@@ -1,0 +1,62 @@
+---
+title: Platform application access controls
+description: Implement ingress and egress access controls for platform applications. 
+canonical_url: '/workload-access/enterprise-security/platform'
+---
+
+In this article you will learn some best practices to secure platform tier applications.
+
+### Isolate platform applications
+
+You may have several types of platform applications in your environment:
+
+- Storage platform
+- Secret management
+- Container security
+- Platform monitoring
+- Application performance monitoring
+
+We recommend that you implement all your platform applications controls in a **platform tier**, implicitly allowing granular ingress and egress controls for platform applications pods and denying everything else. This effectively isolates platform applications from business applications, and extends the multi-tenancy and application microsegmentation controls to platform applications.
+
+### Platform order
+
+Unless you are a large enterprise organization with security teams that require that security takes precedence, we recommend that you put the platform tier before the security tier. 
+
+![policy-board2]({{site.baseurl}}/images/policy-board2.png)
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: Tier
+metadata:
+  name: platform
+spec:
+  order: 200
+```
+
+### Map your application access controls to policy
+
+Next, we recommend that you refer to your platform application documentation and get the communication map of application pods, and reflect the controls in your network policy. 
+
+### Create a global network policy 
+
+Here is our global network policy that allows application (`platform-app1`) and service (`platf-app1-svc2`), ingress access to service (`svc = platf-app1-svc1`) from port 12345.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: platform.platform-app2-svc2
+spec:
+  tier: platform
+  selector: (app == "platform-app1" && svc == "platf-app1-svc2")
+  ingress:
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: svc == "platf-app1-svc1"
+      destination:
+        ports:
+          - '12345'
+  types:
+    - Ingress
+```
