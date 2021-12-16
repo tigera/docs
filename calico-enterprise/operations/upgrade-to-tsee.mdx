@@ -58,6 +58,16 @@ If your cluster already has {{site.prodname}} installed, follow the [Upgrading {
 
 %>
 
+<label: AKS>
+<%
+
+> **Note**: AKS upgrades from open source Calico are not production ready due to limited testing.
+>
+{: .alert .alert-info}
+
+{% include content/upgrade-operator-simple.md upgradeFrom="OpenSource" provider="AKS" %}
+
+%>
 {% endtabs %}
 
 Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
