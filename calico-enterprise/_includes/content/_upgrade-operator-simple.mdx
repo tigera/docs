@@ -2,6 +2,26 @@
    ```bash
    curl -L -O {{ "/manifests/tigera-operator.yaml" | absolute_url }}
    ```
+{%- if include.provider == "AKS" and include.upgradeFrom == "OpenSource" %}
+1. Modify the new Tigera operator manifest to use a new namespace (for example, "tigera-operator-v3-11-1").
+   First, download the helper script:
+
+   ```bash
+   curl -L -O {{ "/scripts/aks-modify-operator-manifest-for-upgrade.sh" | absolute_url }}
+   ```
+
+   **Note**: The new namespace must conform the Kubernetes label naming standards.
+   {: .alert .alert-info}
+
+   This helper script creates a copy of the tigera operator manifest so that it will install the operator and its associated resources
+   into a given namespace. Now run the helper script with the new namespace name you have chosen.
+   ```bash
+   chmod a+x ./aks-modify-operator-manifest-for-upgrade.sh
+   ./aks-modify-operator-manifest-for-upgrade.sh <new_namespace>
+   ```
+   A new operator manifest named `tigera-operator-new.yaml` is created.
+
+{%- endif %}
 
 1. Download the new manifests for Prometheus operator.
 
@@ -19,8 +39,13 @@
 
 1. Apply the manifests for Tigera operator.
    ```bash
+{%- if include.provider == "AKS" and include.upgradeFrom == "OpenSource" %}
+   kubectl apply -f tigera-operator-new.yaml
+{%- else %}
    kubectl apply -f tigera-operator.yaml
+{%- endif %}
    ```
+
 {%- if include.upgradeFrom != "OpenSource" %}
    **Note**: If you intend to update any `operator.tigera.io` or `projectcalico.org` resources to utilize new fields available in the update you must make sure you make those changes after applying the `tigera-operator.yaml`.
    {: .alert .alert-info}
@@ -29,8 +54,21 @@
 
 1. If you downloaded the manifests for Prometheus operator from the earlier step, then apply them now.
    ```bash
-   kubectl apply -f tigera-prometheus-operator.yaml
+   kubectl create -f tigera-prometheus-operator.yaml
    ```
+
+{%- if include.provider == "AKS" and include.upgradeFrom == "OpenSource" %}
+1. Make the new operator running in the new namespace the active operator.
+   First, download the helper script:
+   ```bash
+   curl -L -O {{ "/scripts/switch-active-operator.sh" | absolute_url }}
+   ```
+   Then switch the active operator:
+   ```bash
+   chmod a+x ./switch-active-operator.sh
+   ./switch-active-operator.sh tigera-operator-v3-11-1
+   ```
+{%- endif %}
 
 {%- if include.upgradeFrom == "OpenSource" %}
 
@@ -48,9 +86,30 @@
    ```bash
    {%- if include.provider == "EKS" %}
    kubectl apply -f {{ "/manifests/eks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
+   {%- else if include.provider == "AKS" %}
+   kubectl apply -f {{ "/manifests/aks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
    {%- else %}
    kubectl apply -f {{ "/manifests/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
    {%- endif %}
+   ```
+
+   Remove the opensource Calico apiserver resource if it exists.
+   Check if multiple apiserver resources exist:
+   ```bash
+   kubectl get apiserver
+   ```
+ 
+   If a default apiserver resource exists, you will see output similar to this:
+   ```
+   $ kubectl get apiserver
+   NAME            AGE
+   default         18h
+   tigera-secure   19h
+   ```
+ 
+   Remove the `default` apiserver:
+   ```bash
+   kubectl delete apiserver default
    ```
 
 {%- endif %}
