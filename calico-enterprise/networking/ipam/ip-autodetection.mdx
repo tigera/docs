@@ -52,7 +52,8 @@ By default, {{site.prodname}} uses the **firstFound** method; the first valid IP
 
 - Address used by the node to reach a particular IP or domain (**canReach**)
 - Regex to include matching interfaces (**interface**)
-- Regex to exclude matching interfaces (**skipInterface**)
+- Regex to exclude matching interfaces (**skip-interface**)
+- Address assigned to kubernetes node (**kubernetes-internal-ip**)
 
 For help on autodetection methods, see
 [NodeAddressAutodetection]({{ site.baseurl }}/reference/installation/api#operator.tigera.io/v1.NodeAddressAutodetection) in the operator Installation reference
@@ -138,6 +139,14 @@ Where autodetection methods are based on:
 
   ```
   skipInterface: "eth.*"
+  ```
+  
+- **Kubernetes Node IP**
+
+  An IP address assigned to kubernetes node (INTERNAL-IP)
+
+  ```
+  kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=kubernetes-internal-ip
   ```
 
 #### Manually configure IP address and subnet for a node
