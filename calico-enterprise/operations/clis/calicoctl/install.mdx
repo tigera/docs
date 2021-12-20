@@ -109,8 +109,9 @@ chmod +x calicoctl
 
    Use the following PowerShell command to download the `calicoctl` binary.      
 
-   > **Tip**: Consider running PowerShell as administrator and navigating to a location that's in your `PATH`. For example, `C:\Windows`.
-   {: .alert .alert-info}       
+   > **Tip**: Consider running PowerShell as administrator and navigating
+   > to a location that's in your `PATH`. For example, `C:\Windows`.
+   {: .alert .alert-success}
 
 
       {% if page.version == "master" %}
@@ -202,9 +203,9 @@ chmod +x kubectl-calico
 
    Use the following PowerShell command to download the `calicoctl` binary.
 
-   > **Tip**: Consider running PowerShell as administrator and navigating to a location that's in your `PATH`. For example, `C:\Windows`.
-   {: .alert .alert-info}
-   
+   > **Tip**: Consider running PowerShell as administrator and navigating
+   > to a location that's in your `PATH`. For example, `C:\Windows`.
+   {: .alert .alert-success}
    
       {% if page.version == "master" %}
    ```bash

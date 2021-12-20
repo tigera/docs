@@ -89,7 +89,7 @@ Before attempting to create a Calico release you must do the following.
 
 1. Select the appropriate component version numbers, and create any necessary releases. Follow the instructions
    in each repository for further information. (See recent release information, e.g. at
-   https://docs.projectcalico.org/v3.7/release-notes/, for the set of components to consider releasing.)
+   https://projectcalico.docs.tigera.io/v3.7/release-notes/, for the set of components to consider releasing.)
 
    The following components _must_ use the same version number as the Calico version number
    chosen above, and thus must be re-released for every Calico release.
@@ -315,8 +315,9 @@ This will cause `docs.tigera.io` to be updated (after a few minutes). Validate t
 
 1. Push your branch and open a pull request. Get it reviewed and wait for it to pass CI.
 
-1. Once reviewed and CI is passing, run the following on your local branch in order to build and publish the release
-   at the newly created commit.
+1. Once reviewed and CI is passing, merge your pull request. This will cause the live docs site to be
+   updated (after a few minutes). After your pull request has merged, run the following on the release
+   branch in order to build and publish the release at the newly created commit.
 
    ```
    make release
@@ -327,7 +328,6 @@ This will cause `docs.tigera.io` to be updated (after a few minutes). Validate t
    ```
    make release-publish
    ```
-1. Merge the PR. This will cause the live docs site to be updated (after a few minutes).
 
 # Release notes
 
