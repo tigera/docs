@@ -14,7 +14,7 @@ The doc contribution process works as follows.
 1. Preview your changes to make sure they render as expected. You can either [build the site locally](#building-the-doc-site-locally) or go directly to the "submit a pull request" to [build the site with the Project Calico CI/CD system](#previewing-the-changes-from-cicd).
 1. Check for broken links. You can either [check for broken links](#checking-for-broken-links) in your local environment or submit a pull request and use the output of the Semaphore job.
 1. Submit a pull request (PR) against the master branch of the [Project Calico repo](https://github.com/projectcalico/calico).
-1. If you haven't already signed our contributer agreement, GitHub will prompt you to do so (required).
+1. If you haven't already signed our contributor agreement, GitHub will prompt you to do so (required).
 1. Request a review from one or more Calico maintainers.
 1. After getting the approval of at least one Calico maintainer, we ask that you [backport the changes in the `master` folder to the folders of the last two releases](#how-to-quickly-apply-changes-in-master-to-a-previous-release), if appropriate.
 1. Squash your commits.
@@ -177,7 +177,7 @@ Examples:
 
 - [Add the new page to the side navigation bar](#linking-content).
 
-- Within the copies of the page in the `master` and previous release directories, add a `canonical_url` line below the `title` line in the metadata of the page. This should contain the absolute path to the page in the current latest directory. Example: `canonical_url: 'https://docs.projectcalico.org/v3.0/getting-started/kubernetes/'`. For more discussion of canonical URLs, refer to the [Canonical URLs](#canonical-urls) section.
+- Within the copies of the page in the `master` and previous release directories, add a `canonical_url` line below the `title` line in the metadata of the page. This should contain the absolute path to the page in the current latest directory. Example: `canonical_url: 'https://projectcalico.docs.tigera.io/v3.0/getting-started/kubernetes/'`. For more discussion of canonical URLs, refer to the [Canonical URLs](#canonical-urls) section.
 
 ### Deleting or renaming pages
 
@@ -277,7 +277,7 @@ Do not include any uppercase letters in your links.
 
 ### Anchor links
 
-An anchor link for each heading is automatically created. It consists of the title of the heading with each word separated by hyphens. Delete any slashes in the title. For example, to reference a heading titled "Working with the calico/kube-controllers container" on a page located at `https://docs.projectcalico.org/v3.0/reference/kube-controllers/configuration`, you would use the following:
+An anchor link for each heading is automatically created. It consists of the title of the heading with each word separated by hyphens. Delete any slashes in the title. For example, to reference a heading titled "Working with the calico/kube-controllers container" on a page located at `https://projectcalico.docs.tigera.io/v3.0/reference/kube-controllers/configuration`, you would use the following:
 
 ```
 /{{page.version}}/reference/kube-controllers/configuration#working-with-the-calicokube-controllers-container
