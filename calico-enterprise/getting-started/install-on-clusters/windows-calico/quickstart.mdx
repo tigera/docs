@@ -116,7 +116,6 @@ The following steps install a Kubernetes cluster on a single Windows node, with 
    ```bash
    kubectl patch installation default --type=merge -p '{"spec": {"calicoNetwork": {"bgp": "Disabled"}}}'
    ```
-
 1. Prepare the directory for Kubernetes files on Windows node.
 
    ```powershell
