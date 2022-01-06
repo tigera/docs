@@ -9,9 +9,6 @@ to the individual endpoints to which this profile has been assigned.
 
 Each {{site.prodname}} endpoint or host endpoint can be assigned to zero or more profiles.
 
-For `calicoctl` [commands]({{ site.baseurl }}/reference/calicoctl/overview) that specify a resource type on the CLI, the following
-aliases are supported (all case insensitive): `profile`, `profiles`, `pro`, `pros`.
-
 This resource is not supported in `kubectl`.
 
 ### Sample YAML
