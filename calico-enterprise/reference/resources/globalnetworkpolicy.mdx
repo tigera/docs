@@ -19,9 +19,6 @@ take precedence over [Profile resources]({{site.baseurl}}/reference/resources/pr
 GlobalNetworkPolicies are organized into [tiers]({{site.baseurl}}/reference/resources/tier), which provide an additional layer of ordering—in particular, note that the `Pass` action skips to the
 next [tier]({{site.baseurl}}/reference/resources/tier), to enable hierarchical security policy.
 
-For `calicoctl` [commands]({{ site.baseurl }}/reference/calicoctl/overview) that specify a resource type on the CLI, the following
-aliases are supported (all case insensitive): `globalnetworkpolicy`, `globalnetworkpolicies`, `gnp`, `gnps`.
-
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/){:target="_blank"}, the following case-insensitive aliases
 may be used to specify the resource type on the CLI:
 `globalnetworkpolicy.projectcalico.org`, `globalnetworkpolicies.projectcalico.org` and abbreviations such as
