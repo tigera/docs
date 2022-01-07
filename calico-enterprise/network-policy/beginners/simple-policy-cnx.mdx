@@ -30,7 +30,6 @@ This guide will deploy pods in a Kubernetes namespace.  Let's create the `Namesp
 kubectl create ns policy-demo
 ```
 
-
 ### Create demo pods
 
 We'll use Kubernetes `Deployment` objects to easily create pods in the namespace.
