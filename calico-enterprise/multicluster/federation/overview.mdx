@@ -41,7 +41,7 @@ Federated endpoint identity solves this by allowing a local Kubernetes cluster t
 
 Federated services works with federated endpoint identity, providing cross-cluster service discovery for a local cluster. If you have an existing service discovery mechanism, this feature is optional. 
 
-Federated services use the Tigera Federated Services Controller to federate all {% include open-new-window.html text='Kubernetes endpoints' url='https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#endpoints-v1-core' %} (workload and host endpoints) across all of the clusters. The Federated Services Controller accesses service and endpoints data in the remote clusters directly through the Kubernetes API.
+Federated services use the Tigera Federated Services Controller to federate all {% include open-new-window.html text='Kubernetes endpoints' url='https://v1-21.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#endpoints-v1-core' %} (workload and host endpoints) across all of the clusters. The Federated Services Controller accesses service and endpoints data in the remote clusters directly through the Kubernetes API.
 
 ### Next steps
 
