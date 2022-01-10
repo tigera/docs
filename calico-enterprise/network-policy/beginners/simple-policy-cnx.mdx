@@ -20,7 +20,7 @@ guides above and that your cluster consists of the following nodes:
   * k8s-node2
   * k8s-master
 
-Where you see references to these in the text below, substitute for your actual node names.
+Where you see references to these in the text below, substitute for your actual node names. You can find what nodes are on your cluster with `kubectl get nodes`
 
 ### Configure Namespaces
 
@@ -83,7 +83,7 @@ information about the policies for endpoints on a given host.
    {: .alert .alert-info}
 
    ```
-   ETCD_ENDPOINTS=http://10.96.232.136:6666 ./calicoq host k8s-node1
+   DATASTORE_TYPE=kubernetes ./calicoq host k8s-node1
    ```
 
    You should see the following output.
@@ -138,22 +138,24 @@ information about the policies for endpoints on a given host.
    You should see the following output.
 
    ```yaml
-   apiVersion: projectcalico.org/v3
-   kind: Profile
-   metadata:
-     creationTimestamp: 2018-01-09T10:20:52Z
-     name: kns.policy-demo
-     resourceVersion: "661"
-     uid: c541b088-f526-11e7-a837-42010a80000a
-   spec:
-     egress:
-     - action: Allow
-       destination: {}
-       source: {}
-     ingress:
-     - action: Allow
-       destination: {}
-       source: {}
+    apiVersion: projectcalico.org/v3
+    kind: Profile
+    metadata:
+      creationTimestamp: "2022-01-06T21:32:05Z"
+      name: kns.policy-demo
+      resourceVersion: 435026/
+      uid: 75dd2ed4-d3a6-41ca-a106-db073bfa946a
+    spec:
+      egress:
+      - action: Allow
+        destination: {}
+        source: {}
+      ingress:
+      - action: Allow
+        destination: {}
+        source: {}
+      labelsToApply:
+        pcns.projectcalico.org/name: policy-demo
    ```
    {: .no-select-button}
 
