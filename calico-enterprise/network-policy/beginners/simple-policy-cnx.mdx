@@ -4,7 +4,7 @@ description: Learn the extra features for Calico Enterprise that make it so impo
 canonical_url: /security/simple-policy-cnx
 ---
 
-This guide is a variation of the simple policy demo intended to introduce the extra features of {{site.prodname}} to people already familiar with Project Calico for Kubernetes.
+This guide is a variation of the [simple policy demo]({{site.baseurl}}/security/tutorials/kubernetes-policy-basic) intended to introduce the extra features of {{site.prodname}} to people already familiar with Project Calico for Kubernetes.
 
 It requires a Kubernetes cluster configured with Calico networking and {{site.prodname}}, and expects that you have `kubectl` configured to interact with the cluster.
 
@@ -12,7 +12,7 @@ You can quickly and easily obtain such a cluster by following one of the
 [installation guides]({{site.baseurl}}/getting-started/kubernetes/),
 or by [upgrading an existing cluster]({{site.baseurl}}/maintenance/upgrade-to-tsee).
 
-The key steps in moving to {{site.prodname}} are to change to the {{site.prodname}} version of calico-node, update its configuration, download calicoq and deploy Prometheus.
+The key steps in moving to {{site.prodname}} are to change to the {{site.prodname}} version of calico-node, update its configuration, download [calicoq]({{site.baseurl}}/reference/calicoq) and deploy Prometheus.
 
 This guide assumes that you have installed all the {{site.prodname}} components from the
 guides above and that your cluster consists of the following nodes:
@@ -20,7 +20,7 @@ guides above and that your cluster consists of the following nodes:
   * k8s-node2
   * k8s-master
 
-Where you see references to these in the text below, substitute for your actual node names.
+Where you see references to these in the text below, substitute for your actual node names. You can find what nodes are on your cluster with `kubectl get nodes`
 
 ### Configure Namespaces
 
@@ -30,46 +30,47 @@ This guide will deploy pods in a Kubernetes namespace.  Let's create the `Namesp
 kubectl create ns policy-demo
 ```
 
-### Create demo Pods
+### Create demo pods
 
-We'll use Kubernetes `Deployment` objects to easily create pods in that namespace.
+We'll use Kubernetes `Deployment` objects to easily create pods in the namespace.
 
-1. Create some nginx pods in the `policy-demo` namespace
+1. Create some nginx pods in the `policy-demo` namespace.
 
    ```shell
-   kubectl run --namespace=policy-demo nginx --replicas=2 --image=nginx
+   kubectl create deployment --namespace=policy-demo nginx --image=nginx
    ```
 
-1. Expose them through a service on port 80.
+1. Expose them through a service.
 
    ```shell
    kubectl expose --namespace=policy-demo deployment nginx --port=80
    ```
 
-1. Check that the nginx service is accessible, by trying to access it from
-another, busybox pod.
+1. Ensure the nginx service is accessible.
 
-   ```
+   ```shell
    kubectl run --namespace=policy-demo access --rm -ti --image busybox /bin/sh
    ```
 
    This should open up a shell session inside the `access` pod, as shown below.
 
    ```
+   Waiting for pod policy-demo/access-472357175-y0m47 to be running, status is Pending, pod ready: false
+
    If you don't see a command prompt, try pressing enter.
 
    / #
    ```
    {: .no-select-button}
 
-1. From inside the `access` pod, attempt to access the nginx service.
+1. From inside the `access` pod, attempt to reach the `nginx` service.
 
-   ```bash
+   ```shell
    wget -q nginx -O -
    ```
 
-1. You should see a response from `nginx`.  Great! Our service is accessible.  You
-can exit the `access` pod now.
+
+   You should see a response from `nginx`.  Great! Our service is accessible.  You can exit the pod now.
 
 1. Inspect the network policies using calicoq.  The `host` command displays
 information about the policies for endpoints on a given host.
@@ -82,7 +83,7 @@ information about the policies for endpoints on a given host.
    {: .alert .alert-info}
 
    ```
-   ETCD_ENDPOINTS=http://10.96.232.136:6666 ./calicoq host k8s-node1
+   DATASTORE_TYPE=kubernetes ./calicoq host k8s-node1
    ```
 
    You should see the following output.
@@ -130,29 +131,31 @@ information about the policies for endpoints on a given host.
    example, for the `kns.policy-demo` profile, which defines default behavior for
    pods in the `policy-demo` namespace:
 
-   ```
+   ```shell
    kubectl get profile kns.policy-demo -o yaml
    ```
 
    You should see the following output.
 
-   ```
-   apiVersion: projectcalico.org/v3
-   kind: Profile
-   metadata:
-     creationTimestamp: 2018-01-09T10:20:52Z
-     name: kns.policy-demo
-     resourceVersion: "661"
-     uid: c541b088-f526-11e7-a837-42010a80000a
-   spec:
-     egress:
-     - action: Allow
-       destination: {}
-       source: {}
-     ingress:
-     - action: Allow
-       destination: {}
-       source: {}
+   ```yaml
+    apiVersion: projectcalico.org/v3
+    kind: Profile
+    metadata:
+      creationTimestamp: "2022-01-06T21:32:05Z"
+      name: kns.policy-demo
+      resourceVersion: 435026/
+      uid: 75dd2ed4-d3a6-41ca-a106-db073bfa946a
+    spec:
+      egress:
+      - action: Allow
+        destination: {}
+        source: {}
+      ingress:
+      - action: Allow
+        destination: {}
+        source: {}
+      labelsToApply:
+        pcns.projectcalico.org/name: policy-demo
    ```
    {: .no-select-button}
 
@@ -164,7 +167,7 @@ Let's turn on isolation in our policy-demo namespace. {{site.prodname}} will the
 
 Running the following command creates a NetworkPolicy which implements a default deny behavior for all pods in the `policy-demo` namespace.
 
-```
+```shell
 kubectl create -f - <<EOF
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
@@ -183,7 +186,7 @@ This will prevent all access to the nginx service.  We can see the effect by try
 
 1. Start another pod within the `policy-demo` namespace.
 
-   ```
+   ```shell
    kubectl run --namespace=policy-demo access --rm -ti --image busybox /bin/sh
    ```
 
@@ -234,7 +237,7 @@ from anywhere else.
 
 1. Create a network policy `access-nginx` with the following contents:
 
-   ```
+   ```shell
    kubectl create -f - <<EOF
    kind: NetworkPolicy
    apiVersion: networking.k8s.io/v1
@@ -261,7 +264,7 @@ from anywhere else.
 
 1. We should now be able to access the service from the `access` pod.
 
-   ```
+   ```shell
    kubectl run --namespace=policy-demo access --rm -ti --image busybox /bin/sh
    ```
 
@@ -287,13 +290,13 @@ from anywhere else.
 
 1. To set a stream of allowed packets run the following command.
 
-   ```
+   ```shell
    for i in `seq 1 10000`; do (wget -q --timeout=1 nginx -O - & sleep 0.01); done
    ```
 
 1. Coming back, however, we still cannot access the service from a pod without the label `run: access`:
 
-   ```
+   ```shell
    kubectl run --namespace=policy-demo cant-access --rm -ti --image busybox /bin/sh
    ```
 
@@ -309,7 +312,7 @@ from anywhere else.
 
 1. From inside the `cant-access` pod, attempt to access the service again.
 
-   ```
+   ```shell
    wget -q --timeout=5 nginx -O -
    ```
 
