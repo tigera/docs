@@ -67,16 +67,26 @@ This article assumes that you are familiar with network masks and CIDR notation.
 
 {{site.prodname}} supports IP pools that are backed by the AWS fabric.  Workloads that use an IP address from an
 AWS-backed pool can communicate on the AWS network using their own IP address and AWS will route their traffic
-to/from their host without changing the IP address.  This feature works as follows:
+to/from their host without changing the IP address.  
 
-* An IP pool is created with its `awsSubnetID` field set to the ID of a VPC Subnet.  The IP pool's CIDR must be 
-  contained within the VPC Subnet's CIDR.
+Pods that use an IP address from an AWS-backed pool may also be [assigned an AWS
+Elastic IP via a pod annotation](#add-aws-elastic-ips-to-the-egress-gateway-deployment).  Elastic IPs used in this 
+way have the normal AWS semantics: when accessing resources inside the AWS network, the workload's private IP 
+(from the IP pool) is used.  When accessing resources outside the AWS network, AWS translates the workload's IP to 
+the Elastic IP.  Elastic IPs also allow for incoming requests from outside the AWS fabric, direct to the workload.
 
-  > **Note**: Only VPC Subnet addresses are supported at this time.  Elastic IP addresses are not supported.
-  {: .alert .alert-info}
+In overview, the AWS-backed feature works as follows:
 
-* {{site.prodname}} IPAM does not use AWS-backed pools by default.  To request an AWS-backed IP address, a pod 
-  must have a resource request:
+* An IP pool is created with its `awsSubnetID` field set to the ID of a VPC Subnet.  This "AWS-backed" IP pool's 
+  CIDR must be contained within the VPC Subnet's CIDR.
+
+  > **Important**: The CIDR(s) used for AWS-backed IP pool(s) must be reserved for {{site.prodname}}.  For example,
+  > by creating a dedicated VPC Subnet for {{site.prodname}}.  If the CIDR is not reserved; both {{site.prodname}} and
+  > AWS may try to assign the same IP address, resulting in a conflict.
+  {: .alert .alert-danger}
+
+* Since they are a limited resource, {{site.prodname}} IPAM does not use AWS-backed pools by default.  To request an  
+  AWS-backed IP address, a pod must have a resource request:
 
   ```yaml
   spec:
@@ -89,22 +99,21 @@ to/from their host without changing the IP address.  This feature works as follo
           projectcalico.org/aws-secondary-ipv4: 1
   ```
 
+  {{site.prodname}} manages the  `projectcalico.org/aws-secondary-ipv4` capacity on the Kubernetes Node resource, 
+  ensuring that Kubernetes will not try to schedule too many AWS-backed workloads to the same node.  Only AWS-backed 
+  pods are limited in this way; there is no limit on the number of non-AWS-backed pods.
+
 * When the CNI plugin spots such a resource request, it will choose an IP address from an AWS-backed pool.  Only
   pools with VPC Subnets in the availability zone of the host are considered.
 
 * When Felix, {{site.prodname}}'s per-host agent spots a local workload with an AWS-backed address it tries to ensure
   that the IP address of the workload is assigned to the host in the AWS fabric.  If need be, it will create a 
   new [secondary ENI](#secondary-elastic-network-interfaces-enis) device and attach it to the host to house the IP address.
-  
-  > **Important**: Since {{site.prodname}} IPAM is only aware of the allocations in the IP pool, not the VPC Subnet
-  > itself, it is important to make sure that the VPC Subnet is reserved for {{site.prodname}} to use.  If this is not
-  > the case, AWS may try to use the same IP address that {{site.prodname}} IPAM chose causing a conflict.
-  {: .alert .alert-danger}
 
-* Since secondary ENIs and IP addresses are a limited resource per host, {{site.prodname}} manages the  `projectcalico.org/aws-secondary-ipv4`
-  capacity on the Kubernetes Node resource, ensuring that Kubernetes will not try to schedule too many AWS-backed
-  workloads to the same node.  Only AWS-backed pods are limited in this way; there is no limit on the number of
-  non-AWS-backed pods.
+* If the pod has one or more AWS Elastic IPs listed in the `cni.projectcalico.org/awsElasticIPs` pod annotation, 
+  Felix will try to ensure that _one_ of the Elastic IPs is assigned to the pod's private IP address in the AWS fabric.
+  (Specifying multiple Elastic IPs is useful for multi-pod deployments; ensuring that each pod in the deployment
+  gets one of the IPs.)
 
 #### Egress gateway
 
@@ -209,7 +218,7 @@ autodetect the correct primary interface to use for normal pod-to-pod traffic.  
 autodetect a newly-added secondary ENI as the main interface, causing an outage.
 
 For EKS clusters, the default IP autodetection method is `can-reach=8.8.8.8`, which will choose the interface 
-with a route to `8.8.8.8`; this is typically the interface with a default route, which will be the primary ENI.
+with a route to `8.8.8.8`; this is typically the interface with a default route, which will be the correct (primary) ENI.
 ({{site.prodname}} ensures that the secondary ENIs do not have default routes in the main routing table.)
 
 For other AWS clusters, {{site.prodname}} may default to `firstFound`, which is **not** suitable.
@@ -304,13 +313,16 @@ In order to provision the required AWS resources, each instance in your cluster 
 * CreateTags
 * AssignPrivateIpAddresses
 * UnassignPrivateIpAddresses
+* DescribeAddresses
+* AssociateAddress
+* DisassociateAddress
 * AttachNetworkInterface
 * CreateNetworkInterface
 * DeleteNetworkInterface
 * DetachNetworkInterface
 * ModifyNetworkInterfaceAttribute
 
-These permissions are the same as those required by the AWS VPC CNI (since both CNIs need to provision the same kinds
+These permissions are the similar to those used by the AWS VPC CNI (since both CNIs need to provision the same kinds
 of resources).
 
 #### Configure IP reservations for each VPC Subnet
@@ -566,7 +578,7 @@ spec:
   template:
     metadata:
       annotations:
-        cni.projectcalico.org/ipv4pools: "[\"egress-red-west-1\",\"egress-red-west-2\"]"
+        cni.projectcalico.org/ipv4pools: '["egress-red-west-1","egress-red-west-2"]'
       labels:
         egress-code: red
     spec:
@@ -715,6 +727,29 @@ spec:
   ...
 EOF
 ```
+
+#### Add AWS Elastic IPs to the egress gateway deployment
+
+To add AWS Elastic IPs to the egress gateway pods, follow these steps:
+
+* Create one or more Elastic IPs for the deployment.  This can be done through the AWS Console or using the AWS
+  command line interface.
+
+* Add the `cni.projectcalico.org/awsElasticIPs` annotation to the pod template, within the egress gateway deployment.
+  The format of the annotation is a string containing a JSON-formatted list of Elastic IP addresses:
+  
+  ```yaml
+  ...
+  template:
+    metadata:
+      annotations:
+        cni.projectcalico.org/ipv4pools: '["egress-red-west-1","egress-red-west-2"]'
+        cni.projectcalico.org/awsElasticIPs: '["37.1.2.3", "43.2.5.6"]'
+  ...
+  ```
+  
+Once the update has rolled out, {{site.prodname}} will try to add one of the requested Elastic IPs to each pod in 
+the deployment.
 
 #### Optionally enable ECMP load balancing
 
