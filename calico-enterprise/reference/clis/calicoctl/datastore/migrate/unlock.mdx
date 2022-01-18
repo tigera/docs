@@ -50,6 +50,6 @@ calicoctl datastore migrate unlock
 
 ## See also
 
--  [Install calicoctl]({{site.baseurl}}/maintenance/clis/calicoctl/install)
--  [Resources]({{site.baseurl}}/reference/resources/overview) for details on all valid resources, including file format
+-  [Install calicoctl]({{ site.baseurl }}/maintenance/clis/calicoctl/install)
+-  [Resources]({{ site.baseurl }}/reference/resources/overview) for details on all valid resources, including file format
    and schema
