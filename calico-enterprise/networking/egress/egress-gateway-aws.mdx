@@ -80,9 +80,9 @@ In overview, the AWS-backed feature works as follows:
 * An IP pool is created with its `awsSubnetID` field set to the ID of a VPC Subnet.  This "AWS-backed" IP pool's 
   CIDR must be contained within the VPC Subnet's CIDR.
 
-  > **Important**: The CIDR(s) used for AWS-backed IP pool(s) must be reserved for {{site.prodname}}.  For example,
-  > by creating a dedicated VPC Subnet for {{site.prodname}}.  If the CIDR is not reserved; both {{site.prodname}} and
-  > AWS may try to assign the same IP address, resulting in a conflict.
+  > **Important**: You must ensure that the CIDR(s) used for AWS-backed IP pool(s) are reserved in the AWS fabric.  
+  > For example, by creating a dedicated VPC Subnet for {{site.prodname}}.  If the CIDR is not reserved; both 
+  > {{site.prodname}} and AWS may try to assign the same IP address, resulting in a conflict.
   {: .alert .alert-danger}
 
 * Since they are a limited resource, {{site.prodname}} IPAM does not use AWS-backed pools by default.  To request an  
@@ -197,7 +197,7 @@ an instance (for example when scaling up the cluster).
 - [Configure IP autodetection](#configure-ip-autodetection)
 - [Ensure Kubernetes VPC has free CIDR range](#ensure-kubernetes-vpc-has-free-cidr-range)
 - [Create dedicated VPC Subnets](#create-dedicated-vpc-subnets)
-- [Configure AWS IAM roles for cluster nodes](#configure-aws-iam-roles-for-cluster-nodes)
+- [Configure AWS IAM roles](#configure-aws-iam-roles)
 - [Configure IP reservations for each VPC Subnet](#configure-ip-reservations-for-each-vpc-subnet)
 - [Enable egress gateway support](#enable-egress-gateway-support)
 - [Enable policy sync API](#enable-policy-sync-api)
@@ -301,7 +301,7 @@ extra egress gateway is provisioned.
 >   require ENIs and IPs.
 {: .alert .alert-success}
 
-#### Configure AWS IAM roles for cluster nodes
+#### Configure AWS IAM roles
 
 In order to provision the required AWS resources, each instance in your cluster requires the following IAM permissions:
 
@@ -322,7 +322,7 @@ In order to provision the required AWS resources, each instance in your cluster 
 * DetachNetworkInterface
 * ModifyNetworkInterfaceAttribute
 
-These permissions are the similar to those used by the AWS VPC CNI (since both CNIs need to provision the same kinds
+These permissions are similar to those used by the AWS VPC CNI (since both CNIs need to provision the same kinds
 of resources).
 
 #### Configure IP reservations for each VPC Subnet
