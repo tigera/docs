@@ -57,14 +57,21 @@ spec:
     replicas: 1
   nodes:
     count: 3
+    # This section sets the resource requirements for each individual Elasticsearch node.
+    resourceRequirements:
+      limits:
+        cpu: 1000m
+        memory: 16Gi
+      requests:
+        cpu: 1000m
+        memory: 16Gi
+        storage: 200Gi
   componentResources:
     - componentName: ECKOperator
+      # This section sets the resource requirements for the operator that bootstraps the Elasticsearch cluster.
       resourceRequirements:
         limits:
-          cpu: 1000m
-          memory: 16Gi
+          memory: 512Mi
         requests:
-          cpu: 1000m
-          memory: 16Gi
-          storage: 200Gi
+          memory: 512Mi
 ```
