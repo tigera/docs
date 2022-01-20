@@ -1,27 +1,11 @@
 1. Download the new manifests for Tigera operator.
    ```bash
+{%- if include.provider == "AKS" %}
+   curl -L -o tigera-operator.yaml {{ "/manifests/aks/tigera-operator-upgrade.yaml" | absolute_url }}
+{%- else %}
    curl -L -O {{ "/manifests/tigera-operator.yaml" | absolute_url }}
-   ```
-{%- if include.provider == "AKS" and include.upgradeFrom == "OpenSource" %}
-1. Modify the new Tigera operator manifest to use a new namespace (for example, "tigera-operator-v3-11-1").
-   First, download the helper script:
-
-   ```bash
-   curl -L -O {{ "/scripts/aks-modify-operator-manifest-for-upgrade.sh" | absolute_url }}
-   ```
-
-   **Note**: The new namespace must conform the Kubernetes label naming standards.
-   {: .alert .alert-info}
-
-   This helper script creates a copy of the tigera operator manifest so that it will install the operator and its associated resources
-   into a given namespace. Now run the helper script with the new namespace name you have chosen.
-   ```bash
-   chmod a+x ./aks-modify-operator-manifest-for-upgrade.sh
-   ./aks-modify-operator-manifest-for-upgrade.sh <new_namespace>
-   ```
-   A new operator manifest named `tigera-operator-new.yaml` is created.
-
 {%- endif %}
+   ```
 
 1. Download the new manifests for Prometheus operator.
 
@@ -37,13 +21,9 @@
    and then [update the manifest]({{site.baseurl}}/getting-started/private-registry/private-registry-regular#run-the-operator-using-images-from-your-private-registry)
    downloaded in the previous step.
 
-1. Apply the manifests for Tigera operator.
+1. Apply the manifest for Tigera operator.
    ```bash
-{%- if include.provider == "AKS" and include.upgradeFrom == "OpenSource" %}
-   kubectl apply -f tigera-operator-new.yaml
-{%- else %}
    kubectl apply -f tigera-operator.yaml
-{%- endif %}
    ```
 
 {%- if include.upgradeFrom != "OpenSource" %}
@@ -57,6 +37,22 @@
    kubectl create -f tigera-prometheus-operator.yaml
    ```
 
+{%- if include.upgradeFrom == "OpenSource" %}
+{%- if include.provider == "AKS" %}
+  {% assign ns = "tigera-operator-enterprise" %}
+{% else %}
+  {% assign ns = "tigera-operator" %}
+{%- endif %}
+
+1. Install your pull secret.
+   ```bash
+   kubectl create secret generic tigera-pull-secret \
+       --from-file=.dockerconfigjson=<path/to/pull/secret> \
+       --type=kubernetes.io/dockerconfigjson -n {{ ns }}
+   ```
+
+{%- endif %}
+
 {%- if include.provider == "AKS" and include.upgradeFrom == "OpenSource" %}
 1. Make the new operator running in the new namespace the active operator.
    First, download the helper script:
@@ -66,20 +62,10 @@
    Then switch the active operator:
    ```bash
    chmod a+x ./switch-active-operator.sh
-   ./switch-active-operator.sh tigera-operator-v3-11-1
+   ./switch-active-operator.sh tigera-operator-enterprise
    ```
 {%- endif %}
 
-{%- if include.upgradeFrom == "OpenSource" %}
-
-1. Install your pull secret.
-   ```bash
-   kubectl create secret generic tigera-pull-secret \
-       --from-file=.dockerconfigjson=<path/to/pull/secret> \
-       --type=kubernetes.io/dockerconfigjson -n tigera-operator
-   ```
-
-{%- endif %}
 {%- if include.upgradeFrom == "OpenSource" %}
 
 1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
@@ -116,7 +102,7 @@
 {%- if include.upgradeFrom != "OpenSource" %}
 
 1. If your cluster has OIDC login configured, follow these steps:
-   
+
    a.  Save a copy of your Manager for reference.
    ```bash
    kubectl get manager tigera-secure -o yaml > manager.yaml
