@@ -72,7 +72,7 @@
    ```bash
    {%- if include.provider == "EKS" %}
    kubectl apply -f {{ "/manifests/eks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
-   {%- else if include.provider == "AKS" %}
+   {%- elsif include.provider == "AKS" %}
    kubectl apply -f {{ "/manifests/aks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
    {%- else %}
    kubectl apply -f {{ "/manifests/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
