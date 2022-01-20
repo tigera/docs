@@ -60,6 +60,7 @@ calicoctl ipam configure --strictaffinity=true
 
 #### Windows platform 
 
+- Windows worker nodes should have at least 4 cores, 8GB RAM
 - Windows versions:
   - Windows Server 1903 (AKA 19H1) build 18317 or greater
   - Windows Server 2019 / 1809 (RS5) or greater, with [some limitations]({{site.baseurl}}/getting-started/windows-calico/limitations)
