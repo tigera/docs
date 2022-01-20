@@ -1,6 +1,10 @@
 1. Download the new manifests for Tigera operator.
    ```bash
+{%- if include.provider == "AKS" %}
+   curl -L -o tigera-operator.yaml {{ "/manifests/aks/tigera-operator-upgrade.yaml" | absolute_url }}
+{%- else %}
    curl -L -O {{ "/manifests/tigera-operator.yaml" | absolute_url }}
+{%- endif %}
    ```
 
 1. Download the new manifests for Prometheus operator.
@@ -17,10 +21,11 @@
    and then [update the manifest]({{site.baseurl}}/getting-started/private-registry/private-registry-regular#run-the-operator-using-images-from-your-private-registry)
    downloaded in the previous step.
 
-1. Apply the manifests for Tigera operator.
+1. Apply the manifest for Tigera operator.
    ```bash
    kubectl apply -f tigera-operator.yaml
    ```
+
 {%- if include.upgradeFrom != "OpenSource" %}
    **Note**: If you intend to update any `operator.tigera.io` or `projectcalico.org` resources to utilize new fields available in the update you must make sure you make those changes after applying the `tigera-operator.yaml`.
    {: .alert .alert-info}
@@ -29,35 +34,75 @@
 
 1. If you downloaded the manifests for Prometheus operator from the earlier step, then apply them now.
    ```bash
-   kubectl apply -f tigera-prometheus-operator.yaml
+   kubectl create -f tigera-prometheus-operator.yaml
    ```
 
 {%- if include.upgradeFrom == "OpenSource" %}
+{%- if include.provider == "AKS" %}
+  {% assign ns = "tigera-operator-enterprise" %}
+{% else %}
+  {% assign ns = "tigera-operator" %}
+{%- endif %}
 
 1. Install your pull secret.
    ```bash
    kubectl create secret generic tigera-pull-secret \
        --from-file=.dockerconfigjson=<path/to/pull/secret> \
-       --type=kubernetes.io/dockerconfigjson -n tigera-operator
+       --type=kubernetes.io/dockerconfigjson -n {{ ns }}
    ```
 
 {%- endif %}
+
+{%- if include.provider == "AKS" and include.upgradeFrom == "OpenSource" %}
+1. Make the new operator running in the new namespace the active operator.
+   First, download the helper script:
+   ```bash
+   curl -L -O {{ "/scripts/switch-active-operator.sh" | absolute_url }}
+   ```
+   Then switch the active operator:
+   ```bash
+   chmod a+x ./switch-active-operator.sh
+   ./switch-active-operator.sh tigera-operator-enterprise
+   ```
+{%- endif %}
+
 {%- if include.upgradeFrom == "OpenSource" %}
 
 1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
    ```bash
    {%- if include.provider == "EKS" %}
    kubectl apply -f {{ "/manifests/eks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
+   {%- else if include.provider == "AKS" %}
+   kubectl apply -f {{ "/manifests/aks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
    {%- else %}
    kubectl apply -f {{ "/manifests/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
    {%- endif %}
+   ```
+
+   Remove the opensource Calico apiserver resource if it exists.
+   Check if multiple apiserver resources exist:
+   ```bash
+   kubectl get apiserver
+   ```
+ 
+   If a default apiserver resource exists, you will see output similar to this:
+   ```
+   $ kubectl get apiserver
+   NAME            AGE
+   default         18h
+   tigera-secure   19h
+   ```
+ 
+   Remove the `default` apiserver:
+   ```bash
+   kubectl delete apiserver default
    ```
 
 {%- endif %}
 {%- if include.upgradeFrom != "OpenSource" %}
 
 1. If your cluster has OIDC login configured, follow these steps:
-   
+
    a.  Save a copy of your Manager for reference.
    ```bash
    kubectl get manager tigera-secure -o yaml > manager.yaml
