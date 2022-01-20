@@ -39,9 +39,9 @@ the upgrade.
 
 If your cluster has Windows nodes and uses custom TLS certificates for log storage, prior to upgrade, prepare and apply new certificates for [log storage]({{site.baseurl}}/security/comms/log-storage-tls) that include the required service DNS names.
 
-For AKS only, upgrades beginning from {{site.prodname}} v3.11.0 to a newer version will automatically upgrade {{site.prodnameWindows}}. During the upgrade, Windows nodes will be tainted so new pods will not be scheduled until the upgrade of the node has finished. The {{site.prodnameWindows}} upgrade status can be monitored with: `kubectl get tigerastatus calico -oyaml`
+For AKS only, upgrades beginning from {{site.prodname}} v3.11.2 to a newer version will automatically upgrade {{site.prodnameWindows}}. During the upgrade, Windows nodes will be tainted so new pods will not be scheduled until the upgrade of the node has finished. The {{site.prodnameWindows}} upgrade status can be monitored with: `kubectl get tigerastatus calico -oyaml`
 
-For all other platforms or versions older than v3.11.0, upgrading {{site.prodnameWindows}} can be performed out-of-band with the {{site.prodname}} upgrade of the cluster. For each Windows node, [uninstall]({{site.baseurl}}/getting-started/windows-calico/maintain#uninstall-calico-enterprise-for-windows-from-windows-nodes) the {{site.prodnameWindows}} services, copy over the latest {{site.prodnameWindows}} installation archive, then proceed with the [installation]({{site.baseurl}}/getting-started/windows-calico/quickstart#install-calico-enterprise-for-windows).
+For all other platforms or versions older than v3.11.2, upgrading {{site.prodnameWindows}} can be performed out-of-band with the {{site.prodname}} upgrade of the cluster. For each Windows node, [uninstall]({{site.baseurl}}/getting-started/windows-calico/maintain#uninstall-calico-enterprise-for-windows-from-windows-nodes) the {{site.prodnameWindows}} services, copy over the latest {{site.prodnameWindows}} installation archive, then proceed with the [installation]({{site.baseurl}}/getting-started/windows-calico/quickstart#install-calico-enterprise-for-windows).
 
 #### Multi-cluster management
 
@@ -52,4 +52,34 @@ For {{site.prodname}} v3.5 and v3.7, upgrading multi-cluster management setups m
 
 ### Upgrade Calico Enterprise
 
+{% tabs %}
+
+<label:Kubernetes,active:true>
+<%
+
 {% include content/upgrade-operator-simple.md upgradeFrom="Enterprise" %}
+
+%>
+
+<label: AKS>
+<%
+
+> **Note**: If {{site.prodname}} was installed directly onto the AKS cluster, follow the upgrade instructions in the **Kubernetes** tab.
+>
+{: .alert .alert-info}
+
+These AKS upgrade instructions apply only to AKS clusters which were upgraded to
+{{site.prodname}} from Calico. Check whether the cluster was upgraded from Calico by
+checking the namespace for the active operator:
+```bash
+kubectl get configmap -n calico-system active-operator -oyaml | grep active-namespace
+```
+If the `active-namespace` is `tigera-operator-enterprise`, then the cluster was
+upgraded from Calico.
+
+{% include content/upgrade-operator-simple.md upgradeFrom="Enterprise" provider="AKS" %}
+
+%>
+
+{% endtabs %}
+
