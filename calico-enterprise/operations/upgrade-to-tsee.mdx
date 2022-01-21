@@ -25,6 +25,8 @@ Please contact Tigera Support for assistance upgrading a cluster with an `etcdv3
 
 If your cluster already has {{site.prodname}} installed, follow the [Upgrading {{site.prodname}} from an earlier release guide]({{site.baseurl}}/maintenance/kubernetes-upgrade-tsee) instead.
 
+For hybrid Linux and Windows clusters, ensure that your Windows nodes have at least 4 cores, 8GB RAM.
+
 ## Upgrade Calico to {{site.prodname}}
 
 > **Note**: GKE and AKS upgrades from open source Calico are not currently supported.
@@ -58,6 +60,16 @@ If your cluster already has {{site.prodname}} installed, follow the [Upgrading {
 
 %>
 
+<label: AKS>
+<%
+
+> **Note**: AKS upgrades from open source Calico are not production ready due to limited testing.
+>
+{: .alert .alert-info}
+
+{% include content/upgrade-operator-simple.md upgradeFrom="OpenSource" provider="AKS" %}
+
+%>
 {% endtabs %}
 
 Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
@@ -88,3 +100,8 @@ To secure {{site.prodname}} component communications, install the following set 
 ```bash
 kubectl apply -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
 ```
+
+### Next steps
+
+- [Configure access to {{site.prodname}} Manager UI]({{site.baseurl}}/getting-started/cnx/access-the-manager)
+- [Authentication quickstart]({{site.baseurl}}/getting-started/cnx/authentication-quickstart)
