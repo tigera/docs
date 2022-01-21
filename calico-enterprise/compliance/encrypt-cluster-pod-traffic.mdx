@@ -32,7 +32,7 @@ All platforms listed above will encrypt pod-to-pod traffic. Additionally, when u
 
 **Required**
 
-- Operating system(s) of nodes running in the cluster must {% include open-new-window.html text='support WireGuard' url='https://www.wireguard.com/install/' %}
+- Verify the operating system(s) running on the nodes in the cluster {% include open-new-window.html text='support WireGuard' url='https://www.wireguard.com/install/' %}.
 - IP addresses for every node in the cluster. This is required to establish secure tunnels between the nodes. {{site.prodname}} can automatically do this using [IP Setting]({{site.baseurl}}/reference/node/configuration#ip-setting) and [IP autodetection methods]({{site.baseurl}}/reference/node/configuration#ip-autodetection-methods) available under [calico/node]({{site.baseurl}}/reference/node/configuration) resource.
     - Under [installation]({{site.baseurl}}/reference/installation/api), set the [autodetection method]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.NodeAddressAutodetection) (`nodeAddressAutodetectionV4` and/or `nodeAddressAutodetectionV6`) for your cluster.
 
@@ -290,7 +290,7 @@ With the above command, Calico will not encrypt any of the pod traffic to or fro
 To enable encryption for pod traffic on node `my-node` again:
 
   ```bash
-calicoctl patch felixconfiguration node.my-node --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
+kubectl patch felixconfiguration node.my-node --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
   ```
 
 #### Disable WireGuard for a cluster
