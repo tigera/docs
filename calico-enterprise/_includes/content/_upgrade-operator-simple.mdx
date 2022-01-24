@@ -34,7 +34,7 @@
 
 1. If you downloaded the manifests for Prometheus operator from the earlier step, then apply them now.
    ```bash
-   kubectl create -f tigera-prometheus-operator.yaml
+   kubectl replace -f tigera-prometheus-operator.yaml
    ```
 
 {%- if include.upgradeFrom == "OpenSource" %}
