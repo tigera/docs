@@ -1,7 +1,6 @@
 Apply the {{site.prodname}} manifests for the Prometheus operator.
 
 {% if include.operation == "install" %}
-
 ```bash
 oc create -f {{ "/manifests/ocp/tigera-prometheus-operator.yaml" | absolute_url }}
 ```
