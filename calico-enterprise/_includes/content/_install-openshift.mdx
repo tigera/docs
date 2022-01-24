@@ -164,7 +164,7 @@ oc create -f {{ "/manifests/ocp/tigera-enterprise-resources.yaml" | absolute_url
 ```
 {% endif %}
 
-{% include content/openshift-prometheus-operator.md operation=install %}
+{% include content/openshift-prometheus-operator.md operation="install" %}
 
 You can now monitor progress with the following command:
 
