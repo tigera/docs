@@ -160,11 +160,11 @@ oc create -f ./tigera-enterprise-resources.yaml
 Apply the custom resources for enterprise features.
 
 ```bash
-oc apply -f {{ "/manifests/ocp/tigera-enterprise-resources.yaml" | absolute_url }} 
+oc create -f {{ "/manifests/ocp/tigera-enterprise-resources.yaml" | absolute_url }}
 ```
 {% endif %}
 
-{% include content/openshift-prometheus-operator.md %}
+{% include content/openshift-prometheus-operator.md operation="install" %}
 
 You can now monitor progress with the following command:
 

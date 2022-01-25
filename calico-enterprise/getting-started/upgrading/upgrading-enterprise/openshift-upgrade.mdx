@@ -60,7 +60,7 @@ mkdir manifests
    oc apply -f manifests/
    ```
 
-1. {% include content/openshift-prometheus-operator.md %}
+1. {% include content/openshift-prometheus-operator.md operation="upgrade" %}
 
 1. If your cluster is a management cluster, apply a [ManagementCluster]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.ManagementCluster)
    CR to your cluster.
