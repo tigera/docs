@@ -13,10 +13,6 @@ because the `Pass` `action` in a Rule jumps to the next Tier.  Some example use 
 - Allowing privileged users to define security policy that takes precedence over other users.
 - Translating hierarchies of physical firewalls directly into {{site.prodname}} policy.
 
-For `calicoctl` [commands]({{site.baseurl}}/reference/calicoctl/), the following case-insensitive aliases
-may be used to specify the resource type on the CLI:
-`tier`, `tiers`.
-
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/){:target="_blank"}, the following case-insensitive aliases
 may be used to specify the resource type on the CLI:
 `tier.projectcalico.org`, `tiers.projectcalico.org` and abbreviations such as

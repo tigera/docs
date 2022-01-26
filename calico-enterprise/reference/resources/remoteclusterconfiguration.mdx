@@ -22,11 +22,6 @@ For more details on the federation feature refer to the [Overview]({{site.baseur
 
 For the meaning of the fields matches the configuration used for configuring `calicoctl`, see [Kubernetes datastore]({{site.baseurl}}/maintenance/clis/calicoctl/configure/datastore) instructions for more details.
 
-For `calicoctl` [commands]({{site.baseurl}}/reference/calicoctl/), the following case-insensitive aliases
-may be used to specify the resource type on the CLI:
-`remoteclusterconfiguration`, `remoteclusterconfigurations`, `remoteclusterconfig`,
-`remoteclusterconfigs`, `rcc`.
-
 This resource is not supported in `kubectl`.
 
 ### Sample YAML

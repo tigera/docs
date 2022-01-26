@@ -9,9 +9,6 @@ This is used to preview network behavior before actually enforcing the network p
 will create a Kubernetes network policy backed by a {{site.prodname}}
 [network policy]({{site.baseurl}}/reference/resources/networkpolicy).
 
-For `calicoctl` [commands]({{site.baseurl}}/reference/calicoctl/), the following case-insensitive aliases
-may be used to specify the resource type on the CLI:
-`stagedkubernetesnetworkpolicy`, `stagedkubernetesnetworkpolicies`, `stagedkubernetespolicy`, `sknp`, `stagedkubernetespolicies`, `skpol`, `skpols`.
 
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/){:target="_blank"}, the following case-insensitive aliases
 may be used to specify the resource type on the CLI:

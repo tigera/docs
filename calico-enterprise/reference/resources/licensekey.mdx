@@ -26,12 +26,12 @@ To apply or update a license key use the following command, replacing `<customer
 with the customer name in the file sent to you by Tigera.
 
 **Command**
-```
+```bash
 kubectl apply -f <customer-name>-license.yaml
 ```
 
 **Example**
-```
+```bash
 kubectl apply -f awesome-corp-license.yaml
 ```
 
@@ -39,7 +39,7 @@ kubectl apply -f awesome-corp-license.yaml
 
 To view the number of licensed nodes and the license key expiry, use:
 
-```
+```bash
 kubectl get licensekeys.p -o custom-columns='Name:.metadata.name,MaxNodes:.status.maxnodes,Expiry:.status.expiry,PackageType:.status.package'
 ```
 

@@ -9,8 +9,6 @@ The management plane provides central control of the managed cluster and stores 
 
 {{site.prodname}} supports connecting multiple {{site.prodname}} clusters as describe in the [Multi-cluster management] installation guide.
 
-Using `calicoctl` for this resource is not supported.
-
 For `kubectl` commands, the following case-insensitive aliases may be used to specify the resource type on the CLI: 
 `managedcluster`,`managedclusters`, `managedcluster.projectcalico.org`, `managedclusters.projectcalico.org` as well as
 abbreviations such as `managedcluster.p` and `managedclusters.p`.
