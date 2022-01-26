@@ -8,9 +8,8 @@ canonical_url: '/getting-started/openshift/requirements'
 
 {{site.prodname}} {{page.version}} supports these OpenShift Container Platform versions:
 
-- 4.6
-- 4.7
 - 4.8
+- 4.9
 
 Refer to the OpenShift documentation for additional requirements.
 
