@@ -109,20 +109,35 @@ See [Configuring Felix]({{ site.baseurl }}/reference/felix/configuration) for mo
 ## Supported resource definition aliases
 
 The following table lists supported aliases for {{site.prodname}} resources when using `calicoctl`. Note that all aliases
-are **case insensitive**.
+are **case insensitive**. 
 
 | Resource definition                  | Supported calicoctl aliases                                  |
 | :----------------------------------- | :----------------------------------------------------------- |
 | BGP configuration                    | `bgpconfig`, `bgpconfigurations`, `bgpconfigs`               |
+| Deep packet inspection               | `deeppacketinspection`, `deeppacketinspections`
 | BGP peer                             | `bgppeer`, `bgppeers`, `bgpp`, `bgpps`, `bp`, `bps`          |
 | Felix configuration                  | `felixconfiguration`, `felixconfig`, `felixconfigurations`, `felixconfigs` |
+| Global alert                         | `globalalert`, `globalalerts`
 | Global network policy                | `globalnetworkpolicy`, `globalnetworkpolicies`, `gnp`, `gnps` |
 | Global network set                   | `globalnetworkset`, `globalnetworksets`                      |
+| Global report                        | not supported                                                |
+| Global threatfeed                    | `globalthreatfeed`, `globalthreatfeeds`                      |
 | Host endpoint                        | `hostendpoint`, `hostendpoints`, `hep`, `heps`               |
 | IP pool                              | `ippool`, `ippools`, `ipp`, `ipps`, `pool`, `pools`          |
 | IP reservation                       | `ipreservation`, `ipreservations`, `reservation`, `reservations` |
 | Kubernetes controllers configuration | `kubecontrollersconfiguration`, `kubecontrollersconfig`      |
+| License key                          | not supported                                                |
+| Managed cluster                      | not supported                                                |
 | Network policy                       | `networkpolicy`, `networkpolicies`, `policy`, `np`, `policies`, `pol`, `pols` |
+| Network set                          | `networkset`, `networksets`, `netsets`
 | Node                                 | `node`, `nodes`, `no`, `nos`                                 |
+| Packet capture                       | `packetcapture`, `packetcaptures`                            |
 | Profiles                             | `profile`, `profiles`, `pro`, `pros`                         |
+| Remote cluster configuration.        | `remoteclusterconfiguration`, `remoteclusterconfigurations`, `remoteclusterconfig`, `remoteclusterconfigs`, `rcc` |
+| Staged global network policy         | `stagedglobalnetworkpolicy`, `stagedglobalnetworkpolicies`, `sgnp`, `sgnps` |
+| Staged Kubernetes network policy.    | `stagedkubernetesnetworkpolicy`, `stagedkubernetesnetworkpolicies`, `stagedkubernetespolicy`, `sknp`, `stagedkubernetespolicies`, `skpol`, `skpols` |
+| Staged network policy.               | `stagednetworkpolicy`, `stagednetworkpolicies`, `stagedpolicy`, `snp`, `stagedpolicies`, `spol`, `spols` |
+| Tier                                 | `tier`, `tiers`                                              |           
 | Workload endpoint                    | `workloadendpoint`, `workloadendpoints`, `wep`, `weps`       |
+
+

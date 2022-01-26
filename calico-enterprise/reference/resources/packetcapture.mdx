@@ -10,10 +10,6 @@ interaction inside a Kubernetes cluster.
 {{site.prodname}} supports selecting one or multiple [WorkloadEndpoints resources]({{site.baseurl}}/reference/resources/workloadendpoint)
 as described in the [Packet Capture] guide.
 
-For `calicoctl` [commands]({{site.baseurl}}/reference/calicoctl/), the following case-insensitive aliases
-may be used to specify the resource type on the CLI:
-`packetcapture`, `packetcaptures`.
-
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases may be used to specify the resource type on the CLI: 
 `packetcapture`,`packetcaptures`, `packetcapture.projectcalico.org`, `packetcaptures.projectcalico.org` as well as
 abbreviations such as `packetcapture.p` and `packetcaptures.p`.
