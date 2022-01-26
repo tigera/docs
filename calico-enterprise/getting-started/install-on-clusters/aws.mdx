@@ -33,7 +33,7 @@ Kubernetes Operations (kOps) is a cluster management tool that provisions cluste
 ### Before you begin...
 
 **Supported**
-- kOps version 1.20.0
+- kOps version 1.21 and 1.22
 
 **Required**
 - Install {% include open-new-window.html text='kubectl' url='https://kubernetes.io/docs/tasks/tools/install-kubectl/' %}
