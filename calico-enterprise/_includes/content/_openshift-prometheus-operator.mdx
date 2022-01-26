@@ -6,7 +6,7 @@ oc create -f {{ "/manifests/ocp/tigera-prometheus-operator.yaml" | absolute_url 
 ```
 {%- else %}
 ```bash
-oc replace -f {{ "/manifests/ocp/tigera-prometheus-operator.yaml" | absolute_url }}
+oc apply -f {{ "/manifests/ocp/tigera-prometheus-operator.yaml" | absolute_url }}
 ```
 {%- endif %}
 
