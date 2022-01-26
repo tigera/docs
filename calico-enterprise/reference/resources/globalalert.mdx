@@ -16,10 +16,6 @@ satisfy a condition.
  * [Flow logs]({{site.baseurl}}/visibility/elastic/flow)
  * [L7 logs]({{site.baseurl}}/visibility/elastic/l7)
 
-For `calicoctl` [commands]({{site.baseurl}}/reference/calicoctl/), the following case-insensitive aliases
-can be used to specify the resource type on the CLI:
-`globalalert`, `globalalerts`.
-
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/){:target="_blank"}, the following case-insensitive aliases
 can be used to specify the resource type on the CLI:
 `globalalert.projectcalico.org`, `globalalerts.projectcalico.org` and abbreviations such as

@@ -19,10 +19,6 @@ take precedence over [profile resources]({{site.baseurl}}/reference/resources/pr
 StagedNetworkPolicies are organized into [tiers]({{site.baseurl}}/reference/resources/tier), which provide an additional layer of ordering—in particular, note that the `Pass` action skips to the
 next [tier]({{site.baseurl}}/reference/resources/tier), to enable hierarchical security policy.
 
-For `calicoctl` [commands]({{site.baseurl}}/reference/calicoctl/), the following case-insensitive aliases
-may be used to specify the resource type on the CLI:
-`stagednetworkpolicy`, `stagednetworkpolicies`, `stagedpolicy`, `snp`, `stagedpolicies`, `spol`, `spols`.
-
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/){:target="_blank"}, the following case-insensitive aliases
 may be used to specify the resource type on the CLI:
 `stagednetworkpolicy.projectcalico.org`, `stagednetworkpolicies.projectcalico.org` and abbreviations such as
