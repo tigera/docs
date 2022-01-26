@@ -8,8 +8,6 @@ A global report resource is a configuration for generating compliance reports. A
 - Specify the node(s) on which to run the report generation jobs
 - Enable/disable creation of new jobs for generating the report
 
-This resource is not supported in `calicoctl`.
-
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/){:target="_blank"}, the following case-insensitive aliases
 may be used to specify the resource type on the CLI:
 `globalreport.projectcalico.org`, `globalreports.projectcalico.org` and abbreviations such as

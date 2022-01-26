@@ -8,10 +8,6 @@ A deep packet inspection resource (`DeepPacketInspection`) represents live netwr
 by analyzing header and payload of the packet using specific rules. Malicious activities are addeed to the “Alerts” page in 
 {{site.prodname}} Manager.
 
-For `calicoctl` [commands]({{site.baseurl}}/reference/calicoctl/), the following case-insensitive aliases
-can be used to specify the resource type on the CLI:
-`deeppacketinspection`, `deeppacketinspections`.
-
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases can be used to specify the resource type on the CLI: 
 `deeppacketinspection`,`deeppacketinspections`, `deeppacketinspection.projectcalico.org`, `deeppacketinspections.projectcalico.org` as well as
 abbreviations such as `deeppacketinspection.p` and `deeppacketinspections.p`.
