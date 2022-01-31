@@ -45,15 +45,13 @@ spec:
 
 #### Autodetection methods
 
-{% comment %}
-If merging from Calico, make sure to retain the changes that have been made here for the operator.
-{% endcomment %}
 By default, {{site.prodname}} uses the **firstFound** method; the first valid IP address on the first interface (excluding local interfaces such as the docker bridge). However, you can change the default method to any of the following:
 
 - Address used by the node to reach a particular IP or domain (**canReach**)
+- Address assigned to Kubernetes node (**kubernetes: InternalIP**)
 - Regex to include matching interfaces (**interface**)
-- Regex to exclude matching interfaces (**skip-interface**)
-- Address assigned to kubernetes node (**kubernetes-internal-ip**)
+- Regex to exclude matching interfaces (**skipInterface**)
+- A list of IP ranges in CIDR format to determine valid IP addresses on the node to choose from (**cidrs**)
 
 For help on autodetection methods, see
 [NodeAddressAutodetection]({{ site.baseurl }}/reference/installation/api#operator.tigera.io/v1.NodeAddressAutodetection) in the operator Installation reference
@@ -73,6 +71,87 @@ To manually configure an IP address and subnet, disable autodetection and update
 As noted previously, the default autodetection method is **first valid interface found** (firstFound). To use a different autodetection method,
 configure the NodeAddressAutodetection field(s) in the Installation resource. You can update the Installation resource before applying it
 during installation or edit it later with `kubectl edit installation default`.
+
+> **Note**: To configure the default autodetection method for IPv6 for any of the below methods, use the field `nodeAddressAutodetectionV6`.
+{: .alert .alert-info}
+
+- **Kubernetes Node IP**
+
+  {{site.prodname}} will select the first internal IP address listed in the Kubernetes node's `Status.Addresses` field.
+
+  ```
+  kind: Installation
+  apiVersion: operator.tigera.io/v1
+  metadata:
+    name: default
+  spec:
+    calicoNetwork:
+      nodeAddressAutodetectionV4:
+        kubernetes: NodeInternalIP
+  ```
+ 
+- **Source address used to reach an IP or domain name**
+
+  {{site.prodname}} will choose the IP address that is used to reach the given "can reach" IP address or domain. For example:
+
+  ```
+  kind: Installation
+  apiVersion: operator.tigera.io/v1
+  metadata:
+    name: default
+  spec:
+    calicoNetwork:
+      nodeAddressAutodetectionV4:
+        canReach: 8.8.8.8
+  ```
+
+- **Including matching interfaces**
+
+  {{site.prodname}} will choose an address on each node from an interface that matches the given [regex](https://pkg.go.dev/regexp){:target="_blank"}.
+  For example:
+
+  ```
+  kind: Installation
+  apiVersion: operator.tigera.io/v1
+  metadata:
+    name: default
+  spec:
+    calicoNetwork:
+      nodeAddressAutodetectionV4:
+        interface: eth.*
+  ```
+
+- **Excluding matching interfaces**
+
+  {{site.prodname}} will choose an address on each node from an interface that does not match the given [regex](https://pkg.go.dev/regexp){:target="_blank"}.
+  For example:
+
+  ```
+  kind: Installation
+  apiVersion: operator.tigera.io/v1
+  metadata:
+    name: default
+  spec:
+    calicoNetwork:
+      nodeAddressAutodetectionV4:
+        skipInterface: eth.*
+  ```
+
+- **Including CIDRs**
+
+  {{site.prodname}} will select any IP address from the node that falls within the given CIDRs. For example:
+
+  ```
+  kind: Installation
+  apiVersion: operator.tigera.io/v1
+  metadata:
+    name: default
+  spec:
+    calicoNetwork:
+      nodeAddressAutodetectionV4:
+        cidrs:
+          - "192.168.200.0/24"
+  ```
 
 - **IPv4**
 
@@ -106,48 +185,6 @@ during installation or edit it later with `kubectl edit installation default`.
 
 > **Note**: You can use both `nodeAddressAutodetectionV4` and `nodeAddressAutodetectionV6` to specify IPv4 and IPv6 methods.
 {: .alert .alert-info}
-
-Where autodetection methods are based on:
-
-- **First found**
-
-  Select the first valid interface. For example:
-
-  ```
-  firstFound: true
-  ```
-
-- **IP or domain name**
-
-  A reachable destination (IP address or domain). For example:
-
-  ```
-  canReach: "www.google.com"
-  ```
-
-- **Including matching interfaces**
-
-  A regular expression in golang syntax that includes interfaces that match. For example:
-
-  ```
-  interface: "eth.*"
-  ```
-
-- **Excluding matching interfaces**
-
-  A regular expression in golang syntax that excludes interfaces that match. For example:
-
-  ```
-  skipInterface: "eth.*"
-  ```
-  
-- **Kubernetes Node IP**
-
-  An IP address assigned to kubernetes node (INTERNAL-IP)
-
-  ```
-  kubectl set env daemonset/calico-node -n kube-system IP_AUTODETECTION_METHOD=kubernetes-internal-ip
-  ```
 
 #### Manually configure IP address and subnet for a node
 
