@@ -768,15 +768,15 @@ egress gateways.
 #### Verify the feature operation
 
 To verify the feature operation, cause the application pod to initiate a connection to a server
-outside the cluster, and observe -- for example using tcpdump -- the source IP of the connection
+outside the cluster, and observe -- for example using tcpdump -- the source IP of the connection 
 packet as it reaches the server.
 
 > **Note**: In order for such a connection to complete, the server must know how to route back to
 > the egress gateway's IP.
 {: .alert .alert-info}
 
-By way of a concrete example, you could use netcat to run a test server outside the cluster; for
-example:
+By way of a concrete example, you could use netcat to run a test server outside the cluster (outside
+AWS if you're using Elastic IPs); for example:
 
 ```bash
 docker run --net=host --privileged subfuzion/netcat -v -l -k -p 8089
