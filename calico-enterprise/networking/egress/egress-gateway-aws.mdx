@@ -398,7 +398,7 @@ You can verify that the setting took effect by examining the Kubernetes Node res
 kubectl describe node <nodename>
 ```
 
-Should show the new `projectcalico.org/aws-secondary-ipv4` capacity. 
+Should show the new `projectcalico.org/aws-secondary-ipv4` capacity (in the Allocated Resources section). 
 
 #### Configure IP pools backed by VPC Subnets
 
