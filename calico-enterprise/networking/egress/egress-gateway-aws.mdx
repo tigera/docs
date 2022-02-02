@@ -303,7 +303,10 @@ extra egress gateway is provisioned.
 
 #### Configure AWS IAM roles
 
-In order to provision the required AWS resources, each instance in your cluster requires the following IAM permissions:
+In order to provision the required AWS resources, each {{ site.noderunning }} pod in your cluster requires the 
+following IAM permissions to be granted.  The permissions can be granted to the node IAM Role itself, or by using 
+the AWS {% include open-new-window.html text='IAM roles for service accounts' url='https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html' %} feature to grant the permissions to the 
+`calico-node` service account.
 
 * DescribeInstances
 * DescribeInstanceTypes
@@ -313,17 +316,18 @@ In order to provision the required AWS resources, each instance in your cluster 
 * CreateTags
 * AssignPrivateIpAddresses
 * UnassignPrivateIpAddresses
-* DescribeAddresses
-* AssociateAddress
-* DisassociateAddress
 * AttachNetworkInterface
 * CreateNetworkInterface
 * DeleteNetworkInterface
 * DetachNetworkInterface
 * ModifyNetworkInterfaceAttribute
 
-These permissions are similar to those used by the AWS VPC CNI (since both CNIs need to provision the same kinds
-of resources).
+The above permissions are the same as those used by the AWS VPC CNI (since both CNIs need to provision the same kinds
+of resources).  In addition, to support elastic IPs, each {{ site.noderunning }} also requires the following permissions:
+
+* DescribeAddresses
+* AssociateAddress
+* DisassociateAddress
 
 #### Configure IP reservations for each VPC Subnet
 
