@@ -736,6 +736,10 @@ EOF
 
 To add AWS Elastic IPs to the egress gateway pods, follow these steps:
 
+* Ensure that your VPC has an {% include open-new-window.html text='Internet Gateway' url='https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html' %} 
+  and a (default) route to the Internet Gateway from the AWS Subnets used for egress gateways.  (This is a 
+  standard requirement for Elastic IPs in AWS.)
+
 * Create one or more Elastic IPs for the deployment.  This can be done through the AWS Console or using the AWS
   command line interface.
 
