@@ -304,7 +304,7 @@ extra egress gateway is provisioned.
 #### Configure AWS IAM roles
 
 In order to provision the required AWS resources, each {{ site.noderunning }} pod in your cluster requires the 
-following IAM permissions to be granted.  The permissions can be granted to the node itself, or by using 
+following IAM permissions to be granted.  The permissions can be granted to the node IAM Role itself, or by using 
 the AWS {% include open-new-window.html text='IAM roles for service accounts' url='https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html' %} feature to grant the permissions to the 
 `calico-node` service account.
 
