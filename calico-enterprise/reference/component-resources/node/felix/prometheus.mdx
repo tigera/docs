@@ -1,6 +1,6 @@
 ---
 title: Prometheus statistics
-description: Review metrics for the Felix component if you are using Prometheus. 
+description: Review metrics for the Felix component if you are using Prometheus.
 canonical_url: '/reference/felix/prometheus'
 ---
 
@@ -93,7 +93,6 @@ felix_active_local_policies 0
 # HELP felix_active_local_selectors Number of active selectors on this host.
 # TYPE felix_active_local_selectors gauge
 felix_active_local_selectors 82
-# HELP felix_active_local_tags Number of active tags on this host.
 ...
 ```
 {: .no-select-button}
