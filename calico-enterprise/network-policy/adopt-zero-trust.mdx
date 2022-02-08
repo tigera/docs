@@ -195,7 +195,7 @@ Things to notice in this example:
 
 - **Namespace**
 
-  Create a {{site.prodname}} NetworkPolicy in the same **namespace** as the service for the whitelist (microblog).
+  Create a {{site.prodname}} NetworkPolicy in the same **namespace** as the service for the allow-list (microblog).
 
   <pre>
   metadata:
