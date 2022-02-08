@@ -104,8 +104,6 @@ Wait until the `apiserver` shows a status of `Available`, then proceed to [insta
 Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
 {% endif %}
 
-{% include /content/install-awscni-routetable-issue.md %}
-
 #### Install EKS with Calico networking
 
 {% if include.clusterType == "standalone" %}
