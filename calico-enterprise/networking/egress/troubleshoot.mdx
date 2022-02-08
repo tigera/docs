@@ -130,9 +130,9 @@ unreachable default scope link
 
 #### Do you have egress IPs in BGPConfiguration svcExternalIPs?
 
-You should not have any egress IPs or pod IP ranges in BGPConfiguration `svcExternalIPs` or `svcClusterIPs` fields; it causes problems if you do.
+You should not have any egress IPs or pod IP ranges in BGPConfiguration `serviceExternalIPs` or `serviceClusterIPs` fields; it causes problems if you do.
 
-By default, {{site.prodname}} BGP exports all pod IPs, which includes egress gateway IPs because they are pod IPs. But you can also use the `svc*` fields in BGPConfiguration to export additional IP ranges, in particular Kubernetes Service IPs. Because {{site.prodname}} exports additional IP ranges in a different way from pod IPs, things can go wrong if you include pod IPs in the additional ranges.
+By default, {{site.prodname}} BGP exports all pod IPs, which includes egress gateway IPs because they are pod IPs. But you can also use [BGPConfiguration resource parameters]({{site.baseurl}}/reference/resources/bgpconfig) like `BGPConfiguration`, `serviceClusterIPs`, `serviceExternalIPs` and `serviceLoadBalancerIPs` to export additional IP ranges, in particular Kubernetes Service IPs. Because {{site.prodname}} exports additional IP ranges in a different way from pod IPs, things can go wrong if you include pod IPs in the additional ranges.
 
 ### Connection to an egress gateway cannot be established
 
