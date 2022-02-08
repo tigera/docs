@@ -129,8 +129,6 @@ Set your kOps cluster configuration to:
 
 After the cluster is up and ready, [Install {{site.prodname}}]({{site.baseurl}}/getting-started/kubernetes/generic-install).
 
-{% include /content/install-awscni-routetable-issue.md %}
-
 ### Next steps
 
 - {% include open-new-window.html text='Video: Everything you need to know about Kubernetes pod networking on AWS' url='https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-pod-networking-on-aws/' %}
