@@ -13,7 +13,7 @@ security purposes.
 
 For each IPSet threat feed, {{site.prodname}} automatically monitors flow logs for members of the set.
 IPSet threat feeds can also be configured to be synchronized to a [global network set](./globalnetworkset),
-allowing you to use them as a dynamically-updating blacklist by incorporating the global network set into network policy.
+allowing you to use them as a dynamically-updating deny-list by incorporating the global network set into network policy.
 
 For each DomainNameSet threat feed, {{site.prodname}} automatically monitors DNS logs for queries (QNAME) or answers (RR NAME or RDATA) that contain members of the set.
 
@@ -41,7 +41,7 @@ spec:
     http:
       format:
         newlineDelimited: {}
-      url: https://an.example.threat.feed/blacklist
+      url: https://an.example.threat.feed/deny-list
       headers:
         - name: "Accept"
           value: "text/plain"

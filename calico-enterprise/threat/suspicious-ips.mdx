@@ -10,7 +10,7 @@ Add threat intelligence feeds to {{site.prodname}} to trace network flows of sus
 
 ### Value
 
-{{site.prodname}} integrates with threat intelligence feeds so you can detect when your Kubernetes clusters communicate with suspicious IPs. When communications are detected, an anomaly detection dashboard in the UI shows the full context, including which pod(s) were involved so you can analyze and remediate. You can also use a threat intelligence feed to power a dynamic blocklist, either to or from a specific group of sensitive pods, or your entire cluster.
+{{site.prodname}} integrates with threat intelligence feeds so you can detect when your Kubernetes clusters communicate with suspicious IPs. When communications are detected, an anomaly detection dashboard in the UI shows the full context, including which pod(s) were involved so you can analyze and remediate. You can also use a threat intelligence feed to power a dynamic deny-list, either to or from a specific group of sensitive pods, or your entire cluster.
 
 ### Features
 
@@ -63,7 +63,7 @@ To add threat feeds to {{site.prodname}} for automatic updates (default is once 
      content: IPSet
      pull:
        http:
-         url: https://my.threatfeed.com/blacklist
+         url: https://my.threatfeed.com/deny-list
    ```
 
 2. Add the global threat feed to the cluster.
@@ -111,7 +111,7 @@ Use the push method if your threat feeds that are not in newline-delimited forma
 
 #### Block traffic to a cluster
 
-Create a new/edit existing threat feed to include the globalNetworkSet stanza, setting the labels you want to use to represent the blacklisted IPs. This stanza instructs {{site.prodname}} to search for flows to and from the listed IP addresses, and maintain a GlobalNetworkSet containing the IP addresses.
+Create a new/edit existing threat feed to include the globalNetworkSet stanza, setting the labels you want to use to represent the deny-listed IPs. This stanza instructs {{site.prodname}} to search for flows to and from the listed IP addresses, and maintain a GlobalNetworkSet containing the IP addresses.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -122,7 +122,7 @@ spec:
   content: IPSet
   pull:
     http:
-      url: https://an.example.threat.feed/blacklist
+      url: https://an.example.threat.feed/deny-list
   globalNetworkSet:
     labels:
       security-action: block
@@ -198,7 +198,7 @@ Open {{site.prodname}} Manager, and navigate to the “Alerts” page. If any of
 
 If you have high confidence in the IP addresses listed as malicious in a threat feed, you can take stronger action than just searching for connections after the fact. For example, the FEODO tracker lists IP addresses used by command and control servers for botnets. We can configure {{site.prodname}} to block all egress traffic to addresses on this list.
 
-It is strongly recommended that you assess the contents of a threat feed for false positives before using it as a blocklist, and that you apply it to a test subset of your workloads before rolling out application or cluster-wide. Failure to do so could cause legitimate application traffic to be blocked and could lead to an outage in your application.
+It is strongly recommended that you assess the contents of a threat feed for false positives before using it as a deny-list, and that you apply it to a test subset of your workloads before rolling out application or cluster-wide. Failure to do so could cause legitimate application traffic to be blocked and could lead to an outage in your application.
 
 In this demo, we will apply the policy only to a test workload (so we do not impact other traffic).
 
