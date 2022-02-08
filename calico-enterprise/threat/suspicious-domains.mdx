@@ -26,9 +26,9 @@ This how-to guide uses the following {{site.prodname}} features:
 
 #### Domain name threat feeds
 
-A best practice is to develop a whitelist of "known-good" domains that particular applications or services must access, and then [enforce this whitelist with network policy]({{site.baseurl}}/security/domain-based-policy).
+A best practice is to develop an allow-list of "known-good" domains that particular applications or services must access, and then [enforce this allow-list with network policy]({{site.baseurl}}/security/domain-based-policy).
 
-In addition to whitelists, you can use threat feeds to monitor your cluster for DNS queries to known malicious or suspicious domain names. {{site.prodname}} monitors DNS queries and generates alerts for any that are listed in your threat feed.
+In addition to allow-lists, you can use threat feeds to monitor your cluster for DNS queries to known malicious or suspicious domain names. {{site.prodname}} monitors DNS queries and generates alerts for any that are listed in your threat feed.
 
 Threat feeds for domain names associated with malicious **egress** activity (e.g. command and control (C2) servers or data exfiltration), provide the most security value.  Threat feeds that associate domain names with malicious **ingress** activity (e.g. port scans or IP sweeps) are less useful since these activities do not cause endpoints in your cluster to query DNS.  It is better to consider [IP-based threat feeds](./suspicious-ips) for ingress activity.
 
@@ -65,7 +65,7 @@ To add threat feeds to {{site.prodname}} for automatic updates (default is once 
      content: DomainNameSet
      pull:
        http:
-         url: https://my.threatfeed.com/blacklist
+         url: https://my.threatfeed.com/deny-list
    ```
 
 2. Add the global threat feed to the cluster.
