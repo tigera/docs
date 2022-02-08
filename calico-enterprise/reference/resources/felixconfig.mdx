@@ -114,7 +114,8 @@ spec:
 | flowLogsFileNatOutgoingPortLimit | Specify the maximum number of distinct post SNAT ports that will appear in the flowLogs | int | int | `3` |
 | flowLogsFilePerFlowProcessArgsLimit | Specify the maximum number of unique arguments in the flowlogs beyond which process arguments will be aggregated | int | int | `5` |
 | statsDumpFilePath | Specify the position of the file used for dumping flow log statistics on Linux nodes. Note this is an internal setting that users shouldn't need to modify.| string | string | `/var/log/calico/stats/dump` |
-| routeTableRange                    | Calico programs additional Linux route tables for various purposes.  `RouteTableRange` specifies the indices of the route tables that Calico should use. |  | [RouteTableRange](#routetablerange) | `{Min: 1, Max: 250}` |
+| routeTableRange                    | *deprecated in favor of `RouteTableRanges`* Calico programs additional Linux route tables for various purposes. `RouteTableRange` specifies the indices of the route tables that Calico should use. |  | [RouteTableRanges](#routetablerange) | `""` |
+| routeTableRanges                    | Calico programs additional Linux route tables for various purposes. `RouteTableRanges` specifies a set of table index ranges that Calico should use. Deprecates `RouteTableRange`, overrides `RouteTableRange` |  | [RouteTableRanges](#routetableranges) | `[{"Min": 1, "Max": 250}]` |
 | serviceLoopPrevention              | When [service IP advertisement is enabled]({{ site.baseurl }}/networking/advertise-service-ips), prevent routing loops to service IPs that are not in use, by dropping or rejecting packets that do not get DNAT'd by kube-proxy.  Unless set to "Disabled", in which case such routing loops continue to be allowed. | `Drop`, `Reject`, `Disabled` | string | `Drop` |
 | sidecarAccelerationEnabled         | Enable experimental acceleration between application and proxy sidecar when using [application layer policy]({{ site.baseurl }}/security/app-layer-policy). [Default: `false`] | boolean | boolean | `false` |
 | vxlanEnabled                       | Automatically set when needed, you shouldn't need to change this setting: whether Felix should create the VXLAN tunnel device for VXLAN networking. | boolean | boolean | `false` |
@@ -206,11 +207,30 @@ policy is always accelerated, using the best available BPF technology.
 | 2     | Aggregate all flows that share source ports or are from the same ReplicaSet on each node |
 
 #### RouteTableRange
+The `RouteTableRange` option is now deprecated in favor of [RouteTableRanges](#routetableranges).
 
 | Field    | Description          | Accepted Values   | Schema |
 |----------|----------------------|-------------------|--------|
 | min      | Minimum index to use | 1-250             | int    |
 | max      | Maximum index to use | 1-250             | int    |
+
+#### RouteTableRanges
+`RouteTableRanges` is a list of `RouteTableRange` objects:
+
+| Field    | Description          | Accepted Values | Schema |
+|----------|----------------------|-----------------|--------|
+| min      | Minimum index to use | 1 - 4294967295  | int    |
+| max      | Maximum index to use | 1 - 4294967295  | int    |
+
+Each item in the `RouteTableRanges` list designates a range of routing tables available to Calico. By default, Calico will use a single range of `1-250`.  If a range spans Linux's reserved table range (`253-255`) then those tables are automatically excluded from the list. It's possible that other table ranges may also be reserved by third-party systems unknown to Calico. In that case, multiple ranges can be defined to target tables below and above the sensitive ranges:
+```sh
+# target tables 65-99, and 256-1000, skipping 100-255
+calicoctl patch felixconfig default --type=merge -p '{"spec":{"routeTableRanges": [{"Min": 65, "Max": 99}, {"Min": 256, "Max": 1000}] }}
+```
+
+*Note*, for performance reasons, the maximum total number of routing tables that Felix will accept is 65535 (or 2*16).
+
+If both `RouteTableRanges` and `RouteTableRange` are set, `RouteTableRanges` takes precedence and `RouteTableRange` is ignored.
 
 #### AWS IAM Role/Policy for source-destination-check configuration
 
