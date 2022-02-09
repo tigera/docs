@@ -1,6 +1,6 @@
 ---
-title: Detect and alert on security anomalies
-description: Enable machine learning to automatically alert you when clusters have security issues. 
+title: Detect and alert on anomalies
+description: Enable machine learning to automatically alert you when clusters have security and performance issues. 
 canonical_url: /threat/security-anomalies
 ---
 
@@ -9,12 +9,18 @@ canonical_url: /threat/security-anomalies
 
 ### Big picture
 
-Automatically detect suspicious security activities within a cluster and generate alerts. 
+Detect suspicious security and performance activities within a cluster and generate alerts. 
 
 ### Value
 
-{{site.prodname}} includes an anomaly detection engine that analyzes patterns and indicates potential 
-threats and security issues. Security issues that are detected include threats like DGA, reconnaisance threats like IP sweep, but also issues with servers that can affect daily operations. To enable the anomaly detection engine, all you need to do is install anomaly detection within your cluster. If there are any security anomalies, you will automatically get alerts in the Manager UI.
+The {{site.prodname}} anomaly detection engine analyzes patterns and alerts on potential 
+threats and isues such as:
+
+- **Security issues** - threats like DGA, reconnaisance threats like IP sweep, but also issues with servers that can affect daily operations. 
+
+- **Performance issues** - spikes in data transmission, and anomalous degradation in network communication that may impact application workloads.
+
+All you need to do is install the anomaly detection within your cluster. If there are any security or performance anomalies, you will automatically get alerts in Manager UI.
 
 ### Features
 
@@ -23,30 +29,26 @@ This how-to guide uses the following {{site.prodname}} features:
 
 ### Concepts 
 
-#### About security anomalies
+#### About anomalies
 
-{{site.prodname}} anomaly detection detects anomalous behavior for patterns and 
-alerts on them. This feature allows you to proactively determine if there is an issue (or not), and potentially 
-resolve problems before service levels are compromised. Anomaly detection uses {{site.prodname}} Elasticsearch logs 
-([flows]({{site.baseurl}}/visibility/elastic/flow) logs, [L7]({{site.baseurl}}/visibility/elastic/l7) logs, and [DNS]({{site.baseurl}}/visibility/elastic/dns) logs) to learn behavior of cluster nodes, pods, services, and other 
-entities that send log records (applications, load balancers, databases, etc.).
+{{site.prodname}} anomaly detection allows you to proactively determine if there is an issue (or not), and potentially resolve problems before service levels are compromised. Anomaly detection uses {{site.prodname}} Elasticsearch logs ([flows]({{site.baseurl}}/visibility/elastic/flow) logs, [L7]({{site.baseurl}}/visibility/elastic/l7) logs, and [DNS]({{site.baseurl}}/visibility/elastic/dns) logs) to learn behavior of cluster nodes, pods, services, and other entities that send log records (applications, load balancers, databases, etc.).
 
-Root causes of cluster security anomalies are numerous, for example:
+Root causes of anomalies include:
+  
+- **Security**
+  - Malicious behaviors like DoS and crypto mining attacks
 
-**Malicious behaviors**
-- DoS and crypto mining attacks
+- **Security and performance**
 
-**Applications and microservices**
-- Bugs in applications and microservices
-- Underprovisioned applications (replicas)
-
-**Network and infrastructure**
-- Process or CPU overload due to surges in traffic 
+  - Applications and microservices
+  - Bugs in applications and microservices
+  - Underprovisioned applications (replicas)
+  - Network and infrastructure process or CPU overload due to traffic surges 
 
 #### About anomaly detection modeling
 
 Anomaly detection uses a neural network and probabilistic time series modeling to automatically 
-identify security anomalies associated with workloads in your cluster. It can also work as a daemon that 
+identify anomalies associated with workloads in your cluster. It can also work as a daemon that 
 periodically retrains the model and performs anomaly detection. Anomaly detections performs these 
 high-level tasks:
 
@@ -58,13 +60,13 @@ bytes sent, latencies, and counters.
 in the connections to an authorization service in the morning, then a big data transmission when 
 the database starts a backup operation.
 
-For a list of security anomalies that are enabled by default, see [Anomaly detection reference]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars#security-anomaly-detectors).
+For a list of anomalies that are enabled by default, see [Anomaly detection reference]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars).
 
 ### FAQ
 
 **Do I need to configure anomaly values?**
 
->Anomalies are preconfigured with reasonable defaults that are optimized for performance and appropriate frequency and severity. You should not need to change the values unless you are getting too many alerts.  
+>Anomalies are preconfigured with reasonable defaults that are optimized for frequency and severity. You should not need to change the values unless you are getting too many alerts.  
 
 **Will alerts be unusually high until the engine learns to distinguish normal from anomalous behavior?**
 
@@ -75,9 +77,11 @@ For a list of security anomalies that are enabled by default, see [Anomaly detec
 >You can see several `suspicious_records` from different logs in the same alert if those records are presented in 
 > the same time interval. Suspicious records in alert are grouped by log names.
 
+{% comment %} 
+USERS CANNOT ENABLE/DISABLE UNTIL 3.13
 **Where does anomaly detection run on multi-cluster management (mcm) deployments?**
-
->Anomaly detection runs on the management cluster, but users on managed clusters can enable/disable alerts. 
+>Anomaly detection runs on the management cluster, but users on managed clusters can enable/disable alerts.
+{% endcomment %} 
 
 ### How To
 
@@ -100,15 +104,14 @@ For a list of security anomalies that are enabled by default, see [Anomaly detec
 
 #### Troubleshooting
 
-**Issue:** I am getting too many alerts. What can I do?
+**Issue:** I'm getting too many alerts. What can I do?
 
 **Solution:** The default values for anomaly detectors are configured for a reasonable amount of alerts. However, you can change values using [anomaly detection environment variables]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars). 
 
-**Issue:** The Elasticsearch consumption is very high. How do I decrease it?
+**Issue:** I'm getting too many Elasticsearch logs. How do I decrease them?
 
 **Solution:** Decrease the maximum number of log records used for training using the [**AD_max_docs** variable]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars). Note that the more Elasticsearch log data is used in training of the model, the more accurate the anomaly detection. However, the more data the anomaly detection reads, the more costly it becomes in terms of data retention.
 
 ### Above and beyond
 
 - [Anomaly detection reference]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars)
-- [Detect and alert on performance anomalies]({{site.baseurl}}/visibility/performance-hotspots)

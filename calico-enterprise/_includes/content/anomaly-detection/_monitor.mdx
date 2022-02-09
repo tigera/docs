@@ -1,5 +1,5 @@
 
-There are several ways to view and monitor anomalies. 
+You can view and monitor anomalies in Manager UI and using the command line. 
 
 **Monitor anomalies in Manager UI**
 
@@ -7,16 +7,21 @@ There are several ways to view and monitor anomalies.
 
 In the left navbar, click **Alerts**. 
 
-[screenshot and text for any fields that are not intuitive]
+Both security and performance alerts are listed. 
 
-![tbd]({{site.baseurl}}/images/anomaly-detection-alert.png)
+![anomaly-detection-alert-list]({{site.baseurl}}/images/anomaly-detecton-alert-list.png)
+
+To drill down for details, expand the alert. 
+
+![anomaly-detection-single-alert]({{site.baseurl}}/images/anomaly-detection-single-alert.png)
 
 **Service Graph**
 
-In the left navbar, click **Service Graph**.
+Alerts on security and performance anomalies are also viewable in Serice Graph.
 
-[screenshot of Alerts tab and show how to get to Kibana raw data]
+In the left navbar, click **Service Graph**, **Alerts** tab.
 
+![anomaly-detection-service-graph-alerts-tab]({{site.baseurl}}/images/anomaly-detection-service-graph-alerts-tab.png)
 
 **Monitor anomalies using command line**
 
