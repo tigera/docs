@@ -45,10 +45,16 @@
 {%- endif %}
 
 1. Install your pull secret.
-   ```bash
+
+   If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
+
+   ```
    kubectl create secret generic tigera-pull-secret \
-       --from-file=.dockerconfigjson=<path/to/pull/secret> \
-       --type=kubernetes.io/dockerconfigjson -n {{ ns }}
+       --type=kubernetes.io/dockerconfigjson -n {{ ns }} \
+       --from-file=.dockerconfigjson=<path/to/pull/secret>
+   kubectl create secret generic tigera-pull-secret \
+       --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
+       --from-file=.dockerconfigjson=<path/to/pull/secret>
    ```
 
 {%- endif %}
