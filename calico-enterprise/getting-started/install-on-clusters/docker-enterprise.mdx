@@ -72,8 +72,11 @@ The geeky details of what you get:
 
    ```
    kubectl create secret generic tigera-pull-secret \
-       --from-file=.dockerconfigjson=<path/to/pull/secret> \
-       --type=kubernetes.io/dockerconfigjson -n tigera-operator
+       --type=kubernetes.io/dockerconfigjson -n tigera-operator \
+       --from-file=.dockerconfigjson=<path/to/pull/secret>
+   kubectl create secret generic tigera-pull-secret \
+       --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
+       --from-file=.dockerconfigjson=<path/to/pull/secret>
    ```
 
 1. Install any extra [{{site.prodname}} resources]({{site.baseurl}}/reference/resources) needed at cluster start using [calicoctl]({{site.baseurl}}/reference/calicoctl/overview).
