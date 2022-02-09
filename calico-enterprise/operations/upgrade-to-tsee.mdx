@@ -29,7 +29,7 @@ For hybrid Linux and Windows clusters, ensure that your Windows nodes have at le
 
 ## Upgrade Calico to {{site.prodname}}
 
-> **Note**: GKE and AKS upgrades from open source Calico are not currently supported.
+> **Note**: GKE upgrades from open source Calico are not currently supported.
 {: .alert .alert-info}
 
 ### Before you begin
