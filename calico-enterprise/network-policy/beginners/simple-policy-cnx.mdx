@@ -83,7 +83,7 @@ information about the policies for endpoints on a given host.
    {: .alert .alert-info}
 
    ```
-   DATASTORE_TYPE=kubernetes ./calicoq host k8s-node1
+   DATASTORE_TYPE=kubernetes calicoq host k8s-node1
    ```
 
    You should see the following output.
@@ -247,7 +247,7 @@ from anywhere else.
    spec:
      podSelector:
        matchLabels:
-         run: nginx
+         app: nginx
      ingress:
        - from:
          - podSelector:
@@ -257,7 +257,7 @@ from anywhere else.
    ```
 
    > **Note**: The NetworkPolicy allows traffic from pods with the label `run: access`
-   > to pods with the label `run: nginx`.  These are the labels automatically added to
+   > to pods with the label `app: nginx`.  These are the labels automatically added to
    > pods started via `kubectl run` based on the name of the `Deployment`.
    {: .alert .alert-info}
 
