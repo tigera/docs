@@ -121,8 +121,10 @@ When configuring your cluster, you may be asked for the following inputs:
 
 <%
 
+1. Install the [Openshift CLI (oc)](https://docs.okd.io/4.9/cli_reference/openshift_cli/getting-started-cli.html).
+
 1. Create values for some required variables. `MANAGER_URL` is the URL where {{site.prodname}} Manager will be accessed,
-   `CLUSTER_DOMAIN` is the domain (excl. port) where your OpenShift cluster is accessed and `CLIENT_SECRET` is a value of your choosing.
+   `CLUSTER_DOMAIN` is the domain (excl. port) where your OpenShift cluster is accessed (run `oc status` to get it) and `CLIENT_SECRET` is a value of your choosing.
    ```bash
    MANAGER_URL=<manager-host>:<port>
    CLUSTER_DOMAIN=<domain-of-your-ocp-cluster>
