@@ -52,6 +52,7 @@ When configuring your cluster, you may be asked for the following inputs:
    metadata:
      name: tigera-secure
    spec:
+     # This indicates where the Manager UI can be accessed from the browser. Include the port only if the the manager UI is not running on port 443.
      managerDomain: https://<domain-of-manager-ui>
      oidc:
        issuerURL: <your-idp-issuer>
@@ -126,6 +127,7 @@ When configuring your cluster, you may be asked for the following inputs:
 1. Create values for some required variables. `MANAGER_URL` is the URL where {{site.prodname}} Manager will be accessed,
    `CLUSTER_DOMAIN` is the domain (excl. port) where your OpenShift cluster is accessed (run `oc status` to get it) and `CLIENT_SECRET` is a value of your choosing.
    ```bash
+   # This indicates where the Manager UI can be accessed from the browser. Include the port only if the the manager UI is not running on port 443.
    MANAGER_URL=<manager-host>:<port>
    CLUSTER_DOMAIN=<domain-of-your-ocp-cluster>
    CLIENT_SECRET=<clientSecret>
@@ -158,6 +160,7 @@ When configuring your cluster, you may be asked for the following inputs:
    metadata:
      name: tigera-secure
    spec:
+     # This indicates where the Manager UI can be accessed from the browser. Include the port only if the the manager UI is not running on port 443.
      managerDomain: $MANAGER_URL
      openshift:
        issuerURL: https://api.$CLUSTER_DOMAIN:6443
@@ -192,6 +195,7 @@ When configuring your cluster, you may be asked for the following inputs:
    metadata:
      name: tigera-secure
    spec:
+     # This indicates where the Manager UI can be accessed from the browser. Include the port only if the the manager UI is not running on port 443.
      managerDomain: https://<manager-host>:<port>
      ldap:
        # The host and port of the LDAP server. Example: ad.example.com:636.
@@ -279,6 +283,7 @@ Most IdPs require redirect URIs to be allowed to redirect users at the end of th
 
 ### Troubleshooting
 - ManagerDomain `localhost` and `127.0.0.1` are not the same. If you configure `localhost:9443` as your managerDomain, while navigating to `https://127.0.0.1:9443`, the OIDC security checks will deny you access.
+- Omit the port from `managerURL` if it is listening on the standard port (`:443`) for HTTPS.
 - When your `usernameClaim` is not `email` and `usernamePrefix` is omitted, we have implemented a default prefix identical to how Kubernetes has for their kube-apiserver, see the [oidc-username-claim documentation](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver).
 - When you encounter problems while configuring your IdP, we encourage you to use the network tab of the browser dev tools to inspect requests with error codes and to decode authorization headers of the HTTP requests.
 - If you would like to bring a self-signed certificate for your IdP and are using OIDC, you can do so by adding the field `rootCA` to secret `tigera-oidc-credentials`. The value for this field should contain the certificate in PEM format.
