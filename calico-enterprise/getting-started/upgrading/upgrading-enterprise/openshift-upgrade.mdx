@@ -111,7 +111,7 @@ mkdir manifests
    ```bash
    oc apply -f {{ "/manifests/ocp/tigera-policies-managed.yaml" | absolute_url }}
    ```   
-   a. If your cluster is a managed cluster:
+   a. If your cluster is a standalone or management cluster:
    ```bash
    oc apply -f {{ "/manifests/ocp/tigera-policies.yaml" | absolute_url }}
    ```
