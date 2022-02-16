@@ -159,4 +159,3 @@ for common tasks that can then be modified to suit your needs.
 - [DNS logs]({{site.baseurl}}/visibility/elastic/dns)
 - [Flow logs]({{site.baseurl}}/visibility/elastic/flow)
 - [L7 logs]({{site.baseurl}}/visibility/elastic/l7)
-- {% include open-new-window.html text='Exploits database' url='https://www.exploit-db.com/exploits/45925' %}
