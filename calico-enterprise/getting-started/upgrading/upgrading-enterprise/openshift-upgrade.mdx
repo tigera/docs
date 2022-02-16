@@ -105,6 +105,17 @@ mkdir manifests
    watch kubectl get tigerastatus
    ```
 
+1. Update the network policies.
+   
+   a. If your cluster is a managed cluster:
+   ```bash
+   oc apply -f {{ "/manifests/ocp/tigera-policies-managed.yaml" | absolute_url }}
+   ```   
+   a. If your cluster is a managed cluster:
+   ```bash
+   oc apply -f {{ "/manifests/ocp/tigera-policies.yaml" | absolute_url }}
+   ```
+
 1. You can now monitor the upgrade progress with the following command:
    ```bash
    watch oc get tigerastatus
