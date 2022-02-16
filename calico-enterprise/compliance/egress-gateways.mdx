@@ -15,7 +15,7 @@ As a security requirment, all traffic leaving your cluster must flow through a s
 Consider the following setup:
 
 <div class="mermaid">
-graph TD;
+graph LR;
     AR[pod/app-red];
     ER[deployment/egress-gateway];
     GW[external gateway];
@@ -58,7 +58,7 @@ Our external node / gateway must have `bird` installed and configured. For examp
 sudo apt-get install -y bird
 ```
 
-2 Example `/etc/bird/bird.conf` contents:
+2. Example `/etc/bird/bird.conf` contents:
 ```
 router id __EXTERNAL_NODE_PRIVATE_IP__;
 
