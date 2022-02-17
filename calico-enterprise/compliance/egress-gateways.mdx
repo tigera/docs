@@ -254,7 +254,34 @@ EOF
 
 1. Allowed Traffic to Gateway
 
-    Since v3.12, by default, egress-gateway client pods are allowed traffic to the external egress gateway node
+    Since v3.12, by default, egress-gateway client pods are allowed traffic to the external egress gateway node. However, we still need to be explicit about the traffic we're interested in allowing or denying before traffic makes it through the vxlan link:
+
+  ```
+kubectl apply -f - << EOF
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-client-server
+  namespace: ns-red
+spec:
+  types:
+  - Ingress
+  - Egress
+  egress:
+  - action: Allow
+    protocol: TCP
+    destination:
+      ports:
+      - 8089
+    source: {}
+EOF
+```
+
+    Start a corresponding test server on external node:
+
+    ```
+    netcat -n -v -l -k -p 8089
+    ```
 
     Start TCP Dump on the external node:
 
@@ -281,27 +308,14 @@ EOF
     ```
 
     ```
-    kubectl -n ns-red exec -it multitool-test -- curl https://google.com/
+    kubectl -n ns-red exec -it multitool-test -- nc __EXTERNAL_NODE_PRIVATE_IP__ 8089
+    hi
+    mom
     ``` 
 
     Verify that the traffic in tcpdump shows the source IP address of the egress-gateway pod(s)!
 
-1. Deny egress from client to server
 
-    ```
-    apiVersion: projectcalico.org/v3
-    kind: GlobalNetworkPolicy
-    metadata:
-      name: deny-egress-to-gateway
-    spec:
-      selector: app == 'client'
-      types:
-      - Egress
-      egress:
-      - action: Deny
-        protocol: TCP
-        destination:
-          selector: color == 'red'
-    ```
+# Further
 
-
+  Egress Gateways and their related Calico Network Policies are only limited to traffic within your cluster that are about to egress to your external node(s). For more information on running Calico (and its features) please read [Calicon on Bare Metal]({{ site.baseurl }}/getting-started/bare-metal/)
