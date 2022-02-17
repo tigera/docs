@@ -7,7 +7,7 @@ canonical_url: '/compliance/egress-gateways'
 
 # Introduction
 
-As a security requirment, all traffic leaving your cluster must flow through a set of dedicated, external nodes. Separated from the rest of the nodes that are running applications, these nodes can serve a policy-enforcement function on the egress traffic and can enable thorough monitoring than other nodes.
+As a security requirement, all traffic leaving your cluster must flow through a set of dedicated, external nodes. Separated from the rest of the nodes that are running applications, these nodes can serve a policy-enforcement function on the egress traffic and can enable thorough monitoring than other nodes.
 
 
 # The Setup
