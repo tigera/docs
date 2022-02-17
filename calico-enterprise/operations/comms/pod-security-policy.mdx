@@ -86,7 +86,7 @@ Admission controllers in Kubernetes intercept requests to the Kubernetes API and
     |tigera-fluentd   		|true*   	|true* 						|hostPath 	|  -			|root  		|CAP_CHOWN  			| -  	|
     |tigera-operator   		|  -  		|  - 						| - 		|  true			| -  		| -  					| -  	|
     |typha   				|  -  		|  - 						| - 		|  true			| -  		| -  					| -  	|
-    |tigera-namager   		|  -  		|  - 						| - 		|  -			| -  		| -  					| -  	|
+    |tigera-manager   		|  -  		|  - 						| - 		|  -			| -  		| -  					| -  	|
     |voltron   				|  -  		|  - 						| - 		|  -			| -  		| -  					| -  	|
     |l7-collector			|  -  		|  - 						|flexVolume |  -			| -  		| -  					| -  	|
     |envoy-init 			|  -  		|  - 						|-          |  -			|root  		|NET_ADMIN, NET_RAW		| -  	|
