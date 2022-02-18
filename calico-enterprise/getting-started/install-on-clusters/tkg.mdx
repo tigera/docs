@@ -17,7 +17,7 @@ Install {{site.prodname}} as the CNI for networking and/or network policy on Tan
 - ebpf
 
 **Required**
-- A Tanzu Kubernetes Grid workload cluster with version 1.4 and later
+- A Tanzu Kubernetes Grid workload cluster with version 1.4
 - The workload cluster must be configured with `CNI: none`. When the workload cluster is bootstrapped, the nodes will end up in a `NotReady` state until {{site.prodname}} is installed.
   - For more information, read {% include open-new-window.html text='Tanzu networking' url='https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.4/vmware-tanzu-kubernetes-grid-14/GUID-tanzu-k8s-clusters-networking.html' %}
 and {% include open-new-window.html text='Tanzu configuration file reference' url='https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.4/vmware-tanzu-kubernetes-grid-14/GUID-tanzu-config-reference.html' %}
