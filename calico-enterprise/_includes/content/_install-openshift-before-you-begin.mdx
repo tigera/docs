@@ -9,7 +9,7 @@
 
 - A {% include open-new-window.html text='RedHat account' url='https://cloud.redhat.com/' %} for the pull secret to provision an OpenShift cluster.
 
-- OpenShift installer **v4.6 or 4.8** and OpenShift command line interface from {% include open-new-window.html text='cloud.redhat.com' url='https://cloud.redhat.com/openshift/install/aws/installer-provisioned' %}
+- OpenShift installer **v4.8 or 4.9** and OpenShift command line interface from {% include open-new-window.html text='cloud.redhat.com' url='https://cloud.redhat.com/openshift/install/aws/installer-provisioned' %}
 
 - A {% include open-new-window.html text='generated a local SSH private key' url='https://docs.openshift.com/container-platform/4.1/installing/installing_aws/installing-aws-default.html#ssh-agent-using_installing-aws-default' %} that is added to your ssh-agent
 
