@@ -136,7 +136,7 @@ Packet Captures files will be rotated either when reaching maximum size or when 
 For example, in order to extend the time rotation to one day, the command below can be used:
 
 ```bash
-kubectl patch felixconfiguration default -p '{"spec":{"captureRotationSeconds":"86400"}}'
+kubectl patch felixconfiguration default -p '{"spec":{"captureRotationSeconds": 86400}}'
 ```
 
 ### Enforce RBAC for packet capture
