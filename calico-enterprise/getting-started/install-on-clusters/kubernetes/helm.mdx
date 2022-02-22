@@ -7,14 +7,10 @@ canonical_url: '/getting-started/kubernetes/helm'
 
 Install {{ site.prodname }} on a deployed Kubernetes cluster using Helm.
 
->**Note**: Helm is no longer a supported install method when using Kubernetes 1.22
-{: .alert .alert-warning}
-
 ### Before you begin
 
 **Required**
-
-- Tiller **v2.14** is running, and your local helm CLI is configured to speak to it.
+- Helm Version 3 is required.
 - [Credentials for the Tigera private registry and a license key]({{site.baseurl}}/getting-started/calico-enterprise)
 
 ### How to
@@ -37,8 +33,7 @@ The geeky details of what you get:
 
 1. Install the chart, passing in your image pull secrets.
    ```
-   helm install ./tigera-operator-{% include chart_version_name %}.tgz \
-     --name {{ site.prodnamedash }} \
+   helm install calico-enterprise ./tigera-operator-{% include chart_version_name %}.tgz \
      --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>
    ```
 2. Monitor progress, wait until `apiserver` shows a status of `Available`, then proceed to the next step.
