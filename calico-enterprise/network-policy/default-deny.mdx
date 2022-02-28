@@ -30,7 +30,7 @@ kind: GlobalNetworkPolicy
 metadata:
   name: deny-app-policy
 spec:
-  namespaceSelector: has(projectcalico.org/name) && projectcalico.org/name not in {"kube-system", "tigera-system"}
+  namespaceSelector: has(projectcalico.org/name) && projectcalico.org/name not in {"kube-system", "calico-system", "tigera-system"}
   types:
   - Ingress
   - Egress
