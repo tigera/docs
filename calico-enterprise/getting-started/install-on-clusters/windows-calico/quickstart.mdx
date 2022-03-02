@@ -14,60 +14,9 @@ Install {{site.prodnameWindows}} on your Kubernetes cluster in approximately 5 m
 
 ### Before you begin
 
-**Installation archive**
+Review the [Linux requirements]({{site.baseurl}}/getting-started/kubernetes/requirements) and the [{{site.prodnameWindows}} requirements]({{site.baseurl}}/getting-started/windows-calico/kubernetes/requirements).
 
-Get the {{site.prodnameWindows}} installation zip archive from your support representative.
-
-**Datastore requirements**
-
-Kubernetes datastore (kdd)
-
-**Kubernetes cluster requirements**
-- Kubernetes clusters with versions 1.20, 1.19, or 1.18
-
-**Windows node requirements**
-- Versions:
-  - Windows Server 1809 (build 17763.1432 or greater)
-  - Windows Server 2004 (build 19041)
-  - Windows Server 20H2 (build 19042)
-
-  > **Note**: Windows Server version support differs for each Kubernetes version. Review the {% include open-new-window.html text='Windows OS Version Support' url='https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#windows-os-version-support' %} table for the Windows Server versions supported by each Kubernetes version.
-  {: .alert .alert-info}
-  
-- Container runtime: Docker or containerd installed and running. If containerd is running, it will be used as the container runtime otherwise Docker is assumed.
-- Remote access to the Windows node via Remote Desktop Protocol (RDP) or Windows Remote Management (WinRM)
-- Be able to run a command as Administrator using PowerShell.
-- Additionally, for EKS:
-  - The VPC controllers must be installed to run Windows pods.
-  - The Windows instance role must have permissions to get `namespaces` and get `secrets` in the calico-system namespace.
-    - Run these commands below to install the permissions needed to install {{site.prodnameWindows}}.
-      Replace `<eks_node_name>` with the Kubernetes node name of the EKS Windows node, for example `ip-192-168-42-34.us-west-2.compute.internal`.
-      Replace the namespace `calico-system` with `kube-system` in the commands below if you are using a non operator-managed {{site.prodname}} installation.
-
-      ```bash
-      kubectl create clusterrole calico-install-ns --verb=get --resource=namespace
-      kubectl create clusterrolebinding calico-install-ns --clusterrole=calico-install-ns --user=system:node:<eks_node_name>
-      kubectl create role calico-install-token --verb=get,list --resource=secrets --namespace calico-system
-      kubectl create rolebinding calico-install-token --role=calico-install-token --user=system:node:<eks_node_name> --namespace calico-system
-      ```
-    - When {{site.prodnameWindows}} installation is complete, delete the temporary resources:
-      ```bash
-      kubectl delete clusterrolebinding calico-install-ns
-      kubectl delete clusterrole calico-install-ns
-      kubectl delete rolebinding calico-install-token --namespace calico-system
-      kubectl delete role calico-install-token --namespace calico-system
-      ```
-  - An instance role on the Windows instance must have permissions to get `namespaces` and get `secrets` in the calico-system namespace (or kube-system namespace if you are using a non operator-managed {{site.prodname}} installation.)
-- Additionally, for AKS:
-    - {{site.prodnameWindows}} can be enabled only on newly created clusters.
-    - Kubernetes version 1.20+
-
-**Linux control node requirements**
-- Installed with {{site.prodname}} v3.5+
-- If {{site.prodname}} networking is being used:
-    - Networking must be VXLAN or BGP without encapsulation. (Note: for EKS, networking is set to none since AWS VPC networking is used.)
-    - Strict affinity must be set to `true`
-    - Must NOT be running in eBPF mode
+Before beginning the quickstart, setup a {{site.prodname}} cluster on Linux nodes and provision Windows machines.
 
 ### How to
 
