@@ -38,11 +38,11 @@ The following table summarizes the networking options and considerations.
 
 #### Kubernetes version 
 
-- Versions 1.20, 1.19, or 1.18
+See the [Kubernetes requirements]({{site.baseurl}}/getting-started/kubernetes/requirements#kubernetes-requirements).
 
 Earlier versions may work, but we do not actively test {{site.prodnameWindows}} against them, and they may have known issues and incompatibilities.
 
-#### Linux platform 
+#### Linux platform requirements
 
 - At least four Linux Kubernetes worker nodes to run {{site.prodname}}'s cluster-wide components that meets [Linux system requirements]({{site.baseurl}}/getting-started/kubernetes/requirements), and is installed with {{site.prodname}} v3.5.0+
 - Must not be running in eBPF mode
@@ -58,24 +58,34 @@ calicoctl ipam configure --strictaffinity=true
 >**Note**: For operator-managed Linux {{site.prodname}} clusters, three Linux worker nodes are required in order to meet high-availability requirements for Typha.
 {: .alert .alert-info}
 
-#### Windows platform 
+#### Windows platform requirements
 
-- Windows worker nodes should have at least 4 cores, 8GB RAM
 - Windows versions:
-  - Windows Server 1903 (AKA 19H1) build 18317 or greater
-  - Windows Server 2019 / 1809 (RS5) or greater, with [some limitations]({{site.baseurl}}/getting-started/windows-calico/limitations)
-  - Windows Server 2019 with DSR support:
-    - OS 1809: Build 17763.1432, binary version: 10.0.17763.1432
-    - OS 1903: Build 18362.1049, binary version: 10.0.18362.1049
-    - OS 1909: Build 18363.1049, binary version: 10.0.18363.1049
-- PowerShell for the installer
-- Make sure {% include open-new-window.html text='Docker' url='https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=Windows-Server' %} or {% include open-new-window.html text='containerd' url='https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd' %} is installed and running.
+  - Windows Server 1809 (build Build 17763.1432 or greater)
+  - Windows Server 20H2 (build 19042)
+
+  > **Note**: Windows Server version support differs for each Kubernetes version. Review the {% include open-new-window.html text='Windows OS Version Support' url='https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#windows-os-version-support' %} table for the Windows Server versions supported by each Kubernetes version.
+  {: .alert .alert-info}
+
+- Be able to run commands as Administrator using PowerShell.
+- Container runtime: {% include open-new-window.html text='Docker' url='https://docs.microsoft.com/en-us/virtualization/windowscontainers/quick-start/set-up-environment?tabs=Windows-Server' %} or {% include open-new-window.html text='containerd' url='https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd' %} is installed and running. If containerd is running, it will be used as the container runtime otherwise Docker is assumed.
+- Remote access to the Windows node via Remote Desktop Protocol (RDP) or Windows Remote Management (WinRM)
 - If you are using {{site.prodname}} BGP networking, the RemoteAccess service must be installed for the Windows BGP Router.
 - Windows nodes support only a single IP pool type (so, if using a VXLAN pool, you should only use VXLAN throughout the cluster).
 - TLS v1.2 enabled. For example:
 ```powershell
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 ```
+
+#### EKS requirements
+
+- The VPC controllers must be installed to run Windows pods.
+- An instance role on the Windows instance must have permissions to get `namespaces` and get `secrets` in the calico-system namespace (or kube-system namespace if you are using a non operator-managed {{site.prodname}} installation.)
+
+#### AKS requirements
+
+- {{site.prodnameWindows}} can be enabled only on newly created clusters.
+- Available with Kubernetes version 1.20 or later
 
 ### Next steps
 
