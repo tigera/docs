@@ -186,6 +186,26 @@ Alternatively, you can run the `calicoctl node status` command on a given node t
 >**Note**: This command communicates with the local {{site.prodname}} agent, so you must execute it on the node whose status you are attempting to view.
 {: .alert .alert-info}
 
+#### View BGP info on all peers for a node
+
+You can use `calicoctl` to view the BGP information for all peers of a particular node, including connection status, routing statistics, and BGP state. This is useful for confirming that your configuration is behaving as desired, and for more detailed troubleshooting.
+
+Run the following command from anywhere you have access to `kubectl`:
+
+```
+calicoctl bgp peers <NODE_NAME>
+```
+
+Where `<NODE_NAME>` is the resource name for one of the Calico node pods within your cluster.
+
+>**Note**: The above command can be run from anywhere you have access to kubectl. We recommend running it as a kubectl plugin. [Follow these instructions]({{site.baseurl}}/maintenance/clis/calicoctl/install#install-calicoctl-as-a-kubectl-plugin-on-a-single-host) for how to install `calicoctl` as a kubectl plugin.
+{: .alert .alert-info}
+If you install the binary as a kubectl plugin using the above instructions, you can then run the command as follows:
+
+```
+kubectl calico bgp peers <NODE_NAME>
+```
+
 #### Change the default global AS number
 
 By default, all Calico nodes use the 64512 autonomous system, unless a per-node AS has been specified for the node. You can change the global default for all nodes by modifying the default **BGPConfiguration** resource. The following example command sets the global default AS number to **64513**.
