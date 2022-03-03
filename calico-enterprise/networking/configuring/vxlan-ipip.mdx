@@ -56,11 +56,7 @@ Be aware that switching encapsulation modes can cause disruption to in-progress 
 
 #### Configure default IP pools at install time
 
-Default IP pools are configured at install-time automatically by Calico. You can configure these default IP pools based on install method.
-
-{% tabs %}
-  <label:Operator,active:true>
-<%
+Default IP pools are configured at install-time automatically by Calico.
 
 For operator managed clusters, you can configure encapsulation in the IP pools section of the default Installation. For example, the following installation snippet will enable VXLAN across subnets.
 
@@ -75,15 +71,6 @@ spec:
       - cidr: 192.168.0.0/16
         encapsulation: VXLANCrossSubnet
 ```
-
-%>
-  <label:Manifest>
-<%
-
-For manifest installations of Calico, you can control the deafult IP pool encapsualtion mode using the `CALICO_IPV4POOL_VXLAN` and `CALICO_IPV4POOL_IPIP` environment variables in the environment of the `calico-node` daemon set.
-
-%>
-{% endtabs %}
 
 #### Configure IP in IP encapsulation for only cross-subnet traffic
 
