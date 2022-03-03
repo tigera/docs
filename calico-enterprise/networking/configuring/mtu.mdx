@@ -90,28 +90,6 @@ When using flannel for networking, the MTU for network interfaces should match t
 
 > **Note**: The updated MTU used by {{site.prodname}} only applies to new workloads.
 
-Select the appropriate instructions for configuring the MTU.  This is broken down based on installation:
--  Manifest based installation (if you are not using the quickstart guide, most non-OpenShift installs fall under this
-   category)
--  Operator
-
-##### **Manifest**
-
-For manifest based installations (i.e. ones that do not use the operator) edit the `calico-config` ConfigMap. For example:
-
-```bash
-kubectl patch configmap/calico-config -n kube-system --type merge \
-  -p '{"data":{"veth_mtu": "1440"}}'
-```
-
-After updating the ConfigMap, perform a rolling restart of all calico/node pods. For example:
-
-```bash
-kubectl rollout restart daemonset calico-node -n kube-system
-```
-
-##### **Operator**
-
 For Operator installations, edit the {{site.prodname}} operator `Installation` resource to set the `mtu`
 field in the `calicoNetwork` section of the `spec`.  For example:
 
@@ -124,7 +102,6 @@ Similarly, for OpenShift:
 ```bash
 oc patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"mtu":1440}}}'
 ```
-
 #### View current tunnel MTU values
 
 To view the current tunnel size, use the following command:

@@ -63,107 +63,51 @@ This how-to guide uses the following {{site.prodname}} features:
 
 #### Enable IPv6 only
 
-<!--
-{% tabs %}
-   <label:Operator,active:true>
-   <%
-1. TBD.
-1. TBD.
+To configure an IPv6-only cluster using the operator, edit your default Installation at install time to include a single IPv6 pool, and no IPv4 pools. For example:
 
-%>
-<label:Manifest>
-<%
--->
-
-1. Set up a new Kubernetes cluster with an IPv6 pod CIDR and service IP range.
-
-1. Follow our [installation docs]({{ site.baseurl }}/getting-started/kubernetes) to install using
-    the Tigera operator on your cluster.
-
-1. When about to apply `custom-resources.yaml`, edit it first to define an IPv6 pod CIDR
-    pool in the `Installation` resource.  For example, like this:
-
-    ```yaml
-    apiVersion: operator.tigera.io/v1
-    kind: Installation
-    metadata:
-      name: default
-    spec:
-      # Install Calico Enterprise
-      variant: TigeraSecureEnterprise
-      ...
-      calicoNetwork:
-        ipPools:
-        - cidr: fd5f:1801::/112
-      ...
-    ```
-
-1. Apply the edited manifest with `kubectl apply -f`.
-
-   New pods will get IPv6 addresses, and can communicate with each other and the outside world over IPv6.
-
-<!--
-%>
-{% endtabs %}
--->
-
-**(Optional) Update host to not look for IPv4 addresses**
-
-If you want your workloads to have IPv6 addresses only, because you do not have IPv4 addresses or connectivity
-between your nodes, complete these additional steps to tell {{site.prodname}} not to look for any IPv4 addresses.
-
-1. Disable [IP autodetection of IPv4]({{site.baseurl}}/networking/ip-autodetection) by setting `IP` to `none`.
-1. Calculate the {{site.prodname}} BGP router ID for IPv6 using either of the following methods.
-   - Set the environment variable `CALICO_ROUTER_ID=hash` on {{site.nodecontainer}}.
-     This configures {{site.prodname}} to calculate the router ID based on the hostname.
-   - Pass a unique value for `CALICO_ROUTER_ID` to each node individually.
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+  pec:
+   calicoNetwork:
+     # Note: The ipPools section cannot be modified post-install.
+    ipPools:
+    - blockSize: 122
+      cidr: 2001::00/64 
+      encapsulation: None 
+      natOutgoing: Enabled 
+      nodeSelector: all()
+```
 
 #### Enable dual stack
 
-<!--
-{% tabs id:installation-method-bbb %}
-<id:opbbb,name:Operator,active:true>
-<%
-1. TBD.
-1. TBD.
-
-%>
-<id:manbbb,name:Manifest>
-<%
--->
-
 1. Set up a new cluster following the Kubernetes {% include open-new-window.html text='prerequisites' url='https://kubernetes.io/docs/concepts/services-networking/dual-stack/#prerequisites' %} and {% include open-new-window.html text='enablement steps' url='https://kubernetes.io/docs/concepts/services-networking/dual-stack/#enable-ipv4-ipv6-dual-stack' %}.
 
-1. Follow our [installation docs]({{ site.baseurl }}/getting-started/kubernetes) to install using
-    the Tigera operator on your cluster.
+To configure dual-stack cluster using the operator, edit your default Installation at install time to include both an IPv4 and IPv6 pool. For example:
 
-1. When about to apply `custom-resources.yaml`, edit it first to define an IPv4 and IPv6 pod CIDR
-    pool in the `Installation` resource.  For example, like this:
-
-    ```yaml
-    apiVersion: operator.tigera.io/v1
-    kind: Installation
-    metadata:
-      name: default
-    spec:
-      # Install Calico Enterprise
-      variant: TigeraSecureEnterprise
-      ...
-      calicoNetwork:
-        ipPools:
-        - cidr: 192.168.0.0/16
-        - cidr: fd5f:1801::/112
-      ...
-    ```
-
-1. Apply the edited manifest with `kubectl apply -f`.
-
-   New pods will get both IPv4 and IPv6 addresses, and can communicate with each other and the outside world over IPv4 or IPv6.
-
-<!--
-%>
-{% endtabs %}
--->
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+  pec:
+   # Configures Calico networking.
+   calicoNetwork:
+     # Note: The ipPools section cannot be modified post-install.
+    ipPools:
+    - blockSize: 26
+      cidr: 10.48.0.0/21
+      encapsulation: IPIP
+      natOutgoing: Enabled
+      nodeSelector: all()
+    - blockSize: 122
+      cidr: 2001::00/64 
+      encapsulation: None 
+      natOutgoing: Enabled 
+      nodeSelector: all()
+```
 
 ### Above and beyond
 
