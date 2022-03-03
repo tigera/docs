@@ -52,9 +52,16 @@
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n {{ ns }} \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
+   ```
+
+   For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
+
+   ```
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
+   kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \
+       -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'
    ```
 
 {%- endif %}
