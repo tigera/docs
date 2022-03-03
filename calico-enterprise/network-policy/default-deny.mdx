@@ -14,7 +14,7 @@ A global default deny policy ensures that unwanted traffic (ingress and egress) 
 
 We recommend that you create a global default deny policy *after you complete writing policy for the traffic that you want to allow*. Use the stage policy feature to get your allowed traffic working as expected, then lock down the cluster to block unwanted traffic. The following steps summarizes the best practice:
 
-1. Create a staged global default deny policy. It will shows all the traffic that would be blocked if it were converted into a deny.
+1. Create a staged global default deny policy. It will show all the traffic that would be blocked if it were converted into a deny.
 1. Create other network policies to individually allow the traffic shown as blocked in step 1, until no connections are denied.
 1. Convert the staged global network policy to an enforced policy.
 
@@ -47,7 +47,7 @@ Note the following:
 
 - Even though we call this policy "global default deny", the above policy is not explicitly *denying traffic*. By selecting the traffic with the `namespaceSelector` but not specifying an allow, the traffic is denied after all other policy is evaluated. This design also makes it unnecessary to ensure any specific order (priority) for the default-deny policy.
 - Allowing access to `kube-dns` simplifies per-pod policies because you don't need to duplicate the DNS rules in every policy
-- The policy deliberately excludes the `kube-system` and `calico-system` namespaces by using a negative `namespaceSelector` to avoid impacting any control plane components
+- The policy deliberately excludes the `kube-system`, `calico-system`, and `tigera-system` namespaces by using a negative `namespaceSelector` to avoid impacting any control plane components
 
 Next, add the policy to the default tier. (As noted above, anywhere in the default tier is fine.) 
 
