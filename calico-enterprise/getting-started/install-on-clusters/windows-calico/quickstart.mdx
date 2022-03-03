@@ -330,7 +330,7 @@ The following steps install a Kubernetes cluster on a single Windows node, with 
    ```
 %>
 
-  {% endtabs %}
+{% endtabs %}
 
 #### Configure installation parameters
 

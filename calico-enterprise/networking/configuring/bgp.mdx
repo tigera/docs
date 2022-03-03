@@ -179,41 +179,12 @@ using label selectors.
 
 #### View BGP peering status for a node
 
-You can use `calicoctl` to view the current status of a particular node’s BGP connections. This is useful for confirming that your configuration is behaving as desired.
+Create a [CalicoNodeStatus resource]({{site.baseurl}}/reference/resources/caliconodestatus) to monitor BGP session status for the node.
 
-Run the following command on the node you want to view the current state:
-
-```
-sudo calicoctl node status
-```
-A table that lists all of the neighbors and their current status is displayed. Successful peerings are listed as, **Established**.
+Alternatively, you can run the `calicoctl node status` command on a given node to learn more about its BGP status.
 
 >**Note**: This command communicates with the local {{site.prodname}} agent, so you must execute it on the node whose status you are attempting to view.
 {: .alert .alert-info}
-
-#### View BGP info on all peers for a node
-
-You can use `calicoctl` to view the BGP information for all peers of a particular node, including connection status, routing statistics, and BGP state. This is useful for confirming that your configuration is behaving as desired, and for more detailed troubleshooting.
-
-Run the following command from anywhere you have access to `kubectl`:  
-
-```
-calicoctl bgp peers <NODE_NAME>
-```
-
-Where `<NODE_NAME>` is the resource name for one of the Calico node pods within your cluster.
-
->**Note**: The above command can be run from anywhere you have access to kubectl. We recommend running it as a kubectl plugin. [Follow these instructions]({{site.baseurl}}/maintenance/clis/calicoctl/install#install-calicoctl-as-a-kubectl-plugin-on-a-single-host) for how to install `calicoctl` as a kubectl plugin.
-{: .alert .alert-info}
-
-If you install the binary as a kubectl plugin using the above instructions, you can then run the command as follows:  
-
-```
-kubectl calico bgp peers <NODE_NAME>
-```
-
-Alternatively, you can create a [`CalicoNodeStatus` resource]({{site.baseurl}}/reference/resources/caliconodestatus) to get BGP session status for the node.
-
 
 #### Change the default global AS number
 
@@ -233,6 +204,7 @@ You can configure an AS for a particular node by modifying the node object using
 ```
 calicoctl patch node node-1 -p '{"spec": {"bgp": {"asNumber": "64514"}}}'
 ```
+
 ### Above and beyond
 
 - [Node resource]({{site.baseurl}}/reference/resources/node)
