@@ -10,7 +10,7 @@ Enable WireGuard to secure on the wire in-cluster pod traffic in a {{site.prodna
 
 ### Value
 
-When this feature is enabled, {{ site.prodname }} automatically creates and manages WireGuard tunnels between nodes providing transport-level security for on-the-wire, in-cluster pod traffic. WireGuard provides {% include open-new-window.html text='formally verified' url='https://www.wireguard.com/formal-verification/' %} secure and {% include open-new-window.html text='performant tunnels' url='https://www.wireguard.com/performance/' %} without any specialized hardware. For a deep dive in to WireGuard implementation, see this {% include open-new-window.html text='whitepaper' url='https://www.wireguard.com/papers/wireguard.pdf' %}.
+When this feature is enabled, {{site.prodname}} automatically creates and manages WireGuard tunnels between nodes providing transport-level security for on-the-wire, in-cluster pod traffic. WireGuard provides {% include open-new-window.html text='formally verified' url='https://www.wireguard.com/formal-verification/' %} secure and {% include open-new-window.html text='performant tunnels' url='https://www.wireguard.com/performance/' %} without any specialized hardware. For a deep dive in to WireGuard implementation, see this {% include open-new-window.html text='whitepaper' url='https://www.wireguard.com/papers/wireguard.pdf' %}.
 
 ### Features
 
@@ -23,16 +23,24 @@ This how-to guide uses the following {{site.prodname}} features:
 **Supported**
 
 The following platforms using only IPv4:
+
 - Kubernetes, on-premises
 - EKS using Calico CNI
 - EKS using AWS CNI
 - AKS using Azure CNI
 
-All platforms listed above will encrypt pod-to-pod traffic. Additionally, when using AKS or EKS, host-to-host traffic will also be encrypted, including host-networked pods.
+**Supported traffic for encryption**
+
+- Pod-to-pod traffic
+- Host-to-host traffic (only for managed clusters deployed on EKS and AKS)
 
 **Required**
 
-- Verify the operating system(s) running on the nodes in the cluster {% include open-new-window.html text='support WireGuard' url='https://www.wireguard.com/install/' %}.
+- On all nodes in the cluster that you want to participate in {{site.prodname}} encryption, verify that the operating system(s) on the nodes are {% include open-new-window.html text='installed with WireGuard' url='https://www.wireguard.com/install/' %}.
+
+  > **Note**: Some node operating systems do not support Wireguard, or do not have it installed by default. Enabling {{site.prodname}} Wireguard encryption does not require all nodes to be installed with Wireguard. However, traffic to or from a node that does not have Wireguard installed, will not be encrypted.
+  {: .alert .alert-info}
+
 - IP addresses for every node in the cluster. This is required to establish secure tunnels between the nodes. {{site.prodname}} can automatically do this using [IP Setting]({{site.baseurl}}/reference/node/configuration#ip-setting) and [IP autodetection methods]({{site.baseurl}}/reference/node/configuration#ip-autodetection-methods) available under [calico/node]({{site.baseurl}}/reference/node/configuration) resource.
     - Under [installation]({{site.baseurl}}/reference/installation/api), set the [autodetection method]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.NodeAddressAutodetection) (`nodeAddressAutodetectionV4` and/or `nodeAddressAutodetectionV6`) for your cluster.
 
@@ -57,12 +65,12 @@ Use the following instructions for these platforms that are not listed on the Wi
 <%
 To install WireGuard on the default Amazon Machine Image (AMI):
 
-   ```bash
+```bash
 sudo yum install kernel-devel-`uname -r` -y
 sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
 sudo curl -o /etc/yum.repos.d/jdoss-wireguard-epel-7.repo https://copr.fedorainfracloud.org/coprs/jdoss/wireguard/repo/epel-7/jdoss-wireguard-epel-7.repo
 sudo yum install wireguard-dkms wireguard-tools -y
-   ```
+```
 
 Additionally, you may optionally enable host-to-host encryption mode for WireGuard using the following command.
 
@@ -70,8 +78,8 @@ Additionally, you may optionally enable host-to-host encryption mode for WireGua
 kubectl patch felixconfiguration default --type='merge' -p '{"spec": {"wireguardHostEncryptionEnabled": true}}'
 ```
 
-> **Warning**: `wireguardHostEncryptionEnabled` is an experimental flag that extends WireGuard encryption to host-network IP addresses. It is currently only supported on managed clusters deployed on EKS and AKS, where WireGuard *cannot* be enabled on the cluster's control-plane node. Enabling this flag while WireGuard is enabled on the control-plane node can lead to a broken cluster, and neworking deadlock.
-{: .alert .alert-warning}
+> **Warning**: `wireguardHostEncryptionEnabled` is an experimental flag that extends WireGuard encryption to host-network IP addresses. It is currently only supported on managed clusters deployed on EKS and AKS, where WireGuard *cannot* be enabled on the cluster's control-plane node. Enabling this flag while WireGuard is enabled on the control-plane node can lead to a broken cluster and networking deadlock.
+{: .alert .alert-danger}
    
 %>
 <label:AKS>
@@ -80,10 +88,11 @@ AKS cluster nodes run Ubuntu with a kernel that has WireGuard installed already,
 
 However, you will need to enable host-to-host encryption mode for WireGuard using the following command:
 
+```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec": {"wireguardHostEncryptionEnabled": true}}'
-
-> **Warning**: `wireguardHostEncryptionEnabled` is an experimental flag that extends WireGuard encryption to host-network IP addresses. It is currently only supported on managed clusters deployed on EKS and AKS, where WireGuard *cannot* be enabled on the cluster's control-plane node. Enabling this flag while WireGuard is enabled on the control-plane node can lead to a broken cluster, and neworking deadlock.
-{: .alert .alert-warning}
+```
+> **Warning**: `wireguardHostEncryptionEnabled` is an experimental flag that extends WireGuard encryption to host-network IP addresses. It is currently only supported on managed clusters deployed on EKS and AKS, where WireGuard *cannot* be enabled on the cluster's control-plane node. Enabling this flag while WireGuard is enabled on the control-plane node can lead to a broken cluster and networking deadlock.
+{: .alert .alert-danger}
 
 %>
 <label:OpenShift>
@@ -141,27 +150,24 @@ To install WireGuard for OpenShift v4.8:
 
 #### Enable WireGuard for a cluster
 
-   > **Note**: Nodes that do not support WireGuard will not be secured by WireGuard tunnels, even if traffic running on the node to and from the pods goes to nodes that do support WireGuard.
-   {: .alert .alert-info}
-
 Enable WireGuard encryption across all the nodes using the following command.
 
-   ```bash
+```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
-   ```
+```
 
    For OpenShift, add the Felix configuration with WireGuard enabled [under custom resources]({{ site.baseurl }}/getting-started/openshift/installation/index#provide-additional-configuration). To enable WireGuard at the time of installation using operator, add the felixconfiguration to [custom-resources]({{ site.baseurl }}/reference/installation/api).
 
    > **Note**: The above command can be used to change other WireGuard attributes. For a list of other WireGuard parameters and configuration evaluation, see the [Felix configuration]({{ site.baseurl }}/reference/resources/felixconfig#felix-configuration-definition).
    {: .alert .alert-info}
 
-We recommend that you review and modify the MTU used by Calico networking when WireGuard is enabled to increase network performance. Follow the instructions in the [Configure MTU to maximize network performance]({{site.baseurl}}/networking/mtu) guide to set the MTU to a value appropriate for your network.
+We recommend that you review and modify the MTU used by {{site.prodname}} networking when WireGuard is enabled to increase network performance. Follow the instructions in the [Configure MTU to maximize network performance]({{site.baseurl}}/networking/mtu) guide to set the MTU to a value appropriate for your network.
 
 #### Verify encryption is enabled
 
 To verify that the nodes are configured for WireGuard encryption, check the node status set by Felix using `kubectl`. For example:
 
-   ```
+```bash
 kubectl get node <NODE-NAME> -o yaml
 ...
 kind: Node
@@ -169,7 +175,7 @@ metadata:
   annotations:
     projectcalico.org/WireguardPublicKey: jlkVyQYooZYzI2wFfNhSZez5eWh44yfq1wKVjLvSXgY=
 ...
-   ```
+```
 
 #### Enable WireGuard statistics
 
@@ -187,7 +193,7 @@ To view WireGuard statistics in Manager UI, you must enable them. From the left 
 
 To disable WireGuard on a specific node with WireGuard installed, modify the node-specific Felix configuration. e.g., to turn off encryption for pod traffic on node `my-node`, use the following command:
 
-  ```bash
+```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: projectcalico.org/v3
 kind: FelixConfiguration
@@ -198,23 +204,23 @@ spec:
   reportingInterval: 0s
   wireguardEnabled: false
 EOF
-  ```
+```
 
 With the above command, Calico will not encrypt any of the pod traffic to or from node `my-node`.
 
 To enable encryption for pod traffic on node `my-node` again:
 
-  ```bash
+```bash
 kubectl patch felixconfiguration node.my-node --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
-  ```
+```
 
 #### Disable WireGuard for a cluster
 
 To disable WireGuard on all nodes modify the default Felix configuration. For example:
 
-  ```bash
+```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":false}}'
-  ```
+```
 
 ### Above and beyond
 
