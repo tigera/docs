@@ -39,9 +39,16 @@ Make sure you have an EKS cluster **without {{site.prodname}} installed** and:
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-operator \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
+   ```
+
+   For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
+
+   ```
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
+   kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \
+       -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'
    ```
 
 1. Install any extra [{{site.prodname}} resources]({{site.baseurl}}/reference/resources) needed at cluster start using [calicoctl]({{site.baseurl}}/reference/calicoctl/overview).
@@ -167,9 +174,16 @@ Before you get started, make sure you have downloaded and configured the {% incl
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-operator \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
+   ```
+
+   For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
+
+   ```
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
+   kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \
+       -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'
    ```
 
 1. Install any extra [{{site.prodname}} resources]({{site.baseurl}}/reference/resources) needed at cluster start using [calicoctl]({{site.baseurl}}/reference/calicoctl/overview).
