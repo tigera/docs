@@ -285,7 +285,7 @@ Most IdPs require redirect URIs to be allowed to redirect users at the end of th
 - ManagerDomain `localhost` and `127.0.0.1` are not the same. If you configure `localhost:9443` as your managerDomain, while navigating to `https://127.0.0.1:9443`, the OIDC security checks will deny you access.
 - Omit the port from `managerURL` if it is listening on the standard port (`:443`) for HTTPS.
 - When your `usernameClaim` is not `email` and `usernamePrefix` is omitted, we have implemented a default prefix identical to how Kubernetes has for their kube-apiserver, see the [oidc-username-claim documentation](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver).
- For example, if the provider URL is `https://example.com` and the username claim maps to `jane`, the (cluster) role binding should be bound to: `https://example.com#jane`
+ For example, if the `managerDomain` in your `Authentication` spec is `https://example.com`, and the username claim maps to `jane`, the (cluster) role binding should be bound to: `https://example.com/dex#jane`
 - When you encounter problems while configuring your IdP, we encourage you to use the network tab of the browser dev tools to inspect requests with error codes and to decode authorization headers of the HTTP requests.
 - If you would like to bring a self-signed certificate for your IdP and are using OIDC, you can do so by adding the field `rootCA` to secret `tigera-oidc-credentials`. The value for this field should contain the certificate in PEM format.
 - If logging into Kibana fails with a `cookie not present` error, update the browser settings to allow third-party cookies, as {{site.prodname}} Manager UI uses Kibana's cookies during login.
