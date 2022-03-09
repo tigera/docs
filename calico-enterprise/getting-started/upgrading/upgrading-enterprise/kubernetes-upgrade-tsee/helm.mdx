@@ -7,6 +7,13 @@ show_toc: false
 
 ### Upgrades paths
 
+- Upgrading to {{site.prodname}} v3.13 from previous {{site.prodname}} versions is currently unsupported.
+- Contact Tigera Support to upgrade if your cluster is installed with Calico.
+
+{% comment %} # TODO(dimitrin): Add back document for 3.14. {% endcomment %}
+{% comment %}
+### Upgrades paths
+
 You can upgrade your cluster to a maximum of **two releases** from your existing version. For example, if you are on version 3.6, you can upgrade to 3.7, or you can upgrade directly to 3.8. However, you cannot upgrade beyond **two releases**; upgrading from 3.6 to 3.9 (three releases) is not supported. 
 
 If you are several versions behind where you want to be, you must go through each group of two releases to get there. For example, if you are on version 3.6, and you want to get to 3.10, you can upgrade to 3.8, then upgrade from 3.8 directly to 3.10.
@@ -16,14 +23,16 @@ If you are several versions behind where you want to be, you must go through eac
 
 ### Prerequisites
 
-Verify that your Kubernetes cluster is using a version of {{site.prodname}} installed with Helm, by running
-`kubectl get tigerastatus`. If the result is successful, then your installation is using Helm.
+- Verify that your Kubernetes cluster is using Helm
+   ```bash
+   kubectl get tigerastatus
+   ```
+If the result is successful, then your installation is using Helm.
 
-If your cluster is on a version earlier than 3.0, contact Tigera support to upgrade.
-
-If your cluster has a Calico installation, contact Tigera support to upgrade.
-
-If your cluster is using the Egress Gateway feature, and you are upgrading from a pre-v3.11.0 release to release v3.11.0 or later, you will need to follow the instructions [here]({{site.baseurl}}/networking/egress/egress-gateway-on-prem) after upgrading.
+- Contact Tigera Support to upgrade if your cluster:
+   - Version is earlier than 3.0
+   - Version is between v3.1 and v3.13
+   - Is installed with Calico
 
 ### Prepare your cluster for the upgrade
 
@@ -44,10 +53,10 @@ If your cluster has Windows nodes and uses custom TLS certificates for log stora
 **Note**: These steps differ based on your cluster type. If you are unsure of your cluster type, look at the field `clusterManagementType` when you run `kubectl get installation -o yaml` before you proceed.
 {: .alert .alert-info}
 
-1. Get the Helm chart.
-{%- if page.version == "master" -%}
-   ```
-   curl -O -L {{site.url}}/download/charts/tigera-operator-v0.0.tgz
+1. Get the Helm chart
+{%- if page.version == "master" -%}.
+   ```bash
+   gsutil cp gs://tigera-helm-charts/tigera-operator-v0.0.tgz
    ```
 {% else %}
    ```bash
@@ -62,10 +71,16 @@ If your cluster has Windows nodes and uses custom TLS certificates for log stora
    ```
 
 1. Run the Helm upgrade command for `tigera-operator`
-
+{%- if page.version == "master" -%}.
+   ```bash
+   helm upgrade calico-enterprise tigera-operator-v0.0.tgz
+   ```
+{% else %}
    ```bash
    helm upgrade calico-enterprise tigera-operator-{% include chart_version_name %}.tgz
    ```
+{% endif %}
+
 
 1. If your cluster has OIDC login configured, follow these steps:
 
@@ -152,3 +167,4 @@ If your cluster has Windows nodes and uses custom TLS certificates for log stora
    ```bash
    kubectl delete -f {{ "/manifests/default-tier-policies.yaml" | absolute_url }}
    ```
+{% endcomment %}
