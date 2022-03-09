@@ -1,29 +1,40 @@
 ---
 title: Get started with network sets
-description: Learn the basics the power of network sets and why you should create them.
+description: Learn the power of network sets and why you should create them.
 canonical_url: '/security/networksets'
 ---
 
-### What you will learn
+### Big picture
 
-- What are network sets and why they are so powerful
-- How to create a network set and use it in a network security policy
-- Best practices for using network sets
-- More examples of network sets in policies
+Learn why network sets are integral to policy, visibility, and threat defense. 
 
-### Visualize traffic to/from your cluster
+### Value
 
-Modern applications often integrate with third-party APIs and SaaS services that live outside Kubernetes clusters. To securely enable access to those integrations, you must be able to limit IP ranges for egress and ingress traffic to workloads. Limiting IP lists or ranges is also used to deny-list bad actors or embargoed countries. To limit IP ranges, you need to use the {{site.prodname}} resource called **network sets**.
+Network sets are a grouping mechanisms for arbitrary sets of IPs/subnets/CIDRs or domains. Key use cases are:
 
-### What are network sets?
+- **Use/reuse in policy for scaling** 
+    
+    Rather than updating individual policies with CIDRs or domains, you reference network sets in policies using selectors. 
 
-**Network sets** are a grouping mechanism that allows you to create an arbitrary set of IP subnetworks/CIDRs or domains that can be matched by standard label selectors in Kubernetes or {{site.prodname}} network policy. Like IP pools for pods, they allow you to reuse/scale sets of IP addresses in policies. 
+- **Visibility to traffic to/from a cluster**
+    
+    View traffic to/from a cluster in Service Graph for apps that integrate with third-party APIs and SaaS services. 
+
+- **Global deny lists**
+    
+    Create a "deny-list" of CIDRs for bad actors or embargoed countries in policy.
+
+### Concepts
+
+#### About network sets
+
+**Network sets** are a grouping mechanism that allows you to create an arbitrary set of IP subnetworks/CIDRs or domains that can be matched by standard label selectors in Kubernetes or {{site.prodname}} network policy. 
 
 A **network set** is a namespaced resource that you can use with Kubernetes or {{site.prodname}} network policies; a **global network set** is a cluster-wide resource that you can use with {{site.prodname}} network policies.
 
 Like network policy, you manage user access to network sets using standard Kubernetes RBAC.
 
-### Why are network sets powerful?
+#### Why are network sets powerful?
 
 If you are familiar with Service Graph in Manager UI, you know the value of seeing pod-to-pod traffic within your cluster. But what about traffic external to your cluster? 
 
@@ -47,7 +58,7 @@ Here are just a few examples of how network sets can be used:
 
     Network sets are critical when scaling your deployment. You may have only a few CIDRs when you start. But as you scale out, it is easier to update a handful of network sets than update each network policy individually. Also, in a Kubernetes deployment, putting lots of anything (CIDRs, ports, policy rules) directly into policies causes inefficiencies in traffic processing (iptables/eBPF). 
 
-- **Microsegmentation and shift left**
+- **Microsegmentation**
 
     Network sets provide the same microsegmentation controls as network policy. For example, you can allow specific users to create policy (that reference networksets), but allow only certain users to manage networksets.
 
@@ -55,9 +66,11 @@ Here are just a few examples of how network sets can be used:
 
     Network sets are key to being able to manage threats by blocking bad IPs with policy in a timely way. Imagine having to update individual policies when you find a bad IP you need to quickly block. You can even give access to a controller that automatically updates CIDRs in a network set when a bad IP is found. 
 
-### Create a network set and use it in policy
+### How to
 
-In this section, we’ll walk through how to create a namespaced network set in Manager UI. You can use your cluster or a labs-cluster. 
+#### Create a network set and use it in policy
+
+In this section, we’ll walk through how to create a namespaced network set in Manager UI. 
 
 In this example, you will create a network set named, `google`. This network set contains a list of trusted google endpoints for the app called, `storefront`. As a service owner, you want to be able to see traffic leaving the storefront app to these trusted sites in Service Graph. Instead of matching endpoints on IP addresses, we will use domain names.
 
@@ -121,21 +134,7 @@ If we double-click `storefront` to drill-down, we now see the `google` network s
 
 Service Graph provides a view into how services are interconnected in a consumable view, along with easy access to flow logs. However, you can also see traffic associated with network sets in volumetric display with Flow Visualizer, and query flow log data associated with network sets in Kibana.
 
-### Best practices with network sets
-
-- Create network sets as soon as possible after getting started
-
-   This allows you to quickly realize the benefits of seeing custom metadata in flow logs and visualizing traffic in Service Graph and Flow Visualizer.
-
-- Create a network set name and label schema
-
-    It is helpful to think: what names would be meaningful and easy to understand when you look in Service Graph? Flow Viz? Kibana? What labels will be easy to understand when used in network policies – especially if you are separating users who manage network sets and those who consume them in network policies. 
-
-- Put CIDRs and domains in network sets rather than policies
-
-    Network sets allow you to specify CIDRs and/or domains. Although you might be tempted to add CIDRs and domains directly in policy, it is not efficient, and doesn't scale. It is why we recommend to create network sets early so users writing policy can create efficient policies from day one.    
-
-### Examples of network sets with policies
+### Tutorial
 
 In the following example, we create a global network set resource for a trusted load-balancer that can be used with microservices and applications. The label,  `trusted-ep: load-balancer` is how this global network set can be referenced in policy.
 
@@ -224,7 +223,41 @@ spec:
   - action: Deny
     source:
       selector: ip-deny-list == 'true' && !has(projectcalico.org/namespace)
-```      
+```   
+
+### Best practices for using network sets
+
+- Create network sets as soon as possible after getting started
+
+   This allows you to quickly realize the benefits of seeing custom metadata in flow logs and visualizing traffic in Service Graph and Flow Visualizer.
+
+- Create a network set label and name schema
+
+    It is helpful to think: what names would be meaningful and easy to understand when you look in Service Graph? Flow Viz? Kibana? What labels will be easy to understand when used in network policies – especially if you are separating users who manage network sets from those who consume them in network policies. 
+
+- Do not put large sets of CIDRs and domains directly in policy
+
+    Network sets allow you to specify CIDRs and/or domains. Although you can add CIDRs and domains directly in policy, it doesn't scale. 
+
+- Do not put thousands of rules into a policy, each with a different CIDR 
+
+    If your set of /32s can be easily aggregated into a few broader CIDRs without compromising security, it’s a good thing to do; whether you’re putting the CIDRs in the rule or using a network set.
+
+- If you want to match thousands of endpoints, write one or two rules and use selectors to match the endpoints. 
+
+    Having one rule per port, per host is inefficient because each rule ends up being rendered as an iptable/eBPF rule instead of making good use of IP sets. 
+
+- Avoid overlapping IP addresses/subnets in networkset/globalnetworkset definitions
+
+The following table provide guidance on efficient use of network sets. 
+
+| Policy                                                       | Network set                            | Results                                                      |
+| ------------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------ |
+| source: selector: foo="bar"                                  | With handful of broad CIDRs            | **Efficient**<br /> **-** 1 iptables/eBPF rule   <br />- 1 IP set with handful of CIDRs |
+| source: nets: [ ... handful ...]                             | Not used                               | **Efficient**<br/> - Handful of iptables/eBPF rules <br /> - 0 IP sets |
+| source: selector: foo="bar"                                  | One network set with 2000 x /32s       | **Fairly efficient**  <br />- 1 iptables/eBPF rule<br />- 1 IP sets with 2000 entries |
+|                                                              | Two network sets with 1000 each x /32s | **Efficient**<br/>- 2 iptable/eBPF rules<br />- 2 IP set with 1000 entries |
+| source: <br />  nets: [... 2000 /32s ...]<br />- source:  <br />  nets: [1 x /32]<br />- source:  nets: [1 x /32]<br />- ... x 2000 | Not used                               | **Inefficient**<br />Results in programming 2k iptables/eBPF rules <br />- 2000+ iptables/eBPF rules<br />- 0 IP sets |     
 
 ### Above and beyond
 
