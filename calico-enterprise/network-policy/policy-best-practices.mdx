@@ -70,13 +70,16 @@ Creating a label standard is often an overlooked step. But if you skip this step
 Network sets and global network sets are grouping mechanisms for arbitrary sets of IPs/subnets/CIDRs or domains. They are key resources for efficient policy design. The key use cases for network sets are: 
 
 - **Use/reuse in policy to support scaling** 
-You reference network sets in policies using selectors (rather than updating individual policies with CIDRs or domains). 
+
+    You reference network sets in policies using selectors (rather than updating individual policies with CIDRs or domains). 
 
 - **Visibility to traffic to/from a cluster**
-For apps that integrate with third-party APIs and SaaS services, you get enhanced visibility to this traffic in Service Graph. 
+
+    For apps that integrate with third-party APIs and SaaS services, you get enhanced visibility to this traffic in Service Graph. 
 
 - **Global deny lists**
-Create a “deny-list” of CIDRs for bad actors or embargoed countries in policy.
+
+    Create a “deny-list” of CIDRs for bad actors or embargoed countries in policy.
 
 **Recommendation**: Create network sets **and labels** before writing policy. 
 
@@ -313,7 +316,7 @@ source:
 
 #### Put domains and CIDRs in network sets rather than policy
 
-Network sets allow you to specify CIDRs and/or domains. As noted in [Network set best practices]({{site.baseurl}}/security/policy-best-practices), we do not recommend putting large CIDRs and domains directly in policy. Although nothing stops you from do this in policy, us network sets is more efficient and supports scaling. 
+Network sets allow you to specify CIDRs and/or domains. As noted in [Network set best practices]({{site.baseurl}}/security/policy-best-practices), we do not recommend putting large CIDRs and domains directly in policy. Although nothing stops you from do this in policy, using network sets is more efficient and supports scaling. 
 
 ### Policy life cycle tools
 
