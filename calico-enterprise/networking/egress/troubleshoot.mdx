@@ -47,6 +47,13 @@ on
 - Client pod
 - Client pod’s namespace
 
+#### Does Calico have enough route tables?
+On Linux, Calico claims a number of routing tables for various purposes. The exact number of tables allocated is determined by the [FelixConfiguration](/reference/resources/felixconfig) option `routeTableRanges`. Failing to allocate enough route tables will result in Calico failing to program the networking needed for Egress Gateways to function.
+
+Under these conditions, `calico-node` pods will log error messages and report [unhealthy](#check-calico-node-health).
+
+[See more about routeTableRanges](/reference/resources/felixconfig#routetableranges)
+
 #### Check calico-node health
 
 Check that your calico-node pods are consistently running and ready, especially on the nodes hosting the client and 
@@ -63,7 +70,7 @@ log such as the following:
 ```
 If you see such a log, check the AWS IAM permissions assigned to the nodes in your cluster to ensure that the nodes
 have the [required permissions](./egress-gateway-aws#configure-aws-iam-roles).  It is also possible 
-to decode the "encoded authorization failure message" in the log by following {% include open-new-window.html text='this guide' url='https://aws.amazon.com/premiumsupport/knowledge-center/aws-backup-encoded-authorization-failure/' %}; this give more detail on the error.
+to decode the "encoded authorization failure message" in the log by following {% include open-new-window.html text='this guide' url='https://aws.amazon.com/premiumsupport/knowledge-center/aws-backup-encoded-authorization-failure/' %}; this gives more detail on the error.
 
 #### Check IP rule and routing setup on the client node
 
