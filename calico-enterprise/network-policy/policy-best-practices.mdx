@@ -35,7 +35,7 @@ When you get clarity on who can write policies, you can move to creating tiers. 
 
 #### Understand the depth of {{site.prodname}} network policy
 
-Because {{site.prodname}} policy goes well beyond the features in Kubernetes policy, we recommend that you have a basic understanding of [network policy and global network policy]({{site.baseurl}}/security/calico-network-policy) and how they provide workload access controls. And even though you may not implement the following policies, it is helpful to know the defense in depth that {{site.prodname}} is available.
+Because {{site.prodname}} policy goes well beyond the features in Kubernetes policy, we recommend that you have a basic understanding of [network policy and global network policy]({{site.baseurl}}/security/calico-network-policy) and how they provide workload access controls. And even though you may not implement the following policies, it is helpful to know the depth of defense that is available in {{site.prodname}}.
 
 - [Policy for services]({{site.baseurl}}/security/services)
 - [Policy integration for firewalls]({{site.baseurl}}/security/policy-firewalls/)
@@ -53,7 +53,9 @@ To understand how tiered policy works and best practices, see [Get started with 
 
 Creating a label standard is often an overlooked step. But if you skip this step, it will cost you in troubleshooting down the road; especially given visibility/troubleshooting is already a challenge in a Kubernetes deployment.  
 
-**Why are label standards important?** Network policies in Kubernetes depend on **labels and selectors** (not IP addresses and IP ranges) to determine which workloads can talk to each other. As pods dynamically scale up and down, network policy is enforced based on the labels and selectors that you define. So workloads and host endpoints need unique, identifiable labels for workloads and host endpoints. If you create duplicate label names, or labels are not intuitive, troubleshooting network policy issues and authoring network policies becomes more difficult. 
+**Why are label standards important?** 
+
+Network policies in Kubernetes depend on **labels and selectors** (not IP addresses and IP ranges) to determine which workloads can talk to each other. As pods dynamically scale up and down, network policy is enforced based on the labels and selectors that you define. So workloads and host endpoints need unique, identifiable labels for workloads and host endpoints. If you create duplicate label names, or labels are not intuitive, troubleshooting network policy issues and authoring network policies becomes more difficult. 
 
 **Recommendations**:
 
@@ -274,11 +276,11 @@ spec:
       protocol: TCP
 ```
 
-However, the policy incorrectly assumes that the main policy selector (`app == "app1"`) will be combined (ANDed) with the endpoint selector, and only for certain policy types. In this case,
+The policy incorrectly assumes that the main policy selector (`app == "app1"`) will be combined (ANDed) with the endpoint selector, and only for certain policy types. In this case,
 
-- **Ingress** - combines policy selector, and destination endpoint selector 
+- **Ingress** - combines policy selector and *destination endpoint selector* 
 or 
-- **Egress** - combines policy selector, and source endpoint selector
+- **Egress** - combines policy selector and *source endpoint selector*
 
 But if the assumptions behind the labels are not understood by other policy authors and are not correctly assigned, the endpoint selector may select *additional endpoints that were not intended*. For ingress policy, this can open up the endpoint to more IP addresses than necessary. This unintended consequence would be exacerbated if the author used a global network policy.
 
@@ -307,7 +309,7 @@ ingress:
   source: 
     selector: label == 'bar'
 ```
-Another common mistake is using `selector: all()` when you don’t need to. `all()` means "all workloads" so that will be a large IP set. Whenever there's a source/destination selector in a rule, it is rendered as an IP set in the dataplane. 
+Another common mistake is using `selector: all()` when you don’t need to. `all()` means *all workloads* so that will be a large IP set. Whenever there's a source/destination selector in a rule, it is rendered as an IP set in the dataplane. 
 
 ```yaml
 source:
@@ -316,7 +318,7 @@ source:
 
 #### Put domains and CIDRs in network sets rather than policy
 
-Network sets allow you to specify CIDRs and/or domains. As noted in [Network set best practices]({{site.baseurl}}/security/policy-best-practices), we do not recommend putting large CIDRs and domains directly in policy. Although nothing stops you from do this in policy, using network sets is more efficient and supports scaling. 
+Network sets allow you to specify CIDRs and/or domains. As noted in [Network set best practices]({{site.baseurl}}/security/policy-best-practices), we do not recommend putting large CIDRs or domains directly in policy. Although nothing stops you from do this in policy, using network sets is more efficient and supports scaling. 
 
 ### Policy life cycle tools
 
