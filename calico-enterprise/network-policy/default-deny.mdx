@@ -55,7 +55,7 @@ Next, use the stage policy feature and verify that the policy does not block any
 
 #### Don't try this! 
 
-The following policy looks fine on the surface, and it does works. But as described in Best practices #2, the policy could break your cluster because the scope is too broad. Therefore, we do not recommend adding this type of policy to the default tier, even if you have verified allowed traffic using the stage policy feature. 
+The following policy looks fine on the surface, and it does work. But as described in Best practices #2, the policy could break your cluster because the scope is too broad. Therefore, we do not recommend adding this type of policy to the default tier, even if you have verified allowed traffic using the stage policy feature. 
 
 ```yaml
 apiVersion: projectcalico.org/v3
