@@ -31,23 +31,34 @@ The geeky details of what you get:
    ```
 {% endif %}
 
+1. Create the `tigera-operator` namespace.
+
+   ```
+   kubectl create namespace tigera-operator
+   ```
+
 1. Install the chart, passing in your image pull secrets.
    ```
    helm install calico-enterprise ./tigera-operator-{% include chart_version_name %}.tgz \
-     --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>
+     --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
+     --namespace tigera-operator
    ```
+
 2. Monitor progress, wait until `apiserver` shows a status of `Available`, then proceed to the next step.
    ```
    watch kubectl get tigerastatus
    ``` 
+
 3. Install your {{ site.prodname }} license.
    ```
    kubectl apply -f </path/to/license.yaml>
    ```
+
 4. Monitor progress, wait until all components show a status of `Available`, then proceed to the next step.
    ```
    watch kubectl get tigerastatus
    ```
+
 5. Apply the following manifest to secure {{site.prodname}} with network policy:
    ```
    kubectl apply -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
