@@ -21,15 +21,15 @@ This how to guide uses the following {{site.prodname}} features:
 
 ### Concepts
 
-#### Federated services 
+#### Federated services
 
 A federated service (also called a backing service), is a set of services with consolidated endpoints. Calico Enterprise discovers services across all clusters (both local cluster and remote clusters) and creates a "federated service" on the local cluster that encompasses all of the individual services.
 
-Federated services are managed by the Tigera Federated Service Controller, which monitors and maintains endpoints for each locally-federated service. The controller does not change configuration on remote clusters. 
+Federated services are managed by the Tigera Federated Service Controller, which monitors and maintains endpoints for each locally-federated service. The controller does not change configuration on remote clusters.
 
 A federated service looks similar to a regular Kubernetes service, but instead of using a pod selector, it uses an annotation. For example:
 
-```bash
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -53,8 +53,8 @@ spec:
 
 - Services that you specify in the federated service must be in the same namespace or they are ignored. A basic assumption of federated endpoint identity is that namespace names are linked across clusters.
 - If you specify a `spec.Selector` in a federated service, the service is not federated.
-- You cannot federate another federated service. If a service has a federated services annotation, it is not included as a backing service of another federated service. 
-- The target port number in the federated service ports is not used. 
+- You cannot federate another federated service. If a service has a federated services annotation, it is not included as a backing service of another federated service.
+- The target port number in the federated service ports is not used.
 
 **Match services using a label**
 
@@ -67,8 +67,8 @@ You can also match services using a label. The label is implicitly added to each
 
 **About endpoints**
 
-- Do not manually create or manage endpoints resources; let the Tigera controller do all of the work. User updates to endpoint resources are ignored. 
-- Endpoints are selected only when the service port name and protocol in the federated service matches the port name and protocol in the backing service. 
+- Do not manually create or manage endpoints resources; let the Tigera controller do all of the work. User updates to endpoint resources are ignored.
+- Endpoints are selected only when the service port name and protocol in the federated service matches the port name and protocol in the backing service.
 - Endpoint data configured in the federated service is slightly modified from the original data of the backing service. For backing services on remote clusters, the `targetRef.name` field in the federated service adds the `<original name>`. For example, `<Remote Cluster Configuration name>/<original name>`.
 
 ### Before you begin
@@ -85,20 +85,20 @@ You can also match services using a label. The label is implicitly added to each
 
 #### Create service resources
 
-On each cluster that is providing a particular service, create your service resources as you normal would with the following requirements: 
+On each cluster that is providing a particular service, create your service resources as you normal would with the following requirements:
 
-- Services must all be in the same namespace. 
-- Configure each service with a common label key and value to identify the common set of services across your clusters (for example, `run=my-app`).  
+- Services must all be in the same namespace.
+- Configure each service with a common label key and value to identify the common set of services across your clusters (for example, `run=my-app`).
 
-Kubernetes manages the service by populating the service endpoints from the pods that match the selector configured in the service spec. 
+Kubernetes manages the service by populating the service endpoints from the pods that match the selector configured in the service spec.
 
 #### Configure a federated service
 
 1. On a cluster that needs to access the federated set of pods that are running an application, create a
 service on that cluster leaving the `spec selector` blank.
-1. Set the `federation.tigera.io/serviceSelector` annotation to be a {{site.prodname}} selector that selects the previously-configured services using the matching label match (for example, `run == "my-app"`). 
+1. Set the `federation.tigera.io/serviceSelector` annotation to be a {{site.prodname}} selector that selects the previously-configured services using the matching label match (for example, `run == "my-app"`).
 
-The Federated Services Controller manages this service, populating the service endpoints from all of the services that match the service selector configured in the annotation. 
+The Federated Services Controller manages this service, populating the service endpoints from all of the services that match the service selector configured in the annotation.
 
 #### Access a federated service
 
@@ -164,7 +164,7 @@ spec:
   type: ClusterIP
 ```
 
-The `spec.selector` is not specified so it will not be managed by Kubernetes. Instead, we use a `federation.tigera.io/selector` annotation, indicating that this is a federated service managed by the Federated Services Controller. 
+The `spec.selector` is not specified so it will not be managed by Kubernetes. Instead, we use a `federation.tigera.io/selector` annotation, indicating that this is a federated service managed by the Federated Services Controller.
 
 The controller matches the `my-app` services (matching the run label) on both the local and remote clusters, consolidates endpoints from the `my-app-ui` TCP port for both of those services. Because the federated service does not specify the `my-app-console` port, the controller does not include these endpoints in the federated service.
 
