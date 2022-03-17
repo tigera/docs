@@ -23,7 +23,7 @@ This how to guide uses the following {{site.prodname}} features:
 
 #### Federated services
 
-A federated service (also called a backing service), is a set of services with consolidated endpoints. Calico Enterprise discovers services across all clusters (both local cluster and remote clusters) and creates a "federated service" on the local cluster that encompasses all of the individual services.
+A federated service (also called a backing service), is a set of services with consolidated endpoints. {{site.prodname}} discovers services across all clusters (both local cluster and remote clusters) and creates a "federated service" on the local cluster that encompasses all of the individual services.
 
 Federated services are managed by the Tigera Federated Service Controller, which monitors and maintains endpoints for each locally-federated service. The controller does not change configuration on remote clusters.
 
