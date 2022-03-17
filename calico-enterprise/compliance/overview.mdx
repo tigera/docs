@@ -10,16 +10,15 @@ Schedule and run compliance reports to assess Kubernetes workloads and environme
 
 ### Value
 
-Existing compliance tools that rely on periodic snapshots, do not provide accurate assessments of Kubernetes workloads
-against your compliance standards. {{site.prodname}} compliance dashboard and reports provide a complete inventory of regulated workloads, along with evidence of enforcement of network controls for these workloads. Additionally, audit reports are available to see changes to any network security controls. 
+Compliance tools that rely on periodic snapshots, do not provide accurate assessments of Kubernetes workloads against your compliance standards. {{site.prodname}} compliance dashboard and reports provide a complete inventory of regulated workloads, along with evidence of enforcement of network controls for these workloads. Additionally, audit reports are available to see changes to any network security controls. 
 
 ### Features
 
 This how-to guide uses the following {{site.prodname}} features:
 
-- Predefined **compliance reports** (Inventory, Network Access, Policy Audit) that are installed with {{site.prodname}}
-- A **GlobalReport** resource to schedule reports, specify which nodes to include, and manually run reports
-- The **compliance dashboard** in {{site.prodname}} Manager to view and export reports from Elasticsearch
+- Preconfigured **compliance reports** (Inventory, Network Access, Policy Audit) that are installed with {{site.prodname}}
+- A **GlobalReport** resource to schedule and configure reports
+- The **compliance dashboard** in Manager UI to view reports
 
 ### Concepts
 
@@ -56,24 +55,19 @@ Compliance reports provide the following high-level information:
 
 **Supported**
 
-- Kubernetes, on-premises
-- EKS
-- AWS using kOps
+- Kubernetes/kubeadm
 - RKE
+- AWS/kOps
+- TKG
+- EKS
 
 **Required**
 
-- Stop using `calicoctl`  
-
-   Because calicoctl cannot provide audit log data, you can no longer use calicoctl to manage resources ({{site.prodname}} and Kubernetes) for compliance reporting. Instead, use kubectl, Manager UI, or the Kubernetes API, to manage policy, tiers, and host endpoints.
-
-- Ensure that all nodes in your Kubernetes clusters must be time-synchronized using NTP or similar (for accurate audit log timestamps)
-
-**Recommended**
+- Ensure that all nodes in your Kubernetes clusters are time-synchronized using NTP or similar (for accurate audit log timestamps)
 
 - [Configure audit logs for Kubernetes resources]({{site.baseurl}}/visibility/elastic/audit-overview)
 
-    Although all {{site.prodname}} resources are configured for compliance reports, you must configure Kubernetes resources for audit logs through the Kubernetes API for a complete view of your resources. 
+   You must configure audit logs for Kubernetes resources through the Kubernetes API to get a complete view of all resources.
 
 ### How To
 
@@ -84,8 +78,7 @@ Compliance reports provide the following high-level information:
 
 #### Configure report permissions
 
-Report permissions are granted using the standard Kubernetes RBAC based on ClusterRole and ClusterRoleBindings. The
-following table outlines the required RBAC verbs for each resource type for a specific user actions.
+Report permissions are granted using the standard Kubernetes RBAC based on ClusterRole and ClusterRoleBindings. The following table outlines the required RBAC verbs for each resource type for a specific user actions.
 
 | **Action**                                              | **globalreporttypes**           | **globalreports**                 | **globalreports/status** |
 | ------------------------------------------------------- | ------------------------------- | --------------------------------- | ------------------------ |
@@ -372,8 +365,8 @@ To run a report on demand:
 
 ### Above and beyond
 
-- For details on configuring and scheduling reports, see [Global Reports]({{site.baseurl}}/reference/resources/globalreport)
-- For report field descriptions, see [Compliance Reports]({{site.baseurl}}/reference/compliance-reports/)
+- For details on configuring and scheduling reports, see [Global reports]({{site.baseurl}}/reference/resources/globalreport)
+- For report field descriptions, see [Compliance reports]({{site.baseurl}}/reference/compliance-reports/)
 - [CIS benchmarks]({{site.baseurl}}/compliance/compliance-reports-cis)
 
 [parse-duration]: https://golang.org/pkg/time/#ParseDuration
