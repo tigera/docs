@@ -152,7 +152,12 @@ spec:
 | dnsLogsFileIncludeLabels           | Whether to include client and server workload labels in DNS logs. | `true`, `false` | boolean | `true` |
 | dnsLogsFilePerNodeLimit            | Limit on the number of DNS logs that can be emitted within each flush interval.  When this limit has been reached, Felix counts the number of unloggable DNS responses within the flush interval, and emits a WARNING log with that count at the same time as it flushes the buffered DNS logs. | int | int | `0` (no limit) |
 | dnsLogsLatency                     | Indicates to include measurements of DNS request/response latency in each DNS log. | `true`, `false` | boolean | `true` |
-| dnsPolicyNfqueueID                 | DNSPolicyNfqueueID is the NFQUEUE ID to use for DNS Policy re-evaluation when the domains IP hasn't been programmed to ipsets yet. This value can be changed to avoid conflicts with other users of NFQUEUEs. | 0-65535 | int | `100` |
+| dnsPolicyMode                      | DNSPolicyMode specifies how DNS policy programming will be handled. | `NoDelay`, `DelayDNSResponse`, `DelayDeniedPacket` | [DNSPolicyMode](#dnspolicymode) | `DelayDeniedPacket` |   
+| dnsPolicyNfqueueID                 | DNSPolicyNfqueueID is the NFQUEUE ID to use for DNS Policy re-evaluation when the domains IP hasn't been programmed to ipsets yet. This value can be changed to avoid conflicts with other users of NFQUEUEs. Used when `DNSPolicyMode` is `DelayDeniedPacket`. | 0-65535 | int | `100` |
+| dnsPolicyNfqueueSize               | DNSPolicyNfqueueID is the size of the NFQUEUE for DNS policy re-evaluation. This is the maximum number of denied packets that may be queued up pending re-evaluation. Used when `DNSPolicyMode` is `DelayDeniedPacket`. | 0-65535 | int | `100` |
+| dnsPacketsNfqueueID                | DNSPacketsNfqueueID is the NFQUEUE ID to use for capturing DNS packets to ensure programming IPSets occurs before the response is released. Used when `DNSPolicyMode` is `DelayDNSResponse`. | 0-65535 | int | `101` |
+| dnsPacketsNfqueueSize              | DNSPacketsNfqueueSize is the size of the NFQUEUE for captured DNS packets. This is the maximum number of DNS packets that may be queued awaiting programming in the dataplane. Used when `DNSPolicyMode` is `DelayDNSResponse`. | 0-65535 | int | `100` |
+| dnsPacketsNfqueueMaxHoldDuration   | DNSPacketsNfqueueMaxHoldDuration is the max length of time to hold on to a DNS response while waiting for the the dataplane to be programmed. Used when `DNSPolicyMode` is `DelayDNSResponse`. | `5s`, `10s`, `1m` etc. | duration | `3s` |
 | bpfEnabled                         | Enable eBPF dataplane mode.  eBPF mode has a number of limitations, see [Enable the eBPF dataplane]({{ site.baseurl }}/maintenance/ebpf/enabling-ebpf).  This is a tech preview feature and subject to change in future releases. | true, false | boolean | false |
 | bpfDisableUnprivileged             | If true, Felix sets the kernel.unprivileged_bpf_disabled sysctl to disable unprivileged use of BPF.  This ensures that unprivileged users cannot access Calico's BPF maps and cannot insert their own BPF programs to interfere with the ones that {{site.prodname}} installs. | true, false | boolean | true |
 | bpfLogLevel                        | In eBPF dataplane mode, the log level used by the BPF programs.  The logs are emitted to the BPF trace pipe, accessible with the command `tc exec bpf debug`.  This is a tech preview feature and subject to change in future releases. | Off,Info,Debug | string | Off |
@@ -205,6 +210,18 @@ policy is always accelerated, using the best available BPF technology.
 | 0     | No aggregation |
 | 1     | Aggregate all flows that share a source port on each node |
 | 2     | Aggregate all flows that share source ports or are from the same ReplicaSet on each node |
+
+#### DNSPolicyMode
+
+| Value                  | Description              |
+|------------------------|--------------------------|
+| DelayDeniedPacket      | Felix delays any denied packet that traversed a policy that included egress domain matches, but did not match. The packet is released after a fixed time, or after the destination IP address was programmed. |
+| DelayDNSResponse       | Felix delays any DNS response until related IPSets are programmed. This introduces some latency to all DNS packets (even when no IPSet programming is required), but it ensures policy hit statistics are accurate. This is the recommended setting when you are making use of staged policies or policy rule hit statistics. |
+| NoDelay                | Felix does not introduce any delay to the packets. DNS rules may not have been programmed by the time the first packet traverses the policy rules. Client applications need to handle reconnection attempts if initial connection attempts fail. This may be problematic for some applications or for very low DNS TTLs. |
+
+On Windows, or when using the eBPF dataplane, this setting is ignored and `NoDelay` is always used.
+
+A linux kernel version of 3.13 or greater is required to use `DelayDNSResponse`. For earlier kernel versions, this value is modified to `DelayDeniedPacket`.
 
 #### RouteTableRange
 The `RouteTableRange` option is now deprecated in favor of [RouteTableRanges](#routetableranges).
