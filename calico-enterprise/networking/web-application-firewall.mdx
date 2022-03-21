@@ -23,7 +23,7 @@ This how-to-guide uses the following Calico Enterprise features:
 
 ### Concepts
 
-#### About {site.prodname}} WAF
+#### About {{site.prodname}} WAF
 
 With {{site.prodname}} WAF, you gain visibility into internal east/west traffic at the HTTP layer in Manager UI Service Graph, Kibana, and Alerts page. 
 
