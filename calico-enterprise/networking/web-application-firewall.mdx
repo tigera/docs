@@ -44,7 +44,7 @@ With {{site.prodname}} WAF, you gain visibility into internal east/west traffic 
 - WAF is not supported for host-networked client pods
 - When selecting and deselecting traffic for WAF, active connections may be disrupted
 
-#### Requirements
+**Required**
 
 Configure Felix for syncing WAF policy. Note: this is the same step required for L7 log collection so you may already have this set.
 
@@ -117,42 +117,43 @@ In case of an error, HTTP request will return HTTP 403 Response Code from Envoy 
 
 | Action | Description | Disruptive? |
 | ------ | ----------- | ----------- |
-| Block | Despite the name, this **will not block or drop the request**. ModSecurity will return detection=0 in this case and Calico will log the event in ElasticSearch | No |
-| Deny | Denies HTTP traffic as ModSecurity will return detection=1 | Yes |
-| Drop | Denies HTTP traffic as ModSecurity will return detection=1 | Yes |
+| Block | Despite the name, this **will not block or drop the request**. ModSecurity will return detection=0 in this case and Calico will log the event in ElasticSearch. | No |
+| Deny | Denies HTTP traffic as ModSecurity will return detection=1. | Yes |
+| Drop | Denies HTTP traffic as ModSecurity will return detection=1. | Yes |
 
 ##### Add or edit a rule set
 
-Create a directory and download all core rules set files you would like to use, for example:
+Create a directory, and download the core rules set files that you want to use, for example:
 
-```
+```bash
 mkdir -p my-core-rules-sets && cd my-core-rules-sets
 curl -O https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf
 ```
 
 Note: For completeness, it is a good practice to download these bootstrapping configuration files
-[(Reference)](https://medium.com/lightbaseio/web-application-firewall-in-go-feat-owasp-modsecurity-core-rule-set-3f97a26e3311)
+[(Reference)](https://medium.com/lightbaseio/web-application-firewall-in-go-feat-owasp-modsecurity-core-rule-set-3f97a26e3311).
+{: .alert .alert-info}
 
-```
+```bash
 curl -O https://raw.githubusercontent.com/lsgroup/SmartReverseProxy/master/modsecdefault.conf
 curl https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/crs-setup.conf.example > crs-setup.conf
 ```
 
-IMPORTANT:
-
-The two bootstrapping files `modsecdefault.conf` and `crs-setup.conf` MUST be named lowercase i.e. lowercase "m" and lowercase "c" respectively in order to ensure they are loaded into ModSec before any REQUST-*.conf Core Rules Set files. Presence of these two files is required and enforced by the operator.
+**Important**: The two bootstrapping files `modsecdefault.conf` and `crs-setup.conf` MUST be named lowercase i.e. lowercase "m" and lowercase "c" respectively in order to ensure they are loaded into ModSec before any REQUST-*.conf Core Rules Set files. Presence of these two files is required and enforced by the operator.
+{: .alert .alert-warning}
 
 Create a configMap from all core rules set files downloaded to your new directory:
 
-```
+```bash
 kubectl create configmap -n tigera-operator modsecurity-ruleset --from-file=../my-core-rules-sets
 ```
 
-#### Monitor alerts
+#### Manager UI
 
-Create a new Global Alert for "waf" using {{site.prodname}} UI or via standard YAML configuration file for Global Alerts.  
+Create a new Global Alert for WAF using Manager UI, or using standard YAML.
 
-For example, we would like to trigger a Global Alert for SQL Injection attack specifically Rule ID 942100 as per (custom version of Core Rule Set file)[https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf] that will "deny" all traffic instead of "block".
+For example, we would like to trigger a Global Alert for SQL Injection attack specifically Rule ID 942100 as per {% include open-new-window.html text='custom version of Core Rule Set file' url='https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf' %} that will "deny" all traffic instead of "block".
+
 
 ```
 apiVersion: projectcalico.org/v3
@@ -171,6 +172,6 @@ spec:
   condition: gt
 ```
 
-Apply the YAML configuration to your cluster using standard `kubectl apply -f test-demo-alert.yaml`
+Apply the YAML to your cluster using: `kubectl apply -f test-demo-alert.yaml`
 
-Now, once SQL Injection attack specifically rule ID 942100 is detected this shall trigger a global alert in the UI.
+Now if a SQL Injection attack is detected for rule ID 942100, you will see the global alert in Manager UI, Activity, Alerts.
