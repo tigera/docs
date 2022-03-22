@@ -1,5 +1,5 @@
 ---
-title: Web Application Firewall
+title: Web Application Firewall (WAF)
 description: Configure Calico to use with Layer 7 Web Application Firewall
 canonical_url: /networking/web-application-firewall
 ---
@@ -10,15 +10,17 @@ Protect cloud-native applications from application layer attacks with {{site.pro
 
 ### Value
 
-A web application firewall (WAF) protects web applications from a variety of application layer attacks such as [cross-site scripting (XSS)](https://www.f5.com/services/resources/glossary/cross-site-scripting-xss-or-css), [SQL injection](https://www.f5.com/services/resources/glossary/sql-injection), and [cookie poisoning](https://www.f5.com/services/resources/glossary/cookie-poisoning), among others. Attacks to apps are the [leading cause of breaches](https://www.f5.com/labs/articles/threat-intelligence/application-protection-report-2019--episode-2--2018-breach-trend) given that HTTP traffic is often the gateway to your valuable data.
+A web application firewall (WAF) protects web applications from a variety of application layer attacks such as {% include open-new-window.html text='cross-site scripting (XSS)' url='https://www.f5.com/services/resources/glossary/cross-site-scripting-xss-or-css' %}, {% include open-new-window.html text='SQL injection' url='https://www.f5.com/services/resources/glossary/sql-injection' %}, and {% include open-new-window.html text='cookie poisoning' url='https://www.f5.com/services/resources/glossary/cookie-poisoning' %}, among others. Given that attacks on apps are the {% include open-new-window.html text='leading cause of breaches' url='https://www.f5.com/labs/articles/threat-intelligence/application-protection-report-2019--episode-2--2018-breach-trend' %}, you need to protect the HTTP traffic that provides a gateway to valuable app data.
 
-Historically, web application firewalls (WAFs) were deployed at the edge of your cluster to filter incoming traffic. Our WAF solution takes a unique, cloud-native approach to web security by allowing you to implement zero-trust rules for **internal east/west traffic** inside your cluster
+Historically, web application firewalls (WAFs) were deployed at the edge of your cluster to filter incoming traffic. Our WAF solution takes a unique, cloud-native approach to web security by allowing you to implement zero-trust rules for **internal east/west traffic** inside your cluster.
 
-The {{site.prodname}} WAF allows you to selectively run service traffic within your cluster and protects intra-cluster traffic from common HTTP-layer attacks such as SQL injection or cross-site request forgery. You can augment this protection with {{site.prodname}} network policies to enforce security controls on selected pods on the host. 
+{{site.prodname}} WAF allows you to selectively run service traffic within your cluster, and protect intra-cluster traffic from common HTTP-layer attacks such as SQL injection, and cross-site request forgery. To increase protection, you can use {{site.prodname}} network policies to enforce security controls on selected pods on the host.
 
-In addition to protecting against application layer attacks, any blocked HTTP requests will be logged and available in ElasticSearch for review. You can also set globalAlerts to be triggered based on these logs. Features 
+In addition to protecting against application layer attacks, any blocked HTTP requests will be logged and available in ElasticSearch for review. You can also set globalAlerts to be triggered based on these logs.
 
-This how-to-guide uses the following Calico Enterprise features:
+### Features 
+
+This how-to-guide uses the following {{site.prodname}} features:
 - Application Layer resource
 
 ### Concepts
@@ -33,14 +35,14 @@ With {{site.prodname}} WAF, you gain visibility into internal east/west traffic 
 
 ### Before you begin
 
-Not supported:
+**Not supported**
 - Windows
 - eBPF dataplane
 - RKE clusters
 
-Limitations:
-- WAF is not supported for host-networked client pods.
-- When selecting and deselecting traffic for WAF, active connections may be disrupted.
+**Limitations**
+- WAF is not supported for host-networked client pods
+- When selecting and deselecting traffic for WAF, active connections may be disrupted
 
 #### Requirements
 
@@ -50,11 +52,11 @@ Enable the Policy Sync API in Felix. To do this cluster-wide, modify the `defaul
 
 ### How to
 
-- [Configure cluster for WAF](#configure-cluster-for-waf)
+- [Configure a cluster for WAF](#configure-cluster-for-waf)
 - [Add and edit rules](#add-and-edit-rules)
 - [Monitor alerts](#monitor-alerts)
 
-#### Configure cluster for WAF
+#### Configure a cluster for WAF
 
 ##### Step 1: Configure ApplicationLayer CRD
 
@@ -74,18 +76,18 @@ spec:
 
 Annotate the services you wish to enable WAF for as shown.
 
-```
+```bash
 kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging=true
 ```
 
 To disable WAF for the service, remove the annotation.
 
-```
+```bash
 kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging-
 ```
 
 
-##### Step 3: Test your configuration
+##### Step 3: Test your installation
 
 To test your installation, you must first know the URL to access services. The URL can be either of the following:
 - The external address of your cluster/service
@@ -106,7 +108,7 @@ The OWASP Core Rule set that is bundled with {{site.prodname}} WAF, has reasonab
 ModSecurity provides the following rule sets and options:
 
 - **DetectionOnly**
-Allows all traffic to pass regardless of action specified. However, potentially malicious traffic warning(s) are returned from ModSecurity and logged accordingly with the OWASP violation details.
+Allows all traffic to pass, regardless of action specified. However, potentially malicious traffic warning(s) are returned from ModSecurity and logged accordingly with the OWASP violation details.
     
 - **On or Off**
 Denies all traffic if the SecAction is set to "deny" or "drop". However "block" traffic is not denied or dropped - this is slightly counter-intuitive. These actions are called SecActions and the full list can be found [here]().
@@ -148,7 +150,7 @@ kubectl create configmap -n tigera-operator modsecurity-ruleset --from-file=../m
 
 #### Monitor alerts
 
-Create a new Global Alert for “waf” using Calico Enterprise UI or via standard YAML configuration file for Global Alerts.  
+Create a new Global Alert for "waf" using {{site.prodname}} UI or via standard YAML configuration file for Global Alerts.  
 
 For example, we would like to trigger a Global Alert for SQL Injection attack specifically Rule ID 942100 as per (custom version of Core Rule Set file)[https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf] that will "deny" all traffic instead of "block".
 
