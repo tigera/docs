@@ -57,7 +57,7 @@ Enable the Policy Sync API in Felix. To do this cluster-wide, modify the `defaul
 
 - [Configure a cluster for WAF](#configure-cluster-for-waf)
 - [Add and edit rules](#add-and-edit-rules)
-- [Monitor alerts](#monitor-alerts)
+- [Manager UI](#manager-ui)
 
 #### Configure a cluster for WAF
 
@@ -102,7 +102,9 @@ After identifying the URL, `curl` your service with a command to trigger an OWAS
 curl http://<host>//test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
 ```
 
-Now view the WAF logs in Kibana by selecting the `tigera_secure_ee_waf` index pattern. You should see the relevant WAF assessment from your request recorded.
+Now view the WAF logs in Kibana by selecting the `tigera_secure_ee_waf` index pattern. You should see the relevant WAF assessment from your request recorded:
+
+<img src="/images/waf-kibana.png" alt="WAF logs in Kibana" width="600">
 
 #### Add and edit rules
 
@@ -178,3 +180,5 @@ spec:
 Apply the YAML to your cluster using: `kubectl apply -f test-demo-alert.yaml`
 
 Now if a SQL Injection attack is detected for rule ID 942100, you will see the global alert in Manager UI, Activity, Alerts.
+
+<img src="/images/waf-alert.png" alt="WAF alert" width="600">
