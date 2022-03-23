@@ -4,6 +4,9 @@ description: Configure Calico to use with Layer 7 Web Application Firewall
 canonical_url: /networking/web-application-firewall
 ---
 
+**Note:** This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+{: .alert .alert-info}
+
 ### Big picture
 
 Protect cloud-native applications from application layer attacks with {{site.prodname}} Web Application Firewall (WAF).
@@ -111,7 +114,7 @@ ModSecurity provides the following rule sets and options:
 Allows all traffic to pass, regardless of action specified. However, potentially malicious traffic warning(s) are returned from ModSecurity and logged accordingly with the OWASP violation details.
     
 - **On or Off**
-Denies all traffic if the SecAction is set to "deny" or "drop". However "block" traffic is not denied or dropped - this is slightly counter-intuitive. These actions are called SecActions and the full list can be found [here]().
+Denies all traffic if the SecAction is set to "deny" or "drop". However "block" traffic is not denied or dropped - this is slightly counter-intuitive.
 
 In case of an error, HTTP request will return HTTP 403 Response Code from Envoy to the originating service.
 
@@ -139,7 +142,7 @@ curl -O https://raw.githubusercontent.com/lsgroup/SmartReverseProxy/master/modse
 curl https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/crs-setup.conf.example > crs-setup.conf
 ```
 
-**Important**: The two bootstrapping files `modsecdefault.conf` and `crs-setup.conf` MUST be named lowercase i.e. lowercase "m" and lowercase "c" respectively in order to ensure they are loaded into ModSec before any REQUST-*.conf Core Rules Set files. Presence of these two files is required and enforced by the operator.
+> **Important**: The two bootstrapping files `modsecdefault.conf` and `crs-setup.conf` MUST be named lowercase i.e. lowercase "m" and lowercase "c" respectively in order to ensure they are loaded into ModSec before any REQUST-*.conf Core Rules Set files. Presence of these two files is required and enforced by the operator.
 {: .alert .alert-warning}
 
 Create a configMap from all core rules set files downloaded to your new directory:
