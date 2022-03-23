@@ -12,7 +12,7 @@
 
 #### What happens when a license expires or is invalid?  
    
-   >**Warning!** Although users can still log in to Manager UI, your deployment is no longer operational. All policy enforcement stops, except for policies in the default tier. In most cases, you will experience broken connectivity (depending on your policies in the default tier). {{site.prodname}} stops reporting flow logs, DNS logs, and {{site.prodname}} metrics, which affects other UI elements like Service Graph and dashboards. Although some elements may appear to work, actions are not saved, and you should regard your deployment as non-functional. We recommend that you proactively managed your license to avoid disruption.
+   >**Warning!** Although users can still log in to Manager UI, your deployment is no longer operational. All policy enforcement stops, except for policies in the default tier. In most cases, you will experience broken connectivity (depending on your policies in the default tier). {{site.prodname}} stops reporting flow logs, DNS logs, and {{site.prodname}} metrics, which affects other UI elements like Service Graph and dashboards. Although some elements may appear to work, actions are not saved, and you should regard your deployment as non-functional. We recommend that you proactively manage your license to avoid disruption.
    {: .alert .alert-danger}
 
 #### What happens if I add nodes beyond what I'm licensed for?
