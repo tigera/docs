@@ -55,7 +55,7 @@ Enable the Policy Sync API in Felix. To do this cluster-wide, modify the `defaul
 
 ### How to
 
-- [Configure a cluster for WAF](#configure-cluster-for-waf)
+- [Configure a cluster for WAF](#configure-a-cluster-for-waf)
 - [Add and edit rules](#add-and-edit-rules)
 - [Manager UI](#manager-ui)
 
