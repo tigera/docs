@@ -98,7 +98,7 @@ openshift-install create cluster
 
 #### Install the {{site.prodname}} license
 
-In order to use {{site.prodname}}, you must install the license provided to you by Tigera.
+In order to use {{site.prodname}}, you must install the license provided to you by Tigera support representative.
 Before applying the license, wait until the Tigera API server is ready with the following command:
 
 ```
