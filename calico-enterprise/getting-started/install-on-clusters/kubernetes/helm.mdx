@@ -96,25 +96,25 @@ kubectl create namespace tigera-operator
 {%- if page.version == "master" -%}:
    ```bash
 helm install calico-enterprise tigera/tigera-operator --version v0.0 \
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=.local/config/docker_cfg.json \
+--set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
 --namespace tigera-operator
    ```
 or if you created a `values.yaml` above:
    ```bash
 helm install calico projectcalico/tigera-operator --version v0.0 -f values.yaml \
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=.local/config/docker_cfg.json \
+--set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
 --namespace tigera-operator
    ```
 {% else %}:
    ```bash
 helm install calico-enterprise tigera-operator-{% include chart_version_name %}.tgz \
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=.local/config/docker_cfg.json \
+--set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
 --namespace tigera-operator
    ```
 or if you created a `values.yaml` above:
    ```bash
 helm install calico tigera-operator-{% include chart_version_name %}.tgz -f values.yaml \
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=.local/config/docker_cfg.json \
+--set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
 --namespace tigera-operator
    ```
 {% endif %}
