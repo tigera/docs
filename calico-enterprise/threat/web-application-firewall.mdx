@@ -1,7 +1,7 @@
 ---
 title: Web Application Firewall (WAF)
 description: Configure Calico to use with Layer 7 Web Application Firewall
-canonical_url: /networking/web-application-firewall
+canonical_url: /threat/web-application-firewall
 ---
 
 **Note:** This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
