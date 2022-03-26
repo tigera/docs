@@ -53,19 +53,21 @@ spec:
 
 | Field | Description | Type | Required | Acceptable Values | Default |
 |---|---|---|---|---|---|
+| type | Type will dictate how the fields of the GlobalAlert will be utilized. Each `type` will have different usages and/or defaults for the other GlobalAlert fields as described in the table. | string | no | RuleBased, AnomalyDetection | RuleBased |
 | description | Human-readable description of the template. | string | yes |
 | summary | Template for the description field in generated events. See the summary section below for more details. `description` is used if this is omitted. | string | no |
 | severity | Severity of the alert for display in Manager. | int | yes | 1 - 100 |
-| dataSet | Which data set to execute the alert against. | string | yes | audit, dns, flows, l7 |
-| period | How often the query is run. | duration | no | 1h 2m 3s | 5m |
-| lookback | How much data to gather at once. Must exceed audit log flush interval, `dnsLogsFlushInterval`, or `flowLogsFlushInterval` as appropriate. | duration | no | 1h 2m 3s | 10m |
-| query | Which data to include from the source data set. Written in a domain-specific query language. See the query section below. | string | no |
-| aggregateBy | An optional list of fields to aggregate results. | string array | no |
-| field | Which field to aggregate results by if using a metric other than count. | string | if metric is one of avg, max, min, or sum |
-| metric | A metric to apply to aggregated results. `count` is the number of log entries matching the aggregation pattern. Others are applied only to numeric fields in the logs. | string | no | avg, max, min, sum, count |
-| condition | Compare the value of the metric to the threshold using this condition. | string | if metric defined | eq, not_eq, lt, lte, gt, gte |
-| threshold | A numeric value to compare the value of the metric against. | float | if metric defined |
-| substitutions | An optional list of values to replace variable names in query. | List of [GlobalAlertSubstitution](#globalalertsubstitution) | no |
+| dataSet | Which data set to execute the alert against. | string | if `type` is `RuleBased` | audit, dns, flows, l7 |
+| period |  Fow often the query defined will run, if `type` is `RuleBased`.  How often the `detector` defined will run, if `type` is `AnomalyDetection`. | duration | no | 1h 2m 3s | 5m, 15m if `type` is `RuleBased` |
+| lookback | How much data to gather at once. Must exceed audit log flush interval, `dnsLogsFlushInterval`, or `flowLogsFlushInterval` as appropriate. Ignored if `type` is `AnomalyDetection`. | duration | no | 1h 2m 3s | 10m |
+| query | Which data to include from the source data set. Written in a domain-specific query language. Ignored if `type` is `AnomalyDetection`. See the query section below. | string | no |
+| aggregateBy | An optional list of fields to aggregate results. Ignored if `type` is `AnomalyDetection`. | string array | no |
+| field | Which field to aggregate results by if using a metric other than count. Ignored if `type` is `AnomalyDetection`. | string | if metric is one of avg, max, min, or sum |
+| metric | A metric to apply to aggregated results. `count` is the number of log entries matching the aggregation pattern. Others are applied only to numeric fields in the logs. Ignored if `type` is `AnomalyDetection`. | string | no | avg, max, min, sum, count |
+| condition | Compare the value of the metric to the threshold using this condition. Ignored if `type` is `AnomalyDetection`. | string | if metric defined | eq, not_eq, lt, lte, gt, gte |
+| threshold | A numeric value to compare the value of the metric against. Ignored if `type` is `AnomalyDetection`. | float | if metric defined |
+| substitutions | An optional list of values to replace variable names in query. Ignored if `type` is `AnomalyDetection`. | List of [GlobalAlertSubstitution](#globalalertsubstitution) | no |
+| detector | Detector specifies the parametes to run `AnomalyDetection` for a detector. See the detector section below for more details. | [Detector](#detector) |  if `type` is `AnomalyDetection` |
 
 #### GlobalAlertSubstitution
 
@@ -73,6 +75,12 @@ spec:
 |---|---|---|---|
 | name | The name of the global alert substitution. It will be referenced by the variable names in query. Duplicate names are not allowed in the substitutions list. | string | yes |
 | values | A list of values for this substitution. Wildcard operators asterisk (`*`) and question mark (`?`) are supported. | string array | yes |
+
+### Detector
+
+| Field | Description | Type | Required |
+|---|---|---|---|
+| name | Name specifies the AnomalyDetection Detector to run. The name has to match a detector ID which can be found in the [Anomaly detection reference page]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars). | string | yes |
 
 #### Status
 
@@ -244,10 +252,13 @@ respectively. These fields are formatted as [duration](https://golang.org/pkg/ti
  > "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"),
  > "ms", "s", "m", "h".
 
-The default period is 5 minutes, and lookback is 10 minutes. The
-lookback should always be greater than the sum of the period and
-the configured `FlowLogsFlushInterval` or `DNSLogsFlushInterval` as
-appropriate to avoid gaps in coverage.
+The default period is 5 minutes, and lookback is 10 minutes. For a 
+GlobalAlert with `type` as `AnomalyDetection`, the default period is 
+set at 15 minutes and lookback is ignored. The lookback should always be 
+greater than the sum of the period and the configured  
+`FlowLogsFlushInterval` or `DNSLogsFlushInterval` as appropriate to avoid 
+gaps in coverage.
+
 
 ### Alert records
 
@@ -277,6 +288,7 @@ templates; add your own templates as needed.
 
 #### Sample YAML
 
+**RuleBased GlobalAlert**
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: GlobalAlertTemplate
@@ -294,6 +306,21 @@ spec:
   condition: gte
   threshold: 1
 ```
+
+**AnomalyDetection GlobalAlert**
+```yaml
+ apiVersion: projectcalico.org/v3
+  kind: GlobalAlert
+  metadata:
+    name: port-scan-detection
+  spec:
+    description: "Port scan detection"
+    type: AnomalyDetection
+    detector: 
+      name: port-scan
+    severity: 100
+```
+
 
 ### Appendix: Valid fields for queries
 
