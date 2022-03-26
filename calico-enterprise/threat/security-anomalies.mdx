@@ -88,7 +88,6 @@ USERS CANNOT ENABLE/DISABLE UNTIL 3.13
 - [Install anomaly detection](#install-anomaly-detection)
 - [Monitor anomalies and alerts](#monitor-anomalies-and-alerts)
 - [Disable anomaly detectors](#disable-anomaly-detectors)
-- [Troubleshooting](#troubleshooting)
 
 #### Install anomaly detection
 
@@ -102,20 +101,8 @@ USERS CANNOT ENABLE/DISABLE UNTIL 3.13
 
 {% include /content/anomaly-detection/disable.md %}
 
-#### Troubleshooting
-
-**Issue:** I'm getting too many alerts. What can I do?
-
-**Solution:** The default values for anomaly detectors are configured for a reasonable amount of alerts. 
-However, especially when you are starting the anomaly detection, you may want to tune up the detection sensitivity.
-You may want to pay more or less attention to different anomalies. Then you need to change the sensitivity of
-different anomaly detectors by changing values of the 
-[anomaly detection environment variables]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars). 
-
-**Issue:** I'm getting too many Elasticsearch logs. How do I decrease them?
-
-**Solution:** Decrease the maximum number of log records used for training using the [**AD_max_docs** variable]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars). Note that the more Elasticsearch log data is used in training of the model, the more accurate the anomaly detection. However, the more data the anomaly detection reads, the more costly it becomes in terms of data retention.
-
 ### Above and beyond
 
 - [Anomaly detection reference]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars)
+- [Global Alert reference]({{site.baseurl}}/reference/resources/globalalert)
+
