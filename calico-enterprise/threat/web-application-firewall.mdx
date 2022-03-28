@@ -104,7 +104,7 @@ curl http://<host>//test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Asel
 
 Now view the WAF logs in Kibana by selecting the `tigera_secure_ee_waf` index pattern. You should see the relevant WAF assessment from your request recorded:
 
-<img src="/images/waf-kibana.png" alt="WAF logs in Kibana" width="600">
+<img src="{{site.baseurl}}/images/waf-kibana.png" alt="WAF logs in Kibana" width="600">
 
 #### Add and edit rules
 
@@ -181,4 +181,4 @@ Apply the YAML to your cluster using: `kubectl apply -f test-demo-alert.yaml`
 
 Now if a SQL Injection attack is detected for rule ID 942100, you will see the global alert in Manager UI, Activity, Alerts.
 
-<img src="/images/waf-alert.png" alt="WAF alert" width="600">
+<img src="{{site.baseurl}}/images/waf-alert.png" alt="WAF alert" width="600">
