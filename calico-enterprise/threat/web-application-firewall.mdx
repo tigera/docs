@@ -102,7 +102,9 @@ After identifying the URL, `curl` your service with a command to trigger an OWAS
 curl http://<host>//test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
 ```
 
-Now view the WAF logs in Kibana by selecting the `tigera_secure_ee_waf` index pattern. You should see the relevant WAF assessment from your request recorded:
+In Kibana you will have to create `tigera_secure_ee_waf*` index pattern. Instructions how to create an index pattern can be found {% include open-new-window.html text='here' url=' https://www.elastic.co/guide/en/kibana/7.17/index-patterns.html' %}.
+
+Now view the WAF logs in Kibana by selecting the `tigera_secure_ee_waf*` index pattern. You should see the relevant WAF assessment from your request recorded:
 
 <img src="{{site.baseurl}}/images/waf-kibana.png" alt="WAF logs in Kibana" width="600">
 
