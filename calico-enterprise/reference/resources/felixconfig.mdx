@@ -115,7 +115,7 @@ spec:
 | flowLogsFilePerFlowProcessArgsLimit | Specify the maximum number of unique arguments in the flowlogs beyond which process arguments will be aggregated | int | int | `5` |
 | statsDumpFilePath | Specify the position of the file used for dumping flow log statistics on Linux nodes. Note this is an internal setting that users shouldn't need to modify.| string | string | `/var/log/calico/stats/dump` |
 | routeTableRange                    | *deprecated in favor of `RouteTableRanges`* Calico programs additional Linux route tables for various purposes. `RouteTableRange` specifies the indices of the route tables that Calico should use. |  | [RouteTableRanges](#routetablerange) | `""` |
-| routeTableRanges                    | Calico programs additional Linux route tables for various purposes. `RouteTableRanges` specifies a set of table index ranges that Calico should use. Deprecates `RouteTableRange`, overrides `RouteTableRange` |  | [RouteTableRanges](#routetableranges) | `[{"Min": 1, "Max": 250}]` |
+| routeTableRanges                    | Calico programs additional Linux route tables for various purposes. `RouteTableRanges` specifies a set of table index ranges that Calico should use. Deprecates `RouteTableRange`, overrides `RouteTableRange` |  | [RouteTableRanges](#routetableranges) | `[{"min": 1, "max": 250}]` |
 | serviceLoopPrevention              | When [service IP advertisement is enabled]({{ site.baseurl }}/networking/advertise-service-ips), prevent routing loops to service IPs that are not in use, by dropping or rejecting packets that do not get DNAT'd by kube-proxy.  Unless set to "Disabled", in which case such routing loops continue to be allowed. | `Drop`, `Reject`, `Disabled` | string | `Drop` |
 | sidecarAccelerationEnabled         | Enable experimental acceleration between application and proxy sidecar when using [application layer policy]({{ site.baseurl }}/security/app-layer-policy). [Default: `false`] | boolean | boolean | `false` |
 | vxlanEnabled                       | Automatically set when needed, you shouldn't need to change this setting: whether Felix should create the VXLAN tunnel device for VXLAN networking. | boolean | boolean | `false` |
@@ -248,7 +248,7 @@ The `RouteTableRange` option is now deprecated in favor of [RouteTableRanges](#r
 Each item in the `RouteTableRanges` list designates a range of routing tables available to Calico. By default, Calico will use a single range of `1-250`.  If a range spans Linux's reserved table range (`253-255`) then those tables are automatically excluded from the list. It's possible that other table ranges may also be reserved by third-party systems unknown to Calico. In that case, multiple ranges can be defined to target tables below and above the sensitive ranges:
 ```sh
 # target tables 65-99, and 256-1000, skipping 100-255
-calicoctl patch felixconfig default --type=merge -p '{"spec":{"routeTableRanges": [{"Min": 65, "Max": 99}, {"Min": 256, "Max": 1000}] }}
+calicoctl patch felixconfig default --type=merge -p '{"spec":{"routeTableRanges": [{"min": 65, "max": 99}, {"min": 256, "max": 1000}] }}
 ```
 
 *Note*, for performance reasons, the maximum total number of routing tables that Felix will accept is 65535 (or 2*16).
