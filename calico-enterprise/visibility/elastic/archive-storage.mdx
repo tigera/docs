@@ -117,7 +117,7 @@ This how-to guide uses the following {{site.prodname}} features:
          - IDSEvents
    ```
 
-   > **Note**: The log type `IDSEvents` is only supported for a cluster that has [LogStorage]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.LogStorage) configured. Is is because intrusion detection event data is pulled from the corresponding LogStorage datastore directly. 
+   > **Note**: The log type `IDSEvents` is only supported for a cluster that has [LogStorage]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.LogStorage) configured. It is because intrusion detection event data is pulled from the corresponding LogStorage datastore directly.
    {: .alert .alert-info}
 
    The `logTypes` field is a required, which means you must specify at least one type of log to export to syslog.
