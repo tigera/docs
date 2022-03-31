@@ -1,193 +1,224 @@
 ---
-title: Tour Manager UI
+title: Manager UI tutorial
 description: A quick tour of the Calico Cloud user interface.
 canonical_url: '/get-started/tutorials/tour'
 ---
 
 ### What you will learn
 
-- The basic views in Manager UI, and how each provides visibility into your Kubernetes deployment
+- Manager UI features and controls
 
-### About your managed clusters
+Let's go through each item in the Manager left navbar from top to bottom. You can follow along using any cluster. 
 
-After you install {{site.prodname}} on a cluster, the cluster is displayed in the Manager as a **managed cluster**. Click the cluster in the upper right corner for the drop-down menu.
+### Dashboards
 
-![cluster-menu]({{site.baseurl}}/images/cluster-menu.png)
+> From the left navbar, click Dashboards.
 
-Each time you change to a different cluster, the entire Manager "view" is set for the cluster you've selected. For example, each managed cluster has unique indexes for Elasticsearch clusters and the dashboard reflects only the selected managed cluster. 
+Dashboards are a birds-eye view of cluster activity. Note the following:
 
-Let's walk through each tab in the left navigation of Manager.
+- The filter panel at the top lets you change the time range 
+- The **Layout Settings** shows the default metrics. To get WireGuard metrics for pod-to-pod and host-to-host encryption, you must [enable WireGuard]({{site.baseurl}}/compliance/encrypt-cluster-pod-traffic).
 
-### Dashboard
+![dashboards]({{site.baseurl}}/images/dashboards.png)
 
-The dashboard is a birds-eye view of cluster activity for policy and networking. For example, you can monitor connection spikes in traffic that may indicate issues, and see at a glance if any endpoints are without policy. The filter lets you change the time range for the charts. 
+### Service Graph
 
-![dashboard]({{site.baseurl}}/images/dashboard.png)
+> From the left navbar, select **Service Graph**, **Default**
+
+Service Graph provides a point-to-point, topographical representation of network traffic within your cluster. It is the primary tool for visibility and troubleshooting.
+
+![service-graph]({{site.baseurl}}/images/service-graph.png)
+
+**Namespaces**  
+
+Namespaces are the default view in Service Graph. 
+
+When you expand the top right panel `<<`, you see a detailed view of the service-to-service communications for the namespace. 
+
+![service-graph-namespace]({{site.baseurl}}/images/service-graph-namespace.png)   
+
+**Nodes and edges**  
+
+Lines going to/from nodes are called edges. When you click on a node or edge, the right panel shows details, and the associated flow logs are automatically filtered in the bottom panel. 
+
+![edges]({{site.baseurl}}/images/edges.png)
+
+**Layers**   
+
+Layers allow you to create meaningful groupings of resources so you can easily hide and show them on the graph. For example, you can group resources for different platform infrastructure types in your cluster like networking, storage, and logging. 
+
+> Click the panel on the left (`>>`) by the Namespaces breadcrumb, and then expand the Tigera components layer. 
+
+![service-graph-layers]({{site.baseurl}}/images/service-graph-layers.png)
+
+The **Tigera components** layer contains namespaces for {{site.prodname}} networking components, and a view of interest to Dev/Ops. 
+
+> Click the vertical ellipses and select, **Hide layer**. Notice that only the business application namespaces remain visible in the graph. 
+
+> To make this layer less visible, select **Restore layer**and click **De-emphasize layer**. 
+
+**Logs, alerts, and capture jobs**  
+
+The panel at the bottom below the graph provides tools for troubleshooting connectivity and performance issues. **Logs** (Flows, DNS, and HTTP) are the foundation of security and observability in {{site.prodname}}. When you select a node or edge in the graph, logs are filtered for the node or service. For example, here is a flow log with details including how the policies were processed in tiers. 
+
+![service-graph-flows]({{site.baseurl}}/images/service-graph-flows.png) 
+
+**Alerts**
+
+For convenience, the Alerts tab duplicates the alerts you have enabled in the **Alerts tab** in the left navbar. By default, alerts are not enabled. 
+
+**Capture jobs**
+
+Service Graph integrates a packet feature for capturing traffic for a specific namespace, service, replica set, daemonset, statefulset, or pod. You can then download capture files to your favorite visualization tool like WireShark.
+
+> Right-click on any endpoint to start or schedule a capture.
+
+![packet-capture-service]({{site.baseurl}}/images/packet-capture-service.png) 
+
+**Flow Visualizations**
+
+> From the left navbar, select **Service Graph**, **Flow Visualizations**. 
+
+Flow Visualizer (also called, "FlowViz") is a {{site.prodname}} tool for drilling down into network traffic within the cluster to troubleshoot issues. The most common use of Flow Visualizer is to drill down and pinpoint which policies are allowing and denying traffic between services. 
+
+![flow-viz]({{site.baseurl}}/images/flow-viz.png)
 
 ### Policies
 
-**Network policy** is the primary tool for securing a Kubernetes network. It lets you restrict the network traffic (egress and ingress) in your cluster so only the traffic that you want to flow is allowed. {{site.prodname}} supports managing:
+> From the left navbar, click **Policies**.
+
+Network policy is the primary tool for securing a Kubernetes network. Policy is used to restrict network traffic (egress and ingress) in your cluster so only the traffic that you want to flow is allowed. {{site.prodname}} supports these policies:
 
 - {{site.prodname}} network policy
 - {{site.prodname}} global network policy
 - Kubernetes policy 
 
-To provide guardrails for managing network policy in your Kubernetes platform, {{site.prodname}} provides **policy tiers**. Policy tiers allow users with more authority (like devops) to enforce network policies that take precedence over service owners and developers. This is also known as *hierarchical tiers*.
+{{site.prodname}} uses **tiers** (also called, hierarchical tiers) to provide guardrails for managing network policy across teams. Policy tiers allow users with more authority (for example, Dev/ops user) to enforce network policies that take precedence over teams (for example, service owners and developers).
 
-You'll want to use the **policy board** view for moving and ordering tiers. To reorder tiers, just drag and move the tier left or right in the graphical sequence. You can move policies up and down in a tier, or left and right to a different tier.  
+**Policies Board** is the default view for managing tiered policies. 
 
 ![policy-board]({{site.baseurl}}/images/policy-board.png)
 
-You can also export one or all policies in a tier to .yaml format.
+Users typically use a mix of Policy Board and YAMLs. Note that you can export one or all policies in a tier to YAML.
 
-![export-yaml]({{site.baseurl}}/images/export-yaml.png)
-
-
-The **policy board filter** is another powerful tool for understanding traffic flows (like denied traffic) within your cluster. 
+The **Policy Board filter** lets you filter by policy types and label selectors. 
 
 ![policy-filters]({{site.baseurl}}/images/policy-filters.png)
 
-The **grid view** of policy is good for seeing a list of all policies and for adding policies and tiers. 
+The following features provide more security and guardrails for teams.
 
-![policy-grid]({{site.baseurl}}/images/policy-grid.png)
+**Recommended a policy** 
 
-#### Policy manifest versus GUI editor
+> In Policies Board, click **Recommend a policy**. 
 
-Manager uses the familiar .yaml/manifest policy format in features like the **Timeline** for viewing audit logs: 
-
-![timeline]({{site.baseurl}}/images/timeline.png)
-
-For editing {{site.prodname}} policy, the GUI editor is a great tool to design and test/stage policies before you enforce it. 
-
-![edit-policy]({{site.baseurl}}/images/edit-policy.png)
-
-Malformed policy, or policy that doesn't work as intended can be caught using the following policy lifecycle tools. 
-
-#### Recommended policy for new users
-
-After installing {{site.prodname}}, one of the first things you want to do is secure unprotected pods/workloads with network policy. (For example, Kubernetes pods accept traffic from any source by default.) The recommended policy feature lets you generate policies that protect specific endpoints in the cluster. It is useful for new users with minimal experience with network policy.
+One of the first things you'll want to do after installation is to secure unprotected pods/workloads with network policy. (For example, Kubernetes pods allow traffic from any source by default.) The Recommend a policy feature generates policies that protect specific endpoints in the cluster. Users with minimal experience with network policy can easily get started.
 
 ![recommend-policy]({{site.baseurl}}/images/recommend-policy.png)
 
-#### Stage and preview policies 
+**Policy stage** 
 
-![policy-lifecycle]({{site.baseurl}}/images/policy-lifecycle.png)
+When you create a policy, it is a best practice to stage it to evaluate the effects before enforcing it. After you verify that a staged network policy is allowing traffic as expected, you can enforce it. 
 
-**Policy stage** is another guardrail that lets you evaluate the effects of a network policy before enforcing it, (for example, a default deny policy). After you verify that a staged network policy is allowing traffic as expected, you can enforce it. 
+![stage-policyl]({{site.baseurl}}/images/stage-policy.png)
 
-**Preview** lets you iterate on policies and evaluate changes to see how they may affect existing traffic. 
+**Preview** 
 
-### Timeline
+When you edit a policy, you can select **Preview** to see how changes may affect existing traffic. 
 
-What changed, who did it, and when? This information is critical for security. Native Kubernetes doesn’t provide an easy way to capture audit logs for pods, namespaces, service accounts, network policies, and endpoints. The {{site.prodname}} timeline provides audit logs for all changes to network policy and other resources associated with your {{site.prodname}} deployment. 
-
-![audit-logs]({{site.baseurl}}/images/audit-logs.png)
+![policy-preview]({{site.baseurl}}/images/policy-preview.png)
 
 ### Endpoints
 
-This display lists all of your workload endpoints.
+> From the left navbar, click **Endpoints**.
 
-#### Nodes
+**Endpoint Details**
 
-This displays all nodes associated with your cluster. 
+This page is a list of all pods in the cluster (also known as workload endpoints).
 
-![nodes]({{site.baseurl}}/images/nodes.png)
+![endpoints]({{site.baseurl}}/images/endpoints.png)
+
+**Node List**
+
+This page lists all nodes associated with your cluster. 
+
+![node-list]({{site.baseurl}}/images/node-list.png)
 
 ### Network Sets
 
-Network sets and global network sets are {{site.prodname}} resources for defining IP subnetworks/CIDRs, which can be matched by standard label selectors in Kubernetes or {{site.prodname}} network policy. A simple use case is to limit traffic to/from external networks. For example, create a global network set with "deny-lists CIDR ranges 192.0.2.55/32 and 203.0.113.0/24", and reference the network set in a global network policy.
+Network sets and global network sets are {{site.prodname}} resources for defining IP subnetworks/CIDRs, which can be matched by standard label selectors in policy (Kubernetes or {{site.prodname}}). They are a powerful feature for use/reuse and scaling policy. 
 
-![network-sets]({{site.baseurl}}/images/network-sets.png)
+A simple use case is to limit traffic to/from external networks. For example, you can create a global network set with "deny-list CIDR ranges 192.0.2.55/32 and 203.0.113.0/24", and then reference the network set in a global network policy. This also allows you to see this traffic in Service Graph. 
 
-### Flow Visualizations
+![networksets]({{site.baseurl}}/images/networksets.png)
 
-Flow Visualizer (also called "FlowViz") is a powerful {{site.prodname}} tool to gain visibility into network traffic within the cluster and troubleshoot issues. The most common use of Flow Visualizer is to find packet allowed/denied flows, and to see how things are changing in your deployment. You can quickly drill down and pinpoint which policies are allowing and denying traffic between their services. 
+### Managed clusters
 
-![flow-viz]({{site.baseurl}}/images/flow-viz.png)
+> From the left navbar, click **Managed clusters**.
 
-### Service Graph
+This page is where you switch views between clusters in Manager UI. When you connect to a different cluster, the entire Manager view changes to reflect the selected cluster. 
 
-Service Graph provides a point-to-point, topographical representation of network traffic within your cluster. It enables platform operators and application developers understand networking relationships between namespaces, services, and deployments with a rich set of tools to filter resources and save views. Selecting a node or edge on the graph displays detailed networking and DNS activity on the right-side panel, while automatically filtering raw flow log data that is displayed on the bottom panel.
+![managed-clusters]({{site.baseurl}}/images/managed-clusters.png)
 
-Layers provide a unique way to manage the scale of the graph, allowing you to group resources depending on their purpose within a cluster (e.g. monitoring, infrastructure, storage, networking) and easily hide and show them as part of a saved view. This enables application developers and platform operators to tailor views based on their use case.
+### Compliance 
 
-![service-graph]({{site.baseurl}}/images/service-graph.png)
+> From the left navbar, click **Compliance**.
 
-**Nodes**  
+Compliance tools that rely on periodic snapshots, do not provide accurate assessments of Kubernetes workloads against your compliance standards. {{site.prodname}} compliance dashboard and reports provide a complete inventory of regulated workloads, along with evidence of enforcement of network controls for these workloads. Additionally, audit reports are available to see changes to any network security controls. 
 
-Right-click any node on the graph, hide the node or hide unrelated (to hide anything that isn’t communicating with the selected node).
+**Compliance reports** are based on archived flow logs and audit logs for all {{site.prodname}} resources, and audit logs for Kubernetes resources in the Kubernetes API server. 
 
-**Edges**  
+![cis-benchmark]({{site.baseurl}}/images/cis-benchmark.png)
 
-Select any of the edges on the graph and see details on ports/protocols on the right; the raw flow logs are automatically filtered in the bottom panel.
+Using the filter, you can select report types. 
 
-![service-graph-details]({{site.baseurl}}/images/service-graph-details.png)
+![compliance-filter]({{site.baseurl}}/images/compliance-filter.png)
 
-**Layers**   
+### Activity
 
-Create meaningful groupings of resources for different types of platform infrastructure in your cluster - networking, storage, logging et al.
+> From the left navbar, select **Activity**, **Timeline**. 
 
-- See Tigera Components Layer, which contains a number of namespaces related to networking
-- If you hide this layer, only the business application namespaces remain in the graph
+**Timeline**
 
-![service-graph-layers]({{site.baseurl}}/images/service-graph-layers.png)
+What changed, who did it, and when? This information is critical for security. Native Kubernetes doesn’t provide an easy way to capture audit logs for pods, namespaces, service accounts, network policies, and endpoints. The {{site.prodname}} timeline provides audit logs for all changes to network policy and other resources associated with your {{site.prodname}} deployment. 
 
-**Namespaces**  
+![timeline]({{site.baseurl}}/images/timeline.png)
 
-Double-click on any namespace for a detailed view of all the service-to-service communications in that namespace. 
+> From the left navbar, selection **Activity**, **Alerts**. 
 
-![service-graph-namespace]({{site.baseurl}}/images/service-graph-namespace.png)   
+**Alerts**
 
-**DNS Logs**  
-
-These are the foundation of security and observability in {{site.prodname}}. A quick look shows the rich Kubernetes context to help troubleshoot issues. Here are filtered logs for DNS stats.
-
-![service-graph-flows]({{site.baseurl}}/images/service-graph-flows.png) 
-
-### Compliance Reports
-
-Existing compliance tools that rely on periodic snapshots, do not provide accurate assessments of Kubernetes workloads
-against your compliance standards. {{site.prodname}} compliance dashboard and reports provide a complete inventory of regulated workloads, along with evidence of enforcement of network controls for these workloads. Additionally, audit reports are available to see changes to any network security controls. 
-
-Compliance report are based on archived flow logs and audit logs for all of your {{site.prodname}} resources, plus any audit logs you’ve configured for Kubernetes resources in the Kubernetes API server:
-
-- Pods
-- Service accounts
-- Namespaces
-- Kubernetes service endpoints
-- Global network sets
-- Calico and Kubernetes network policies
-- Global network policies
-- Compliance reports provide the following high-level information:
-
-**Protection**
-- Endpoints explicitly protected using ingress or egress policy
-- Endpoints with Envoy enabled
-
-**Policies and services**
-- Policies and services associated with endpoints
-- Policy audit logs
-
-**Traffic**
-- Allowed ingress/egress traffic to/from namespaces
-- Allowed ingress/egress traffic to/from the internet
-
-![compliance-reporting]({{site.baseurl}}/images/compliance-reporting.png)
-
-### Alerts
-
-How do you know if you have an infected workload? {{site.prodname}} detects and alerts on unexpected network behavior that may indicate a security breach. You can create alerts for:
+How do you know if you have an infected workload? A possible threat? {{site.prodname}} detects and alerts on unexpected network behavior that may indicate a security breach. You can create alerts for:
 
 - Known attacks and exploits (for example, exploits found at Shopify, Tesla, Atlassian)
 - DOS attempts
 - Attempted connections to botnets and command and control servers
-- Abnormal flow volumes or flow patterns using machine learning
+- Abnormal flow volumes or flow patterns based on machine learning
+
+![alerts]({{site.baseurl}}/images/alerts.png)
+
+As shown, there are many types of alerts you can enable. None are enabled by default.  
 
 ### Kibana
 
 {{site.prodname}} includes a fully-integrated deployment of Elasticsearch to collect flow
-log data that drives key features like the Flow Visualizer, metrics in the dashboard and Policy Board, policy automation and testing features, and security. 
+log data that drives key features like the Flow Visualizer, metrics in the Dashboard and Policy Board, policy automation, and testing features and security. {{site.prodname}} also embeds Kibana so you can view raw log data for the traffic within your cluster. 
 
-{{site.prodname}} also embeds Kibana to view raw log data for the traffic within your cluster. Kibana provides its own set of powerful filtering capabilities to quickly drill into log data. For example, use filters to drill into flow log data for specific namespaces and pods. Or view details and metadata for a single flow log entry.
+> From the left navbar, click **Kibana**.
 
-![kibana-logs]({{site.baseurl}}/images/kibana-logs.png)
+**Dashboards**
+
+{{site.prodname}} comes with built-in dashboards. 
+
+![kibana-dashboards]({{site.baseurl}}/images/kibana-dashboards.png)
+
+**Log data**
+
+Kibana provides its own set of filtering capabilities to drill down into log data. For example, use filters to drill into flow log data for specific namespaces and pods. Or view details and metadata for a single flow log entry.
+
+![kibana]({{site.baseurl}}/images/kibana.png)
+
+Now that you understand the basics, we recommend the following:
+
+- [Service Graph tutorial]({{site.baseurl}}/get-started/tutorials/service-graph)
+- [Understanding policy tiers]({{site.baseurl}}/get-started/tutorials/policy-tiers)
+- [Understanding network sets]({{site.baseurl}}/get-started/tutorials/networksets)
