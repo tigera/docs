@@ -177,7 +177,7 @@ To manually run a report:
 
 **Problem**: Compliance reports can fail to generate if the `compliance-benchmarker` component cannot find the required `kubelet` or `kubectl` binaries to determine the Kubernetes version running on the cluster. 
 
-**Solution or workaround**: If a node is running within a hyperkube container (not running `kubelet` as a binary), make sure the `kubectl` binary is available in the `/usr/bin` directory.
+**Solution or workaround**: If a node is running within a container (not running `kubelet` as a binary), make sure the `kubectl` binary is available in the `/usr/bin` directory.
 
 ### Above and beyond
 
