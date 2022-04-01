@@ -13,88 +13,14 @@ so that kube-apiserver can verify their identities.
 
 ### Connections from Node to Typha (Kubernetes)
 
-We recommend enabling mutual TLS authentication on connections from Node to Typha.
-To do so, you must provision Typha with a server certificate with extended key usage `ServerAuth` and Node with a client
-certificate with extended key usage `ClientAuth`. Each service will need the private key associated with their certificate.
-In addition, you must configure one of the following.
-
-- **SPIFFE identifiers** (recommended): Generate a [SPIFFE](https://github.com/spiffe/spiffe){:target="_blank"} identifier for Felix,
-  set `ClientURISAN` on Typha to Felix's SPIFFE ID, and include Felix's SPIFFE ID in the `URI SAN` field
-  of its certificate. Similarly, generate a [SPIFFE](https://github.com/spiffe/spiffe){:target="_blank"} identifier for Typha,
-  set `TyphaURISAN` on Felix to Typha's SPIFFE ID, and include Typha's SPIFFE ID in the `URI SAN` field
-  of its certificate.
-
-- **Common Name identifiers**: Set a common name on the Typha certificate and a different
-  common name on the Node certificate.
-
-> **Tip**: If you are migrating from Common Name to SPIFFE identifiers, you can set both values.
-> If either matches, the communication succeeds.
-{: .alert .alert-success}
+Operator based installations automatically configure mutual TLS authentication on connections from
+Felix to Typha. You may also configure this TLS by providing your own secrets.
 
 #### Configure Node to Typha TLS based on your deployment
 
-##### Operator deployment
-
 For clusters installed using operator, see how to [provide TLS certificates for Typha and Node](typha-node-tls).
 
-##### Manual/Helm deployment
-
-Here is an example of how you can secure the Node-Typha communications in your
-cluster:
-
-1.  Choose a certificate authority, or set up your own.
-
-1.  Obtain or generate the following leaf certificates, signed by that
-    authority, and corresponding keys:
-
-    -  A certificate for each Node with Common Name `typha-client` and
-       extended key usage `ClientAuth`.
-
-    -  A certificate for each Typha with Common Name `typha-server` and
-       extended key usage `ServerAuth`.
-
-1.  Configure each Typha with:
-
-    -  `CAFile` pointing to the certificate authority certificate
-
-    -  `ServerCertFile` pointing to that Typha's certificate
-
-    -  `ServerKeyFile` pointing to that Typha's key
-
-    -  `ClientCN` set to `typha-client`
-
-    -  `ClientURISAN` unset.
-
-1.  Configure each Node with:
-
-    -  `TyphaCAFile` pointing to the Certificate Authority certificate
-
-    -  `TyphaCertFile` pointing to that Node's certificate
-
-    -  `TyphaKeyFile` pointing to that Node's key
-
-    -  `TyphaCN` set to `typha-server`
-
-    -  `TyphaURISAN` unset.
-
-For a [SPIFFE](https://github.com/spiffe/spiffe){:target="_blank"}-compliant deployment you can
-follow the same procedure as above, except:
-
-1.  Choose [SPIFFE
-    Identities](https://github.com/spiffe/spiffe/blob/master/standards/SPIFFE-ID.md#2-spiffe-identity){:target="_blank"}
-    to represent Felix and Typha.
-
-1.  When generating leaf certificates for Node and Typha, put the relevant
-    SPIFFE Identity in the certificate as a URI SAN.
-
-1.  Leave `ClientCN` and `TyphaCN` unset.
-
-1.  Set Typha's `ClientURISAN` parameter to the SPIFFE Identity for Node that
-    you use in each Node certificate.
-
-1.  Set Node's `TyphaURISAN` parameter to the SPIFFE Identity for Typha.
-
-For detailed reference information on these parameters, refer to:
+For detailed reference information on TLS configuration parameters, refer to:
 
 - **Typha**: [Node-Typha TLS configuration]({{site.baseurl}}/reference/typha/configuration#felix-typha-tls-configuration)
 
