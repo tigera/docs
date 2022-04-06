@@ -30,13 +30,13 @@ Anomaly detectors run indefinitely. To monitor detector execution and health, us
 1. Find the real pod name (for example, **cluster-port-scan-detection-27464946**) using associated with the  where the globalalert is deployed, run the following command:
 
     ```bash
-    k -n tigera-intrusion-detection get pods -l cluster=<cluster name>,tigera.io.detector-cycle=detection
+    kubectl -n tigera-intrusion-detection get pods -l cluster=<cluster name>,tigera.io.detector-cycle=detection
     ```
 
-1. Read logs for a pod.
+1. Read logs for the chosen AnomalyDetection pod.
 
     ```bash
-    kubectl logs -n tigera-intrusion-detection -l cluster=<cluster name>,tigera.io.detector-cycle=detection
+    kubectl -n tigera-intrusion-detection logs <chosen-pod-name-from-step-1>
     ```
 
 After the pod starts, you can see the progress of training and detection in the log. Job execution goes through different status and begin with "START" or "Start" lines and finish with "STOP" or "Stop" lines. You also see the current configuration values in this log.
