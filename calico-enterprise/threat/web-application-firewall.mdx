@@ -51,7 +51,11 @@ With {{site.prodname}} WAF, you gain visibility into internal east/west traffic 
 
 Configure Felix for syncing WAF policy. Note: this is the same step required for L7 log collection so you may already have this set.
 
-Enable the Policy Sync API in Felix. To do this cluster-wide, modify the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`.
+Enable the Policy Sync API in Felix. To do this cluster-wide, modify the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
+```
 
 ### How to
 
@@ -133,7 +137,7 @@ In case of an error, HTTP request will return HTTP 403 Response Code from Envoy 
 Create a directory, and download the core rules set files that you want to use, for example:
 
 ```bash
-mkdir -p my-core-rules-sets && cd my-core-rules-sets
+mkdir my-ruleset && cd my-ruleset
 curl -O https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf
 ```
 
@@ -149,10 +153,11 @@ curl https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/crs-setu
 > **Important**: The two bootstrapping files `modsecdefault.conf` and `crs-setup.conf` MUST be named lowercase i.e. lowercase "m" and lowercase "c" respectively in order to ensure they are loaded into ModSec before any REQUST-*.conf Core Rules Set files. Presence of these two files is required and enforced by the operator.
 {: .alert .alert-warning}
 
-Create a configMap from all core rules set files downloaded to your new directory:
+Create a configMap containing all the files downloaded into your new directory and replace the existing rule set with it:
 
 ```bash
-kubectl create configmap -n tigera-operator modsecurity-ruleset --from-file=../my-core-rules-sets
+kubectl create cm --dry-run --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > ../my-ruleset.yaml
+kubectl replace -f ../my-ruleset.yaml
 ```
 
 #### Manager UI
