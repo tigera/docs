@@ -60,7 +60,7 @@ bytes sent, latencies, and counters.
 in the connections to an authorization service in the morning, then a big data transmission when 
 the database starts a backup operation.
 
-For a list of anomalies that are enabled by default, see [Anomaly detection reference]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars).
+For a list of anomalies that are enabled by default, see [Anomaly detection reference]({{site.baseurl}}/reference/anomaly-detection/all-detectors).
 
 ### FAQ
 
@@ -103,6 +103,6 @@ USERS CANNOT ENABLE/DISABLE UNTIL 3.13
 
 ### Above and beyond
 
-- [Anomaly detection reference]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars)
+- [Anomaly detection reference]({{site.baseurl}}/reference/anomaly-detection/all-detectors)
 - [Global Alert reference]({{site.baseurl}}/reference/resources/globalalert)
 

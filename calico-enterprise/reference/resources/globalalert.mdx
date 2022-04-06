@@ -80,7 +80,7 @@ spec:
 
 | Field | Description | Type | Required |
 |---|---|---|---|
-| name | Name specifies the AnomalyDetection Detector to run. The name has to match a detector ID which can be found in the [Anomaly detection reference page]({{site.baseurl}}/reference/anomaly-detection/all-jobs-envars). | string | yes |
+| name | Name specifies the AnomalyDetection Detector to run. The name has to match a detector ID which can be found in the [Anomaly detection reference page]({{site.baseurl}}/reference/anomaly-detection/all-detectors). | string | yes |
 
 #### Status
 
