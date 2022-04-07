@@ -5,6 +5,9 @@ canonical_url: /maintenance/kubernetes-upgrade-tsee
 show_toc: false
 ---
 
+>**Note**: All upgrades in {{site.prodname}} are free with a valid license.
+{: .alert .alert-info}
+
 ### Upgrades paths
 
 - Upgrading to {{site.prodname}} v3.13 from previous {{site.prodname}} versions is currently unsupported.

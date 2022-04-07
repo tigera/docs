@@ -7,6 +7,9 @@ openshift_manifests_ignore_pullsecret: true
 openshift_manifests_ignore_installation_cr: true
 ---
 
+>**Note**: All upgrades in {{site.prodname}} are free with a valid license.
+{: .alert .alert-info}
+
 ### Upgrades paths
 
 You can upgrade your cluster to a maximum of **two releases** from your existing version. For example, if you are on version 3.6, you can upgrade to 3.7, or you can upgrade directly to 3.8. However, you cannot upgrade beyond **two releases**; upgrading from 3.6 to 3.9 (three releases) is not supported. 
