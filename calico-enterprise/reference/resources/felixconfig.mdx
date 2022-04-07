@@ -44,6 +44,7 @@ spec:
 | awsRequestTimeout | Timeout used for communicating with the AWS API. | `5s`, `10s`, `1m` etc. | duration | `30s` |
 | dropActionOverride | Controls what happens to each packet that is denied by the current {{site.prodname}} policy. Normally the `Drop` or `LogAndDrop` value should be used. However when experimenting or debugging a scenario that is not behaving as you expect, the `Accept` and `LogAndAccept` values can be useful: then the packet will be still be allowed through. When one of the `LogAnd...` values is set, each denied packet is logged in syslog.\* | `Drop`, `Accept`, `LogAndDrop`, `LogAndAccept` | string | `Drop` |
 | chainInsertMode                    | Controls whether Felix hooks the kernel's top-level iptables chains by inserting a rule at the top of the chain or by appending a rule at the bottom. `Insert` is the safe default since it prevents {{site.prodname}}'s rules from being bypassed.  If you switch to `Append` mode, be sure that the other rules in the chains signal acceptance by falling through to the {{site.prodname}} rules, otherwise the {{site.prodname}} policy will be bypassed. | `Insert`, `Append` | string | `Insert` |
+| dataplaneWatchdogTimeout | Timeout before the main dataplane goroutine is determined to have hung and Felix will report non-live and non-ready.  Can be increased if the liveness check incorrectly fails (for example if Felix is running slowly on a heavily loaded system). | `90s`, `120s`, `10m` etc. | duration | `90s` |
 | defaultEndpointToHostAction        | This parameter controls what happens to traffic that goes from a workload endpoint to the host itself (after the traffic hits the endpoint egress policy).  By default {{site.prodname}} blocks traffic from workload endpoints to the host itself with an iptables "DROP" action. If you want to allow some or all traffic from endpoint to host, set this parameter to `Return` or `Accept`.  Use `Return` if you have your own rules in the iptables "INPUT" chain; {{site.prodname}} will insert its rules at the top of that chain, then `Return` packets to the "INPUT" chain once it has completed processing workload endpoint egress policy.  Use `Accept` to unconditionally accept packets from workloads after processing workload endpoint egress policy. | Drop, Return, Accept | string | `Drop` |
 | deviceRouteSourceAddress           | IPv4 address to set as the source hint for routes programmed by Felix. When not set the source address for local traffic from host to workload will be determined by the kernel. | IPv4 | string | `""` |
 | deviceRouteProtocol                | This defines the route protocol added to programmed device routes. | Protocol | int | RTPROT_BOOT |
@@ -276,6 +277,6 @@ For an EKS cluster, the necessary IAM role and policy is available by default. N
 
 ### Supported operations
 
-| Datastore type        | Create  | Delete | Delete (Global `default`)  |  Update  | Get/List | Notes
-|-----------------------|---------|--------|----------------------------|----------|----------|------
-| Kubernetes API server | Yes     | Yes    | No                         | Yes      | Yes      |
+| Datastore type        | Create | Delete | Delete (Global `default`) | Update | Get/List | Notes |
+|-----------------------|--------|--------|---------------------------|--------|----------|-------|
+| Kubernetes API server | Yes    | Yes    | No                        | Yes    | Yes      |       |
