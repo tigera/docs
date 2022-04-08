@@ -4,63 +4,51 @@ description: Understand how tiered policy works and supports microsegmentation.
 canonical_url: /security/tiered-policy
 ---
 
-### Big picture
+### Seamless network policy integration
 
-Learn the basics of tiered policy in {{site.prodname}}.
+**Network policy** is the primary tool for securing a Kubernetes network. It lets you restrict network traffic in your cluster so only the traffic that you want to flow is allowed. {{site.prodname}} provides more robust policy than Kubernetes, but you can use them together -- seamlessly. {{site.prodname}} supports:
 
-### About policy 
+- {{site.prodname}} network policy, (namespaced)
+- {{site.prodname}} global network policy (non-namespaced, global)
+- Kubernetes network policy 
 
-Network policy is the primary tool for securing a Kubernetes network. It lets you restrict network traffic in your cluster so only the traffic that you want to flow is allowed. {{site.prodname}} supports:
+### Tiers: what and why?
 
-- {{site.prodname}} network policy
-- {{site.prodname}} global network policy
-- Kubernetes network policy
+**Tiers** are a hierarchical construct used to group policies and enforce higher precedence policies that cannot be circumvented by other teams. As you will learn in this tutorial, tiers have built-in features that support workload microsegmentation. 
 
-The ability to use both types of policies in the same workflow promotes self-service for microservices teams, while preserving the security controls required by security teams.  
-
-### About tiers 
-
-**Tiers** are a hierarchical construct used to group policies and enforce higher precedence policies that cannot be circumvented by other teams. As part of your microsegmentation strategy, tiers let you apply identity-based protection to workloads and hosts. All {{site.prodname}} and Kubernetes network policies reside in **tiers**.  (Tiers are one of the major feature differences between Project Calico open-source and {{site.prodname}}.) 
-
-To start "thinking in tiers", you can group your teams and types of policies. For example, 
+All {{site.prodname}} and Kubernetes network policies reside in tiers. You can start "thinking in tiers" by grouping your teams and types of policies within each group. For example, we recommend these three tiers (platform, security, and application).
 
 ![policy-types]({{site.baseurl}}/images/policy-types.png)
 
-Next, you can determine the priority of policies in tiers, and draft your policies including whether to use namespaced policy, global policies, and Kubernetes policies. In the following example, the security team and platform teams can manage global {{site.prodname}} network policies that apply to all pods, while developer teams can safely manage pods within namespaces for their microservices using Kubernetes network policy. 
+Next, you can determine the priority of policies in tiers (from top to bottom). In the following example, that platform and security tiers use {{site.prodname}} global network policies that apply to all pods, while developer teams can safely manage pods within namespaces using Kubernetes network policy for their applications and microservices. 
 
 ![policy-tiers]({{site.baseurl}}/images/policy-tiers.png)
 
-### Tier layout in Policy Board 
+### Create a tier and policy
 
-All of the previous steps can be done right in Manager UI, which is a good place to start. Policy Board is a graphical view of your policies in tiers and policies. 
+To create a tier and policy in Manager UI:
 
-To create a tier in Policy Board:
+1. In the left navbar, click **Policies**.
+1. On the **Policies Board**, click **Add Tier**.
+1. Name the tier, select **Order, Add after** `tigera-security`, and save. 
+1. To create a policy in the tier, click **+ Add policy**.
 
-1. From the left navigation bar, click **Policies**.
-1. Click the policy board icon.
-   ![policy-board]({{site.baseurl}}/images/policy-board.png) 
-1. Click **Add Tier**.
-1. Name the tier, select Order, Add after `allow-tigera`, and save. 
+You can export all policies or a single policy to a YAML file.   
 
-**Alternative YAML**
+Here is a sample YAML that creates a security tier and uses `kubectl` to apply it. 
 
 ```yaml
-  apiVersion: projectcalico.org/v3
-  kind: Tier
-  metadata:
-    name: security
-  spec:
-    order: 300
+apiVersion: projectcalico.org/v3
+kind: Tier
+metadata:
+  name: security
+spec:
+ order: 300
 ```
-
-Apply the YAML using `kubectl`.
 
 ```bash
 kubectl apply -f security.yaml
 ```
-1. To create a policy, click the menu and select **Add policy**.
-   ![add-policy]({{site.baseurl}}/images/add-policy.png)
-
 
 ### The default tier: always last
 
@@ -68,38 +56,52 @@ The default tier is created during installation and is always the last tier.
 
 ![default-tier]({{site.baseurl}}/images/default-tier.png)
 
-It is the tier where:
+The default tier is where:
 
-- You manage all of your Kubernetes network policies
-- Calico open source network policies land if you upgrade to {{site.prodname}}
-- The policy recommendation feature puts recommended policies
-
+- You manage all Kubernetes network policies
+- Network and global network policies are placed when you upgrade from Project Calico to {{site.prodname}}
+- Recommended policies are placed when you use the **Recommend a policy** feature
+  
 ### System tiers
 
-System tiers are hidden by default. Currently, we have the `allow-tigera` tier that contains policies for {{site.prodname}} components. System tiers should not be edited or reordered. 
+System tiers are added during installation and are hidden by default. 
 
-![system-tiers]({{site.baseurl}}/images/system-tiers.png)
+- **allow-tigera** - contains component policies 
+   
+>**Important!** Do not modify these tiers or change their order. Create all of your tiers after system tiers.
+{: .alert .alert-warning}
 
->**Tip**: To reorder tiers, you must first make all tiers are visible. Click the “Toggle Tiers” icon and select “Show All”.
-{: .alert .alert-info}
+### Moving tiers
 
-![show-all-tiers]({{site.baseurl}}/images/show-all-tiers.png)
+You can move tiers by dragging and moving them in the graphical sequence, but all tiers must be visible first before you reorder tiers.   
 
+To show all tiers, click **View** and select all of the tiers in the Show tiers list. 
+
+![hidden-tiers]({{site.baseurl}}/images/hidden-tiers.png)
+
+Now you can reorder tiers by dragging and moving them.
+    
 ### Tier order 
 
-Tiers are ordered from left to right, starting with highest priority (also called highest precedence) tiers. In the following example, tier priorities are as follows:
+Tiers are ordered from left to right, starting with the highest priority (also called highest precedence) tiers. 
 
 ![tier-order]({{site.baseurl}}/images/tier-order.png)
 
-The tier you put first as highest priority depends on your environment. In compliance-driven environments, it is common for security teams to request that the security tier be the highest priority --  to ensure the cluster is in compliance at all times. However, if you’re trying to ensure platform communication first, you can put the platform tier first as shown in the above example. There is no one-size-fits-all order.
+In the example above, tier priorities are as follows:
+
+- **security tier** - is higher priority than application tier 
+- **platform tier** - is higher priority than security tier
+- **default tier** - is always the last tier, and cannot be reordered 
+
+The tier you put as the highest priority (after system tiers), depends on your environment. In compliance-driven environments, the security tier may be the highest priority (as shown above). There is no one-size-fits-all order. 
 
 ### Policy processing
 
-Policies are processed in sequential order from the top of a tier, to the bottom of a tier. 
+Policies are processed in sequential order from top to bottom.
 
 ![policy-processing]({{site.baseurl}}/images/policy-processing.png)
 
-There are two important mechanisms that drive how traffic is processed across tiered policies:
+Two mechanisms drive how traffic is processed across tiered policies:
 
 - Labels and selectors
 - Policy action rules
@@ -109,7 +111,8 @@ It is important to understand the roles they play.
 #### Labels and selectors
 
 Instead of IP addresses and IP ranges, network policies in Kubernetes depend on labels and selectors to determine which workloads can talk to each other. Workload identity is the same for Kubernetes and {{site.prodname}} network policies: as pods dynamically come and go, network policy is enforced based on the labels and selectors that you define. 
-The following diagrams shows the relationship between all of the elements that affect traffic flow: 
+
+The following diagrams show the relationship between all of the elements that affect traffic flow: 
 
 - **Tiers** group and order policies
 - **Policy action rules** define how to process traffic in and across tiers, and policy labels and selectors specify how groups of pods are allowed to communicate with each other and other network endpoints
@@ -131,7 +134,7 @@ As shown in the following diagram, at the end of each tier is an implicit defaul
 
 ![implicit-deny]({{site.baseurl}}/images/implicit-deny.svg)
 
-Let’s look at a Dev/Ops global network policy in a high precedence tier (Platform). The policy denies ingress and egress traffic to workloads that match selector, `env != "stage"`. To ensure that policies continue to evaluate traffic after this policy, the policy adds an action: pass for both ingress and egress.
+Let’s look at a Dev/Ops global network policy in a high precedence tier (Platform). The policy denies ingress and egress traffic to workloads that match selector, `env != "stage"`. To ensure that policies continue to evaluate traffic after this policy, the policy adds a Pass action for both ingress and egress.
 
 **Pass action rule example**
 
@@ -163,13 +166,13 @@ spec:
 
 Whoever is responsible for tier creation, also needs to understand how policy selects matching endpoints across tiers. For normal policy processing (without apply-on-forward, pre-DNAT, and do-not-track), if no policies within a tier apply to endpoints, the tier is skipped, and the tier's implicit deny behavior is not executed. 
 
-For example, if policy D in Tier 1 includes a **Pass** action rule, but no policy matches endpoints in Tier 2, Tier 2 is skipped, including the end of tier deny. And the first policy with a matching endpoint is in Tier 3, **policy J**.
+For example, if policy D in Tier 2 includes a **Pass action rule**, but no policy matches endpoints in Tier 3, Tier 3 is skipped, including the end of tier deny. The first policy with a matching endpoint is in Tier 4, policy J.
 
 ![endpoint-match]({{site.baseurl}}/images/endpoint-match.svg)
 
 #### Default endpoint behavior
 
-Also, tier managers need to understand the default behavior for endpoints based whether the endpoint is known or unknown, and the endpoint type. As shown in the following table: 
+Also, tier managers need to understand the default behavior for endpoints based on whether the endpoint is known or unknown, and the endpoint type. As shown in the following table: 
 
 - **Known endpoints** - {{site.prodname}} resources that are managed by Felix
 - **Unknown endpoints** - interfaces/resources not recognizable as part of our data model 
@@ -178,7 +181,7 @@ Also, tier managers need to understand the default behavior for endpoints based 
 | ---------------- | -------------------------------------------- | -------------------------------------------- |
 | Workload, {{site.prodname}} | Deny | Deny |
 | Workload, Kubernetes | Allow ingress from same Kubernetes namespace; allow all egress | Deny |
-| Host        | Deny. With exception of auto host endpoints, which gets `default-allow `. | Fall through and use iptable rules |
+| Host        | Deny. With exception of auto host endpoints, which get `default-allow`. | Fall through and use iptable rules |
 
 ### Best practices for tiered policy
 
@@ -186,16 +189,16 @@ To control and authorize access to {{site.prodname}} tiers, policies, and Kubern
 
 We recommend:
 
-- Limit tier creation permissions to Admin users only (`tigera-network-admin`); creating and reordering tiers affects your policy processing workflow 
+- Limit tier creation permissions to Admin users only; creating and reordering tiers affects your policy processing workflow 
 
 - Limit full CRUD operations on tiers and policy management to select Admin users
 
 - Review your policy processing whenever you add/reorder tiers  
 
-  For example, you may need to add new Pass action rules to policies before or after the new tier. Intervening tiers may require changes to policies before and after, depending on the endpoints.
+  For example, you may need to update Pass action rules to policies before or after the new tier. Intervening tiers may require changes to policies before and after, depending on the endpoints.
 
-- Use the [staged network policy]({{site.baseurl}}/security/policy-lifecycle/) feature to eliminate any cluster/network outage caused by introducing new policies. You can preview the new policy and see its effect in action before enforcing it.  
+- Use the **policy preview** feature to see effects of policy in action before enforcing it, and use the **staged network policy** feature to test the entire tier workflow before pushing it to production  
 
 ### Above and beyond
 
-- For details on using RBAC for fine-grained access to tiers and policies, see [Configure RBAC for tiered policies]({{site.baseurl}}/security/rbac-tiered-policies).
+- For details on using RBAC for fine-grained access to tiers and policies, see [Configure RBAC for tiered policies]({{site.baseurl}}/security/rbac-tiered-policies). 
