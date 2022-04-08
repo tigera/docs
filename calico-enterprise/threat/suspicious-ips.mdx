@@ -2,6 +2,7 @@
 title: Trace and block suspicious IPs
 description: Add threat intelligence feeds to trace network flows of suspicious IP addresses, and optionally block traffic to them.
 canonical_url: /threat/suspicious-ips
+feature_name: suspicious_ips
 ---
 
 ### Big picture

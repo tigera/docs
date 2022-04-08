@@ -2,6 +2,7 @@
 title: Schedule and run compliance reports
 description: Get the reports for regulatory compliance on Kubernetes workloads and environments.
 canonical_url: '/compliance/overview'
+feature_name: 'compliance'
 ---
 
 ### Big picture

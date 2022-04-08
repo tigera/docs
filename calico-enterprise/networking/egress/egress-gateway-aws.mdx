@@ -2,6 +2,7 @@
 title: Configure egress gateways, AWS
 description: Configure specific application traffic to exit the cluster through an egress gateway with a native AWS IP address.
 canonical_url: '/networking/egress/egress-gateway-aws'
+feature_name: 'egress_gateway_aws'
 ---
 
 ### Big picture
