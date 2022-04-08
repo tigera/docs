@@ -89,9 +89,9 @@ Tiers are ordered from left to right, starting with the highest priority (also c
 
 In the example above, tier priorities are as follows:
 
-- **security tier** - is higher priority than application tier 
-- **platform tier** - is higher priority than security tier
-- **default tier** - is always the last tier, and cannot be reordered 
+- **security tier** - is higher priority than platform tier 
+- **platform tier** - is higher priority than default tier
+- **default tier** - is always the last tier and cannot be reordered 
 
 The tier you put as the highest priority (after system tiers), depends on your environment. In compliance-driven environments, the security tier may be the highest priority (as shown above). There is no one-size-fits-all order. 
 
