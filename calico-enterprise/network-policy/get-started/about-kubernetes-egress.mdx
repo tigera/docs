@@ -42,12 +42,6 @@ resources need to be specified as IP addresses (or IP address ranges) within the
 associated with an external resource change, then every policy that referenced those IP addresses needs to be updated with
 the new IP addresses. This limitation can be circumvented using {{site.prodname}} [Use external IPs or networks rules in policy]({{site.baseurl}}/security/external-ips-policy), or [DNS policy]({{site.baseurl}}/security/domain-based-policy) in policy rules.
 
-In addition to using network policy, service meshes typically allow you to configure which external services each pod
-can access. In the case of Istio, {{site.prodname}} can be integrated to enforce network policy at the service mesh
-layer, including [L5-7 rules]({{site.baseurl}}/security/http-methods), as another alternative to using IP addresses in rules. To
-learn more about the benefits of this kind of approach, read our [Adopt a zero trust network model for security
-]({{site.baseurl}}/security/adopt-zero-trust) guide.
-
 Note in addition to everything mentioned so far, perimeter firewalls can also be used to restrict outgoing connections,
 for example to allow connections only to particular external IP address ranges, or external services. However, since
 perimeter firewalls typically cannot distinguish individual pods, the rules apply equally to all pods in the cluster.
@@ -99,10 +93,7 @@ deployments. In these scenarios, using egress gateways is likely to be a better 
 
 ### Above and beyond
 
-- [Adopt a zero trust network model for security]({{site.baseurl}}/security/adopt-zero-trust)
 - [Use external IPs or networks rules in policy]({{site.baseurl}}/security/external-ips-policy)
-- [Enforce network policy using Istio]({{site.baseurl}}/security/app-layer-policy)
-- [Use HTTP methods and paths in policy rules]({{site.baseurl}}/security/http-methods)
 - [Restrict a pod to use an IP address in a specific range]({{site.baseurl}}/networking/legacy-firewalls)
 - [Assign IP addresses based on topology]({{site.baseurl}}/networking/assign-ip-addresses-topology)
 - [Egress gateways]({{site.baseurl}}/networking/egress/)

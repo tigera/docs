@@ -28,8 +28,6 @@ Verify the cluster has these Networking settings:
 - Intranode visability is enabled
 - Network policy is disabled
 - Dataplane V2 is disabled
-- Istio is disabled  
-   The Istio setting on the GKE cluster prevents configuration of {{site.prodname}} application layer policy. To use Istio in your cluster, follow {% include open-new-window.html text='this GKE tutorial' url='https://cloud.google.com/kubernetes-engine/docs/tutorials/installing-istio' %} to install the open source version of Istio on GKE.
 - GKE master access to TCP ports 5443, 8080 and 9090
    The GKE master must be able to access the {{site.prodname}} API server which runs with pod networking on TCP ports 5443 and 8080, and the {{site.prodname}} Prometheus server which runs with pod networking on TCP port 9090.  For multi-zone clusters and clusters with the "master IP range" configured, you will need to add a GCP firewall rule to allow access to those ports from the master nodes.   
 
