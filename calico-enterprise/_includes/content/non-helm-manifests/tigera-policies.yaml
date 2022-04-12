@@ -28,8 +28,17 @@ spec:
     protocol: TCP
     source:
       # This policy allows Calico Enterprise API Server access from anywhere: replace it with
-      # the addresses of your Kubernetes API Servers if those are static.
+      # the IPv4 addresses of your Kubernetes API Servers if those are static.
       nets: ["0.0.0.0/0"]
+    destination:
+      # The ports Calico Enterprise API Server and Calico Enterprise Query Server are configured to listen on.
+      ports: [443, 5443, 8080, 10443]
+  - action: Allow
+    protocol: TCP
+    source:
+      # This policy allows Calico Enterprise API Server access from anywhere: replace it with
+      # the IPv6 addresses of your Kubernetes API Servers if those are static.
+      nets: ["::/0"]
     destination:
       # The ports Calico Enterprise API Server and Calico Enterprise Query Server are configured to listen on.
       ports: [443, 5443, 8080, 10443]
@@ -89,9 +98,18 @@ spec:
   - action: Allow
     protocol: TCP
     source:
-      # This policy allows access to Calico Enterprise Manager from anywhere: narrow it down if
+      # This policy allows IPv4 access to Calico Enterprise Manager from anywhere: narrow it down if
       # only certain subnets should be allowed.
       nets: ["0.0.0.0/0"]
+    destination:
+      # By default, Calico Enterprise Manager is accessed over https. Update this if needed.
+      ports: [9443]
+  - action: Allow
+    protocol: TCP
+    source:
+      # This policy allows IPv6 access to Calico Enterprise Manager from anywhere: narrow it down if
+      # only certain subnets should be allowed.
+      nets: ["::/0"]
     destination:
       # By default, Calico Enterprise Manager is accessed over https. Update this if needed.
       ports: [9443]
@@ -967,10 +985,19 @@ spec:
   - action: Allow
     protocol: TCP
     source:
-      # This policy allows access to Kibana from anywhere.
+      # This policy allows access to Kibana from anywhere via IPv4.
       # Narrow this down to your management network or remove this
       # policy to block access to Kibana.
       nets: ["0.0.0.0/0"]
+    destination:
+      ports: [5601]
+  - action: Allow
+    protocol: TCP
+    source:
+      # This policy allows access to Kibana from anywhere via IPv4.
+      # Narrow this down to your management network or remove this
+      # policy to block access to Kibana.
+      nets: ["::/0"]
     destination:
       ports: [5601]
   - action: Allow
@@ -1253,9 +1280,17 @@ spec:
       destination:
         # This rule is intended to allow egress between dex and your identity provider. Modify it if your server runs on a non-standard port.
         ports: [443, 6443, 389, 636]
-        # This subnet is added to represent the address(es) where your identity provider is running. If you make this subnet
+        # This subnet is added to represent the IPv4 address(es) where your identity provider is running. If you make this subnet
         # more specific, network policies are enforced to block egress to all addresses that do not correspond with your IdP.
-        nets: ['0.0.0.0/0']
+        nets: ["0.0.0.0/0"]
+    - action: Allow
+      protocol: TCP
+      destination:
+        # This rule is intended to allow egress between dex and your identity provider. Modify it if your server runs on a non-standard port.
+        ports: [443, 6443, 389, 636]
+        # This subnet is added to represent the IPv6 address(es) where your identity provider is running. If you make this subnet
+        # more specific, network policies are enforced to block egress to all addresses that do not correspond with your IdP.
+        nets: ["::/0"]
 
 ---
 
