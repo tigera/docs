@@ -14,9 +14,7 @@ Using {{site.prodname}} network policy, you can leverage Kubernetes service acco
 - Control which service accounts the developer team can use within a namespace
 - Write high-priority network policies for those service accounts (that the developer team cannot override) 
 
-The network security team can maintain full control of security, while selectively allowing developer operations where it makes sense.  
-
-Using **Istio-enabled apps** with {{site.prodname}} network policy, the cryptographic identity associated with the service account is checked (along with the network identity) to achieve two-factor authentication.
+The network security team can maintain full control of security, while selectively allowing developer operations where it makes sense. 
 
 ### Features
 

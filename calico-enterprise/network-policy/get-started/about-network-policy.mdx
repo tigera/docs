@@ -91,8 +91,7 @@ namespaced [NetworkPolicy]({{site.baseurl}}/reference/resources/networkpolicy) a
 features beyond those supported by Kubernetes network policy. This includes support for:
 - policy ordering/priority
 - deny and log actions in rules
-- more flexible match criteria for applying policies and in policy rules, including matching on Kubernetes
-  ServiceAccounts, and (if using Istio & Envoy) cryptographic identity and layer 5-7 match criteria such as HTTP & gRPC URLs.
+- more flexible match criteria for applying policies and in policy rules, including matching on Kubernetes ServiceAccounts
 - ability to reference non-Kubernetes workloads in polices, including matching on
   [NetworkSets]({{site.baseurl}}/reference/resources/networkset) in policy rules
 
@@ -130,12 +129,6 @@ model to provide [hierarchical policy](#hierarchical-policy).
 As {{site.prodname}} policies can be enforce on host interfaces, you can use them to protect your Kubernetes nodes (not
 just your pods), including for example, limiting access to node ports from outside of the cluster. To learn more, check
 out the {{site.prodname}} [policy for hosts]({{site.baseurl}}/security/hosts) guides.
-
-#### Integrates with Istio
-When used with Istio service mesh, {{site.prodname}} policy engine enforces the same policy model at the host networking
-layer and at the service mesh layer, protecting your infrastructure from compromised workloads and protecting your
-workloads from compromised infrastructure. This also avoids the need for dual provisioning of security at the service
-mesh and infrastructure layers, or having to learn different policy models for each layer.
 
 #### Extendable with {{site.prodname}}
 [Calico Enterprise]({{site.baseurl}}/calico-enterprise/) adds even richer network policy capabilities, with the ability

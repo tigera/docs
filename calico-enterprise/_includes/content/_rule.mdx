@@ -11,8 +11,7 @@ are executed in order.
 | notICMP     | Negative match on ICMP.                    |                                                                   | [ICMP](#icmp)             |            |
 | ipVersion   | Positive IP version match.                 | `4`, `6`                                                          | integer                   |            |
 | source      | Source match parameters.                   |                                                                   | [EntityRule](#entityrule) |            |
-| destination | Destination match parameters.              |                                                                   | [EntityRule](#entityrule) |            |
-| http        | Match HTTP request parameters. Application layer policy must be enabled to use this field. |                   | [HTTPMatch](#httpmatch)   |            |
+| destination | Destination match parameters.              |                                                                   | [EntityRule](#entityrule) |            |                                |
 
 After a `Log` action, processing continues with the next rule; `Allow` and `Deny` are immediate
 and final and no further rules are processed.
