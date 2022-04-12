@@ -171,6 +171,8 @@ Kubernetes is particularly vulnerable to the spread of malware due to the open n
 <script src="https://fast.wistia.com/embed/medias/7wpdipagkg.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:18% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:25%;left:0;position:absolute;top:0;width:25%;"><div class="wistia_embed wistia_async_7wpdipagkg videoFoam=true" style="height:25%;position:relative;width:25%"><div class="wistia_swatch" style="height:25%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:25%;"><img src="https://fast.wistia.com/embed/medias/7wpdipagkg/swatch" style="filter:blur(5px);height:25%;object-fit:contain;width:25%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
 
 
+{% comment %}  
 **Documentation**
 
 - [Adopt zero trust security model]({{site.baseurl}}/security/adopt-zero-trust)
+{% endcomment %}

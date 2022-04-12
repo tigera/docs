@@ -13,7 +13,7 @@ canonical_url: '/getting-started/windows-calico/limitations'
 | Networking                     | **Supported**:<br />- Calico Enterprise VXLAN, no cross-subnet or VXLAN MTU settings with [limitations](#vxlan-networking-limitations)<br />- Calico Enterprise non-overlay mode with BGP peering with [limitations](#bgp-networking-limitations)<br />- IPv4 |
 |                                | **Not supported**: <br />- Overlay mode with BGP peering<br />- IP in IP overlay with BPG routing<br />- Cross-subnet support and MTU setting for VXLAN<br />- IPv6 and dual stack<br />- Dual-ToR<br />- Service advertisement<br />- Multiple networks to pods |
 | Policy                         | **Supported**: <br />- Tiered policy with [limitations](#network-policy-with-tiers)<br />- DNS policy with [limitations](#dns-policy-limitations)<br />- Policy recommendations<br />- Policy impact preview |
-|                                | **Not supported**: <br />- Staged network-policy<br />- Firewall integrations<br />- Application Layer Policy (ALP) for Istio<br />- Policy for hosts (host endpoints, including automatic host endpoints) |
+|                                | **Not supported**: <br />- Staged network-policy<br />- Firewall integrations<br />- Policy for hosts (host endpoints, including automatic host endpoints) |
 | Visibility and troubleshooting | **Supported**:<br />- Flow logs for traffic to/from windows pods with [limitations](#flow-log-limitations)           <br />- Audit logs<br />- Alerts |
 |                                | **Not supported**: <br />- Packet capture<br />- DNS logs<br />- iptable logs<br />- L7 metrics |
 | Threat defense                 | **Supported**: Block traffic to/from src/dst based on a threat feed |

@@ -12,7 +12,7 @@ Enforce which network traffic that is allowed or denied using rules in Calico ne
 
 #### Extends Kubernetes network policy
 
-Calico network policy provides a richer set of policy capabilities than Kubernetes including: policy ordering/priority, deny rules, and more flexible match rules. While Kubernetes network policy applies only to pods, Calico network policy can be applied to multiple types of endpoints including pods, VMs, and host interfaces. Finally, when used with Istio service mesh, Calico network policy supports securing applications layers 5-7 match criteria, and cryptographic identity.
+Calico network policy provides a richer set of policy capabilities than Kubernetes including: policy ordering/priority, deny rules, and more flexible match rules. While Kubernetes network policy applies only to pods, Calico network policy can be applied to multiple types of endpoints including pods, VMs, and host interfaces. 
 
 #### Write once, works everywhere
 
@@ -33,7 +33,6 @@ The Calico **NetworkPolicy** supports the following features:
   - **Source and destination match criteria**:
     - Ports: numbered, ports in a range, and Kubernetes named ports
     - Protocols: TCP, UDP, ICMP, SCTP, UDPlite, ICMPv6, protocol numbers (1-255)
-    - HTTP attributes (if using Istio service mesh)
     - ICMP attributes
     - IP version (IPv4, IPv6)
     - IP or CIDR

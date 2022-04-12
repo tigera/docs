@@ -35,8 +35,6 @@ The following table details the key/value pairs in the JSON blob, including thei
 | `num_process_names`   | long              | Number of unique process names aggregated into this entry during this export interval. |
 | `num_process_ids`     | long              | Number of unique process ids aggregated into this entry during this export interval. |
 | `num_process_args`    | long              | Number of unique process args aggregated into this entry during this export interval. |
-| `http_requests_allowed_in` | long         | Number of allowed incoming HTTP requests during the export interval. Only [application layer policy](../../../security/app-layer-policy) enabled flows are counted. |
-| `http_requests_denied_in`  | long         | Number of denied incoming HTTP requests during the export interval. Only [application layer policy](../../../security/app-layer-policy) enabled flows are counted. |
 | `nat_outgoing_ports`  | array of ints     | List of [NAT](https://en.wikipedia.org/wiki/Network_address_translation) outgoing ports for the packets that were Source NAT'd in the flow |
 | `packets_in`          | long              | Number of incoming packets since the last export. |
 | `packets_out`         | long              | Number of outgoing packets since the last export. |
