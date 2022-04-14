@@ -30,12 +30,15 @@ By default, {{site.prodname}} Typha and Node components are configured with self
    kubectl create configmap typha-ca -n tigera-operator --from-file=caBundle=</path/to/CA/cert> --dry-run -o yaml --save-config > typha-node-tls.yaml
    echo '---' >> typha-node-tls.yaml
    ```
+   > **Note**: The contents of the caBundle field should contain the CA or the certificates for both Typha and Node. 
+   > It is possible to add multiple PEM blocks.
+   {: .alert .alert-success}
 
 1. Create the Typha Secret with the following command:
    ```bash
    kubectl create secret generic typha-certs -n tigera-operator \
      --from-file=cert.crt=</path/to/typha/cert> --from-file=key.key=</path/to/typha/key> \
-     --from-literal=common-name=<typha certificate common name> --dry-run  -o yaml --save-config >> typha-node-tls.yaml
+     --from-literal=common-name=<typha certificate common name> --dry-run -o yaml --save-config >> typha-node-tls.yaml
    echo '---' >> typha-node-tls.yaml
    ```
 
@@ -44,13 +47,9 @@ By default, {{site.prodname}} Typha and Node components are configured with self
 
 1. Create the Node Secret with the following command:
    ```bash
-   kubectl create configmap node-certs -n tigera-operator \
-     --from-file=cert.crt=</path/to/node/cert> --from-file=key.key=</path/to/node/key> \
-     --from-literal=common-name=<node certificate common name> >> typha-node-tls.yaml
    kubectl create secret generic node-certs -n tigera-operator \
      --from-file=cert.crt=</path/to/node/cert> --from-file=key.key=</path/to/node/key> \
-     --from-literal=common-name=<node certificate common name> --dry-run  -o yaml --save-config >> typha-node-tls.yaml
-
+     --from-literal=common-name=<node certificate common name> --dry-run -o yaml --save-config >> typha-node-tls.yaml
    ```
 
    > **Note**: If using SPIFFE identifiers replace `--from-literal=common-name=<node certificate common name>` with `--from-literal=uri-san=<node SPIFFE ID>`.
