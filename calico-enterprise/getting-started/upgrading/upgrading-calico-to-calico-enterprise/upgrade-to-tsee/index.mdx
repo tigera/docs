@@ -1,6 +1,6 @@
 ---
-description: Upgrade from an earlier release of Calico Enterprise using Kubernetes.
-canonical_url: '/maintenance/kubernetes-upgrade-tsee/index'
+description: Upgrade to Calico Enterprise from Calico installed with Helm.
+canonical_url: '/maintenance/upgrade-to-tsee/index'
 show_read_time: false
 show_toc: false
 ---
