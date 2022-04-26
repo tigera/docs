@@ -594,7 +594,7 @@ For the "west-1" availability zone:
 * IP pool "hosts-west-1", CIDR `100.64.0.0/25` (the first 128 addresses in the "west-1" VPC subnet).
 
   * We'll reserve these addresses for hosts to use.
-  * `100.64.0.0/25` covers the addresses from `100.64.0.0` to `100.64.1.255` (but addresses `100.64.0.0` to `100.64.0.3`
+  * `100.64.0.0/25` covers the addresses from `100.64.0.0` to `100.64.0.127` (but addresses `100.64.0.0` to `100.64.0.3`
     were reserved above).
 
 * IP pool "egress-red-west-1", CIDR `100.64.0.128/31` (the next 2 IPs from the "west-1" subnet).
@@ -609,7 +609,7 @@ For the "west-2" availability zone:
 
 * IP pool "hosts-west-2", CIDR `100.64.4.0/25` (the first 128 addresses in the "west-2" VPC subnet).
 
-  * `100.64.4.0/25` covers the addresses from `100.64.4.0` to `100.64.5.255` (but addresses `100.64.4.0` to `100.64.4.3`
+  * `100.64.4.0/25` covers the addresses from `100.64.4.0` to `100.64.4.127` (but addresses `100.64.4.0` to `100.64.4.3`
     were reserved above).
 
 * IP pool "egress-red-west-2", CIDR `100.64.4.128/31` (the next 2 IPs from the "west-2" subnet).
