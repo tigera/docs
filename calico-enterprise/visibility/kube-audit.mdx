@@ -59,7 +59,7 @@ At a minimum, enable audit logs for these resources that are involved in network
 
 **Sample policy**
 
-The following sample policy audits changes to Kubernetes Pod, Namespace, ServiceAccount, Endpoints and NetworkPolicy resources. To add other audit logs for resources beyond network policy, see the {% include open-new-window.html text='Kubernetes docs' url='https://kubernetes.io/docs/tasks/debug-application-cluster/audit/#audit-policy' %}, or review this function for inspiration (which generates the GKE audit policy). 
+The following sample policy audits changes to Kubernetes Pod, Namespace, ServiceAccount, Endpoints and NetworkPolicy resources. To add other audit logs for resources beyond network policy, see the {% include open-new-window.html text='Kubernetes docs' url='https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/' %}, or review this function for inspiration (which generates the GKE audit policy).
 
 ```yaml
 apiVersion: audit.k8s.io/v1beta1
@@ -112,7 +112,7 @@ At a minimum, enable audit logs for these resources that are involved in network
 
 **Sample policy**
 
-The following sample policy audits changes to Kubernetes Pod, Namespace, ServiceAccount, Endpoints and NetworkPolicy resources. To add other audit logs for resources beyond network policy, see the {% include open-new-window.html text='Kubernetes docs' url='https://kubernetes.io/docs/tasks/debug-application-cluster/audit/#audit-policy' %}, or review this function for inspiration (which generates the GKE audit policy). 
+The following sample policy audits changes to Kubernetes Pod, Namespace, ServiceAccount, Endpoints and NetworkPolicy resources. To add other audit logs for resources beyond network policy, see the {% include open-new-window.html text='Kubernetes docs' url='https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/' %}, or review this function for inspiration (which generates the GKE audit policy).
 
 ```yaml
 apiVersion: audit.k8s.io/v1beta1
@@ -230,7 +230,7 @@ At a minimum, enable audit logs for these resources that are involved in network
 
 **Sample policy**
 
-The following sample policy audits changes to Kubernetes Pod, Namespace, ServiceAccount, Endpoints and NetworkPolicy resources. To add other audit logs for resources beyond network policy, see the {% include open-new-window.html text='Kubernetes docs' url='https://kubernetes.io/docs/tasks/debug-application-cluster/audit/#audit-policy' %}, or review this function for inspiration (which generates the GKE audit policy). 
+The following sample policy audits changes to Kubernetes Pod, Namespace, ServiceAccount, Endpoints and NetworkPolicy resources. To add other audit logs for resources beyond network policy, see the {% include open-new-window.html text='Kubernetes docs' url='https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/' %}, or review this function for inspiration (which generates the GKE audit policy).
 
 ```yaml
 apiVersion: audit.k8s.io/v1beta1
