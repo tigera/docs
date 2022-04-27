@@ -166,7 +166,7 @@ spec:
 
 Whoever is responsible for tier creation, also needs to understand how policy selects matching endpoints across tiers. For normal policy processing (without apply-on-forward, pre-DNAT, and do-not-track), if no policies within a tier apply to endpoints, the tier is skipped, and the tier's implicit deny behavior is not executed. 
 
-For example, if policy D in Tier 2 includes a **Pass action rule**, but no policy matches endpoints in Tier 3, Tier 3 is skipped, including the end of tier deny. The first policy with a matching endpoint is in Tier 4, policy J.
+In the following example, **policy D** in the Security tier includes a Pass action rule because we want traffic evaulation to continue to the next tier in sequence. In the Platform tier, there are no selectors in policies that match endpoints so the tier is skipped, including the end of tier deny. Evaluation continues to the Application tier. **Policy J** is the first policy with a matching endpoint.
 
 ![endpoint-match]({{site.baseurl}}/images/endpoint-match.svg)
 
