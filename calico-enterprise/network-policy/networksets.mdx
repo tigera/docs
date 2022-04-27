@@ -4,37 +4,19 @@ description: Learn the power of network sets and why you should create them.
 canonical_url: '/security/networksets'
 ---
 
-### Big picture
+### Visualize traffic to/from your cluster
 
-Learn why network sets are integral to policy, visibility, and threat defense. 
+Modern applications often integrate with third-party APIs and SaaS services that live outside Kubernetes clusters. To securely enable access to those integrations, you must be able to limit IP ranges for egress and ingress traffic to workloads. Limiting IP lists or ranges is also used to deny-list bad actors or embargoed countries. To limit IP ranges, you need to use the {{site.prodname}} resource called **network sets**.
 
-### Value
+### What are network sets?
 
-Network sets are a grouping mechanisms for arbitrary sets of IPs/subnets/CIDRs or domains. Key use cases are:
-
-- **Use/reuse in policy for scaling** 
-    
-    Rather than updating individual policies with CIDRs or domains, you reference network sets in policies using selectors. 
-
-- **Visibility to traffic to/from a cluster**
-    
-    View traffic to/from a cluster in Service Graph for apps that integrate with third-party APIs and SaaS services. 
-
-- **Global deny lists**
-    
-    Create a "deny-list" of CIDRs for bad actors or embargoed countries in policy.
-
-### Concepts
-
-#### About network sets
-
-**Network sets** are a grouping mechanism that allows you to create an arbitrary set of IP subnetworks/CIDRs or domains that can be matched by standard label selectors in Kubernetes or {{site.prodname}} network policy. 
+**Network sets** are a grouping mechanism that allows you to create an arbitrary set of IP subnetworks/CIDRs or domains that can be matched by standard label selectors in Kubernetes or {{site.prodname}} network policy. Like IP pools for pods, they allow you to reuse/scale sets of IP addresses in policies. 
 
 A **network set** is a namespaced resource that you can use with Kubernetes or {{site.prodname}} network policies; a **global network set** is a cluster-wide resource that you can use with {{site.prodname}} network policies.
 
 Like network policy, you manage user access to network sets using standard Kubernetes RBAC.
 
-#### Why are network sets powerful?
+### Why are network sets powerful?
 
 If you are familiar with Service Graph in Manager UI, you know the value of seeing pod-to-pod traffic within your cluster. But what about traffic external to your cluster? 
 
@@ -48,7 +30,7 @@ Here are just a few examples of how network sets can be used:
 
 - **Egress access control**
 
-    Networksets are a key resource for defining egress access controls; for example, securing ingress to microservices/apps or egress from workloads outside the cluster.
+    Network sets are a key resource for defining egress access controls; for example, securing ingress to microservices/apps or egress from workloads outside the cluster.
 
 - **Troubleshooting**
 
@@ -58,33 +40,35 @@ Here are just a few examples of how network sets can be used:
 
     Network sets are critical when scaling your deployment. You may have only a few CIDRs when you start. But as you scale out, it is easier to update a handful of network sets than update each network policy individually. Also, in a Kubernetes deployment, putting lots of anything (CIDRs, ports, policy rules) directly into policies causes inefficiencies in traffic processing (iptables/eBPF). 
 
-- **Microsegmentation**
+- **Microsegmentation and shift left**
 
-    Network sets provide the same microsegmentation controls as network policy. For example, you can allow specific users to create policy (that reference networksets), but allow only certain users to manage networksets.
+    Network sets provide the same microsegmentation controls as network policy. For example, you can allow specific users to create policies (that reference network sets), but allow only certain users to manage network sets.
 
 - **Threat defense**
 
     Network sets are key to being able to manage threats by blocking bad IPs with policy in a timely way. Imagine having to update individual policies when you find a bad IP you need to quickly block. You can even give access to a controller that automatically updates CIDRs in a network set when a bad IP is found. 
 
-### How to
+### Create a network set and use it in policy
 
-#### Create a network set and use it in policy
+In this section, we’ll walk through how to create a namespaced network set in Manager UI. You can follow along using your cluster or tigera-labs cluster.
 
-In this section, we’ll walk through how to create a namespaced network set in Manager UI. 
-
-In this example, you will create a network set named, `google`. This network set contains a list of trusted google endpoints for the app called, `storefront`. As a service owner, you want to be able to see traffic leaving the storefront app to these trusted sites in Service Graph. Instead of matching endpoints on IP addresses, we will use domain names.
+In this example, you will create a network set named, `google`. This network set contains a list of trusted google endpoints for a microservice called, `hipstershop`. As a service owner, you want to be able to see traffic leaving the microservices in Service Graph. Instead of matching endpoints on IP addresses, we will use domain names.
 
 1. From the left navbar, click **Network Sets**. 
 1. Click **Add Network Set**, and enter these values.
    - For Name: `google`
-   - For Scope: Select **Namespace** and enter, `storefront`
-1. Click **Add label**.
+   - For Scope: Select **Namespace** and select, `hipstershop`
+1. Under Labels, click **Add label**.
    - In the Select key field, enter `destinations` and click the green bar to add this new entry. 
-   - In the Value field, enter `google`, click the green bar to add the entry, and click Save.
+   - In the Value field, enter `google`, click the green bar to add the entry, and save.
 1. For Domains, click **+Add Domain** and these URLs: `clouddebugger.googleapis.com`, `cloudtrace.googleapis.com`, `metadata.google.internal`, `monitoring.googleapis.com`.
 1. Click **Create Network Set**. 
 
-You’ve created your first network set. The YAML looks likes this:
+You’ve created your first network set. 
+
+![add-networkset-google]({{site.baseurl}}/images/add-networkset-google.png)
+
+The YAML looks like this:
 
 ```yaml
 kind: NetworkSet
@@ -93,7 +77,7 @@ metadata:
   name: google
   labels:
     destinations: google
-  namespace: storefront
+  namespace: hipstershop
 spec:
   nets: []
   allowedEgressDomains:
@@ -103,32 +87,35 @@ spec:
     - monitoring.googleapis.com
 ```
 
-Now we write DNS policy for our storefront app that allows egress traffic to the trusted google sites. The following network policy allows egress access for all destination selectors labeled, `google`. Note that putting domains in a network set and using them in policy is the best practice. 
+Next, we write a DNS policy for hipstershop that allows egress traffic to the trusted google sites. The following network policy allows egress access for all destination selectors labeled, `google`. Note that putting domains in a network set referencing it in policy is the best practice. Also, note that using `selector: all()` should only be used if all pods in the namespace can access all of the domains in the network set; if not, you should create separate policies accordingly. 
 
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
-  name: allow-egress-to-domain
-  namespace: storefront
+  name: application.allow-egress-domain
+  namespace: hipstershop
 spec:
-  order: 1
+  tier: application
+  order: 0
   selector: all()
-  types:
-  - Egress
+  serviceAccountSelector: ''
   egress:
-  - action: Allow
-    destination:
-      selector: destinations == 'google'
+    - action: Allow
+      source: {}
+      destination:
+        selector: destinations == "google"
+  types:
+    - Egress
 ```
 
 ### Network sets in Service Graph
 
-Continuing with our sample `storefront` app, if we go to Service Graph, we see our storefront app (highlighted in yellow). 
+Continuing with our `hipstershop` example, if you go to Service Graph, you see hipstershop (highlighted in yellow). 
 
-![storefront-app]({{site.baseurl}}/images/storefront-app.png)
+![hipstershop]({{site.baseurl}}/images/hipstershop.png)
 
-If we double-click `storefront` to drill-down, we now see the `google` network set icon (highlighted in yellow). We now have visibility to traffic external from google sites to the storefront app. 
+If we double-click `hipstershop` to drill down, we now see the `google` network set icon (highlighted in yellow). We now have visibility to traffic external from google sites to hipstershop. (If you are using the tigera-labs cluster, note that the network set will not be displayed as shown below.)
 
 ![google-networkset]({{site.baseurl}}/images/google-networkset.png)
 
@@ -136,7 +123,7 @@ Service Graph provides a view into how services are interconnected in a consumab
 
 ### Tutorial
 
-In the following example, we create a global network set resource for a trusted load-balancer that can be used with microservices and applications. The label,  `trusted-ep: load-balancer` is how this global network set can be referenced in policy.
+In the following example, we create a global network set resource for a trusted load-balancer that can be used with microservices and applications. The label, `trusted-ep: load-balancer` is how this global network set can be referenced in policy.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -151,7 +138,7 @@ spec:
     - 10.0.0.1/32
     - 10.0.0.2/32
 ```
-The following network policy uses the `selector: trusted-ep == "load balancer"` to reference the above globalnetwork set. All applications in the `app2-ns` namespace, that match `app2` and `svc1` are allowed ingress traffic from the trusted load balance on port 1001. 
+The following network policy uses the `selector: trusted-ep == "load balancer"` to reference the above GlobalNetworkSet. All applications in the `app2-ns` namespace, that match `app2` and `svc1` are allowed ingress traffic from the trusted load balance on port 1001. 
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -176,7 +163,7 @@ spec:
 ```
 #### Advanced policy rules with network sets
 
-When you combine {{site.prodname}} policy rules with network sets, you have powerful ways to fine tune. The following example combines network sets with specific rules in a global network policy to deny access more quickly. 
+When you combine {{site.prodname}} policy rules with network sets, you have powerful ways to fine-tune. The following example combines network sets with specific rules in a global network policy to deny access more quickly. 
 We start by creating a {{site.prodname}} GlobalNetworkSet that specifies a list of CIDR ranges we want to deny: 192.0.2.55/32 and 203.0.113.0/24.
 
 ```yaml
@@ -249,7 +236,7 @@ spec:
 
 - Avoid overlapping IP addresses/subnets in networkset/globalnetworkset definitions
 
-The following table provide guidance on efficient use of network sets. 
+The following table provides guidance on the efficient use of network sets. 
 
 | Policy                                                       | Network set                            | Results                                                      |
 | ------------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------ |
@@ -257,7 +244,8 @@ The following table provide guidance on efficient use of network sets.
 | source: nets: [ ... handful ...]                             | Not used                               | **Efficient**<br/> - Handful of iptables/eBPF rules <br /> - 0 IP sets |
 | source: selector: foo="bar"                                  | One network set with 2000 x /32s       | **Fairly efficient**  <br />- 1 iptables/eBPF rule<br />- 1 IP sets with 2000 entries |
 |                                                              | Two network sets with 1000 each x /32s | **Efficient**<br/>- 2 iptable/eBPF rules<br />- 2 IP set with 1000 entries |
-| source: <br />  nets: [... 2000 /32s ...]<br />- source:  <br />  nets: [1 x /32]<br />- source:  nets: [1 x /32]<br />- ... x 2000 | Not used                               | **Inefficient**<br />Results in programming 2k iptables/eBPF rules <br />- 2000+ iptables/eBPF rules<br />- 0 IP sets |     
+| source: <br />  nets: [... 2000 /32s ...]<br />- source:  <br />  nets: [1 x /32]<br />- source:  nets: [1 x /32]<br />- ... x 2000 | Not used                               | **Inefficient**<br />Results in programming 2k iptables/eBPF rules <br />- 2000+ iptables/eBPF rules<br />- 0 IP sets |
+
 
 ### Above and beyond
 
