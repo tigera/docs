@@ -1,7 +1,7 @@
 ---
 title: Upgrade from Calico to Calico Enterprise
 description: Steps to upgrade from open source Calico to Calico Enterprise.
-canonical_url: /maintenance/upgrade-to-tsee
+canonical_url: /maintenance/upgrade-to-tsee/standard
 ignore_installation_cr: true
 cr_directory: manifests_cr
 ---

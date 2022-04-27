@@ -1,7 +1,7 @@
 ---
 title: Upgrade Calico Enterprise installed with the operator
 description: Upgrading from an earlier release of Calico Enterprise with the operator.
-canonical_url: /maintenance/kubernetes-upgrade-tsee
+canonical_url: /maintenance/kubernetes-upgrade-tsee/operator
 show_toc: false
 ---
 
