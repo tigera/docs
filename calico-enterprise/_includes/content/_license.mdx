@@ -2,7 +2,7 @@
    After you submit a sales purchase order to Tigera, 1-2 days.
 
 #### Is there a grace period? 
-   No.
+   Yes, there is a grace period of 30 days (as of April 2022).
 
 #### Does Manager UI display license expiration?
    Yes. The license indicator in Manager UI (top right banner) turns red when the license expires.
