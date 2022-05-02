@@ -1022,3 +1022,4 @@ Please see also:
 
 - The `egressIP...` and `aws...` fields of the [FelixConfiguration resource]({{site.baseurl}}/reference/resources/felixconfig#spec).
 - [Troubleshooting egress gateways]({{site.baseurl}}/networking/egress/troubleshoot).
+- [Additional configuration for egress gateway maintenance]({{site.baseurl}}/networking/egress/egress-gateway-maintenance)
