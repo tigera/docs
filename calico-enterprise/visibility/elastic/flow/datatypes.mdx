@@ -28,6 +28,7 @@ The following table details the key/value pairs in the JSON blob, including thei
 | `dest_service_port`      | keyword        | Port name of the destination service.<br />A `-` means :<br />- the original destination did not correspond to a known Kubernetes service (e.g. a services ClusterIP), or<br />- the destination port is aggregated.<br />A `*` means there are multiple service port names matching the destination port number. |
 | `dest_type`           | keyword           | Destination endpoint type. Possible values:<br />- `wep`: A workload endpoint, a pod in Kubernetes.<br />- `ns`: A Networkset. If multiple Networksets match, then the one with the longest prefix match is chosen.<br />- `net`: A Network. The IP address did not fall into a known endpoint type.|
 | `dest_labels`         | array of keywords | Labels applied to the destination pod. A hyphen indicates aggregation. |
+| `dest_domains`        | array of keywords | Top level domains associated with the destination IP. Only valid for source reported flows to destinations external to the cluster. |
 | `reporter`            | keyword           | - `src`: flow came from the pod that initiated the connection.<br />- `dst`: flow came from the pod that received the initial connection. |
 | `num_flows`           | long              | Number of flows aggregated into this entry during this export interval. |
 | `num_flows_completed` | long              | Number of flows that were completed during the export interval. |
