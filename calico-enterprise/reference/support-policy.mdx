@@ -35,6 +35,9 @@ See the OpenShift system requirements for more information on a specific release
 ### Rancher Kubernetes Engine (RKE)
 {{site.prodname}} supports the latest version of RKE at time of {{site.prodname}} release, as stated in the system requirements.
 
+### Rancher's Next Generation Kubernetes Distribution (RKE2)
+{{site.prodname}} supports the versions of RKE2 that align with supported kubernetes versions in {{site.prodname}} release, as stated in the system requirements.
+
 ### Tanzu Kubernetes Grid (TKG)
 See the Tanzu Kubernetes Grid (TKG) system requirements for more information on a specific release of {{site.prodname}}.
 
