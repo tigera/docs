@@ -6,6 +6,17 @@ description: Calico Enterprise Kubernetes controllers monitor the Kubernetes API
 The {{site.prodname}} Kubernetes controllers are deployed in a Kubernetes cluster. The different controllers monitor the Kubernetes API
 and perform actions based on cluster state.
 
+{% tabs %}
+  <label:Operator,active:true>
+<%
+
+If you have installed Calico using the operator, see the [KubeControllersConfiguration](../resources/kubecontrollersconfig) resource instead.
+
+%>
+
+  <label:Manifest>
+<%
+
 The controllers are primarily configured through environment variables. When running
 the controllers as a Kubernetes pod, this is accomplished through the pod manifest `env`
 section.
@@ -69,5 +80,9 @@ The federation controller is disabled by default if `ENABLED_CONTROLLERS` is not
 This controller is valid for all {{site.prodname}} datastore types. For more details refer to the
 [Configuring federated services]({{site.baseurl}}/multicluster/federation/services-controller) usage guide.
 
+%>
+{% endtabs %}
+
 [in-cluster-config]: https://kubernetes.io/docs/tasks/access-application-cluster/access-cluster/#accessing-the-api-from-a-pod
 [kubeconfig]: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
+
