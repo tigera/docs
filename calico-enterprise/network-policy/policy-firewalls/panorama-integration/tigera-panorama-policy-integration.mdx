@@ -199,13 +199,14 @@ kubectl create namespace tigera-firewall-integration
 2. Create a ConfigMap and add your Panorama device information in the data section. For example:
 
     ```bash
-kubectl create configmap tigera-policy-integration-controller-config -n tigera-firewall-integration --from-literal=panorama.host=__IPADDRESS_OF_PANORAMA__ \
---from-literal=panorama.rules.filter="(tag1 OR tag2) AND tag3" \
---from-literal=panorama.device-group="devicegroup1" \
---from-literal=tigera.policy.integration.tier="mypolicytier" \
---from-literal=tigera.policy.integration.tier.order=101 \
---from-literal=firewall.policy.integration.log-level="info" \
---from-literal=panorama.address-groups.filter="tag1, tag2, tag3"
+kubectl create configmap tigera-policy-integration-controller-config -n tigera-firewall-integration \
+  --from-literal=panorama.host=__IPADDRESS_OF_PANORAMA__ \
+  --from-literal=panorama.rules.filter="(tag1 OR tag2) AND tag3" \
+  --from-literal=panorama.device-group="devicegroup1" \
+  --from-literal=tigera.policy.integration.tier="mypolicytier" \
+  --from-literal=tigera.policy.integration.tier.order=101 \
+  --from-literal=firewall.policy.integration.log-level="info" \
+  --from-literal=panorama.address-groups.filter="tag1, tag2, tag3"
     ```
     Where:
    
@@ -232,13 +233,23 @@ Store each Panorama username and password as a secret in the `tigera-firewall-in
 For example, in the Secret for Panorama, store its username as a secret, with key `panorama.username` and password as a secret, with key as `panorama.password`.
 
 ```bash
-kubectl create secret generic panorama-access -n tigera-firewall-integration --from-literal=panorama.username=__USERNAME_OF_PANORAMA__ \
---from-literal=panorama.password=__PASSWORD_OF_PANORAMA__
+kubectl create secret generic panorama-access -n tigera-firewall-integration \
+  --from-literal=panorama.username=__USERNAME_OF_PANORAMA__ \
+  --from-literal=panorama.password=__PASSWORD_OF_PANORAMA__
 ```
 
 #### Deploy the firewall policy integration controller in the Kubernetes cluster
 
-Create the manifest.
+{%- if page.version != "master" -%}
+Add `tigera-pull-secret` into the namespace `tigera-firewall-integration`:
+```bash
+kubectl create secret generic tigera-pull-secret -n tigera-firewall-integration \
+  --from-file=.dockerconfigjson=<pull-secrets.json> \
+  --type=kubernetes.io/dockerconfigjson
+```
+
+{% endif %}
+Create the manifest:
 
 ```bash
 kubectl create -f {{ "/manifests/tigera-policy-integration.yaml" | absolute_url }}
