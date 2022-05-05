@@ -82,13 +82,8 @@ The following steps install a Kubernetes cluster on a single Windows node with a
    Invoke-WebRequest {{ "/scripts/install-calico-windows.ps1" | absolute_url }} -OutFile c:\install-calico-windows.ps1
    ```
 
-<<<<<<< HEAD
 1. Install {{site.prodnameWindows}} for your datastore using the default parameters or [customize installation parameters](#configure-installation-parameters).
    The PowerShell script downloads {% if site.prodnameWindows == "Calico Enterprise for Windows" %}the {{site.prodnameWindows}} release binary, {% endif %}Kubernetes binaries, Windows utilities files, configures {{site.prodnameWindows}}, and starts the Calico service.
-=======
-1. Install {{site.prodnameWindows}} for your datastore with using the default parameters or [customize installation parameters]. (#configure-installation-parameters).
-   The PowerShell script downloads {{site.prodnameWindows}} release binary, Kubernetes binaries, Windows utilities files, configures {{site.prodnameWindows}}, and starts the Calico service.
->>>>>>> e4b053856a
 
    **Kubernetes datastore (default)**
 
@@ -170,13 +165,8 @@ The following steps install a Kubernetes cluster on a single Windows node with a
    Invoke-WebRequest {{ "/scripts/install-calico-windows.ps1" | absolute_url }} -OutFile c:\install-calico-windows.ps1
    ```
 
-<<<<<<< HEAD
 1. Install {{site.prodnameWindows}} for your datastore using the default parameters or [customize installation parameters](#configure-installation-parameters).
    The PowerShell script downloads {% if site.prodnameWindows == "Calico Enterprise for Windows" %}the {{site.prodnameWindows}} release binary, {% endif %}Kubernetes binaries, Windows utilities files, configures {{site.prodnameWindows}}, and starts the Calico service.
-=======
-1. Install {{site.prodnameWindows}} for your datastore with using the default parameters or [customize installation parameters]. (#configure-installation-parameters).
-   The PowerShell script downloads {{site.prodnameWindows}} release binary, Kubernetes binaries, Windows utilities files, configures {{site.prodnameWindows}}, and starts the Calico service.
->>>>>>> e4b053856a
 
    You do not need to pass a parameter if the default value of the parameter is correct for your cluster.
 
@@ -282,72 +272,6 @@ The following steps install a Kubernetes cluster on a single Windows node with a
    kubectl delete role calico-install-token --namespace calico-system
    ```
 %>
-<<<<<<< HEAD
-=======
-
-<label:AKS>
-<%
-
-1. Register the `EnableAKSWindowsCalico` feature flag with the following Azure CLI commad.
-
-   ```bash
-   az feature register --namespace "Microsoft.ContainerService" --name "EnableAKSWindowsCalico"
-   ```
-
-1. Wait until the `EnableAKSWindowsCalico` feature flag is registered successfully. Execute following CLI command to get current status of the feature.
-
-   ```bash
-   az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService/EnableAKSWindowsCalico')].{Name:name,State:properties.state}"
-   ```
-
-   Move to next step if the output from above command matches the following output.
-   ```bash
-   Name                                               State
-   -------------------------------------------------  ----------
-   Microsoft.ContainerService/EnableAKSWindowsCalico  Registered
-   ```
-
-1. Refresh the registration of the `Microsoft.ContainerService` resource provider. Run the following command.
-
-   ```bash
-   az provider register --namespace Microsoft.ContainerService
-   ```
-
-1. Create the AKS cluster with these settings: `network-plugin` to `azure`, and `network-policy` to `calico`. For example,
-
-   ```bash
-   az group create -n $your-resource-group -l $your-region
-   az aks create \
-    --resource-group $your-resource-group \
-    --name $your-cluster-name \
-    --node-count 1 \
-    --enable-addons monitoring \
-    --windows-admin-username azureuser \
-    --windows-admin-password $your-windows-password \
-    --kubernetes-version 1.20.2 \
-    --vm-set-type VirtualMachineScaleSets \
-    --service-principal $your-service-principal \
-    --client-secret $your-client-secret \
-    --load-balancer-sku standard \
-    --node-vm-size Standard_D2s_v3 \
-    --network-plugin azure \
-    --network-policy calico
-   ```
-
-1. Add a Windows node pool. For example,
-
-   ```bash
-   az aks nodepool add \
-    --resource-group $your-resource-group \
-    --cluster-name $your-cluster-name \
-    --os-type Windows \
-    --name $your-windows-node-pool-name \
-    --node-count 1 \
-    --kubernetes-version 1.20.2 \
-    --node-vm-size Standard_D2s_v3
-   ```
-%>
->>>>>>> e4b053856a
 {% endtabs %}
 
 Congratulations! You now have a Kubernetes cluster with {{site.prodnameWindows}} and a Linux control node.
