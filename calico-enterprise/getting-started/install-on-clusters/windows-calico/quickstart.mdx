@@ -20,7 +20,7 @@ Before beginning the quickstart, setup a {{site.prodname}} cluster on Linux node
 
 ### How to
 
-- [Configure strict affinity for clusters using {{site.prodname}} networking](#configure-strict-affinity-for-clusters-using-calico-networking)
+- [Configure strict affinity for clusters using {{site.prodname}} networking](#configure-strict-affinity-for-clusters-using-{{site.prodnamedash}}-networking)
 - [Install {{site.prodnameWindows}} manually](#install-calico-enterprise-for-windows-manually)
 - [Install {{site.prodnameWindows}} using HostProcess containers](#install-calico-enterprise-for-windows-using-hostprocess-containers)
 - [Configure installation parameters](#configure-installation-parameters)
