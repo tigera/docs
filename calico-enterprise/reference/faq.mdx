@@ -41,8 +41,6 @@ While the routing table may look a little odd to someone who is used to
 configuring LAN networking, using explicit routes rather than
 subnet-local gateways is fairly common in WAN networking.
 
-<<<<<<< HEAD
-=======
 ## Why isn't {{site.prodname}} working with a containerized Kubelet?
 
 {{site.prodname}} hosted install places the necessary CNI binaries and config on each
@@ -91,7 +89,6 @@ However, if you do need to assign a particular address to a pod, {{site.prodname
 
 See the [Requesting a specific IP address]({{ site.baseurl }}/reference/cni-plugin/configuration#requesting-a-specific-ip-address) section in the CNI plugin reference documentation for more details.
 
->>>>>>> 1b1e25650d
 ## Why can't I see the 169.254.1.1 address mentioned above on my host?
 
 {{site.prodname}} tries hard to avoid interfering with any other configuration
@@ -437,107 +434,6 @@ confusing behavior where traffic can be blocked and then suddenly start working!
 
 To resolve the issue, add a rule to your security groups that allows inbound and outbound IP-in-IP traffic (IP protocol
 number 4) between your hosts.
-
-<<<<<<< HEAD
-### Why isn't {{site.prodname}} working on CoreOS Container Linux / hyperkube?
-
-{{site.prodname}} hosted install places the necessary CNI binaries and config on each
-Kubernetes node in a directory on the host as specified in the manifest.  By
-default it places binaries in /opt/cni/bin and config /etc/cni/net.d.
-
-When running the kubelet as a container using hyperkube as is common on CoreOS Container Linux,
-you need to make sure that the containerized kubelet can see the CNI network
-plugins and config that have been installed by mounting them into the kubelet container.
-
-For example add the following arguments to the kubelet-wrapper service:
-
-```
---volume /etc/cni/net.d:/etc/cni/net.d \
---volume /opt/cni/bin:/opt/cni/bin \
-```
-
-Without the above volume mounts, the kubelet will not call the {{site.prodname}} CNI binaries, and so
-{{site.prodname}} [workload endpoints]({{site.baseurl}}/reference/resources/workloadendpoint) will
-not be created, and {{site.prodname}} policy will not be enforced.
-
-### How do I view {{site.prodname}} CNI logs?
-
-The {{site.prodname}} CNI plugin emits logs to stderr, which are then logged out by the kubelet.  Where these logs end up
-depend on how your kubelet is configured.  For deployments using `systemd`, you can do this via `journalctl`.
-
-The log level can be configured via the CNI network configuration file, by changing the value of the
-key `log_level`.  See [the configuration guide]({{site.baseurl}}/reference/cni-plugin/configuration) for more information.
-
-### How do I configure the Pod IP range?
-
-When using {{site.prodname}} IPAM, IP addresses are assigned from [IP Pools]({{site.baseurl}}/reference/resources/ippool).
-
-By default, all enabled IP Pool are used. However, you can specify which IP Pools to use for IP address management in the [CNI network config]({{site.baseurl}}/reference/cni-plugin/configuration#ipam),
-or on a per-Pod basis using [Kubernetes annotations]({{site.baseurl}}/reference/cni-plugin/configuration#using-kubernetes-annotations).
-
-### How do I assign a specific IP address to a pod?
-
-For most use-cases it's not necessary to assign specific IP addresses to a Kubernetes Pod, and it's recommended to use Kubernetes Services instead.
-However, if you do need to assign a particular address to a Pod, {{site.prodname}} provides two ways of doing this:
-
-- You can request an IP that is available in {{site.prodname}} IPAM using the `cni.projectcalico.org/ipAddrs` annotation.
-- You can request an IP using the `cni.projectcalico.org/ipAddrsNoIpam` annotation. Note that this annotation bypasses the configured IPAM plugin, and thus in most cases it is recommended to use the above annotation.
-
-See the [Requesting a Specific IP address]({{site.baseurl}}/reference/cni-plugin/configuration#requesting-a-specific-ip-address) section in the CNI plugin reference documentation for more details.
-=======
-## In Calico for OpenStack, why can't a VM ping its default gateway?
-
-The concept of default gateway makes sense with OpenStack networking drivers that simulate
-direct layer 2 (Ethernet) connectivity between VMs in the same Neutron network.  With that
-kind of simulation,
-
--  When a VM sends to another VM in the same network, there is no routing at all, from the
-   VM point of view. (Of course there may be routing in the underlay network, because
-   compute hosts may be on different subnets.)
-
--  When a VM sends to something outside its own network, it goes - by simulated layer 2 -
-   to the default gateway first, and then is routed to wherever it is addressed to.
-
-However OpenStack also allows drivers, including Calico, that use routing between the VMs
-of a Neutron network.  With Calico specifically, any packet sent by a VM is
-layer-2-terminated and IP-routed by the VM's compute host, whether the VM is sending to
-another VM in the same network, or to anywhere else. So Calico doesn't need the "default
-gateway" concept, and it doesn't really make any sense with Calico. If a VM thinks that
-"my default gateway is the first hop at which the packets I send can be IP-routed", and in
-any way relies on that, that will be wrong, with Calico networking.
-
-Now, with all that said, for detailed technical reasons to do with the DHCP server
-(dnsmasq), Calico does actually configure the default gateway IP - i.e. bind it to a Linux
-network interface - on every compute host with at least one VM in the relevant Neutron
-network; and that is one of the ingredients needed, in Linux, for a VM to be able to ping
-that IP.
-
-The reason why it still *isn't* possible for a VM to ping that IP, is that Calico by
-default configures iptables rules to block almost all communication *to* its own host -
-because in general, of course, a workload should not be able to access and possibly
-compromise its host. There are a few pinholes here, e.g. for DHCP, but those do not
-include ping (ICMP Echo). If you start running a command like `watch 'sudo iptables-save
--c | grep DROP'` on a compute host, and then try pinging the default gateway IP from a VM
-on that host, you will see the DROP count increasing as each ping packet is sent and
-blocked.
-
-This behaviour is controlled by a config parameter named DefaultEndpointToHostAction,
-whose default is DROP. For the sake of demonstration, you can change this by adding
-`DefaultEndpointToHostAction = RETURN` to `/etc/calico/felix.cfg`, then use `sudo
-systemctl restart calico-felix` to restart Felix, and then you will observe that a VM on
-that host *can* ping its default gateway. However we do not recommend routinely operating
-with `DefaultEndpointToHostAction = RETURN`, because that potentially allows a malicious
-VM to compromise its host.
-
-In summary, then, there are two points behind why a VM cannot normally ping its default
-gateway, with Calico.
-
-1.  The default gateway concept just doesn't really fit, and isn't needed, given how
-    Calico routes everything at the compute node - which is a fundamental aspect of Calico
-    networking for OpenStack.
-
-1.  Calico's iptables rules generally do not allow a VM to contact its host.
->>>>>>> 1b1e25650d
 
 ## Can Calico do IP multicast?
 
