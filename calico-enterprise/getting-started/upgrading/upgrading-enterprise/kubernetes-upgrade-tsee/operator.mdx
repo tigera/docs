@@ -44,7 +44,7 @@ If your cluster has Windows nodes and uses custom TLS certificates for log stora
 
 For AKS only, upgrades beginning from {{site.prodname}} v3.11.2 to a newer version will automatically upgrade {{site.prodnameWindows}}. During the upgrade, Windows nodes will be tainted so new pods will not be scheduled until the upgrade of the node has finished. The {{site.prodnameWindows}} upgrade status can be monitored with: `kubectl get tigerastatus calico -oyaml`
 
-For all other platforms or versions older than v3.11.2, upgrading {{site.prodnameWindows}} can be performed out-of-band with the {{site.prodname}} upgrade of the cluster. For each Windows node, [uninstall]({{site.baseurl}}/getting-started/windows-calico/maintain#uninstall-calico-enterprise-for-windows-from-windows-nodes) the {{site.prodnameWindows}} services, copy over the latest {{site.prodnameWindows}} installation archive, then proceed with the [installation]({{site.baseurl}}/getting-started/windows-calico/quickstart#install-calico-enterprise-for-windows).
+For all other platforms or versions older than v3.11.2, upgrading {{site.prodnameWindows}} can be performed out-of-band with the {{site.prodname}} upgrade of the cluster. For each Windows node, [uninstall]({{site.baseurl}}/getting-started/windows-calico/maintain#uninstall-calico-enterprise-for-windows-from-windows-nodes) the {{site.prodnameWindows}} services, copy over the latest {{site.prodnameWindows}} installation archive, then proceed with the [installation]({{site.baseurl}}/getting-started/windows-calico/quickstart#install-calico-enterprise-for-windows-manually).
 
 #### Multi-cluster management
 
