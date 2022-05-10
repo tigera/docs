@@ -28,48 +28,18 @@ These features require you to have configured a functioning egress gateway deplo
 
 ### How to
  - [Observe gateway maintenance impact](#observe-gateway-maintenance-impact)
- - [Expose gateway maintenance annotations to workloads](#expose-gateway-maintenance-annotations-to-workloads)
+ - [Expose gateway maintenance annotations to your application](#expose-gateway-maintenance-annotations-to-your-application)
  - [Reduce the impact of gateway downtime](#reduce-the-impact-of-gateway-downtime)
 
 #### Observe gateway maintenance impact
 A number of egress-related annotations are automatically added to your workloads when an egress gateway they use is in the "terminating" phase. These annotations will outline *which* gateway is about to terminate, *when it began terminating*, and *when it will fully terminate*. This information can prove useful for conducting non-disruptive maintenance on your cluster, as it means any planned termination of egress pods will be communicated to dependent workloads.
 
-To observe these annotations in your test environment, try deleting an egress gateway pod that is being used by another workload:
-
-```sh
-$ # show pods in default namespace - two egress gateway pods and one application pod using them.
-$ kubectl get pods -o wide
-NAME                                      READY   STATUS    RESTARTS   AGE     IP
-application-with-long-lived-connections   1/1     Running   0          10m     192.168.192.210
-egress-gateway-6644fbb56b-nn7sh           1/1     Running   0          13m     10.10.10.1
-egress-gateway-6644fbb56b-rqw5q           1/1     Running   0          13m     10.10.10.0
-
-
-$ # delete one of the egress gateways being used by the application pod
-$ kubectl delete pod egress-gateway-6644fbb56b-rqw5q
-pod "egress-gateway-6644fbb56b-rqw5q" deleted
-
-
-$ # observe the annotations added to the dependent application pod
-$ kubectl get pod application-with-long-lived-connections -o yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    ...
-    egress.projectcalico.org/gatewayMaintenanceFinishedTimestamp: "2022-04-19T09:18:49Z"
-    egress.projectcalico.org/gatewayMaintenanceGatewayIP: 10.10.10.0
-    egress.projectcalico.org/gatewayMaintenanceStartedTimestamp: "2022-04-19T09:18:49Z"
-...
-```
-From the above we can see that {{site.prodname}} has added all three gateway maintenance annotations to our application pod. It has identified the terminating gateway by its IP, when the gateway began terminating, and when it finished terminating (at-which point it was replaced by a fresh pod).
-
-However, you may notice that the `egress.projectcalico.org/gatewayMaintenanceStartedTimestamp` and `egress.projectcalico.org/gatewayMaintenanceFinishedTimestamp` annotations have the same value! In other words, we had a zero-second window to prepare for the gateway outage - not very useful yet!
+Before we can observe these annotations, we must first configure a *termination grace period* for our egress gateways. The termination grace period prolongs an egress gateway's termination phase, giving us a window to react to the termination. Without configuring the grace period, we would have a zero-second window to react to gateway termination.
 
 ##### Add a termination grace period to egress gateway replicas
-In order to widen this window, we must tell our egress gateway pods to wait for some duration before fully terminating, rather than stopping immediately - this is known as the *termination grace period*. The amount of time we allot for the termination grace period will dictate how much time a dependent workload has to prepare.
+In order to widen our maintenance window, we must adjust the `terminationGracePeriodSeconds` field on our egress gateway pods. The amount of time we allot for the termination grace period will dictate how much time a dependent workload has to prepare for a gateway going down.
 
-Let's add a termination grace period of 60 seconds to all pods in our egress gateway deploymment, so that our dependent workloads have a wider window to react:
+Let's add a termination grace period of 60 seconds to all pods in our egress gateway deploymment, so that our egress-dependent workloads have a wider window to react:
 
 ```sh
 $ # patch a termination grace period of 60s into egress gateway deployment
@@ -85,13 +55,12 @@ $ # wait for change to rollout
 $ kubectl rollout status deploy/egress-gateway
 ```
 > **Note**:
-> - Making the above alterations to an egress gateway deployment will trigger a new rollout - you can monitor the rollout status 
->   with `kubectl rollout status deploy/<deployment name>`
-> - If your rollout seems to have stalled and egress gateway pods are stuck on "ContainerCreating" phase, it's possible the deployment's 
->   IPPool has been exhausted. You can check if this is the case by inspecting a stuck pod with `kubectl describe pod <pod name>`
+> - Making the above alterations to an egress gateway deployment will trigger a new rollout - you can monitor the rollout status with `kubectl rollout status deploy/<deployment name>`
+> - If your rollout seems to have stalled and egress gateway pods are stuck on "ContainerCreating" phase, it's possible the deployment's IPPool has been exhausted. You can check if this is the case by inspecting a stuck pod with `kubectl describe pod <pod name>`
 {: .alert .alert-info}
 
-Once the updated egress gateway deployment has fully rolled out, we can test our annotations again. Let's delete another egress gateway pod. It should take 60 seconds to terminate. As before, annotations will be added to our dependent workloads, only this time, there should be a 60-second window between the two timestamps:
+##### Inspect workload annotations
+Once the updated egress gateway deployment rolls out, we're ready to observe the gateway maintenance annotations {{site.prodname}} adds to your dependent workloads. Let's simulate cluster maintenance by deleting an egress gateway pod. It should take 60 seconds to terminate - the amount of time defined by `terminationGracePeriodSeconds`.
 
 ```sh
 $ # show pods in default namespace - two egress gateway pods and one application pod using them.
@@ -105,8 +74,11 @@ egress-gateway-6644fbb56b-5xbh2           1/1     Running             0         
 $ # delete one of the egress gateways being used by the application pod - do not block waiting for termination to finish
 $ kubectl delete pod egress-gateway-6576ccdf66-fxdvh --wait=false
 pod "egress-gateway-6576ccdf66-fxdvh" deleted
+```
 
+The gateway we just deleted should now wait in the "terminating" phase until its termination grace period expires, at-which point it will be deleted. If our application pod depends on the terminating egress gateway, we'll see gateway maintenance annotations added to the dependent application pod automatically, outlining what gateway is going down, when it began terminating, and when it will be deleted:
 
+```sh
 $ # observe the annotations added to the dependent application pod
 $ kubectl get pod application-with-long-lived-connections -o yaml
 apiVersion: v1
@@ -119,14 +91,20 @@ metadata:
     egress.projectcalico.org/gatewayMaintenanceStartedTimestamp: "2022-04-19T15:59:18Z"
 ...
 ```
-Success! Our annotations now mark a 60-second maintenance window, indicating when our egress gateway began terminating, and when it will fully terminate.
+Success! Our workload's annotations mark a 60-second maintenance window for the gateway we terminated, indicating when the egress gateway began terminating, and when it will fully terminate.
+
+> **Note**:
+>  - Adjusting egress deployments, say, by modifying the `terminationGracePeriodSeconds` field, will trigger a new rollout.
+>  - Egress pods terminating due to a new rollout will behave the same as if they were deleted for maintenance - dependent workloads will receive gateway maintenance annotations, and gateway pods will terminate after their termination grace period has elapsed.
+>  - Deleting an egress gateway in a way that overrides the termination grace period, say, by using `kubectl delete pod my-pod --grace-period=0`, will result in the gateway going down immediately, and dependent workloads will not have any time to react to the termination.
+{: .alert .alert-info}
 
 <br>
 
-#### Expose gateway maintenance annotations to workloads
-While the presence of these annotations may be useful to a cluster administrator inspecting pods, it's not quite enough if our workload wishes to react to terminating egress gateways, say, by restarting its session gracefully before loss of connectivity.
+#### Expose gateway maintenance annotations to your application
+While the presence of gateway maintenance annotations may be useful to a cluster administrator inspecting pods, it's not quite enough if our workload wishes to react to terminating egress gateways, say, by restarting its session gracefully before loss of connectivity.
 
-The [Kubernetes downward API](https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/#the-downward-api){:target="_blank"} provides a means of exposing pod information [as files](https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/#store-pod-fields){:target="_blank"} or as [environment variables](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/#use-pod-fields-as-values-for-environment-variables){:target="_blank"} within the workload. This value can then be polled by your workload, in order to react to changes as you see fit.
+The [Kubernetes downward API](https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/#the-downward-api){:target="_blank"} provides a means of exposing pod information [as files](https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/#store-pod-fields){:target="_blank"} or as [environment variables](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/#use-pod-fields-as-values-for-environment-variables){:target="_blank"} within the pod. This value can then be polled by your workload, in order to react to changes as you see fit.
 
 Let's write a simple pod manifest that uses the downward API to expose maintenance annotations to the program running within:
 
@@ -183,7 +161,7 @@ gatewayMaintenanceStartedTimestamp has value "2022-04-19T17:24:46Z"
 ```
 We can see above that our script saw the value of the mounted volume change at the same time what we terminated our egress gateway pod. This work can be further developed to propagate notifications to our production workloads, without any need for polling kubernetes itself.
 
-**Note**: It's not recommended to couple your production applications to a Kubernetes client for the purposes of polling pod information, as it could conveivably give an attacker greater privileges if successful in compromising a workload. Instead, use a method such as the downward API that fully decouples the program.
+**Note**: It's not recommended to couple your production applications to a Kubernetes client for the purposes of polling pod information, as it could give an attacker greater privileges if successful in compromising a workload. Instead, use a method such as the downward API that fully decouples the program.
 {: .alert .alert-danger}
 
 <br>
@@ -288,7 +266,8 @@ kubectl patch deploy annotation-aware-workloads --type=merge -p \
 > **Note**:
 > - Either a *pod or a namespace* can be annotated with `egress.projectcalico.org/maxNextHops`, however, the `egress.projectcalico.org/selector` annotation must also be present on the selected resource.
 > - If annotating pods, the `egressIPSupport` Felixconfiguration option must be set to `EnabledPerNamespaceOrPerPod`.
-> - To ensure a pod's egress networking remains functional for its entire lifecycle, the `maxNextHops` annotation will not have any effect until the pod is restarted.
+> - If a pod's desired `maxNextHops` exceeds the total number of available egress gateways, scaling up the egress gateway deployment will result in the pod's egress networking updating until the desired number of gateways are being used.
+> - In all other cases, the `maxNextHops` annotation only takes effect at the time a pod is created. To ensure a pod's egress networking remains functional for its entire lifecycle, modifications to `maxNextHops` after a pod's creation will have no effect. For this reason, it's recommended that any egress gateway deployments have been scaled prior to deploying dependent workloads.
 {: .alert .alert-info}
 
 Once our patched sample deployment has been fully rolled out, each of our application pods should now depend on at-most 1 egress gateway replica. Lets bring down another egress gateway pod and monitor our application logs:
