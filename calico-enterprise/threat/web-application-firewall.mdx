@@ -1,6 +1,6 @@
 ---
-title: Web Application Firewall (WAF)
-description: Configure Calico to use with Layer 7 Web Application Firewall
+title: Workload-based Web Application Firewall (WAF)
+description: Configure Calico to use with Layer 7 Web Application Firewall.
 canonical_url: /threat/web-application-firewall
 ---
 
@@ -9,13 +9,13 @@ canonical_url: /threat/web-application-firewall
 
 ### Big picture
 
-Protect cloud-native applications from application layer attacks with {{site.prodname}} Web Application Firewall (WAF).
+Protect cloud-native applications from application layer attacks with {{site.prodname}} Workload-based Web Application Firewall (WAF).
 
 ### Value
 
 A web application firewall (WAF) protects web applications from a variety of application layer attacks such as {% include open-new-window.html text='cross-site scripting (XSS)' url='https://www.f5.com/services/resources/glossary/cross-site-scripting-xss-or-css' %}, {% include open-new-window.html text='SQL injection' url='https://www.f5.com/services/resources/glossary/sql-injection' %}, and {% include open-new-window.html text='cookie poisoning' url='https://www.f5.com/services/resources/glossary/cookie-poisoning' %}, among others. Given that attacks on apps are the {% include open-new-window.html text='leading cause of breaches' url='https://www.f5.com/labs/articles/threat-intelligence/application-protection-report-2019--episode-2--2018-breach-trend' %}, you need to protect the HTTP traffic that provides a gateway to valuable app data.
 
-Historically, web application firewalls (WAFs) were deployed at the edge of your cluster to filter incoming traffic. Our WAF solution takes a unique, cloud-native approach to web security by allowing you to implement zero-trust rules for **internal east/west traffic** inside your cluster.
+Historically, web application firewalls (WAFs) were deployed at the edge of your cluster to filter incoming traffic. Our workload-based WAF solution takes a unique, cloud-native approach to web security by allowing you to implement zero-trust rules for **workloads** inside your cluster.
 
 {{site.prodname}} WAF allows you to selectively run service traffic within your cluster, and protect intra-cluster traffic from common HTTP-layer attacks such as SQL injection, and cross-site request forgery. To increase protection, you can use {{site.prodname}} network policies to enforce security controls on selected pods on the host.
 
@@ -34,7 +34,7 @@ With {{site.prodname}} WAF, you gain visibility into internal east/west traffic 
 
 #### {{site.prodname}} WAF implementation
 
-{{site.prodname}} WAF is deployed in your cluster as an Envoy daemonset. {{site.prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry standard ModSecurity module.
+{{site.prodname}} WAF is deployed in your cluster as an Envoy daemonset. {{site.prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry-standard ModSecurity module.
 
 ### Before you begin
 
