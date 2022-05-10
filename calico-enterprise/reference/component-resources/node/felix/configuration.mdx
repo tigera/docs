@@ -4,11 +4,23 @@ description: Configure Felix, the daemon that runs on every machine that provide
 canonical_url: '/reference/felix/configuration'
 ---
 
-> **Note**: If you have installed Calico using the operator, you cannot modify the environment provided to felix directly. To configure felix, see the [FelixConfiguration](../resources/felixconfig) resource instead.
+{% tabs %}
+  <label:Operator,active:true>
+<%
+
+If you have installed Calico using the operator, you cannot modify the environment provided to felix directly. To configure felix, see the [FelixConfiguration](../resources/felixconfig) resource instead.
+
+%>
+
+  <label:Manifest>
+<%
+
+> **Note**: The following tables detail the configuration file and
+> environment variable parameters. For `FelixConfiguration` resource settings,
+> refer to [Felix Configuration Resource](../resources/felixconfig).
 {: .alert .alert-info}
 
-Configuration for Felix is read from one of four possible locations, in
-order, as follows.
+Configuration for Felix is read from one of four possible locations, in order, as follows.
 
 1.  Environment variables.
 2.  The Felix configuration file.
@@ -22,20 +34,11 @@ contains a value, it takes top precedence.
 If not set in any of these locations, most configuration parameters have
 defaults, and it should be rare to have to explicitly set them.
 
-When creating a host-specific `FelixConfiguration` resource called `node.<nodename>`,
-the `<nodename>` part must match the value for the nodename in the calico
-datastore - i.e. it must be present in the output of `calicoctl get nodes`
-
 The full list of parameters which can be set is as follows.
-
-> **Note**: The following tables detail the configuration file and
-> environment variable parameters. For `FelixConfiguration` resource settings,
-> refer to [Felix Configuration Resource](../resources/felixconfig).
-{: .alert .alert-info}
 
 #### General configuration
 
-| Configuration parameter           | Environment variable                    | Description  | Schema |
+| Configuration file parameter      | Environment variable                    | Description  | Schema |
 | --------------------------------- | --------------------------------------- | -------------| ------ |
 | `DataplaneWatchdogTimeout` | `FELIX_DATAPLANEWATCHDOGTIMEOUT` | Timeout before the main dataplane goroutine is determined to have hung and Felix will report non-live and non-ready. Can be increased if the liveness check incorrectly fails (for example if Felix is running slowly on a heavily loaded system). [Default: `90`] | int |
 | `AwsSrcDstCheck`                  | `FELIX_AWSSRCDSTCHECK`                  | Set the {% include open-new-window.html text='source-destination-check' url='https://docs.aws.amazon.com/vpc/latest/userguide/VPC_NAT_Instance.html#EIP_Disable_SrcDestCheck' %} when using AWS EC2 instances. Check [IAM role and profile configuration]({{ site.baseurl }}/reference/resources/felixconfig#aws-iam-rolepolicy-for-source-destination-check-configuration) for setting the necessary permission for this setting to work. [Default: `DoNothing`] | `DoNothing`, `Disable`, `Enable` |
@@ -44,6 +47,7 @@ The full list of parameters which can be set is as follows.
 | `AWSRequestTimeout`           | `FELIX_AWSREQUESTTIMEOUT`              Timeout used for communicating with the AWS API (seconds). [Default: "30"]| int |
 | `DatastoreType`                   | `FELIX_DATASTORETYPE`                   | The datastore that Felix should read endpoints and policy information from. [Default: `etcdv3`] | `etcdv3`, `kubernetes`|
 | `DeviceRouteSourceAddress`        | `FELIX_DEVICEROUTESOURCEADDRESS`        | IPv4 address to use as the source hint on device routes programmed by Felix [Default: No source hint is set on programmed routes and for local traffic from host to workload the source address will be chosen by the kernel.] | `<IPv4-address>` |
+| `DeviceRouteSourceAddressIPv6`    | `FELIX_DEVICEROUTESOURCEADDRESSIPV6`    | IPv6 address to use as the source hint on device routes programmed by Felix [Default: No source hint is set on programmed routes and for local traffic from host to workload the source address will be chosen by the kernel.] | `<IPv6-address>` |
 | `DeviceRouteProtocol`             | `FELIX_DEVICEROUTEPROTOCOL`             | This defines the route protocol added to programmed device routes. [Default: `RTPROT_BOOT`] | int |
 | `DisableConntrackInvalidCheck`    | `FELIX_DISABLECONNTRACKINVALIDCHECK`    | Disable the dropping of packets that aren't either a valid handshake or part of an established connection. [Default: `false`] | boolean |
 | `EndpointReportingDelaySecs`      | `FELIX_ENDPOINTREPORTINGDELAYSECS`      | Set the endpoint reporting delay between status check intervals, in seconds. Only used if endpoint reporting is enabled. [Default: `1`] | int |
@@ -57,7 +61,7 @@ The full list of parameters which can be set is as follows.
 | `HealthPort`                      | `FELIX_HEALTHPORT`                      | The port on which Felix will respond to health requests. [Default: `9099`] | int |
 | `IpInIpEnabled`                   | `FELIX_IPINIPENABLED`                   | Optional, you shouldn't need to change this setting as Felix calculates if IPIP should be enabled based on the existing IP Pools. When set, this overrides whether Felix should configure an IPinIP interface on the host. When explicitly disabled in FelixConfiguration, Felix will not clean up addresses from the `tunl0` interface (use this if you need to add addresses to that interface and don't want to have them removed). [Default: unset] | optional boolean |
 | `IpInIpMtu`                       | `FELIX_IPINIPMTU`                       | The MTU to set on the IPIP tunnel device. Zero value means auto-detect. See [Configuring MTU]({{ site.baseurl }}/networking/mtu) [Default: `0`] | int |
-| `IPv4VXLANTunnelAddr`             |                                         | IPv4 address of the VXLAN tunnel. This is system configured and should not be updated manually. | string |
+| `IPv4VXLANTunnelAddr`             |                                         | IP address of the IPv4 VXLAN tunnel. This is system configured and should not be updated manually. | string |
 | `LogFilePath`                     | `FELIX_LOGFILEPATH`                     | The full path to the Felix log. Set to `none` to disable file logging. [Default: `/var/log/calico/felix.log`] | string |
 | `LogSeverityFile`                 | `FELIX_LOGSEVERITYFILE`                 | The log severity above which logs are sent to the log file. [Default: `Info`] | `Debug`, `Info`, `Warning`, `Error`, `Fatal` |
 | `LogSeverityScreen`               | `FELIX_LOGSEVERITYSCREEN`               | The log severity above which logs are sent to the stdout. [Default: `Info`] | `Debug`, `Info`, `Warning`, `Error`, `Fatal` |
@@ -76,9 +80,10 @@ The full list of parameters which can be set is as follows.
 | `RouteTableRange`                 | `FELIX_ROUTETABLERANGE`                 | *deprecated in favor of `RouteTableRanges`* Calico programs additional Linux route tables for various purposes. `RouteTableRange` specifies the indices of the route tables that Calico should use. [Default: `""`] | `<min>-<max>` |
 | `RouteTableRanges`                 | `FELIX_ROUTETABLERANGES`                 | Calico programs additional Linux route tables for various purposes. `RouteTableRanges` specifies a set of table index ranges that Calico should use. Deprecates `RouteTableRange`, overrides `RouteTableRange`. [Default: `"1-250"`] | `<min>-<max>,<min>-<max>,...` |
 | `VXLANEnabled`                    | `FELIX_VXLANENABLED`                    | Optional, you shouldn't need to change this setting as Felix calculates if VXLAN should be enabled based on the existing IP Pools. When set, this overrides whether Felix should create the VXLAN tunnel device for VXLAN networking. [Default: unset] | optional boolean |
-| `VXLANMTU`                        | `FELIX_VXLANMTU`                        | The MTU to set on the VXLAN tunnel device. Zero value means auto-detect. Also controls NodePort MTU when eBPF enabled. See [Configuring MTU]({{ site.baseurl }}/networking/mtu) [Default: `0`] | int |
+| `VXLANMTU`                        | `FELIX_VXLANMTU`                        | The MTU to set on the IPv4 VXLAN tunnel device. Zero value means auto-detect. Also controls NodePort MTU when eBPF enabled. See [Configuring MTU]({{ site.baseurl }}/networking/mtu) [Default: `0`] | int |
+| `VXLANMTUV6`                      | `FELIX_VXLANMTUV6`                        | The MTU to set on the IPv6 VXLAN tunnel device. Zero value means auto-detect. Also controls NodePort MTU when eBPF enabled. See [Configuring MTU]({{ site.baseurl }}/networking/mtu) [Default: `0`] | int |
 | `VXLANPort`                       | `FELIX_VXLANPORT`                       | The UDP port to use for VXLAN. [Default: `4789`] | int |
-| `VXLANTunnelMACAddr`              |                                         | MAC address of the VXLAN tunnel. This is system configured and should not be updated manually. | string |
+| `VXLANTunnelMACAddr`              |                                         | MAC address of the IPv4 VXLAN tunnel. This is system configured and should not be updated manually. | string |
 | `VXLANVNI`                        | `FELIX_VXLANVNI`                        | The virtual network ID to use for VXLAN. [Default: `4096`] | int |
 | `AllowVXLANPacketsFromWorkloads`  | `FELIX_ALLOWVXLANPACKETSFROMWORKLOADS`  | Set to `true` to allow VXLAN encapsulated traffic from workloads. [Default: `false`] | boolean |
 | `AllowIPIPPacketsFromWorkloads`   | `FELIX_ALLOWIPIPPACKETSFROMWORKLOADS`   | Set to `true` to allow IPIP encapsulated traffic from workloads. [Default: `false`] | boolean |
@@ -89,6 +94,8 @@ The full list of parameters which can be set is as follows.
 | `mtuIfacePattern`                 | `FELIX_MTUIFACEPATTERN`                 | Pattern used to discover the host's interface for MTU auto-detection. [Default: `^((en|wl|ww|sl|ib)[opsx].*|(eth|wlan|wwan).*)` | regex |
 | `TPROXYMode`                      | `FELIX_TPROXYMODE`                      | Sets transparent proxying mode. [Default: "Disabled"] | 'Disabled', 'Enabled' |
 | `TPROXYPort`                      | `FELIX_TPROXYPORT`                      | What local ports is the proxied traffic sent to. [Default: `16001`] | int |
+=======
+| `FeatureDetectOverride`           | `FELIX_FEATUREDETECTOVERRIDE`           | Is used to override the feature detection. Values are specified in a comma separated list with no spaces, example; "SNATFullyRandom=true,MASQFullyRandom=false,RestoreSupportsLock=true,IPIPDeviceIsL3=true. "true" or "false" will force the feature, empty or omitted values are auto-detected. [Default: `""`] | string |
 
 #### etcd datastore configuration
 
@@ -109,7 +116,6 @@ The Kubernetes API datastore driver reads its configuration from Kubernetes-prov
 | ------------------------------------ | ------------------------------------------ | ----------- | ------ |
 | `ChainInsertMode`                    | `FELIX_CHAININSERTMODE`                    | Controls whether Felix hooks the kernel's top-level iptables chains by inserting a rule at the top of the chain or by appending a rule at the bottom.  `Insert` is the safe default since it prevents {{site.prodname}}'s rules from being bypassed.  If you switch to `Append` mode, be sure that the other rules in the chains signal acceptance by falling through to the {{site.prodname}} rules, otherwise the {{site.prodname}} policy will be bypassed. [Default: `Insert`]  | `Insert`, `Append` |
 | `DefaultEndpointToHostAction`        | `FELIX_DEFAULTENDPOINTTOHOSTACTION`        | This parameter controls what happens to traffic that goes from a workload endpoint to the host itself (after the traffic hits the endpoint egress policy). By default {{site.prodname}} blocks traffic from workload endpoints to the host itself with an iptables `Drop` action. If you want to allow some or all traffic from endpoint to host, set this parameter to `Return` or `Accept`.  Use `Return` if you have your own rules in the iptables "INPUT" chain; {{site.prodname}} will insert its rules at the top of that chain, then `Return` packets to the "INPUT" chain once it has completed processing workload endpoint egress policy. Use `Accept` to unconditionally accept packets from workloads after processing workload endpoint egress policy. [Default: `Drop`] | `Drop`, `Return`, `Accept` |
-| `FeatureDetectOverride`              | `FELIX_FEATUREDETECTOVERRIDE`              | Is used to override the feature detection. Values are specified in a comma separated list with no spaces, example; "SNATFullyRandom=true,MASQFullyRandom=false,RestoreSupportsLock=". "true" or "false" will force the feature, empty or omitted values are auto-detected. [Default: `""`] | string |
 | `GenericXDPEnabled`                  | `FELIX_GENERICXDPENABLED`                  | When enabled, Felix can fallback to the non-optimized `generic` XDP mode. This should only be used for testing since it doesn't improve performance over the non-XDP mode. [Default: `false`] | boolean |
 | `InterfaceExclude`                   | `FELIX_INTERFACEEXCLUDE`                   | A comma-separated list of interface names that should be excluded when Felix is resolving host endpoints.  The default value ensures that Felix ignores Kubernetes' internal `kube-ipvs0` device. If you want to exclude multiple interface names using a single value, the list supports regular expressions. For regular expressions you must wrap the value with `/`. For example having values `/^kube/,veth1` will exclude all interfaces that begin with `kube` and also the interface `veth1`. [Default: `kube-ipvs0`] | string |
 | `IpsetsRefreshInterval`              | `FELIX_IPSETSREFRESHINTERVAL`              | Period, in seconds, at which Felix re-checks the IP sets in the dataplane to ensure that no other process has accidentally broken {{site.prodname}}'s rules. Set to 0 to disable IP sets refresh.  [Default: `10`] | int |
@@ -130,6 +136,7 @@ The Kubernetes API datastore driver reads its configuration from Kubernetes-prov
 | `NetlinkTimeoutSecs`                 | `FELIX_NETLINKTIMEOUTSECS`                 | Time, in seconds, that Felix will wait for netlink (i.e. routing table list/update) operations to complete before giving up and retrying. [Default: `10`] | float |
 | `RouteRefreshInterval`               | `FELIX_ROUTEREFRESHINTERVAL`               | Period, in seconds, at which Felix re-checks the routes in the dataplane to ensure that no other process has accidentally broken {{site.prodname}}'s rules. Set to 0 to disable route refresh. [Default: `90`] | int |
 | `ServiceLoopPrevention`              | `FELIX_SERVICELOOPPREVENTION`              | When [service IP advertisement is enabled]({{ site.baseurl }}/networking/advertise-service-ips), prevent routing loops to service IPs that are not in use, by dropping or rejecting packets that do not get DNAT'd by kube-proxy.  Unless set to "Disabled", in which case such routing loops continue to be allowed. [Default: `Drop`] | `Drop`, `Reject`, `Disabled` |
+| `WorkloadSourceSpoofing`             | `FELIX_WORKLOADSOURCESPOOFING`             | Controls whether pods can enable source IP address spoofing with the `cni.projectcalico.org/allowedSourcePrefixes` annotation. When set to `Any`, pods can use this annotation to send packets from any IP address. [Default: `Disabled`] | `Any`, `Disabled` |
 | `XDPRefreshInterval`                 | `FELIX_XDPREFRESHINTERVAL`                 | Period, in seconds, at which Felix re-checks the XDP state in the dataplane to ensure that no other process has accidentally broken {{site.prodname}}'s rules. Set to 0 to disable XDP refresh. [Default: `90`] | int |
 | `XDPEnabled`                         | `FELIX_XDPENABLED`                         | Enable XDP acceleration for host endpoint policies. [Default: `true`] | boolean |
 
@@ -408,3 +415,7 @@ a global setting and a per-host override.
    ```
 
 For more information, see [Felix Configuration Resource](../resources/felixconfig).
+
+%>
+
+{% endtabs %}
