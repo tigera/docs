@@ -4,6 +4,18 @@ description: Configure Typha for scaling Kubernetes API datastore (kdd).
 canonical_url: '/reference/typha/configuration'
 ---
 
+{% tabs %}
+  <label:Operator,active:true>
+<%
+
+Typha configuration can not be modified when Calico Enterprise is installed via the operator.
+
+%>
+
+  <label:Manifest>
+<%
+
+
 Configuration for Typha is read from one of two possible locations, in
 order, as follows.
 
@@ -84,3 +96,6 @@ that is signed by one of the trusted CAs in the
 
 For more information on how to use and set these variables, refer to
 [Connections from Node to Typha (Kubernetes)](../../security/comms/crypto-auth#connections-from-node-to-typha-kubernetes).
+
+%>
+{% endtabs %}
