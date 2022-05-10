@@ -230,7 +230,7 @@ calicoctl patch node kind-control-plane \
 
 ### Above and beyond
 
-- For details on autodetection methods, see the [node configuration]({{ site.baseurl }}/reference/node/configuration#ip-autodetection-methods) reference.
+- For details on autodetection methods, see the [node configuration]({{ site.baseurl }}/reference/node/configuration) reference.
 - For calicoctl environment variables, see [Configuring {{site.nodecontainer}}]({{ site.baseurl }}/reference/node/configuration)
 - [Node resource]({{ site.baseurl }}/reference/resources/node)
 - [Reference documentation for calicoctl patch]({{ site.baseurl }}/reference/calicoctl/patch)

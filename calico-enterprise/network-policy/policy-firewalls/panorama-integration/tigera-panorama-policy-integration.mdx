@@ -240,7 +240,6 @@ kubectl create secret generic panorama-access -n tigera-firewall-integration \
 
 #### Deploy the firewall policy integration controller in the Kubernetes cluster
 
-{%- if page.version != "master" -%}
 Add `tigera-pull-secret` into the namespace `tigera-firewall-integration`:
 ```bash
 kubectl create secret generic tigera-pull-secret -n tigera-firewall-integration \
@@ -248,7 +247,6 @@ kubectl create secret generic tigera-pull-secret -n tigera-firewall-integration 
   --type=kubernetes.io/dockerconfigjson
 ```
 
-{% endif %}
 Create the manifest:
 
 ```bash
