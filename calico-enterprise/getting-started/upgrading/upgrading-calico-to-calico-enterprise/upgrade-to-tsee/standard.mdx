@@ -52,20 +52,12 @@ For hybrid Linux and Windows clusters, ensure that your Windows nodes have at le
 <label: EKS>
 <%
 
-> **Note**: EKS upgrades from open source Calico are not production ready due to limited testing.
->
-{: .alert .alert-info}
-
 {% include content/upgrade-operator-simple.md upgradeFrom="OpenSource" provider="EKS" %}
 
 %>
 
 <label: AKS>
 <%
-
-> **Note**: AKS upgrades from open source Calico are not production ready due to limited testing.
->
-{: .alert .alert-info}
 
 {% include content/upgrade-operator-simple.md upgradeFrom="OpenSource" provider="AKS" %}
 
