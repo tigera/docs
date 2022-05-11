@@ -851,14 +851,14 @@ So, to configure all the pods in a namespace to use the egress gateways that are
 labelled with `egress-code: red`, you would annotate that namespace like this:
 
 ```bash
-kubectl annotate ns <namespace> egress.projectcalico.org/selector='egress-code == "red"'
+kubectl annotate ns <namespace> egress.projectcalico.org/selector="egress-code == 'red'"
 ```
 
 By default, that selector can only match egress gateways in the same namespace.  To select gateways
 in a different namespace, specify a `namespaceSelector` annotation as well, like this:
 
 ```bash
-kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector='projectcalico.org/name == "default"'
+kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
 ```
 
 Egress gateway annotations have the same [syntax and range of
