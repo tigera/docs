@@ -10,7 +10,21 @@ Capture live traffic inside a Kubernetes cluster, and export to visualization to
 
 ### Value 
 
-Packet capture is a valuable tool for debugging microservices and application interaction in day-to-day operations and incident response. But manually setting up packet capturing can be tedious. {{site.prodname}} provides an easy way to capture packets using the widely-known "pcap" format, and export them to visualization tools like WireShark.
+{{site.prodname}} packet capture is implemented in a Kubernetes-native way so you can troubleshoot service/application connectivity issues and performance issues. You can start a packet capture in Manager UI Service Graph, or using the CLI. 
+
+Packet capture integration with **Service Graph** makes it very easy to capture traffic for a specific namespace, service, replica set, daemonset, statefulset, or pod. Just right-click on an endpoint to start or schedule a capture, and then download capture files to your favorite visualization tool like WireShark. 
+
+With {{site.prodname}} packet capture you can:
+
+- Run packet capture whenever you want (available 24/7)
+- Preschedule packet captures to start and stop when needed
+- Customize packet captures by port and protocol
+- Share packet capture jobs
+
+**Demos and blogs**
+
+-  {% include open-new-window.html text='Video: packet capture demo' url='https://www.tigera.io/features/packet-capture/' %}
+-  {% include open-new-window.html text='Troubleshooting microservices with Dynamic Packet Capture' url='https://thenewstack.io/faster-troubleshooting-with-dynamic-packet-capture/' %}
 
 ### Features
 
@@ -20,49 +34,69 @@ This how-to guide uses the following {{site.prodname}} features:
 
 ### Concepts
 
-Libpcap file format, also known as {% include open-new-window.html text='pcap' url='https://wiki.wireshark.org/Development/LibpcapFileFormat' %}, is the main file format used for capturing traffic by network tools.
+### About packet capture
+
+Typically, when you troubleshoot microservices and applications for connectivity issues or slow performance, you run a traditional packet capture tool like **tcpdump** against a container in a pod. But live troubleshooting in an ephemeral Kubernetes environment is tricky; problems do not last a long time, and happen randomly. So you need to be very fast to capture meaningful information to determine root causes. {{site.prodname}} makes it easy with these basic steps:
+
+1. Determine the workload(s) you want to capture.
+1. Start/schedule a packet capture job in Service Graph (Manager UI) or the CLI.
+1. After the capture is finished, download the packet capture files (known as `pcap` files), and import them into your analysis tool (for example, WireShark).
+
+For a simple use case workflow see, {% include open-new-window.html text='Faster troubleshooting of microservices, containers, and Kubernetes with Dynamic Packet Capture' url='https://www.tigera.io/blog/faster-troubleshooting-of-microservices-containers-and-kubernetes-with-dynamic-packet-capture/' %}.
+
 
 ### Before you begin
 
-**Supported**
-
-- All platforms supported in this release
-- pcap file format for captured traffic
-
 **Not supported**
 
-- pcapng format for captured traffic
 - Capturing traffic from host networked pods or host endpoints
 - Capturing traffic from pods with multiple interfaces
 - Capturing traffic for pods running on Windows hosts
 
 ### How To
 
-- [Capture live traffic](#capture-live-traffic)
-- [Schedule traffic capture](#schedule-traffic-capture)
-- [Configure packet capture rotation](#configure-packet-capture-rotation)
-- [Enforce RBAC for packet capture](#enforce-rbac-for-packet-capture)
-- [Access packet capture files](#access-packet-capture-files)
+- [Packet capture in Service Graph](#packet-capture-in-service-graph)
+- [Packet capture using the command line](#packet-capture-using-the-command-line)
+- [Store and rotate capture files](#store-and-rotate-capture-files) 
+- [Enforce RBAC for capture tasks for CLI users](#enforce-rbac-for-capture-tasks-for-cli-users)
 
-### Capture live traffic
+#### Packet capture in Service Graph
 
+1. Select an endpoint from the service graph (for example, namespace, service, replica set, daemonset, statefulset, or pod), right-click, and select **Initiate packet capture**.
 
-Capturing live traffic will start by creating a [PacketCapture]({{site.baseurl}}/reference/resources/packetcapture) resource.
+    ![start-capture]({{site.baseurl}}/images/start-capture.png)
 
-Create a yaml file containing one or more packet captures and apply the packet capture to your cluster.
+1. Schedule the capture to run now or at a later time, and click **Run**.
 
-```bash
-kubectl apply -f <your_packet_capture_filename>
+    ![schedule-pc]({{site.baseurl}}/images/schedule-pc.png)
+
+1. From the **Capture Jobs** tab in the bottom panel, the Status field will show that status, "Capturing". Scroll to the right, and click the drop-down menu for options to stop and manage captures.
+
+    ![capture-menu]({{site.baseurl}}/images/capture-menu.png)
+
+#### Packet capture using the command line
+
+This section provides examples of using the CLI to manage packet capture jobs and pcap files.  
+
+**Create a PacketCapture resource**
+
+**Example: All pods in a namespace**
+
+This example captures traffic for all pods in the `sample` namespace.
+
+```
+apiVersion: projectcalico.org/v3
+kind: PacketCapture
+metadata:
+  name: sample-capture-all
+  namespace: sample
+spec:
+  selector: all()
 ```
 
-In order to stop capturing traffic, delete the packet capture from your cluster.
+**Example: All pods in a namespace matching a label and selector**
 
-```bash
-kubectl delete -f <your_packet_capture_filename>
-```
-**Examples of selecting workloads**
-
-Following is a basic example to select a single workload that has the label `k8s-app` with value `nginx`.
+This example captures traffic on all pods in the namespace `sample`, with the label `k8s-app`, equal to `nginx`.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -74,19 +108,9 @@ spec:
   selector: k8s-app == "nginx"
 ```
 
-In the following example, we select all workload endpoints in `sample` namespace.
+**Example: All pods in a namespace, TCP traffic only**
 
-```yaml
-apiVersion: projectcalico.org/v3
-kind: PacketCapture
-metadata:
-  name: sample-capture-all
-  namespace: sample
-spec:
-  selector: all()
-```
-
-In the following example, we select all workload endpoints in `sample` namespace and only TCP traffic.
+This example captures traffic on all pods in the `sample` namespace, but only for TCP traffic.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -100,14 +124,17 @@ spec:
     - protocol: TCP
 ```
 
-More examples for filtering traffic are provided at [PacketCapture]({{site.baseurl}}/reference/resources/packetcapture) resource definition.
+**Start a packet capture job, now**
 
-### Schedule traffic capture
+To start a packet capture job immediately, use the following command:
 
-You can schedule a `PacketCapture` to start and/or stop at a certain time. Start and end time are defined using RFC3339 format. 
+```bash
+kubectl apply -f <your_packet_capture_filename>
+```
 
-In the following example, we schedule traffic capture for 10 minutes between 00:30 UTC and 00:40 UTC for all workload
-endpoints in `sample` namespace.
+**Schedule a packet capture job**
+
+You can schedule a packet capture job to start and/or stop at a specific time using RFC3339 format. In the following example, a traffic capture job is scheduled for 10 minutes, between 00:30 UTC and 00:40 UTC for all pods in the sample namespace.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -121,31 +148,111 @@ spec:
   endTime: "2021-09-08T00:40:00Z"
 ```
 
-In order to check the state of the capture, you can monitor to status of a `PacketCapture` for each node there are pods 
-scheduled and targeted by the selector to cycle between states: `Scheduled`, `WaitingForTraffic`, `Capturing` and `Finished`.
+**Monitor status of packet capture job**
 
-More examples for scheduling to capture traffic are provided at [PacketCapture]({{site.baseurl}}/reference/resources/packetcapture) resource definition.
-
-### Configure packet capture rotation
-
-Live traffic will be stored as pcap files that will be rotated by size and time. All packet capture files rotate using
-parameters defined in [FelixConfig]({{site.baseurl}}/reference/resources/felixconfig).
-
-Packet Captures files will be rotated either when reaching maximum size or when passing rotation time.
-
-For example, in order to extend the time rotation to one day, the command below can be used:
+After you start capture a job, it cycles through these states: Scheduled (if applicable), WaitingForTraffic, Capturing, and Finished. To monitor the status of a PacketCapture, use the following command:
 
 ```bash
-kubectl patch felixconfiguration default -p '{"spec":{"captureRotationSeconds": 86400}}'
+kubectl get packetcaptures -A
 ```
 
-### Enforce RBAC for packet capture
+**Stop a packet capture job**
 
-Packet Capture permissions are enforced using the standard Kubernetes RBAC based on Role and RoleBindings within a namespace.
+To stop a capture job immediately, update the PacketCaptureResource by setting the `endTime` to the current time (or earlier). 
 
-For example, in order to allow user jane to create/delete/get/list/update/watch packet captures for a specific namespace, the command below can be used:
- 
+**Stop a packet capture job, and delete the capture file from the cluster**
+
+```bash
+kubectl delete -f <your_packet_capture_filename>
 ```
+
+**Delete a packet capture job**
+
+```bash
+kubectl delete -f <your_packet_capture_filename>
+```
+
+**Find packet capture files**
+
+To find generated capture files, query the status of the PacketCapture:
+
+```bash
+kubectl get packetcaptures -n <namespace> <name> -o yaml
+```
+
+```bash
+export NS=<REPLACE_WITH_CAPTURE_NAMESPACE>
+export NAME=<REPLACE_WITH_CAPTURE_NAME>
+```
+
+**Sample output**
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: PacketCapture
+metadata:
+  name: sample-capture-all
+  namespace: sample
+spec:
+  selector: all()
+status:
+  files:
+  - directory: /var/log/calico/pcap
+    fileNames:
+    - pod_cali.pcap
+    node: node-0
+    state: Capturing
+```
+
+**Get packet capture files from pods**
+
+Get the pod on the node with the packet capture that you want.
+
+```bash
+kubectl get pods -ntigera-fluentd --no-headers --field-selector spec.nodeName="<REPLACE_WITH_NODE_NAME>"
+```
+
+Copy the packet capture using the pod information.
+
+```bash
+kubectl cp tigera-fluentd/<REPLACE_WITH_POD_NAME>:var/log/calico/pcap/sample/sample-capture/ .
+```
+
+**Delete packet capture files**
+
+```bash
+kubectl exec -it tigera-fluentd/<REPLACE_WITH_POD_NAME> -- sh -c "rm -r /var/log/calico/pcap/sample/sample-capture/"
+```
+
+#### Store and rotate capture files
+
+Packet capture files are stored on the host-mounted volume used for calico nodes. FelixConfig contains several parameters for storing and rotating capture files. 
+
+**Note**:
+- Capture files are stored using the following directory structure: 
+`{namespace}/{packet capture resource name}`
+- The active packet capture file is identified using the following schema: 
+`{workload endpoint name}_{host network interface}.pcap` 
+- Rotated capture file names contain an index matching the rotation timestamp
+- Packet capture files are deleted after the packet capture resource is deleted.
+
+**Rotate capture files**
+
+The Felix parameter, `captureRotationSeconds` lets you schedule how often saved pcap are rotated. In the following example, the time rotation time is one day.
+
+```bash
+kubectl patch felixconfiguration default -p '{"spec":{"captureRotationSeconds":"86400"}}'
+```
+
+#### Enforce RBAC for capture tasks for CLI users
+
+Packet capture permissions are enforced using the standard Kubernetes RBAC for CLI users, based on Role and RoleBindings within a namespace.
+
+**Example**
+
+The following Role and RoleBindings shows how to allow user jane to create/delete/get/list/update/watch packet captures for a specific namespace. 
+
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -169,10 +276,9 @@ roleRef:
   name: tigera-packet-capture-role
   apiGroup: rbac.authorization.k8s.io
 ```
+To allow user jane to access (get and delete) the capture files generated for a specific namespace, a role/role binding similar to the one below can be used:
 
-In order to allow user jane to access (retrieve and delete) the capture files generated for a specific namespace, a role/role binding similar to the one below can be used:
-
-```
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -220,133 +326,3 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### Access packet capture files
-
-Capture files will be stored on the host mounted volume used for calico nodes. These can be visualized using tools such as Wireshark.
-
-Packet capture files will be stored using the following directory structure: {namespace}/{packet capture resource name} under the capture directory defined via FelixConfig.
-The active packet capture file will be identified using the following schema: {workload endpoint name}_{host network interface}.pcap. Rotated capture files name will contain an index matching the rotation timestamp.
-
-Packet capture files will be deleted after the packet capture resource has been deleted.
-
-In order to locate the capture files generated, query the status of the [PacketCapture]({{site.baseurl}}/reference/resources/packetcapture)
-
-```bash
-export NS=<REPLACE_WITH_CAPTURE_NAMESPACE>
-export NAME=<REPLACE_WITH_CAPTURE_NAME>
-```
-
-```bash
-kubectl get packetcaptures -n $NS $NAME -o yaml
-```
-
-Sample of received output:
-```
-apiVersion: projectcalico.org/v3
-kind: PacketCapture
-metadata:
-  name: sample-capture-all
-  namespace: sample
-spec:
-  selector: all()
-status:
-  files:
-  - directory: /var/log/calico/pcap
-    fileNames:
-    - pod_cali.pcap
-    node: node-0
-    state: Capturing
-```
-
-#### Access packet capture files via Service Graph
-
-[Service Graph]({{site.baseurl}}/visibility/get-started-cem) lets you access captured traffic for your workload endpoints.
-
-By selecting a service graph vertex that corresponds to a namespace, you can schedule a capture job that selects all workload endpoints within that particular namespace. Other vertex types supported are: service, service groups and replica sets.
-
-![initiate-capture-job]({{site.baseurl}}/images/initiate-capture-job.png)
-
-From the Capture Jobs tab in the bottom panel, you can: rerun/stop a capture job, retrieve and delete capture files, view YAML files and delete a capture job.
-
-#### Access packet capture files via API
-
-To access the capture files locally, you can use the following api that is available via tigera-manager service:
-
-```bash
-kubectl port-forward -n tigera-manager service/tigera-manager 9443:9443 &
-NS=<REPLACE_WITH_PACKETCAPTURE_NS> NAME=<REPLACE_WITH_PACKETCAPTURE_NAME> TOKEN=<REPLACE_WITH_YOUR_TOKEN> \
-curl "https://localhost:9443/packet-capture/download/$NS/$NAME/files.zip" -L -O -k \
--H "Authorization: Bearer $TOKEN"
-```
-
-Retrieving capture files from a managed cluster is performed by calling the same API:
-
-```bash
-kubectl port-forward -n tigera-manager service/tigera-manager 9443:9443 &
-NS=<REPLACE_WITH_PACKETCAPTURE_NS> NAME=<REPLACE_WITH_PACKETCAPTURE_NAME> TOKEN=<REPLACE_WITH_YOUR_TOKEN> MANAGED_CLUSTER=<REPLACE_WITH_THE_NAME_OF_MANAGED_CLUSTER>\
-curl "https://localhost:9443/packet-capture/download/$NS/$NAME/files.zip" -L -O -k \
--H "Authorization: Bearer $TOKEN" -H "X-CLUSTER-ID: $MANAGED_CLUSTER"
-```
-
-In addition, capture files can be deleted at any point in time once a PacketCapture was marked as `Finished`.
-
-```bash
-kubectl port-forward -n tigera-manager service/tigera-manager 9443:9443 &
-NS=<REPLACE_WITH_PACKETCAPTURE_NS> NAME=<REPLACE_WITH_PACKETCAPTURE_NAME> TOKEN=<REPLACE_WITH_YOUR_TOKEN> \
-curl -X DELETE "https://localhost:9443/packet-capture/files/$NS/$NAME/files.zip" -k \
--H "Authorization: Bearer $TOKEN"
-```
-
-Deleting capture files from a managed cluster is performed by calling the same API:
-
-```bash
-kubectl port-forward -n tigera-manager service/tigera-manager 9443:9443 &
-NS=<REPLACE_WITH_PACKETCAPTURE_NS> NAME=<REPLACE_WITH_PACKETCAPTURE_NAME> TOKEN=<REPLACE_WITH_YOUR_TOKEN> MANAGED_CLUSTER=<REPLACE_WITH_THE_NAME_OF_MANAGED_CLUSTER>\
-curl -X DELETE "https://localhost:9443/packet-capture/download/$NS/$NAME/files.zip" -k \
--H "Authorization: Bearer $TOKEN" -H "X-CLUSTER-ID: $MANAGED_CLUSTER"
-```
-
-
-Users accessing packet captures from management and managed clusters need to be allowed `CREATE` actions for `authenticationreviews` in api group `projectcalico.org` in the management cluster, as in the example in the section above.
-
-Next, get the token from the service account.
-Using the running example of a service account named, `jane` in the default namespace:
-
-```bash
-{% raw %}kubectl get secret $(kubectl get serviceaccount jane -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo{% endraw %}
-```
-
-#### Access packet capture files via CLI
-
-Alternatively, you can access the capture files locally using [calicoctl]({{site.baseurl}}/reference/calicoctl/captured-packets) CLI:
-
-```bash
-calicoctl captured-packets copy sample-capture --namespace sample --destination /tmp
-```
-
-You can access the capture files locally from the Fluentd pods using similar commands like the ones below:
-
-```bash
-kubectl get pods -ntigera-fluentd --no-headers --field-selector spec.nodeName="<REPLACE_WITH_NODE_NAME>"
-```
-
-```bash
-kubectl cp tigera-fluentd/<REPLACE_WITH_POD_NAME>:var/log/calico/pcap/sample/sample-capture/ .
-```
-
-[calicoctl]({{site.baseurl}}/reference/calicoctl/captured-packets) CLI can be used to clean capture files:
-
-```bash
-calicoctl captured-packets clean sample-capture -namespace sample
-```
-
-Alternatively, the following command can be used to clean up capture files:
-
-```bash
-kubectl exec -it tigera-fluentd/<REPLACE_WITH_POD_NAME> -- sh -c "rm -r /var/log/calico/pcap/sample/sample-capture/"
-```
-
-### Above and beyond
-
-- [Configure access to the Manager UI]({{site.baseurl}}/getting-started/cnx/access-the-manager)
-- [Get started with Calico Enterprise Manager]({{site.baseurl}}/visibility/get-started-cem)
