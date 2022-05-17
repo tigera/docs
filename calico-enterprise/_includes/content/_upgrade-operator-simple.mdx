@@ -1,3 +1,17 @@
+{%- if include.provider == "AKS" and include.upgradeFrom == "OpenSource" %}
+1. Switch the active operator to the one that will be installed to the new namespace.
+   First, download the helper script:
+   ```bash
+   curl -L -O {{ "/scripts/switch-active-operator.sh" | absolute_url }}
+   ```
+
+   Then switch the active operator. This will deactivate the currently running operator.
+   ```bash
+   chmod a+x ./switch-active-operator.sh
+   ./switch-active-operator.sh tigera-operator-enterprise
+   ```
+{%- endif %}
+
 1. Download the new manifests for Tigera operator.
    ```bash
 {%- if include.provider == "AKS" %}
@@ -66,19 +80,6 @@
 
 {%- endif %}
 
-{%- if include.provider == "AKS" and include.upgradeFrom == "OpenSource" %}
-1. Make the new operator running in the new namespace the active operator.
-   First, download the helper script:
-   ```bash
-   curl -L -O {{ "/scripts/switch-active-operator.sh" | absolute_url }}
-   ```
-   Then switch the active operator:
-   ```bash
-   chmod a+x ./switch-active-operator.sh
-   ./switch-active-operator.sh tigera-operator-enterprise
-   ```
-{%- endif %}
-
 {%- if include.upgradeFrom == "OpenSource" %}
 
 1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
@@ -97,7 +98,7 @@
    ```bash
    kubectl get apiserver
    ```
- 
+
    If a default apiserver resource exists, you will see output similar to this:
    ```
    $ kubectl get apiserver
@@ -105,7 +106,7 @@
    default         18h
    tigera-secure   19h
    ```
- 
+
    Remove the `default` apiserver:
    ```bash
    kubectl delete apiserver default
@@ -165,14 +166,14 @@
    ```
 
 1. If your cluster is management or standalone cluster using v3.8 or older, follow these steps:
-   
+
    a. Install the network policies to secure {{site.prodname}} component communications with ElasticSearch
 
    ```bash
    kubectl apply -f {{ "/manifests/tigera-policies-es-access.yaml" | absolute_url }}
    ```
 
-   b. Wait until all components of tigerastatus shows a status of `Available`, then proceed to the next section. You can monitor progress with the following 
+   b. Wait until all components of tigerastatus shows a status of `Available`, then proceed to the next section. You can monitor progress with the following
 
    ```bash
    watch kubectl get tigerastatus
@@ -181,17 +182,17 @@
 1. Install the new network policies to secure {{site.prodname}} component communications.
 
    If your cluster is a **managed** cluster, apply this manifest.
-   
+
    ```bash
    kubectl apply -f {{ "/manifests/tigera-policies-managed.yaml" | absolute_url }}
    ```
-   
+
    For other clusters, use this manifest.
-   
+
    ```bash
    kubectl apply -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
    ```
-   
+
 1. You can monitor progress with the following command:
    ```bash
    watch kubectl get tigerastatus
