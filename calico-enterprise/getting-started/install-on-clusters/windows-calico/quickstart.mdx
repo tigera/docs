@@ -98,8 +98,8 @@ Note: if {{site.prodname}} is installed in kube-system, update the `namespace` i
    Invoke-WebRequest {{ "/scripts/install-calico-windows.ps1" | absolute_url }} -OutFile c:\install-calico-windows.ps1
    ```
 
-1. Install {{site.prodnameWindows}} for your datastore using the default parameters or [customize installation parameters](#configure-installation-parameters).
-   The PowerShell script downloads {% if site.prodnameWindows == "Calico Enterprise for Windows" %}the {{site.prodnameWindows}} release binary, {% endif %}Kubernetes binaries, Windows utilities files, configures {{site.prodnameWindows}}, and starts the Calico service.
+1. Install {{site.prodnameWindows}} for your datastore with using the default parameters or [customize installation parameters]. (#configure-installation-parameters).
+   The PowerShell script downloads {{site.prodnameWindows}} release binary, Kubernetes binaries, Windows utilities files, configures {{site.prodnameWindows}}, and starts the Calico service.
 
    **Kubernetes datastore (default)**
 
@@ -181,8 +181,8 @@ Note: if {{site.prodname}} is installed in kube-system, update the `namespace` i
    Invoke-WebRequest {{ "/scripts/install-calico-windows.ps1" | absolute_url }} -OutFile c:\install-calico-windows.ps1
    ```
 
-1. Install {{site.prodnameWindows}} for your datastore using the default parameters or [customize installation parameters](#configure-installation-parameters).
-   The PowerShell script downloads {% if site.prodnameWindows == "Calico Enterprise for Windows" %}the {{site.prodnameWindows}} release binary, {% endif %}Kubernetes binaries, Windows utilities files, configures {{site.prodnameWindows}}, and starts the Calico service.
+1. Install {{site.prodnameWindows}} for your datastore with using the default parameters or [customize installation parameters]. (#configure-installation-parameters).
+   The PowerShell script downloads {{site.prodnameWindows}} release binary, Kubernetes binaries, Windows utilities files, configures {{site.prodnameWindows}}, and starts the Calico service.
 
    You do not need to pass a parameter if the default value of the parameter is correct for your cluster.
 
@@ -288,6 +288,7 @@ Note: if {{site.prodname}} is installed in kube-system, update the `namespace` i
    kubectl delete role calico-install-token --namespace calico-system
    ```
 %>
+
 {% endtabs %}
 
 Congratulations! You now have a Kubernetes cluster with {{site.prodnameWindows}} and a Linux control node.
