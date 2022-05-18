@@ -54,6 +54,12 @@ By default, {{site.prodname}} trusts the Kubernetes cluster’s DNS service (kub
 out-of-the-box defaults work with standard Kubernetes installs, so normally you won’t change them. For host endpoints you will need to add
 the IP addresses that the cluster nodes use for DNS resolution.
 
+### Before you begin
+
+**Not supported**
+
+{{site.prodname}} DNS policy does not support Kubernetes {% include open-new-window.html text='Using NodeLocal DNSCache in Kubernetes clusters' url='https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/' %} because it interferes with the ability to capture DNS traffic everywhere. 
+
 ### How to
 
 You can specify allowed domain names directly in a **global network policy** or **namespaced network policy**, or specify domain names in a **global network set** (and then
