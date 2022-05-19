@@ -645,7 +645,7 @@ spec:
       protocol: TCP
       source:
         selector: job-name == 'intrusion-detection-es-job-installer'
-        namespaceSelector: name == 'tigera-intrusion-detection'
+        namespaceSelector: projectcalico.org/name == 'tigera-intrusion-detection'
       destination:
         ports: [5554]
     - action: Allow
@@ -703,7 +703,7 @@ spec:
       protocol: TCP
       source:
         selector: k8s-app == 'intrusion-detection-controller'
-        namespaceSelector: name == 'tigera-intrusion-detection'
+        namespaceSelector: projectcalico.org/name == 'tigera-intrusion-detection'
     - action: Allow
       destination:
         ports: [5554]
@@ -1132,6 +1132,139 @@ spec:
       ports: [443, 6443, 12388]
   # Pass to subsequent tiers for further enforcement
   - action: Pass
+
+---
+
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-tigera.anomaly-detection-api
+  namespace: tigera-intrusion-detection
+spec:
+  order: 1
+  tier: allow-tigera
+  selector: k8s-app == 'anomaly-detection-api'
+  types:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow incoming connections from AD pods on port :8080
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: tigera.io.detector-cycle == 'detection'
+        namespaceSelector: projectcalico.org/name == 'tigera-intrusion-detection'
+      destination:
+        ports: [8080]
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: tigera.io.detector-cycle == 'training'
+        namespaceSelector: projectcalico.org/name == 'tigera-intrusion-detection'
+      destination:
+        ports: [8080]
+  egress:
+  {%- if include.containerOrchestrationPlatform == "openshift" %}
+    - action: Allow
+      protocol: UDP
+      destination:
+        # This rule allows to communicate with openshift-dns in udp.
+        namespaceSelector: projectcalico.org/name == "openshift-dns"
+        selector: dns.operator.openshift.io/daemonset-dns == "default"
+        ports: [5353]
+    - action: Allow
+      protocol: TCP
+      destination:
+        # This rule allows to communicate with openshift-dns in tcp.
+        namespaceSelector: projectcalico.org/name == "openshift-dns"
+        selector: dns.operator.openshift.io/daemonset-dns == "default"
+        ports: [5353]
+  {%- else %}
+    - action: Allow
+      protocol: UDP
+      destination:
+        # This rule allows to communicate with kube-dns.
+        namespaceSelector: projectcalico.org/name == "kube-system"
+        selector: k8s-app == "kube-dns"
+        ports: [53]
+  {%- endif %}
+    - action: Allow
+      protocol: TCP
+      destination:
+        # This egress rule in this policy allows anomaly-detection-api to communicate with kubernetes api server.
+        namespaceSelector: projectcalico.org/name == 'default'
+        selector: (provider == 'kubernetes' && component == 'apiserver' && endpoints.projectcalico.org/serviceName == 'kubernetes')
+        # By default, kubernetes api server listens on [12388, 6443, 443]. If Api server is customized to listen
+        # on different port, Include the port number below. DockerEE uses port 12388 for kubernetes apiserver service.
+        ports: [443, 6443, 12388]
+
+---
+
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-tigera.anomaly-detectors
+  namespace: tigera-intrusion-detection
+spec:
+  order: 1
+  tier: allow-tigera
+  selector: (tigera.io.detector-cycle == 'training' || tigera.io.detector-cycle == 'detection')
+  types:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow incoming connections from AD pods on port :8080
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: k8s-app == 'anomaly-detection-api'
+        namespaceSelector: projectcalico.org/name == 'tigera-intrusion-detection'
+  egress:
+  {%- if include.containerOrchestrationPlatform == "openshift" %}
+    - action: Allow
+      protocol: UDP
+      destination:
+        # This rule allows to communicate with openshift-dns in udp.
+        namespaceSelector: projectcalico.org/name == "openshift-dns"
+        selector: dns.operator.openshift.io/daemonset-dns == "default"
+        ports: [5353]
+    - action: Allow
+      protocol: TCP
+      destination:
+        # This rule allows to communicate with openshift-dns in tcp.
+        namespaceSelector: projectcalico.org/name == "openshift-dns"
+        selector: dns.operator.openshift.io/daemonset-dns == "default"
+        ports: [5353]
+  {%- else %}
+    - action: Allow
+      protocol: UDP
+      destination:
+        # This rule allows to communicate with kube-dns.
+        namespaceSelector: projectcalico.org/name == "kube-system"
+        selector: k8s-app == "kube-dns"
+        ports: [53]
+  {%- endif %}
+    - action: Allow
+      protocol: TCP
+      destination:
+        # This egress rule in this policy allows anomaly-detectors to communicate with kubernetes api server.
+        namespaceSelector: projectcalico.org/name == 'default'
+        selector: (provider == 'kubernetes' && component == 'apiserver' && endpoints.projectcalico.org/serviceName == 'kubernetes')
+        # By default, kubernetes api server listens on [12388, 6443, 443]. If Api server is customized to listen
+        # on different port, Include the port number below. DockerEE uses port 12388 for kubernetes apiserver service.
+        ports: [443, 6443, 12388]
+    - action: Allow
+      protocol: TCP
+      destination:
+        ports: [5554, 9200]
+        selector: k8s-app == 'tigera-secure-es-gateway'
+        namespaceSelector: projectcalico.org/name == 'tigera-elasticsearch'
+    - action: Allow
+      protocol: TCP
+      destination:
+        ports: [8080]
+        selector:  k8s-app == 'anomaly-detection-api'
+        namespaceSelector: projectcalico.org/name == 'tigera-elasticsearch'
 
 ---
 
