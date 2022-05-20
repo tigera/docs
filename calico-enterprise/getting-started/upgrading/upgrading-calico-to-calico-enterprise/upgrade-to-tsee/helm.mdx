@@ -77,3 +77,8 @@ Upgrading to {{site.prodname}} v3.13 and above, from Calico 3.22 and below is cu
    ```bash
    kubectl apply -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
    ```
+
+### Next steps
+
+- [Configure access to {{site.prodname}} Manager UI]({{site.baseurl}}/getting-started/cnx/access-the-manager)
+- [Authentication quickstart]({{site.baseurl}}/getting-started/cnx/authentication-quickstart)
