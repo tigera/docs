@@ -1,7 +1,18 @@
+#### Install AKS with Azure CNI networking
 
-First make sure you have a compatible AKS cluster, see [Create a compatible AKS cluster.]({{site.baseurl}}/getting-started/kubernetes/aks)
+{% if include.clusterType == "standalone" %}
+The geeky details of what you get:
+{% include geek-details.html details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}
+{% endif %}
 
-#### Install {{site.prodname}}
+##### Create an AKS cluster
+
+Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/aks) AKS cluster with:
+
+- {% include open-new-window.html text='Azure CNI networking' url='https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni' %}
+- [A supported {{site.prodname}} managed Kubernetes version]({{site.baseurl}}/getting-started/kubernetes/requirements#supported-managed-kubernetes-versions)
+
+##### Install {{site.prodname}}
 
 1. [Configure a storage class for {{site.prodname}}]({{site.baseurl}}/getting-started/create-storage).
 
@@ -92,7 +103,122 @@ First make sure you have a compatible AKS cluster, see [Create a compatible AKS 
    watch kubectl get tigerastatus
    ```
 
-   Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+{% if include.clusterType != "managed" %}
+Wait until the `apiserver` shows a status of `Available`, then proceed to [install the {{site.prodname}} license](#install-the-calico-enterprise-license).
+{% else %}
+Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+{% endif %}
+
+#### Install AKS with Calico networking
+
+{% if include.clusterType == "standalone" %}
+The geeky details of what you get:
+{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VxLAN,Routing:Calico,Datastore:Kubernetes' %}
+{% endif %}
+
+##### Create an AKS cluster
+
+Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/aks) AKS cluster with:
+
+- {% include open-new-window.html text='Bring your own CNI' url='https://docs.microsoft.com/en-us/azure/aks/use-byo-cni?tabs=azure-cli' %}
+- [A supported {{site.prodname}} managed Kubernetes version]({{site.baseurl}}/getting-started/kubernetes/requirements#supported-managed-kubernetes-versions)
+
+##### Install {{site.prodname}}
+
+1. [Configure a storage class for {{site.prodname}}]({{site.baseurl}}/getting-started/create-storage).
+
+1. Install the Tigera operator and custom resource definitions.
+
+   ```
+   kubectl create -f {{ "/manifests/tigera-operator.yaml" | absolute_url }}
+   ```
+
+1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator will be used to deploy Prometheus server and Alertmanager to monitor {{site.prodname}} metrics.
+
+   > **Note**: If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with {{site.prodname}}, your Prometheus operator must be v0.40.0 or higher.
+   {: .alert .alert-info}
+
+   ```
+   kubectl create -f {{ "/manifests/tigera-prometheus-operator.yaml" | absolute_url }}
+   ```
+
+1. Install your pull secret.
+
+   If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
+
+   ```
+   kubectl create secret generic tigera-pull-secret \
+       --type=kubernetes.io/dockerconfigjson -n tigera-operator \
+       --from-file=.dockerconfigjson=<path/to/pull/secret>
+   ```
+
+   For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
+
+   ```
+   kubectl create secret generic tigera-pull-secret \
+       --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
+       --from-file=.dockerconfigjson=<path/to/pull/secret>
+   kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \
+       -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'
+   ```
+
+1. Install any extra [{{site.prodname}} resources]({{site.baseurl}}/reference/resources) needed at cluster start using [calicoctl]({{site.baseurl}}/reference/calicoctl/overview).
+
+{% if include.clusterType == "managed" %}
+1. Download the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
+
+   ```bash
+   curl -O -L {{ "/manifests/aks/custom-resources-calico-cni.yaml" | absolute_url }}
+   ```
+
+   Remove the `Manager` custom resource from the manifest file.
+
+   ```yaml
+   apiVersion: operator.tigera.io/v1
+   kind: Manager
+   metadata:
+     name: tigera-secure
+   spec:
+     # Authentication configuration for accessing the Tigera manager.
+     # Default is to use token-based authentication.
+     auth:
+       type: Token
+   ```
+
+   Remove the `LogStorage` custom resource from the manifest file.
+
+   ```yaml
+   apiVersion: operator.tigera.io/v1
+   kind: LogStorage
+   metadata:
+     name: tigera-secure
+   spec:
+     nodes:
+       count: 1
+   ```
+   Now apply the modified manifest.
+
+   ```bash
+   kubectl create -f ./custom-resources-calico-cni.yaml
+   ```
+{% else %}
+1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
+
+   ```
+   kubectl create -f {{ "/manifests/aks/custom-resources-calico-cni.yaml" | absolute_url }}
+   ```
+{% endif %}
+   You can now monitor progress with the following command:
+
+   ```
+   watch kubectl get tigerastatus
+   ```
+
+{% if include.clusterType != "managed" %}
+Wait until the `apiserver` shows a status of `Available`, then proceed to [install the {{site.prodname}} license](#install-the-calico-enterprise-license).
+{% else %}
+Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+{% endif %}
 
 {% if include.clusterType == "standalone" or include.clusterType == "management" %}
 
