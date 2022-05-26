@@ -37,6 +37,8 @@ Upgrading to {{site.prodname}} v3.13 and above, from Calico 3.22 and below is cu
    kubectl apply -f {{ "/manifests/eck-operator-crds.yaml" | absolute_url }}
    ```
 
+1. [Configure a storage class for {{site.prodname}}]({{site.baseurl}}/getting-started/create-storage)
+
 1. Run the Helm upgrade command for `tigera-operator`
 {%- if page.version == "master" -%}.
 
