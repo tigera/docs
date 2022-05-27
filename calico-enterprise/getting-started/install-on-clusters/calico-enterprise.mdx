@@ -69,7 +69,7 @@ spec:
     Docker Enterprise
   </div>
   <div class="col-xs-6 col-md-3" style="text-align:center">
-    <a href="{{site.baseurl}}/getting-started/openshift/installation/" class="thumbnail">
+    <a href="{{site.baseurl}}/getting-started/openshift/installation" class="thumbnail">
       <img src="{{site.baseurl}}/images/OpenShift-LogoType.svg" alt="OpenShift" width="80%">
     </a>
     OpenShift
