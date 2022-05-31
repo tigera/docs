@@ -20,6 +20,8 @@ apiVersion: projectcalico.org/v3
 kind: ManagedCluster
 metadata:
   name: managed-cluster
+spec:
+  operatorNamespace: tigera-operator
 ```
 
 ### Managed cluster definition
@@ -34,9 +36,10 @@ metadata:
 
 #### Spec
 
-| Field       | Description                 | Accepted Values   | Schema | Default    |
-|-------------|-----------------------------|-------------------|--------|------------|
-| installationManifest | Installation Manifest to be applied on a managed cluster infrastructure | None | string | `Empty` |
+| Field                | Description                                                                                                       | Accepted Values | Schema | Default |
+|----------------------|-------------------------------------------------------------------------------------------------------------------|-----------------|--------|---------|
+| installationManifest | Installation Manifest to be applied on a managed cluster infrastructure                                           | None            | string | `Empty` |
+| operatorNamespace    | The namespace of the managed cluster's operator. This value is used in the generation of the InstallationManifest | None            | string | `Empty` |
 
 - `installationManifest` field can be retrieved only once at creation time. Updates are not supported for this field.
 
