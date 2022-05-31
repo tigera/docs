@@ -87,23 +87,33 @@ The steps in this section assume that a management cluster is up and running.
 >**Note**: If you wish to retain LogStorage data for your managed cluster, verify that the reclaim policy within your storage class is configured to {% include open-new-window.html text='Retain data' url='https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming' %}.
 {: .alert .alert-info}
 
-
-1. Choose a name for your managed cluster and then add it to your **management cluster**. The following command will
-   create a manifest with the name of your managed cluster in your current directory.
+1. Choose a name for your managed cluster.
    ```bash
    export MANAGED_CLUSTER=my-managed-cluster
+   ```
+
+1. Get the namespace in which the Tigera operator is running in your managed cluster (in most cases this will be `tigera-operator`):
+   ```bash
+   export MANAGED_CLUSTER_OPERATOR_NS=tigera-operator
+   ```
+
+1. Add the managed cluster to your **management cluster**. The following command will
+   create a manifest with the name of your managed cluster in your current directory.
+   ```bash
    kubectl -o jsonpath="{.spec.installationManifest}" > $MANAGED_CLUSTER.yaml create -f - <<EOF
    apiVersion: projectcalico.org/v3
    kind: ManagedCluster
    metadata:
      name: $MANAGED_CLUSTER
+   spec:
+     operatorNamespace: $MANAGED_CLUSTER_OPERATOR_NS
    EOF
    ```
 1. Verify that the `managementClusterAddr` in the manifest is correct. Apply the manifest to your **managed cluster**.
    ```bash
    kubectl apply -f $MANAGED_CLUSTER.yaml
    ```
-1. Remove unnecessary resources in the managed clusters. 
+1. Remove unnecessary resources in the managed clusters.
    ```bash
    kubectl delete manager tigera-secure
    kubectl delete logstorage tigera-secure
