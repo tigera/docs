@@ -150,11 +150,14 @@ The steps in this section assume that a management cluster is up and running.
 1. Ensure a persistent volume is provisioned to store log data for the standalone cluster. 
   See [Configure storage for logs and reports]({{site.baseurl}}/getting-started/create-storage).
 
-1. Remove the `ManagementClusterConnection` from your cluster.
+1. Remove the `ManagementClusterConnection` from your cluster and delete the managed cluster connection secret.
    ```bash
    kubectl delete managementclusterconnection tigera-secure
-   kubectl delete secret tigera-managed-cluster-connection -n <your-managed-cluster-operator-namespace>
+   kubectl delete secret tigera-managed-cluster-connection -n tigera-operator
    ```
+   >**Note**: If the operator in your managed cluster is running in a different namespace, use that namespace in the `kubectl delete secret...` command.
+   {: .alert .alert-info}
+
 1. Install the Tigera custom resources. 
    For more information, see [the installation reference]({{site.baseurl}}/reference/installation/api).
    ```bash
