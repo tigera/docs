@@ -143,7 +143,7 @@ The steps in this section assume that a management cluster is up and running.
 1. Remove the `ManagementClusterConnection` from your cluster.
    ```bash
    kubectl delete managementclusterconnection tigera-secure
-   kubectl delete secret tigera-managed-cluster-connection -n tigera-operator
+   kubectl delete secret tigera-managed-cluster-connection -n <your-managed-cluster-operator-namespace>
    ```
 1. Install the Tigera custom resources. 
    For more information, see [the installation reference]({{site.baseurl}}/reference/installation/api).
