@@ -24,6 +24,11 @@ create a manifest with the name of your managed cluster in your current director
    export MANAGED_CLUSTER=my-managed-cluster
    ```
 
+1. Get the namespace in which the Tigera operator is running in your managed cluster (in most cases this will be `tigera-operator`):
+   ```bash
+   export MANAGED_CLUSTER_OPERATOR_NS=tigera-operator
+   ```
+
 1. Add a managed cluster and save the manifest containing a [ManagementClusterConnection]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.ManagementClusterConnection) and a Secret.
    ```bash
    {{kubectlCmd}} -o jsonpath="{.spec.installationManifest}" > $MANAGED_CLUSTER.yaml create -f - <<EOF
@@ -31,6 +36,8 @@ create a manifest with the name of your managed cluster in your current director
    kind: ManagedCluster
    metadata:
      name: $MANAGED_CLUSTER
+   spec:
+     operatorNamespace: $MANAGED_CLUSTER_OPERATOR_NS
    EOF
    ```
 
