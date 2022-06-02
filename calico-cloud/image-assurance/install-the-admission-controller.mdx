@@ -77,7 +77,7 @@ Container admission policies are custom Kubernetes resources that allow you to c
 1. Apply the Admission Controller manifests.
 
    ```bash
-   kubectl apply -f ./*
+   kubectl apply -f ./tigera-image-assurance-admission-controller-deploy.yaml
    ```
 
 ### Create container admission policies
@@ -112,7 +112,8 @@ This ContainerAdmissionPolicy allows admission requests for pod-creating resourc
      - action: Reject
 ```
 
-This ContainerAdmissionPolicy rejects deploying or updating pod-creating resources with the label, `reject-policy: reject-outdated-scans`, from any namespace labeled, `apply-container-admission-policies == 'true'`, that would deploy an image that hasn't been scanned in 3 days.
+The following ContainerAdmissionPolicy rejects deploying or updating pod-creating resources with the label, `reject-policy: reject-outdated-scans`,
+from any namespace labeled, `apply-container-admission-policies == 'true'`, that would deploy an image that hasn't been scanned in 3 days.
 
 ```yaml
    apiVersion: containersecurity.tigera.io/v1beta1
@@ -124,12 +125,21 @@ This ContainerAdmissionPolicy rejects deploying or updating pod-creating resourc
     namespaceSelector: "apply-container-policies == 'true'"
     order: 1
     rules:
-    - action: Reject
+    - action: Allow
       imageLastScan:
         operator: "gt"
         duration:
           days: 3
+    - action: Reject
 ```
+
+The first rule (Allow), allows images based on the age of the image scan (in days). In this example, we want to allow
+images that have been scanned within the last three days. So, we use the gt operator (greater than), along with Duration,
+3 days, to say the image scan time must be greater than 3 days ago but less than now. "Now" is defined as when the
+attempt was made to create the Kubernetes resource. If the Allow rule does not match, then the second action rule
+(Reject) is evaluated, which denies everything.
+
+You can also use modify the Allow rule to match an absolute time. For help, see [ContainerAdmissionPolicies]({{site.baseurl}}/reference/resources/containeradmissionpolicy).
 
 ### Troubleshooting
 
