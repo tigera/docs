@@ -36,7 +36,7 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
   - Generic or kubeadm
   - kOps
   - OpenShift
-  - EKS (requires non-default OS image, as described in [Creating an EKS cluster for eBPF mode](./ebpf-and-eks))
+  - EKS
   - AKS
   - RKE
 
