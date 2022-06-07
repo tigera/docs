@@ -70,22 +70,6 @@ EOF
 Note: if {{site.prodname}} is installed in kube-system, update the `namespace` in the above command.
 {: .alert .alert-info}
 
->**Note**: If your Kubernetes version is v1.24.0 or higher, service account token secrets are no longer automatically created. Before continuing with the install, {% include open-new-window.html text='manually create' url='https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#manually-create-a-service-account-api-token' %} the calico-node service account token:
-```bash
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: calico-node-token
-  namespace: calico-system
-  annotations:
-    kubernetes.io/service-account.name: calico-node
-type: kubernetes.io/service-account-token
-EOF
-```
-Note: if {{site.prodname}} is installed in kube-system, update the `namespace` in the above command.
-{: .alert .alert-info}
-
 {% tabs %}
   <label:Kubernetes VXLAN,active:true>
   <%
