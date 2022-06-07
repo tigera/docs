@@ -21,10 +21,11 @@ various settings.
   <label:Operator,active:true>
 <%
 
-calico/node does not need to be configured directly when installed by the operator. For a complete operator 
+`{{site.nodecontainer}}` does not need to be configured directly when installed by the operator. For a complete operator 
 configuration reference, see [the installation API reference documentation][installation].
 
 %>
+
   <label:Manifest>
 <%
 
