@@ -18,7 +18,7 @@ The geeky details of what you get:
 ### Before you begin
 
 #### Supported
-- {% include /content/aks.md %}
+{% include /content/aks.md %}
 
 #### Required
 
