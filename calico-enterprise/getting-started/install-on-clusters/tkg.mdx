@@ -28,6 +28,8 @@ and {% include open-new-window.html text='Tanzu configuration file reference' ur
 - EC2 instances must be configured to belong to a separate SecurityGroup with ingress rules:
   - Calico (BGP) TCP 179
   - Calico (Typha) TCP 5473
+  - Manager UI Prometheus metrics TCP 9081
+  - Manager UI BGP metrics TCP 9900
 
 **Recommended**
 - [Options for installing {{site.prodname}}]({{site.baseurl}}/getting-started/options-install)
