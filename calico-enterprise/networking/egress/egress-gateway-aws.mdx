@@ -204,7 +204,7 @@ an instance (for example when scaling up the cluster).
 
 - Amazon VPC CNI
 
- Calico Enterprise CNI and IPAM is required. The ability to control the egress gateway’s IP is a feature of Calico Enterprise CNI and IPAM. AWS VPC CNI does not support that feature, so it is incompatible with egress gateways.
+  {{ site.prodname }} CNI and IPAM is required. The ability to control the egress gateway’s IP is a feature of {{ site.prodname }} CNI and IPAM. AWS VPC CNI does not support that feature, so it is incompatible with egress gateways.
 
 ### How to
 
