@@ -200,6 +200,12 @@ an instance (for example when scaling up the cluster).
 
 - Kubernetes in AWS only; for on-prem, see [this guide]({{site.baseurl}}/networking/egress/egress-gateway-on-prem)
 
+**Not Supported**
+
+- Amazon VPC CNI
+
+ Calico Enterprise CNI and IPAM is required. The ability to control the egress gateway’s IP is a feature of Calico Enterprise CNI and IPAM. AWS VPC CNI does not support that feature, so it is incompatible with egress gateways.
+
 ### How to
 
 - [Configure IP autodetection](#configure-ip-autodetection)
