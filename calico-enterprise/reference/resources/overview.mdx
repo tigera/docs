@@ -45,6 +45,7 @@ spec:
 
 The following resources are supported:
 
+- [AlertException]({{site.baseurl}}/reference/resources/alertexception)
 - [BGPConfiguration]({{site.baseurl}}/reference/resources/bgpconfig)
 - [BGPPeer]({{site.baseurl}}/reference/resources/bgppeer)
 - [DeepPacketInspection]({{site.baseurl}}/reference/resources/deeppacketinspection)
