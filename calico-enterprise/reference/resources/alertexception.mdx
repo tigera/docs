@@ -4,9 +4,8 @@ description: API for this Calico Enterprise resource.
 canonical_url: '/reference/resources/alertexception'
 ---
 
-An alert exception resource represents a filter to silent certain alerts over a specific time window
-or indefinitely. Alert exceptions affect search results in the "Alerts" page in {{site.prodname}}
-Manager UI.
+An alert exception resource is a filter that hides specific alerts from users in {{site.prodname}} Manager UI.
+You can filter alerts by time range or indefinitely. If an alert exception expires, alerts will reappear in Manager UI.
 
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/){:target="_blank"},
 the following case-insensitive aliases can be used to specify the resource type on the CLI:
@@ -44,13 +43,13 @@ spec:
 
 #### Selector
 
-A selector is an expression which matches alerts based on their fields.
-For each alert, `origin` and `type` fields are always set but other fields can be empty.
+A selector is an expression that matches alerts based on their fields.  For each alert,
+`origin` and `type` fields are automatically set by the applicable component, but other fields can be empty.
 
 | Field | Description |
 |---|---|
 | origin | User specified or generated names from {{site.prodname}} threat defense components. |
-| type | Indicates which {{site.prodname}} threat defense components an alert is generated from. |
+| type | {{site.prodname}} threat defense components an alert is generated from. |
 | host | Name of the node that triggers this alert. |
 | dest_ip | IP address of the destination pod. |
 | dest_name | Name of the destination pod. |
@@ -70,10 +69,10 @@ The selector also supports logical operators, which can be combined into larger 
 
 #### StartTime
 
-Defines the start time from which this alert exception will start filtering alerts in RFC 3339 format. This value is required.
+Defines the start time when this alert exception starts filtering alerts in RFC 3339 format. This value is required.
 
 #### EndTime
 
-Defines the end time from which this alert exception will stop filtering alerts in RFC 3339 format.
-If omitted, alerts will be filtered indefinitely.
-If the value is changed to the past, this alert exception will be disabled immediately.
+Defines the end time when this alert exception stops filtering alerts in RFC 3339 format.
+If omitted, alerts are filtered indefinitely.
+If the value is changed to the past, this alert exception is disabled immediately.
