@@ -38,8 +38,8 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
   - OpenShift
   - EKS
   - AKS with limitations:
-    - [AKS with Azure CNI and Calico network policy](../../getting-started/kubernetes/managed-public-cloud/aks#install-aks-with-{{site.prodnamedash}}-for-network-policy) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
-    - [AKS with {{site.prodname}} networking](../../getting-started/kubernetes/managed-public-cloud/aks#install-aks-with-{{site.prodnamedash}}-networking) is in testing with the eBPF dataplane. This should be a better solution overall but, at time of writing, the testing was not complete.
+    - [AKS with Azure CNI and Calico network policy](../../getting-started/kubernetes/aks#install-aks-with-azure-cni-networking) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
+    - [AKS with {{site.prodname}} networking](../../getting-started/kubernetes/aks#install-aks-with-{{site.prodnamedash}}-networking) is in testing with the eBPF dataplane. This should be a better solution overall but, at time of writing, the testing was not complete.
   - RKE (RKE2 recommended because it supports disabling `kube-proxy`)
 
 - Linux distribution/kernel:
