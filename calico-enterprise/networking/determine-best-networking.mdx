@@ -162,7 +162,7 @@ If you would like pod IP addresses to be routable outside of the cluster then yo
 
 {% include geek-details.html details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native' %}
 
-If you aren’t using AKS, and prefer to avoid dependencies on a specific cloud provider or allocating pod IPs from the underlying VNET is problematic due to IP address range exhaustion challenges, we recommend using {{site.prodname}} networking in cross-subnet overlay mode. Pod IPs will not be routable outside of the cluster, but you can scale the cluster up to the limits of Kubernetes with no dependencies on the underlying cloud network.
+If you are using AKS and prefer to avoid dependencies on a specific cloud provider or allocating pod IPs from the underlying VNET is problematic due to IP address range exhaustion challenges, we recommend using {{site.prodname}} networking in cross-subnet overlay mode. Pod IPs will not be routable outside of the cluster, but you can scale the cluster up to the limits of Kubernetes with no dependencies on the underlying cloud network.
 
 {% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Cross-subnet:VXLAN,Routing:Calico' %}
 

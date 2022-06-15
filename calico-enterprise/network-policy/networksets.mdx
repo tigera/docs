@@ -236,16 +236,27 @@ spec:
 
 - Avoid overlapping IP addresses/subnets in networkset/globalnetworkset definitions
 
-The following table provides guidance on the efficient use of network sets. 
+### Efficient use of network sets
+
+If you have a large number of things to match, using a network set is more efficient both in the control plane (for example, Felix CPU), and for the packet path (latency/per packet CPU). If you use network sets and you add/remove an IP from the network set, this doesn't require changing iptables rules at all. It only requires updating the ipset, which is efficient. If you also change the policy rules, then iptables must be updated too. Using network sets is efficient for all of the following use cases:
+
+- The system applying the iptables rules to incoming connections (to decide whether to allow or deny the traffic)
+- iptables rules updates whenever one of the policies and/or network sets change
+- The Kubernetes APIserver handling changes to the policy and/or networkset CRDs
+
+Follow these guidelines for efficient use of network sets.
 
 | Policy                                                       | Network set                            | Results                                                      |
 | ------------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------ |
 | source: selector: foo="bar"                                  | With handful of broad CIDRs            | **Efficient**<br /> **-** 1 iptables/eBPF rule   <br />- 1 IP set with handful of CIDRs |
 | source: nets: [ ... handful ...]                             | Not used                               | **Efficient**<br/> - Handful of iptables/eBPF rules <br /> - 0 IP sets |
-| source: selector: foo="bar"                                  | One network set with 2000 x /32s       | **Fairly efficient**  <br />- 1 iptables/eBPF rule<br />- 1 IP sets with 2000 entries |
+| source: selector: foo="bar"                                  | One network set with 2000 x /32s       | **`*`Most efficient**  <br />- 1 iptables/eBPF rule<br />- 1 IP sets with 2000 entries |
 |                                                              | Two network sets with 1000 each x /32s | **Efficient**<br/>- 2 iptable/eBPF rules<br />- 2 IP set with 1000 entries |
 | source: <br />  nets: [... 2000 /32s ...]<br />- source:  <br />  nets: [1 x /32]<br />- source:  nets: [1 x /32]<br />- ... x 2000 | Not used                               | **Inefficient**<br />Results in programming 2k iptables/eBPF rules <br />- 2000+ iptables/eBPF rules<br />- 0 IP sets |
 
+`*` Updating **ipsets** is fast and efficient. Adding/removing a single entry is an O(1) operation no matter the number of IPs in the set. Updating **iptables** is generally slow and gets slower the more rules you have in total (including rules created by kube-proxy, for example). Less than 10K rules are generally fine, but noticeable latency occurs when updating rules above that number (increasing as the number of rules grows). (The newer nftables may scale more efficiently but those results are not included here.)
+
+Similarly, hitting many iptables (or eBPF) rules adds latency to the first packet in a flow. For iptables, it measures around 250ns per rule. Although a single rule is negligible, hitting 10K rules add >1ms to the first packet in the flow. Packets only hit the rules for the particular interface that they arrive on; if you have 10K rules on one interface and 10 rules on another, the packet processed by the first interface will have more latency.
 
 ### Above and beyond
 

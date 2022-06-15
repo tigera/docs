@@ -23,7 +23,7 @@ Other versions may work, but we do not actively test {{site.prodname}}
 
 We test {{site.prodname}} {{page.version}} against the following managed Kubernetes versions.
 
-- AKS: 1.22 
+- AKS: 1.21, 1.22 
 - GKE: 1.21
 - EKS: 1.21
 
