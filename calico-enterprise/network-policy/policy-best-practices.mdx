@@ -128,110 +128,110 @@ If you follow a few simple guidelines, you’ll  be well on your way to writing 
 The following policy is a global network policy for a microservice that limits all egress communication external to the cluster in the security tier. Does this policy work? Yes. And logically, it seems to cleanly implement application controls.
 
 ```yaml
-apiVersion: projectcalico.org/v3
-2kind: GlobalNetworkPolicy
-3metadata:
-4  name: security.allow-egress-from-pods
-5spec:
-6  tier: security
-7  order: 1
-8  selector: all()
-9  egress:
-10    - action: Deny
-11      source:
-12        namespaceSelector: projectcalico.org/namespace starts with "tigera"
-13      destination:
-14        selector: threatfeed == "feodo"
-15    - action: Allow
-16      protocol: TCP
-17      source:
-18        namespaceSelector: projectcalico.org/name == "sso"
-19        ports:
-20          - '443'
-21          - '80'
-22      destination:
-23        domains:
-24          - '*.googleapis.com'
-25    - action: Allow
-26      protocol: TCP
-27      source:
-28        selector: psql == "external"
-29      destination:
-30        ports:
-31          - '5432'
-32        domains:
-33          - '*.postgres.database.azure.com'
-34    - action: Allow
-35      protocol: TCP
-36      source: {}
-37      destination:
-38        ports:
-39          - '443'
-40          - '80'
-41        domains:
-42          - '*.logic.azure.com'
-43    - action: Allow
-44      protocol: TCP
-45      source: {}
-46      destination:
-47        ports:
-48          - '443'
-49          - '80'
-50        domains:
-51          - '*.azurewebsites.windows.net'
-52    - action: Allow
-53      protocol: TCP
-54      source:
-55        selector: 'app in { "call-archives-api" }||app in { "finwise" }'
-56      destination:
-57        domains:
-58          - '*.documents.azure.com'
-59    - action: Allow
-60      protocol: TCP
-61      source:
-62        namespaceSelector: projectcalico.org/name == "warehouse"
-63      destination:
-64        ports:
-65          - '1433'
-66        domains:
-67          - '*.database.windows.net'
-68    - action: Allow
-69      protocol: TCP
-70      source: {}
-71      destination:
-72        nets:
-73          - 65.132.216.26/32
-74.         - 10.10.10.1/32
-75        ports:
-76          - '80'
-77          - '443'
-78    - action: Allow
-79      protocol: TCP
-80      source:
-81        selector: app == "api-caller"
-82      destination:
-83        ports:
-84          - '80'
-85          - '443'
-86        domains:
-87          - api.example.com
-88    - action: Allow
-89      source:
-90        selector: component == "tunnel"
-91    - action: Allow
-92      destination:
-93        selector: all()
-94        namespaceSelector: all()
-95    - action: Deny
-96  types:
-97    - Egress
+1  apiVersion: projectcalico.org/v3
+2  kind: GlobalNetworkPolicy
+3  metadata:
+4    name: security.allow-egress-from-pods
+5  spec:
+6    tier: security
+7    order: 1
+8    selector: all()
+9    egress:
+10     - action: Deny
+11       source:
+12         namespaceSelector: projectcalico.org/namespace starts with "tigera"
+13       destination:
+14         selector: threatfeed == "feodo"
+15     - action: Allow
+16       protocol: TCP
+17       source:
+18         namespaceSelector: projectcalico.org/name == "sso"
+19         ports:
+20           - '443'
+21           - '80'
+22       destination:
+23         domains:
+24           - '*.googleapis.com'
+25     - action: Allow
+26       protocol: TCP
+27       source:
+28         selector: psql == "external"
+29       destination:
+30         ports:
+31           - '5432'
+32         domains:
+33           - '*.postgres.database.azure.com'
+34     - action: Allow
+35       protocol: TCP
+36       source: {}
+37       destination:
+38         ports:
+39           - '443'
+40           - '80'
+41         domains:
+42           - '*.logic.azure.com'
+43     - action: Allow
+44       protocol: TCP
+45       source: {}
+46       destination:
+47         ports:
+48           - '443'
+49           - '80'
+50         domains:
+51           - '*.azurewebsites.windows.net'
+52     - action: Allow
+53       protocol: TCP
+54       source:
+55         selector: 'app in { "call-archives-api" }||app in { "finwise" }'
+56       destination:
+57         domains:
+58           - '*.documents.azure.com'
+59     - action: Allow
+60       protocol: TCP
+61       source:
+62         namespaceSelector: projectcalico.org/name == "warehouse"
+63       destination:
+64         ports:
+65           - '1433'
+66         domains:
+67           - '*.database.windows.net'
+68     - action: Allow
+69       protocol: TCP
+70       source: {}
+71       destination:
+72         nets:
+73           - 65.132.216.26/32
+74.          - 10.10.10.1/32
+75         ports:
+76           - '80'
+77           - '443'
+78     - action: Allow
+79       protocol: TCP
+80       source:
+81         selector: app == "api-caller"
+82       destination:
+83         ports:
+84           - '80'
+85           - '443'
+86         domains:
+87           - api.example.com
+88     - action: Allow
+89       source:
+90         selector: component == "tunnel"
+91     - action: Allow
+92       destination:
+93         selector: all()
+94         namespaceSelector: all()
+95     - action: Deny
+96   types:
+97     - Egress
 ```
 
 **Why this policy is inefficient**
 
 First, the policy does not follow guidance on use for global network policy: that all rules apply to the endpoints. So the main issue is inefficiency, although the policy works.
 
-The main selector all() (line 8) means the policy will be rendered on every endpoint (workload and host endpoints). The selectors in each rule (for example, lines 12 and 14) control traffic that are matched by that rule. So, even if the host doesn’t have any workloads that match `"selector: app == "api-caller"`, you’ll still get the iptables/eBPF rule rendered on every host to implement that rule. If this sample policy had 100 pods, that’s a 10 - 100x increase in the number of rules (depending on how many local endpoints match each rule). In short, it adds:
+The main selector `all()` (line 8) means the policy will be rendered on every endpoint (workload and host endpoints). The selectors in each rule (for example, lines 12 and 14) control traffic that are matched by that rule. So, even if the host doesn’t have any workloads that match `"selector: app == "api-caller"`, you’ll still get the iptables/eBPF rule rendered on every host to implement that rule. If this sample policy had 100 pods, that’s a 10 - 100x increase in the number of rules (depending on how many local endpoints match each rule). In short, it adds:
 
 - Memory and CPU to keep track of all the extra rules
 - Complexity to handle changes to endpoint labels, and to re-render all the policies too.
