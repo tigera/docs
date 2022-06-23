@@ -37,14 +37,16 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
   - kOps
   - OpenShift
   - EKS
-  - AKS
-  - RKE
+  - AKS with limitations:
+    - [AKS with Azure CNI and Calico network policy](../../getting-started/kubernetes/aks#install-aks-with-azure-cni-networking) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
+    - [AKS with {{site.prodname}} networking](../../getting-started/kubernetes/aks#install-aks-with-{{site.prodnamedash}}-networking) is in testing with the eBPF dataplane. This should be a better solution overall but, at time of writing, the testing was not complete.
+  - RKE (RKE2 recommended because it supports disabling `kube-proxy`)
 
 - Linux distribution/kernel:
 
   - Ubuntu 20.04.
   - Red Hat v8.2 with Linux kernel v4.18.0-193 or above (Red Hat have backported the required features to that build).
-  - Another [supported distribution]({{site.baseurl}}/getting-started/kubernetes/requirements) with Linux kernel v5.3 or above.
+  - Another [supported distribution]({{site.baseurl}}/getting-started/kubernetes/requirements) with Linux kernel v5.3 or above.  Kernel v5.8 or above with CO-RE enabled is recommended for better performance. 
 
 - An underlying network fabric that allows VXLAN traffic between hosts.  In eBPF mode, VXLAN is used to forward Kubernetes NodePort traffic.
 
@@ -54,19 +56,14 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
 
 - Distributions:
 
-  - GKE.  This is because of an incompatibility with the GKE CNI plugin.  A fix for the issue has already been accepted upstream but at the time of writing it is not publicly available.
-
-  - EKS using the default Ubuntu or Amazon Linux images.  At the time of writing, these do not have a recent enough kernel.
-
-  - Mirantis Kubernetes Engine (MKE): eBPF mode is incompatible with MKE at this time. The Tigera team is investigating the issue.
+  - GKE.  This is because of an incompatibility with the GKE CNI plugin.
 
 - Clusters with some eBPF nodes and some standard dataplane and/or Windows nodes.
 - IPv6.
-- Host endpoint `doNotTrack` policy (other policy types are supported).
 - Floating IPs.
-- SCTP (either for policy or services).
-- `Log` action in policy rules.
-- Tagged VLAN devices.
+- SCTP (either for policy or services). This is due to lack of kernel support for the SCTP checksum in BPF.
+- `Log` action in policy rules. This is because the `Log` action maps to the iptables `LOG` action and BPF programs cannot access that log.
+- VLAN-based traffic.
 
 #### Performance
 
@@ -76,7 +73,7 @@ For best pod-to-pod performance, we recommend using an underlying network that d
 - A cluster using a compatible cloud provider's CNI (such as the AWS VPC CNI plugin).
 - An on-prem cluster with BGP peering configured.
 
-If you must use an overlay, we recommend that you use VXLAN, not IPIP.  VXLAN has better performance than IPIP in
+If you must use an overlay, we recommend that you use VXLAN, not IPIP.  VXLAN has much better performance than IPIP in
 eBPF mode due to various kernel optimisations.
 
 ### How to
@@ -187,8 +184,8 @@ If you do not see the pods restart then it's possible that the `ConfigMap` wasn'
 
 #### Configure kube-proxy
 
-In eBPF mode {{site.prodname}} replaces `kube-proxy` so it wastes resources to run both.  This section explains how
-to disable `kube-proxy` in some common environments.
+In eBPF mode {{site.prodname}} replaces `kube-proxy` so it wastes resources (and reduces performance) to run both.  
+This section explains how to disable `kube-proxy` in some common environments.
 
 ##### Clusters that run `kube-proxy` with a `DaemonSet` (such as `kubeadm`)
 
@@ -200,7 +197,7 @@ kubectl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nod
 
 Then, should you want to start `kube-proxy` again, you can simply remove the node selector.
 
-> **Note**: This approach is not suitable for AKS since that platform makes use of the Kubernetes add-on manager.
+> **Note**: This approach is not suitable for AKS with Azure CNI since that platform makes use of the Kubernetes add-on manager.
 > the change will be reverted by the system.  For AKS, you should follow [Avoiding conflicts with kube-proxy](#avoiding-conflicts-with-kube-proxy)
 > below.
 {: .alert .alert-info}

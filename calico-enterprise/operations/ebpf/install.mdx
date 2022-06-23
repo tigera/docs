@@ -56,8 +56,7 @@ and in particular, pushing the networking capabilities of the latest Linux kerne
 
 - Distributions:
 
-  - GKE.  This is because of an incompatibility with the GKE CNI plugin.  A fix for the
-    issue has already been accepted upstream but at the time of writing it is not publicly available.
+  - GKE.  This is because of an incompatibility with the GKE CNI plugin.
   
   - RKE: eBPF mode cannot be enabled at install time because RKE doesn't provide
     a stable address for the API server.  However, by following [these instructions](../../maintenance/ebpf/enabling-ebpf),
@@ -165,44 +164,10 @@ AKS does not support disabling `kube-proxy` so it's necessary to tell {{site.pro
 <label:EKS>
 <%
 
-Amazon's Elastic Kubernetes Service (EKS) supports a number of base OSes for nodes.  Unfortunately, several of them
-are incompatible with eBPF mode.  In particular, the kernel used by Amazon Linux and the version of Ubuntu 18.04 that
-EKS provides at the time of writing are too old for eBPF mode.
+Amazon's Elastic Kubernetes Service (EKS) supports a number of base OSes for nodes.  At the time of writing, the
+default kernel used by Amazon Linux is recent enough to run eBPF mode, as is the Bottlerocket kernel.  The Ubuntu
+18.04 image did not have a recent-enough kernel (but that may have changed by the time you read this).
 
-The easiest way to start an EKS cluster that meets eBPF mode's requirements is to use Amazon's
-{% include open-new-window.html text='Bottlerocket' url='https://aws.amazon.com/bottlerocket/' %} OS, instead of the default.  Bottlerocket is a
-container-optimised OS with an emphasis on security; it has a version of the kernel which is compatible with eBPF mode.
-
-For example, to create a 4-node test cluster with a Bottlerocket node group, run the command below.  When using `eksctl` 
-it is important to use the config-file approach to creating a cluster in order to set the additional IAM permissions 
-that Bottlerocket requires.
-
-  ```
-  eksctl create cluster --config-file - <<EOF
-  apiVersion: eksctl.io/v1alpha5
-  kind: ClusterConfig
-  metadata:
-    name: my-calico-cluster
-    region: us-west-2
-    version: '1.18'
-  nodeGroups:
-    - name: ng-my-calico-cluster
-      instanceType: t3.medium
-      minSize: 0
-      maxSize: 4
-      desiredCapacity: 4
-      amiFamily: Bottlerocket
-      iam:
-        attachPolicyARNs:
-        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-  EOF
-  ```
-
-Since Bottlerocket places the Kubelet's plugin directory in a different location to other OSes, it's necessary to add 
-the `flexVolumePath` setting to the operator `Installation` resource as described below.
 %>
 {% endtabs %}
 
@@ -300,7 +265,7 @@ EOF
 ```
 
 > **Tip**: If you forget to create the config map before installing the operator you can create it afterwards and
-> then wait 60 seconds before restarting the operator:
+> then wait 60 seconds (for the config map to propagate) before restarting the operator:
 > ```
 > kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator
 > ```
@@ -323,7 +288,8 @@ curl -o custom-resources.yaml <url of the file from the main install guide>
 
 Edit the file in your editor of choice and find the `Installation` resource, which should be at the top of the file.
 To enable eBPF mode, we need to add a new `calicoNetwork` section inside the `spec` of the Installation resource,
-including the `linuxDataplane` field.  For EKS only, you should also add the `flexVolumePath` setting as shown below. 
+including the `linuxDataplane` field.  For EKS Bottlerocket OS only, you should also add the `flexVolumePath` setting 
+as shown below. 
 
 For example:
 
@@ -355,7 +321,7 @@ kubectl create -f custom-resources.yaml
 ```
 
 > **Tip**: If you already created the custom resources, you can switch your cluster over to eBPF mode by updating the
-> installation resource.  The operator will automatically apply the change.
+> installation resource.  The operator will automatically roll out the change.
 > ```bash
 > kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF", "hostPorts":null}}}'
 > ```
@@ -421,7 +387,7 @@ kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"
 <label:AKS>
 <%
 
-AKS does not allow `kube-proxy` to be disabled, `kube-proxy` is deployed by the addon manager, which will reconcile
+AKS with Azure CNI does not allow `kube-proxy` to be disabled, `kube-proxy` is deployed by the addon manager, which will reconcile
 away any manual changes made to its configuration.  To ensure `kube-proxy` and {{site.prodname}} don't fight, set
 the Felix configuration parameter `bpfKubeProxyIptablesCleanupEnabled` to false.  This can be done with
 `kubectl` as follows:

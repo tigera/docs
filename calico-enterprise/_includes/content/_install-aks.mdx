@@ -109,7 +109,7 @@ Wait until the `apiserver` shows a status of `Available`, then proceed to [insta
 Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
 {% endif %}
 
-#### Install AKS with Calico networking
+#### Install AKS with {{ site.prodname }} networking
 
 {% if include.clusterType == "standalone" %}
 The geeky details of what you get:
