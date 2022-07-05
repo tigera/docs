@@ -81,8 +81,8 @@ The following is a sample flow log entry using aggregation by pod prefix for all
 ```
 
 - `1597086849` to `1597087167` is the 5 minute aggregation interval.
-- Workload endpoints with a similar prefix "access-6b687c8dcb-*" in the "policy-demo" namespace connected to a workload-endpoints/pods with prefix "nginx-86c57db685-*" exposing a service on port "80".
-- The aggregated source workloade endpoints had the labels `app: nginx` and `"pod-template-hash: 6b687c8dcb` and the aggregated destination workload endpoint had the labels `app: nginx` and `"pod-template-hash: 86c57db685`.
+- Workload endpoints with a similar prefix `access-6b687c8dcb-*` in the `policy-demo` namespace connected to a workload-endpoints/pods with prefix `nginx-86c57db685-*` exposing a service on port `80`.
+- The aggregated source workloade endpoints had the labels `app: nginx` and `pod-template-hash: 6b687c8dcb` and the aggregated destination workload endpoint had the labels `app: nginx` and `pod-template-hash: 86c57db685`.
 - It was an incoming connection reported by the "Destination" node, and a policy "Allowed" the connection.
 - There were 282 incoming packets and 239 outgoing packets.
 - Within the aggregation time interval, there were 7 flows aggregated, with 47 new flows started, and 40 flows completed.
