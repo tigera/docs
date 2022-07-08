@@ -19,7 +19,7 @@ Historically, web application firewalls (WAFs) were deployed at the edge of your
 
 {{site.prodname}} WAF allows you to selectively run service traffic within your cluster, and protect intra-cluster traffic from common HTTP-layer attacks such as SQL injection, and cross-site request forgery. To increase protection, you can use {{site.prodname}} network policies to enforce security controls on selected pods on the host.
 
-In addition to protecting against application layer attacks, any blocked HTTP requests will be logged and available in ElasticSearch for review. You can also set globalAlerts to be triggered based on these logs.
+In addition to protecting against application layer attacks, any blocked HTTP requests will be logged and available in Elasticsearch for review. You can also set globalAlerts to be triggered based on these logs.
 
 ### Features 
 
@@ -61,7 +61,9 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 
 - [Configure a cluster for WAF](#configure-a-cluster-for-waf)
 - [Add and edit rules](#add-and-edit-rules)
-- [Manager UI](#manager-ui)
+- [Seeing WAF events in Kibana and Manager UI](#seeing-waf-events-in-kibana-and-manager-ui)
+  - [Kibana](#kibana)
+  - [Manager UI](#manager-ui)
 
 #### Configure a cluster for WAF
 
@@ -93,7 +95,6 @@ To disable WAF for the service, remove the annotation.
 kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging-
 ```
 
-
 ##### Step 3: Test your installation
 
 To test your installation, you must first know the URL to access services. The URL can be either of the following:
@@ -106,11 +107,13 @@ After identifying the URL, `curl` your service with a command to trigger an OWAS
 curl http://<host>//test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
 ```
 
-In Kibana you will have to create `tigera_secure_ee_waf*` index pattern. Instructions on how to create an index pattern can be found {% include open-new-window.html text='here' url='https://www.elastic.co/guide/en/kibana/7.17/index-patterns.html' %}.
+In the l7-log-collector pods, you should notice a **warning** log when the attack triggered:
 
-Now view the WAF logs in Kibana by selecting the `tigera_secure_ee_waf*` index pattern. You should see the relevant WAF assessment from your request recorded:
+```
+level=warning msg="WAF Process Http Request [2f435aca-4a3e-4f96-a7b2-a60c9745bd7b] URL '/test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user' OWASP Warning'[2] Host:'10.224.0.38' File:'/etc/modsecurity-ruleset/REQUEST-942-APPLICATION-ATTACK-SQLI.conf' Line:'45' ID:'942100' Data:'' Severity:'0' Version:'OWASP_CRS/3.3.2' Message:'Warning. detected SQLi using libinjection.''"
+```
 
-<img src="{{site.baseurl}}/images/waf-kibana.png" alt="WAF logs in Kibana" width="600">
+To enable seeing WAF logs in Kibana and Manager UI, see the [Seeing WAF events in Kibana and Manager UI](#seeing-waf-events-in-kibana-and-manager-ui) section.
 
 #### Add and edit rules
 
@@ -128,9 +131,9 @@ In case of an error, HTTP request will return HTTP 403 Response Code from Envoy 
 
 | Action | Description | Disruptive? |
 | ------ | ----------- | ----------- |
-| Block | Despite the name, this **will not block or drop the request**. ModSecurity will return detection=0 in this case and Calico will log the event in ElasticSearch. | No |
-| Deny | Denies HTTP traffic as ModSecurity will return detection=1. | Yes |
-| Drop | Denies HTTP traffic as ModSecurity will return detection=1. | Yes |
+| Block | Despite the name, this **will not block or drop the request**. ModSecurity will return detection=0 in this case and Calico will **not** log the event in Elasticsearch. | No |
+| Deny | Denies HTTP traffic as ModSecurity will return detection=1 and will log the event in Elasticsearch.  | Yes |
+| Drop | Denies HTTP traffic as ModSecurity will return detection=1 and will log the event in Elasticsearch. | Yes |
 
 ##### Add or edit a rule set
 
@@ -153,14 +156,59 @@ curl https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/crs-setu
 > **Important**: The two bootstrapping files `modsecdefault.conf` and `crs-setup.conf` MUST be named lowercase i.e. lowercase "m" and lowercase "c" respectively in order to ensure they are loaded into ModSec before any REQUST-*.conf Core Rules Set files. Presence of these two files is required and enforced by the operator.
 {: .alert .alert-warning}
 
-Create a configMap containing all the files downloaded into your new directory and replace the existing rule set with it:
+Change your current directory to the `my-ruleset` folder where your core rules set files live. Create a configMap containing all the files downloaded into your new directory and replace the existing rule set with it:
 
 ```bash
-kubectl create cm --dry-run --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > ../my-ruleset.yaml
+kubectl create cm --dry-run=client --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > ../my-ruleset.yaml
 kubectl replace -f ../my-ruleset.yaml
 ```
 
-#### Manager UI
+#### Seeing WAF events in Kibana and Manager UI
+In order for logs to be pushed and seen in Kibana and Manager UI, core rulesets have to be modified to **deny** or **drop** traffic. When WAF is configured in the cluster by default, modsecurity rules are programmed in the l7-log-collector to log a warning but not deny or drop the traffic.
+
+Follow the section in [Add or edit a rule set](#add-and-edit-rules) to download the bootstrap files, and update your rule sets to **deny** instead of **block (pass)** traffic.
+
+For example, modify the modsecurity core rulesets' `SecDefaultAction` to **deny** rules by commenting and uncommenting these sections in the `crs-setup.conf`, which will change the `SecDefaultAction` from `pass` to `deny` with a `403` response. 
+
+Comment
+```
+# SecDefaultAction "phase:1,log,auditlog,pass"
+# SecDefaultAction "phase:2,log,auditlog,pass"
+```
+
+Uncomment
+```
+SecDefaultAction "phase:1,log,auditlog,deny,status:403"
+SecDefaultAction "phase:2,log,auditlog,deny,status:403"
+```
+
+Switching to deny means it will stop processing the request and return a 403 forbidden error when a rule is triggered. All denied traffic in this case means any HTTP request will return HTTP 403 Response Code from Envoy to the originating service like below:
+
+```
+root@waf-attacker-1234:/# curl http://<host>//test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user -v
+*   Trying 10.0.40.16:80...
+* Connected to 10.0.40.16 (10.0.40.16) port 80 (#0)
+> GET /test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user HTTP/1.1
+> Host: 10.0.40.16
+> User-Agent: curl/7.74.0
+> Accept: */*
+> 
+* Mark bundle as not supporting multiuse
+< HTTP/1.1 403 Forbidden
+< date: Thu, 23 Jun 2022 19:02:10 GMT
+< server: envoy
+< content-length: 0
+```
+
+##### Kibana
+
+In Kibana you will have to create `tigera_secure_ee_waf*` index pattern. Instructions on how to create an index pattern can be found {% include open-new-window.html text='here' url='https://www.elastic.co/guide/en/kibana/7.17/index-patterns.html' %}.
+
+Now view the WAF logs in Kibana by selecting the `tigera_secure_ee_waf*` index pattern. You should see the relevant WAF assessment from your request recorded:
+
+<img src="{{site.baseurl}}/images/waf-kibana.png" alt="WAF logs in Kibana" width="600">
+
+##### Manager UI
 
 Create a new Global Alert for WAF using Manager UI, or using standard YAML.
 
