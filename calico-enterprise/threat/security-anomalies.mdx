@@ -31,7 +31,7 @@ This how-to guide uses the following {{site.prodname}} features:
 
 #### About anomalies
 
-{{site.prodname}} anomaly detection allows you to proactively determine if there is an issue (or not), and potentially resolve problems before service levels are compromised. Anomaly detection uses {{site.prodname}} Elasticsearch logs ([flows]({{site.baseurl}}/visibility/elastic/flow) logs, [L7]({{site.baseurl}}/visibility/elastic/l7) logs, and [DNS]({{site.baseurl}}/visibility/elastic/dns) logs) to learn the behavior of cluster nodes, pods, services, and other entities that send log records (applications, load balancers, databases, etc.).
+{{site.prodname}} anomaly detection allows you to proactively determine if there is an issue (or not), and potentially resolve problems before service levels are compromised. Anomaly detection uses {{site.prodname}} Elasticsearch logs ([flow]({{site.baseurl}}/visibility/elastic/flow) logs, [L7]({{site.baseurl}}/visibility/elastic/l7) logs, and [DNS]({{site.baseurl}}/visibility/elastic/dns) logs) to learn the behavior of cluster nodes, pods, services, and other entities that send log records (applications, load balancers, databases, etc.).
 
 Root causes of anomalies include:
   

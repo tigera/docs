@@ -48,30 +48,15 @@ The following detectors are searching for performance anomalies. These detectors
 ID: `generic_dns`. Looks for excessive values in several fields in the `DNS` log. May indicate performance 
 issues like the excessive resource consumption.
 
-#### Time series anomaly in DNS log
-
-ID: `time_series_dns`. Looks at all numeric fields in the `DNS` log and how they changed over time. 
-Anomalies may indicate performance issues like the excessive resource consumption.
-
 #### Excessive value anomaly in flows log
 
 ID: `generic_flows`. Looks for excessive values in several fields in the `flows` log. May indicate performance 
 issues like the excessive resource consumption.
 
-#### Time series anomaly in flows log
-
-ID: `time_series_flows`. Looks at all numeric fields in the `flows` log and how they changed over time. 
-Anomalies may indicate performance issues like the excessive resource consumption.
-
 #### Excessive value anomaly in L7 log
 
 ID: `generic_l7`. Looks for excessive values in several fields in the `L7` log. May indicate performance 
 issues like the excessive resource consumption.
-
-#### Time series anomaly in L7 log
-
-ID: `time_series_l7`. Looks at all numeric fields in the `L7` log and how they changed over time. 
-Anomalies may indicate performance issues like the excessive resource consumption.
 
 ### Detectors common to security and performance
 
@@ -95,8 +80,20 @@ ID: `l7_latency`. Looks for the pods that have too high latency of the L7 reques
 May indicate a denial of service attack or other attacks. This anomaly could also indicate performance issues, 
 like the slowness of processes or the excessive resource consumption.
 
+#### Inbound Service bytes anomaly
+
+ID: `bytes_in`. Looks for services that receive a high amount of data. This could indicate a denial of service attack, data exfiltrating, or other attacks. The detector looks for services with unusual replica sets, and unusual replica sets related to the cluster.
+
+#### Outbound Service bytes anomaly
+
+ID: `bytes_out`. Looks for pods that send a high amount of data. This could indicate a denial of service attack, data exfiltrating, or other attacks. The detector looks for pods with unusual replica sets, and unusual replica sets related to the cluster.
+
+#### Process bytes
+ID: `process_bytes`. Looks for the processes with an excessive number of bytes sent or received. May indicate problems with the processes, including excessive resource consumption due to attacks, or performance issues like process slowness or excessive resource consumption.
+
 #### Process restarts
 
 ID: `process_restarts`. Looks for pods with excessive number of the process restarts. May indicate problems with 
 the processes, including excessive resource consumption due to attacks, or performance issues like process slowness 
 or excessive resource consumption.
+
