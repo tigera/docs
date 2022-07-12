@@ -10,6 +10,7 @@ canonical_url: '/getting-started/openshift/requirements'
 
 - 4.8
 - 4.9
+- 4.10
 
 Refer to the OpenShift documentation for additional requirements.
 
