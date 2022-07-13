@@ -41,7 +41,7 @@ With {{site.prodname}} WAF, you gain visibility into internal east/west traffic 
 **Not supported**
 - Windows
 - eBPF dataplane
-- RKE clusters
+- RKE and RKE2 clusters
 
 **Limitations**
 - WAF is not supported for host-networked client pods
@@ -153,7 +153,7 @@ curl -O https://raw.githubusercontent.com/lsgroup/SmartReverseProxy/master/modse
 curl https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/crs-setup.conf.example > crs-setup.conf
 ```
 
-> **Important**: The two bootstrapping files `modsecdefault.conf` and `crs-setup.conf` MUST be named lowercase i.e. lowercase "m" and lowercase "c" respectively in order to ensure they are loaded into ModSec before any REQUST-*.conf Core Rules Set files. Presence of these two files is required and enforced by the operator.
+> **Important**: The two bootstrapping files `modsecdefault.conf` and `crs-setup.conf` MUST be named lowercase i.e. lowercase "m" and lowercase "c" respectively in order to ensure they are loaded into ModSec before any `REQUST-*.conf` Core Rules Set files. Presence of these two files is required and enforced by the operator.
 {: .alert .alert-warning}
 
 Change your current directory to the `my-ruleset` folder where your core rules set files live. Create a configMap containing all the files downloaded into your new directory and replace the existing rule set with it:
@@ -215,7 +215,7 @@ Create a new Global Alert for WAF using Manager UI, or using standard YAML.
 For example, we would like to trigger a Global Alert for SQL Injection attack specifically Rule ID 942100 as per {% include open-new-window.html text='custom version of Core Rule Set file' url='https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf' %} that will "deny" all traffic instead of "block".
 
 
-```
+```yaml
 apiVersion: projectcalico.org/v3
 kind: GlobalAlert
 metadata:

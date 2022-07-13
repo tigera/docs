@@ -2,6 +2,7 @@
 title: Monitor honeypods
 description: Monitor honeypod behavior to gain insight on what attackers are doing.
 canonical_url: /threat/honeypod/honeypod-controller
+feature_name: feature_generic_all
 ---
 
 ### Big picture
