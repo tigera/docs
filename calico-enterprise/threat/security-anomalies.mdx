@@ -80,6 +80,16 @@ For a list of anomalies that are enabled by default, see [Anomaly detection refe
 **Where does anomaly detection run on multi-cluster management (mcm) deployments?**
 >Anomaly detection runs on the management cluster, but users on managed clusters can enable/disable alerts.
 
+### Before you begin
+
+**Supported**
+
+- All platforms in this release except OpenShift
+
+**Required**
+
+- To use L7/HTTP anomaly detectors, you must enable [L7 logs]({{site.baseurl}}/visibility/elastic/l7/configure) on the cluster 
+
 ### How To
 
 - [Enable and disable anomaly detectors](#enable-and-disable-anomaly-detectors)
