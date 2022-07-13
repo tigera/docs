@@ -2,7 +2,7 @@
 title: Trace and block suspicious domains
 description: Add threat intelligence feeds to trace DNS queries that involve suspicious domains. 
 canonical_url: /threat/suspicious-domains
-feature_name: suspicious_domains
+feature_name: feature_generic_all
 ---
 
 ### Big picture

@@ -2,6 +2,7 @@
 title: Deep packet inspection
 description: Monitor live traffic for malicious activities.
 canonical_url: /threat/deeppacketinspection
+feature_name: feature_generic_all
 ---
 
 ### Big picture
