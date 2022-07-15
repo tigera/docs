@@ -2,6 +2,7 @@
 title: Configure outgoing NAT
 description: Configure {{site.prodname}} networking to perform outbound NAT for connections from pods to outside of the cluster.
 canonical_url: '/networking/workloads-outside-cluster'
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -35,6 +36,12 @@ If you choose to implement {{site.prodname}} networking with [BGP peered with yo
 - Configure {{site.prodname}} to peer with your physical network infrastructure
 - Create an IP pool with public IP addresses for those pods that are routed to your network with NAT disabled (`nat-outgoing: false`)
 - Verify that other network equipment does not NAT the pod traffic
+
+### Before you begin
+
+**Required**
+
+- Calico CNI
 
 ### How to
 

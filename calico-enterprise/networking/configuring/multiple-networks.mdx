@@ -1,6 +1,7 @@
 ---
 title: Configure multiple Calico Enterprise networks on a pod
 description: Configure a cluster with multiple Calico Enterprise networks on each pod, and enforce security using Calico Enterprise tiered network policy.
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -53,8 +54,11 @@ Although the following {{site.prodname}} features are supported for your default
 ### Before you begin...
 
 **Required**
-- Calico Enterprise CNI plugin
-  >**Note**: Verify that you are using the Calico Enterprise CNI. On AKS, EKS, and GKE, the CNI plugin used by Kubernetes may be different, which means this feature will not work.
+
+- Calico CNI 
+- Calico CNI plugin
+
+  >**Note**: Verify that you are using the Calico Enterprise CNI. The CNI plugin used by Kubernetes for AKS, EKS, and GKE may be different, which means this feature will not work.
     {: .alert .alert-info}
 - [Install Multus 3.0+ on your Kubernetes cluster](https://github.com/intel/multus-cni/){:target="_blank"}
   >**Note**: Multus is installed on OpenShift 4.0+ clusters.

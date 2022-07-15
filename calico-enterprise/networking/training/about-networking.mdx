@@ -2,6 +2,7 @@
 title: Networking overview
 description: Learn about networking layers, packets, IP addressing, and routing.
 canonical_url: '/networking/training/about-networking'
+feature_name: feature_generic_all
 ---
 
 > <span class="glyphicon glyphicon-info-sign"></span> This guide provides educational material that is not specific to {{site.prodname}}.

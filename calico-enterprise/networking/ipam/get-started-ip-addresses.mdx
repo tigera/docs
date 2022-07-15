@@ -1,6 +1,7 @@
 ---
 title: Get started with IP address management
 description: Configure Calico Enterprise to use Calico Enterprise IPAM or host-local IPAM, and when to use one or the other.
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -54,6 +55,12 @@ The host-local plugin is a simple IP address management plugin. It uses predeter
 {{site.prodname}} can use the host-local IPAM plugin, using the **Node.Spec.PodCIDR** field in the Kubernetes API to determine the CIDR to use for each node. However, per-node, per-pod, and per-namespace IP allocation features are not available using the host-local plugin.
 
 The host-local IPAM plugin is primarily used by other methods of routing pod traffic from one host to another. For example, it is used when installing {{site.prodname}} for policy enforcement with flannel networking, as well as when using {{site.prodname}} in Google Kubernetes Engine (GKE).
+
+### Before you begin
+
+**Limitations**
+
+- Works for platforms that use the Calico CNI
 
 ### How to
 

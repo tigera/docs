@@ -2,6 +2,7 @@
 title: Optimize egress networking for workloads with long-lived TCP connections
 description: React to egress gateway maintenance windows and minimize the impact of egress gateway downtime on sensitive workloads
 canonical_url: '/networking/egress/egress-gateway-maintenance'
+feature_name: egress_gateway
 ---
 
 ### Big Picture
