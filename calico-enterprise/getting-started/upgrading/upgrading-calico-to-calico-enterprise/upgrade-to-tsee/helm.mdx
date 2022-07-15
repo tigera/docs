@@ -2,7 +2,6 @@
 title: Upgrade Calico to Calico Enterprise installed with Helm
 description: Upgrade to Calico Enterprise from Calico installed with Helm.
 canonical_url: /maintenance/upgrade-to-tsee/helm
-show_toc: false
 ---
 
 >**Note**: All upgrades in {{site.prodname}} are free with a valid license.

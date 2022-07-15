@@ -2,7 +2,7 @@
 title: Upgrade Calico Enterprise installed with the operator
 description: Upgrading from an earlier release of Calico Enterprise with the operator.
 canonical_url: /maintenance/kubernetes-upgrade-tsee/operator
-show_toc: false
+feature_name: upgrade_all_but_ocp
 ---
 
 >**Note**: All upgrades in {{site.prodname}} are free with a valid license.
