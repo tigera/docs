@@ -2,6 +2,7 @@
 title: Install network policy on non-cluster hosts
 description: Install Calico network policy so you can secure hosts not in a cluster.
 canonical_url: '/getting-started/bare-metal/about'
+feature_name: non_cluster_hosts_all
 ---
 
 ### Big picture

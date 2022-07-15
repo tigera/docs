@@ -2,6 +2,7 @@
 title: Standard
 description: Install Calico Enterprise on a deployed Kubernetes cluster for on-premises deployments.
 canonical_url: /getting-started/kubernetes/generic-install
+feature_name: install_kubernetes_kubeadm
 ---
 
 ### Big picture

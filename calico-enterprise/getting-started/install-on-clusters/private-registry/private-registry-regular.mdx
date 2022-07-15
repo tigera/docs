@@ -2,6 +2,7 @@
 title: Install from a private registry
 description: Install and configure Calico Enterprise in a private registry. 
 canonical_url: '/getting-started/private-registry/private-registry-regular'
+feature_name: feature_generic_all
 ---
 
 {% assign operator = site.data.versions.first.tigera-operator %}
