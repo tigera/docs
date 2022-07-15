@@ -1,6 +1,7 @@
 ---
 title: Advertise Kubernetes service IP addresses
 description: Configure Calico to advertise Kubernetes service cluster IPs and external IPs outside the cluster using BGP.
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -51,6 +52,8 @@ If your {{site.prodname}} deployment is configured to peer with BGP routers outs
 ### Before you begin...
 
 **Required**
+
+- Calico CNI
 - [Configure BGP peering]({{site.baseurl}}/networking/bgp) between {{site.prodname}} and your network infrastructure
 - For ECMP load balancing to services, the upstream routers must be configured to use BGP multipath.
 - You need at least one external node outside the cluster that acts as a router, route reflector, or ToR that is peered with calico nodes inside the cluster.
@@ -58,6 +61,7 @@ If your {{site.prodname}} deployment is configured to peer with BGP routers outs
 
 **Limitations**
 
+- Supported in EKS and AWS, but only if you are using Calico CNI
 - OpenShift, versions 4.5 and 4.6  
     There is a {% include open-new-window.html text='bug' url='https://github.com/kubernetes/kubernetes/issues/91374' %} where the source IP is not preserved by NodePort services or traffic via a Service ExternalIP with externalTrafficPolicy:Local.   
     

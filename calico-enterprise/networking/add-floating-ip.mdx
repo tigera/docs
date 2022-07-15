@@ -1,6 +1,7 @@
 ---
 title: Add a floating IP to a pod
 description: Configure one or more floating IPs to use as additional IP addresses for reaching a Kubernetes pod.
+feature_name: feature_generic_all
 ---
 
 ### Big picture

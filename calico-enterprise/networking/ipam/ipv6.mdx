@@ -2,6 +2,7 @@
 title: Configure dual stack 
 description: Configure dual stack for workloads.
 canonical_url: '/networking/ipv6'
+feature_name: dual_stack
 ---
 
 ### Big picture
@@ -33,10 +34,13 @@ This how-to guide uses the following {{site.prodname}} features:
 **{{site.prodname}} requirements**
 
 - {{site.prodname}} IPAM
+- OpenShift 
+  - Requires 4.8 for IPv6/IPv4 dual-stack and IPv6 single stack support
+  - Requires 3.11 and later using {{site.prodname}} 3.4 and later for IPv6 support
 
 **Kubernetes version requirements**
-  - For dual stack, 1.16 and later
-  - For IPv4 only, any Kubernetes version
+  - For dual stack, 1.20 and later
+  - For one IP stack at a time (IPv4 or IPv6), any Kubernetes version
 
 **Kubernetes IPv6 host requirements**
   - An IPv6 address that is reachable from the other hosts

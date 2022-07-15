@@ -2,6 +2,7 @@
 title: Configure MTU to maximize network performance
 description: Optimize network performance for workloads by configuring the MTU in Calico to best suit your underlying network.
 canonical_url: '/networking/mtu'
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -34,6 +35,10 @@ of MTU by providing an explicit value if needed.
 To ensure auto-detection of MTU works correctly, make sure that the correct encapsulation modes are set in your [felix configuration]({{site.baseurl}}/reference/resources/felixconfig). Disable any unused encapsulations (`vxlanEnabled`, `ipipEnabled`, and `wireguardEnabled`) in your felix configuration to ensure that auto-detection can pick the optimal MTU for your cluster.
 
 ### Before you begin...
+
+**Required**
+
+- Calico CNI
 
 For help on using IP in IP and/or VXLAN overlays, see [Configure overlay networking]({{site.baseurl}}/networking/vxlan-ipip).
 

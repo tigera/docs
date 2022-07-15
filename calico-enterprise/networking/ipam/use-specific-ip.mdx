@@ -1,6 +1,7 @@
 ---
 title: Use a specific IP address with a pod
 description: Specify the IP address for a pod instead of allowing Calico Enterprise to automatically choose one.
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -17,7 +18,6 @@ This how-to guide uses the following features:
 
 - **{{site.prodname}} IPAM**
 - **IPPool** resource
-
 
 ### Concepts
 

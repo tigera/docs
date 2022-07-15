@@ -2,6 +2,7 @@
 title: Troubleshoot egress gateways
 description: Use checklist to troubleshoot common problems.
 canonical_url: '/networking/egress/troubleshoot'
+feature_name: egress_gateway
 ---
 
 - [Checklist of common problems](#checklist-of-common-problems)

@@ -2,6 +2,7 @@
 title: Kubernetes network model
 description: Learn network behaviors of the Kubernetes network model.
 canonical_url: 'https://www.tigera.io/learn/guides/kubernetes-networking/'
+feature_name: feature_generic_all
 ---
 
 {% comment %}

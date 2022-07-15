@@ -2,7 +2,7 @@
 title: Configure egress gateways, AWS
 description: Configure specific application traffic to exit the cluster through an egress gateway with a native AWS IP address.
 canonical_url: '/networking/egress/egress-gateway-aws'
-feature_name: 'egress_gateway_aws'
+feature_name: egress_gateway_aws
 ---
 
 ### Big picture
@@ -196,9 +196,9 @@ an instance (for example when scaling up the cluster).
 
 ### Before you begin
 
-**Supported**
+**Required**
 
-- Kubernetes in AWS only; for on-prem, see [this guide]({{site.baseurl}}/networking/egress/egress-gateway-on-prem)
+- Calico CNI
 
 **Not Supported**
 
