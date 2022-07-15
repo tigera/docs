@@ -566,8 +566,7 @@ at two examples: with OpenShift, and when adding Calico to an existing Kubernete
 **OpenShift**
 
 With OpenShift, follow [our documentation]({{site.baseurl}}/getting-started/openshift) as
-far as the option to [provide additional
-configuration]({{site.baseurl}}/getting-started/openshift/installation#provide-additional-configuration).
+far as the option to [provide additional configuration]({{site.baseurl}}/getting-started/openshift/installation).
 Then use `kubectl create configmap ...`, as that documentation says, to combine the
 prepared BGPPeer, BGPConfiguration and IPPool resources into a `calico-resources`
 ConfigMap.  Place the generated file in the manifests directory for the OpenShift install.

@@ -1,6 +1,7 @@
 ---
 title: Install a patch release
 description: Install an older patch release of Calico Enterprise.
+feature_name: feature_generic_all
 ---
 
 ### Big picture

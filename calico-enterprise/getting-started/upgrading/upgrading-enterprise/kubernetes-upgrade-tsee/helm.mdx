@@ -2,7 +2,7 @@
 title: Upgrade Calico Enterprise installed with Helm
 description: Upgrade to a newer version of Calico Enterprise installed with Helm.
 canonical_url: /maintenance/kubernetes-upgrade-tsee/helm
-show_toc: false
+feature_name: upgrade_all_but_ocp
 ---
 
 >**Note**: All upgrades in {{site.prodname}} are free with a valid license.

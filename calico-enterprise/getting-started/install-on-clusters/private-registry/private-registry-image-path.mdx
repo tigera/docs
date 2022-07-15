@@ -2,6 +2,7 @@
 title: Install from an image path in a private registry
 description: Install and configure Calico Enterprise using an image path in a private registry.
 canonical_url: '/getting-started/private-registry/private-registry-image-path'
+feature_name: feature_generic_all
 ---
 
 {% assign operator = site.data.versions.first.tigera-operator %}

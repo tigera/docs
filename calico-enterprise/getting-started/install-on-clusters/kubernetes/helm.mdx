@@ -2,6 +2,7 @@
 title: Helm
 description: Install Calico Enterprise using Helm application package manager.
 canonical_url: '/getting-started/kubernetes/helm'
+feature_name: feature_generic_all
 ---
 ### Big picture
 
@@ -34,9 +35,6 @@ management and managed clusters
 In this guide, you install the Tigera Calico operator and custom resource definitions using the Helm 3 chart. The Tigera operator provides lifecycle management for {{ site.prodname }} exposed via the Kubernetes API defined as a custom resource definition.
 
 ### How to
-
-The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes' %}
 
 {%- if page.version == "master" -%}
 #### Download the Helm chart

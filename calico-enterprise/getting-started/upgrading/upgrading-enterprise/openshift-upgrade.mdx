@@ -2,7 +2,7 @@
 title: Upgrade Calico Enterprise installed with OpenShift
 description: Upgrade to a newer version of Calico Enterprise installed with OpenShift.
 canonical_url: /maintenance/openshift-upgrade
-show_toc: false
+feature_name: upgrade_ocp
 openshift_manifests_ignore_pullsecret: true
 openshift_manifests_ignore_installation_cr: true
 ---
