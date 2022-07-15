@@ -1,6 +1,7 @@
 ---
 title: Deploy a dual ToR cluster
 description: Configure a dual plane cluster for redundant connectivity between workloads.
+feature_name: dual_tor
 ---
 
 ### Big picture
@@ -235,6 +236,12 @@ and 128.0.0.0/1 from the ToRs, instead of the true default route 0.0.0.0/0.  0.0
 routing for any destination outside the local rack.  They also mask the true default route
 0.0.0.0/0, by virtue of having longer prefixes (1 bit instead of 0 bits), and so it no
 longer matters if there is any other programming of the true default route on the node.
+
+### Before you begin
+
+**Required**
+
+- Calico CNI
 
 ### How to
 

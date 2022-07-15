@@ -134,9 +134,9 @@ happens to be on the same node as the client).
 
 ### Before you begin
 
-**Supported**
+**Required**
 
-- Kubernetes on-premises only; for AWS, see [this guide]({{site.baseurl}}/networking/egress/egress-gateway-aws).
+- Calico CNI
 
 ### How to
 

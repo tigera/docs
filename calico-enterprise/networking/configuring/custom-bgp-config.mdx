@@ -1,6 +1,7 @@
 ---
 title: Custom BGP Configuration
 canonical_url: /networking/custom-bgp-config
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -15,6 +16,12 @@ You can modify the BIRD configuration to use BIRD features which are not typical
 default configuration provided with {{site.prodname}}.
 
 Customization of BGP templates should be done only with the help of your Tigera Support representative.
+
+### Before you begin
+
+**Required**
+
+- Calico CNI
 
 ### How to
 

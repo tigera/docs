@@ -1,7 +1,8 @@
 ---
 title: Overlay networking
 description: Configure Calico to use IP in IP or VXLAN overlay networking so the underlying network doesn’t need to understand pod addresses.
-canonical_url: /networking/vxlan-ipip
+canonical_url: '/networking/vxlan-ipip'
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -35,6 +36,12 @@ Calico supports two types of encapsulation: VXLAN and IP in IP.  VXLAN is suppor
 #### Cross-subnet
 
 Encapsulation of workload traffic is typically required only when traffic crosses a router that is unable to route workload IP addresses on its own. Calico can perform encapsulation on: all traffic, no traffic, or only on traffic that crosses a subnet boundary.
+
+### Before you begin
+
+**Required**
+
+- Calico CNI
 
 ### How to
 
