@@ -2,6 +2,7 @@
 title: Configure federated services
 description: Configure a federated service for cross-cluster service discovery for local clusters.
 canonical_url: /multicluster/federation/services-controller
+feature_name: federated_endpoint
 ---
 
 ### Big picture
