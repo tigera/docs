@@ -2,6 +2,7 @@
 title: Change a cluster type
 description: Change an existing Calico Enterprise cluster type to a management cluster, a managed cluster, or standalone. 
 canonical_url: '/multicluster/mcm/change-cluster-type'
+feature_name: feature_generic_all
 ---
 
 ### Big picture

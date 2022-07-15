@@ -2,6 +2,7 @@
 title: Create a Calico Enterprise management cluster
 description: Create a Calico Enterprise management cluster to manage multiple clusters from a single management plane.
 canonical_url: '/multicluster/mcm/create-a-management-cluster'
+feature_name: feature_generic_all
 ---
 
 ### Big picture

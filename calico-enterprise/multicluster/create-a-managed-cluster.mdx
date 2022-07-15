@@ -2,6 +2,7 @@
 title: Create and configure a managed cluster
 description: Create a Calico Enterprise managed cluster that you can control from you management cluster.
 canonical_url: '/multicluster/mcm/create-a-managed-cluster'
+feature_name: feature_generic_all
 ---
 
 ### Big picture
