@@ -2,6 +2,7 @@
 title: Calico Enterprise for Kubernetes demo
 description: Learn the extra features for Calico Enterprise that make it so important for production environments.
 canonical_url: /security/simple-policy-cnx
+feature_name: feature_generic_all
 ---
 
 This guide is a variation of the [simple policy demo]({{site.baseurl}}/security/tutorials/kubernetes-policy-basic) intended to introduce the extra features of {{site.prodname}} to people already familiar with Project Calico for Kubernetes.

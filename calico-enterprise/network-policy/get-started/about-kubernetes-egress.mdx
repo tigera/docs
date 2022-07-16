@@ -2,6 +2,7 @@
 title: Kubernetes egress
 description: Learn why you should restrict egress traffic and how to do it.
 canonical_url: /security/training/about-kubernetes-egress
+feature_name: feature_generic_all
 ---
 
 > <span class="glyphicon glyphicon-info-sign"></span> This guide provides educational material that is not specific to {{site.prodname}}.

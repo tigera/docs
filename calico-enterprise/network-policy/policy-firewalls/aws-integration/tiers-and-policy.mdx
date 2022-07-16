@@ -2,6 +2,7 @@
 title: Configure fine-grained access control between VPC endpoints and pods 
 description: Keep your AWS security groups, and configure fine-grained access control between VPC endpoints and pods. 
 canonical_url: /security/aws-integration/tiers-and-policy
+feature_name: aws_integration
 ---
 
 ### Big picture

@@ -2,6 +2,7 @@
 title: Determine the best Calico Enterprise/Fortinet solution
 description: Learn how to integrate Kubernetes clusters with existing Fortinet firewall workflows using Calico Enterprise.
 canonical_url: '/security/fortinet-integration/overview'
+feature_name: feature_generic_all
 ---
 
 ### Big picture

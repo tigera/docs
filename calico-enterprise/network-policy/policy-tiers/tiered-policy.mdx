@@ -2,6 +2,7 @@
 title: Get started with tiered policies
 description: Understand how tiered policy works and supports microsegmentation.
 canonical_url: /security/tiered-policy
+feature_name: feature_generic_all
 ---
 
 ### Seamless network policy integration

@@ -2,6 +2,7 @@
 title: Extend FortiManager firewall policies to Kubernetes
 description: Extend FortiManager firewall policies to Kubernetes with {{site.prodname}}
 canonical_url: '/security/fortinet-integration/fortimgr-integration'
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -40,13 +41,8 @@ The basic workflow is:
 
 ### Before you begin
 
-**Supported {{site.prodname}} plaforms**
-- All
-
 **Supported version**
 - FortiManager v6.4
-
-**Note**: Other versions may work, but are not actively tested.
 
 **Required**
 -  Pull secret that you used during [{{site.prodname}} installation]({{site.baseurl}}/getting-started/install-on-clusters/)
