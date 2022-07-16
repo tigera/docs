@@ -1,6 +1,7 @@
 ---
 title: Use service rules in policy
 description: Use Kubernetes Service names in policy rules.
+feature_name: feature_generic_all
 ---
 
 ### Big picture

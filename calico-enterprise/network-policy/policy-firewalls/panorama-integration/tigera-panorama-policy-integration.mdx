@@ -2,6 +2,7 @@
 title: Panorama policy integration
 description: Leverage existing Panorama policy, and take advantage of Calico Enterprise network policy to secure workloads.
 canonical_url: '/security/panorama-integration/tigera-panorama-policy-integration'
+feature_name: feature_generic_all
 ---
 
 ### Big picture
@@ -155,9 +156,6 @@ Where:
 
 
 ### Before you begin
-
-**Supported {{site.prodname}} plaforms**
-- Kubernetes/kubeadm, OpenShift, AWS using kOps, RKE, EKS, AKS, GKE, Tanzu Kubernetes Grid
 
 **Manager UI tools**
 - The scope of the Panorama integration is network policy only. The scope of the Panorama integration is mapping Panorama policy and address groups to Calico network policy and network sets only. Users with privileged access to Manager UI (via RBAC) can view tier, policies, and network sets managed by the integration add/create/delete network sets, and observe their usage in Service Graph tool. Policy lifecycle tools such as policy preview and staged network policy will not work for Panorama-transformed policies; these tools are only for {{site.prodname}} native policies.

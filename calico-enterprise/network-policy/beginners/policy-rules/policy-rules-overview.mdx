@@ -1,6 +1,7 @@
 ---
 title: Basic rules
 description: Define network connectivity for Calico endpoints using policy rules and label selectors. 
+feature_name: feature_generic_all
 ---
 
 ### Big picture

@@ -2,6 +2,7 @@
 title: Stage, preview impacts, and enforce policy
 description: Stage and preview policies to observe traffic implications before enforcing them.
 canonical_url: /security/staged-network-policies
+feature_name: feature_generic_all
 ---
 
 ### Big picture

@@ -2,6 +2,7 @@
 title: Kubernetes services
 description: Learn the three main service types and how to use them.
 canonical_url: /security/training/about-kubernetes-services
+feature_name: feature_generic_all
 ---
 
 > <span class="glyphicon glyphicon-info-sign"></span> This guide provides educational material that is not specific to {{site.prodname}}.
