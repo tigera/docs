@@ -2,7 +2,7 @@
 title: Kubernetes policy, basic tutorial
 description: Learn how to use basic Kubernetes network policy to securely restrict traffic to/from pods.
 canonical_url: '/security/tutorials/kubernetes-policy-basic'
-show_toc: false
+feature_name: feature_generic_all
 ---
 
 This guide provides a simple way to try out Kubernetes `NetworkPolicy` with {{site.prodname}}.  It requires a Kubernetes cluster configured with {{site.prodname}} networking, and expects that you have `kubectl` configured to interact with the cluster.

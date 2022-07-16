@@ -2,6 +2,7 @@
 title: Configure Calico Enterprise AWS security groups integration
 description: Calico Enterprise lets you combine AWS security groups with network policy to enforce access control between Kubernetes pods and AWS VPC resources. 
 canonical_url: /security/aws-integration/
+feature_name: aws_integration
 ---
 
 ### Big picture
@@ -19,8 +20,6 @@ AWS security group integration for {{site.prodname}} allows you to combine AWS s
 - Kubernetes and EKS clusters deployed with the Amazon VPC CNI plugin 
 
 **Not supported**
-
-- OpenShift, Rancher, other managed cloud providers
 - Helm and Docker install
 - Multiple VPCs
 - {{site.prodname}} non-cluster hosts, and auto-hostendpoint features. Alternatives to secure host endpoints:

@@ -2,6 +2,7 @@
 title: Protect Kubernetes nodes
 description: Protect Kubernetes nodes with host endpoints managed by Calico Enterprise.
 canonical_url: '/security/kubernetes-nodes'
+feature_name: auto_hep
 ---
 
 ### Big picture
@@ -37,6 +38,12 @@ This means that policy targeting these automatic host endpoints will function co
 
 Automatic host endpoints are differentiated from other host endpoints by the label `projectcalico.org/created-by: calico-kube-controllers`.
 Enable or disable automatic host endpoints by configuring the default KubeControllersConfiguration resource.
+
+### Before you begin
+
+**Required**
+
+- AKS and EKS require [eBPF]({{site.baseurl}}/maintenance/ebpf) (iptables are not supported)
 
 ### How to
 
