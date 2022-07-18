@@ -2,6 +2,7 @@
 title: Encrypt data in transit
 description: Enable WireGuard for state-of-the-art cryptographic security between pods for Calico Enterprise clusters.
 canonical_url: '/compliance/encrypt-cluster-pod-traffic'
+feature_name: wireguard_encryption
 ---
 
 ### Big picture
@@ -20,14 +21,12 @@ This how-to guide uses the following {{site.prodname}} features:
 
 ### Before you begin
 
-**Supported**
+**Limitations**
 
-The following platforms using only IPv4:
-
-- Kubernetes, on-premises
-- EKS using Calico CNI
-- EKS using AWS CNI
-- AKS using Azure CNI
+- IPv4 only
+- EKS, only with AWS CNI
+- AKS, only with Azure CNI
+- Host-to-host encryption only with EKS/AWS CNI and AKS/Azure CNI
 
 **Supported encryption**
 
