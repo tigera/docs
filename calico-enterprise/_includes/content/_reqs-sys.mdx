@@ -76,6 +76,7 @@ Ensure that your hosts and firewalls allow the necessary traffic based on your c
 | **{{site.prodname}} networking options** | IP-in-IP (default)                                       | Protocol number 4                 |
 |                                      | BGP                                                          | TCP 179                           |
 |                                      | VXLAN                                                        | UDP 4789                          |
+|                                      | Wireguard                                                    | UDP 51820 (default)               |
 | **Cluster scaling**                  | Any {{site.prodname}} networking option above with Typha agents enabled | TCP 5473 (default)     |
 {%- if include.orch == "Kubernetes" %} 
 | **APIs**                             | Kubernetes API (kube-apiserver) to access Kubernetes API datastore  | Often TCP 443 or 6443\*    |
