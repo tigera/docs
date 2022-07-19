@@ -19,9 +19,10 @@ Helm charts are a way to package up an application for Kubernetes (similar to `a
 - `kubeconfig` is configured to work with your cluster (check by running `kubectl get nodes`)
 - [Credentials for the Tigera private registry and a license key]({{site.baseurl}}/getting-started/calico-enterprise)
 
-**Supported**
+**Not Supported**
 
-- Standalone 
+- Multi-cluster management (mcm)
+
 {% comment %}
 TODO(dimitrin) Add supported cluster type after verification
 
@@ -36,9 +37,8 @@ In this guide, you install the Tigera Calico operator and custom resource defini
 
 ### How to
 
-{%- if page.version == "master" -%}
 #### Download the Helm chart
-
+{%- if page.version == "master" -%}&nbsp;
 1. Install the Google cloud storage helm repo plugin:
 ```bash
 helm plugin install https://github.com/viglesiasce/helm-gcs.git
@@ -49,9 +49,7 @@ helm plugin install https://github.com/viglesiasce/helm-gcs.git
    ```bash
 helm repo add tigera gs://tigera-helm-charts
    ```
-{% else %}
-#### Download the Helm chart
-
+{% else %}&nbsp;
 1. Get the Helm chart:
    ```bash
 curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-{% include chart_version_name %}.tgz
