@@ -2,6 +2,7 @@
 title: Kubernetes audit logs
 description: Enable Kubernetes audit logs on changes to Kubernetes resources. 
 canonical_url: /visibility/elastic/kube-audit
+feature_name: kubernetes_audit_logs
 ---
 
 ### Big picture
@@ -25,19 +26,6 @@ You must enable the following Kubernetes resources for each cluster:
 #### Audit logs in Manager UI
 
 Like {{site.prodname}} audit logs, Kubernetes audit logs are displayed in Manager UI in the Timeline dashboard, Kibana dashboard (indexed by, `tigera_secure_ee_audit_kube`), and provide the core data for compliance reports. 
-
-### Before you begin
-
-**Supported**
-- Kubernetes, on-premises
-- EKS
-- AWS using kOps
-- RKE
-
-**Not supported**
-- OpenShift
-- AKS
-- GKE
 
 ### How to
 

@@ -2,6 +2,7 @@
 title: Configure L7 logs
 description: Configure and aggregate L7 logs.
 canonical_url: /visibility/elastic/l7/configure
+feature_name: l7_logs
 ---
 
 ### Big picture
@@ -39,7 +40,6 @@ L7 logs are visible in the Manager UI, service graph, in the HTTP tab.
 
 * Windows
 * eBPF dataplane
-* RKE clusters
 
 **Limitations**
 

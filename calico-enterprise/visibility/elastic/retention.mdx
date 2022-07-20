@@ -2,6 +2,7 @@
 title: Configure data retention
 description: Configure how long to retain logs and compliance reports.
 canonical_url: /visibility/elastic/retention
+feature_name: feature_generic_all
 ---
 
 ### Big picture

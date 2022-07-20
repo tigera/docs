@@ -2,6 +2,7 @@
 title: Enable process-level information in flow logs
 description: Get visibility into process-level network activity in flow logs.
 canonical_url: /visibility/elastic/flow/processpath
+feature_name: feature_generic_all
 ---
 
 

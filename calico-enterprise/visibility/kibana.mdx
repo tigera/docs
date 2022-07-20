@@ -2,6 +2,7 @@
 title: Kibana dashboards and logs
 description: Learn the basics of using Elasticsearch logs and Kibana to gain visibility and troubleshoot.
 canonical_url: '/visibility/kibana'
+feature_name: feature_generic_all
 ---
 
 ### Kibana 
