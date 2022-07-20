@@ -2,6 +2,7 @@
 title: Configure RBAC for Elasticsearch logs and events
 description: Configure RBAC to control access to Elasticsearch logs and events.
 canonical_url: /visibility/elastic/rbac-elasticsearch
+feature_name: feature_generic_all
 ---
 
 ### Big picture

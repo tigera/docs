@@ -2,6 +2,7 @@
 title: Configure flow log aggregation
 description: Configure flow log aggregation to reduce log volume and costs.
 canonical_url: /visibility/elastic/flow/aggregation
+feature_name: feature_generic_all
 ---
 
 ### Big picture

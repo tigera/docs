@@ -2,6 +2,7 @@
 title: Archive logs 
 description: Archive logs to Syslog, Splunk, or Amazon S3 for maintaining compliance data.
 canonical_url: /visibility/elastic/archive-storage
+feature_name: feature_generic_all
 ---
 
 ### Big picture

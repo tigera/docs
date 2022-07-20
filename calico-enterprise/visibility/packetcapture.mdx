@@ -2,6 +2,7 @@
 title: Packet capture
 description: Capture live traffic for debugging microservices and application interaction.
 canonical_url: /visibility/packetcapture
+feature_name: feature_generic_all
 ---
 
 ### Big picture

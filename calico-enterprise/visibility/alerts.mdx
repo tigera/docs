@@ -2,6 +2,7 @@
 title: Configure alerts
 description: Define alert criteria for the Alerts page in Calico Enterprise Manager. 
 canonical_url: /visibility/alerts
+feature_name: feature_generic_all
 ---
 
 ### Big picture
