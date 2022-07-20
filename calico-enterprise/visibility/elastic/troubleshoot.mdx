@@ -131,7 +131,7 @@ $ kubectl edit logstorage tigera-secure
 Find the `ECKOperator` Component Resource in the `spec` section. Increase the limits and requests memory amounts as needed. Verify that the pod has restarted with the new settings:
 
 ```
-$ kubectl descibe pod elastic-operator -n tigera-eck-operator   
+$ kubectl describe pod elastic-operator -n tigera-eck-operator   
 ```
 
 Check the `Container.Limits` and `Container.Requests` fields to confirm the values have propagated correctly.
