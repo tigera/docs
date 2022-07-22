@@ -31,7 +31,6 @@ The geeky details of what you get:
 1. [Create the cluster](#create-the-cluster)
 1. [Create a storage class](#create-a-storage-class)
 1. [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
-1. [Secure {{site.prodname}} components with network policy](#secure-calico-enterprise-components-with-network-policy)
 1. [Configure strict affinity](#configure-strict-affinity)
 1. [Add Windows nodes to the cluster](#add-windows-nodes-to-the-cluster)
 1. [Get the Administrator password](#get-the-administrator-password)

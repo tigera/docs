@@ -144,16 +144,10 @@ helm install calico-enterprise tigera-operator-{% include chart_version_name %}.
    kubectl apply -f </path/to/license.yaml>
    ```
 
-1. Monitor progress, wait until all components show a status of `Available`, then proceed to the next step.
+1. You can now monitor progress with the following command:
    
    ```bash
    watch kubectl get tigerastatus
-   ```
-   
-1. Apply the following manifest to secure {{site.prodname}} with network policy:
-   
-   ```bash
-   kubectl apply -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
    ```
 
 Congratulations! You have now installed {{site.prodname}} using the Helm 3 chart.

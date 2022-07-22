@@ -172,25 +172,7 @@ You can now monitor progress with the following command:
 watch oc get tigerastatus
 ```
 
-When it shows all components with status `Available`, proceed to the next section.
 
-{% if include.clusterType == "managed" %}
-#### Secure {{site.prodname}} components with network policy
-
-To secure the components that make up {{site.prodname}}, install the following set of network policies.
-
-```
-oc create -f {{ "/manifests/ocp/tigera-policies-managed.yaml" | absolute_url }}
-```
-{% else %}
-#### Secure {{site.prodname}} components with network policy
-
-To secure the components that make up {{site.prodname}}, install the following set of network policies.
-
-```
-oc create -f {{ "/manifests/ocp/tigera-policies.yaml" | absolute_url }}
-```
-{% endif %}
 
 {% if include.clusterType == "management" %}
 #### Create a management cluster
