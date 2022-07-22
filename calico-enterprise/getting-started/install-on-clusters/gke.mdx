@@ -50,7 +50,6 @@ Verify your user account has IAM permissions to create Kubernetes ClusterRoles, 
 
 1. [Install {{site.prodname}}](#install-calico-enterprise)
 1. [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
-1. [Secure {{site.prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
 {% include content/install-gke.md clusterType="standalone" %}
 

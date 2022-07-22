@@ -43,7 +43,6 @@ The geeky details of what you get:
 
 - [Install {{site.prodname}}](#install-calico-enterprise)
 - [Install {{site.prodname}} license](#install-calico-enterprise-license)
-- [Secure {{site.prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
 {% include content/install-generic.md clusterType="standalone" %}
 

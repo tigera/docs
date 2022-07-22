@@ -46,7 +46,6 @@ Verify your user account has IAM permissions to create Kubernetes ClusterRoles, 
 1. [Option A: Install with Azure CNI networking](#install-aks-with-azure-cni-networking)
 1. [Option B: Install with Calico networking](#install-aks-with-{{site.prodnamedash}}-networking)
 1. [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
-1. [Secure {{site.prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
 {% include content/install-aks.md clusterType="standalone" %}
 
