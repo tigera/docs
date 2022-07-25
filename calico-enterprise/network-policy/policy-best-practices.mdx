@@ -56,7 +56,7 @@ Creating a label standard is often an overlooked step. But if you skip this step
 
 **Why are label standards important?** 
 
-Network policies in Kubernetes depend on **labels and selectors** (not IP addresses and IP ranges) to determine which workloads can talk to each other. As pods dynamically scale up and down, network policy is enforced based on the labels and selectors that you define. So workloads and host endpoints need unique, identifiable labels for workloads and host endpoints. If you create duplicate label names, or labels are not intuitive, troubleshooting network policy issues and authoring network policies becomes more difficult. 
+Network policies in Kubernetes depend on **labels and selectors** (not IP addresses and IP ranges) to determine which workloads can talk to each other. As pods dynamically scale up and down, network policy is enforced based on the labels and selectors that you define. So workloads and host endpoints need unique, identifiable labels. If you create duplicate label names, or labels are not intuitive, troubleshooting network policy issues and authoring network policies becomes more difficult. 
 
 **Recommendations**:
 
