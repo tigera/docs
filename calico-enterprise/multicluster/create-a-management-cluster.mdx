@@ -22,12 +22,6 @@ This how-to guide uses the following {{site.prodname}} features:
 
 ### Before you begin...
 
-**Supported**
-
-- Kubernetes on-premises
-- OpenShift
-- GKE, EKS, and AKS
-
 **Required**
 
 - A Calico Enterprise cluster, see [here]({{site.baseurl}}/getting-started/install-on-clusters) for help
