@@ -26,12 +26,6 @@ This how-to guide uses the following {{site.prodname}} features:
 
 ### Before you begin...
 
-**Supported**
-
-- Kubernetes on-premises
-- OpenShift
-- GKE, EKS, AKS, TKG
-
 **Required**
 
 - A [Calico Enterprise management cluster]({{site.baseurl}}/multicluster/mcm/create-a-management-cluster)
