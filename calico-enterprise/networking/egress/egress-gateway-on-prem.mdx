@@ -177,11 +177,10 @@ kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
 ```
 
-> **Note**:
->
-> -  `egressIPSupport` and `policySyncPathPrefix` must be the same on all cluster nodes, so you should only set them in the
->    `default` FelixConfiguration resource.
-{: .alert .alert-info}
+Where: 
+-  `egressIPSupport` and `policySyncPathPrefix` must be the same on all cluster nodes, so you should only set them in the
+   `default` FelixConfiguration resource.
+
 #### Provision an egress IP pool
 
 Provision a small IP Pool with the range of source IPs that you want to use for a particular
@@ -200,18 +199,15 @@ spec:
 EOF
 ```
 
-> **Note**:
->
-> -  `blockSize` must be specified when the prefix length of the whole `cidr` is more than
->    the default `blockSize` of 26.
->
-> -  `nodeSelector: "!all()"` is recommended so that this egress IP pool is not accidentally
->    used for cluster pods in general.  Specifying this `nodeSelector` means that the IP pool
->    is only used for pods that explicitly identify it in their `cni.projectcalico.org/ipv4pools`
->    annotation.
->
-> -  Set `ipipMode` or `vxlanMode` to `Always` if the pod network has [IPIP or VXLAN]({{site.baseurl}}/networking/vxlan-ipip) enabled.
-{: .alert .alert-info}
+Where: 
+- `blockSize` must be specified when the prefix length of the whole `cidr` is more than the default `blockSize` of 26.
+
+- `nodeSelector: "!all()"` is recommended so that this egress IP pool is not accidentally used for cluster pods in general. Specifying this `nodeSelector` means that the IP pool is only used for pods that explicitly identify it in their `cni.projectcalico.org/ipv4pools` annotation.
+
+- Set `ipipMode` or `vxlanMode` to `Always` if the pod network has [IPIP or VXLAN]({{site.baseurl}}/networking/vxlan-ipip) enabled. 
+
+  > **Note**: This setting is not specific to egress gateway. In some cases where nodes happen to be in the same subnet, setting the value to `Never`will work the same as `Always`. It all depends on the hop from the client node to the egress gateway node. For example, if the client nodes are in the same AWS subnet, and you are using `Always` because some of the nodes are in different subnets, then `Never` will work for the egress IP Pool when the client and gateway nodes are in the same subnet. 
+  {: .alert .alert-info}
 
 #### Copy pull secret into egress gateway namespace
 
@@ -276,31 +272,19 @@ spec:
 EOF
 ```
 
-> **Note**:
->
-> -  It is advisable to have more than one egress gateway per group, so that the egress IP function
->    continues if one of the gateways crashes or needs to be restarted.  When there are multiple
->    gateways in a group, outbound traffic from the applications using that group is load-balanced
->    across the available gateways.  The number of `replicas` specified must be less than or equal
->    to the number of free IP addresses in the IP Pool.
->
-> -  In the `cni.projectcalico.org/ipv4pools` annotation, the IP Pool can be specified either
->    by its name (e.g. `egress-ippool-1`) or by its CIDR (e.g. `10.10.10.0/31`).
->
-> -  The labels are arbitrary.  You can choose whatever names and values are convenient for
->    your cluster's Namespaces and Pods to refer to in their egress selectors.
->
-> -  The image name and `EGRESS_POD_IP` configuration are required.  `tigera/egress-gateway` is the
->    image that provides the egress gateway function, and `EGRESS_POD_IP` tells the runtime
->    container what its pod IP is.
->
-> -  The `securityContext` is required, so that the egress gateway can manipulate its own network
->    namespace.
->
-> -  The `policysync` volume mount is required. This exposes the policy sync API to the pod,
->    allowing it to program its own routing based off information from Felix.
-{: .alert .alert-info}
+Where:
 
+- It is advisable to have more than one egress gateway per group, so that the egress IP function continues if one of the gateways crashes or needs to be restarted. When there are multiple gateways in a group, outbound traffic from the applications using that group is load-balanced    across the available gateways. The number of `replicas` specified must be less than or equal to the number of free IP addresses in the IP Pool.
+
+- In the `cni.projectcalico.org/ipv4pools` annotation, the IP Pool can be specified either by its name (e.g. `egress-ippool-1`) or by its CIDR (e.g. `10.10.10.0/31`).
+
+ - The labels are arbitrary. You can choose whatever names and values are convenient for your cluster's Namespaces and Pods to refer to in their egress selectors.
+
+ - The image name and `EGRESS_POD_IP` configuration are required.  `tigera/egress-gateway` is the image that provides the egress gateway function, and `EGRESS_POD_IP` tells the runtime container what its pod IP is.
+
+ - The `securityContext` is required, so that the egress gateway can manipulate its own network namespace.
+
+ - The `policysync` volume mount is required. This exposes the policy sync API to the pod, allowing it to program its own routing based off information from Felix.
 
 #### Configure a Namespace or Pod to use egress gateways
 
