@@ -8,16 +8,16 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'Calico & Tigera Docs',
   tagline: 'Active security for cloud-native applications',
-  url: 'https://new-docs.tigera.io',
+  url: 'https://unified-docs.tigera.io',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.png',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  // organizationName: 'facebook', // Usually your GitHub org/user name.
-  // projectName: 'docusaurus', // Usually your repo name.
+  // organizationName: 'tigera', // Usually your GitHub org/username.
+  // projectName: 'docs', // Usually your repo name.
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
@@ -61,11 +61,23 @@ const config = {
         title: 'Calico & Tigera Docs',
         logo: {
           alt: 'Calico & Tigera Docs',
-          src: 'img/logo.svg',
+          src: 'img/logo.png',
         },
         items: [
           {
-            label: 'Calico OSS',
+            label: 'Calico',
+            type: 'doc',
+            docId: 'intro',
+            position: 'left',
+          },
+          {
+            label: 'Calico Enterprise',
+            type: 'doc',
+            docId: 'intro',
+            position: 'left',
+          },
+          {
+            label: 'Calico Cloud',
             type: 'doc',
             docId: 'intro',
             position: 'left',
