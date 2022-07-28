@@ -130,6 +130,10 @@ const config = {
                 label: 'Stack Overflow',
                 href: 'https://stackoverflow.com/questions/tagged/project-calico',
               },
+              {
+                label: 'Discourse',
+                href: 'https://discuss.projectcalico.org/',
+              },
             ],
           },
           {
