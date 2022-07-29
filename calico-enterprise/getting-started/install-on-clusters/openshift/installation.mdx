@@ -31,7 +31,6 @@ The geeky details of what you get:
 1. [Create the cluster](#create-the-cluster)
 1. [Create a storage class](#create-a-storage-class)
 1. [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
-1. [Secure {{site.prodname}} components with network policy](#secure-calico-enterprise-components-with-network-policy)
 
 
 {% include content/install-openshift.md clusterType="standalone" %}

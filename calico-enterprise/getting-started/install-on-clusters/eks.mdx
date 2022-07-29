@@ -27,7 +27,6 @@ Install {{site.prodname}} in EKS managed Kubernetes service.
 1. [Option A: Install with Amazon VPC networking](#install-eks-with-amazon-vpc-networking)
 1. [Option B: Install with Calico CNI networking](#install-eks-with-calico-networking)
 1. [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
-1. [Secure {{site.prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
 {% include content/install-eks.md clusterType="standalone" %}
 
