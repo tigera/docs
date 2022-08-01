@@ -1,6 +1,6 @@
 {%- if include.networkingType == "vxlan" %}
 1. Ensure that BGP is disabled.
-   - If you installed {{site.prodname}} using the {% include open-new-window.html text='manifest' url='https://projectcalico.docs.tigera.io/manifests/calico-vxlan.yaml' %}, BGP is already disabled.
+   - If you installed {{site.prodname}} using the manifest, BGP is already disabled.
    - If you installed {{site.prodname}} using the operator, run this command:
 
    ```bash
