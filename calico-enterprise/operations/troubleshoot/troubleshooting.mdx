@@ -84,10 +84,11 @@ varies by Linux distribution. The following steps work best on Ubuntu systems.
 
 1. Create the following configuration file at `/etc/NetworkManager/conf.d/calico.conf`.
 
-   ```
+   ```conf
    [keyfile]
-   unmanaged-devices=interface-name:cali*;interface-name:tunl*;interface-name:vxlan.calico;interface-name:wireguard.cali
+   unmanaged-devices=interface-name:cali*;interface-name:tunl*;interface-name:vxlan.calico;interface-name:vxlan-v6.calico;interface-name:wireguard.cali;interface-name:wg-v6.cali
    ```
+
 
 1. Restart NetworkManager.
 
