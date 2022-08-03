@@ -39,7 +39,6 @@ The geeky details of what you get:
 
 - [Install {{site.prodname}}](#install-calico-enterprise)
 - [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
-- [Secure {{site.prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
 #### Install {{site.prodname}}
 
@@ -117,15 +116,6 @@ You can now monitor progress with the following command:
 watch kubectl get tigerastatus
 ```
 
-When all components show a status of `Available`, proceed to the next section.
-
-#### Secure {{site.prodname}} with network policy
-
-To secure {{site.prodname}} component communications, install the following set of network policies.
-
-```
-kubectl create -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
-```
 
 ### Next steps
 

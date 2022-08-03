@@ -75,12 +75,6 @@ Upgrading to {{site.prodname}} v3.13 and above, from Calico 3.22 and below is cu
     **Note**: If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
     {: .alert .alert-info}
 
-1. Apply the following manifest to secure {{site.prodname}} with network policy:
-
-   ```bash
-   kubectl apply -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
-   ```
-
 ### Next steps
 
 - [Configure access to {{site.prodname}} Manager UI]({{site.baseurl}}/getting-started/cnx/access-the-manager)
