@@ -54,10 +54,4 @@ create a manifest with the name of your managed cluster in your current director
    ```
    Wait until the `management-cluster-connection` and `tigera-compliance` show a status of `Available`.
 
-1. Secure {{site.prodname}} on the managed cluster with network policy.
-   
-   ```bash
-   {{kubectlCmd}} create -f {{ "/manifests/tigera-policies-managed.yaml" | absolute_url }}
-   ```
-
 You have now successfully installed a managed cluster!

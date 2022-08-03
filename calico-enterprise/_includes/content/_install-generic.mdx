@@ -112,16 +112,6 @@ You can now monitor progress with the following command:
 watch kubectl get tigerastatus
 ```
 
-When all components show a status of `Available`, continue to the next section.
-
-
-#### Secure {{site.prodname}} with network policy
-
-Install the following network policies to secure {{site.prodname}} component communications.
-
-```
-kubectl create -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
-```
 {% endif %}
 
 {% if include.clusterType == "management" %}
