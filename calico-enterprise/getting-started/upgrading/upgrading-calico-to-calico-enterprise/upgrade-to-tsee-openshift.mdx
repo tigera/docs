@@ -101,12 +101,3 @@ You can now monitor progress with the following command:
 watch oc get tigerastatus
 ```
 
-When all components show a status of `Available`, proceed to the next section.
-
-### Secure {{site.prodname}} with network policy
-
-To secure {{site.prodname}} component communications, install the following set of network policies.
-
-```bash
-oc apply -f {{ "/manifests/ocp/tigera-policies.yaml" | absolute_url }}
-```

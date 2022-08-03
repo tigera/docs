@@ -42,7 +42,6 @@ The geeky details of what you get:
 - [Install {{site.prodname}}](#install-calico-enterprise)
 - [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
 - [Log in to {{site.prodname}} Manager](#log-in-to-calico-enterprise-manager)
-- [Secure {{site.prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
 #### Install Kubernetes
 
@@ -176,13 +175,6 @@ When all components show a status of `Available`, proceed to the next section.
 
    Visit https://localhost:9443/ to log in to the {{site.prodname}} UI. Use the `token` from the previous step to authenticate.
 
-#### Secure {{site.prodname}} with network policy
-
-To secure {{site.prodname}} component communications, install the following set of network policies.
-
-```
-kubectl create -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
-```
 Congratulations! You now have a single-host Kubernetes cluster with {{site.prodname}}.
 
 ### Next steps
