@@ -14,6 +14,21 @@ const config = {
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
 
+  customFields: {
+    // TODO: Migrate all variables
+    variables: {
+      cloud: {
+        prodname: 'Calico Cloud',
+      },
+      enterprise: {
+        prodname: 'Calico Enterprise',
+      },
+      openSource: {
+        prodname: 'Calico Open Source',
+      },
+    },
+  },
+
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   // organizationName: 'tigera', // Usually your GitHub org/username.
