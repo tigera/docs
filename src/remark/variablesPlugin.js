@@ -15,11 +15,11 @@ function variablesPlugin(_options) {
 		const posixFriendlyPath = convertToPosixFriendlyPath(file.path);
 		const productVariables = posixFriendlyPath.includes(pathPrefixes.cloud)
 			? variables.cloud
-      : posixFriendlyPath.includes(pathPrefixes.enterprise)
-        ? variables.enterprise
-          : posixFriendlyPath.includes(pathPrefixes.openSource)
-            ? variables.openSource
-            : null;
+			: posixFriendlyPath.includes(pathPrefixes.enterprise)
+				? variables.enterprise
+				: posixFriendlyPath.includes(pathPrefixes.openSource)
+					? variables.openSource
+					: null;
 
     if (!productVariables) {
       return;
