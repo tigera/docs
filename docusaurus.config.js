@@ -4,6 +4,8 @@
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
+const variablesPlugin = require('./src/remark/variablesPlugin');
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Calico & Tigera Docs',
@@ -13,21 +15,6 @@ const config = {
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
-
-  customFields: {
-    // TODO: Migrate all variables
-    variables: {
-      cloud: {
-        prodname: 'Calico Cloud',
-      },
-      enterprise: {
-        prodname: 'Calico Enterprise',
-      },
-      openSource: {
-        prodname: 'Calico Open Source',
-      },
-    },
-  },
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -53,6 +40,9 @@ const config = {
           // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/tigera/docs/',
+          beforeDefaultRemarkPlugins: [
+            variablesPlugin,
+          ],
         },
         blog: false,
         // {
