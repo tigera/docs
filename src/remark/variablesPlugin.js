@@ -21,9 +21,9 @@ function variablesPlugin(_options) {
 					? variables.openSource
 					: null;
 
-    if (!productVariables) {
-      return;
-    }
+		if (!productVariables) {
+			return;
+		}
 
 		visit(tree, 'text', (node) => {
 			node.value = node.value.replace(
