@@ -94,7 +94,6 @@ The full list of parameters which can be set is as follows.
 | `mtuIfacePattern`                 | `FELIX_MTUIFACEPATTERN`                 | Pattern used to discover the host's interface for MTU auto-detection. [Default: `^((en|wl|ww|sl|ib)[opsx].*|(eth|wlan|wwan).*)` | regex |
 | `TPROXYMode`                      | `FELIX_TPROXYMODE`                      | Sets transparent proxying mode. [Default: "Disabled"] | 'Disabled', 'Enabled' |
 | `TPROXYPort`                      | `FELIX_TPROXYPORT`                      | What local ports is the proxied traffic sent to. [Default: `16001`] | int |
-=======
 | `FeatureDetectOverride`           | `FELIX_FEATUREDETECTOVERRIDE`           | Is used to override the feature detection. Values are specified in a comma separated list with no spaces, example; "SNATFullyRandom=true,MASQFullyRandom=false,RestoreSupportsLock=true,IPIPDeviceIsL3=true. "true" or "false" will force the feature, empty or omitted values are auto-detected. [Default: `""`] | string |
 
 #### etcd datastore configuration
