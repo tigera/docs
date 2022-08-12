@@ -774,8 +774,8 @@ spec:
             projectcalico.org/aws-secondary-ipv4: 1
       terminationGracePeriodSeconds: 0
       volumes:
-      - flexVolume:
-          driver: nodeagent/uds
+      - csi:
+          driver: csi.tigera.io
         name: policysync
 EOF
 ```
