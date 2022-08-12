@@ -67,10 +67,10 @@ The default tier is where:
 
 System tiers are added during installation and are hidden by default. 
 
-- **allow-tigera** - contains component policies 
-   
->**Important!** Do not modify these tiers or change their order. Create all of your tiers after system tiers.
-{: .alert .alert-warning}
+- **allow-tigera** - a required tier with policies to enable and secure traffic flows for Tigera services and subsystems.  
+
+> **Note**: The Tigera Operator manages this tier and reverts any user edits to policy or moving of this tier. This ensures that you do not inadvertently impact the operation of {{site.prodname}}. However, you can still change how traffic is enforced using policies in adjacent tiers. For details, see [Change allow-tigera tier behavior]({{site.baseurl}}/security/allow-tigera).
+{: .alert .alert-info}
 
 ### Moving tiers
 
