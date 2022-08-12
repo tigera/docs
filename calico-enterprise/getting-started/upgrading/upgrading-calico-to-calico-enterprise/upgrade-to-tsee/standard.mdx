@@ -58,7 +58,7 @@ For hybrid Linux and Windows clusters, ensure that your Windows nodes have at le
 
 <label: AKS>
 <%
-**Note**: For AKS clusters with a self-managed Calico installation, including AKS clusters with Calico CNI, follow the upgrade steps under the **Kubernetes** tab.
+**Note**: The following instructions are only for AKS clusters that use a Kubernetes reconciler. For AKS clusters with a self-managed Calico installation (including AKS clusters with Calico CNI), or a cluster that is not using a reconciler, follow the upgrade steps under the **Kubernetes** tab.
 {: .alert .alert-info}
 
 These upgrade instructions will upgrade your AKS clusters with Azure CNI and an AKS-managed Calico installation.
