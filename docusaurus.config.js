@@ -61,19 +61,19 @@ const config = {
           {
             label: 'Calico',
             type: 'doc',
-            docId: 'intro',
+            docId: 'calico/getting-started/kubernetes/quickstart',
             position: 'left',
           },
           {
             label: 'Calico Enterprise',
             type: 'doc',
-            docId: 'intro',
+            docId: 'calico-enterprise/getting-started/options-install',
             position: 'left',
           },
           {
             label: 'Calico Cloud',
             type: 'doc',
-            docId: 'intro',
+            docId: 'calico-cloud/index',
             position: 'left',
           },
           {
