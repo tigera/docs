@@ -2,7 +2,6 @@
 title: Troubleshoot policies
 description: Common policy implementation problems. 
 canonical_url: '/security/policy-troubleshooting'
-feature_name: feature_generic_all
 ---
 
 #### Problem

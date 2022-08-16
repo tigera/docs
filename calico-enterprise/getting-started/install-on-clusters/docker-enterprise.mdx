@@ -2,7 +2,6 @@
 title: Mirantis Kubernetes Engine (MKE)
 description: Install Calico Enterprise on an MKE cluster.
 canonical_url: /getting-started/kubernetes/docker-enterprise
-feature_name: install_mke
 ---
 
 ### Big picture

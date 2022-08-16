@@ -2,7 +2,6 @@
 title: Get started with network sets
 description: Learn the power of network sets and why you should create them.
 canonical_url: '/security/networksets'
-feature_name: feature_generic_all
 ---
 
 ### Visualize traffic to/from your cluster

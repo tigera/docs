@@ -2,7 +2,6 @@
 title: Microsoft Azure Kubernetes Service (AKS)
 description: Enable Calico network policy in AKS.
 canonical_url: '/getting-started/kubernetes/aks'
-feature_name: install_aks
 ---
 
 ### Big picture

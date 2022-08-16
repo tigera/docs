@@ -2,7 +2,6 @@
 title: Enable HostEndpoint reporting in flow logs
 description: Enable hostendpoint reporting in flow logs.
 canonical_url: /visibility/elastic/flow/hep
-feature_name: feature_generic_all
 ---
 
 ### Big picture

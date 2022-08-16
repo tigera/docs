@@ -2,7 +2,6 @@
 title: Flow log data types
 description: Data that Calico Enterprise sends to Elasticsearch. 
 canonical_url: /visibility/elastic/flow/datatypes
-feature_name: feature_generic_all
 ---
 
 ### Big picture

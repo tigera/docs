@@ -1,7 +1,6 @@
 ---
 title: Get started with IP address management
 description: Configure Calico Enterprise to use Calico Enterprise IPAM or host-local IPAM, and when to use one or the other.
-feature_name: feature_generic_all
 ---
 
 ### Big picture

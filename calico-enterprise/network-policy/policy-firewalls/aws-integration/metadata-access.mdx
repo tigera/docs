@@ -2,7 +2,6 @@
 title: Enable pods to access AWS metadata
 description: Enable pods to access the AWS metadate endpoint. 
 canonical_url: /security/aws-integration/metadata-access
-feature_name: aws_integration
 ---
 
 ### Big picture

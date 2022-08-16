@@ -2,7 +2,6 @@
 title: Extend Kubernetes to Fortinet firewall devices
 description: Enable FortiGate firewalls to control traffic from Kubernetes workloads.
 canonical_url: '/security/fortinet-integration/firewall-integration'
-feature_name: feature_generic_all
 ---
 
 ### Big picture

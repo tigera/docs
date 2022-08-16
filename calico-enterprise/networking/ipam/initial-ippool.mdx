@@ -2,7 +2,6 @@
 title: Configure default IP pools
 description: Configure the default IP address ranges for operator installation. 
 canonical_url: ""
-feature_name: feature_generic_all
 ---
 
 ### Big picture

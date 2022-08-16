@@ -2,7 +2,6 @@
 title: Anonymization attacks
 description: Detect and analyze malicious anonymization activity using Tor-VPN feeds.
 canonical_url: /threat/tor-vpn-feed-and-dashboard
-feature_name: feature_generic_all
 ---
 
 ### Big picture

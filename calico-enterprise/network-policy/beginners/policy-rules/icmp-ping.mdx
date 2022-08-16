@@ -1,7 +1,6 @@
 ---
 title: Use ICMP/ping rules in policy
 description: Control where ICMP/ping is used by creating a Calico network policy to allow and deny ICMP/ping messages for workloads and host endpoints.
-feature_name: feature_generic_all
 ---
 
 ### Big picture

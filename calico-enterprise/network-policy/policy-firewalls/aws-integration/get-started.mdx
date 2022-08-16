@@ -2,7 +2,6 @@
 title: Get started
 description: Learn about the Calico Enterprise AWS security groups integration.
 canonical_url: /security/aws-integration/get-started
-feature_name: aws_integration
 ---
 
 ### Big picture

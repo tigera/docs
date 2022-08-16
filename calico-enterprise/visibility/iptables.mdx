@@ -2,7 +2,6 @@
 title: iptables logs
 description: Learn how policy audit mode rules can affect the number of iptable logs.
 canonical_url: /visibility/iptables
-feature_name: feature_generic_all
 ---
 
 ## About iptables logs
