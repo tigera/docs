@@ -2,7 +2,6 @@
 title: Configure dual stack 
 description: Configure dual stack for workloads.
 canonical_url: '/networking/ipv6'
-feature_name: dual_stack
 ---
 
 ### Big picture

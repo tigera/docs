@@ -2,7 +2,6 @@
 title: Protect hosts
 description: Create Calico Enterprise network policies to restrict traffic to/from hosts.
 canonical_url: '/security/protect-hosts'
-feature_name: feature_generic_all
 ---
 
 ### Big picture

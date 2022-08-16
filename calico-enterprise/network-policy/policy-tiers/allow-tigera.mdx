@@ -1,8 +1,8 @@
 ---
 title: Change allow-tigera tier behavior
 description: Understand the purpose of the allow-tigera tier and how to change its behavior.
-feature_name: feature_generic_all
 ---
+
 ### Big picture
 Change traffic behavior of the tier that secures {{site.prodname}} components.
 

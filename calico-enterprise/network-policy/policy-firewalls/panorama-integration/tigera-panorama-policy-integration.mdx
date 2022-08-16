@@ -2,7 +2,6 @@
 title: Panorama policy integration
 description: Leverage existing Panorama policy, and take advantage of Calico Enterprise network policy to secure workloads.
 canonical_url: '/security/panorama-integration/tigera-panorama-policy-integration'
-feature_name: feature_generic_all
 ---
 
 ### Big picture

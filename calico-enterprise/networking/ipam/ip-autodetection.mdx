@@ -1,7 +1,6 @@
 ---
 title: Configure IP autodetection
 description: Calico IP autodetection ensures the correct IP address is used for routing. Learn how to customize it. 
-feature_name: feature_generic_all
 ---
 
 ### Big picture

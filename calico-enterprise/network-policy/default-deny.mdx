@@ -2,7 +2,6 @@
 title: Global default deny policy best practices
 description: Implement a global default deny policy in the default tier to block unwanted traffic. 
 canonical_url: '/security/default-deny'
-feature_name: feature_generic_all
 ---
 
 In this article you will learn when and how to create a global default deny policy for the cluster.
