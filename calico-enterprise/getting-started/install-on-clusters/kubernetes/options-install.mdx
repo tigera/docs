@@ -1,7 +1,6 @@
 ---
 title: Options for installing Calico Enterprise
 description: Learn about API-driven installation and how to customize your installation configuration.
-feature_name: feature_generic_all
 ---
 
 ### Big picture

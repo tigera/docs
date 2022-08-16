@@ -2,7 +2,6 @@
 title: Enabling TCP socket stats in flow logs
 description: Enabling TCP socket stats information in flow logs
 canonical_url: /visibility/elastic/flow/tcpstats
-feature_name: feature_generic_all
 ---
 
 

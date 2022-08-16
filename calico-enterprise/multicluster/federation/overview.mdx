@@ -2,7 +2,6 @@
 title: Overview
 description: Configure local clusters for cross-cluster workload and host endpoints sharing, and cross-cluster service discovery. 
 canonical_url: /multicluster/federation/overview
-feature_name: federated_endpoint
 ---
 
 ### Big picture

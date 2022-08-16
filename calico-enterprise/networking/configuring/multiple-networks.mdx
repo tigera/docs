@@ -1,7 +1,6 @@
 ---
 title: Configure multiple Calico Enterprise networks on a pod
 description: Configure a cluster with multiple Calico Enterprise networks on each pod, and enforce security using Calico Enterprise tiered network policy.
-feature_name: feature_generic_all
 ---
 
 ### Big picture

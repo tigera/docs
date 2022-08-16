@@ -2,7 +2,6 @@
 title: L7 log data types
 description: L7 data that Calico Enterprise sends to Elasticsearch. 
 canonical_url: /visibility/elastic/l7/datatypes
-feature_name: l7_logs
 ---
 
 ### Big picture

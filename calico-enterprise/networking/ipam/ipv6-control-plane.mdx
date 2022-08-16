@@ -2,7 +2,6 @@
 title: Configure Kubernetes control plane to operate over IPv6
 description: Configure the Kubernetes control plane to operate over IPv6 for dual stack or IPv6 only.
 canonical_url: '/networking/ipv6-control-plane'
-feature_name: kubernetes_controlplane_ipv6
 ---
 
 ### Big picture

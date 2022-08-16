@@ -2,7 +2,6 @@
 title: Get a license
 description: Get a license to install Calico Enterprise.
 canonical_url: /getting-started/calico-enterprise
-feature_name: feature_generic_all
 ---
 
 ### Get private registry credentials and license key

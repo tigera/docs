@@ -2,7 +2,6 @@
 title: Overlay networking
 description: Configure Calico to use IP in IP or VXLAN overlay networking so the underlying network doesn’t need to understand pod addresses.
 canonical_url: '/networking/vxlan-ipip'
-feature_name: feature_generic_all
 ---
 
 ### Big picture

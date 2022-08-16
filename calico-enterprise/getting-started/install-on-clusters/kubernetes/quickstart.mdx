@@ -2,7 +2,6 @@
 title: Quickstart for Calico Enterprise on Kubernetes
 description: Install Calico Enterprise on a single-host Kubernetes cluster for testing or development.
 canonical_url: '/getting-started/kubernetes/quickstart'
-feature_name: install_kubernetes_kubeadm
 ---
 
 ### Big picture

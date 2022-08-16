@@ -1,7 +1,6 @@
 ---
 title: Apply Calico Enterprise policy to services exposed externally as cluster IPs
 description: Expose Kuberenetes service cluster IPs over BGP using Calico Enterprise, and restrict who can access them using Calico Enterprise network policy.
-feature_name: feature_generic_all
 ---
 
 ### Big picture

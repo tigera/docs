@@ -2,7 +2,6 @@
 title: System requirements
 description: Review requirements for using OpenShift with Calico Enterprise.
 canonical_url: '/getting-started/openshift/requirements'
-feature_name: install_ocp
 ---
 
 ### OpenShift requirements

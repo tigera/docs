@@ -2,7 +2,6 @@
 title: Configure RBAC for tiered policies
 description: Configure RBAC to control access to policies and tiers. 
 canonical_url: /security/rbac-tiered-policies
-feature_name: feature_generic_all
 ---
 
 ### Big picture

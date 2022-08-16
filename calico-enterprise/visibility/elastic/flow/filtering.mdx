@@ -2,7 +2,6 @@
 title: Filter flow logs
 description: Filter Calico Enterprise flow logs. 
 canonical_url: /visibility/elastic/flow/filtering
-feature_name: feature_generic_all
 ---
 
 ### Big picture
