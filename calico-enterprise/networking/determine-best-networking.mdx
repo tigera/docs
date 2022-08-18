@@ -1,7 +1,6 @@
 ---
 title: Determine best networking option
 description: Learn about the different networking options Calico Enterprise supports so you can choose the best option for your needs.
-feature_name: feature_generic_all
 ---
 
 ### Big picture

@@ -2,7 +2,6 @@
 title: Troubleshoot logs
 description: Learn how to troubleshoot common issues with Elasticsearch.
 canonical_url: '/visibility/troubleshoot'
-feature_name: feature_generic_all
 ---
 
 ### Elasticsearch resources and settings

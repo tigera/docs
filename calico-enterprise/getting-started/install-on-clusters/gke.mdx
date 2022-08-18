@@ -2,7 +2,6 @@
 title: Google Kubernetes Engine (GKE)
 description: Enable Calico network policy in GKE.
 canonical_url: '/getting-started/kubernetes/gke'
-feature_name: install_gke
 ---
 
 ### Big picture

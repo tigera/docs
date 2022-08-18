@@ -2,7 +2,6 @@
 title: Configure L7 logs
 description: Configure and aggregate L7 logs.
 canonical_url: /visibility/elastic/l7/configure
-feature_name: l7_logs
 ---
 
 ### Big picture

@@ -2,7 +2,6 @@
 title: Install Calico Enterprise on OpenShift
 description: Install Calico Enterprise on an OpenShift 4 cluster.
 canonical_url: '/getting-started/openshift/installation'
-feature_name: install_ocp
 openshift_manifests_include_apiserver_cr: true
 ---
 

@@ -2,7 +2,6 @@
 title: Configure honeypods
 description: Configure honeypods to detect compromised workloads.
 canonical_url: /threat/honeypod/honeypods
-feature_name: feature_generic_all
 ---
 
 ### Big picture

@@ -2,7 +2,6 @@
 title: Configure outgoing NAT
 description: Configure {{site.prodname}} networking to perform outbound NAT for connections from pods to outside of the cluster.
 canonical_url: '/networking/workloads-outside-cluster'
-feature_name: feature_generic_all
 ---
 
 ### Big picture

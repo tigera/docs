@@ -24,11 +24,13 @@ This how-to guide uses the following {{site.prodname}} features:
 
 #### Policy recommendations: when and why
 
+Policy recommendation automatically creates policies that explicitly allow traffic because of {{site.prodname}}'s [day-one zero trust](policy-best-practices#policy-best-practices-for-day-one-zero-trust) enhanced security posture.
+
 A typical scenario for using the policy recommendation feature is:
 
 - Your Kubernetes clusters are up and running under {{site.prodname}}
 - Clusters are successfully running, and workloads have been running long enough to gather traffic for applications
-- Developers want to secure their workloads, pods, and endpoints.
+- Developers want to secure their workloads, pods, and endpoints
 
 Developers without any experience using {{site.prodname}} network policy, can simply specify a few parameters, click a button, and generate a valid {{site.prodname}} network policy to protect their workloads.
 
@@ -42,7 +44,7 @@ After developers get a recommended {{site.prodname}} network policy to secure th
 
 #### Tips for generating policy recommendations
 
-The policy recommendation feature does not look into existing policies, but into *historial flow log entries that match a request*. Because of this, developers should run their workloads for a reasonable amount of time so “typical network traffic” for their application can be gathered.
+The policy recommendation feature does not look into existing policies. It looks only into *historical flow log entries that match a request, and only at entries with an `Allow` action*. Because of this, you should run your workloads for a reasonable amount of time so “typical network traffic” for your application can be gathered.
 
 ### Before you begin...
 
@@ -83,6 +85,12 @@ Then, you can assess the impact of the recommended policy using **Preview** and/
 
 >**Note**: We do not recommend using **Enforce** without first assessing the impact of the recommended policy using **Preview** and/or **Stage**.
 {: .alert .alert-info}
+
+### Troubleshooting
+
+**Error**: No matching flows to compute rules for
+
+**Solution/workaround**: Informational message that indicates no flow log entries with an `Allow` action were found in the workflow to generate a policy.
 
 ### Above and beyond
 

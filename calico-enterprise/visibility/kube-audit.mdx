@@ -2,7 +2,6 @@
 title: Kubernetes audit logs
 description: Enable Kubernetes audit logs on changes to Kubernetes resources. 
 canonical_url: /visibility/elastic/kube-audit
-feature_name: kubernetes_audit_logs
 ---
 
 ### Big picture
