@@ -2,7 +2,6 @@
 title: Kubernetes ingress
 description: Learn the different ingress implentations and how ingress and policy interact.
 canonical_url: /security/training/about-kubernetes-ingress
-feature_name: feature_generic_all
 ---
 
 > <span class="glyphicon glyphicon-info-sign"></span> This guide provides education material

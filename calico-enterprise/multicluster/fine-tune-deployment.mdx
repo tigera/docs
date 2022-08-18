@@ -2,7 +2,6 @@
 title: Fine-tune multi-cluster management 
 description: Review your multi-cluster management deployment to ensure it is ready for production.
 canonical_url: '/multicluster/mcm/fine-tune-deployment'
-feature_name: feature_generic_all
 ---
 
 ### Big picture

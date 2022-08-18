@@ -2,7 +2,6 @@
 title: Configure federated endpoint identity 
 description: Configure a local cluster to pull endpoint data from a remote cluster. 
 canonical_url: /multicluster/federation/kubeconfig
-feature_name: federated_endpoint
 ---
 
 ### Big picture

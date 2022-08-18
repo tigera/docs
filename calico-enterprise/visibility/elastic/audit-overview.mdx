@@ -2,7 +2,6 @@
 title: Audit logs
 description: Calico Enterprise audit logs provide data on changes to resources. 
 canonical_url: /visibility/elastic/audit-overview
-feature_name: feature_generic_all
 ---
 
 ### Big picture

@@ -2,7 +2,6 @@
 title: Amazon Elastic Kubernetes Service (EKS)
 description: Enable Calico network policy in EKS.
 canonical_url: '/getting-started/kubernetes/eks'
-feature_name: install_eks
 ---
 
 ### Big picture

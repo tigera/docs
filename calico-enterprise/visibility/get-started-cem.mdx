@@ -2,7 +2,6 @@
 title: Manager UI tutorial
 description: Tour the main features of Manager UI.
 canonical_url: /visibility/get-started-cem
-feature_name: feature_generic_all
 ---
 
 ### What you will learn

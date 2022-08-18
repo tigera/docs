@@ -2,7 +2,6 @@
 title: Configure BGP peering
 description: Configure BGP peering with full mesh, node-specific peering, ToR, and/or Calico route reflectors.
 canonical_url: '/networking/bgp'
-feature_name: feature_generic_all
 ---
 
 ### Big picture

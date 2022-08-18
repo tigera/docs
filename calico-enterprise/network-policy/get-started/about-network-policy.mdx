@@ -2,7 +2,6 @@
 title: What is network policy?
 description: Learn the basics of Kubernetes and Calico Enterprise network policy
 canonical_url: /security/training/about-network-policy
-feature_name: feature_generic_all
 ---
 
 > <span class="glyphicon glyphicon-info-sign"></span> This guide provides educational material that is not specific to {{site.prodname}}.

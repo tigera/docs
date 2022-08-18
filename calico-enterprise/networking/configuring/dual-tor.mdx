@@ -1,7 +1,6 @@
 ---
 title: Deploy a dual ToR cluster
 description: Configure a dual plane cluster for redundant connectivity between workloads.
-feature_name: dual_tor
 ---
 
 ### Big picture

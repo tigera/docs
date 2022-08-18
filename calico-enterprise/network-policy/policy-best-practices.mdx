@@ -2,7 +2,6 @@
 title: Policy best practices
 description: Learn policy best practices for security, scalability, and performance.
 canonical_url: '/security/policy-best-practices'
-feature_name: feature_generic_all
 ---
 
 ### Big picture

@@ -2,7 +2,6 @@
 title: Get started with Calico network policy
 description: Create your first Calico network policies. Shows the rich features using sample policies that extend native Kubernetes network policy.
 canonical_url: /security/calico-network-policy
-feature_name: feature_generic_all
 ---
 
 ### Big picture
