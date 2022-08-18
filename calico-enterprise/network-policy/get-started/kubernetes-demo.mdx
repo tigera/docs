@@ -2,7 +2,6 @@
 title: Kubernetes policy, demo
 description: An interactive demo that visually shows how applying Kubernetes policy allows and denies connections. 
 canonical_url: '/security/tutorials/kubernetes-policy-demo/kubernetes-demo'
-feature_name: feature_generic_all
 ---
 
 The included demo sets up a frontend and backend service, as well as a client service, all

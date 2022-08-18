@@ -2,8 +2,8 @@
 title: BGP logs
 description: Key/value pairs of BGP activity logs and how to construct queries. 
 canonical_url: /visibility/elastic/bgp
-feature_name: feature_generic_all
 ---
+
 {{site.prodname}} pushes BGP activity logs to Elasticsearch. To view them, go to the Discovery view, and from the dropdown menu, select `tigera_secure_ee_bgp.*` to view the collected BIRD and BIRD6 logs.
  
 The following table details key/value pairs for constructing queries, including their Elasticsearch datatype.

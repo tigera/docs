@@ -1,7 +1,6 @@
 ---
 title: Custom BGP Configuration
 canonical_url: /networking/custom-bgp-config
-feature_name: feature_generic_all
 ---
 
 ### Big picture

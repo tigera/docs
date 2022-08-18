@@ -2,7 +2,6 @@
 title: Configure MTU to maximize network performance
 description: Optimize network performance for workloads by configuring the MTU in Calico to best suit your underlying network.
 canonical_url: '/networking/mtu'
-feature_name: feature_generic_all
 ---
 
 ### Big picture

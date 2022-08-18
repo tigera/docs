@@ -2,7 +2,6 @@
 title: DNS policy
 description: Use domain names to allow traffic to destinations outside of a cluster by their DNS names instead of by their IP addresses.
 canonical_url: '/security/domain-based-policy'
-feature_name: feature_generic_all
 ---
 
 ### Big picture
