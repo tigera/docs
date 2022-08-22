@@ -7,6 +7,9 @@ description: Outlines minimum required pod security policy for each component in
 
 Use fine-grain authorization to restrict access to {{site.prodname}} components within the cluster using pod security policies.
 
+> **Note:** Pod security policies have been [deprecated as of Kubernetes v1.21][deprecated], and are removed entirely in Kubernetes v1.25. 
+{: .alert .alert-info}
+
 ### Value
 
 Kubernetes recommends using {% include open-new-window.html text='pod security policy' url='https://kubernetes.io/docs/concepts/policy/pod-security-policy/' %} (PSP) for fine-grained authorization of pod creation and updates to reduce pod attacks. 
@@ -94,3 +97,5 @@ Admission controllers in Kubernetes intercept requests to the Kubernetes API and
     ``*`` on all platforms for {{site.prodname}} v3.0.0, only on OpenShift platform for {{site.prodname}} v3.0.1 and above
 
 4. Create or update your PSPs to control access to {{site.prodname}} components. Pod security policies will take effect only after pods are created or updated
+
+[deprecated]: https://kubernetes.io/blog/2021/04/06/podsecuritypolicy-deprecation-past-present-and-future/
