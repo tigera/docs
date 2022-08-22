@@ -12,6 +12,9 @@ Enable WireGuard to secure on the wire in-cluster pod traffic in a {{site.prodna
 
 When this feature is enabled, {{site.prodname}} automatically creates and manages WireGuard tunnels between nodes providing transport-level security for on-the-wire, in-cluster pod traffic. WireGuard provides {% include open-new-window.html text='formally verified' url='https://www.wireguard.com/formal-verification/' %} secure and {% include open-new-window.html text='performant tunnels' url='https://www.wireguard.com/performance/' %} without any specialized hardware. For a deep dive in to WireGuard implementation, see this {% include open-new-window.html text='whitepaper' url='https://www.wireguard.com/papers/wireguard.pdf' %}.
 
+{{ site.prodname }} supports WireGuard encryption for both IPv4 and IPv6 traffic. These can be independently enabled in the FelixConfiguration resource: `wireguardEnabled`
+enables encrypting IPv4 traffic over an IPv4 underlay network and `wireguardEnabledV6` enables encrypting IPv6 traffic over an IPv6 underlay network.
+
 ### Features
 
 This how-to guide uses the following {{site.prodname}} features:
@@ -130,12 +133,23 @@ To install WireGuard for OpenShift v4.8:
 
 #### Enable WireGuard for a cluster
 
-Enable WireGuard encryption across all the nodes using the following command.
+Enable IPv4 WireGuard encryption across all the nodes using the following command.
 
 ```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
 ```
 
+Enable IPv6 WireGuard encryption across all the nodes using the following command.
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabledV6":true}}'
+```
+
+To enable both IPv4 and IPv6 WireGuard encryption across all the nodes, use the following command.
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true,"wireguardEnabledV6":true}}'
+```
 For OpenShift, add the Felix configuration with WireGuard enabled [under custom resources]({{site.baseurl}}/getting-started/openshift/installation#provide-additional-configuration).
 
    > **Note**: The above command can be used to change other WireGuard attributes. For a list of other WireGuard parameters and configuration evaluation, see the [Felix configuration]({{site.baseurl}}/reference/resources/felixconfig#felix-configuration-definition).
@@ -169,7 +183,7 @@ To view WireGuard statistics in Manager UI, you must enable them. From the left 
 
 #### Disable WireGuard for an individual node
 
-To disable WireGuard on a specific node with WireGuard installed, modify the node-specific Felix configuration. e.g., to turn off encryption for pod traffic on node `my-node`, use the following command:
+To disable WireGuard on a specific node with WireGuard installed, modify the node-specific Felix configuration. e.g., to turn off encryption for pod traffic on node `my-node`, use the following command. This command disables WireGuard for both IPv4 and IPv6, modify it accordingly if disabling only either IP version:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -181,15 +195,16 @@ spec:
   logSeverityScreen: Info
   reportingInterval: 0s
   wireguardEnabled: false
+  wireguardEnabledV6: false
 EOF
 ```
 
 With the above command, Calico will not encrypt any of the pod traffic to or from node `my-node`.
 
-To enable encryption for pod traffic on node `my-node` again:
+To enable encryption for IPv4 and IPv6 pod traffic on node `my-node` again, patch this node's FelixConfiguration (modify accordingly if only dealing with IPv4 or IPv6):
 
 ```bash
-kubectl patch felixconfiguration node.my-node --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
+kubectl patch felixconfiguration node.my-node --type='merge' -p '{"spec":{"wireguardEnabled":true,"wireguardEnabledV6":true}}'
 ```
 
 #### Disable WireGuard for a cluster
@@ -197,7 +212,7 @@ kubectl patch felixconfiguration node.my-node --type='merge' -p '{"spec":{"wireg
 To disable WireGuard on all nodes modify the default Felix configuration. For example:
 
 ```bash
-kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":false}}'
+kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":false,"wireguardEnabledV6":false}}'
 ```
 
 ### Above and beyond
