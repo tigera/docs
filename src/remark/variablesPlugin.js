@@ -29,8 +29,15 @@ function variablesPlugin(_options) {
 			const valueKey = node.type === "link" ? "url" : "value";
 
 			node[valueKey] = node[valueKey].replaceAll(
-				/{{((.)*?)}}/g,
-				(_match, varName) => objProp(productVariables, varName)
+				/{{([\w\d.]+)}}/g,
+				(match, varName) => {
+					const varValue = objProp(productVariables, varName);
+					if (!varValue) {
+						return match;
+					}
+
+					return varValue;
+				}
 			);
 		});
 	}
