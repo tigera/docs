@@ -92,8 +92,8 @@ mkdir manifests
    watch oc get tigerastatus
    ```
 
-     **Note**: If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
-     {: .alert .alert-info}
+   **Note**: If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
+   {: .alert .alert-info}
 
 1. Remove unused policies in your cluster.
 
