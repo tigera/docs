@@ -12,9 +12,9 @@ canonical_url: '/getting-started/kubernetes/requirements'
 
 We test {{site.prodname}} {{page.version}} against the following Kubernetes versions.
 
-- v1.21
 - v1.22
 - v1.23
+- v1.24
 
 Other versions may work, but we do not actively test {{site.prodname}}
 {{page.version}} against them.
