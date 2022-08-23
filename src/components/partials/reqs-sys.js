@@ -1,9 +1,8 @@
 import React from 'react';
 
 const orchList = {
-    All: 'All',
     Kubernetes: 'Kubernetes',
-    HostProtection: 'Host Protection',
+    HostProtection: 'host protection',
     OpenShift: 'OpenShift',
     OpenStack: 'OpenStack',
 }
