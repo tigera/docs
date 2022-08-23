@@ -1,10 +1,14 @@
 import React from 'react';
+import Admonition from '@theme/Admonition'
+import Link from "@docusaurus/Link";
 
 const orchList = {
+    All: 'All',
     Kubernetes: 'Kubernetes',
-    HostProtection: 'host protection',
     OpenShift: 'OpenShift',
     OpenStack: 'OpenStack',
+    HostProtection: 'host protection',
+    'host protection': 'host protection',
 }
 
 const osList = [
@@ -47,13 +51,7 @@ const osList = [
 ]
 
 function osForOrch(orch) {
-    let rv = []
-    osList.forEach(i => {
-        let include = false
-        i.OrchTags.forEach(j => include = include ? true : j === orch)
-        if (include) rv[rv.length] = i
-    })
-    return rv;
+    return osList.filter(i => i.OrchTags.includes(orch) || i.OrchTags.includes(orchList.All))
 }
 
 function NodeRequirements(props) {
@@ -62,13 +60,13 @@ function NodeRequirements(props) {
             <h2 id="node-requirements">Node requirements</h2>
             <ul>
                 <li><p>x86-64, arm64, ppc64le, or s390x processor</p></li>
-                <li><p>Linux kernel 3.10 or later with <a
-                    href="#kernel-dependencies">required dependencies</a>. The following
+                <li><p>Linux kernel 3.10 or later with <Link href="#kernel-dependencies">required dependencies</Link>.
+                    The following
                     distributions have the required kernel, its dependencies, and are known
                     to work well with {props.prodname} and {props.orch}.</p>
                     <ul>
-                        {props.os.map((props, idx) => (
-                            <li key={idx}>{props.Name}</li>
+                        {props.os.map((e, idx) => (
+                            <li key={idx}>{e.Name}</li>
                         ))}
                     </ul>
                 </li>
@@ -87,15 +85,16 @@ function Notes(props) {
     return (
         <>
             <div className="note">
-                <blockquote>
-                    <p><strong>Note</strong>: Many Linux distributions, such as most of the
-                        above, include NetworkManager. By default, NetworkManager does not allow
-                        {props.prodname} to manage interfaces. If your nodes have NetworkManager,
-                        complete the steps in <a
-                            href="/maintenance/troubleshoot/troubleshooting#configure-networkmanager">Preventing
-                            NetworkManager from controlling {props.prodname} interfaces</a> before
-                        installing {props.prodname}.</p>
-                </blockquote>
+                <Admonition type="note">
+                    <p>
+                        Many Linux distributions, such as most of the above, include NetworkManager. By default,
+                        NetworkManager does not allow {props.prodname} to manage interfaces. If your nodes have
+                        NetworkManager, complete the steps in <Link
+                        href="/maintenance/troubleshoot/troubleshooting#configure-networkmanager">Preventing
+                        NetworkManager from controlling {props.prodname} interfaces</Link> before
+                        installing {props.prodname}.
+                    </p>
+                </Admonition>
             </div>
             <ul>
                 <li>If your Linux distribution comes with installed Firewalld or another
@@ -104,11 +103,13 @@ function Notes(props) {
                 </li>
             </ul>
             <div className="note">
-                <blockquote>
-                    <p><strong>Note</strong>: If a host firewall is needed, it can be
-                        configured by {props.prodname} HostEndpoint and GlobalNetworkPolicy. More
-                        information about configuration at <a href="/security/hosts">Security for host</a>.</p>
-                </blockquote>
+                <Admonition type="note">
+                    <p>
+                        If a host firewall is needed, it can be configured by {props.prodname} HostEndpoint and
+                        GlobalNetworkPolicy. More information about configuration at <Link href="/security/hosts">Security
+                        for host</Link>.
+                    </p>
+                </Admonition>
             </div>
         </>
     )
@@ -118,15 +119,15 @@ function KeyValueStore(props) {
     return (
         <>
             <h2 id="keyvalue-store">Key/value store</h2>
-            <p>{props.prodname} requires a key/value store accessible by all {props.prodname} components.
+            <p>{props.prodname} requires a key/value store accessible by all {props.prodname} components.&nbsp;
                 {
                     {
                         OpenShift:
                             <span>With OpenShift, the Kubernetes API datastore is used for the key/value store.</span>,
                         Kubernetes: <span>On Kubernetes, you can configure {props.prodname} to access an etcdv3 cluster directly or to use the Kubernetes API datastore.</span>,
                         OpenStack: <span>For production you will likely want multiple nodes for greater performance and reliability. If you don’t already have an etcdv3 cluster to connect to,
-                            please refer to <a href="https://coreos.com/etcd/">the upstream etcd docs</a> for detailed advice and setup.</span>,
-                        HostProtection: <span>The key/value store must be etcdv3.</span>,
+                            please refer to <Link href="https://coreos.com/etcd/">the upstream etcd docs</Link> for detailed advice and setup.</span>,
+                        'host protection': <span>The key/value store must be etcdv3.</span>,
                     }[props.orch]
                 }
             </p>
@@ -134,7 +135,7 @@ function KeyValueStore(props) {
     )
 }
 
-function NetworkRequirments(props) {
+function NetworkRequirements(props) {
     return (
         <>
             <h2 id="network-requirements">Network requirements</h2>
@@ -232,8 +233,8 @@ function NetworkRequirments(props) {
                             <td>etcd datastore</td>
                             <td>etcd hosts</td>
                             <td>Incoming</td>
-                            <td><a
-                                href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt">Officially</a> TCP
+                            <td><Link
+                                href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt">Officially</Link> TCP
                                 2379 but can vary
                             </td>
                         </tr>
@@ -244,8 +245,8 @@ function NetworkRequirments(props) {
                         <td>All</td>
                         <td>etcd hosts</td>
                         <td>Incoming</td>
-                        <td><a
-                            href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt">Officially</a> TCP
+                        <td><Link
+                            href="http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt">Officially</Link> TCP
                             2379 but can vary
                         </td>
                     </tr>
@@ -267,6 +268,7 @@ function NetworkRequirments(props) {
 }
 
 function Privileges(props) {
+    let idx = 0
     return (
         <>
             <h2 id="privileges">Privileges</h2>
@@ -280,9 +282,10 @@ function Privileges(props) {
                         containers.
                         There are two ways this can be achieved.</p>
                     <ul>
-                        <li key={1}>Specify <code>--allow-privileged</code> on the kubelet (deprecated).</li>
-                        <li key={2}>Use a <a href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">pod
-                            security policy</a>.
+                        <li key={idx++}>Specify <code>--allow-privileged</code> on the kubelet (deprecated).</li>
+                        <li key={idx++}>Use a <Link
+                            href="https://kubernetes.io/docs/concepts/policy/pod-security-policy/">pod
+                            security policy</Link>.
                         </li>
                     </ul>
                 </>
@@ -292,17 +295,14 @@ function Privileges(props) {
 }
 
 export default function ReqsSys(props) {
-    const newProps = {
-        ...props,
-        os: osForOrch(props.orch)
-    }
+    const os = osForOrch(props.orch)
     return (
         <>
-            <NodeRequirements {...newProps}/>
-            <Notes {...newProps}/>
-            <KeyValueStore {...newProps}/>
-            <NetworkRequirments {...newProps}/>
-            <Privileges {...newProps}/>
+            <NodeRequirements os={os} {...props}/>
+            <Notes os={os} {...props}/>
+            <KeyValueStore os={os} {...props}/>
+            <NetworkRequirements os={os} {...props}/>
+            <Privileges os={os} {...props}/>
         </>
-    );
+    )
 }

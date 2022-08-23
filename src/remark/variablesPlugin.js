@@ -5,9 +5,9 @@ const variables = require(path.resolve("variables"));
 const objProp = require(path.resolve("src/utils/objProp"));
 
 const pathPrefixes = {
-	cloud: "/calico-cloud/",
-	enterprise: "/calico-enterprise/",
-	openSource: "/calico/",
+	cloud: "/docs/calico-cloud/",
+	enterprise: "/docs/calico-enterprise/",
+	openSource: "/docs/calico/",
 };
 
 function variablesPlugin(_options) {
@@ -29,13 +29,12 @@ function variablesPlugin(_options) {
 			const valueKey = node.type === "link" ? "url" : "value";
 
 			node[valueKey] = node[valueKey].replaceAll(
-				/{{([\w\d.]+)}}/g,
+				/{{([\w.]+)}}/g,
 				(match, varName) => {
 					const varValue = objProp(productVariables, varName);
 					if (!varValue) {
 						return match;
 					}
-
 					return varValue;
 				}
 			);

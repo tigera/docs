@@ -18,7 +18,7 @@ const variables = {
 		rootDirWindows: "C:\TigeraCalico",
 	},
 	openSource: {
-		prodname: "Calico Open Source",
+		prodname: "Calico",
 		prodnamedash: "calico",
 		prodnameWindows: "Calico for Windows",
 		nodecontainer: "calico/node",
