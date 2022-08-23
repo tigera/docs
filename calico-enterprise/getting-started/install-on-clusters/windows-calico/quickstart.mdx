@@ -34,9 +34,6 @@ This is required to prevent Linux nodes from borrowing IP addresses from Windows
 kubectl patch ipamconfigurations default --type merge --patch='{"spec": {"strictAffinity": true}}'
 ```
 
-> **Note**: If the above command failed to find ipamconfigurations resource, you need to install Calico API server. Please refer to [installing the Calico API server]({{site.baseurl}}/maintenance/install-apiserver).
-{: .alert .alert-info}
-
 #### Install {{site.prodnameWindows}} manually
 
 The following steps install a Kubernetes cluster on a single Windows node with a [minimum]({{site.baseurl}}/getting-started/kubernetes/requirements#node-requirements) of 4 Linux worker nodes.
