@@ -46,7 +46,7 @@ function MainList(props) {
 export default function ReqsKernel(props) {
     return (
         <>
-            <h3 id="kernel-dependencies">Kernel Dependencies</h3>
+            <h2 id="kernel-dependencies">Kernel Dependencies</h2>
             <Admonition type="tip">
                 <p>
                     If you are using one of the recommended distributions, you will already satisfy these.
