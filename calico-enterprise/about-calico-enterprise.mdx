@@ -156,7 +156,7 @@ In addition to cloud microsegmentation and zero trust security, {{site.prodname}
 **Documentation**
 
 - [Alerts]({{site.baseurl}}/visibility/alerts)
-- [Detect and alert on security anomalies]({{site.baseurl}}/threat/security-anomalies)
+- [Detect and alert on security anomalies]({{site.baseurl}}/threat/anomaly-detection/security-anomalies)
 - [Threat intelligence feeds]({{site.baseurl}}/threat/suspicious-ips)
 - [Honeypods]({{site.baseurl}}/threat/honeypod/)
 

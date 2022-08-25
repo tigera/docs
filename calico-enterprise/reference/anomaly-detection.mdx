@@ -8,7 +8,7 @@ This topic lists {{site.prodname}} anomaly detectors and their descriptions.
 
 ### Security anomaly detectors 
 
-The following detectors are searching for [security anomalies]({{site.baseurl}}/threat/security-anomalies). These detectors search primarily for security anomalies related to malicious activities. 
+The following detectors are primarily searching for [security anomalies]({{site.baseurl}}/threat/anomaly-detection/security-anomalies) related to malicious activities. 
 
 #### Domain Generation Algorithms (DGA)
 

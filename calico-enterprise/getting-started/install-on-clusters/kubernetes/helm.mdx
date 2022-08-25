@@ -1,7 +1,7 @@
 ---
 title: Helm
 description: Install Calico Enterprise using Helm application package manager.
-canonical_url: '/getting-started/kubernetes/helm
+canonical_url: '/getting-started/kubernetes/helm'
 ---
 
 ### Big picture
@@ -62,7 +62,7 @@ If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubern
 
 1. If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), set the `kubernetesProvider` as described in the [Installation reference]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.Provider). For example:
    ```bash
-echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml
+   echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml
    ```
    For Azure AKS cluster with no Kubernetes CNI pre-installed, create `values.yaml` with the following command:
    ```
