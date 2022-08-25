@@ -1,7 +1,7 @@
 ---
 title: Detect and alert on anomalies
 description: Enable machine learning to automatically alert you when clusters have security and performance issues. 
-canonical_url: /threat/security-anomalies
+canonical_url: /threat/anomaly-detection/security-anomalies
 ---
 
 >**Note**: This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
@@ -88,7 +88,12 @@ For a list of anomalies that are enabled by default, see [Anomaly detection refe
 
 **Required**
 
-- To use L7/HTTP anomaly detectors, you must enable [L7 logs]({{site.baseurl}}/visibility/elastic/l7/configure) on the cluster 
+- To use L7/HTTP anomaly detectors, you must enable [L7 logs]({{site.baseurl}}/visibility/elastic/l7/configure) on the cluster
+
+**Optional**
+
+By default models created from anomaly detection's training cycle are stored in ephemeral storage.
+To persist storage for the training models [configure a storage class]({{site.baseurl}}/threat/anomaly-detection/storage)
 
 ### How To
 
