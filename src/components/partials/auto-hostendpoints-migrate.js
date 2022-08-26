@@ -1,0 +1,46 @@
+import React from "react";
+
+import Admonition from '@theme/Admonition'
+import Link from "@docusaurus/Link";
+
+export default function AutoHostendpointsMigrate(props) {
+    return (
+        <>
+            <h2 id="migrating-to-auto-host-endpoints">Migrating to auto host endpoints</h2>
+            <Admonition type="caution">
+                Auto host endpoints have an allow-all profile attached which allows all traffic in the absence of network policy.
+                This may result in unexpected behavior and data.
+            </Admonition>
+            <p>In order to migrate existing all-interfaces host endpoints to {props.prodname}-managed auto host endpoints:</p>
+            <ol>
+                <li>
+                    <p>Add any labels on existing all-interfaces host endpoints to their corresponding {props.orch} nodes. {props.prodname} manages labels on automatic host endpoints by syncing
+                    labels from their nodes. Any labels on existing all-interfaces host endpoints should be added to their respective nodes.
+                    For example, if your existing all-interface host endpoint for node <strong>node1</strong> has the label <strong>environment: dev</strong>, then you must add that same label to its node:</p>
+                    <pre><code>
+                        {props.orch === "OpenShift" ? (
+                            <span>oc label node node1 environment=dev</span>
+                        ) : (
+                            <span>kubectl label node node1 environment=dev</span>
+                        )}
+                    </code></pre>
+                </li>
+                <li>
+                    <p>Enable auto host endpoints by following the <Link href="../../../docs/calico/security/kubernetes-nodes#enable-automatic-host-endpoints">enable automatic host endpoints how-to guide</Link>.
+                    Note that automatic host endpoints are created with a profile attached that allows all traffic in the absence of network policy.</p>
+                    <pre><code>
+                        calicoctl patch kubecontrollersconfiguration default --patch =
+                        {'{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled"}}}}}'}
+                    </code></pre>
+                </li>
+                <li>
+                    <p>Delete old all-interfaces host endpoints. You can distinguish host endpoints managed by {props.prodname} from others in several ways. First, automatic host endpoints
+                    have the label <strong>projectcalico.org/created-by: calico-kube-controllers</strong>. Secondly, automatic host endpoints&#39; name have the suffix <strong>-auto-hep</strong>.</p>
+                    <pre><code>
+                        calicoctl delete hostendpoint &lt;old_hostendpoint_name&gt;
+                    </code></pre>
+                </li>
+            </ol>
+        </>
+    )
+}
