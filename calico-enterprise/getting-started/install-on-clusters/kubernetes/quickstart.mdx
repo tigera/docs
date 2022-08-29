@@ -155,15 +155,16 @@ When all components show a status of `Available`, proceed to the next section.
    kubectl create clusterrolebinding jane-access --clusterrole tigera-network-admin --serviceaccount default:jane
    ```
 
-1. Extract the login `token` for use with the {{site.prodname}} UI.
+1. Create a login token for use with the {{site.prodname}} UI.
 
-   {%- raw %}
    ```
-   kubectl get secret $(kubectl get serviceaccount jane -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo
+   kubectl create token jane --duration=24h
    ```
-   {% endraw %}
 
-   Copy the above `token` to your clipboard for use in the next step.
+   Copy the `token` from the above command to your clipboard for use in the next step.
+
+   > **Note**: The token created above will expire after 24 hours.
+   {: .alert .alert-info}
 
 
 1. Set up a channel from your local computer to the {{site.prodname}} UI.
