@@ -209,11 +209,7 @@ adjust other kube-proxy parameters.
 
 1. Disable BGP routing by updating the Installation instance:
    ```bash
-<<<<<<< HEAD
-   kubectl patch installation default --type=merge -p '{"spec": {"calicoNetwork": {"bgp": "Disabled"}}}'
-=======
    kubectl patch ipamconfigurations default --type merge --patch='{"spec": {"strictAffinity": true}}'
->>>>>>> os/release-v3.24
    ```
 
 For Linux control nodes using {{site.prodname}} networking, strict affinity must be set to `true`.

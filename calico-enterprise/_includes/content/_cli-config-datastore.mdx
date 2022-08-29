@@ -1,9 +1,3 @@
----
-title: Configure calicoctl to connect to the Kubernetes API datastore
-description: Sample configuration files for kdd.
-canonical_url: '/maintenance/clis/calicoctl/configure/kdd'
----
-
 ### Default configuration
 
 By default, calicoctl will attempt to read from the Kubernetes API using the default kubeconfig located at `$(HOME)/.kube/config`.
