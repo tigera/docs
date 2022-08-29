@@ -60,20 +60,20 @@ const config = {
         items: [
           {
             label: 'Calico',
-            type: 'doc',
-            docId: 'calico/getting-started/kubernetes/quickstart',
+            type: 'docSidebar',
+            sidebarId: 'calicoSidebar',
             position: 'left',
           },
           {
             label: 'Calico Enterprise',
-            type: 'doc',
-            docId: 'calico-enterprise/getting-started/options-install',
+            type: 'docSidebar',
+            sidebarId: 'calicoEnterpriseSidebar',
             position: 'left',
           },
           {
             label: 'Calico Cloud',
-            type: 'doc',
-            docId: 'calico-cloud/index',
+            type: 'docSidebar',
+            sidebarId: 'calicoCloudSidebar',
             position: 'left',
           },
           {
