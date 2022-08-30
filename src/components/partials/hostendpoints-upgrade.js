@@ -91,6 +91,11 @@ export default function HostEndpointsUpgrade(props) {
 				of the host endpoints temporarily:
 			</p>
 			<CodeBlock language="bash">
+				{/*
+					It looks like a broken indentation due to a JS template strings limitation. Actually, it
+					will be rendered correctly. If we want to use template strings with "correct" indentation
+					we can use https://www.npmjs.com/package/endent.
+				*/}
 				{`cat > allow-all-upgrade.yaml <<EOF
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
