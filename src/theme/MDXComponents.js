@@ -3,6 +3,7 @@ import MDXComponents from '@theme-original/MDXComponents';
 import ReqsSys from '@site/src/components/partials/reqs-sys';
 import ReqsKernel from '@site/src/components/partials/reqs-kernel';
 import HostEndpointsUpgrade from '@site/src/components/partials/hostendpoints-upgrade';
+import CalicoWindowsInstall from '@site/src/components/partials/calico-windows-install';
 
 export default {
     // Re-use the default mapping
@@ -12,4 +13,5 @@ export default {
     ReqsSys,
     ReqsKernel,
     HostEndpointsUpgrade,
+    CalicoWindowsInstall,
 };
