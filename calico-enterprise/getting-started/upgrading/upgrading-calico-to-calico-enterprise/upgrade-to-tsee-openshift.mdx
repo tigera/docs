@@ -65,7 +65,7 @@ __Install {{site.prodname}}__
 3. Apply the custom resources for enterprise features, see [the installation reference]({{site.baseurl}}/reference/installation/api).
 
    ```bash
-   oc apply -f {{ "/manifests/tigera-enterprise-resources.yaml" | absolute_url }} 
+   oc apply -f {{ "/manifests/ocp/tigera-enterprise-resources.yaml" | absolute_url }} 
    ```
 
 4. Patch installation.
