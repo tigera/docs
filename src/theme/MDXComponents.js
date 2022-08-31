@@ -10,19 +10,21 @@ import InstallOpenshiftBeforeYouBegin from '@site/src/components/partials/instal
 import CalicoWindowsInstall from '@site/src/components/partials/calico-windows-install';
 import PodCidrSed from '@site/src/components/partials/pod-cidr-sed';
 import EnvironmentFile from '@site/src/components/partials/environment-file';
+import ConfigureManagedCluster from '@site/src/components/partials/configure-managed-cluster';
 
 export default {
-    // Re-use the default mapping
-    ...MDXComponents,
+	// Re-use the default mapping
+	...MDXComponents,
 
-    // all of our partials
-    ReqsSys,
-    ReqsKernel,
-    HostEndpointsUpgrade,
-    EnterpriseLink,
-    InstallOpenshiftBeforeYouBegin,
-    CalicoWindowsInstall,
-    PodCidrSed,
-    EnvironmentFile,
-    AutoHostendpointsMigrate,
+	// all of our partials
+	ReqsSys,
+	ReqsKernel,
+	HostEndpointsUpgrade,
+	EnterpriseLink,
+	InstallOpenshiftBeforeYouBegin,
+	CalicoWindowsInstall,
+	PodCidrSed,
+	EnvironmentFile,
+	AutoHostendpointsMigrate,
+	ConfigureManagedCluster,
 };
