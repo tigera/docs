@@ -13,18 +13,18 @@ import EnvironmentFile from '@site/src/components/partials/environment-file';
 import ConfigureManagedCluster from '@site/src/components/partials/configure-managed-cluster';
 
 export default {
-	// Re-use the default mapping
-	...MDXComponents,
+  // Re-use the default mapping
+  ...MDXComponents,
 
-	// all of our partials
-	ReqsSys,
-	ReqsKernel,
-	HostEndpointsUpgrade,
-	EnterpriseLink,
-	InstallOpenshiftBeforeYouBegin,
-	CalicoWindowsInstall,
-	PodCidrSed,
-	EnvironmentFile,
-	AutoHostendpointsMigrate,
-	ConfigureManagedCluster,
+  // all of our partials
+  ReqsSys,
+  ReqsKernel,
+  HostEndpointsUpgrade,
+  EnterpriseLink,
+  InstallOpenshiftBeforeYouBegin,
+  CalicoWindowsInstall,
+  PodCidrSed,
+  EnvironmentFile,
+  AutoHostendpointsMigrate,
+  ConfigureManagedCluster,
 };
