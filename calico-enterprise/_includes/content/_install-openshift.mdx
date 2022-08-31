@@ -123,7 +123,7 @@ oc create -f </path/to/license.yaml>
 Download the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
 
 ```bash
-curl -O -L {{ "/manifests/tigera-enterprise-resources.yaml" | absolute_url }}
+curl -O -L {{ "/manifests/ocp/tigera-enterprise-resources.yaml" | absolute_url }}
 ```
 
 Remove the `Manager` custom resource from the manifest file.
@@ -160,7 +160,7 @@ oc create -f ./tigera-enterprise-resources.yaml
 Apply the custom resources for enterprise features.
 
 ```bash
-oc create -f {{ "/manifests/tigera-enterprise-resources.yaml" | absolute_url }}
+oc create -f {{ "/manifests/ocp/tigera-enterprise-resources.yaml" | absolute_url }}
 ```
 {% endif %}
 
