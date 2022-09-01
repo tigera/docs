@@ -5,7 +5,7 @@ const variables = {
   // over the objects listed further down, as long as the paths match.
   //
   // override: {
-  // 	docsPathPrefix: ["/docs/calico-cloud/new-folder-example"],
+  // 	docsPathPrefix: ["/docs/calico-cloud/new-folder-example/"],
   // 	nodecontainer: 'cnx-node-override'
   // },
   cloud: {

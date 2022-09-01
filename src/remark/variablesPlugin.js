@@ -55,14 +55,12 @@ function getContextVariables(file, variables) {
     if (typeof variables[p] !== "object") continue;
     if (!Object.prototype.hasOwnProperty.call(variables[p], dpName)) continue;
     const docsPathPrefix = variables[p][dpName];
-    if (Array.isArray(docsPathPrefix)) {
-      for (let dpp of docsPathPrefix) {
-        if (posixFriendlyPath.includes(dpp)) {
-          cvars[cvars.length] = variables[p];
-        }
-      }
-    } else if (typeof docsPathPrefix === "string") {
-      if (posixFriendlyPath.includes(docsPathPrefix)) {
+    if (!Array.isArray(docsPathPrefix)) {
+      console.error(`${dpName} in variables.js should be an array!`);
+      continue;
+    }
+    for (let dpp of docsPathPrefix) {
+      if (posixFriendlyPath.includes(dpp)) {
         cvars[cvars.length] = variables[p];
       }
     }
