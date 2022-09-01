@@ -41,7 +41,7 @@ function variablesPlugin(_options) {
 }
 
 // We enumerate through each object in 'variables' which has a 'docsPathPrefix'
-// property. The 'docsPathPrefix' can be an array of strings or a string. We
+// property. The 'docsPathPrefix' should be an array of strings. We
 // then check to see if that path prefix occurs in the current file's path. If
 // so, we add that variables object to the list of objects we'll use for
 // variable substitution.
