@@ -11,6 +11,7 @@ import CalicoWindowsInstall from '@site/src/components/partials/calico-windows-i
 import PodCidrSed from '@site/src/components/partials/pod-cidr-sed';
 import EnvironmentFile from '@site/src/components/partials/environment-file';
 import ConfigureManagedCluster from '@site/src/components/partials/configure-managed-cluster';
+import InstallAKS from '@site/src/components/partials/install-aks';
 import InstallGeneric from '@site/src/components/partials/install-generic';
 
 export default {
@@ -28,5 +29,6 @@ export default {
   EnvironmentFile,
   AutoHostendpointsMigrate,
   ConfigureManagedCluster,
+  InstallAKS,
   InstallGeneric,
 };

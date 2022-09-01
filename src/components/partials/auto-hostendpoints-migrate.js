@@ -1,6 +1,6 @@
 import React from "react";
 
-import Admonition from '@theme/Admonition'
+import Admonition from '@theme/Admonition';
 import Link from "@docusaurus/Link";
 import CodeBlock from "@theme/CodeBlock";
 
