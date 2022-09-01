@@ -5,6 +5,12 @@ const variables = require(path.resolve("variables"));
 const objProp = require(path.resolve("src/utils/objProp"));
 const varRegex = RegExp(/\{\{[ \t]*([\w.]+)[ \t]*}}/, "g");
 
+// This is a remark plugin which runs before all the docusaurus plugins which
+// allows us to support variable substitution in all md/mdx files. We are
+// 'visit'ing each 'node' in the AST (abstract syntax tree) to do a replacement
+// on all text values where we see a pattern described in the regex above, such
+// as {{ i_am_a_context_variable }} or {{objectInGlobal.foobar}}
+// variables can be seen in @site/variables.js
 function variablesPlugin(_options) {
   async function transformer(tree, file) {
     const contextVariables = getContextVariables(file, variables);
@@ -34,6 +40,11 @@ function variablesPlugin(_options) {
   return transformer;
 }
 
+// We enumerate through each object in 'variables' which has a 'docsPathPrefix'
+// property. The 'docsPathPrefix' can be an array of strings or a string. We
+// then check to see if that path prefix occurs in the current file's path. If
+// so, we add that variables object to the list of objects we'll use for
+// variable substitution.
 function getContextVariables(file, variables) {
   let cvars = [];
   const dpName = "docsPathPrefix";

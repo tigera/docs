@@ -1,4 +1,13 @@
 const variables = {
+  // This is an example of how to override variables. Bear in mind that 1) the
+  // 'docsPathPrefix' is necessary, except for 'global' object. And, 2) the
+  // order is important as the first objects listed here will take precedence
+  // over the objects listed further down, as long as the paths match.
+  //
+  // override: {
+  // 	docsPathPrefix: ["/docs/calico-cloud/new-folder-example"],
+  // 	nodecontainer: 'cnx-node-override'
+  // },
   cloud: {
     prodname: "Calico Cloud",
     prodnamedash: "calico-cloud",
