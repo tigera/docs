@@ -1,7 +1,9 @@
 import React from 'react';
 import Admonition from '@theme/Admonition'
 import Link from "@docusaurus/Link";
-import {cloud, enterprise, openSource, orchestrators} from "@site/variables"
+import {cloud, enterprise, openSource, global} from "@site/variables"
+
+const { orchestrators } = global;
 
 function NodeRequirementsOSS(props) {
     return (
