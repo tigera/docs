@@ -13,6 +13,10 @@ import EnvironmentFile from '@site/src/components/partials/environment-file';
 import ConfigureManagedCluster from '@site/src/components/partials/configure-managed-cluster';
 import InstallAKS from '@site/src/components/partials/install-aks';
 import InstallGeneric from '@site/src/components/partials/install-generic';
+import InstallOpenShift from '@site/src/components/partials/install-openshift';
+import OpenShiftManifests from '@site/src/components/partials/openshift-manifests';
+import OpenShiftPullSecret from '@site/src/components/partials/openshift-pull-secret';
+import OpenShiftPrometheusOperator from '@site/src/components/partials/openshift-prometheus-operator';
 
 export default {
   // Re-use the default mapping
@@ -31,4 +35,8 @@ export default {
   ConfigureManagedCluster,
   InstallAKS,
   InstallGeneric,
+  InstallOpenShift,
+  OpenShiftManifests,
+  OpenShiftPullSecret,
+  OpenShiftPrometheusOperator,
 };
