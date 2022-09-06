@@ -44,7 +44,7 @@ Make the manifests directory.
 mkdir manifests
 ```
 
-{% include content/openshift-manifests.md %}
+{% include content/install-openshift-manifests.md %}
 
 __Add an image pull secret__
 
