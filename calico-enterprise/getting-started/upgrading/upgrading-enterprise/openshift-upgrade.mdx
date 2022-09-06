@@ -51,7 +51,7 @@ Make a manifests directory.
 mkdir manifests
 ```
 
-{% include content/openshift-manifests.md %}
+{% include content/install-openshift-manifests.md %}
 
 ## Upgrade from 3.0 or later
 **Note**: The steps differ based on your cluster type. If you are unsure of your cluster type, look at the field `clusterManagementType` when you run `oc get installation -o yaml` before you proceed.

@@ -35,7 +35,7 @@ Now generate the Kubernetes manifests using your configuration file:
 openshift-install create manifests
 ```
 
-{% include content/openshift-manifests.md %}
+{% include content/install-openshift-manifests.md %}
 
 {% comment %} For IPI hybrid clusters (Linux + Windows) we need to enable VXLAN and disable BGP{% endcomment %}
 {% if include.clusterOS == "hybrid" %}
