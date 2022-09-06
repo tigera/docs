@@ -13,6 +13,7 @@ import EnvironmentFile from '@site/src/components/partials/environment-file';
 import ConfigureManagedCluster from '@site/src/components/partials/configure-managed-cluster';
 import InstallAKS from '@site/src/components/partials/install-aks';
 import InstallGeneric from '@site/src/components/partials/install-generic';
+import UpgradeOperatorSimple from '@site/src/components/partials/upgrade-operator-simple';
 
 export default {
   // Re-use the default mapping
@@ -31,4 +32,5 @@ export default {
   ConfigureManagedCluster,
   InstallAKS,
   InstallGeneric,
+  UpgradeOperatorSimple,
 };
