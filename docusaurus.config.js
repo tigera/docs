@@ -12,7 +12,7 @@ const config = {
   tagline: "Active security for cloud-native applications",
   url: "https://unified-docs.tigera.io",
   baseUrl: "/",
-  onBrokenLinks: "throw",
+  onBrokenLinks: "warn",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.png",
 

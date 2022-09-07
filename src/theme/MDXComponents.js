@@ -12,8 +12,14 @@ import PodCidrSed from '@site/src/components/partials/pod-cidr-sed';
 import EnvironmentFile from '@site/src/components/partials/environment-file';
 import ConfigureManagedCluster from '@site/src/components/partials/configure-managed-cluster';
 import InstallAKS from '@site/src/components/partials/install-aks';
+import InstallEKS from '@site/src/components/partials/install-eks';
 import InstallGeneric from '@site/src/components/partials/install-generic';
 import InstallGKE from '@site/src/components/partials/install-gke';
+import UpgradeOperatorSimple from '@site/src/components/partials/upgrade-operator-simple';
+import InstallOpenShift from '@site/src/components/partials/install-openshift';
+import InstallOpenShiftManifests from '@site/src/components/partials/install-openshift-manifests';
+import OpenShiftPullSecret from '@site/src/components/partials/openshift-pull-secret';
+import OpenShiftPrometheusOperator from '@site/src/components/partials/openshift-prometheus-operator';
 
 export default {
   // Re-use the default mapping
@@ -31,6 +37,12 @@ export default {
   AutoHostendpointsMigrate,
   ConfigureManagedCluster,
   InstallAKS,
+  InstallEKS,
   InstallGeneric,
   InstallGKE,
+  UpgradeOperatorSimple,
+  InstallOpenShift,
+  InstallOpenShiftManifests,
+  OpenShiftPullSecret,
+  OpenShiftPrometheusOperator,
 };
