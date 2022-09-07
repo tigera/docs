@@ -1,0 +1,44 @@
+version: v1.0
+name: Calico / Tigera Docs Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Install dependencies
+    task:
+      env_vars:
+        - name: NODE_ENV
+          value: test
+        - name: CI
+          value: 'true'
+      prologue:
+        commands:
+          - checkout
+          - sem-version node 16.14
+          - node --version
+          - yarn --version
+      jobs:
+        - name: yarn install and cache
+          commands:
+            - cache restore
+            - yarn install
+            - cache store
+  - name: Tests
+    task:
+      env_vars:
+        - name: NODE_ENV
+          value: test
+        - name: CI
+          value: 'true'
+      prologue:
+        commands:
+          - checkout
+          - sem-version node 16.14
+          - node --version
+          - yarn --version
+      jobs:
+        - name: Unit tests
+          commands:
+            - cache restore
+            - yarn test
