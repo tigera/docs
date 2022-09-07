@@ -3,7 +3,7 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 
-import OpenShiftManifests from './openshift-manifests';
+import InstallOpenShiftManifests from './install-openshift-manifests';
 import OpenShiftPullSecret from './openshift-pull-secret';
 import OpenShiftPrometheusOperator from './openshift-prometheus-operator';
 import ConfigureManagedCluster from './configure-managed-cluster';
@@ -48,7 +48,7 @@ export default function InstallOpenShift(props) {
       <p>Now generate the Kubernetes manifests using your configuration file:</p>
       <CodeBlock language='bash'>openshift-install create manifests</CodeBlock>
 
-      <OpenShiftManifests prodname={props.prodname} />
+      <InstallOpenShiftManifests prodname={props.prodname} />
 
       {/* For IPI hybrid clusters (Linux + Windows) we need to enable VXLAN and disable BGP */}
       {maybeRender(

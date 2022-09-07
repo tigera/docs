@@ -14,7 +14,7 @@ import ConfigureManagedCluster from '@site/src/components/partials/configure-man
 import InstallAKS from '@site/src/components/partials/install-aks';
 import InstallGeneric from '@site/src/components/partials/install-generic';
 import InstallOpenShift from '@site/src/components/partials/install-openshift';
-import OpenShiftManifests from '@site/src/components/partials/openshift-manifests';
+import InstallOpenShiftManifests from '@site/src/components/partials/install-openshift-manifests';
 import OpenShiftPullSecret from '@site/src/components/partials/openshift-pull-secret';
 import OpenShiftPrometheusOperator from '@site/src/components/partials/openshift-prometheus-operator';
 
@@ -36,7 +36,7 @@ export default {
   InstallAKS,
   InstallGeneric,
   InstallOpenShift,
-  OpenShiftManifests,
+  InstallOpenShiftManifests,
   OpenShiftPullSecret,
   OpenShiftPrometheusOperator,
 };
