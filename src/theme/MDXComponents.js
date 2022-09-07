@@ -14,6 +14,7 @@ import ConfigureManagedCluster from '@site/src/components/partials/configure-man
 import InstallAKS from '@site/src/components/partials/install-aks';
 import InstallEKS from '@site/src/components/partials/install-eks';
 import InstallGeneric from '@site/src/components/partials/install-generic';
+import InstallGKE from '@site/src/components/partials/install-gke';
 import UpgradeOperatorSimple from '@site/src/components/partials/upgrade-operator-simple';
 import InstallOpenShift from '@site/src/components/partials/install-openshift';
 import InstallOpenShiftManifests from '@site/src/components/partials/install-openshift-manifests';
@@ -38,6 +39,7 @@ export default {
   InstallAKS,
   InstallEKS,
   InstallGeneric,
+  InstallGKE,
   UpgradeOperatorSimple,
   InstallOpenShift,
   InstallOpenShiftManifests,
