@@ -1,0 +1,238 @@
+---
+title: Scan image registries for known vulnerabilities
+description: Detect and block vulnerable images from container workloads.
+---
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+Image Assurances helps operators identify vulnerabilities in workloads they deploy to Kubernetes clusters. A vulnerability is a weakness in an application (for example, a design flaw or an implementation bug) that allows attackers to cause additional harm.
+
+The Common Vulnerabilities and Exposures (CVE) system provides publicly known information and security vulnerabilities and exposures. Known vulnerabilities are identified by a unique CVE ID, based on the year it was reported (for example, CVE-2021-44228).
+
+{{prodname}}’s Image Assurance lets you:
+
+- Scan registries for image vulnerabilities
+- Assess the impact of newly-found vulnerabilities and prioritize remediation efforts
+- Block non-compliant workloads as part of your cloud-native security posture
+- Create “allow-lists” of vulnerabilities that are false positives or reduce severity based on usage
+- Create alerts on high-severity vulnerabilities to help delegate remediation efforts to the appropriate team
+
+## About Image Assurance
+
+Image Assurance continuously scans images for vulnerabilities in image registries that you provide credentialed access to scan. Credentials are encrypted in the {{prodname}} datastore using 256-bit [Advanced Encryption Standard (AES-256) encryption](https://wikipedia.org/wiki/Advanced_Encryption_Standard). The database used for vulnerability detection is [Anchore Grype, open source](https://github.com/anchore/grype#grypes-database). Image content that is scanned includes:
+
+- Libraries and content (python, ruby gems, jars and go)
+- Packages (OS and non-OS)
+- Image layer 
+
+## Limitations in this tech preview
+
+- Images larger than 3GB cannot be scanned
+- Identifying image versions with more than one tag is not supported; images with multiple tags are treated as separate images
+
+## Get Image Assurance 
+
+To ensure all features are available, make sure your cluster is updated with the latest installation. 
+
+1. Navigate to the **Managed Clusters** page.
+1. Select the cluster from the list, and click **Reinstall**.
+1. Copy the updated install script command and run it against your cluster.
+
+## Create access to image registries
+
+Image Assurance allows you to configure several types of private registries or those that require authenticated access. This includes the following:
+
+- JFrog artifactory
+- Quay
+- Azure Container Registry
+
+
+1. In the left navbar in Manager, click **Image Assurance**, **Image Registries**. 
+
+   ![add-registry](/img/calico-cloud/add-registry.png)
+
+1. Click **Add Registry**, and add a registry. 
+    
+    You must supply a valid username and password. 
+
+    **What happens when a registry is added?**
+      - Images are pulled from registry/repos one by one and scanned
+      - Image Assurance watches for pods in managed clusters, and images are pulled from registries that are publicly available
+ 
+   **What happens when I deactivate a registry?**
+
+     Image Assurance stops scanning the registry. Note that images that are in the queue to be scanned will continue to affect Image Assurance metrics.
+
+   **What does the Disconnected state mean?**
+
+     Disconnected means {{prodname}} cannot pull images from the registry. This can typically mean expired credentials or insufficient permissions.
+
+## View scan results
+
+In the left navbar in Manager UI, click **Image Assurance**, **Scan Results**. 
+
+This page is divided into these sections: Scan results, Runtime, and Summary. 
+
+- **Scan Results** - lists images found in the latest scan/rescan of repositories. Note that scan results may contain images that are not your own, and images from public registries that do not require credentials. 
+
+   ![scan-results](/img/calico-cloud/scan-results.png)
+
+- **Runtime** - lists images running in your cluster. Scan results are correlated with Kubernetes workloads so you can assess the risk of existing and newly-discovered vulnerabilities. The columns, **Clusters** and **Running Instances** shows you the number of running instances that exist in clusters you have connected to {{prodname}}.
+
+   ![run-time-results](/img/calico-cloud/runtime-results.png)
+
+- **Summary** - shows different results based on which tab you're looking at (Scan results or Runtime).
+
+   - **Scan results tab**  - number images grouped by Fail/Warn/Pass/Unknown, and the top five image repos based on total Fails.
+
+  - **Runtime tab** - number of running pods grouped by whether the image it contains has a scan result of Fail/Warn/Pass/Unknown, and the top five namespaces based on total Fails. 
+
+   ![scan-summary](/img/calico-cloud/scan-summary.png)
+
+**How do Pass, Warning, and Fail map to CVSS ratings?**
+
+{{prodname}} image scoring is based on the Common Vulnerability Scoring System (CVSS Scores). You can change the CVSS score threshold between a Pass and a Warn, as well as between a Warn and a Fail.
+
+| CVSS scores                                   | Image Assurance mapping | Default settings     |
+| --------------------------------------------- | ----------------------- | -------------------- |
+| 0.0 – (None)<br />0.1 – 3.9 (Low)             | Pass = 3.9              | n/a                  |
+| 4.0 – 6.9 (Medium)                            | Warn = 7                | Medium severity – 7  |
+| 7.0 – 8.9  (High)<br />9.0 – 10.0  (Critical) | Fail = 8.0              | Critical or high – 8 | 
+
+**What are Unknowns?**
+
+Unknowns images can include:
+
+- Images that could not be pulled due to authentication issues
+- Images that are too large to be scanned
+
+**When should I change Scan Settings?**
+
+The default settings should work for the majority of {{prodname}} deployments. Changing the settings is considered a power user setting because it will be applied to everything in Image Assurance; this includes policies for the admission controller and vulnerability alerts. For example, changing the values may block fewer pods with admission controller policies. 
+
+![scan-settings](/img/calico-cloud/scan-settings.png)
+
+:::note
+
+Changes to settings take effect immediately. The maximum setting you can set for critical/Fail is 10. However, if you set the threshold to 10, you will no longer get any scan results with a "Fail".
+
+:::
+
+**When does image scanning start, and how often are images rescanned?**
+
+After you add a registry, pods are watched for all connected managed clusters, and images are pulled and scanned in the background. Scan results for an image is available to review as soon as the image is successfully scanned. Images are scanned continuously and are rescanned on a 24-hour interval. 
+
+## Ignore vulnerabilities in scan results
+
+In some cases, you may not care about specific vulnerabilities. Two common examples are:
+
+- Scan results represent a false positives based on how you are using the affected package
+- You have explicitly decided to exclude a vulnerability from scan results based on your own internal assessment
+
+To exclude a vulnerability from scanning results, you create a vulnerability exception. 
+
+In the left navbar in Manager, click **Image Assurance**, **Vulnerability Exceptions**. 
+
+Before creating an exception, it is important to understand the effects you may see across other parts of Image Assurance after you create an exception.
+
+- **Maximum CVSS score** 
+
+    An image’s maximum CVSS score may be reduced to a lower score. An exception could eliminate the vulnerability with the highest CVSS score for an image.
+
+- **Scan results**
+
+    Scan results for Pass/Warn/Fail could change because they are based on the maximum CVSS score. For example, Fail could change to Warn, and Warn could change to Pass.
+
+- **Vulnerability global alerts** 
+
+    Alerts may no longer be generated. Alerts are triggered based on scan results or maximum CVSS score values of images.
+
+- **Admission controller**
+
+    Pods could be created where they were previously blocked. Admission controller policies are based on vulnerability information (scan result and/or maximum CVSS score).
+
+## Set up alerts
+
+You can set up alerts on vulnerabilities using {{prodname}} the [Global alert resource](../reference/resources/globalalert.mdx). 
+
+**Example 1 - Alert on a failed image**
+
+In this example, an alert is created whenever there is more than one event for an image from the specified registry / repo that has a result value of Fail within the past 30 minutes.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalAlert
+metadata:
+  name: example-1
+spec:
+  summary: "Vulnerabilities for a specific repo based on result"
+  description: "Vulnerabilities for a specific repo based on result"
+  severity: 100
+  period: 30m
+  lookback: 30m
+  dataSet: vulnerability
+  query: registry="quay.io/tigera" AND repository="node" AND result="Fail"
+  metric: count
+  condition: gt
+  threshold: 1
+```
+
+**Example 2 - Alert on a specific repo with maximum CVSS greater than 7.0**
+
+In this example, an alert is created whenever there is at least one event for an image from the specified registry / repo that has a max CVSS score greater than 7.0 within the past 30 minutes. Providing control over the exact max CVSS score threshold lets you define a trigger that is different from what the CVSS score threshold is configured for Fail scan result on the Scan Results page in Manager UI. 
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalAlert
+metadata:
+  name: example-2
+spec:
+  summary: "Vulnerabilities for a specific repo based on max CVSS score"
+  description: "Vulnerabilities for a specific repo based on max CVSS score"
+  severity: 100
+  period: 30m
+  lookback: 30m
+  dataSet: vulnerability
+  query: registry="quay.io/tigera" AND repository="node"
+  field: max_cvss_score
+  metric: max
+  condition: gt
+  threshold: 7.0
+```
+
+**Example 3 - Alert on a failed scan result within a pod in a namespace**
+
+In this example, an alert is created whenever there is at least one event for an image that has a scan result of Fail, that is running within a pod in any cluster in the namespace `tigera-elasticsearch`, within the past 30 minutes.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalAlert
+metadata:
+  name: example-3
+spec:
+  summary: "Vulnerabilities for namespace tigera-elasticsearch"
+  description: "Vulnerabilities for namespace tigera-elasticsearch"
+  severity: 100
+  period: 30m
+  dataSet: vulnerability
+  query: result="Fail" AND namespace="tigera-elasticsearch"
+  metric: count
+  condition: gt
+  threshold: 1
+```
+
+:::note
+
+You must apply global alerts across all applicable managed clusters. For example, if you have five clusters, you must apply the alerts five times. 
+
+:::
+
+For a complete list of parameters, see [Global alert resource](../reference/resources/globalalert.mdx).
+
+## Next step (optional)
+
+Block vulnerable containers from being deployed into your cluster using the [Admission Controller](install-the-admission-controller.mdx).

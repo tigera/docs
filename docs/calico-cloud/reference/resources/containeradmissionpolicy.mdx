@@ -1,0 +1,123 @@
+---
+title: Container Admission Policy
+description: Resource definition.
+---
+
+A container admission policy (`ContainerAdmissionPolicy`) represents an ordered set of rules which are applied to a 
+collection of containers that match a [label selector](#selector).
+
+`ContainerAdmissionPolicy` is a cluster resource. `ContainerAdmissionPolicy` can be restricted to a set of namespaces
+using a [namespace selector](#selector).
+
+## Sample YAML
+
+This sample policy allows admission requests for pod creating resources whose image is in the registry / repository
+`gcr.io/company/production-repository/*` with a scan status of either `Pass` or `Warn`, and rejects all other admission
+requests.
+
+```yaml
+apiVersion: containersecurity.tigera.io/v1beta1
+kind: ContainerAdmissionPolicy
+metadata:
+  name: reject-failed-and-non-gcr
+spec:
+  selector: all()
+  namespaceSelector: all()
+  order: 10
+  rules:
+  - action: "Reject"
+    imagePath:
+      operator: IsNoneOf
+      values:
+      - "^gcr.io/company/production-repository/.*"
+  - action: Allow
+    imageScanStatus:
+      operator: IsOneOf
+      values:
+      - Pass
+      - Warn
+  - action: Reject
+```
+
+## Definition
+
+### Metadata
+
+| Field     | Description                                                        | Accepted Values                                     | Schema | Default   |
+|-----------|--------------------------------------------------------------------|-----------------------------------------------------|--------|-----------|
+| name      | The name of the network policy. Required.                          | Alphanumeric string with optional `.`, `_`, or `-`. | string |           |
+
+### Spec
+
+| Field             | Description                                                                                         | Accepted Values | Schema                | Default |
+|-------------------|-----------------------------------------------------------------------------------------------------|-----------------|-----------------------|---------|
+| order             | Controls the order of precedence. {{prodname}} applies the policy with the lowest value first. |                 | float                 |         |
+| selector          | Selects the resources to which this policy applies.                                                 |                 | [selector](#selector) | all()   |
+| namespaceSelector | Selects the namespace to which this policy applies.                                                 |                 | [selector](#selector) | all()   |
+| rules             | Ordered list of rules applied by this policy.                                                       |                 | List of [Rule](#rule) |         |
+
+### Rule
+
+A single rule matches a set of pod creating resources and applies some action to them.  Multiple rules are executed in order.
+
+| Field             | Description                                | Accepted Values                                                   | Schema                                     | Default    |
+|-------------------|---------------------------------------------------------------------|------------------------------------------|--------------------------------------------|------------|
+| action            | Action to perform when matching this rule.                    | `Allow`, `Reject`                        | string                                     |            |
+| imagePath         | Image path matching criteria.                                 |                                          | [String Values Match](#stringvaluematch)   |            |
+| imageScanStatus   | Vulnerability scan status criteria.                           |                                          | [String Values Match](#stringvaluematch)   |            |
+| imageLastScan     | Criteria for the last time the containers image was scanned.  |                                          | [Time Match](#timematch)                   |            |
+
+### Selector
+
+{% include content/selectors.md %}
+{% include content/selector-scopes.md %}
+
+### StringValueMatch
+A string values match does a match or negative match on a target against a set of values.
+
+| Field     | Description                                       | Accepted Values       | Schema            | Default    |
+|-----------|---------------------------------------------------|-----------------------|-------------------|------------|
+| operator  | Match operator to use against the list of values  | `IsOneOf`, `IsNoneOf` | string            |            |
+| values    | List of values to match against.                  |                       | list of strings   |            |
+
+### TimeMatch
+A time match does a match or negative match against a time or duration.
+
+Duration is the length of time into the past from the current time to match against. As an example,
+
+```yaml
+  operator: "gt"
+  duration:
+    days: 3
+```
+
+is false for 4 days prior to the current date time, and true for 2 days prior to current date time.
+
+Time is the absolute time to match a given time against. As an example,
+
+```yaml
+  operator: "gt"
+  time: "2022-01-02T0:00:00Z"
+```
+
+is false for "2022-01-01T0:00:00Z", and true for "2022-01-03T0:00:00Z".
+
+| Field     | Description                                           | Accepted Values       | Schema                                            | Default    |
+|-----------|-------------------------------------------------------|-----------------------|---------------------------------------------------|------------|
+| operator  | Match operator to use against the duration or time.   | `gt`, `lt`    | string                                            |            |
+| duration  | The duration that this operator matches within.       |               | [Duration](#duration)                             |            |
+| time      | List of values to match against.                      |               | String of the format "2006-01-02T15:04:05Z07:00"  |            |
+
+### Duration
+
+| Field     | Description                                   | Accepted Values   | Schema    | Default    |
+|-----------|-----------------------------------------------|-------------------|-----------|------------|
+| days      | Number of days past from the current time.    |                   | integer   |            |
+| months    | Number of months past from the current time.  |                   | integer   |            |
+| years     | Number of years past from the current time.   |                   | integer   |            |
+
+## Supported operations
+
+| Datastore type           | Create/Delete | Update | Get/List | Notes
+|--------------------------|---------------|--------|----------|------
+| Kubernetes API datastore | Yes           | Yes    | Yes      |
