@@ -15,6 +15,7 @@ import InstallAKS from '@site/src/components/partials/install-aks';
 import InstallEKS from '@site/src/components/partials/install-eks';
 import InstallGeneric from '@site/src/components/partials/install-generic';
 import InstallGKE from '@site/src/components/partials/install-gke';
+import PrivateRegistryRegular from '@site/src/components/partials/private-registry-regular';
 import UpgradeOperatorSimple from '@site/src/components/partials/upgrade-operator-simple';
 import InstallOpenShift from '@site/src/components/partials/install-openshift';
 import InstallOpenShiftManifests from '@site/src/components/partials/install-openshift-manifests';
@@ -41,6 +42,7 @@ export default {
   InstallEKS,
   InstallGeneric,
   InstallGKE,
+  PrivateRegistryRegular,
   UpgradeOperatorSimple,
   InstallOpenShift,
   InstallOpenShiftManifests,
