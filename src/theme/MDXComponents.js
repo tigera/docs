@@ -20,6 +20,7 @@ import InstallOpenShift from '@site/src/components/partials/install-openshift';
 import InstallOpenShiftManifests from '@site/src/components/partials/install-openshift-manifests';
 import OpenShiftPullSecret from '@site/src/components/partials/openshift-pull-secret';
 import OpenShiftPrometheusOperator from '@site/src/components/partials/openshift-prometheus-operator';
+import GeekDetails from '@site/src/components/partials/geek-details';
 
 export default {
   // Re-use the default mapping
@@ -45,4 +46,5 @@ export default {
   InstallOpenShiftManifests,
   OpenShiftPullSecret,
   OpenShiftPrometheusOperator,
+  GeekDetails,
 };

@@ -43,6 +43,7 @@ const config = {
             require.resolve('./src/css/custom.css'),
             require.resolve('./src/css/glyphicons.scss'),
             require.resolve('./src/css/external-links.scss'),
+            require.resolve('./src/css/modal.scss'),
           ],
         },
       }),
