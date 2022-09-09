@@ -20,7 +20,11 @@ The geeky details of what you get:
 
 **Required**
 
-- A compatible {% include open-new-window.html text='Rancher Kubernetes Engine cluster' url='https://rancher.com/docs/rke/latest/en/' %} with version 1.3.3 and later. Note that RKE2 is a different Kubernetes distribution and [documented separately]({{site.baseurl}}/getting-started/kubernetes/rke2).
+- A compatible {% include open-new-window.html text='Rancher Kubernetes Engine cluster' url='https://rancher.com/docs/rke/latest/en/' %} with version 1.3.3. (RKE2 is a different Kubernetes distribution and [documented separately]({{site.baseurl}}/getting-started/kubernetes/rke2)).
+
+  >**Note**: {{site.prodname}} requires the RKE CNI set to "none", which is not an option in the Rancher UI.
+  {: .alert .alert-info}
+
   - Configure your cluster with a {% include open-new-window.html text='Cluster Config File' url='https://rancher.com/docs/rancher/v2.x/en/cluster-provisioning/rke-clusters/options/#cluster-config-file' %} and specify {% include open-new-window.html text='no network plugin' url='https://rancher.com/docs/rke/latest/en/config-options/add-ons/network-plugins/' %} by setting `plugin: none` under `network` in your configuration file.
 
 - RKE cluster meets the [{{side.prodname}} requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
