@@ -8,6 +8,9 @@ const variablesPlugin = require('./src/remark/variablesPlugin');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
+  // TODO[dac]: noIndex should be removed, along with robots.txt and the
+  // X-Robots-Tag:noindex in the /static/_headers file once we cutover
+  noIndex: true,
   title: 'Calico & Tigera Docs',
   tagline: 'Active security for cloud-native applications',
   url: 'https://unified-docs.tigera.io',
@@ -48,7 +51,7 @@ const config = {
   ],
 
   themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
         title: 'Calico & Tigera Docs',
