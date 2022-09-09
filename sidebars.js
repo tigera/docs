@@ -13,7 +13,6 @@
 
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
-
   calicoSidebar: [
     {
       type: 'category',
@@ -54,7 +53,8 @@ const sidebars = {
       label: 'Calico Cloud',
       collapsed: false,
       link: {
-        type: 'generated-index',
+        type: 'doc',
+        id: 'calico-cloud/index',
       },
       items: [
         {
@@ -64,7 +64,6 @@ const sidebars = {
       ],
     },
   ],
-
 };
 
 module.exports = sidebars;
