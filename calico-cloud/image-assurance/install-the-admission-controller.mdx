@@ -1,11 +1,8 @@
 ---
-title: Install and configure the Admission Controller
+title: Create policy to block vulnerable images from your cluster
 description: Block vulnerable containers from being deployed into your cluster using the Admission Controller.
 canonical_url: '/image-assurance/install-the-admission-controller'
 ---
-
->**Note**: This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
-{: .alert .alert-info}
 
 ### Big picture
 
@@ -29,6 +26,11 @@ However, if you *create a pod directly*, the Admission Controller evaluates the 
 #### About container admission policies
 
 Container admission policies are custom Kubernetes resources that allow you to configure the criteria for the Admission Controller to reject admission requests for resources that create pods.
+
+### How to
+- [Install the Admission Controller](#install-the-admission-controller)
+- [Create container admission policies](#create-container-admission-policies)
+- [Troubleshoot](#troubleshoot)
 
 #### Install the Admission Controller
 
@@ -55,7 +57,7 @@ Container admission policies are custom Kubernetes resources that allow you to c
 1. Download and configure the Admission Controller manifests.
    
    As a safety mechanism, we require that you specify the namespaces that the Admission Controller will apply in
-   the `IN_NAMESPACE_SELECT_KEY` and the `IN_NAMESPACE_SELECTOR_VALUES`. These values configure the Kubernetes API server to send admission requests to our Admission Controller only for resources from relevant namespaces.
+   the `IN_NAMESPACE_SELECTOR_KEY` and the `IN_NAMESPACE_SELECTOR_VALUES`. These values configure the Kubernetes API server to send admission requests to our Admission Controller only for resources from relevant namespaces.
 
    For example, to configure the Kubernetes API server to send admission requests for resources created in any namespace with label key `foo`, and label values either `bar` or `baz`, the variables would be set as follows:
    
@@ -65,7 +67,7 @@ Container admission policies are custom Kubernetes resources that allow you to c
 
    >**WARNING!**: Do not add Kubernetes critical namespaces such as the `kube-system` namespace. This could create a
    deadlock situation where you cannot bring up the Admission Controller because a critical Kubernetes pod is not running, but you also cannot bring up the critical Kubernetes pod because the Admission Controller is not running.
-   {: .alert .alert-warning}
+   {: .alert .alert-danger}
 
    ```bash
    export URL="{{site.clouddownloadurl}}/manifests" && \
@@ -84,7 +86,7 @@ Container admission policies are custom Kubernetes resources that allow you to c
 
 Container admission policies are used to define criteria for the Admission Controller to admit or reject admission for resources that create pods. For details, see [ContainerAdmissionPolicies]({{site.baseurl}}/reference/resources/containeradmissionpolicy).
 
-### Sample container admission policies
+**Sample container admission policies**
 
 This ContainerAdmissionPolicy allows admission requests for pod-creating resources whose image is in the registry/repository `gcr.io/company/production-repository/*`, with a scan status of either `Pass` or `Warn`, and rejects all other admission requests.
 
@@ -141,8 +143,8 @@ attempt was made to create the Kubernetes resource. If the Allow rule does not m
 
 You can also use modify the Allow rule to match an absolute time. For help, see [ContainerAdmissionPolicies]({{site.baseurl}}/reference/resources/containeradmissionpolicy).
 
-### Troubleshooting
+### Troubleshoot
 
-**My container admission policy is not blocking resources from a namespace, even though the namespaceSelector matches my namespace**
+**My container admission policy is not blocking resources from a namespace, even though the namespaceSelector matches the namespace**
 
-The Kubernetes API server is likely not sending admission requests for the namespace in question. Verify that the key and value(s) you specified for `IN_NAMESPACE_SELECT_KEY` and `IN_NAMESPACE_SELECT_VALUES` in the installation steps, match the policy namespaces. 
+This indicates that the Kubernetes API server is not sending admission requests for the namespace. Verify that the key and value(s) that you specified for `IN_NAMESPACE_SELECT_KEY` and `IN_NAMESPACE_SELECT_VALUES` in the installation steps, match the policy namespaces. 
