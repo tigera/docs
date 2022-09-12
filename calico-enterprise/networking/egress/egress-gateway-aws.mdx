@@ -566,7 +566,7 @@ In **Secondary-IP-per-workload** mode, IP pools are used to subdivide the VPC su
   These pools must have:
 
   * `awsSubnetID` set to the ID of the relevant VPC subnet.  This activates the AWS-backed IP feature for these pools.
-  * `allowedUse` set to `["HostSecondary"]` to reserve them for this purpose.
+  * `allowedUse` set to `["HostSecondaryInterface"]` to reserve them for this purpose.
   * `blockSize` set to 32.  This aligns {{site.prodname}} IPAM with the behaviour of the AWS fabric.
   * `vxlanMode` and `ipipMode` set to `Never`.  (`Never` is the default if these fields are not specified.)
   * `disableBGPExport` set to `true`.  This prevents routing conflicts if your cluster is using IPIP or BGP networking.
