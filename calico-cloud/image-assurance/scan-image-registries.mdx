@@ -1,138 +1,209 @@
 ---
-title: Scan image registries for known vulnerabilities
-description: Detect and block vulnerable images from container workloads.
+title: Scan images for vulnerabilities
+description: Identify vulnerabilities in workloads to Kubernetes clusters.
 canonical_url: '/image-assurance/scan-image-registries'
 ---
 
->**Note**: This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
-{: .alert .alert-info}
+### Big picture
 
-Image Assurances helps operators identify vulnerabilities in workloads they deploy to Kubernetes clusters. A vulnerability is a weakness in an application (for example, a design flaw or an implementation bug) that allows attackers to cause additional harm.
+Scan images for vulnerabilities using {{site.prodname}} Image Assurance.
 
-The Common Vulnerabilities and Exposures (CVE) system provides publicly known information and security vulnerabilities and exposures. Known vulnerabilities are identified by a unique CVE ID, based on the year it was reported (for example, CVE-2021-44228).
+### Value
 
-{{site.prodname}}’s Image Assurance lets you:
+{{site.prodname}} Image Assurances helps you identify vulnerabilities in workloads that you deploy to Kubernetes clusters. A vulnerability can be a weakness in an application (for example, a design flaw or an implementation bug) that allows attackers to cause additional harm. With Image Assurance you can:
 
-- Scan registries for image vulnerabilities
+- Scan an image for vulnerabilities
 - Assess the impact of newly-found vulnerabilities and prioritize remediation efforts
-- Block non-compliant workloads as part of your cloud-native security posture
-- Create “allow-lists” of vulnerabilities that are false positives or reduce severity based on usage
-- Create alerts on high-severity vulnerabilities to help delegate remediation efforts to the appropriate team
+- Create exceptions to ignore specific vulnerabilities
+- Create alerts on high-severity vulnerabilities so you can delegate remediation efforts to the appropriate team
+- Block non-compliant workloads using policy as part of your cloud-native security posture
 
 ### About Image Assurance
 
-Image Assurance continuously scans images for vulnerabilities in image registries that you provide credentialed access to scan. Credentials are encrypted in the {{site.prodname}} datastore using 256-bit {% include open-new-window.html text='Advanced Encryption Standard (AES-256) encryption' url='https://wikipedia.org/wiki/Advanced_Encryption_Standard' %}. The database used for vulnerability detection is {% include open-new-window.html text='Anchore Grype, open source' url='https://github.com/anchore/grype#grypes-database' %}. Image content that is scanned includes:
+Image Assurance is based on the Common Vulnerabilities and Exposures (CVE) system, which provides a catalog of publicly-known security vulnerabilities and exposures. Known vulnerabilities are identified by a unique CVE ID based on the year it was reported (for example, CVE-2021-44228). 
 
-- Libraries and content (python, ruby gems, jars and go)
+Image Assurance provides a command-line interface (CLI) to scan images, with the option to send results to the Manager UI. Scanned image content includes:
+
+- Libraries and content (for example, python, ruby gems, jars and go)
 - Packages (OS and non-OS)
-- Image layer 
+- Image layer
 
-### Limitations in this tech preview
+### Before you begin
 
-- Images larger than 3GB cannot be scanned
-- Identifying image versions with more than one tag is not supported; images with multiple tags are treated as separate images
+**Update your cluster**
 
-### Get Image Assurance 
-
-To ensure all features are available, make sure your cluster is updated with the latest installation. 
-
+Update your cluster to get the latest version of Image Assurance:
 1. Navigate to the **Managed Clusters** page.
 1. Select the cluster from the list, and click **Reinstall**.
 1. Copy the updated install script command and run it against your cluster.
 
-### Create access to image registries
+**Image requirements**
 
-Image Assurance allows you to configure several types of private registries or those that require authenticated access. This includes the following:
+To be included in scan results, images must:
 
-- JFrog artifactory
-- Quay
-- Azure Container Registry
+- Be available locally through the container runtime environment where the CLI scanner is running
+- Have a RepoDigest ID
+
+   To verify RepoDigestIDs, run this command:
+
+   `docker images --digests`
+
+**CLI scanner requirements**
+
+- Must have internet access to download and update the vulnerability database 
+- To see image scan results in Manager UI, the CLI scanner must communicate with an external API endpoint outside your environment
+
+### How to
+- [Start the CLI scanner](#start-the-cli-scanner)
+- [Scan images using CLI](#scan-images-using-cli)
+- [Scan images using a config file](#scan-images-using-a-config-file)
+- [Understand scan results in Manager UI](#understand-scan-results-in-manager-ui)
+- [Create vulnerability exceptions](#create-vulnerability-exceptions)
+- [Export scan results](#export-scan-results)
+
+#### Start the CLI scanner
+
+1. Download the latest version of the CLI scanner.
+
+   **Linux**
+   ```shell
+   curl -Lo tigera-scanner {% include clidownloadurl %}/image-assurance-scanner-cli-linux-amd64
+   ```
+   **MacOS**
+   ```shell
+   curl -Lo tigera-scanner {% include clidownloadurl %}/image-assurance-scanner-cli-darwin-amd64
+   ```
+2. Set the executable flag on the binary.
+
+   ```shell
+   chmod +x ./tigera-scanner
+   ```
+   >**Note**: You must download and set the executable flag each time you get a new version of the CLI.
+   {: .alert .alert-info}
+
+3. Verify the CLI scanner works correctly by running the version command.
+
+   ```shell
+   ./tigera-scanner version
+   ```
+
+#### Scan images using CLI
+
+You can scan images and report results back to {{site.prodname}}, or scan images locally without reporting results to {{site.prodname}}.
+
+**Syntax**:
+
+`tigera-scanner scan [OPTIONS] <image_name>`   
+
+**Options**:
+
+- `--apiurl` - {{site.prodname}} API URL path. You can get this URL in Manager UI, **Image Assurance**, **Scan settings**. 
+- `--token` - secure API or authorization token to make requests to {{site.prodname}} API URL. You can get this URL in Manager UI, **Image Assurance**, **Scan settings**.
+- `--warn_threshold` - CVSS threshold for Warn scan results. Range from 0.0 - 10.0.
+- `--fail_threshold` - CVSS threshold for Fail scan results. Range from 0.0 - 10.0.
+- `--vulnerability_db_path` - path to a folder to store vulnerability data (defaults to `$XDG_CACHE_HOME`; if it is not set, defaults to `$HOME/.cache`).
 
 
-1. In the left navbar in Manager, click **Image Assurance**, **Image Registries**. 
+**Examples**
 
-   ![add-registry]({{site.baseurl}}/images/add-registry.png)
 
-1. Click **Add Registry**, and add a registry. 
-    
-    You must supply a valid username and password. 
+**Scan image, report results**
 
-    **What happens when a registry is added?**
-      - Images are pulled from registry/repos one by one and scanned
-      - Image Assurance watches for pods in managed clusters, and images are pulled from registries that are publicly available
- 
-   **What happens when I deactivate a registry?**
+```shell
+./tigera-scanner scan ubuntu:latest --apiurl https://<my-org>.calicocloud.io --token ezBhbGcetc...
+```  
 
-     Image Assurance stops scanning the registry. Note that images that are in the queue to be scanned will continue to affect Image Assurance metrics.
+**Scan image locally, do not report results**
 
-   **What does the Disconnected state mean?**
+```shell
+./tigera-scanner scan ubuntu:latest 
+``` 
 
-     Disconnected means {{site.prodname}} cannot pull images from the registry. This can typically mean expired credentials or insufficient permissions.
+**Scan images with fail and warn thresholds**
 
-### View scan results
+```shell
+./tigera-scanner scan ubuntu:latest --fail_threshold 7.0 --warn_threshold 3.9 
+``` 
+
+#### Scan images using a config file
+
+Create a configuration file in `$HOME/.tigera-scanner.yaml` for the CLI to read.
+
+>**Note**: Key names must match the full name of arguments passed to the CLI. The configuration precedence order is options > environment variables > file configuration.
+{: .alert .alert-info} 
+
+**Options**
+
+Options | Shorthand | Environment variable | Description
+--- |-----------|----------------------| ---
+--apiurl | -a        | CC_API_URL                 | {{site.prodname}} API URL path. You can get this URL in Manager UI, Image Assurance, Scan settings. 
+--token | -t        | CC_TOKEN                 | Secure API or authorization token to make requests to {{site.prodname}} API URL. 
+--warn_threshold | -w        | CC_WARN_THRESHOLD                 | CVSS threshold for Warn scan results. Range from 0.0 - 10.0. 
+--fail_threshold | -f        | CC_FAIL_THRESHOLD                 |CVSS threshold for Fail scan results. Range from 0.0 - 10.0.
+--vulnerability_db_path | -p        | CC_VULNERABILITY_DB_PATH                 |Path to a folder to store vulnerability data (defaults to `$XDG_CACHE_HOME`; if it is not set, defaults to `$HOME/.cache`).
+
+
+#### Understand scan results in Manager UI
 
 In the left navbar in Manager UI, click **Image Assurance**, **Scan Results**. 
 
-This page is divided into these sections: Scan results, Runtime, and Summary. 
+**Scan Results tab** 
 
-- **Scan Results** - lists images found in the latest scan/rescan of repositories. Note that scan results may contain images that are not your own, and images from public registries that do not require credentials. 
+The left panel lists scanned images (assuming you set up the CLI scanner to report scan results to {{site.prodname}}).
 
-   ![scan-results]({{site.baseurl}}/images/scan-results.png)
+The right pane lists:
+- Number of images grouped by Fail, Warn, Pass, and Unknown (the CLI scanner has not yet reported results)
+- High Risk Repos (top five repos based on total Fails)
 
-- **Runtime** - lists images running in your cluster. Scan results are correlated with Kubernetes workloads so you can assess the risk of existing and newly-discovered vulnerabilities. The columns, **Clusters** and **Running Instances** shows you the number of running instances that exist in clusters you have connected to {{site.prodname}}.
+**Runtime tab**
 
-   ![run-time-results]({{site.baseurl}}/images/runtime-results.png)
+The left panel lists images running in your cluster. Because you can see the CVEs associated with running pods, you can assess pod vulnerability. The columns, **Clusters** and **Running Instances**, show the number of running instances in clusters that are connected to {{site.prodname}}.
 
-- **Summary** - shows different results based on which tab you're looking at (Scan results or Runtime).
+The right panel lists:
+- Number of running pods that have images with scan results of Fail, Warn, Pass, and Unknown (the CLI scanner has not yet reported results)
+- High Risk Namespaces (top five namespaces based on total Fails) 
 
-   - **Scan results tab**  - number images grouped by Fail/Warn/Pass/Unknown, and the top five image repos based on total Fails.
+>**Note**: In the Scan Results and Runtime tabs, the **Registry path** field may be blank if {{site.prodname}} cannot access this metadata. For example, images from Docker Hub do not specify the registry in the image metadata. 
+{: .alert .alert-info}  
 
-  - **Runtime tab** - number of running pods grouped by whether the image it contains has a scan result of Fail/Warn/Pass/Unknown, and the top five namespaces based on total Fails. 
+**How Pass, Warn, and Fail scores map to CVSS scores**
 
-   ![scan-summary]({{site.baseurl}}/images/scan-summary.png)
+{{site.prodname}} image scoring is based on the Common Vulnerability Scoring System v3 (CVSS Scores). 
+You can change the CVSS score threshold between a Pass and a Warn, and between a Warn and a Fail. Currently, only {% include open-new-window.html text='CVSS v3 scores' url='https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator' %} are displayed. CVEs that do not have a CVSS v3 score (too old to have one, or are too new to be assigned one), display a blank score in the UI, and **N/A** in the CLI.
 
-**How do Pass, Warning, and Fail map to CVSS ratings?**
-
-{{site.prodname}} image scoring is based on the Common Vulnerability Scoring System (CVSS Scores). You can change the CVSS score threshold between a Pass and a Warn, as well as between a Warn and a Fail.
-
-| CVSS scores                                   | Image Assurance mapping | Default settings     |
-| --------------------------------------------- | ----------------------- | -------------------- |
-| 0.0 – (None)<br />0.1 – 3.9 (Low)             | Pass = 3.9              | n/a                  |
+| CVSS v3 scores                                | Image Assurance mapping | Default settings     |
+|-----------------------------------------------| ----------------------- |----------------------|
+| 0.0 – (None)<br />0.1 – 3.9 (Low)             | Pass = 3.9              | Low                  |
 | 4.0 – 6.9 (Medium)                            | Warn = 7                | Medium severity – 7  |
 | 7.0 – 8.9  (High)<br />9.0 – 10.0  (Critical) | Fail = 8.0              | Critical or high – 8 | 
 
-**What are Unknowns?**
+**Changing the default CVSS threshold values**
 
-Unknowns images can include:
-
-- Images that could not be pulled due to authentication issues
-- Images that are too large to be scanned
-
-**When should I change Scan Settings?**
-
-The default settings should work for the majority of {{site.prodname}} deployments. Changing the settings is considered a power user setting because it will be applied to everything in Image Assurance; this includes policies for the admission controller and vulnerability alerts. For example, changing the values may block fewer pods with admission controller policies. 
+The default threshold values (shown below) will work for the majority of {{site.prodname}} deployments. However, you may need to change the defaults because of security requirements.  
 
 ![scan-settings]({{site.baseurl}}/images/scan-settings.png)
 
->**Note**: Changes to settings take effect immediately. The maximum setting you can set for critical/Fail is 10. However, if you set the threshold to 10, you will no longer get any scan results with a "Fail".
-{: .alert .alert-info}
+To change the CVSS threshold values, note the following:
 
-**When does image scanning start, and how often are images rescanned?**
+- Changes to threshold values take effect immediately and alter the scan results for images already in the system
+- If you are using admission controller policies, changing a value may allow pods in your Kubernetes cluster that were previously being blocked, to now be deployed or vice versa.
 
-After you add a registry, pods are watched for all connected managed clusters, and images are pulled and scanned in the background. Scan results for an image is available to review as soon as the image is successfully scanned. Images are scanned continuously and are rescanned on a 24-hour interval. 
+**Enable Runtime View**
 
-### Ignore vulnerabilities in scan results
+When Runtime View is enabled in Scan Settings, {{site.prodname}} actively monitors pods running in your Kubernetes clusters so it can correlate them with images you have recorded in the Image Assurance system. By default, this feature is disabled. If you disable the feature after it has been enabled, runtime information that is already collected for existing images will remain in the system.
 
-In some cases, you may not care about specific vulnerabilities. Two common examples are:
+#### Create vulnerability exceptions
 
-- Scan results represent a false positives based on how you are using the affected package
-- You have explicitly decided to exclude a vulnerability from scan results based on your own internal assessment
+In some cases, you may want to ignore specific vulnerabilities or CVEs. For example:
 
-To exclude a vulnerability from scanning results, you create a vulnerability exception. 
+- You determine scan results are "false positives" (based on how you are using the affected package)
+- You decide to exclude a vulnerability based on your own internal assessment
+
+To exclude a vulnerability from scanning results, create a vulnerability exception. 
 
 In the left navbar in Manager, click **Image Assurance**, **Vulnerability Exceptions**. 
 
-Before creating an exception, it is important to understand the effects you may see across other parts of Image Assurance after you create an exception.
+Before creating an exception, it is important to understand the effects to Image Assurance.
 
 - **Maximum CVSS score** 
 
@@ -150,81 +221,22 @@ Before creating an exception, it is important to understand the effects you may 
 
     Pods could be created where they were previously blocked. Admission controller policies are based on vulnerability information (scan result and/or maximum CVSS score).
 
-### Set up alerts
+#### Export scan results
 
-You can set up alerts on vulnerabilities using {{site.prodname}} the [Global alert resource]({{site.baseurl}}/reference/resources/globalalert). 
+To export the scan results for images you have scanned and uploaded to Image Assurance:
 
-**Example 1 - Alert on a failed image**
+On the Scan Results or Runtime tab of the Manager UI, click **Export**.
 
-In this example, an alert is created whenever there is more than one event for an image from the specified registry / repo that has a result value of Fail within the past 30 minutes.
+The export generates a CSV file with image and CVE metadata for the current list of images you have selected (based on your current filter options). Options include:
 
-```yaml
-apiVersion: projectcalico.org/v3
-kind: GlobalAlert
-metadata:
-  name: example-1
-spec:
-  summary: "Vulnerabilities for a specific repo based on result"
-  description: "Vulnerabilities for a specific repo based on result"
-  severity: 100
-  period: 30m
-  lookback: 30m
-  dataSet: vulnerability
-  query: registry="quay.io/tigera" AND repository="node" AND result="Fail"
-  metric: count
-  condition: gt
-  threshold: 1
-```
+- **Export one row for each image and CVE ID** exports a unique image + CVE combination for each row. For example, if an image has 10 CVEs, 10 rows are created (1 for each CVE).
+- **Export one row per image** exports one row for each image, with all associated CVEs condensed into a single column.
 
-**Example 2 - Alert on a specific repo with maximum CVSS greater than 7.0**
-
-In this example, an alert is created whenever there is at least one event for an image from the specified registry / repo that has a max CVSS score greater than 7.0 within the past 30 minutes. Providing control over the exact max CVSS score threshold lets you define a trigger that is different from what the CVSS score threshold is configured for Fail scan result on the Scan Results page in Manager UI. 
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: GlobalAlert
-metadata:
-  name: example-2
-spec:
-  summary: "Vulnerabilities for a specific repo based on max CVSS score"
-  description: "Vulnerabilities for a specific repo based on max CVSS score"
-  severity: 100
-  period: 30m
-  lookback: 30m
-  dataSet: vulnerability
-  query: registry="quay.io/tigera" AND repository="node"
-  field: max_cvss_score
-  metric: max
-  condition: gt
-  threshold: 7.0
-```
-
-**Example 3 - Alert on a failed scan result within a pod in a namespace**
-
-In this example, an alert is created whenever there is at least one event for an image that has a scan result of Fail, that is running within a pod in any cluster in the namespace `tigera-elasticsearch`, within the past 30 minutes.
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: GlobalAlert
-metadata:
-  name: example-3
-spec:
-  summary: "Vulnerabilities for namespace tigera-elasticsearch"
-  description: "Vulnerabilities for namespace tigera-elasticsearch"
-  severity: 100
-  period: 30m
-  dataSet: vulnerability
-  query: result="Fail" AND namespace="tigera-elasticsearch"
-  metric: count
-  condition: gt
-  threshold: 1
-```
-
->**Tip**: You must apply global alerts across all applicable managed clusters. For example, if you have five clusters, you must apply the alerts five times. 
+>**Note**: Images with no associated CVEs are not included in the exported data (regardless of whether or not it is included by the filters).
 {: .alert .alert-info}
 
-For a complete list of parameters, see [Global alert resource]({{site.baseurl}}/reference/resources/globalalert).
+### Next steps
 
-### Next step (optional)
+- [Set up alerts on vulnerabilities]({{site.baseurl}}/image-assurance/set-up-alerts)
 
-Block vulnerable containers from being deployed into your cluster using the [Admission Controller]({{site.baseurl}}/image-assurance/install-the-admission-controller).
+- Create [policy]({{site.baseurl}}/image-assurance/install-the-admission-controller) to block vulnerable containers from deploying to your cluster
