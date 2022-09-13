@@ -26,9 +26,9 @@ function componentImagePlugin(_options) {
 
 function detectProdnameByPath(path) {
   const pathPrefixes = {
-    cloud: '/calico-cloud/',
-    enterprise: '/calico-enterprise/',
-    openSource: '/calico/',
+    cloud: '/docs/calico-cloud/',
+    enterprise: '/docs/calico-enterprise/',
+    openSource: '/docs/calico/',
   };
 
   if (path.includes(pathPrefixes.cloud)) {
