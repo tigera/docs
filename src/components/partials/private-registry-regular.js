@@ -3,10 +3,10 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 
-import variables from '@site/variables';
+import getProductVariablesByProdname from '../../utils/getProductVariablesByProdname';
 
 export default function PrivateRegistryRegular(props) {
-  const productVariables = Object.values(variables).find((variables) => variables.prodname === props.prodname);
+  const productVariables = getProductVariablesByProdname(props.prodname);
 
   if (!productVariables) {
     console.error(`Invalid "props.prodname": ${props.prodname}`);

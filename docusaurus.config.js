@@ -5,6 +5,7 @@ const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 const variablesPlugin = require('./src/remark/variablesPlugin');
+const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -35,7 +36,7 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/tigera/docs/',
-          beforeDefaultRemarkPlugins: [variablesPlugin],
+          beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         },
         blog: false,
         theme: {
@@ -51,7 +52,7 @@ const config = {
   ],
 
   themeConfig:
-  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
         title: 'Calico & Tigera Docs',
