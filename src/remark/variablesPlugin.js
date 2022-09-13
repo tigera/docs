@@ -1,9 +1,11 @@
-const path = require("path");
-const visit = require("unist-util-visit");
+const path = require('path');
+const visit = require('unist-util-visit');
 
-const variables = require(path.resolve("variables"));
-const objProp = require(path.resolve("src/utils/objProp"));
-const varRegex = RegExp(/\{\{[ \t]*([\w.]+)[ \t]*}}/, "g");
+const variables = require(path.resolve('variables'));
+const objProp = require(path.resolve('src/utils/objProp'));
+const convertToPosixFriendlyPath = require(path.resolve('src/utils/convertToPosixFriendlyPath'));
+
+const varRegex = RegExp(/\{\{[ \t]*([\w.]+)[ \t]*}}/, 'g');
 
 // This is a remark plugin which runs before all the docusaurus plugins which
 // allows us to support variable substitution in all md/mdx files. We are
@@ -20,7 +22,7 @@ function variablesPlugin(_options) {
       (node) => {
         for (let prop in node) {
           if (!Object.prototype.hasOwnProperty.call(node, prop)) continue;
-          if (prop === "type" || typeof node[prop] !== "string") continue;
+          if (prop === 'type' || typeof node[prop] !== 'string') continue;
 
           node[prop] = node[prop].replaceAll(varRegex, (match, varName) => {
             let varValue;
@@ -47,12 +49,12 @@ function variablesPlugin(_options) {
 // variable substitution.
 function getContextVariables(file, variables) {
   let cvars = [];
-  const dpName = "docsPathPrefix";
+  const dpName = 'docsPathPrefix';
   const posixFriendlyPath = convertToPosixFriendlyPath(file.path);
 
   for (let p in variables) {
     if (!Object.prototype.hasOwnProperty.call(variables, p)) continue;
-    if (typeof variables[p] !== "object") continue;
+    if (typeof variables[p] !== 'object') continue;
     if (!Object.prototype.hasOwnProperty.call(variables[p], dpName)) continue;
     const docsPathPrefix = variables[p][dpName];
     if (!Array.isArray(docsPathPrefix)) {
@@ -66,10 +68,6 @@ function getContextVariables(file, variables) {
     }
   }
   return cvars;
-}
-
-function convertToPosixFriendlyPath(maybeWindowsPath) {
-  return maybeWindowsPath.split(path.sep).join(path.posix.sep);
 }
 
 module.exports = variablesPlugin;
