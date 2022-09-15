@@ -112,7 +112,7 @@ const config = {
               },
               {
                 label: 'Calico Cloud',
-                to: '/docs/category/calico-cloud',
+                to: '/docs/calico-cloud',
               },
             ],
           },
