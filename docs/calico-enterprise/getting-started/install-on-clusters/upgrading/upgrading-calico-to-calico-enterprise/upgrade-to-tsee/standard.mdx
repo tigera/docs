@@ -1,0 +1,98 @@
+---
+title: Upgrade from Calico to Calico Enterprise
+description: Steps to upgrade from open source Calico to Calico Enterprise.
+ignore_installation_cr: true
+cr_directory: manifests_cr
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+
+{% assign calico_minor_version = site.data.versions.first["calico"].minor_version %}
+{% assign archive_path = site.data.versions.first["calico"].archive_path %}
+
+{% if archive_path and archive_path != "" %}
+{% capture calico_minor_version_with_path %}{{ archive_path }}/{{ calico_minor_version }}{% endcapture %}
+{% else %}
+{% assign calico_minor_version_with_path = calico_minor_version %}
+{% endif %}
+
+## Prerequisites
+
+Ensure that your Kubernetes cluster is running with open source Calico on the latest {{ calico_minor_version | append: '.x' }} release.
+If not, follow the [Calico upgrade documentation](https://docs.projectcalico.org/{{calico_minor_version_with_path}}/maintenance/kubernetes-upgrade) before continuing.
+
+{{prodname}} only supports clusters with a Kubernetes datastore.
+Please contact Tigera Support for assistance upgrading a cluster with an `etcdv3` datastore.
+
+If your cluster already has {{prodname}} installed, follow the [Upgrading {{prodname}} from an earlier release guide](../../../../upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/index.mdx) instead.
+
+For hybrid Linux and Windows clusters, ensure that your Windows nodes have at least 4 cores, 8GB RAM.
+
+## Upgrade Calico to {{prodname}}
+
+:::note
+
+GKE upgrades from open source Calico are not currently supported.
+
+:::
+
+### Before you begin
+
+**Required**
+
+- [Configure a storage class for {{prodname}}.](../../../../../maintenance/logstorage/create-storage.mdx)
+
+### Install {{prodname}}
+
+<Tabs>
+<TabItem label="Kubernetes" value="Kubernetes-0">
+
+<UpgradeOperatorSimple prodname='{{prodname}}' upgradeFrom="OpenSource" />
+
+
+</TabItem>
+<TabItem label="EKS" value="EKS-1">
+
+<UpgradeOperatorSimple prodname='{{prodname}}' upgradeFrom="OpenSource" provider="EKS" />
+
+
+</TabItem>
+<TabItem label="AKS" value="AKS-2">
+
+**Note**: The following instructions are only for AKS clusters that use a Kubernetes reconciler. For AKS clusters with a self-managed Calico installation (including AKS clusters with Calico CNI), or a cluster that is not using a reconciler, follow the upgrade steps under the **Kubernetes** tab.
+{: .alert .alert-info}
+
+These upgrade instructions will upgrade your AKS clusters with Azure CNI and an AKS-managed Calico installation.
+
+<UpgradeOperatorSimple prodname='{{prodname}}' upgradeFrom="OpenSource" provider="AKS" />
+
+
+</TabItem>
+</Tabs>
+
+Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+
+**Note**: If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
+{: .alert .alert-info}
+
+### Install the {{prodname}} license
+
+In order to use {{prodname}}, you must install the license provided to you by Tigera.
+
+```
+kubectl create -f </path/to/license.yaml>
+```
+
+You can now monitor progress with the following command:
+
+```
+watch kubectl get tigerastatus
+```
+
+
+### Next steps
+
+- [Configure access to {{prodname}} Manager UI](../../../../../maintenance/cnx/access-the-manager.mdx)
+- [Authentication quickstart](../../../../../maintenance/cnx/authentication-quickstart.mdx)

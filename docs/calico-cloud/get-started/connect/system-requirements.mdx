@@ -1,0 +1,76 @@
+---
+title: Create a compatible cluster for installing Calico Cloud
+description: Review node and cluster requirements to install Calico Cloud.
+redirect_from: /install/system-requirements
+---
+
+<!-- This file is referenced in the manager UI and its location should not be changed with accounting for references
+from pendo/manager UI. A symlink so this file exists at install/system-requirements. -->
+
+{% include /content/note-reqs.md %}
+
+Follow these steps to create a compatible cluster for installing {{prodname}}.
+
+### Step 1: Check supported platform
+
+**Supported Kubernetes platforms**
+
+{{prodname}} supports all of the open-source [Kubernetes deployments](https://docs.projectcalico.org/getting-started/kubernetes/), except: 
+
+- MKE (formerly Docker)
+- IBM Cloud Kubernetes Service (IKS)
+- K3s
+
+**Supported architecture**
+- Only AMD64
+
+**Not supported**
+- Clusters with Windows nodes 
+
+### Step 2: Check supported Kubernetes version
+
+As of this date, {{prodname}} supports the following Kubernetes versions:
+
+- Minimum: v1.21
+- Maximum: v1.23
+
+If you have a later version than the maximum, contact [Support](https://support.tigera.io/).
+
+### Step 3: Check supported CNI plugin
+
+  - Calico CNI
+  - Amazon VPC CNI
+  - Azure CNI
+  - GKE CNI
+
+### Step 4: Verify cluster is not managed by a Kubernetes reconciler
+
+{{prodname}} cannot be installed on clusters that are managed by any kind of Kubernetes reconciler (for example, Addon-manager). To verify, look for an annotation called `addonmanager.kubernetes.io/mode` on either of the following resources. (The resources may not exist).
+
+- `tigera-operator` deployment in the `tigera-operator` namespace (Installation on AKS will work if the mode is EnsureExists)
+- `calico-node` daemonset in the `kube-system` namespace
+
+If the following command finds addonmanager on either of the resources, then Addon-manager is being used. Find a different cluster to use. 
+
+```bash
+kubectl get <type> -n <namespace> <resource-name> -o yaml | grep ' addonmanager.kubernetes.io/mode:'
+```
+
+### Step 5: Prepare your infrastructure to connect to {{prodname}}
+
+Pods running in your kubernetes cluster should be allowed to connect to the following endpoints:
+
+- https://installer.calicocloud.io:443/*
+- https://www.calicocloud.io:443/api/*
+- TCP to `<management-cluster>.calicocloud.io:9000`
+
+Docker running on each node should be able to pull images from `quay.io`,`cdn01.quay.io`,`cdn02.quay.io`, and `us-docker.pkg.dev`
+
+### Step 6: Verify platform-specific requirements
+
+If you are not using any of the following platforms, you are good to go! Otherwise, just one more step. 
+
+- [AKS]({{sitebase.url}}/get-started/connect/aks)
+- [GKE]({{sitebase.url}}/get-started/connect/gke)
+- [RKE]({{sitebase.url}}/get-started/connect/rke)
+- [RKE2]({{sitebase.url}}/get-started/connect/rke2)
