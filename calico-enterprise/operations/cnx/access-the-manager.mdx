@@ -47,9 +47,16 @@ metadata:
   name: tigera-manager
   namespace: tigera-manager
 spec:
-  backend:
-    serviceName: tigera-manager
-    servicePort: 9443
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: tigera-manager
+            port:
+              number: 9443
 ```
 
 **Advanced ingress controllers, with modifications**
@@ -63,9 +70,16 @@ metadata:
   name: tigera-manager
   namespace: tigera-manager
 spec:
-  backend:
-    serviceName: annotated-service
-    servicePort: 9443
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: annotated-service
+            port:
+              number: 9443
 ```
 #### Log in to {{site.prodname}} Manager UI 
 
