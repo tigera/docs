@@ -5,6 +5,7 @@ import Link from '@docusaurus/Link';
 import Admonition from '@theme/Admonition';
 
 import Highlight from '../utils/Highlight';
+import { toKebab } from '../utils/formatters';
 
 export default function InstallEKS(props) {
   return (
@@ -27,16 +28,16 @@ export default function InstallEKS(props) {
           </Link>
         </li>
         <li>
-          <Link href='../../../calico-enterprise/getting-started/kubernetes/requirements#supported-managed-kubernetes-versions'>
+          <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/kubernetes/requirements#supported-managed-kubernetes-versions'>
             A supported {props.prodname} managed Kubernetes version
           </Link>
           .
         </li>
       </ul>
-      <h5 id={`"install-${props.prodname}-"`}>Install {props.prodname}</h5>
+      <h5 id={`"install-${toKebab(props.prodname)}"`}>Install {props.prodname}</h5>
       <ol>
         <li>
-          <Link href='../../../calico-enterprise/getting-started/create-storage'>
+          <Link href='/docs/calico-enterprise/getting-started/create-storage'>
             Configure a storage class for {props.prodname}.
           </Link>
         </li>
@@ -87,8 +88,9 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
         </li>
         <li>
           <p>
-            Install any extra <Link href='/reference/resources'>{props.prodname} resources</Link> needed at cluster
-            start using <Link href='../../../calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
+            Install any extra{' '}
+            <Link href={`/docs/${toKebab(props.prodname)}/reference/resources`}>{props.prodname} resources</Link> needed
+            at cluster start using <Link href='/docs/calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
           </p>
         </li>
         {props.clusterType === 'managed' ? (
@@ -96,7 +98,11 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
             <li>
               <p>
                 Download the Tigera custom resources. For more information on configuration options available in this
-                manifest, see <Link href='/reference/installation/api'>the installation reference</Link>.
+                manifest, see{' '}
+                <Link href={`/docs/${toKebab(props.prodname)}/reference/installation/api`}>
+                  the installation reference
+                </Link>
+                .
               </p>
               <CodeBlock language='bash'>
                 {/* TODO [manifest]: Use correct manifest links */}
@@ -144,7 +150,11 @@ spec:
           <li>
             <p>
               Install the Tigera custom resources. For more information on configuration options available in this
-              manifest, see <Link href='/reference/installation/api'>the installation reference</Link>.
+              manifest, see{' '}
+              <Link href={`/docs/${toKebab(props.prodname)}/reference/installation/api`}>
+                the installation reference
+              </Link>
+              .
             </p>
             <CodeBlock>
               {/* TODO [manifest]: Use correct manifest links */}
@@ -212,7 +222,7 @@ spec:
       <ol>
         <li>
           <p>
-            <Link href='../../../calico-enterprise/getting-started/create-storage'>
+            <Link href='/docs/calico-enterprise/getting-started/create-storage'>
               Configure a storage class for {props.prodname}.
             </Link>
           </p>
@@ -264,8 +274,9 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
         </li>
         <li>
           <p>
-            Install any extra <Link href='/reference/resources'>{props.prodname} resources</Link> needed at cluster
-            start using <Link href='../../../calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
+            Install any extra{' '}
+            <Link href={`/docs/${toKebab(props.prodname)}/reference/resources`}>{props.prodname} resources</Link> needed
+            at cluster start using <Link href='/docs/calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
           </p>
         </li>
         <li>
@@ -274,7 +285,8 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
             <Highlight>Installation</Highlight> resource that has <Highlight>spec.cni.type: Calico</Highlight>. Install
             the <Highlight>custom-resources-calico-cni.yaml</Highlight> manifest, which includes this configuration. For
             more information on configuration options available in this manifest, see{' '}
-            <Link href='/reference/installation/api'>the installation reference</Link>.
+            <Link href={`/docs/${toKebab(props.prodname)}/reference/installation/api`}>the installation reference</Link>
+            .
           </p>
           {props.clusterType !== 'managed' && (
             <CodeBlock>
@@ -288,7 +300,11 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
             <li>
               <p>
                 Download the Tigera custom resources. For more information on configuration options available in this
-                manifest, see <Link href='/reference/installation/api'>the installation reference</Link>.
+                manifest, see{' '}
+                <Link href={`/docs/${toKebab(props.prodname)}/reference/installation/api`}>
+                  the installation reference
+                </Link>
+                .
               </p>
               <CodeBlock language='bash'>
                 {/* TODO [manifest]: Use correct manifest links */}
@@ -378,7 +394,7 @@ spec:
               <p>
                 The following example of a NodePort service may not be suitable for production and high availability.
                 For options, see{' '}
-                <Link href='../../../calico-enterprise/multicluster/mcm/fine-tune-deployment'>
+                <Link href='/docs/calico-enterprise/multicluster/mcm/fine-tune-deployment'>
                   Fine-tune multi-cluster management for production
                 </Link>
                 .
@@ -413,7 +429,11 @@ EOF`}
             <li>
               <p>
                 Apply the{' '}
-                <Link href='/reference/installation/api#operator.tigera.io/v1.ManagementCluster'>
+                <Link
+                  href={`/docs/${toKebab(
+                    props.prodname
+                  )}/reference/installation/api#operator.tigera.io/v1.ManagementCluster`}
+                >
                   ManagementCluster
                 </Link>{' '}
                 CR.
@@ -457,7 +477,10 @@ kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-us
                 In the top right banner, your management cluster is displayed as the first entry in the cluster
                 selection drop-down menu with the fixed name, <Highlight>management cluster</Highlight>.
               </p>
-              <img src='/img/calico-enterprise/mcm/mcm-management-cluster.png' alt='Cluster Created' />
+              <img
+                src='/img/calico-enterprise/mcm/mcm-management-cluster.png'
+                alt='Cluster Created'
+              />
             </li>
           </ol>
           <p>You have successfully installed a management cluster.</p>

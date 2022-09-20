@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Modal from '../utils/Modal';
+import { toKebab } from '../utils/formatters';
 
 export default function GeekDetails(props) {
   const [selectedDetail, setSelectedDetail] = React.useState(null);
@@ -20,7 +21,7 @@ export default function GeekDetails(props) {
       return;
     }
 
-    const key = detail === INFO ? INFO : `${detail[0]}-${detail[1].replace(' ', '-')}`.toLowerCase();
+    const key = detail === INFO ? INFO : toKebab(`${detail[0]}-${detail[1]}`);
 
     return detailsMap[key](props);
   };

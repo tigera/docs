@@ -27,7 +27,7 @@ const FeatureList = [
     {
         title: 'Calico Cloud',
         Svg: require('@site/static/img/calico-cloud-logo.svg').default,
-        link: '/docs/category/calico-cloud',
+        link: '/docs/calico-cloud',
         description: (
             <>
                 Calico Cloud...

@@ -4,6 +4,8 @@ import Admonition from '@theme/Admonition';
 import Link from "@docusaurus/Link";
 import CodeBlock from "@theme/CodeBlock";
 
+import { toKebab } from '../utils/formatters';
+
 export default function AutoHostendpointsMigrate(props) {
     return (
         <>
@@ -25,7 +27,7 @@ export default function AutoHostendpointsMigrate(props) {
                     </CodeBlock>
                 </li>
                 <li>
-                    <p>Enable auto host endpoints by following the <Link href="../../../docs/calico/security/kubernetes-nodes#enable-automatic-host-endpoints">enable automatic host endpoints how-to guide</Link>.
+                    <p>Enable auto host endpoints by following the <Link href={`/docs/${toKebab(props.prodname)}/security/hosts/kubernetes-nodes#enable-automatic-host-endpoints`}>enable automatic host endpoints how-to guide</Link>.
                     Note that automatic host endpoints are created with a profile attached that allows all traffic in the absence of network policy.</p>
                     <CodeBlock language="bash">
                         calicoctl patch kubecontrollersconfiguration default --patch =
