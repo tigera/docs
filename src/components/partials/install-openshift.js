@@ -2,12 +2,14 @@ import React from 'react';
 
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
+import Link from '@docusaurus/Link';
 
 import InstallOpenShiftManifests from './install-openshift-manifests';
 import OpenShiftPullSecret from './openshift-pull-secret';
 import OpenShiftPrometheusOperator from './openshift-prometheus-operator';
 import ConfigureManagedCluster from './configure-managed-cluster';
 import maybeRender from '../utils/maybeRender';
+import { toKebab } from '../utils/formatters';
 
 export default function InstallOpenShift(props) {
   return (
@@ -24,9 +26,13 @@ export default function InstallOpenShift(props) {
       <CodeBlock>openshift-install create install-config</CodeBlock>
       <Admonition type='note'>
         See the{' '}
-        <a href='https://cloud.redhat.com/openshift/install' target='_blank' rel='noopener noreferrer'>
+        <Link
+          href='https://cloud.redhat.com/openshift/install'
+          target='_blank'
+          rel='noopener noreferrer'
+        >
           OpenShift installer documentation
-        </a>{' '}
+        </Link>{' '}
         for more information about the installer and any configuration changes required for your platform.
       </Admonition>
       <p>
@@ -37,7 +43,10 @@ export default function InstallOpenShift(props) {
       <h4 id='update-the-configuration-file-to-use-prodname'>Update the configuration file to use {props.prodname}</h4>
       <p>
         Override the OpenShift networking to use {props.prodname} and update the AWS instance types to meet the{' '}
-        <a href='../../../calico-enterprise/getting-started/openshift/requirements'>system requirements</a>:
+        <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/openshift/requirements'>
+          system requirements
+        </Link>
+        :
       </p>
       <CodeBlock language='bash'>
         sed -i 's/OpenShiftSDN/Calico/' install-config.yaml{'\n'}
@@ -87,7 +96,7 @@ spec:
         configuration, skip this section.
       </p>
       <p>
-        To include <a href='../../../calico-enterprise/reference/resources'>{props.prodname} resources</a> during
+        To include <Link href='/docs/calico-enterprise/reference/resources'>{props.prodname} resources</Link> during
         installation, edit <code>manifests/02-configmap-calico-resources.yaml</code> in order to add your own
         configuration.
       </p>
@@ -121,9 +130,9 @@ spec:
       <h4 id='create-a-storage-class'>Create a storage class</h4>
       <p>
         {props.prodname} requires storage for logs and reports. Before finishing the installation, you must{' '}
-        <a href='../../../calico-enterprise/getting-started/create-storage'>
+        <Link href='/docs/calico-enterprise/getting-started/create-storage'>
           create a StorageClass for {props.prodname}
-        </a>
+        </Link>
         .
       </p>
 
@@ -154,7 +163,9 @@ spec:
         <>
           <p>
             Download the Tigera custom resources. For more information on configuration options available in this
-            manifest, see <a href='/reference/installation/api'>the installation reference</a>.
+            manifest, see{' '}
+            <Link href={`/docs/${toKebab(props.prodname)}/reference/installation/api`}>the installation reference</Link>
+            .
           </p>
           {/* TODO [manifest]: Use correct manifest links */}
           <CodeBlock language='bash'>curl -O -L "/manifests/tigera-enterprise-resources.yaml"</CodeBlock>
@@ -197,7 +208,10 @@ spec:
         </>
       )}
 
-      <OpenShiftPrometheusOperator prodname={props.prodname} operation='install' />
+      <OpenShiftPrometheusOperator
+        prodname={props.prodname}
+        operation='install'
+      />
 
       <p>You can now monitor progress with the following command:</p>
       <CodeBlock>watch oc get tigerastatus</CodeBlock>
@@ -217,9 +231,9 @@ spec:
               <p>
                 Create a service to expose the management cluster. The following example of a NodePort service may not
                 be suitable for production and high availability. For options, see{' '}
-                <a href='../../../calico-enterprise/multicluster/mcm/fine-tune-deployment'>
+                <Link href='/docs/calico-enterprise/multicluster/mcm/fine-tune-deployment'>
                   Fine-tune multi-cluster management for production
-                </a>
+                </Link>
                 . Apply the following service manifest.
               </p>
               <CodeBlock language='bash'>
@@ -251,7 +265,14 @@ EOF`}
             <li>
               <p>
                 Apply the{' '}
-                <a href='/reference/installation/api#operator.tigera.io/v1.ManagementCluster'>ManagementCluster</a> CR.
+                <Link
+                  href={`/docs/${toKebab(
+                    props.prodname
+                  )}/reference/installation/api#operator.tigera.io/v1.ManagementCluster`}
+                >
+                  ManagementCluster
+                </Link>{' '}
+                CR.
               </p>
               <CodeBlock language='bash'>
                 {`oc apply -f - <<EOF
@@ -294,7 +315,10 @@ EOF`}
                 selection drop-down menu with the fixed name, <code>management cluster</code>.
               </p>
               <p>
-                <img src='/img/calico-enterprise/mcm/mcm-management-cluster.png' alt='Cluster Created' />
+                <img
+                  src='/img/calico-enterprise/mcm/mcm-management-cluster.png'
+                  alt='Cluster Created'
+                />
               </p>
             </li>
           </ol>
@@ -305,7 +329,10 @@ EOF`}
       {maybeRender(
         props.clusterType === 'managed',
         <>
-          <ConfigureManagedCluster prodname={props.prodname} kubectlCmd='oc' />
+          <ConfigureManagedCluster
+            prodname={props.prodname}
+            kubectlCmd='oc'
+          />
           <h4 id='provide-permissions-to-view-the-managed-cluster'>Provide permissions to view the managed cluster</h4>
           <p>
             To access resources belonging to a managed cluster from the {props.prodname} Manager UI, the service or user
@@ -333,8 +360,8 @@ function InstallOpenShiftWindows(props) {
     <>
       <h4 id='configure-strict-affinity'>Configure strict affinity</h4>
       <p>
-        Next, <a href='../../maintenance/clis/calicoctl/install'>install calicoctl</a> and ensure strict affinity is
-        true:
+        Next, <Link href={`docs/${toKebab(props.prodname)}/maintenance/clis/calicoctl/install`}>install calicoctl</Link>{' '}
+        and ensure strict affinity is true:
       </p>
       <CodeBlock language='bash'>calicoctl ipam configure --strictaffinity=true</CodeBlock>
       <h4 id='add-windows-nodes-to-the-cluster'>Add Windows nodes to the cluster</h4>

@@ -1,5 +1,9 @@
 import React from 'react';
+
 import CodeBlock from '@theme/CodeBlock';
+import Link from '@docusaurus/Link';
+
+import { toKebab } from '../utils/formatters';
 
 export default function ConfigureManagedCluster(props) {
   const kubectlCmd = props.kubectlCmd || 'kubectl';
@@ -59,9 +63,13 @@ export default function ConfigureManagedCluster(props) {
         <li>
           <p>
             Add a managed cluster and save the manifest containing a{' '}
-            <a href='/reference/installation/api#operator.tigera.io/v1.ManagementClusterConnection'>
+            <Link
+              href={`/docs/${toKebab(
+                props.prodname
+              )}/reference/installation/api#operator.tigera.io/v1.ManagementClusterConnection`}
+            >
               ManagementClusterConnection
-            </a>{' '}
+            </Link>{' '}
             and a Secret.
           </p>
           <CodeBlock language='bash'>

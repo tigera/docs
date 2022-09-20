@@ -2,6 +2,9 @@ import React from 'react';
 
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
+import Link from '@docusaurus/Link';
+
+import { toKebab } from '../utils/formatters';
 
 export default function UpgradeOperatorSimple(props) {
   return (
@@ -49,15 +52,17 @@ export default function UpgradeOperatorSimple(props) {
         <li>
           <p>
             If you previously{' '}
-            <a href='../../../calico-enterprise/getting-started/private-registry'>installed using a private registry</a>
+            <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/private-registry'>
+              installed using a private registry
+            </Link>
             , you will need to{' '}
-            <a href='../../../calico-enterprise/getting-started/private-registry/private-registry-regular#push-calico-enterprise-images-to-your-private-registry'>
+            <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/private-registry/private-registry-regular#push-calico-enterprise-images-to-your-private-registry'>
               push the new images{' '}
-            </a>
+            </Link>
             and then{' '}
-            <a href='../../../calico-enterprise/getting-started/private-registry/private-registry-regular#run-the-operator-using-images-from-your-private-registry'>
+            <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/private-registry/private-registry-regular#run-the-operator-using-images-from-your-private-registry'>
               update the manifest
-            </a>{' '}
+            </Link>{' '}
             downloaded in the previous step.
           </p>
         </li>
@@ -116,7 +121,11 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
           <li>
             <p>
               Install the Tigera custom resources. For more information on configuration options available in this
-              manifest, see <a href='/reference/installation/api'>the installation reference</a>.
+              manifest, see{' '}
+              <Link href={`/docs/${toKebab(props.prodname)}/reference/installation/api`}>
+                the installation reference
+              </Link>
+              .
             </p>
             <CodeBlock language='bash'>
               {/* TODO [manifest]: Use correct manifest links */}
@@ -164,23 +173,29 @@ tigera-secure   19h`}
               <p>
                 If both of these resources are present, you can continue with the next step. Otherwise, use the
                 instructions to{' '}
-                <a href='../../../calico-enterprise/getting-started/cnx/configure-identity-provider'>
+                <Link href='/docs/calico-enterprise/getting-started/cnx/configure-identity-provider'>
                   configure an identity provider
-                </a>{' '}
+                </Link>{' '}
                 to configure OIDC.
               </p>
               <p>
                 d. Follow{' '}
-                <a href='../../../calico-enterprise/getting-started/cnx/configure-identity-provider'>
+                <Link href='/docs/calico-enterprise/getting-started/cnx/configure-identity-provider'>
                   configure an identity provider
-                </a>
+                </Link>
                 .
               </p>
             </li>
             <li>
               <p>
                 If your cluster is a management cluster using v3.1 or older, apply a{' '}
-                <a href='/reference/installation/api#operator.tigera.io/v1.ManagementCluster'>ManagementCluster </a>
+                <Link
+                  href={`/docs/${toKebab(
+                    props.prodname
+                  )}/reference/installation/api#operator.tigera.io/v1.ManagementCluster`}
+                >
+                  ManagementCluster{' '}
+                </Link>
                 CR to your cluster.
               </p>
               <CodeBlock language='bash'>
@@ -195,7 +210,11 @@ EOF`}
             <li>
               <p>
                 If your cluster is v3.7 or older, apply a new{' '}
-                <a href='/reference/installation/api#operator.tigera.io/v1.Monitor'>Monitor </a>
+                <Link
+                  href={`/docs/${toKebab(props.prodname)}/reference/installation/api#operator.tigera.io/v1.Monitor`}
+                >
+                  Monitor{' '}
+                </Link>
                 CR to your cluster.
               </p>
               <CodeBlock language='bash'>

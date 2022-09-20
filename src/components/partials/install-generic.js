@@ -2,8 +2,11 @@ import React from 'react';
 
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
+import Link from '@docusaurus/Link';
 
 import ConfigureManagedCluster from '@site/src/components/partials/configure-managed-cluster';
+
+import { toKebab } from '../utils/formatters';
 
 export default function InstallGeneric(props) {
   return (
@@ -13,9 +16,9 @@ export default function InstallGeneric(props) {
         {maybeRender(
           props.clusterType !== 'managed',
           <li>
-            <a href='../../../calico-enterprise/getting-started/create-storage'>
+            <Link href='/docs/calico-enterprise/getting-started/create-storage'>
               Configure storage for {props.prodname}
-            </a>
+            </Link>
             .
           </li>
         )}
@@ -66,15 +69,20 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
         </li>
         <li>
           (Optional) If your cluster architecture requires any custom{' '}
-          <a href='/reference/resources'>{props.prodname} resources</a> to function at startup, install them now using{' '}
-          <a href='../../../calico-enterprise/reference/calicoctl/overview'>calicoctl</a>.
+          <Link href={`/docs/${toKebab(props.prodname)}/reference/resources`}>{props.prodname} resources</Link> to
+          function at startup, install them now using{' '}
+          <Link href='/docs/calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
         </li>
         {maybeRender(
           props.clusterType === 'managed',
           <li>
             <p>
               Download the Tigera custom resources. For more information on configuration options available in this
-              manifest, see <a href='/reference/installation/api'>the installation reference</a>.
+              manifest, see{' '}
+              <Link href={`/docs/${toKebab(props.prodname)}/reference/installation/api`}>
+                the installation reference
+              </Link>
+              .
             </p>
             {/* TODO [manifest]: Use correct manifest links */}
             <CodeBlock language='bash'>curl -O -L "/manifests/custom-resources.yaml"</CodeBlock>
@@ -113,7 +121,10 @@ spec:
           <li>
             <p>
               Install the Tigera custom resources. For more information on configuration options available, see{' '}
-              <a href='/reference/installation/api'>the installation reference</a>.
+              <Link href={`/docs/${toKebab(props.prodname)}/reference/installation/api`}>
+                the installation reference
+              </Link>
+              .
             </p>
             <CodeBlock>
               {/* TODO [manifest]: Use correct manifest links */}
@@ -155,9 +166,9 @@ spec:
               <p>
                 Create a service to expose the management cluster. The following example of a NodePort service may not
                 be suitable for production and high availability. For options, see{' '}
-                <a href='../../../calico-enterprise/multicluster/mcm/fine-tune-deployment'>
+                <Link href='/docs/calico-enterprise/multicluster/mcm/fine-tune-deployment'>
                   Fine-tune multi-cluster management for production
-                </a>
+                </Link>
                 . Apply the following service manifest.
               </p>
               <CodeBlock language='bash'>
@@ -190,7 +201,14 @@ EOF`}
             </li>
             <li>
               <p>
-                <a href='/reference/installation/api#operator.tigera.io/v1.ManagementCluster'>ManagementCluster</a> CR.
+                <Link
+                  href={`/docs/${toKebab(
+                    props.prodname
+                  )}/reference/installation/api#operator.tigera.io/v1.ManagementCluster`}
+                >
+                  ManagementCluster
+                </Link>{' '}
+                CR.
               </p>
               <CodeBlock language='bash'>
                 {`kubectl apply -f - <<EOF
@@ -233,7 +251,10 @@ EOF`}
                 selection drop-down menu with the fixed name, <code>management cluster</code>.
               </p>
               <p>
-                <img src='/img/calico-enterprise/mcm/mcm-management-cluster.png' alt='Cluster Created' />
+                <img
+                  src='/img/calico-enterprise/mcm/mcm-management-cluster.png'
+                  alt='Cluster Created'
+                />
               </p>
             </li>
           </ol>
