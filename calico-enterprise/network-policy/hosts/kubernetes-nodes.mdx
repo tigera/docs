@@ -14,7 +14,7 @@ Secure Kubernetes nodes with host endpoints managed by {{site.prodname}}.
 
 ### Features
 
-This how-to guide uses the following Calico features:
+This how-to guide uses the following {{site.prodname}} features:
 - **HostEndpoint**
 - **KubeControllersConfiguration**
 - **GlobalNetworkPolicy**
@@ -23,7 +23,7 @@ This how-to guide uses the following Calico features:
 
 ### Host endpoints
 
-Each host has one or more network interfaces that it uses to communicate externally. You can represent these interfaces in Calico using host endpoints and then use network policy to secure them.
+Each host has one or more network interfaces that it uses to communicate externally. You can represent these interfaces in {{site.prodname}} using host endpoints and then use network policy to secure them.
 
 {{site.prodname}} host endpoints can have labels, and they work the same as labels on workload endpoints. The network policy rules can apply to both workload and host endpoints using label selectors.
 
@@ -40,8 +40,10 @@ Enable or disable automatic host endpoints by configuring the default KubeContro
 
 ### Before you begin
 
-**Required**
+**Unsupported**
+- GKE
 
+**Required**
 - AKS and EKS require [eBPF]({{site.baseurl}}/maintenance/ebpf) (iptables are not supported)
 
 ### How to

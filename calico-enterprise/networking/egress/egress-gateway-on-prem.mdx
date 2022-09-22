@@ -133,8 +133,11 @@ happens to be on the same node as the client).
 
 ### Before you begin
 
-**Required**
+**Unsupported**
+- AKS
+- GKE
 
+**Required**
 - Calico CNI
 
 ### How to

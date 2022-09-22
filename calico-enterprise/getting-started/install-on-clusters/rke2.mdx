@@ -22,7 +22,7 @@ The geeky details of what you get:
 - RKE2 cluster meets the [{{side.prodname}} requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
 
 - A compatible {% include open-new-window.html text='RKE2 cluster' url='https://docs.rke2.io/' %}.
-  - The version of RKE2 aligns with the [{{side.prodname}} Kubernetes versions requirements]({{site.baseurl}}/getting-started/kubernetes/requirements#supported-kubernetes-versions)
+  - The version of RKE2 aligns with the [{{side.prodname}} Kubernetes versions requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
   - {% include open-new-window.html text='Configure' url='https://docs.rke2.io/install/install_options/install_options/' %} cluster with no CNI plugin; either by using `--cni none` with the RKE2 CLI or `RKE2_CNI=none` with the installation script or setting `cni: none` in the {% include open-new-window.html text='configuration file' url='https://docs.rke2.io/install/install_options/install_options/#configuration-file' %}.
 
 - [Credentials for the Tigera private registry and a license key]({{site.baseurl}}/getting-started/calico-enterprise).

@@ -53,13 +53,12 @@ Compliance reports provide the following high-level information:
 
 ### Before you begin
 
-**Supported**
+**Unsupported**
 
-- Kubernetes/kubeadm
-- RKE
-- AWS/kOps
+- AKS
+- GKE
+- OpenShift
 - TKG
-- EKS
 
 **Required**
 
