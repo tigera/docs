@@ -26,6 +26,15 @@ You must enable the following Kubernetes resources for each cluster:
 
 Like {{site.prodname}} audit logs, Kubernetes audit logs are displayed in Manager UI in the Timeline dashboard, Kibana dashboard (indexed by, `tigera_secure_ee_audit_kube`), and provide the core data for compliance reports. 
 
+### Before you begin
+
+**Unsupported**
+
+- AKS
+- GKE
+- OpenShift
+- TKG
+
 ### How to
 
 Enable Kubernetes audit logs in the Kubernetes API server:

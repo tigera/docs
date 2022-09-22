@@ -30,68 +30,56 @@ and in particular, pushing the networking capabilities of the latest Linux kerne
 
 ### Before you begin
 
-#### Supported
+**Supported architecture and versions**
 
 - x86-64
-
-- Distributions:  
-
-  - Generic or kubeadm
-  - kOps
-  - OpenShift
-  - EKS
-  - AKS
-
 - Linux distribution/kernel:
-
   - Ubuntu 20.04.
   - Red Hat v8.2 with Linux kernel v4.18.0-193 or above (Red Hat have backported the required features to that build).
   - Another [supported distribution]({{site.baseurl}}/getting-started/kubernetes/requirements) with Linux kernel v5.3 or above.
 
 - An underlying network fabric that allows VXLAN traffic between hosts.  In eBPF mode, VXLAN is used to forward Kubernetes NodePort traffic.
 
-#### Not supported
+**Unsupported platforms**
+  - GKE
+  - MKE
+  - TKG 
+  - RKE
 
-- Other processor architectures.
+   >**Note**:
+   eBPF supports AKS with Calico CNI and {{site.prodname}} network policy. However, with [AKS with Azure CNI and {{site.prodname}} network policy](../../getting-started/kubernetes/aks#install-aks-with-azure-cni-networking), kube-proxy cannot be disabled so the performance benefits of eBPF are lost. However, there are other reasons to use eBPF other than performance gains, as described in [eBPF use cases]({{site.baseurl}}/maintenance/ebpf/use-cases-ebpf). 
+   {: .alert .alert-info}
 
-- Distributions:
 
-  - GKE.  This is because of an incompatibility with the GKE CNI plugin.
-  
-  - RKE: eBPF mode cannot be enabled at install time because RKE doesn't provide
-    a stable address for the API server.  However, by following [these instructions](../../maintenance/ebpf/enabling-ebpf),
-    it can be enabled as a post-install step.
-  
-  - Mirantis Kubernetes Engine (MKE): eBPF mode is incompatible with MKE at this time. The Tigera team is investigating the issue.
+**Unsupported features**
+  - Clusters with some eBPF nodes and some standard dataplane and/or Windows nodes
+  - IPv6
+  - Host endpoint `doNotTrack` policy (other policy types are supported)
+  - Floating IPs
+  - SCTP (either for policy or services)
+  - `Log` action in policy rules
+  - Tagged VLAN devices
+  - L7 logs
 
-- Clusters with some eBPF nodes and some standard dataplane and/or Windows nodes.
-- IPv6.
-- Host endpoint `doNotTrack` policy (other policy types are supported).
-- Floating IPs.
-- SCTP (either for policy or services).
-- `Log` action in policy rules.
-- Tagged VLAN devices.
+**Recommendations for performance**
 
-#### Performance
+For best pod-to-pod performance, we recommend using an underlying network that doesn't require {{site.prodname}} to use an overlay.  For example:
 
-For best pod-to-pod performance, we recommend using an underlying network that doesn't require Calico to use an overlay.  For example:
+- A cluster within a single AWS subnet
+- A cluster using a compatible cloud provider's CNI (such as the AWS VPC CNI plugin)
+- An on-prem cluster with BGP peering configured
 
-- A cluster within a single AWS subnet.
-- A cluster using a compatible cloud provider's CNI (such as the AWS VPC CNI plugin).
-- An on-prem cluster with BGP peering configured.
-
-If you must use an overlay, we recommend that you use VXLAN, not IPIP.  VXLAN has better performance than IPIP in
-eBPF mode due to various kernel optimisations.
+If you must use an overlay, we recommend that you use VXLAN, not IPIP. VXLAN has better performance than IPIP in eBPF mode due to various kernel optimizations.
 
 ### How to
 
-Installing {{ site.prodname }} normally consists of the following stages, which are covered by the main installation 
-guides:
+Installing {{site.prodname}} normally consists of the following steps, which are covered by the main installation 
+guide:
 
-* Create a cluster suitable to run {{site.prodname}}.
-* Install the Tigera Operator (possibly via a Helm chart), and the associated Custom Resource Definitions.
-* Apply a set of Custom Resources to tell the operator what to install.
-* Wait for the operator to provision all the associated resources and report back via its status resource.
+* Create a cluster suitable to run {{site.prodname}}
+* Install the Tigera Operator, and the associated Custom Resource Definitions
+* Apply a set of Custom Resources to tell the operator what to install
+* Wait for the operator to provision all the associated resources and report back via its status resource
 
 To install directly in eBPF is very similar; this guide explains the differences:
 
@@ -109,7 +97,7 @@ These steps are explained in more detail below.
 
 #### Create a suitable cluster
 
-The basic requirement for eBPF mode is to have a recent-enough kernel (see [above](#supported)).  
+The basic requirement for eBPF mode is to have a recent-enough kernel (see [supported architectures and versions](#before-you-begin)).  
 
 Select the appropriate tab below for distribution-specific instructions:
 
