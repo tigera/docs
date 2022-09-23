@@ -4,15 +4,17 @@ description: Prometheus support in Calico Enterprise.
 canonical_url: /maintenance/monitor/support
 ---
 
-Prometheus (including AlertManager) is an open-source toolkit for systems monitoring and alerting. Prometheus is the default monitoring tool for {{site.prodname}} component metrics and alerting.
+### Big picture
 
-You install the Prometheus operator and CRDs when you install {{site.prodname}} on your cluster. 
+{{site.prodname}} uses the open-source {% include open-new-window.html text='Prometheus monitoring and alerting toolkit' url='https://prometheus.io/docs/introduction/overview/' %}. With these tools, you can view time-series metrics from {{site.prodname}} components in the Prometheus and Grafana interfaces, or scrape the metrics for a BYO Prometheus deployment.
 
-**What if I have my own Prometheus operator?**
 
-If you have your own Prometheus operator, you can skip this step during {{site.prodname}} installation. The only requirement is that your Prometheus operator is v0.40.0 or higher. Note that {{site.prodname}} creates AlertManager and Prometheus CRs in the `tigera-prometheus` namespace. Make sure that your Prometheus operator is configured to manage Prometheus and AlertManager instances in the `tigera-prometheus` namespace. That's all you need to do.
+### Install options
 
-**Is BYO Prometheus supported for {{site.prodname}}?**
+- Use Prometheus operator managed by Tigera operator
 
-- Supported for calico-node/Felix metrics
-- Not supported for {{site.prodname}} networking and policy metrics or integration with {{site.prodname}} Manager.
+   You install the {{site.prodname}} Prometheus operator and CRDs during {{site.prodname}} installation. {{site.prodname}} metrics and alerts are available in Manager UI. You configure alerts through Prometheus AlertManager.
+   
+   If you want to specify your own Prometheus operator during installation for management by the Tigera operator, the require operator version must be **v0.40.0 or higher**. Because {{site.prodname}} creates AlertManager and Prometheus CRs in the `tigera-prometheus` namespace, all you need to do is verify that your Prometheus operator is configured to manage Prometheus and AlertManager instances in the `tigera-prometheus` namespace. 
+
+- [Bring your own Prometheus]({{site.baseurl}}/maintenance/monitor/prometheus/byo-prometheus) 
