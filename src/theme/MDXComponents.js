@@ -23,30 +23,37 @@ import OpenShiftPullSecret from '@site/src/components/partials/openshift-pull-se
 import OpenShiftPrometheusOperator from '@site/src/components/partials/openshift-prometheus-operator';
 import GeekDetails from '@site/src/components/partials/geek-details';
 
+const wrap = (Partial) => (props) =>
+  (
+    <div className='docs-partial'>
+      <Partial {...props} />
+    </div>
+  );
+
 export default {
   // Re-use the default mapping
   ...MDXComponents,
 
   // all of our partials
-  ReqsSys,
-  ReqsKernel,
-  HostEndpointsUpgrade,
-  EnterpriseLink,
-  InstallOpenshiftBeforeYouBegin,
-  CalicoWindowsInstall,
-  PodCidrSed,
-  EnvironmentFile,
-  AutoHostendpointsMigrate,
-  ConfigureManagedCluster,
-  InstallAKS,
-  InstallEKS,
-  InstallGeneric,
-  InstallGKE,
-  PrivateRegistryRegular,
-  UpgradeOperatorSimple,
-  InstallOpenShift,
-  InstallOpenShiftManifests,
-  OpenShiftPullSecret,
-  OpenShiftPrometheusOperator,
-  GeekDetails,
+  ReqsSys: wrap(ReqsSys),
+  ReqsKernel: wrap(ReqsKernel),
+  HostEndpointsUpgrade: wrap(HostEndpointsUpgrade),
+  EnterpriseLink: wrap(EnterpriseLink),
+  InstallOpenshiftBeforeYouBegin: wrap(InstallOpenshiftBeforeYouBegin),
+  CalicoWindowsInstall: wrap(CalicoWindowsInstall),
+  PodCidrSed: wrap(PodCidrSed),
+  EnvironmentFile: wrap(EnvironmentFile),
+  AutoHostendpointsMigrate: wrap(AutoHostendpointsMigrate),
+  ConfigureManagedCluster: wrap(ConfigureManagedCluster),
+  InstallAKS: wrap(InstallAKS),
+  InstallEKS: wrap(InstallEKS),
+  InstallGeneric: wrap(InstallGeneric),
+  InstallGKE: wrap(InstallGKE),
+  PrivateRegistryRegular: wrap(PrivateRegistryRegular),
+  UpgradeOperatorSimple: wrap(UpgradeOperatorSimple),
+  InstallOpenShift: wrap(InstallOpenShift),
+  InstallOpenShiftManifests: wrap(InstallOpenShiftManifests),
+  OpenShiftPullSecret: wrap(OpenShiftPullSecret),
+  OpenShiftPrometheusOperator: wrap(OpenShiftPrometheusOperator),
+  GeekDetails: wrap(GeekDetails),
 };
