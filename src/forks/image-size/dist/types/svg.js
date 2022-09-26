@@ -1,7 +1,7 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 exports.SVG = void 0;
-const svgReg = /<svg\s([^>"']|"[^"]*"|'[^']*')*>/;
+const svgReg = /<svg.*/s;
 const extractorRegExps = {
   height: /\sheight=(['"])([^%]+?)\1/,
   root: svgReg,
