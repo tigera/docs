@@ -90,8 +90,35 @@ For each cluster in the federation, follow these steps.
    {{ "/getting-started/kubernetes/installation/federation-remote-sa.yaml" | absolute_url }}
    ```
 
+1. Create a secret for service Account manually.
+
+    >**Note**: This step is needed if your k8s version is 1.24 or above. From K8s 1.24, K8s won’t generate Secrets automatically for ServiceAccounts and need be created manually.
+   {: .alert .alert-info}
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: v1
+   kind: Secret
+   type: kubernetes.io/service-account-token
+   metadata:
+     name: tigera-federation-remote-cluster
+     namespace: kube-system
+     annotations:
+       kubernetes.io/service-account.name: "tigera-federation-remote-cluster"
+   EOF
+   ```
+
+    Use the following command to retrieve the token of the service account.
+   ```bash
+   kubectl describe secret tigera-federation-remote-cluster -n kube-system
+   ```
+
+
 1. Use the following command to retrieve the name of the secret containing the token associated
    with the `tigera-federation-remote-cluster` service account.
+
+   >**Note**: This step is applicable only if your k8s version is less than 1.24.
+   {: .alert .alert-info}
 
    ```bash
    kubectl describe serviceaccounts tigera-federation-remote-cluster -n kube-system
@@ -114,7 +141,7 @@ For each cluster in the federation, follow these steps.
 
    The value of `Tokens` is the name of the secret containing the service account's token.
 
-1. Use the following command to retrieve the token of the service account.
+   Use the following command to retrieve the token of the service account.
 
    ```bash
    kubectl describe secrets tigera-federation-remote-cluster-token-wzdgp -n kube-system
