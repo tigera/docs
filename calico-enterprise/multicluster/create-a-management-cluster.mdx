@@ -82,10 +82,11 @@ To access resources in a managed cluster from the {{site.prodname}} Manager with
    kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-user --clusterrole=tigera-network-admin
    ```
 
-1. Create a secret for service Account manually.
+1. Create a secret for the service account
 
-   >**Note**: This step is needed if your k8s version is 1.24 or above. From K8s 1.24, K8s won’t generate Secrets automatically for ServiceAccounts and need be created manually.
+   >**Note**: This step is needed if your Kubernetes cluster is version v1.24 or above. Prior to Kubernetes v1.24, this secret is created automatically.
    {: .alert .alert-info}
+
    ```bash
    kubectl apply -f - <<EOF
    apiVersion: v1
@@ -97,16 +98,14 @@ To access resources in a managed cluster from the {{site.prodname}} Manager with
        kubernetes.io/service-account.name: "mcm-user"
    EOF
    ```
-   Get the login token for your new admin user, and log in to {{site.prodname}} Manager.
+
+1. For Kubernetes v1.24+, use the following command to obtain the token for the secret associated with your host
 
     ```bash
     kubectl describe secret mcm-user
     ```
 
-1. Get the login token for your new admin user, and log in to {{site.prodname}} Manager.
-
-    >**Note**: This step is applicable only if your k8s version is less than 1.24.
-   {: .alert .alert-info}
+    For Kubernetes clusters prior to version v1.24, use the following command to retrieve your token:
 
    ```bash
    {% raw %}kubectl get secret $(kubectl get serviceaccount mcm-user -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo{% endraw %}

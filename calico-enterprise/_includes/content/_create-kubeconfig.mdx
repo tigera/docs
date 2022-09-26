@@ -5,10 +5,11 @@
    SA_NAME=my-host
    kubectl create serviceaccount $SA_NAME -n calico-system -o yaml
    ```
-1. Create a secret for service Account manually.
+1. Create a secret for the service account
 
-   >**Note**: This step is needed if your k8s version is 1.24 or above. From K8s 1.24, K8s won’t generate Secrets automatically for ServiceAccounts and need be created manually.
+   >**Note**: This step is needed if your Kubernetes cluster is version v1.24 or above. Prior to Kubernetes v1.24, this secret is created automatically.
    {: .alert .alert-info}
+
    ```bash
    kubectl apply -f - <<EOF
    apiVersion: v1
@@ -21,18 +22,15 @@
        kubernetes.io/service-account.name: $SA_NAME
    EOF
    ```
-   
-1. Obtain the token for the secret associated with your host
+
+1. For Kubernetes v1.24+, use the following command to obtain the token for the secret associated with your host
    
    ```bash
    kubectl describe secret $SA_NAME -n calico-system
    ```
 
-1. Obtain the token for the secret associated with your host
+   For Kubernetes clusters prior to version v1.24, use the following command to retrieve your token:
 
-   >**Note**: This step is applicable only if your k8s version is less than 1.24.
-   {: .alert .alert-info}
-   
    ```bash
    kubectl describe secret -n calico-system $(kubectl get serviceaccount -n calico-system $SA_NAME -o=jsonpath="{.secrets[0].name}")
    ```
