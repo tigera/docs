@@ -28,7 +28,7 @@ export default function InstallEKS(props) {
           </Link>
         </li>
         <li>
-          <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/kubernetes/requirements#supported-managed-kubernetes-versions'>
+          <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/requirements#supported-managed-kubernetes-versions'>
             A supported {props.prodname} managed Kubernetes version
           </Link>
           .
@@ -37,7 +37,7 @@ export default function InstallEKS(props) {
       <h5 id={`"install-${toKebab(props.prodname)}"`}>Install {props.prodname}</h5>
       <ol>
         <li>
-          <Link href='/docs/calico-enterprise/getting-started/create-storage'>
+          <Link href='/docs/calico-enterprise/maintenance/logstorage/create-storage'>
             Configure a storage class for {props.prodname}.
           </Link>
         </li>
@@ -90,7 +90,8 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
           <p>
             Install any extra{' '}
             <Link href={`/docs/${toKebab(props.prodname)}/reference/resources`}>{props.prodname} resources</Link> needed
-            at cluster start using <Link href='/docs/calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
+            at cluster start using{' '}
+            <Link href='/docs/calico-enterprise/reference/clis/calicoctl/overview'>calicoctl</Link>.
           </p>
         </li>
         {props.clusterType === 'managed' ? (
@@ -222,7 +223,7 @@ spec:
       <ol>
         <li>
           <p>
-            <Link href='/docs/calico-enterprise/getting-started/create-storage'>
+            <Link href='/docs/calico-enterprise/maintenance/logstorage/create-storage'>
               Configure a storage class for {props.prodname}.
             </Link>
           </p>
@@ -276,7 +277,8 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
           <p>
             Install any extra{' '}
             <Link href={`/docs/${toKebab(props.prodname)}/reference/resources`}>{props.prodname} resources</Link> needed
-            at cluster start using <Link href='/docs/calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
+            at cluster start using{' '}
+            <Link href='/docs/calico-enterprise/reference/clis/calicoctl/overview'>calicoctl</Link>.
           </p>
         </li>
         <li>

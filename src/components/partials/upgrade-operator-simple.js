@@ -173,14 +173,14 @@ tigera-secure   19h`}
               <p>
                 If both of these resources are present, you can continue with the next step. Otherwise, use the
                 instructions to{' '}
-                <Link href='/docs/calico-enterprise/getting-started/cnx/configure-identity-provider'>
+                <Link href='/docs/calico-enterprise/maintenance/cnx/configure-identity-provider'>
                   configure an identity provider
                 </Link>{' '}
                 to configure OIDC.
               </p>
               <p>
                 d. Follow{' '}
-                <Link href='/docs/calico-enterprise/getting-started/cnx/configure-identity-provider'>
+                <Link href='/docs/calico-enterprise/maintenance/cnx/configure-identity-provider'>
                   configure an identity provider
                 </Link>
                 .

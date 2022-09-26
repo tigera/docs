@@ -19,15 +19,15 @@ export default function InstallAKS(props) {
       )}
       <h5 id='create-an-aks-cluster'>Create an AKS cluster</h5>
       <p>
-        Make sure you have a <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/kubernetes/aks'>compatible</Link> AKS
-        cluster with:
+        Make sure you have a{' '}
+        <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/aks'>compatible</Link> AKS cluster with:
       </p>
       <ul>
         <li>
           <Link href='https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni'>Azure CNI networking</Link>
         </li>
         <li>
-          <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/kubernetes/requirements#supported-managed-kubernetes-versions'>
+          <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/requirements#supported-managed-kubernetes-versions'>
             A supported {props.prodname} managed Kubernetes version
           </Link>
         </li>
@@ -36,7 +36,7 @@ export default function InstallAKS(props) {
       <ol>
         <li>
           <p>
-            <Link href='/docs/calico-enterprise/getting-started/create-storage'>
+            <Link href='/docs/calico-enterprise/maintenance/logstorage/create-storage'>
               Configure a storage class for {props.prodname}
             </Link>
             .
@@ -91,7 +91,8 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
           <p>
             Install any extra{' '}
             <Link href={`/docs/${toKebab(props.prodname)}/reference/resources`}>{props.prodname} resources</Link> needed
-            at cluster start using <Link href='/docs/calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
+            at cluster start using{' '}
+            <Link href='/docs/calico-enterprise/reference/clis/calicoctl/overview'>calicoctl</Link>.
           </p>
         </li>
         {props.clusterType === 'managed' ? (
@@ -178,15 +179,15 @@ spec:
       )}
       <h5 id='create-an-aks-cluster'>Create an AKS cluster</h5>
       <p>
-        Make sure you have a <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/kubernetes/aks'>compatible</Link> AKS
-        cluster with:
+        Make sure you have a{' '}
+        <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/aks'>compatible</Link> AKS cluster with:
       </p>
       <ul>
         <li>
           <Link href='https://docs.microsoft.com/en-us/azure/aks/use-byo-cni?tabs=azure-cli'>Bring your own CNI</Link>
         </li>
         <li>
-          <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/kubernetes/requirements#supported-managed-kubernetes-versions'>
+          <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/requirements#supported-managed-kubernetes-versions'>
             A supported {props.prodname} managed Kubernetes version
           </Link>
         </li>
@@ -195,7 +196,7 @@ spec:
       <ol>
         <li>
           <p>
-            <Link href='/docs/calico-enterprise/getting-started/create-storage'>
+            <Link href='/docs/calico-enterprise/maintenance/logstorage/create-storage'>
               Configure a storage class for {props.prodname}
             </Link>
             .
@@ -250,7 +251,8 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
           <p>
             Install any extra{' '}
             <Link href={`/docs/${toKebab(props.prodname)}/reference/resources`}>{props.prodname} resources</Link> needed
-            at cluster start using <Link href='/docs/calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
+            at cluster start using{' '}
+            <Link href='/docs/calico-enterprise/reference/clis/calicoctl/overview'>calicoctl</Link>.
           </p>
         </li>
         {props.clusterType === 'managed' ? (

@@ -15,7 +15,7 @@ export default function InstallGKE(props) {
       <ol>
         <li>
           <p>
-            <Link href='/docs/calico-enterprise/getting-started/create-storage'>
+            <Link href='/docs/calico-enterprise/maintenance/logstorage/create-storage'>
               Configure a storage class for {props.prodname}.
             </Link>
           </p>
@@ -69,7 +69,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
           <p>
             Install any extra{' '}
             <Link href={`/docs/${toKebab(props.prodname)}/reference/resources`}>Calico resources</Link> needed at
-            cluster start using <Link href='/docs/calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
+            cluster start using <Link href='/docs/calico-enterprise/reference/clis/calicoctl/overview'>calicoctl</Link>.
           </p>
         </li>
         <If condition={props.clusterType === 'managed'}>
