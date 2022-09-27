@@ -31,9 +31,9 @@ Upgrading to {{site.prodname}} v3.13 and above, from Calico 3.22 and below is cu
 1. Install the {{site.prodname}} custom resource definitions.
 
    ```bash
-   kubectl apply -f {{ "/manifests/operator-crds.yaml" | absolute_url }}
-   kubectl apply -f {{ "/manifests/prometheus-operator-crds.yaml" | absolute_url }}
-   kubectl apply -f {{ "/manifests/eck-operator-crds.yaml" | absolute_url }}
+   kubectl replace -f {{ "/manifests/operator-crds.yaml" | absolute_url }}
+   kubectl replace -f {{ "/manifests/prometheus-operator-crds.yaml" | absolute_url }}
+   kubectl replace -f {{ "/manifests/eck-operator-crds.yaml" | absolute_url }}
    ```
 
 1. [Configure a storage class for {{site.prodname}}]({{site.baseurl}}/getting-started/create-storage)
@@ -63,7 +63,7 @@ Upgrading to {{site.prodname}} v3.13 and above, from Calico 3.22 and below is cu
 1. Install your {{ site.prodname }} license.
 
    ```bash
-   kubectl apply -f </path/to/license.yaml>
+   kubectl replace -f </path/to/license.yaml>
    ```
 
 1. Monitor progress, wait until all components show a status of `Available`, then proceed to the next step.
