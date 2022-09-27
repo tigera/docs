@@ -11,7 +11,8 @@ export default function OpenShiftPrometheusOperator(props) {
       <Admonition type='note'>
         Complete this step only if you are using the {props.prodname} Prometheus operator (including adding your own
         Prometheus operator). Skip this step if you are using{' '}
-        <Link href='/docs/calico-enterprise/maintenance/monitor/support'>BYO Prometheus</Link> that you manage yourself.
+        <Link href='/docs/calico-enterprise/maintenance/monitor/prometheus/support'>BYO Prometheus</Link> that you
+        manage yourself.
       </Admonition>
       <CodeBlock language='bash'>
         {props.operation === 'install'

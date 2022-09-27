@@ -14,12 +14,14 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
         <li>
           <p>
             Your environment meets the {props.prodname}{' '}
-            <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/openshift/requirements'>system requirements</Link>
+            <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/openshift/requirements'>
+              system requirements
+            </Link>
           </p>
         </li>
         <li>
           <p>
-            <Link href='/docs/calico-enterprise/getting-started/calico-enterprise'>
+            <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/calico-enterprise'>
               Private registry credentials and license key
             </Link>
           </p>

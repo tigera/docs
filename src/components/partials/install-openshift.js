@@ -130,7 +130,7 @@ spec:
       <h4 id='create-a-storage-class'>Create a storage class</h4>
       <p>
         {props.prodname} requires storage for logs and reports. Before finishing the installation, you must{' '}
-        <Link href='/docs/calico-enterprise/getting-started/create-storage'>
+        <Link href='/docs/calico-enterprise/maintenance/logstorage/create-storage'>
           create a StorageClass for {props.prodname}
         </Link>
         .

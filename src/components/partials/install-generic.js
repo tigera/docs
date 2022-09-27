@@ -16,7 +16,7 @@ export default function InstallGeneric(props) {
         {maybeRender(
           props.clusterType !== 'managed',
           <li>
-            <Link href='/docs/calico-enterprise/getting-started/create-storage'>
+            <Link href='/docs/calico-enterprise/maintenance/logstorage/create-storage'>
               Configure storage for {props.prodname}
             </Link>
             .
@@ -71,7 +71,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
           (Optional) If your cluster architecture requires any custom{' '}
           <Link href={`/docs/${toKebab(props.prodname)}/reference/resources`}>{props.prodname} resources</Link> to
           function at startup, install them now using{' '}
-          <Link href='/docs/calico-enterprise/reference/calicoctl/overview'>calicoctl</Link>.
+          <Link href='/docs/calico-enterprise/reference/clis/calicoctl/overview'>calicoctl</Link>.
         </li>
         {maybeRender(
           props.clusterType === 'managed',
