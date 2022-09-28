@@ -4,6 +4,7 @@ import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Admonition from '@theme/Admonition';
 
+import ConfigureManagedCluster from './configure-managed-cluster';
 import Highlight from '../utils/Highlight';
 import { toKebab } from '../utils/formatters';
 
@@ -450,7 +451,7 @@ kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-us
       )}
       {props.clusterType === 'managed' && (
         <>
-          {`{% include content/configure-managed-cluster.md %}`}
+          <ConfigureManagedCluster prodname={props.prodname} />
           <h4 id='provide-permissions-to-view-the-managed-cluster'>Provide permissions to view the managed cluster</h4>
           <p>
             To access resources belonging to a managed cluster from the {props.prodname} Manager UI, the service or user
