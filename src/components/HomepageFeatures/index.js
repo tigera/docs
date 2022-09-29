@@ -7,7 +7,7 @@ const FeatureList = [
     {
         title: 'Calico',
         Svg: require('@site/static/img/calico-logo.svg').default,
-        link: '/docs/category/calico',
+        link: '/docs/calico/about/about-calicoy',
         description: (
             <>
                 Calico...
@@ -17,7 +17,7 @@ const FeatureList = [
     {
         title: 'Calico Enterprise',
         Svg: require('@site/static/img/calico-enterprise-logo.svg').default,
-        link: '/docs/category/calico-enterprise',
+        link: '/docs/calico-enterprise/about-calico-enterprise',
         description: (
             <>
                 Calico Enterprise...
