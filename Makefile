@@ -4,7 +4,7 @@ LOCAL_USER_ID?=$(shell id -u $$USER)
 PACKAGE_NAME = github.com/projectcalico/calico/calico
 API_GEN_REPO?=tmjd/gen-crd-api-reference-docs
 API_GEN_BRANCH?=kb_v2
-OPERATOR_VERSION?=master
+OPERATOR_VERSION?=v1.28.1
 OPERATOR_REPO?=tigera/operator
 
 build: init
