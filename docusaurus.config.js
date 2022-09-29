@@ -104,11 +104,11 @@ const config = {
             items: [
               {
                 label: 'Calico',
-                to: '/docs/category/calico',
+                to: '/docs/calico/about/about-calico',
               },
               {
                 label: 'Calico Enterprise',
-                to: '/docs/category/calico-enterprise',
+                to: '/docs/calico-enterprise/about-calico-enterprise',
               },
               {
                 label: 'Calico Cloud',
