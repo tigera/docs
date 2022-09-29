@@ -1,4 +1,5 @@
 ---
+title: migrate
 description: calicoctl datastore migrate commands.
 show_read_time: false
 show_toc: false
