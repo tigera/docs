@@ -1,4 +1,5 @@
 ---
+title: Fortinet firewall integrations
 description: Calico Enterprise Fortinet firewall integrations. 
 show_read_time: false
 show_toc: false
