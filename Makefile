@@ -6,6 +6,7 @@ API_GEN_REPO?=tmjd/gen-crd-api-reference-docs
 API_GEN_BRANCH?=kb_v2
 OPERATOR_VERSION?=v1.28.1
 OPERATOR_REPO?=tigera/operator
+PRODUCT?=calico
 
 build: init
 	yarn build
@@ -26,7 +27,10 @@ clean:
 init:
 	yarn
 
-autogen: build-operator-reference
+autogen:
+	PRODUCT=calico $(MAKE) build-operator-reference
+	PRODUCT=calico-enterprise $(MAKE) build-operator-reference
+	PRODUCT=calico-cloud $(MAKE) build-operator-reference
 
 .PHONY: build-operator-reference
 build-operator-reference:
@@ -41,5 +45,5 @@ build-operator-reference:
 	           git clone --depth=1 -b $(API_GEN_BRANCH) https://github.com/$(API_GEN_REPO) api-gen && cd api-gen && \
 	           go mod edit -replace github.com/tigera/operator=github.com/$(OPERATOR_REPO)@$(OPERATOR_VERSION) && \
 	           go mod download all && go build && \
-	           ./gen-crd-api-reference-docs -config /go/src/$(PACKAGE_NAME)/reference/installation/config.json \
-				   -api-dir github.com/tigera/operator/api -out-file /go/src/$(PACKAGE_NAME)/reference/installation/_api.html'
+	           ./gen-crd-api-reference-docs -config /go/src/$(PACKAGE_NAME)/docs/$(PRODUCT)/reference/installation/config.json \
+				   -api-dir github.com/tigera/operator/api -out-file /go/src/$(PACKAGE_NAME)/docs/$(PRODUCT)/reference/installation/_api.html'
