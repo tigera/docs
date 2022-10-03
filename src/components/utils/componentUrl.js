@@ -39,4 +39,4 @@ function componentUrl(component, release, prodname) {
   }
 }
 
-module.exports = componentUrl;
+module.exports.componentUrl = componentUrl;

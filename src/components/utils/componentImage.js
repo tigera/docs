@@ -9,7 +9,7 @@ function componentImage(comp, prodname) {
     return;
   }
 
-  const component = productVariables.components[comp];
+  const component = productVariables.releases[0].components[comp];
   const registry = component.registry ? `${component.registry}/` : '';
 
   return `${registry}${component.image}:${component.version}`;
