@@ -4,6 +4,7 @@ import { If, When, Then, Else } from 'react-if';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Admonition from '@theme/Admonition';
+import Heading from '@theme/Heading';
 
 import ConfigureManagedCluster from './configure-managed-cluster';
 import Highlight from '../utils/Highlight';
@@ -12,7 +13,12 @@ import { toKebab } from '../utils/formatters';
 export default function InstallGKE(props) {
   return (
     <>
-      <h4 id={`install-${props.prodname}`}>Install {props.prodname}</h4>
+      <Heading
+        as='h4'
+        id={`install-${props.prodname}`}
+      >
+        Install {props.prodname}
+      </Heading>
       <ol>
         <li>
           <p>
@@ -149,14 +155,24 @@ spec:
         </If>
       </ol>
       <When condition={props.clusterType === 'standalone' || props.clusterType === 'management'}>
-        <h4 id={`install-the-${props.prodname}-license`}>Install the {props.prodname} license</h4>
+        <Heading
+          as='h4'
+          id={`install-the-${props.prodname}-license`}
+        >
+          Install the {props.prodname} license
+        </Heading>
         <p>In order to use {props.prodname}, you must install the license provided to you by Tigera.</p>
         <CodeBlock>{`kubectl create -f </path/to/license.yaml>`}</CodeBlock>
         <p>You can now monitor progress with the following command:</p>
         <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
       </When>
       <When condition={props.clusterType === 'management'}>
-        <h4 id='create-a-management-cluster'>Create a management cluster</h4>
+        <Heading
+          as='h4'
+          id='create-a-management-cluster'
+        >
+          Create a management cluster
+        </Heading>
         <p>
           To control managed clusters from your central management plane, you must ensure it is reachable for
           connections. The simplest way to get started (but not for production scenarios), is to configure a{' '}
@@ -225,9 +241,12 @@ EOF`}
             </CodeBlock>
           </li>
         </ol>
-        <h4 id='create-an-admin-user-and-verify-management-cluster-connection'>
+        <Heading
+          as='h4'
+          id='create-an-admin-user-and-verify-management-cluster-connection'
+        >
           Create an admin user and verify management cluster connection
-        </h4>
+        </Heading>
         <p>
           To access resources in a managed cluster from the {props.prodname} Manager within the management cluster, the
           logged-in user must have appropriate permissions defined in that managed cluster (clusterrole bindings).
@@ -264,7 +283,12 @@ kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-us
         <p>
           <ConfigureManagedCluster prodname={props.prodname} />
         </p>
-        <h4 id='provide-permissions-to-view-the-managed-cluster'>Provide permissions to view the managed cluster</h4>
+        <Heading
+          as='h4'
+          id='provide-permissions-to-view-the-managed-cluster'
+        >
+          Provide permissions to view the managed cluster
+        </Heading>
         <p>
           To access resources belonging to a managed cluster from the {props.prodname} Manager UI, the service or user
           account used to log in must have appropriate permissions defined in the managed cluster.

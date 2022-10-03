@@ -3,6 +3,7 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
+import Heading from '@theme/Heading';
 
 import InstallOpenShiftManifests from './install-openshift-manifests';
 import OpenShiftPullSecret from './openshift-pull-secret';
@@ -14,9 +15,12 @@ import { toKebab } from '../utils/formatters';
 export default function InstallOpenShift(props) {
   return (
     <>
-      <h4 id='create-a-configuration-file-for-the-openshift-installer'>
+      <Heading
+        as='h4'
+        id='create-a-configuration-file-for-the-openshift-installer'
+      >
         Create a configuration file for the OpenShift installer
-      </h4>
+      </Heading>
       <p>
         First, create a staging directory for the installation. This directory will contain the configuration file,
         along with cluster state files, that OpenShift installer will create:
@@ -40,7 +44,12 @@ export default function InstallOpenShift(props) {
         <code>install-config.yaml</code>.
       </p>
 
-      <h4 id='update-the-configuration-file-to-use-prodname'>Update the configuration file to use {props.prodname}</h4>
+      <Heading
+        as='h4'
+        id='update-the-configuration-file-to-use-prodname'
+      >
+        Update the configuration file to use {props.prodname}
+      </Heading>
       <p>
         Override the OpenShift networking to use {props.prodname} and update the AWS instance types to meet the{' '}
         <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/openshift/requirements'>
@@ -53,7 +62,12 @@ export default function InstallOpenShift(props) {
         sed -i 's/platform: {}/platform:\n{'\t'}aws:\n{'\t'}type: m4.xlarge/g' install-config.yaml
       </CodeBlock>
 
-      <h4 id='generate-the-install-manifests'>Generate the install manifests</h4>
+      <Heading
+        as='h4'
+        id='generate-the-install-manifests'
+      >
+        Generate the install manifests
+      </Heading>
       <p>Now generate the Kubernetes manifests using your configuration file:</p>
       <CodeBlock language='bash'>openshift-install create manifests</CodeBlock>
 
@@ -86,10 +100,20 @@ spec:
         </>
       )}
 
-      <h4 id='add-an-image-pull-secret'>Add an image pull secret</h4>
+      <Heading
+        as='h4'
+        id='add-an-image-pull-secret'
+      >
+        Add an image pull secret
+      </Heading>
       <OpenShiftPullSecret />
 
-      <h4 id='provide-additional-configuration'>Provide additional configuration</h4>
+      <Heading
+        as='h4'
+        id='provide-additional-configuration'
+      >
+        Provide additional configuration
+      </Heading>
       <p>
         To provide additional configuration during installation (for example, BGP configuration or peers), use a
         Kubernetes ConfigMap with your desired {props.prodname} resources. If you do not need to provide additional
@@ -123,11 +147,21 @@ spec:
         </p>
       </Admonition>
 
-      <h4 id='create-the-cluster'>Create the cluster</h4>
+      <Heading
+        as='h4'
+        id='create-the-cluster'
+      >
+        Create the cluster
+      </Heading>
       <p>Start the cluster creation with the following command and wait for it to complete.</p>
       <CodeBlock>openshift-install create cluster</CodeBlock>
 
-      <h4 id='create-a-storage-class'>Create a storage class</h4>
+      <Heading
+        as='h4'
+        id='create-a-storage-class'
+      >
+        Create a storage class
+      </Heading>
       <p>
         {props.prodname} requires storage for logs and reports. Before finishing the installation, you must{' '}
         <Link href='/docs/calico-enterprise/maintenance/logstorage/create-storage'>
@@ -139,7 +173,12 @@ spec:
       {maybeRender(
         props.clusterType === 'standalone' || props.clusterType === 'management',
         <>
-          <h4 id='install-the-prodname-license'>Install the {props.prodname} license</h4>
+          <Heading
+            as='h4'
+            id='install-the-prodname-license'
+          >
+            Install the {props.prodname} license
+          </Heading>
           <p>
             In order to use {props.prodname}, you must install the license provided to you by Tigera support
             representative. Before applying the license, wait until the Tigera API server is ready with the following
@@ -154,7 +193,12 @@ spec:
         </>
       )}
 
-      <h4 id='install-prodname-resources'>Install {props.prodname} resources</h4>
+      <Heading
+        as='h4'
+        id='install-prodname-resources'
+      >
+        Install {props.prodname} resources
+      </Heading>
 
       {/* OCP_ENTERPRISE_RESOURCES variable in Makefile needs to be updated for any addition or deletion of enterprise resources */}
 
@@ -219,7 +263,12 @@ spec:
       {maybeRender(
         props.clusterType === 'management',
         <>
-          <h4 id='create-a-management-cluster'>Create a management cluster</h4>
+          <Heading
+            as='h4'
+            id='create-a-management-cluster'
+          >
+            Create a management cluster
+          </Heading>
           <p>
             To control managed clusters from your central management plane, you must ensure it is reachable for
             connections. The simplest way to get started (but not for production scenarios), is to configure a{' '}
@@ -286,9 +335,12 @@ EOF`}
               </CodeBlock>
             </li>
           </ol>
-          <h4 id='create-an-admin-user-and-verify-management-cluster-connection'>
+          <Heading
+            as='h4'
+            id='create-an-admin-user-and-verify-management-cluster-connection'
+          >
             Create an admin user and verify management cluster connection
-          </h4>
+          </Heading>
           <p>
             To access resources in a managed cluster from the {props.prodname} Manager within the management cluster,
             the logged-in user must have appropriate permissions defined in that managed cluster (clusterrole bindings).
@@ -333,7 +385,12 @@ EOF`}
             prodname={props.prodname}
             kubectlCmd='oc'
           />
-          <h4 id='provide-permissions-to-view-the-managed-cluster'>Provide permissions to view the managed cluster</h4>
+          <Heading
+            as='h4'
+            id='provide-permissions-to-view-the-managed-cluster'
+          >
+            Provide permissions to view the managed cluster
+          </Heading>
           <p>
             To access resources belonging to a managed cluster from the {props.prodname} Manager UI, the service or user
             account used to log in must have appropriate permissions defined in the managed cluster.
@@ -358,13 +415,23 @@ EOF`}
 function InstallOpenShiftWindows(props) {
   return (
     <>
-      <h4 id='configure-strict-affinity'>Configure strict affinity</h4>
+      <Heading
+        as='h4'
+        id='configure-strict-affinity'
+      >
+        Configure strict affinity
+      </Heading>
       <p>
         Next, <Link href={`docs/${toKebab(props.prodname)}/maintenance/clis/calicoctl/install`}>install calicoctl</Link>{' '}
         and ensure strict affinity is true:
       </p>
       <CodeBlock language='bash'>calicoctl ipam configure --strictaffinity=true</CodeBlock>
-      <h4 id='add-windows-nodes-to-the-cluster'>Add Windows nodes to the cluster</h4>
+      <Heading
+        as='h4'
+        id='add-windows-nodes-to-the-cluster'
+      >
+        Add Windows nodes to the cluster
+      </Heading>
       <p>
         Download the latest{' '}
         <a
@@ -418,7 +485,12 @@ $ ./wni aws create \
 2020/10/05 12:57:30 External IP: 52.35.12.231
 2020/10/05 12:57:30 Internal IP: 10.0.90.193`}
       </CodeBlock>
-      <h4 id='get-the-administrator-password'>Get the administrator password</h4>
+      <Heading
+        as='h4'
+        id='get-the-administrator-password'
+      >
+        Get the administrator password
+      </Heading>
       <p>
         The <code>wni</code> binary writes the instance details to the file <code>windows-node-installer.json</code>. An
         example of the file:
@@ -432,7 +504,12 @@ $ ./wni aws create \
         {'aws ec2 get-password-data --instance-id <instance id> --priv-launch-key <aws private key path>'}
       </CodeBlock>
 
-      <h4 id='install-prodnamewindows'>Install {props.prodnameWindows}</h4>
+      <Heading
+        as='h4'
+        id='install-prodnamewindows'
+      >
+        Install {props.prodnameWindows}
+      </Heading>
       <ol>
         <li>
           <p>Remote into the Windows node, open a Powershell window, and prepare the directory for Kubernetes files.</p>
@@ -492,7 +569,12 @@ Kubernetes Version: v1.18.3+5302882`}
           <CodeBlock language='bash'>Get-Service -Name kube-proxy</CodeBlock>
         </li>
       </ol>
-      <h4 id='configure-kubelet'>Configure kubelet</h4>
+      <Heading
+        as='h4'
+        id='configure-kubelet'
+      >
+        Configure kubelet
+      </Heading>
       <p>
         From the Windows node, download the Windows Machine Config Bootstrapper <code>wmcb.exe</code> that matches your
         OpenShift minor version from{' '}

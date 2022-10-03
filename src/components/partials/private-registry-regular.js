@@ -2,6 +2,7 @@ import React from 'react';
 
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
+import Heading from '@theme/Heading';
 
 import getProductVariablesByProdname from '../../utils/getProductVariablesByProdname';
 
@@ -20,7 +21,12 @@ export default function PrivateRegistryRegular(props) {
 
   return (
     <>
-      <h4 id='push-images-to-your-private-registry'>Push {props.prodname} images to your private registry</h4>
+      <Heading
+        as='h4'
+        id='push-images-to-your-private-registry'
+      >
+        Push {props.prodname} images to your private registry
+      </Heading>
       <p>
         In order to install images from your private registry, you must first pull the images from Tigera&#39;s
         registry, re-tag them with your own registry, and then push the newly tagged images to your own registry.
@@ -86,9 +92,12 @@ export default function PrivateRegistryRegular(props) {
         </li>
       </ol>
 
-      <h4 id='run-the-operator-using-images-from-your-private-registry'>
+      <Heading
+        as='h4'
+        id='run-the-operator-using-images-from-your-private-registry'
+      >
         Run the operator using images from your private registry
-      </h4>
+      </Heading>
       <p>
         Before applying <code>tigera-operator.yaml</code>, modify registry references to use your custom registry:
       </p>
@@ -117,9 +126,12 @@ sed -ie "/serviceAccountName: calico-prometheus-operator/a \      imagePullSecre
       <CodeBlock language='bash'>sed -ie "s?quay.io?$PRIVATE_REGISTRY?g" custom-resources.yaml</CodeBlock>
       {/* This step should be removed once operator launches Prometheus & Alertmanager */}
 
-      <h4 id='configure-the-operator-to-use-images-from-your-private-registry'>
+      <Heading
+        as='h4'
+        id='configure-the-operator-to-use-images-from-your-private-registry'
+      >
         Configure the operator to use images from your private registry.
-      </h4>
+      </Heading>
       <p>
         Set the <code>spec.registry</code> field of your Installation resource to the name of your custom registry. For
         example:

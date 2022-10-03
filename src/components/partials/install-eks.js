@@ -3,6 +3,7 @@ import React from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Admonition from '@theme/Admonition';
+import Heading from '@theme/Heading';
 
 import ConfigureManagedCluster from './configure-managed-cluster';
 import Highlight from '../utils/Highlight';
@@ -11,14 +12,24 @@ import { toKebab } from '../utils/formatters';
 export default function InstallEKS(props) {
   return (
     <>
-      <h4 id='install-eks-with-amazon-vpc-networking'>Install EKS with Amazon VPC networking</h4>
+      <Heading
+        as='h4'
+        id='install-eks-with-amazon-vpc-networking'
+      >
+        Install EKS with Amazon VPC networking
+      </Heading>
       {props.clusterType === 'standalone' && (
         <>
           <p>The geeky details of what you get:</p>
           {`{% include geek-details.html details='Policy:Calico,IPAM:AWS,CNI:AWS,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}`}
         </>
       )}
-      <h5 id='create-an-eks-cluster'>Create an EKS cluster</h5>
+      <Heading
+        as='h5'
+        id='create-an-eks-cluster'
+      >
+        Create an EKS cluster
+      </Heading>
       <p>
         Make sure you have an EKS cluster <strong>without {props.prodname} installed</strong> and:
       </p>
@@ -35,7 +46,12 @@ export default function InstallEKS(props) {
           .
         </li>
       </ul>
-      <h5 id={`"install-${toKebab(props.prodname)}"`}>Install {props.prodname}</h5>
+      <Heading
+        as='h5'
+        id={`"install-${toKebab(props.prodname)}"`}
+      >
+        Install {props.prodname}
+      </Heading>
       <ol>
         <li>
           <Link href='/docs/calico-enterprise/maintenance/logstorage/create-storage'>
@@ -172,7 +188,12 @@ spec:
           </li>
         )}
       </ol>
-      <h4 id='install-eks-with-calico-networking'>Install EKS with Calico networking</h4>
+      <Heading
+        as='h4'
+        id='install-eks-with-calico-networking'
+      >
+        Install EKS with Calico networking
+      </Heading>
       {props.clusterType === 'standalone' && (
         <>
           <p>The geeky details of what you get:</p>
@@ -193,7 +214,12 @@ spec:
         </Link>{' '}
         definition for more information on this setting.
       </Admonition>
-      <h5 id='create-an-eks-cluster'>Create an EKS cluster</h5>
+      <Heading
+        as='h5'
+        id='create-an-eks-cluster'
+      >
+        Create an EKS cluster
+      </Heading>
       <p>
         For these instructions, we will use <Highlight>eksctl</Highlight> to provision the cluster. However, you can use
         any of the methods in{' '}
@@ -220,7 +246,12 @@ spec:
           <CodeBlock language='bash'>kubectl delete daemonset -n kube-system aws-node</CodeBlock>
         </li>
       </ol>
-      <h5 id={`install-${props.prodname}`}>Install {props.prodname}</h5>
+      <Heading
+        as='h5'
+        id={`install-${props.prodname}`}
+      >
+        Install {props.prodname}
+      </Heading>
       <ol>
         <li>
           <p>
@@ -375,7 +406,12 @@ spec:
       </ol>
       {(props.clusterType === 'standalone' || props.clusterType === 'management') && (
         <>
-          <h4 id={`install-the-${props.prodname}-license`}>Install the {props.prodname} license</h4>
+          <Heading
+            as='h4'
+            id={`install-the-${props.prodname}-license`}
+          >
+            Install the {props.prodname} license
+          </Heading>
           <p>In order to use {props.prodname}, you must install the license provided to you by Tigera.</p>
           <CodeBlock>{`kubectl create -f </path/to/license.yaml>`}</CodeBlock>
           <p>You can now monitor progress with the following command:</p>
@@ -384,7 +420,12 @@ spec:
       )}
       {props.clusterType === 'management' && (
         <>
-          <h4 id='create-a-management-cluster'>Create a management cluster</h4>
+          <Heading
+            as='h4'
+            id='create-a-management-cluster'
+          >
+            Create a management cluster
+          </Heading>
           <p>
             To control managed clusters from your central management plane, you must ensure it is reachable for
             connections. The simplest way to get started (but not for production scenarios), is to configure a{' '}
@@ -453,9 +494,12 @@ EOF`}
               </CodeBlock>
             </li>
           </ol>
-          <h4 id='create-an-admin-user-and-verify-management-cluster-connection'>
+          <Heading
+            as='h4'
+            id='create-an-admin-user-and-verify-management-cluster-connection'
+          >
             Create an admin user and verify management cluster connection
-          </h4>
+          </Heading>
           <p>
             To access resources in a managed cluster from the {props.prodname} Manager within the management cluster,
             the logged-in user must have appropriate permissions defined in that managed cluster (clusterrole bindings).
@@ -492,7 +536,12 @@ kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-us
       {props.clusterType === 'managed' && (
         <>
           <ConfigureManagedCluster prodname={props.prodname} />
-          <h4 id='provide-permissions-to-view-the-managed-cluster'>Provide permissions to view the managed cluster</h4>
+          <Heading
+            as='h4'
+            id='provide-permissions-to-view-the-managed-cluster'
+          >
+            Provide permissions to view the managed cluster
+          </Heading>
           <p>
             To access resources belonging to a managed cluster from the {props.prodname} Manager UI, the service or user
             account used to log in must have appropriate permissions defined in the managed cluster.

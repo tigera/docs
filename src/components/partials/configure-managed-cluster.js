@@ -2,6 +2,7 @@ import React from 'react';
 
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
+import Heading from '@theme/Heading';
 
 import { toKebab } from '../utils/formatters';
 
@@ -10,15 +11,23 @@ export default function ConfigureManagedCluster(props) {
 
   return (
     <>
-      <h4 id='create-the-connection-manifest-for-your-managed-cluster'>
+      <Heading
+        as='h4'
+        id='create-the-connection-manifest-for-your-managed-cluster'
+      >
         Create the connection manifest for your managed cluster
-      </h4>
+      </Heading>
       <p>
         To connect the managed cluster to your management cluster, you need to create and apply a connection manifest.
         You can create a connection manifest from the Manager UI in the management cluster or manually using{' '}
         {kubectlCmd}.
       </p>
-      <h5 id='connect-cluster---manager-ui'>Connect cluster - Manager UI</h5>
+      <Heading
+        as='h5'
+        id='connect-cluster---manager-ui'
+      >
+        Connect cluster - Manager UI
+      </Heading>
       <ol>
         <li>
           <p>
@@ -37,7 +46,12 @@ export default function ConfigureManagedCluster(props) {
           <p>Download the manifest.</p>
         </li>
       </ol>
-      <h5 id='connect-cluster---kubectl'>Connect cluster - kubectl</h5>
+      <Heading
+        as='h5'
+        id='connect-cluster---kubectl'
+      >
+        connect-cluster---kubectl
+      </Heading>
       <p>
         Choose a name for your managed cluster and then add it to your <strong>management cluster</strong>. The
         following commands will create a manifest with the name of your managed cluster in your current directory.
@@ -91,9 +105,12 @@ EOF`
           Verify that the <code>managementClusterAddr</code> in the manifest is correct.
         </li>
       </ol>
-      <h4 id='apply-the-connection-manifest-to-your-managed-cluster'>
+      <Heading
+        as='h4'
+        id='apply-the-connection-manifest-to-your-managed-cluster'
+      >
         Apply the connection manifest to your managed cluster
-      </h4>
+      </Heading>
       <ol>
         <li>
           <p>
