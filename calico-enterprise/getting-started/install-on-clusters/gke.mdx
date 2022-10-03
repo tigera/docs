@@ -10,10 +10,12 @@ Install {{site.prodname}} on a GKE managed Kubernetes cluster.
 
 ### Concepts
 
-{{site.prodname}} supports the Calico CNI with {{site.prodname}} network policy:
+{% comment %} CE supports only GKE CNI, even though OS/Calico supports Calico CNI. Verified with Shaun, Casey, and Sujeet in 3.15. So docs will continue to be misaligned so be careful during merges. Note that OS support of Calico CNI is only in v1 of the dataplane; in v2, Cillium is the supported CNI. Another misalignment is that CE install docs list all platforms supported; OS/Calico lists of supported CNIs based on an opinionated view. {% endcomment %}
+
+{{site.prodname}} supports the GKE CNI with {{site.prodname}} network policy:
 
 The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Host Local,CNI:Calico,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}
+{% include geek-details.html details='Policy:Calico,IPAM:Host Local,CNI:GKE,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}
 
 ### Before you begin
 
