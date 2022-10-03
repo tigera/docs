@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Link from '@docusaurus/Link';
+import Heading from '@theme/Heading';
 
 import { toKebab } from '../utils/formatters';
 import { componentUrl } from '../utils/componentUrl';
@@ -27,7 +28,12 @@ export default function ReleaseNotesCalicoEnterprise() {
       </p>
       {releases.map((release) => (
         <div key={release.title}>
-          <h2 id={`calico-enterprise-${toKebab(release.title)}`}>Calico Enterprise {release.title}</h2>
+          <Heading
+            as='h2'
+            id={`calico-enterprise-${toKebab(release.title)}`}
+          >
+            Calico Enterprise {release.title}
+          </Heading>
           {release.title !== 'master' && (
             <p>
               <Link
@@ -39,7 +45,12 @@ export default function ReleaseNotesCalicoEnterprise() {
             </p>
           )}
           {release.note}
-          <h2 id='component-versions'>Component Versions</h2>
+          <Heading
+            as='h2'
+            id='component-versions'
+          >
+            Component Versions
+          </Heading>
           <p>
             This release comprises the following components, and can be installed using{' '}
             <Highlight>

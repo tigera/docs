@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Link from '@docusaurus/Link';
+import Heading from '@theme/Heading';
 
 import { toKebab } from '../utils/formatters';
 import { componentUrl } from '../utils/componentUrl';
@@ -26,7 +27,12 @@ export default function ReleaseNotesCalico() {
       </p>
       {releases.map((release) => (
         <div key={release.title}>
-          <h2 id={toKebab(release.title)}>{release.title}</h2>
+          <Heading
+            as='h2'
+            id={toKebab(release.title)}
+          >
+            {release.title}
+          </Heading>
           {release.title !== 'master' && (
             <p>
               <Link

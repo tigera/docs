@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Admonition from '@theme/Admonition';
+import Heading from '@theme/Heading';
 import Link from '@docusaurus/Link';
 import { cloud, enterprise, openSource, global } from '@site/variables';
 import { toKebab } from '../utils/formatters';
@@ -10,7 +11,12 @@ const { orchestrators } = global;
 function NodeRequirementsOSS(props) {
   return (
     <>
-      <h2 id='node-requirements'>Node requirements</h2>
+      <Heading
+        as='h2'
+        id='node-requirements'
+      >
+        Node requirements
+      </Heading>
       <ul>
         <li>
           <p>x86-64, arm64, ppc64le, or s390x processor</p>
@@ -61,7 +67,12 @@ function NodeRequirementsOSS(props) {
 function NodeRequirementsEnt(props) {
   return (
     <>
-      <h2 id='node-requirements'>Node requirements</h2>
+      <Heading
+        as='h2'
+        id='node-requirements'
+      >
+        Node requirements
+      </Heading>
       <ul>
         <li>
           <p>x86-64 processor with at least 2 cores, 8.0GB RAM and 20 GB free disk space</p>
@@ -204,7 +215,11 @@ function NotesOSS(props) {
           <p>
             Many Linux distributions, such as most of the above, include NetworkManager. By default, NetworkManager does
             not allow {props.prodname} to manage interfaces. If your nodes have NetworkManager, complete the steps in{' '}
-            <Link href={`/docs/${toKebab(props.prodname)}/maintenance/troubleshoot/troubleshooting#configure-networkmanager`}>
+            <Link
+              href={`/docs/${toKebab(
+                props.prodname
+              )}/maintenance/troubleshoot/troubleshooting#configure-networkmanager`}
+            >
               Preventing NetworkManager from controlling {props.prodname} interfaces
             </Link>{' '}
             before installing {props.prodname}.
@@ -221,7 +236,8 @@ function NotesOSS(props) {
         <Admonition type='note'>
           <p>
             If a host firewall is needed, it can be configured by {props.prodname} HostEndpoint and GlobalNetworkPolicy.
-            More information about configuration at <Link href={`/docs/${toKebab(props.prodname)}/security/hosts`}>Security for host</Link>.
+            More information about configuration at{' '}
+            <Link href={`/docs/${toKebab(props.prodname)}/security/hosts`}>Security for host</Link>.
           </p>
         </Admonition>
       </div>
@@ -232,7 +248,12 @@ function NotesOSS(props) {
 function KeyValueStore(props) {
   return (
     <>
-      <h2 id='keyvalue-store'>Key/value store</h2>
+      <Heading
+        as='h2'
+        id='keyvalue-store'
+      >
+        Key/value store
+      </Heading>
       <p>
         {props.prodname} requires a key/value store accessible by all {props.prodname} components.&nbsp;
         {
@@ -262,7 +283,12 @@ function KeyValueStore(props) {
 function NetworkRequirementsOSS(props) {
   return (
     <>
-      <h2 id='network-requirements'>Network requirements</h2>
+      <Heading
+        as='h2'
+        id='network-requirements'
+      >
+        Network requirements
+      </Heading>
       <p>Ensure that your hosts and firewalls allow the necessary traffic based on your configuration.</p>
       <table style={{ width: '100%' }}>
         <colgroup>
@@ -408,7 +434,12 @@ function NetworkRequirementsOSS(props) {
 function NetworkRequirementsEnt(props) {
   return (
     <>
-      <h2 id='network-requirements'>Network requirements</h2>
+      <Heading
+        as='h2'
+        id='network-requirements'
+      >
+        Network requirements
+      </Heading>
       <p>
         Ensure that your hosts and firewalls allow the necessary traffic based on your configuration. See{' '}
         <Link href={'/docs/calico-enterprise/reference/architecture/overview'}>Component architecture</Link> to view the
@@ -612,7 +643,12 @@ function NetworkRequirementsEnt(props) {
 function Privileges(props) {
   return (
     <>
-      <h2 id='privileges'>Privileges</h2>
+      <Heading
+        as='h2'
+        id='privileges'
+      >
+        Privileges
+      </Heading>
       <p>
         Ensure that {props.prodname} has the <code>CAP_SYS_ADMIN</code> privilege.
       </p>

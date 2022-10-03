@@ -3,6 +3,7 @@ import React from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Admonition from '@theme/Admonition';
+import Heading from '@theme/Heading';
 
 import ConfigureManagedCluster from './configure-managed-cluster';
 import Highlight from '../utils/Highlight';
@@ -11,14 +12,24 @@ import { toKebab } from '../utils/formatters';
 export default function InstallAKS(props) {
   return (
     <>
-      <h4 id='install-aks-with-azure-cni-networking'>Install AKS with Azure CNI networking</h4>
+      <Heading
+        as='h4'
+        id='install-aks-with-azure-cni-networking'
+      >
+        Install AKS with Azure CNI networking
+      </Heading>
       {props.clusterType === 'standalone' && (
         <>
           <p>The geeky details of what you get:</p>
           <p>{`{% include geek-details.html details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}`}</p>
         </>
       )}
-      <h5 id='create-an-aks-cluster'>Create an AKS cluster</h5>
+      <Heading
+        as='h5'
+        id='create-an-aks-cluster'
+      >
+        Create an AKS cluster
+      </Heading>
       <p>
         Make sure you have a{' '}
         <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/aks'>compatible</Link> AKS cluster with:
@@ -33,7 +44,12 @@ export default function InstallAKS(props) {
           </Link>
         </li>
       </ul>
-      <h5 id={`install-${props.prodname}-`}>Install {props.prodname}</h5>
+      <Heading
+        as='h5'
+        id={`install-${props.prodname}`}
+      >
+        Install {props.prodname}
+      </Heading>
       <ol>
         <li>
           <p>
@@ -171,14 +187,24 @@ spec:
           proceed to the next section.
         </p>
       )}
-      <h4 id={`install-aks-with-${props.prodname}-networking`}>Install AKS with {props.prodname} networking</h4>
+      <Heading
+        as='h4'
+        id={`install-aks-with-${props.prodname}-networking`}
+      >
+        Install AKS with {props.prodname} networking
+      </Heading>
       {props.clusterType === 'standalone' && (
         <>
           <p>The geeky details of what you get:</p>
           <p>{`{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VxLAN,Routing:Calico,Datastore:Kubernetes' %}`}</p>
         </>
       )}
-      <h5 id='create-an-aks-cluster'>Create an AKS cluster</h5>
+      <Heading
+        as='h5'
+        id='create-an-aks-cluster'
+      >
+        Create an AKS cluster
+      </Heading>
       <p>
         Make sure you have a{' '}
         <Link href='/docs/calico-enterprise/getting-started/install-on-clusters/aks'>compatible</Link> AKS cluster with:
@@ -193,7 +219,12 @@ spec:
           </Link>
         </li>
       </ul>
-      <h5 id={`install-${toKebab(props.prodname)}`}>Install {props.prodname}</h5>
+      <Heading
+        as='h5'
+        id={`install-${toKebab(props.prodname)}`}
+      >
+        Install {props.prodname}
+      </Heading>
       <ol>
         <li>
           <p>
@@ -333,9 +364,12 @@ spec:
       )}
       {(props.clusterType === 'standalone' || props.clusterType === 'management') && (
         <>
-          <h4 id={`install-the-${props.prodname.toLowerCase().replace(' ', '-')}-license`}>
+          <Heading
+            as='h4'
+            id={`install-the-${props.prodname.toLowerCase().replace(' ', '-')}-license`}
+          >
             Install the {props.prodname} license
-          </h4>
+          </Heading>
           <p>In order to use {props.prodname}, you must install the license provided to you by Tigera.</p>
           <CodeBlock>{`kubectl create -f </path/to/license.yaml>`}</CodeBlock>
           <p>You can now monitor progress with the following command:</p>
@@ -344,7 +378,12 @@ spec:
       )}
       {props.clusterType === 'management' && (
         <>
-          <h4 id='create-a-management-cluster'>Create a management cluster</h4>
+          <Heading
+            as='h4'
+            id='create-a-management-cluster'
+          >
+            Create a management cluster
+          </Heading>
           <p>
             To control managed clusters from your central management plane, you must ensure it is reachable for
             connections. The simplest way to get started (but not for production scenarios), is to configure a{' '}
@@ -413,9 +452,12 @@ EOF`}
               </CodeBlock>
             </li>
           </ol>
-          <h4 id='create-an-admin-user-and-verify-management-cluster-connection'>
+          <Heading
+            as='h4'
+            id='create-an-admin-user-and-verify-management-cluster-connection'
+          >
             Create an admin user and verify management cluster connection
-          </h4>
+          </Heading>
           <p>
             To access resources in a managed cluster from the {props.prodname} Manager within the management cluster,
             the logged-in user must have appropriate permissions defined in that managed cluster (clusterrole bindings).
@@ -452,7 +494,12 @@ kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-us
       {props.clusterType === 'managed' && (
         <>
           <ConfigureManagedCluster prodname={props.prodname} />
-          <h4 id='provide-permissions-to-view-the-managed-cluster'>Provide permissions to view the managed cluster</h4>
+          <Heading
+            as='h4'
+            id='provide-permissions-to-view-the-managed-cluster'
+          >
+            Provide permissions to view the managed cluster
+          </Heading>
           <p>
             To access resources belonging to a managed cluster from the {props.prodname} Manager UI, the service or user
             account used to log in must have appropriate permissions defined in the managed cluster.
