@@ -22,6 +22,8 @@ import InstallOpenShiftManifests from '@site/src/components/partials/install-ope
 import OpenShiftPullSecret from '@site/src/components/partials/openshift-pull-secret';
 import OpenShiftPrometheusOperator from '@site/src/components/partials/openshift-prometheus-operator';
 import GeekDetails from '@site/src/components/partials/geek-details';
+import ReleaseNotesCalico from '@site/src/components/partials/release-notes-calico';
+import ReleaseNotesCalicoEnterprise from '@site/src/components/partials/release-notes-calico-enterprise';
 
 const wrap = (Partial) => (props) =>
   (
@@ -56,4 +58,6 @@ export default {
   OpenShiftPullSecret: wrap(OpenShiftPullSecret),
   OpenShiftPrometheusOperator: wrap(OpenShiftPrometheusOperator),
   GeekDetails: wrap(GeekDetails),
+  ReleaseNotesCalico: wrap(ReleaseNotesCalico),
+  ReleaseNotesCalicoEnterprise: wrap(ReleaseNotesCalicoEnterprise),
 };

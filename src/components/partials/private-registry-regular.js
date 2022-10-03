@@ -14,7 +14,8 @@ export default function PrivateRegistryRegular(props) {
     return null;
   }
 
-  const { tigeraOperator, components } = productVariables;
+  const { tigeraOperator } = productVariables;
+  const components = productVariables.releases[0].components;
   const componentsWithImage = Object.values(components).filter(filters.withImage);
 
   return (
