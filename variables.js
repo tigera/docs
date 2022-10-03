@@ -1,6 +1,6 @@
-const releasesCalico = require('./src/data/calico/releases.json');
-const releasesCalicoCloud = require('./src/data/calico-cloud/releases.json');
-const releasesCalicoEnterprise = require('./src/data/calico-enterprise/releases.json');
+const releasesCalico = require('./src/releases/releases-calico.json');
+const releasesCalicoCloud = require('./src/releases/releases-calico-cloud.json');
+const releasesCalicoEnterprise = require('./src/releases/releases-calico-enterprise.json');
 
 const getVersion = (releases) => {
   return releases[0].title === 'master' ? 'master' : releases[0].calico.minor_version;
