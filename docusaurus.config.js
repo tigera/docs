@@ -34,7 +34,9 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
+          path: 'calico',
+          routeBasePath: 'calico',
+          sidebarPath: require.resolve('./sidebars-calico.js'),
           editUrl: 'https://github.com/tigera/docs/',
           beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         },
@@ -71,12 +73,14 @@ const config = {
             label: 'Calico Enterprise',
             type: 'docSidebar',
             sidebarId: 'calicoEnterpriseSidebar',
+            docsPluginId: 'calico-enterprise',
             position: 'left',
           },
           {
             label: 'Calico Cloud',
             type: 'docSidebar',
             sidebarId: 'calicoCloudSidebar',
+            docsPluginId: 'calico-cloud',
             position: 'left',
           },
           {
@@ -104,15 +108,15 @@ const config = {
             items: [
               {
                 label: 'Calico',
-                to: '/docs/category/calico',
+                to: '/calico/category/calico',
               },
               {
                 label: 'Calico Enterprise',
-                to: '/docs/category/calico-enterprise',
+                to: '/calico-enterprise/category/calico-enterprise',
               },
               {
                 label: 'Calico Cloud',
-                to: '/docs/calico-cloud',
+                to: '/calico-cloud',
               },
             ],
           },
@@ -162,7 +166,32 @@ const config = {
         darkTheme: darkCodeTheme,
       },
     }),
-  plugins: ['docusaurus-plugin-sass'],
+  plugins: [
+    'docusaurus-plugin-sass',
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      {
+        id: 'calico-enterprise',
+        path: 'calico-enterprise',
+        routeBasePath: 'calico-enterprise',
+        editCurrentVersion: true,
+        sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      {
+        id: 'calico-cloud',
+        path: 'calico-cloud',
+        routeBasePath: 'calico-cloud',
+        editCurrentVersion: true,
+        sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
+      },
+    ],
+  ],
 };
 
+module.exports = config;
 module.exports = config;
