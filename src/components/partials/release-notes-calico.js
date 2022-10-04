@@ -12,8 +12,7 @@ export default function ReleaseNotesCalico() {
   const releases = variables.openSource.releases.map((release) => ({
     ...release,
     note:
-      release.note ||
-      require(`../../../docs/calico/_includes/release-notes/${release.title}-release-notes.mdx`).default({}),
+      release.note || require(`../../../calico/_includes/release-notes/${release.title}-release-notes.mdx`).default({}),
   }));
 
   return (

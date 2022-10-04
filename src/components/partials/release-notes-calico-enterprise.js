@@ -14,7 +14,7 @@ export default function ReleaseNotesCalicoEnterprise() {
     ...release,
     note:
       release.note ||
-      require(`../../../docs/calico-enterprise/_includes/release-notes/${release.title}-release-notes.mdx`).default({}),
+      require(`../../../calico-enterprise/_includes/release-notes/${release.title}-release-notes.mdx`).default({}),
   }));
 
   return (
