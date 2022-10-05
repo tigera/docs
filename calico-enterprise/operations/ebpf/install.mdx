@@ -47,7 +47,7 @@ and in particular, pushing the networking capabilities of the latest Linux kerne
   - RKE
 
    >**Note**:
-   eBPF supports AKS with Calico CNI and {{site.prodname}} network policy. However, with [AKS with Azure CNI and {{site.prodname}} network policy](../../getting-started/kubernetes/aks#install-aks-with-azure-cni-networking), kube-proxy cannot be disabled so the performance benefits of eBPF are lost. However, there are other reasons to use eBPF other than performance gains, as described in [eBPF use cases]({{site.baseurl}}/maintenance/ebpf/use-cases-ebpf). 
+   eBPF supports AKS with Calico CNI and {{site.prodname}} network policy. However, with [AKS with Azure CNI and {{site.prodname}} network policy](../../getting-started/kubernetes/aks#install-with-azure-cni-networking), kube-proxy cannot be disabled so the performance benefits of eBPF are lost. However, there are other reasons to use eBPF other than performance gains, as described in [eBPF use cases]({{site.baseurl}}/maintenance/ebpf/use-cases-ebpf). 
    {: .alert .alert-info}
 
 

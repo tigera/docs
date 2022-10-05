@@ -8,7 +8,7 @@
 
 1. Install the Tigera operator and custom resource definitions.
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/tigera-operator.yaml" | absolute_url }}
    ```
 
@@ -17,7 +17,7 @@
    > **Note**: If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with {{site.prodname}}, your Prometheus operator must be v0.40.0 or higher.
    {: .alert .alert-info}
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/tigera-prometheus-operator.yaml" | absolute_url }}
    ```
 
@@ -25,7 +25,7 @@
 
    If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials.
 
-   ```
+   ```bash
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-operator \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -33,7 +33,7 @@
 
    For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
 
-   ```
+   ```bash
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -83,14 +83,14 @@
 {% else %}
 1. Install the Tigera custom resources. For more information on configuration options available, see [the installation reference]({{site.baseurl}}/reference/installation/api).
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/custom-resources.yaml" | absolute_url }}
    ```
 {% endif %}
 
    You can now monitor progress with the following command:
 
-   ```
+   ```bash
    watch kubectl get tigerastatus
    ```
 
@@ -102,13 +102,13 @@
 
 Install the {{site.prodname}} license provided to you by Tigera.
 
-```
+```bash
 kubectl create -f </path/to/license.yaml>
 ```
 
 You can now monitor progress with the following command:
 
-```
+```bash
 watch kubectl get tigerastatus
 ```
 

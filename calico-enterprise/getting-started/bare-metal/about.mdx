@@ -26,9 +26,12 @@ To learn how to restrict traffic to/from hosts using {{site.prodname}} network p
 
 ### Before you begin
 
-**Supported**
+**CNI support**
 
-All platforms supported in this release except Windows
+Calico CNI for networking with {{site.prodname}} network policy
+
+The geeky details of what you get: 
+{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes' %}
 
 **Required**
 
@@ -36,7 +39,7 @@ All platforms supported in this release except Windows
   
   If {{site.prodname}} is installed on a cluster, you already have a datastore.
 
-- Non-cluster host meets {{site.prodname}} [system requirements]({{site.baseurl}}/getting-started/bare-metal/about) 
+- Non-cluster host meets {{site.prodname}} [system requirements]({{site.baseurl}}/getting-started/bare-metal/requirements) 
   - Ensure that your node OS includes the `ipset` and `conntrack` kernel dependencies
   - Install Docker if you are are using container install option (rather than binary install)  
 

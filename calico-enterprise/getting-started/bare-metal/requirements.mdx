@@ -1,6 +1,6 @@
 ---
 title: System requirements
-description: Review node requirements for installing Calico Enterprise.
+description: Review node requirements for installing Calico Enterprise on non-cluster hosts.
 canonical_url: '/getting-started/bare-metal/requirements'
 ---
 
