@@ -43,6 +43,7 @@ const variables = {
     chart_version_name: getChartVersionName(releasesCalicoCloud),
     clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.14.1-1',
     releases: releasesCalicoCloud,
+    registry: 'quay.io/',
   },
   enterprise: {
     prodname: 'Calico Enterprise',
@@ -76,6 +77,8 @@ const variables = {
     ppa_repo_name: getPPARepoName(OPEN_SOURCE_VERSION),
     chart_version_name: getChartVersionName(releasesCalico),
     releases: releasesCalico,
+    registry: 'quay.io/',
+    vppbranch: 'master',
     imageNames: {
       'calico/node': 'calico/node',
       calicoctl: 'calico/ctl',
@@ -102,6 +105,7 @@ const variables = {
       HostProtection: 'host protection',
       'host protection': 'host protection',
     },
+    url: 'http://localhost:3000',
   },
 };
 
