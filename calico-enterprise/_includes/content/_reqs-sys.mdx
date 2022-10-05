@@ -52,7 +52,7 @@
   | up to 2000              | 8
   | 2000 or more            | 10
 
-### Key/value store
+### Datastore requirements
 
 {{site.prodname}} {{page.version}} requires a key/value store accessible by all
 {{site.prodname}} components.
@@ -110,7 +110,7 @@ Ensure that your hosts and firewalls allow the necessary traffic based on your c
 \* _If your compute hosts connect directly and don't use IP-in-IP, you don't need to allow IP-in-IP traffic._
 {%- endif %}
 
-### Privileges
+### Privilege requirements
 
 Ensure that {{site.prodname}} has the `CAP_SYS_ADMIN` privilege.
 

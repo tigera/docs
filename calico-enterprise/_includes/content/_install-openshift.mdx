@@ -2,17 +2,17 @@
 
 First, create a staging directory for the installation. This directory will contain the configuration file, along with cluster state files, that OpenShift installer will create:
 
-```
+```bash
 mkdir openshift-tigera-install && cd openshift-tigera-install
 ```
 
 Now run OpenShift installer to create a default configuration file:
 
-```
+```bash
 openshift-install create install-config
 ```
 
-> **Note**: See the {% include open-new-window.html text='OpenShift installer documentation' url='https://cloud.redhat.com/openshift/install' %} for more information
+>**Note**: See the {% include open-new-window.html text='OpenShift installer documentation' url='https://cloud.redhat.com/openshift/install' %} for more information
 > about the installer and any configuration changes required for your platform.
 {: .alert .alert-info}
 
@@ -41,7 +41,7 @@ openshift-install create manifests
 {% if include.clusterOS == "hybrid" %}
 Edit the Installation custom resource manifest `manifests/01-cr-installation.yaml` so that it enables VXLAN and disables BGP. This is required for {{site.prodnameWindows}}:
 
-```
+```yaml
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
@@ -101,15 +101,15 @@ openshift-install create cluster
 In order to use {{site.prodname}}, you must install the license provided to you by Tigera support representative.
 Before applying the license, wait until the Tigera API server is ready with the following command:
 
-```
+```bash
 watch oc get tigerastatus
 ```
 
 Wait until the `apiserver` shows a status of `Available`.
 
-Once the Tigera API server is ready, apply the license:
+After the Tigera API server is ready, apply the license:
 
-```
+```bash
 oc create -f </path/to/license.yaml>
 ```
 
@@ -168,7 +168,7 @@ oc create -f {{ "/manifests/ocp/tigera-enterprise-resources.yaml" | absolute_url
 
 You can now monitor progress with the following command:
 
-```
+```bash
 watch oc get tigerastatus
 ```
 
