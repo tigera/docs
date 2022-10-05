@@ -177,6 +177,7 @@ const config = {
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
+        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
       },
     ],
     [
@@ -188,6 +189,7 @@ const config = {
         routeBasePath: 'calico-cloud',
         editCurrentVersion: true,
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
+        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
       },
     ],
   ],
