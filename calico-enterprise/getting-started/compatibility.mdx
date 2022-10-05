@@ -22,7 +22,7 @@ The following list shows the platforms supported in this release. The tables pro
 - [AKS](#aks)
 - [EKS](#eks)
 - [GKE](#gke)
-- [kOps](#kops)
+- [kOps-on-AWS](#kops-on-aws)
 - [Kubernetes-kubeadm](#kubernetes-kubeadm)
 - [MKE](#mke)
 - [OpenShift](#openshift)
@@ -80,8 +80,7 @@ The following list shows the platforms supported in this release. The tables pro
 | 3.6                       | 1.18         | - GKE CNI with {{site.prodname}} network policy |
 | 3.5                       | 1.18         | - GKE CNI with {{site.prodname}} network policy |
 
-
-### kOps
+### kOps on AWS
 
 | {{site.prodname}} version | kOps and Kubernetes versions | {{site.prodname}} support     |
 | ------------------------- | ----------- | ----------------------------- |
@@ -95,7 +94,6 @@ The following list shows the platforms supported in this release. The tables pro
 | 3.8                       | 1.20 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
 | 3.7                       | 1.20 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
 | 3.6                       | 1.19 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-
 
 ### Kubernetes-kubeadm
 

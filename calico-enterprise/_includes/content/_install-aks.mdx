@@ -1,24 +1,10 @@
-#### Install AKS with Azure CNI networking
-
-{% if include.clusterType == "standalone" %}
-The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}
-{% endif %}
-
-##### Create an AKS cluster
-
-Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/aks) AKS cluster with:
-
-- {% include open-new-window.html text='Azure CNI networking' url='https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni' %}
-- [A supported {{site.prodname}} managed Kubernetes version]({{site.baseurl}}/getting-started/kubernetes/requirements#supported-managed-kubernetes-versions)
-
-##### Install {{site.prodname}}
+#### Install with Azure CNI networking
 
 1. [Configure a storage class for {{site.prodname}}]({{site.baseurl}}/getting-started/create-storage).
 
 1. Install the Tigera operator and custom resource definitions.
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/tigera-operator.yaml" | absolute_url }}
    ```
 
@@ -27,7 +13,7 @@ Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/ak
    > **Note**: If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with {{site.prodname}}, your Prometheus operator must be v0.40.0 or higher.
    {: .alert .alert-info}
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/tigera-prometheus-operator.yaml" | absolute_url }}
    ```
 
@@ -35,7 +21,7 @@ Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/ak
 
    If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
 
-   ```
+   ```bash
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-operator \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -43,7 +29,7 @@ Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/ak
 
    For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
 
-   ```
+   ```bash
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -93,13 +79,13 @@ Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/ak
 {% else %}
 1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/aks/custom-resources.yaml" | absolute_url }}
    ```
 {% endif %}
    You can now monitor progress with the following command:
 
-   ```
+   ```bash
    watch kubectl get tigerastatus
    ```
 
@@ -109,27 +95,13 @@ Wait until the `apiserver` shows a status of `Available`, then proceed to [insta
 Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
 {% endif %}
 
-#### Install AKS with {{ site.prodname }} networking
-
-{% if include.clusterType == "standalone" %}
-The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VxLAN,Routing:Calico,Datastore:Kubernetes' %}
-{% endif %}
-
-##### Create an AKS cluster
-
-Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/aks) AKS cluster with:
-
-- {% include open-new-window.html text='Bring your own CNI' url='https://docs.microsoft.com/en-us/azure/aks/use-byo-cni?tabs=azure-cli' %}
-- [A supported {{site.prodname}} managed Kubernetes version]({{site.baseurl}}/getting-started/kubernetes/requirements#supported-managed-kubernetes-versions)
-
-##### Install {{site.prodname}}
+#### Install with {{site.prodname}} networking
 
 1. [Configure a storage class for {{site.prodname}}]({{site.baseurl}}/getting-started/create-storage).
 
 1. Install the Tigera operator and custom resource definitions.
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/tigera-operator.yaml" | absolute_url }}
    ```
 
@@ -138,7 +110,7 @@ Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/ak
    > **Note**: If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with {{site.prodname}}, your Prometheus operator must be v0.40.0 or higher.
    {: .alert .alert-info}
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/tigera-prometheus-operator.yaml" | absolute_url }}
    ```
 
@@ -146,7 +118,7 @@ Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/ak
 
    If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
 
-   ```
+   ```bash
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-operator \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -154,7 +126,7 @@ Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/ak
 
    For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
 
-   ```
+   ```bash
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -204,13 +176,13 @@ Make sure you have a [compatible]({{site.baseurl}}/getting-started/kubernetes/ak
 {% else %}
 1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/aks/custom-resources-calico-cni.yaml" | absolute_url }}
    ```
 {% endif %}
    You can now monitor progress with the following command:
 
-   ```
+   ```bash
    watch kubectl get tigerastatus
    ```
 
@@ -226,13 +198,13 @@ Wait until the `apiserver` shows a status of `Available`, then proceed to the ne
 
 In order to use {{site.prodname}}, you must install the license provided to you by Tigera.
 
-```
+```bash
 kubectl create -f </path/to/license.yaml>
 ```
 
 You can now monitor progress with the following command:
 
-```
+```bash
 watch kubectl get tigerastatus
 ```
 

@@ -8,10 +8,6 @@ canonical_url: '/getting-started/windows-calico/openshift/installation'
 
 Install an OpenShift 4 cluster on AWS with {{site.prodname}} on Windows nodes.
 
-### Value
-
-Run Windows workloads on OpenShift 4 with {{site.prodname}}.
-
 Augments the applicable steps in the {% include open-new-window.html text='OpenShift documentation' url='https://cloud.redhat.com/openshift/install' %} to install {{site.prodnameWindows}}.
 
 ### Before you begin
@@ -19,9 +15,6 @@ Augments the applicable steps in the {% include open-new-window.html text='OpenS
 {% include content/install-openshift-before-you-begin.md clusterOS="hybrid" %}
 
 ### How to
-
-The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:Calico,Datastore:Kubernetes' %}
 
 1. [Create a configuration file for the OpenShift installer](#create-a-configuration-file-for-the-openshift-installer)
 1. [Update the configuration file to use {{site.prodname}}](#update-the-configuration-file-to-use-calico-enterprise)
