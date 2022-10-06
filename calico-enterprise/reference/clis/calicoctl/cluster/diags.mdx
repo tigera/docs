@@ -46,6 +46,7 @@ An example response follows.
 
 ```
 ==== Begin collecting diagnostics. ====
+This needs to change
 Collecting basic cluster state ...
 Collect all namespaces
 Collect all in calico-system
