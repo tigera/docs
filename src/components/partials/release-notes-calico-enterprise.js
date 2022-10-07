@@ -4,19 +4,32 @@ import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 
 import { toKebab } from '../utils/formatters';
-import { componentUrl } from '../utils/componentUrl';
 import variables from '../../../variables';
 import Highlight from '../utils/Highlight';
 
 export default function ReleaseNotesCalicoEnterprise() {
   const { prodname, version, downloadsurl } = variables.enterprise;
 
-  const releases = variables.openSource.releases.map((release) => ({
-    ...release,
-    note:
-      release.note ||
-      require(`../../../docs/calico-enterprise/_includes/release-notes/${release.title}-release-notes.mdx`).default({}),
-  }));
+  const releases = variables.enterprise.releases.map((release) => {
+    let note = release.note;
+    try {
+      if (!note) {
+        note =
+          require(`../../../docs/calico-enterprise/_includes/release-notes/_${release.title}-release-notes.mdx`).default(
+            {}
+          );
+      }
+    } catch {
+      console.error(
+        `Cannot find "docs/calico-enterprise/_includes/release-notes/_${release.title}-release-notes.mdx" file`
+      );
+    }
+
+    return {
+      ...release,
+      note,
+    };
+  });
 
   return (
     <>
@@ -69,11 +82,7 @@ export default function ReleaseNotesCalicoEnterprise() {
               {Object.keys(release.components).map((componentName) => (
                 <tr key={componentName}>
                   <td>{componentName}</td>
-                  <td>
-                    <Link href={`/release-notes/${componentUrl(componentName, release, prodname)}`}>
-                      {release.components[componentName].version}
-                    </Link>
-                  </td>
+                  <td>{release.components[componentName].version}</td>
                 </tr>
               ))}
             </tbody>
