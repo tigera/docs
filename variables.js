@@ -81,7 +81,6 @@ const variables = {
     vppbranch: 'master',
     imageNames: {
       'calico/node': 'calico/node',
-      calicoctl: 'calico/ctl',
       typha: 'calico/typha',
       'calico/cni': 'calico/cni',
       'calico/apiserver': 'calico/apiserver',
