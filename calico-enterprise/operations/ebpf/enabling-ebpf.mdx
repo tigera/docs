@@ -1,6 +1,6 @@
 ---
-title: Enable the eBPF dataplane
-description: Step-by-step instructions for enabling the eBPF dataplane.
+title: Enable eBPF on an existing cluster
+description: Steps to enable the eBPF dataplane on an existing cluster.
 canonical_url: '/maintenance/ebpf/enabling-ebpf'
 ---
 
@@ -27,54 +27,9 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
 
 ### Before you begin
 
-#### Supported
+**Required**
 
-- x86-64
-
-- Distributions:
-
-  - Generic or kubeadm
-  - kOps
-  - OpenShift
-  - EKS
-  - AKS with limitations:
-    - [AKS with Azure CNI and Calico network policy](../../getting-started/kubernetes/aks#install-aks-with-azure-cni-networking) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
-    - [AKS with {{site.prodname}} networking](../../getting-started/kubernetes/aks#install-aks-with-{{site.prodnamedash}}-networking) is in testing with the eBPF dataplane. This should be a better solution overall but, at time of writing, the testing was not complete.
-  - RKE (RKE2 recommended because it supports disabling `kube-proxy`)
-
-- Linux distribution/kernel:
-
-  - Ubuntu 20.04.
-  - Red Hat v8.2 with Linux kernel v4.18.0-193 or above (Red Hat have backported the required features to that build).
-  - Another [supported distribution]({{site.baseurl}}/getting-started/kubernetes/requirements) with Linux kernel v5.3 or above.  Kernel v5.8 or above with CO-RE enabled is recommended for better performance. 
-
-- An underlying network fabric that allows VXLAN traffic between hosts.  In eBPF mode, VXLAN is used to forward Kubernetes NodePort traffic.
-
-#### Not supported
-
-- Other processor architectures.
-
-- Distributions:
-
-  - GKE.  This is because of an incompatibility with the GKE CNI plugin.
-
-- Clusters with some eBPF nodes and some standard dataplane and/or Windows nodes.
-- IPv6.
-- Floating IPs.
-- SCTP (either for policy or services). This is due to lack of kernel support for the SCTP checksum in BPF.
-- `Log` action in policy rules. This is because the `Log` action maps to the iptables `LOG` action and BPF programs cannot access that log.
-- VLAN-based traffic.
-
-#### Performance
-
-For best pod-to-pod performance, we recommend using an underlying network that doesn't require Calico to use an overlay.  For example:
-
-- A cluster within a single AWS subnet.
-- A cluster using a compatible cloud provider's CNI (such as the AWS VPC CNI plugin).
-- An on-prem cluster with BGP peering configured.
-
-If you must use an overlay, we recommend that you use VXLAN, not IPIP.  VXLAN has much better performance than IPIP in
-eBPF mode due to various kernel optimisations.
+- Review [Requirements, limitations, and performance]({{site.baseurl}}/maintenance/ebpf/install#before-you-begin) 
 
 ### How to
 

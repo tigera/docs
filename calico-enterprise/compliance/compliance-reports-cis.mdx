@@ -33,13 +33,9 @@ We recommend that you review the CIS benchmark best practices for securing clust
 
 ### Before you begin
 
-**Supported**
+**Limitations**
 
-- Kubernetes/kubeadm
-- RKE
-- OpenShift 
-- AWS/kOps
-- TKG
+CIS benchmarks runs only on nodes where {{site.prodname}} is running. This limitation may exclude master nodes in some managed cloud platforms (AKS, EKS, GKE). Because the user has limited control over installation of master nodes in managed cloud platforms, these reports may have limited use for cloud users.
 
 ### How to
 

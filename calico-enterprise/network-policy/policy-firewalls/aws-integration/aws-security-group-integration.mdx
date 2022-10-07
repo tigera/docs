@@ -15,11 +15,10 @@ AWS security group integration for {{site.prodname}} allows you to combine AWS s
 ### Before you begin
 
 **Supported**
-
 - Kubernetes and EKS clusters deployed with the Amazon VPC CNI plugin 
 
-**Not supported**
-- Helm and Docker install
+**Unsupported**
+- Helm install
 - Multiple VPCs
 - {{site.prodname}} non-cluster hosts, and auto-hostendpoint features. Alternatives to secure host endpoints:
   - Configure the security groups that are applied to the instances to police traffic to nodes

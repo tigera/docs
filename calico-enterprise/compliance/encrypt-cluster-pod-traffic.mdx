@@ -23,17 +23,20 @@ This how-to guide uses the following {{site.prodname}} features:
 
 ### Before you begin
 
+**Unsupported**
+
+- GKE
+
 **Limitations**
 
 - IPv4 only
 - EKS, only with AWS CNI
 - AKS, only with Azure CNI
-- Host-to-host encryption only with EKS/AWS CNI and AKS/Azure CNI
 
 **Supported encryption**
 
-- Host-to-host encryption for pod traffic
-- Encryption for direct node-to-node communication - supported only on managed clusters deployed on EKS and AKS
+- Pod-to-pod traffic
+- Encryption for direct node-to-node communication is only supported on managed clusters deployed on EKS (AWS CNI) and AKS (Azure CNI).
 
 **Required**
 

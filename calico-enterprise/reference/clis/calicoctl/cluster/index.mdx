@@ -1,4 +1,5 @@
 ---
+title: cluster
 description: calicoctl cluster commands.
 show_read_time: false
 show_toc: false
