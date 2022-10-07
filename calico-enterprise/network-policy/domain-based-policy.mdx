@@ -60,6 +60,11 @@ the IP addresses that the cluster nodes use for DNS resolution.
 
 {{site.prodname}} DNS policy does not support Kubernetes {% include open-new-window.html text='Using NodeLocal DNSCache in Kubernetes clusters' url='https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/' %} because it interferes with the ability to capture DNS traffic everywhere. 
 
+DNS policy is not supported at egress of egress gateway pods.  Domain-based rules will either never match in
+that hook, or, they may match intermittently.  Intermittent matches occur when a pod on the same node as the 
+egress gateway pod happens to make a matching DNS query.  This is because the DNS-to-IP cache used to render
+the policy is shared node-wide.
+
 ### How to
 
 You can specify allowed domain names directly in a **global network policy** or **namespaced network policy**, or specify domain names in a **global network set** (and then

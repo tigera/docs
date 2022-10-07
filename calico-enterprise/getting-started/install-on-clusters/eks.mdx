@@ -6,20 +6,31 @@ canonical_url: '/getting-started/kubernetes/eks'
 
 ### Big picture
 
-Install {{site.prodname}} in EKS managed Kubernetes service.
+Install {{site.prodname}} on an EKS managed Kubernetes cluster.
 
 ### Before you begin
 
-**Supported**
-- {% include /content/eks.md %}
+**CNI support**
+
+- Calico CNI for networking with {{site.prodname}} network policy
+
+  The geeky details of what you get by default:
+  {% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes' %}
+
+- AWS CNI networking with {{site.prodname}} network policy 
+
+  The geeky details of what you get by default:
+  {% include geek-details.html details='Policy:Calico,IPAM:AWS,CNI:AWS,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}
 
 **Required**
 
-- Review [network requirements]({{site.baseurl}}/getting-started/kubernetes/requirements#network-requirements) to ensure network access is properly configured for {{site.prodname}} components
+- A [compatible EKS cluster]({{site.baseurl}}/getting-started/compatibility#eks)
 
-- [Credentials for the Tigera private registry and a license key]({{site.baseurl}}/getting-started/calico-enterprise)
+- Cluster meets [system requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
 
-- If using a private registry, familiarize yourself with this guide on [using a private registry]({{site.baseurl}}/getting-started/private-registry)
+- A [Tigera license key and credentials]({{site.baseurl}}/getting-started/calico-enterprise)
+
+- {% include open-new-window.html text='Install kubectl' url='https://kubernetes.io/docs/tasks/tools/install-kubectl/' %}
 
 ### How to
 
@@ -31,9 +42,9 @@ Install {{site.prodname}} in EKS managed Kubernetes service.
 
 ### Next steps
 
-- [Configure access to {{site.prodname}} Manager]({{site.baseurl}}/getting-started/cnx/access-the-manager)
+- [Configure access to {{site.prodname}} Manager UI]({{site.baseurl}}/getting-started/cnx/access-the-manager)
 
 **Recommended**
 - {% include open-new-window.html text='Video: Everything you need to know about Kubernetes pod networking on AWS' url='https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-pod-networking-on-aws/' %}
-- [Get started with {{site.prodname}} network policy]({{ site.baseurl }}/security/calico-enterprise-policy)
-- [Enable default deny for Kubernetes pods]({{ site.baseurl }}/security/kubernetes-default-deny)
+- [Get started with {{site.prodname}} network policy]({{site.baseurl}}/security/calico-network-policy)
+- [Enable default deny for Kubernetes pods]({{site.baseurl}}/security/kubernetes-default-deny)

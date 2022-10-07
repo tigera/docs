@@ -9,18 +9,13 @@ openshift_manifests_include_apiserver_cr: true
 
 Install an OpenShift 4 cluster with {{site.prodname}}.
 
-### Value
-
-Augments the applicable steps in the {% include open-new-window.html text='OpenShift documentation' url='https://cloud.redhat.com/openshift/install' %} to install {{site.prodname}}.
+This guide augments the applicable steps in the {% include open-new-window.html text='OpenShift documentation' url='https://cloud.redhat.com/openshift/install' %} to install {{site.prodname}}.
 
 ### Before you begin
 
 {% include content/install-openshift-before-you-begin.md %}
 
 ### How to
-
-The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes' %}
 
 1. [Create a configuration file for the OpenShift installer](#create-a-configuration-file-for-the-openshift-installer)
 1. [Update the configuration file to use {{site.prodname}}](#update-the-configuration-file-to-use-calico-enterprise)
@@ -30,7 +25,6 @@ The geeky details of what you get:
 1. [Create the cluster](#create-the-cluster)
 1. [Create a storage class](#create-a-storage-class)
 1. [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
-
 
 {% include content/install-openshift.md clusterType="standalone" %}
 

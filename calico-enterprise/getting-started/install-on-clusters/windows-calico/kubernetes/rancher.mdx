@@ -1,22 +1,14 @@
 ---
-title: Install Calico Enterprise for Windows on a Rancher Kubernetes Engine cluster
-description: Install Calico Enterprise for Windows on a Rancher RKE cluster.
+title: Install Calico Enterprise for Windows on RKE
+description: Install Calico Enterprise for Windows on RKE.
 canonical_url: '/getting-started/windows-calico/kubernetes/rancher'
 ---
 
 ### Big picture
 
-Install {{site.prodnameWindows}} on a Rancher Kubernetes Engine (RKE) cluster.
-
-### Value
-
-Run Linux and Windows workloads on a RKE cluster with {{site.prodname}}.
+Install {{site.prodnameWindows}} on Rancher Kubernetes Engine (RKE).
 
 ### Before you begin
-
-**Supported**
-
-- RKE Kubernetes 1.20, 1.19, or 1.18
 
 **Supported networking**
 
@@ -25,8 +17,10 @@ Run Linux and Windows workloads on a RKE cluster with {{site.prodname}}.
 
 **Required**
 
+- A [compatible RKE cluster]({{site.baseurl}}/getting-started/compatibility#rke)
+
 - An RKE cluster provisioned with {% include open-new-window.html text='no network plugin' url='https://rancher.com/docs/rke/latest/en/config-options/add-ons/network-plugins#disabling-deployment-of-a-network-plug-in' %}
-but which otherwise meets the {{site.prodnameWindows}} Kubernetes [cluster requirements]({{site.baseurl}}/getting-started/windows-calico/kubernetes/requirements). This guide was tested with RKE v1.18.9.
+
 - One or more Windows nodes that meet the [requirements]({{site.baseurl}}/getting-started/windows-calico/kubernetes/requirements).
 
 ### How to
@@ -35,7 +29,7 @@ The following steps will outline the installation of {{site.prodname}} networkin
 
 1. Install the Tigera {{site.prodname}} operator and custom resource definitions.
 
-   ```
+   ```bash
    kubectl create -f {{ "/manifests/tigera-operator.yaml" | absolute_url }}
    ```
 
@@ -50,7 +44,7 @@ The following steps will outline the installation of {{site.prodname}} networkin
 
    **VXLAN**
 
-   ```
+   ```yaml
    apiVersion: operator.tigera.io/v1
    kind: Installation
    metadata:
@@ -70,7 +64,7 @@ The following steps will outline the installation of {{site.prodname}} networkin
 
    **BGP**
 
-   ```
+   ```yaml
    apiVersion: operator.tigera.io/v1
    kind: Installation
    metadata:
