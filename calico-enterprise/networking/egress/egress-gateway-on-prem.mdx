@@ -268,8 +268,10 @@ spec:
       - name: tigera-pull-secret
       nodeSelector:
         kubernetes.io/os: linux
-      containers:
-      - name: egress-gateway
+      initContainers:
+      - name: egress-gateway-init
+      - command:
+        - /init-gateway.sh
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
         - name: EGRESS_POD_IP
@@ -277,6 +279,21 @@ spec:
             fieldRef:
               fieldPath: status.podIP
         securityContext:
+          privileged: true
+      containers:
+      - name: egress-gateway
+      - command:
+        - /install-gateway.sh
+        image: {{page.registry}}{% include component_image component="egress-gateway" %}
+        env:
+        - name: EGRESS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
           privileged: true
         volumeMounts:
         - mountPath: /var/run
