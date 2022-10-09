@@ -8,7 +8,7 @@ OPERATOR_VERSION?=v1.28.1
 OPERATOR_REPO?=tigera/operator
 PRODUCT?=calico
 
-build: init
+build: init autogen
 	yarn build
 
 .PHONY: start
@@ -23,10 +23,14 @@ test: init
 clean:
 	yarn clear
 
+.PHONY: clear
+clear: clean
+
 .PHONY: init
 init:
 	yarn
 
+.PHONY: autogen
 autogen:
 	PRODUCT=calico $(MAKE) build-operator-reference
 	PRODUCT=calico-enterprise $(MAKE) build-operator-reference
