@@ -50,4 +50,4 @@ build-operator-reference:
 	           go mod edit -replace github.com/tigera/operator=github.com/$(OPERATOR_REPO)@$(OPERATOR_VERSION) && \
 	           go mod download all && go build && \
 	           ./gen-crd-api-reference-docs -config /go/src/$(PACKAGE_NAME)/docs/$(PRODUCT)/reference/installation/config.json \
-				   -api-dir github.com/tigera/operator/api -out-file /go/src/$(PACKAGE_NAME)/docs/$(PRODUCT)/reference/installation/_api.html'
+				   -api-dir github.com/tigera/operator/api -out-file /go/src/$(PACKAGE_NAME)/docs/$(PRODUCT)/reference/installation/_api.mdx'
