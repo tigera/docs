@@ -24,6 +24,7 @@ import OpenShiftPrometheusOperator from '@site/src/components/partials/openshift
 import GeekDetails from '@site/src/components/partials/geek-details';
 import ReleaseNotesCalico from '@site/src/components/partials/release-notes-calico';
 import ReleaseNotesCalicoEnterprise from '@site/src/components/partials/release-notes-calico-enterprise';
+import CliConfigIntro from '@site/src/components/partials/cli-config-intro';
 
 const wrap = (Partial) => (props) =>
   (
@@ -60,4 +61,5 @@ export default {
   GeekDetails: wrap(GeekDetails),
   ReleaseNotesCalico: wrap(ReleaseNotesCalico),
   ReleaseNotesCalicoEnterprise: wrap(ReleaseNotesCalicoEnterprise),
+  CliConfigIntro: wrap(CliConfigIntro),
 };
