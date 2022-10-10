@@ -57,12 +57,16 @@ For example, the following command gives the service account, `jane` in the defa
 kubectl create clusterrolebinding jane-access --clusterrole tigera-network-admin --serviceaccount default:jane
 ```
 
-Next, get the token from the service account.
+Next, create a login token for the service account. 
+
 Using the running example of a service account named, `jane` in the default namespace:
 
 ```bash
-{% raw %}kubectl get secret $(kubectl get serviceaccount jane -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo{% endraw %}
+kubectl create token jane --duration=24h
 ```
+
+> **Note**: The token created above will expire after 24 hours.
+{: .alert .alert-info}
 
 Now that you have the token, log in to the {{site.prodname}} UI and submit the token.
 

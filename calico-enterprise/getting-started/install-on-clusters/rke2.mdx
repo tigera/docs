@@ -6,26 +6,31 @@ canonical_url: '/getting-started/kubernetes/rke2'
 
 ### Big picture
 
-Install {{site.prodname}} as the required CNI for networking and/or network policy on Rancher's Next-generation Kubernetes Distribution (RKE2) clusters.
+Install {{site.prodname}} on Rancher's Next-generation Kubernetes Distribution (RKE2) clusters.
 
-### Concepts
+### Before you begin
 
-{{site.prodname}} supports the Calico CNI with {{site.prodname}} network policy:
+**CNI support**
+
+Calico CNI for networking with {{site.prodname}} network policy:
 
 The geeky details of what you get:
 {% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes' %}
 
-### Before you begin
-
 **Required**
 
-- RKE2 cluster meets the [{{side.prodname}} requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
+- A [compatible RKE2 cluster]({{site.baseulr}}/getting-started/compatibility#rke2)
+  
+  For help, see {% include open-new-window.html text='Rancher Kubernetes Engine cluster' url='https://rancher.com/docs/rke/latest/en/' %}.
 
-- A compatible {% include open-new-window.html text='RKE2 cluster' url='https://docs.rke2.io/' %}.
-  - The version of RKE2 aligns with the [{{side.prodname}} Kubernetes versions requirements]({{site.baseurl}}/getting-started/kubernetes/requirements#supported-kubernetes-versions)
-  - {% include open-new-window.html text='Configure' url='https://docs.rke2.io/install/install_options/install_options/' %} cluster with no CNI plugin; either by using `--cni none` with the RKE2 CLI or `RKE2_CNI=none` with the installation script or setting `cni: none` in the {% include open-new-window.html text='configuration file' url='https://docs.rke2.io/install/install_options/install_options/#configuration-file' %}.
+- {% include open-new-window.html text='Configure cluster with no CNI plugin' url='https://docs.rke2.io/install/install_options/install_options/' %} using any of these methods:
+   - RKE2 CLI: `--cni none` 
+   - Install script: `RKE2_CNI=none`
+   - {% include open-new-window.html text='Configuration file' url='https://docs.rke2.io/install/install_options/install_options/#configuration-file' %}: `cni: none`  
 
-- [Credentials for the Tigera private registry and a license key]({{site.baseurl}}/getting-started/calico-enterprise).
+- Cluster meets [system requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
+
+- A [Tigera license key and credentials]({{site.baseurl}}/getting-started/calico-enterprise).
 
 - A `kubectl` environment with access to your cluster
   - Ensure you have the {% include open-new-window.html text='Kubeconfig file that was generated when you created the cluster' url='https://docs.rke2.io/cluster_access/' %}.
@@ -36,7 +41,6 @@ The geeky details of what you get:
 
 - [Install {{site.prodname}}](#install-calico-enterprise)
 - [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
-
 
 #### Install {{site.prodname}}
 
@@ -59,7 +63,7 @@ The geeky details of what you get:
 
 1. Install your pull secret.
 
-   If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
+   If pulling images directly from `quay.io/tigera`, you can use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
 
    ```bash
    kubectl create secret generic tigera-pull-secret \
@@ -85,7 +89,7 @@ The geeky details of what you get:
    kubectl create -f {{ "/manifests/rancher/custom-resources-rke2.yaml" | absolute_url }}
    ```
 
-   You can now monitor progress with the following command:
+   Monitor progress with the following command:
 
    ```bash
    watch kubectl get tigerastatus
@@ -95,18 +99,15 @@ The geeky details of what you get:
 
 #### Install the {{site.prodname}} license
 
-In order to use {{site.prodname}}, you must install the license provided to you by Tigera.
-
 ```bash
 kubectl create -f </path/to/license.yaml>
 ```
 
-You can now monitor progress with the following command:
+Monitor progress with the following command:
 
 ```bash
 watch kubectl get tigerastatus
 ```
-
 
 ### Next steps
 

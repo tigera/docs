@@ -995,31 +995,47 @@ the following.
     place on Namespace or Pod resources) and either reject the operation in hand, or allow it
     through after adding the corresponding {{site.prodname}} egress annotations.
 
+
 #### Policy enforcement for flows via an egress gateway
 
 For an outbound connection from a client pod, via an egress gateway, to a destination outside the
-cluster, any applicable {{site.prodname}} policy will in principle be enforced:
+cluster, there is more than one possible enforcement point for policy:
+
+The path of the traffic through policy is as follows:
+
+1. Packet leaves the client pod and passes through its egress policy.
+2. The packet is encapsulated by the client pod's host and sent to the egress gateway
+3. The encapsulated packet is sent from the host to the egress gateway pod.
+4. The egress gateway pod de-encapsulates the packet and send the packet out again with its own address.
+5. The packet leaves the egress gateway pod through its egress policy.
+
+To ensure correct operation, (as of v3.15) the encapsulated traffic between host and egress gateway is auto-allowed by
+{{site.prodname}} and other ingress traffic is blocked.  That means that there are effectively two places where
+policy can be applied:
 
 1.  on egress from the client pod
-2.  on ingress to the egress gateway pod
-3.  on egress from the egress gateway pod.
+2.  on egress from the egress gateway pod (see limitations below).
 
-Since an egress gateway will never *originate* any traffic itself, a possible approach is not to
-configure any policy for the egress gateway.  Then the enforcement at points (2) and (3) is a no-op,
-and enforcement at point (1) is the same as for flows that are not via an egress gateway.
+The policy applied at (1) is the most powerful since it implicitly sees the original source of the traffic (by
+virtue of being attached to that original source).  It also sees the external destination of the traffic.
 
-On the other hand,
+Since an egress gateway will never originate its own traffic, one option is to rely on policy applied at (1) and
+to allow all traffic to at (2) (either by applying no policy or by applying an "allow all").
 
--  if you apply a default-deny ingress policy to your egress gateways, you will need to configure
-   allow policies for the clients that you want to be able to use those gateways;
+Alternatively, for maximum "defense in depth" applying policy at both (1) and (2) provides extra protection should
+the policy at (1) be disabled or bypassed by an attacker.  Policy at (2) has the following limitations:
 
--  if you apply a default-deny egress policy to your egress gateways, you will need to configure
-   allow policies for the destinations that those gateways should be able to forward to.
+- [Domain-based policy]({{site.baseurl}}/security/domain-based-policy) is not supported at egress from egress
+  gateways.  It will either fail to match the expected traffic, or it will work intermittently if the egress gateway
+  happens to be scheduled to the same node as its clients.  This is because any DNS lookup happens at the client pod.
+  By the time the policy reaches (2) the DNS information is lost and only the IP addresses of the traffic are available.
 
-Unfortunately it will not work to [specify external destinations by
-name]({{site.baseurl}}/security/domain-based-policy) here, because the gateway's node will not see
-the DNS protocol that maps a destination name to the underlying IP addresses (unless the gateway
-happens to be on the same node as the client).
+- The traffic source will appear to be the egress gateway pod, the source information is lost in the address
+  translation that occurs inside the egress gateway pod.
+
+That means that policies at (2) will usually take the form of rules that match only on destination port and IP address,
+either directly in the rule (via a CIDR match) or via a (non-domain based) NetworkSet.  Matching on source has little
+utility since the IP will always be the egress gateway and the port of translated traffic is not always preserved.
 
 ### Above and beyond
 

@@ -30,6 +30,15 @@ This how-to guide uses the following {{site.prodname}} features:
 
 ### Before you begin
 
+**Unsupported**
+- IPv6 only
+- AKS
+- AWS/kOps
+- EKS
+- GKE
+- RKE
+- RKE2
+
 **{{site.prodname}} requirements**
 
 - {{site.prodname}} IPAM
@@ -85,7 +94,3 @@ spec:
     natOutgoing: Enabled
     nodeSelector: all()
 ```
-
-### Above and beyond
-
-- [Configure Kubernetes control plane to operate over IPv6]({{site.baseurl}}/networking/ipv6-control-plane)

@@ -1,6 +1,7 @@
 ---
 title: Change allow-tigera tier behavior
 description: Understand the purpose of the allow-tigera tier and how to change its behavior.
+canonical_url: '/security/allow-tigera'
 ---
 
 ### Big picture

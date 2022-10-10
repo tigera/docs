@@ -1,43 +1,34 @@
 ---
-title: Amazon Web Services (AWS) using kOps
-description: Use Calico Enterprise with a self-managed Kubernetes cluster in Amazon Web Services (AWS) using kOps.
+title: kOps on AWS
+description: Install Calico Enterprise with a self-managed Kubernetes cluster using kOps on AWS.
 canonical_url: '/getting-started/kubernetes/aws'
 ---
 
 ### Big picture
 
-Use {{site.prodname}} with a self-managed Kubernetes cluster in Amazon Web Services (AWS) using kOps.
+Install {{site.prodname}} with a self-managed Kubernetes cluster using Kubernetes Operations (kOps) on AWS. kOps is a cluster management tool that provisions cluster VMs and installs Kubernetes. It is a good default choice for most because it gives you access to all {{site.prodname}} [flexible and powerful networking features]({{site.baseurl}}/networking). However, other options may work better for your environment. 
 
-### Value
+### Before you begin
 
-Managing your own Kubernetes cluster (as opposed to using a managed-Kubernetes service like EKS), gives you the most flexibility in configuring {{site.prodname}} and Kubernetes. {{site.prodname}} combines flexible networking capabilities with "run-anywhere" security enforcement to provide a solution with native Linux kernel performance and true cloud-native scalability.
+**CNI support**
 
-### Concepts
+- Calico CNI for networking with {{site.prodname}} network policy
 
-#### About kOps
-
-Kubernetes Operations (kOps) is a cluster management tool that provisions cluster VMs and installs Kubernetes. It is a good default choice for most because it gives you access to all {{site.prodname}} [flexible and powerful networking features]({{site.baseurl}}/networking). However, other options may work better for your environment. 
-
-{{site.prodname}} supports these options:
-
-- Calico CNI for networking with {{site.prodname}} network policy 
-
-    The geeky details of what you get (default):    
-    {% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes' %}  
+   The geeky details of what you get:    
+   {% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes' %}  
 
 - AWS VPC CNI for networking with {{site.prodname}} network policy 
 
-    The geeky details of what you get:    
-    {% include geek-details.html details='Policy:Calico,IPAM:AWS,CNI:AWS,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}
-
-### Before you begin...
-
-**Supported**
-- kOps version 1.21 and 1.22
+   The geeky details of what you get:    
+   {% include geek-details.html details='Policy:Calico,IPAM:AWS,CNI:AWS,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}
 
 **Required**
-- Install {% include open-new-window.html text='kubectl' url='https://kubernetes.io/docs/tasks/tools/install-kubectl/' %}
-- Install {% include open-new-window.html text='AWS CLI tools' url='https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html' %}
+
+- A [compatible kOps cluster]({{site.baseurl}}/getting-started/compatibility#kops-on-aws)
+- A [Tigera license key and credentials]({{site.baseurl}}/getting-started/calico-enterprise)
+- Cluster meets [system requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
+- {% include open-new-window.html text='Install kubectl' url='https://kubernetes.io/docs/tasks/tools/install-kubectl/' %}
+- {% include open-new-window.html text='Install AWS CLI tools' url='https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html' %}
 
 ### How to
 

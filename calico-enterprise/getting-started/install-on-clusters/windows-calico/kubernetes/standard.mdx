@@ -6,18 +6,21 @@ canonical_url: '/getting-started/windows-calico/kubernetes/standard'
 
 ### Big picture
 
-Install {{site.prodnameWindows}} on Kubernetes clusters. The standard installation for {{site.prodnameWindows}} requires more time and expertise to configure. If you need to get started quickly, we recommend the [Quickstart]({{site.baseurl}}/getting-started/windows-calico/quickstart)
-
-### Value
-
-Extend your Kubernetes deployment to Windows environments.
+Install {{site.prodnameWindows}} on Kubernetes clusters. This {{site.prodnameWindows}} standard installation requires time and expertise for configuration. To get started quickly, we recommend the [Quickstart]({{site.baseurl}}/getting-started/windows-calico/quickstart).
 
 ### Before you begin
+
+**CNI support**
+
+Calico CNI for networking with {{site.prodname}} network policy:
+
+The geeky details of what you get by default:
+{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes' %}
 
 **Required**
 
 - Linux and Windows nodes [meet requirements]({{site.baseurl}}/getting-started/windows-calico/kubernetes/requirements)
-- You will need the {{site.prodnameWindows}} zip archive provided to you by your support representative.
+- The {{site.prodnameWindows}} zip archive provided to you by your support representative.
 - If using {{site.prodname}} networking:
    - Copy the kubeconfig file (used by kubelet) to each Windows node to the file, `c:\k\config`.
    - Install and configure [calicoctl]({{site.baseurl}}/maintenance/clis/calicoctl/install)
@@ -45,9 +48,6 @@ Extend your Kubernetes deployment to Windows environments.
 
 Because the Kubernetes and {{site.prodname}} control components do not run on Windows yet, a hybrid Linux/Windows cluster is required. First you create a Linux cluster for {{site.prodname}} components, then you join Windows nodes to the Linux cluster.
 
-The geeky details of what you get by default:
-{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes' %}
-
 **Kubernetes**
 1. [Create a Linux cluster](#create-a-linux-cluster)
 1. [Ensure pods run on the correct nodes](#ensure-pods-run-on-the-correct-nodes)
@@ -74,7 +74,7 @@ To get around this for `kube-proxy`:
    ```
 1. Modify the `kube-proxy.yaml` file to include a node selector that selects only Linux nodes:
 
-   ```
+   ```yaml
    spec:
      template:
      ...

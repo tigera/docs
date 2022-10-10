@@ -38,9 +38,7 @@ The following table summarizes the networking options and considerations.
 
 #### Kubernetes version 
 
-See the [Kubernetes requirements]({{site.baseurl}}/getting-started/kubernetes/requirements#kubernetes-requirements).
-
-Earlier versions may work, but we do not actively test {{site.prodnameWindows}} against them, and they may have known issues and incompatibilities.
+For Kubernetes versions for your platform, see [Support and compatibility]({{site.baseurl}}/getting-started/compatibility).
 
 #### Linux platform requirements
 
