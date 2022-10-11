@@ -283,7 +283,7 @@ spec:
       containers:
       - name: egress-gateway
       - command:
-        - /install-gateway.sh
+        - /start-gateway.sh
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
         - name: EGRESS_POD_IP
