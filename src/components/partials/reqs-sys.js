@@ -408,17 +408,16 @@ function NetworkRequirementsOSS(props) {
           )}
         </tbody>
       </table>
-      {props.orch === orchestrators.Kubernetes ||
-        (props.orch === orchestrators.OpenShift && (
-          <p>
-            *{' '}
-            <em>
-              The value passed to kube-apiserver using the <code>--secure-port</code> flag. If you cannot locate this,
-              check the <code>targetPort</code> value returned by
-              <code>kubectl get svc kubernetes -o yaml</code>.
-            </em>
-          </p>
-        ))}
+      {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.OpenShift) && (
+        <p>
+          *{' '}
+          <em>
+            The value passed to kube-apiserver using the <code>--secure-port</code> flag. If you cannot locate this,
+            check the <code>targetPort</code> value returned by
+            <code>kubectl get svc kubernetes -o yaml</code>.
+          </em>
+        </p>
+      )}
       {props.orch === orchestrators.OpenStack && (
         <p>
           *{' '}
@@ -615,19 +614,18 @@ function NetworkRequirementsEnt(props) {
           </tr>
         </tbody>
       </table>
-      {props.orch === orchestrators.Kubernetes ||
-        (props.orch === orchestrators.OpenShift && (
-          <>
-            <p>
-              *{' '}
-              <em>
-                The value passed to kube-apiserver using the <code>--secure-port</code>
-                flag. If you cannot locate this, check the <code>targetPort</code> value returned by &nbsp;
-                <code>kubectl get svc kubernetes -o yaml</code>.
-              </em>
-            </p>
-          </>
-        ))}
+      {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.OpenShift) && (
+        <>
+          <p>
+            *{' '}
+            <em>
+              The value passed to kube-apiserver using the <code>--secure-port</code>
+              flag. If you cannot locate this, check the <code>targetPort</code> value returned by &nbsp;
+              <code>kubectl get svc kubernetes -o yaml</code>.
+            </em>
+          </p>
+        </>
+      )}
       {props.orch === orchestrators.OpenStack && (
         <p>
           *{' '}
