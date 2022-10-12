@@ -4,6 +4,7 @@ import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Admonition from '@theme/Admonition';
 import Heading from '@theme/Heading';
+import GeekDetails from '@site/src/components/partials/GeekDetails';
 
 import ConfigureManagedCluster from './configure-managed-cluster';
 import Highlight from '../utils/Highlight';
@@ -21,7 +22,7 @@ export default function InstallAKS(props) {
       {props.clusterType === 'standalone' && (
         <>
           <p>The geeky details of what you get:</p>
-          <p>{`{% include geek-details.html details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' %}`}</p>
+          <GeekDetails details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' />
         </>
       )}
       <Heading
@@ -196,7 +197,7 @@ spec:
       {props.clusterType === 'standalone' && (
         <>
           <p>The geeky details of what you get:</p>
-          <p>{`{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VxLAN,Routing:Calico,Datastore:Kubernetes' %}`}</p>
+          <GeekDetails details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VxLAN,Routing:Calico,Datastore:Kubernetes' />
         </>
       )}
       <Heading
