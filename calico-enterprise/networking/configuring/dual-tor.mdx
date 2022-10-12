@@ -238,6 +238,11 @@ longer matters if there is any other programming of the true default route on th
 
 ### Before you begin
 
+**Unsupported**
+- AKS
+- EKS
+- GKE
+
 **Required**
 
 - Calico CNI

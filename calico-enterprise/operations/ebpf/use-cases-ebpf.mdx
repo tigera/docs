@@ -64,7 +64,7 @@ With eBPF, you get performance—but it comes at a cost. You need to find a bala
 
 Let’s look at some specific cases where it would make sense to use eBPF, and some where it would not.
 
-#### ✘ When not to use eBPF
+#### When not to use eBPF
 
 #### ✘ Building a service mesh control plane
 
@@ -74,7 +74,7 @@ Service mesh relies on proxies like Envoy. A lot of thought has gone into design
 
 Using eBPF to perform CPU intensive or packet-by-packet processing, such as decryption and re-encryption for encrypted flows, would not be efficient because you would need to build a structure and do a lookup for every packet, which is expensive.
 
-#### ✔ When to use eBPF
+#### When to use eBPF
 
 #### ✔ XDP
 eBPF provides an efficient way to examine raw packet buffers as they enter the system, allowing you to make quick decisions about what to do with them.

@@ -35,9 +35,9 @@
    and then [update the manifest]({{site.baseurl}}/getting-started/private-registry/private-registry-regular#run-the-operator-using-images-from-your-private-registry)
    downloaded in the previous step.
 
-1. Apply the manifest for Tigera operator.
+1. {% if include.upgradeFrom == "OpenSource" %}Apply{% else %}Replace{% endif %} the manifest for Tigera operator.
    ```bash
-   kubectl apply -f tigera-operator.yaml
+   kubectl {% if include.upgradeFrom == "OpenSource" %}apply --server-side --force-conflicts{% else %}replace{% endif %} -f tigera-operator.yaml
    ```
 
 {%- if include.upgradeFrom != "OpenSource" %}
@@ -46,9 +46,9 @@
 {%- endif %}
 
 
-1. If you downloaded the manifests for Prometheus operator from the earlier step, then apply them now.
+1. If you downloaded the manifests for Prometheus operator from the earlier step, then {% if include.upgradeFrom == "OpenSource" %}create{% else %}replace{% endif %} them now.
    ```bash
-   kubectl apply -f tigera-prometheus-operator.yaml
+   kubectl {% if include.upgradeFrom == "OpenSource" %}create{% else %}replace{% endif %} -f tigera-prometheus-operator.yaml
    ```
 
 {%- if include.upgradeFrom == "OpenSource" %}

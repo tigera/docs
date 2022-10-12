@@ -4,25 +4,21 @@ description: Review limitations before starting installation.
 canonical_url: '/getting-started/windows-calico/limitations'
 ---
 
-### Feature support and limitations
+### Unsupported features
 
-| Feature                        |                                                              |
+| Feature                        | Unsupported in this release                                  |
 | ------------------------------ | ------------------------------------------------------------ |
-| Distributions                  | **Supported:**<br />- EKS<br />- AWS<br />- GCE<br />- Azure<br />- AKS (via [upgrade from Calico]({{site.baseurl}}/maintenance/upgrade-to-tsee))<br />- Kubernetes on-premises<br />- OpenShift<br />- Rancher Kubernetes Engine (RKE) |
-| Install and upgrade            | **Supported**: Manifest with manual upgrade<br /><br />**Not supported**: <br />- Operator install<br />- Non-cluster hosts<br />- Typha component for scaling (Linux-based feature) |
-| Networking                     | **Supported**:<br />- Calico Enterprise VXLAN, no cross-subnet or VXLAN MTU settings with [limitations](#vxlan-networking-limitations)<br />- Calico Enterprise non-overlay mode with BGP peering with [limitations](#bgp-networking-limitations)<br />- IPv4 |
-|                                | **Not supported**: <br />- Overlay mode with BGP peering<br />- IP in IP overlay with BPG routing<br />- Cross-subnet support and MTU setting for VXLAN<br />- IPv6 and dual stack<br />- Dual-ToR<br />- Service advertisement<br />- Multiple networks to pods |
-| Policy                         | **Supported**: <br />- Tiered policy with [limitations](#network-policy-with-tiers)<br />- DNS policy with [limitations](#dns-policy-limitations)<br />- Policy recommendations<br />- Policy impact preview |
-|                                | **Not supported**: <br />- Staged network-policy<br />- Firewall integrations<br />- Policy for hosts (host endpoints, including automatic host endpoints) |
-| Visibility and troubleshooting | **Supported**:<br />- Flow logs for traffic to/from windows pods with [limitations](#flow-log-limitations)           <br />- Audit logs<br />- Alerts |
-|                                | **Not supported**: <br />- Packet capture<br />- DNS logs<br />- iptable logs<br />- L7 metrics |
-| Threat defense                 | **Supported**: Block traffic to/from src/dst based on a threat feed |
-|                                | **Not supported**: <br />- Honeypods<br />- Anomaly detection |
-| Multi-cluster management       | **Not supported**, including federated identity endpoints and services |
-| Compliance and security        | **Supported**: <br />- Compliance reports: network-access, inventory, policy-audit only |
-|                                | **Not supported**: <br />- CIS benchmark and other reports<br />- Encryption with Wireguard |
-| Metrics                        | **Not supported**: Prometheus monitoring                     |
-| eBPF                           | **Not supported**: (Linux-based feature)                     |
+| Platforms                      | - TKG<br />- GKE                                             |
+| Install and upgrade            | - Operator install<br />- Non-cluster hosts<br />- Typha component for scaling (Linux-based feature) |
+| Networking                     | - Overlay mode with BGP peering<br />- IP in IP overlay with BPG routing<br />- Cross-subnet support and MTU setting for VXLAN<br />- IPv6 and dual stack<br />- Dual-ToR<br />- Service advertisement<br />- Multiple networks to pods |
+| Policy                         | - Staged network-policy<br />- Firewall integrations<br />- Policy for hosts (host endpoints, including automatic host endpoints)<br />- Tiered policy: TKG, GKE, AKS<br />- WAF integration<br />- AWS firewall integration<br />- Fortinet integration |
+| Visibility and troubleshooting | - Packet capture<br />- DNS logs<br />- iptable logs<br />- L7 logs |
+| Threat defense                 | - Honeypods<br />- DPI<br />- Performance hotspots           |
+| Multi-cluster management       | - Multi-cluster management federated identity endpoints and services<br />- Federated endpoint identity and services |
+| Compliance and security        | - CIS benchmark and other reports<br />- Wireguard encryption for pod-to-pod traffic and host-to-host traffic |
+| Monitoring                     | - Prometheus monitoring                                      |
+| Dataplane                      | - eBPF is a Linux-based feature                              |
+
 
 ### BGP networking limitations 
 

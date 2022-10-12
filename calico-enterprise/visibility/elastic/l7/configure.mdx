@@ -35,10 +35,10 @@ L7 logs are visible in the Manager UI, service graph, in the HTTP tab.
 
 ### Before you begin
 
-**Not supported**
+**Unsupported**
 
-* Windows
-* eBPF dataplane
+- RKE
+- RKE2
 
 **Limitations**
 
