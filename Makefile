@@ -8,7 +8,7 @@ OPERATOR_VERSION?=v1.28.1
 OPERATOR_REPO?=tigera/operator
 PRODUCT?=calico
 
-build: init
+build: init autogen
 	yarn build
 
 .PHONY: start
@@ -23,10 +23,14 @@ test: init
 clean:
 	yarn clear
 
+.PHONY: clear
+clear: clean
+
 .PHONY: init
 init:
 	yarn
 
+.PHONY: autogen
 autogen:
 	PRODUCT=calico $(MAKE) build-operator-reference
 	PRODUCT=calico-enterprise $(MAKE) build-operator-reference
@@ -46,4 +50,4 @@ build-operator-reference:
 	           go mod edit -replace github.com/tigera/operator=github.com/$(OPERATOR_REPO)@$(OPERATOR_VERSION) && \
 	           go mod download all && go build && \
 	           ./gen-crd-api-reference-docs -config /go/src/$(PACKAGE_NAME)/docs/$(PRODUCT)/reference/installation/config.json \
-				   -api-dir github.com/tigera/operator/api -out-file /go/src/$(PACKAGE_NAME)/docs/$(PRODUCT)/reference/installation/_api.html'
+				   -api-dir github.com/tigera/operator/api -out-file /go/src/$(PACKAGE_NAME)/docs/$(PRODUCT)/reference/installation/_api.mdx'

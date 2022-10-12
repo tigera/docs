@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Link from '@docusaurus/Link';
+import Heading from '@theme/Heading';
 
 import { toKebab } from '../utils/formatters';
 import { componentUrl } from '../utils/componentUrl';
@@ -9,11 +10,21 @@ import variables from '../../../variables';
 export default function ReleaseNotesCalico() {
   const { prodname, version, imageNames } = variables.openSource;
 
-  const releases = variables.openSource.releases.map((release) => ({
-    ...release,
-    note:
-      release.note || require(`../../../calico/_includes/release-notes/${release.title}-release-notes.mdx`).default({}),
-  }));
+  const releases = variables.openSource.releases.map((release) => {
+    let note = release.note;
+    try {
+      if (!note) {
+        note = require(`../../../docs/calico/_includes/release-notes/_${release.title}-release-notes.mdx`).default({});
+      }
+    } catch {
+      console.error(`Cannot find "docs/calico/_includes/release-notes/_${release.title}-release-notes.mdx" file`);
+    }
+
+    return {
+      ...release,
+      note,
+    };
+  });
 
   return (
     <>
@@ -25,7 +36,12 @@ export default function ReleaseNotesCalico() {
       </p>
       {releases.map((release) => (
         <div key={release.title}>
-          <h2 id={toKebab(release.title)}>{release.title}</h2>
+          <Heading
+            as='h2'
+            id={toKebab(release.title)}
+          >
+            {release.title}
+          </Heading>
           {release.title !== 'master' && (
             <p>
               <Link
@@ -53,7 +69,7 @@ export default function ReleaseNotesCalico() {
                   <tr key={componentName}>
                     <td>{componentName}</td>
                     <td>
-                      <Link href={`/release-notes/${componentUrl(componentName, release, prodname)}`}>
+                      <Link href={componentUrl(componentName, release, prodname)}>
                         {release.components[comp].version}
                       </Link>
                     </td>

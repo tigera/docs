@@ -5,7 +5,6 @@ import ReqsSys from '@site/src/components/partials/reqs-sys';
 import ReqsKernel from '@site/src/components/partials/reqs-kernel';
 import AutoHostendpointsMigrate from '@site/src/components/partials/auto-hostendpoints-migrate';
 import HostEndpointsUpgrade from '@site/src/components/partials/hostendpoints-upgrade';
-import EnterpriseLink from '@site/src/components/partials/enterprise-link';
 import InstallOpenshiftBeforeYouBegin from '@site/src/components/partials/install-openshift-before-you-begin';
 import CalicoWindowsInstall from '@site/src/components/partials/calico-windows-install';
 import PodCidrSed from '@site/src/components/partials/pod-cidr-sed';
@@ -24,40 +23,48 @@ import OpenShiftPrometheusOperator from '@site/src/components/partials/openshift
 import GeekDetails from '@site/src/components/partials/geek-details';
 import ReleaseNotesCalico from '@site/src/components/partials/release-notes-calico';
 import ReleaseNotesCalicoEnterprise from '@site/src/components/partials/release-notes-calico-enterprise';
+import CliConfigIntro from '@site/src/components/partials/cli-config-intro';
 
-const wrap = (Partial) => (props) =>
-  (
-    <div className='docs-partial'>
-      <Partial {...props} />
-    </div>
-  );
+const partials = {
+  ReqsSys,
+  ReqsKernel,
+  HostEndpointsUpgrade,
+  InstallOpenshiftBeforeYouBegin,
+  CalicoWindowsInstall,
+  PodCidrSed,
+  EnvironmentFile,
+  AutoHostendpointsMigrate,
+  ConfigureManagedCluster,
+  InstallAKS,
+  InstallEKS,
+  InstallGeneric,
+  InstallGKE,
+  PrivateRegistryRegular,
+  UpgradeOperatorSimple,
+  InstallOpenShift,
+  InstallOpenShiftManifests,
+  OpenShiftPullSecret,
+  OpenShiftPrometheusOperator,
+  GeekDetails,
+  ReleaseNotesCalico,
+  ReleaseNotesCalicoEnterprise,
+  CliConfigIntro,
+};
+
+const wrappedPartials = wrapPartials(partials);
 
 export default {
-  // Re-use the default mapping
   ...MDXComponents,
-
-  // all of our partials
-  ReqsSys: wrap(ReqsSys),
-  ReqsKernel: wrap(ReqsKernel),
-  HostEndpointsUpgrade: wrap(HostEndpointsUpgrade),
-  EnterpriseLink: wrap(EnterpriseLink),
-  InstallOpenshiftBeforeYouBegin: wrap(InstallOpenshiftBeforeYouBegin),
-  CalicoWindowsInstall: wrap(CalicoWindowsInstall),
-  PodCidrSed: wrap(PodCidrSed),
-  EnvironmentFile: wrap(EnvironmentFile),
-  AutoHostendpointsMigrate: wrap(AutoHostendpointsMigrate),
-  ConfigureManagedCluster: wrap(ConfigureManagedCluster),
-  InstallAKS: wrap(InstallAKS),
-  InstallEKS: wrap(InstallEKS),
-  InstallGeneric: wrap(InstallGeneric),
-  InstallGKE: wrap(InstallGKE),
-  PrivateRegistryRegular: wrap(PrivateRegistryRegular),
-  UpgradeOperatorSimple: wrap(UpgradeOperatorSimple),
-  InstallOpenShift: wrap(InstallOpenShift),
-  InstallOpenShiftManifests: wrap(InstallOpenShiftManifests),
-  OpenShiftPullSecret: wrap(OpenShiftPullSecret),
-  OpenShiftPrometheusOperator: wrap(OpenShiftPrometheusOperator),
-  GeekDetails: wrap(GeekDetails),
-  ReleaseNotesCalico: wrap(ReleaseNotesCalico),
-  ReleaseNotesCalicoEnterprise: wrap(ReleaseNotesCalicoEnterprise),
+  ...wrappedPartials,
 };
+
+function wrapPartials(partials) {
+  const wrapPartial = (Partial) => (props) =>
+    (
+      <div className='docs-partial'>
+        <Partial {...props} />
+      </div>
+    );
+
+  return Object.fromEntries(Object.entries(partials).map(([key, comp]) => [key, wrapPartial(comp)]));
+}
