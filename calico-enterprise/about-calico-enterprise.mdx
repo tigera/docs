@@ -2,7 +2,7 @@
 title: Calico Enterprise use cases
 description: Find the Calico Enterprise features that remove major blockers in your Kubernetes journey.
 show_title: false
-canonical_url: '/about/about-calico-enterprise'
+canonical_url: "/about/about-calico-enterprise"
 custom_css: css/intro.css
 ---
 
@@ -38,22 +38,21 @@ Learn about the {{site.prodname}} features that remove these blockers.
   </div>
 </div>
 
-
 ### Egress access controls
 
-{{site.prodname}} packages several features that enable fine-grained access controls between your microservices and databases, cloud services, APIs, and other applications that are protected behind a firewall. 
+{{site.prodname}} packages several features that enable fine-grained access controls between your microservices and databases, cloud services, APIs, and other applications that are protected behind a firewall.
 
 **2-minute video**
 
-<script src="https://fast.wistia.com/embed/medias/v60ur89tn9.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:18% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:25%;left:0;position:absolute;top:0;width:25%;"><div class="wistia_embed wistia_async_v60ur89tn9 videoFoam=true" style="height:25%;position:relative;width:25%"><div class="wistia_swatch" style="height:25%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:25%;"><img src="https://fast.wistia.com/embed/medias/v60ur89tn9/swatch" style="filter:blur(5px);height:25%;object-fit:contain;width:25%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
-
+<script src="https://fast.wistia.com/embed/medias/v60ur89tn9.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:49% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:75%;left:0;position:absolute;top:0;width:75%;"><div class="wistia_embed wistia_async_v60ur89tn9 videoFoam=true" style="height:75%;position:relative;width:75%"><div class="wistia_swatch" style="height:75%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:75%;"><img src="https://fast.wistia.com/embed/medias/v60ur89tn9/swatch" style="filter:blur(5px);height:75%;object-fit:contain;width:75%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
 
 **Documentation**
+
 - [Egress gateways]({{site.baseurl}}/networking/egress/)
 - [DNS policy]({{site.baseurl}}/security/domain-based-policy)
 - [AWS Security group integration]({{site.baseurl}}/security/aws-integration/)
 
-### Visibility and troubleshooting 
+### Visibility and troubleshooting
 
 Connectivity issues between microservices are difficult to troubleshoot. Troubleshooting often requires collaboration between multiple teams to identify and resolve the problem.
 
@@ -61,17 +60,15 @@ Connectivity issues between microservices are difficult to troubleshoot. Trouble
 
 **2-minute video**
 
-<script src="https://fast.wistia.com/embed/medias/11w6ccb5x9.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:18% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:25%;left:0;position:absolute;top:0;width:25%;"><div class="wistia_embed wistia_async_11w6ccb5x9 videoFoam=true" style="height:25%;position:relative;width:25%"><div class="wistia_swatch" style="height:25%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:25%;"><img src="https://fast.wistia.com/embed/medias/11w6ccb5x9/swatch" style="filter:blur(5px);height:25%;object-fit:contain;width:25%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
-
+<script src="https://fast.wistia.com/embed/medias/11w6ccb5x9.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:49% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:75%;left:0;position:absolute;top:0;width:75%;"><div class="wistia_embed wistia_async_11w6ccb5x9 videoFoam=true" style="height:75%;position:relative;width:75%"><div class="wistia_swatch" style="height:75%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:75%;"><img src="https://fast.wistia.com/embed/medias/11w6ccb5x9/swatch" style="filter:blur(5px);height:75%;object-fit:contain;width:75%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
 
 **Documentation**
 
 - [Flow visualizer]({{site.baseurl}}/visibility/get-started-cem)
 - [Flow logs in Kibana]({{site.baseurl}}/visibility/elastic/)
-- [Alerts]({{site.baseurl}}/visibility/alerts) 
+- [Alerts]({{site.baseurl}}/visibility/alerts)
 - [Packet capture]({{site.baseurl}}/visibility/packetcapture)
 - [DNS logs and dashboards]({{site.baseurl}}/visibility/elastic/dns/dns-logs)
-
 
 ### Enterprise security controls
 
@@ -83,8 +80,7 @@ Many applications have compliance requirements such as workload isolation, ensur
 
 **2-minute video**
 
-<script src="https://fast.wistia.com/embed/medias/u4e7n863ek.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:18% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:25%;left:0;position:absolute;top:0;width:25%;"><div class="wistia_embed wistia_async_u4e7n863ek videoFoam=true" style="height:25%;position:relative;width:25%"><div class="wistia_swatch" style="height:25%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:25%;"><img src="https://fast.wistia.com/embed/medias/u4e7n863ek/swatch" style="filter:blur(5px);height:25%;object-fit:contain;width:25%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
-
+<script src="https://fast.wistia.com/embed/medias/u4e7n863ek.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:44% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:75%;left:0;position:absolute;top:0;width:75%;"><div class="wistia_embed wistia_async_u4e7n863ek videoFoam=true" style="height:75%;position:relative;width:75%"><div class="wistia_swatch" style="height:75%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:75%;"><img src="https://fast.wistia.com/embed/medias/u4e7n863ek/swatch" style="filter:blur(5px);height:75%;object-fit:contain;width:75%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
 
 **Documentation**
 
@@ -101,12 +97,11 @@ Most security teams are short-staffed and don’t have the capacity to take on n
 
 **2-minute video**
 
-<script src="https://fast.wistia.com/embed/medias/lj6z9042vd.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:18% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:25%;left:0;position:absolute;top:0;width:25%;"><div class="wistia_embed wistia_async_lj6z9042vd videoFoam=true" style="height:25%;position:relative;width:25%"><div class="wistia_swatch" style="height:25%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:25%;"><img src="https://fast.wistia.com/embed/medias/lj6z9042vd/swatch" style="filter:blur(5px);height:25%;object-fit:contain;width:25%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
-
+<script src="https://fast.wistia.com/embed/medias/lj6z9042vd.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:44% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:75%;left:0;position:absolute;top:0;width:75%;"><div class="wistia_embed wistia_async_lj6z9042vd videoFoam=true" style="height:75%;position:relative;width:75%"><div class="wistia_swatch" style="height:75%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:75%;"><img src="https://fast.wistia.com/embed/medias/lj6z9042vd/swatch" style="filter:blur(5px);height:75%;object-fit:contain;width:75%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
 
 **Documentation**
 
-- [AWS security groups]({{site.baseurl}}/security/aws-integration/) 
+- [AWS security groups]({{site.baseurl}}/security/aws-integration/)
 - [Extend Fortigate firewalls to Kubernetes]({{site.baseurl}}/security/fortinet-integration/overview)
 - [Egress gateways]({{site.baseurl}}/networking/egress/)
 
@@ -118,12 +113,11 @@ When deploying a new microservice to a secure cluster, it needs to be deployed a
 
 **2-minute video**
 
-<script src="https://fast.wistia.com/embed/medias/1ii0v1bquq.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:18% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:25%;left:0;position:absolute;top:0;width:25%;"><div class="wistia_embed wistia_async_1ii0v1bquq videoFoam=true" style="height:25%;position:relative;width:25%"><div class="wistia_swatch" style="height:25%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:25%;"><img src="https://fast.wistia.com/embed/medias/1ii0v1bquq/swatch" style="filter:blur(5px);height:25%;object-fit:contain;width:25%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
-
+<script src="https://fast.wistia.com/embed/medias/1ii0v1bquq.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:49% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:75%;left:0;position:absolute;top:0;width:75%;"><div class="wistia_embed wistia_async_1ii0v1bquq videoFoam=true" style="height:75%;position:relative;width:75%"><div class="wistia_swatch" style="height:75%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:75%;"><img src="https://fast.wistia.com/embed/medias/1ii0v1bquq/swatch" style="filter:blur(5px);height:75%;object-fit:contain;width:75%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
 
 **Documentation**
 
-- [Tiered network policy]({{site.baseurl}}/security/tiered-policy) 
+- [Tiered network policy]({{site.baseurl}}/security/tiered-policy)
 - [RBAC for tiered network policy]({{site.baseurl}}/security/rbac-tiered-policies)
 - [Policy recommendations]({{site.baseurl}}/security/generate-policy-recommendation)
 - [Policy impact preview]({{site.baseurl}}/security/policy-impact-preview)
@@ -135,8 +129,7 @@ Every cloud and hosting environment has a unique approach to segmentation, which
 
 **2-minute video**
 
-<script src="https://fast.wistia.com/embed/medias/yggh00gd73.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:18% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:25%;left:0;position:absolute;top:0;width:25%;"><div class="wistia_embed wistia_async_yggh00gd73 videoFoam=true" style="height:25%;position:relative;width:25%"><div class="wistia_swatch" style="height:25%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:25%;"><img src="https://fast.wistia.com/embed/medias/yggh00gd73/swatch" style="filter:blur(5px);height:25%;object-fit:contain;width:25%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
-
+<script src="https://fast.wistia.com/embed/medias/yggh00gd73.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:44% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:75%;left:0;position:absolute;top:0;width:75%;"><div class="wistia_embed wistia_async_yggh00gd73 videoFoam=true" style="height:75%;position:relative;width:75%"><div class="wistia_swatch" style="height:75%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:75%;"><img src="https://fast.wistia.com/embed/medias/yggh00gd73/swatch" style="filter:blur(5px);height:75%;object-fit:contain;width:75%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
 
 **Documentation**
 
@@ -150,8 +143,7 @@ In addition to cloud microsegmentation and zero trust security, {{site.prodname}
 
 **2-minute video**
 
-<script src="https://fast.wistia.com/embed/medias/kpt6n4r40b.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:18% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:25%;left:0;position:absolute;top:0;width:25%;"><div class="wistia_embed wistia_async_kpt6n4r40b videoFoam=true" style="height:25%;position:relative;width:25%"><div class="wistia_swatch" style="height:25%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:25%;"><img src="https://fast.wistia.com/embed/medias/kpt6n4r40b/swatch" style="filter:blur(5px);height:25%;object-fit:contain;width:25%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
-
+<script src="https://fast.wistia.com/embed/medias/kpt6n4r40b.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:49% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:75%;left:0;position:absolute;top:0;width:75%;"><div class="wistia_embed wistia_async_kpt6n4r40b videoFoam=true" style="height:75%;position:relative;width:75%"><div class="wistia_swatch" style="height:75%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:75%;"><img src="https://fast.wistia.com/embed/medias/kpt6n4r40b/swatch" style="filter:blur(5px);height:75%;object-fit:contain;width:75%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
 
 **Documentation**
 
@@ -168,11 +160,10 @@ Kubernetes is particularly vulnerable to the spread of malware due to the open n
 
 **2-minute video**
 
-<script src="https://fast.wistia.com/embed/medias/7wpdipagkg.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:18% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:25%;left:0;position:absolute;top:0;width:25%;"><div class="wistia_embed wistia_async_7wpdipagkg videoFoam=true" style="height:25%;position:relative;width:25%"><div class="wistia_swatch" style="height:25%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:25%;"><img src="https://fast.wistia.com/embed/medias/7wpdipagkg/swatch" style="filter:blur(5px);height:25%;object-fit:contain;width:25%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
+<script src="https://fast.wistia.com/embed/medias/7wpdipagkg.jsonp" async></script><script src="https://fast.wistia.com/assets/external/E-v1.js" async></script><div class="wistia_responsive_padding" style="padding:44% 0 0 0;position:relative;"><div class="wistia_responsive_wrapper" style="height:75%;left:0;position:absolute;top:0;width:75%;"><div class="wistia_embed wistia_async_7wpdipagkg videoFoam=true" style="height:75%;position:relative;width:75%"><div class="wistia_swatch" style="height:75%;left:0;opacity:0;overflow:hidden;position:absolute;top:0;transition:opacity 200ms;width:75%;"><img src="https://fast.wistia.com/embed/medias/7wpdipagkg/swatch" style="filter:blur(5px);height:75%;object-fit:contain;width:75%;" alt="" aria-hidden="true" onload="this.parentNode.style.opacity=1;" /></div></div></div></div>
 
-
-{% comment %}  
+{% comment %}
 **Documentation**
 
 - [Adopt zero trust security model]({{site.baseurl}}/security/adopt-zero-trust)
-{% endcomment %}
+  {% endcomment %}
