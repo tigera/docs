@@ -46,57 +46,83 @@ An example response follows.
 
 ```
 ==== Begin collecting diagnostics. ====
-This needs to change
-Collecting basic cluster state ...
-Collect all namespaces
-Collect all in calico-system
-Collect all in tigera-operator
-Collecting host node details ...
-Collect nodes
-Collect nodes yaml
+Collecting kubernetes version...
+Collect kubernetes Client and Server version
+Collecting Calico resources...
+Collect Calico clusterinformations
+Collect Calico clusterinformations
+Collect Calico felixconfigurations
+Collect Calico felixconfigurations
+Collect Calico bgppeers
+Collect Calico bgppeers
+Collect Calico bgpconfigurations
+Collect Calico bgpconfigurations
+Collect Calico ipamblocks
+Collect Calico ipamblocks
+Collect Calico blockaffinities
+Collect Calico blockaffinities
+Collect Calico ipamhandles
+Collect Calico ipamhandles
+Collect Calico tiers
+Collect Calico tiers
+Collect Calico networkpolicies
+Collect Calico networkpolicies
+Collect Calico clusterinformations
+Collect Calico clusterinformations
+Collect Calico hostendpoints
+Collect Calico hostendpoints
+Collect Calico ippools
+Collect Calico ippools
+Collect Calico licensekeys
+Collect Calico licensekeys
+Collect Calico networksets
+Collect Calico networksets
+Collect Calico globalnetworksets
+Collect Calico globalnetworksets
+Collect Calico globalnetworkpolicies
+Collect Calico globalnetworkpolicies
+Collecting Tigera operator details ...
+Collect tigerastatuses
+Collect tigerastatuses
+Collect installations
 Collect installations
 Collect apiservers
+Collect apiservers
+Collect compliances
 Collect compliances
 Collect intrusiondetections
+Collect intrusiondetections
+Collect managers
 Collect managers
 Collect logcollectors
+Collect logcollectors
+Collect logstorages
 Collect logstorages
 Collect managementclusterconnections
-Collecting tigera-operator logs ...
-Collect ipamblocks yaml
-Collecting TigeraStatus details ...
-Collect tigerastatus
-Collect tigerastatus yaml
-Collecting IPAM diagnostics ...
-Collect ipamblocks yaml
-Collect blockaffinities yaml
-Collect ipamhandles yaml
-Collecting calico/typha logs ...
-Collect logs for typha pod calico-typha-64748d876f-4js2v
-Collect logs for typha pod calico-typha-64748d876f-pvcmc
-Collect logs for typha pod calico-typha-64748d876f-rlrmb
-Collect logs for typha pod calico-typha-64748d876f-zjh92
-Collecting per-node logs and network information ...
-Collecting logs for node: calico-node-6gqdx
-Collect logs for node calico-node-6gqdx
-Collect iptables for node calico-node-6gqdx
-Collect ip routes for node calico-node-6gqdx
-Collecting logs for node: calico-node-89v97
-Collect logs for node calico-node-89v97
-Collect iptables for node calico-node-89v97
-Collect ip routes for node calico-node-89v97
-Collecting logs for node: calico-node-8xg2b
-Collect logs for node calico-node-8xg2b
-Collect iptables for node calico-node-8xg2b
-Collect ip routes for node calico-node-8xg2b
-Collecting logs for node: calico-node-wr56k
-Collect logs for node calico-node-wr56k
-Collect iptables for node calico-node-wr56k
-Collect ip routes for node calico-node-wr56k
-Collecting logs for node: calico-node-xn5rl
-Collect logs for node calico-node-xn5rl
-Collect iptables for node calico-node-xn5rl
-Collect ip routes for node calico-node-xn5rl
+Collect managementclusterconnections
+Collecting core kubernetes resources...
+Collect nodes
+Collect nodes
+Collect pods
+Collect pods
+Collect deployments
+Collect deployments
+Collect daemonsets
+Collect daemonsets
+Collect services
+Collect services
+Collect endpoints
+Collect endpoints
+Collect configmaps
+Collect configmaps
+Collect persistent volume claim
+Collect persistent volume claim
+Collect persistent volume
+Collect persistent volume
+Collect storage class
+Collect storage class
+Collect all namespaces
+Collect all namespaces
 
 ==== Producing a diagnostics bundle. ====
 Diagnostic bundle available at ./calico-diagnostics.tar.gz
