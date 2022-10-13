@@ -755,8 +755,7 @@ spec:
         kubernetes.io/os: linux
       initContainers:
       - name: egress-gateway-init
-      - command:
-        - /init-gateway.sh
+	command: ["/init-gateway.sh"]
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
         - name: EGRESS_POD_IP
@@ -767,8 +766,7 @@ spec:
           privileged: true
       containers:
       - name: egress-gateway
-      - command:
-        - /start-gateway.sh
+	command: ["/start-gateway.sh"]
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
         - name: EGRESS_POD_IP
