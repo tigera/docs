@@ -8,7 +8,7 @@ OPERATOR_VERSION?=v1.28.1
 OPERATOR_REPO?=tigera/operator
 PRODUCT?=calico
 
-build: init autogen
+build: init
 	yarn build
 
 .PHONY: start
