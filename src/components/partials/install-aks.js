@@ -4,7 +4,7 @@ import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Admonition from '@theme/Admonition';
 import Heading from '@theme/Heading';
-import GeekDetails from '@site/src/components/partials/GeekDetails';
+import GeekDetails from '@site/src/components/partials/geek-details';
 
 import ConfigureManagedCluster from './configure-managed-cluster';
 import Highlight from '../utils/Highlight';
