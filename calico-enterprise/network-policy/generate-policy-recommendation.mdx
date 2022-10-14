@@ -1,15 +1,15 @@
 ---
 title: Generate policy recommendation
-description: Generate a Calico Enterprise policy recommendation to secure unprotected workloads.
+description: Generate a Calico Enterprise policy recommendation to secure unprotected namespaces or workloads.
 ---
 
 ### Big picture
 
-Generate a {{site.prodname}} policy recommendation to secure namespaces.
+Generate a {{site.prodname}} policy recommendation to secure namespaces or workloads.
 
 ### Value
 
-After installing {{site.prodname}}, one of the first things developers need to do is secure unprotected workloads that do not have network policy enforcement. (For example, by default, Kubernetes pods accept traffic from any source.) The {{site.prodname}} Manager policy recommendation feature helps developers with minimal, to no experience to generate a {{site.prodname}} network policy to secure namespaces.
+After installing {{site.prodname}}, one of the first things developers need to do is secure unprotected workloads that do not have network policy enforcement. (For example, by default, Kubernetes pods accept traffic from any source.) The {{site.prodname}} Manager policy recommendation feature helps developers with minimal, to no experience to generate a {{site.prodname}} network policy to secure namespaces or workloads.
 
 This self-service feature for developers allows network security teams to focus on the overall network policy labeling, evaluation, RBAC, and workflow.
 
@@ -30,7 +30,7 @@ A typical scenario for using the policy recommendation feature is:
 
 - Your Kubernetes clusters are up and running under {{site.prodname}}
 - Clusters are successfully running, and workloads have been running long enough to gather traffic for applications
-- Developers want to secure their namespaces or with advanced options secure their workloads, pods, and endpoints
+- Developers want to secure their namespaces (or workloads, pods, and endpoints using advanced options)
 
 Developers without any experience using {{site.prodname}} network policy, can simply specify a few parameters, click a button, and generate a valid {{site.prodname}} network policy to protect their namespaces.
 
@@ -40,7 +40,7 @@ During installation, all Kubernetes network policies land in the **default tier*
 
 #### Preview and stage the policy
 
-After developers get a recommended {{site.prodname}} network policy to secure the namespace, they can **preview it**, and **stage it** to observe the impact of a recommended policy on network traffic before applying it (if they are granted permissions). Remember, the format of a recommended {{site.prodname}} network policy is valid and accurate; it is only totally “valid” when you validate the intended results during staging.
+After developers get a recommended {{site.prodname}} network policy to secure the namespace (or workload), they can **preview it**, and **stage it** to observe the impact of a recommended policy on network traffic before applying it (if they are granted permissions). Remember, the format of a recommended {{site.prodname}} network policy is valid and accurate; it is only totally “valid” when you validate the intended results during staging.
 
 #### Tips for generating policy recommendations
 
@@ -77,7 +77,7 @@ And click, **Recommend**.
 
 ![Generate a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-screen.png)
 
-If relevant flow logs are found within the selected time range for the namespace, the recommended policy is displayed in the **Create Policy** screen.
+If relevant flow logs are found within the selected time range for the namespace or the workload endpoint, the recommended policy is displayed in the **Create Policy** screen.
 
 ![Preview or Stage a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/create-policy-action-buttons.png)
 
