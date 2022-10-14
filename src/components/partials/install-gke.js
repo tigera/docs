@@ -15,7 +15,7 @@ export default function InstallGKE(props) {
     <>
       <Heading
         as='h4'
-        id={`install-${props.prodname}`}
+        id={`install-${toKebab(props.prodname)}`}
       >
         Install {props.prodname}
       </Heading>
@@ -157,7 +157,7 @@ spec:
       <When condition={props.clusterType === 'standalone' || props.clusterType === 'management'}>
         <Heading
           as='h4'
-          id={`install-the-${props.prodname}-license`}
+          id={`install-the-${toKebab(props.prodname)}-license`}
         >
           Install the {props.prodname} license
         </Heading>

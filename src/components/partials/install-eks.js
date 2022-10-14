@@ -247,7 +247,7 @@ spec:
       </ol>
       <Heading
         as='h5'
-        id={`install-${props.prodname}`}
+        id={`install-${toKebab(props.prodname)}`}
       >
         Install {props.prodname}
       </Heading>
@@ -407,7 +407,7 @@ spec:
         <>
           <Heading
             as='h4'
-            id={`install-the-${props.prodname}-license`}
+            id={`install-the-${toKebab(props.prodname)}-license`}
           >
             Install the {props.prodname} license
           </Heading>

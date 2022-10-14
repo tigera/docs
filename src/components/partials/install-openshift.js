@@ -175,7 +175,7 @@ spec:
         <>
           <Heading
             as='h4'
-            id='install-the-prodname-license'
+            id={`install-the-${toKebab(props.prodname)}-license`}
           >
             Install the {props.prodname} license
           </Heading>
@@ -506,7 +506,7 @@ $ ./wni aws create \
 
       <Heading
         as='h4'
-        id='install-prodnamewindows'
+        id={`install-${props.prodnameWindows}`}
       >
         Install {props.prodnameWindows}
       </Heading>
