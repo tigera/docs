@@ -14,7 +14,7 @@ export default function InstallGeneric(props) {
     <>
       <Heading
         as='h4'
-        id={`install-${toKebab(prodname)}`}
+        id={`install-${toKebab(props.prodname)}`}
       >
         Install {props.prodname}
       </Heading>
