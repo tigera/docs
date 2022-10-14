@@ -47,7 +47,7 @@ export default function InstallAKS(props) {
       </ul>
       <Heading
         as='h5'
-        id={`install-${props.prodname}`}
+        id={`install-${toKebab(props.prodname)}`}
       >
         Install {props.prodname}
       </Heading>
@@ -190,7 +190,7 @@ spec:
       )}
       <Heading
         as='h4'
-        id={`install-aks-with-${props.prodname}-networking`}
+        id={`install-aks-with-${toKebab(props.prodname)}-networking`}
       >
         Install AKS with {props.prodname} networking
       </Heading>
@@ -367,7 +367,7 @@ spec:
         <>
           <Heading
             as='h4'
-            id={`install-the-${props.prodname.toLowerCase().replace(' ', '-')}-license`}
+            id={`install-the-${toKebab(props.prodname)}-license`}
           >
             Install the {props.prodname} license
           </Heading>
