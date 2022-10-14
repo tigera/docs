@@ -7,7 +7,7 @@ const FeatureList = [
     {
         title: 'Calico',
         Svg: require('@site/static/img/calico-logo.svg').default,
-        link: '/docs/calico/about/about-calicoy',
+        link: '/docs/calico/about/about-calico',
         description: (
             <>
                 Calico...
