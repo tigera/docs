@@ -34,6 +34,7 @@ const variables = {
     prodname: 'Calico Cloud',
     prodnamedash: 'calico-cloud',
     version: CLOUD_VERSION,
+    baseUrl: '/docs/calico-cloud', // or e.g. /docs/calico-cloud/archive/v3.23
     docsPathPrefix: ['/docs/calico-cloud/', '/docs/_includes/calico-cloud/'],
     prodnameWindows: 'Calico Enterprise for Windows',
     rootDirWindows: 'C:\\TigeraCalico',
@@ -49,6 +50,7 @@ const variables = {
     prodname: 'Calico Enterprise',
     prodnamedash: 'calico-enterprise',
     version: ENTERPRISE_VERSION,
+    baseUrl: '/docs/calico-enterprise', // or e.g. /docs/calico-enterprise/archive/v3.23'
     docsPathPrefix: ['/docs/calico-enterprise/', '/docs/_includes/calico-enterprise/'],
     prodnameWindows: 'Calico Enterprise for Windows',
     downloadsurl: 'https://downloads.tigera.io',
@@ -69,6 +71,7 @@ const variables = {
     prodname: 'Calico',
     prodnamedash: 'calico',
     version: OPEN_SOURCE_VERSION,
+    baseUrl: '/docs/calico', // or e.g. /docs/calico/archive/v3.23
     docsPathPrefix: ['/docs/calico/', '/docs/_includes/calico/'],
     prodnameWindows: 'Calico for Windows',
     nodecontainer: 'calico/node',
