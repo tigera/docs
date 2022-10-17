@@ -270,7 +270,7 @@ spec:
         kubernetes.io/os: linux
       initContainers:
       - name: egress-gateway-init
-	command: ["/init-gateway.sh"]
+        command: ["/init-gateway.sh"]
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
         - name: EGRESS_POD_IP
@@ -281,7 +281,7 @@ spec:
           privileged: true
       containers:
       - name: egress-gateway
-	command: ["/start-gateway.sh"]
+        command: ["/start-gateway.sh"]
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
         - name: EGRESS_POD_IP
@@ -297,6 +297,7 @@ spec:
         - mountPath: /var/run
           name: policysync
       terminationGracePeriodSeconds: 0
+      serviceAccount: tigera-egress-gateway
       volumes:
       - csi:
           driver: csi.tigera.io
@@ -317,6 +318,20 @@ Where:
  - The `securityContext` is required, so that the egress gateway can manipulate its own network namespace.
 
  - The `policysync` volume mount is required. This exposes the policy sync API to the pod, allowing it to program its own routing based off information from Felix.
+
+#### Deploying on a RKE2 CIS Hardened Cluster
+
+If you are deploying `egress-gateway` on a RKE2 CIS-hardened cluster, its `PodSecurityPolicies` restrict the `securityContext` and `volumes` required by egress gateway. To fix this, apply the following manifests to set up a `PodSecurityPolicy`, `ClusterRole` and associated `ServiceAccount`: `tigera-egress-gateway`.
+
+```bash
+kubectl apply -f {{ "/manifests/rancher/custom-psp-rke2-cis-hardened.yaml" | absolute_url }}
+```
+
+Set the `serviceAccount` field in the `egress-gateway` `Deployment` to use the created `ServiceAccount`: `tigera-egeress-gateway` assosciated with the `PodSecurityPolicy`,
+
+```bash
+kubectl -n default set serviceaccount deployment egress-gateway  tigera-egress-gateway
+```
 
 #### Configure a Namespace or Pod to use egress gateways
 
