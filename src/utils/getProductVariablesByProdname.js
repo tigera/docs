@@ -5,7 +5,10 @@ function getProductVariablesByProdname(prodname) {
     .filter((variables) => !!variables.prodname)
     .find((variables) => variables.prodname === prodname);
 
-  return productVariables;
+  return {
+    ...variables.global,
+    ...productVariables,
+  };
 }
 
 module.exports = getProductVariablesByProdname;

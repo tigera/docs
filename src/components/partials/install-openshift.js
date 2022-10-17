@@ -11,8 +11,11 @@ import OpenShiftPrometheusOperator from './openshift-prometheus-operator';
 import ConfigureManagedCluster from './configure-managed-cluster';
 import maybeRender from '../utils/maybeRender';
 import { toKebab } from '../utils/formatters';
+import getProductVariablesByProdname from '../../utils/getProductVariablesByProdname';
 
 export default function InstallOpenShift(props) {
+  const { url, baseUrl } = getProductVariablesByProdname(props.prodname);
+
   return (
     <>
       <Heading
@@ -211,8 +214,7 @@ spec:
             <Link href={`/docs/${toKebab(props.prodname)}/reference/installation/api`}>the installation reference</Link>
             .
           </p>
-          {/* TODO [manifest]: Use correct manifest links */}
-          <CodeBlock language='bash'>curl -O -L "/manifests/tigera-enterprise-resources.yaml"</CodeBlock>
+          <CodeBlock language='bash'>curl -O -L {url}{baseUrl}/manifests/tigera-enterprise-resources.yaml</CodeBlock>
           <p>
             Remove the <code>Manager</code> custom resource from the manifest file.
           </p>
@@ -413,6 +415,8 @@ EOF`}
 
 // Contains extra OpenShift installation instructions for hybrid Linux+Windows clusters.
 function InstallOpenShiftWindows(props) {
+  const { url, baseUrl } = getProductVariablesByProdname(props.prodname);
+
   return (
     <>
       <Heading
@@ -526,9 +530,7 @@ $ ./wni aws create \
             Download the powershell script, <strong>install-calico-windows.ps1</strong>.
           </p>
           <CodeBlock language='powershell'>
-            {
-              'Invoke-WebRequest {{ "/scripts/install-calico-windows.ps1" | absolute_url }} -OutFile c:install-calico-windows.ps1'
-            }
+            Invoke-WebRequest {url}{baseUrl}/scripts/install-calico-windows.ps1 -OutFile c:install-calico-windows.ps1
           </CodeBlock>
         </li>
         <li>

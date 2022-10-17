@@ -9,8 +9,11 @@ import Heading from '@theme/Heading';
 import ConfigureManagedCluster from './configure-managed-cluster';
 import Highlight from '../utils/Highlight';
 import { toKebab } from '../utils/formatters';
+import getProductVariablesByProdname from '../../utils/getProductVariablesByProdname';
 
 export default function InstallGKE(props) {
+  const { url, baseUrl } = getProductVariablesByProdname(props.prodname);
+
   return (
     <>
       <Heading
@@ -30,8 +33,7 @@ export default function InstallGKE(props) {
         <li>
           <p>Install the Tigera operator and custom resource definitions.</p>
           <CodeBlock>
-            {/* TODO [manifest]: Use correct manifest links */}
-            {`kubectl create -f {{ "/manifests/tigera-operator.yaml" | absolute_url }}`}
+            kubectl create -f {url}{baseUrl}/manifests/tigera-operator.yaml
           </CodeBlock>
         </li>
         <li>
@@ -44,8 +46,7 @@ export default function InstallGKE(props) {
             with {props.prodname}, your Prometheus operator must be v0.40.0 or higher.
           </Admonition>
           <CodeBlock>
-            {/* TODO [manifest]: Use correct manifest links */}
-            {`kubectl create -f {{ "/manifests/tigera-prometheus-operator.yaml" | absolute_url }}`}
+            kubectl create -f {url}{baseUrl}/manifests/tigera-prometheus-operator.yaml
           </CodeBlock>
         </li>
         <li>
@@ -91,8 +92,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
                 .
               </p>
               <CodeBlock language='bash'>
-                {/* TODO [manifest]: Use correct manifest links */}
-                {`curl -O -L {{ "/manifests/custom-resources.yaml" | absolute_url }}`}
+                curl -O -L {url}{baseUrl}/manifests/custom-resources.yaml
               </CodeBlock>
               <p>
                 Remove the <Highlight>Manager</Highlight> custom resource from the manifest file.
@@ -141,8 +141,7 @@ spec:
                 .
               </p>
               <CodeBlock>
-                {/* TODO [manifest]: Use correct manifest links */}
-                {`kubectl create -f {{ "/manifests/custom-resources.yaml" | absolute_url }}`}
+                kubectl create -f {url}{baseUrl}/manifests/custom-resources.yaml
               </CodeBlock>
               <p>You can now monitor progress with the following command:</p>
               <CodeBlock>watch kubectl get tigerastatus</CodeBlock>

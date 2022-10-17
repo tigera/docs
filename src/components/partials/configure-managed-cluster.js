@@ -5,9 +5,11 @@ import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 
 import { toKebab } from '../utils/formatters';
+import getProductVariablesByProdname from '../../utils/getProductVariablesByProdname';
 
 export default function ConfigureManagedCluster(props) {
   const kubectlCmd = props.kubectlCmd || 'kubectl';
+  const { url, baseUrl } = getProductVariablesByProdname(props.prodname);
 
   return (
     <>
@@ -129,8 +131,7 @@ EOF`
           <li>
             <p>Secure {props.prodname} on the managed cluster with network policy.</p>
             <CodeBlock language='bash'>
-              {/* TODO [manifest]: Use correct manifest links */}
-              {`${kubectlCmd} `} create -f "/manifests/tigera-policies-managed.yaml"
+              {`${kubectlCmd} `} create -f {url}{baseUrl}/manifests/tigera-policies-managed.yaml
             </CodeBlock>
           </li>
         ) : null}
