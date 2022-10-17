@@ -766,7 +766,7 @@ spec:
           privileged: true
       containers:
       - name: egress-gateway
-	    command: ["/start-gateway.sh"]
+        command: ["/start-gateway.sh"]
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
         # Optional: comma-delimited list of IP addresses to send ICMP pings to; if all probes fail, the egress
