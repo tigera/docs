@@ -5,7 +5,7 @@ const variables = require(path.resolve('variables'));
 const objProp = require(path.resolve('src/utils/objProp'));
 const convertToPosixFriendlyPath = require(path.resolve('src/utils/convertToPosixFriendlyPath'));
 
-const varRegex = RegExp(/\{\{[ \t]*([\w.]+)[ \t]*}}/, 'g');
+const varRegex = RegExp(/\{\{[ \t]*([\w.\/-]+)[ \t]*}}/, 'g');
 
 // This is a remark plugin which runs before all the docusaurus plugins which
 // allows us to support variable substitution in all md/mdx files. We are
