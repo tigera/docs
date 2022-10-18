@@ -22,15 +22,15 @@ Usage:
   calicoctl cluster diags [options]
 
 Options:
-  -h --help                   Show this screen.
-     --since=<SINCE>          Only collect logs newer than provided relative
-                              duration, in seconds (s), minutes (m) or hours (h).
-     --max-logs=<MAXLOGS>     Only collect up to this number of logs, for each
-                              kind of Calico component. [default: 5]
-     --focus-nodes=<NODES>    Comma-separated list of nodes from which we should
-                              try first to collect logs.
-  -c --config=<CONFIG>        Path to connection configuration file.
-                              [default: /etc/calico/calicoctl.cfg]
+  -h --help                    Show this screen.
+     --since=<SINCE>           Only collect logs newer than provided relative
+                               duration, in seconds (s), minutes (m) or hours (h).
+     --max-logs=<MAXLOGS>      Only collect up to this number of logs, for each
+                               kind of Calico component. [default: 5]
+     --focus-nodes=<NODES>     Comma-separated list of nodes from which we should
+                               try first to collect logs.
+  -c --config=<CONFIG>         Path to connection configuration file.
+                               [default: /etc/calico/calicoctl.cfg]
 
 Description:
   The cluster diags command collects a snapshot of diagnostic info and logs related
