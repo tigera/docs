@@ -6,6 +6,9 @@ canonical_url: /reference/anomaly-detection/all-detectors
 
 This topic lists {{site.prodname}} anomaly detectors and their descriptions.
 
+> **Note:** If you have detectors currently running that are not listed on this page, they will not be managed on {{site.prodname}} and will not show up on Manager UI. Delete them manually through `kubectl` by running the command: `kubectl delete globalalert tigera.io.detector.<detector-name>`, replacing `_` in the `<detector-name>` with `-`.
+{: .alert .alert-info}
+
 ### Security anomaly detectors 
 
 The following detectors are primarily searching for [security anomalies]({{site.baseurl}}/threat/anomaly-detection/security-anomalies) related to malicious activities. 
@@ -28,11 +31,6 @@ interfere with day-to-day operations. May indicate an attempt to exploit or enum
 
 ID: `http_verbs`. Looks for the services that sent HTTP requests with rare verbs, like `HEAD`, `CONNECT`, `OPTIONS`. 
 May indicate an attempt to exploit or enumerate web service behaviour.
-
-#### IP sweep
-
-ID: `ip_sweep`. Looks for pods in your cluster that are sending packets to many destinations. 
-May indicate an attacker has gained control of a pod and is gathering reconnaissance on what else they can reach.
 
 #### Port scan
 
