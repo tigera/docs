@@ -104,14 +104,7 @@ const sidebars = {
                         'calico/getting-started/kubernetes/windows-calico/kubernetes/rancher',
                     ],
                   },
-                  {
-                    type: 'category',
-                    label: 'OpenShift',
-                    link: {type: 'doc', id: 'calico/getting-started/kubernetes/windows-calico/openshift/index'},
-                    items: [
-                      'calico/getting-started/kubernetes/windows-calico/openshift/installation',
-                    ],
-                  },
+                    'calico/getting-started/kubernetes/windows-calico/openshift-installation',
                     'calico/getting-started/kubernetes/windows-calico/kubeconfig',
                     'calico/getting-started/kubernetes/windows-calico/maintain',
                     'calico/getting-started/kubernetes/windows-calico/troubleshoot',
