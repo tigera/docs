@@ -19,19 +19,36 @@ command.
 
 ```
 Usage:
-  calicoctl cluster diags [--since=<SINCE>] [--config=<CONFIG>]
+  calicoctl cluster diags [options]
 
 Options:
-  -h --help               Show this screen.
-     --since=<SINCE>      Only collect logs newer than provided relative duration,
-                          in seconds (s), minutes (m) or hours (h)
-  -c --config=<CONFIG>    Path to the file containing connection configuration in
-                          YAML or JSON format.
-                          [default: /etc/calico/calicoctl.cfg]
+  -h --help                   Show this screen.
+     --since=<SINCE>          Only collect logs newer than provided relative
+                              duration, in seconds (s), minutes (m) or hours (h).
+     --max-logs=<MAXLOGS>     Only collect up to this number of logs, for each
+                              kind of Calico component. [default: 5]
+     --focus-nodes=<NODES>    Comma-separated list of nodes from which we should
+                              try first to collect logs.
+  -c --config=<CONFIG>        Path to connection configuration file.
+                              [default: /etc/calico/calicoctl.cfg]
 
 Description:
   The cluster diags command collects a snapshot of diagnostic info and logs related
-  to Calico for the given cluster.
+  to Calico for the given cluster.  It generates a .tar.gz file containing all the
+  diags.
+
+  By default, in order to keep the .tar.gz file to a reasonable size, this command
+  only collects up to 5 sets of logs for each kind of Calico pod (for example,
+  for calico-node, or Typha, or the intrusion detection controller).  To collect
+  more (or fewer) sets of logs, use the --max-logs option.
+
+  To tell calicoctl to try to collect logs first from particular nodes of interest,
+  set the --focus-nodes option to the relevant node names, comma-separated.  For a
+  Calico component with pods on multiple nodes, calicoctl will first collect logs
+  from the pods (if any) on the focus nodes, then from other nodes in the cluster.
+
+  To collect logs only for the last few hours, minutes, or seconds, set the --since
+  option to indicate the desired period.
 ```
 {: .no-select-button}
 
@@ -40,6 +57,7 @@ Description:
 ```bash
 calicoctl cluster diags
 calicoctl cluster diags --since=1h
+calicoctl cluster diags --focus-nodes=infra1,control2 --max-logs=2
 ```
 
 An example response follows.
