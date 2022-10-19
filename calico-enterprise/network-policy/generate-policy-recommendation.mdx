@@ -1,15 +1,15 @@
 ---
-title: Generate policy recommendation
-description: Generate a Calico Enterprise policy recommendation to secure unprotected namespaces or workloads.
+title: Create policy recommendation
+description: Create a Calico Enterprise policy recommendation to secure unprotected namespaces or workloads.
 ---
 
 ### Big picture
 
-Generate a {{site.prodname}} policy recommendation to secure namespaces or workloads.
+Create a {{site.prodname}} policy recommendation to secure namespaces or workloads.
 
 ### Value
 
-After installing {{site.prodname}}, one of the first things developers need to do is secure unprotected workloads that do not have network policy enforcement. (For example, by default, Kubernetes pods accept traffic from any source.) The {{site.prodname}} Manager policy recommendation feature helps developers with minimal, to no experience to generate a {{site.prodname}} network policy to secure namespaces or workloads.
+After installing {{site.prodname}}, one of the first things developers need to do is secure unprotected workloads that do not have network policy enforcement. (For example, by default, Kubernetes pods accept traffic from any source.) The {{site.prodname}} Manager policy recommendation feature helps developers with minimal, to no experience to create a {{site.prodname}} network policy to secure namespaces or workloads.
 
 This self-service feature for developers allows network security teams to focus on the overall network policy labeling, evaluation, RBAC, and workflow.
 
@@ -32,7 +32,7 @@ A typical scenario for using the policy recommendation feature is:
 - Clusters are successfully running, and workloads have been running long enough to gather traffic for applications
 - Developers want to secure their namespaces (or workloads, pods, and endpoints using advanced options)
 
-Developers without any experience using {{site.prodname}} network policy, can simply specify a few parameters, click a button, and generate a valid {{site.prodname}} network policy to protect their namespaces.
+Developers without any experience using {{site.prodname}} network policy, can simply specify a few parameters, click a button, and create a valid {{site.prodname}} network policy to protect their namespaces.
 
 #### Default tier and Kubernetes policies
 
@@ -44,7 +44,7 @@ After developers get a recommended {{site.prodname}} network policy to secure th
 
 #### Tips for generating policy recommendations
 
-The policy recommendation feature does not look into existing policies. It looks only into *historical flow log entries that match a request, and only at entries with an `Allow` action*. Because of this, you should run your workloads for a reasonable amount of time so “typical network traffic” for your application can be gathered.
+The policy recommendation feature does not look into existing policies. It looks only into *flow logs that match a request, and only at entries with an `Allow` action*. Because of this, you should run your workloads for a reasonable amount of time so “typical network traffic” for your application can be gathered.
 
 ### Before you begin...
 
@@ -54,15 +54,15 @@ Ensure that flow logs are generated and sent to Elasticsearch.
 
 #### Permissions
 
-- To generate a policy recommendation, you must have permission to read flow logs.
+- To create a policy recommendation, you must have permission to read flow logs.
 - To stage a policy recommendation, you must have permission to create a **StagedNetworkPolicy** in the namespace of the workload that is being secured.
 - To enforce a policy, you must have permission to create a **NetworkPolicy** in the namespace that is being secured. It is recommended to stage a policy to verify its impact before enforcing it.
 
 ### How to
 
-#### Generate a recommended network policy
+#### Create a recommended network policy
 
-To generate a {{site.prodname}} network policy recommendation, go the **Recommend Policy** page,
+To create a {{site.prodname}} network policy recommendation, go the **Recommend Policy** page,
 
 
 ![Navigate to Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-action-bar.png)
@@ -75,19 +75,19 @@ and specify:
 And click, **Recommend**.
 
 
-![Generate a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-screen.png){:height="75%" width="75%"}
+![Create a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-screen.png){:height="75%" width="75%"}
 
 
 Click on **Advanced Options** and specify:
 
 - **Name** of the workload
-- (optional)  "Unprotected only" checkbox considers only historical flow logs that are not explicitly allowed by a network policy.
+- (optional)  "Unprotected only" checkbox considers flow logs that are not explicitly allowed by a network policy.
 
 
-![Generate a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-screen-advanced-options.png){:height="75%" width="75%"}
+![Create a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-screen-advanced-options.png){:height="75%" width="75%"}
 
 
-to generate workload endpoint based recommendations.
+to create workload endpoint based recommendations.
 
 If relevant flow logs are found within the selected time range for the namespace or the workload endpoint, the recommended policy is displayed in the **Create Policy** screen.
 
@@ -104,7 +104,7 @@ Then, you can assess the impact of the recommended policy using **Preview** and/
 
 **Error**: No matching flows to compute rules for
 
-**Solution/workaround**: Informational message that indicates no flow log entries with an `Allow` action were found in the workflow to generate a policy.
+**Solution/workaround**: Informational message that indicates no flow log entries with an `Allow` action were found in the workflow to create a policy.
 
 ### Above and beyond
 
