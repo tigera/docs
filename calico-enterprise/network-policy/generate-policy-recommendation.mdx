@@ -64,22 +64,36 @@ Ensure that flow logs are generated and sent to Elasticsearch.
 
 To generate a {{site.prodname}} network policy recommendation, go the **Recommend Policy** page,
 
+
 ![Navigate to Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-action-bar.png)
 
 and specify:
 
 - **Time Range**
 - **Namespace**
-- (advanced option) **Name** of the workload
-- (optional)  "Unprotected only" checkbox considers only historical flow logs that are not explicitly allowed by a network policy.
 
 And click, **Recommend**.
 
-![Generate a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-screen.png)
+
+![Generate a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-screen.png){:height="75%" width="75%"}
+
+
+Click on **Advanced Options** and specify:
+
+- **Name** of the workload
+- (optional)  "Unprotected only" checkbox considers only historical flow logs that are not explicitly allowed by a network policy.
+
+
+![Generate a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-screen-advanced-options.png){:height="75%" width="75%"}
+
+
+to generate workload endpoint based recommendations.
 
 If relevant flow logs are found within the selected time range for the namespace or the workload endpoint, the recommended policy is displayed in the **Create Policy** screen.
 
+
 ![Preview or Stage a Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/create-policy-action-buttons.png)
+
 
 Then, you can assess the impact of the recommended policy using **Preview** and/or **Stage** to observe the effect on traffic without impacting the actual traffic flows.
 
