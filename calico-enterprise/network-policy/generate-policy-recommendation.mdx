@@ -42,7 +42,7 @@ During installation, all Kubernetes network policies land in the **default tier*
 
 After developers get a recommended {{site.prodname}} network policy to secure the namespace (or workload), they can **preview it**, and **stage it** to observe the impact of a recommended policy on network traffic before applying it (if they are granted permissions). Remember, the format of a recommended {{site.prodname}} network policy is valid and accurate; it is only totally “valid” when you validate the intended results during staging.
 
-#### Tips for generating policy recommendations
+#### Tips for creating policy recommendations
 
 The policy recommendation feature does not look into existing policies. It looks only into *flow logs that match a request, and only at entries with an `Allow` action*. Because of this, you should run your workloads for a reasonable amount of time so “typical network traffic” for your application can be gathered.
 
@@ -60,9 +60,9 @@ Ensure that flow logs are generated and sent to Elasticsearch.
 
 ### How to
 
-#### Create a recommended network policy
+#### Create a policy recommendation
 
-To create a {{site.prodname}} network policy recommendation, go the **Recommend Policy** page,
+To create a {{site.prodname}} policy recommendation, go the **Recommend Policy** page,
 
 
 ![Navigate to Policy Recommendation]({{site.baseurl}}/images/generate-policy-recommendation/recommend-policy-action-bar.png)
