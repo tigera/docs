@@ -771,12 +771,12 @@ spec:
         env:
         # Optional: comma-delimited list of IP addresses to send ICMP pings to; if all probes fail, the egress
         # gateway will report non-ready.
-        - name: ICMP_PROBES
+        - name: ICMP_PROBE_IPS
           value: ""
-        # Only used if ICMP_PROBES is non-empty: interval to send probes.
+        # Only used if ICMP_PROBE_IPS is non-empty: interval to send probes.
         - name: ICMP_PROBE_INTERVAL
           value: "5s"
-        # Only used if ICMP_PROBES is non-empty: timeout before reporting non-ready if there are no successful 
+        # Only used if ICMP_PROBE_IPS is non-empty: timeout before reporting non-ready if there are no successful 
         # ICMP probes.
         - name: ICMP_PROBE_TIMEOUT
           value: "15s"
@@ -897,7 +897,7 @@ EOF
 >     endpoint, which is used for the `readinessProbe`.  If required, the health port can be disabled
 >     entirely by setting the environment variable to 0 (and by removing the `readinessProbe` stanza).
 >
-> - The `ICMP_PROBES` environment variable may be set to a comma-separated list of IPs.
+> - The `ICMP_PROBE_IPS` environment variable may be set to a comma-separated list of IPs.
 >   If set, the egress gateway pod will probe each IP periodically using an ICMP ping.  If all pings fail then the egress
 >   gateway will report non-ready via its health port.  This allows for an egress gateway to report the status of the
 >   upstream link. `ICMP_PROBE_INTERVAL` controls the interval between probes.  `ICMP_PROBE_TIMEOUT` controls the
