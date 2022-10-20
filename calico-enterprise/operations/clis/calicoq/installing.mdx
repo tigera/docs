@@ -97,11 +97,11 @@ you want to install the binary.
    registry.
 
    ```bash
-   docker pull {{page.registry}}{% include component_image component=calicoq %}
+   docker pull {{page.registry}}{% include component_image component="calicoq" %}
    ```
 
 1. Confirm that the image has loaded by typing `docker images`.
-{%- assign c = site.data.versions.first.components[calicoq] %}
+{%- assign c = site.data.versions.first.components["calicoq"] %}
    ```bash
    REPOSITORY                TAG               IMAGE ID       CREATED         SIZE
    {{ c.image }}    {{ c.version }}            e07d59b0eb8a   2 minutes ago   42MB

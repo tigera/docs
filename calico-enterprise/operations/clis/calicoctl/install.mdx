@@ -263,15 +263,15 @@ You can now run any `calicoctl` subcommands through `kubectl calico`.
 
 1. Save and close the file.
 
-1. Use the following commands to pull the `{{include.cli}}` image from the Tigera
+1. Use the following commands to pull the `calicoctl` image from the Tigera
    registry.
 
    ```bash
-   docker pull {{page.registry}}{% include component_image component=include.cli %}
+   docker pull {{page.registry}}{% include component_image component="calicoctl" %}
    ```
 
 1. Confirm that the image has loaded by typing `docker images`.
-{%- assign c = site.data.versions.first.components[include.cli] %}
+{%- assign c = site.data.versions.first.components["calicoctl"] %}
 
    ```bash
    REPOSITORY                TAG               IMAGE ID       CREATED         SIZE
