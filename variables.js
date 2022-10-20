@@ -43,6 +43,7 @@ const variables = {
     ppa_repo_name: getPPARepoName(CLOUD_VERSION),
     chart_version_name: getChartVersionName(releasesCalicoCloud),
     clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.14.1-1',
+    clouddownloadbase: 'https://installer.calicocloud.io',
     releases: releasesCalicoCloud,
     registry: 'quay.io/',
   },
