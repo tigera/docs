@@ -755,7 +755,7 @@ spec:
         kubernetes.io/os: linux
       initContainers:
       - name: egress-gateway-init
-	command: ["/init-gateway.sh"]
+        command: ["/init-gateway.sh"]
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
         - name: EGRESS_POD_IP
@@ -766,9 +766,35 @@ spec:
           privileged: true
       containers:
       - name: egress-gateway
-	command: ["/start-gateway.sh"]
+        command: ["/start-gateway.sh"]
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
+        # Optional: comma-delimited list of IP addresses to send ICMP pings to; if all probes fail, the egress
+        # gateway will report non-ready.
+        - name: ICMP_PROBE_IPS
+          value: ""
+        # Only used if ICMP_PROBE_IPS is non-empty: interval to send probes.
+        - name: ICMP_PROBE_INTERVAL
+          value: "5s"
+        # Only used if ICMP_PROBE_IPS is non-empty: timeout before reporting non-ready if there are no successful 
+        # ICMP probes.
+        - name: ICMP_PROBE_TIMEOUT
+          value: "15s"
+        # Optional comma-delimited list of HTTP URLs to send periodic probes to; if all probes fail, the egress
+        # gateway will report non-ready.
+        - name: HTTP_PROBE_URLS
+          value: ""
+        # Only used if HTTP_PROBE_URL is non-empty: interval to send probes.
+        - name: HTTP_PROBE_INTERVAL
+          value: "10s"
+        # Only used if HTTP_PROBE_URL is non-empty: timeout before reporting non-ready if there are no successful 
+        # HTTP probes.
+        - name: HTTP_PROBE_TIMEOUT
+          value: "30s"
+        # Port that the egress gateway serves its health reports.  Must match the readiness probe.
+        - name: HEALTH_PORT
+          value: "8080"
+        # Use downward API to tell the pod its own IP address.
         - name: EGRESS_POD_IP
           valueFrom:
             fieldRef:
@@ -777,6 +803,15 @@ spec:
           capabilities:
             add:
             - NET_ADMIN
+        ports:
+        - name: health
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 3
         volumeMounts:
         - mountPath: /var/run
           name: policysync
@@ -857,6 +892,22 @@ EOF
 >
 > -  The `policysync` volume mount is required. This exposes the policy sync API to the pod,
 >    allowing it to program its own routing based off information from Felix.
+>
+> - The `HEALTH_PORT` environment variable controls the port used to serve an HTTP health
+>     endpoint, which is used for the `readinessProbe`.  If required, the health port can be disabled
+>     entirely by setting the environment variable to 0 (and by removing the `readinessProbe` stanza).
+>
+> - The `ICMP_PROBE_IPS` environment variable may be set to a comma-separated list of IPs.
+>   If set, the egress gateway pod will probe each IP periodically using an ICMP ping.  If all pings fail then the egress
+>   gateway will report non-ready via its health port.  This allows for an egress gateway to report the status of the
+>   upstream link. `ICMP_PROBE_INTERVAL` controls the interval between probes.  `ICMP_PROBE_TIMEOUT` controls the
+>   timeout before reporting non-ready if all probes are failing.
+>
+> - The `HTTP_PROBE_URLS` environment variable may be set to a comma-separated list of URLs.
+>   If set, the egress gateway pod will probe each external service periodically.  If all probes fail then the egress
+>   gateway will report non-ready via its health port.  This allows for an egress gateway to report the status of the
+>   upstream link. `HTTP_PROBE_INTERVAL` controls the interval between probes.  `HTTP_PROBE_TIMEOUT` controls the
+>   timeout before reporting non-ready if all probes are failing.
 {: .alert .alert-info}
 
 
