@@ -1,7 +1,7 @@
 import React, {useState, useRef, useCallback, useMemo} from 'react';
 import {createPortal} from 'react-dom';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import {useHistory} from '@docusaurus/router';
+import {useHistory, useLocation} from '@docusaurus/router';
 import {useBaseUrlUtils} from '@docusaurus/useBaseUrl';
 import Link from '@docusaurus/Link';
 import Head from '@docusaurus/Head';
@@ -30,6 +30,17 @@ function ResultsFooter({state, onClose}) {
 function mergeFacetFilters(f1, f2) {
   const normalize = (f) => (typeof f === 'string' ? [f] : f);
   return [...normalize(f1), ...normalize(f2)];
+}
+function useIndexName() {
+  const {pathname} = useLocation();
+
+  if (pathname.includes('/docs/calico/')) {
+    return 'calico';
+  } else if (pathname.includes('/docs/calico-cloud/')) {
+    return 'calico-cloud';
+  } else if (pathname.includes('/docs/calico-enterprise/')) {
+    return 'calico-enterprise';
+  }
 }
 function DocSearch({contextualSearch, externalUrlRegex, ...props}) {
   const {siteMetadata} = useDocusaurusContext();
@@ -136,6 +147,8 @@ function DocSearch({contextualSearch, externalUrlRegex, ...props}) {
     onInput,
     searchButtonRef,
   });
+  const indexName = useIndexName();
+
   return (
     <>
       <Head>
@@ -177,6 +190,7 @@ function DocSearch({contextualSearch, externalUrlRegex, ...props}) {
             searchParameters={searchParameters}
             placeholder={translations.placeholder}
             translations={translations.modal}
+            indexName={indexName}
           />,
           searchContainer.current,
         )}
