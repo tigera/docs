@@ -4,6 +4,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
 
+import { toKebab } from '../utils/formatters';
 import getProductVariablesByProdname from '../../utils/getProductVariablesByProdname';
 
 export default function PrivateRegistryRegular(props) {
@@ -23,7 +24,7 @@ export default function PrivateRegistryRegular(props) {
     <>
       <Heading
         as='h4'
-        id='push-images-to-your-private-registry'
+        id={`push-${toKebab(props.prodname)}-images-to-your-private-registry`}
       >
         Push {props.prodname} images to your private registry
       </Heading>

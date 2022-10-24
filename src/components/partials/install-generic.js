@@ -8,13 +8,16 @@ import Heading from '@theme/Heading';
 import ConfigureManagedCluster from '@site/src/components/partials/configure-managed-cluster';
 
 import { toKebab } from '../utils/formatters';
+import getProductVariablesByProdname from '../../utils/getProductVariablesByProdname';
 
 export default function InstallGeneric(props) {
+  const { url, baseUrl } = getProductVariablesByProdname(props.prodname);
+
   return (
     <>
       <Heading
         as='h4'
-        id='install-prodname'
+        id={`install-${toKebab(props.prodname)}`}
       >
         Install {props.prodname}
       </Heading>
@@ -31,8 +34,7 @@ export default function InstallGeneric(props) {
         <li>
           <p>Install the Tigera operator and custom resource definitions.</p>
           <CodeBlock>
-            {/* TODO [manifest]: Use correct manifest links */}
-            kubectl create -f "/manifests/tigera-operator.yaml"
+            kubectl create -f {url}{baseUrl}/manifests/tigera-operator.yaml
           </CodeBlock>
         </li>
         <li>
@@ -45,8 +47,7 @@ export default function InstallGeneric(props) {
             with {props.prodname}, your Prometheus operator must be v0.40.0 or higher.
           </Admonition>
           <CodeBlock>
-            {/* TODO [manifest]: Use correct manifest links */}
-            kubectl create -f "/manifests/tigera-prometheus-operator.yaml"
+            kubectl create -f {url}{baseUrl}/manifests/tigera-prometheus-operator.yaml
           </CodeBlock>
         </li>
         <li>
@@ -90,8 +91,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
               </Link>
               .
             </p>
-            {/* TODO [manifest]: Use correct manifest links */}
-            <CodeBlock language='bash'>curl -O -L "/manifests/custom-resources.yaml"</CodeBlock>
+            <CodeBlock language='bash'>curl -O -L {url}{baseUrl}/manifests/custom-resources.yaml</CodeBlock>
             <p>
               Remove the <code>Manager</code> custom resource from the manifest file.
             </p>
@@ -133,8 +133,7 @@ spec:
               .
             </p>
             <CodeBlock>
-              {/* TODO [manifest]: Use correct manifest links */}
-              kubectl create -f "/manifests/custom-resources.yaml"
+              kubectl create -f {url}{baseUrl}/manifests/custom-resources.yaml
             </CodeBlock>
           </li>
         )}

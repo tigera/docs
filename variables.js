@@ -34,7 +34,8 @@ const variables = {
     prodname: 'Calico Cloud',
     prodnamedash: 'calico-cloud',
     version: CLOUD_VERSION,
-    docsPathPrefix: ['/docs/calico-cloud/', '/docs/calico-cloud/_includes/'],
+    baseUrl: '/docs/calico-cloud', // or e.g. /docs/calico-cloud/archive/v3.23
+    docsPathPrefix: ['/docs/calico-cloud/', '/docs/_includes/calico-cloud/'],
     prodnameWindows: 'Calico Enterprise for Windows',
     rootDirWindows: 'C:\\TigeraCalico',
     nodecontainer: 'cnx-node',
@@ -42,6 +43,7 @@ const variables = {
     ppa_repo_name: getPPARepoName(CLOUD_VERSION),
     chart_version_name: getChartVersionName(releasesCalicoCloud),
     clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.14.1-1',
+    clouddownloadbase: 'https://installer.calicocloud.io',
     releases: releasesCalicoCloud,
     registry: 'quay.io/',
   },
@@ -49,7 +51,8 @@ const variables = {
     prodname: 'Calico Enterprise',
     prodnamedash: 'calico-enterprise',
     version: ENTERPRISE_VERSION,
-    docsPathPrefix: ['/docs/calico-enterprise/', '/docs/calico-enterprise/_includes/'],
+    baseUrl: '/docs/calico-enterprise', // or e.g. /docs/calico-enterprise/archive/v3.23'
+    docsPathPrefix: ['/docs/calico-enterprise/', '/docs/_includes/calico-enterprise/'],
     prodnameWindows: 'Calico Enterprise for Windows',
     downloadsurl: 'https://downloads.tigera.io',
     nodecontainer: 'cnx-node',
@@ -69,7 +72,8 @@ const variables = {
     prodname: 'Calico',
     prodnamedash: 'calico',
     version: OPEN_SOURCE_VERSION,
-    docsPathPrefix: ['/docs/calico/', '/docs/calico/_includes/'],
+    baseUrl: '/docs/calico', // or e.g. /docs/calico/archive/v3.23
+    docsPathPrefix: ['/docs/calico/', '/docs/_includes/calico/'],
     prodnameWindows: 'Calico for Windows',
     nodecontainer: 'calico/node',
     noderunning: 'calico-node',
