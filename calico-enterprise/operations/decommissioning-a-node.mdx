@@ -24,7 +24,7 @@ of the following reasons.
 ### Purpose of this page
 
 Provide guidance on how to remove a host that is part of a {{site.prodname}} cluster
-and clean up the associated [Node resource][Node resource reference]
+and clean up the associated [Node resource][{{ site.baseurl }}/reference/resources/node]
 information.
 
 ### Prerequisites
@@ -32,7 +32,7 @@ information.
 - Prior to removing any Node resource from the datastore the `{{site.nodecontainer}}`
   container should be stopped on the corresponding host and it should be
   ensured that it will not be restarted.
-- You must have [calicoctl configured][calicoctl setup] and operational to run
+- You must have [calicoctl configured][../maintenance/clis/calicoctl/install] and operational to run
   the commands listed here.
 
 ### Removing a node resource
@@ -67,7 +67,7 @@ To remove several Nodes, a file can be created with several Node resources and
 then be passed to the `calicoctl delete` command with the `-f` flag.
 Below is an example of how to create a file of Nodes and delete them.
 
-1. Create a file with the [Node resources][Node resource reference] that need
+1. Create a file with the [Node resources][{{ site.baseurl }}/reference/resources/node] that need
    to be removed.  For example:
 
    ```yaml
@@ -89,6 +89,3 @@ Below is an example of how to create a file of Nodes and delete them.
    ```bash
    calicoctl delete -f nodes_to_delete.yaml
    ```
-
-[Node resource reference]: {{ site.baseurl }}/reference/resources/node
-[calicoctl setup]: ../maintenance/clis/calicoctl/install
