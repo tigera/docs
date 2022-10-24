@@ -273,6 +273,18 @@ spec:
         command: ["/init-gateway.sh"]
         image: {{page.registry}}{% include component_image component="egress-gateway" %}
         env:
+        # Use downward API to tell the pod its own IP address.
+        - name: EGRESS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        securityContext:
+          privileged: true
+      containers:
+      - name: egress-gateway
+        command: ["/start-gateway.sh"]
+        image: {{page.registry}}{% include component_image component="egress-gateway" %}
+        env:
         # Optional: comma-delimited list of IP addresses to send ICMP pings to; if all probes fail, the egress
         # gateway will report non-ready.
         - name: ICMP_PROBE_IPS
@@ -299,18 +311,6 @@ spec:
         # port defined below.
         - name: HEALTH_PORT
           value: "8080"
-        # Use downward API to tell the pod its own IP address.
-        - name: EGRESS_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        securityContext:
-          privileged: true
-      containers:
-      - name: egress-gateway
-        command: ["/start-gateway.sh"]
-        image: {{page.registry}}{% include component_image component="egress-gateway" %}
-        env:
         - name: EGRESS_POD_IP
           valueFrom:
             fieldRef:
