@@ -1170,13 +1170,13 @@ const sidebars = {
             },
             {
               type: 'category',
-              label: 'calicoctl',
+              label: 'calicoq',
               link: {type: 'doc', id: 'calico-enterprise/maintenance/clis/calicoq/index'},
               items: [
                 'calico-enterprise/maintenance/clis/calicoq/installing',
                 {
                   type: 'category',
-                  label: 'Configure calicoctl',
+                  label: 'Configure calicoq',
                   link: {type: 'doc', id: 'calico-enterprise/maintenance/clis/calicoq/configure/index'},
                   items: [
                     'calico-enterprise/maintenance/clis/calicoq/configure/overview',
