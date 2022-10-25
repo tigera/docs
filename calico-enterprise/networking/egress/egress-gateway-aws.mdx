@@ -899,15 +899,22 @@ EOF
 >
 > - The `ICMP_PROBE_IPS` environment variable may be set to a comma-separated list of IPs.
 >   If set, the egress gateway pod will probe each IP periodically using an ICMP ping.  If all pings fail then the egress
->   gateway will report non-ready via its health port.  This allows for an egress gateway to report the status of the
->   upstream link. `ICMP_PROBE_INTERVAL` controls the interval between probes.  `ICMP_PROBE_TIMEOUT` controls the
->   timeout before reporting non-ready if all probes are failing.
+>   gateway will report non-ready via its health port.  `ICMP_PROBE_INTERVAL` controls the interval between probes.  
+>   `ICMP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if no probes succeed.
 >
-> - The `HTTP_PROBE_URLS` environment variable may be set to a comma-separated list of URLs.
+> - The `HTTP_PROBE_URLS` environment variable may be set to a comma-separated list of URLs. 
 >   If set, the egress gateway pod will probe each external service periodically.  If all probes fail then the egress
->   gateway will report non-ready via its health port.  This allows for an egress gateway to report the status of the
->   upstream link. `HTTP_PROBE_INTERVAL` controls the interval between probes.  `HTTP_PROBE_TIMEOUT` controls the
->   timeout before reporting non-ready if all probes are failing.
+>   gateway will report non-ready via its health port. `HTTP_PROBE_INTERVAL` controls the interval between probes.
+>   `HTTP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if all probes are failing.
+> 
+> The health port serves two purposes:
+>
+> - It is used by the Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
+>   probes).
+>
+> - It is used by remote {{site.noderunning}} pods to check if the egress gateway is "ready".  Only "ready" egress
+>   gateways will be used for remote client traffic.  This traffic is automatically allowed by {{site.prodname}} and
+>   no policy is required to allow it.
 {: .alert .alert-info}
 
 
@@ -1129,6 +1136,10 @@ To upgrade an egress gateway deployment:
 * Follow the steps [above](#deploy-a-group-of-egress-gateways) to prepare a deployment manifest for the new version
   egress gateways with the same name as the old.  As noted above, the deployment must be updated in lockstep with
   the image version since different versions require different volumes/environment variables and other settings.
+
+  * If upgrading from a pre-v3.15 release, you may wish to enable the new ICMP and/or HTTP probe features, which allow
+    the egress gateways to probe one or more external hosts with ICMP pings and/or HTTP GET requests and report problems through
+    their Kubernetes `readinessProbe`s.  These are controlled by environment variables in the deployment manifest.
 
 * Use `kubectl replace` to apply the manifest over the existing one.  Kubernetes will roll out the new egress gateways,
   replacing the old.
