@@ -478,14 +478,40 @@ Connection from <source IP> <source port> received
 
 with `<source IP>` being one of the IPs of the egress IP pool that you provisioned.
 
-### Upgrading from a pre-v3.11.0 release
+### Upgrading Egress Gateways
 
-Calico Enterprise v3.11.0 introduced some new configuration. If you are using the Egress Gateways feature, and are 
-upgrading from a pre-v3.11.0 release to v3.11.0 or later, you will need to perform the following two steps:
+Since egress gateway deployments are not currently managed by the Tigera Operator, it is necessary to upgrade 
+egress gateway deployments manually.
 
-- Enable policy sync API as described [here](#enable-policy-sync-api).
-- Update your Egress Gateway Deployments to match as described [here](#deploy-a-group-of-egress-gateways).
-The new elements required as of v3.11.0 are the volumeMounts and volumes sections.
+>**Note**: Whe upgrading egress gateway deployments both the image and the deployment spec need to be changed in 
+> tandem; upgrading only the image version can result in a non-functioning egress gateway.  Newer versions of the
+> egress gateway image require new volume mounts and environment variables and have other structural changes (such
+> as the addition of an `initContainer` in v3.15.0).
+{: .alert .alert-warn}
+
+To upgrade an egress gateway deployment:
+
+* Before upgrading egress gateways to a particular version, upgrade the other {{site.prodname}} components 
+  first.  The egress gateway image should never be newer than the other {{site.prodname}} components.  We recommend 
+  keeping the gress gateway version up-to-date with the overall product version to minimise the chance of 
+  incompatibilities. 
+  
+* Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To 
+  enable the policy sync API, follow the steps in [enable policy sync API](#enable-policy-sync-api) above.  This API
+  allows the egress gateway daemon inside the egress gateway pod to query {{site.noderunning}} for the set of active 
+  routes in the cluster.  If the egress gateway daemon cannot reach the API it will fail and report errors to the logs
+  as it retries the connection.
+  
+* Follow the steps [above](#deploy-a-group-of-egress-gateways) to prepare a new deployment manifest for the new version 
+  egress gateways with the same name as the old.  As noted above, the deployment must be updated in lockstep with 
+  the image version since different versions require different volumes/environment variables and other settings. 
+
+* Use `kubectl replace` to apply the manifest over the existing one.  Kubernetes will roll out the new egress gateways,
+  replacing the old.
+  
+By default, upgrading egress gateways wil sever any connections that are flowing through them.  To minimise impact, 
+the egress gateway feature supports some advanced options that give feedback to affected pods.  For more details see
+the [egress gateway maintenance guide]({{site.baseurl}}/networking/egress/egress-gateway-maintenance).
 
 ### Above and beyond
 

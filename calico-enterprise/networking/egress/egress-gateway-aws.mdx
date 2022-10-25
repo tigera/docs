@@ -1102,6 +1102,41 @@ That means that policies at (2) will usually take the form of rules that match o
 either directly in the rule (via a CIDR match) or via a (non-domain based) NetworkSet.  Matching on source has little
 utility since the IP will always be the egress gateway and the port of translated traffic is not always preserved.
 
+### Upgrading Egress Gateways
+
+Since egress gateway deployments are not currently managed by the Tigera Operator, it is necessary to upgrade
+egress gateway deployments manually.
+
+>**Note**: Whe upgrading egress gateway deployments both the image and the deployment spec need to be changed in
+> tandem; upgrading only the image version can result in a non-functioning egress gateway.  Newer versions of the
+> egress gateway image require new volume mounts and environment variables and have other structural changes (such
+> as the addition of an `initContainer` in v3.15.0).
+{: .alert .alert-warn}
+
+To upgrade an egress gateway deployment:
+
+* Before upgrading egress gateways to a particular version, upgrade the other {{site.prodname}} components
+  first.  The egress gateway image should never be newer than the other {{site.prodname}} components.  We recommend
+  keeping the gress gateway version up-to-date with the overall product version to minimise the chance of
+  incompatibilities.
+
+* Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To
+  enable the policy sync API, follow the steps in [enable policy sync API](#enable-policy-sync-api) above.  This API
+  allows the egress gateway daemon inside the egress gateway pod to query {{site.noderunning}} for the set of active
+  routes in the cluster.  If the egress gateway daemon cannot reach the API it will fail and report errors to the logs
+  as it retries the connection.
+
+* Follow the steps [above](#deploy-a-group-of-egress-gateways) to prepare a deployment manifest for the new version
+  egress gateways with the same name as the old.  As noted above, the deployment must be updated in lockstep with
+  the image version since different versions require different volumes/environment variables and other settings.
+
+* Use `kubectl replace` to apply the manifest over the existing one.  Kubernetes will roll out the new egress gateways,
+  replacing the old.
+
+By default, upgrading egress gateways wil sever any connections that are flowing through them.  To minimise impact,
+the egress gateway feature supports some advanced options that give feedback to affected pods.  For more details see
+the [egress gateway maintenance guide]({{site.baseurl}}/networking/egress/egress-gateway-maintenance).
+
 ### Above and beyond
 
 Please see also:
