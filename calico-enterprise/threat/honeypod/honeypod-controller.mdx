@@ -98,7 +98,7 @@ data:
     alert icmp any any -> any any (msg:"ICMP Echo Reply"; itype:0; sid:1000001;)
 EOF
 ```
-Refer to {% include open-new-window.html text='Snort Users Manual' url='https://www.snort.org/documents/snort-users-manual' %} for writing Snort signatures.
+Refer to {% include open-new-window.html text='Snort Users Manual' url='https://www.snort.org/documents' %} for writing Snort signatures.
 
 To add a Snort-compatible ruleset file:
 
