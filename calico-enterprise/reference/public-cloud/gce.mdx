@@ -12,9 +12,9 @@ deployment.
 
 ## IP-in-IP encapsulation
 
-Container traffic routing can be enabled by setting [IP-in-IP encapsulation][{{site.baseurl}}/networking/vxlan-ipip] and NAT outgoing on the configured {{site.prodname}} IP pools.
+Container traffic routing can be enabled by setting [IP-in-IP encapsulation]({{site.baseurl}}/networking/vxlan-ipip) and NAT outgoing on the configured {{site.prodname}} IP pools.
 
-See the [IP pool configuration reference][{{site.baseurl}}/reference/resources/ippool] for information on how to configure {{site.prodname}} IP pools.
+See the [IP pool configuration reference]({{site.baseurl}}/reference/resources/ippool) for information on how to configure {{site.prodname}} IP pools.
 
 ## GCE cloud routes
 
@@ -23,4 +23,4 @@ Kubernetes GCE cloud provider integration simplifies route configuration by enab
 
 ## Enabling workload-to-WAN traffic
 
-To allow {{site.prodname}} networked containers to reach resources outside of GCE, you must configure outgoing NAT on your [{{site.prodname}} IP pool][{{site.baseurl}}/reference/resources/ippool].
+To allow {{site.prodname}} networked containers to reach resources outside of GCE, you must configure outgoing NAT on your [{{site.prodname}} IP pool]({{site.baseurl}}/reference/resources/ippool).
