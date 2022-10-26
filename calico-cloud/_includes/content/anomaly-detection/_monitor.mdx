@@ -7,16 +7,13 @@ You can monitor anomaly alerts on the Alerts page and/or Service Graph.
 
 From the left navbar, click Alerts. This page lists both security and performance anomaly alerts.
 
-
 ![anomaly-detection-single-alert]({{site.baseurl}}/images/anomaly-detection-single-alert.png)
 
 **Service Graph**
 
 From the left navbar, click Service Graph. Monitor security performance in the bottom panel. 
 
-
 ![anomaly-detection-service-graph-alerts-tab]({{site.baseurl}}/images/anomaly-detection-service-graph-alerts-tab.png)
-
 
 **Quarantine suspicious pods**
 

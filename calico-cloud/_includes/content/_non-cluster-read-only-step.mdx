@@ -14,4 +14,3 @@ kubectl create clusterrolebinding $SA_NAME --serviceaccount=calico-system:$SA_NA
 > applied to other init daemons such as upstart.
 {: .alert .alert-info}
 
-
