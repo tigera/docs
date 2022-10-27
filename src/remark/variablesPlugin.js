@@ -1,9 +1,5 @@
-const path = require('path');
 const visit = require('unist-util-visit');
-
-const variables = require(path.resolve('variables'));
-const objProp = require(path.resolve('src/utils/objProp'));
-const convertToPosixFriendlyPath = require(path.resolve('src/utils/convertToPosixFriendlyPath'));
+const getVariableByFilePath = require('../utils/getVariableByFilePath');
 
 const varRegex = RegExp(/\{\{[ \t]*([\w.\/-]+)[ \t]*}}/, 'g');
 
@@ -15,7 +11,6 @@ const varRegex = RegExp(/\{\{[ \t]*([\w.\/-]+)[ \t]*}}/, 'g');
 // variables can be seen in @site/variables.js
 function variablesPlugin(_options) {
   async function transformer(tree, file) {
-    const contextVariables = getContextVariables(file, variables);
     visit(
       tree,
       () => true,
@@ -25,14 +20,9 @@ function variablesPlugin(_options) {
           if (prop === 'type' || typeof node[prop] !== 'string') continue;
 
           node[prop] = node[prop].replaceAll(varRegex, (match, varName) => {
-            let varValue;
-            for (let cv of contextVariables) {
-              varValue = objProp(cv, varName);
-              if (varValue) return String(varValue);
-            }
-            varValue = objProp(variables.global, varName);
-            if (varValue) return String(varValue);
-            return match;
+            const varValue = getVariableByFilePath(file, varName);
+
+            return varValue || match;
           });
         }
       }
@@ -40,34 +30,6 @@ function variablesPlugin(_options) {
   }
 
   return transformer;
-}
-
-// We enumerate through each object in 'variables' which has a 'docsPathPrefix'
-// property. The 'docsPathPrefix' should be an array of strings. We
-// then check to see if that path prefix occurs in the current file's path. If
-// so, we add that variables object to the list of objects we'll use for
-// variable substitution.
-function getContextVariables(file, variables) {
-  let cvars = [];
-  const dpName = 'docsPathPrefix';
-  const posixFriendlyPath = convertToPosixFriendlyPath(file.path);
-
-  for (let p in variables) {
-    if (!Object.prototype.hasOwnProperty.call(variables, p)) continue;
-    if (typeof variables[p] !== 'object') continue;
-    if (!Object.prototype.hasOwnProperty.call(variables[p], dpName)) continue;
-    const docsPathPrefix = variables[p][dpName];
-    if (!Array.isArray(docsPathPrefix)) {
-      console.error(`${dpName} in variables.js should be an array!`);
-      continue;
-    }
-    for (let dpp of docsPathPrefix) {
-      if (posixFriendlyPath.includes(dpp)) {
-        cvars[cvars.length] = variables[p];
-      }
-    }
-  }
-  return cvars;
 }
 
 module.exports = variablesPlugin;
