@@ -167,4 +167,5 @@
     **Note**: If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
     {: .alert .alert-info}
 
+1. If your cluster includes egress gateways, follow the [egress gateway upgrade instructions]({{site.baseurl}}/networking/egress/egress-gateway-on-prem#upgrading-egress-gateways).
 {% endif %}

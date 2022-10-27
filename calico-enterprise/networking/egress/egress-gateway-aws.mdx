@@ -907,12 +907,12 @@ EOF
 >   gateway will report non-ready via its health port. `HTTP_PROBE_INTERVAL` controls the interval between probes.
 >   `HTTP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if all probes are failing.
 > 
-> The health port serves two purposes:
+> The health port is used by:
 >
-> - It is used by the Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
+> - The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
 >   probes).
 >
-> - It is used by remote {{site.noderunning}} pods to check if the egress gateway is "ready".  Only "ready" egress
+> - Remote pods to check if the egress gateway is "ready".  Only "ready" egress
 >   gateways will be used for remote client traffic.  This traffic is automatically allowed by {{site.prodname}} and
 >   no policy is required to allow it.
 {: .alert .alert-info}
@@ -1109,12 +1109,12 @@ That means that policies at (2) will usually take the form of rules that match o
 either directly in the rule (via a CIDR match) or via a (non-domain based) NetworkSet.  Matching on source has little
 utility since the IP will always be the egress gateway and the port of translated traffic is not always preserved.
 
-### Upgrading Egress Gateways
+### Upgrading egress gateways
 
-Since egress gateway deployments are not currently managed by the Tigera Operator, it is necessary to upgrade
+Because egress gateway deployments are not currently managed by the Tigera Operator, it is necessary to upgrade
 egress gateway deployments manually.
 
->**Note**: Whe upgrading egress gateway deployments both the image and the deployment spec need to be changed in
+>**Note**: When upgrading egress gateway deployments, both the image and the deployment spec need to be changed in
 > tandem; upgrading only the image version can result in a non-functioning egress gateway.  Newer versions of the
 > egress gateway image require new volume mounts and environment variables and have other structural changes (such
 > as the addition of an `initContainer` in v3.15.0).
@@ -1130,12 +1130,12 @@ To upgrade an egress gateway deployment:
 * Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To
   enable the policy sync API, follow the steps in [enable policy sync API](#enable-policy-sync-api) above.  This API
   allows the egress gateway daemon inside the egress gateway pod to query {{site.noderunning}} for the set of active
-  routes in the cluster.  If the egress gateway daemon cannot reach the API it will fail and report errors to the logs
+  routes in the cluster.  If the egress gateway daemon cannot reach the API, it will fail and report errors to the logs
   as it retries the connection.
 
 * Follow the steps [above](#deploy-a-group-of-egress-gateways) to prepare a deployment manifest for the new version
   egress gateways with the same name as the old.  As noted above, the deployment must be updated in lockstep with
-  the image version since different versions require different volumes/environment variables and other settings.
+  the image version because different versions require different volumes/environment variables and other settings.
 
   * If upgrading from a pre-v3.15 release, you may wish to enable the new ICMP and/or HTTP probe features, which allow
     the egress gateways to probe one or more external hosts with ICMP pings and/or HTTP GET requests and report problems through
@@ -1144,7 +1144,7 @@ To upgrade an egress gateway deployment:
 * Use `kubectl replace` to apply the manifest over the existing one.  Kubernetes will roll out the new egress gateways,
   replacing the old.
 
-By default, upgrading egress gateways wil sever any connections that are flowing through them.  To minimise impact,
+By default, upgrading egress gateways will sever any connections that are flowing through them.  To minimise impact,
 the egress gateway feature supports some advanced options that give feedback to affected pods.  For more details see
 the [egress gateway maintenance guide]({{site.baseurl}}/networking/egress/egress-gateway-maintenance).
 
