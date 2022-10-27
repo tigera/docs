@@ -33,12 +33,10 @@ const config = {
       'classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
+        // TODO: try to find a way to not specify a default instance
         docs: {
-          path: 'calico',
-          routeBasePath: 'calico',
-          sidebarPath: require.resolve('./sidebars-calico.js'),
-          editUrl: 'https://github.com/tigera/docs/',
-          beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+          path: 'default',
+          sidebarPath: false,
         },
         blog: false,
         theme: {
@@ -73,6 +71,7 @@ const config = {
             label: 'Calico',
             type: 'docSidebar',
             sidebarId: 'calicoSidebar',
+            docsPluginId: 'calico',
             position: 'left',
           },
           {
@@ -88,6 +87,11 @@ const config = {
             sidebarId: 'calicoCloudSidebar',
             docsPluginId: 'calico-cloud',
             position: 'left',
+          },
+          {
+            type: 'docsVersionDropdown',
+            position: 'right',
+            docsPluginId: 'calico',
           },
           {
             label: 'Tigera',
@@ -174,6 +178,18 @@ const config = {
     }),
   plugins: [
     'docusaurus-plugin-sass',
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      {
+        id: 'calico',
+        path: 'calico',
+        routeBasePath: 'calico',
+        editCurrentVersion: true,
+        sidebarPath: require.resolve('./sidebars-calico.js'),
+        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+      },
+    ],
     [
       '@docusaurus/plugin-content-docs',
       /** @type {import('@docusaurus/plugin-content-docs').Options} */
