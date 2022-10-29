@@ -1,0 +1,103 @@
+---
+title: Upgrade from Calico to Calico Enterprise on OpenShift
+description: Steps to upgrade from open source Calico to Calico Enterprise on OpenShift.
+openshift_manifests_ignore_installation_cr: true
+---
+
+{% assign calico_minor_version = releases.0["calico"].minor_version %}
+{% assign archive_path = releases.0["calico"].archive_path %}
+
+{% if archive_path and archive_path != "" %}
+{% capture calico_minor_version_with_path %}{{ archive_path }}/{{ calico_minor_version }}{% endcapture %}
+{% else %}
+{% assign calico_minor_version_with_path = calico_minor_version %}
+{% endif %}
+
+## Prerequisites
+
+Ensure that your Kubernetes cluster is running with open source Calico on the latest {{ calico_minor_version | append: '.x' }} release.
+If not, follow the [Calico upgrade documentation](https://docs.projectcalico.org/{{calico_minor_version_with_path}}/maintenance/kubernetes-upgrade) before continuing.
+
+Ensure your Kubernetes cluster is using the Kubernetes datastore. If you are using an `etcdv3` datastore, or the cluster doesn't have a datastore, contact Tigera Support to upgrade the datastore.
+
+Your Kubernetes cluster must not be running in production. Operator-based upgrades from open source Calico are not recommended for production clusters due to limited testing. Also, upgrades are not tested with open source Calico prior to v3.15.
+
+If your cluster already has {{prodname}} installed, follow the [Upgrading {{prodname}} from an earlier release guide](../upgrading-enterprise/openshift-upgrade.mdx) instead.
+
+## Upgrade Calico to {{prodname}}
+
+### Before you begin
+
+**Required**
+
+- [Configure a storage class for {{prodname}}.](../../../maintenance/logstorage/create-storage.mdx)
+
+### Install {{prodname}}
+
+**Download the new manifests**
+
+Make the manifests directory.
+
+```bash
+mkdir manifests
+```
+
+<InstallOpenShiftManifests />
+
+**Add an image pull secret**
+
+<OpenShiftPullSecret />
+
+> (Optional) If your cluster architecture requires any custom [{{prodname}} resources](../../../reference/resources/index.mdx) to function at startup, install them now using [calicoctl](../../../reference/clis/calicoctl/overview.mdx).
+
+**Install {{prodname}}**
+
+1. Apply the Tigera operators and custom resource definitions.
+
+   ```bash
+   oc apply -f manifests/
+   ```
+
+2. (Optional) If your cluster architecture requires any custom [Calico resources](../../../reference/resources/index.mdx) to function at startup, install them now using [calicoctl](../../../reference/clis/calicoctl/overview.mdx).
+
+3. Apply the custom resources for enterprise features, see [the installation reference](../../../reference/installation/api.mdx).
+
+   ```bash
+   oc apply -f {{url}}{{baseUrl}}/manifests/ocp/tigera-enterprise-resources.yaml
+   ```
+
+4. Patch installation.
+
+   ```bash
+   oc patch installations.operator.tigera.io default --type merge -p '{"spec":{"variant":"TigeraSecureEnterprise","imagePullSecrets":[{"name":"tigera-pull-secret"}]}}'
+   ```
+
+5. You can now monitor the upgrade progress with the following command:
+
+   ```bash
+   watch oc get tigerastatus
+   ```
+
+Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+
+:::note
+
+To troubleshoot problems, use `oc get tigerastatus -o yaml`.
+
+:::
+
+### Install the {{prodname}} license
+
+Install the {{prodname}} license provided to you by Tigera.
+
+```
+oc create -f </path/to/license.yaml>
+```
+
+<OpenShiftPrometheusOperator />
+
+You can now monitor progress with the following command:
+
+```
+watch oc get tigerastatus
+```
