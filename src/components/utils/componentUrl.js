@@ -1,14 +1,4 @@
-const getProductVariablesByProdname = require('../../utils/getProductVariablesByProdname');
-
-function componentUrl(component, release, prodname) {
-  const productVariables = getProductVariablesByProdname(prodname);
-
-  if (!productVariables) {
-    console.error(`Invalid "prodname": ${prodname}`);
-
-    return;
-  }
-
+function componentUrl(component, release) {
   if (release.title !== 'master') {
     switch (component) {
       case 'calico/node':

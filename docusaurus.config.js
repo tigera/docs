@@ -33,10 +33,10 @@ const config = {
       'classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
+        // TODO: try to find a way to not specify a default instance
         docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/tigera/docs/',
-          beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+          path: 'default',
+          sidebarPath: false,
         },
         blog: false,
         theme: {
@@ -71,19 +71,27 @@ const config = {
             label: 'Calico',
             type: 'docSidebar',
             sidebarId: 'calicoSidebar',
+            docsPluginId: 'calico',
             position: 'left',
           },
           {
             label: 'Calico Enterprise',
             type: 'docSidebar',
             sidebarId: 'calicoEnterpriseSidebar',
+            docsPluginId: 'calico-enterprise',
             position: 'left',
           },
           {
             label: 'Calico Cloud',
             type: 'docSidebar',
             sidebarId: 'calicoCloudSidebar',
+            docsPluginId: 'calico-cloud',
             position: 'left',
+          },
+          {
+            type: 'docsVersionDropdown',
+            position: 'right',
+            docsPluginId: 'calico',
           },
           {
             label: 'Tigera',
@@ -110,15 +118,15 @@ const config = {
             items: [
               {
                 label: 'Calico',
-                to: '/docs/calico/about/about-calico',
+                to: '/calico/category/calico',
               },
               {
                 label: 'Calico Enterprise',
-                to: '/docs/calico-enterprise/about-calico-enterprise',
+                to: '/calico-enterprise/category/calico-enterprise',
               },
               {
                 label: 'Calico Cloud',
-                to: '/docs/calico-cloud',
+                to: '/calico-cloud',
               },
             ],
           },
@@ -168,7 +176,45 @@ const config = {
         darkTheme: darkCodeTheme,
       },
     }),
-  plugins: ['docusaurus-plugin-sass'],
+  plugins: [
+    'docusaurus-plugin-sass',
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      {
+        id: 'calico',
+        path: 'calico',
+        routeBasePath: 'calico',
+        editCurrentVersion: true,
+        sidebarPath: require.resolve('./sidebars-calico.js'),
+        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      {
+        id: 'calico-enterprise',
+        path: 'calico-enterprise',
+        routeBasePath: 'calico-enterprise',
+        editCurrentVersion: true,
+        sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
+        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      {
+        id: 'calico-cloud',
+        path: 'calico-cloud',
+        routeBasePath: 'calico-cloud',
+        editCurrentVersion: true,
+        sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
+        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+      },
+    ],
+  ],
 };
 
 module.exports = config;

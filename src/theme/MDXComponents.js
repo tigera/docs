@@ -1,62 +1,196 @@
 import React from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import { useLocation } from '@docusaurus/router';
 
 import MDXComponents from '@theme-original/MDXComponents';
-import ReqsSys from '@site/src/components/partials/reqs-sys';
-import ReqsKernel from '@site/src/components/partials/reqs-kernel';
-import AutoHostendpointsMigrate from '@site/src/components/partials/auto-hostendpoints-migrate';
-import HostEndpointsUpgrade from '@site/src/components/partials/hostendpoints-upgrade';
-import InstallOpenshiftBeforeYouBegin from '@site/src/components/partials/install-openshift-before-you-begin';
-import CalicoWindowsInstall from '@site/src/components/partials/calico-windows-install';
-import PodCidrSed from '@site/src/components/partials/pod-cidr-sed';
-import EnvironmentFile from '@site/src/components/partials/environment-file';
-import ConfigureManagedCluster from '@site/src/components/partials/configure-managed-cluster';
-import InstallAKS from '@site/src/components/partials/install-aks';
-import InstallEKS from '@site/src/components/partials/install-eks';
-import InstallGeneric from '@site/src/components/partials/install-generic';
-import InstallGKE from '@site/src/components/partials/install-gke';
-import PrivateRegistryRegular from '@site/src/components/partials/private-registry-regular';
-import UpgradeOperatorSimple from '@site/src/components/partials/upgrade-operator-simple';
-import InstallOpenShift from '@site/src/components/partials/install-openshift';
-import InstallOpenShiftManifests from '@site/src/components/partials/install-openshift-manifests';
-import OpenShiftPullSecret from '@site/src/components/partials/openshift-pull-secret';
-import OpenShiftPrometheusOperator from '@site/src/components/partials/openshift-prometheus-operator';
-import GeekDetails from '@site/src/components/partials/geek-details';
-import ReleaseNotesCalico from '@site/src/components/partials/release-notes-calico';
-import ReleaseNotesCalicoEnterprise from '@site/src/components/partials/release-notes-calico-enterprise';
-import CliConfigIntro from '@site/src/components/partials/cli-config-intro';
 
-const partials = {
-  ReqsSys,
-  ReqsKernel,
-  HostEndpointsUpgrade,
-  InstallOpenshiftBeforeYouBegin,
-  CalicoWindowsInstall,
-  PodCidrSed,
-  EnvironmentFile,
-  AutoHostendpointsMigrate,
-  ConfigureManagedCluster,
-  InstallAKS,
-  InstallEKS,
-  InstallGeneric,
-  InstallGKE,
-  PrivateRegistryRegular,
-  UpgradeOperatorSimple,
-  InstallOpenShift,
-  InstallOpenShiftManifests,
-  OpenShiftPullSecret,
-  OpenShiftPrometheusOperator,
-  GeekDetails,
-  ReleaseNotesCalico,
-  ReleaseNotesCalicoEnterprise,
-  CliConfigIntro,
-};
+import GeekDetails from '@site/src/components/partials/GeekDetails';
+
+// TO REGISTER A NEW COMPONENT
+//
+// Add component name to 'partials' array.
+// Add corresponding case to swith-case in getCalicoVersionedComponent(),
+// if component exists only for Calico, otherwise add a case for each
+// get{product}VersionedComponent(), if the product uses this component.
+
+const partials = [
+  'ReqsSys',
+  'ReqsKernel',
+  'HostEndpointsUpgrade',
+  'InstallOpenshiftBeforeYouBegin',
+  'CalicoWindowsInstall',
+  'PodCidrSed',
+  'EnvironmentFile',
+  'AutoHostendpointsMigrate',
+  'ConfigureManagedCluster',
+  'InstallAKS',
+  'InstallEKS',
+  'InstallGeneric',
+  'InstallGKE',
+  'PrivateRegistryRegular',
+  'UpgradeOperatorSimple',
+  'InstallOpenShift',
+  'InstallOpenShiftManifests',
+  'OpenShiftPullSecret',
+  'OpenShiftPrometheusOperator',
+  'ReleaseNotes',
+  'CliConfigIntro',
+];
 
 const wrappedPartials = wrapPartials(partials);
 
 export default {
   ...MDXComponents,
   ...wrappedPartials,
+  GeekDetails,
 };
+
+function resolveComponent(componentName) {
+  return (props) => {
+    const { pathname } = useLocation();
+    const context = useDocusaurusContext();
+
+    const [, prodnamedash, maybeVersion] = pathname.match(/\/(.*?)\/(.*?)\//);
+    const [, ...versions] = context.globalData['docusaurus-plugin-content-docs'][prodnamedash].versions;
+
+    let Component = null;
+
+    const isNext = maybeVersion === 'next';
+    const noVersions = !versions || !versions.length;
+
+    if (isNext || noVersions) {
+      Component = getComponentForNextVersion(prodnamedash, componentName);
+    } else {
+      const isLatest = !versions.some((v) => v.name === maybeVersion);
+      const version = isLatest ? versions.find((v) => v.isLast).name : maybeVersion;
+
+      Component = getComponentForVersion(prodnamedash, componentName, version);
+    }
+
+    if (!Component) {
+      console.error(`Cannot resolve ${componentName} component for ${prodnamedash}`);
+    }
+
+    return <Component {...props} />;
+  };
+}
+
+function getComponentForNextVersion(prodnamedash, componentName) {
+  switch (prodnamedash) {
+    case 'calico-enterprise':
+      return require(`../../calico-enterprise/_includes/components/${componentName}`).default;
+    case 'calico':
+      return require(`../../calico/_includes/components/${componentName}`).default;
+    case 'calico-cloud':
+      console.error('No partial components registered for Calico Cloud');
+      return;
+    default:
+      console.error(`${prodnamedash} product doesn't exist`);
+  }
+}
+
+function getComponentForVersion(prodnamedash, componentName, version) {
+  switch (prodnamedash) {
+    case 'calico-enterprise':
+      return getCalicoEnterpriseVersionedComponent(version, componentName);
+    case 'calico':
+      return getCalicoVersionedComponent(version, componentName);
+    case 'calico-cloud':
+      console.error('No partial components registered for Calico Cloud');
+      return;
+    default:
+      console.error(`${prodnamedash} product doesn't exist`);
+  }
+}
+
+function getCalicoVersionedComponent(version, componentName) {
+  switch (componentName) {
+    case 'AutoHostendpointsMigrate':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/AutoHostendpointsMigrate`)
+        .default;
+    case 'CalicoWindowsInstall':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/CalicoWindowsInstall`)
+        .default;
+    case 'EnvironmentFile':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/EnvironmentFile`).default;
+    case 'HostEndpointsUpgrade':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/HostEndpointsUpgrade`)
+        .default;
+    case 'InstallOpenShiftManifests':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
+        .default;
+    case 'PodCidrSed':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/PodCidrSed`).default;
+    case 'ReleaseNotes':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReleaseNotes`).default;
+    case 'ReqsKernel':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReqsKernel`).default;
+    case 'ReqsSys':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReqsSys`).default;
+    default:
+      console.error(`Versioned ${componentName} component isn't registered for Calico`);
+  }
+}
+
+function getCalicoEnterpriseVersionedComponent(version, componentName) {
+  switch (componentName) {
+    case 'CalicoWindowsInstall':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/CalicoWindowsInstall`)
+        .default;
+    case 'CliConfigIntro':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/CliConfigIntro`)
+        .default;
+    case 'ConfigureManagedCluster':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ConfigureManagedCluster`)
+        .default;
+    case 'EnvironmentFile':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/EnvironmentFile`)
+        .default;
+    case 'InstallOpenshiftBeforeYouBegin':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenshiftBeforeYouBegin`)
+        .default;
+    case 'InstallAKS':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallAKS`)
+        .default;
+    case 'InstallEKS':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallEKS`)
+        .default;
+    case 'InstallGeneric':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallGeneric`)
+        .default;
+    case 'InstallGKE':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallGKE`)
+        .default;
+    case 'InstallOpenShift':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenShift`)
+        .default;
+    case 'InstallOpenShiftManifests':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
+        .default;
+    case 'OpenShiftPrometheusOperator':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/OpenShiftPrometheusOperator`)
+        .default;
+    case 'OpenShiftPullSecret':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/OpenShiftPullSecret`)
+        .default;
+    case 'PrivateRegistryRegular':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/PrivateRegistryRegular`)
+        .default;
+    case 'ReleaseNotes':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReleaseNotes`)
+        .default;
+    case 'ReqsKernel':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReqsKernel`)
+        .default;
+    case 'ReqsSys':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReqsSys`).default;
+    case 'UpgradeOperatorSimple':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/UpgradeOperatorSimple`)
+        .default;
+    default:
+      console.error(`Versioned ${componentName} component isn't registered for Calico Enterprise`);
+  }
+}
 
 function wrapPartials(partials) {
   const wrapPartial = (Partial) => (props) =>
@@ -66,5 +200,5 @@ function wrapPartials(partials) {
       </div>
     );
 
-  return Object.fromEntries(Object.entries(partials).map(([key, comp]) => [key, wrapPartial(comp)]));
+  return Object.fromEntries(partials.map((name) => [name, wrapPartial(resolveComponent(name))]));
 }
