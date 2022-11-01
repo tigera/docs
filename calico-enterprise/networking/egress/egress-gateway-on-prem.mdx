@@ -2,6 +2,8 @@
 title: Configure egress gateways, on-premises
 description: Configure specific application traffic to exit the cluster through an egress gateway.
 canonical_url: '/networking/egress/egress-gateway-on-prem'
+redirect_from:
+  - /compliance/egress-gateways
 ---
 
 ### Big picture
