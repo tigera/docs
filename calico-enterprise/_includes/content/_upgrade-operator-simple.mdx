@@ -35,9 +35,9 @@
    and then [update the manifest]({{site.baseurl}}/getting-started/private-registry/private-registry-regular#run-the-operator-using-images-from-your-private-registry)
    downloaded in the previous step.
 
-1. Apply or replace the manifest for Tigera operator.
+1. {% if include.upgradeFrom == "OpenSource" %}Apply{% else %}Replace{% endif %} the manifest for Tigera operator.
    ```bash
-   kubectl replace -f tigera-operator.yaml
+   kubectl {% if include.upgradeFrom == "OpenSource" %}apply --server-side --force-conflicts{% else %}replace{% endif %} -f tigera-operator.yaml
    ```
 
 {%- if include.upgradeFrom != "OpenSource" %}
@@ -46,9 +46,9 @@
 {%- endif %}
 
 
-1. If you downloaded the manifests for Prometheus operator from the earlier step, then replace them now.
+1. If you downloaded the manifests for Prometheus operator from the earlier step, then {% if include.upgradeFrom == "OpenSource" %}create{% else %}replace{% endif %} them now.
    ```bash
-   kubectl replace -f tigera-prometheus-operator.yaml
+   kubectl {% if include.upgradeFrom == "OpenSource" %}create{% else %}replace{% endif %} -f tigera-prometheus-operator.yaml
    ```
 
 {%- if include.upgradeFrom == "OpenSource" %}
@@ -85,11 +85,11 @@
 1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
    ```bash
    {%- if include.provider == "EKS" %}
-   kubectl replace -f {{ "/manifests/eks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
+   kubectl apply -f {{ "/manifests/eks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
    {%- elsif include.provider == "AKS" %}
-   kubectl replace -f {{ "/manifests/aks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
+   kubectl apply -f {{ "/manifests/aks/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
    {%- else %}
-   kubectl replace -f {{ "/manifests/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
+   kubectl apply -f {{ "/manifests/custom-resources-upgrade-from-calico.yaml" | absolute_url }}
    {%- endif %}
    ```
 
