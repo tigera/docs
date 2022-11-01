@@ -7,7 +7,7 @@ const FeatureList = [
   {
     title: 'Calico Open Source',
     Svg: require('@site/static/img/calico-logo.svg').default,
-    link: 'calico/about/about-calico',
+    link: 'calico/about',
     description: (
       <>
         Calico Open Source...

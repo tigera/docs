@@ -2,16 +2,14 @@
 
 module.exports = {
   calicoSidebar: [
-    //{type: 'ref', id: 'about/about-calico'},
     {
       type: 'category',
       label: 'About',
       link: {
         type: 'doc',
-        id: 'about/about-calico',
+        id: 'about/index',
       },
       items: [
-        'about/about-calico',
         'about/about-k8s-networking',
         'about/about-network-policy',
         'about/about-kubernetes-services',
