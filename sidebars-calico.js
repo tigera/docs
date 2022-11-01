@@ -8,7 +8,7 @@ module.exports = {
       label: 'About',
       link: {
         type: 'doc',
-        id: 'about/index',
+        id: 'about/about-calico',
       },
       items: [
         'about/about-calico',
@@ -31,13 +31,16 @@ module.exports = {
         {
           type: 'category',
           label: 'Kubernetes',
-          link: {type: 'doc', id: 'getting-started/kubernetes/index'},
+          link: { type: 'doc', id: 'getting-started/kubernetes/index' },
           items: [
             'getting-started/kubernetes/quickstart',
             {
               type: 'category',
               label: 'Managed public cloud',
-              link: {type: 'doc', id: 'getting-started/kubernetes/managed-public-cloud/index'},
+              link: {
+                type: 'doc',
+                id: 'getting-started/kubernetes/managed-public-cloud/index',
+              },
               items: [
                 'getting-started/kubernetes/managed-public-cloud/eks',
                 'getting-started/kubernetes/managed-public-cloud/gke',
@@ -48,7 +51,10 @@ module.exports = {
             {
               type: 'category',
               label: 'Self-managed public cloud',
-              link: {type: 'doc', id: 'getting-started/kubernetes/self-managed-public-cloud/index'},
+              link: {
+                type: 'doc',
+                id: 'getting-started/kubernetes/self-managed-public-cloud/index',
+              },
               items: [
                 'getting-started/kubernetes/self-managed-public-cloud/aws',
                 'getting-started/kubernetes/self-managed-public-cloud/gce',
@@ -59,7 +65,10 @@ module.exports = {
             {
               type: 'category',
               label: 'Self-managed on-premises',
-              link: {type: 'doc', id: 'getting-started/kubernetes/self-managed-onprem/index'},
+              link: {
+                type: 'doc',
+                id: 'getting-started/kubernetes/self-managed-onprem/index',
+              },
               items: [
                 'getting-started/kubernetes/self-managed-onprem/onpremises',
                 'getting-started/kubernetes/self-managed-onprem/config-options',
@@ -69,7 +78,10 @@ module.exports = {
             {
               type: 'category',
               label: 'OpenShift',
-              link: {type: 'doc', id: 'getting-started/kubernetes/openshift/index'},
+              link: {
+                type: 'doc',
+                id: 'getting-started/kubernetes/openshift/index',
+              },
               items: [
                 'getting-started/kubernetes/openshift/requirements',
                 'getting-started/kubernetes/openshift/installation',
@@ -79,7 +91,10 @@ module.exports = {
             {
               type: 'category',
               label: 'Flannel',
-              link: {type: 'doc', id: 'getting-started/kubernetes/flannel/index'},
+              link: {
+                type: 'doc',
+                id: 'getting-started/kubernetes/flannel/index',
+              },
               items: [
                 'getting-started/kubernetes/flannel/install-for-flannel',
                 'getting-started/kubernetes/flannel/migration-from-flannel',
@@ -88,7 +103,10 @@ module.exports = {
             {
               type: 'category',
               label: 'Calico for Windows',
-              link: {type: 'doc', id: 'getting-started/kubernetes/windows-calico/index'},
+              link: {
+                type: 'doc',
+                id: 'getting-started/kubernetes/windows-calico/index',
+              },
               items: [
                 'getting-started/kubernetes/windows-calico/limitations',
                 'getting-started/kubernetes/windows-calico/quickstart',
@@ -96,7 +114,10 @@ module.exports = {
                 {
                   type: 'category',
                   label: 'Kubernetes',
-                  link: {type: 'doc', id: 'getting-started/kubernetes/windows-calico/kubernetes/index'},
+                  link: {
+                    type: 'doc',
+                    id: 'getting-started/kubernetes/windows-calico/kubernetes/index',
+                  },
                   items: [
                     'getting-started/kubernetes/windows-calico/kubernetes/requirements',
                     'getting-started/kubernetes/windows-calico/kubernetes/standard',
@@ -112,7 +133,7 @@ module.exports = {
             {
               type: 'category',
               label: 'K3s',
-              link: {type: 'doc', id: 'getting-started/kubernetes/k3s/index'},
+              link: { type: 'doc', id: 'getting-started/kubernetes/k3s/index' },
               items: [
                 'getting-started/kubernetes/k3s/quickstart',
                 'getting-started/kubernetes/k3s/multi-node-install',
@@ -124,7 +145,10 @@ module.exports = {
             {
               type: 'category',
               label: 'Calico the hard way',
-              link: {type: 'doc', id: 'getting-started/kubernetes/hardway/index'},
+              link: {
+                type: 'doc',
+                id: 'getting-started/kubernetes/hardway/index',
+              },
               items: [
                 'getting-started/kubernetes/hardway/overview',
                 'getting-started/kubernetes/hardway/standing-up-kubernetes',
@@ -144,7 +168,7 @@ module.exports = {
             {
               type: 'category',
               label: 'VPP dataplane',
-              link: {type: 'doc', id: 'getting-started/kubernetes/vpp/index'},
+              link: { type: 'doc', id: 'getting-started/kubernetes/vpp/index' },
               items: [
                 'getting-started/kubernetes/vpp/getting-started',
                 'getting-started/kubernetes/vpp/ipsec',
@@ -156,14 +180,17 @@ module.exports = {
         {
           type: 'category',
           label: 'OpenStack',
-          link: {type: 'doc', id: 'getting-started/openstack/index'},
+          link: { type: 'doc', id: 'getting-started/openstack/index' },
           items: [
             'getting-started/openstack/overview',
             'getting-started/openstack/requirements',
             {
               type: 'category',
               label: 'Installation',
-              link: {type: 'doc', id: 'getting-started/openstack/installation/index'},
+              link: {
+                type: 'doc',
+                id: 'getting-started/openstack/installation/index',
+              },
               items: [
                 'getting-started/openstack/installation/overview',
                 'getting-started/openstack/installation/ubuntu',
@@ -177,14 +204,17 @@ module.exports = {
         {
           type: 'category',
           label: 'Non-cluster hosts',
-          link: {type: 'doc', id: 'getting-started/bare-metal/index'},
+          link: { type: 'doc', id: 'getting-started/bare-metal/index' },
           items: [
             'getting-started/bare-metal/about',
             'getting-started/bare-metal/requirements',
             {
               type: 'category',
               label: 'Installation',
-              link: {type: 'doc', id: 'getting-started/bare-metal/installation/index'},
+              link: {
+                type: 'doc',
+                id: 'getting-started/bare-metal/installation/index',
+              },
               items: [
                 'getting-started/bare-metal/installation/container',
                 'getting-started/bare-metal/installation/binary-mgr',
@@ -198,13 +228,13 @@ module.exports = {
     {
       type: 'category',
       label: 'Networking',
-      link: {type: 'doc', id: 'networking/index'},
+      link: { type: 'doc', id: 'networking/index' },
       items: [
         'networking/determine-best-networking',
         {
           type: 'category',
           label: 'Configure networking',
-          link: {type: 'doc', id: 'networking/configuring/index'},
+          link: { type: 'doc', id: 'networking/configuring/index' },
           items: [
             'networking/configuring/bgp',
             'networking/configuring/vxlan-ipip',
@@ -219,7 +249,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Customize IP address management',
-          link: {type: 'doc', id: 'networking/ipam/index'},
+          link: { type: 'doc', id: 'networking/ipam/index' },
           items: [
             'networking/ipam/get-started-ip-addresses',
             'networking/ipam/ip-autodetection',
@@ -236,7 +266,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Calico networking for OpenStack',
-          link: {type: 'doc', id: 'networking/openstack/index'},
+          link: { type: 'doc', id: 'networking/openstack/index' },
           items: [
             'networking/openstack/dev-machine-setup',
             'networking/openstack/ipv6',
@@ -257,19 +287,22 @@ module.exports = {
     {
       type: 'category',
       label: 'Security',
-      link: {type: 'doc', id: 'security/index'},
+      link: { type: 'doc', id: 'security/index' },
       items: [
         'security/adopt-zero-trust',
         'security/non-privileged',
         {
           type: 'category',
           label: 'Get started with policy',
-          link: {type: 'doc', id: 'security/get-started/index'},
+          link: { type: 'doc', id: 'security/get-started/index' },
           items: [
             {
               type: 'category',
               label: 'Calico policy',
-              link: {type: 'doc', id: 'security/get-started/calico-policy/index'},
+              link: {
+                type: 'doc',
+                id: 'security/get-started/calico-policy/index',
+              },
               items: [
                 'security/get-started/calico-policy/calico-network-policy',
                 'security/get-started/calico-policy/network-policy-openstack',
@@ -279,7 +312,10 @@ module.exports = {
             {
               type: 'category',
               label: 'Kubernetes policy',
-              link: {type: 'doc', id: 'security/get-started/kubernetes-policy/index'},
+              link: {
+                type: 'doc',
+                id: 'security/get-started/kubernetes-policy/index',
+              },
               items: [
                 'security/get-started/kubernetes-policy/kubernetes-network-policy',
                 'security/get-started/kubernetes-policy/kubernetes-demo',
@@ -293,7 +329,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy rules',
-          link: {type: 'doc', id: 'security/policy-rules/index'},
+          link: { type: 'doc', id: 'security/policy-rules/index' },
           items: [
             'security/policy-rules/policy-rules-overview',
             'security/policy-rules/namespace-policy',
@@ -307,7 +343,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for hosts',
-          link: {type: 'doc', id: 'security/hosts/index'},
+          link: { type: 'doc', id: 'security/hosts/index' },
           items: [
             'security/hosts/protect-hosts',
             'security/hosts/kubernetes-nodes',
@@ -318,7 +354,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for services',
-          link: {type: 'doc', id: 'security/services/index'},
+          link: { type: 'doc', id: 'security/services/index' },
           items: [
             'security/services/kubernetes-node-ports',
             'security/services/services-cluster-ips',
@@ -327,7 +363,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for Istio',
-          link: {type: 'doc', id: 'security/istio/index'},
+          link: { type: 'doc', id: 'security/istio/index' },
           items: [
             'security/istio/enforce-policy-istio',
             'security/istio/http-methods',
@@ -337,7 +373,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for extreme traffic',
-          link: {type: 'doc', id: 'security/extreme-traffic/index'},
+          link: { type: 'doc', id: 'security/extreme-traffic/index' },
           items: [
             'security/extreme-traffic/high-connection-workloads',
             'security/extreme-traffic/defend-dos-attack',
@@ -347,7 +383,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Secure Calico component communications',
-          link: {type: 'doc', id: 'security/comms/index'},
+          link: { type: 'doc', id: 'security/comms/index' },
           items: [
             'security/comms/crypto-auth',
             'security/comms/reduce-nodes',
@@ -361,12 +397,12 @@ module.exports = {
     {
       type: 'category',
       label: 'Operations',
-      link: {type: 'doc', id: 'maintenance/index'},
+      link: { type: 'doc', id: 'maintenance/index' },
       items: [
         {
           type: 'category',
           label: 'Upgrade',
-          link: {type: 'doc', id: 'maintenance/upgrading/index'},
+          link: { type: 'doc', id: 'maintenance/upgrading/index' },
           items: [
             'maintenance/upgrading/kubernetes-upgrade',
             'maintenance/upgrading/openshift-upgrade',
@@ -376,13 +412,16 @@ module.exports = {
         {
           type: 'category',
           label: 'calicoctl',
-          link: {type: 'doc', id: 'maintenance/calicoctl/index'},
+          link: { type: 'doc', id: 'maintenance/calicoctl/index' },
           items: [
             'maintenance/calicoctl/install',
             {
               type: 'category',
               label: 'Configure calicoctl',
-              link: {type: 'doc', id: 'maintenance/calicoctl/configure/index'},
+              link: {
+                type: 'doc',
+                id: 'maintenance/calicoctl/configure/index',
+              },
               items: [
                 'maintenance/calicoctl/configure/overview',
                 'maintenance/calicoctl/configure/etcd',
@@ -394,7 +433,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Deploy image options',
-          link: {type: 'doc', id: 'maintenance/image-options/index'},
+          link: { type: 'doc', id: 'maintenance/image-options/index' },
           items: [
             'maintenance/image-options/imageset',
             'maintenance/image-options/alternate-registry',
@@ -406,7 +445,7 @@ module.exports = {
         {
           type: 'category',
           label: 'eBPF',
-          link: {type: 'doc', id: 'maintenance/ebpf/index'},
+          link: { type: 'doc', id: 'maintenance/ebpf/index' },
           items: [
             'maintenance/ebpf/use-cases-ebpf',
             'maintenance/ebpf/enabling-ebpf',
@@ -417,7 +456,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Monitor',
-          link: {type: 'doc', id: 'maintenance/monitor/index'},
+          link: { type: 'doc', id: 'maintenance/monitor/index' },
           items: [
             'maintenance/monitor/monitor-component-metrics',
             'maintenance/monitor/monitor-component-visual',
@@ -427,7 +466,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Troubleshoot',
-          link: {type: 'doc', id: 'maintenance/troubleshoot/index'},
+          link: { type: 'doc', id: 'maintenance/troubleshoot/index' },
           items: [
             'maintenance/troubleshoot/troubleshooting',
             'maintenance/troubleshoot/commands',
@@ -442,7 +481,7 @@ module.exports = {
     {
       type: 'category',
       label: 'Reference',
-      link: {type: 'doc', id: 'reference/index'},
+      link: { type: 'doc', id: 'reference/index' },
       items: [
         'reference/api',
         {
@@ -454,7 +493,7 @@ module.exports = {
         {
           type: 'category',
           label: 'calicoctl',
-          link: {type: 'doc', id: 'reference/calicoctl/index'},
+          link: { type: 'doc', id: 'reference/calicoctl/index' },
           items: [
             'reference/calicoctl/overview',
             'reference/calicoctl/create',
@@ -468,7 +507,7 @@ module.exports = {
             {
               type: 'category',
               label: 'ipam',
-              link: {type: 'doc', id: 'reference/calicoctl/ipam/index'},
+              link: { type: 'doc', id: 'reference/calicoctl/ipam/index' },
               items: [
                 'reference/calicoctl/ipam/overview',
                 'reference/calicoctl/ipam/check',
@@ -480,7 +519,7 @@ module.exports = {
             {
               type: 'category',
               label: 'node',
-              link: {type: 'doc', id: 'reference/calicoctl/node/index'},
+              link: { type: 'doc', id: 'reference/calicoctl/node/index' },
               items: [
                 'reference/calicoctl/node/overview',
                 'reference/calicoctl/node/run',
@@ -492,13 +531,16 @@ module.exports = {
             {
               type: 'category',
               label: 'datastore',
-              link: {type: 'doc', id: 'reference/calicoctl/datastore/index'},
+              link: { type: 'doc', id: 'reference/calicoctl/datastore/index' },
               items: [
                 'reference/calicoctl/datastore/overview',
                 {
                   type: 'category',
                   label: 'migrate',
-                  link: {type: 'doc', id: 'reference/calicoctl/datastore/migrate/index'},
+                  link: {
+                    type: 'doc',
+                    id: 'reference/calicoctl/datastore/migrate/index',
+                  },
                   items: [
                     'reference/calicoctl/datastore/migrate/overview',
                     'reference/calicoctl/datastore/migrate/export',
@@ -515,7 +557,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Resource definitions',
-          link: {type: 'doc', id: 'reference/resources/index'},
+          link: { type: 'doc', id: 'reference/resources/index' },
           items: [
             'reference/resources/overview',
             'reference/resources/bgpconfig',
@@ -540,7 +582,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Configuring etcd RBAC',
-          link: {type: 'doc', id: 'reference/etcd-rbac/index'},
+          link: { type: 'doc', id: 'reference/etcd-rbac/index' },
           items: [
             'reference/etcd-rbac/overview',
             'reference/etcd-rbac/certificate-generation',
@@ -554,7 +596,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Felix',
-          link: {type: 'doc', id: 'reference/felix/index'},
+          link: { type: 'doc', id: 'reference/felix/index' },
           items: [
             'reference/felix/configuration',
             'reference/felix/prometheus',
@@ -563,7 +605,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Typha',
-          link: {type: 'doc', id: 'reference/typha/index'},
+          link: { type: 'doc', id: 'reference/typha/index' },
           items: [
             'reference/typha/overview',
             'reference/typha/configuration',
@@ -574,7 +616,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Calico Kubernetes controllers',
-          link: {type: 'doc', id: 'reference/kube-controllers/index'},
+          link: { type: 'doc', id: 'reference/kube-controllers/index' },
           items: [
             'reference/kube-controllers/configuration',
             'reference/kube-controllers/prometheus',
@@ -583,7 +625,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Configuration on public clouds',
-          link: {type: 'doc', id: 'reference/public-cloud/index'},
+          link: { type: 'doc', id: 'reference/public-cloud/index' },
           items: [
             'reference/public-cloud/aws',
             'reference/public-cloud/azure',
@@ -594,7 +636,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Host endpoints',
-          link: {type: 'doc', id: 'reference/host-endpoints/index'},
+          link: { type: 'doc', id: 'reference/host-endpoints/index' },
           items: [
             'reference/host-endpoints/overview',
             'reference/host-endpoints/connectivity',
@@ -610,14 +652,14 @@ module.exports = {
         {
           type: 'category',
           label: 'Architecture',
-          link: {type: 'doc', id: 'reference/architecture/index'},
+          link: { type: 'doc', id: 'reference/architecture/index' },
           items: [
             'reference/architecture/overview',
             'reference/architecture/data-path',
             {
               type: 'category',
               label: 'Network design',
-              link: {type: 'doc', id: 'reference/architecture/design/index'},
+              link: { type: 'doc', id: 'reference/architecture/design/index' },
               items: [
                 'reference/architecture/design/l2-interconnect-fabric',
                 'reference/architecture/design/l2-interconnect-fabric',
@@ -628,7 +670,7 @@ module.exports = {
         {
           type: 'category',
           label: 'VPP dataplane',
-          link: {type: 'doc', id: 'reference/vpp/index'},
+          link: { type: 'doc', id: 'reference/vpp/index' },
           items: [
             'reference/vpp/uplink-configuration',
             'reference/vpp/technical-details',
@@ -640,7 +682,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Attributions',
-          link: {type: 'doc', id: 'reference/legal/index'},
+          link: { type: 'doc', id: 'reference/legal/index' },
           items: [
             'reference/legal/alp',
             'reference/legal/calicoctl',
@@ -649,11 +691,11 @@ module.exports = {
             'reference/legal/felix',
             'reference/legal/node',
             'reference/legal/typha',
-          ]
-        }
+          ],
+        },
       ],
     },
-    'release-notes/index'
+    'release-notes/index',
   ],
 
 };

@@ -52,7 +52,7 @@ const config = {
   ],
 
   themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       algolia: {
         appId: 'Q4GSZWRKBA',
@@ -68,7 +68,7 @@ const config = {
         },
         items: [
           {
-            label: 'Calico',
+            label: 'Calico Open Source',
             type: 'docSidebar',
             sidebarId: 'calicoSidebar',
             docsPluginId: 'calico',
@@ -117,7 +117,7 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Calico',
+                label: 'Calico Open Source',
                 to: '/calico/about/about-calico',
               },
               {
@@ -165,6 +165,10 @@ const config = {
               {
                 label: 'Calico GitHub',
                 href: 'https://github.com/projectcalico',
+              },
+              {
+                label: 'Docs GitHub',
+                href: 'https://github.com/tigera/docs',
               },
             ],
           },
