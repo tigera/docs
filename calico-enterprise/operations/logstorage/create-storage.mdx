@@ -66,8 +66,7 @@ metadata:
   name: tigera-elasticsearch
 provisioner: ebs.csi.aws.com
 parameters:
-  type: gp2
-  fsType: ext4
+  type: gp3
 reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
