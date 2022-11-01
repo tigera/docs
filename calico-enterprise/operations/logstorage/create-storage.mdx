@@ -65,8 +65,6 @@ kind: StorageClass
 metadata:
   name: tigera-elasticsearch
 provisioner: ebs.csi.aws.com
-parameters:
-  type: gp3
 reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
