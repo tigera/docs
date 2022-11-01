@@ -118,7 +118,7 @@ const config = {
             items: [
               {
                 label: 'Calico Open Source',
-                to: '/calico/about/about-calico',
+                to: '/calico/about',
               },
               {
                 label: 'Calico Enterprise',
