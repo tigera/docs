@@ -108,9 +108,17 @@ Where:
 - A Calico egress/ingress rule referencing a zone defines a selector of the form: `firewall.tigera.io/zone == <ZONE_NAME>`.
 - A Calico egress/ingress rule referencing an address group defines a selector of the form: `firewall.tigera.io/address-group == <ADDRESS_GROUP_NAME>`.
 
-> **Note**: GlobalNetworkPolicy.metadata.name will be prefixed with `<TIER_NAME>.pan-zone` and either be: 1) `<ZONE_NAME>`, if it is a Kubernetes (RFC1123) compliant name, or 2) a mapping to a Kubernetes (RFC1123) compliant name, suffixed with a unique hash value.
+:::note
 
-> **Note**: An object (eg. service, address, etc.) member of a Panorama rule must be defined in same device group as the rule or the `shared` device group for it to be used in Calico policy.
+GlobalNetworkPolicy.metadata.name will be prefixed with `<TIER_NAME>.pan-zone` and either be: 1) `<ZONE_NAME>`, if it is a Kubernetes (RFC1123) compliant name, or 2) a mapping to a Kubernetes (RFC1123) compliant name, suffixed with a unique hash value.
+
+:::
+
+:::note
+
+An object (eg. service, address, etc.) member of a Panorama rule must be defined in same device group as the rule or the `shared` device group for it to be used in Calico policy.
+
+:::
 
 ### About the Panorama address groups integration
 
@@ -150,7 +158,11 @@ Where:
 - Each address group maps to a global network set in Kubernetes.
 - The GlobalNetworkSet is labeled with a `firewall.tigera.io/address-group` key, and value equal to `<ADDRESS_GROUP_NAME>`.
 
-> **Note**: GlobalNetworkSet.metadata.name will be prefixed with `pan.` and either be: 1) `<ADDRESS_GROUP_NAME>`, if it is a Kubernetes (RFC1123) compliant name, or 2) a mapping to a Kubernetes (RFC1123) compliant name, suffixed with a unique hash value.
+:::note
+
+GlobalNetworkSet.metadata.name will be prefixed with `pan.` and either be: 1) `<ADDRESS_GROUP_NAME>`, if it is a Kubernetes (RFC1123) compliant name, or 2) a mapping to a Kubernetes (RFC1123) compliant name, suffixed with a unique hash value.
+
+:::
 
 ## Before you begin
 
@@ -168,7 +180,11 @@ Where:
 - Panorama rules defined in the `shared` device group
 - Panorama user, device mappings
 
-> **Note**: All actions that are not allow or deny map to deny.
+:::note
+
+All actions that are not allow or deny map to deny.
+
+:::
 
 **Recommended**
 
@@ -189,44 +205,50 @@ The user must have read REST API access to rules, addresses, address groups and 
 
 ## Create a Panorama policy config map
 
-1.  Create a namespace for the tigera-firewall-controller.
+1. Create a namespace for the tigera-firewall-controller.
 
-        ```bash
+   ```bash
+   kubectl create namespace tigera-firewall-integration
+   ```
 
-    kubectl create namespace tigera-firewall-integration
-    ```
+2. Create a ConfigMap and add your Panorama device information in the data section. For example:
 
-2.  Create a ConfigMap and add your Panorama device information in the data section. For example:
+   ```bash
+   kubectl create configmap tigera-policy-integration-controller-config -n tigera-firewall-integration \
+   --from-literal=panorama.host=__IPADDRESS_OF_PANORAMA__ \
+   --from-literal=panorama.rules.filter="(tag1 OR tag2) AND tag3" \
+   --from-literal=panorama.device-group="devicegroup1" \
+   --from-literal=tigera.policy.integration.tier="mypolicytier" \
+   --from-literal=tigera.policy.integration.tier.order=101 \
+   --from-literal=firewall.policy.integration.log-level="info" \
+   --from-literal=panorama.address-groups.filter="tag1, tag2, tag3"
+   ```
 
-        ```bash
+   Where:
+   | Field | Description |
+   | -------------------------- | ------------------------------------------------------------ |
+   | host | Panorama host address. |
+   | device-group | Device group in which the Panorama rules reside in. |
+   | filter | The logical statement of Panorama tags used to filter the Panorama rules (eg. "tag1 AND tag2"). |
+   | tier | The tier the Panorama policy belongs to. (default:"firewallpolicy") |
+   | tier-order | The Panorama policy tier order. (default: 101) |
+   | tags | The comma delimited set of Panorama tags used to filter in the address groups. |
 
-    kubectl create configmap tigera-policy-integration-controller-config -n tigera-firewall-integration \
-     --from-literal=panorama.host=**IPADDRESS_OF_PANORAMA** \
-     --from-literal=panorama.rules.filter="(tag1 OR tag2) AND tag3" \
-     --from-literal=panorama.device-group="devicegroup1" \
-     --from-literal=tigera.policy.integration.tier="mypolicytier" \
-     --from-literal=tigera.policy.integration.tier.order=101 \
-     --from-literal=firewall.policy.integration.log-level="info" \
-     --from-literal=panorama.address-groups.filter="tag1, tag2, tag3"
-    ```
-    Where:
+   :::note
 
-        | Field                      | Description                                                  |
-        | -------------------------- | ------------------------------------------------------------ |
-        | host                       | Panorama host address.      |
-        | device-group               | Device group in which the Panorama rules reside in.      |
-        | filter                     | The logical statement of Panorama tags used to filter the Panorama rules (eg. "tag1 AND tag2"). |
-        | tier                       | The tier the Panorama policy belongs to. (default:"firewallpolicy")      |
-        | tier-order                 | The Panorama policy tier order. (default: 101)     |
-        | tags                       | The comma delimited set of Panorama tags used to filter in the address groups. |
+   Tag names with characters that do not follow the RFC1123 standard must be encapsulated within single quotes. Invalid input will produce an error similar to:
 
-        **Note**: Tag names with characters that do not follow the RFC1123 standard must be  encapsulated within single quotes. Invalid input will produce an error similar to:
-        ```
+   ```
+   [ERROR] "failed to parse tags"
+   ```
 
-    [ERROR] "failed to parse tags"
-    ```
+   :::
 
-        **Note**: The `tags` field is used to filter in address groups is a comma delimited (eg. `"tag1, tag2, tag3`) list of Panorama tags. All address groups tagged with at least one corresponding tag will be mapped to a corresponding global network set in Kubernetes.
+   :::note
+
+   The `tags` field is used to filter in address groups is a comma delimited (eg. `"tag1, tag2, tag3`) list of Panorama tags. All address groups tagged with at least one corresponding tag will be mapped to a corresponding global network set in Kubernetes.
+
+   :::
 
 ## Install Panorama username and password as secrets
 
@@ -263,9 +285,17 @@ kubectl create -f {{url}}{{baseUrl}}/manifests/tigera-policy-integration.yaml
 3. Select **Policies**, and create a new security **Pre** or **Post** **Rule**.
 4. In the Manager UI, click Network Policies in the left navbar and verify that the GlobalNetworkPolicies are created
 
-   **Note**: A new **Zone** can be defined by clicking on **Add** and typing in the new name within the **Source** or **Destination** definition, while creating a Panorama rule.
+   :::note
 
-   **Note**: For any Panorama rule to be reflected as a GlobalNetworkPolicy in Kubernets, at least one source or destination **Zone** must be defined.
+   A new **Zone** can be defined by clicking on **Add** and typing in the new name within the **Source** or **Destination** definition, while creating a Panorama rule.
+
+   :::
+
+   :::note
+
+   For any Panorama rule to be reflected as a GlobalNetworkPolicy in Kubernets, at least one source or destination **Zone** must be defined.
+
+   :::
 
 ### Troubleshooting
 
