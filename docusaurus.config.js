@@ -118,15 +118,15 @@ const config = {
             items: [
               {
                 label: 'Calico',
-                to: '/calico/category/calico',
+                to: '/calico/about/about-calico',
               },
               {
                 label: 'Calico Enterprise',
-                to: '/calico-enterprise/category/calico-enterprise',
+                to: '/calico-enterprise/about-calico-enterprise',
               },
               {
                 label: 'Calico Cloud',
-                to: '/calico-cloud',
+                to: '/calico-cloud/',
               },
             ],
           },
