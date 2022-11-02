@@ -54,7 +54,25 @@ reclaimPolicy: Retain
 
 ##### AWS EBS disks
 
-In the following example for an AWS cloud provider integration, the **StorageClass** tells {{site.prodname}} to use EBS disks for log storage.
+In the following example for an AWS cloud provider integration, the **StorageClass** is based on [how your EBS disks are provisioned](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html):
+{% tabs %}
+  <label:Amazon EBS CSI,active:true>
+<%
+Make sure the CSI plugin is enabled in your cluster and apply the following manifest.
+```
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: tigera-elasticsearch
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+```
+
+%>
+  <label:Legacy Kubernetes EBS driver>
+<%
 
 ```
 apiVersion: storage.k8s.io/v1
@@ -69,6 +87,9 @@ reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
 ```
+
+%>
+{% endtabs %}
 
 ##### AKS Azure Files storage
 
