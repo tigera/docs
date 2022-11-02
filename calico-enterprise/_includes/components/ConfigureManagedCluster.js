@@ -4,6 +4,8 @@ import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 
+import { baseUrl } from '../../variables';
+
 export default function ConfigureManagedCluster(props) {
   const kubectlCmd = props.kubectlCmd || 'kubectl';
 
@@ -61,24 +63,24 @@ export default function ConfigureManagedCluster(props) {
             clusters, choose a name that can be easily recognized in a list of managed clusters. The name is also used
             in steps that follow.
           </p>
-          <CodeBlock language='bash'>export MANAGED_CLUSTER=my-managed-cluster</CodeBlock>
+          <CodeBlock language='bash-plain-text'>export MANAGED_CLUSTER=my-managed-cluster</CodeBlock>
         </li>
         <li>
           <p>
             Get the namespace in which the Tigera operator is running in your managed cluster (in most cases this will
             be <code>tigera-operator</code>):
           </p>
-          <CodeBlock language='bash'>export MANAGED_CLUSTER_OPERATOR_NS=tigera-operator</CodeBlock>
+          <CodeBlock language='bash-plain-text'>export MANAGED_CLUSTER_OPERATOR_NS=tigera-operator</CodeBlock>
         </li>
         <li>
           <p>
             Add a managed cluster and save the manifest containing a{' '}
-            <Link href='../../reference/installation/api#operator.tigera.io/v1.ManagementClusterConnection'>
+            <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.ManagementClusterConnection`}>
               ManagementClusterConnection
             </Link>{' '}
             and a Secret.
           </p>
-          <CodeBlock language='bash'>
+          <CodeBlock language='bash-plain-text'>
             {`${kubectlCmd} -o jsonpath="{.spec.installationManifest}" > $MANAGED_CLUSTER.yaml create -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: ManagedCluster
@@ -105,11 +107,11 @@ EOF`}
             Apply the manifest that you modified in the step,
             <strong> Add a managed cluster to the management cluster</strong>.
           </p>
-          <CodeBlock language='bash'>{`${kubectlCmd} apply -f $MANAGED_CLUSTER.yaml`}</CodeBlock>
+          <CodeBlock language='bash-plain-text'>{`${kubectlCmd} apply -f $MANAGED_CLUSTER.yaml`}</CodeBlock>
         </li>
         <li>
           <p>Monitor progress with the following command:</p>
-          <CodeBlock language='bash'>{`watch ${kubectlCmd} get tigerastatus`}</CodeBlock>
+          <CodeBlock language='bash-plain-text'>{`watch ${kubectlCmd} get tigerastatus`}</CodeBlock>
           Wait until the <code>management-cluster-connection</code> and <code>tigera-compliance</code> show a status of{' '}
           <code>Available</code>.
         </li>

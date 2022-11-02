@@ -22,7 +22,7 @@ This how-to guide uses the following {{prodname}} features:
 
 To verify the type of an existing cluster, run the following command:
 
-```bash
+```bash-plain-text
 kubectl get managementcluster,managementclusterconnection
 ```
 
@@ -44,7 +44,7 @@ We do not support having both `ManagementCluster` and `ManagementClusterConnecti
    The following example of a NodePort service may not be suitable for production and high availability. For options, see [Fine-tune multi-cluster management for production](fine-tune-deployment.mdx).
    Apply the following service manifest.
 
-   ```bash
+   ```bash-plain-text
    kubectl create -f - <<EOF
    apiVersion: v1
    kind: Service
@@ -65,13 +65,13 @@ We do not support having both `ManagementCluster` and `ManagementClusterConnecti
 
 1. Find out the address where you can reach the above service and set it as a variable. (Ex. "example.com:1234" or "10.0.0.10:1234".)
 
-   ```bash
+   ```bash-plain-text
    export MANAGEMENT_CLUSTER_ADDR=<your-management-cluster-addr>
    ```
 
 1. Apply the [ManagementCluster](../reference/installation/api.mdx) CR.
 
-   ```bash
+   ```bash-plain-text
    kubectl apply -f - <<EOF
    apiVersion: operator.tigera.io/v1
    kind: ManagementCluster
@@ -94,19 +94,19 @@ If you wish to retain LogStorage data for your managed cluster, verify that the 
 
 1. Choose a name for your managed cluster.
 
-   ```bash
+   ```bash-plain-text
    export MANAGED_CLUSTER=my-managed-cluster
    ```
 
 1. Get the namespace in which the Tigera operator is running in your managed cluster (in most cases this will be `tigera-operator`):
 
-   ```bash
+   ```bash-plain-text
    export MANAGED_CLUSTER_OPERATOR_NS=tigera-operator
    ```
 
 1. Add the managed cluster to your **management cluster**. The following command will
    create a manifest with the name of your managed cluster in your current directory.
-   ```bash
+   ```bash-plain-text
    kubectl -o jsonpath="{.spec.installationManifest}" > $MANAGED_CLUSTER.yaml create -f - <<EOF
    apiVersion: projectcalico.org/v3
    kind: ManagedCluster
@@ -117,32 +117,32 @@ If you wish to retain LogStorage data for your managed cluster, verify that the 
    EOF
    ```
 1. Verify that the `managementClusterAddr` in the manifest is correct. Apply the manifest to your **managed cluster**.
-   ```bash
+   ```bash-plain-text
    kubectl apply -f $MANAGED_CLUSTER.yaml
    ```
 1. Remove unnecessary resources in the managed clusters.
-   ```bash
+   ```bash-plain-text
    kubectl delete manager tigera-secure
    kubectl delete logstorage tigera-secure
    ```
 1. Monitor progress until everything has the status, `Available`.
-   ```bash
+   ```bash-plain-text
    watch kubectl get tigerastatus
    ```
 
 ### Change a management cluster to a standalone cluster
 
 1. Change your installation type to `Standalone`.
-   ```bash
+   ```bash-plain-text
    kubectl delete managementcluster tigera-secure
    ```
 1. Delete the service that you created to expose the management cluster.
-   ```bash
+   ```bash-plain-text
    kubectl delete service <your-service-name> -n tigera-manager
    ```
 1. Delete all managed cluster resources in your cluster.
 
-   ```bash
+   ```bash-plain-text
    kubectl delete managedcluster --all
    ```
 
@@ -159,7 +159,7 @@ If you wish to retain LogStorage data for your managed cluster, verify that the 
 
 1. Remove the `ManagementClusterConnection` from your cluster and delete the managed cluster connection secret.
 
-   ```bash
+   ```bash-plain-text
    kubectl delete managementclusterconnection tigera-secure
    kubectl delete secret tigera-managed-cluster-connection -n tigera-operator
    ```
@@ -172,15 +172,15 @@ If you wish to retain LogStorage data for your managed cluster, verify that the 
 
 1. Install the Tigera custom resources.
    For more information, see [the installation reference](../reference/installation/api.mdx).
-   ```bash
+   ```bash-plain-text
    kubectl apply -f {{url}}{{baseUrl}}/manifests/custom-resources.yaml
    ```
 1. Monitor the progress with the following command:
-   ```bash
+   ```bash-plain-text
    watch kubectl get tigerastatus
    ```
    When all components show a status of `Available`, go to the next step.
 1. Remove your managed cluster from the **management cluster**.
-   ```bash
+   ```bash-plain-text
    kubectl delete managedcluster <your-managed-cluster-name>
    ```

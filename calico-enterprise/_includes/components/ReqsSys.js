@@ -5,7 +5,7 @@ import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 
 import { orchestrators } from '@site/variables';
-import { prodname } from '../../variables';
+import { prodname, baseUrl } from '../../variables';
 
 function NodeRequirementsEnt(props) {
   return (
@@ -61,7 +61,7 @@ function NodeRequirementsEnt(props) {
               Many Linux distributions, such as most of the above, include NetworkManager. By default, NetworkManager
               does not allow
               {prodname} to manage interfaces. If your nodes have NetworkManager, complete the steps in{' '}
-              <Link href='../../maintenance/troubleshoot/troubleshooting#configure-networkmanager'>
+              <Link href={`${baseUrl}/maintenance/troubleshoot/troubleshooting#configure-networkmanager`}>
                 Preventing NetworkManager from controlling {prodname} interfaces
               </Link>{' '}
               before installing {prodname}.
@@ -76,7 +76,7 @@ function NodeRequirementsEnt(props) {
           <Admonition type='note'>
             <p>
               If a host firewall is needed, it can be configured by {prodname} HostEndpoint and GlobalNetworkPolicy.
-              More information about configuration at <Link href='../../security/hosts'>Security for host</Link>.
+              More information about configuration at <Link href={`${baseUrl}/security/hosts`}>Security for host</Link>.
             </p>
           </Admonition>
         </li>
@@ -191,7 +191,7 @@ function NetworkRequirementsEnt(props) {
       </Heading>
       <p>
         Ensure that your hosts and firewalls allow the necessary traffic based on your configuration. See{' '}
-        <Link href='../../reference/architecture/overview'>Component architecture</Link> to view the following
+        <Link href={`${baseUrl}/reference/architecture/overview`}>Component architecture</Link> to view the following
         components.
       </p>
       <table>

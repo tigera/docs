@@ -8,7 +8,7 @@ import Link from '@docusaurus/Link';
 
 import Highlight from '@site/src/components/utils/Highlight';
 
-import { prodname } from '../../variables';
+import { prodname, baseUrl } from '../../variables';
 
 export default function EnvironmentFile(props) {
   if (props.target === 'felix') {
@@ -33,9 +33,9 @@ export default function EnvironmentFile(props) {
           host. For more help, see the{' '}
         </span>
         {props.install === 'container' ? (
-          <Link href='../../reference/node/configuration'>{props.nodecontainer} configuration reference</Link>
+          <Link href={`${baseUrl}/reference/node/configuration`}>{props.nodecontainer} configuration reference</Link>
         ) : (
-          <Link href='../../reference/felix/configuration'>Felix configuration reference</Link>
+          <Link href={`${baseUrl}/reference/felix/configuration`}>Felix configuration reference</Link>
         )}
       </p>
       <Tabs>
@@ -180,7 +180,7 @@ export default function EnvironmentFile(props) {
           <p>
             Sample <Highlight>EnvironmentFile</Highlight> - save to <Highlight>/etc/calico/calico.env</Highlight>
           </p>
-          <CodeBlock language='bash'>
+          <CodeBlock language='bash-plain-text'>
             {`${datastore_type}=etcdv3
 ${etcd_endpoints}=https://calico-datastore.example.com:2379
 ${etcd_ca_file}="/pki/ca.pem"

@@ -26,7 +26,7 @@ Windows Server 1809 (build older than 17763.1432) do not support [direct server 
 
 First, create a client (busybox) and server (nginx) pod on the Linux nodes:
 
-```bash
+```bash-plain-text
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Namespace
@@ -86,7 +86,7 @@ that matches your Windows Server version.
 
 :::
 
-```bash
+```bash-plain-text
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -111,7 +111,7 @@ EOF
 
 Next, we'll create the porter server pod:
 
-```bash
+```bash-plain-text
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -140,19 +140,19 @@ EOF
 Now that client and server pods are running on both Linux and Windows nodes, let's verify that client pods
 on Linux nodes can reach server pods on Windows nodes. First, we will need the porter pod IP:
 
-```bash
+```bash-plain-text
 kubectl get po porter -n calico-demo -o 'jsonpath={.status.podIP}'
 ```
 
 Then we can exec into the busybox pod and try reaching the porter pod on port 80:
 
-```bash
+```bash-plain-text
 kubectl exec -n calico-demo busybox -- nc -vz <porter_ip> 80
 ```
 
 To combine both of the above steps:
 
-```bash
+```bash-plain-text
 kubectl exec -n calico-demo busybox -- nc -vz $(kubectl get po porter -n calico-demo -o 'jsonpath={.status.podIP}') 80
 ```
 
@@ -164,7 +164,7 @@ If the connection from the busybox pod to the porter pod succeeds, we will get o
 
 Now let's verify that the powershell pod can reach the nginx pod:
 
-```bash
+```bash-plain-text
 kubectl exec -n calico-demo pwsh -- powershell Invoke-WebRequest -Uri http://$(kubectl get po nginx -n calico-demo -o 'jsonpath={.status.podIP}') -UseBasicParsing -TimeoutSec 5
 ```
 
@@ -190,7 +190,7 @@ Content           : <!DOCTYPE html>
 
 Finally, let's verify that the powershell pod can reach the porter pod:
 
-```bash
+```bash-plain-text
 kubectl exec -n calico-demo pwsh -- powershell Invoke-WebRequest -Uri http://$(kubectl get po porter -n calico-demo -o 'jsonpath={.status.podIP}') -UseBasicParsing -TimeoutSec 5
 ```
 
@@ -220,7 +220,7 @@ RawContentLength  : 49
 
 Now let's apply a basic network policy that allows only the busybox pod to reach the porter pod.
 
-```bash
+```bash-plain-text
 kubectl apply -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
@@ -241,13 +241,13 @@ EOF
 
 With the policy in place, the busybox pod should still be able to reach the porter pod:
 
-```bash
+```bash-plain-text
 kubectl exec -n calico-demo busybox -- nc -vz $(kubectl get po porter -n calico-demo -o 'jsonpath={.status.podIP}') 80
 ```
 
 However, the powershell pod will not able to reach the porter pod:
 
-```bash
+```bash-plain-text
 kubectl exec -n calico-demo pwsh -- powershell Invoke-WebRequest -Uri http://$(kubectl get po porter -n calico-demo -o 'jsonpath={.status.podIP}') -UseBasicParsing -TimeoutSec 5
 ```
 
@@ -271,7 +271,7 @@ command terminated with exit code 1
 In this demo we've brought up pods on Linux and Windows nodes, verified basic pod connectivity, and tried a
 basic network policy to isolate pod to pod traffic. Finally, we can clean up all of our demo resources:
 
-```bash
+```bash-plain-text
 kubectl delete ns calico-demo
 ```
 

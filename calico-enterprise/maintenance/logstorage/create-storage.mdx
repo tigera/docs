@@ -5,6 +5,9 @@ description: Configure persistent storage for flow logs, DNS logs, audit logs, a
 
 import PersistentStorageTerms from '@site/calico-enterprise/_includes/content/_persistent-storage-terms.mdx';
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 ## Big picture
 
 Before installing {{prodname}}, you must configure persistent storage for flow logs, DNS logs, audit logs, and compliance reports.
@@ -62,7 +65,26 @@ reclaimPolicy: Retain
 
 #### AWS EBS disks
 
-In the following example for an AWS cloud provider integration, the **StorageClass** tells {{prodname}} to use EBS disks for log storage.
+In the following example for an AWS cloud provider integration, the **StorageClass** is based on [how your EBS disks are provisioned](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html):
+
+<Tabs>
+<TabItem label="Amazon EBS CSI" value="Amazon EBS CSI-0">
+
+Make sure the CSI plugin is enabled in your cluster and apply the following manifest.
+
+```
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: tigera-elasticsearch
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+```
+
+</TabItem>
+<TabItem label="Legacy Kubernetes EBS driver" value="Legacy Kubernetes EBS driver-1">
 
 ```
 apiVersion: storage.k8s.io/v1
@@ -77,6 +99,9 @@ reclaimPolicy: Retain
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
 ```
+
+</TabItem>
+</Tabs>
 
 #### AKS Azure Files storage
 

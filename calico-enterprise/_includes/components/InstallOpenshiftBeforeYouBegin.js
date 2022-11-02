@@ -4,7 +4,7 @@ import Link from '@docusaurus/Link';
 
 import Highlight from '@site/src/components/utils/Highlight';
 
-import { prodname, prodnameWindows } from '../../variables';
+import { prodname, prodnameWindows, baseUrl } from '../../variables';
 
 export default function InstallOpenshiftBeforeYouBegin(props) {
   return (
@@ -16,12 +16,14 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
         <li>
           <p>
             Your environment meets the {prodname}{' '}
-            <Link href='../../getting-started/install-on-clusters/openshift/requirements'>system requirements</Link>
+            <Link href={`${baseUrl}/getting-started/install-on-clusters/openshift/requirements`}>
+              system requirements
+            </Link>
           </p>
         </li>
         <li>
           <p>
-            <Link href='../../getting-started/install-on-clusters/calico-enterprise'>
+            <Link href={`${baseUrl}/getting-started/install-on-clusters/calico-enterprise`}>
               Private registry credentials and license key
             </Link>
           </p>

@@ -20,7 +20,7 @@ export default function UpgradeOperatorSimple(props) {
               Switch the active operator to the one that will be installed to the new namespace. First, download the
               helper script:
             </p>
-            <CodeBlock language='bash'>
+            <CodeBlock language='bash-plain-text'>
               curl -L -O {url}
               {baseUrl}/scripts/switch-active-operator.sh
             </CodeBlock>
@@ -34,7 +34,7 @@ export default function UpgradeOperatorSimple(props) {
 
         <li>
           <p>Download the new manifests for Tigera operator.</p>
-          <CodeBlock language='bash'>
+          <CodeBlock language='bash-plain-text'>
             {props.provider === 'AKS'
               ? `curl -L -o tigera-operator.yaml ${url}${baseUrl}/manifests/aks/tigera-operator-upgrade.yaml`
               : `curl -L -O ${url}${baseUrl}/manifests/tigera-operator.yaml`}
@@ -47,7 +47,7 @@ export default function UpgradeOperatorSimple(props) {
             If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work
             with Calico Enterprise, your Prometheus operator must be v0.40.0 or higher.
           </Admonition>
-          <CodeBlock language='bash'>
+          <CodeBlock language='bash-plain-text'>
             curl -L -O {url}
             {baseUrl}/manifests/tigera-prometheus-operator.yaml
           </CodeBlock>
@@ -56,15 +56,19 @@ export default function UpgradeOperatorSimple(props) {
         <li>
           <p>
             If you previously{' '}
-            <Link href='../../getting-started/install-on-clusters/private-registry'>
+            <Link href={`${baseUrl}/getting-started/install-on-clusters/private-registry`}>
               installed using a private registry
             </Link>
             , you will need to{' '}
-            <Link href='../../getting-started/install-on-clusters/private-registry/private-registry-regular#push-calico-enterprise-images-to-your-private-registry'>
+            <Link
+              href={`${baseUrl}/getting-started/install-on-clusters/private-registry/private-registry-regular#push-calico-enterprise-images-to-your-private-registry`}
+            >
               push the new images{' '}
             </Link>
             and then{' '}
-            <Link href='../../getting-started/install-on-clusters/private-registry/private-registry-regular#run-the-operator-using-images-from-your-private-registry'>
+            <Link
+              href={`${baseUrl}/getting-started/install-on-clusters/private-registry/private-registry-regular#run-the-operator-using-images-from-your-private-registry`}
+            >
               update the manifest
             </Link>{' '}
             downloaded in the previous step.
@@ -73,7 +77,7 @@ export default function UpgradeOperatorSimple(props) {
 
         <li>
           <p>Apply the manifest for Tigera operator.</p>
-          <CodeBlock language='bash'>kubectl apply -f tigera-operator.yaml</CodeBlock>
+          <CodeBlock language='bash-plain-text'>kubectl apply -f tigera-operator.yaml</CodeBlock>
           {maybeRender(
             props.upgradeFrom !== 'OpenSource',
             <Admonition type='note'>
@@ -86,7 +90,7 @@ export default function UpgradeOperatorSimple(props) {
 
         <li>
           <p>If you downloaded the manifests for Prometheus operator from the earlier step, then apply them now.</p>
-          <CodeBlock language='bash'>kubectl apply -f tigera-prometheus-operator.yaml</CodeBlock>
+          <CodeBlock language='bash-plain-text'>kubectl apply -f tigera-prometheus-operator.yaml</CodeBlock>
         </li>
 
         {maybeRender(
@@ -125,9 +129,9 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
           <li>
             <p>
               Install the Tigera custom resources. For more information on configuration options available in this
-              manifest, see <Link href='../../reference/installation/api'>the installation reference</Link>.
+              manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
             </p>
-            <CodeBlock language='bash'>
+            <CodeBlock language='bash-plain-text'>
               {props.provider === 'EKS'
                 ? `kubectl apply -f ${url}${baseUrl}/manifests/eks/custom-resources-upgrade-from-calico.yaml`
                 : props.provider === 'AKS'
@@ -137,7 +141,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
             <p>
               Remove the opensource Calico apiserver resource if it exists. Check if multiple apiserver resources exist:
             </p>
-            <CodeBlock language='bash'>kubectl get apiserver</CodeBlock>
+            <CodeBlock language='bash-plain-text'>kubectl get apiserver</CodeBlock>
             <p>If a default apiserver resource exists, you will see output similar to this:</p>
             <CodeBlock>
               {`$ kubectl get apiserver
@@ -148,7 +152,7 @@ tigera-secure   19h`}
             <p>
               Remove the <code>default</code> apiserver:
             </p>
-            <CodeBlock language='bash'>kubectl delete apiserver default</CodeBlock>
+            <CodeBlock language='bash-plain-text'>kubectl delete apiserver default</CodeBlock>
           </li>
         )}
 
@@ -158,37 +162,44 @@ tigera-secure   19h`}
             <li>
               <p>If your cluster has OIDC login configured, follow these steps:</p>
               <p> a. Save a copy of your Manager for reference.</p>
-              <CodeBlock language='bash'>{'kubectl get manager tigera-secure -o yaml > manager.yaml'}</CodeBlock>
+              <CodeBlock language='bash-plain-text'>
+                {'kubectl get manager tigera-secure -o yaml > manager.yaml'}
+              </CodeBlock>
               <p>b. Remove the deprecated fields from your Manager resource.</p>
-              <CodeBlock language='bash'>{`kubectl patch manager tigera-secure --type merge -p '{"spec": null}'`}</CodeBlock>
+              <CodeBlock language='bash-plain-text'>{`kubectl patch manager tigera-secure --type merge -p '{"spec": null}'`}</CodeBlock>
               <p>
                 c. If you are currently using v3.2 and are using OIDC with Kibana verify that you have the following
                 resources in your cluster:
               </p>
-              <CodeBlock language='bash'>
+              <CodeBlock language='bash-plain-text'>
                 kubectl get authentication tigera-secure{'\n'}
                 kubectl get secret tigera-oidc-credentials -n tigera-operator
               </CodeBlock>
               <p>
                 If both of these resources are present, you can continue with the next step. Otherwise, use the
                 instructions to{' '}
-                <Link href='../../maintenance/cnx/configure-identity-provider'>configure an identity provider</Link> to
-                configure OIDC.
+                <Link href={`${baseUrl}/maintenance/cnx/configure-identity-provider`}>
+                  configure an identity provider
+                </Link>{' '}
+                to configure OIDC.
               </p>
               <p>
                 d. Follow{' '}
-                <Link href='../../maintenance/cnx/configure-identity-provider'>configure an identity provider</Link>.
+                <Link href={`${baseUrl}/maintenance/cnx/configure-identity-provider`}>
+                  configure an identity provider
+                </Link>
+                .
               </p>
             </li>
             <li>
               <p>
                 If your cluster is a management cluster using v3.1 or older, apply a{' '}
-                <Link href='../../reference/installation/api#operator.tigera.io/v1.ManagementCluster'>
+                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.ManagementCluster`}>
                   ManagementCluster{' '}
                 </Link>
                 CR to your cluster.
               </p>
-              <CodeBlock language='bash'>
+              <CodeBlock language='bash-plain-text'>
                 {`kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: ManagementCluster
@@ -200,10 +211,10 @@ EOF`}
             <li>
               <p>
                 If your cluster is v3.7 or older, apply a new{' '}
-                <Link href='../../reference/installation/api#operator.tigera.io/v1.Monitor'>Monitor </Link>
+                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.Monitor`}>Monitor </Link>
                 CR to your cluster.
               </p>
-              <CodeBlock language='bash'>
+              <CodeBlock language='bash-plain-text'>
                 {`kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: Monitor
@@ -214,7 +225,7 @@ EOF`}
             </li>
             <li>
               <p>You can monitor progress with the following command:</p>
-              <CodeBlock language='bash'>watch kubectl get tigerastatus</CodeBlock>
+              <CodeBlock language='bash-plain-text'>watch kubectl get tigerastatus</CodeBlock>
               <Admonition type='note'>
                 If there are any problems you can use <code>kubectl get tigerastatus -o yaml</code> to get more details.
               </Admonition>

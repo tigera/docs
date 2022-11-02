@@ -6,6 +6,8 @@ import Link from '@docusaurus/Link';
 
 import Highlight from '@site/src/components/utils/Highlight';
 
+import { baseUrl } from '../../variables';
+
 export default function EnvironmentFile(props) {
   return (
     <>
@@ -15,9 +17,9 @@ export default function EnvironmentFile(props) {
           host. For more help, see the{' '}
         </span>
         {props.install === 'container' ? (
-          <Link href='../../reference/node/configuration'>{props.nodecontainer} configuration reference</Link>
+          <Link href={`${baseUrl}/reference/node/configuration`}>{props.nodecontainer} configuration reference</Link>
         ) : (
-          <Link href='../../reference/felix/configuration'>Felix configuration reference</Link>
+          <Link href={`${baseUrl}/reference/felix/configuration`}>Felix configuration reference</Link>
         )}
       </p>
       <p>For the Kubernetes datastore set the following:</p>
@@ -44,7 +46,7 @@ export default function EnvironmentFile(props) {
       <p>
         Sample <Highlight>EnvironmentFile</Highlight> - save to <Highlight>/kubernetes/calico/calico.env</Highlight>
       </p>
-      <CodeBlock language='bash'>
+      <CodeBlock language='bash-plain-text'>
         {`DATASTORE_TYPE=kubernetes
 CALICO_NODENAME=""
 NO_DEFAULT_POOLS="true"

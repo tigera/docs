@@ -4,7 +4,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { prodname } from '../../variables';
+import { prodname, baseUrl } from '../../variables';
 
 export default function CliConfigIntro(props) {
   return (
@@ -39,8 +39,8 @@ spec:
         </li>
       </ol>
       <p>
-        See the section that corresponds to your <Link href='../../maintenance/clis'>datastore type</Link> for a full
-        set of options and examples.
+        See the section that corresponds to your <Link href={`${baseUrl}/maintenance/clis`}>datastore type</Link> for a
+        full set of options and examples.
       </p>
       <Admonition type='note'>
         When running <code>{props.cli}</code> inside a container, any environment variables and configuration files must

@@ -4,7 +4,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { prodname } from '../../variables';
+import { prodname, baseUrl } from '../../variables';
 
 export default function OpenShiftPrometheusOperator(props) {
   return (
@@ -13,9 +13,9 @@ export default function OpenShiftPrometheusOperator(props) {
       <Admonition type='note'>
         Complete this step only if you are using the {prodname} Prometheus operator (including adding your own
         Prometheus operator). Skip this step if you are using{' '}
-        <Link href='../../maintenance/monitor/prometheus/support'>BYO Prometheus</Link> that you manage yourself.
+        <Link href={`${baseUrl}/maintenance/monitor/prometheus/support`}>BYO Prometheus</Link> that you manage yourself.
       </Admonition>
-      <CodeBlock language='bash'>
+      <CodeBlock language='bash-plain-text'>
         {props.operation === 'install'
           ? 'oc create -f "/manifests/ocp/tigera-prometheus-operator.yaml"'
           : 'oc apply -f "/manifests/ocp/tigera-prometheus-operator.yaml"'}
@@ -24,7 +24,7 @@ export default function OpenShiftPrometheusOperator(props) {
         Create the pull secret in the <code>tigera-prometheus</code> namespace and then patch the Prometheus operator
         deployment. Use the image pull secret provided to you by Tigera support representative.
       </p>
-      <CodeBlock language='bash'>
+      <CodeBlock language='bash-plain-text'>
         {`oc create secret generic tigera-pull-secret \\
     --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \\
     --from-file=.dockerconfigjson=<path/to/pull/secret>

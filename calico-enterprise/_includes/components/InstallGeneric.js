@@ -24,7 +24,7 @@ export default function InstallGeneric(props) {
         {maybeRender(
           props.clusterType !== 'managed',
           <li>
-            <Link href='../../maintenance/logstorage/create-storage'>Configure storage for {prodname}</Link>.
+            <Link href={`${baseUrl}/maintenance/logstorage/create-storage`}>Configure storage for {prodname}</Link>.
           </li>
         )}
         <li>
@@ -74,17 +74,17 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
         </li>
         <li>
           (Optional) If your cluster architecture requires any custom{' '}
-          <Link href='../../reference/resources'>{prodname} resources</Link> to function at startup, install them now
-          using <Link href='../../reference/clis/calicoctl/overview'>calicoctl</Link>.
+          <Link href={`${baseUrl}/reference/resources`}>{prodname} resources</Link> to function at startup, install them
+          now using <Link href={`${baseUrl}/reference/clis/calicoctl/overview`}>calicoctl</Link>.
         </li>
         {maybeRender(
           props.clusterType === 'managed',
           <li>
             <p>
               Download the Tigera custom resources. For more information on configuration options available in this
-              manifest, see <Link href='../../reference/installation/api'>the installation reference</Link>.
+              manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
             </p>
-            <CodeBlock language='bash'>
+            <CodeBlock language='bash-plain-text'>
               curl -O -L {url}
               {baseUrl}/manifests/custom-resources.yaml
             </CodeBlock>
@@ -115,7 +115,7 @@ spec:
     count: 1`}
             </CodeBlock>
             <p>Now apply the modified manifest.</p>
-            <CodeBlock language='bash'>kubectl create -f ./custom-resources.yaml</CodeBlock>
+            <CodeBlock language='bash-plain-text'>kubectl create -f ./custom-resources.yaml</CodeBlock>
           </li>
         )}
         {maybeRender(
@@ -123,7 +123,7 @@ spec:
           <li>
             <p>
               Install the Tigera custom resources. For more information on configuration options available, see{' '}
-              <Link href='../../reference/installation/api'>the installation reference</Link>.
+              <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
             </p>
             <CodeBlock>
               kubectl create -f {url}
@@ -175,12 +175,12 @@ spec:
               <p>
                 Create a service to expose the management cluster. The following example of a NodePort service may not
                 be suitable for production and high availability. For options, see{' '}
-                <Link href='../../multicluster/mcm/fine-tune-deployment'>
+                <Link href={`${baseUrl}/multicluster/mcm/fine-tune-deployment`}>
                   Fine-tune multi-cluster management for production
                 </Link>
                 . Apply the following service manifest.
               </p>
-              <CodeBlock language='bash'>
+              <CodeBlock language='bash-plain-text'>
                 {`kubectl create -f - <<EOF
 apiVersion: v1
 kind: Service
@@ -210,12 +210,12 @@ EOF`}
             </li>
             <li>
               <p>
-                <Link href='../../reference/installation/api#operator.tigera.io/v1.ManagementCluster'>
+                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.ManagementCluster`}>
                   ManagementCluster
                 </Link>{' '}
                 CR.
               </p>
-              <CodeBlock language='bash'>
+              <CodeBlock language='bash-plain-text'>
                 {`kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: ManagementCluster
@@ -243,7 +243,7 @@ EOF`}
                 Create an admin user called, <code>mcm-user</code> in the default namespace with full permissions, by
                 applying the following commands.
               </p>
-              <CodeBlock language='bash'>
+              <CodeBlock language='bash-plain-text'>
                 kubectl create sa mcm-user{'\n'}
                 kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-user
                 --clusterrole=tigera-network-admin
@@ -251,7 +251,7 @@ EOF`}
             </li>
             <li>
               <p>Get the login token for your new admin user, and log in to {prodname} Manager.</p>
-              <CodeBlock language='bash'>
+              <CodeBlock language='bash-plain-text'>
                 {`kubectl get secret $(kubectl get serviceaccount mcm-user -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo`}
               </CodeBlock>
               <p>
@@ -287,7 +287,7 @@ EOF`}
             Let&#39;s define admin-level permissions for the service account (<code>mcm-user</code>) we created to log
             in to the Manager UI. Run the following command against your managed cluster.
           </p>
-          <CodeBlock language='bash'>
+          <CodeBlock language='bash-plain-text'>
             kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-user
             --clusterrole=tigera-network-admin
           </CodeBlock>

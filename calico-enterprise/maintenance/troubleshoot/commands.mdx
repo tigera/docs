@@ -25,7 +25,7 @@ See [Calico architecture and components](../../reference/architecture/overview.m
 
 ### Verify number of nodes in a cluster
 
-```bash
+```bash-plain-text
 kubectl get nodes
 ```
 
@@ -40,7 +40,7 @@ ip-10-0-0-12   Ready    <none>   27h   v1.18.0
 
 ### Verify calico-node pods are running on every node, and are in a healthy state
 
-```bash
+```bash-plain-text
 kubectl get pods -n calico-system -o wide
 ```
 
@@ -53,7 +53,7 @@ calico-node-7trv7           1/1     Running   0          27h   10.0.0.12      ip
 
 ### Exec into pod for further troubleshooting
 
-```bash
+```bash-plain-text
 kubectl run multitool --image=praqma/network-multitool
 
 kubectl exec -it multitool -- bash
@@ -68,7 +68,7 @@ PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
 
 ### Collect {{prodname}} diagnostic logs
 
-```bash
+```bash-plain-text
 sudo calicoctl node diags
 ```
 
@@ -90,7 +90,7 @@ Diags saved to /tmp/calico194224816/diags-20201127_010117.tar.gz
 
 ### Verify all pods are running
 
-```bash
+```bash-plain-text
 kubectl get pods -A
 ```
 
@@ -103,7 +103,7 @@ kube-system       kube-apiserver-ip-10-0-0-10                1/1     Running   0
 
 ### Verify Kubernetes API server is running
 
-```bash
+```bash-plain-text
 kubectl cluster-info
 ```
 
@@ -117,7 +117,7 @@ kubernetes   ClusterIP   10.49.0.1    <none>        443/TCP   2d2h
 
 ### Verify Kubernetes kube-dns is working
 
-```bash
+```bash-plain-text
 kubectl get svc
 ```
 
@@ -126,7 +126,7 @@ NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
 kubernetes   ClusterIP   10.49.0.1    <none>        443/TCP   2d2h
 ```
 
-```bash
+```bash-plain-text
 kubectl exec -it multitool  bash
 ```
 
@@ -139,7 +139,7 @@ x-content-type-options: nosniff
 content-length: 234
 ```
 
-```bash
+```bash-plain-text
 bash-5.0 nslookup google.com
 ```
 
@@ -155,13 +155,13 @@ Address: 2607:f8b0:400a:804::200e
 
 ### Verify that kubelet is running on the node with the correct flags
 
-```bash
+```bash-plain-text
 systemctl status kubelet
 ```
 
 If there is a problem, check the journal
 
-```bash
+```bash-plain-text
 journalclt -u kubelet | head
 ```
 
@@ -169,13 +169,13 @@ journalclt -u kubelet | head
 
 Look especially at coredns; if they are not getting an IP, something is wrong with the CNI
 
-```bash
+```bash-plain-text
 kubectl get pod -n kube-system -o wide
 ```
 
 But if other pods fail, it is likely a different issue. Perform normal Kubernetes troubleshooting. For example:
 
-```bash
+```bash-plain-text
 kubectl describe pod kube-scheduler-ip-10-0-1-20.eu-west-1.compute.internal -n kube-system | tail -15
 ```
 
@@ -183,7 +183,7 @@ kubectl describe pod kube-scheduler-ip-10-0-1-20.eu-west-1.compute.internal -n k
 
 ### View Calico CNI configuration on a node
 
-```bash
+```bash-plain-text
 cat /etc/cni/net.d/10-calico.conflist
 ```
 
@@ -191,19 +191,19 @@ cat /etc/cni/net.d/10-calico.conflist
 
 The cluster version and type must match the calicoctl version.
 
-```bash
+```bash-plain-text
 calicoctl version
 ```
 
 For syntax:
 
-```bash
+```bash-plain-text
 calicoctl version -help
 ```
 
 ### Check tigera operator status
 
-```bash
+```bash-plain-text
 kubectl get tigerastatus
 ```
 
@@ -214,19 +214,19 @@ calico   True        False         False      27h
 
 ### Check if operator pod is running
 
-```bash
+```bash-plain-text
 kubectl get pod -n tigera-operator
 ```
 
 ### View calico nodes
 
-```bash
+```bash-plain-text
 kubectl get pod -n calico-system -o wide
 ```
 
 ### View {{prodname}} installation parameters
 
-```bash
+```bash-plain-text
 kubectl get installation -o yaml
 ```
 
@@ -258,11 +258,11 @@ items:
 
 ### Run commands across multiple nodes
 
-```bash
+```bash-plain-text
 export THE_COMMAND_TO_RUN=date && for calinode in `kubectl get pod -o wide -n calico-system | grep calico-node | awk '{print $1}'`; do echo $calinode; echo "-----"; kubectl exec -n calico-system $calinode -- $THE_COMMAND_TO_RUN; printf "\n"; done
 ```
 
-```bash
+```bash-plain-text
 calico-node-87lpx
 -----
 Defaulted container "calico-node" out of: calico-node, flexvol-driver (init), install-cni (init)
@@ -277,11 +277,11 @@ Thu Apr 28 13:48:07 UTC 2022
 
 ### View pod info
 
-```bash
+```bash-plain-text
 kubectl describe pods `<pod_name>`  -n `<namespace> `
 ```
 
-```bash
+```bash-plain-text
 kubectl describe pods busybox -n default
 ```
 
@@ -298,17 +298,17 @@ Events:
 
 ### View logs of a pod
 
-```bash
+```bash-plain-text
 kubectl logs `<pod_name>`  -n `<namespace>`
 ```
 
-```bash
+```bash-plain-text
 kubectl logs busybox -n default
 ```
 
 ### View kubelet logs
 
-```bash
+```bash-plain-text
 journalctl -u kubelet
 ```
 
@@ -316,7 +316,7 @@ journalctl -u kubelet
 
 ### Verify routing table on the node
 
-```bash
+```bash-plain-text
 ip route
 ```
 
@@ -331,7 +331,7 @@ default via 10.0.0.1 dev eth0 proto dhcp src 10.0.0.10 metric 100
 
 ### Verify BGP peer status
 
-```bash
+```bash-plain-text
 sudo calicoctl node status
 ```
 
@@ -349,7 +349,7 @@ IPv4 BGP status
 
 ### Verify overlay configuration
 
-```bash
+```bash-plain-text
 kubectl get ippools default-ipv4-ippool -o yaml
 ```
 
@@ -363,7 +363,7 @@ spec:
 
 ### Verify bgp learned routes
 
-```bash
+```bash-plain-text
 ip r | grep bird
 ```
 
@@ -377,7 +377,7 @@ blackhole 192.168.231.0/26 proto bird
 
 **Note**: The BIRD routing table gets pushed to node routing tables.
 
-```bash
+```bash-plain-text
 kubectl exec -it -n calico-system calico-node-8cfc8 -- /bin/bash
 ```
 
@@ -404,7 +404,7 @@ bird> show route
 
 For example,
 
-```bash
+```bash-plain-text
 sudo tcpdump -i calicofac0017c3 icmp
 ```
 
@@ -412,7 +412,7 @@ sudo tcpdump -i calicofac0017c3 icmp
 
 ### Verify existing Kubernetes network policies
 
-```bash
+```bash-plain-text
 kubectl get networkpolicy --all-namespaces
 ```
 
@@ -427,7 +427,7 @@ stars       default-deny     <none>         4h51m
 
 ### Verify existing {{prodname}} network policies
 
-```bash
+```bash-plain-text
 calicoctl get networkpolicy --all-namespaces -o wide
 ```
 
@@ -443,7 +443,7 @@ stars         knp.default.default-deny     1000    projectcalico.org/orchestrato
 
 ### Verify existing {{prodname}} global network policies
 
-```bash
+```bash-plain-text
 calicoctl get globalnetworkpolicy -o wide
 ```
 
@@ -459,12 +459,12 @@ nodeport-policy       100     has(kubernetes.io/hostname)
 
 For example,
 
-```bash
+```bash-plain-text
 calicoctl get np -n yaobank -o wide
 ```
 
 If the selectors should match, check the endpoint IP and the node where it is running. For example,
 
-```bash
+```bash-plain-text
 kubectl get pod -l app=customer -n yaobank
 ```

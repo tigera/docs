@@ -5,7 +5,7 @@ import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 
 import { orchestrators } from '@site/variables';
-import { prodname } from '../../variables';
+import { prodname, baseUrl } from '../../variables';
 
 function NodeRequirementsOSS(props) {
   return (
@@ -71,7 +71,7 @@ function NotesOSS() {
           <p>
             Many Linux distributions, such as most of the above, include NetworkManager. By default, NetworkManager does
             not allow {prodname} to manage interfaces. If your nodes have NetworkManager, complete the steps in{' '}
-            <Link href='../../maintenance/troubleshoot/troubleshooting#configure-networkmanager'>
+            <Link href={`${baseUrl}/maintenance/troubleshoot/troubleshooting#configure-networkmanager`}>
               Preventing NetworkManager from controlling {prodname} interfaces
             </Link>{' '}
             before installing {prodname}.
@@ -88,7 +88,7 @@ function NotesOSS() {
         <Admonition type='note'>
           <p>
             If a host firewall is needed, it can be configured by {prodname} HostEndpoint and GlobalNetworkPolicy. More
-            information about configuration at <Link href='../../security/hosts'>Security for host</Link>.
+            information about configuration at <Link href={`${baseUrl}/security/hosts`}>Security for host</Link>.
           </p>
         </Admonition>
       </div>
