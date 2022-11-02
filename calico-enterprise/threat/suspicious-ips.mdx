@@ -61,6 +61,9 @@ To add threat feeds to {{site.prodname}} for automatic updates (default is once 
      name: my-threat-feed
    spec:
      content: IPSet
+     mode: Enabled
+     description: "This is my threat feed"
+     feedType: Custom
      pull:
        http:
          url: https://my.threatfeed.com/deny-list
@@ -88,6 +91,9 @@ Use the push method if your threat feeds that are not in newline-delimited forma
      name: my-threat-feed
    spec:
      content: IPSet
+     mode: Enabled
+     description: "This is my threat feed"
+     feedType: Custom
    ```
 
 2. Add the global threat feed to the cluster.
@@ -120,6 +126,9 @@ metadata:
   name: sample-global-threat-feed
 spec:
   content: IPSet
+  mode: Enabled
+  description: "This is the sample global threat feed"
+  feedType: Custom
   pull:
     http:
       url: https://an.example.threat.feed/deny-list
@@ -177,6 +186,9 @@ If you haven’t already adjusted your [aggregation flows](#before-you-begin), w
      name: feodo-tracker
    spec:
      content: IPSet
+     mode: Enabled
+     description: "This is the feodo-tracker threat feed"
+     feedType: Custom
      pull:
        http:
          url: https://feodotracker.abuse.ch/downloads/ipblocklist.txt
@@ -237,6 +249,9 @@ In this demo, we will apply the policy only to a test workload (so we do not imp
      name: feodo-tracker
    spec:
      content: IPSet
+     mode: Enabled
+     description: "This is the feodo-tracker threat feed"
+     feedType: Custom
      pull:
        http:
          url: https://feodotracker.abuse.ch/downloads/ipblocklist.txt
