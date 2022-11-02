@@ -51,6 +51,10 @@ issues like the excessive resource consumption.
 ID: `generic_flows`. Looks for excessive values in several fields in the `flows` log. May indicate performance 
 issues like the excessive resource consumption.
 
+#### Multivariable flow
+
+ID: `multivariable_flow`. Looks for excessive values in combination of all numeric fields in the flow log. May indicate performance issues like the excessive resource consumption.
+
 #### Excessive value anomaly in L7 log
 
 ID: `generic_l7`. Looks for excessive values in several fields in the `L7` log. May indicate performance 
@@ -66,6 +70,11 @@ malicious activity.
 
 ID: `dns_latency`. Looks for the clients that have too high latency of the DNS requests. May indicate a denial of service attack. 
 This anomaly could also indicate performance issues, like the slowness of processes or the excessive resource consumption.
+
+#### DNS tunnel
+
+ID: `dns_tunnel`. 
+Looks for DNS query names in the DNS log with subdomains that can contain encoded information. DNS Tunneling is a method of communicating between a client and server via encoding data into DNS Requests requests and responses. Long and non-human readable strings in DNS query names can indicate the use of DNS Tunneling for malicious communications or data exfiltration.
 
 #### L7 bytes   
 
