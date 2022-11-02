@@ -31,6 +31,9 @@ metadata:
   name: sample-global-threat-feed
 spec:
   content: IPSet
+  mode: Enabled
+  description: "This is the sample global threat feed"
+  feedType: Custom
   globalNetworkSet:
     # labels to set on the GNS
     labels:
@@ -102,11 +105,14 @@ create and update documents in Elasticsearch.
 
 #### Spec
 
-| Field            | Description                                    | Accepted Values      | Schema                                        | Default |
-|------------------|------------------------------------------------|----------------------|-----------------------------------------------|---------|
-| content          | What kind of threat intelligence is provided   | IPSet, DomainNameSet | string                                        | IPSet   |
-| globalNetworkSet | Include to sync with a global network set      |                      | [GlobalNetworkSetSync](#globalnetworksetsync) |         |
-| pull             | Configure periodic pull of threat feed updates |                      | [Pull](#pull)                                 |         |
+| Field            | Description                                          | Accepted Values        | Schema                                        | Default |
+|------------------|------------------------------------------------------|------------------------|-----------------------------------------------|---------|
+| content          | What kind of threat intelligence is provided         | IPSet, DomainNameSet   | string                                        | IPSet   |
+| mode             | Determines if the threat feed is Enabled or Disabled | Enabled, Disabled      | string                                        | Enabled |
+| description      | Human-readable description of the template           | Maximum 256 characters | string                                        |         |
+| feedType         | Distinguishes Builtin threat feeds from Custom feeds | Builtin, Custom        | string                                        | Custom  |
+| globalNetworkSet | Include to sync with a global network set            |                        | [GlobalNetworkSetSync](#globalnetworksetsync) |         |
+| pull             | Configure periodic pull of threat feed updates       |                        | [Pull](#pull)                                 |         |
 
 
 #### Status

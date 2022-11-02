@@ -63,6 +63,9 @@ To add threat feeds to {{site.prodname}} for automatic updates (default is once 
      name: my-threat-feed
    spec:
      content: DomainNameSet
+     mode: Enabled
+     description: "This is my threat feed"
+     feedType: Custom
      pull:
        http:
          url: https://my.threatfeed.com/deny-list
@@ -90,6 +93,9 @@ Use the push method if your threat feeds that are not in newline-delimited forma
      name: my-threat-feed
    spec:
      content: DomainNameSet
+     mode: Enabled
+     description: "This is my threat feed"
+     feedType: Custom
    ```
 
 2. Add the global threat feed to the cluster.
