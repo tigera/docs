@@ -6,7 +6,7 @@ import Link from '@docusaurus/Link';
 const FeatureList = [
   {
     title: 'Calico Open Source',
-    Svg: require('@site/static/img/calico-logo.svg').default,
+    img: '/img/calico-logo.png',
     link: 'calico/about',
     description: (
       <>
@@ -16,7 +16,7 @@ const FeatureList = [
   },
   {
     title: 'Calico Enterprise',
-    Svg: require('@site/static/img/calico-enterprise-logo.svg').default,
+    img: '/img/calico-enterprise-logo.png',
     link: 'calico-enterprise/about-calico-enterprise',
     description: (
       <>
@@ -26,7 +26,7 @@ const FeatureList = [
   },
   {
     title: 'Calico Cloud',
-    Svg: require('@site/static/img/calico-cloud-logo.svg').default,
+    img: '/img/calico-cloud-logo.png',
     link: 'calico-cloud',
     description: (
       <>
@@ -36,12 +36,12 @@ const FeatureList = [
   },
 ];
 
-function Feature({ Svg, title, description, link }) {
+function Feature({ img, title, description, link }) {
   return (
     <div className={clsx('col col--4')}>
       <div className='text--center'>
         <Link href={link}>
-          <Svg className={styles.featureSvg} role='img' />
+          <img src={img} alt={title} />
         </Link>
       </div>
       <div className='text--center padding-horiz--md'>
