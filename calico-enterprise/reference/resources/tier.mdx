@@ -53,8 +53,8 @@ spec:
 
 #### Spec
 
-| Field      | Description                                                                                                                                                         | Accepted Values | Schema                | Default |
-|------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------+-----------------------+---------|
-| order      | (Optional) Indicates priority of this Tier, with lower order taking precedence.  No value indicates highest order (lowest precedence)                             |                 | float                 |   `nil` (highest order)   |
+| Field      | Description                                                                                                                                                         | Accepted Values | Schema                | Default               |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------|-----------------------|
+| order      | (Optional) Indicates priority of this Tier, with lower order taking precedence.  No value indicates highest order (lowest precedence)                             |                 | float                 | `nil` (highest order) |
 
 All Policies created by {{site.prodname}} orchestrator integrations are created in the default (last) Tier.
