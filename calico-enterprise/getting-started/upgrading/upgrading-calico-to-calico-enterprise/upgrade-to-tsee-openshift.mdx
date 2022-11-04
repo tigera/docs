@@ -55,21 +55,37 @@ mkdir manifests
 1. Apply the Tigera operators and custom resource definitions.
 
    ```bash-plain-text
-   oc apply -f manifests/
+   oc apply --server-side --force-conflicts -f manifests/
    ```
 
 2. (Optional) If your cluster architecture requires any custom [Calico resources](../../../reference/resources/index.mdx) to function at startup, install them now using [calicoctl](../../../reference/clis/calicoctl/overview.mdx).
 
-3. Apply the custom resources for enterprise features, see [the installation reference](../../../reference/installation/api.mdx).
+3. Create the custom resources for {{prodname}} features, see [the installation reference](../../../reference/installation/api.mdx).
 
    ```bash-plain-text
    oc apply -f {{url}}{{baseUrl}}/manifests/ocp/tigera-enterprise-resources.yaml
    ```
 
-4. Patch installation.
+4. Remove the opensource Calico apiserver resource if it exists.
+   Check if multiple apiserver resources exist:
 
    ```bash-plain-text
-   oc patch installations.operator.tigera.io default --type merge -p '{"spec":{"variant":"TigeraSecureEnterprise","imagePullSecrets":[{"name":"tigera-pull-secret"}]}}'
+   kubectl get apiserver.operator.tigera.io
+   ```
+
+   If a default apiserver resource exists, you will see output similar to this:
+
+   ```
+   $ kubectl get apiserver
+   NAME            AGE
+   default         18h
+   tigera-secure   2m52s
+   ```
+
+   Remove the `default` apiserver:
+
+   ```bash-plain-text
+   kubectl delete apiserver.operator.tigera.io default
    ```
 
 5. You can now monitor the upgrade progress with the following command:
@@ -94,7 +110,7 @@ Install the {{prodname}} license provided to you by Tigera.
 oc create -f </path/to/license.yaml>
 ```
 
-<OpenShiftPrometheusOperator />
+<OpenShiftPrometheusOperator upgradeFrom='OpenSource' />
 
 You can now monitor progress with the following command:
 
