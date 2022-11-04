@@ -252,7 +252,8 @@ respectively. These fields are formatted as [duration](https://golang.org/pkg/ti
  > "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"),
  > "ms", "s", "m", "h".
 
-The default period is 5 minutes, and lookback is 10 minutes. For a 
+The minimum duration of a period is 1 minute with a default of 5 minutes and 
+the default for lookback is 10 minutes. For a 
 GlobalAlert with `type` as `AnomalyDetection`, the default period is 
 set at 15 minutes and lookback is ignored. The lookback should always be 
 greater than the sum of the period and the configured  
