@@ -1,7 +1,7 @@
 import React from 'react';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import { useLocation } from '@docusaurus/router';
 
+import { useLocation } from '@docusaurus/router';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import MDXComponents from '@theme-original/MDXComponents';
 
 import GeekDetails from '@site/src/components/partials/GeekDetails';
@@ -35,6 +35,7 @@ const partials = [
   'OpenShiftPrometheusOperator',
   'ReleaseNotes',
   'CliConfigIntro',
+  'PrivateRegistryImagePath',
 ];
 
 const wrappedPartials = wrapPartials(partials);
@@ -186,6 +187,9 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReqsSys`).default;
     case 'UpgradeOperatorSimple':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/UpgradeOperatorSimple`)
+        .default;
+    case 'PrivateRegistryImagePath':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/PrivateRegistryImagePath`)
         .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Enterprise`);
