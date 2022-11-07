@@ -93,25 +93,6 @@
    {%- endif %}
    ```
 
-   Remove the opensource Calico apiserver resource if it exists.
-   Check if multiple apiserver resources exist:
-   ```bash
-   kubectl get apiserver
-   ```
-
-   If a default apiserver resource exists, you will see output similar to this:
-   ```
-   $ kubectl get apiserver
-   NAME            AGE
-   default         18h
-   tigera-secure   19h
-   ```
-
-   Remove the `default` apiserver:
-   ```bash
-   kubectl delete apiserver default
-   ```
-
 {%- endif %}
 {%- if include.upgradeFrom != "OpenSource" %}
 
