@@ -39,6 +39,12 @@ Privileges to manage GlobalThreatFeed and GlobalNetworkPolicy.
 
 We recommend that you turn down the aggregation of flow logs sent to Elasticsearch for configuring threat feeds. If you do not adjust flow logs, Calico Enterprise aggregates over the external IPs for allowed traffic, and threat feed searches will not provide useful results (unless the traffic is denied by policy). Go to: [FelixConfiguration]({{site.baseurl}}/reference/resources/felixconfig) and set the field, **flowLogsFileAggregationKindForAllowed** to **1**.
 
+You can adjust the flow logs by running the following command:
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"flowLogsFileAggregationKindForAllowed":1}}'
+```
+
 ### How to
 
 This section describes how to pull or push threat feeds to {{site.prodname}}, and block traffic to a cluster for a suspicious IP.
@@ -71,7 +77,7 @@ To add threat feeds to {{site.prodname}} for automatic updates (default is once 
 
 2. Add the global threat feed to the cluster.
 
-   ```shell
+   ```bash
    kubectl apply -f <your_threatfeed_filename>
    ```
 
@@ -98,7 +104,7 @@ Use the push method if your threat feeds that are not in newline-delimited forma
 
 2. Add the global threat feed to the cluster.
 
-   ```shell
+   ```bash
    kubectl apply -f <your_threatfeed_filename>
    ```
 
@@ -139,7 +145,7 @@ spec:
 
 1. Add the global threat feed to the cluster.
 
-   ```shell
+   ```bash
    kubectl apply -f <your_threatfeed_filename>
    ```
 
@@ -163,7 +169,7 @@ spec:
 
 3. Add the global network policy to the cluster.
 
-   ```shell
+   ```bash
    kubectl apply -f <your_policy_filename>
    ```
 
@@ -198,7 +204,7 @@ If you haven’t already adjusted your [aggregation flows](#before-you-begin), w
 
 2. Add the feed to your cluster.
 
-   ```shell
+   ```bash
    kubectl apply -f feodo-tracker.yaml
    ```
 
@@ -236,7 +242,7 @@ In this demo, we will apply the policy only to a test workload (so we do not imp
 
 2. Apply the pod configuration.
 
-   ```shell
+   ```bash
    kubectl apply -f tf-ubuntu.yaml
    ```
 
@@ -262,13 +268,13 @@ In this demo, we will apply the policy only to a test workload (so we do not imp
 
 4. Reapply the new YAML.
 
-   ```shell
+   ```bash
    kubectl apply -f feodo-tracker.yaml
    ```
 
 5. Verify that the GlobalNetworkSet is created.
 
-   ```shell
+   ```bash
    kubectl get globalnetworksets threatfeed.feodo-tracker -o yaml
    ```
 
@@ -297,7 +303,7 @@ We will now apply a GlobalNetworkPolicy that blocks the test workload from conne
 
 2. Apply this policy to the cluster
 
-   ```shell
+   ```bash
    kubectl apply -f block-feodo.yaml
    ```
 
@@ -307,7 +313,7 @@ We will verify the policy from the test workload that we created earlier.
 
 1. Get a shell in the pod by executing
 
-   ```shell
+   ```bash
    kubectl exec -ti tf-ubuntu bash
    ```
 
@@ -315,13 +321,13 @@ We will verify the policy from the test workload that we created earlier.
 
 2. Install the ping command.
 
-   ```shell
+   ```bash
    apt update && apt install iputils-ping
    ```
 
 3. Ping a known safe IP (like 8.8.8.8, Google’s public DNS server)
 
-   ```shell
+   ```bash
    ping 8.8.8.8
    ```
 
