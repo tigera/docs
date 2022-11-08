@@ -311,7 +311,7 @@ We will now apply a GlobalNetworkPolicy that blocks the test workload from conne
 
 We will verify the policy from the test workload that we created earlier.
 
-1. Get a shell in the pod by executing the following command.
+1. Get a shell in the pod by running the following command:
 
    ```bash
    kubectl exec -ti tf-ubuntu bash
