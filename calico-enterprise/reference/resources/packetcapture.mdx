@@ -1,5 +1,5 @@
 ---
-title: PacketCapture
+title: Packet capture
 description: API for this Calico Enterprise resource. 
 canonical_url: '/reference/resources/packetcapture'
 ---
