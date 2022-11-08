@@ -311,7 +311,7 @@ We will now apply a GlobalNetworkPolicy that blocks the test workload from conne
 
 We will verify the policy from the test workload that we created earlier.
 
-1. Get a shell in the pod by executing
+1. Get a shell in the pod by executing the following command.
 
    ```bash
    kubectl exec -ti tf-ubuntu bash
@@ -325,7 +325,7 @@ We will verify the policy from the test workload that we created earlier.
    apt update && apt install iputils-ping
    ```
 
-3. Ping a known safe IP (like 8.8.8.8, Google’s public DNS server)
+3. Ping a known safe IP (like 8.8.8.8, Google’s public DNS server).
 
    ```bash
    ping 8.8.8.8
