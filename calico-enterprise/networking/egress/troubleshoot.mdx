@@ -60,7 +60,7 @@ As of v3.15.0, the egress gateway `Deployment` includes a Kubernetes `readinessP
 only report ready if it is able to connect to the local `calico-node` pod and if any configured HTTP/ICMP probes
 are succeeding.
 
-If the gress gateway reports not-Ready then more information can be found in its logs.  The egress gateway logs to 
+If the egress gateway reports not-Ready then more information can be found in its logs.  The egress gateway logs to 
 `stdout` so its logs are available via `kubectl logs -n <namespace> <egress gateway pod name>`.
 
 #### Check health of calico-node to egress gateway probes

@@ -1112,7 +1112,7 @@ utility since the IP will always be the egress gateway and the port of translate
 
 > **Note**: Since v3.15.0, {{site.prodname}} also sends health probes to the egress gateway pods from the nodes where
 > their clients are located.  In iptables mode, this traffic is auto-allowed at egress from the host and ingress
-> to the egress gateway.  In eBPF mode, the probe traffic can be blocked by policy; this should be fixed in an upcoming
+> to the egress gateway.  In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic is allowed; this should be fixed in an upcoming
 > patch release.
 {: .alert .alert-info}
 
