@@ -227,7 +227,7 @@ In this demo, we will apply the policy only to a test workload (so we do not imp
    kind: Pod
    metadata:
      labels:
-       docs.tigera.io/tutorial: threat-feed
+       docs.tigera.io-tutorial: threat-feed
      name: tf-ubuntu
    spec:
      nodeSelector:
@@ -263,7 +263,7 @@ In this demo, we will apply the policy only to a test workload (so we do not imp
          url: https://feodotracker.abuse.ch/downloads/ipblocklist.txt
      globalNetworkSet:
        labels:
-         docs.tigera.io/threat/feed: feodo
+         docs.tigera.io-threat-feed: feodo
    ```
 
 4. Reapply the new YAML.
@@ -291,13 +291,13 @@ We will now apply a GlobalNetworkPolicy that blocks the test workload from conne
      name: default.block-feodo
    spec:
      tier: default
-     selector: docs.tigera.io/tutorial == 'threat-feed'
+     selector: docs.tigera.io-tutorial == 'threat-feed'
      types:
      - Egress
      egress:
      - action: Deny
        destination:
-         selector: docs.tigera.io/threat/feed == 'feodo'
+         selector: docs.tigera.io-threat-feed == 'feodo'
      - action: Allow
    ```
 
