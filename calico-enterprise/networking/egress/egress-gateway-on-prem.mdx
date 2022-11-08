@@ -148,6 +148,12 @@ That means that policies at (2) will usually take the form of rules that match o
 either directly in the rule (via a CIDR match) or via a (non-domain based) NetworkSet.  Matching on source has little
 utility since the IP will always be the egress gateway and the port of translated traffic is not always preserved.
 
+> **Note**: Since v3.15.0, {{site.prodname}} also sends health probes to the egress gateway pods from the nodes where
+> their clients are located.  In iptables mode, this traffic is auto-allowed at egress from the host and ingress 
+> to the egress gateway.  In eBPF mode, the probe traffic can be blocked by policy; this should be fixed in an upcoming
+> patch release.
+{: .alert .alert-info}
+
 ### Before you begin
 
 **Unsupported**
@@ -377,7 +383,8 @@ The health port is used by:
   
 - Remote pods to check if the egress gateway is "ready".  Only "ready" egress
   gateways will be used for remote client traffic.  This traffic is automatically allowed by {{site.prodname}} and 
-  no policy is required to allow it.
+  no policy is required to allow it.  {{site.prodname}} only sends probes to egress gateway pods that have a named
+  "health" port.  This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
 
 #### Deploying on a RKE2 CIS Hardened Cluster
 
