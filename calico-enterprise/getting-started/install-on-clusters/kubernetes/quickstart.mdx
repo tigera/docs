@@ -17,7 +17,7 @@ To deploy a cluster suitable for production, see [{{site.prodname}} on Kubernete
 Calico CNI for networking with {{site.prodname}} network policy:
 
 The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:kubernetes' %}
+{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes' %}
 
 **Required**
 
