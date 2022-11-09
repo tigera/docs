@@ -71,13 +71,11 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
     if (DocSearchModal) {
       return Promise.resolve();
     }
-    return Promise.all([
-      import('@docsearch/react/modal'),
-      import('@docsearch/react/style'),
-      import('./styles.css'),
-    ]).then(([{ DocSearchModal: Modal }]) => {
-      DocSearchModal = Modal;
-    });
+    return Promise.all([import('./DocSearchModal'), import('@docsearch/react/style'), import('./styles.css')]).then(
+      ([{ DocSearchModal: Modal }]) => {
+        DocSearchModal = Modal;
+      }
+    );
   }, []);
   const onOpen = useCallback(() => {
     importDocSearchModalIfNeeded().then(() => {
