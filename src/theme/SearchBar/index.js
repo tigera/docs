@@ -38,11 +38,12 @@ function mergeFacetFilters(f1, f2) {
 function useIndexName() {
   const { pathname } = useLocation();
 
-  if (pathname.includes('/docs/calico/')) {
+  // TODO: Most likely we need to use startsWith and take into account a version prefix
+  if (pathname.includes('/calico/')) {
     return 'calico';
-  } else if (pathname.includes('/docs/calico-cloud/')) {
+  } else if (pathname.includes('/calico-cloud/')) {
     return 'calico-cloud';
-  } else if (pathname.includes('/docs/calico-enterprise/')) {
+  } else if (pathname.includes('/calico-enterprise/')) {
     return 'calico-enterprise';
   }
 }
