@@ -42,6 +42,9 @@ existing metrics.
 | `felix_cluster_num_profiles` | Total number of profiles in the cluster. |
 | `felix_cluster_num_tiers` | Total number of {{site.prodname}} tiers in the cluster. |
 | `felix_cluster_num_workload_endpoints` | Total number of workload endpoints cluster-wide. |
+| `felix_egress_gateway_remote_polls{status="total"}` | Total number of remote egress gateway pods that Felix is polling for health/connectivity.  Only egress gateways with a named "health" port will be polled. |
+| `felix_egress_gateway_remote_polls{status="up"}` | Total number of remote egress gateway pods that have successful probes. |
+| `felix_egress_gateway_remote_polls{status="probe-failed"}` | Total number of remote egress gateway pods that have failed probes. |
 | `felix_exec_time_micros` | Summary of time taken to fork/exec child processes |
 | `felix_int_dataplane_addr_msg_batch_size` | Number of interface address messages processed in each batch. Higher values indicate we're doing more batching to try to keep up. |
 | `felix_int_dataplane_apply_time_seconds` | Time in seconds that it took to apply a dataplane update. |

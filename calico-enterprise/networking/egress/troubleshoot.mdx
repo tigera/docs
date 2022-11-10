@@ -12,7 +12,7 @@ canonical_url: '/networking/egress/troubleshoot'
 
 Use the following checklist to troubleshoot, or to collect details before opening a Support ticket. 
 
-#### Is the egress gateway enabled?
+#### Is the egress gateway feature enabled?
 
 Egress gateway is disabled by default.  Have you enabled it in [Felix configuration]({{site.baseurl}}/reference/resources/felixconfig) by setting `egressIPSupport` to `EnabledPerNamespace` or `EnabledPerNamespaceOrPerPod`?
 
@@ -53,6 +53,29 @@ On Linux, Calico claims a number of routing tables for various purposes. The exa
 Under these conditions, `calico-node` pods will log error messages and report [unhealthy](#check-calico-node-health).
 
 [See more about routeTableRanges](/reference/resources/felixconfig#routetableranges)
+
+#### Check egress gateway health
+
+As of v3.15.0, the egress gateway `Deployment` includes a Kubernetes `readinessProbe`.  The egress gateway will
+only report ready if it is able to connect to the local `calico-node` pod and if any configured HTTP/ICMP probes
+are succeeding.
+
+If the egress gateway reports not-Ready then more information can be found in its logs.  The egress gateway logs to 
+`stdout` so its logs are available via `kubectl logs -n <namespace> <egress gateway pod name>`.
+
+#### Check health of calico-node to egress gateway probes
+
+As of v3.15.0, each `calico-node` pod probes the health of the remote egress gateways that its local pods are using.
+If probes fail, the failures are logged in `calico-node`'s log (search for `egress_gw_tracker`) and reported via Prometheus metrics:
+
+```
+felix_egress_gateway_remote_polls{status="probe-failed"} 0
+felix_egress_gateway_remote_polls{status="total"} 2
+felix_egress_gateway_remote_polls{status="up"} 2
+```
+
+Where, the `total` metric reports the total number of remote egress gateways that are being polled and the `up` and `probe-failed`
+metrics report the number of egress gateways in each of those states.
 
 #### Check calico-node health
 
