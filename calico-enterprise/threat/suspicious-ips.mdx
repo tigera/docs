@@ -165,7 +165,7 @@ spec:
      - action: Deny
        source:
          selector: security-action == 'block'
-  ```
+   ```
 
 3. Add the global network policy to the cluster.
 
