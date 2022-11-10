@@ -59,7 +59,7 @@ mkdir manifests
 
 1. Apply the updated manifests.
    ```bash
-   oc apply -f manifests/
+   oc apply --server-side --force-conflicts -f manifests/
    ```
 
 1. {% include content/openshift-prometheus-operator.md operation="upgrade" %}
