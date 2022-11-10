@@ -57,9 +57,9 @@ If your cluster has Windows nodes and uses custom TLS certificates for log stora
 1. Install the {{site.prodname}} custom resource definitions.
 
    ```bash
-   kubectl replace -f {{ "/manifests/operator-crds.yaml" | absolute_url }}
-   kubectl replace -f {{ "/manifests/prometheus-operator-crds.yaml" | absolute_url }}
-   kubectl replace -f {{ "/manifests/eck-operator-crds.yaml" | absolute_url }}
+   kubectl apply --server-side --force-conflicts -f {{ "/manifests/operator-crds.yaml" | absolute_url }}
+   kubectl apply --server-side --force-conflicts -f {{ "/manifests/prometheus-operator-crds.yaml" | absolute_url }}
+   kubectl apply --server-side --force-conflicts -f {{ "/manifests/eck-operator-crds.yaml" | absolute_url }}
    ```
 
 1. Run the Helm upgrade command for `tigera-operator`
