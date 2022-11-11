@@ -502,7 +502,7 @@ To upgrade an egress gateway deployment:
 
 * Before upgrading egress gateways to a particular version, upgrade the other {{site.prodname}} components
   first.  The egress gateway image should never be newer than the other {{site.prodname}} components.  We recommend
-  keeping the gress gateway version up-to-date with the overall product version to minimise the chance of
+  keeping the egress gateway version up-to-date with the overall product version to minimise the chance of
   incompatibilities.
 
 * Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To
