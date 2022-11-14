@@ -121,6 +121,36 @@ This how-to guide uses the following {{site.prodname}} features:
    {: .alert .alert-info}
 
    The `logTypes` field is a required, which means you must specify at least one type of log to export to syslog.
+
+**TLS configuration**
+
+3. You can enable TLS option for syslog forwarding by including the "encryption" option in the [Syslog section]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.SyslogStoreSpec).
+
+   ```yaml
+   apiVersion: operator.tigera.io/v1
+   kind: LogCollector
+   metadata:
+     name: tigera-secure
+   spec:
+     additionalStores:
+       syslog:
+         # (Required) Syslog endpoint, in the format protocol://host:port
+         endpoint: tcp://1.2.3.4:514
+         # (Optional) If messages are being truncated set this field
+         packetSize: 1024
+         # (Optional) To Configure TLS mode
+         encryption: TLS
+   ```
+
+4. Using the self-signed CA with the field name tls.crt, create a configmap in the tigera-operator namespace named, syslog-ca. Example:
+
+   > **Note**: Skip this step if publicCA bundle is good enough to verify the server certificates.
+   {: .alert .alert-info}
+
+   ```bash
+   kubectl create configmap syslog-ca --from-file=tls.crt -n tigera-operator
+   ```
+
 %>
 
  <label: Splunk>
