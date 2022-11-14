@@ -13,7 +13,7 @@ const variables = {
   ppa_repo_name: getPPARepoName(releases),
   chart_version_name: getChartVersionName(releases),
   releases,
-  registry: 'quay.io/',
+  registry: '',
   vppbranch: 'master',
   imageNames: {
     'calico/node': 'calico/node',
@@ -30,6 +30,7 @@ const variables = {
     'pilot-webhook': 'calico/pilot-webhook',
     flexvol: 'calico/pod2daemon-flexvol',
     'csi-driver': 'calico/csi',
+    'csi-node-driver-registrar': 'calico/node-driver-registrar',
   },
 };
 
