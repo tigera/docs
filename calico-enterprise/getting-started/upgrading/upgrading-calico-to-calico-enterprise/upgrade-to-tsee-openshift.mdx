@@ -68,27 +68,11 @@ __Install {{site.prodname}}__
    oc apply -f {{ "/manifests/ocp/tigera-enterprise-resources.yaml" | absolute_url }} 
    ```
 
-4. Remove the opensource Calico apiserver resource if it exists.
-   Check if multiple apiserver resources exist:
+4. Patch installation.
    
    ```bash
-   kubectl get apiserver.operator.tigera.io
+   oc patch installations.operator.tigera.io default --type merge -p '{"spec":{"variant":"TigeraSecureEnterprise","imagePullSecrets":[{"name":"tigera-pull-secret"}]}}'
    ```
-
-   If a default apiserver resource exists, you will see output similar to this:
-   
-   ```
-   $ kubectl get apiserver
-   NAME            AGE
-   default         18h
-   tigera-secure   2m52s
-   ```
-
-   Remove the `default` apiserver:
-   ```bash
-   kubectl delete apiserver.operator.tigera.io default
-   ```
-
 
 5. You can now monitor the upgrade progress with the following command:
 
