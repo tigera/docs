@@ -13,7 +13,10 @@ import Translate from '@docusaurus/Translate';
 import translations from '@theme/SearchTranslations';
 let DocSearchModal = null;
 function Hit({ hit, children }) {
-  return <Link to={hit.url}>{children}</Link>;
+  const text = hit.content || hit.hierarchy[hit.type];
+  const scrollTo = `-scroll-to-${text}`;
+
+  return <Link to={hit.url + scrollTo}>{children}</Link>;
 }
 function ResultsFooter({ state, onClose }) {
   const { generateSearchPageLink } = useSearchPage();
