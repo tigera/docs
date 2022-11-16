@@ -31,21 +31,52 @@ function ResultsFooter({ state, onClose }) {
     </Link>
   );
 }
+function Footer({ productName, setProductName }) {
+  const products = ['calico', 'calico-cloud', 'calico-enterprise']
+    .filter((product) => product !== productName)
+    .map((product) => <a onClick={() => setProductName(product)}>{getFullProductName(product)}</a>);
+
+  return (
+    <div className='search-results-footer'>
+      See results for {products[0]} or {products[1]}
+    </div>
+  );
+}
 function mergeFacetFilters(f1, f2) {
   const normalize = (f) => (typeof f === 'string' ? [f] : f);
   return [...normalize(f1), ...normalize(f2)];
 }
-function useIndexName() {
+function useProductName() {
   const { pathname } = useLocation();
 
-  // TODO: Most likely we need to use startsWith and take into account a version prefix
-  if (pathname.includes('/calico/')) {
+  if (pathname.startsWith('/calico/')) {
     return 'calico';
-  } else if (pathname.includes('/calico-cloud/')) {
+  } else if (pathname.startsWith('/calico-cloud/')) {
     return 'calico-cloud';
-  } else if (pathname.includes('/calico-enterprise/')) {
+  } else if (pathname.startsWith('/calico-enterprise/')) {
     return 'calico-enterprise';
   }
+}
+function getFullProductName(product) {
+  switch (product) {
+    case 'calico':
+      return 'Calico Open Source';
+    case 'calico-cloud':
+      return 'Calico Cloud';
+    case 'calico-enterprise':
+      return 'Calico Enterprise';
+  }
+}
+function filterFacetFiltersByProduct(filters, product) {
+  const [language, products] = filters;
+
+  return [
+    language,
+    products.filter((p) => {
+      const match = p.match(/(.*)-/);
+      return match && match[1].endsWith(product);
+    }),
+  ];
 }
 function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
   const { siteMetadata } = useDocusaurusContext();
@@ -56,11 +87,16 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
       mergeFacetFilters(contextualSearchFacetFilters, configFacetFilters)
     : // ... or use config facetFilters
       configFacetFilters;
+  const [productName, setProductName] = useState(useProductName());
   // We let user override default searchParameters if she wants to
-  const searchParameters = {
-    ...props.searchParameters,
-    facetFilters,
-  };
+  const [searchParameters, setSearchParameters] = useState({});
+  React.useEffect(() => {
+    setSearchParameters({
+      ...props.searchParameters,
+      facetFilters: filterFacetFiltersByProduct(facetFilters, productName),
+    });
+  }, [productName]);
+  const [footer, setFooter] = useState();
   const { withBaseUrl } = useBaseUrlUtils();
   const history = useHistory();
   const searchContainer = useRef(null);
@@ -71,22 +107,28 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
     if (DocSearchModal) {
       return Promise.resolve();
     }
-    return Promise.all([import('./DocSearchModal'), import('@docsearch/react/style'), import('./styles.css')]).then(
-      ([{ DocSearchModal: Modal }]) => {
-        DocSearchModal = Modal;
-      }
-    );
+    return Promise.all([
+      import('@docsearch/react/modal'),
+      import('@docsearch/react/style'),
+      import('./styles.css'),
+    ]).then(([{ DocSearchModal: Modal }]) => {
+      DocSearchModal = Modal;
+    });
   }, []);
   const onOpen = useCallback(() => {
     importDocSearchModalIfNeeded().then(() => {
       searchContainer.current = document.createElement('div');
       document.body.insertBefore(searchContainer.current, document.body.firstChild);
       setIsOpen(true);
+      setTimeout(() => {
+        setFooter(document.querySelector('.DocSearch-Footer'));
+      });
     });
   }, [importDocSearchModalIfNeeded, setIsOpen]);
   const onClose = useCallback(() => {
     setIsOpen(false);
     searchContainer.current?.remove();
+    setInitialQuery('');
   }, [setIsOpen]);
   const onInput = useCallback(
     (event) => {
@@ -149,7 +191,6 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
     onInput,
     searchButtonRef,
   });
-  const indexName = useIndexName();
 
   return (
     <>
@@ -173,6 +214,25 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
         translations={translations.button}
       />
 
+      {footer &&
+        createPortal(
+          <Footer
+            productName={productName}
+            setProductName={(product) => {
+              setFooter(null);
+              const query = document.querySelector('#docsearch-input').value;
+              setIsOpen(false);
+
+              setInitialQuery(query);
+              setProductName(product);
+              setTimeout(() => {
+                setIsOpen(true);
+                setTimeout(() => setFooter(document.querySelector('.DocSearch-Footer')));
+              });
+            }}
+          />,
+          footer
+        )}
       {isOpen &&
         DocSearchModal &&
         searchContainer.current &&
@@ -190,9 +250,8 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
             })}
             {...props}
             searchParameters={searchParameters}
-            placeholder={translations.placeholder}
+            placeholder={`Search docs (${getFullProductName(productName)})`}
             translations={translations.modal}
-            indexName={indexName}
           />,
           searchContainer.current
         )}
