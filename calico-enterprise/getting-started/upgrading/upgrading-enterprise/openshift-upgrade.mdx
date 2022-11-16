@@ -20,8 +20,7 @@ If you are several versions behind where you want to be, you must go through eac
 
 ### Prerequisites
 
-Ensure that your {{site.prodname}} OpenShift cluster is running OpenShift Container Platform 
-{% include content/ocp-versions.md %}, and the {{site.prodname}} operator version is v1.2.4 or greater.
+Ensure that your {{site.prodname}} OpenShift cluster is running a supported version of [OpenShift Container Platform]({{site.baseurl}}/getting-started/compatibility#openshift), and the {{site.prodname}} operator version is v1.2.4 or greater.
 
 **Note**: You can check if you are running the operator by checking for the existence of the operator namespace
 with `oc get ns tigera-operator` or issuing `oc get tigerastatus`; a successful return means your installation is
