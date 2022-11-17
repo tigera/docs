@@ -33,9 +33,10 @@ export function useScrollToMatch() {
 
       const scrollTo = scrollToMatch[2];
 
-      const header = document.getElementById(hash.slice(1));
+      const headerSelector = hash === '#docusaurus_skipToContent_fallback' ? 'header' : `[id='${hash.slice(1)}']`;
+      const header = document.querySelector(headerSelector);
       const contentTagsWithHeader = Array.from(
-        document.querySelectorAll(`[id='${hash.slice(1)}'], article li, article p, article td:last-child`)
+        document.querySelectorAll(`${headerSelector}, article li, article p, article td:last-child`)
       );
       const headerIndex = contentTagsWithHeader.indexOf(header);
       const contentTags = contentTagsWithHeader.slice(headerIndex);
