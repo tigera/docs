@@ -80,6 +80,12 @@ This how-to guide uses the following {{site.prodname}} features:
          endpoint: tcp://1.2.3.4:514
          # (Optional) If messages are being truncated set this field
          packetSize: 1024
+         # (Required) Types of logs to forward to Syslog (must specify at least one option)
+         logTypes:
+         - Audit
+         - DNS
+         - Flows
+         - IDSEvents
    ```
    This can be done during installation by editing the custom-resources.yaml by applying it or after installation by editing the resource with the command:
    ```bash
@@ -95,27 +101,6 @@ This how-to guide uses the following {{site.prodname}} features:
     - IDSEvents
 
    Refer to the [Syslog section]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.SyslogStoreSpec) for more details on what data each log type represents.
-
-   Building on the example from the previous step:
-   ```yaml
-   apiVersion: operator.tigera.io/v1
-   kind: LogCollector
-   metadata:
-     name: tigera-secure
-   spec:
-     additionalStores:
-       syslog:
-         # (Required) Syslog endpoint, in the format protocol://host:port
-         endpoint: tcp://1.2.3.4:514
-         # (Optional) If messages are being truncated set this field
-         packetSize: 1024
-         # (Required) Types of logs to forward to Syslog (must specify at least one option)
-         logTypes:
-         - Audit
-         - DNS
-         - Flows
-         - IDSEvents
-   ```
 
    > **Note**: The log type `IDSEvents` is only supported for a cluster that has [LogStorage]({{site.baseurl}}/reference/installation/api#operator.tigera.io/v1.LogStorage) configured. It is because intrusion detection event data is pulled from the corresponding LogStorage datastore directly.
    {: .alert .alert-info}
@@ -140,6 +125,12 @@ This how-to guide uses the following {{site.prodname}} features:
          packetSize: 1024
          # (Optional) To Configure TLS mode
          encryption: TLS
+         # (Required) Types of logs to forward to Syslog (must specify at least one option)
+         logTypes:
+         - Audit
+         - DNS
+         - Flows
+         - IDSEvents
    ```
 
 4. Using the self-signed CA with the field name tls.crt, create a configmap in the tigera-operator namespace named, syslog-ca. Example:
