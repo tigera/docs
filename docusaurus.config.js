@@ -52,13 +52,14 @@ const config = {
   ],
 
   themeConfig:
-  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       algolia: {
         appId: 'Q4GSZWRKBA',
         apiKey: '2ab3eace97419c5868153aac2e3d2e6c',
-        indexName: '-', // sets automatically in swizzled SearchBar
-        contextualSearch: false,
+        indexName: 'calico',
+        contextualSearch: true,
+        searchPagePath: '/search',
       },
       navbar: {
         title: 'Calico & Tigera Docs',
