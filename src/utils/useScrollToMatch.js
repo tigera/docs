@@ -35,7 +35,7 @@ export function useScrollToMatch() {
 
       const header = document.getElementById(hash.slice(1));
       const contentTagsWithHeader = Array.from(
-        document.querySelectorAll(`${hash}, article li, article p, article td:last-child`)
+        document.querySelectorAll(`[id='${hash.slice(1)}'], article li, article p, article td:last-child`)
       );
       const headerIndex = contentTagsWithHeader.indexOf(header);
       const contentTags = contentTagsWithHeader.slice(headerIndex);
