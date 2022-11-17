@@ -5,7 +5,7 @@ const variables = {
   prodname: 'Calico',
   prodnamedash: 'calico',
   version: getVersion(releases),
-  baseUrl: '/calico', // or e.g. /calico/next
+  baseUrl: '/calico/next', // or e.g. /calico/next
   prodnameWindows: 'Calico for Windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',

@@ -7,7 +7,7 @@ const variables = {
     HostProtection: 'host protection',
     'host protection': 'host protection',
   },
-  url: 'http://localhost:3000',
+  url: 'https://unified-docs.tigera.io',
 };
 
 module.exports = variables;

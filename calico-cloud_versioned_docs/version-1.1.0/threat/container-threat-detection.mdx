@@ -1,0 +1,105 @@
+---
+title: Container threat detection
+description: Threat detection for containerized workloads.
+redirect_from:
+  - /threat/malware-detection
+---
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## Big picture
+
+Get alerts when security threats, such as malware and other suspicious processes, are detected in your cluster.
+
+## Value
+
+{{prodname}} provides a threat detection engine that analyzes observed file and process activity to detect known malicious and suspicious activity.
+
+As part of these threat detection capabilities, {{prodname}} maintains a database of malware file
+hashes. This database consists of SHA256, SHA1, and MD5 hashes of executable file contents that are
+known to be malicious. Whenever a program is launched in a {{prodname}} cluster, malware
+detection generates an alert in the Alerts dashboard if the program's hash matches one that is known
+to be malicious.
+
+Our threat detection engine also monitors activity within the containers running in your clusters to detect suspicious behavior and generate corresponding alerts. The threat detection engine monitors the following types of suspicious activity within containers:
+
+- Access to sensitive system files and directories
+- Defense evasion
+- Discovery
+- Execution
+- Persistence
+- Privilege escalation
+
+## Before you begin...
+
+### Required
+
+{{prodname}} container threat detection uses eBPF to monitor container activity, and it runs on Linux-based
+nodes in a Kubernetes cluster.
+
+Nodes require amd64 (x86_64) architecture CPUs and one of the following distributions:
+
+- Ubuntu Bionic with kernel version 4.15.0 or 5.4.0
+- Ubuntu Focal with kernel version 5.4.0, 5.8.0 or 5.11.0
+- CentOS 7 or 8
+- Fedora 29, 30, 31, 32, 33 or 34
+- Amazon Linux 2
+- Debian Stretch or later
+
+:::note
+
+If your nodes are running a variant kernel, or a similarly-modern kernel but with another platform,
+please open a [Support ticket](https://support.tigera.io/)
+so we can bundle the BTF data to precisely match the version of the kernel running on your cluster nodes.
+
+:::
+
+## How to
+
+- [Enable container threat detection in the managed cluster](#enable-container-threat-detection)
+- [Monitor Alerts page for malicious programs](#monitor-alerts-page-for-malicious-programs)
+
+### Enable container threat detection
+
+Container threat detection is disabled by default. The DaemonSet has a nodeSelector constraint
+`enable-tigera-runtime-security: t`, which means that it will not initially run on any nodes,
+because there are no nodes with an `enable-tigera-runtime-security: t` label.
+
+**Enable on all nodes**
+
+```bash-plain-text
+kubectl get ds runtime-reporter -n calico-system -o yaml | sed '/enable-tigera-runtime-security/d' | kubectl apply -f -
+```
+
+:::note
+
+- “runtime-reporter” is the name of the container threat defense DaemonSet in the managed cluster.
+- You will need to rerun that command whenever you rerun the install script to upgrade the managed
+  cluster.
+
+:::
+
+**Enable on specific nodes**
+
+To enable container threat detection on a particular node, add the `enable-tigera-runtime-security: t` label
+to that node. For example:
+
+```bash-plain-text
+kubectl label nodes <node-name> enable-tigera-runtime-security=t
+```
+
+### Monitor Alerts page for malicious programs
+
+If a malicious or suspicious program is run within the cluster, it will be reported on the Alerts page of the
+{{prodname}} UI.
+
+![malware-alert-example](/img/calico-cloud/malware-alert-example.png)
+
+## Container activity logs in Kibana
+
+Lower-level reports for file and process activity are captured for your cluster in Kibana using the index pattern `tigera_secure_ee_runtime*`.
+Please note that most of these reports are not usually malicious; they constitute the raw data against which known malicious program fingerprints and activity patterns are compared. Suspicious and known malicious activity is reported on the **Alerts** page of the {{prodname}} UI.
