@@ -11,7 +11,7 @@ module.exports = {
         'getting-started/compatibility',
         {
           type: 'category',
-          label: 'Install on cluters',
+          label: 'Install on clusters',
           link: {type: 'doc', id:'getting-started/install-on-clusters/index'},
           items: [
             {
