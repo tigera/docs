@@ -13,7 +13,7 @@ export function useSwitchToTab() {
     const [hash] = parseLocationHash(location);
 
     const header = document.getElementById(hash.slice(1));
-    const tabPanel = header.closest('[role=tabpanel]');
+    const tabPanel = header && header.closest('[role=tabpanel]');
 
     if (!tabPanel) {
       return;

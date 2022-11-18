@@ -92,7 +92,6 @@ const config = {
           {
             type: 'docsVersionDropdown',
             position: 'right',
-            docsPluginId: 'calico',
           },
           {
             label: 'Tigera',
