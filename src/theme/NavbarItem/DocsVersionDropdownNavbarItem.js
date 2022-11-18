@@ -5,6 +5,10 @@ import { useProductId } from '../../utils/useProductId';
 export default function DocsVersionDropdownNavbarItemWrapper(props) {
   const productId = useProductId();
 
+  if (!productId) {
+    return null;
+  }
+
   return (
     <>
       <DocsVersionDropdownNavbarItem
