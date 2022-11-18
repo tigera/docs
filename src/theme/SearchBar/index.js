@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import { useHistory, useLocation } from '@docusaurus/router';
+import { useHistory } from '@docusaurus/router';
 import { useBaseUrlUtils } from '@docusaurus/useBaseUrl';
 import Link from '@docusaurus/Link';
 import Head from '@docusaurus/Head';
@@ -11,6 +11,7 @@ import { DocSearchButton, useDocSearchKeyboardEvents } from '@docsearch/react';
 import { useAlgoliaContextualFacetFilters } from '@docusaurus/theme-search-algolia/client';
 import Translate from '@docusaurus/Translate';
 import translations from '@theme/SearchTranslations';
+import { useProductId } from '../../utils/useProductId';
 let DocSearchModal = null;
 function Hit({ hit, children }) {
   const text = hit.content || hit.hierarchy[hit.type];
@@ -34,10 +35,10 @@ function ResultsFooter({ state, onClose }) {
     </Link>
   );
 }
-function Footer({ productName, setProductName }) {
+function Footer({ productId, setProductId }) {
   const products = ['calico', 'calico-cloud', 'calico-enterprise']
-    .filter((product) => product !== productName)
-    .map((product) => <a onClick={() => setProductName(product)}>{getFullProductName(product)}</a>);
+    .filter((product) => product !== productId)
+    .map((product) => <a onClick={() => setProductId(product)}>{getProductName(product)}</a>);
 
   return (
     <div className='search-results-footer'>
@@ -49,19 +50,8 @@ function mergeFacetFilters(f1, f2) {
   const normalize = (f) => (typeof f === 'string' ? [f] : f);
   return [...normalize(f1), ...normalize(f2)];
 }
-function useProductName() {
-  const { pathname } = useLocation();
-
-  if (pathname.startsWith('/calico/')) {
-    return 'calico';
-  } else if (pathname.startsWith('/calico-cloud/')) {
-    return 'calico-cloud';
-  } else if (pathname.startsWith('/calico-enterprise/')) {
-    return 'calico-enterprise';
-  }
-}
-function getFullProductName(product) {
-  switch (product) {
+function getProductName(productId) {
+  switch (productId) {
     case 'calico':
       return 'Calico Open Source';
     case 'calico-cloud':
@@ -90,15 +80,15 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
       mergeFacetFilters(contextualSearchFacetFilters, configFacetFilters)
     : // ... or use config facetFilters
       configFacetFilters;
-  const [productName, setProductName] = useState(useProductName());
+  const [productId, setProductId] = useState(useProductId());
   // We let user override default searchParameters if she wants to
   const [searchParameters, setSearchParameters] = useState({});
   React.useEffect(() => {
     setSearchParameters({
       ...props.searchParameters,
-      facetFilters: filterFacetFiltersByProduct(facetFilters, productName),
+      facetFilters: filterFacetFiltersByProduct(facetFilters, productId),
     });
-  }, [productName]);
+  }, [productId]);
   const [footer, setFooter] = useState();
   const { withBaseUrl } = useBaseUrlUtils();
   const history = useHistory();
@@ -220,14 +210,14 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
       {footer &&
         createPortal(
           <Footer
-            productName={productName}
-            setProductName={(product) => {
+            productId={productId}
+            setProductId={(product) => {
               setFooter(null);
               const query = document.querySelector('#docsearch-input').value;
               setIsOpen(false);
 
               setInitialQuery(query);
-              setProductName(product);
+              setProductId(product);
               setTimeout(() => {
                 setIsOpen(true);
                 setTimeout(() => setFooter(document.querySelector('.DocSearch-Footer')));
@@ -253,7 +243,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
             })}
             {...props}
             searchParameters={searchParameters}
-            placeholder={`Search docs (${getFullProductName(productName)})`}
+            placeholder={`Search docs (${getProductName(productId)})`}
             translations={translations.modal}
           />,
           searchContainer.current
