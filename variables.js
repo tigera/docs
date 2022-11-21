@@ -7,7 +7,6 @@ const variables = {
     HostProtection: 'host protection',
     'host protection': 'host protection',
   },
-  url: 'http://localhost:3000',
 };
 
 module.exports = variables;
