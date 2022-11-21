@@ -67,8 +67,6 @@ Prometheus Alertmanager (or simply Alertmanager), deployed as part of the {{site
 
 Its critical function means that it runs on every machine that provides endpoints. A binary running inside `{{site.noderunning}}` monitors the BIRD daemon for peering and routing activity and reports these statics to Prometheus.
 
-For a detailed explanation on the various components within `{{site.noderunning}}` please see [Anatomy of a `{{site.noderunning}}` container]({{site.baseurl}}/reference/architecture/components).
-
 ### How to
 
 BGP metrics are generated within `{{site.noderunning}}` every 5 seconds using statistics pulled from the BIRD daemon.

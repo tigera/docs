@@ -119,7 +119,6 @@ When deploying a new microservice to a secure cluster, it needs to be deployed a
 
 - [Tiered network policy]({{site.baseurl}}/security/tiered-policy)
 - [RBAC for tiered network policy]({{site.baseurl}}/security/rbac-tiered-policies)
-- [Policy recommendations]({{site.baseurl}}/security/generate-policy-recommendation)
 - [Policy impact preview]({{site.baseurl}}/security/policy-impact-preview)
 - [Staged network policies]({{site.baseurl}}/security/staged-network-policies)
 
