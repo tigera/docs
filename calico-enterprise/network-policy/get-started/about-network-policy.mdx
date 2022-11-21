@@ -131,7 +131,7 @@ just your pods), including for example, limiting access to node ports from outsi
 out the {{site.prodname}} [policy for hosts]({{site.baseurl}}/security/hosts) guides.
 
 #### Extendable with {{site.prodname}}
-[Calico Enterprise]({{site.baseurl}}/calico-enterprise/) adds even richer network policy capabilities, with the ability
+Calico Enterprise adds even richer network policy capabilities, with the ability
 to specify hierarchical policies, with each team have particular boundaries of trust, and FQDN / domain names in policy
 rules for restricting access to specific external services.
 
