@@ -5,7 +5,8 @@ const variables = {
   prodname: 'Calico',
   prodnamedash: 'calico',
   version: getVersion(releases),
-  baseUrl: '/calico/next', // or e.g. /calico/next
+  baseUrl: '/calico', // or e.g. /calico/next
+  siteUrl: 'https://projectcalico.docs.tigera.io', // TODO: Maybe should be renamed to `url` (https://tigera.atlassian.net/browse/DOCS-973)
   prodnameWindows: 'Calico for Windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',

@@ -5,7 +5,8 @@ const variables = {
   prodname: 'Calico Cloud',
   prodnamedash: 'calico-cloud',
   version: getVersion(releases),
-  baseUrl: '/calico-cloud/next', // or e.g. /calico-cloud/next
+  baseUrl: '/calico-cloud', // or e.g. /calico-cloud/next
+  siteUrl: 'https://docs.calicocloud.io', // TODO: Maybe should be renamed to `url` (https://tigera.atlassian.net/browse/DOCS-973)
   prodnameWindows: 'Calico Enterprise for Windows',
   rootDirWindows: 'C:\\TigeraCalico',
   nodecontainer: 'cnx-node',

@@ -3,6 +3,8 @@ title: Helm
 description: Install Calico Enterprise using Helm application package manager.
 ---
 
+import GettingStartedInstallOnClustersKubernetesHelm from '@site/calico-enterprise/_includes/components/_GettingStarted_InstallOnClusters_Kubernetes_Helm';
+
 ## Big picture
 
 Install {{prodname}} on a Kubernetes cluster using Helm 3.
@@ -37,130 +39,7 @@ In this guide, you install the Tigera Calico operator and custom resource defini
 
 ### Download the Helm chart
 
-{%- if page.version == "master" -%}&nbsp;
-
-1. Install the Google cloud storage helm repo plugin:
-
-```bash-plain-text
-helm plugin install https://github.com/viglesiasce/helm-gcs.git
-```
-
-1. Add the Calico helm repo
-   :
-   ```bash-plain-text
-   helm repo add tigera gs://tigera-helm-charts
-   ```
-   {% else %}&nbsp;
-1. Get the Helm chart:
-   ```bash-plain-text
-   curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-{{chart_version_name}}.tgz
-   ```
-   {% endif %}
-
-### Customize the Helm chart
-
-If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), or you need to customize TLS certificates, you **must** customize this Helm chart by creating a `values.yaml` file. Otherwise, you can skip this step.
-
-1. If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), set the `kubernetesProvider` as described in the [Installation reference](../../../reference/installation/api.mdx#operator.tigera.io/v1.Provider). For example:
-
-   ```bash-plain-text
-   echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml
-   ```
-
-   For Azure AKS cluster with no Kubernetes CNI pre-installed, create `values.yaml` with the following command:
-
-   ```
-   cat > values.yaml <<EOF
-   installation:
-     kubernetesProvider: AKS
-     cni:
-       type: Calico
-     calicoNetwork:
-       bgp: Disabled
-       ipPools:
-       - cidr: 10.244.0.0/16
-         encapsulation: VXLAN
-   EOF
-   ```
-
-1. Add any other customizations you require to `values.yaml`. You might like to refer to the [helm docs ](https://helm.sh/docs/)
-   {%- if page.version == "master" -%}
-   or run:
-   ```bash-plain-text
-   helm show values tigera/tigera-operator --version v0.0
-   ```
-   {% else %}.
-   ```bash-plain-text
-   helm show values ./tigera-operator-{{chart_version_name}}.tgz
-   ```
-   {% endif %}
-   to see the values that can be customized in the chart.
-
-### Install {{prodname}}
-
-1. [Configure a storage class for {{prodname}}](../../../maintenance/logstorage/create-storage.mdx)
-
-1. Create the `tigera-operator` namespace:
-
-   ```bash-plain-text
-   kubectl create namespace tigera-operator
-   ```
-
-1. Install the Tigera {{prodname}} operator and custom resource definitions using the Helm chart, and passing in your image pull secrets
-
-{%- if page.version == "master" -%}:
-
-```bash-plain-text
-helm install calico-enterprise tigera/tigera-operator --version v0.0 \
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
---namespace tigera-operator
-```
-
-or if you created a `values.yaml` above:
-
-```bash-plain-text
-helm install calico-enterprise tigera/tigera-operator --version v0.0 -f values.yaml \
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
---namespace tigera-operator
-```
-
-{% else %}:
-
-```bash-plain-text
-helm install calico-enterprise tigera-operator-{{chart_version_name}}.tgz \
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
---namespace tigera-operator
-```
-
-or if you created a `values.yaml` above:
-
-```bash-plain-text
-helm install calico-enterprise tigera-operator-{{chart_version_name}}.tgz -f values.yaml \
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
---namespace tigera-operator
-```
-
-{% endif %}
-
-1. Monitor progress, wait until `apiserver` shows a status of `Available`, then proceed to the next step.
-
-   ```bash-plain-text
-   watch kubectl get tigerastatus/apiserver
-   ```
-
-1. Install your {{prodname}} license:
-
-   ```bash-plain-text
-   kubectl apply -f </path/to/license.yaml>
-   ```
-
-1. You can now monitor progress with the following command:
-
-   ```bash-plain-text
-   watch kubectl get tigerastatus
-   ```
-
-Congratulations! You have now installed {{prodname}} using the Helm 3 chart.
+<GettingStartedInstallOnClustersKubernetesHelm />
 
 ## Next steps
 
@@ -181,4 +60,4 @@ Congratulations! You have now installed {{prodname}} using the Helm 3 chart.
 
 **Recommended - Security**
 
-- [Get started with {{prodname}} tiered network policy](../../../security/policy-tiers/tiered-policy/index.mdx)
+- [Get started with {{prodname}} tiered network policy](/security/policy-tiers/tiered-policy/)
