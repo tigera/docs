@@ -207,14 +207,7 @@ module.exports = {
           label: 'Tiered network policy',
           link: {type: 'doc', id: 'security/policy-tiers/index'},
           items: [
-            {
-              type: 'category',
-              label: 'Get started with tiered policy',
-              link: {type: 'doc', id: 'security/policy-tiers/tiered-policy/index'},
-              items: [
-                'security/policy-tiers/tiered-policy/allow-tigera',
-              ],
-            },
+            'security/policy-tiers/allow-tigera',
             'security/policy-tiers/rbac-tiered-policies',
           ],
         },
