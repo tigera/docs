@@ -214,15 +214,15 @@ struct fields.
 
 ##### CSV
 
-| Field                       | Description                                                               | Schema |
-|-----------------------------|---------------------------------------------------------------------------|--------|
-| fieldNum                    | Number of column containing values. Mutually exclusive with `fieldName`.  | int    |
-| fieldName                   | Name of column containing values, requires `header: true`.                | string |
-| header                      | Whether or not the document contains a header row.                        | bool   |
-| columnDelimiter             | An alternative delimiter character, such as `|`.                          | string |
-| commentDelimiter            | Lines beginning with this character are skipped. `#` is common.           | string |
-| recordSize                  | The number of columns expected in the document. Auto detected if omitted. | int    |
-| disableRecordSizeValidation | Disable row size checking. Mutually exclusive with `recordSize`.          | bool   |
+| Field                       | Description                                                               | Schema  |
+|-----------------------------|---------------------------------------------------------------------------|---------|
+| fieldNum                    | Number of column containing values. Mutually exclusive with `fieldName`.  | int     |
+| fieldName                   | Name of column containing values, requires `header: true`.                | string  |
+| header                      | Whether or not the document contains a header row.                        | bool    |
+| columnDelimiter             | An alternative delimiter character, such as <code>&#124;</code>.          | string  |
+| commentDelimiter            | Lines beginning with this character are skipped. `#` is common.           | string  |
+| recordSize                  | The number of columns expected in the document. Auto detected if omitted. | int     |
+| disableRecordSizeValidation | Disable row size checking. Mutually exclusive with `recordSize`.          | bool    |
 
 #### HTTPHeader
 
