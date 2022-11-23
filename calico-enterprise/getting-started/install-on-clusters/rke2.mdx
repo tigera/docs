@@ -19,7 +19,7 @@ The geeky details of what you get:
 
 **Required**
 
-- A [compatible RKE2 cluster]({{site.baseulr}}/getting-started/compatibility#rke2)
+- A [compatible RKE2 cluster]({{site.baseurl}}/getting-started/compatibility#rke2)
   
   For help, see {% include open-new-window.html text='Rancher Kubernetes Engine cluster' url='https://rancher.com/docs/rke/latest/en/' %}.
 
