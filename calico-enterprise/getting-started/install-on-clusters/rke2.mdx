@@ -23,17 +23,17 @@ The geeky details of what you get:
   
   For help, see {% include open-new-window.html text='Rancher Kubernetes Engine cluster' url='https://rancher.com/docs/rke/latest/en/' %}.
 
-- {% include open-new-window.html text='Configure cluster with no CNI plugin' url='https://docs.rke2.io/install/install_options/install_options/' %} using any of these methods:
+- {% include open-new-window.html text='Configure cluster with no CNI plugin' url='https://docs.rke2.io/install/configuration' %} using any of these methods:
    - RKE2 CLI: `--cni none` 
    - Install script: `RKE2_CNI=none`
-   - {% include open-new-window.html text='Configuration file' url='https://docs.rke2.io/install/install_options/install_options/#configuration-file' %}: `cni: none`  
+   - {% include open-new-window.html text='Configuration file' url='https://docs.rke2.io/install/configuration#configuration-file' %}: `cni: none`  
 
 - Cluster meets [system requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
 
 - A [Tigera license key and credentials]({{site.baseurl}}/getting-started/calico-enterprise).
 
 - A `kubectl` environment with access to your cluster
-  - Ensure you have the {% include open-new-window.html text='Kubeconfig file that was generated when you created the cluster' url='https://docs.rke2.io/cluster_access/' %}.
+  - Ensure you have the {% include open-new-window.html text='Kubeconfig file that was generated when you created the cluster' url='https://docs.rke2.io/cluster_access' %}.
 
 - If using a Kubeconfig file locally, {% include open-new-window.html text='install and set up the Kubectl CLI tool' url='https://kubernetes.io/docs/tasks/tools/install-kubectl/' %}.
 
