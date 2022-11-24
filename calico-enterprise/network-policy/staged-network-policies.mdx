@@ -58,7 +58,7 @@ Because **Recommend policy** looks at historial flow log entries that match your
 
 #### Stage a policy
 
-Stage a policy to test it in a near replica of a production environment. 
+Stage a policy to test it in a near replica of a production environment. A best practice is to stage a policy before enforcing it to avoid unintentionally exposing or blocking other network traffic. 
 
 1. In the left navbar, click **Policies**.
 1. In a tier, click **Add Policy**. 
@@ -66,9 +66,14 @@ Stage a policy to test it in a near replica of a production environment.
 
 ![stage-new-policy]({{site.baseurl}}/images/stage-new-policy.png)
 
+#### Enforce a staged policy
+
+1. From **Policies Board**, click a staged policy. 
+1. Click **Edit policy**, make changes and click **Enforce**. The staged policy is deleted and the enforced policy is created/updated (depending on whether it already exists).
+
 #### Preview policy impact
 
-Before enforcing a staged policy, it is a best practice to use the **Preview** feature to avoid unintentionally exposing or blocking other network traffic. 
+The policy preview impact feature assesses traffic impact only on *enforced staged policies*. 
 
 1. From the **Policies Board**, select a staged policy and click **Edit policy**.
 1. Make some edits and click **Preview**.
@@ -76,11 +81,6 @@ Before enforcing a staged policy, it is a best practice to use the **Preview** f
 The following example shows denied flows that may or may not be intended. 
 
 ![policy-preview]({{site.baseurl}}/images/policy-preview.png)
-
-#### Enforce a staged policy
-
-1. From **Policies Board**, click a staged policy. 
-1. Click**Edit policy**, make changes and click **Enforce**. The staged policy is deleted and the enforced policy is created/updated (depending on whether it already exists).
 
 #### Stage updates to an enforced policy
 
