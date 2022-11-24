@@ -49,31 +49,31 @@ If Elasticsearch platinum or enterprise license expires, ECK operator will switc
 Follow these steps to create a new Elasticsearch cluster.
 1. (Optional) To delete all current data follow this step. For each PersistentVolume in StorageClass `tigera-elasticsearch` that is currently mounted, set the ReclaimPolicy to `Recycle` or `Delete`.
 1. Export your current LogStorage resource to a file.
-```bash
-kubectl get logstorage tigera-secure -o yaml > log-storage.yaml
-```
+   ```bash
+   kubectl get logstorage tigera-secure -o yaml > log-storage.yaml
+   ```
 
 1. Delete logstorage.
-```bash
-kubectl delete -f log-storage.yaml
-```
+   ```bash
+   kubectl delete -f log-storage.yaml
+   ```
 
 1. Delete the trial license. You can skip this step if the secret is not present in your cluster.
-```bash
-kubectl delete secret -n tigera-eck-operator trial-status
-```
+   ```bash
+   kubectl delete secret -n tigera-eck-operator trial-status
+   ```
 
 1. (Optional) If you made changes to the ReclaimPolicy in step 1, revert them so that it matches the value in StorageClass `tigera-elasticsearch` again.
 
 1. Apply the LogStorage again.
-```bash
-kubectl apply -f log-storage.yaml
-```
+   ```bash
+   kubectl apply -f log-storage.yaml
+   ```
 
 1. Wait until your cluster is back up and running.
-```bash
-watch kubectl get tigerastatus
-```
+   ```bash
+   watch kubectl get tigerastatus
+   ```
 
 ### Common problems
 
