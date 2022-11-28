@@ -7,6 +7,15 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const variablesPlugin = require('./src/remark/variablesPlugin');
 const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
+// First 4 are default and taken from preset.
+// Temporarly adding '../**/_includes/**' until https://github.com/facebook/docusaurus/pull/8275 released to npm
+const excludeContentDocsPatterns = [
+  '**/_*.{js,jsx,ts,tsx,md,mdx}',
+  '**/_*/**',
+  '**/*.test.{js,jsx,ts,tsx}',
+  '**/__tests__/**',
+  '../**/_includes/**',
+];
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   // TODO[dac]: noIndex should be removed, along with robots.txt and the
@@ -192,6 +201,7 @@ const config = {
         editCurrentVersion: true,
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        exclude: excludeContentDocsPatterns,
       },
     ],
     [
@@ -204,6 +214,7 @@ const config = {
         editCurrentVersion: true,
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        exclude: excludeContentDocsPatterns,
       },
     ],
     [
@@ -216,6 +227,7 @@ const config = {
         editCurrentVersion: true,
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        exclude: excludeContentDocsPatterns,
       },
     ],
   ],
