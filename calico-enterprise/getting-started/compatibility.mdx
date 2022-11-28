@@ -12,12 +12,9 @@ canonical_url: /getting-started/compatibility
 - Firefox
 - Safari
 
-### Platforms
+### Supported Platforms
 
 The following list shows the platforms supported in this release. The tables provide a platform version history, starting with {{site.prodname}} 3.5. If you need an earlier version, contact Support. 
-
->**Note**: If your platform is listed below, the features in the release work for your platform&mdash;unless an individual feature topic explicitly calls out a vendor or {{site.prodname}} limitation. However, all Windows feature limitations are described in [Windows limitations]({{site.baseurl}}/getting-started/windows-calico/limitations), and are not called out in individual Linux topics.
-{: .alert .alert-info}
 
 - [AKS](#aks)
 - [EKS](#eks)
@@ -29,6 +26,11 @@ The following list shows the platforms supported in this release. The tables pro
 - [RKE](#rke)
 - [RKE2](#rke2)
 - [TKG](#tkg)
+
+#### Supported {{site.prodname}} features
+
+If your platform is listed below, the features in this release will work for your platform unless an individual feature topic explicitly calls out a vendor or {{site.prodname}} limitation. However, all Windows feature limitations are described in [Windows limitations]({{site.baseurl}}/getting-started/windows-calico/limitations), and are not called out in individual Linux topics.
+{: .alert .alert-info}
 
 ### AKS
 
@@ -51,7 +53,7 @@ The following list shows the platforms supported in this release. The tables pro
 
 | {{site.prodname}} version | EKS and Kubernetes versions | {{site.prodname}} support                                    |
 | ------------------------- | ---------------- | ------------------------------------------------------------ |
-| 3.15                      | 1.22 - 1.23 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.15                      | 1.23 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
 | 3.14                      | 1.22 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
 | 3.13                      | 1.21             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
 | 3.12                      | 1.21             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
@@ -68,7 +70,7 @@ The following list shows the platforms supported in this release. The tables pro
 
 | {{site.prodname}} version | GKE and Kubernetes versions | {{site.prodname}} support               |
 | ------------------------- | ------------ | --------------------------------------- |
-| 3.15                      | 1.21         | - GKE CNI with {{site.prodname}} network policy |
+| 3.15                      | 1.22         | - GKE CNI with {{site.prodname}} network policy |
 | 3.14                      | 1.21         | - GKE CNI with {{site.prodname}} network policy |
 | 3.13                      | 1.21         | - GKE CNI with {{site.prodname}} network policy |
 | 3.12                      | 1.21         | - GKE CNI with {{site.prodname}} network policy |
@@ -84,7 +86,7 @@ The following list shows the platforms supported in this release. The tables pro
 
 | {{site.prodname}} version | kOps and Kubernetes versions | {{site.prodname}} support     |
 | ------------------------- | ----------- | ----------------------------- |
-| 3.15                      | 1.22 - 1.24 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.15                      | 1.23 - 1.25 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
 | 3.14                      | 1.21 - 1.23 | - {{site.prodname}} CNI with network policy<br />- AWS CNI  with {{site.prodname}} network policy |
 | 3.13                      | 1.21 - 1.23 | - {{site.prodname}} CNI with network policy<br />- AWS CNI  with {{site.prodname}} network policy |
 | 3.12                      | 1.21, 1.22 | - {{site.prodname}} CNI with network policy<br />- AWS CNI  with{{site.prodname}} network policy |
@@ -99,7 +101,7 @@ The following list shows the platforms supported in this release. The tables pro
 
 | {{site.prodname}} version | Kubernetes/kubeadm versions | {{site.prodname}} support               |
 | ------------------------- | ------------------ | --------------------------------------- |
-| 3.15                      | 1.22 - 1.24       | {{site.prodname}} CNI with network policy |
+| 3.15                      | 1.23 - 1.25       | {{site.prodname}} CNI with network policy |
 | 3.14                      | 1.21 - 1.23 | {{site.prodname}} CNI with network policy |
 | 3.13                      | 1.21 - 1.23 | {{site.prodname}} CNI with network policy |
 | 3.12                      | 1.20 - 1.23 | {{site.prodname}} CNI with network policy |
