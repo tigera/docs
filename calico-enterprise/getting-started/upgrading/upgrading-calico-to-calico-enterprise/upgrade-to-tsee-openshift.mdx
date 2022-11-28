@@ -4,19 +4,26 @@ description: Steps to upgrade from open source Calico to Calico Enterprise on Op
 openshift_manifests_ignore_installation_cr: true
 ---
 
-{% assign calico_minor_version = releases.0["calico"].minor_version %}
-{% assign archive_path = releases.0["calico"].archive_path %}
-
-{% if archive_path and archive_path != "" %}
-{% capture calico_minor_version_with_path %}{{ archive_path }}/{{ calico_minor_version }}{% endcapture %}
-{% else %}
-{% assign calico_minor_version_with_path = calico_minor_version %}
-{% endif %}
+export const Paragraph = () => {
+  const cmv = '{{releases.0.calico.minor_version}}';
+  const ap = '{{releases.0.calico.archive_path}}';
+  const cmv_postfix = cmv + '.x';
+  const cmv_path = ap && ap !== '' ? `${ap}/${cmv}` : cmv;
+  return (
+    <p>
+      Ensure that your Kubernetes cluster is running with open source Calico on the latest {cmv_postfix} release. If
+      not, follow the{' '}
+      <a href={`https://docs.projectcalico.org/${cmv_path}/maintenance/kubernetes-upgrade`}>
+        Calico upgrade documentation
+      </a>{' '}
+      before continuing.
+    </p>
+  );
+};
 
 ## Prerequisites
 
-Ensure that your Kubernetes cluster is running with open source Calico on the latest {{ calico_minor_version | append: '.x' }} release.
-If not, follow the [Calico upgrade documentation](https://docs.projectcalico.org/{{calico_minor_version_with_path}}/maintenance/kubernetes-upgrade) before continuing.
+<Paragraph />
 
 Ensure your Kubernetes cluster is using the Kubernetes datastore. If you are using an `etcdv3` datastore, or the cluster doesn't have a datastore, contact Tigera Support to upgrade the datastore.
 

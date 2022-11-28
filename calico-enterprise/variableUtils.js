@@ -1,5 +1,5 @@
 function getVersion(releases) {
-  return releases[0].title === 'master' ? 'master' : releases[0].calico.minor_version;
+  return releases[0].title === 'master' ? 'master' : releases[0].title.split('.').slice(0, 1).join('.');
 }
 
 function getPPARepoName(releases) {
