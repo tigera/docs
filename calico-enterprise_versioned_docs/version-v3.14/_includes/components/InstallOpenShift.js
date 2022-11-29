@@ -6,14 +6,13 @@ import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 
 import maybeRender from '@site/src/components/utils/maybeRender';
-import { url } from '@site/variables';
 
 import InstallOpenShiftManifests from './InstallOpenShiftManifests';
 import OpenShiftPullSecret from './OpenShiftPullSecret';
 import OpenShiftPrometheusOperator from './OpenShiftPrometheusOperator';
 import ConfigureManagedCluster from './ConfigureManagedCluster';
 
-import { prodname, prodnameWindows, prodnamedash, rootDirWindows, baseUrl } from '../../variables';
+import { prodname, prodnameWindows, prodnamedash, rootDirWindows, baseUrl, filesUrl } from '../../variables';
 
 export default function InstallOpenShift(props) {
   return (
@@ -205,8 +204,7 @@ spec:
             manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
           </p>
           <CodeBlock language='bash-plain-text'>
-            curl -O -L {url}
-            {baseUrl}/manifests/tigera-enterprise-resources.yaml
+            curl -O -L {filesUrl}/manifests/tigera-enterprise-resources.yaml
           </CodeBlock>
           <p>
             Remove the <code>Manager</code> custom resource from the manifest file.
@@ -513,8 +511,7 @@ $ ./wni aws create \
             Download the powershell script, <strong>install-calico-windows.ps1</strong>.
           </p>
           <CodeBlock language='powershell'>
-            Invoke-WebRequest {url}
-            {baseUrl}/scripts/install-calico-windows.ps1 -OutFile c:install-calico-windows.ps1
+            Invoke-WebRequest {filesUrl}/scripts/install-calico-windows.ps1 -OutFile c:install-calico-windows.ps1
           </CodeBlock>
         </li>
         <li>

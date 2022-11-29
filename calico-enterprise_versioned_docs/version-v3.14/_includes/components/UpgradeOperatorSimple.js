@@ -5,9 +5,8 @@ import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
 import maybeRender from '@site/src/components/utils/maybeRender';
-import { url } from '@site/variables';
 
-import { baseUrl } from '../../variables';
+import { baseUrl, filesUrl } from '../../variables';
 
 export default function UpgradeOperatorSimple(props) {
   return (
@@ -20,10 +19,7 @@ export default function UpgradeOperatorSimple(props) {
               Switch the active operator to the one that will be installed to the new namespace. First, download the
               helper script:
             </p>
-            <CodeBlock language='bash-plain-text'>
-              curl -L -O {url}
-              {baseUrl}/scripts/switch-active-operator.sh
-            </CodeBlock>
+            <CodeBlock language='bash-plain-text'>curl -L -O {filesUrl}/scripts/switch-active-operator.sh</CodeBlock>
             <p>Then switch the active operator. This will deactivate the currently running operator.</p>
             <CodeBlock>
               chmod a+x ./switch-active-operator.sh{'\n'}
@@ -36,8 +32,8 @@ export default function UpgradeOperatorSimple(props) {
           <p>Download the new manifests for Tigera operator.</p>
           <CodeBlock language='bash-plain-text'>
             {props.provider === 'AKS'
-              ? `curl -L -o tigera-operator.yaml ${url}${baseUrl}/manifests/aks/tigera-operator-upgrade.yaml`
-              : `curl -L -O ${url}${baseUrl}/manifests/tigera-operator.yaml`}
+              ? `curl -L -o tigera-operator.yaml ${filesUrl}/manifests/aks/tigera-operator-upgrade.yaml`
+              : `curl -L -O ${filesUrl}/manifests/tigera-operator.yaml`}
           </CodeBlock>
         </li>
 
@@ -48,8 +44,7 @@ export default function UpgradeOperatorSimple(props) {
             with Calico Enterprise, your Prometheus operator must be v0.40.0 or higher.
           </Admonition>
           <CodeBlock language='bash-plain-text'>
-            curl -L -O {url}
-            {baseUrl}/manifests/tigera-prometheus-operator.yaml
+            curl -L -O {filesUrl}/manifests/tigera-prometheus-operator.yaml
           </CodeBlock>
         </li>
 
@@ -133,10 +128,10 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
             </p>
             <CodeBlock language='bash-plain-text'>
               {props.provider === 'EKS'
-                ? `kubectl apply -f ${url}${baseUrl}/manifests/eks/custom-resources-upgrade-from-calico.yaml`
+                ? `kubectl apply -f ${filesUrl}/manifests/eks/custom-resources-upgrade-from-calico.yaml`
                 : props.provider === 'AKS'
-                ? `kubectl apply -f ${url}${baseUrl}/manifests/aks/custom-resources-upgrade-from-calico.yaml`
-                : `kubectl apply -f ${url}${baseUrl}/manifests/custom-resources-upgrade-from-calico.yaml`}
+                ? `kubectl apply -f ${filesUrl}/manifests/aks/custom-resources-upgrade-from-calico.yaml`
+                : `kubectl apply -f ${filesUrl}/manifests/custom-resources-upgrade-from-calico.yaml`}
             </CodeBlock>
             <p>
               Remove the opensource Calico apiserver resource if it exists. Check if multiple apiserver resources exist:

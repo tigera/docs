@@ -1,12 +1,15 @@
 const releases = require('./releases.json');
 const { getPPARepoName, getChartVersionName, getVersion } = require('./variableUtils');
 
+// e.g. "/master" or "/v3.23" or "/archive/v3.22" or "" if it's the latest
+const versionPrefix = '/' + getVersion(releases);
+
 const variables = {
   prodname: 'Calico',
   prodnamedash: 'calico',
   version: getVersion(releases),
   baseUrl: '/calico', // or e.g. /calico/next
-  siteUrl: 'https://projectcalico.docs.tigera.io', // TODO: Maybe should be renamed to `url` (https://tigera.atlassian.net/browse/DOCS-973)
+  filesUrl: 'https://projectcalico.docs.tigera.io' + versionPrefix,
   prodnameWindows: 'Calico for Windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',
