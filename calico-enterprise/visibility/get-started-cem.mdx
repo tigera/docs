@@ -9,17 +9,17 @@ canonical_url: /visibility/get-started-cem
 - Manager UI features and controls
 - How to gain visibility into clusters
 
-Let's go through each item in the Manager left navbar from top to bottom. You can follow along using any cluster.
+Let's go through each item in the Manager UI left navbar from top to bottom. You can follow along using any cluster.
 
-### Dashboards
+### Dashboard
 
 > From the left navbar, click Dashboards.
 
-Dashboards are a birds-eye view of cluster activity. Note the following:
+The Dashboard provides a birds-eye view of cluster activity. Note the following:
 
 - The filter panel at the top lets you change dashboard views and the time range.
 - The **Layout Settings** shows the default metrics. To get WireGuard metrics for pod-to-pod and host-to-host encryption, you must [enable WireGuard]({{site.baseurl}}/compliance/encrypt-cluster-pod-traffic).
-- For application related dashboard cards to show data, like HTTP Response Codes or Url Requests, you need to [configure L7 logs]({{site.baseurl}}/visibility/elastic/l7/configure).
+- For application-related dashboard cards to show data, like HTTP Response Codes or Url Requests, you need to [configure L7 logs]({{site.baseurl}}/visibility/elastic/l7/configure).
 
 ![dashboards]({{site.baseurl}}/images/dashboards.png)
 
@@ -53,7 +53,7 @@ Layers allow you to create meaningful groupings of resources so you can easily h
 
 ![service-graph-layers]({{site.baseurl}}/images/service-graph-layers.png)
 
-The **Tigera components** layer contains namespaces for {{site.prodname}} networking components, and a view of interest to Dev/Ops.
+The **Tigera components** layer contains namespaces for {{site.prodname}} networking components, and is a view of interest to Dev/Ops.
 
 > Click the vertical ellipses and select, **Hide layer**. Notice that only the business application namespaces remain visible in the graph.
 
@@ -95,7 +95,7 @@ Network policy is the primary tool for securing a Kubernetes network. Policy is 
 - {{site.prodname}} global network policy
 - Kubernetes policy
 
-{{site.prodname}} uses **tiers** (also called, hierarchical tiers) to provide guardrails for managing network policy across teams. Policy tiers allow users with more authority (for example, Dev/ops user) to enforce network policies that take precedence over teams (for example, service owners and developers).
+{{site.prodname}} uses **tiers** (also called, hierarchical tiers) to provide guardrails for managing network policy across teams. Policy tiers allow users with more authority (for example, Dev/ops users) to enforce network policies that take precedence over teams (for example, service owners and developers).
 
 **Policies Board** is the default view for managing tiered policies.
 
@@ -155,13 +155,15 @@ A simple use case is to limit traffic to/from external networks. For example, yo
 
 ### Managed clusters
 
+If you have configured {{site.prodname}} for multi-cluster management, you will see the **Managed clusters** option in the left navbar. 
+
 > From the left navbar, click **Managed clusters**.
 
-This page is where you switch views between clusters in Manager UI. When you connect to a different cluster, the entire Manager view changes to reflect the selected cluster.
+This page is where you switch views between clusters in Manager UI. When you connect to a different cluster, the entire Manager UI view changes to reflect the selected cluster. 
 
 ![managed-clusters]({{site.baseurl}}/images/managed-clusters.png)
 
-### Compliance
+### Compliance Reports
 
 > From the left navbar, click **Compliance**.
 
@@ -198,14 +200,17 @@ How do you know if you have an infected workload? A possible threat? {{site.prod
 
 ![alerts]({{site.baseurl}}/images/alerts.png)
 
-As shown, there are many types of alerts you can enable. None are enabled by default.  
+As shown, there are many types of alerts you can enable. None are enabled by default. 
 
-### Kibana
+**Anomaly Detection** 
 
-{{site.prodname}} includes a fully-integrated deployment of Elasticsearch to collect flow
-log data that drives key features like the Flow Visualizer, metrics in the Dashboard and Policy Board, policy automation, and testing features and security. {{site.prodname}} also embeds Kibana so you can view raw log data for the traffic within your cluster.
+This page lets you enable/disable anomaly detectors that are preconfigured by {{site.prodname}}. Anomaly detection uses {{site.prodname}} Elasticsearch logs (flow logs, L7 logs, and DNS logs) to learn the behavior of cluster nodes, pods, services, and other entities that send log records (applications, load balancers, databases, etc.).
 
-> From the left navbar, click **Kibana**.
+### Logs
+
+{{site.prodname}} includes a fully-integrated deployment of Elastic to collect flow log data that drives key features like the Flow Visualizer, metrics in the Dashboard and Policy Board, policy automation, and testing features and security. {{site.prodname}} also embeds Kibana so you can view raw log data for the traffic within your cluster.
+
+> From the left navbar, click **Logs**.
 
 **Dashboards**
 
@@ -218,6 +223,10 @@ log data that drives key features like the Flow Visualizer, metrics in the Dashb
 Kibana provides its own set of filtering capabilities to drill down into log data. For example, use filters to drill into flow log data for specific namespaces and pods. Or view details and metadata for a single flow log entry.
 
 ![kibana]({{site.baseurl}}/images/kibana.png)
+
+### Threat feeds
+
+You can add threat intelligence feeds to {{site.prodname}} to trace network flows of suspicious IP addresses and domains. Then, you can use network policy to block pods from contacting IPs or domains.
 
 Now that you understand the basics, we recommend the following:
 
