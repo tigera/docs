@@ -86,7 +86,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
   React.useEffect(() => {
     setSearchParameters({
       ...props.searchParameters,
-      facetFilters: filterFacetFiltersByProduct(facetFilters, productId),
+      facetFilters: productId ? filterFacetFiltersByProduct(facetFilters, productId) : facetFilters,
     });
   }, [productId]);
   const [footer, setFooter] = useState();
@@ -208,6 +208,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
       />
 
       {footer &&
+        productId &&
         createPortal(
           <Footer
             productId={productId}
@@ -243,7 +244,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
             })}
             {...props}
             searchParameters={searchParameters}
-            placeholder={`Search docs (${getProductName(productId)})`}
+            placeholder={'Search docs' + (productId ? ` (${getProductName(productId)})` : '')}
             translations={translations.modal}
           />,
           searchContainer.current
