@@ -2,17 +2,18 @@ const path = require('path');
 const globalVariables = require(path.resolve('variables'));
 const convertToPosixFriendlyPath = require('./convertToPosixFriendlyPath');
 const objProp = require('./objProp');
+const isVarValue = require('./isVarValue');
 
 module.exports = function getVariableByFilePath(file, varName) {
   const contextVariables = getContextVariables(file);
 
   let varValue = objProp(contextVariables, varName);
-  if (varValue) {
+  if (isVarValue(varValue)) {
     return varValue;
   }
 
   varValue = objProp(globalVariables, varName);
-  if (varValue) {
+  if (isVarValue(varValue)) {
     return varValue;
   }
 };
