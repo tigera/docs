@@ -83,8 +83,9 @@ function getComponentForNextVersion(prodnamedash, componentName) {
     case 'calico':
       return require(`../../calico/_includes/components/${componentName}`).default;
     case 'calico-cloud':
-      console.error('No partial components registered for Calico Cloud');
-      return;
+      // console.error('No partial components registered for Calico Cloud');
+      // return;
+      return require(`../../calico-enterprise/_includes/components/${componentName}`).default;
     default:
       console.error(`${prodnamedash} product doesn't exist`);
   }

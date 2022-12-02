@@ -1,5 +1,6 @@
 const visit = require('unist-util-visit');
 const getVariableByFilePath = require('../utils/getVariableByFilePath');
+const isVarValue = require('../utils/isVarValue');
 
 const varRegex = RegExp(/\{\{[ \t]*([\w.\/-]+)[ \t]*}}/, 'g');
 
@@ -22,7 +23,7 @@ function variablesPlugin(_options) {
           node[prop] = node[prop].replaceAll(varRegex, (match, varName) => {
             const varValue = getVariableByFilePath(file, varName);
 
-            return varValue || match;
+            return isVarValue(varValue) ? varValue : match;
           });
         }
       }
