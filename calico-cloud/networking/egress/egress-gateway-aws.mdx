@@ -200,9 +200,9 @@ an instance (for example when scaling up the cluster).
 
 ## Before you begin
 
-**Supported**
+**Required**
 
-- Kubernetes in AWS only; for on-prem, see [this guide](egress-gateway-on-prem.mdx)
+- Calico CNI
 
 **Not Supported**
 
@@ -572,7 +572,7 @@ In **Secondary-IP-per-workload** mode, IP pools are used to subdivide the VPC su
   These pools must have:
 
   - `awsSubnetID` set to the ID of the relevant VPC subnet. This activates the AWS-backed IP feature for these pools.
-  - `allowedUse` set to `["HostSecondary"]` to reserve them for this purpose.
+  - `allowedUse` set to `["HostSecondaryInterface"]` to reserve them for this purpose.
   - `blockSize` set to 32. This aligns {{prodname}} IPAM with the behaviour of the AWS fabric.
   - `vxlanMode` and `ipipMode` set to `Never`. (`Never` is the default if these fields are not specified.)
   - `disableBGPExport` set to `true`. This prevents routing conflicts if your cluster is using IPIP or BGP networking.
@@ -760,8 +760,9 @@ spec:
       - name: tigera-pull-secret
       nodeSelector:
         kubernetes.io/os: linux
-      containers:
-      - name: egress-gateway
+      initContainers:
+      - name: egress-gateway-init
+        command: ["/init-gateway.sh"]
         image: {{registry}}{% component_image("egress-gateway") %}
         env:
         - name: EGRESS_POD_IP
@@ -770,6 +771,54 @@ spec:
               fieldPath: status.podIP
         securityContext:
           privileged: true
+      containers:
+      - name: egress-gateway
+        command: ["/start-gateway.sh"]
+        image: {{registry}}{% component_image("egress-gateway") %}
+        env:
+         Optional: comma-delimited list of IP addresses to send ICMP pings to; if all probes fail, the egress
+         gateway will report non-ready.
+        - name: ICMP_PROBE_IPS
+          value: ""
+         Only used if ICMP_PROBE_IPS is non-empty: interval to send probes.
+        - name: ICMP_PROBE_INTERVAL
+          value: "5s"
+         Only used if ICMP_PROBE_IPS is non-empty: timeout before reporting non-ready if there are no successful
+         ICMP probes.
+        - name: ICMP_PROBE_TIMEOUT
+          value: "15s"
+         Optional comma-delimited list of HTTP URLs to send periodic probes to; if all probes fail, the egress
+         gateway will report non-ready.
+        - name: HTTP_PROBE_URLS
+          value: ""
+         Only used if HTTP_PROBE_URL is non-empty: interval to send probes.
+        - name: HTTP_PROBE_INTERVAL
+          value: "10s"
+         Only used if HTTP_PROBE_URL is non-empty: timeout before reporting non-ready if there are no successful
+         HTTP probes.
+        - name: HTTP_PROBE_TIMEOUT
+          value: "30s"
+         Port that the egress gateway serves its health reports.  Must match the readiness probe.
+        - name: HEALTH_PORT
+          value: "8080"
+         Use downward API to tell the pod its own IP address.
+        - name: EGRESS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+        ports:
+        - name: health
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 3
         volumeMounts:
         - mountPath: /var/run
           name: policysync
@@ -780,8 +829,8 @@ spec:
             projectcalico.org/aws-secondary-ipv4: 1
       terminationGracePeriodSeconds: 0
       volumes:
-      - flexVolume:
-          driver: nodeagent/uds
+      - csi:
+          driver: csi.tigera.io
         name: policysync
 EOF
 ```
@@ -845,6 +894,24 @@ EOF
   namespace.
 - The `policysync` volume mount is required. This exposes the policy sync API to the pod,
   allowing it to program its own routing based off information from Felix.
+- The `HEALTH_PORT` environment variable controls the port used to serve an HTTP health
+  endpoint, which is used for the `readinessProbe`. If required, the health port can be disabled
+  entirely by setting the environment variable to 0 (and by removing the `readinessProbe` stanza).
+- The `ICMP_PROBE_IPS` environment variable may be set to a comma-separated list of IPs.
+  If set, the egress gateway pod will probe each IP periodically using an ICMP ping. If all pings fail then the egress
+  gateway will report non-ready via its health port. `ICMP_PROBE_INTERVAL` controls the interval between probes.  
+  `ICMP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if no probes succeed.
+- The `HTTP_PROBE_URLS` environment variable may be set to a comma-separated list of URLs.
+  If set, the egress gateway pod will probe each external service periodically. If all probes fail then the egress
+  gateway will report non-ready via its health port. `HTTP_PROBE_INTERVAL` controls the interval between probes.
+  `HTTP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if all probes are failing.
+  The health port is used by:
+- The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
+  probes).
+- Remote pods to check if the egress gateway is "ready". Only "ready" egress
+  gateways will be used for remote client traffic. This traffic is automatically allowed by {{prodname}} and
+  no policy is required to allow it. {{prodname}} only sends probes to egress gateway pods that have a named
+  "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
 
 :::
 
@@ -1003,28 +1070,94 @@ the following.
 ### Policy enforcement for flows via an egress gateway
 
 For an outbound connection from a client pod, via an egress gateway, to a destination outside the
-cluster, any applicable {{prodname}} policy will in principle be enforced:
+cluster, there is more than one possible enforcement point for policy:
+
+The path of the traffic through policy is as follows:
+
+1. Packet leaves the client pod and passes through its egress policy.
+2. The packet is encapsulated by the client pod's host and sent to the egress gateway
+3. The encapsulated packet is sent from the host to the egress gateway pod.
+4. The egress gateway pod de-encapsulates the packet and send the packet out again with its own address.
+5. The packet leaves the egress gateway pod through its egress policy.
+
+To ensure correct operation, (as of v3.15) the encapsulated traffic between host and egress gateway is auto-allowed by
+{{prodname}} and other ingress traffic is blocked. That means that there are effectively two places where
+policy can be applied:
 
 1.  on egress from the client pod
-2.  on ingress to the egress gateway pod
-3.  on egress from the egress gateway pod.
+2.  on egress from the egress gateway pod (see limitations below).
 
-Since an egress gateway will never _originate_ any traffic itself, a possible approach is not to
-configure any policy for the egress gateway. Then the enforcement at points (2) and (3) is a no-op,
-and enforcement at point (1) is the same as for flows that are not via an egress gateway.
+The policy applied at (1) is the most powerful since it implicitly sees the original source of the traffic (by
+virtue of being attached to that original source). It also sees the external destination of the traffic.
 
-On the other hand,
+Since an egress gateway will never originate its own traffic, one option is to rely on policy applied at (1) and
+to allow all traffic to at (2) (either by applying no policy or by applying an "allow all").
 
-- if you apply a default-deny ingress policy to your egress gateways, you will need to configure
-  allow policies for the clients that you want to be able to use those gateways;
+Alternatively, for maximum "defense in depth" applying policy at both (1) and (2) provides extra protection should
+the policy at (1) be disabled or bypassed by an attacker. Policy at (2) has the following limitations:
 
-- if you apply a default-deny egress policy to your egress gateways, you will need to configure
-  allow policies for the destinations that those gateways should be able to forward to.
+- [Domain-based policy](../../security/domain-based-policy.mdx) is not supported at egress from egress
+  gateways. It will either fail to match the expected traffic, or it will work intermittently if the egress gateway
+  happens to be scheduled to the same node as its clients. This is because any DNS lookup happens at the client pod.
+  By the time the policy reaches (2) the DNS information is lost and only the IP addresses of the traffic are available.
 
-Unfortunately it will not work to [specify external destinations by
-name](../../security/beginners/domain-based-policy.mdx) here, because the gateway's node will not see
-the DNS protocol that maps a destination name to the underlying IP addresses (unless the gateway
-happens to be on the same node as the client).
+- The traffic source will appear to be the egress gateway pod, the source information is lost in the address
+  translation that occurs inside the egress gateway pod.
+
+That means that policies at (2) will usually take the form of rules that match only on destination port and IP address,
+either directly in the rule (via a CIDR match) or via a (non-domain based) NetworkSet. Matching on source has little
+utility since the IP will always be the egress gateway and the port of translated traffic is not always preserved.
+
+:::note
+
+Since v3.15.0, {{prodname}} also sends health probes to the egress gateway pods from the nodes where
+their clients are located. In iptables mode, this traffic is auto-allowed at egress from the host and ingress
+to the egress gateway. In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic is allowed; this should be fixed in an upcoming
+patch release.
+
+:::
+
+## Upgrading egress gateways
+
+Because egress gateway deployments are not currently managed by the Tigera Operator, it is necessary to upgrade
+egress gateway deployments manually.
+
+:::caution
+
+When upgrading egress gateway deployments, both the image and the deployment spec need to be changed in
+tandem; upgrading only the image version can result in a non-functioning egress gateway. Newer versions of the
+egress gateway image require new volume mounts and environment variables and have other structural changes (such
+as the addition of an `initContainer` in v3.15.0).
+
+:::
+
+To upgrade an egress gateway deployment:
+
+- Before upgrading egress gateways to a particular version, upgrade the other {{prodname}} components
+  first. The egress gateway image should never be newer than the other {{prodname}} components. We recommend
+  keeping the gress gateway version up-to-date with the overall product version to minimise the chance of
+  incompatibilities.
+
+- Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To
+  enable the policy sync API, follow the steps in [enable policy sync API](#enable-policy-sync-api) above. This API
+  allows the egress gateway daemon inside the egress gateway pod to query {{noderunning}} for the set of active
+  routes in the cluster. If the egress gateway daemon cannot reach the API, it will fail and report errors to the logs
+  as it retries the connection.
+
+- Follow the steps [above](#deploy-a-group-of-egress-gateways) to prepare a deployment manifest for the new version
+  egress gateways with the same name as the old. As noted above, the deployment must be updated in lockstep with
+  the image version because different versions require different volumes/environment variables and other settings.
+
+  - If upgrading from a pre-v3.15 release, you may wish to enable the new ICMP and/or HTTP probe features, which allow
+    the egress gateways to probe one or more external hosts with ICMP pings and/or HTTP GET requests and report problems through
+    their Kubernetes `readinessProbe`s. These are controlled by environment variables in the deployment manifest.
+
+- Use `kubectl replace` to apply the manifest over the existing one. Kubernetes will roll out the new egress gateways,
+  replacing the old.
+
+By default, upgrading egress gateways will sever any connections that are flowing through them. To minimise impact,
+the egress gateway feature supports some advanced options that give feedback to affected pods. For more details see
+the [egress gateway maintenance guide](egress-gateway-maintenance.mdx).
 
 ## Above and beyond
 

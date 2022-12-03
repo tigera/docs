@@ -11,7 +11,7 @@ description: Use checklist to troubleshoot common problems.
 
 Use the following checklist to troubleshoot, or to collect details before opening a Support ticket.
 
-### Is the egress gateway enabled?
+### Is the egress gateway feature enabled?
 
 Egress gateway is disabled by default.  Have you enabled it in [Felix configuration](../../reference/resources/felixconfig.mdx) by setting `egressIPSupport` to `EnabledPerNamespace` or `EnabledPerNamespaceOrPerPod`?
 
@@ -19,7 +19,7 @@ Egress gateway is disabled by default.  Have you enabled it in [Felix configura
 
 As shown in the following diagram, from the gateway to the destination, the source IP is the egress IP.  On the return path, from the destination back to the gateway, the destination IP is the egress IP. If there are any routers between the gateway and the destination, they must all know how to route the egress IP back to the gateway. If they don’t, the attempted connection cannot be established.
 
-![egress-basic-routing](/img/calico-cloud/master/egress-basic-routing.svg)
+![egress-basic-routing](/img/calico-enterprise/master/egress-basic-routing.svg)
 
 Options to make routers aware of egress IP:
 
@@ -52,7 +52,30 @@ On Linux, Calico claims a number of routing tables for various purposes. The exa
 
 Under these conditions, `calico-node` pods will log error messages and report [unhealthy](#check-calico-node-health).
 
-[See more about routeTableRanges in Felix](../../reference/resources/felixconfig.mdx).
+[See more about routeTableRanges](../../reference/resources/felixconfig.mdx#routetableranges)
+
+### Check egress gateway health
+
+As of v3.15.0, the egress gateway `Deployment` includes a Kubernetes `readinessProbe`. The egress gateway will
+only report ready if it is able to connect to the local `calico-node` pod and if any configured HTTP/ICMP probes
+are succeeding.
+
+If the egress gateway reports not-Ready then more information can be found in its logs. The egress gateway logs to
+`stdout` so its logs are available via `kubectl logs -n <namespace> <egress gateway pod name>`.
+
+### Check health of calico-node to egress gateway probes
+
+As of v3.15.0, each `calico-node` pod probes the health of the remote egress gateways that its local pods are using.
+If probes fail, the failures are logged in `calico-node`'s log (search for `egress_gw_tracker`) and reported via Prometheus metrics:
+
+```
+felix_egress_gateway_remote_polls{status="probe-failed"} 0
+felix_egress_gateway_remote_polls{status="total"} 2
+felix_egress_gateway_remote_polls{status="up"} 2
+```
+
+Where, the `total` metric reports the total number of remote egress gateways that are being polled and the `up` and `probe-failed`
+metrics report the number of egress gateways in each of those states.
 
 ### Check calico-node health
 
@@ -142,13 +165,13 @@ unreachable default scope link
 
 You should not have any egress IPs or pod IP ranges in BGPConfiguration `serviceExternalIPs` or `serviceClusterIPs` fields; it causes problems if you do.
 
-By default, {{prodname}} BGP exports all pod IPs, which includes egress gateway IPs because they are pod IPs. But you can also use BGPConfiguration resource parameters like `BGPConfiguration`, `serviceClusterIPs`, `serviceExternalIPs` and `serviceLoadBalancerIPs` to export additional IP ranges, in particular Kubernetes Service IPs. Because {{prodname}} exports additional IP ranges in a different way from pod IPs, things can go wrong if you include pod IPs in the additional ranges.
+By default, {{prodname}} BGP exports all pod IPs, which includes egress gateway IPs because they are pod IPs. But you can also use [BGPConfiguration resource parameters](../../reference/resources/bgpconfig.mdx) like `BGPConfiguration`, `serviceClusterIPs`, `serviceExternalIPs` and `serviceLoadBalancerIPs` to export additional IP ranges, in particular Kubernetes Service IPs. Because {{prodname}} exports additional IP ranges in a different way from pod IPs, things can go wrong if you include pod IPs in the additional ranges.
 
 ## Connection to an egress gateway cannot be established
 
 If the outbound connection cannot be established, the policy may be denying the flow. As shown in the following diagram, policy is enforced at more points in an egress gateway flow.
 
-![egress-basic-routing](/img/calico-cloud/master/egress-basic-routing.svg)
+![egress-basic-routing](/img/calico-enterprise/master/egress-basic-routing.svg)
 
 **Policy enforcement**:
 
@@ -157,7 +180,7 @@ If the outbound connection cannot be established, the policy may be denying the 
 - From the gateway pod, egress
 - Any relevant HostEndpoints that are configured in your cluster
 
-In Manager UI, check for dropped packets because of policy on the outbound connection path. If you are using the iptables dataplane, you can also run the following command on the client and gateway nodes to look at a lower level.
+In [Manager UI](../../visibility/get-started-cem.mdx), check for dropped packets because of policy on the outbound connection path. If you are using the iptables dataplane, you can also run the following command on the client and gateway nodes to look at a lower level.
 
 ```
 watch iptables-save -c | grep DROP | grep -v 0:0

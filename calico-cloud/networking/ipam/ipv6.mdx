@@ -1,18 +1,15 @@
 ---
-title: Configure dual stack or IPv6 only
-description: Configure dual stack or IPv6 only for workloads.
+title: Configure dual stack
+description: Configure dual stack for workloads.
 ---
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 ## Big picture
 
-Configure {{prodname}} IP address allocation to use dual stack or IPv6 only for workload communications.
+Configure {{prodname}} IP address allocation to use dual stack for workload communications.
 
 ## Value
 
-Workload communication over IPv6 is increasingly desirable, as well as or instead of IPv4. {{prodname}} supports:
+In addition to IPv4, IPv6 is increasingly desirable for Workload communication. {{prodname}} supports:
 
 - **IPv4 only** (default)
 
@@ -21,10 +18,6 @@ Workload communication over IPv6 is increasingly desirable, as well as or instea
 - **Dual stack**
 
   Each workload gets an IPv4 and an IPv6 address, and can communicate over IPv4 or IPv6.
-
-- **IPv6 only**
-
-  Each workload gets an IPv6 address, and can communicate over IPv6.
 
 ## Features
 
@@ -35,13 +28,26 @@ This how-to guide uses the following {{prodname}} features:
 
 ## Before you begin
 
+**Unsupported**
+
+- IPv6 only
+- AKS
+- AWS/kOps
+- EKS
+- GKE
+- RKE
+- RKE2
+
 **{{prodname}} requirements**
 
 - {{prodname}} IPAM
+- OpenShift
+  - Requires 4.8 for IPv6/IPv4 dual-stack and IPv6 single stack support
+  - Requires 3.11 and later using {{prodname}} 3.4 and later for IPv6 support
 
 **Kubernetes version requirements**
 
-- For dual stack, 1.16 and later
+- For dual stack, 1.20 and later
 - For one IP stack at a time (IPv4 or IPv6), any Kubernetes version
 
 **Kubernetes IPv6 host requirements**
@@ -62,113 +68,34 @@ This how-to guide uses the following {{prodname}} features:
 
 :::note
 
-The following tasks are only for new clusters.
+The following task is only for new clusters.
 
 :::
 
-- [Enable IPv6 only](#enable-ipv6-only)
-- [Enable dual stack](#enable-dual-stack)
-
-### Enable IPv6 only
-
-<!--
-<Tabs>
-<TabItem label="Operator" value="Operator-0">
-
-1. TBD.
-1. TBD.
-
-</TabItem>
-<TabItem label="Manifest" value="Manifest-1">
-
--->
-
-1. Set up a new Kubernetes cluster with an IPv6 pod CIDR and service IP range.
-
-1. When about to apply `custom-resources.yaml`, edit it first to define an IPv6 pod CIDR
-   pool in the `Installation` resource. For example, like this:
-
-   ```yaml
-   apiVersion: operator.tigera.io/v1
-   kind: Installation
-   metadata:
-     name: default
-   spec:
-      Install Calico Enterprise
-     variant: TigeraSecureEnterprise
-     ...
-     calicoNetwork:
-       ipPools:
-       - cidr: fd5f:1801::/112
-     ...
-   ```
-
-1. Apply the edited manifest with `kubectl apply -f`.
-
-   New pods will get IPv6 addresses, and can communicate with each other and the outside world over IPv6.
-
-<!--
-
-</TabItem>
-</Tabs>
-
--->
-
-**(Optional) Update host to not look for IPv4 addresses**
-
-If you want your workloads to have IPv6 addresses only, because you do not have IPv4 addresses or connectivity
-between your nodes, complete these additional steps to tell {{prodname}} not to look for any IPv4 addresses.
-
-1. Disable [IP autodetection of IPv4](ip-autodetection.mdx) by setting `IP` to `none`.
-1. Calculate the {{prodname}} BGP router ID for IPv6 using either of the following methods.
-   - Set the environment variable `CALICO_ROUTER_ID=hash` on {{nodecontainer}}.
-     This configures {{prodname}} to calculate the router ID based on the hostname.
-   - Pass a unique value for `CALICO_ROUTER_ID` to each node individually.
-
 ### Enable dual stack
-
-<!--
-{% tabs id:installation-method-bbb %}
-<id:opbbb,name:Operator,active:true>
-<%
-1. TBD.
-1. TBD.
-
-%>
-<id:manbbb,name:Manifest>
-<%
--->
 
 1. Set up a new cluster following the Kubernetes [prerequisites](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#prerequisites) and [enablement steps](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#enable-ipv4-ipv6-dual-stack).
 
-1. When about to apply `custom-resources.yaml`, edit it first to define an IPv4 and IPv6 pod CIDR
-   pool in the `Installation` resource. For example, like this:
+To configure dual-stack cluster using the operator, edit your default Installation at install time to include both an IPv4 and IPv6 pool. For example:
 
-   ```yaml
-   apiVersion: operator.tigera.io/v1
-   kind: Installation
-   metadata:
-     name: default
-   spec:
-      Install Calico Enterprise
-     variant: TigeraSecureEnterprise
-     ...
-     calicoNetwork:
-       ipPools:
-       - cidr: 192.168.0.0/16
-       - cidr: fd5f:1801::/112
-     ...
-   ```
-
-1. Apply the edited manifest with `kubectl apply -f`.
-
-   New pods will get both IPv4 and IPv6 addresses, and can communicate with each other and the outside world over IPv4 or IPv6.
-
-<!--
-%>
-{% endtabs %}
--->
-
-## Above and beyond
-
-- [Configure Kubernetes control plane to operate over IPv6](ipv6-control-plane.mdx)
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+   Configures Calico networking.
+  calicoNetwork:
+     Note: The ipPools section cannot be modified post-install.
+  ipPools:
+  - blockSize: 26
+    cidr: 10.48.0.0/21
+    encapsulation: IPIP
+    natOutgoing: Enabled
+    nodeSelector: all()
+  - blockSize: 122
+    cidr: 2001::00/64
+    encapsulation: None
+    natOutgoing: Enabled
+    nodeSelector: all()
+```
