@@ -9,22 +9,21 @@ Schedule and run compliance reports to assess Kubernetes workloads and environme
 
 ## Value
 
-Existing compliance tools that rely on periodic snapshots, do not provide accurate assessments of Kubernetes workloads
-against your compliance standards. {{prodname}} compliance dashboard and reports provide a complete inventory of regulated workloads, along with evidence of enforcement of network controls for these workloads. Additionally, audit reports are available to see changes to any network security controls.
+Compliance tools that rely on periodic snapshots, do not provide accurate assessments of Kubernetes workloads against your compliance standards. {{prodname}} compliance dashboard and reports provide a complete inventory of regulated workloads, along with evidence of enforcement of network controls for these workloads. Additionally, audit reports are available to see changes to any network security controls.
 
 ## Features
 
 This how-to guide uses the following {{prodname}} features:
 
-- Predefined **compliance reports** (Inventory, Network Access, Policy Audit) that are installed with {{prodname}}
-- A **GlobalReport** resource to schedule reports, specify which nodes to include, and manually run reports
-- The **compliance dashboard** in {{prodname}} Manager to view and export reports from Elasticsearch
+- Preconfigured **compliance reports** (Inventory, Network Access, Policy Audit) that are installed with {{prodname}}
+- A **GlobalReport** resource to schedule and configure reports
+- The **compliance dashboard** in Manager UI to view reports
 
 ## Concepts
 
 ### Compliance reports at a glance
 
-Compliance reports are based on archived flow logs and audit logs for all of your {{prodname}} resources, plus any audit logs you've configured for Kubernetes resources in the Kubernetes API server:
+Compliance report are based on archived flow logs and audit logs for all of your {{prodname}} resources, plus any audit logs you've configured for Kubernetes resources in the Kubernetes API server:
 
 - Pods
 - Host endpoints
@@ -51,28 +50,26 @@ Compliance reports provide the following high-level information:
   - Allowed ingress/egress traffic to/from namespaces
   - Allowed ingress/egress traffic to/from the internet
 
-![compliance-reporting](/img/calico-cloud/master/compliance-reporting.png)
+![compliance-reporting](/img/calico-enterprise/master/compliance-reporting.png)
 
 ## Before you begin
 
-**Supported**
+**Unsupported**
 
-- Kubernetes, on-premises
-- EKS
-- AWS using kOps
-- RKE
+- AKS
+- GKE
+- OpenShift
+- TKG
 
 **Required**
 
-- Ensure that all nodes in your Kubernetes clusters must be time-synchronized using NTP or similar (for accurate audit log timestamps)
-
-**Recommended**
+- Ensure that all nodes in your Kubernetes clusters are time-synchronized using NTP or similar (for accurate audit log timestamps)
 
 - [Configure audit logs for Kubernetes resources](../visibility/elastic/audit-overview.mdx)
 
-  Although all {{prodname}} resources are configured for compliance reports, you must configure Kubernetes resources for audit logs through the Kubernetes API for a complete view of your resources.
+  You must configure audit logs for Kubernetes resources through the Kubernetes API to get a complete view of all resources.
 
-## How to
+## How To
 
 - [Configure report permissions](#configure-report-permissions)
 - [Configure and schedule reports](#configure-and-schedule-reports)
@@ -81,7 +78,7 @@ Compliance reports provide the following high-level information:
 
 ### Configure report permissions
 
-Report permissions are granted using the standard Kubernetes RBAC based on ClusterRole and ClusterRoleBindings. The following table outlines the required RBAC verbs for each resource type for a specific user action.
+Report permissions are granted using the standard Kubernetes RBAC based on ClusterRole and ClusterRoleBindings. The following table outlines the required RBAC verbs for each resource type for a specific user actions.
 
 | **Action**                                              | **globalreporttypes**           | **globalreports**                 | **globalreports/status** |
 | ------------------------------------------------------- | ------------------------------- | --------------------------------- | ------------------------ |
@@ -90,10 +87,10 @@ Report permissions are granted using the standard Kubernetes RBAC based on Clust
 | List the generated reports and summary status in the UI |                                 | list + get (for required reports) |                          |
 | Export the generated reports from the UI                | get (for the particular report) | get (for required reports)        |                          |
 
-The following sample manifest creates RBAC for three users: Paul, Candice, and David.
+The following sample manifest creates RBAC for three users: Paul, Candice and David.
 
-- Paul has permission to create/modify/delete the report schedules and configuration but does not have permission to export generated reports from the UI.
-- Candice has permission to list and export generated reports from the UI, but cannot modify the report schedule or configuration.
+- Paul has permissions to create/modify/delete the report schedules and configuration, but does not have permission to export generated reports from the UI.
+- Candice has permissions to list and export generated reports from the UI, but cannot modify the report schedule or configuration.
 - David has permissions to list and export generated `dev-inventory` reports from the UI, but cannot list or download other reports, nor modify the report
   schedule or configuration.
 
@@ -188,18 +185,18 @@ roleRef:
 
 To configure and schedule a compliance report, create a [GlobalReport](../reference/resources/globalreport.mdx) with the following information.
 
-| **Fields**      | **Description**                                                                                                                                                                                                                                                                           |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| name            | Unique name for your report.                                                                                                                                                                                                                                                              |
-| reportType      | One of the following predefined report types: `inventory`, `network-access`, `policy-audit`.                                                                                                                                                                                              |
-| schedule        | The start and end time of the report using [crontab format](https://en.wikipedia.org/wiki/Cron). To allow for archiving, reports are generated approximately 30 minutes after the end time. A single report is limited to a maximum of two per hour.                                      |
-| endpoints       | **Optional**. For inventory and network-access reports, specifies the endpoints to include in the report. The policy-audit report restricts audit logs to include only policies that apply to the selected endpoints. If not specified, the report includes all endpoints and audit logs. |
-| jobNodeSelector | **Optional**. Limits report generation jobs to specific nodes.                                                                                                                                                                                                                            |
-| suspend         | **Optional**. Suspends report generation. All in-flight reports will complete, and future scheduled reports are suspended.                                                                                                                                                                |
+| **Fields**      | **Description**                                                                                                                                                                                                                                                                                |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| name            | Unique name for your report.                                                                                                                                                                                                                                                                   |
+| reportType      | One of the following predefined report types: `inventory`, `network-access`, `policy-audit`.                                                                                                                                                                                                   |
+| schedule        | The start and end time of the report using [crontab format](https://en.wikipedia.org/wiki/Cron). To allow for archiving, reports are generated approximately 30 minutes after the end time. A single report is limited to a maximum of two per hour.                                           |
+| endpoints       | **Optional**. For inventory and network-access reports, specifies the endpoints to include in the report. For the policy-audit report, restricts audit logs to include only policies that apply to the selected endpoints. If not specified, the report includes all endpoints and audit logs. |
+| jobNodeSelector | **Optional**. Limits report generation jobs to specific nodes.                                                                                                                                                                                                                                 |
+| suspend         | **Optional**. Suspends report generation. All in-flight reports will complete, and future scheduled reports are suspended.                                                                                                                                                                     |
 
 :::note
 
-GlobalReports can only be configured using kubectl (not calicoctl), and they cannot be edited in the Tigera
+GlobalReports can only be configured using kubectl (not calicoctl); and they cannot be edited in the Tigera
 Secure EE Manager UI.
 
 :::
@@ -307,7 +304,7 @@ In a report, the job status types are:
 
 - **lastScheduledReportJob**:
   The most recently scheduled job for generating the report. Because reports are scheduled in order, the “end time” of
-  this report will be the “start-time” of the next scheduled report.
+  this report will be the “start time” of the next scheduled report.
 - **activeReportJobs**:
   Default = allows up to 5 concurrent report generation jobs.
 - **lastFailedReportJobs**:
@@ -332,13 +329,14 @@ To change the delay, go to the installation manifest, and uncomment and set the 
 You can run reports at any time to specify a different start/end time, and if a scheduled report fails.
 
 {{prodname}} GlobalReport schedules Kubernetes Jobs, which create a single-run pod to generate a report and store it
-in Elasticsearch. Because you need to run reports as a pod, you need higher permissions: allow `create` access for pods in namespace `tigera-compliance` using the `tigera-compliance-reporter` service account.
+in Elasticsearch. Because you need to run reports as a pod, you need higher permissions: allow `create` access
+access for pods in namespace `tigera-compliance` using the `tigera-compliance-reporter` service account.
 
-To run a report on-demand:
+To run a report on demand:
 
 1. Download the pod template corresponding to your installation method.
 
-   ```
+   ```bash-plain-text
    curl -O {{filesUrl}}/manifests/compliance-reporter-pod.yaml
    ```
 
@@ -368,8 +366,8 @@ Manually-generated reports do not appear in GlobalReport status.
 
 ## Above and beyond
 
-- For details on configuring and scheduling reports, see [Global Reports](../reference/resources/globalreport.mdx)
-- For report field descriptions, see [Compliance Reports](../reference/compliance-reports/index.mdx)
+- For details on configuring and scheduling reports, see [Global reports](../reference/resources/globalreport.mdx)
+- For report field descriptions, see [Compliance reports](../reference/resources/compliance-reports/index.mdx)
 - [CIS benchmarks](compliance-reports-cis.mdx)
 
 [parse-duration]: https://golang.org/pkg/time/#ParseDuration

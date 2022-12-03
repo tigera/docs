@@ -1,5 +1,5 @@
 ---
-title: Export logs to a SIEM
+title: Archive logs
 description: Archive logs to Syslog, Splunk, or Amazon S3 for maintaining compliance data.
 ---
 
@@ -8,7 +8,18 @@ import TabItem from '@theme/TabItem';
 
 ## Big picture
 
-The default log vendor is Elasticsearch. To meet compliance storage requirements, you can export {{prodname}} logs to SIEMs like syslog, Splunk, or Amazon S3.
+Archive {{prodname}} logs to SIEMs like Syslog, Splunk, or Amazon S3 to meet compliance storage requirements.
+
+## Value
+
+Archiving your {{prodname}} Elasticsearch logs to storage services like Amazon S3, Syslog, or Splunk are reliable
+options for maintaining and consolidating your compliance data long term.
+
+## Features
+
+This how-to guide uses the following {{prodname}} features:
+
+- **LogCollector** resource
 
 ## How to
 
@@ -21,7 +32,7 @@ The default log vendor is Elasticsearch. To meet compliance storage requirements
 2. Create a Secret in the `tigera-operator` namespace named `log-collector-s3-credentials` with the fields `key-id` and `key-secret`.
    Example:
 
-   ```bash-plain-text
+   ```
     kubectl create secret generic log-collector-s3-credentials \
     --from-literal=key-id=<AWS-access-key-id> \
     --from-literal=key-secret=<AWS-secret-key> \
@@ -72,6 +83,12 @@ The default log vendor is Elasticsearch. To meet compliance storage requirements
          endpoint: tcp://1.2.3.4:514
           (Optional) If messages are being truncated set this field
          packetSize: 1024
+          (Required) Types of logs to forward to Syslog (must specify at least one option)
+         logTypes:
+         - Audit
+         - DNS
+         - Flows
+         - IDSEvents
    ```
    This can be done during installation by editing the custom-resources.yaml by applying it or after installation by editing the resource with the command:
    ```bash-plain-text
@@ -89,7 +106,17 @@ The default log vendor is Elasticsearch. To meet compliance storage requirements
 
    Refer to the [Syslog section](../../reference/installation/api.mdx#operator.tigera.io/v1.SyslogStoreSpec) for more details on what data each log type represents.
 
-   Building on the example from the previous step:
+   :::note
+
+   The log type `IDSEvents` is only supported for a cluster that has [LogStorage](../../reference/installation/api.mdx#operator.tigera.io/v1.LogStorage) configured. It is because intrusion detection event data is pulled from the corresponding LogStorage datastore directly.
+
+   :::
+
+   The `logTypes` field is a required, which means you must specify at least one type of log to export to syslog.
+
+**TLS configuration**
+
+3. You can enable TLS option for syslog forwarding by including the "encryption" option in the [Syslog section](../../reference/installation/api.mdx#operator.tigera.io/v1.SyslogStoreSpec).
 
    ```yaml
    apiVersion: operator.tigera.io/v1
@@ -103,6 +130,8 @@ The default log vendor is Elasticsearch. To meet compliance storage requirements
          endpoint: tcp://1.2.3.4:514
           (Optional) If messages are being truncated set this field
          packetSize: 1024
+          (Optional) To Configure TLS mode
+         encryption: TLS
           (Required) Types of logs to forward to Syslog (must specify at least one option)
          logTypes:
          - Audit
@@ -111,13 +140,17 @@ The default log vendor is Elasticsearch. To meet compliance storage requirements
          - IDSEvents
    ```
 
+4. Using the self-signed CA with the field name tls.crt, create a configmap in the tigera-operator namespace named, syslog-ca. Example:
+
    :::note
 
-   The log type `IDSEvents` is only supported for a cluster that has [LogStorage](../../reference/installation/api.mdx#operator.tigera.io/v1.LogStorage) configured. It is because intrusion detection event data is pulled from the corresponding LogStorage datastore directly.
+   Skip this step if publicCA bundle is good enough to verify the server certificates.
 
    :::
 
-   The `logTypes` field is a required, which means you must specify at least one type of log to export to syslog.
+   ```bash-plain-text
+   kubectl create configmap syslog-ca --from-file=tls.crt -n tigera-operator
+   ```
 
 </TabItem>
 <TabItem label="Splunk" value="Splunk-2">
@@ -133,7 +166,7 @@ In this release, only [Splunk Enterprise](https://www.splunk.com/en_us/download/
 2. Create a Secret in the `tigera-operator` namespace named `logcollector-splunk-credentials` with the field `token`.
    Example:
 
-   ```bash-plain-text
+   ```
     kubectl create secret generic logcollector-splunk-credentials \
     --from-literal=token=<splunk-hec-token> \
     -n tigera-operator
@@ -161,25 +194,10 @@ In this release, only [Splunk Enterprise](https://www.splunk.com/en_us/download/
    This can be done during installation by editing the custom-resources.yaml
    by applying it or after installation by editing the resource with the command:
 
-   ```bash-plain-text
+   ```
    kubectl edit logcollector tigera-secure
    ```
 
 </TabItem>
 
 </Tabs>
-
-## Forward global alerts to a SIEM
-
-{{prodname}} supports setting up global alerts on the following logs:
-
-- Audit
-- DNS
-- Flow
-- L7
-
-To forward global alerts to a SIEM, notify Support in the Contact page in Manager UI, and open a [Support ticket](https://support.tigera.io/s/login/?ec=302&startURL=%2Fs%2F) with the following information:
-
-- Endpoint to your SIEM/Syslog server setup. For example:
-
-  `syslog: endpoint: tcp://rsyslog-service.default.svc:522`

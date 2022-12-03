@@ -1,6 +1,6 @@
 ---
 title: Global threat feed
-description: Resource definition
+description: API for this Calico Enterprise resource.
 ---
 
 A global threat feed resource (GlobalThreatFeed) represents a feed of threat intelligence used for
@@ -13,7 +13,7 @@ security purposes.
 
 For each IPSet threat feed, {{prodname}} automatically monitors flow logs for members of the set.
 IPSet threat feeds can also be configured to be synchronized to a [global network set](globalnetworkset.mdx),
-allowing you to use them as a dynamically-updating deny list by incorporating the global network set into network policy.
+allowing you to use them as a dynamically-updating deny-list by incorporating the global network set into network policy.
 
 For each DomainNameSet threat feed, {{prodname}} automatically monitors DNS logs for queries (QNAME) or answers (RR NAME or RDATA) that contain members of the set.
 
@@ -31,6 +31,9 @@ metadata:
   name: sample-global-threat-feed
 spec:
   content: IPSet
+  mode: Enabled
+  description: "This is the sample global threat feed"
+  feedType: Custom
   globalNetworkSet:
      labels to set on the GNS
     labels:
@@ -41,7 +44,7 @@ spec:
     http:
       format:
         newlineDelimited: {}
-      url: https://an.example.threat.feed/denylist
+      url: https://an.example.threat.feed/deny-list
       headers:
         - name: "Accept"
           value: "text/plain"
@@ -102,11 +105,14 @@ create and update documents in Elasticsearch.
 
 ### Spec
 
-| Field            | Description                                    | Accepted Values      | Schema                                        | Default |
-| ---------------- | ---------------------------------------------- | -------------------- | --------------------------------------------- | ------- |
-| content          | What kind of threat intelligence is provided   | IPSet, DomainNameSet | string                                        | IPSet   |
-| globalNetworkSet | Include to sync with a global network set      |                      | [GlobalNetworkSetSync](#globalnetworksetsync) |         |
-| pull             | Configure periodic pull of threat feed updates |                      | [Pull](#pull)                                 |         |
+| Field            | Description                                          | Accepted Values        | Schema                                        | Default |
+| ---------------- | ---------------------------------------------------- | ---------------------- | --------------------------------------------- | ------- |
+| content          | What kind of threat intelligence is provided         | IPSet, DomainNameSet   | string                                        | IPSet   |
+| mode             | Determines if the threat feed is Enabled or Disabled | Enabled, Disabled      | string                                        | Enabled |
+| description      | Human-readable description of the template           | Maximum 256 characters | string                                        |         |
+| feedType         | Distinguishes Builtin threat feeds from Custom feeds | Builtin, Custom        | string                                        | Custom  |
+| globalNetworkSet | Include to sync with a global network set            |                        | [GlobalNetworkSetSync](#globalnetworksetsync) |         |
+| pull             | Configure periodic pull of threat feed updates       |                        | [Pull](#pull)                                 |         |
 
 ### Status
 
@@ -210,11 +216,11 @@ and `$.a` is valid for `{"a": ["b", "c"]}`.
 #### CSV
 
 | Field                       | Description                                                               | Schema |
-| --------------------------- | ------------------------------------------------------------------------- | ------ | ------ |
+| --------------------------- | ------------------------------------------------------------------------- | ------ |
 | fieldNum                    | Number of column containing values. Mutually exclusive with `fieldName`.  | int    |
 | fieldName                   | Name of column containing values, requires `header: true`.                | string |
 | header                      | Whether or not the document contains a header row.                        | bool   |
-| columnDelimiter             | An alternative delimiter character, such as `                             | `.     | string |
+| columnDelimiter             | An alternative delimiter character, such as <code>&#124;</code>.          | string |
 | commentDelimiter            | Lines beginning with this character are skipped. `#` is common.           | string |
 | recordSize                  | The number of columns expected in the document. Auto detected if omitted. | int    |
 | disableRecordSizeValidation | Disable row size checking. Mutually exclusive with `recordSize`.          | bool   |
