@@ -12,8 +12,14 @@ Enable WireGuard to secure on the wire in-cluster pod traffic in a {{site.prodna
 
 When this feature is enabled, {{site.prodname}} automatically creates and manages WireGuard tunnels between nodes providing transport-level security for on-the-wire, in-cluster pod traffic. WireGuard provides {% include open-new-window.html text='formally verified' url='https://www.wireguard.com/formal-verification/' %} secure and {% include open-new-window.html text='performant tunnels' url='https://www.wireguard.com/performance/' %} without any specialized hardware. For a deep dive in to WireGuard implementation, see this {% include open-new-window.html text='whitepaper' url='https://www.wireguard.com/papers/wireguard.pdf' %}.
 
-{{ site.prodname }} supports WireGuard encryption for both IPv4 and IPv6 traffic. These can be independently enabled in the FelixConfiguration resource: `wireguardEnabled`
-enables encrypting IPv4 traffic over an IPv4 underlay network and `wireguardEnabledV6` enables encrypting IPv6 traffic over an IPv6 underlay network.
+### Concepts
+#### About WireGuard
+
+{{ site.prodname }} supports both host-to-host encryption for pod traffic, and direct node-to-node communication. Because {{site.prodname}} is not implemented using a sidecar, traffic is not encrypted for the full journey from one pod to another; traffic is only encrypted on the host-to-host portion of the journey.
+
+{{site.prodname}} supports WireGuard encryption for both IPv4 and IPv6 traffic. You can enable traffic independently using parameters in the FelixConfiguration resource:
+  - `wireguardEnabled` -  enables encrypting IPv4 traffic over an IPv4 underlay network
+  - `wireguardEnabledV6`  - enables encrypting IPv6 traffic over an IPv6 underlay network
 
 ### Features
 
@@ -26,6 +32,7 @@ This how-to guide uses the following {{site.prodname}} features:
 **Unsupported**
 
 - GKE
+- Using your own custom keys to encrypt traffic
 
 **Limitations**
 
@@ -52,6 +59,8 @@ This how-to guide uses the following {{site.prodname}} features:
 - [Install WireGuard](#install-wireguard)
 - [Enable WireGuard for a cluster](#enable-wireguard-for-a-cluster)
 - [Verify encryption is enabled](#verify-encryption-is-enabled)
+- [Enable WireGuard statistics](#enable-wireguard-statistics)
+- [View WireGuard statistics](#view-wireguard-statistics) 
 - [Disable WireGuard for an individual node](#disable-wireguard-for-an-individual-node)
 - [Disable WireGuard for a cluster](#disable-wireguard-for-a-cluster)
 
@@ -183,6 +192,15 @@ Since v3.11.1, WireGuard statistics are now automatically enabled with the enabl
 To view WireGuard statistics in Manager UI, you must enable them. From the left navbar, click **Dashboard**, and the Layout Settings icon. 
 
 ![Wireguard Dashboard Toggle]({{site.baseurl}}/images/wireguard/stats-toggle.png)
+
+##### Frequently Asked Questions (FAQs)
+
+Why do WireGuard encryption charts in the Manager UI Dashboard show more ingress traffic than egress if all the traffic goes within the cluster?
+
+The chart might show 1% difference in the traffic. The difference comes from the following sources:
+- Sampling time. The statistics are generated a few microseconds apart.
+- Packet loss. If a node resends a lost packet, then the node counts the packet twice where the receiver counts it only once.
+- Averaging/smoothing. The statistics are smoothed out over a few seconds.
 
 #### Disable WireGuard for an individual node
 
