@@ -15,9 +15,16 @@ import { useProductId } from '../../utils/useProductId';
 let DocSearchModal = null;
 function Hit({ hit, children }) {
   const text = hit.content || hit.hierarchy[hit.type];
-  const scrollTo = `-scroll-to-${text}`;
+  const scrollTo = `-scroll-to-${encodeURIComponent(text)}`;
+  const productId = useProductId();
+  const product = getProductName(hit.url.split('/')[1]);
 
-  return <Link to={hit.url + scrollTo}>{children}</Link>;
+  return (
+    <Link to={hit.url + scrollTo}>
+      {children}
+      {!productId && <span className='search-hit-product-label'>{product}</span>}
+    </Link>
+  );
 }
 function ResultsFooter({ state, onClose }) {
   const { generateSearchPageLink } = useSearchPage();
