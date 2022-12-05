@@ -232,6 +232,9 @@ allocates blocks of addresses and single addresses alike in response to cluster 
 
 Host local IPAM is generally only used on clusters where integration with the Kubernetes [route controller](https://kubernetes.io/docs/concepts/architecture/cloud-controller/#route-controller) is necessary. 
 Note that some Calico features - such as the ability to request a specific address or pool for a pod - require Calico IPAM in order to function, and will not work with host-local IPAM enabled.
+%>
+
+{% endtabs %}
 
 {% tabs %}
   <label:Operator,active:true>
@@ -553,8 +556,6 @@ For example:
 }
 ```
 
-%>
 
-{% endtabs %}
 
 [installation]: {{site.baseurl}}/reference/installation/api
