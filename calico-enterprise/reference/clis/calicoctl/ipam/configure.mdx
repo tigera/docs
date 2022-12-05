@@ -1,5 +1,5 @@
 ---
-title: calicoctl ipam
+title: calicoctl ipam configure
 description: Command to change IPAM configuration.
 canonical_url: '/reference/calicoctl/ipam/configure'
 ---
