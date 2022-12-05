@@ -165,7 +165,6 @@ Congratulations! You have now installed {{site.prodname}} using the Helm 3 chart
 - [Authentication quickstart]({{site.baseurl}}/getting-started/cnx/authentication-quickstart)
 - [Configure your own identity provider]({{site.baseurl}}/getting-started/cnx/configure-identity-provider)
 
-
 **Recommended - Networking**
 
 - The default networking is IP in IP encapsulation using BPG routing. For all networking options, see [Determine best networking option]({{site.baseurl}}/networking/determine-best-networking).

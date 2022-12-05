@@ -16,7 +16,6 @@ configuration reference, see [the installation API reference documentation][inst
   <label:Manifest>
 <%
 
-
 The {{site.prodname}} CNI plugin is configured through the standard CNI
 [configuration mechanism](https://github.com/containernetworking/cni/blob/master/SPEC.md#network-configuration){:target="_blank"}
 

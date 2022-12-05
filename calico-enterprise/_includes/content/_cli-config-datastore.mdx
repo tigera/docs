@@ -16,7 +16,6 @@ If the default kubeconfig does not exist, or you would like to specify alternati
 | `k8sCAFile`               | `K8S_CA_FILE`        | Location of a CA for accessing the Kubernetes API, e.g., `/path/to/ca`.                                   | string
 | `k8sToken`                | `K8S_TOKEN`          | Token to be used for accessing the Kubernetes API.                                                        | string
 
-
 > **Important**: The `kubeconfig` file specifies the user whose privileges are used. We recommend
 > giving only trusted administrators the permission to modify {{site.prodname}}
 > Custom Resource Definitions.
@@ -27,7 +26,6 @@ If the default kubeconfig does not exist, or you would like to specify alternati
 > This is useful if the non-prefixed names clash with existing environment
 > variables defined on your system.
 {: .alert .alert-info}
-
 
 ### Examples
 
@@ -86,7 +84,6 @@ A correct setup will yield a list of the nodes that have registered.  If an
 empty list is returned you are either pointed at the wrong datastore or no
 nodes have registered.  If an error is returned then attempt to correct the
 issue then try again.
-
 
 ### Next steps
 

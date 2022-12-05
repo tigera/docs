@@ -72,7 +72,6 @@ Now that you have the token, log in to the {{site.prodname}} UI and submit the t
 
 `https://<host>:<port>/login/token`
 
-  
 **Log in to Kibana**
 
 Connect to Kibana with the `elastic` username. Use the following command to decode the password:	

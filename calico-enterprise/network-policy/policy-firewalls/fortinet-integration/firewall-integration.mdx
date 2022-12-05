@@ -142,7 +142,6 @@ The basic workflow is:
     | apikey.secretKeyRef.name | Name of the secret to store APIKey.                                         |
     | apikey.secretKeyRef.key  | Key name in the secret, which stores APIKey                                 |
 
-
     For example:
 
     ```

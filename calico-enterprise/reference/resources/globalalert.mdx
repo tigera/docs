@@ -260,7 +260,6 @@ greater than the sum of the period and the configured
 `FlowLogsFlushInterval` or `DNSLogsFlushInterval` as appropriate to avoid 
 gaps in coverage.
 
-
 ### Alert records
 
 With only aggregations and no metrics, the alert will generate one event
@@ -276,7 +275,6 @@ With no aggregations the alert will generate one event per record
 returned by the query. The record will be included in its entirety
 in the record field of the event. This should only be used with very
 narrow and specific queries.
-
 
 ### Templates
 
@@ -321,7 +319,6 @@ spec:
       name: port-scan
     severity: 100
 ```
-
 
 ### Appendix: Valid fields for queries
 

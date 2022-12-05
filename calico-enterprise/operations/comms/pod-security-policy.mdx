@@ -16,7 +16,6 @@ Kubernetes recommends using {% include open-new-window.html text='pod security p
 Because {{site.prodname}} components run in the pod container, security teams can use PSP to control permissions to the 
 {{site.prodname}} component images. 
 
-
 ### Concepts
 
 **PSP admission controller**
@@ -25,11 +24,9 @@ Admission controllers in Kubernetes intercept requests to the Kubernetes API and
 
 {{site.prodname}} provides a PSP for each {{site.prodname}} component used during installation. You can update the permissions before or after installation. A few components are required to run as root. 
 
-
 ### How to
 
 #### Control permissions to {{site.prodname}} components using pod security policies
-
 
 1. Enable the {% include open-new-window.html text='pod security policy admission controller' url='https://kubernetes.io/docs/concepts/policy/pod-security-policy/#enabling-pod-security-policies' %} in your cluster.
 

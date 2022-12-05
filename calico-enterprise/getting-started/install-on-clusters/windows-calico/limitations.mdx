@@ -19,7 +19,6 @@ canonical_url: '/getting-started/windows-calico/limitations'
 | Monitoring                     | - Prometheus monitoring                                      |
 | Dataplane                      | - eBPF is a Linux-based feature                              |
 
-
 ### BGP networking limitations 
 
 If you are using {{site.prodname}} with BGP, note these current limitations with Windows.

@@ -108,8 +108,6 @@ watch kubectl get tigerastatus
 
 {% endif %}
 
-
-
 {% if include.clusterType == "management" %}
 #### Create a management cluster
 To control managed clusters from your central management plane, you must ensure it is reachable for connections. The simplest way to get started (but not for production scenarios), is to configure a `NodePort` service to expose the management cluster. Note that the service must live within the `tigera-manager` namespace.

@@ -214,7 +214,6 @@ Create a new Global Alert for WAF using Manager UI, or using standard YAML.
 
 For example, we would like to trigger a Global Alert for SQL Injection attack specifically Rule ID 942100 as per {% include open-new-window.html text='custom version of Core Rule Set file' url='https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf' %} that will "deny" all traffic instead of "block".
 
-
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: GlobalAlert

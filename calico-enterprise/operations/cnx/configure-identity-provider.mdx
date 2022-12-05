@@ -38,7 +38,6 @@ When configuring your cluster, you may be asked for the following inputs:
 
 #### Configure an external identity provider for user authentication
 
-
 {% tabs %}
   <label:OIDC,active:true>
 <%
@@ -187,7 +186,6 @@ When configuring your cluster, you may be asked for the following inputs:
 <%
 
 1. Apply the Authentication CR to your cluster to let the operator configure your login. 
-
 
    ```
    apiVersion: operator.tigera.io/v1

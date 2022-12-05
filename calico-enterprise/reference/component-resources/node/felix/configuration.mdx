@@ -172,7 +172,6 @@ See [Enable the eBPF dataplane]({{ site.baseurl }}/maintenance/ebpf/enabling-ebp
 | BPFHostConntrackBypass / <br/> FELIX_BPFHostConntrackBypass | Controls whether to bypass Linux conntrack in BPF mode for workloads and services. | true,false | true |
 | BPFPolicyDebugEnabled  / <br/> FELIX_BPFPOLICYDEBUGENABLED    | In eBPF dataplane mode, Felix records detailed information about the BPF policy programs, which can be examined with the calico-bpf command-line tool. | true, false |  true |
 
-
 #### Windows-specific configuration
 
 | Configuration parameter | Environment variable    | Description | Schema | Default |
@@ -183,14 +182,12 @@ See [Enable the eBPF dataplane]({{ site.baseurl }}/maintenance/ebpf/enabling-ebp
 | WindowsDNSCacheFile             | <br/> FELIX_WINDOWSDNSCACHEFILE                     | Specify the name of the file that Felix uses to preserve learned DNS information when restarting. | string | `c:\\TigeraCalico\\felix-dns-cache.txt` |
 | WindowsDNSExtraTTL              | <br/> FELIX_WINDOWSDNSEXTRATTL                      | Specify extra time in seconds to keep IPs and alias names that are learned from DNS, in addition to each name or IP's advertised TTL. | seconds | `120` |
 
-
 #### Kubernetes-specific configuration
 
 | Configuration parameter | Environment variable       | Description  | Schema |
 | ------------------------|----------------------------| ------------ | ------ |
 | `KubeNodePortRanges`    | `FELIX_KUBENODEPORTRANGES` | A list of port ranges that Felix should treat as Kubernetes node ports.  Only when `kube-proxy` is configured to use IPVS mode:  Felix assumes that traffic arriving at the host of one of these ports will ultimately be forwarded instead of being terminated by a host process.  [Default: `30000:32767`] <a id="ipvs-portranges"></a>  | Comma-delimited list of `<min>:<max>` port ranges or single ports. |
 | `KubeMasqueradeBit`     | `FELIX_KUBEMASQUERADEBIT`  | KubeMasqueradeBit should be set to the same value as --iptables-masquerade-bit of kube-proxy when TPROXY is used. This defaults to the corresponding kube-proxy default value so it only needs to change if kube-proxy is using a non-standard setting. Must be within the range of 0-31. OpenShift sets the bit to 0 by default. [Default: 14] | integer  |
-
 
 > **Note**: <a id="ipvs-bits"></a> When using {{site.prodname}} with Kubernetes' `kube-proxy` in IPVS mode, {{site.prodname}} uses additional iptables mark bits to store an ID for each local {{site.prodname}} endpoint.
 > For example, the default `IptablesMarkMask` value, `0xffff0000` gives {{site.prodname}} 16 bits, up to 6 of which are used for internal purposes, leaving 10 bits for endpoint IDs.
@@ -363,7 +360,6 @@ The following parameters fine tune packet capture rotation:
 | wireguardRoutingRulePriority       | WireGuard routing rule priority value set up by Felix. If you change the default value, set it to a value most appropriate to routing rules for your nodes. | 1-32765 | int | 99 |
 | wireguardHostEncryptionEnabled     | **Experimental**: Adds host-namespace workload IP's to WireGuard's list of peers. Should **not** be enabled when WireGuard is enabled on a cluster's control-plane node, as networking deadlock can occur. | true, false | boolean | false |
 | wireguardKeepAlive                 | WireguardKeepAlive controls Wireguard PersistentKeepalive option. Set 0 to disable. [Default: 0] | int | int | 25 |
-
 
 For more information on encrypting in-cluster traffic with WireGuard, refer to
 [Encrypt cluster pod traffic]({{site.baseurl}}/compliance/encrypt-cluster-pod-traffic)

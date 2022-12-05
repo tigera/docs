@@ -89,7 +89,6 @@ varies by Linux distribution. The following steps work best on Ubuntu systems.
    unmanaged-devices=interface-name:cali*;interface-name:tunl*;interface-name:vxlan.calico;interface-name:vxlan-v6.calico;interface-name:wireguard.cali;interface-name:wg-v6.cali
    ```
 
-
 1. Restart NetworkManager.
 
    ```bash

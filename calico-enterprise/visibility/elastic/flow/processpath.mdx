@@ -4,7 +4,6 @@ description: Get visibility into process-level network activity in flow logs.
 canonical_url: /visibility/elastic/flow/processpath
 ---
 
-
 ### Big picture
 
 Configure {{site.prodname}} to collect process executable path and arguments and add them to flow logs.

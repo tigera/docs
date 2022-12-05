@@ -5,6 +5,5 @@ canonical_url: /maintenance/clis/calicoq/configure/datastore
 no_canonical: true
 ---
 
-
 {% include content/cli-config-datastore.md %}
 

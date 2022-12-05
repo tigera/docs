@@ -48,7 +48,6 @@ As a binary on a single host, you can also run it as a kubectl plugin.
 
    Use the following command to download the `calicoctl` binary.    
 
-
       {% if page.version == "master" %}
    ```bash
 curl -o calicoctl -O -L {{site.url}}/download/binaries/{{version}}/calicoctl
@@ -78,7 +77,6 @@ chmod +x calicoctl
    {: .alert .alert-info}
 
    Use the following command to download the `calicoctl` binary.    
-
 
       {% if page.version == "master" %}
    ```bash
@@ -113,7 +111,6 @@ chmod +x calicoctl
    > to a location that's in your `PATH`. For example, `C:\Windows`.
    {: .alert .alert-success}
 
-
       {% if page.version == "master" %}
    ```bash
 Invoke-WebRequest -Uri "{{site.url}}/download/binaries/{{ version }}/calicoctl-windows-amd64.exe" -OutFile "calicocttl.exe"
@@ -139,7 +136,6 @@ Invoke-WebRequest -Uri "{{site.downloadsurl}}/ee/binaries/{{ version }}/calicoct
    {: .alert .alert-info}
 
    Use the following command to download the `calicoctl` binary.  
-
 
       {% if page.version == "master" %}
    ```bash
@@ -172,7 +168,6 @@ chmod +x kubectl-calico
    {: .alert .alert-info}
 
    Use the following command to download the `calicoctl` binary.  
-
 
       {% if page.version == "master" %}
    ```bash

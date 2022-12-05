@@ -30,7 +30,6 @@ Augments the applicable steps in the {% include open-new-window.html text='OpenS
 1. [Install {{site.prodnameWindows}}](#install-calico-enterprise-for-windows)
 1. [Configure kubelet](#configure-kubelet)
 
-
 {% include content/install-openshift.md clusterType="standalone" clusterOS="hybrid" %}
 
 ### Next steps

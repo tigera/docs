@@ -45,7 +45,6 @@ Install {{site.prodname}} on an AKS managed Kubernetes cluster.
 
 - {% include open-new-window.html text='Install kubectl' url='https://kubernetes.io/docs/tasks/tools/install-kubectl/' %}
 
-
 1. [Option A: Install with Azure CNI networking](#install-with-azure-cni-networking)
 1. [Option B: Install with Calico networking](#install-with-{{site.prodnamedash}}-networking)
 1. [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)

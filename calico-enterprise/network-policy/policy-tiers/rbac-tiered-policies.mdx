@@ -120,7 +120,6 @@ license information through the services/proxy https:tigera-api:8080.
 
 This tutorial shows how to use RBAC to control access to resources and CRUD actions for a non-Admin user, John, with the username **john**.
 
-
 The RBAC examples shown will include:
 
 - [User cannot read policies in any tier](#user-cannot-read-policies-in-any-tier)

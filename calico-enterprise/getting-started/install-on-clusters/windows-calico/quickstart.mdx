@@ -187,7 +187,6 @@ The following steps install a Kubernetes cluster on a single Windows node with a
    > **Note**: You do not need to pass a parameter if the default value of the parameter is correct for your cluster.
    {: .alert .alert-info}
 
-
 1. Verify that the {{site.prodname}} services are running.
 
    ```powershell
@@ -252,7 +251,6 @@ The following steps install a Kubernetes cluster on a single Windows node with a
 
    > **Note**: You do not need to pass a parameter if the default value of the parameter is correct for your cluster.
    {: .alert .alert-info}
-
 
 1. Verify that the {{site.prodname}} services are running.
 
@@ -368,7 +366,6 @@ Congratulations! You now have a Kubernetes cluster with {{site.prodnameWindows}}
 | ServiceCidr        | Service IP range of the Kubernetes cluster. Not required for most managed Kubernetes clusters. Note: EKS has non-default value. | 10.96.0.0/12 |
 | DNSServerIPs       | Comma-delimited list of DNS service IPs used by Windows pod. Not required for most managed Kubernetes clusters. Note: EKS has a non-default value. | 10.96.0.10 |
 | CalicoBackend      | Calico backend network type (`vxlan` or `bgp`). If the value is an empty string (default), backend network type is auto detected. | "" |
-
 
 ### Next steps
 

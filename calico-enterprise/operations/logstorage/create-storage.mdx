@@ -116,7 +116,6 @@ allowVolumeExpansion: true
 
 In the following example for a GKE cloud provider integration, the **StorageClass** tells {{site.prodname}} to use the GCE Persistent Disks for log storage. 
 
-
   > **Note**: There are currently two types available `pd-standard` and `pd-ssd`. For production deployments, we recommend using the `pd-ssd` storage type. 
 
 ```

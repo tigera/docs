@@ -113,7 +113,6 @@ For each cluster in the federation, follow these steps.
    kubectl describe secret tigera-federation-remote-cluster -n kube-system
    ```
 
-
 1. Use the following command to retrieve the name of the secret containing the token associated
    with the `tigera-federation-remote-cluster` service account.
 
@@ -242,8 +241,7 @@ For each cluster in the federation, follow these steps.
    ```
 
    You should see your cluster listed.
-   
-   
+
 #### Create secrets
 
 The simplest method to create a secret for a remote cluster is to use the `kubectl` command because it correctly encodes the data and formats the file.

@@ -85,7 +85,6 @@ AKS cluster nodes run Ubuntu with a kernel that has WireGuard installed already,
 <%
 To install WireGuard for OpenShift v4.8:
 
-
    1. Install requirements:
       - {% include open-new-window.html text='CoreOS Butane' url='https://coreos.github.io/butane/getting-started/' %}
       - {% include open-new-window.html text='Openshift CLI' url='https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html' %}
@@ -108,7 +107,6 @@ To install WireGuard for OpenShift v4.8:
        a. You must then set the URLs for the `KERNEL_CORE_RPM`, `KERNEL_DEVEL_RPM` and `KERNEL_MODULES_RPM` packages in the conf file `$FAKEROOT/etc/kvc/wireguard-kmod.conf`. Obtain copies for `kernel-core`, `kernel-devel`, and `kernel-modules` rpms from {% include open-new-window.html text='RedHat Access' url='https://access.redhat.com/downloads/content/package-browser' %} and host it in an http file server that is reachable by your OCP workers.
 
        b. For help configuring `kvc-wireguard-kmod/wireguard-kmod.conf` and WireGuard version to kernel version compatibility, see the {% include open-new-window.html text='kvc-wireguard-kmod README file' url='https://github.com/tigera/kvc-wireguard-kmod#quick-config-variables-guide' %}.
-
 
    1. Get RHEL Entitlement data from your own RHEL8 system from a host in your cluster.
       ```bash

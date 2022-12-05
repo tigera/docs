@@ -8,7 +8,6 @@ canonical_url: /maintenance/monitor/support
 
 {{site.prodname}} uses the open-source {% include open-new-window.html text='Prometheus monitoring and alerting toolkit' url='https://prometheus.io/docs/introduction/overview/' %}. With these tools, you can view time-series metrics from {{site.prodname}} components in the Prometheus and Grafana interfaces, or scrape the metrics for a BYO Prometheus deployment.
 
-
 ### Install options
 
 - Use Prometheus operator managed by Tigera operator

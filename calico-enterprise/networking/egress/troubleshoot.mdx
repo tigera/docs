@@ -125,7 +125,6 @@ If you don’t see this, it means one of the following:
 - egressIPSupport is enabled, but you have not configured egress annotations on the client pod or on its namespace
 - egressIPSupport is EnabledPerNamespace and you have configured egress annotations on the client pod, but not on its namespace
 
-
 **Run `ip route show table`**
 
 On the client node, run the following command using the routing table number from the `ip rule` command. For example: `250`.

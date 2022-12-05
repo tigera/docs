@@ -162,7 +162,6 @@ When all components show a status of `Available`, proceed to the next section.
    > **Note**: The token created above will expire after 24 hours.
    {: .alert .alert-info}
 
-
 1. Set up a channel from your local computer to the {{site.prodname}} UI.
 
    ```bash

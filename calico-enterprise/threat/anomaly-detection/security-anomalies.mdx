@@ -135,7 +135,6 @@ From the left navbar, click Service Graph. Monitor security performance in the b
 
 If you find anomalous behavior that is suspicious but not urgent, you may want to disable the detector to research the root cause. For any critical anomaly, you may need to quarantine pods immediately by applying a network policy. A best practice is have a network policy ready for editing (as part of your tier and policy lifecycle workflow) to ensure that you can quickly enforce it. 
 
-
 ### Above and beyond
 
 - [Anomaly detection reference]({{site.baseurl}}/reference/anomaly-detection/all-detectors)

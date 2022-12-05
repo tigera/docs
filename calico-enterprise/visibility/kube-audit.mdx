@@ -213,7 +213,6 @@ data:
   <label: AWS using kOps>
   <%
 
-
 #### Enable audit logs for Kubernetes resources
 
 At a minimum, enable audit logs for these resources that are involved in network policy:
@@ -252,7 +251,6 @@ rules:
 Follow these instructions to enable audit logs for {% include open-new-window.html text='AWS using kOps' url='https://kops.sigs.k8s.io/cluster_spec/#audit-logging' %}.
 
 Note that `auditLogPath` should be `/var/log/calico/audit/kube-audit.log`.
-
 
 %>
  {% endtabs %}

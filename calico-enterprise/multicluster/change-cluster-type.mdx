@@ -79,7 +79,6 @@ We do not support having both `ManagementCluster` and `ManagementClusterConnecti
    EOF
    ```
 
-   
 #### Change a standalone cluster to a managed cluster
 
 The steps in this section assume that a management cluster is up and running.

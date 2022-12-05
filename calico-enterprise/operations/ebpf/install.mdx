@@ -50,7 +50,6 @@ and in particular, pushing the networking capabilities of the latest Linux kerne
    eBPF supports AKS with Calico CNI and {{site.prodname}} network policy. However, with [AKS with Azure CNI and {{site.prodname}} network policy](../../getting-started/kubernetes/aks#install-with-azure-cni-networking), kube-proxy cannot be disabled so the performance benefits of eBPF are lost. However, there are other reasons to use eBPF other than performance gains, as described in [eBPF use cases]({{site.baseurl}}/maintenance/ebpf/use-cases-ebpf). 
    {: .alert .alert-info}
 
-
 **Unsupported features**
   - Clusters with some eBPF nodes and some standard dataplane and/or Windows nodes
   - IPv6
@@ -327,7 +326,6 @@ watch kubectl get tigerastatus
 In eBPF mode, to avoid conflicts with `kube-proxy` it's necessary to either disable `kube-proxy` or to configure 
 {{ site.prodname }} not to clean up `kube-proxy`'s iptables rules.  If you didn't disable `kube-proxy` when starting 
 your cluster then follow the steps below to avoid conflicts:
-
 
 {% tabs tab-group:grp1 %}
 <label:Generic or kubeadm,active:true>

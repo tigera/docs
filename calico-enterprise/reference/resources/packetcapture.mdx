@@ -51,7 +51,6 @@ spec:
 | name      | The name of the packet capture. Required.                          | Alphanumeric string with optional `.`, `_`, or `-`. | string |           |
 | namespace | Namespace provides an additional qualification to a resource name. |                                                     | string | "default" |
 
-
 #### Spec
 
 | Field      | Description                                                                                         | Accepted Values           | Schema                 | Default |

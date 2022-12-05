@@ -59,7 +59,6 @@ To use kOps to create a cluster with {{site.prodname}} networking and network po
    ```
 
       > **Note:** The name of the cluster must be chosen as a valid DNS name belonging to the root user.  It can either be a subdomain of an existing domain name or a subdomain which can be configured on AWS Route 53 service. More details on DNS domain requirements on the `kops` command can be found in Kubernetes' {% include open-new-window.html text='documentation for kops' url='https://kubernetes.io/docs/setup/production-environment/tools/kops/#2-5-create-a-route53-domain-for-your-cluster' %}.
-      
 
    Or, you you can add `cni` to your cluster config.  Run `kops update cluster --name=<name-of-your-cluster>` and set the following networking configuration.
 
@@ -77,7 +76,6 @@ To use kOps to create a cluster with {{site.prodname}} networking and network po
          clusterCIDR: 192.168.0.0/16
    ```
       > **Note:** For more advanced pod networking CIDR configuration, the requirement is to have `ipPools` CIDR set by the {{site.prodname}} installation to match cluster CIDR set in kube-proxy.  Calico's `ipPools` setting is obtainable in the Installation resource `kubectl get installation -o yaml` and can be configured in the editting the operator manifest found in the [install instructions for {{site.prodname}}]({{site.baseurl}}/getting-started/kubernetes/generic-install).
-
 
 1. The default size of the provisioned instance groups for the cluster might not be sufficient for the full installation of kubernetes and {{site.prodname}}. To increase the size of the instance groups run `kops edit ig <name-of-instance-group-in-your-cluster> --name <name-of-your-cluster>` and edit the following fields accordingly.
    ```

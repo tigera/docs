@@ -85,7 +85,6 @@ Refer to [Configuring Prometheus]({{site.baseurl}}/maintenance/monitor/prometheu
  
 The metric `bgp_peers` has the relevant labels `instance`, `status` and `ip_verison`. Using this metric, you can identify how many peers have a specific BGP connection status with a given node instance and IP version. This metric will be available as a combination of `{instance, status, ip_verison}`.
 
-
 Example queries:
 - Total number of peers currently with a BGP connection to the node instance “calico-node-1”, with status “Established”, for IP version “IPv4”.
 ```

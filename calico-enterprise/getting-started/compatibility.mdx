@@ -48,7 +48,6 @@ If your platform is listed below, the features in this release will work for you
 | 3.6                       | 1.19       | Azure CNI with {{site.prodname}} network policy           |
 | 3.5                       | 1.19       | Azure CNI with {{site.prodname}} network policy           |
 
-
 ### EKS
 
 | {{site.prodname}} version | EKS and Kubernetes versions | {{site.prodname}} support                                    |
@@ -64,7 +63,6 @@ If your platform is listed below, the features in this release will work for you
 | 3.7                       | 1.19             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
 | 3.6                       | 1.19             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
 | 3.5                       | 1.18             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-
 
 ### GKE
 
@@ -113,7 +111,6 @@ If your platform is listed below, the features in this release will work for you
 | 3.6                       | 1.18 - 1.20 | {{site.prodname}} CNI with network policy |
 | 3.5                       | 1.18 - 1.20 | {{site.prodname}} CNI with network policy |
 
-
 ### MKE
 
 | {{site.prodname}} version | MKE version                          | {{site.prodname}} support                 | Kubernetes versions |
@@ -129,8 +126,6 @@ If your platform is listed below, the features in this release will work for you
 | 3.7                       | Docker Enterprise 3.1 with UCP 3.3.5 | {{site.prodname}} CNI with network policy | 1.19                |
 | 3.6                       | Docker Enterprise 3.1 with UCP 3.3.5 | {{site.prodname}} CNI with network policy | 1.18                |
 | 3.5                       | Docker Enterprise 3.1 with UCP 3.3.5 | {{site.prodname}} CNI with network policy | 1.18                |
-
-
 
 ### OpenShift
 
@@ -148,9 +143,6 @@ If your platform is listed below, the features in this release will work for you
 | 3.6                       | 4.6, 4.7       | {{site.prodname}} CNI with network policy |
 | 3.5                       | 4.5 - 4.7      | {{site.prodname}} CNI with network policy |
 
-
-
-
 ### RKE
 
 | {{site.prodname}} version | RKE version | {{site.prodname}} support               | Kubernetes versions |
@@ -167,14 +159,12 @@ If your platform is listed below, the features in this release will work for you
 | 3.6                       | 1.2.5       | {{site.prodname}} CNI with network policy | 1.18                       |
 | 3.5                       | 1.2.2       | {{site.prodname}} CNI with network policy | 1.18                       |
 
-
 ### RKE2
 
 | {{site.prodname}} version | {{site.prodname}} support                | Kubernetes versions        |
 | ------------------------- | ---------------------------------------- | -------------------------- |
 | 3.15                      | {{site.prodname}} CNI with network policy | 1.24                       |
 | 3.14                      | {{site.prodname}} CNI with network policy | 1.22                       |
-
 
 ### TKG
 

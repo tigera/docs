@@ -168,7 +168,6 @@ To manually run a report:
 >**Note**: Manually-generated reports do not appear in GlobalReport status.
 {: .alert .alert-info}
 
-
 #### Troubleshooting
 
 **Problem**: Compliance reports can fail to generate if the `compliance-benchmarker` component cannot find the required `kubelet` or `kubectl` binaries to determine the Kubernetes version running on the cluster. 

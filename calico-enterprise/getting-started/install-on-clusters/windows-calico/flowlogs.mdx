@@ -37,7 +37,6 @@ key features like Flow Visualizer, metrics in the dashboard and Policy Board, po
 | windowsFlowLogsFileDirectory | Set the directory where flow logs files are stored on Windows nodes. This parameter takes effect only when `flowLogsFileEnabled` is set to `true`. | string | string | `c:\\TigeraCalico\\flowlogs` |
 | windowsFlowLogsPositionFilePath | Specify the position of the external pipeline that reads flow logs on Windows nodes. This parameter takes effect only when `FlowLogsDynamicAggregationEnabled` is set to `true`. | string | string | `c:\\TigeraCalico\\flowlogs\\flows.log.pos` |
 | windowsStatsDumpFilePath | Specify the position of the file used for dumping flow log statistics on Windows nodes. Note this is an internal setting that you should not need to modify.| string | string | `c:\\TigeraCalico\\stats\\dump` |
- 
 
 ### Above and beyond
 

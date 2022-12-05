@@ -86,4 +86,3 @@ Once you have such a policy in place, you may want to disable the
 > to allow TCP traffic to destination port 179.
 {: .alert .alert-info}
 
-

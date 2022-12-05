@@ -87,7 +87,6 @@ You can now monitor progress with the following command:
 watch kubectl get tigerastatus
 ```
 
-
 ### Next steps
 
 - [Configure access to {{site.prodname}} Manager UI]({{site.baseurl}}/getting-started/cnx/access-the-manager)

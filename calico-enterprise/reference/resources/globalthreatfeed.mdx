@@ -93,7 +93,6 @@ PUT .tigera.domainnameset.cluster01/_doc/example-global-threat-feed
 Refer to the [Elasticsearch document APIs][elastic-document-apis] for more information on how to
 create and update documents in Elasticsearch.
 
-
 ### GlobalThreatFeed Definition
 
 #### Metadata
@@ -113,7 +112,6 @@ create and update documents in Elasticsearch.
 | feedType         | Distinguishes Builtin threat feeds from Custom feeds | Builtin, Custom        | string                                        | Custom  |
 | globalNetworkSet | Include to sync with a global network set            |                        | [GlobalNetworkSetSync](#globalnetworksetsync) |         |
 | pull             | Configure periodic pull of threat feed updates       |                        | [Pull](#pull)                                 |         |
-
 
 #### Status
 
@@ -151,7 +149,6 @@ If you do not include a `pull` stanza, you must configure your system to [push](
 |--------|---------------------------------------|-----------------|-----------------------------------|---------|
 | period | How often to pull an update           | >= 5m           | [Duration string][parse-duration] | 24h     |
 | http   | Pull the update from an HTTP endpoint |                 | [HTTPPull](#httppull)             |         |
-
 
 #### HTTPPull
 
@@ -235,14 +232,12 @@ struct fields.
 > **NOTE**: You must include either `value` or `valueFrom`, but not both.
 {: .alert .alert-info}
 
-
 #### HTTPHeaderSource
 
 | Field           | Description                     | Schema            |
 |-----------------|---------------------------------|-------------------|
 | configMapKeyRef | Get the value from a config map | [KeyRef](#keyref) |
 | secretKeyRef    | Get the value from a secret     | [KeyRef](#keyref) |
-
 
 #### KeyRef
 
@@ -255,7 +250,6 @@ Kubernetes object should have a name with following prefix format: `globalthreat
 | name     | The name of the config map or secret                      |                 | string |         |
 | key      | The key within the config map or secret                   |                 | string |         |
 | optional | Whether the pull can proceed without the referenced value | If the referenced value does not exist, `true` means omit the header. `false` means abort the entire pull until it exists | bool | `false`
-
 
 [elastic-document-apis]: https://www.elastic.co/guide/en/elasticsearch/reference/6.4/docs-update.html
 [parse-duration]: https://golang.org/pkg/time/#ParseDuration

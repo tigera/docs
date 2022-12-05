@@ -16,7 +16,6 @@ for a full list of calicoctl commands.
 > for details about each resource type.
 {: .alert .alert-info}
 
-
 ## Displaying the help text for 'calicoctl delete' command
 
 Run `calicoctl delete --help` to display the following help menu for the

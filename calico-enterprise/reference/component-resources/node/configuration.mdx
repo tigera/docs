@@ -309,5 +309,4 @@ Setting CALICO_ROUTER_ID to value `hash` will use a hash of the configured noden
 
 {% endtabs %}
 
-
 [installation]: {{site.baseurl}}/reference/installation/api

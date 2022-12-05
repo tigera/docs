@@ -155,7 +155,6 @@ roleRef:
    ```
    {: .no-select-button}
 
-
 ### Setting the log level
 
 ```

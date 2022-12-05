@@ -250,8 +250,7 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 %>
 
 %>
-  
- 
+
   <label: Typha>
   <%
 
@@ -309,8 +308,6 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 %>
   {% endtabs %}
 
-
-
 ### Verify BYO Prometheus
 
 **Verify metrics in the Prometheus console**
@@ -326,7 +323,6 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 1. In the Expression text box, enter your metric name and click the **Execute** button.
 
     The Console table is populated with all of your nodes with the number of endpoints.
-
 
 **Verify endpoint authentication**
 
@@ -365,7 +361,6 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
    ```
 
 You should be able to see the metrics.
-
 
 ### Create policy to secure traffic between pods
 

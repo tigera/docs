@@ -24,7 +24,6 @@ This how-to guide uses the following {{site.prodname}} features:
 
 The Prometheus monitoring tool scrapes metrics from instrumented jobs and displays time series data in a visualizer (such as Grafana). For {{site.prodname}}, the “jobs” that Prometheus can harvest metrics from the License Agent component. 
 
-
 #### About License Agent
 
 The **License Agent** is a containerized application that monitors the following {{site.prodname}} licensing information from the Kubernetes cluster, and exports the metrics through the Prometheus server:

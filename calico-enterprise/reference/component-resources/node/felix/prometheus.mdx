@@ -143,11 +143,9 @@ include:
 | `process_virtual_memory_bytes` | Virtual memory size in bytes. |
 | `process_virtual_memory_max_bytes` | Maximum amount of virtual memory available in bytes. |
 
-
 #### Wireguard Metrics
 
 Felix also exports wireguard device stats if found/detected. Can be disabled via Felix configuration.
-
 
 | Name          | Description     |
 | ------------- | --------------- |
