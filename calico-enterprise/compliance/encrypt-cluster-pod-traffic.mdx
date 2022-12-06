@@ -43,7 +43,7 @@ This how-to guide uses the following {{site.prodname}} features:
 **Supported encryption**
 
 - Pod-to-pod traffic
-- Encryption for direct node-to-node communication is only supported on managed clusters deployed on EKS (AWS CNI) and AKS (Azure CNI).
+- Encryption for direct node-to-node communication is only supported on managed clusters deployed on EKS (AWS CNI) and AKS (Azure CNI)
 
 **Required**
 
@@ -193,11 +193,9 @@ To view WireGuard statistics in Manager UI, you must enable them. From the left 
 
 ![Wireguard Dashboard Toggle]({{site.baseurl}}/images/wireguard/stats-toggle.png)
 
-##### Frequently Asked Questions (FAQs)
+##### WireGuard Dashboard toggle
 
-Why do WireGuard encryption charts in the Manager UI Dashboard show more ingress traffic than egress if all the traffic goes within the cluster?
-
-The chart might show 1% difference in the traffic. The difference comes from the following sources:
+When viewing WireGuard statistics, you might wonder why the charts in the Manager UI Dashboard show more ingress traffic than egress if all the traffic goes within the cluster. The chart might show a 1% difference between traffic for the following reasons:
 - Sampling time. The statistics are generated a few microseconds apart.
 - Packet loss. If a node resends a lost packet, then the node counts the packet twice where the receiver counts it only once.
 - Averaging/smoothing. The statistics are smoothed out over a few seconds.
