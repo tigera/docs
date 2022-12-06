@@ -945,7 +945,7 @@ To configure a specific Kubernetes Pod to use egress gateways, specify the same 
 creating the pod.  For example:
 
 ```bash
-kubectl apply -f - <<'EOF'
+kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
@@ -1019,8 +1019,23 @@ docker run --net=host --privileged subfuzion/netcat -v -l -k -p 8089
 
 Then provision an egress IP Pool, and egress gateways, as above.
 
-Then deploy a pod, with egress annotations as above, and with any image that includes netcat, for
-example `laurenceman/alpine`.
+Then deploy a pod, with egress annotations as above, and with any image that includes netcat, for example:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-netcat-pod
+  namespace: my-namespace
+spec:
+  containers:
+  - name: alpine
+    image: alpine
+    command: ["/bin/sleep"]
+    args: ["infinity"]
+EOF
+```
 
 Now you can use `kubectl exec` to initiate an outbound connection from that pod:
 
