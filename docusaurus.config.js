@@ -202,6 +202,7 @@ const config = {
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         exclude: excludeContentDocsPatterns,
+        editUrl: generateEditUrl,
       },
     ],
     [
@@ -215,6 +216,7 @@ const config = {
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         exclude: excludeContentDocsPatterns,
+        editUrl: generateEditUrl,
       },
     ],
     [
@@ -228,9 +230,20 @@ const config = {
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         exclude: excludeContentDocsPatterns,
+        editUrl: generateEditUrl,
       },
     ],
   ],
 };
 
 module.exports = config;
+
+function generateEditUrl(params) {
+  const { versionDocsDirPath, docPath } = params;
+
+  // TODO: Change `alt-main` to `main` after the release
+  const baseUrl = 'https://github.com/tigera/docs/edit/alt-main';
+  const url = `${baseUrl}/${versionDocsDirPath}/${docPath}`;
+
+  return url;
+}
