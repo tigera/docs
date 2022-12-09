@@ -21,7 +21,7 @@ const config = {
   // TODO[dac]: noIndex should be removed, along with robots.txt and the
   // X-Robots-Tag:noindex in the /static/_headers file once we cutover
   noIndex: true,
-  title: 'Calico & Tigera Docs',
+  title: 'Calico Documentation',
   tagline: 'Active security for cloud-native applications',
   url: 'https://unified-docs.tigera.io',
   baseUrl: '/',
@@ -71,9 +71,9 @@ const config = {
         searchPagePath: '/search',
       },
       navbar: {
-        title: 'Calico & Tigera Docs',
+        title: 'Calico Documentation',
         logo: {
-          alt: 'Calico & Tigera Docs',
+          alt: 'Calico documentation',
           src: 'img/logo.png',
         },
         items: [
