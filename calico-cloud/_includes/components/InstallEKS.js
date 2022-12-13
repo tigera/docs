@@ -9,7 +9,7 @@ import Highlight from '@site/src/components/utils/Highlight';
 import GeekDetails from '@site/src/components/partials/GeekDetails';
 
 import ConfigureManagedCluster from './ConfigureManagedCluster';
-import { prodname, prodnamedash, baseUrl, filesUrl } from '../../variables';
+import { prodname, prodnamedash, baseUrl, filesUrl_CE } from '../../variables';
 
 export default function InstallEKS(props) {
   return (
@@ -64,7 +64,7 @@ export default function InstallEKS(props) {
         </li>
         <li>
           <p>Install the Tigera operator and custom resource definitions.</p>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
+          <CodeBlock>kubectl create -f {filesUrl_CE}/manifests/tigera-operator.yaml</CodeBlock>
         </li>
         <li>
           <p>
@@ -75,7 +75,7 @@ export default function InstallEKS(props) {
             If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work
             with {prodname}, your Prometheus operator must be v0.40.0 or higher.
           </Admonition>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-prometheus-operator.yaml</CodeBlock>
+          <CodeBlock>kubectl create -f {filesUrl_CE}/manifests/tigera-prometheus-operator.yaml</CodeBlock>
         </li>
         <li>
           <p>Install your pull secret.</p>
@@ -115,7 +115,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
                 manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
               </p>
               <CodeBlock language='bash-plain-text'>
-                curl -O -L {filesUrl}/manifests/eks/custom-resources.yaml
+                curl -O -L {filesUrl_CE}/manifests/eks/custom-resources.yaml
               </CodeBlock>
               <p>
                 Remove the <Highlight>Manager</Highlight> custom resource from the manifest file.
@@ -161,7 +161,7 @@ spec:
               Install the Tigera custom resources. For more information on configuration options available in this
               manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
             </p>
-            <CodeBlock>kubectl create -f {filesUrl}/manifests/eks/custom-resources.yaml</CodeBlock>
+            <CodeBlock>kubectl create -f {filesUrl_CE}/manifests/eks/custom-resources.yaml</CodeBlock>
             <p>You can now monitor progress with the following command:</p>
             <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
             <p>
@@ -244,7 +244,7 @@ spec:
         </li>
         <li>
           <p>Install the Tigera operator and custom resource definitions.</p>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
+          <CodeBlock>kubectl create -f {filesUrl_CE}/manifests/tigera-operator.yaml</CodeBlock>
         </li>
         <li>
           <p>
@@ -255,7 +255,7 @@ spec:
             If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work
             with {prodname}, your Prometheus operator must be v0.40.0 or higher.
           </Admonition>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-prometheus-operator.yaml</CodeBlock>
+          <CodeBlock>kubectl create -f {filesUrl_CE}/manifests/tigera-prometheus-operator.yaml</CodeBlock>
         </li>
         <li>
           <p>Install your pull secret.</p>
@@ -296,7 +296,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
             <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
           </p>
           {props.clusterType !== 'managed' && (
-            <CodeBlock>kubectl create -f {filesUrl}/manifests/eks/custom-resources-calico-cni.yaml</CodeBlock>
+            <CodeBlock>kubectl create -f {filesUrl_CE}/manifests/eks/custom-resources-calico-cni.yaml</CodeBlock>
           )}
         </li>
         {props.clusterType === 'managed' && (
@@ -307,7 +307,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
                 manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
               </p>
               <CodeBlock language='bash-plain-text'>
-                curl -O -L {filesUrl}/manifests/eks/custom-resources-calico-cni.yaml
+                curl -O -L {filesUrl_CE}/manifests/eks/custom-resources-calico-cni.yaml
               </CodeBlock>
               <p>
                 Remove the <Highlight>Manager</Highlight> custom resource from the manifest file.

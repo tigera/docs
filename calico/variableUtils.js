@@ -1,5 +1,5 @@
 function getVersion(releases) {
-  return releases[0].title === 'master' ? 'master' : releases[0].title.split('.').slice(0, 1).join('.');
+  return releases[0].title === 'master' ? 'master' : releases[0].title.split('.').slice(0, 2).join('.');
 }
 
 function getPPARepoName(releases) {

@@ -2,7 +2,7 @@ import React from 'react';
 
 import CodeBlock from '@theme/CodeBlock';
 
-import { prodname, filesUrl } from '../../variables';
+import { prodname, filesUrl_CE } from '../../variables';
 
 export default function InstallOpenShiftManifests() {
   return (
@@ -10,7 +10,7 @@ export default function InstallOpenShiftManifests() {
       <p>Download the {prodname} manifests for OpenShift and add them to the generated manifests directory:</p>
       <CodeBlock language='bash-plain-text'>
         {`mkdir calico
-wget -qO- ${filesUrl}/manifests/ocp.tgz | tar xvz --strip-components=1 -C calico
+wget -qO- ${filesUrl_CE}/manifests/ocp.tgz | tar xvz --strip-components=1 -C calico
 cp calico/* manifests/`}
       </CodeBlock>
     </>

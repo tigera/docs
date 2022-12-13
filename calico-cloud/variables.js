@@ -7,6 +7,7 @@ const variables = {
   version: getVersion(releases),
   baseUrl: '/calico-cloud', // or e.g. /calico-cloud/next
   filesUrl: 'https://docs.calicocloud.io',
+  filesUrl_CE: 'https://docs.tigera.io/master',
   prodnameWindows: 'Calico Enterprise for Windows',
   rootDirWindows: 'C:\\TigeraCalico',
   nodecontainer: 'cnx-node',
