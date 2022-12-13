@@ -9,10 +9,15 @@ export default function DocsVersionDropdownNavbarItemWrapper(props) {
     return null;
   }
 
+  const dropdownItemsAfter = props.dropdownItemsAfter.filter(
+    (item) => !item.className || !item.className.startsWith('product') || item.className.endsWith(productId)
+  );
+
   return (
     <>
       <DocsVersionDropdownNavbarItem
         {...props}
+        dropdownItemsAfter={dropdownItemsAfter}
         docsPluginId={productId}
       />
     </>
