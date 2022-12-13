@@ -35,7 +35,7 @@ Our threat detection engine also monitors activity within the containers running
 
 #### Required
 
-{{site.prodname}} container threat detection uses eBPF to monitor container activity, and it runs on Linux-based
+{{site.prodname}} Container threat detection uses eBPF to monitor container activity, and it runs on Linux-based
 nodes in a Kubernetes cluster.
 
 Nodes require amd64 (x86_64) architecture CPUs and one of the following distributions:
@@ -52,38 +52,36 @@ Nodes require amd64 (x86_64) architecture CPUs and one of the following distribu
 > so we can bundle the BTF data to precisely match the version of the kernel running on your cluster nodes.
 {: .alert .alert-info}
 
+#### Supported platforms
+
+-  Kubeadm, on GCP or AWS
+-  GKE
+-  EKS
+-  AKS
+-  Rancher RKE
+-  Rancher RKE2
+
 ### How to
 
-- [Enable container threat detection in the managed cluster](#enable-container-threat-detection)
+- [Enable Container threat detection in the managed cluster](#enable-container-threat-detection)
 - [Monitor Alerts page for malicious programs](#monitor-alerts-page-for-malicious-programs)
 
-#### Enable container threat detection
+#### Enable Container Threat Detection
 
-Container threat detection is disabled by default. The DaemonSet has a nodeSelector constraint
-`enable-tigera-runtime-security: t`, which means that it will not initially run on any nodes,
-because there are no nodes with an `enable-tigera-runtime-security: t` label.
+Container threat detection is disabled by default.
 
-**Enable on all nodes**
+To enable Container threat detection on your managed cluster, go to the **Threat Defence** section in the {{site.prodname}} UI, and select **Enable Container Threat Detection**.
+This will result in Container threat detection running on all nodes in the managed cluster to detect malware and suspicious processes. 
 
-```bash
-kubectl get ds runtime-reporter -n calico-system -o yaml | sed '/enable-tigera-runtime-security/d' | kubectl apply -f -
-```
-
-> **Note:**
->
-> -  “runtime-reporter” is the name of the container threat defense DaemonSet in the managed cluster.
->
-> -  You will need to rerun that command whenever you rerun the install script to upgrade the managed
->    cluster.
-{: .alert .alert-info}
-
-**Enable on specific nodes**
-
-To enable container threat detection on a particular node, add the `enable-tigera-runtime-security: t` label
-to that node.  For example:
+Alternatively, Container threat detection can be enabled using kubectl:
 
 ```bash
-kubectl label nodes <node-name> enable-tigera-runtime-security=t
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: RuntimeSecurity
+metadata:
+  name: default
+EOF
 ```
 
 #### Monitor Alerts page for malicious programs
