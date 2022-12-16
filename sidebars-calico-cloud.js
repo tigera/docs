@@ -312,6 +312,8 @@ module.exports = {
         },
         'threat/deeppacketinspection',
         'threat/web-application-firewall',
+        'threat/container-threat-detection',
+
       ],
     },
     {
