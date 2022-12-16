@@ -71,10 +71,9 @@ const config = {
         searchPagePath: '/search',
       },
       navbar: {
-        title: 'Calico Documentation',
         logo: {
-          alt: 'Calico documentation',
-          src: 'img/logo.png',
+          src: 'img/tigera-logo-black.png',
+          srcDark: 'img/tigera-logo-white.png',
         },
         items: [
           {
