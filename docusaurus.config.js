@@ -144,9 +144,10 @@ const config = {
             position: 'right',
           },
           {
-            label: 'GitHub',
             href: 'https://github.com/projectcalico',
             position: 'right',
+            className: 'header-github-link',
+            'aria-label': 'GitHub repository',
           },
         ],
       },
