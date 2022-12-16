@@ -71,36 +71,42 @@ const config = {
         searchPagePath: '/search',
       },
       navbar: {
-        title: 'Calico Documentation',
         logo: {
-          alt: 'Calico documentation',
-          src: 'img/logo.png',
+          src: 'img/tigera-logo-black.png',
+          srcDark: 'img/tigera-logo-white.png',
         },
         items: [
           {
-            label: 'Calico Open Source',
-            type: 'docSidebar',
-            sidebarId: 'calicoSidebar',
-            docsPluginId: 'calico',
-            position: 'left',
-          },
-          {
-            label: 'Calico Enterprise',
-            type: 'docSidebar',
-            sidebarId: 'calicoEnterpriseSidebar',
-            docsPluginId: 'calico-enterprise',
-            position: 'left',
-          },
-          {
-            label: 'Calico Cloud',
-            type: 'docSidebar',
-            sidebarId: 'calicoCloudSidebar',
-            docsPluginId: 'calico-cloud',
-            position: 'left',
+            type: 'dropdown',
+            label: 'Documentation',
+            className: 'documentation-dropdown',
+            items: [
+              {
+                label: 'Calico Open Source',
+                type: 'docSidebar',
+                sidebarId: 'calicoSidebar',
+                docsPluginId: 'calico',
+                className: 'navbar-product-link_calico',
+              },
+              {
+                label: 'Calico Enterprise',
+                type: 'docSidebar',
+                sidebarId: 'calicoEnterpriseSidebar',
+                docsPluginId: 'calico-enterprise',
+                className: 'navbar-product-link_calico-enterprise',
+              },
+              {
+                label: 'Calico Cloud',
+                type: 'docSidebar',
+                sidebarId: 'calicoCloudSidebar',
+                docsPluginId: 'calico-cloud',
+                className: 'navbar-product-link_calico-cloud',
+              },
+            ],
           },
           {
             type: 'docsVersionDropdown',
-            position: 'right',
+            position: 'left',
             // className for product specific items must start with 'product-'
             dropdownItemsAfter: [
               {
@@ -134,19 +140,20 @@ const config = {
             ],
           },
           {
-            label: 'Tigera',
-            href: 'https://tigera.io',
-            position: 'right',
+            label: 'Tutorials',
+            href: 'https://www.tigera.io/self-paced-workshops/',
+            position: 'left',
           },
           {
-            label: 'Blog',
-            href: 'https://tigera.io/blog',
-            position: 'right',
+            label: 'Try Calico Cloud',
+            href: 'https://calicocloud.io',
+            position: 'left',
           },
           {
-            label: 'GitHub',
             href: 'https://github.com/projectcalico',
             position: 'right',
+            className: 'header-icon-link github-icon',
+            'aria-label': 'GitHub repository',
           },
         ],
       },
@@ -213,7 +220,44 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Tigera, Inc.`,
+        // TODO: Add appropriate icons and links
+        copyright: `
+          <div>
+            <div>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
+            <div>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+            </div>
+          </div>
+        `,
       },
       prism: {
         theme: lightCodeTheme,

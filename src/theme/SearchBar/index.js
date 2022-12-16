@@ -12,12 +12,13 @@ import { useAlgoliaContextualFacetFilters } from '@docusaurus/theme-search-algol
 import Translate from '@docusaurus/Translate';
 import translations from '@theme/SearchTranslations';
 import { useProductId } from '../../utils/useProductId';
+import { getProductNameById } from '../../utils/getProductNameById';
 let DocSearchModal = null;
 function Hit({ hit, children }) {
   const text = hit.content || hit.hierarchy[hit.type];
   const scrollTo = `-scroll-to-${encodeURIComponent(text)}`;
   const productId = useProductId();
-  const product = getProductName(hit.url.split('/')[1]);
+  const product = getProductNameById(hit.url.split('/')[1]);
 
   return (
     <Link to={hit.url + scrollTo}>
@@ -45,7 +46,7 @@ function ResultsFooter({ state, onClose }) {
 function Footer({ productId, setProductId }) {
   const products = ['calico', 'calico-cloud', 'calico-enterprise']
     .filter((product) => product !== productId)
-    .map((product) => <a onClick={() => setProductId(product)}>{getProductName(product)}</a>);
+    .map((product) => <a onClick={() => setProductId(product)}>{getProductNameById(product)}</a>);
 
   return (
     <div className='search-results-footer'>
@@ -56,16 +57,6 @@ function Footer({ productId, setProductId }) {
 function mergeFacetFilters(f1, f2) {
   const normalize = (f) => (typeof f === 'string' ? [f] : f);
   return [...normalize(f1), ...normalize(f2)];
-}
-function getProductName(productId) {
-  switch (productId) {
-    case 'calico':
-      return 'Calico Open Source';
-    case 'calico-cloud':
-      return 'Calico Cloud';
-    case 'calico-enterprise':
-      return 'Calico Enterprise';
-  }
 }
 function filterFacetFiltersByProduct(filters, product) {
   const [language, products] = filters;
@@ -251,7 +242,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
             })}
             {...props}
             searchParameters={searchParameters}
-            placeholder={'Search docs' + (productId ? ` (${getProductName(productId)})` : '')}
+            placeholder={'Search docs' + (productId ? ` (${getProductNameById(productId)})` : '')}
             translations={translations.modal}
           />,
           searchContainer.current
