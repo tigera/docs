@@ -105,18 +105,8 @@ const config = {
             ],
           },
           {
-            label: 'Tutorials',
-            href: 'https://www.tigera.io/self-paced-workshops/',
-            position: 'left',
-          },
-          {
-            label: 'Try Calico Cloud',
-            href: 'https://calicocloud.io',
-            position: 'left',
-          },
-          {
             type: 'docsVersionDropdown',
-            position: 'right',
+            position: 'left',
             // className for product specific items must start with 'product-'
             dropdownItemsAfter: [
               {
@@ -148,6 +138,16 @@ const config = {
                 label: 'All versions',
               },
             ],
+          },
+          {
+            label: 'Tutorials',
+            href: 'https://www.tigera.io/self-paced-workshops/',
+            position: 'left',
+          },
+          {
+            label: 'Try Calico Cloud',
+            href: 'https://calicocloud.io',
+            position: 'left',
           },
           {
             href: 'https://github.com/projectcalico',
