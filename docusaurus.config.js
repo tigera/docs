@@ -105,6 +105,16 @@ const config = {
             ],
           },
           {
+            label: 'Tutorials',
+            href: 'https://www.tigera.io/self-paced-workshops/',
+            position: 'left',
+          },
+          {
+            label: 'Try Calico Cloud',
+            href: 'https://calicocloud.io',
+            position: 'left',
+          },
+          {
             type: 'docsVersionDropdown',
             position: 'right',
             // className for product specific items must start with 'product-'
@@ -138,16 +148,6 @@ const config = {
                 label: 'All versions',
               },
             ],
-          },
-          {
-            label: 'Tigera',
-            href: 'https://tigera.io',
-            position: 'right',
-          },
-          {
-            label: 'Blog',
-            href: 'https://tigera.io/blog',
-            position: 'right',
           },
           {
             href: 'https://github.com/projectcalico',
