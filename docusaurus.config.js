@@ -148,7 +148,7 @@ const config = {
           {
             href: 'https://github.com/projectcalico',
             position: 'right',
-            className: 'header-github-link',
+            className: 'header-icon-link github-icon',
             'aria-label': 'GitHub repository',
           },
         ],
@@ -216,7 +216,44 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Tigera, Inc.`,
+        // TODO: Add appropriate icons and links
+        copyright: `
+          <div>
+            <div>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
+            <div>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+              <a
+                href="https://github.com/projectcalico"
+                target="_blank" rel="noopener noreferrer"
+                class="footer-social-icon github-icon"
+                aria-label="GitHub repository"
+              ></a>
+            </div>
+          </div>
+        `,
       },
       prism: {
         theme: lightCodeTheme,
