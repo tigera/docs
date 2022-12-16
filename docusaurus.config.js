@@ -83,6 +83,7 @@ const config = {
             sidebarId: 'calicoSidebar',
             docsPluginId: 'calico',
             position: 'left',
+            className: 'navbar-product-link_calico',
           },
           {
             label: 'Calico Enterprise',
@@ -90,6 +91,7 @@ const config = {
             sidebarId: 'calicoEnterpriseSidebar',
             docsPluginId: 'calico-enterprise',
             position: 'left',
+            className: 'navbar-product-link_calico-enterprise',
           },
           {
             label: 'Calico Cloud',
@@ -97,6 +99,7 @@ const config = {
             sidebarId: 'calicoCloudSidebar',
             docsPluginId: 'calico-cloud',
             position: 'left',
+            className: 'navbar-product-link_calico-cloud',
           },
           {
             type: 'docsVersionDropdown',
