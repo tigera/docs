@@ -7,6 +7,8 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import { translate } from '@docusaurus/Translate';
 import IconHome from '@theme/Icon/Home';
 import styles from './styles.module.css';
+import { useProductId } from '../../utils/useProductId';
+import { getProductNameById } from '../../utils/getProductNameById';
 // TODO move to design system folder
 function BreadcrumbsItemLink({ children, href, isLast }) {
   const className = 'breadcrumbs__link';
@@ -76,8 +78,39 @@ function HomeBreadcrumbItem() {
     </li>
   );
 }
+function usuBreadCrumbsWithProduct(sidebarBreadcrumbs) {
+  const productId = useProductId();
+
+  const [breadcrumbs, setBreadcrumbs] = React.useState([
+    {
+      label: getProductNameById(productId),
+      type: 'link',
+      href: '/',
+    },
+    ...(sidebarBreadcrumbs || []),
+  ]);
+
+  React.useEffect(() => {
+    // just take the link from navbar to not invent the wheel and care about current version, root doc etc
+    const navbarLink = Array.from(document.getElementsByClassName(`navbar-product-link_${productId}`))[0];
+
+    if (navbarLink) {
+      breadcrumbs.splice(0, 1, {
+        label: getProductNameById(productId),
+        type: 'link',
+        href: navbarLink.href.replace(location.origin, ''),
+      });
+
+      setBreadcrumbs([...breadcrumbs]);
+    }
+  }, []);
+
+  return breadcrumbs;
+}
 export default function DocBreadcrumbs() {
-  const breadcrumbs = useSidebarBreadcrumbs();
+  const sidebarBreadcrumbs = useSidebarBreadcrumbs();
+  const breadcrumbs = usuBreadCrumbsWithProduct(sidebarBreadcrumbs);
+
   const homePageRoute = useHomePageRoute();
   if (!breadcrumbs) {
     return null;
