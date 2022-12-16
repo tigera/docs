@@ -242,7 +242,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
             })}
             {...props}
             searchParameters={searchParameters}
-            placeholder={'Search docs' + (productId ? ` (${getProductName(productId)})` : '')}
+            placeholder={'Search docs' + (productId ? ` (${getProductNameById(productId)})` : '')}
             translations={translations.modal}
           />,
           searchContainer.current
