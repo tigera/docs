@@ -44,7 +44,8 @@ spec:
 | awsRequestTimeout | Timeout used for communicating with the AWS API. | `5s`, `10s`, `1m` etc. | duration | `30s` |
 | dropActionOverride | Controls what happens to each packet that is denied by the current {{site.prodname}} policy. Normally the `Drop` or `LogAndDrop` value should be used. However when experimenting or debugging a scenario that is not behaving as you expect, the `Accept` and `LogAndAccept` values can be useful: then the packet will be still be allowed through. When one of the `LogAnd...` values is set, each denied packet is logged in syslog.\* | `Drop`, `Accept`, `LogAndDrop`, `LogAndAccept` | string | `Drop` |
 | chainInsertMode                    | Controls whether Felix hooks the kernel's top-level iptables chains by inserting a rule at the top of the chain or by appending a rule at the bottom. `Insert` is the safe default since it prevents {{site.prodname}}'s rules from being bypassed.  If you switch to `Append` mode, be sure that the other rules in the chains signal acceptance by falling through to the {{site.prodname}} rules, otherwise the {{site.prodname}} policy will be bypassed. | `Insert`, `Append` | string | `Insert` |
-| dataplaneWatchdogTimeout | Timeout before the main dataplane goroutine is determined to have hung and Felix will report non-live and non-ready.  Can be increased if the liveness check incorrectly fails (for example if Felix is running slowly on a heavily loaded system). | `90s`, `120s`, `10m` etc. | duration | `90s` |
+| healthTimeoutOverrides             | A list of overrides for Felix's internal liveness/readiness timeouts. | see [below](#health-timeout-overrides) | List of `HealthTimeoutOverride` objects | `[]` |
+| dataplaneWatchdogTimeout           | Deprecated, use `healthTimeoutOverrides` instead.  Timeout before the main dataplane goroutine is determined to have hung and Felix will report non-live and non-ready.  Can be increased if the liveness check incorrectly fails (for example if Felix is running slowly on a heavily loaded system). | `90s`, `120s`, `10m` etc. | duration | `90s` |
 | defaultEndpointToHostAction        | This parameter controls what happens to traffic that goes from a workload endpoint to the host itself (after the traffic hits the endpoint egress policy).  By default {{site.prodname}} blocks traffic from workload endpoints to the host itself with an iptables "DROP" action. If you want to allow some or all traffic from endpoint to host, set this parameter to `Return` or `Accept`.  Use `Return` if you have your own rules in the iptables "INPUT" chain; {{site.prodname}} will insert its rules at the top of that chain, then `Return` packets to the "INPUT" chain once it has completed processing workload endpoint egress policy.  Use `Accept` to unconditionally accept packets from workloads after processing workload endpoint egress policy. | Drop, Return, Accept | string | `Drop` |
 | deviceRouteSourceAddress           | IPv4 address to set as the source hint for routes programmed by Felix. When not set the source address for local traffic from host to workload will be determined by the kernel. | IPv4 | string | `""` |
 | deviceRouteSourceAddressIPv6       | IPv6 address to set as the source hint for routes programmed by Felix. When not set the source address for local traffic from host to workload will be determined by the kernel. | IPv6 | string | `""` |
@@ -212,6 +213,43 @@ prevention policies in the iptables dataplane.
 
 When `bpfEnabled` is `true` the "xdp" settings all have no effect; in BPF mode the implementation of
 policy is always accelerated, using the best available BPF technology.
+
+#### Health Timeout Overrides
+
+Felix has internal liveness and readiness watchdog timers that monitor its various loops.
+If a loop fails to "check in" within the allotted timeout then Felix will report non-Ready
+or non-Live on its health port (which is monitored by Kubelet in a Kubernetes system).
+If Felix reports non-Live, this can result in the Pod being restarted.
+
+In Kubernetes, if you see the calico-node Pod readiness or liveness checks fail 
+intermittently, check the calico-node Pod log for a log from Felix that gives the 
+overall health status (the list of components will depend on which features are enabled):
+
+```
++---------------------------+---------+----------------+-----------------+--------+
+|         COMPONENT         | TIMEOUT |    LIVENESS    |    READINESS    | DETAIL |
++---------------------------+---------+----------------+-----------------+--------+
+| CalculationGraph          | 30s     | reporting live | reporting ready |        |
+| FelixStartup              | 0s      | reporting live | reporting ready |        |
+| InternalDataplaneMainLoop | 1m30s   | reporting live | reporting ready |        |
++---------------------------+---------+----------------+-----------------+--------+
+```
+
+If some health timeouts show as "timed out" it may help to apply an override
+using the `healthTimeoutOverrides` field:
+
+```
+...
+spec:
+  healthTimeoutOverrides:
+  - name: InternalDataplaneMainLoop
+    timeout: "5m"
+  - name: CalculationGraph
+    timeout: "1m30s"
+  ...
+```
+
+A timeout value of 0 disables the timeout.
 
 #### ProtoPort
 
