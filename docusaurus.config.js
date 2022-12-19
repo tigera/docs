@@ -161,65 +161,110 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
+            title: 'Learn',
             items: [
               {
-                label: 'Calico Open Source',
-                to: '/calico/about',
+                label: 'Documentation',
+                to: '/',
               },
               {
-                label: 'Calico Enterprise',
-                to: '/calico-enterprise/about-calico-enterprise',
+                label: 'Events',
+                href: 'https://tigera.io/events',
               },
               {
-                label: 'Calico Cloud',
-                to: '/calico-cloud/',
-              },
-            ],
-          },
-          {
-            title: 'Community',
-            items: [
-              {
-                label: 'Slack',
-                href: 'https://slack.projectcalico.org/',
+                label: 'Resource center',
+                href: 'https://tigera.io/resources',
               },
               {
-                label: 'Tigera Twitter',
-                href: 'https://twitter.com/tigeraio',
-              },
-              {
-                label: 'Calico Twitter',
-                href: 'https://twitter.com/projectcalico',
-              },
-              {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/project-calico',
-              },
-              {
-                label: 'Discourse',
-                href: 'https://discuss.projectcalico.org/',
-              },
-            ],
-          },
-          {
-            title: 'More',
-            items: [
-              {
-                label: 'Tigera Blog',
+                label: 'Blog',
                 href: 'https://tigera.io/blog',
               },
               {
-                label: 'Calico GitHub',
-                href: 'https://github.com/projectcalico',
+                label: 'Trade shows',
+                href: 'https://tigera.io/lp/tradeshows',
               },
               {
-                label: 'Docs GitHub',
-                href: 'https://github.com/tigera/docs',
+                label: 'Certification',
+                href: 'https://tigera.io/lp/calico-certification',
+              },
+              {
+                label: 'Guides',
+                href: 'https://tigera.io/learn/guides/kubernetes-monitoring',
               },
             ],
           },
-        ],
+          {
+            title: 'Support',
+            items: [
+              {
+                label: 'Customer success',
+                href: 'https://tigera.io/customer-success',
+              },
+              {
+                label: 'Support portal',
+                href: 'http://tigera.force.com/community/s/login/'
+              },
+              {
+                label: 'Security bulletins',
+                href: 'https://tigera.io/security-bulletins',
+              },
+              {
+                label: 'Report a security issue',
+                href: 'https://tigera.io/vulnerability-disclosure',
+              },
+            ],
+          },
+          {
+            title: 'Open source',
+            items: [
+              {
+                label: 'Project Calico',
+                href: 'https://tigera.io/project-calico',
+              },
+              {
+                label: 'OSS events',
+                href: 'https://www.tigera.io/project-calico/calico-open-source-events',
+              },
+              {
+                label: 'Community',
+                href: 'https://tigera.io/project-calico/community',
+              },
+              {
+                label: 'GitHub',
+                href: 'https://github.com/project-calico',
+              },
+            ],
+          },
+          {
+            title: 'Company',
+            items: [
+              {
+                label: 'About',
+                href: 'https://tigera.io/about',
+              },
+              {
+                label: 'Customers',
+                href: 'https://tigera.io/customer-stories',
+              },
+              {
+                label: 'Partners',
+                href: 'https://tigera.io/partners',
+              },
+              {
+                label: 'Newsroom',
+                href: 'https://tigera.io/media',
+              },
+              {
+                label: 'Careers',
+                href: 'https://tigera.io/careers',
+              },
+              {
+                label: 'Contact',
+                href: 'https://tigera.io/contact',
+              },
+            ],
+          },
+      ],
         // TODO: Add appropriate icons and links
         copyright: `
           <div>
