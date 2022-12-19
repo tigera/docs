@@ -202,7 +202,7 @@ const config = {
               },
               {
                 label: 'Support portal',
-                href: 'http://tigera.force.com/community/s/login/'
+                href: 'http://tigera.force.com/community/s/login/',
               },
               {
                 label: 'Security bulletins',
@@ -264,7 +264,7 @@ const config = {
               },
             ],
           },
-      ],
+        ],
         // TODO: Add appropriate icons and links
         copyright: `
           <div>
@@ -303,6 +303,11 @@ const config = {
             </div>
           </div>
         `,
+      },
+      docs: {
+        sidebar: {
+          autoCollapseCategories: true,
+        },
       },
       prism: {
         theme: lightCodeTheme,
