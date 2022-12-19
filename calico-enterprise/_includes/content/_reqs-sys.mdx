@@ -7,12 +7,12 @@
   known to work well with {{site.prodname}} and {{include.orch}}.{% if include.orch == "Kubernetes" or include.orch == "host protection" %}
   - CentOS 8
   - Ubuntu 18.04 and 20.04
-  - RHEL 8
+  - RHEL 7 and 8
   - Debian 10
   {% endif %}{% if include.orch == "OpenShift" %}
   - Red Hat Enterprise Linux CoreOS
   {% endif %}{% if include.orch == "OpenStack" %}
-  - Ubuntu 18.04
+  - Ubuntu 18.04 and 20.04
   - CentOS 8
   {% endif %}
 
