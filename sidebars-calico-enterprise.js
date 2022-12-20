@@ -75,8 +75,6 @@ module.exports = {
               items: [
                 'getting-started/install-on-clusters/private-registry/private-registry-regular',
                 'getting-started/install-on-clusters/private-registry/private-registry-image-path',
-                // TODO: Remove the following page once we've sorted it out.
-                'getting-started/install-on-clusters/private-registry/private-registry-archive',
               ],
             },
             'getting-started/install-on-clusters/calico-enterprise',
