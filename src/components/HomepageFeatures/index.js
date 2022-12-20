@@ -8,31 +8,19 @@ const FeatureList = [
     title: 'Calico Open Source',
     img: '/img/calico-logo.png',
     link: 'calico/about',
-    description: (
-      <>
-        Calico Open Source...
-      </>
-    ),
+    description: <>Calico Open Source...</>,
   },
   {
     title: 'Calico Enterprise',
     img: '/img/calico-enterprise-logo.png',
     link: 'calico-enterprise/about-calico-enterprise',
-    description: (
-      <>
-        Calico Enterprise...
-      </>
-    ),
+    description: <>Calico Enterprise...</>,
   },
   {
     title: 'Calico Cloud',
     img: '/img/calico-cloud-logo.png',
     link: 'calico-cloud',
-    description: (
-      <>
-        Calico Cloud...
-      </>
-    ),
+    description: <>Calico Cloud...</>,
   },
 ];
 
@@ -41,12 +29,15 @@ function Feature({ img, title, description, link }) {
     <div className={clsx('col col--4')}>
       <div className='text--center'>
         <Link href={link}>
-          <img src={img} alt={title} />
+          <img
+            src={img}
+            alt={title}
+          />
         </Link>
       </div>
       <div className='text--center padding-horiz--md'>
-        <h3>{title}</h3>
-        <p>{description}</p>
+        <h1>{title}</h1>
+        <p className={styles.featureDescription}>{description}</p>
       </div>
     </div>
   );
@@ -58,7 +49,10 @@ export default function HomepageFeatures() {
       <div className='container'>
         <div className='row'>
           {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
+            <Feature
+              key={idx}
+              {...props}
+            />
           ))}
         </div>
       </div>
