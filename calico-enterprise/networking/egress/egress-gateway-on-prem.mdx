@@ -340,7 +340,6 @@ spec:
           initialDelaySeconds: 3
           periodSeconds: 3
       terminationGracePeriodSeconds: 0
-      serviceAccount: tigera-egress-gateway
       volumes:
       - csi:
           driver: csi.tigera.io
