@@ -601,10 +601,10 @@ module.exports = {
         'reference/attribution',
         'reference/rest-api-reference',
         'reference/faq',
-        'release-notes/index',
-        'get-help/support',
       ],
     },
+    'get-help/support',
+    'release-notes/index',
   ],
 };
 
