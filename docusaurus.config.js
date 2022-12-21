@@ -22,7 +22,7 @@ const config = {
   // X-Robots-Tag:noindex in the /static/_headers file once we cutover
   noIndex: true,
   title: 'Calico Documentation',
-  tagline: 'Active security for cloud-native applications',
+  tagline: 'Active security, networking, and observability for cloud-native applications',
   url: 'https://unified-docs.tigera.io',
   baseUrl: '/',
   onBrokenLinks: 'warn',
@@ -89,18 +89,18 @@ const config = {
                 className: 'navbar-product-link_calico',
               },
               {
-                label: 'Calico Enterprise',
-                type: 'docSidebar',
-                sidebarId: 'calicoEnterpriseSidebar',
-                docsPluginId: 'calico-enterprise',
-                className: 'navbar-product-link_calico-enterprise',
-              },
-              {
                 label: 'Calico Cloud',
                 type: 'docSidebar',
                 sidebarId: 'calicoCloudSidebar',
                 docsPluginId: 'calico-cloud',
                 className: 'navbar-product-link_calico-cloud',
+              },
+              {
+                label: 'Calico Enterprise',
+                type: 'docSidebar',
+                sidebarId: 'calicoEnterpriseSidebar',
+                docsPluginId: 'calico-enterprise',
+                className: 'navbar-product-link_calico-enterprise',
               },
             ],
           },
@@ -141,8 +141,13 @@ const config = {
           },
           {
             label: 'Tutorials',
+            // TODO: Marketing is building a page at /tutorials. Using self-paced-workshops as placeholder.
             href: 'https://www.tigera.io/self-paced-workshops/',
             position: 'left',
+          },
+          {
+            label: 'Certification',
+            href: 'https://www.tigera.io/lp/calico-certification/',
           },
           {
             label: 'Try Calico Cloud',
@@ -161,61 +166,110 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
+            title: 'Learn',
             items: [
               {
-                label: 'Calico Open Source',
-                to: '/calico/about',
+                label: 'Documentation',
+                to: '/',
               },
               {
-                label: 'Calico Enterprise',
-                to: '/calico-enterprise/about-calico-enterprise',
+                label: 'Events',
+                href: 'https://www.tigera.io/events',
               },
               {
-                label: 'Calico Cloud',
-                to: '/calico-cloud/',
+                label: 'Resource center',
+                href: 'https://www.tigera.io/resources',
+              },
+              {
+                label: 'Blog',
+                href: 'https://www.tigera.io/blog',
+              },
+              {
+                label: 'Trade shows',
+                href: 'https://www.tigera.io/lp/tradeshows',
+              },
+              {
+                label: 'Certification',
+                href: 'https://www.tigera.io/lp/calico-certification',
+              },
+              {
+                label: 'Guides',
+                href: 'https://www.tigera.io/learn/guides/kubernetes-monitoring',
               },
             ],
           },
           {
-            title: 'Community',
+            title: 'Support',
             items: [
               {
-                label: 'Slack',
-                href: 'https://slack.projectcalico.org/',
+                label: 'Customer success',
+                href: 'https://www.tigera.io/customer-success',
               },
               {
-                label: 'Tigera Twitter',
-                href: 'https://twitter.com/tigeraio',
+                label: 'Support portal',
+                href: 'http://www.tigera.force.com/community/s/login/',
               },
               {
-                label: 'Calico Twitter',
-                href: 'https://twitter.com/projectcalico',
+                label: 'Security bulletins',
+                href: 'https://www.tigera.io/security-bulletins',
+              },
+              {
+                label: 'Report a security issue',
+                href: 'https://www.tigera.io/vulnerability-disclosure',
+              },
+            ],
+          },
+          {
+            title: 'Open source',
+            items: [
+              {
+                label: 'Project Calico',
+                href: 'https://www.tigera.io/project-calico',
+              },
+              {
+                label: 'Community',
+                href: 'https://www.tigera.io/project-calico/community',
+              },
+              {
+                label: 'GitHub',
+                href: 'https://github.com/project-calico',
               },
               {
                 label: 'Stack Overflow',
                 href: 'https://stackoverflow.com/questions/tagged/project-calico',
               },
               {
-                label: 'Discourse',
-                href: 'https://discuss.projectcalico.org/',
+                label: 'Slack',
+                href: 'https://slack.projectcalico.org/',
               },
             ],
           },
           {
-            title: 'More',
+            title: 'Company',
             items: [
               {
-                label: 'Tigera Blog',
-                href: 'https://tigera.io/blog',
+                label: 'About',
+                href: 'https://www.tigera.io/about',
               },
               {
-                label: 'Calico GitHub',
-                href: 'https://github.com/projectcalico',
+                label: 'Customers',
+                href: 'https://www.tigera.io/customer-stories',
               },
               {
-                label: 'Docs GitHub',
-                href: 'https://github.com/tigera/docs',
+                label: 'Partners',
+                href: 'https://www.tigera.io/partners',
+              },
+              {
+                label: 'Newsroom',
+                href: 'https://www.tigera.io/media',
+              },
+              {
+                label: 'Careers',
+                href: 'https://www.tigera.io/careers',
+              },
+              {
+                label: 'Contact',
+                href: 'https://www.tigera.io/contact',
               },
             ],
           },
@@ -224,40 +278,40 @@ const config = {
         copyright: `
           <div>
             <div>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
+            <div>Tigera is the creator and maintainer of Project Calico.</div>
             <div>
               <a
-                href="https://github.com/projectcalico"
+                href="https://www.linkedin.com/company/tigera/"
                 target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
+                class="footer-social-icon linkedin-icon"
+                aria-label="Linkedin profile"
               ></a>
               <a
-                href="https://github.com/projectcalico"
+                href="https://twitter.com/tigeraio"
                 target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
+                class="footer-social-icon twitter-icon"
+                aria-label="Twitter profile"
               ></a>
               <a
-                href="https://github.com/projectcalico"
+                href="https://www.youtube.com/channel/UC8uN3yhpeBeerGNwDiQbcgw"
                 target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
+                class="footer-social-icon youtube-icon"
+                aria-label="YouTube channel"
               ></a>
               <a
-                href="https://github.com/projectcalico"
+                href="https://calicousers.slack.com/"
                 target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
-              ></a>
-              <a
-                href="https://github.com/projectcalico"
-                target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
+                class="footer-social-icon slack-icon"
+                aria-label="Slack team"
               ></a>
             </div>
           </div>
         `,
+      },
+      docs: {
+        sidebar: {
+          autoCollapseCategories: true,
+        },
       },
       prism: {
         theme: lightCodeTheme,
