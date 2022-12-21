@@ -211,7 +211,7 @@ module.exports = {
         },
         'network-policy/networksets',
         'network-policy/default-deny',
-        'network-policy/policy-lifecycle/staged-network-policies',
+        'network-policy/staged-network-policies',
         'network-policy/policy-troubleshooting',
         {
           type: 'category',
