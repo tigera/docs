@@ -271,34 +271,28 @@ const config = {
             <div>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
             <div>
               <a
-                href="https://github.com/projectcalico"
+                href="https://www.linkedin.com/company/tigera/"
                 target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
+                class="footer-social-icon linkedin-icon"
+                aria-label="Linkedin profile"
               ></a>
               <a
-                href="https://github.com/projectcalico"
+                href="https://twitter.com/tigeraio"
                 target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
+                class="footer-social-icon twitter-icon"
+                aria-label="Twitter profile"
               ></a>
               <a
-                href="https://github.com/projectcalico"
+                href="https://www.youtube.com/channel/UC8uN3yhpeBeerGNwDiQbcgw"
                 target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
+                class="footer-social-icon youtube-icon"
+                aria-label="YouTube channel"
               ></a>
               <a
-                href="https://github.com/projectcalico"
+                href="https://calicousers.slack.com/"
                 target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
-              ></a>
-              <a
-                href="https://github.com/projectcalico"
-                target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon github-icon"
-                aria-label="GitHub repository"
+                class="footer-social-icon slack-icon"
+                aria-label="Slack team"
               ></a>
             </div>
           </div>
