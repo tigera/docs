@@ -2,11 +2,19 @@ import React from 'react';
 import Logo from '@theme-original/Navbar/Logo';
 import DropdownNavbarItem from '@theme-original/NavbarItem/DropdownNavbarItem';
 
-// TODO: add more links
+// TODO: Add comments to explain how this file is used.
 export default function LogoWrapper(props) {
   return (
     <DropdownNavbarItem
       items={[
+        {
+          label: 'Tigera home',
+          href: 'https://tigera.io',
+        },
+        {
+          label: 'Project Calico',
+          to: 'https://www.tigera.io/project-calico/',
+        },
         {
           label: 'Compare products',
           to: 'https://www.tigera.io/tigera-products/compare-products/',
@@ -16,20 +24,12 @@ export default function LogoWrapper(props) {
           to: 'https://www.tigera.io/tigera-products/calico-cloud-pricing/',
         },
         {
-          label: 'Why Calico?',
-          to: 'https://www.tigera.io/tigera-products/why-calico/',
-        },
-        {
           label: 'Blog',
           to: 'https://www.tigera.io/blog/',
         },
         {
-          label: 'Project Calico',
-          to: 'https://www.tigera.io/project-calico/',
-        },
-        {
-          label: 'Resource center',
-          to: 'https://www.tigera.io/resources/',
+          label: 'Contact us',
+          to: 'https://www.tigera.io/contact/',
         },
       ]}
       label={<Logo {...props} />}
