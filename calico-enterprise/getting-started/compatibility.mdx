@@ -34,51 +34,59 @@ If your platform is listed below, the features in this release will work for you
 
 ### AKS
 
-| {{site.prodname}} version | AKS and Kubernetes versions | {{site.prodname}} support                                    |
-| ------------------------- | ---------- | ------------------------------------------------------------ |
-| 3.15                      | 1.23 | - {{site.prodname}} CNI with network policy<br />- Azure CNI with {{site.prodname}} network policy |
-| 3.14                      | 1.22 | - {{site.prodname}} CNI with network policy<br />- Azure CNI with {{site.prodname}} network policy |
-| 3.13                      | 1.21       | Azure CNI with {{site.prodname}} network policy                 |
-| 3.12                      | 1.21       | Azure CNI with {{site.prodname}} network policy           |
-| 3.11                      | 1.21       | Azure CNI with {{site.prodname}} network policy           |
-| 3.10                      | 1.21       | Azure CNI with {{site.prodname}} network policy           |
-| 3.9                       | 1.21       | Azure CNI with {{site.prodname}} network policy           |
-| 3.8                       | 1.20       | Azure CNI with {{site.prodname}} network policy           |
-| 3.7                       | 1.20       | Azure CNI with {{site.prodname}} network policy           |
-| 3.6                       | 1.19       | Azure CNI with {{site.prodname}} network policy           |
-| 3.5                       | 1.19       | Azure CNI with {{site.prodname}} network policy           |
+Kubernetes version support aligns with upstream Kubernetes to the latest version if available.
+
+| {{site.prodname}} version | {{site.prodname}} support                                    |
+| ------------------------- | ------------------------------------------------------------ |
+| 3.15                      | - {{site.prodname}} CNI with network policy<br />- Azure CNI with {{site.prodname}} network policy |
+| 3.14                      | - {{site.prodname}} CNI with network policy<br />- Azure CNI with {{site.prodname}} network policy |
+| 3.13                      | Azure CNI with {{site.prodname}} network policy                 |
+| 3.12                      | Azure CNI with {{site.prodname}} network policy           |
+| 3.11                      | Azure CNI with {{site.prodname}} network policy           |
+| 3.10                      | Azure CNI with {{site.prodname}} network policy           |
+| 3.9                       | Azure CNI with {{site.prodname}} network policy           |
+| 3.8                       | Azure CNI with {{site.prodname}} network policy           |
+| 3.7                       | Azure CNI with {{site.prodname}} network policy           |
+| 3.6                       | Azure CNI with {{site.prodname}} network policy           |
+| 3.5                       | Azure CNI with {{site.prodname}} network policy           |
 
 ### EKS
 
-| {{site.prodname}} version | EKS and Kubernetes versions | {{site.prodname}} support                                    |
-| ------------------------- | ---------------- | ------------------------------------------------------------ |
-| 3.15                      | 1.23 - 1.24 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.14                      | 1.22 | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.13                      | 1.21             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.12                      | 1.21             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.11                      | 1.21             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.10                      | 1.21             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.9                       | 1.21             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.8                       | 1.20             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.7                       | 1.19             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.6                       | 1.19             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
-| 3.5                       | 1.18             | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+Kubernetes version support aligns with upstream Kubernetes to the latest version if available.
+
+| {{site.prodname}} version | {{site.prodname}} support                                    |
+| ------------------------- | ------------------------------------------------------------ |
+| 3.15                      | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.14                      | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.13                      | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.12                      | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.11                      | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.10                      | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.9                       | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.8                       | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.7                       | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.6                       | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+| 3.5                       | - {{site.prodname}} CNI with network policy<br />- AWS CNI with {{site.prodname}} network policy |
+
 
 ### GKE
 
-| {{site.prodname}} version | GKE and Kubernetes versions | {{site.prodname}} support               |
-| ------------------------- | ------------ | --------------------------------------- |
-| 3.15                      | 1.22         | - GKE CNI with {{site.prodname}} network policy |
-| 3.14                      | 1.21         | - GKE CNI with {{site.prodname}} network policy |
-| 3.13                      | 1.21         | - GKE CNI with {{site.prodname}} network policy |
-| 3.12                      | 1.21         | - GKE CNI with {{site.prodname}} network policy |
-| 3.11                      | 1.21         | - GKE CNI with {{site.prodname}} network policy |
-| 3.10                      | 1.20         | - GKE CNI with {{site.prodname}} network policy |
-| 3.9                       | 1.20         | - GKE CNI with {{site.prodname}} network policy |
-| 3.8                       | 1.19         | - GKE CNI with {{site.prodname}} network policy |
-| 3.7                       | 1.19         | - GKE CNI with {{site.prodname}} network policy |
-| 3.6                       | 1.18         | - GKE CNI with {{site.prodname}} network policy |
-| 3.5                       | 1.18         | - GKE CNI with {{site.prodname}} network policy |
+Kubernetes version support aligns with upstream Kubernetes to the latest version if available.
+
+| {{site.prodname}} version | {{site.prodname}} support               |
+| ------------------------- | --------------------------------------- |
+| 3.15                      | - GKE CNI with {{site.prodname}} network policy |
+| 3.14                      | - GKE CNI with {{site.prodname}} network policy |
+| 3.13                      | - GKE CNI with {{site.prodname}} network policy |
+| 3.12                      | - GKE CNI with {{site.prodname}} network policy |
+| 3.11                      | - GKE CNI with {{site.prodname}} network policy |
+| 3.10                      | - GKE CNI with {{site.prodname}} network policy |
+| 3.9                       | - GKE CNI with {{site.prodname}} network policy |
+| 3.8                       | - GKE CNI with {{site.prodname}} network policy |
+| 3.7                       | - GKE CNI with {{site.prodname}} network policy |
+| 3.6                       | - GKE CNI with {{site.prodname}} network policy |
+| 3.5                       | - GKE CNI with {{site.prodname}} network policy |
+
 
 ### kOps on AWS
 
@@ -115,14 +123,14 @@ If your platform is listed below, the features in this release will work for you
 
 | {{site.prodname}} version | MKE version                          | {{site.prodname}} support                 | Kubernetes versions |
 | ------------------------- | ------------------------------------ | ----------------------------------------- | ------------------- |
-| 3.15                      | MKE 3.5.5                            | {{site.prodname}} CNI with network policy | 1.21                |
-| 3.14                      | MKE 3.5.3                            | {{site.prodname}} CNI with network policy | 1.21                |
-| 3.13                      | MKE 3.5.1                            | {{site.prodname}} CNI with network policy | 1.21                |
-| 3.12                      | MKE 3.5.1                            | {{site.prodname}} CNI with network policy | 1.21                |
-| 3.11                      | MKE 3.5.1                            | {{site.prodname}} CNI with network policy | 1.20                |
-| 3.10                      | MKE 3.4.4                            | {{site.prodname}} CNI with network policy | 1.20                |
-| 3.9                       | MKE 3.4.4                            | {{site.prodname}} CNI with network policy | 1.19                |
-| 3.8                       | MKE 3.4.2                           | {{site.prodname}} CNI with network policy | 1.19                |
+| 3.15                      | MKE 3.5                              | {{site.prodname}} CNI with network policy | 1.21                |
+| 3.14                      | MKE 3.5                              | {{site.prodname}} CNI with network policy | 1.21                |
+| 3.13                      | MKE 3.5                              | {{site.prodname}} CNI with network policy | 1.21                |
+| 3.12                      | MKE 3.5                              | {{site.prodname}} CNI with network policy | 1.21                |
+| 3.11                      | MKE 3.5                              | {{site.prodname}} CNI with network policy | 1.20                |
+| 3.10                      | MKE 3.4                              | {{site.prodname}} CNI with network policy | 1.20                |
+| 3.9                       | MKE 3.4                              | {{site.prodname}} CNI with network policy | 1.19                |
+| 3.8                       | MKE 3.4                              | {{site.prodname}} CNI with network policy | 1.19                |
 | 3.7                       | Docker Enterprise 3.1 with UCP 3.3.5 | {{site.prodname}} CNI with network policy | 1.19                |
 | 3.6                       | Docker Enterprise 3.1 with UCP 3.3.5 | {{site.prodname}} CNI with network policy | 1.18                |
 | 3.5                       | Docker Enterprise 3.1 with UCP 3.3.5 | {{site.prodname}} CNI with network policy | 1.18                |
@@ -147,17 +155,17 @@ If your platform is listed below, the features in this release will work for you
 
 | {{site.prodname}} version | RKE version | {{site.prodname}} support               | Kubernetes versions |
 | ------------------------- | ----------- | --------------------------------------- | -------------------------- |
-| 3.15                      | 1.3.13       | {{site.prodname}} CNI with network policy | 1.23                       |
-| 3.14                      | 1.3.3       | {{site.prodname}} CNI with network policy | 1.22                       |
-| 3.13                      | 1.3.3       | {{site.prodname}} CNI with network policy | 1.21                       |
-| 3.12                      | 1.3.3       | {{site.prodname}} CNI with network policy | 1.21                       |
-| 3.11                      | 1.3.2       | {{site.prodname}} CNI with network policy | 1.20                       |
-| 3.10                      | 1.2.9       | {{site.prodname}} CNI with network policy | 1.20                       |
-| 3.9                       | 1.2.9       | {{site.prodname}} CNI with network policy | 1.19                       |
-| 3.8                       | 1.2.8       | {{site.prodname}} CNI with network policy | 1.19                       |
-| 3.7                       | 1.2.6       | {{site.prodname}} CNI with network policy | 1.19                       |
-| 3.6                       | 1.2.5       | {{site.prodname}} CNI with network policy | 1.18                       |
-| 3.5                       | 1.2.2       | {{site.prodname}} CNI with network policy | 1.18                       |
+| 3.15                      | 1.3         | {{site.prodname}} CNI with network policy | 1.23                       |
+| 3.14                      | 1.3         | {{site.prodname}} CNI with network policy | 1.22                       |
+| 3.13                      | 1.3         | {{site.prodname}} CNI with network policy | 1.21                       |
+| 3.12                      | 1.3         | {{site.prodname}} CNI with network policy | 1.21                       |
+| 3.11                      | 1.3         | {{site.prodname}} CNI with network policy | 1.20                       |
+| 3.10                      | 1.2         | {{site.prodname}} CNI with network policy | 1.20                       |
+| 3.9                       | 1.2         | {{site.prodname}} CNI with network policy | 1.19                       |
+| 3.8                       | 1.2         | {{site.prodname}} CNI with network policy | 1.19                       |
+| 3.7                       | 1.2         | {{site.prodname}} CNI with network policy | 1.19                       |
+| 3.6                       | 1.2         | {{site.prodname}} CNI with network policy | 1.18                       |
+| 3.5                       | 1.2         | {{site.prodname}} CNI with network policy | 1.18                       |
 
 ### RKE2
 
