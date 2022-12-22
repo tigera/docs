@@ -61,7 +61,7 @@ const config = {
   ],
 
   themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       algolia: {
         appId: 'Q4GSZWRKBA',
@@ -232,7 +232,7 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/project-calico',
+                href: 'https://github.com/projectcalico',
               },
               {
                 label: 'Stack Overflow',
@@ -281,28 +281,28 @@ const config = {
             <div>Tigera is the creator and maintainer of Project Calico.</div>
             <div>
               <a
-                href="https://www.linkedin.com/company/tigera/"
-                target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon linkedin-icon"
-                aria-label="Linkedin profile"
+                href='https://www.linkedin.com/company/tigera/'
+                target='_blank' rel='noopener noreferrer'
+                class='footer-social-icon linkedin-icon'
+                aria-label='Linkedin profile'
               ></a>
               <a
-                href="https://twitter.com/tigeraio"
-                target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon twitter-icon"
-                aria-label="Twitter profile"
+                href='https://twitter.com/tigeraio'
+                target='_blank' rel='noopener noreferrer'
+                class='footer-social-icon twitter-icon'
+                aria-label='Twitter profile'
               ></a>
               <a
-                href="https://www.youtube.com/channel/UC8uN3yhpeBeerGNwDiQbcgw"
-                target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon youtube-icon"
-                aria-label="YouTube channel"
+                href='https://www.youtube.com/channel/UC8uN3yhpeBeerGNwDiQbcgw'
+                target='_blank' rel='noopener noreferrer'
+                class='footer-social-icon youtube-icon'
+                aria-label='YouTube channel'
               ></a>
               <a
-                href="https://calicousers.slack.com/"
-                target="_blank" rel="noopener noreferrer"
-                class="footer-social-icon slack-icon"
-                aria-label="Slack team"
+                href='https://calicousers.slack.com/'
+                target='_blank' rel='noopener noreferrer'
+                class='footer-social-icon slack-icon'
+                aria-label='Slack team'
               ></a>
             </div>
           </div>
