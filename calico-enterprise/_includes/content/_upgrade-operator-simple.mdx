@@ -45,12 +45,7 @@
    {: .alert .alert-info}
 {%- endif %}
 
-<<<<<<< HEAD
-
 1. If you downloaded the manifests for Prometheus operator from the earlier step, then apply them now.
-=======
-1. If you downloaded the manifests for Prometheus operator from the earlier step, then {% if include.upgradeFrom == "OpenSource" %}create{% else %}replace{% endif %} them now.
->>>>>>> 4aa92131fe (Removes two or more blank lines with a single blank line)
    ```bash
    kubectl apply --server-side --force-conflicts -f tigera-prometheus-operator.yaml
    ```
