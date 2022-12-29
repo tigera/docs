@@ -55,6 +55,7 @@ export default function GeekDetails(props) {
                 key={detail.join('-')}
               >
                 <button
+                  className='button button--sm button--secondary'
                   onClick={() => {
                     setSelectedDetail(detail);
                     setIsOpen(true);
@@ -68,14 +69,10 @@ export default function GeekDetails(props) {
         </tbody>
       </table>
       <button
+        className='button geek-details-info'
         onClick={() => {
           setSelectedDetail(INFO);
           setIsOpen(true);
-        }}
-        style={{
-          width: '40px',
-          height: '40px',
-          margin: '15px',
         }}
       >
         ?

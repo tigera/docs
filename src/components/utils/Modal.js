@@ -9,10 +9,14 @@ export default function Modal(props) {
       isOpen={props.isOpen}
       style={styles.root}
       closeTimeoutMS={300}
+      shouldCloseOnEsc
+      shouldCloseOnOverlayClick
+      onRequestClose={() => props.onClose()}
     >
       <div style={styles.title}>
         <h3>{props.title}</h3>
         <button
+          className='button button--secondary'
           onClick={() => props.onClose()}
           style={styles.xButton}
         >
@@ -21,7 +25,12 @@ export default function Modal(props) {
       </div>
       <div style={styles.content}>{props.content}</div>
       <div style={styles.footer}>
-        <button onClick={() => props.onClose()}>Close</button>
+        <button
+          className='button button--primary button--sm'
+          onClick={() => props.onClose()}
+        >
+          Close
+        </button>
       </div>
     </ReactModal>
   );
@@ -58,6 +67,9 @@ const styles = {
     paddingRight: '20px',
   },
   xButton: {
-    height: '24px',
+    padding: 0,
+    lineHeight: 0,
+    height: '25px',
+    width: '25px',
   },
 };
