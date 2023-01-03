@@ -101,5 +101,4 @@ Then, you can assess the impact of the recommended policy using **Preview** and/
 
 ### Above and beyond
 
-- To preview the impact of a recommended policy before applying it see, [Preview policy impacts]({{site.baseurl}}/security/policy-impact-preview)
-- To observe the impact of a recommended policy on network traffic without affecting flows, see [Create staged policy]({{site.baseurl}}/security/staged-network-policies)
+- [Stage, preview impacts, and enforce policy]({{site.baseurl}}/security/staged-network-policies)
