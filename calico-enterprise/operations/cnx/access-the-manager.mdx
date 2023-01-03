@@ -40,15 +40,22 @@ For security, the {{site.prodname}} Manager UI is not exposed outside of the clu
 The following example uses `tigera-manager` as the backend service without modification. Use the `tigera-manager` service only when edits to the service are not required. (Note if you try to make changes to `tigera-manager`, changes may appear to take effect, but the service always resets to the default and is not overwritten.)
 
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: tigera-manager
   namespace: tigera-manager
 spec:
-  backend:
-    serviceName: tigera-manager
-    servicePort: 9443
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: tigera-manager
+            port:
+              number: 9443
 ```
 
 **Advanced ingress controllers, with modifications**
@@ -56,15 +63,22 @@ spec:
 If you need to annotate or modify the service, you must create your own service (`serviceName: <your own name>`) in the `tigera-manager` namespace, and use it in the ingress resource. For example:
 
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: tigera-manager
   namespace: tigera-manager
 spec:
-  backend:
-    serviceName: annotated-service
-    servicePort: 9443
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: annotated-service
+            port:
+              number: 9443
 ```
 #### Log in to {{site.prodname}} Manager UI 
 

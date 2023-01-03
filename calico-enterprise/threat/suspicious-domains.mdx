@@ -53,6 +53,22 @@ This section describes how to pull or push threat feeds to {{site.prodname}}.
 
 To add threat feeds to {{site.prodname}} for automatic updates (default is once a day), the threat feed(s) must be available using HTTP(S), and return a newline-separated list of domain names.
 
+##### Using Manager UI
+
+1. From the Manager UI, select **Threat Feeds** --> **Add Feed**.
+2. Add your threat feed on the Add a New Threat Feed window. For example: 
+   - **Feed Name**: feodo-tracker
+   - **Description**: This is my threat feed based on domains.
+   - **URL**: https://my.threatfeed.com/deny-list
+   - **Content type**: DomainNameSet
+   - **Labels**: Choose a label from the list. 
+3. Click **Save Changes**. 
+   <br/>From the **Action** menu, you can view or edit the details that you entered and can download the manifest file.
+
+> Go to the Alerts page to view events that are generated when an endpoint in the cluster queries a name on the list. For more information, see [Manage alerts]({{site.baseurl}}/visibility/alerts).
+
+##### Using CLIs
+
 1. Create the GlobalThreatFeed YAML and save it to file.
    The simplest example of this looks like the following. Replace the **name** and the **URL** with your feed.
 
@@ -77,7 +93,7 @@ To add threat feeds to {{site.prodname}} for automatic updates (default is once 
    kubectl apply -f <your_threatfeed_filename>
    ```
 
-3. In {{site.prodname}} Manager, go to the “Alerts” page to view events that are generated when an endpoint in the cluster queries a name on the list.
+ > Go to the Alerts page to view events that are generated when an endpoint in the cluster queries a name on the list. For more information, see [Manage alerts]({{site.baseurl}}/visibility/alerts).
 
 #### Push threat feed updates
 
