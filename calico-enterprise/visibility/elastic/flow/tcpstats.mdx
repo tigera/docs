@@ -4,7 +4,6 @@ description: Enabling TCP socket stats information in flow logs
 canonical_url: /visibility/elastic/flow/tcpstats
 ---
 
-
 ### Big picture
 
 Configure {{site.prodname}} to collect additional TCP socket statistics. While this feature is available in both iptables and eBPF dataplane modes, it uses eBPF to collect the statistics. Therefore it requires a recent Linux kernel (at least v5.3.0/v4.18.0-193 for RHEL).
@@ -18,7 +17,6 @@ Get visibility into the network activity at the socket level using {{site.prodna
 #### eBPF TC programs
 
 eBPF is a Linux kernel technology that allows safe mini-programs to be attached to various hooks inside the kernel. This feature leverages eBPF to look up the TCP socket associated with packets flowing through an interface and sends them to userspace for addition to flow logs.
-
 
 ### Before you begin
 

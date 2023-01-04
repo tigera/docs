@@ -25,7 +25,6 @@ Your Kubernetes cluster must not be running in production. Operator-based upgrad
 
 If your cluster already has {{site.prodname}} installed, follow the [Upgrading {{site.prodname}} from an earlier release guide]({{site.baseurl}}/maintenance/openshift-upgrade) instead.
 
-
 ## Upgrade Calico to {{site.prodname}}
 
 ### Before you begin

@@ -34,7 +34,6 @@ Options:
                                 [Default: yaml]
   --ignore-validation           Skip validation on the converted manifest.
 
-
 Description:
   Convert config files from Calico v1 or Kubernetes to Calico v3 API versions. Both YAML and JSON formats are accepted.
 
@@ -72,7 +71,6 @@ Description:
 --ignore-validation           Skip validation on the converted manifest.
 ```
 {: .no-select-button}
-
 
 ## See also
 

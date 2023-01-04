@@ -15,7 +15,6 @@ Typha configuration can not be modified when Calico Enterprise is installed via 
   <label:Manifest>
 <%
 
-
 Configuration for Typha is read from one of two possible locations, in
 order, as follows.
 

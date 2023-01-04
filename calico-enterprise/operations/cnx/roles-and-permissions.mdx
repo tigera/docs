@@ -31,7 +31,6 @@ The [Calico Enterprise API server]({{site.baseurl}}/reference/installation/api#o
 | Visibility and troubleshooting | Elasticsearch logs: flow, audit, dns, intrusion detection, bgp |
 | Multi-cluster management       | Management and managed clusters in single management plane.  |
 
-
 #### Predefined roles and permissions
 
 {{site.prodname}} provides the following predefined roles and permissions:

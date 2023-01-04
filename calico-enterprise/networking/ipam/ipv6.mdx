@@ -20,7 +20,6 @@ In addition to IPv4, IPv6 is increasingly desirable for Workload communication. 
 
   Each workload gets an IPv4 and an IPv6 address, and can communicate over IPv4 or IPv6.
 
-
 ### Features
 
 This how-to guide uses the following {{site.prodname}} features:

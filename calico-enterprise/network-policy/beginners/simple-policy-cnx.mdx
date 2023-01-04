@@ -69,7 +69,6 @@ We'll use Kubernetes `Deployment` objects to easily create pods in the namespace
    wget -q nginx -O -
    ```
 
-
    You should see a response from `nginx`.  Great! Our service is accessible.  You can exit the pod now.
 
 1. Inspect the network policies using calicoq.  The `host` command displays
@@ -261,7 +260,6 @@ from anywhere else.
    > pods started via `kubectl run` based on the name of the `Deployment`.
    {: .alert .alert-info}
 
-
 1. We should now be able to access the service from the `access` pod.
 
    ```shell
@@ -276,7 +274,6 @@ from anywhere else.
    / #
    ```
    {: .no-select-button}
-
 
 1. From inside the busybox pod, attempt to access the service again.
 
@@ -308,7 +305,6 @@ from anywhere else.
    / #
    ```
    {: .no-select-button}
-
 
 1. From inside the `cant-access` pod, attempt to access the service again.
 

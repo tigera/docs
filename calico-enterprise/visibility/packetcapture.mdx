@@ -44,7 +44,6 @@ Typically, when you troubleshoot microservices and applications for connectivity
 
 For a simple use case workflow see, {% include open-new-window.html text='Faster troubleshooting of microservices, containers, and Kubernetes with Dynamic Packet Capture' url='https://www.tigera.io/blog/faster-troubleshooting-of-microservices-containers-and-kubernetes-with-dynamic-packet-capture/' %}.
 
-
 ### Before you begin
 
 **Not supported**

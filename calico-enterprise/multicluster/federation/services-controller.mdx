@@ -60,7 +60,6 @@ spec:
 
 You can also match services using a label. The label is implicitly added to each service, but it does not appear in `kubectl` when viewing the service.
 
-
 | Label | Description |
 | --- | --- |
 | `federation.tigera.io/remoteClusterName` | Label added to all remote services that correspond to the Remote Cluster Configuration name for the remote cluster. Use this label to restrict the clusters selected by the services. **Note**: The label is not added for services in the local cluster. |

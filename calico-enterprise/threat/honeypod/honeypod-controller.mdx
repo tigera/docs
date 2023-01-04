@@ -111,7 +111,6 @@ kubectl create cm localrule -n tigera-intrusion-detection --from-file=rules=<SNO
 
 Update the controller deployment to include the ConfigMap. **Important!** The mountPath `/etc/snort/rules/custom.rules` is required and the path cannot be changed.
 
-
 ```bash
 cat <<EOF > patch.yaml
 spec:
@@ -172,7 +171,6 @@ kubectl run --restart=Never --image busybox ping-runner -- ping -c1 <honeypod IP
 ```
 
 An alert will be generated for `honeypod-controller.snort` with the example custom signature.
-
 
 ### Above and beyond
 

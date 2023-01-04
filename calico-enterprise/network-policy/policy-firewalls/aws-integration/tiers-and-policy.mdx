@@ -42,7 +42,6 @@ We recommend restricting access to integration tiers to ensure they are not modi
 | `sg-local`  | 106   | AWS SG integration feature |
 | `metadata`  | 107   | AWS SG integration feature |
 
-
 **Best practices:**
  
 To avoid accidentally modifying the above tiers and associated network policies, do not allow admin and non-admin users to view and modify them. 
