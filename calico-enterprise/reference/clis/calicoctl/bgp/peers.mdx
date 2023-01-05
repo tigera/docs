@@ -1,5 +1,5 @@
 ---
-title: calicoctl bgp
+title: calicoctl bgp peers
 description: Command to release an IP address from Calico Enterprise IP management.
 canonical_url: '/reference/calicoctl/bgp/peers'
 ---
