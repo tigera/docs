@@ -29,12 +29,13 @@ The following list shows the platforms supported in this release. The tables pro
 
 #### Supported {{site.prodname}} features
 
-If your platform is listed below, the features in this release will work for your platform unless an individual feature topic explicitly calls out a vendor or {{site.prodname}} limitation. However, all Windows feature limitations are described in [Windows limitations]({{site.baseurl}}/getting-started/windows-calico/limitations), and are not called out in individual Linux topics.
-{: .alert .alert-info}
+If your platform is listed below, the features in this release will work for your platform unless an individual feature topic explicitly calls out a vendor or {{site.prodname}} limitation. 
+
+Note that all Windows feature limitations are described in [Windows limitations]({{site.baseurl}}/getting-started/windows-calico/limitations), and are not called out in individual Linux topics.
 
 ### AKS
 
-Kubernetes version support aligns with upstream Kubernetes to the latest version if available.
+Kubernetes version support aligns with [upstream Kubernetes](#kubernetes-kubeadm) to the latest version if available.
 
 | {{site.prodname}} version | {{site.prodname}} support                                    |
 | ------------------------- | ------------------------------------------------------------ |
@@ -52,7 +53,7 @@ Kubernetes version support aligns with upstream Kubernetes to the latest version
 
 ### EKS
 
-Kubernetes version support aligns with upstream Kubernetes to the latest version if available.
+Kubernetes version support aligns with [upstream Kubernetes](#kubernetes-kubeadm) to the latest version if available.
 
 | {{site.prodname}} version | {{site.prodname}} support                                    |
 | ------------------------- | ------------------------------------------------------------ |
@@ -71,7 +72,7 @@ Kubernetes version support aligns with upstream Kubernetes to the latest version
 
 ### GKE
 
-Kubernetes version support aligns with upstream Kubernetes to the latest version if available.
+Kubernetes version support aligns with [upstream Kubernetes](#kubernetes-kubeadm) to the latest version if available.
 
 | {{site.prodname}} version | {{site.prodname}} support               |
 | ------------------------- | --------------------------------------- |
