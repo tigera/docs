@@ -116,14 +116,7 @@ module.exports = {
         },
         'network-policy/networksets',
         'network-policy/default-deny',
-        {
-          type: 'category',
-          label: 'Policy life cycle and automation',
-          link: {type: 'doc', id: 'network-policy/policy-lifecycle/index'},
-          items: [
-            'network-policy/policy-lifecycle/staged-network-policies',
-          ],
-        },
+        'network-policy/staged-network-policies',
         'network-policy/policy-troubleshooting',
         {
           type: 'category',
