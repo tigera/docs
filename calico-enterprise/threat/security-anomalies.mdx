@@ -16,7 +16,7 @@ Detect suspicious security and performance activities within a cluster and gener
 The {{site.prodname}} anomaly detection engine analyzes patterns and alerts on potential 
 threats and issues such as:
 
-- **Security issues** - threats like DGA, recommaissance threats like IP sweep, but also issues with servers that can affect daily operations. 
+- **Security issues** - threats like DGA, reconnaissance threats like IP sweep, but also issues with servers that can affect daily operations. 
 
 - **Performance issues** - spikes in data transmission, and anomalous degradation in network communication that may impact application workloads.
 
