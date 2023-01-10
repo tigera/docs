@@ -55,7 +55,7 @@ on behalf of that client, sending it the change list from each breadcrumb.
 | `typha_updates_skipped`              | Total number of updates skipped because the datastore change was not relevant. (For example, an update to a Kubernetes Pod field that {{site.prodname}} does not read.) |
 | `typha_updates_total`                | Total number of updates received from the datastore.                                                                                                                    |
 
-Prometheus metrics are self-documenting, with metrics turned on, `curl` can be used to list the
+Prometheus metrics are self-documenting, with metrics turned on, `curl` from a node running Typha can be used to list the
 metrics along with their help text and type information.
 
 ```bash
