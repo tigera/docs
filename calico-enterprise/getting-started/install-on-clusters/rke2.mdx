@@ -24,9 +24,9 @@ The geeky details of what you get:
   For help, see {% include open-new-window.html text='Rancher Kubernetes Engine cluster' url='https://rancher.com/docs/rke/latest/en/' %}.
 
 - {% include open-new-window.html text='Configure cluster with no CNI plugin' url='https://docs.rke2.io/install/configuration' %} using any of these methods:
-   - RKE2 CLI: `--cni none` 
-   - Install script: `RKE2_CNI=none`
-   - {% include open-new-window.html text='Configuration file' url='https://docs.rke2.io/install/configuration#configuration-file' %}: `cni: none`  
+  - RKE2 CLI: `--cni none`
+  - Install script: `RKE2_CNI=none`
+  - {% include open-new-window.html text='Configuration file' url='https://docs.rke2.io/install/configuration#configuration-file' %}: `cni: none`  
 
 - Cluster meets [system requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
 
@@ -45,6 +45,12 @@ The geeky details of what you get:
 #### Install {{site.prodname}}
 
 1. [Configure a storage class for {{site.prodname}}.]({{site.baseurl}}/getting-started/create-storage).
+
+1. For RKE2 [CIS hardened clusters](https://docs.rke2.io/security/hardening_guide) with v1.24 or earlier, if the Tigera operator PSP is not installed, add it now.
+
+   ```bash
+   kubectl create -f {{ "/manifests/psp-tigera-operator.yaml" | absolute_url }}
+   ```
 
 1. Install the Tigera operator and custom resource definitions.
 
