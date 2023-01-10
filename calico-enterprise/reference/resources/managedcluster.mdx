@@ -50,8 +50,7 @@ can be used with a `kubectl` command.
 
 Status represents the latest observed status of Managed cluster. The `status` is read-only for users and updated by the 
 {{site.prodname}} components.
-
-| Field       | Description                 | Schema | 
+ 
 | Field       | Description                 | Schema | 
 |-------------|-----------------------------|--------|
 | conditions |  List of condition that describe the current status of the Managed cluster. | List of ManagedClusterStatusConditions |
