@@ -215,11 +215,3 @@ multiple teams.
 
 ![Example tiers]({{site.baseurl}}/images/example-tiers.svg)
 
-
-
-
-
-
-
-
-

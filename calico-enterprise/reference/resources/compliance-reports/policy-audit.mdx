@@ -9,7 +9,6 @@ set to `policy-audit`.
 The following sample command creates a GlobalReport that results in a daily policy audit report for
 policies that are applied to endpoints in the `public` namespace.
 
-
 ```bash
 kubectl apply -f - << EOF
 apiVersion: projectcalico.org/v3

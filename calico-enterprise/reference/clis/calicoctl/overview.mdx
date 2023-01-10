@@ -65,7 +65,6 @@ Description:
 {: .no-select-button}
 -  [calicoctl version]({{ site.baseurl }}/reference/calicoctl/version)
 
-
 > **Note:** In a multi cluster environment if you have a {% include open-new-window.html url="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" text="kubeconfig" %} file with multiple cluster contexts it is possible to directly change the context using calicoctl `--context` argument.
 {: .alert .alert-info}
 
@@ -139,5 +138,4 @@ are **case insensitive**.
 | Staged network policy.               | `stagednetworkpolicy`, `stagednetworkpolicies`, `stagedpolicy`, `snp`, `stagedpolicies`, `spol`, `spols` |
 | Tier                                 | `tier`, `tiers`                                              |           
 | Workload endpoint                    | `workloadendpoint`, `workloadendpoints`, `wep`, `weps`       |
-
 

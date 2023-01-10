@@ -61,7 +61,6 @@ spec:
 | nets        | The IP networks/CIDRs to include in the set. | Valid IPv4 or IPv6 CIDRs, for example "192.0.2.128/25"  | list   |            |
 | allowedEgressDomains | The list of domain names that belong to this set and are honored in egress allow rules only.  Domain names specified here only work to allow egress traffic from the cluster to external destinations.  They don't work to _deny_ traffic to destinations specified by domain name, or to allow ingress traffic from _sources_ specified by domain name. | List of [exact or wildcard domain names](#exact-and-wildcard-domain-names) | list   |            |
 
-
 #### Exact and wildcard domain names
 
 {% include content/domain-names.md %}

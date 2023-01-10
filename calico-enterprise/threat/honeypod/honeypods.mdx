@@ -136,7 +136,6 @@ After you have verified that the honeypods are installed and working, a best pra
 kubectl delete secret tigera-pull-secret -n tigera-internal
 ```
 
-
 ### Above and beyond
 
 - [Monitor honeypods]({{site.baseurl}}/threat/honeypod/honeypod-controller)

@@ -24,7 +24,6 @@ This how-to guide uses the following {{site.prodname}} features:
 - **tigera-address-groups-controller**
 - **GlobalNetworkSet**
 
-
 ### Concepts
 
 #### About the Panorama policy integration

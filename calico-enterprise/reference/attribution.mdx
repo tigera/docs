@@ -11,7 +11,6 @@ canonical_url: '/reference/attribution/attribution'
 {{site.prodname}} incorporates various open source softwares. The following open source components and their respective licenses used in the product are provided for your informational purposes.
 In the table below, you can look at the details of each project and license associated with it.
 
-
 <table dir="ltr" border="1" cellspacing="0" cellpadding="0"><colgroup><col width="384" /><col width="376" /><col width="100" /></colgroup>
 <tbody>
 	<tr>

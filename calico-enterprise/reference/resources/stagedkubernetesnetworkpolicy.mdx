@@ -9,7 +9,6 @@ This is used to preview network behavior before actually enforcing the network p
 will create a Kubernetes network policy backed by a {{site.prodname}}
 [network policy]({{site.baseurl}}/reference/resources/networkpolicy).
 
-
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/){:target="_blank"}, the following case-insensitive aliases
 may be used to specify the resource type on the CLI:
 `stagedkubernetesnetworkpolicy.projectcalico.org`, `stagedkubernetesnetworkpolicies.projectcalico.org` and abbreviations such as

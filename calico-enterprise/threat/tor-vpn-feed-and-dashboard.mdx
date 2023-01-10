@@ -25,7 +25,6 @@ This how-to guide uses the following {{site.prodname}} features:
 **Tor** is a popular anonymization network on the internet. It is also popular among the malicious actors, hacktivist groups, criminal enterprises as the infrastructure hides the real identity of an attacker carrying out malicious activities. To track down such attackers, Tor historically was subject to investigation by various state level intelligence agencies from US and UK for criminal activities such as Silk Road marketplace, Mirai Botnet C&C. Though it’s not possible to completely de-anonymize the attacker. Hence **Tor bulk exit feed** came into existence to track all the Tor exit IPs over the internet to know attackers using the Tor infrastructure. 
 Over the years, many Tor flaws became public and attackers evolved to leverage Tor network with additional VPN layers. There are many individual VPN providers which have the anonymizing infrastructure. Attackers can use these new breed of VPN providers with existing options like Tor to make sure of anonymity. To help security teams, the **X4B vpn feed** detects all the major VPN providers on the internet.
 
-
 #### Tor-VPN feed types
 
 **Tor Bulk Exit feed**

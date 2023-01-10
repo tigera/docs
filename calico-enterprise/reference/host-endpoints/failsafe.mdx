@@ -4,7 +4,6 @@ description: Avoid cutting off connectivity to hosts because of incorrect networ
 canonical_url: '/reference/host-endpoints/failsafe'
 ---
 
-
 To avoid completely cutting off a host via incorrect or malformed
 policy, {{site.prodname}} has a failsafe mechanism that keeps various pinholes open
 in the firewall.
@@ -19,7 +18,6 @@ By default, {{site.prodname}} keeps the following ports open on *all* host endpo
 |   68   |   UDP    |  Inbound            |             DHCP access                        |
 |   179  |   TCP    |  Inbound & Outbound |             BGP access (Calico networking)     |
 |   6443 |   TCP    |  Inbound & Outbound |             Kubernetes API server access       |
-
 
 The lists of failsafe ports can be configured via the configuration parameters
 `FailsafeInboundHostPorts` and `FailsafeOutboundHostPorts`

@@ -26,7 +26,6 @@ For security, the {{site.prodname}} Manager UI is not exposed outside of the clu
 | Port forwarding    | Forward traffic from a local port to the Kubernetes API server, where it is proxied to the Manager UI. This approach is **not recommended for production**, but is useful if you do not have a load balancer or ingress infrastructure configured, or you need to get started quickly. | n/a                                                          |
 | OpenShift routes   | Use OpenShift routes to expose a service by giving it an externally-reachable hostname (for example, `www.example.com`) . | n/a                                                          |
 
-
 ### How to
 
 #### Configure access to {{site.prodname}} Manager UI
