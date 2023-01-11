@@ -36,7 +36,12 @@ const partials = [
   'ReleaseNotes',
   'CliConfigIntro',
   'PrivateRegistryImagePath',
+  'GettingStartedInstallOnClustersKubernetesHelm',
 ];
+
+const partialFileNameMap = {
+  GettingStartedInstallOnClustersKubernetesHelm: '_GettingStarted_InstallOnClusters_Kubernetes_Helm',
+};
 
 const wrappedPartials = wrapPartials(partials);
 
@@ -77,15 +82,17 @@ function resolveComponent(componentName) {
 }
 
 function getComponentForNextVersion(prodnamedash, componentName) {
+  const fileName = partialFileNameMap[componentName] || componentName;
+
   switch (prodnamedash) {
     case 'calico-enterprise':
-      return require(`../../calico-enterprise/_includes/components/${componentName}`).default;
+      return require(`../../calico-enterprise/_includes/components/${fileName}`).default;
     case 'calico':
-      return require(`../../calico/_includes/components/${componentName}`).default;
+      return require(`../../calico/_includes/components/${fileName}`).default;
     case 'calico-cloud':
       // console.error('No partial components registered for Calico Cloud');
       // return;
-      return require(`../../calico-enterprise/_includes/components/${componentName}`).default;
+      return require(`../../calico-enterprise/_includes/components/${fileName}`).default;
     default:
       console.error(`${prodnamedash} product doesn't exist`);
   }
@@ -191,6 +198,9 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'PrivateRegistryImagePath':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/PrivateRegistryImagePath`)
+        .default;
+    case 'GettingStartedInstallOnClustersKubernetesHelm':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/_GettingStarted_InstallOnClusters_Kubernetes_Helm`)
         .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Enterprise`);
