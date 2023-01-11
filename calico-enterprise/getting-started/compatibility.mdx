@@ -124,7 +124,7 @@ Kubernetes version support aligns with [upstream Kubernetes](#kubernetes-kubeadm
 
 | {{site.prodname}} version | MKE version                          | {{site.prodname}} support                 | Kubernetes versions |
 | ------------------------- | ------------------------------------ | ----------------------------------------- | ------------------- |
-| 3.15                      | MKE 3.5                              | {{site.prodname}} CNI with network policy | 1.21                |
+| 3.15                      | MKE 3.6                              | {{site.prodname}} CNI with network policy | 1.24                |
 | 3.14                      | MKE 3.5                              | {{site.prodname}} CNI with network policy | 1.21                |
 | 3.13                      | MKE 3.5                              | {{site.prodname}} CNI with network policy | 1.21                |
 | 3.12                      | MKE 3.5                              | {{site.prodname}} CNI with network policy | 1.21                |
