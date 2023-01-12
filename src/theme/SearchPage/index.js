@@ -13,6 +13,7 @@ import { useAllDocsData } from '@docusaurus/plugin-content-docs/client';
 import Translate, { translate } from '@docusaurus/Translate';
 import Layout from '@theme/Layout';
 import styles from './styles.module.css';
+import { getProductNameById } from '../../utils/getProductNameById';
 // Very simple pluralization: probably good enough for now
 function useDocumentsFoundPlural() {
   const { selectMessage } = usePluralForm();
@@ -93,6 +94,13 @@ function SearchPageContent() {
   const documentsFoundPlural = useDocumentsFoundPlural();
   const docsSearchVersionsHelpers = useDocsSearchVersionsHelpers();
   const { searchQuery, setSearchQuery } = useSearchPage();
+  const [productId, setProductId] = useState();
+  const [version, setVersion] = useState();
+  useEffect(() => {
+    const params = new URL(location.href).searchParams;
+    setProductId(params.get('p'));
+    setVersion(params.get('v'));
+  }, []);
   const initialSearchResultState = {
     items: [],
     query: null,
@@ -206,9 +214,13 @@ function SearchPageContent() {
   const makeSearch = useEvent((page = 0) => {
     algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', 'default');
     algoliaHelper.addDisjunctiveFacetRefinement('language', currentLocale);
-    Object.entries(docsSearchVersionsHelpers.searchVersions).forEach(([pluginId, searchVersion]) => {
-      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${pluginId}-${searchVersion}`);
-    });
+    if (productId) {
+      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${productId}-${version}`);
+    } else {
+      Object.entries(docsSearchVersionsHelpers.searchVersions).forEach(([pluginId, searchVersion]) => {
+        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${pluginId}-${searchVersion}`);
+      });
+    }
     algoliaHelper.setQuery(searchQuery).setPage(page).search();
   });
   useEffect(() => {
@@ -367,6 +379,11 @@ function SearchPageContent() {
                     dangerouslySetInnerHTML={{ __html: summary }}
                   />
                 )}
+
+                <div className='search-page-productId'>
+                  {getProductNameById(url.split('/')[1])} ({docsSearchVersionsHelpers.searchVersions[url.split('/')[1]]}
+                  )
+                </div>
               </article>
             ))}
           </main>

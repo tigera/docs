@@ -6,11 +6,11 @@ import { useBaseUrlUtils } from '@docusaurus/useBaseUrl';
 import Link from '@docusaurus/Link';
 import Head from '@docusaurus/Head';
 import { isRegexpStringMatch } from '@docusaurus/theme-common';
-import { useSearchPage } from '@docusaurus/theme-common/internal';
 import { DocSearchButton, useDocSearchKeyboardEvents } from '@docsearch/react';
 import { useAlgoliaContextualFacetFilters } from '@docusaurus/theme-search-algolia/client';
 import Translate from '@docusaurus/Translate';
 import translations from '@theme/SearchTranslations';
+import { useAllDocsData } from '@docusaurus/plugin-content-docs/client';
 import { useProductId } from '../../utils/useProductId';
 import { getProductNameById } from '../../utils/getProductNameById';
 let DocSearchModal = null;
@@ -27,11 +27,20 @@ function Hit({ hit, children }) {
     </Link>
   );
 }
-function ResultsFooter({ state, onClose }) {
-  const { generateSearchPageLink } = useSearchPage();
+function ResultsFooter({ state, onClose, productId }) {
+  const data = useAllDocsData();
+
+  let version = '';
+  if (productId) {
+    const versions = data[productId].versions.sort((v) => (v.isLast ? 1 : -1));
+    version = versions.find((v) => location.pathname.startsWith(v.path)).name;
+  }
+
+  const to = `/search?q=${encodeURIComponent(state.query)}&p=${productId || ''}&v=${version}`;
+
   return (
     <Link
-      to={generateSearchPageLink(state.query)}
+      to={to}
       onClick={onClose}
     >
       <Translate
@@ -164,9 +173,10 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
           <ResultsFooter
             {...footerProps}
             onClose={onClose}
+            productId={productId}
           />
         ),
-    [onClose]
+    [onClose, productId]
   );
   const transformSearchClient = useCallback(
     (searchClient) => {
@@ -229,22 +239,24 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
         DocSearchModal &&
         searchContainer.current &&
         createPortal(
-          <DocSearchModal
-            onClose={onClose}
-            initialScrollY={window.scrollY}
-            initialQuery={initialQuery}
-            navigator={navigator}
-            transformItems={transformItems}
-            hitComponent={Hit}
-            transformSearchClient={transformSearchClient}
-            {...(props.searchPagePath && {
-              resultsFooterComponent,
-            })}
-            {...props}
-            searchParameters={searchParameters}
-            placeholder={'Search docs' + (productId ? ` (${getProductNameById(productId)})` : '')}
-            translations={translations.modal}
-          />,
+          <div className={`DocSearch-Modal-product-${productId}`}>
+            <DocSearchModal
+              onClose={onClose}
+              initialScrollY={window.scrollY}
+              initialQuery={initialQuery}
+              navigator={navigator}
+              transformItems={transformItems}
+              hitComponent={Hit}
+              transformSearchClient={transformSearchClient}
+              {...(props.searchPagePath && {
+                resultsFooterComponent,
+              })}
+              {...props}
+              searchParameters={searchParameters}
+              placeholder={'Search docs' + (productId ? ` (${getProductNameById(productId)})` : '')}
+              translations={translations.modal}
+            />
+          </div>,
           searchContainer.current
         )}
     </>
