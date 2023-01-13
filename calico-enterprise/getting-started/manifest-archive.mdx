@@ -28,74 +28,79 @@ This feature is:
 
 1. Untar the **release-x.x.x.tgz** to a local directory.
 
-   ```
+   ```bash
    tar xzvf release-x.y.z.tgz
    ```
 
-**OpenShift users**
+{% tabs %}
 
-1. In the patch release archive, find the `ocp-manifests` folder.  This contains three folders `install-manifests`,
-`enterprise-resources`, and `upgrade-manifests`. `install-manifests` contains all the manifests needed for minimal OCP cluster. 
-`enterprise-resources` contains the {{site.prodname}} resources. `upgrade-manifests` folder contains all the manifests needed for upgrading {{site.prodname}}. 
+<label:Kubernetes,active:true>
+<%
 
-1. Apply patches.
+In the patch release archive, navigate to the `manifests` folder.
 
-   Create the cluster using the following command.
+1. Follow the [quickstart installation]({{site.baseurl}}/getting-started/kubernetes/quickstart), making the following changes:
+   1. Install Tigera operator and custom resource definitions.
+      
+      ```bash
+      kubectl create -f <your-local-directory-archive>/manifests/tigera-operator.yaml
+      ```
 
-   ```
-   cd <your-local-directory-archive>/ocp-manifests/install-manifests && kubectl create -f
-   ```
+   2. If you are not using an existing Prometheus operator, install it.
+      
+      ```bash
+      kubectl create -f <your-local-directory-archive>/manifests/tigera-prometheus-operator.yaml
+      ```
 
-   To install {{site.prodname}} resources apply the following command.
+   3. Install Tigera custom resources.
+      
+      ```bash
+      kubectl create -f <your-local-directory-archive>/manifests/custom-resources.yaml
+      ```
 
-   ```
-   cd <your-local-directory-archive>/ocp-manifests/enterprise-resources && kubectl create -f
-   ```
+      > **NOTE**: For platforms like AKS or EKS, you must modify the command to be platform specific.
+      > EKS example: `kubectl create -f <your-local-directory-archive>/manifests/eks/custom-resources.yaml`
+      > {: .alert .alert-info}
 
-   **Example**
-   
-   ```
-   cd /mylocaldir/release-v3.0.0-v1.6.3/ocp-manifests/install-manifests && kubectl create -f
-   cd /mylocaldir/release-v3.0.0-v1.6.3/ocp-manifests/enterprise-resources && kubectl create -f
-   ```  
+%>
 
-**All other users**
+<label: OpenShift>
+<%
 
-1. In the patch release, note the full path to your patch release and platform that you want to apply. 
-1. Use the following command to apply the appropriate .yamls for your platform.
+In the patch release archive, navigate to the `ocp-manifests` folder which contains three folders `install-manifests`,
+`enterprise-resources`, and `upgrade-manifests`.
 
-   ```
-   cd <your-local-directory-archive>/manifests && kubectl create -f <manifest-name>.yaml
-   ```
+- `install-manifests` contains all the manifests needed for minimal OCP cluster.
+- `enterprise-resources` contains the {{site.prodname}} resources.
+- `upgrade-manifests` folder contains all the manifests needed for upgrading {{site.prodname}}.
 
-   **Examples**
+1. Create the cluster by following [the standard installation]({{site.baseurl}}/getting-started/openshift/installation), with the following caveat:
+   1. After the Kubernetes manifests directory is generated, copy the files from `install-manifests` instead of downloading the manifests.
 
-   **On-premises**
+      > **NOTE**: Before creating the cluster, be sure to add an image pull secret in `install-manifests/02-pull-secret.yaml`
+      > {: .alert .alert-info}
 
-   In this example, we apply a patch release for Kubernetes on-premises.
+  1. Install {{site.prodname}} resources:
 
-   ```
-   cd /mylocaldir/release-v3.0.0-v1.6.3/manifests && kubectl create -f tigera-operator.yaml
-   cd /mylocaldir/release-v3.0.0-v1.6.3/manifests && kubectl create -f custom-resources.yaml
-   cd /mylocaldir/release-v3.0.0-v1.6.3/manifests && kubectl create -f tigera-policies.yaml
-   cd /mylocaldir/release-v3.0.0-v1.6.3/manifests && kubectl create -f tigera-policies-managed.yaml
-   cd /mylocaldir/release-v3.0.0-v1.6.3/manifests && kubectl create -f compliance-reporter-pod-es-config.yaml
-   ...
-   ```
+    ```bash
+    cd <your-local-directory-archive>/ocp-manifests/enterprise-resources && oc create -f
 
-   In this example, we apply a patch release for the threat defense feature.
+%>
 
-   ```
-   cd /mylocaldir/release-v3.0.0-v1.6.3/manifests/threatdef && kubectl create -f ejr-vpn.yaml.yaml
-   cd /mylocaldir/release-v3.0.0-v1.6.3/manifests/threatdef && kubectl create -f tor-exit-feed.yaml
-   ```
+<label: Features>
+<%
 
-   **Managed cloud provider**
+In the patch release archive, there are additional manifests relating to specific features.
 
-   In this example, we apply a patch release for GKE.
+**Examples**
 
-   ```
-   cd /mylocaldir/release-v3.0.0-v1.6.3/manifests/gke && kubectl create -f cnx-api-kdd.yaml.yaml
-   cd /mylocaldir/release-v3.0.0-v1.6.3/manifests/gke && kubectl create -f calico-typha.yaml.yaml
-   ...
-   ```
+To apply the patch release for threat defense features.
+
+```bash
+cd <your-local-directory-archive>/manifests/threatdef && kubectl create -f ejr-vpn.yaml.yaml
+cd <your-local-directory-archive>/manifests/threatdef && kubectl create -f tor-exit-feed.yaml
+```
+
+%>
+
+{% endtabs %}
