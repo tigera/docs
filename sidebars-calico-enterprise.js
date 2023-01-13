@@ -799,6 +799,7 @@ module.exports = {
               items: [
                 'reference/component-resources/typha/overview',
                 'reference/component-resources/typha/configuration',
+                'reference/component-resources/typha/prometheus',
               ],
             },
           ],
