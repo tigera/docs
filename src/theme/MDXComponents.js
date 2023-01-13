@@ -208,12 +208,5 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
 }
 
 function wrapPartials(partials) {
-  const wrapPartial = (Partial) => (props) =>
-    (
-      <div className='docs-partial'>
-        <Partial {...props} />
-      </div>
-    );
-
-  return Object.fromEntries(partials.map((name) => [name, wrapPartial(resolveComponent(name))]));
+  return Object.fromEntries(partials.map((name) => [name, resolveComponent(name)]));
 }
