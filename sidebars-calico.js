@@ -363,7 +363,7 @@ module.exports = {
           label: 'Policy for Istio',
           link: { type: 'doc', id: 'network-policy/istio/index' },
           items: [
-            'network-policy/istio/enforce-policy-istio',
+            'network-policy/istio/app-layer-policy',
             'network-policy/istio/http-methods',
             'network-policy/istio/enforce-policy-istio',
           ],
