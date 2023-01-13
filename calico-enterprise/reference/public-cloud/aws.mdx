@@ -96,7 +96,7 @@ Install the AWS VPC CNI plugin in your Kubernetes cluster as follows.
 
    ```bash
    curl \
-   https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/v1.3/aws-k8s-cni.yaml \
+   https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.11.4/config/master/aws-k8s-cni.yaml \
    -O
    ```
 
