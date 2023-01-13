@@ -140,6 +140,7 @@ module.exports = {
             'getting-started/kubernetes/helm',
             'getting-started/kubernetes/microk8s',
             'getting-started/kubernetes/minikube',
+            'getting-started/kubernetes/kind',
             {
               type: 'category',
               label: 'Calico the hard way',
