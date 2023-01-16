@@ -1,27 +1,30 @@
 ---
-title: Encrypt data in transit
 description: Enable WireGuard for state-of-the-art cryptographic security between pods for Calico Enterprise clusters.
-canonical_url: '/compliance/encrypt-cluster-pod-traffic'
 ---
 
-### Big picture
+# Encrypt data in transit
 
-Enable WireGuard to secure on the wire in-cluster pod traffic in a {{site.prodname}} cluster.
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-### Value
+## Big picture
 
-When this feature is enabled, {{site.prodname}} automatically creates and manages WireGuard tunnels between nodes providing transport-level security for on-the-wire, in-cluster pod traffic. WireGuard provides {% include open-new-window.html text='formally verified' url='https://www.wireguard.com/formal-verification/' %} secure and {% include open-new-window.html text='performant tunnels' url='https://www.wireguard.com/performance/' %} without any specialized hardware. For a deep dive in to WireGuard implementation, see this {% include open-new-window.html text='whitepaper' url='https://www.wireguard.com/papers/wireguard.pdf' %}.
+Enable WireGuard to secure on the wire in-cluster pod traffic in a {{prodname}} cluster.
 
-{{ site.prodname }} supports WireGuard encryption for both IPv4 and IPv6 traffic. These can be independently enabled in the FelixConfiguration resource: `wireguardEnabled`
+## Value
+
+When this feature is enabled, {{prodname}} automatically creates and manages WireGuard tunnels between nodes providing transport-level security for on-the-wire, in-cluster pod traffic. WireGuard provides [formally verified](https://www.wireguard.com/formal-verification/) secure and [performant tunnels](https://www.wireguard.com/performance/) without any specialized hardware. For a deep dive in to WireGuard implementation, see this [whitepaper](https://www.wireguard.com/papers/wireguard.pdf).
+
+{{prodname}} supports WireGuard encryption for both IPv4 and IPv6 traffic. These can be independently enabled in the FelixConfiguration resource: `wireguardEnabled`
 enables encrypting IPv4 traffic over an IPv4 underlay network and `wireguardEnabledV6` enables encrypting IPv6 traffic over an IPv6 underlay network.
 
-### Features
+## Features
 
-This how-to guide uses the following {{site.prodname}} features:
+This how-to guide uses the following {{prodname}} features:
 
 - **Felix configuration resource** with WireGuard configuration parameters
 
-### Before you begin
+## Before you begin
 
 **Unsupported**
 
@@ -40,14 +43,17 @@ This how-to guide uses the following {{site.prodname}} features:
 
 **Required**
 
-- On all nodes in the cluster that you want to participate in {{site.prodname}} encryption, verify that the operating system(s) on the nodes are {% include open-new-window.html text='installed with WireGuard' url='https://www.wireguard.com/install/' %}.
+- On all nodes in the cluster that you want to participate in {{prodname}} encryption, verify that the operating system(s) on the nodes are [installed with WireGuard](https://www.wireguard.com/install/).
 
-  > **Note**: Some node operating systems do not support WireGuard, or do not have it installed by default. Enabling {{site.prodname}} WireGuard encryption does not require all nodes to be installed with WireGuard. However, traffic to or from a node that does not have WireGuard installed, will not be encrypted.
-  {: .alert .alert-info}
+  :::note
 
-- IP addresses for every node in the cluster. This is required to establish secure tunnels between the nodes. {{site.prodname}} can automatically do this using [IP autodetection methods]({{site.baseurl}}/networking/ip-autodetection).
+  Some node operating systems do not support WireGuard, or do not have it installed by default. Enabling {{prodname}} WireGuard encryption does not require all nodes to be installed with WireGuard. However, traffic to or from a node that does not have WireGuard installed, will not be encrypted.
 
-### How to
+  :::
+
+- IP addresses for every node in the cluster. This is required to establish secure tunnels between the nodes. {{prodname}} can automatically do this using [IP autodetection methods](../networking/ipam/ip-autodetection.mdx).
+
+## How to
 
 - [Install WireGuard](#install-wireguard)
 - [Enable WireGuard for a cluster](#enable-wireguard-for-a-cluster)
@@ -55,119 +61,131 @@ This how-to guide uses the following {{site.prodname}} features:
 - [Disable WireGuard for an individual node](#disable-wireguard-for-an-individual-node)
 - [Disable WireGuard for a cluster](#disable-wireguard-for-a-cluster)
 
-#### Install WireGuard
+### Install WireGuard
 
 WireGuard is included in Linux 5.6+ kernels, and has been backported to earlier Linux kernels in some Linux distributions.
 
-Install WireGuard on cluster nodes using {% include open-new-window.html text='instructions for your operating system' url='https://www.wireguard.com/install/' %}. Note that you may need to reboot your nodes after installing WireGuard to make the kernel modules available on your system.
+Install WireGuard on cluster nodes using [instructions for your operating system](https://www.wireguard.com/install/). Note that you may need to reboot your nodes after installing WireGuard to make the kernel modules available on your system.
 
 Use the following instructions for these platforms that are not listed on the WireGuard installation page, before proceeding to [enabling WireGuard](#enable-wireguard-for-a-cluster).
 
-{% tabs %}
-<label:EKS,active:true>
-<%
+<Tabs>
+<TabItem label="EKS" value="EKS-0">
+
 To install WireGuard on the default Amazon Machine Image (AMI):
 
-```bash
+```batch
 sudo yum install kernel-devel-`uname -r` -y
 sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
 sudo curl -o /etc/yum.repos.d/jdoss-wireguard-epel-7.repo https://copr.fedorainfracloud.org/coprs/jdoss/wireguard/repo/epel-7/jdoss-wireguard-epel-7.repo
 sudo yum install wireguard-dkms wireguard-tools -y
 ```
 
-%>
-<label:AKS>
-<%
+</TabItem>
+<TabItem label="AKS" value="AKS-1">
+
 AKS cluster nodes run Ubuntu with a kernel that has WireGuard installed already, so there is no manual installation required.
 
-%>
-<label:OpenShift>
-<%
+</TabItem>
+<TabItem label="OpenShift" value="OpenShift-2">
+
 To install WireGuard for OpenShift v4.8:
 
+1.  Install requirements:
 
-   1. Install requirements:
-      - {% include open-new-window.html text='CoreOS Butane' url='https://coreos.github.io/butane/getting-started/' %}
-      - {% include open-new-window.html text='Openshift CLI' url='https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html' %}
+    - [CoreOS Butane](https://coreos.github.io/butane/getting-started/)
+    - [Openshift CLI](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html)
 
-   1. Download and configure the tools needed for kmods.
-   ```bash
-   FAKEROOT=$(mktemp -d)
-   git clone https://github.com/tigera/kmods-via-containers
-   cd kmods-via-containers
-   make install FAKEROOT=${FAKEROOT}
-   cd ..
-   git clone https://github.com/tigera/kvc-wireguard-kmod
-   cd kvc-wireguard-kmod
-   make install FAKEROOT=${FAKEROOT}
-   cd ..
-   ```
+1.  Download and configure the tools needed for kmods.
 
-   1. Configure/edit `${FAKEROOT}/root/etc/kvc/wireguard-kmod.conf`. 
-   
-       a. You must then set the URLs for the `KERNEL_CORE_RPM`, `KERNEL_DEVEL_RPM` and `KERNEL_MODULES_RPM` packages in the conf file `$FAKEROOT/etc/kvc/wireguard-kmod.conf`. Obtain copies for `kernel-core`, `kernel-devel`, and `kernel-modules` rpms from {% include open-new-window.html text='RedHat Access' url='https://access.redhat.com/downloads/content/package-browser' %} and host it in an http file server that is reachable by your OCP workers.
+```batch
+FAKEROOT=$(mktemp -d)
+git clone https://github.com/tigera/kmods-via-containers
+cd kmods-via-containers
+make install FAKEROOT=${FAKEROOT}
+cd ..
+git clone https://github.com/tigera/kvc-wireguard-kmod
+cd kvc-wireguard-kmod
+make install FAKEROOT=${FAKEROOT}
+cd ..
+```
 
-       b. For help configuring `kvc-wireguard-kmod/wireguard-kmod.conf` and WireGuard version to kernel version compatibility, see the {% include open-new-window.html text='kvc-wireguard-kmod README file' url='https://github.com/tigera/kvc-wireguard-kmod#quick-config-variables-guide' %}.
+1.  Configure/edit `${FAKEROOT}/root/etc/kvc/wireguard-kmod.conf`.
 
+    a. You must then set the URLs for the `KERNEL_CORE_RPM`, `KERNEL_DEVEL_RPM` and `KERNEL_MODULES_RPM` packages in the conf file `$FAKEROOT/etc/kvc/wireguard-kmod.conf`. Obtain copies for `kernel-core`, `kernel-devel`, and `kernel-modules` rpms from [RedHat Access](https://access.redhat.com/downloads/content/package-browser) and host it in an http file server that is reachable by your OCP workers.
 
-   1. Get RHEL Entitlement data from your own RHEL8 system from a host in your cluster.
-      ```bash
-      tar -czf subs.tar.gz /etc/pki/entitlement/ /etc/rhsm/ /etc/yum.repos.d/redhat.repo
-      ```
-      Please refer to Openshift {% include open-new-window.html text='documentation' url='https://access.redhat.com/documentation/en-us/red_hat_subscription_management/1/html-single/rhsm/index#reg-cli' %} for more information about these entitlement files.
+    b. For help configuring `kvc-wireguard-kmod/wireguard-kmod.conf` and WireGuard version to kernel version compatibility, see the [kvc-wireguard-kmod README file](https://github.com/tigera/kvc-wireguard-kmod#quick-config-variables-guide).
 
-   1. Copy the `subs.tar.gz` file to your workspace and then extract the contents using the following command.
-      ```bash
-      tar -x -C ${FAKEROOT}/root -f subs.tar.gz
-      ```
+1.  Get RHEL Entitlement data from your own RHEL8 system from a host in your cluster.
 
-   1. Transpile your machine config using {% include open-new-window.html text='CoreOS Butane' url='https://coreos.github.io/butane/getting-started/' %}.
-      ```bash
-      cd kvc-wireguard-kmod
-      make ignition FAKEROOT=${FAKEROOT} > mc-wg.yaml
-      ```
+    ```batch
+    tar -czf subs.tar.gz /etc/pki/entitlement/ /etc/rhsm/ /etc/yum.repos.d/redhat.repo
+    ```
 
-   1. With the KUBECONFIG set for your cluster, run the following command to apply the MachineConfig which will install WireGuard across your cluster.
-      ```bash
-      oc create -f mc-wg.yaml
-      ```
-%>
-{% endtabs %}
+    Please refer to Openshift [documentation](https://access.redhat.com/documentation/en-us/red_hat_subscription_management/1/html-single/rhsm/index#reg-cli) for more information about these entitlement files.
 
-#### Enable WireGuard for a cluster
+1.  Copy the `subs.tar.gz` file to your workspace and then extract the contents using the following command.
+
+    ```batch
+    tar -x -C ${FAKEROOT}/root -f subs.tar.gz
+    ```
+
+1.  Transpile your machine config using [CoreOS Butane](https://coreos.github.io/butane/getting-started/).
+
+    ```batch
+    cd kvc-wireguard-kmod
+    make ignition FAKEROOT=${FAKEROOT} > mc-wg.yaml
+    ```
+
+1.  With the KUBECONFIG set for your cluster, run the following command to apply the MachineConfig which will install WireGuard across your cluster.
+    ```batch
+    oc create -f mc-wg.yaml
+    ```
+
+</TabItem>
+</Tabs>
+
+### Enable WireGuard for a cluster
 
 Enable IPv4 WireGuard encryption across all the nodes using the following command.
 
-```bash
+```batch
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
 ```
 
 Enable IPv6 WireGuard encryption across all the nodes using the following command.
 
-```bash
+```batch
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabledV6":true}}'
 ```
 
 To enable both IPv4 and IPv6 WireGuard encryption across all the nodes, use the following command.
 
-```bash
+```batch
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true,"wireguardEnabledV6":true}}'
 ```
-For OpenShift, add the Felix configuration with WireGuard enabled [under custom resources]({{site.baseurl}}/getting-started/openshift/installation#provide-additional-configuration).
 
-   > **Note**: The above command can be used to change other WireGuard attributes. For a list of other WireGuard parameters and configuration evaluation, see the [Felix configuration]({{site.baseurl}}/reference/resources/felixconfig#felix-configuration-definition).
-   {: .alert .alert-info}
+For OpenShift, add the Felix configuration with WireGuard enabled [under custom resources](../getting-started/install-on-clusters/openshift/installation.mdx#provide-additional-configuration).
 
-   > **Note**:  `natOutgoing: true` is set for the default IPv4 IP pool, but not so for IPv6. Wireguard requires `natOutgoing` to be enabled in both IPv4 and IPv6, so [enable NAT outgoing for the IPv6 IP pools]({{site.baseurl}}/networking/workloads-outside-cluster) when using IPv6 Wireguard.
-   {: .alert .alert-info}
+:::note
 
-We recommend that you review and modify the MTU used by {{site.prodname}} networking when WireGuard is enabled to increase network performance. Follow the instructions in the [Configure MTU to maximize network performance]({{site.baseurl}}/networking/mtu) guide to set the MTU to a value appropriate for your network.
+The above command can be used to change other WireGuard attributes. For a list of other WireGuard parameters and configuration evaluation, see the [Felix configuration](../reference/resources/felixconfig.mdx#felix-configuration-definition).
 
-#### Verify encryption is enabled
+:::
+
+:::note
+
+`natOutgoing: true` is set for the default IPv4 IP pool, but not so for IPv6. Wireguard requires `natOutgoing` to be enabled in both IPv4 and IPv6, so [enable NAT outgoing for the IPv6 IP pools](../networking/configuring/workloads-outside-cluster.mdx) when using IPv6 Wireguard.
+
+:::
+
+We recommend that you review and modify the MTU used by {{prodname}} networking when WireGuard is enabled to increase network performance. Follow the instructions in the [Configure MTU to maximize network performance](../networking/configuring/mtu.mdx) guide to set the MTU to a value appropriate for your network.
+
+### Verify encryption is enabled
 
 To verify that the nodes are configured for WireGuard encryption, check the node status set by Felix using `kubectl`. For example:
 
-```bash
+```batch
 kubectl get node <NODE-NAME> -o yaml
 ...
 kind: Node
@@ -177,21 +195,21 @@ metadata:
 ...
 ```
 
-#### Enable WireGuard statistics
+### Enable WireGuard statistics
 
 Since v3.11.1, WireGuard statistics are now automatically enabled with the enable wireguard setting(s) mentioned above.
 
-#### View WireGuard statistics
+### View WireGuard statistics
 
-To view WireGuard statistics in Manager UI, you must enable them. From the left navbar, click **Dashboard**, and the Layout Settings icon. 
+To view WireGuard statistics in Manager UI, you must enable them. From the left navbar, click **Dashboard**, and the Layout Settings icon.
 
-![Wireguard Dashboard Toggle]({{site.baseurl}}/images/wireguard/stats-toggle.png)
+![Wireguard Dashboard Toggle](/img/calico-enterprise/3.15/wireguard/stats-toggle.png)
 
-#### Disable WireGuard for an individual node
+### Disable WireGuard for an individual node
 
 To disable WireGuard on a specific node with WireGuard installed, modify the node-specific Felix configuration. e.g., to turn off encryption for pod traffic on node `my-node`, use the following command. This command disables WireGuard for both IPv4 and IPv6, modify it accordingly if disabling only either IP version:
 
-```bash
+```batch
 cat <<EOF | kubectl apply -f -
 apiVersion: projectcalico.org/v3
 kind: FelixConfiguration
@@ -209,19 +227,19 @@ With the above command, Calico will not encrypt any of the pod traffic to or fro
 
 To enable encryption for IPv4 and IPv6 pod traffic on node `my-node` again, patch this node's FelixConfiguration (modify accordingly if only dealing with IPv4 or IPv6):
 
-```bash
+```batch
 kubectl patch felixconfiguration node.my-node --type='merge' -p '{"spec":{"wireguardEnabled":true,"wireguardEnabledV6":true}}'
 ```
 
-#### Disable WireGuard for a cluster
+### Disable WireGuard for a cluster
 
 To disable WireGuard on all nodes modify the default Felix configuration. For example:
 
-```bash
+```batch
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":false,"wireguardEnabledV6":false}}'
 ```
 
-### Above and beyond
+## Above and beyond
 
-- [Secure {{site.prodname}} component communications]({{site.baseurl}}/security/comms)
-- [Configure MTU to maximize network performance]({{site.baseurl}}/networking/mtu)
+- [Secure {{prodname}} component communications](../operations/comms/index.mdx)
+- [Configure MTU to maximize network performance](../networking/configuring/mtu.mdx)

@@ -1,14 +1,14 @@
 ---
-title: Install Calico Enterprise for Windows on RKE
 description: Install Calico Enterprise for Windows on RKE.
-canonical_url: '/getting-started/windows-calico/kubernetes/rancher'
 ---
 
-### Big picture
+# Install Calico Enterprise for Windows on RKE
 
-Install {{site.prodnameWindows}} on Rancher Kubernetes Engine (RKE).
+## Big picture
 
-### Before you begin
+Install {{prodnameWindows}} on Rancher Kubernetes Engine (RKE).
+
+## Before you begin
 
 **Supported networking**
 
@@ -17,26 +17,26 @@ Install {{site.prodnameWindows}} on Rancher Kubernetes Engine (RKE).
 
 **Required**
 
-- A [compatible RKE cluster]({{site.baseurl}}/getting-started/compatibility#rke)
+- A [compatible RKE cluster](../../../compatibility.mdx#rke)
 
-- An RKE cluster provisioned with {% include open-new-window.html text='no network plugin' url='https://rancher.com/docs/rke/latest/en/config-options/add-ons/network-plugins#disabling-deployment-of-a-network-plug-in' %}
+- An RKE cluster provisioned with [no network plugin](https://rancher.com/docs/rke/latest/en/config-options/add-ons/network-plugins#disabling-deployment-of-a-network-plug-in)
 
-- One or more Windows nodes that meet the [requirements]({{site.baseurl}}/getting-started/windows-calico/kubernetes/requirements).
+- One or more Windows nodes that meet the [requirements](requirements.mdx).
 
-### How to
+## How to
 
-The following steps will outline the installation of {{site.prodname}} networking on the RKE cluster, then the installation of {{site.prodnameWindows}} on the Windows nodes.
+The following steps will outline the installation of {{prodname}} networking on the RKE cluster, then the installation of {{prodnameWindows}} on the Windows nodes.
 
-1. Install the Tigera {{site.prodname}} operator and custom resource definitions.
+1. Install the Tigera {{prodname}} operator and custom resource definitions.
 
-   ```bash
-   kubectl create -f {{ "/manifests/tigera-operator.yaml" | absolute_url }}
+   ```batch
+   kubectl create -f {{filesUrl}}/manifests/tigera-operator.yaml
    ```
 
 1. Download the necessary Installation custom resource.
 
-   ```bash
-   wget {{ "/manifests/custom-resources.yaml" | absolute_url }}
+   ```batch
+   wget {{filesUrl}}/manifests/custom-resources.yaml
    ```
 
 1. Update the `calicoNetwork` options, ensuring that the correct pod CIDR is set. (Rancher uses `10.42.0.0/16` by default.)
@@ -50,10 +50,10 @@ The following steps will outline the installation of {{site.prodname}} networkin
    metadata:
      name: default
    spec:
-     # Configures Calico networking.
+      Configures Calico networking.
      calicoNetwork:
        bgp: Disabled
-       # Note: The ipPools section cannot be modified post-install.
+        Note: The ipPools section cannot be modified post-install.
        ipPools:
        - blockSize: 26
          cidr: 10.42.0.0/16
@@ -70,9 +70,9 @@ The following steps will outline the installation of {{site.prodname}} networkin
    metadata:
      name: default
    spec:
-     # Configures Calico networking.
+      Configures Calico networking.
      calicoNetwork:
-       # Note: The ipPools section cannot be modified post-install.
+        Note: The ipPools section cannot be modified post-install.
        ipPools:
        - blockSize: 26
          cidr: 10.42.0.0/16
@@ -81,29 +81,36 @@ The following steps will outline the installation of {{site.prodname}} networkin
          nodeSelector: all()
    ```
 
-   > **Note**: For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
-   {: .alert .alert-info}
+   :::note
+
+   For more information on configuration options available in this manifest, see [the installation reference](../../../../reference/installation/api.mdx).
+
+   :::
 
 1. Apply the updated custom resources:
 
-   ```bash
+   ```batch
    kubectl create -f custom-resources.yaml
    ```
 
 1. Configure strict affinity:
-   ```bash
+
+   ```batch
    kubectl patch ipamconfigurations default --type merge --patch='{"spec": {"strictAffinity": true}}'
    ```
 
-1. Finally, follow the {{site.prodnameWindows}} [quickstart guide for Kubernetes]({{site.baseurl}}/getting-started/windows-calico/quickstart#install-calico-enterprise-for-windows-manually)
+1. Finally, follow the {{prodnameWindows}} [quickstart guide for Kubernetes](../quickstart.mdx#install-calico-enterprise-for-windows-manually)
    For VXLAN clusters, follow the instructions under the "Kubernetes VXLAN" tab. For BGP clusters, follow the instructions under the "Kubernetes BGP" tab.
 
-   > **Note**: For Rancher default values for service CIDR and DNS cluster IP, see the {% include open-new-window.html text='Rancher kube-api service options' url='https://rancher.com/docs/rke/latest/en/config-options/services/#kubernetes-api-server-options' %}.
-   {: .alert .alert-info}
+   :::note
 
-1. Check the status of the nodes with `kubectl get nodes`. If you see that the Windows node has the status `Ready`, then you have a {{site.prodnameWindows}} on RKE cluster ready for Linux and Windows workloads!
+   For Rancher default values for service CIDR and DNS cluster IP, see the [Rancher kube-api service options](https://rancher.com/docs/rke/latest/en/config-options/services/#kubernetes-api-server-options).
 
-### Next steps
+   :::
 
-- [Try the basic policy demo]({{site.baseurl}}/getting-started/windows-calico/demo)
-- [Secure pods with {{site.prodname}} network policy]({{site.baseurl}}/security/calico-network-policy)
+1. Check the status of the nodes with `kubectl get nodes`. If you see that the Windows node has the status `Ready`, then you have a {{prodnameWindows}} on RKE cluster ready for Linux and Windows workloads!
+
+## Next steps
+
+- [Try the basic policy demo](../demo.mdx)
+- [Secure pods with {{prodname}} network policy](../../../../network-policy/beginners/calico-network-policy.mdx)
