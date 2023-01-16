@@ -1,38 +1,39 @@
 ---
-title: Self-managed Kubernetes in Google Compute Engine (GCE)
 description: Use Calico with a self-managed Kubernetes cluster in Google Compute Engine (GCE).
 ---
 
-### Big picture
+# Self-managed Kubernetes in Google Compute Engine (GCE)
 
-Use {{site.prodname}} with a self-managed Kubernetes cluster in Google Compute Engine (GCE). 
+## Big picture
 
-### Value
+Use {{prodname}} with a self-managed Kubernetes cluster in Google Compute Engine (GCE).
 
-Managing your own Kubernetes cluster (as opposed to using a managed-Kubernetes service like GKE) gives you the most flexibility in configuring {{site.prodname}} and Kubernetes. {{site.prodname}} combines flexible networking capabilities with "run-anywhere" security enforcement to provide a solution with native Linux kernel performance and true cloud-native scalability.
+## Value
 
-### Concepts
+Managing your own Kubernetes cluster (as opposed to using a managed-Kubernetes service like GKE) gives you the most flexibility in configuring {{prodname}} and Kubernetes. {{prodname}} combines flexible networking capabilities with "run-anywhere" security enforcement to provide a solution with native Linux kernel performance and true cloud-native scalability.
+
+## Concepts
 
 **kubeadm** is a cluster management tool that is used to install Kubernetes.
 
-### Before you begin...
+## Before you begin...
 
-{% include open-new-window.html text='Install and configure the Google Cloud CLI tools' url='https://cloud.google.com/sdk/docs/quickstarts' %}
+[Install and configure the Google Cloud CLI tools](https://cloud.google.com/sdk/docs/quickstarts)
 
-### How to
+## How to
 
-There are many ways to install and manage Kubernetes in GCE. Using kubeadm is a good default choice for most people, as it gives you access to all of {{site.prodname}}’s [flexible and powerful networking features]({{site.baseurl}}/networking). However, there are other options that may work better for your environment.
+There are many ways to install and manage Kubernetes in GCE. Using kubeadm is a good default choice for most people, as it gives you access to all of {{prodname}}’s [flexible and powerful networking features](../../../networking/index.mdx). However, there are other options that may work better for your environment.
 
 - [kubeadm for Calico networking and network policy](#kubeadm-for-calico-networking-and-network-policy)
 - [Other tools and options](#other-tools-and-options)
 
-#### kubeadm for Calico networking and network policy
+### kubeadm for Calico networking and network policy
 
-##### Create cloud resources
+#### Create cloud resources
 
-You will need at least one VM to serve as a control plane node and one or more worker nodes. (It is possible to have control plane nodes also act as workers. This is not recommended in most cases and not covered by this guide.)  See [requirements]({{site.baseurl}}/getting-started/kubernetes/requirements) for specific OS requirements for these VMs.
+You will need at least one VM to serve as a control plane node and one or more worker nodes. (It is possible to have control plane nodes also act as workers. This is not recommended in most cases and not covered by this guide.) See [requirements](../requirements.mdx) for specific OS requirements for these VMs.
 
-The following worked example creates a single control node and three workers on a dedicated virtual private network (VPC). Adjust the example as needed for your requirements. Consider a dedicated infrastructure management tool like {% include open-new-window.html text='Terraform' url='https://www.terraform.io/' %} for managing cloud resources. (This example is adapted from {% include open-new-window.html text='Kubernetes the Hard Way' url='https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/03-compute-resources.md' %}.)
+The following worked example creates a single control node and three workers on a dedicated virtual private network (VPC). Adjust the example as needed for your requirements. Consider a dedicated infrastructure management tool like [Terraform](https://www.terraform.io/) for managing cloud resources. (This example is adapted from [Kubernetes the Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/03-compute-resources.md).)
 
 **Create the VPC**
 
@@ -47,6 +48,7 @@ gcloud compute networks subnets create k8s-nodes \
   --network example-k8s \
   --range 10.240.0.0/24
 ```
+
 Create a firewall rule that allows internal communication across TCP, UDP, ICMP and IP in IP (used for the Calico overlay):
 
 ```
@@ -101,18 +103,18 @@ for i in 0 1 2; do
 done
 ```
 
-Install Docker on the controller VM and each worker VM.  On each VM run:
+Install Docker on the controller VM and each worker VM. On each VM run:
 
 ```
 sudo apt update
-sudo apt install -y docker.io 
+sudo apt install -y docker.io
 sudo systemctl enable docker.service
 sudo apt install -y apt-transport-https curl
 ```
 
-##### Install Kubernetes and create the cluster
+#### Install Kubernetes and create the cluster
 
-Install `kubeadm`,` kubelet`, and `kubectl` on each node (see {% include open-new-window.html text='kubeadm docs' url='https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl' %} for more details).
+Install `kubeadm`,` kubelet`, and `kubectl` on each node (see [kubeadm docs](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl) for more details).
 
 ```
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
@@ -137,7 +139,8 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
-The final line of the kubeadm init output contains the command for joining your workers to the controller.  Run this on each worker, prepending `sudo` to run it as root.  It will look something like this:
+
+The final line of the kubeadm init output contains the command for joining your workers to the controller. Run this on each worker, prepending `sudo` to run it as root. It will look something like this:
 
 ```
 sudo kubeadm join 10.240.0.11:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
@@ -148,6 +151,7 @@ On the controller, verify that all nodes have joined
 ```
 kubectl get nodes
 ```
+
 which should output something similar to:
 
 ```
@@ -158,44 +162,50 @@ worker-1     NotReady   <none>   3m7s    v1.17.2
 worker-2     NotReady   <none>   5s      v1.17.2
 ```
 
-##### Install {{site.prodname}}
+#### Install {{prodname}}
 
-On the controller, install {{site.prodname}} using the operator:
-
-```
-kubectl create -f {{site.data.versions.first.manifests_url}}/manifests/tigera-operator.yaml
-```
-
-Download the custom resources necessary to configure {{site.prodname}}
+On the controller, install {{prodname}} using the operator:
 
 ```
-curl {{site.data.versions.first.manifests_url}}/manifests/custom-resources.yaml -O
+kubectl create -f {{releases.0.manifests_url}}/manifests/tigera-operator.yaml
 ```
 
-If you wish to customize the {{site.prodname}} install, customize the downloaded custom-resources.yaml manifest.  Then create the manifest to install {{site.prodname}}.
+Download the custom resources necessary to configure {{prodname}}
+
+```
+curl {{releases.0.manifests_url}}/manifests/custom-resources.yaml -O
+```
+
+If you wish to customize the {{prodname}} install, customize the downloaded custom-resources.yaml manifest. Then create the manifest to install {{prodname}}.
 
 ```
 kubectl create -f custom-resources.yaml
 ```
 
 The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes' %}   
 
-#### Other tools and options
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>{' '}
 
-##### Terraform
+### Other tools and options
 
-You may have noticed that the bulk of the above instructions are about provisioning the Google Cloud resources for the cluster and installing Kubernetes. Terraform is a tool for automating infrastructure provisioning using declarative configurations.  You can also go as far as automating the install of Docker, kubeadm, and Kubernetes using Terraform “provisioners.” See the {% include open-new-window.html text='Terraform documentation' url='https://www.terraform.io/docs/index.html' %} for more details.
+#### Terraform
 
-##### Kubespray
+You may have noticed that the bulk of the above instructions are about provisioning the Google Cloud resources for the cluster and installing Kubernetes. Terraform is a tool for automating infrastructure provisioning using declarative configurations. You can also go as far as automating the install of Docker, kubeadm, and Kubernetes using Terraform “provisioners.” See the [Terraform documentation](https://www.terraform.io/docs/index.html) for more details.
 
-{% include open-new-window.html text='Kubespray' url='https://kubespray.io/' %} is a tool for provisioning and managing Kubernetes clusters with support for multiple clouds including Google Compute Engine.  Calico is the default networking provider, or you can set the `kube_network_plugin` variable to `calico`. See the Kubespray docs for more details. See the {% include open-new-window.html text='Kubespray docs' url='https://kubespray.io/#/?id=network-plugins' %} for more details.
+#### Kubespray
 
-### Next steps
+[Kubespray](https://kubespray.io/) is a tool for provisioning and managing Kubernetes clusters with support for multiple clouds including Google Compute Engine. Calico is the default networking provider, or you can set the `kube_network_plugin` variable to `calico`. See the Kubespray docs for more details. See the [Kubespray docs](https://kubespray.io/#/?id=network-plugins) for more details.
+
+## Next steps
 
 **Required**
-- [Install and configure calicoctl]({{site.baseurl}}/maintenance/clis/calicoctl/install)
+
+- [Install and configure calicoctl](../../../operations/calicoctl/install.mdx)
 
 **Recommended**
-- {% include open-new-window.html text='Video: Everything you need to know about Kubernetes networking on Google cloud' url='https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-networking-on-google-cloud/' %} 
-- [Try out {{site.prodname}} network policy]({{site.baseurl}}/security/calico-network-policy)
+
+- [Video: Everything you need to know about Kubernetes networking on Google cloud](https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-networking-on-google-cloud/)
+- [Try out {{prodname}} network policy](../../../network-policy/get-started/calico-policy/calico-network-policy.mdx)

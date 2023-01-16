@@ -1,12 +1,12 @@
 ---
-title: calicoctl node run
 description: Command and options for running a Calico node.
-canonical_url: '/reference/calicoctl/node/run'
 ---
+
+# calicoctl node run
 
 This sections describes the `calicoctl node run` command.
 
-Read the [calicoctl Overview]({{ site.baseurl }}/reference/calicoctl/overview)
+Read the [calicoctl Overview](../overview.mdx)
 for a full list of calicoctl commands.
 
 ## Displaying the help text for 'calicoctl node run' command
@@ -89,7 +89,7 @@ Options:
                            [default: /var/log/calico]
      --node-image=<DOCKER_IMAGE_NAME>
                            Docker image to use for Calico's per-node container.
-                           [default: {{page.registry}}{{page.imageNames["calico/node"]}}:latest]
+                           [default: {{registry}}{{imageNames.calico/node}}:latest]
      --backend=(bird|none)
                            Specify which networking backend to use.  When set
                            to "none", Calico node runs in policy only mode.
@@ -123,25 +123,25 @@ Options:
                             configuration in YAML or JSON format.
 
 Description:
-  This command is used to start a {{site.nodecontainer}} container instance which provides
+  This command is used to start a {{nodecontainer}} container instance which provides
   Calico networking and network policy on your compute host.
 ```
-{: .no-select-button}
 
 ### Kubernetes as the datastore
 
-When {{site.prodname}} is configured to use the Kubernetes API as the datastore, BGP routing is *currently*
-not supported.  Many of the command line options related to BGP routing will
-have no effect.  These include:
--  `--ip`, `--ip6`, `--ip-autodetection-method`, `--ip6-autodetection-method`
--  `--as`
--  `--backend`
+When {{prodname}} is configured to use the Kubernetes API as the datastore, BGP routing is _currently_
+not supported. Many of the command line options related to BGP routing will
+have no effect. These include:
+
+- `--ip`, `--ip6`, `--ip-autodetection-method`, `--ip6-autodetection-method`
+- `--as`
+- `--backend`
 
 ### Examples
 
-Start the {{site.nodecontainer}} with a pre-configured IPv4 address for BGP.
+Start the {{nodecontainer}} with a pre-configured IPv4 address for BGP.
 
-```bash
+```batch
 sudo calicoctl node run
 ```
 
@@ -154,7 +154,7 @@ Enabling IPv6 forwarding
 Increasing conntrack limit
 Running the following command:
 
-docker run --net=host --privileged --name={{site.noderunning}} -d --restart=always -e ETCD_SCHEME=http -e HOSTNAME=calico -e ETCD_AUTHORITY=127.0.0.1:2379 -e AS= -e NO_DEFAULT_POOLS= -e ETCD_ENDPOINTS= -e IP= -e IP6= -e CALICO_NETWORKING_BACKEND=bird -v /var/run/docker.sock:/var/run/docker.sock -v /var/run/calico:/var/run/calico -v /lib/modules:/lib/modules -v /var/log/calico:/var/log/calico -v /run/docker/plugins:/run/docker/plugins {{page.registry}}{{page.imageNames["calico/node"]}}:{{site.data.versions.first.title}}
+docker run --net=host --privileged --name={{noderunning}} -d --restart=always -e ETCD_SCHEME=http -e HOSTNAME=calico -e ETCD_AUTHORITY=127.0.0.1:2379 -e AS= -e NO_DEFAULT_POOLS= -e ETCD_ENDPOINTS= -e IP= -e IP6= -e CALICO_NETWORKING_BACKEND=bird -v /var/run/docker.sock:/var/run/docker.sock -v /var/run/calico:/var/run/calico -v /lib/modules:/lib/modules -v /var/log/calico:/var/log/calico -v /run/docker/plugins:/run/docker/plugins {{registry}}{{imageNames.calico/node}}:{{releases.0.title}}
 
 Waiting for etcd connection...
 Using configured IPv4 address: 192.0.2.0
@@ -164,44 +164,46 @@ WARNING: Could not confirm that the provided IPv4 address is assigned to this ho
 Calico node name:  calico
 Calico node started successfully
 ```
-{: .no-select-button}
 
 #### IP Autodetection method examples
 
 The node resource includes IPv4 and IPv6 routing IP addresses that should
-match those on one of the host interfaces.  These IP addresses may be
+match those on one of the host interfaces. These IP addresses may be
 configured in advance by configuring the node resource prior to starting the
-`{{site.nodecontainer}}` service, alternatively, the addresses may either be explicitly
+`{{nodecontainer}}` service, alternatively, the addresses may either be explicitly
 specified or autodetected through options on the `calicoctl run` command.
 
 There are different autodetection methods available and you should use the one
-best suited to your deployment.  If you are able to explicitly specify the IP
+best suited to your deployment. If you are able to explicitly specify the IP
 addresses, that is always preferred over autodetection. This section describes
 the available methods for autodetecting the hosts IP addresses.
 
 An IPv4 address is always required, and so if no address was previously
 configured in the node resource, and no address was specified on the CLI, then
-we will attempt to autodetect an IPv4 address.  An IPv6 address, however, will
+we will attempt to autodetect an IPv4 address. An IPv6 address, however, will
 only be autodetected when explicitly requested.
 
-To force autodetection of an IPv4 address, use the option `--ip=autodetect`.  To
+To force autodetection of an IPv4 address, use the option `--ip=autodetect`. To
 force autodetection of an IPv6 address, use the option `--ip6=autodetect`.
 
 To set the autodetection method for IPv4, use the `--ip-autodetection-method` option.
 To set the autodetection method for IPv6, use the `--ip6-autodetection-method` option.
 
-> **Note**: If you are starting the `{{site.nodecontainer}}` container directly (and not using the
-> `calicoctl run` helper command), the options are passed in environment
-> variables. These are described in
-> [Configuring `{{site.nodecontainer}}`]({{ site.baseurl }}/reference/node/configuration).
-{: .alert .alert-info}
+:::note
+
+If you are starting the `{{nodecontainer}}` container directly (and not using the
+`calicoctl run` helper command), the options are passed in environment
+variables. These are described in
+[Configuring `{{nodecontainer}}`](../../configure-calico-node.mdx).
+
+:::
 
 **first-found**
 
 The `first-found` option enumerates all interface IP addresses and returns the
 first valid IP address (based on IP version and type of address) on
-the first valid interface.  Certain known "local" interfaces
-are omitted, such  as the docker bridge.  The order that both the interfaces
+the first valid interface. Certain known "local" interfaces
+are omitted, such as the docker bridge. The order that both the interfaces
 and the IP addresses are listed is system dependent.
 
 This is the default detection method. However, since this method only makes a
@@ -210,24 +212,25 @@ specific IP address, or to use one of the other detection methods.
 
 An example with first-found auto detection method explicitly specified follows
 
-```bash
+```batch
 sudo calicoctl node run --ip autodetect --ip-autodetection-method first-found
 ```
 
 **can-reach=DESTINATION**
 
 The `can-reach` method uses your local routing to determine which IP address
-will be used to reach the supplied destination.  Both IP addresses and domain
+will be used to reach the supplied destination. Both IP addresses and domain
 names may be used.
 
 An example with IP detection using a can-reach IP address:
 
-```bash
+```batch
 sudo calicoctl node run --ip autodetect --ip-autodetection-method can-reach=8.8.8.8
 ```
+
 An example with IP detection using a can-reach domain name:
 
-```bash
+```batch
 sudo calicoctl node run --ip autodetect --ip-autodetection-method can-reach=www.google.com
 ```
 
@@ -235,25 +238,25 @@ sudo calicoctl node run --ip autodetect --ip-autodetection-method can-reach=www.
 
 The `interface` method uses the supplied interface regular expressions (golang
 syntax) to enumerate matching interfaces and to return the first IP address on
-the first interface that matches any of the interface regexes provided.  The
+the first interface that matches any of the interface regexes provided. The
 order that both the interfaces and the IP addresses are listed is system
 dependent.
 
 Example with IP detection on interface eth0:
 
-```bash
+```batch
 sudo calicoctl node run --ip autodetect --ip-autodetection-method interface=eth0
 ```
 
 Example with IP detection on interfaces eth0, eth1, eth2 etc.:
 
-```bash
+```batch
 sudo calicoctl node run --ip autodetect --ip-autodetection-method interface=eth.*
 ```
 
 An example with IP detection on interfaces eth0, eth1, eth2 etc. and wlp2s0:
 
-```bash
+```batch
 sudo calicoctl node run --ip-autodetect --ip-autodetection-method interface=eth.*,wlp2s0
 ```
 
@@ -262,8 +265,8 @@ sudo calicoctl node run --ip-autodetect --ip-autodetection-method interface=eth.
 The `skip-interface` method uses the supplied interface regular expressions (golang
 syntax) to enumerate all interface IP addresses and returns the first valid IP address
 (based on IP version and type of address) that does not match the listed regular
-expressions.  Like the `first-found` option, it also skips by default certain known
-"local" interfaces such as the docker bridge.  The order that both the interfaces
+expressions. Like the `first-found` option, it also skips by default certain known
+"local" interfaces such as the docker bridge. The order that both the interfaces
 and the IP addresses are listed is system dependent.
 
 This method has the ability to take in multiple regular expressions separated by `,`.
@@ -328,7 +331,7 @@ terminating `,` character does not need to be specified for those cases.
                          [default: /var/log/calico]
    --node-image=<DOCKER_IMAGE_NAME>
                          Docker image to use for Calico's per-node container.
-                         [default: {{page.registry}}{{page.imageNames["calico/node"]}}:latest]
+                         [default: {{registry}}{{imageNames.calico/node}}:latest]
    --backend=(bird|none)
                          Specify which networking backend to use.  When set
                          to "none", Calico node runs in policy only mode.
@@ -355,7 +358,6 @@ terminating `,` character does not need to be specified for those cases.
                          networking, and when enabled traffic must be
                          explicitly allowed by configuring Calico policies.
 ```
-{: .no-select-button}
 
 ### General options
 
@@ -364,11 +366,10 @@ terminating `,` character does not need to be specified for those cases.
                          configuration in YAML or JSON format.
                          [default: /etc/calico/calicoctl.cfg]
 ```
-{: .no-select-button}
 
 ## See also
 
--  [Installing calicoctl]({{ site.baseurl }}/maintenance/clis/calicoctl/install)
--  [Resources]({{ site.baseurl }}/reference/resources/overview) for details on all valid resources, including file format
-   and schema
--  [Policy]({{ site.baseurl }}/reference/resources/networkpolicy) for details on the {{site.prodname}} selector-based policy model
+- [Installing calicoctl](../../../operations/calicoctl/install.mdx)
+- [Resources](../../resources/overview.mdx) for details on all valid resources, including file format
+  and schema
+- [Policy](../../resources/networkpolicy.mdx) for details on the {{prodname}} selector-based policy model

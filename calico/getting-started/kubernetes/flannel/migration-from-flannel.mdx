@@ -1,19 +1,20 @@
 ---
-title: Migrate a Kubernetes cluster from flannel/Canal to Calico
 description: Preserve your existing VXLAN networking in Calico, but take full advantage of Calico IP address management (IPAM) and advanced network policy features.
 ---
 
-### Big picture
+# Migrate a Kubernetes cluster from flannel/Canal to Calico
 
-Migrate an existing Kubernetes cluster with flannel/Canal to {{site.prodname}} networking. 
+## Big picture
 
-### Value
+Migrate an existing Kubernetes cluster with flannel/Canal to {{prodname}} networking.
 
-If you are already using flannel for networking, it is easy to migrate to {{site.prodname}}'s native VXLAN networking. {{site.prodname}} VXLAN is fully equivalent to flannel vxlan, but you get the benefits of the broader range of features offered by {{site.prodname}} with an active maintainer community.
+## Value
 
-### Concepts
+If you are already using flannel for networking, it is easy to migrate to {{prodname}}'s native VXLAN networking. {{prodname}} VXLAN is fully equivalent to flannel vxlan, but you get the benefits of the broader range of features offered by {{prodname}} with an active maintainer community.
 
-#### Limitations of host-local IPAM in flannel
+## Concepts
+
+### Limitations of host-local IPAM in flannel
 
 Flannel networking uses the host-local IPAM (IP address management) CNI plugin, which provides simple IP address management for your cluster. Although simple, it has limitations:
 
@@ -21,21 +22,21 @@ Flannel networking uses the host-local IPAM (IP address management) CNI plugin, 
 
 - Because each node has a pre-allocated CIDR, pods must always have an IP address assigned based on the node it is running on. Being able to allocate IP addresses based on other attributes (for example, the pod’s namespace), provides flexiblity to meet use cases that arise.
 
-Migrating to {{site.prodname}} IPAM solves these use cases and more. For advantages of Calico IPAM, see [Blog: Live Migration from Flannel to Calico](https://www.projectcalico.org/live-migration-from-flannel-to-calico/){:target="_blank"}.
+Migrating to {{prodname}} IPAM solves these use cases and more. For advantages of Calico IPAM, see [Blog: Live Migration from Flannel to Calico](https://www.projectcalico.org/live-migration-from-flannel-to-calico/).
 
-#### Methods for migrating to {{site.prodname}} networking
+### Methods for migrating to {{prodname}} networking
 
-There are two ways to switch your cluster to use {{site.prodname}} networking. Both methods give you a fully-functional {{site.prodname}} cluster using VXLAN networking between pods.
+There are two ways to switch your cluster to use {{prodname}} networking. Both methods give you a fully-functional {{prodname}} cluster using VXLAN networking between pods.
 
-- **Create a new cluster using {{site.prodname}} and migrate existing workloads**
+- **Create a new cluster using {{prodname}} and migrate existing workloads**
 
-  If you have the ability to migrate workloads from one cluster to the next without caring about downtime, this is the easiest method: [create a new cluster using {{site.prodname}}]({{site.baseurl}}/getting-started/kubernetes/quickstart).
+  If you have the ability to migrate workloads from one cluster to the next without caring about downtime, this is the easiest method: [create a new cluster using {{prodname}}](../quickstart.mdx).
 
 - **Live migration on an existing cluster**
 
-  If your workloads are already in production, or downtime is not an option, use the live migration tool that performs a rolling update of each node in the cluster. 
+  If your workloads are already in production, or downtime is not an option, use the live migration tool that performs a rolling update of each node in the cluster.
 
-### Before you begin...
+## Before you begin...
 
 **Required**
 
@@ -48,7 +49,7 @@ There are two ways to switch your cluster to use {{site.prodname}} networking. B
   - Adding/deleting/modifying node labels
   - Modifying and deleting of the flannel daemon set. For example, it must not be installed using the Kubernetes Addon-manager.
 
-### How to
+## How to
 
 - [Migrate from flannel networking to Calico networking, live migration](#migrate-from-flannel-networking-to-calico-networking-live-migration)
 - [Modify flannel configuration](#modify-flannel-configuration)
@@ -56,18 +57,18 @@ There are two ways to switch your cluster to use {{site.prodname}} networking. B
 - [View migration logs](#view-migration-logs)
 - [Revert migration](#revert-migration)
 
-#### Migrate from flannel networking to Calico networking, live migration
+### Migrate from flannel networking to Calico networking, live migration
 
-1. Install {{site.prodname}}.
+1. Install {{prodname}}.
 
    ```
-   kubectl apply -f {{site.data.versions.first.manifests_url}}/manifests/flannel-migration/calico.yaml
+   kubectl apply -f {{releases.0.manifests_url}}/manifests/flannel-migration/calico.yaml
    ```
 
 1. Start the migration controller.
 
    ```
-   kubectl apply -f {{site.data.versions.first.manifests_url}}/manifests/flannel-migration/migration-job.yaml
+   kubectl apply -f {{releases.0.manifests_url}}/manifests/flannel-migration/migration-job.yaml
    ```
 
    You will see nodes begin to update one at a time.
@@ -88,31 +89,31 @@ There are two ways to switch your cluster to use {{site.prodname}} networking. B
 1. Delete the migration controller.
 
    ```
-   kubectl delete -f {{site.data.versions.first.manifests_url}}/manifests/flannel-migration/migration-job.yaml
+   kubectl delete -f {{releases.0.manifests_url}}/manifests/flannel-migration/migration-job.yaml
    ```
 
-#### Modify flannel configuration 
+### Modify flannel configuration
 
 The migration controller autodetects your flannel configuration, and in most cases, does not require
 additional configuration. If you require special configuration, the migration tool provides the following options,
 which can be set as environment variables within the pod.
 
-| Configuration options            | Description                                                          | Default                                    |
-|----------------------------------|----------------------------------------------------------------------|--------------------------------------------|
-| FLANNEL_NETWORK                  | IPv4 network CIDR used by flannel for the cluster.                   | Automatically detected                     |
-| FLANNEL_IPV6_NETWORK             | IPv6 network CIDR used by flannel for the cluster.                   | Automatically detected                     |
-| FLANNEL_DAEMONSET_NAME           | Name of the flannel daemon set in the kube-system namespace.         | kube-flannel-ds                            |
-| FLANNEL_MTU                      | MTU for the flannel VXLAN device.                                    | Automatically detected                     |
-| FLANNEL_IP_MASQ                  | Whether masquerading is enabled for outbound traffic.                | Automatically detected                     |
-| FLANNEL_SUBNET_LEN               | Per-node IPv4 subnet length used by flannel.                         | 24                                         |
-| FLANNEL_IPV6_SUBNET_LEN          | Per-node IPv6 subnet length used by flannel.                         | 64                                         |
-| FLANNEL_ANNOTATION_PREFIX        | Value provided via the kube-annotation-prefix option to flannel.     |  flannel.alpha.coreos.com                  |
-| FLANNEL_VNI                      | The VNI used for the flannel network.                                |  1                                         |
-| FLANNEL_PORT                     | UDP port used for VXLAN.                                             |  8472                                      |
-| CALICO_DAEMONSET_NAME            | Name of the calico daemon set in the kube-system namespace.          |  calico-node                               |
-| CNI_CONFIG_DIR                   | Full path on the host in which to search for CNI config files.       |  /etc/cni/net.d                            |
+| Configuration options     | Description                                                      | Default                  |
+| ------------------------- | ---------------------------------------------------------------- | ------------------------ |
+| FLANNEL_NETWORK           | IPv4 network CIDR used by flannel for the cluster.               | Automatically detected   |
+| FLANNEL_IPV6_NETWORK      | IPv6 network CIDR used by flannel for the cluster.               | Automatically detected   |
+| FLANNEL_DAEMONSET_NAME    | Name of the flannel daemon set in the kube-system namespace.     | kube-flannel-ds          |
+| FLANNEL_MTU               | MTU for the flannel VXLAN device.                                | Automatically detected   |
+| FLANNEL_IP_MASQ           | Whether masquerading is enabled for outbound traffic.            | Automatically detected   |
+| FLANNEL_SUBNET_LEN        | Per-node IPv4 subnet length used by flannel.                     | 24                       |
+| FLANNEL_IPV6_SUBNET_LEN   | Per-node IPv6 subnet length used by flannel.                     | 64                       |
+| FLANNEL_ANNOTATION_PREFIX | Value provided via the kube-annotation-prefix option to flannel. | flannel.alpha.coreos.com |
+| FLANNEL_VNI               | The VNI used for the flannel network.                            | 1                        |
+| FLANNEL_PORT              | UDP port used for VXLAN.                                         | 8472                     |
+| CALICO_DAEMONSET_NAME     | Name of the calico daemon set in the kube-system namespace.      | calico-node              |
+| CNI_CONFIG_DIR            | Full path on the host in which to search for CNI config files.   | /etc/cni/net.d           |
 
-#### View migration status
+### View migration status
 
 View the controller's current status.
 
@@ -120,7 +121,7 @@ View the controller's current status.
 kubectl get pods -n kube-system -l k8s-app=flannel-migration-controller
 ```
 
-#### View migration logs
+### View migration logs
 
 View migration logs to see if any actions are required.
 
@@ -128,18 +129,18 @@ View migration logs to see if any actions are required.
 kubectl logs -n kube-system -l k8s-app=flannel-migration-controller
 ```
 
-#### Revert migration
+### Revert migration
 
-If you need to revert a cluster from {{site.prodname}} back to flannel, follow these steps.
+If you need to revert a cluster from {{prodname}} back to flannel, follow these steps.
 
-1. Remove the migration controller and {{site.prodname}}.
+1. Remove the migration controller and {{prodname}}.
 
    ```
-   kubectl delete -f {{site.data.versions.first.manifests_url}}/manifests/flannel-migration/migration-job.yaml
-   kubectl delete -f {{site.data.versions.first.manifests_url}}/manifests/flannel-migration/calico.yaml
+   kubectl delete -f {{releases.0.manifests_url}}/manifests/flannel-migration/migration-job.yaml
+   kubectl delete -f {{releases.0.manifests_url}}/manifests/flannel-migration/calico.yaml
    ```
 
-1. Determine the nodes that were migrated to {{site.prodname}}.
+1. Determine the nodes that were migrated to {{prodname}}.
 
    ```
    kubectl get nodes -l projectcalico.org/node-network-during-migration=calico
@@ -187,6 +188,6 @@ After the above steps have been completed on each node, perform the following st
    kubectl label node --all projectcalico.org/node-network-during-migration-
    ```
 
-### Next steps
+## Next steps
 
-Learn about [{{site.prodname}} IP address management]({{site.baseurl}}/networking/ipam)
+Learn about [{{prodname}} IP address management](../../../networking/ipam/index.mdx)

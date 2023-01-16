@@ -1,30 +1,37 @@
-This section describes how to run `{{site.nodecontainer}}` as a Docker container.
+This section describes how to run `{{nodecontainer}}` as a Docker container.
 
-> **Note**: We include examples for systemd, but the commands can be
-> applied to other init daemons such as upstart.
-{: .alert .alert-info}
+:::note
 
-#### Step 1: Create environment file
+We include examples for systemd, but the commands can be
+applied to other init daemons such as upstart.
 
-{% include content/environment-file.md install="container" target="calico/node" %}
+:::
 
-#### Step 2: Configure the init system
+### Step 1: Create environment file
 
-Use an init daemon (like systemd or upstart) to start the the {{site.nodecontainer}} image as a service using the EnvironmentFile values.
+<EnvironmentFile
+  nodecontainer='{{nodecontainer}}'
+  install='container'
+  target='calico/node'
+/>
 
-Sample systemd service file: `{{site.noderunning}}.service`
+### Step 2: Configure the init system
+
+Use an init daemon (like systemd or upstart) to start the the {{nodecontainer}} image as a service using the EnvironmentFile values.
+
+Sample systemd service file: `{{noderunning}}.service`
 
 ```shell
 [Unit]
-Description={{site.noderunning}}
+Description={{noderunning}}
 After=docker.service
 Requires=docker.service
 
 [Service]
 EnvironmentFile=/etc/calico/calico.env
-ExecStartPre=-/usr/bin/docker rm -f {{site.noderunning}}
+ExecStartPre=-/usr/bin/docker rm -f {{noderunning}}
 ExecStart=/usr/bin/docker run --net=host --privileged \
- --name={{site.noderunning}} \
+ --name={{noderunning}} \
  -e NODENAME=${CALICO_NODENAME} \
  -e IP=${CALICO_IP} \
  -e IP6=${CALICO_IP6} \
@@ -43,9 +50,9 @@ ExecStart=/usr/bin/docker run --net=host --privileged \
  -v /run/docker/plugins:/run/docker/plugins \
  -v /lib/modules:/lib/modules \
  -v /etc/pki:/pki \
- {{page.registry}}{{page.imageNames["calico/node"]}}:{{site.data.versions.first.title}} /bin/calico-node -felix
+ {{registry}}{{imageNames.calico/node}}:{{releases.0.title}} /bin/calico-node -felix
 
-ExecStop=-/usr/bin/docker stop {{site.noderunning}}
+ExecStop=-/usr/bin/docker stop {{noderunning}}
 
 Restart=on-failure
 StartLimitBurst=3
@@ -57,14 +64,17 @@ WantedBy=multi-user.target
 
 Upon start, the systemd service:
 
-  - Confirms Docker is installed under the `[Unit]` section
-  - Gets environment variables from the environment file above
-  - Removes existing `{{site.nodecontainer}}` container (if it exists)
-  - Starts `{{site.nodecontainer}}`
+- Confirms Docker is installed under the `[Unit]` section
+- Gets environment variables from the environment file above
+- Removes existing `{{nodecontainer}}` container (if it exists)
+- Starts `{{nodecontainer}}`
 
-The script also stops the `{{site.nodecontainer}}` container when the service is stopped.
+The script also stops the `{{nodecontainer}}` container when the service is stopped.
 
-> **Note**: Depending on how you've installed Docker, the name of the Docker service
-> under the `[Unit]` section may be different (such as `docker-engine.service`).
-> Be sure to check this before starting the service.
-{: .alert .alert-info}
+:::note
+
+Depending on how you've installed Docker, the name of the Docker service
+under the `[Unit]` section may be different (such as `docker-engine.service`).
+Be sure to check this before starting the service.
+
+:::
