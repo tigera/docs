@@ -1,51 +1,57 @@
 ---
-title: Mirantis Kubernetes Engine (MKE)
 description: Install Calico Enterprise on an MKE cluster.
-canonical_url: /getting-started/kubernetes/docker-enterprise
 ---
 
-### Big picture
+# Mirantis Kubernetes Engine (MKE)
 
-Install {{site.prodname}} on a Mirantis Kubernetes Engine (MKE) cluster (formerly Docker Enterprise).
+import DockerEe from '@site/calico-enterprise_versioned_docs/version-3.14/_includes/content/_docker-ee.mdx';
 
-### Before you begin
+## Big picture
+
+Install {{prodname}} on a Mirantis Kubernetes Engine (MKE) cluster (formerly Docker Enterprise).
+
+## Before you begin
 
 **MKE requirements**
 
-- {% include content/docker-ee.md %} install with:
+- <DockerEe /> install with:
 
-   - A minimum of three nodes for non-production deployments
-   - CNI flag set to unmanaged, `--unmanaged-cni` so UCP does not install the default {{site.prodname}} networking plugin
+  - A minimum of three nodes for non-production deployments
+  - CNI flag set to unmanaged, `--unmanaged-cni` so UCP does not install the default {{prodname}} networking plugin
 
-   For help, see {% include open-new-window.html text='Docker Enterprise' url='https://docs.docker.com/ee/' %} and {% include open-new-window.html text='Docker EE Best Practices and Design Considerations' url='https://docs.mirantis.com/docker-enterprise/v3.0/dockeree-ref-arch/deploy-manage/best-practices-design.html' %}
+  For help, see [Docker Enterprise](https://docs.docker.com/ee/) and [Docker EE Best Practices and Design Considerations](https://docs.mirantis.com/docker-enterprise/v3.0/dockeree-ref-arch/deploy-manage/best-practices-design.html)
 
-- Install UCP control plane to access the cluster using {% include open-new-window.html text='Docker Universal Control Plane CLI-Based Access' url='https://docs.docker.com/ee/ucp/user-access/cli/' %}. After installing the control plane, enable the option "Allow all authenticated users, including service accounts, to schedule on all nodes, including UCP managers and DTR nodes."
+- Install UCP control plane to access the cluster using [Docker Universal Control Plane CLI-Based Access](https://docs.docker.com/ee/ucp/user-access/cli/). After installing the control plane, enable the option "Allow all authenticated users, including service accounts, to schedule on all nodes, including UCP managers and DTR nodes."
 
-**{{site.prodname}} requirements**
+**{{prodname}} requirements**
 
-- Your MKE cluster meets the [{{site.prodname}} system requirements]({{site.baseurl}}/getting-started/kubernetes/requirements)
+- Your MKE cluster meets the [{{prodname}} system requirements](requirements.mdx)
 
-- If using a private registry, familiarize yourself with this guide on [using a private registry]({{site.baseurl}}/getting-started/private-registry).
+- If using a private registry, familiarize yourself with this guide on [using a private registry](private-registry/index.mdx).
 
-- [Credentials for the Tigera private registry and a license key]({{site.baseurl}}/getting-started/calico-enterprise)
+- [Credentials for the Tigera private registry and a license key](calico-enterprise.mdx)
 
-- Install `kubectl` CLI tool. See {% include open-new-window.html text='Install kubectl' url='https://kubernetes.io/docs/tasks/tools/install-kubectl/' %}
+- Install `kubectl` CLI tool. See [Install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
-### How to
+## How to
 
 The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes' %}
 
-- [Install {{site.prodname}}](#install-calico-enterprise)
-- [Install the {{site.prodname}} license](#install-the-calico-enterprise-license)
-- [Secure {{site.prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
 
-#### Install {{site.prodname}}
+- [Install {{prodname}}](#install-calico-enterprise)
+- [Install the {{prodname}} license](#install-the-calico-enterprise-license)
+- [Secure {{prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
-1. [Configure a storage class for {{site.prodname}}]({{site.baseurl}}/getting-started/create-storage).
+### Install {{prodname}}
+
+1. [Configure a storage class for {{prodname}}](../../operations/logstorage/create-storage.mdx).
 
 1. Configure Tigera operator role bindings for Docker EE.
-   
+
    ```
    kubectl create clusterrolebinding tigera-operator-cluster-admin -n tigera-operator \
     --clusterrole cluster-admin --serviceaccount tigera-operator:tigera-operator
@@ -54,16 +60,19 @@ The geeky details of what you get:
 1. Install the Tigera operator and custom resource definitions.
 
    ```
-   kubectl create -f {{ "/manifests/tigera-operator.yaml" | absolute_url }}
+   kubectl create -f {{filesUrl}}/manifests/tigera-operator.yaml
    ```
 
-1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator will be used to deploy Prometheus server and Alertmanager to monitor {{site.prodname}} metrics.
+1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator will be used to deploy Prometheus server and Alertmanager to monitor {{prodname}} metrics.
 
-   > **Note**: If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with {{site.prodname}}, your Prometheus operator must be v0.40.0 or higher.
-   {: .alert .alert-info}
+   :::note
+
+   If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with {{prodname}}, your Prometheus operator must be v0.40.0 or higher.
+
+   :::
 
    ```
-   kubectl create -f {{ "/manifests/tigera-prometheus-operator.yaml" | absolute_url }}
+   kubectl create -f {{filesUrl}}/manifests/tigera-prometheus-operator.yaml
    ```
 
 1. Install your pull secret.
@@ -86,12 +95,12 @@ The geeky details of what you get:
        -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'
    ```
 
-1. Install any extra [{{site.prodname}} resources]({{site.baseurl}}/reference/resources) needed at cluster start using [calicoctl]({{site.baseurl}}/reference/calicoctl/overview).
+1. Install any extra [{{prodname}} resources](../../reference/resources/index.mdx) needed at cluster start using [calicoctl](../../reference/clis/calicoctl/overview.mdx).
 
-1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
+1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference](../../reference/installation/api.mdx).
 
    ```
-   kubectl create -f {{ "/manifests/custom-resources.yaml" | absolute_url }}
+   kubectl create -f {{filesUrl}}/manifests/custom-resources.yaml
    ```
 
    You can now monitor progress with the following command:
@@ -102,9 +111,9 @@ The geeky details of what you get:
 
    Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
 
-#### Install the {{site.prodname}} license
+### Install the {{prodname}} license
 
-In order to use {{site.prodname}}, you must install the license provided to you by Tigera.
+In order to use {{prodname}}, you must install the license provided to you by Tigera.
 
 ```
 kubectl create -f </path/to/license.yaml>
@@ -118,26 +127,26 @@ watch kubectl get tigerastatus
 
 When all components show a status of `Available`, proceed to the next section.
 
-#### Secure {{site.prodname}} with network policy
+### Secure {{prodname}} with network policy
 
-To secure {{site.prodname}} component communications, install the following set of network policies.
+To secure {{prodname}} component communications, install the following set of network policies.
 
 ```
-kubectl create -f {{ "/manifests/tigera-policies.yaml" | absolute_url }}
+kubectl create -f {{filesUrl}}/manifests/tigera-policies.yaml
 ```
 
-### Next steps
+## Next steps
 
 **Recommended**
 
-- [Configure access to {{site.prodname}} Manager UI]({{site.baseurl}}/getting-started/cnx/access-the-manager)
-- [Authentication quickstart]({{site.baseurl}}/getting-started/cnx/authentication-quickstart)
-- [Configure an external identity provider]({{site.baseurl}}/getting-started/cnx/configure-identity-provider)
+- [Configure access to {{prodname}} Manager UI](../../operations/cnx/access-the-manager.mdx)
+- [Authentication quickstart](../../operations/cnx/authentication-quickstart.mdx)
+- [Configure an external identity provider](../../operations/cnx/configure-identity-provider.mdx)
 
 **Recommended - Networking**
 
-- The default networking uses IP-in-IP with BPG routing. For all networking options, see [Determine best networking option]({{site.baseurl}}/networking/determine-best-networking).
+- The default networking uses IP-in-IP with BPG routing. For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).
 
 **Recommended - Security**
 
-- [Get started with {{site.prodname}} tiered network policy]({{site.baseurl}}/security/tiered-policy)
+- [Get started with {{prodname}} tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)
