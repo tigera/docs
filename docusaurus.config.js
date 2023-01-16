@@ -10,13 +10,10 @@ const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  // TODO[dac]: noIndex should be removed, along with robots.txt and the
-  // X-Robots-Tag:noindex in the /static/_headers file once we cutover
-  noIndex: true,
   title: 'Calico Documentation',
   //tagline:
     //'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials.',
-  url: 'https://unified-docs.tigera.io',
+  url: 'https://docs.tigera.io',
   baseUrl: '/',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
@@ -103,22 +100,22 @@ const config = {
             dropdownItemsAfter: [
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://unified-docs.tigera.io/v3.13">3.13</a>',
+                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.13">3.13</a>',
                 className: 'product-calico-enterprise',
               },
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://unified-docs.tigera.io/v3.12">3.12</a>',
+                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.12">3.12</a>',
                 className: 'product-calico-enterprise',
               },
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://unified-docs.tigera.io/archive/v3.23">3.23</a>',
+                value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.23">3.23</a>',
                 className: 'product-calico',
               },
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://unified-docs.tigera.io/archive/v3.22">3.22</a>',
+                value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.22">3.22</a>',
                 className: 'product-calico',
               },
               {

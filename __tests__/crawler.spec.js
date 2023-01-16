@@ -9,7 +9,7 @@ const linkChecker = require('../src/utils/linkChecker');
 
 const LOCALHOST = process.env.LOCALHOST;
 const isLocalHost = (typeof LOCALHOST === 'string' && LOCALHOST !== '');
-const PROD = 'https://unified-docs.tigera.io'
+const PROD = 'https://docs.tigera.io'
 const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
 const httpRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/gi;
 const DOCS = `${isLocalHost ? LOCALHOST : PROD}`;
