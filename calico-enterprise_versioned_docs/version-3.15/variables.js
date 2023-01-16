@@ -2,7 +2,7 @@ const releases = require('./releases.json');
 const { getPPARepoName, getChartVersionName, getVersion } = require('./variableUtils');
 
 // e.g. "/master" or "/v3.23" or "/archive/v3.22" or "" if it's the latest
-const versionPrefix = '/' + getVersion(releases);
+const versionPrefix = ''; // '/' + getVersion(releases);
 
 const variables = {
   prodname: 'Calico Enterprise',
