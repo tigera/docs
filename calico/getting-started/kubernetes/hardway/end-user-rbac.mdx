@@ -1,11 +1,11 @@
 ---
-title: End user RBAC
-description: Quick review of common roles and access controls for running clusters in production. 
-canonical_url: '/getting-started/kubernetes/hardway/end-user-rbac'
+description: Quick review of common roles and access controls for running clusters in production.
 ---
 
+# End user RBAC
+
 In this lab we will set up role-based access control (RBAC) suitable for running the cluster in production. We will
-cover roles for using {{site.prodname}}.  General RBAC for a production Kubernetes cluster is beyond the scope of this lab.
+cover roles for using {{prodname}}. General RBAC for a production Kubernetes cluster is beyond the scope of this lab.
 
 ## Using `calicoctl`
 
@@ -14,7 +14,7 @@ and `calicoctl` are the same), whoever is using it needs to have `get` access to
 level, i.e., not in a namespace. The network admin role below already has such access, but we will see that we will need to add
 it to the service owner user we will create further on.
 
-```bash
+```batch
 kubectl apply -f - <<EOF
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -31,12 +31,12 @@ EOF
 
 ## Network admin
 
-A network admin is a person responsible for configuring and operating the {{site.prodname}} network as a whole. As such, they
-will need access to all {{site.prodname}} custom resources, as well as some associated Kubernetes resources.
+A network admin is a person responsible for configuring and operating the {{prodname}} network as a whole. As such, they
+will need access to all {{prodname}} custom resources, as well as some associated Kubernetes resources.
 
 Create the role
 
-```bash
+```batch
 kubectl apply -f - <<EOF
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -88,7 +88,7 @@ To test out the network admin role, we'll create a user named Nik grant them the
 
 On the Kubernetes master node, create the key and certificate signing request. Note that we include `/O=network-admins` in the subject. This places Nik in the `network-admins` group.
 
-```bash
+```batch
 openssl req -newkey rsa:4096 \
            -keyout nik.key \
            -nodes \
@@ -98,7 +98,7 @@ openssl req -newkey rsa:4096 \
 
 We will sign this certificate using the main Kubernetes CA.
 
-```bash
+```batch
 sudo openssl x509 -req -in nik.csr \
                   -CA /etc/kubernetes/pki/ca.crt \
                   -CAkey /etc/kubernetes/pki/ca.key \
@@ -110,7 +110,7 @@ sudo chown $(id -u):$(id -g) nik.crt
 
 Next, we create a kubeconfig file for Nik.
 
-```bash
+```batch
 APISERVER=$(kubectl config view -o jsonpath='{.clusters[0].cluster.server}')
 kubectl config set-cluster kubernetes \
     --certificate-authority=/etc/kubernetes/pki/ca.crt \
@@ -134,13 +134,13 @@ kubectl config use-context default --kubeconfig=nik.kubeconfig
 
 Bind the role to the group `network-admins`.
 
-```bash
+```batch
 kubectl create clusterrolebinding network-admins --clusterrole=network-admin --group=network-admins
 ```
 
 Test Nik's access by creating a global network set
 
-```bash
+```batch
 KUBECONFIG=./nik.kubeconfig calicoctl apply -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkSet
@@ -155,7 +155,7 @@ EOF
 
 Verify the global network set exists
 
-```bash
+```batch
 KUBECONFIG=./nik.kubeconfig calicoctl get globalnetworkset -o wide
 ```
 
@@ -165,22 +165,21 @@ Result
 NAME       NETS
 niks-set   110.120.130.0/24,210.220.230.0/24
 ```
-{: .no-select-button}
 
 Delete the global network set
 
-```bash
+```batch
 KUBECONFIG=./nik.kubeconfig calicoctl delete globalnetworkset niks-set
 ```
 
 ## Service owner
 
 A service owner is a person responsible for operating one or more services in Kubernetes. They should be able to define
-network policy for their service, but don't need to view or modify any global configuration related to {{site.prodname}}.
+network policy for their service, but don't need to view or modify any global configuration related to {{prodname}}.
 
 Define the role
 
-```bash
+```batch
 kubectl apply -f - <<EOF
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -203,7 +202,7 @@ To test out the service owner role, we'll create a user named Sam and grant them
 
 On the Kubernetes master node, create the key and certificate signing request.
 
-```bash
+```batch
 openssl req -newkey rsa:4096 \
            -keyout sam.key \
            -nodes \
@@ -213,7 +212,7 @@ openssl req -newkey rsa:4096 \
 
 We will sign this certificate using the main Kubernetes CA.
 
-```bash
+```batch
 sudo openssl x509 -req -in sam.csr \
                   -CA /etc/kubernetes/pki/ca.crt \
                   -CAkey /etc/kubernetes/pki/ca.key \
@@ -225,7 +224,7 @@ sudo chown $(id -u):$(id -g) sam.crt
 
 Next, we create a kubeconfig file for Sam.
 
-```bash
+```batch
 APISERVER=$(kubectl config view -o jsonpath='{.clusters[0].cluster.server}')
 kubectl config set-cluster kubernetes \
     --certificate-authority=/etc/kubernetes/pki/ca.crt \
@@ -247,27 +246,27 @@ kubectl config set-context default \
 kubectl config use-context default --kubeconfig=sam.kubeconfig
 ```
 
-We will limit Sam's access to a single namespace.  Create the namespace
+We will limit Sam's access to a single namespace. Create the namespace
 
-```bash
+```batch
 kubectl create namespace sam
 ```
 
 Bind the role to Sam in the namespace
 
-```bash
+```batch
 kubectl create rolebinding -n sam network-service-owner-sam --clusterrole=network-service-owner --user=sam
 ```
 
 Also bind the `calicoctl-user` role to sam at the cluster level so that they can use `calicoctl` properly
 
-```bash
+```batch
 kubectl create clusterrolebinding calicoctl-user-sam --clusterrole=calicoctl-user --user=sam
 ```
 
 Sam cannot create global network set resources (like Nik can as network admin)
 
-```bash
+```batch
 KUBECONFIG=./sam.kubeconfig calicoctl get globalnetworkset -o wide
 ```
 
@@ -276,11 +275,10 @@ Result
 ```
 connection is unauthorized: globalnetworksets.crd.projectcalico.org is forbidden: User "sam" cannot list resource "globalnetworksets" in API group "crd.projectcalico.org" at the cluster scope
 ```
-{: .no-select-button}
 
 However, Sam can create resources in their own namespace
 
-```bash
+```batch
 KUBECONFIG=./sam.kubeconfig calicoctl apply -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: NetworkSet
@@ -296,7 +294,7 @@ EOF
 
 Verify the resource exists
 
-```bash
+```batch
 KUBECONFIG=./sam.kubeconfig calicoctl get networksets -n sam
 ```
 
@@ -306,14 +304,13 @@ Result
 NAMESPACE   NAME
 sam         sams-set
 ```
-{: .no-select-button}
 
 Delete the NetworkSet
 
-```bash
+```batch
 KUBECONFIG=./sam.kubeconfig calicoctl delete networkset sams-set -n sam
 ```
 
 ## Next
 
-[Istio integration](/getting-started/kubernetes/hardway/istio-integration)
+[Istio integration](istio-integration.mdx)

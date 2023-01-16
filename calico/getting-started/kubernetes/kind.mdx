@@ -1,35 +1,42 @@
 ---
-title: Kind multi-node install
 description: Enable Calico on a single/multi-node Kind cluster for testing or development in approximately 10 minutes.
-canonical_url: '/getting-started/kubernetes/kind'
 ---
 
-### Big picture
+# Kind multi-node install
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Big picture
 
 This tutorial gets you a multi node Kind cluster with Calico in approximately 10 minutes.
 
-
-### Value
+## Value
 
 kind is a tool for running local Kubernetes clusters using Docker container "nodes".
 
 The geeky details of what you get:
-{% include geek-details.html details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:Calico,Datastore:Kubernetes' %}
 
-### Before you begin
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:Calico,Datastore:Kubernetes'
+/>
+
+## Before you begin
+
 - Ensure Docker is installed
-- Install, but do not create cluster, kind. {% include open-new-window.html text='How to install Kind' url='https://kind.sigs.k8s.io/docs/user/quick-start/#installation' %}
-- Install kubectl.{% include open-new-window.html text='How to install kubectl' url='https://kubernetes.io/docs/tasks/tools/install-kubectl/' %}
+- Install, but do not create cluster, kind. [How to install Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+- Install kubectl.[How to install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
-### How to
+## How to
 
-#### Create a multi-node kind cluster
+### Create a multi-node kind cluster
 
 KIND ships with a simple networking implementation ("kindnetd") based around standard CNI plugins (`ptp`, `host-local`, …) and simple netlink routes. You need to disable the default CNI in order to use Calico CNI.
 
-Kind cluster creation can be modified by {% include open-new-window.html text='configuration file' url='https://kind.sigs.k8s.io/docs/user/quick-start/#creating-a-cluster' %}. Here you are providing kind configuration in order to disable simple networking implementation (default CNI) and change the pod ip CIDR.
+Kind cluster creation can be modified by [configuration file](https://kind.sigs.k8s.io/docs/user/quick-start/#creating-a-cluster). Here you are providing kind configuration in order to disable simple networking implementation (default CNI) and change the pod ip CIDR.
 
-```bash
+```batch
 cat > values.yaml <<EOF
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -45,13 +52,13 @@ EOF
 
 Start your Kind cluster with one master and two worker nodes using the following command.
 
-```bash
+```batch
 kind create cluster --config kind.yaml --name dev
 ```
 
 Confirm that you now have three nodes in your cluster with the following command.
 
-```bash
+```batch
 kubectl get nodes -o wide
 ```
 
@@ -64,42 +71,51 @@ dev-worker          Ready    <none>          4m   v1.25.0   172.18.0.4    <none>
 dev-worker2         Ready    <none>          4m   v1.25.0   172.18.0.3    <none>        Ubuntu 22.04.1 LTS   5.10.0-17-amd64   containerd://1.6.7
 ```
 
+### Install {{prodname}}
 
-#### Install {{site.prodname}}
-   {% tabs tab-group:grp1 %}
-   <label:Operator,active:true>
-   <%
-Install the {{site.prodname}} operator and custom resource definitions.
+   <Tabs>
+<TabItem label="Operator" value="Operator-0">
 
-```bash
-kubectl create -f {{site.data.versions.first.manifests_url}}/manifests/tigera-operator.yaml
+Install the {{prodname}} operator and custom resource definitions.
+
+```batch
+kubectl create -f {{releases.0.manifests_url}}/manifests/tigera-operator.yaml
 ```
 
-> **Note**: Due to the large size of the CRD bundle, `kubectl apply` might exceed request limits. Instead, use `kubectl create` or `kubectl replace`.
-{: .alert .alert-info}
+:::note
 
-Install {{site.prodname}} by creating the necessary custom resource. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
+Due to the large size of the CRD bundle, `kubectl apply` might exceed request limits. Instead, use `kubectl create` or `kubectl replace`.
 
-> **Note**: Before creating this manifest, read its contents and make sure its settings are correct for your environment. For example,
-> if you have replaced `pod-network-cidr` you must change it in this file as well.
-{: .alert .alert-info}
+:::
 
-```bash
-kubectl create -f {{site.data.versions.first.manifests_url}}/manifests/custom-resources.yaml
-```
-%>
-<label:Manifest>
-<%
+Install {{prodname}} by creating the necessary custom resource. For more information on configuration options available in this manifest, see [the installation reference](../../reference/installation/api.mdx).
 
-Install {{site.prodname}} by using the following command.
+:::note
 
-```bash
-kubectl apply -f {{site.data.versions.first.manifests_url}}/manifests/calico.yaml
+Before creating this manifest, read its contents and make sure its settings are correct for your environment. For example,
+if you have replaced `pod-network-cidr` you must change it in this file as well.
+
+:::
+
+```batch
+kubectl create -f {{releases.0.manifests_url}}/manifests/custom-resources.yaml
 ```
 
-> **Note**: You can also
-> [view the YAML in a new tab]({{site.data.versions.first.manifests_url}}/manifests/calico.yaml){:target="_blank"}.
-{: .alert .alert-info}
+</TabItem>
+<TabItem label="Manifest" value="Manifest-1">
+
+Install {{prodname}} by using the following command.
+
+```batch
+kubectl apply -f {{releases.0.manifests_url}}/manifests/calico.yaml
+```
+
+:::note
+
+You can also
+[view the YAML in a new tab]({{releases.0.manifests_url}}/manifests/calico.yaml).
+
+:::
 
 You should see the following output.
 
@@ -130,16 +146,14 @@ deployment.apps/calico-kube-controllers created
 serviceaccount/calico-kube-controllers created
 ```
 
-{: .no-select-button}
+</TabItem>
+</Tabs>
 
-%>
-{% endtabs %}
+### Verify {{prodname}} installation
 
-#### Verify {{site.prodname}} installation
+You can verify {{prodname}} installation in your cluster by issuing the following command.
 
-You can verify {{site.prodname}} installation in your cluster by issuing the following command.
-
-```bash
+```batch
 watch kubectl get pods -l k8s-app=calico-node -A
 ```
 
@@ -155,24 +169,24 @@ kube-system   calico-node-j44hp   1/1     Running   0          57s
 
 Use `ctrl+c` to break out of watch.
 
-Congratulations you now have a Kind cluster equipped with {{site.prodname}}
+Congratulations you now have a Kind cluster equipped with {{prodname}}
 
-#### Clean up
+### Clean up
 
 Issuing a delete command will destroy the cluster that you created in this tutorial.
 
-```bash
+```batch
 kind delete cluster --name dev
 ```
 
-
-### Next steps
+## Next steps
 
 **Required**
-- [Install and configure calicoctl]({{site.basurl}}/maintenance/clis/calicoctl/install)
+
+- [Install and configure calicoctl](../../operations/calicoctl/install.mdx)
 
 **Recommended tutorials**
-- [Secure a simple application using the Kubernetes NetworkPolicy API]({{site.basurl}}/security/tutorials/kubernetes-policy-basic)
-- [Control ingress and egress traffic using the Kubernetes NetworkPolicy API]({{site.basurl}}/security/tutorials/kubernetes-policy-advanced)
-- [Run a tutorial that shows blocked and allowed connections in real time]({{site.basurl}}/security/tutorials/kubernetes-policy-demo/kubernetes-demo)
-  
+
+- [Secure a simple application using the Kubernetes NetworkPolicy API](../../network-policy/get-started/kubernetes-policy/kubernetes-policy-basic.mdx)
+- [Control ingress and egress traffic using the Kubernetes NetworkPolicy API](../../network-policy/get-started/kubernetes-policy/kubernetes-policy-advanced.mdx)
+- [Run a tutorial that shows blocked and allowed connections in real time](../../network-policy/get-started/kubernetes-policy/kubernetes-demo.mdx)

@@ -1,98 +1,110 @@
 ---
-title: Quickstart for Calico on minikube
 description: Enable Calico on a single/multi-node minikube cluster for testing or development in under 1 minute.
-canonical_url: '/getting-started/kubernetes/minikube'
 ---
 
-### Big picture
+# Quickstart for Calico on minikube
 
-This quickstart gets you a single-node minikube cluster with {{site.prodname}}
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Big picture
+
+This quickstart gets you a single-node minikube cluster with {{prodname}}
 in approximately 1 minute. You can use this cluster for testing and
 development.
 
-### Value
+## Value
 
-Use this quickstart to quickly and easily try {{site.prodname}} features.
+Use this quickstart to quickly and easily try {{prodname}} features.
 
-### Before you begin
+## Before you begin
 
-- Install, but do not start, minikube. {% include open-new-window.html text='How to install minikube' url='https://minikube.sigs.k8s.io/docs/start/#what-youll-need' %}
-- Install kubectl.{% include open-new-window.html text='How to install kubectl' url='https://kubernetes.io/docs/tasks/tools/install-kubectl/' %}
-- Install a minikube driver. For example Docker. A full List of available drivers can be {% include open-new-window.html  text='found here.' url='https://minikube.sigs.k8s.io/docs/drivers/' %}
+- Install, but do not start, minikube. [How to install minikube](https://minikube.sigs.k8s.io/docs/start/#what-youll-need)
+- Install kubectl.[How to install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- Install a minikube driver. For example Docker. A full List of available drivers can be [found here.](https://minikube.sigs.k8s.io/docs/drivers/)
 
-### How to
+## How to
 
-#### Create a single-node minikube cluster
+### Create a single-node minikube cluster
 
-{% tabs %}
-<label:Built-in {{site.prodname}},active:true>
-<%
+<Tabs>
+<TabItem label="Built-in {{prodname}}" value="Built-in {{prodname}}-0">
 
-Minikube offers a built-in {{site.prodname}} implementation, this is a quick way to checkout {{site.prodname}} features.
+Minikube offers a built-in {{prodname}} implementation, this is a quick way to checkout {{prodname}} features.
 
-> **Note**: Enabling preinstalled {{site.prodname}} might be the quickest way for testing. However, if you like to checkout a more recent version or features of {{site.prodname}} you should consider using Manifest or Operator approach.
-{: .alert .alert-info}
+:::note
 
-```bash
+Enabling preinstalled {{prodname}} might be the quickest way for testing. However, if you like to checkout a more recent version or features of {{prodname}} you should consider using Manifest or Operator approach.
+
+:::
+
+```batch
 minikube start --network-plugin=cni --cni=calico
 ```
 
-%>
-<label:Operator>
-<%
+</TabItem>
+<TabItem label="Operator" value="Operator-1">
 
 Start your minikube cluster with one master node using the following command.
 
-> **Note**: If `192.168.0.0/16` is already in use within your network you must select a different pod network CIDR, by replacing `192.168.0.0/16` in the following command.
-{: .alert .alert-info}
+:::note
 
-```bash
+If `192.168.0.0/16` is already in use within your network you must select a different pod network CIDR, by replacing `192.168.0.0/16` in the following command.
+
+:::
+
+```batch
 minikube start --network-plugin=cni --extra-config=kubeadm.pod-network-cidr=192.168.0.0/16
 ```
 
-Install the Tigera {{site.prodname}} operator and custom resource definitions.
+Install the Tigera {{prodname}} operator and custom resource definitions.
 
-```bash
-kubectl create -f {{site.data.versions.first.manifests_url}}/manifests/tigera-operator.yaml
+```batch
+kubectl create -f {{releases.0.manifests_url}}/manifests/tigera-operator.yaml
 ```
 
-> **Note**: Due to the large size of the CRD bundle, `kubectl apply` might exceed request limits. Instead, use `kubectl create` or `kubectl replace`.
-{: .alert .alert-info}
+:::note
 
-Install {{site.prodname}} by creating the necessary custom resource. For more information on configuration options available in this manifest, see [the installation reference]({{site.baseurl}}/reference/installation/api).
+Due to the large size of the CRD bundle, `kubectl apply` might exceed request limits. Instead, use `kubectl create` or `kubectl replace`.
 
-> **Note**: Before creating this manifest, read its contents and make sure its settings are correct for your environment. For example,
-> if you have replaced `pod-network-cidr` you must change it in this file as well.
-{: .alert .alert-info}
+:::
 
-```bash
-kubectl create -f {{site.data.versions.first.manifests_url}}/manifests/custom-resources.yaml
+Install {{prodname}} by creating the necessary custom resource. For more information on configuration options available in this manifest, see [the installation reference](../../reference/installation/api.mdx).
+
+:::note
+
+Before creating this manifest, read its contents and make sure its settings are correct for your environment. For example,
+if you have replaced `pod-network-cidr` you must change it in this file as well.
+
+:::
+
+```batch
+kubectl create -f {{releases.0.manifests_url}}/manifests/custom-resources.yaml
 ```
 
-%>
-<label:Manifest>
-<%
+</TabItem>
+<TabItem label="Manifest" value="Manifest-2">
 
 Start your minikube cluster with one master node using the following command.
 
-```bash
-minikube start --network-plugin=cni 
+```batch
+minikube start --network-plugin=cni
 ```
 
-Install {{site.prodname}}.
+Install {{prodname}}.
 
-```bash
-kubectl apply -f {{site.data.versions.first.manifests_url}}/manifests/calico.yaml
+```batch
+kubectl apply -f {{releases.0.manifests_url}}/manifests/calico.yaml
 ```
 
-%>
-{% endtabs %}
+</TabItem>
+</Tabs>
 
-#### Verify {{site.prodname}} installation
+### Verify {{prodname}} installation
 
-You can verify {{site.prodname}} installation in your cluster by issuing the following command.
+You can verify {{prodname}} installation in your cluster by issuing the following command.
 
-```bash
+```batch
 watch kubectl get pods -l k8s-app=calico-node -A
 ```
 
@@ -105,37 +117,42 @@ kube-system   calico-node-mlqvs   1/1     Running   0          5m18s
 
 Use `ctrl+c` to break out of watch.
 
-Congratulations you now have a minikube cluster equipped with {{site.prodname}}
+Congratulations you now have a minikube cluster equipped with {{prodname}}
 
-#### Add an additional worker node
+### Add an additional worker node
 
-> **Note**: This as an optional step, you can safely skip this step if you do not require an additional worker node.
-{: .alert .alert-info}
+:::note
 
-```bash
+This as an optional step, you can safely skip this step if you do not require an additional worker node.
+
+:::
+
+```batch
 minikube node add
 ```
 
 Verify nodes using the following command
 
-```bash
+```batch
 kubectl get nodes
 ```
-#### Clean up
+
+### Clean up
 
 Issuing a delete command will destroy the cluster that you created in this tutorial.
 
-```bash
+```batch
 minikube delete
 ```
 
-### Next steps
+## Next steps
 
 **Required**
-- [Install and configure calicoctl]({{site.basurl}}/maintenance/clis/calicoctl/install)
+
+- [Install and configure calicoctl](../../operations/calicoctl/install.mdx)
 
 **Recommended tutorials**
-- [Secure a simple application using the Kubernetes NetworkPolicy API]({{site.basurl}}/security/tutorials/kubernetes-policy-basic)
-- [Control ingress and egress traffic using the Kubernetes NetworkPolicy API]({{site.basurl}}/security/tutorials/kubernetes-policy-advanced)
-- [Run a tutorial that shows blocked and allowed connections in real time]({{site.basurl}}/security/tutorials/kubernetes-policy-demo/kubernetes-demo)
-  
+
+- [Secure a simple application using the Kubernetes NetworkPolicy API](../../network-policy/get-started/kubernetes-policy/kubernetes-policy-basic.mdx)
+- [Control ingress and egress traffic using the Kubernetes NetworkPolicy API](../../network-policy/get-started/kubernetes-policy/kubernetes-policy-advanced.mdx)
+- [Run a tutorial that shows blocked and allowed connections in real time](../../network-policy/get-started/kubernetes-policy/kubernetes-demo.mdx)

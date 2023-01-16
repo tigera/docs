@@ -1,10 +1,10 @@
 ---
-title: Configure BGP peering
-description: Quick review of BGP peering options. 
-canonical_url: '/getting-started/kubernetes/hardway/configure-bgp-peering'
+description: Quick review of BGP peering options.
 ---
 
-We have configured {{site.prodname}} to distribute routing information over the
+# Configure BGP peering
+
+We have configured {{prodname}} to distribute routing information over the
 Border Gateway Protocol (BGP). This scalable protocol powers routing on the global
 public Internet.
 
@@ -19,7 +19,7 @@ directly with each other.
 
 On one of the nodes in your cluster where you have `calicoctl` installed, check the status.
 
-```bash
+```batch
 sudo calicoctl node status
 ```
 
@@ -41,9 +41,8 @@ IPv4 BGP status
 IPv6 BGP status
 No IPv6 peers found.
 ```
-{: .no-select-button}
 
-Alternatively, you can create a [`CalicoNodeStatus` resource]({{site.baseurl}}/reference/resources/caliconodestatus) to get BGP session status for the node.
+Alternatively, you can create a [`CalicoNodeStatus` resource](../../../reference/resources/caliconodestatus.mdx) to get BGP session status for the node.
 
 Notice there are four BGP sessions, one to each other node in the cluster. In a small cluster, this
 works well and is highly resilient. However, the total number of BGP sessions scales as the square
@@ -65,7 +64,7 @@ Choose three nodes and perform the following for each of them.
 
 Save the node YAML.
 
-```bash
+```batch
 calicoctl get node <node name> -o yaml --export > node.yaml
 ```
 
@@ -74,7 +73,7 @@ Edit the YAML to add
 ```yaml
 metadata:
   labels:
-    calico-route-reflector: ""
+    calico-route-reflector: ''
 spec:
   bgp:
     routeReflectorClusterID: 224.0.0.1
@@ -82,7 +81,7 @@ spec:
 
 Reapply the YAML
 
-```bash
+```batch
 calicoctl apply -f node.yaml
 ```
 
@@ -90,7 +89,7 @@ calicoctl apply -f node.yaml
 
 Configure all non-reflector nodes to peer with all route reflectors
 
-```bash
+```batch
 calicoctl apply -f - <<EOF
 kind: BGPPeer
 apiVersion: projectcalico.org/v3
@@ -104,7 +103,7 @@ EOF
 
 Configure all route reflectors to peer with each other
 
-```bash
+```batch
 calicoctl apply -f - <<EOF
 kind: BGPPeer
 apiVersion: projectcalico.org/v3
@@ -118,7 +117,7 @@ EOF
 
 Disable the node-to-node mesh
 
-```bash
+```batch
 calicoctl create -f - <<EOF
  apiVersion: projectcalico.org/v3
  kind: BGPConfiguration
@@ -132,7 +131,7 @@ EOF
 
 On a non-reflector node, you should now see only three peerings.
 
-```bash
+```batch
 sudo calicoctl node status
 ```
 
@@ -153,10 +152,9 @@ IPv4 BGP status
 IPv6 BGP status
 No IPv6 peers found.
 ```
-{: .no-select-button}
 
-Alternatively, you can create a [`CalicoNodeStatus` resource]({{site.baseurl}}/reference/resources/caliconodestatus) to get BGP session status for the node.
+Alternatively, you can create a [`CalicoNodeStatus` resource](../../../reference/resources/caliconodestatus.mdx) to get BGP session status for the node.
 
 ## Next
 
-[Test networking](/getting-started/kubernetes/hardway/test-networking)
+[Test networking](test-networking.mdx)

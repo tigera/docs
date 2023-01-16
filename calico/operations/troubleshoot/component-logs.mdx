@@ -1,22 +1,22 @@
 ---
-title: Component logs
 description: Where to find component logs.
-canonical_url: '/maintenance/troubleshoot/component-logs'
 ---
 
-### Big picture
+# Component logs
 
-View and collect {{site.prodname}} logs.
+## Big picture
 
-### Value
+View and collect {{prodname}} logs.
+
+## Value
 
 It is useful to view logs to monitor component health and diagnose potential issues.
 
-### Concepts
+## Concepts
 
-#### {{site.nodecontainer}} logs
+### {{nodecontainer}} logs
 
-The {{site.nodecontainer}} logs contain log output from the following subcomponents:
+The {{nodecontainer}} logs contain log output from the following subcomponents:
 
 - Per-node startup logic
 - BGP agent
@@ -24,11 +24,11 @@ The {{site.nodecontainer}} logs contain log output from the following subcompone
 
 Components log either to disk within `/var/log/calico`, to stdout, or both.
 
-For components that log to disk, files are automatically rotated, and by default 10 files of 1MB each are kept. The current log file is called `current` and rotated files have @ followed by a timestamp detailing when the files was rotated in [tai64n](http://cr.yp.to/libtai/tai64.html#tai64n){:target="_blank"} format.
+For components that log to disk, files are automatically rotated, and by default 10 files of 1MB each are kept. The current log file is called `current` and rotated files have @ followed by a timestamp detailing when the files was rotated in [tai64n](http://cr.yp.to/libtai/tai64.html#tai64n) format.
 
-### How to
+## How to
 
-### View logs for a {{site.nodecontainer}} instance
+## View logs for a {{nodecontainer}} instance
 
 You can view logs for a node using the `kubectl logs` command. This will show logs for all subcomponents of the given node.
 
@@ -38,7 +38,7 @@ For example:
 kubectl logs -n calico-system calico-node-xxxx
 ```
 
-### View logs from the CNI plugin
+## View logs from the CNI plugin
 
 CNI plugin logs are not available through kubectl and are instead logged both to the host machine's disk as well as stderr.
 
@@ -46,9 +46,9 @@ By default, these logs can be found at `/var/log/calico/cni/` on the host machin
 
 The container runtime may also display the CNI plugin logs within its own log output.
 
-### Configure BGP agent log level
+## Configure BGP agent log level
 
-BGP log level is configured via the [BGPConfiguration]({{site.baseurl}}/reference/resources/bgpconfig) API, and can be one of the following values:
+BGP log level is configured via the [BGPConfiguration](../../reference/resources/bgpconfig.mdx) API, and can be one of the following values:
 
 - `Debug`: enables "debug all" logging for BIRD. The most verbose logging level.
 - `Info`: enables logging for protocol state changes. This is the default log level.
@@ -60,29 +60,32 @@ To modify the BGP log level:
 
 1. Get the current bgpconfig settings.
 
-   ```bash
+   ```batch
    kubectl get bgpconfig -o yaml > bgp.yaml
    ```
 
 1. Modify logSeverityScreen to the desired value.
 
-   ```bash
+   ```batch
    vim bgp.yaml
    ```
 
-   > **Tip**: For a global change set the name to "default".
-   > For a node-specific change set the name to the node name prefixed with "node.", e.g., "node.node-1".
-   {: .alert .alert-success}
+   :::tip
+
+   For a global change set the name to "default".
+   For a node-specific change set the name to the node name prefixed with "node.", e.g., "node.node-1".
+
+   :::
 
 1. Replace the current bgpconfig settings.
 
-   ```bash
+   ```batch
    kubectl replace -f bgp.yaml
    ```
 
-### Configure Felix log level
+## Configure Felix log level
 
-Felix log level is configured via the [FelixConfiguration]({{site.baseurl}}/reference/resources/felixconfig) API, and can be one of the following values:
+Felix log level is configured via the [FelixConfiguration](../../reference/resources/felixconfig.mdx) API, and can be one of the following values:
 
 - `Debug`: The most verbose logging level - for development and debugging.
 - `Info`: The default log level. Shows important state changes.
@@ -94,22 +97,25 @@ To modify Felix's log level:
 
 1. Get the current felixconfig settings.
 
-   ```bash
+   ```batch
    kubectl get felixconfig -o yaml > felixconfig.yaml
    ```
 
 1. Modify logSeverityScreen to desired value.
 
-   ```bash
+   ```batch
    vim felixconfig.yaml
    ```
 
-   > **Tip**: For a global change set the name to "default".
-   > For a node-specific change set the name to the node name, e.g., "{{site.prodname}}-Node-1".
-   {: .alert .alert-success}
+   :::tip
+
+   For a global change set the name to "default".
+   For a node-specific change set the name to the node name, e.g., "{{prodname}}-Node-1".
+
+   :::
 
 1. Replace the current felixconfig settings.
 
-   ```bash
+   ```batch
    kubectl replace -f felixconfig.yaml
    ```
