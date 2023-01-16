@@ -1,16 +1,16 @@
 ---
-title: Advanced Node Scheduling
 description: Control where Elasticsearch pods and replicas are scheduled.
-canonical_url: /maintenance/logstorage/advanced-node-scheduling
 ---
 
-### Big picture
+# Advanced Node Scheduling
 
-{{site.prodname}} can leverage advanced Kubernetes node scheduling options and advanced Elasticsearch shard scheduling 
-options to allow you to customize the distribution of the Elasticsearch pods and replicas across Kubernetes nodes with 
+## Big picture
+
+{{prodname}} can leverage advanced Kubernetes node scheduling options and advanced Elasticsearch shard scheduling
+options to allow you to customize the distribution of the Elasticsearch pods and replicas across Kubernetes nodes with
 specific attributes.
 
-### Value
+## Value
 
 In some scenarios you may want to control where the Elasticsearch pods and replicas are scheduled. DataNodeSelectors and
 SelectionAttributes have been designed to add this flexibility.
@@ -18,62 +18,53 @@ SelectionAttributes have been designed to add this flexibility.
 To make sure that all the Elasticsearch pods are scheduled on Kubernetes nodes with specific attributes, use dataNodeSelectors
 and specify the labels a Kubernetes node must have in order for it to be eligible for an Elasticsearch pod to be scheduled on it.
 
-To protect the Elasticsearch cluster from failing if certain Kubernetes nodes fail, use SelectionAttributes. Elasticsearch 
-pods and replicas will be distributed across nodes with different node labels, ensuring that in the event of Kubernetes 
+To protect the Elasticsearch cluster from failing if certain Kubernetes nodes fail, use SelectionAttributes. Elasticsearch
+pods and replicas will be distributed across nodes with different node labels, ensuring that in the event of Kubernetes
 node failure all the Elasticsearch data will still be available.
 
-### Features
+## Features
 
-This how-to guide uses the following {{site.prodname}} features:
+This how-to guide uses the following {{prodname}} features:
 
 - **LogStorage** DataNodeSelectors
 - **LogStorage** NodeSet SelectionAttributes
 
-### How to
+## How to
 
-#### Schedule LogStorage using dataNodeSelectors
-The {{site.prodname}} [LogStorageSpec]({{site.baseurl}}/reference/installation/api) has the field `dataNodeSelector`,
-which is a map where the keys are label names and values are label values. The Elasticsearch pods used by {{site.prodname}} 
+### Schedule LogStorage using dataNodeSelectors
+
+The {{prodname}} [LogStorageSpec](../../reference/installation/api.mdx) has the field `dataNodeSelector`,
+which is a map where the keys are label names and values are label values. The Elasticsearch pods used by {{prodname}}
 will only be scheduled on Kubernetes nodes that match **all** labels.
 
 1.  Add the labels to your `LogStorage`.
-    ```bash
-    kubectl apply -f - <<EOF
-    apiVersion: operator.tigera.io/v1
-    kind: LogStorage
-    metadata:
-      name: tigera-secure
-    spec:
-      nodes:
-        count: 1
-      dataNodeSelector:
-        label1: value1
-        label2: value2
-    EOF
-    ```
-A new Elasticsearch pod will now be created in namespace `tigera-elasticsearch`, but will remain `PENDING` until there is
-a Kubernetes node that matches the labels.
+    `batch kubectl apply -f - <<EOF apiVersion: operator.tigera.io/v1 kind: LogStorage metadata: name: tigera-secure spec: nodes: count: 1 dataNodeSelector: label1: value1 label2: value2 EOF `
+    A new Elasticsearch pod will now be created in namespace `tigera-elasticsearch`, but will remain `PENDING` until there is
+    a Kubernetes node that matches the labels.
 
 1.  Label one of your Kubernetes Nodes
-    ```bash
+    ```batch
     kubectl label nodes <your-node-name> label1=value1
     kubectl label nodes <your-node-name> label2=value2
     ```
 1.  Monitor the progress.
-    ```bash
+    ```batch
     kubectl get pod -o wide -n tigera-elasticsearch -w
     ```
 
-#### Make LogStorage zone-aware using selectionAttributes
+### Make LogStorage zone-aware using selectionAttributes
+
 If you are in a situation where your cluster has nodes across three regions, you can make sure your Elasticsearch pods
-and replicas are spread evenly among the three regions to ensure the Elasticsearch cluster is intact during zone failure. 
+and replicas are spread evenly among the three regions to ensure the Elasticsearch cluster is intact during zone failure.
 Consider these Kubernetes nodes:
+
 - Nodes in zone A have label `failure-domain.beta.kubernetes.io/zone: zone-a`.
 - Nodes in zone B have label `failure-domain.beta.kubernetes.io/zone: zone-b`.
 - Nodes in zone C have label `failure-domain.beta.kubernetes.io/zone: zone-c`.
 
 We can now use a LogStorage with three node sets that will all form one cluster. For each node set add `selectionAttributes` object,
 such that:
+
 - **NodeLabel** represents a label that should be found on a Kubernetes node for it to be scheduled on.
 - **Value** represents the value for `nodeLabel`.
 - **Name** represents a unique label for this selection attribute.
@@ -81,7 +72,7 @@ such that:
 It is important to have at least one replica of each shard to make sure that no data can get lost.
 
 1.  Apply the following `LogStorage` manifest.
-    ```bash
+    ```batch
     kubectl apply -f - <<EOF
     apiVersion: operator.tigera.io/v1
     kind: LogStorage

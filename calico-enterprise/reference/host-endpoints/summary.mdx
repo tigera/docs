@@ -1,10 +1,8 @@
 ---
-title: Summary
-description: How different host endpoint rules affect packet flows. 
-canonical_url: '/reference/host-endpoints/summary'
+description: How different host endpoint rules affect packet flows.
 ---
 
-
+# Summary
 
 ## When do host endpoint policies apply?
 
@@ -25,17 +23,20 @@ workload, i.e., a locally-hosted pod, container or VM:
 - Untracked policies technically do apply, but never have any net positive
   effect for such flows.
 
-  > **Note**: To be precise, untracked policy for the incoming host interface may
-  > apply in the forwards direction, and if so it will have the effect of forwarding
-  > the packet to the workload without any connection tracking. But then, in
-  > the reverse direction, there will be no conntrack state for the return
-  > packets to match, and there is no application of any egress rules that may
-  > be defined by the untracked policy—so unless the workload's policy
-  > specifically allows the relevant source IP, the return packet will be
-  > dropped. That is the same overall result as if there was no untracked
-  > policy at all, so in practice it is as if untracked policies do not apply
-  > to this flow.
-  {: .alert .alert-info}
+  :::note
+
+  To be precise, untracked policy for the incoming host interface may
+  apply in the forwards direction, and if so it will have the effect of forwarding
+  the packet to the workload without any connection tracking. But then, in
+  the reverse direction, there will be no conntrack state for the return
+  packets to match, and there is no application of any egress rules that may
+  be defined by the untracked policy—so unless the workload's policy
+  specifically allows the relevant source IP, the return packet will be
+  dropped. That is the same overall result as if there was no untracked
+  policy at all, so in practice it is as if untracked policies do not apply
+  to this flow.
+
+  :::
 
 For packets that arrive on a host interface and are destined for a local
 server process in the host namespace:
@@ -52,14 +53,14 @@ For packets that arrive on a host interface (A) and are forwarded out of the
 same or another host interface (B):
 
 - Untracked policies apply, for both host interfaces A and B, but only the
-  ingress rules that are defined in those policies.  The forwards direction is
+  ingress rules that are defined in those policies. The forwards direction is
   governed by the ingress rules of untracked policies that apply to interface
   A, and the reverse direction is governed by the ingress rules of untracked
   policies that apply to interface B, so those rules should be defined
   symmetrically.
 
 - Pre-DNAT policies apply, specifically the ingress rules of the pre-DNAT
-  policies that apply to interface A.  (The reverse direction is allowed by
+  policies that apply to interface A. (The reverse direction is allowed by
   conntrack state.)
 
 - Normal policies apply if `applyOnForward` is `true`: specifically, the ingress

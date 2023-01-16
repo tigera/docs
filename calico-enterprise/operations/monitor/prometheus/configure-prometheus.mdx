@@ -1,25 +1,25 @@
 ---
-title: Configure Prometheus
 description: Configure rules for alerts and denied packets, for persistent storage.
-canonical_url: /maintenance/monitor/prometheus/prometheus
 ---
 
-### Updating Denied Packets Rules
+# Configure Prometheus
+
+## Updating Denied Packets Rules
 
 This is an example of how to modify the sample rule created by the sample manifest.
 The process of updating rules is the same as for user created rules (documented below).
 
-  - Save the current alert rule:
+- Save the current alert rule:
 
-    ```
-    kubectl -n tigera-prometheus get prometheusrule -o yaml > calico-prometheus-alert-rule-dp.yaml
-    ```
+  ```
+  kubectl -n tigera-prometheus get prometheusrule -o yaml > calico-prometheus-alert-rule-dp.yaml
+  ```
 
-  - Make necessary edits to the alerting rules then apply the updated manifest.
+- Make necessary edits to the alerting rules then apply the updated manifest.
 
-    ```
-    kubectl apply -f calico-prometheus-alert-rule-dp.yaml
-    ```
+  ```
+  kubectl apply -f calico-prometheus-alert-rule-dp.yaml
+  ```
 
 Your changes should be applied in a few seconds by the prometheus-config-reloader
 container inside the prometheus pod launched by the prometheus-operator
@@ -28,7 +28,6 @@ container inside the prometheus pod launched by the prometheus-operator
 As an example, the range query in this Manifest is 10 seconds.
 
 ```yaml
-{% raw %}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -39,23 +38,21 @@ metadata:
     prometheus: calico-node-prometheus
 spec:
   groups:
-  - name: calico.rules
-    rules:
-    - alert: DeniedPacketsRate
-      expr: rate(calico_denied_packets[10s]) > 50
-      labels:
-        severity: critical
-      annotations:
-        summary: "Instance {{$labels.instance}} - Large rate of packets denied"
-        description: "{{$labels.instance}} with calico-node pod {{$labels.pod}} has been denying packets at a fast rate {{$labels.sourceIp}} by policy {{$labels.policy}}."
-{% endraw %}
+    - name: calico.rules
+      rules:
+        - alert: DeniedPacketsRate
+          expr: rate(calico_denied_packets[10s]) > 50
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Instance {{$labels.instance}} - Large rate of packets denied'
+            description: '{{$labels.instance}} with calico-node pod {{$labels.pod}} has been denying packets at a fast rate {{$labels.sourceIp}} by policy {{$labels.policy}}.'
 ```
 
 To update this alerting rule, to say, execute the query with a range of
 20 seconds modify the manifest to this:
 
 ```yaml
-{% raw %}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -66,37 +63,36 @@ metadata:
     prometheus: calico-node-prometheus
 spec:
   groups:
-  - name: calico.rules
-    rules:
-    - alert: DeniedPacketsRate
-      expr: rate(calico_denied_packets[20s]) > 50
-      labels:
-        severity: critical
-      annotations:
-        summary: "Instance {{$labels.instance}} - Large rate of packets denied"
-        description: "{{$labels.instance}} with calico-node pod {{$labels.pod}} has been denying packets at a fast rate {{$labels.sourceIp}} by policy {{$labels.policy}}."
-{% endraw %}
+    - name: calico.rules
+      rules:
+        - alert: DeniedPacketsRate
+          expr: rate(calico_denied_packets[20s]) > 50
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Instance {{$labels.instance}} - Large rate of packets denied'
+            description: '{{$labels.instance}} with calico-node pod {{$labels.pod}} has been denying packets at a fast rate {{$labels.sourceIp}} by policy {{$labels.policy}}.'
 ```
 
-### Creating a New Alerting Rule
+## Creating a New Alerting Rule
 
 Creating a new alerting rule is straightforward once you figure out what you
-want your rule to look for. Check [alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/){:target="_blank"}
-and [Queries](https://prometheus.io/docs/querying/examples/){:target="_blank"} for more
+want your rule to look for. Check [alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)
+and [Queries](https://prometheus.io/docs/querying/examples/) for more
 information.
 
-#### New Alerting Rule for Monitoring Calico Node
+### New Alerting Rule for Monitoring Calico Node
+
 To add the new alerting rule to our Prometheus instance, define a PrometheusRule manifest
 in the `tigera-prometheus` namespace with the labels
 `role: tigera-prometheus-rules` and `prometheus: calico-node-prometheus`. The
 labels should match the labels defined by the `ruleSelector` field of the
 Prometheus manifest.
 
-As an example, to fire a alert when a {{site.noderunning}} instance has been down for
+As an example, to fire a alert when a {{noderunning}} instance has been down for
 more than 5 minutes, save the following to a file, say `calico-node-down-alert.yaml`.
 
 ```yaml
-{% raw %}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -107,17 +103,16 @@ metadata:
     prometheus: calico-node-prometheus
 spec:
   groups:
-  - name: calico.rules
-    rules:
-    - alert: CalicoNodeInstanceDown
-      expr: up == 0
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Instance {{$labels.instance}} Pod: {{$labels.pod}} is down"
-        description: "{{$labels.instance}} of job {{$labels.job}} has been down for more than 5 minutes"
-{% endraw %}
+    - name: calico.rules
+      rules:
+        - alert: CalicoNodeInstanceDown
+          expr: up == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Instance {{$labels.instance}} Pod: {{$labels.pod}} is down'
+            description: '{{$labels.instance}} of job {{$labels.job}} has been down for more than 5 minutes'
 ```
 
 Then create/apply this manifest in kubernetes.
@@ -130,7 +125,7 @@ Your changes should be applied in a few seconds by the prometheus-config-reloade
 container inside the prometheus pod launched by the prometheus-operator
 (usually named `prometheus-<your-prometheus-instance-name>`).
 
-#### New Alerting Rule for Monitoring BGP Peers
+### New Alerting Rule for Monitoring BGP Peers
 
 Let’s look at an example of a new alerting rule to our Prometheus instance with respect to monitoring BGP
 peering health. Define a PrometheusRule manifest in the tigera-prometheus namespace with the labels
@@ -138,11 +133,10 @@ peering health. Define a PrometheusRule manifest in the tigera-prometheus namesp
 defined by the `ruleSelector` field of the Prometheus manifest.
 
 As an example, to fire an alert when the number of peering connections with a status other than “Established”
-is increasing at a non-zero rate in the cluster (over the last 5 minutes), save the following to a file, say 
+is increasing at a non-zero rate in the cluster (over the last 5 minutes), save the following to a file, say
 `tigera-peer-status-not-established.yaml`.
 
 ```yaml
-{% raw %}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -153,18 +147,17 @@ metadata:
   namespace: tigera-prometheus
 spec:
   groups:
-  - name: calico.rules
-    rules:
-    - alert: CalicoNodePeerStatusNotEstablished
-      annotations:
-        description: '{{$labels.instance}} has at least one peer connection that is
-          no longer up.'
-        summary: Instance {{$labels.instance}} has peer connection that is no longer
-          up
-      expr: rate(bgp_peers{status!~"Established"}[5m]) > 0
-      labels:
-        severity: critical
-{% endraw %}
+    - name: calico.rules
+      rules:
+        - alert: CalicoNodePeerStatusNotEstablished
+          annotations:
+            description: '{{$labels.instance}} has at least one peer connection that is
+              no longer up.'
+            summary: Instance {{$labels.instance}} has peer connection that is no longer
+              up
+          expr: rate(bgp_peers{status!~"Established"}[5m]) > 0
+          labels:
+            severity: critical
 ```
 
 Then create/apply this manifest in kubernetes.
@@ -177,13 +170,12 @@ Your changes should be applied in a few seconds by the prometheus-config-reloade
 container inside the prometheus pod launched by the prometheus-operator
 (usually named `prometheus-<your-prometheus-instance-name>`).
 
-### Additional Alerting Rules
+## Additional Alerting Rules
 
-The Alerting Rules installed by the {{site.prodname}} install manifest is a simple
+The Alerting Rules installed by the {{prodname}} install manifest is a simple
 one that fires an alert when the rate of denied packets denied by a policy on
 a node from a particular Source IP exceeds a certain packets per second
-threshold. The Prometheus query used for this (ignoring the threshold value
-20) is:
+threshold. The Prometheus query used for this (ignoring the threshold value 20) is:
 
 ```
 rate(calico_denied_packets[10s])
@@ -203,7 +195,6 @@ and this query will return results something along the lines of:
 {endpoint="calico-metrics-port",instance="10.240.0.81:9081",job="calico-node-metrics",namespace="kube-system",pod="calico-node-hn0kl",policy="profile/k8s_ns.test/0/deny",service="calico-node-metrics",srcIP="192.168.252.157"}	0.6
 {endpoint="calico-metrics-port",instance="10.240.0.84:9081",job="calico-node-metrics",namespace="kube-system",pod="calico-node-97m3g",policy="profile/k8s_ns.test/0/deny",service="calico-node-metrics",srcIP="192.168.167.159"}	0.6
 ```
-{: .no-select-button}
 
 We can modify this query to find out all packets dropped by different policies
 on every node.
@@ -221,7 +212,6 @@ query will return results like so:
 {instance="10.240.0.84:9081",policy="profile/k8s_ns.test/0/deny"}	2
 {instance="10.240.0.81:9081",policy="profile/k8s_ns.test/0/deny"}	2.8
 ```
-{: .no-select-button}
 
 To include the pod name in these results, add the label `pod` to the labels
 listed in the `by` expression like so:
@@ -236,7 +226,6 @@ which will return the following results:
 {instance="10.240.0.84:9081",pod="calico-node-97m3g",policy="profile/k8s_ns.test/0/deny"}	2
 {instance="10.240.0.81:9081",pod="calico-node-hn0kl",policy="profile/k8s_ns.test/0/deny"}	2.8
 ```
-{: .no-select-button}
 
 An interesting use case is when a rogue Pod is using tools such as nmap to
 scan a subnet for open ports. To do this, we have to execute a query that will
@@ -256,13 +245,12 @@ which will return results, different source IP address:
 {srcIP="192.168.167.175"}	0.4
 {srcIP="192.168.252.157"}	1.0000000000000002
 ```
-{: .no-select-button}
 
 To use these queries as Alerting Rules, follow the instructions defined in the
 [Creating a new Alerting Rule](#creating-a-new-alerting-rule) section and create
 a ConfigMap with the appropriate query.
 
-### Storage
+## Storage
 
 Prometheus stores metrics at regular intervals. If Prometheus is restarted and
 if ephemeral storage is used, metrics will be lost. Configure the Storage spec
@@ -270,7 +258,7 @@ to store metrics persistently.
 
 The sample manifests do not define a Storage spec. This means that if you
 use the default manifest, Prometheus will be deployed with a `emptyDir`
-volume. Using a [persistent volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/){:target="_blank"}
+volume. Using a [persistent volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
 supported by Kubernetes is strongly recommended.
 
 The Prometheus third party resource defined by the Prometheus Operator
@@ -290,11 +278,14 @@ parameters:
   zone: us-west1-b
 ```
 
-   > **Tip**: Refer to the
-   > [Kubernetes documentation on StorageClasses](https://kubernetes.io/docs/concepts/storage/storage-classes/#provisioner){:target="_blank"}
-   > for a list of alternatives and some sample manifests. You may need to configure
-   > a provisioner or cloud provider integration.
-   {: .alert .alert-success}
+:::tip
+
+Refer to the
+[Kubernetes documentation on StorageClasses](https://kubernetes.io/docs/concepts/storage/storage-classes/#provisioner)
+for a list of alternatives and some sample manifests. You may need to configure
+a provisioner or cloud provider integration.
+
+:::
 
 Then add the `storage` field to the Prometheus manifest with a persistent
 volume claim template.
@@ -310,7 +301,7 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       team: network-operators
-  version: {{site.data.versions.first.components["prometheus"].version}}
+  version: { { releases.0.components.prometheus.version } }
   retention: 1h
   resources:
     requests:
@@ -335,32 +326,32 @@ spec:
 ```
 
 Prometheus Operator also supports other manual storage provisioning
-mechanisms. More information can be found [here](https://github.com/coreos/prometheus-operator/blob/c3eb679265b73210e1af1512fb2a99cf67b3c5cf/Documentation/user-guides/storage.md){:target="_blank"}
+mechanisms. More information can be found [here](https://github.com/coreos/prometheus-operator/blob/c3eb679265b73210e1af1512fb2a99cf67b3c5cf/Documentation/user-guides/storage.md)
 
 Combining storage resource with proper retention time for metrics will ensure
 that Prometheus will use the storage effectively. The `retention` field is used
 to configure the amount of time that metrics are stored on disk.
 
-### Updating the scrape interval
+## Updating the scrape interval
 
 You may wish to modify the scrape interval (time between Prometheus polling each node for new denied packet information).
 Increasing the interval reduces load on Prometheus and the amount of storage required, but decreases the detail of the collected metrics.
 
-  The scrape interval of endpoints ({{site.noderunning}} in our case) is defined as part of
-  the ServiceMonitor manifest. To change the interval:
+The scrape interval of endpoints ({{noderunning}} in our case) is defined as part of
+the ServiceMonitor manifest. To change the interval:
 
-  - Save the current ServiceMonitor manifest:
+- Save the current ServiceMonitor manifest:
 
-    ```
-    kubectl -n tigera-prometheus get servicemonitor calico-node-monitor -o yaml > calico-node-monitor.yaml
-    ```
+  ```
+  kubectl -n tigera-prometheus get servicemonitor calico-node-monitor -o yaml > calico-node-monitor.yaml
+  ```
 
-  - Update the `interval` field under `endpoints` to desired settings and
-   apply the updated manifest.
+- Update the `interval` field under `endpoints` to desired settings and
+  apply the updated manifest.
 
-    ```
-    kubectl apply -f calico-node-monitor.yaml
-    ```
+  ```
+  kubectl apply -f calico-node-monitor.yaml
+  ```
 
 Your changes should be applied in a few seconds by the prometheus-config-reloader
 container inside the prometheus pod launched by the prometheus-operator
@@ -383,13 +374,13 @@ spec:
       k8s-app: calico-node
   namespaceSelector:
     matchNames:
-    - kube-system
+      - kube-system
   endpoints:
-  - port: calico-metrics-port
-    interval: 5s
+    - port: calico-metrics-port
+      interval: 5s
 ```
 
-To update {{site.prodname}} Prometheus' scrape interval to 10 seconds modify the manifest
+To update {{prodname}} Prometheus' scrape interval to 10 seconds modify the manifest
 to this:
 
 ```yaml
@@ -406,27 +397,27 @@ spec:
       k8s-app: calico-node
   namespaceSelector:
     matchNames:
-    - kube-system
+      - kube-system
   endpoints:
-  - port: calico-metrics-port
-    interval: 10s
+    - port: calico-metrics-port
+      interval: 10s
 ```
 
-### Troubleshooting Config Updates
+## Troubleshooting Config Updates
 
 Check config reloader logs to see if they detected any recent activity.
 
-  - For prometheus run:
+- For prometheus run:
 
-    ```
-    kubectl -n tigera-prometheus logs prometheus-<your-prometheus-name> prometheus-config-reloader
-    ```
+  ```
+  kubectl -n tigera-prometheus logs prometheus-<your-prometheus-name> prometheus-config-reloader
+  ```
 
-  - For alertmanager run:
+- For alertmanager run:
 
-    ```
-    kubectl -n tigera-prometheus logs alertmanager-<your-prometheus-name> config-reloader
-    ```
+  ```
+  kubectl -n tigera-prometheus logs alertmanager-<your-prometheus-name> config-reloader
+  ```
 
 The config-reloaders watch each pods file-system for updated config from
 ConfigMap's or Secret's and will perform steps necessary for reloading

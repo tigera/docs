@@ -1,8 +1,8 @@
 ---
-title: Remote cluster configuration
-description: API for this Calico Enterprise resource. 
-canonical_url: /reference/resources/remoteclusterconfiguration
+description: API for this Calico Enterprise resource.
 ---
+
+# Remote cluster configuration
 
 A remote cluster configuration resource (RemoteClusterConfiguration) represents a cluster in a federation of clusters.
 Each remote cluster needs a configuration to be specified to allow the local cluster to access resources on the remote
@@ -11,22 +11,24 @@ information from the local cluster to the remote one a remote cluster configurat
 remote cluster.
 
 A remote cluster configuration causes Typha and `calicoq` to retrieve the following resources from a remote cluster:
-* [Workload endpoints](/reference/resources/workloadendpoint)
-* [Host endpoints](/reference/resources/hostendpoint)
-* [Profiles](/reference/resources/profile) (rules are not retrieved from remote profiles, only the `LabelsToApply` field is used)
+
+- [Workload endpoints](workloadendpoint.mdx)
+- [Host endpoints](hostendpoint.mdx)
+- [Profiles](/reference/resources/profile) (rules are not retrieved from remote profiles, only the `LabelsToApply` field is used)
 
 When using the Kubernetes API datastore with RBAC enabled on the remote cluster, the RBAC rules must be configured to
 allow access to these resources.
 
-For more details on the federation feature refer to the [Overview]({{site.baseurl}}/multicluster/federation/overview).
+For more details on the federation feature refer to the [Overview](../../multicluster/federation/overview.mdx).
 
-For the meaning of the fields matches the configuration used for configuring `calicoctl`, see [Kubernetes datastore]({{site.baseurl}}/maintenance/clis/calicoctl/configure/datastore) instructions for more details.
+For the meaning of the fields matches the configuration used for configuring `calicoctl`, see [Kubernetes datastore](../../operations/clis/calicoctl/configure/datastore.mdx) instructions for more details.
 
 This resource is not supported in `kubectl`.
 
-### Sample YAML
+## Sample YAML
 
 For a remote Kubernetes datastore cluster:
+
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: RemoteClusterConfiguration
@@ -38,6 +40,7 @@ spec:
 ```
 
 For a remote etcdv3 cluster:
+
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: RemoteClusterConfiguration
@@ -45,35 +48,35 @@ metadata:
   name: cluster1
 spec:
   datastoreType: etcdv3
-  etcdEndpoints: "https://10.0.0.1:2379,https://10.0.0.2:2379"
+  etcdEndpoints: 'https://10.0.0.1:2379,https://10.0.0.2:2379'
 ```
 
-### RemoteClusterConfiguration Definition
+## RemoteClusterConfiguration Definition
 
-#### Metadata
+### Metadata
 
-| Field       | Description                                | Accepted Values   | Schema  |
-|-------------|--------------------------------------------|-------------------|---------|
-| name        | The name of this remote cluster configuration.              | Lower-case alphanumeric with optional `-`  | string  |
+| Field | Description                                    | Accepted Values                           | Schema |
+| ----- | ---------------------------------------------- | ----------------------------------------- | ------ |
+| name  | The name of this remote cluster configuration. | Lower-case alphanumeric with optional `-` | string |
 
-#### Spec
+### Spec
 
-| Field          | Secret key    | Description                                  | Accepted Values                                         | Schema | Default    |
-|----------------|---------------|----------------------------------------------|---------------------------------------------------------|--------|------------|
-| clusterAccessSecret |          | Reference to a Secret that contains connection information | | Kubernetes ObjectReference | none |
-| datastoreType  | datastoreType | The datastore type of the remote cluster.    | `etcdv3` `kubernetes` | string   | none           |
-| etcdEndpoints  | etcdEndpoints | A comma separated list of etcd endpoints.    |  | string   | none           |
-| etcdUsername   | etcdUsername  | Username for RBAC.                           |  | string   | none           |
-| etcdPassword   | etcdPassword  | Password for the given username.             |  | string   | none           |
-| etcdKeyFile    | etcdKey       | Path to the etcd key file.                   |  | string   | none           |
-| etcdCertFile   | etcdCert      | Path to the etcd certificate file.           |  | string   | none           |
-| etcdCACertFile | etcdCACert    | Path to the etcd CA certificate file.        |  | string   | none           |
-| kubeconfig     | kubeconfig    | Location of the `kubeconfig` file.           |  | string   | none           |
-| k8sAPIEndpoint |               | Location of the kubernetes API server.       |  | string   | none           |
-| k8sKeyFile     |               | Location of a client key for accessing the Kubernetes API.         |  | string   | none           |
-| k8sCertFile    |               | Location of a client certificate for accessing the Kubernetes API. |  | string   | none           |
-| k8sCAFile      |               | Location of a CA certificate.                                      |  | string   | none           |
-| k8sAPIToken    |               | Token to be used for accessing the Kubernetes API.                 |  | string   | none           |
+| Field               | Secret key    | Description                                                        | Accepted Values       | Schema                     | Default |
+| ------------------- | ------------- | ------------------------------------------------------------------ | --------------------- | -------------------------- | ------- |
+| clusterAccessSecret |               | Reference to a Secret that contains connection information         |                       | Kubernetes ObjectReference | none    |
+| datastoreType       | datastoreType | The datastore type of the remote cluster.                          | `etcdv3` `kubernetes` | string                     | none    |
+| etcdEndpoints       | etcdEndpoints | A comma separated list of etcd endpoints.                          |                       | string                     | none    |
+| etcdUsername        | etcdUsername  | Username for RBAC.                                                 |                       | string                     | none    |
+| etcdPassword        | etcdPassword  | Password for the given username.                                   |                       | string                     | none    |
+| etcdKeyFile         | etcdKey       | Path to the etcd key file.                                         |                       | string                     | none    |
+| etcdCertFile        | etcdCert      | Path to the etcd certificate file.                                 |                       | string                     | none    |
+| etcdCACertFile      | etcdCACert    | Path to the etcd CA certificate file.                              |                       | string                     | none    |
+| kubeconfig          | kubeconfig    | Location of the `kubeconfig` file.                                 |                       | string                     | none    |
+| k8sAPIEndpoint      |               | Location of the kubernetes API server.                             |                       | string                     | none    |
+| k8sKeyFile          |               | Location of a client key for accessing the Kubernetes API.         |                       | string                     | none    |
+| k8sCertFile         |               | Location of a client certificate for accessing the Kubernetes API. |                       | string                     | none    |
+| k8sCAFile           |               | Location of a CA certificate.                                      |                       | string                     | none    |
+| k8sAPIToken         |               | Token to be used for accessing the Kubernetes API.                 |                       | string                     | none    |
 
 When using the `clusterAccessSecret` field, all other fields in the RemoteClusterconfiguration resource must be empty.
 When the `clusterAccessSecret` reference is used, all datastore configuration will be read from the referenced Secret
@@ -86,9 +89,9 @@ The `kubeconfig` field and the fields that end with `File` must be accessible to
 
 When the DatastoreType is `kubernetes`, the `kubeconfig` file is optional but since it can contain all of the authentication information needed to access the Kubernetes API server it is generally easier to use than setting all the individual `k8s` fields. The other kubernetes fields can be used by themselves though or to override specific kubeconfig values.
 
-### Supported operations
+## Supported operations
 
-| Datastore type        | Create/Delete | Update | Get/List | Notes
-|-----------------------|---------------|--------|----------|------
+| Datastore type        | Create/Delete | Update | Get/List | Notes |
+| --------------------- | ------------- | ------ | -------- | ----- |
 | etcdv3                | Yes           | Yes    | Yes      |
 | Kubernetes API server | Yes           | Yes    | Yes      |

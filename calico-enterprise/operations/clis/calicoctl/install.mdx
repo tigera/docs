@@ -1,243 +1,298 @@
 ---
-title: Install calicoctl
 description: Install the CLI for Calico.
-canonical_url: '/maintenance/clis/calicoctl/install'
 ---
 
-### Big picture
+# Install calicoctl
 
-`calicoctl` allows you to create, read, update, and delete {{site.prodname}} objects
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Big picture
+
+`calicoctl` allows you to create, read, update, and delete {{prodname}} objects
 from the command line. These objects represent the networking and policy
 of your cluster.
 
-You should limit access to `calicoctl` and your {{site.prodname}} datastore to
+You should limit access to `calicoctl` and your {{prodname}} datastore to
 trusted administrators. We discuss methods of limiting access to the
-{{site.prodname}} datastore in the [configuration section](/maintenance/clis/calicoctl/configure).
+{{prodname}} datastore in the [configuration section](configure/index.mdx).
 
 You can run `calicoctl` on any host with network access to the
-{{site.prodname}} datastore as either a binary or a container.
+{{prodname}} datastore as either a binary or a container.
 As a binary on a single host, you can also run it as a kubectl plugin.
 
 <!--- Change download URL to latest release if user browsing master branch.  --->
+
 {%- if page.version == "master" -%}
 {% assign version = "master" %}
 {% else %}
-{% assign version = site.data.versions.first.title %}
+{% assign version = releases.0.title %}
 {% endif %}
 
-### How to
+## How to
 
-> **Note**: Make sure you always install the version of `calicoctl` that matches the version of {{site.prodname}} running on your cluster.
-{: .alert .alert-info}
+:::note
+
+Make sure you always install the version of `calicoctl` that matches the version of {{prodname}} running on your cluster.
+
+:::
 
 - [Install calicoctl as a binary on a single host](#install-calicoctl-as-a-binary-on-a-single-host)
 - [Install calicoctl as a kubectl plugin on a single host](#install-calicoctl-as-a-kubectl-plugin-on-a-single-host)
 - [Install calicoctl as a container on a single host](#install-calicoctl-as-a-container-on-a-single-host)
 - [Install calicoctl as a Kubernetes pod](#install-calicoctl-as-a-kubernetes-pod)
 
-#### Install calicoctl as a binary on a single host
+### Install calicoctl as a binary on a single host
 
-{% tabs %}
-<label:Linux,active:true>
-<%
+<Tabs>
+<TabItem label="Linux" value="Linux-0">
 
-   Log into the host, open a terminal prompt, and navigate to the location where you want to install the binary. 
+Log into the host, open a terminal prompt, and navigate to the location where you want to install the binary.
 
-   > **Tip**: Consider navigating to a location that's in your `PATH`. For example, `/usr/local/bin/`. 
-   {: .alert .alert-info}
+:::note
 
-   Use the following command to download the `calicoctl` binary.    
+Consider navigating to a location that's in your `PATH`. For example, `/usr/local/bin/`.
 
+:::
+
+Use the following command to download the `calicoctl` binary.
 
       {% if page.version == "master" %}
-   ```bash
-curl -o calicoctl -O -L {{site.url}}/download/binaries/{{version}}/calicoctl
-   ```
+
+```batch
+curl -o calicoctl -O -L {{url}}/download/binaries/{{version}}/calicoctl
+```
+
       {% else %}
-   ```bash
-curl -o calicoctl -O -L {{site.downloadsurl}}/ee/binaries/{{version}}/calicoctl
-   ```
+
+```batch
+curl -o calicoctl -O -L {{downloadsurl}}/ee/binaries/{{version}}/calicoctl
+```
+
       {% endif %}
 
-   Set the file to be executable.
+Set the file to be executable.
 
-   ```bash
+```batch
 chmod +x calicoctl
-   ```
+```
 
-   > **Note**: If the location of `calicoctl` is not already in your `PATH`, move the file to one that is or add its location to your `PATH`. This will allow you to invoke it without having to prepend its location.
-   {: .alert .alert-info}
+:::note
 
-%>
-<label:Mac OSX>
-<%
+If the location of `calicoctl` is not already in your `PATH`, move the file to one that is or add its location to your `PATH`. This will allow you to invoke it without having to prepend its location.
 
-   Log into the host, open a terminal prompt, and navigate to the location where you want to install the binary.
+:::
 
-   > **Tip**: Consider navigating to a location that's in your `PATH`. For example, `/usr/local/bin/`.
-   {: .alert .alert-info}
+</TabItem>
+<TabItem label="Mac OSX" value="Mac OSX-1">
 
-   Use the following command to download the `calicoctl` binary.    
+Log into the host, open a terminal prompt, and navigate to the location where you want to install the binary.
 
+:::note
+
+Consider navigating to a location that's in your `PATH`. For example, `/usr/local/bin/`.
+
+:::
+
+Use the following command to download the `calicoctl` binary.
 
       {% if page.version == "master" %}
-   ```bash
-curl -o calicoctl -O -L  {{site.url}}/download/binaries/{{ version }}/calicoctl-darwin-amd64
-   ```
+
+```batch
+curl -o calicoctl -O -L  {{url}}/download/binaries/{{ version }}/calicoctl-darwin-amd64
+```
+
       {% else %}
-   ```bash
-curl -o calicoctl -O -L  {{site.downloadsurl}}/ee/binaries/{{ version }}/calicoctl-darwin-amd64
-   ```
+
+```batch
+curl -o calicoctl -O -L  {{downloadsurl}}/ee/binaries/{{ version }}/calicoctl-darwin-amd64
+```
+
       {% endif %}
 
-   Set the file to be executable.
+Set the file to be executable.
 
-   ```bash
+```batch
 chmod +x calicoctl
-   ```
-   
-   > **Note**: If you get the error, `cannot be opened because the developer cannot be verified` when using `caicoctl` for the first time, go to `Applicaitons > System Prefences > Security & Privacy` in the `General` tab at the bottom of the window click `Allow anyway`.
-   {: .alert .alert-info}
+```
 
-   > **Notes**: If the location of `calicoctl` is not already in your `PATH`, move the file to one that is or add its location to your `PATH`. This will allow you to invoke it without having to prepend its location.
-   {: .alert .alert-info}
+:::note
 
-%>
+If you get the error, `cannot be opened because the developer cannot be verified` when using `caicoctl` for the first time, go to `Applicaitons > System Prefences > Security & Privacy` in the `General` tab at the bottom of the window click `Allow anyway`.
 
-<label:Windows>
-<%
+:::
 
-   Use the following PowerShell command to download the `calicoctl` binary.      
+:::note
 
-   > **Tip**: Consider running PowerShell as administrator and navigating
-   > to a location that's in your `PATH`. For example, `C:\Windows`.
-   {: .alert .alert-success}
+If the location of `calicoctl` is not already in your `PATH`, move the file to one that is or add its location to your `PATH`. This will allow you to invoke it without having to prepend its location.
 
+:::
+
+</TabItem>
+<TabItem label="Windows" value="Windows-2">
+
+Use the following PowerShell command to download the `calicoctl` binary.
+
+:::tip
+
+Consider running PowerShell as administrator and navigating
+to a location that's in your `PATH`. For example, `C:\Windows`.
+
+:::
 
       {% if page.version == "master" %}
-   ```bash
-Invoke-WebRequest -Uri "{{site.url}}/download/binaries/{{ version }}/calicoctl-windows-amd64.exe" -OutFile "calicocttl.exe"
-   ```
+
+```batch
+Invoke-WebRequest -Uri "{{url}}/download/binaries/{{ version }}/calicoctl-windows-amd64.exe" -OutFile "calicocttl.exe"
+```
+
       {% else %}
-   ```bash
-Invoke-WebRequest -Uri "{{site.downloadsurl}}/ee/binaries/{{ version }}/calicoctl-windows-amd64.exe" -OutFile "calicocttl.exe"
-   ```
+
+```batch
+Invoke-WebRequest -Uri "{{downloadsurl}}/ee/binaries/{{ version }}/calicoctl-windows-amd64.exe" -OutFile "calicocttl.exe"
+```
+
       {% endif %}
 
-%>
-{% endtabs %}
+</TabItem>
+</Tabs>
 
-#### Install calicoctl as a kubectl plugin on a single host
+### Install calicoctl as a kubectl plugin on a single host
 
-{% tabs %}
-<label:Linux,active:true>
-<%
+<Tabs>
+<TabItem label="Linux" value="Linux-3">
 
-   Log into the host, open a terminal prompt, and navigate to the location where you want to install the binary.
+Log into the host, open a terminal prompt, and navigate to the location where you want to install the binary.
 
-   > **Tip**: Consider navigating to a location that's in your `PATH`. For example, `/usr/local/bin/`.
-   {: .alert .alert-info}
+:::note
 
-   Use the following command to download the `calicoctl` binary.  
+Consider navigating to a location that's in your `PATH`. For example, `/usr/local/bin/`.
 
+:::
+
+Use the following command to download the `calicoctl` binary.
 
       {% if page.version == "master" %}
-   ```bash
-curl -o kubectl-calico -O -L {{site.url}}/download/binaries/{{ version }}/calicoctl
-   ```
+
+```batch
+curl -o kubectl-calico -O -L {{url}}/download/binaries/{{ version }}/calicoctl
+```
+
      {% else %}
-   ```bash
-curl -o kubectl-calico -O -L  {{site.downloadsurl}}/ee/binaries/{{ version }}/calicoctl
-   ```
-   
+
+```batch
+curl -o kubectl-calico -O -L  {{downloadsurl}}/ee/binaries/{{ version }}/calicoctl
+```
+
      {% endif %}
 
-   Set the file to be executable.
+Set the file to be executable.
 
-   ```bash
+```batch
 chmod +x kubectl-calico
-   ```
+```
 
-   > **Note**: If the location of `kubectl-calico` is not already in your `PATH`, move the file to one that is or add its location to your `PATH`. This is required for kubectl to detect the plugin and allow you to use it.
-   {: .alert .alert-info}
+:::note
 
-%> 
+If the location of `kubectl-calico` is not already in your `PATH`, move the file to one that is or add its location to your `PATH`. This is required for kubectl to detect the plugin and allow you to use it.
 
-<label:Mac OSX>
-<%
+:::
 
-   Log into the host, open a terminal prompt, and navigate to the location where you want to install the binary.
+</TabItem> 
+<TabItem label="Mac OSX" value="Mac OSX-4">
 
-   > **Tip**: Consider navigating to a location that's in your `PATH`. For example, `/usr/local/bin/`.
-   {: .alert .alert-info}
+Log into the host, open a terminal prompt, and navigate to the location where you want to install the binary.
 
-   Use the following command to download the `calicoctl` binary.  
+:::note
 
+Consider navigating to a location that's in your `PATH`. For example, `/usr/local/bin/`.
+
+:::
+
+Use the following command to download the `calicoctl` binary.
 
       {% if page.version == "master" %}
-   ```bash
-curl -o kubectl-calico -O -L {{site.url}}/download/binaries/{{ version }}/calicoctl-darwin-amd64
-   ```
+
+```batch
+curl -o kubectl-calico -O -L {{url}}/download/binaries/{{ version }}/calicoctl-darwin-amd64
+```
+
       {% else %}
-   ```bash
-curl -o kubectl-calico -O -L  {{site.downloadsurl}}/ee/binaries/{{ version }}/calicoctl-darwin-amd64
-   ```
+
+```batch
+curl -o kubectl-calico -O -L  {{downloadsurl}}/ee/binaries/{{ version }}/calicoctl-darwin-amd64
+```
+
       {% endif %}
 
-   Set the file to be executable.
+Set the file to be executable.
 
-   ```bash
+```batch
 chmod +x kubectl-calico
-   ```
+```
 
-   > **Note**: If you get the error, "cannot be opened because the developer cannot be verified" when using `calicoctl` for the first time, go to Applications > System Prefences > Security & Privacy in the **General** tab at the bottom of the window click `Allow anyway`.
-   {: .alert .alert-info}
+:::note
 
-   > **Notes**: If the location of `kubectl-calico` is not already in your `PATH`, move the file to one that is or add its location to your `PATH`. This is required for `kubectl` to detect the plugin.
-   {: .alert .alert-info}
+If you get the error, "cannot be opened because the developer cannot be verified" when using `calicoctl` for the first time, go to Applications > System Prefences > Security & Privacy in the **General** tab at the bottom of the window click `Allow anyway`.
 
-%> 
+:::
 
-<label:Windows>
-<%
+:::note
 
-   Use the following PowerShell command to download the `calicoctl` binary.
+If the location of `kubectl-calico` is not already in your `PATH`, move the file to one that is or add its location to your `PATH`. This is required for `kubectl` to detect the plugin.
 
-   > **Tip**: Consider running PowerShell as administrator and navigating
-   > to a location that's in your `PATH`. For example, `C:\Windows`.
-   {: .alert .alert-success}
-   
+:::
+
+</TabItem> 
+<TabItem label="Windows" value="Windows-5">
+
+Use the following PowerShell command to download the `calicoctl` binary.
+
+:::tip
+
+Consider running PowerShell as administrator and navigating
+to a location that's in your `PATH`. For example, `C:\Windows`.
+
+:::
+
       {% if page.version == "master" %}
-   ```bash
-Invoke-WebRequest -Uri "{{site.url}}/download/binaries/{{ version }}/calicoctl-windows-amd64.exe" -OutFile "kubectl-calico.exe"
-   ```
+
+```batch
+Invoke-WebRequest -Uri "{{url}}/download/binaries/{{ version }}/calicoctl-windows-amd64.exe" -OutFile "kubectl-calico.exe"
+```
+
       {% else %}
-   ```bash
-Invoke-WebRequest -Uri "{{site.downloadsurl}}/ee/binaries/{{ version }}/calicoctl-windows-amd64.exe" -OutFile "kubectl-calico.exe"
-   ``` 
+
+```batch
+Invoke-WebRequest -Uri "{{downloadsurl}}/ee/binaries/{{ version }}/calicoctl-windows-amd64.exe" -OutFile "kubectl-calico.exe"
+```
+
       {% endif %}
-   
-%>
-{% endtabs %}
+
+</TabItem>
+</Tabs>
 
 Verify the plugin works.
 
-   ```bash
+```batch
 kubectl calico -h
-   ```
+```
 
 You can now run any `calicoctl` subcommands through `kubectl calico`.
 
-> **Note**: If you run these commands from your local machine (instead of a host node), some of the node related subcommands will not work (like node status).
-{: .alert .alert-info}
+:::note
 
-#### Install calicoctl as a container on a single host
+If you run these commands from your local machine (instead of a host node), some of the node related subcommands will not work (like node status).
 
-1. Ensure that you have the [`config.json` file with the private Tigera registry credentials]({{site.baseurl}}/getting-started/calico-enterprise#get-private-registry-credentials-and-license-key).
+:::
+
+### Install calicoctl as a container on a single host
+
+1. Ensure that you have the [`config.json` file with the private Tigera registry credentials](/getting-started/install-on-clusters/calico-enterprise/#get-private-registry-credentials-and-license-key).
 
 1. From a terminal prompt, use the following command to either create or open the `~/.docker/config.json` file.
 
-   ```bash
+   ```batch
    vi ~/.docker/config.json
    ```
 
@@ -266,36 +321,39 @@ You can now run any `calicoctl` subcommands through `kubectl calico`.
 1. Use the following commands to pull the `calicoctl` image from the Tigera
    registry.
 
-   ```bash
-   docker pull {{page.registry}}{% include component_image component="calicoctl" %}
+   ```batch
+   docker pull {{registry}}{% component_image("calicoctl") %}
    ```
 
 1. Confirm that the image has loaded by typing `docker images`.
-{%- assign c = site.data.versions.first.components["calicoctl"] %}
+   {%- assign c = releases.0.components.calicoctl %}
 
-   ```bash
+   ```batch
    REPOSITORY                TAG               IMAGE ID       CREATED         SIZE
    {{ c.image }}    {{ c.version }}            e07d59b0eb8a   2 minutes ago   42MB
    ```
-   {: .no-select-button}
 
 **Next step**:
 
-[Configure calicoctl to connect to your datastore]({{site.baseurl}}/maintenance/clis/calicoctl/configure).
+[Configure calicoctl to connect to your datastore](configure/index.mdx).
 
-#### Install calicoctl as a Kubernetes pod
+### Install calicoctl as a Kubernetes pod
 
 Run the following to deploy the `calicoctl` container to your nodes.
 
-```bash
-kubectl apply -f {{ "/manifests/calicoctl.yaml" | absolute_url }}
+```batch
+kubectl apply -f {{filesUrl}}/manifests/calicoctl.yaml
 ```
-> **Note**: You can also {% include open-new-window.html text='view the YAML in a new tab' url='/manifests/calicoctl.yaml' %}.
-{: .alert .alert-info}
+
+:::note
+
+You can also [view the YAML in a new tab](/manifests/calicoctl.yaml).
+
+:::
 
 You can then run commands using kubectl as shown below.
 
-```bash
+```batch
 kubectl exec -ti -n kube-system calicoctl -- /calicoctl get profiles -o wide
 ```
 
@@ -306,13 +364,15 @@ NAME                 TAGS
 kns.default          kns.default
 kns.kube-system      kns.kube-system
 ```
-{: .no-select-button}
 
 We recommend setting an alias as follows.
 
-```bash
+```batch
 alias calicoctl="kubectl exec -i -n kube-system calicoctl -- /calicoctl"
 ```
 
-> **Note**: In order to use the `calicoctl` alias when reading manifests, redirect the file into stdin, for example: ```bash calicoctl create -f - < my_manifest.yaml.```
-{: .alert .alert-info}
+:::note
+
+In order to use the `calicoctl` alias when reading manifests, redirect the file into stdin, for example: `batch calicoctl create -f - < my_manifest.yaml.`
+
+:::
