@@ -1,0 +1,109 @@
+---
+description: Command to list policies and profiles for selected endpoints.
+---
+
+# calicoq endpoint
+
+`calicoq endpoint <substring>` shows you the {{prodname}} policies and profiles that
+relate to endpoints whose full ID includes `<substring>`. It displays, for
+each endpoint:
+
+- the policies and profiles that apply to that endpoint (that {{prodname}} uses to
+  police traffic that is arriving at or departing from that endpoint), in the
+  order that they apply
+
+- the policies and profiles whose rule selectors match that endpoint (that
+  allow or disallow that endpoint as a traffic source or destination).
+
+The rule matches can be suppressed by giving the `-r` option.
+
+`<substring>` can be any substring of an endpoint's full ID, which is formed
+as `<host-name>/<orchestrator>/<workload-name>/<endpoint-name>`.
+
+## Options
+
+```
+-r --hide-rule-matches         Don't show the list of policies and profiles whose
+                               rule selectors match each endpoint as an allowed or
+                               disallowed source/destination.
+
+-s --hide-selectors            Don't show the detailed selector expressions involved
+                               (that cause each displayed profile or policy to match
+                               each endpoint).
+
+-o <OUTPUT> --output=<OUTPUT>  Set the output format. Should be one of yaml, json, or
+                               ps. If nothing is set, defaults to ps.
+```
+
+## Examples
+
+Here is an example with three workloads in a namespace, named with a prefix that
+specifies the namespace; so `calicoq endpoint` with that prefix returns information
+about all three endpoints.
+
+To retrieve the policies and profiles for endpoint `ns1`:
+
+```
+calicoq endpoint ns1
+```
+
+Sample output follows.
+
+```
+Policies and profiles for endpoints matching "ns1":
+
+Workload endpoint k8s/namespace1.ns1wep1/eth0
+  Policies:
+    Policy "namespace1/policy1" (order 500; selector "(projectcalico.org/namespace == 'namespace1') && projectcalico.org/namespace == 'namespace1'")
+  Profiles:
+    Profile "profile1"
+  Rule matches:
+    Policy "namespace1/policy1" outbound rule 1 destination match; selector "(projectcalico.org/namespace == 'namespace1') && (projectcalico.org/namespace == 'namespace1')"
+
+Workload endpoint k8s/namespace1.ns1wep2/eth0
+  Policies:
+    Policy "namespace1/policy1" (order 500; selector "(projectcalico.org/namespace == 'namespace1') && projectcalico.org/namespace == 'namespace1'")
+  Profiles:
+    Profile "profile1"
+  Rule matches:
+    Policy "namespace1/policy1" outbound rule 1 destination match; selector "(projectcalico.org/namespace == 'namespace1') && (projectcalico.org/namespace == 'namespace1')"
+
+Workload endpoint k8s/namespace1.ns1wep3/eth0
+  Policies:
+    Policy "namespace1/policy1" (order 500; selector "(projectcalico.org/namespace == 'namespace1') && projectcalico.org/namespace == 'namespace1'")
+  Profiles:
+    Profile "profile1"
+  Rule matches:
+    Policy "namespace1/policy1" outbound rule 1 destination match; selector "(projectcalico.org/namespace == 'namespace1') && (projectcalico.org/namespace == 'namespace1')"
+```
+
+Here is an example of a workload to which both normal and untracked policy
+applies. The untracked policy is listed first because {{prodname}} enforces
+untracked policies before normal ones.
+
+```
+calicoq endpoint tigera-lwr-kubetest-02 --hide-rule-matches
+```
+
+Sample output follows.
+
+```
+Policies and profiles for endpoints matching "tigera-lwr-kubetest-02":
+
+Workload endpoint k8s/advanced-policy-demo.nginx-2371676037-bk6v2/eth0
+  Policies:
+    Policy "donottrack" (order 500; selector "projectcalico.org/namespace == 'advanced-policy-demo'") [untracked]
+    Policy "advanced-policy-demo/abcdefghijklmnopqrstuvwxyz" (order 400; selector "(projectcalico.org/namespace == 'advanced-policy-demo') && projectcalico.org/namespace == 'advanced-policy-demo'")
+  Profiles:
+    Profile "k8s-ns.advanced-policy-demo"
+  Rule matches:
+    Policy "advanced-policy-demo/abcdefghijklmnopqrstuvwxyz" outbound rule 1 destination match; selector "(projectcalico.org/namespace == 'advanced-policy-demo') && (projectcalico.org/namespace == 'advanced-policy-demo')"
+```
+
+## See also
+
+- [NetworkPolicy](../../resources/networkpolicy.mdx) and
+  [GlobalNetworkPolicy](../../resources/globalnetworkpolicy.mdx)
+  for more information about the {{prodname}} policy model.
+- [Untracked policy](../../host-endpoints/index.mdx) for
+  more information about untracked policy.

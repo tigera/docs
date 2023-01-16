@@ -1,0 +1,101 @@
+Jan 10 2023
+
+> **Note**: There is a change to the upgrade instructions in this release. When applying the new `tigera-operator.yaml`
+> or `customer-resources.yaml` you must use additional flags `--server-side` and `--force-conflicts`. This is because
+> the CRDs are now too large to apply in the normal way.
+> Tigera Operator version has been updated to v1.27.17. Please see [release notes](https://github.com/tigera/operator/releases/tag/v1.27.17) for details.
+
+This is a larger than normal patch release that includes backported enhancements and fixes intended to address problems seen
+when upgrading clusters at high scale:
+
+- Adding graceful shutdown to Typha improves the "happy case" for upgrade, ensuring that shutting down a Typha instance
+  doesn't cause a thundering herd of `calico-node` subcomponent restarts. Instead, clients are disconnected slowly over a
+  configured interval, thus limiting the rate of `calico-node` subcomponent restarts.
+- Combining graceful restart with new configuration exposed by the operator allows for the Typha deployment's `maxSurge`
+  and `maxUnavailable` settings to be tuned. Setting `maxSurge: "100%"` and `maxUnavailable: 0` means that all up-level
+  Typha instances will start and reach `Ready` before their back-level counterpart is then (gracefully) shut down.
+  (For back-compatibility, the default values of `maxSurge` and `maxUnavailable` have been kept as-is in this release
+  but the upgrade guide explains how to set these during an upgrade.)
+- To mitigate the "unhappy case" where many `calico-node` instances restart at once (for any reason), Typha's handling
+  of new connections has been improved to share much of the work between different clients, this dramatically improves
+  performance when dealing with a "thundering herd".
+
+In addition to the existing support for upgrade from v3.12+, this release has been tested for direct upgrade from
+Calico Enterprise v3.7 on Kubernetes v1.21 only (because Kubernetes v1.21 is the only release supported by both
+Calico Enterprise v3.7 and this release). Fixes were required to support upgrade from v3.7 without disruption
+so this validation _does not_ extend to older releases. Direct upgrade from v3.8-v3.11 has not been tested but
+is also likely to work.
+
+## Bug Fixes
+
+- Fixed a bug causing Calico Node to restart during upgrades when upgrading from v3.10 and before, due to the  
+  addition of the TPROXYMode setting in the Felix Configuration resource.
+- Fixed a bug causing liveness checks to fail for Calico Node during upgrades, due to changed field names in TLS secrets.
+- Fixed a bug that prevented [controlPlaneNodeSelector](../../reference/installation/api.mdx#operator.tigera.io/v1.InstallationSpec)
+  from being propagated to Prometheus and Alertmanager.
+- Fixed a bug that caused the Tigera Operator to incorrectly (de-)serialize ports in FelixConfigurations.
+- Fixed that operator would render a `ClusterIP` service for Calico's metrics ports resulting in a large number of
+  wasteful `kube-proxy` `iptables` rules in a large cluster. It now renders a "headless" service.
+- Fixed that Typha's metrics were confused between different client types. It now reports separate statistics for
+  each "syncer" type (i.e. client type).
+- Fix that not all components seeded the non-secure random number generator. The main impact was that certain
+  components would disproportionately choose the same Typha instance rather than being evenly spread. Felix
+  (the main user of the Typha API) was not affected by this bug. Secure random number generation, used for all
+  cryptographic operations was not affected.
+
+### Enhancements
+
+#### General
+
+- Calico now uses a faster JSON parsing library. This reduces CPU usage in Typha and its clients.
+- The performance of decoding datastore keys in Typha clients has been improved. This reduces CPU usage in
+  Typha clients and allows them to process the initial snapshot from Typha more quickly.
+
+#### Felix
+
+Felix is Calico's per-host agent, in charge of implementing network policy and local workload routing.
+
+- The `FelixConfiguration` now has a `healthTimeoutOverrides` field, which can be used to override Felix's default
+  liveness and readiness timeouts for its internal subcomponents. Felix handles this setting change without restarting.
+- Felix's configuration update handling has been fixed and improved to prevent Felix from restarting when a configuration
+  option changes from being explicitly set to its default value to being unset.
+- Various logs have been tuned to reduce log spam and to prevent inefficient logging of large objects.
+
+#### Typha
+
+Typha is Calico's caching API server proxy. It acts as a proxy for the components within `calico-node` (such as
+Felix) when they watch resources in the Kubernetes API server. This reduces load on the API server and allows for
+filtering out updates that `calico-node` doesn't care about (thus reducing CPU usage in `calico-node` too).
+
+- Typha now supports graceful shutdown. Rather than disconnecting all clients and
+  shutting down immediately, it will observe the `terminationGracePeriodSeconds` (which can now be set via the
+  operator's [Installation](../../reference/installation/api.mdx#operator.tigera.io/v1.InstallationSpec)
+  resource). Typha will disconnect clients gradually over the graceful shutdown window. Since this is the first
+  release with this feature, the benefit will only be seen when doing an upgrade _from_ this release.
+- Typha now supports compression on its protocol; this gives a 5:1 reduction in bandwidth use and snapshot data size.
+  Compression is automatically enabled when a supporting client connects.
+- Typha now shares computed (and compressed) snapshots between clients that connect at approximately the same time.  
+  This significantly reduces CPU usage and the time to service all clients when many clients connect at once. In a
+  cluster with 150k Pods, generating a snapshot can take 2-3s of CPU time so, if 100 clients connect at once, there
+  can be a 200-300 second saving in CPU used, and a corresponding increase in throughput. Typha has prometheus metrics to
+  monitor the size of snapshots (`typha_snapshot_raw_bytes` / `typha_snapshot_compressed_bytes`) and the number of
+  snapshots that are reused for more than one client (`typha_snapshots_reused`).
+- Typha now exports a Prometheus metric (`typha_cache_size`) for the size of its internal cache.
+
+#### Operator
+
+- Added `calicoNodeDaemonSet` section to the operator's [Installation](../../reference/installation/api.mdx#operator.tigera.io/v1.InstallationSpec)
+  resource. This allows various parameters of the `calico-node` `DaemonSet` to be overridden, including adding custom init containers.
+- Added `typhaDeployment` section to the operator's [Installation](../../reference/installation/api.mdx#operator.tigera.io/v1.InstallationSpec)
+  resource. This allows various parameters of the `calico-typha` `Deployment` to be overridden, including the upgrade strategy and
+  graceful shutdown time.
+- Golang and base image updates to remove CVEs.
+- Elasticsearch and Kibana have been updated to v7.17.7 to remove CVEs.
+- The image for FlexVolume has changed from `docker.io/calico/pod2daemon-flexvol` to `quay.io/tigera/pod2daemon-flexvol`.
+
+## Known issues
+
+- Enabling L7 related Anomaly Detection jobs require L7 to be enabled on the cluster. AD job crashloops if L7 is not enabled.
+- Upgrading {{prodname}} from v3.12.0 and earlier to v3.14.3 using helm charts is not supported at this time.
+- Upgrading {{prodname}} v3.14.3 on Rancher/RKE from {{prodname}} v3.11.0, v3.11.1, v3.11.2, v3.12.0 and v3.13.0 currently requires manually terminating the calico-node container for upgrade to proceed.
+- Mirantis MKE has provisional support due to upgrade issues on that platform. Please contact our support team for upgrades or deployments on Mirantis MKE.
