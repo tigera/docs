@@ -9,7 +9,7 @@ export default function LogoWrapper(props) {
       items={[
         {
           label: 'Tigera home',
-          href: 'https://tigera.io',
+          to: 'https://tigera.io',
         },
         {
           label: 'Project Calico',

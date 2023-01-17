@@ -5,7 +5,6 @@ import { useSidebarBreadcrumbs, useHomePageRoute } from '@docusaurus/theme-commo
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { translate } from '@docusaurus/Translate';
-import IconHome from '@theme/Icon/Home';
 import styles from './styles.module.css';
 import { useProductId } from '../../utils/useProductId';
 import { getProductNameById } from '../../utils/getProductNameById';
@@ -73,7 +72,7 @@ function HomeBreadcrumbItem() {
         className={clsx('breadcrumbs__link', styles.breadcrumbsItemLink)}
         href={homeHref}
       >
-        <IconHome className={styles.breadcrumbHomeIcon} />
+        Home
       </Link>
     </li>
   );
