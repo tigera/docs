@@ -217,7 +217,8 @@ function SearchPageContent() {
     if (productId) {
       algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${productId}-${version}`);
     } else {
-      Object.entries(docsSearchVersionsHelpers.searchVersions).forEach(([pluginId, searchVersion]) => {
+      Object.entries(docsSearchVersionsHelpers.searchVersions).forEach(([pluginId]) => {
+        const searchVersion = localStorage.getItem(`docs-preferred-version-${pluginId}`) || 'current';
         algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${pluginId}-${searchVersion}`);
       });
     }
@@ -381,7 +382,8 @@ function SearchPageContent() {
                 )}
 
                 <div className='search-page-productId'>
-                  {getProductNameById(url.split('/')[1])} ({docsSearchVersionsHelpers.searchVersions[url.split('/')[1]]}
+                  {getProductNameById(url.split('/')[1])} (
+                  {version ? version : localStorage.getItem(`docs-preferred-version-${url.split('/')[1]}`) || 'current'}
                   )
                 </div>
               </article>
