@@ -374,8 +374,7 @@ module.exports = config;
 function generateEditUrl(params) {
   const { versionDocsDirPath, docPath } = params;
 
-  // TODO: Change `alt-main` to `main` after the release
-  const baseUrl = 'https://github.com/tigera/docs/edit/alt-main';
+  const baseUrl = 'https://github.com/tigera/docs/edit/main';
   const url = `${baseUrl}/${versionDocsDirPath}/${docPath}`;
 
   return url;
