@@ -10,7 +10,6 @@ import { DocSearchButton, useDocSearchKeyboardEvents } from '@docsearch/react';
 import { useAlgoliaContextualFacetFilters } from '@docusaurus/theme-search-algolia/client';
 import Translate from '@docusaurus/Translate';
 import translations from '@theme/SearchTranslations';
-import { useAllDocsData } from '@docusaurus/plugin-content-docs/client';
 import { useProductId } from '../../utils/useProductId';
 import { getProductNameById } from '../../utils/getProductNameById';
 let DocSearchModal = null;
@@ -28,12 +27,9 @@ function Hit({ hit, children }) {
   );
 }
 function ResultsFooter({ state, onClose, productId }) {
-  const data = useAllDocsData();
-
   let version = '';
   if (productId) {
-    const versions = data[productId].versions.sort((v) => (v.isLast ? 1 : -1));
-    version = versions.find((v) => location.pathname.startsWith(v.path)).name;
+    version = localStorage.getItem(`docs-preferred-version-${productId}`) || 'current';
   }
 
   const to = `/search?q=${encodeURIComponent(state.query)}&p=${productId || ''}&v=${version}`;
