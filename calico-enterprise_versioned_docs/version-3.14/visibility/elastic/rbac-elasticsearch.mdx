@@ -62,31 +62,31 @@ Because the `lma.tigera.io` API group is used only for RBAC, and is not backed b
 
 Create a `ClusterRole` with permissions to the resource using the table in the **Concepts** section. In this example, the ClusterRole named, `audit-ee-only` provides access to {{prodname}} audit logs using the `resourceNames: ["audit_ee"]`. The `apiGroups: ["lma.tigera.io"]` is required.
 
-```
+```yaml
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: audit-ee-only
 rules:
-- apiGroups: ["lma.tigera.io"]
-  resources: ["cluster"]
-  resourceNames: ["audit_ee"]
-  verbs: ["get"]
+  - apiGroups: ['lma.tigera.io']
+    resources: ['cluster']
+    resourceNames: ['audit_ee']
+    verbs: ['get']
 ```
 
 ### Allow user access to a specific Elasticsearch resource
 
 To allow a user access to a specific Elasticsearch resource, create a `ClusterRoleBinding`. In the following example, the `ClusterRoleBinding` allows user **bob** access only to the resource, {{prodname}} audit logs (`audit-ee-only`).
 
-```
+```yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: bob-es-access
 subjects:
-- kind: User
-  name: bob
-  apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: bob
+    apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: audit-ee-only
@@ -125,7 +125,7 @@ EOF
 
 View the `status` and `allowed` fields to verify that the `ClusterRoleBinding` is doing what you expect. In this example, **bob** is allowed access (`allowed: true`) using the `ClusterRoleBinding`, `"bob-es-access"` for the `audit-ee-only` resource.
 
-```
+```yaml
 apiVersion: authorization.k8s.io/v1
 kind: SubjectAccessReview
 metadata:
@@ -147,31 +147,31 @@ status:
 
 In a `ClusterRole` resource, set the field, `resourceNames: []` to allow access to all Elasticsearch resources.
 
-```
+```yaml
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: allow-all-es
 rules:
-- apiGroups: ["lma.tigera.io"]
-  resources: ["cluster"]
-  resourceNames: []
-  verbs: ["get"]
+  - apiGroups: ['lma.tigera.io']
+    resources: ['cluster']
+    resourceNames: []
+    verbs: ['get']
 ```
 
 ### Allow user access to all Elasticsearch resources
 
 In this example, we create a binding that allows the user `jane` access to all Elasticsearch resources.
 
-```
+```yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: jane-allow-all-es
 subjects:
-- kind: User
-  name: jane
-  apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: jane
+    apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: allow-all-es
@@ -198,7 +198,7 @@ EOF
 
 View the `status` and `allowed` fields to verify that bob cannot access any Elasticsearch resources (`allowed: false`).
 
-```
+```yaml
 apiVersion: authorization.k8s.io/v1
 kind: SubjectAccessReview
 metadata:
