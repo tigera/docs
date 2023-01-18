@@ -5,6 +5,9 @@
 This is the full set of product docs for Calico & Tigera. It includes our Open Source (Project Calico) docs
 as well as our Enterprise and Cloud docs.
 
+Please see the [Docs Migration Training Guide](https://docs.google.com/document/d/1walkA7yioqoukVwr59BsJww2fA2u48PCuILEkfjw5CQ/edit#)
+for guidance on how to contribute to the docs here.
+
 This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
 
 ## Prerequisites
