@@ -39,8 +39,8 @@ $ yarn serve
 ```
 
 This command generates static content into the `build` directory and can be served using any static content hosting
-service. This is a full build that is exactly what Netlify runs to build the site. Therefore, you will get more
-warning and error output. If you are trying to reproduce and error on Netlify, this is a great place to start.
+service. This is a full build which is exactly what Netlify runs to build the site, therefore, you will get more
+warning and error output. If you are trying to reproduce an error on Netlify, this is a great place to start.
 
 ## Other Resources
 
