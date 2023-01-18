@@ -1,3 +1,5 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/b75d944a-c541-4dbe-a70e-262e50218a7f/deploy-status)](https://app.netlify.com/sites/calico-tigera-docs/deploys)
+
 # Website
 
 This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
