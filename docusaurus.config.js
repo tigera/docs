@@ -22,7 +22,8 @@ const config = {
   // X-Robots-Tag:noindex in the /static/_headers file once we cutover
   noIndex: true,
   title: 'Calico Documentation',
-  tagline: 'Active security, networking, and observability for cloud-native applications',
+  tagline:
+    'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials',
   url: 'https://unified-docs.tigera.io',
   baseUrl: '/',
   onBrokenLinks: 'warn',
@@ -61,7 +62,7 @@ const config = {
   ],
 
   themeConfig:
-  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       algolia: {
         appId: 'Q4GSZWRKBA',
@@ -142,16 +143,16 @@ const config = {
           {
             label: 'Tutorials',
             // TODO: Marketing is building a page at /tutorials. Using self-paced-workshops as placeholder.
-            href: 'https://www.tigera.io/self-paced-workshops/',
+            to: 'https://www.tigera.io/self-paced-workshops/',
             position: 'left',
           },
           {
             label: 'Certification',
-            href: 'https://www.tigera.io/lp/calico-certification/',
+            to: 'https://www.tigera.io/lp/calico-certification/',
           },
           {
             label: 'Try Calico Cloud',
-            href: 'https://calicocloud.io',
+            to: 'https://calicocloud.io',
             position: 'left',
           },
           {
@@ -174,27 +175,27 @@ const config = {
               },
               {
                 label: 'Events',
-                href: 'https://www.tigera.io/events',
+                to: 'https://www.tigera.io/events',
               },
               {
                 label: 'Resource center',
-                href: 'https://www.tigera.io/resources',
+                to: 'https://www.tigera.io/resources',
               },
               {
                 label: 'Blog',
-                href: 'https://www.tigera.io/blog',
+                to: 'https://www.tigera.io/blog',
               },
               {
                 label: 'Trade shows',
-                href: 'https://www.tigera.io/lp/tradeshows',
+                to: 'https://www.tigera.io/lp/tradeshows',
               },
               {
                 label: 'Certification',
-                href: 'https://www.tigera.io/lp/calico-certification',
+                to: 'https://www.tigera.io/lp/calico-certification',
               },
               {
                 label: 'Guides',
-                href: 'https://www.tigera.io/learn/guides/kubernetes-monitoring',
+                to: 'https://www.tigera.io/learn/guides/kubernetes-monitoring',
               },
             ],
           },
@@ -203,19 +204,19 @@ const config = {
             items: [
               {
                 label: 'Customer success',
-                href: 'https://www.tigera.io/customer-success',
+                to: 'https://www.tigera.io/customer-success',
               },
               {
                 label: 'Support portal',
-                href: 'http://www.tigera.force.com/community/s/login/',
+                to: 'http://www.tigera.force.com/community/s/login/',
               },
               {
                 label: 'Security bulletins',
-                href: 'https://www.tigera.io/security-bulletins',
+                to: 'https://www.tigera.io/security-bulletins',
               },
               {
                 label: 'Report a security issue',
-                href: 'https://www.tigera.io/vulnerability-disclosure',
+                to: 'https://www.tigera.io/vulnerability-disclosure',
               },
             ],
           },
@@ -224,23 +225,23 @@ const config = {
             items: [
               {
                 label: 'Project Calico',
-                href: 'https://www.tigera.io/project-calico',
+                to: 'https://www.tigera.io/project-calico',
               },
               {
                 label: 'Community',
-                href: 'https://www.tigera.io/project-calico/community',
+                to: 'https://www.tigera.io/project-calico/community',
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/projectcalico',
+                to: 'https://github.com/projectcalico',
               },
               {
                 label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/project-calico',
+                to: 'https://stackoverflow.com/questions/tagged/project-calico',
               },
               {
                 label: 'Slack',
-                href: 'https://slack.projectcalico.org/',
+                to: 'https://slack.projectcalico.org/',
               },
             ],
           },
@@ -249,27 +250,27 @@ const config = {
             items: [
               {
                 label: 'About',
-                href: 'https://www.tigera.io/about',
+                to: 'https://www.tigera.io/about',
               },
               {
                 label: 'Customers',
-                href: 'https://www.tigera.io/customer-stories',
+                to: 'https://www.tigera.io/customer-stories',
               },
               {
                 label: 'Partners',
-                href: 'https://www.tigera.io/partners',
+                to: 'https://www.tigera.io/partners',
               },
               {
                 label: 'Newsroom',
-                href: 'https://www.tigera.io/media',
+                to: 'https://www.tigera.io/media',
               },
               {
                 label: 'Careers',
-                href: 'https://www.tigera.io/careers',
+                to: 'https://www.tigera.io/careers',
               },
               {
                 label: 'Contact',
-                href: 'https://www.tigera.io/contact',
+                to: 'https://www.tigera.io/contact',
               },
             ],
           },
@@ -277,8 +278,8 @@ const config = {
         // TODO: Add appropriate icons and links
         copyright: `
           <div>
-            <div>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
-            <div>Tigera is the creator and maintainer of Project Calico.</div>
+            <div class="footer-copyright__title">Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
+            <div class="footer-copyright__description">Tigera is the creator and maintainer of Project Calico.</div>
             <div>
               <a
                 href='https://www.linkedin.com/company/tigera/'
@@ -329,6 +330,23 @@ const config = {
         path: 'calico',
         routeBasePath: 'calico',
         editCurrentVersion: true,
+        versions: {
+          current: {
+            label: 'Next',
+            path: 'next',
+            banner: 'unreleased',
+          },
+          '3.25': {
+            label: '3.25',
+            path: '3.25',
+            banner: 'none',
+          },
+          '3.24': {
+            label: '3.24',
+            path: '3.24',
+            banner: 'none',
+          },
+        },
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         exclude: excludeContentDocsPatterns,
@@ -343,6 +361,24 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
+        lastVersion: '3.14',
+        versions: {
+          current: {
+            label: 'Next',
+            path: 'next',
+            banner: 'unreleased',
+          },
+          '3.15': {
+            label: '3.15 (beta)',
+            path: '3.15',
+            banner: 'unreleased',
+          },
+          '3.14': {
+            label: '3.14',
+            path: '3.14',
+            banner: 'none',
+          },
+        },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         exclude: excludeContentDocsPatterns,
