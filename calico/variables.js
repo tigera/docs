@@ -16,6 +16,7 @@ const variables = {
   rootDirWindows: 'C:\\CalicoWindows',
   ppa_repo_name: getPPARepoName(releases),
   chart_version_name: getChartVersionName(releases),
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/master',
   releases,
   registry: '',
   vppbranch: 'master',
