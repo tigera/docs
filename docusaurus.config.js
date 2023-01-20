@@ -330,6 +330,23 @@ const config = {
         path: 'calico',
         routeBasePath: 'calico',
         editCurrentVersion: true,
+        versions: {
+          current: {
+            label: 'Next',
+            path: 'next',
+            banner: 'unreleased',
+          },
+          '3.25': {
+            label: '3.25',
+            path: '3.25',
+            banner: 'none',
+          },
+          '3.24': {
+            label: '3.24',
+            path: '3.24',
+            banner: 'none',
+          },
+        },
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         exclude: excludeContentDocsPatterns,
@@ -344,6 +361,24 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
+        lastVersion: '3.14',
+        versions: {
+          current: {
+            label: 'Next',
+            path: 'next',
+            banner: 'unreleased',
+          },
+          '3.15': {
+            label: '3.15 (beta)',
+            path: '3.15',
+            banner: 'unreleased',
+          },
+          '3.14': {
+            label: '3.14',
+            path: '3.14',
+            banner: 'none',
+          },
+        },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         exclude: excludeContentDocsPatterns,

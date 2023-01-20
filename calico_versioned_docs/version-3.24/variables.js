@@ -16,9 +16,12 @@ const variables = {
   rootDirWindows: 'C:\\CalicoWindows',
   ppa_repo_name: getPPARepoName(releases),
   chart_version_name: getChartVersionName(releases),
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.24.5',
   releases,
   registry: '',
   vppbranch: 'master',
+  tigeraOperator: releases[0]['tigera-operator'],
+  tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {
     'calico/node': 'calico/node',
     calicoctl: 'calico/ctl',
