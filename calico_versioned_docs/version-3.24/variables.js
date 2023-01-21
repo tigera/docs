@@ -8,7 +8,7 @@ const variables = {
   prodname: 'Calico',
   prodnamedash: 'calico',
   version: getVersion(releases),
-  baseUrl: '/calico', // or e.g. /calico/next
+  baseUrl: '/calico/3.24',
   filesUrl: 'https://projectcalico.docs.tigera.io' + versionPrefix,
   prodnameWindows: 'Calico for Windows',
   nodecontainer: 'calico/node',

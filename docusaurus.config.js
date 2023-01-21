@@ -62,7 +62,7 @@ const config = {
   ],
 
   themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       algolia: {
         appId: 'Q4GSZWRKBA',
@@ -152,7 +152,7 @@ const config = {
           },
           {
             label: 'Try Calico Cloud',
-            to: 'https://calicocloud.io',
+            to: 'https://www.calicocloud.io/home',
             position: 'left',
           },
           {
@@ -208,7 +208,7 @@ const config = {
               },
               {
                 label: 'Support portal',
-                to: 'http://www.tigera.force.com/community/s/login/',
+                to: 'https://tigera.force.com/community/s/login/',
               },
               {
                 label: 'Security bulletins',
@@ -278,8 +278,8 @@ const config = {
         // TODO: Add appropriate icons and links
         copyright: `
           <div>
-            <div class="footer-copyright__title">Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
-            <div class="footer-copyright__description">Tigera is the creator and maintainer of Project Calico.</div>
+            <div class='footer-copyright__title'>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
+            <div class='footer-copyright__description'>Tigera is the creator and maintainer of Project Calico.</div>
             <div>
               <a
                 href='https://www.linkedin.com/company/tigera/'
