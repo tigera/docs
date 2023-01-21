@@ -419,7 +419,7 @@ function InstallOpenShiftWindows() {
         Configure strict affinity
       </Heading>
       <p>
-        Next, <Link href={`${baseUrl}/maintenance/clis/calicoctl/install`}>install calicoctl</Link> and ensure strict
+        Next, <Link href={`${baseUrl}/operations/clis/calicoctl/install`}>install calicoctl</Link> and ensure strict
         affinity is true:
       </p>
       <CodeBlock language='batch'>calicoctl ipam configure --strictaffinity=true</CodeBlock>
