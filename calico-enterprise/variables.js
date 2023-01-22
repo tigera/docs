@@ -8,7 +8,7 @@ const variables = {
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: getVersion(releases),
-  baseUrl: '/calico-enterprise', // or e.g. /calico-enterprise/next'
+  baseUrl: '/calico-enterprise/next',
   filesUrl: 'https://downloads.tigera.io' + '/ee/' + releases[0].title,
   prodnameWindows: 'Calico Enterprise for Windows',
   downloadsurl: 'https://downloads.tigera.io',
