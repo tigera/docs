@@ -65,8 +65,8 @@ export default function CalicoWindowsInstall(props) {
         <p>Download the {prodnameWindows} installation manifest.</p>
         <CodeBlock language='batch'>
           {props.networkingType === 'vxlan'
-            ? `curl ${releases[0].manifests_url}/manifests/calico-windows-vxlan.yaml -o calico-windows.yaml`
-            : `curl ${releases[0].manifests_url}/manifests/calico-windows-bgp.yaml -o calico-windows.yaml`}
+            ? `curl ${manifestsUrl}/manifests/calico-windows-vxlan.yaml -o calico-windows.yaml`
+            : `curl ${manifestsUrl}/manifests/calico-windows-bgp.yaml -o calico-windows.yaml`}
         </CodeBlock>
       </li>
       <li>
