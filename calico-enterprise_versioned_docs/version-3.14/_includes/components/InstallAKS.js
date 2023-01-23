@@ -56,7 +56,7 @@ export default function InstallAKS(props) {
       <ol>
         <li>
           <p>
-            <Link href={`${baseUrl}/maintenance/logstorage/create-storage`}>
+            <Link href={`${baseUrl}/operations/logstorage/create-storage`}>
               Configure a storage class for {prodname}
             </Link>
             .
@@ -240,7 +240,7 @@ spec:
       <ol>
         <li>
           <p>
-            <Link href={`${baseUrl}/maintenance/logstorage/create-storage`}>
+            <Link href={`${baseUrl}/operations/logstorage/create-storage`}>
               Configure a storage class for {prodname}
             </Link>
             .

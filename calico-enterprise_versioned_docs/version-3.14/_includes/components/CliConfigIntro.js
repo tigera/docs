@@ -39,7 +39,7 @@ spec:
         </li>
       </ol>
       <p>
-        See the section that corresponds to your <Link href={`${baseUrl}/maintenance/clis`}>datastore type</Link> for a
+        See the section that corresponds to your <Link href={`${baseUrl}/operations/clis`}>datastore type</Link> for a
         full set of options and examples.
       </p>
       <Admonition type='note'>
