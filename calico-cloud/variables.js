@@ -5,7 +5,7 @@ const variables = {
   prodname: 'Calico Cloud',
   prodnamedash: 'calico-cloud',
   version: getVersion(releases),
-  baseUrl: '/calico-cloud', // or e.g. /calico-cloud/next
+  baseUrl: '/calico-cloud',
   filesUrl: 'https://docs.calicocloud.io',
   filesUrl_CE: 'https://docs.tigera.io/master',
   prodnameWindows: 'Calico Enterprise for Windows',
