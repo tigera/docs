@@ -18,7 +18,7 @@ export default function OpenShiftPrometheusOperator(props) {
       <Admonition type='note'>
         Complete this step only if you are using the {prodname} Prometheus operator (including adding your own
         Prometheus operator). Skip this step if you are using{' '}
-        <Link href={`${baseUrl}/maintenance/monitor/prometheus/support`}>BYO Prometheus</Link> that you manage yourself.
+        <Link href={`${baseUrl}/operations/monitor/prometheus/support`}>BYO Prometheus</Link> that you manage yourself.
       </Admonition>
       <CodeBlock language='batch'>
         {props.operation === 'install'

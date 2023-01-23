@@ -66,7 +66,7 @@ EOF`}
       <ol>
         <li>
           <p>
-            <a href='../../../maintenance/logstorage/create-storage'>Configure a storage class for {prodname}</a>
+            <a href='../../../operations/logstorage/create-storage'>Configure a storage class for {prodname}</a>
           </p>
         </li>
         <li>
