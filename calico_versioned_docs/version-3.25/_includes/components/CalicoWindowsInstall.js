@@ -3,7 +3,7 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 
-import { prodname, prodnameWindows, releases } from '../../variables';
+import { prodname, prodnameWindows, manifestsUrl } from '../../variables';
 
 function CalicoWindowsInstallFirstStep(props) {
   if (props.networkingType === 'vxlan') {

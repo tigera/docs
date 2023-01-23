@@ -15,6 +15,7 @@ const variables = {
   registry: 'quay.io/',
   chart_version_name: 'v3.15.0-1',
   tigeraOperator: releases[0]['tigera-operator'],
+  manifestsUrl: 'https://docs.tigera.io/v3.15',
   releases,
   imageNames: {
     node: 'tigera/cnx-node',
