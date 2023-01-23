@@ -1,1 +1,0 @@
-Mirantis Kubernetes Engine 3.5.1
