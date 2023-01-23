@@ -39,7 +39,7 @@ export default function AutoHostendpointsMigrate(props) {
         <li>
           <p>
             Enable auto host endpoints by following the{' '}
-            <Link href={`${baseUrl}/security/hosts/kubernetes-nodes#enable-automatic-host-endpoints`}>
+            <Link href={`${baseUrl}/network-policy/hosts/kubernetes-nodes#enable-automatic-host-endpoints`}>
               enable automatic host endpoints how-to guide
             </Link>
             . Note that automatic host endpoints are created with a profile attached that allows all traffic in the

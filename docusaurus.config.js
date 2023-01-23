@@ -53,7 +53,6 @@ const config = {
         theme: {
           customCss: [
             require.resolve('./src/css/custom.css'),
-            require.resolve('./src/css/glyphicons.scss'),
             require.resolve('./src/css/external-links.scss'),
             require.resolve('./src/css/modal.scss'),
           ],
@@ -63,7 +62,7 @@ const config = {
   ],
 
   themeConfig:
-  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       algolia: {
         appId: 'Q4GSZWRKBA',
@@ -337,12 +336,12 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
-          '3.25': {
+          3.25: {
             label: '3.25',
             path: '3.25',
             banner: 'none',
           },
-          '3.24': {
+          3.24: {
             label: '3.24',
             path: '3.24',
             banner: 'none',
@@ -370,12 +369,12 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
-          '3.15': {
+          3.15: {
             label: '3.15 (beta)',
             path: '3.15',
             banner: 'unreleased',
           },
-          '3.14': {
+          3.14: {
             label: '3.14',
             path: '3.14',
             banner: 'none',
