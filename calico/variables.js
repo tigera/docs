@@ -8,7 +8,7 @@ const variables = {
   prodname: 'Calico',
   prodnamedash: 'calico',
   version: getVersion(releases),
-  baseUrl: '/calico', // or e.g. /calico/next
+  baseUrl: '/calico/next',
   filesUrl: 'https://projectcalico.docs.tigera.io' + versionPrefix,
   prodnameWindows: 'Calico for Windows',
   nodecontainer: 'calico/node',
@@ -16,6 +16,7 @@ const variables = {
   rootDirWindows: 'C:\\CalicoWindows',
   ppa_repo_name: getPPARepoName(releases),
   chart_version_name: getChartVersionName(releases),
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/master',
   releases,
   registry: '',
   vppbranch: 'master',

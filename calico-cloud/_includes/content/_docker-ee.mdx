@@ -1,1 +1,0 @@
-Mirantis Kubernetes Engine 3.4.4
