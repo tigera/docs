@@ -23,7 +23,7 @@ export default function InstallGeneric(props) {
         {maybeRender(
           props.clusterType !== 'managed',
           <li>
-            <Link href={`${baseUrl}/maintenance/logstorage/create-storage`}>Configure storage for {prodname}</Link>.
+            <Link href={`${baseUrl}/operations/logstorage/create-storage`}>Configure storage for {prodname}</Link>.
           </li>
         )}
         <li>

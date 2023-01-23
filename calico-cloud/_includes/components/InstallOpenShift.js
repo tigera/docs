@@ -162,7 +162,7 @@ spec:
       </Heading>
       <p>
         {prodname} requires storage for logs and reports. Before finishing the installation, you must{' '}
-        <Link href={`${baseUrl}/maintenance/logstorage/create-storage`}>create a StorageClass for {prodname}</Link>.
+        <Link href={`${baseUrl}/operations/logstorage/create-storage`}>create a StorageClass for {prodname}</Link>.
       </p>
 
       {maybeRender(
@@ -403,7 +403,7 @@ function InstallOpenShiftWindows() {
         Configure strict affinity
       </Heading>
       <p>
-        Next, <Link href={`${baseUrl}/maintenance/clis/calicoctl/install`}>install calicoctl</Link> and ensure strict
+        Next, <Link href={`${baseUrl}/operations/clis/calicoctl/install`}>install calicoctl</Link> and ensure strict
         affinity is true:
       </p>
       <CodeBlock language='batch'>calicoctl ipam configure --strictaffinity=true</CodeBlock>

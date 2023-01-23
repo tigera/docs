@@ -156,14 +156,14 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
               <p>
                 If both of these resources are present, you can continue with the next step. Otherwise, use the
                 instructions to{' '}
-                <Link href={`${baseUrl}/maintenance/cnx/configure-identity-provider`}>
+                <Link href={`${baseUrl}/operations/cnx/configure-identity-provider`}>
                   configure an identity provider
                 </Link>{' '}
                 to configure OIDC.
               </p>
               <p>
                 d. Follow{' '}
-                <Link href={`${baseUrl}/maintenance/cnx/configure-identity-provider`}>
+                <Link href={`${baseUrl}/operations/cnx/configure-identity-provider`}>
                   configure an identity provider
                 </Link>
                 .
