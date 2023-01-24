@@ -90,9 +90,7 @@ function getComponentForNextVersion(prodnamedash, componentName) {
     case 'calico':
       return require(`../../calico/_includes/components/${fileName}`).default;
     case 'calico-cloud':
-      // console.error('No partial components registered for Calico Cloud');
-      // return;
-      return require(`../../calico-enterprise/_includes/components/${fileName}`).default;
+      return require(`../../calico-cloud/_includes/components/${fileName}`).default;
     default:
       console.error(`${prodnamedash} product doesn't exist`);
   }
@@ -105,8 +103,7 @@ function getComponentForVersion(prodnamedash, componentName, version) {
     case 'calico':
       return getCalicoVersionedComponent(version, componentName);
     case 'calico-cloud':
-      console.error('No partial components registered for Calico Cloud');
-      return;
+      return getCalicoCloudVersionedComponent(version, componentName);
     default:
       console.error(`${prodnamedash} product doesn't exist`);
   }
@@ -138,6 +135,20 @@ function getCalicoVersionedComponent(version, componentName) {
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReqsSys`).default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico`);
+  }
+}
+
+function getCalicoCloudVersionedComponent(version, componentName) {
+  switch (componentName) {
+    case 'EnvironmentFile':
+      return require(`../../calico-cloud_versioned_docs/version-${version}/_includes/components/EnvironmentFile`)
+        .default;
+    case 'ReqsKernel':
+      return require(`../../calico-cloud_versioned_docs/version-${version}/_includes/components/ReqsKernel`).default;
+    case 'ReqsSys':
+      return require(`../../calico-cloud_versioned_docs/version-${version}/_includes/components/ReqsSys`).default;
+    default:
+      console.error(`Versioned ${componentName} component isn't registered for Calico Cloud`);
   }
 }
 
