@@ -5,7 +5,7 @@ import { useProductId } from '../../utils/useProductId';
 export default function DocsVersionDropdownNavbarItemWrapper(props) {
   const productId = useProductId();
 
-  if (!productId || productId === 'calico-cloud') {
+  if (!productId) {
     return null;
   }
 
