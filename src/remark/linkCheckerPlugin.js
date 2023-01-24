@@ -1,7 +1,7 @@
 const visit = require('unist-util-visit');
 const linkCheck = require('link-check');
 const linkRegex = [
-  new RegExp(/\bhttps?:\/\/[\w.:/-]+?\.ya?ml\b/, 'g'),
+  new RegExp(/\bhttps?:\/\/[\w.:/-]+?(\.ya?ml|\.ps1|\.tgz)\b/, 'g'),
 ];
 const skipRegex = [
   new RegExp(/:\/\/\d+\.\d+\.\d+\.\d+/),
