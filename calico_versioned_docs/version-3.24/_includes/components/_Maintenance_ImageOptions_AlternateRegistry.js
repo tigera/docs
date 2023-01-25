@@ -4,11 +4,9 @@ import React from 'react';
 
 import CodeBlock from '@theme/CodeBlock';
 
-import { imageNames, prodname, registry, releases } from '../../variables';
+import { imageNames, prodname, registry, releases, tigeraOperator } from '../../variables';
 
 export default function _Maintenance_ImageOptions_AlternateRegistry() {
-  const tigeraOperator = releases[0]['tigera-operator'];
-
   const cmds1 = renderInstallCommands(
     (componentData, reg, componentNames, i) => `docker pull ${reg}${componentNames[i]}:${componentData.version}`
   );

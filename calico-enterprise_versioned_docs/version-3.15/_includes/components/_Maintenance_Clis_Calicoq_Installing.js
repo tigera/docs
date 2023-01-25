@@ -4,10 +4,10 @@ import React from 'react';
 
 import CodeBlock from '@theme/CodeBlock';
 
-import { downloadsurl, releases, filesUrl, version } from '../../variables';
+import { downloadsurl, releaseTitle, filesUrl, version } from '../../variables';
 
 export default function _Maintenance_Clis_Calicoq_Installing() {
-  const ver = version === 'master' ? version : releases[0].title;
+  const ver = version === 'master' ? version : releaseTitle;
   const code =
     ver === 'master'
       ? `${filesUrl}/download/binaries/${ver}/calicoq`
