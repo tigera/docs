@@ -39,6 +39,7 @@ export default function ReleaseNotes() {
           <Heading
             as='h2'
             id={toKebab(release.title)}
+            data-bz-version="{release.title}"
           >
             {release.title}
           </Heading>
