@@ -1,15 +1,33 @@
 const visit = require('unist-util-visit');
 const linkCheck = require('link-check');
 const linkRegex = [
-  new RegExp(
-    /\bhttps?:\/\/[\w.:/-]+?(\.ya?ml|\.ps1|\.tgz|\.sh|\.zip|\.css|\.js)\b/,
-    'g'),
+  // new RegExp(
+  //   /\bhttps?:\/\/[\w.:/-]+?(\.ya?ml|\.ps1|\.tgz|\.sh|\.zip|\.css|\.js)\b/,
+  //   'g'),
+  new RegExp(/https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/, 'g'),
 ];
+const validURLRegex = new RegExp(
+  /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/);
 const skipRegex = [
   new RegExp(/:\/\/\d+\.\d+\.\d+\.\d+/),
+  new RegExp(/:\/\/an\.example\.threat\.feed/),
+  new RegExp(/:\/\/my\.threatfeed\.com/),
+  new RegExp(
+    /:\/\/mycalicocl-calicodemorg-03a087-36558dbb\.hcp\.canadaeast\.azmk8s\.io/),
+  new RegExp(
+    /:\/\/60F939227672BC3D5A1B3EC9744B2B21\.gr7\.us-west-2\.eks\.amazonaws\.com/),
+  new RegExp(/:\/\/prometheus-dashboard-svc\.calico-monitoring\.svc/),
+  new RegExp(/:\/\/manager\.apps\.demo-ocp\.tigera-solutions\.io/),
+  new RegExp(
+    /:\/\/d881b853ae9313e00302a84f1e346a77\.gr7\.us-west-2\.eks\.amazonaws\.com/),
+  new RegExp(/:\/\/api\.my-ocp-domain\.com/),
+  new RegExp(/\/manifests\/alp\/istio-inject-configmap-$/),
+  new RegExp(/:\/\/transfer\.sh/),
+  new RegExp(/:\/\/auth\.calicocloud\.io/),
 ];
 const LC = 'LINK-CHECK', ERR = `${LC} ERROR`;
-const DEAD = 'dead', SKIPPED = 'skipped', ALIVE = 'alive', ERROR = 'error';
+const DEAD = 'dead', SKIPPED = 'skipped',
+  ALIVE = 'alive', ERROR = 'error', INVALID = 'invalid';
 const urlMap = new Map();
 const comm_errors = [];
 
@@ -24,7 +42,11 @@ function linkCheckerPlugin(_options) {
     }
   };
 
-  function shouldSkip(url) {
+  function IsExcludedOrInvalid(url) {
+    if (!validURLRegex.test(url)) {
+      urlMap.set(url, INVALID);
+      return true;
+    }
     for (const sre of skipRegex) {
       if (sre.test(url)) {
         return true;
@@ -41,10 +63,10 @@ function linkCheckerPlugin(_options) {
           for (const lre of linkRegex) {
             const matches = node[prop].matchAll(lre);
             for (const match of matches) {
-              const url = match[0];
+              const url = match[0].trim().replace(/\)$/, '');
               if (urlMap.has(url)) continue;
-              urlMap.set(url, SKIPPED);
-              if (shouldSkip(url)) {
+              urlMap.set(url, SKIPPED); // init to skipped
+              if (IsExcludedOrInvalid(url)) {
                 continue;
               }
               const opts = { retryOn429: true, fallbackRetryDelay: '15s' };
@@ -60,7 +82,7 @@ function linkCheckerPlugin(_options) {
 }
 
 function postBuild() {
-  let skipped = 0, alive = 0, dead = 0, error = 0;
+  let skipped = 0, invalid = 0, alive = 0, dead = 0, error = 0;
   urlMap.forEach((v, k) => {
     if (typeof v === 'object' && v.state === ERROR) {
       error++;
@@ -70,6 +92,8 @@ function postBuild() {
       dead++;
     } else if (v === ALIVE) {
       alive++;
+    } else if (v === INVALID) {
+      invalid++;
     } else {
       console.error(
         `FATAL: an unknown state exists in the ${LC} urlMap. k: ${k}, v: ${v} -- Exiting now...`);
@@ -78,7 +102,17 @@ function postBuild() {
   });
 
   console.log(
-    `${LC} REPORT\n\tSummary: skipped: ${skipped}, comm_errors: ${comm_errors.length}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
+    `${LC} REPORT\n\tSummary: skipped: ${skipped}, invalid: ${invalid}, comm_errors: ${comm_errors.length}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
+
+  if (invalid > 0) {
+    console.info(
+      `\n\t[INFO] LINK-CHECK skipped ${invalid} invalid link(s). The list follows:`);
+    urlMap.forEach((v, k) => {
+      if (v === INVALID) {
+        console.warn(`\t${k} is ${v}`);
+      }
+    });
+  }
 
   if (skipped > 0) {
     console.info(
