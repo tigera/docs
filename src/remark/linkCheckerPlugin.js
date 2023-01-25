@@ -29,12 +29,12 @@ const LC = 'LINK-CHECK', ERR = `${LC} ERROR`;
 const DEAD = 'dead', SKIPPED = 'skipped',
   ALIVE = 'alive', ERROR = 'error', INVALID = 'invalid';
 const urlMap = new Map();
-const comm_errors = [];
+const sys_errors = [];
 
 function linkCheckerPlugin(_options) {
   const linkCheckCallback = function(err, result) {
     if (err) {
-      comm_errors[comm_errors.length] = `${ERR}: ${err}`;
+      sys_errors[sys_errors.length] = `${ERR}: ${err}`;
     } else if (result.err) {
       urlMap.set(result.link, { state: ERROR, msg: `${result.err}` });
     } else {
@@ -102,7 +102,7 @@ function postBuild() {
   });
 
   console.log(
-    `${LC} REPORT\n\tSummary: skipped: ${skipped}, invalid: ${invalid}, comm_errors: ${comm_errors.length}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
+    `${LC} REPORT\n\tSummary: skipped: ${skipped}, invalid: ${invalid}, sys_errors: ${sys_errors.length}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
 
   if (invalid > 0) {
     console.info(
@@ -134,12 +134,9 @@ function postBuild() {
     });
   }
 
-  let exit = false;
-
   if (error > 0) {
-    exit = true;
     console.error(
-      `${LC} FATAL ERROR: we experienced ${error} error(s). The list follows:`);
+      `${LC} ERRORS: we experienced ${error} error(s). The list follows:`);
     urlMap.forEach((v, k) => {
       if (typeof v === 'object' && v.state === ERROR) {
         console.warn(`\t${k} error: ${v.msg}`);
@@ -147,11 +144,13 @@ function postBuild() {
     });
   }
 
-  if (comm_errors.length > 0) {
+  let exit = false;
+
+  if (sys_errors.length > 0) {
     exit = true;
     console.error(
-      `${LC} FATAL ERROR: we experienced ${comm_errors.length} communication errors while link checking. The list follows:`);
-    for (const err of comm_errors) {
+      `${LC} FATAL ERROR: we experienced ${sys_errors.length} system errors while link checking. The list follows:`);
+    for (const err of sys_errors) {
       console.error(`\t${err}`);
     }
   }
