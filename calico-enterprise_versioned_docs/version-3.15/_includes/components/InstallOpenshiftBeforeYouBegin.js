@@ -57,7 +57,7 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
         <li>
           <p>
             Cluster meets the {prodname}{' '}
-            <Link href={`${baseUrl}/getting-started/openshift/requirements`}>system requirements</Link>
+            <Link href={`${baseUrl}//getting-started/install-on-clusters/openshift/requirements`}>system requirements</Link>
           </p>
         </li>
         <li>
@@ -94,7 +94,7 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
         </li>
         <li>
           <p>
-            A <Link href={`${baseUrl}/getting-started/calico-enterprise`}>Tigera license key and credentials</Link>
+            A <Link href={`${baseUrl}/getting-started/install-on-clusters/calico-enterprise`}>Tigera license key and credentials</Link>
           </p>
         </li>
         {props.clusterOS === 'hybrid' && (
