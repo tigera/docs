@@ -15,9 +15,9 @@ export default function EnvironmentFile(props) {
           host. For more help, see the{' '}
         </span>
         {props.install === 'container' ? (
-          <Link href={`${baseUrl}/reference/node/configuration`}>{props.nodecontainer} configuration reference</Link>
+          <Link href={`${baseUrl}/reference/component-resources/node/configuration`}>{props.nodecontainer} configuration reference</Link>
         ) : (
-          <Link href={`${baseUrl}/reference/felix/configuration`}>Felix configuration reference</Link>
+          <Link href={`${baseUrl}/reference/component-resources/node/felix/configuration`}>Felix configuration reference</Link>
         )}
       </p>
       <p>For the Kubernetes datastore set the following:</p>

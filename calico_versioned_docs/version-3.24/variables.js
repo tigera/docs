@@ -1,24 +1,21 @@
 const releases = require('./releases.json');
-const { getPPARepoName, getChartVersionName, getVersion } = require('./variableUtils');
-
-// e.g. "/master" or "/v3.23" or "/archive/v3.22" or "" if it's the latest
-const versionPrefix = '/' + getVersion(releases);
 
 const variables = {
+  releaseTitle: 'v3.24.5',
   prodname: 'Calico',
   prodnamedash: 'calico',
-  version: getVersion(releases),
-  baseUrl: '/calico', // or e.g. /calico/next
-  filesUrl: 'https://projectcalico.docs.tigera.io' + versionPrefix,
+  version: 'v3.24',
+  baseUrl: '/calico/3.24',
+  filesUrl: 'https://projectcalico.docs.tigera.io/v3.24',
   prodnameWindows: 'Calico for Windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\CalicoWindows',
-  ppa_repo_name: getPPARepoName(releases),
-  chart_version_name: getChartVersionName(releases),
+  ppa_repo_name: 'calico-3.24.5',
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.24.5',
   releases,
   registry: '',
-  vppbranch: 'master',
+  vppbranch: 'v3.24.0',
   tigeraOperator: releases[0]['tigera-operator'],
   tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {
