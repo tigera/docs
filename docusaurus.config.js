@@ -395,6 +395,18 @@ const config = {
         path: 'calico-cloud',
         routeBasePath: 'calico-cloud',
         editCurrentVersion: true,
+        onlyIncludeVersions: ['3.15'],
+        versions: {
+          current: {
+            label: 'Next',
+            path: 'next',
+            banner: 'unreleased',
+          },
+          3.15: {
+            path: '/',
+            banner: 'none',
+          },
+        },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         remarkPlugins: [linkCheckerPlugin.remarkPlugin],
