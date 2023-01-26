@@ -11,6 +11,7 @@ const variables = {
   rootDirWindows: 'C:\\TigeraCalico',
   nodecontainer: 'cnx-node',
   noderunning: 'calico-node',
+  cloudversion: 'v3.14.1-16',
   clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.14.1-16',
   clouddownloadbase: 'https://installer.calicocloud.io',
   tigeraOperator: releases[0]['tigera-operator'],
