@@ -13,16 +13,5 @@ find "./${product}_versioned_docs/version-${version}" -path '*/*.mdx' -type f -p
 echo '[SUCCESS]: imports updated!'
 echo
 
-echo 'Copying images...'
-cp -r "./static/img/${product}/master/" "./static/img/${product}/${version}/"
-echo '[SUCCESS]: images copied!'
-echo
-
-echo 'Updating image references...'
-regex="s/\/img\/${product}\/master/\/img\/${product}\/${version}/g"
-find "./${product}_versioned_docs/version-${version}" -path '*/*.mdx' -type f -print0 | xargs -0 perl -0777 -pi -e "${regex}"
-echo '[SUCCESS]: image references updated!'
-echo
-
 echo 'Press any key...'
 read -n 1
