@@ -7,12 +7,12 @@ description: Configure specific application traffic to exit the cluster through 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-### Big picture
+## Big picture
 
 Control the source IP address seen by external services/appliances by routing the traffic from certain pods 
 through egress gateways. Use native VNet subnet IP addresses for the egress gateways so that the IPs are valid in the Azure fabric.
 
-### Value
+## Value
 
 Controlling the source IP seen when traffic leaves the cluster allows groups of pods to be identified
 by external firewalls, appliances and services (even as the groups are scaled up/down or pods restarted).
@@ -25,7 +25,7 @@ using {{prodname}} IPAM. {{prodname}} IPAM allows the IP addresses to be precise
 for static configuration of external appliances. {{prodname}} injects necessary routes to the Azure Route Server
 to configure the Azure fabric to route traffic to and from the egress gateway.
 
-### Features
+## Features
 
 This how-to guide uses the following features:
 
@@ -51,15 +51,15 @@ This how-to guide uses the following features:
 
 - Felix, {{prodname}}'s per-host agent.
 
-### Concepts
+## Concepts
 
-#### Egress gateway
+### Egress gateway
 
 An egress gateway acts as a transit pod for the outbound application traffic that is configured to
 use it. As traffic leaving the cluster passes through the egress gateway, its source IP is changed
 to that of the egress gateway pod, and the traffic is then forwarded on.
 
-#### Source IP
+### Source IP
 
 When an outbound application flow leaves the cluster, its IP packets will have a source IP.
 This begins as the pod IP of the pod that originated the flow, then:
@@ -76,7 +76,7 @@ This begins as the pod IP of the pod that originated the flow, then:
   the underlying network fabric, the fabric must be configured to know about the egress gateway's
   IP and to send response traffic back to the same host.
 
-#### Azure VNets and subnets
+### Azure VNets and subnets
 
 An Azure VNet is a virtual network that is, by default, logically isolated from other VNets. Each VNet has one or more
 (often large) CIDR blocks associated with it (for example `10.0.0.0/16`). In general, VNet CIDRs may overlap, but only
@@ -87,7 +87,7 @@ Each VNet has one or more VNet subnets associated with it, each subnet owns a no
 VNet's CIDR blocks. VNet subnets span all availability zones in a region, so it is possible to distribute egress gateway
 resources across availability zones in a region without the need to repeat the configuration per-AZ.
 
-#### Azure VNet and ExpressRoute peerings
+### Azure VNet and ExpressRoute peerings
 
 Azure [VNet Peerings](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview) allow multiple VNets to be
 connected together. Similarly, [ExpressRoute](https://learn.microsoft.com/en-us/azure/expressroute/expressroute-introduction)
@@ -97,7 +97,7 @@ as if they were all on one large private network.
 By advertising routes to Azure fabric using Azure Route Servers, egress gateways can be assigned private IPs allowing them to
 communicate without NAT within the same VPC, with peered VPCs, and, with peered datacenters.
 
-#### Azure Route Server
+### Azure Route Server
 
 Azure [Route Server](https://learn.microsoft.com/en-us/azure/route-server/) is a managed networking service that allows
 a network virtual appliance, like {{prodname}}, to dynamically configure Azure fabric by exchanging routing information
@@ -107,7 +107,7 @@ VNet peering, or to external datacenters through ExpressRoute, allowing communic
 
 Azure Route Server deployment is per VNet, as such each VNet with egress gateways needs one Azure Route Server.
 
-### Before you begin
+## Before you begin
 
 **Required**
 
@@ -119,7 +119,7 @@ Azure Route Server deployment is per VNet, as such each VNet with egress gateway
 
   {{prodname}} CNI and IPAM are required. The ability to control the egress gateway’s IP is a feature of {{prodname}} CNI and IPAM. Azure VNet CNI does not support that feature, so it is incompatible with egress gateways.
 
-### How to
+## How to
 
 - [Enable BGP](#enable-bgp)
 - [Choose Route Reflectors](#choose-route-reflectors)
@@ -137,23 +137,23 @@ Azure Route Server deployment is per VNet, as such each VNet with egress gateway
 - [Controlling the use of egress gateways](#controlling-the-use-of-egress-gateways)
 - [Policy enforcement for flows via an egress gateway](#policy-enforcement-for-flows-via-an-egress-gateway)
 
-#### Enable BGP
+### Enable BGP
 
 Usually, in the default installation of {{prodname}} in a public cloud, BGP is disabled as it is not used.
 However, running egress gateways in Azure relies on BGP connections between {{prodname}} and Azure
 Route Servers. To enable BGP routing protocol, set `bgp` field to `Enabled` in the default installation:
 
-```bash
+```batch
 kubectl patch installation default --type='merge' -p '{"spec": {"calicoNetwork": {"bgp": "Enabled"}}}'
 ```
 
 and then restart the {{prodname}} daemonSet:
 
-```bash
+```batch
 kubectl rollout restart ds calico-node -n calico-system
 ```
 
-#### Choose Route Reflectors
+### Choose route reflectors
 
 It is possible to establish BGP connections between all {{prodname}} nodes and Azure Route Servers, but
 to avoid hitting Azure Route Server peers [limit](https://learn.microsoft.com/en-us/azure/route-server/overview#route-server-limits),
@@ -161,40 +161,42 @@ it is better to select some nodes as Route Reflectors and set up BGP connections
 The number of Route Reflectors depends on the cluster size, but it is recommended to have at least 3 at all times,
 and Azure Route Servers supports up to 8 peers in a VNet.
 
-#### Create Azure Route server
+### Create Azure Route Server
 
 Deploy Azure [Route Server](https://learn.microsoft.com/en-us/azure/route-server/) in the VNet with egress gateways,
 and add the chosen Route Reflectors as peers to it.
 
-> **Note**
->
-> - The BGP connections between Calico Route Reflectors and Azure Route Servers are critical for the functionality
->   of egress gateways. It is important to maintain Route Reflectors with care, and to make sure there are always
->   enough healthy Route Reflectors.
-> - In AKS, it is [recommended](https://learn.microsoft.com/en-us/azure/aks/use-system-pools?tabs=azure-cli#system-and-user-node-pools)
->   to run applications in user node pools and leave system node pools for running critical system pods.
->   The nodes in system node pools are perfect Route Reflector candidates.
+:::note
 
-#### Configure Route Reflector
+- The BGP connections between Calico Route Reflectors and Azure Route Servers are critical for the functionality
+  of egress gateways. It is important to maintain Route Reflectors with care, and to make sure there are always
+  enough healthy Route Reflectors.
+- In AKS, it is [recommended](https://learn.microsoft.com/en-us/azure/aks/use-system-pools?tabs=azure-cli#system-and-user-node-pools)
+  to run applications in user node pools and leave system node pools for running critical system pods.
+  The nodes in system node pools are perfect Route Reflector candidates.
+
+:::
+
+### Configure Route Reflector
 
 {{prodname}} nodes can be configured to act as route reflectors. To do this, each node that you want to act as a route reflector
 must have a cluster ID - typically an unused IPv4 address.
 
-To configure a node to be a route reflector with cluster ID 244.0.0.1, run the following command.
+To configure a node to be a route reflector with cluster ID 244.0.0.1, run the following command:
 
-```bash
+```batch
 calicoctl patch node my-node -p '{"spec": {"bgp": {"routeReflectorClusterID": "244.0.0.1"}}}'
 ```
 
 Typically, you will want to label this node to indicate that it is a route reflector, allowing it to be easily selected by a BGPPeer resource. You can do this with kubectl. For example:
 
-```bash
+```batch
 kubectl label node my-node route-reflector=true
 ```
 
 Now it is easy to configure route reflector nodes to peer with each other and other non-route-reflector nodes using label selectors. For example:
 
-```
+```yaml
 kind: BGPPeer
 apiVersion: projectcalico.org/v3
 metadata:
@@ -208,7 +210,7 @@ Finally, Add the IP addresses of Azure Route Servers, usually there are two, as 
 cluster is in a subnet with 10.224.0.1 as gateway and Azure Route Servers are deployed with ASN 65515 and IP addresses of 10.225.0.4 and 10.225.0.5,
 create two **BGPPeer** resources:
 
-```bash
+```yaml
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
@@ -232,78 +234,85 @@ spec:
   nodeSelector: route-reflector == 'true'
 ```
 
->**Note**:
->  - Adding `routeReflectorClusterID` to a node spec will remove it from the node-to-node mesh immediately, tearing down the
->    existing BGP sessions. Adding the BGP peering will bring up new BGP sessions. This will cause a short (about 2 seconds)
->    disruption to dataplane traffic of workloads running in the nodes where this happens. To avoid this, make sure no
->    workloads are running on the nodes, by provisioning new nodes or by running `kubectl drain` on the node (which may
->    itself cause a disruption as workloads are drained).
->  - It is important to set `keepOriginalNextHop: true` since route reflectors advertise routes on behalf of other nodes.
->    Advertised routes to Azure Route Servers should have the original next hop otherwise the return packets will be sent to
->    route reflectors, and get dropped.
->  - It is mandatory to set `rechableBy` field set to the gateway of the subnet {{prodname}} cluster is running in for
->    peering with Azure Route Servers to prevent BGP connection flapping. See [BGP peer](../../reference/resources/bgppeer.mdx) for more information.
+:::note
 
-{: .alert .alert-info}
+- Adding `routeReflectorClusterID` to a node spec will remove it from the node-to-node mesh immediately, tearing down the
+   existing BGP sessions. Adding the BGP peering will bring up new BGP sessions. This will cause a short (about 2 seconds)
+   disruption to dataplane traffic of workloads running in the nodes where this happens. To avoid this, make sure no
+   workloads are running on the nodes, by provisioning new nodes or by running `kubectl drain` on the node (which may
+   itself cause a disruption as workloads are drained).
+- It is important to set `keepOriginalNextHop: true` since route reflectors advertise routes on behalf of other nodes.
+   Advertised routes to Azure Route Servers should have the original next hop otherwise the return packets will be sent to
+   route reflectors, and get dropped.
+- It is mandatory to set `rechableBy` field set to the gateway of the subnet {{prodname}} cluster is running in for
+   peering with Azure Route Servers to prevent BGP connection flapping. See [BGP peer](../../reference/resources/bgppeer.mdx) for more information.
 
-#### Disable the default BGP node-to-node mesh
+:::
+
+### Disable the default BGP node-to-node mesh
 
 The default {{prodname}} **node-to-node BGP mesh** may be turned off to enable other BGP topologies.
 To do this, modify the default **BGP configuration** resource.
 
 Run the following command to disable the BGP full-mesh:
 
-```
+```batch
 calicoctl patch bgpconfiguration default -p '{"spec": {"nodeToNodeMeshEnabled": false}}'
 ```
 
->**Note**: If the default BGP configuration resource does not exist, you need to create it first. See [BGP configuration](../../reference/resources/bgpconfig.mdx) for more information.
-{: .alert .alert-info}
+:::note
 
->**Note**: Disabling the node-to-node mesh will break pod networking until/unless you configure replacement BGP peerings using BGPPeer resources.
->          You may configure the BGPPeer resources before disabling the node-to-node mesh to avoid pod networking breakage.
-{: .alert .alert-danger}
+If the default BGP configuration resource does not exist, you need to create it first. See [BGP configuration](../../reference/resources/bgpconfig.mdx) for more information.
 
-#### Enable egress gateway support
+:::
+
+:::note
+
+Disabling the node-to-node mesh will break pod networking until/unless you configure replacement BGP peerings using BGPPeer resources.
+You may configure the BGPPeer resources before disabling the node-to-node mesh to avoid pod networking breakage.
+
+:::
+
+### Enable egress gateway support
 
 In the default **FelixConfiguration**, set the `egressIPSupport` field to `EnabledPerNamespace` or
 `EnabledPerNamespaceOrPerPod`, according to the level of support that you need in your cluster. For
 support on a per-namespace basis only:
 
-```bash
+```batch
 kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
 ```
 
 Or for support both per-namespace and per-pod:
 
-```bash
+```batch
 kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
 
-#### Enable policy sync API
+### Enable policy sync API
 
 The egress gateway container image requires the policy sync API to be enabled. To do this cluster-wide, modify
 the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
 
-```bash
+```batch
 kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
 ```
 
-> **Note**:
->
-> -  `egressIPSupport` and `policySyncPathPrefix` must be the same on all cluster nodes, so you should only set them in the
->    `default` FelixConfiguration resource.
-{: .alert .alert-info}
+:::note
+
+`egressIPSupport` and `policySyncPathPrefix` must be the same on all cluster nodes, so you should only set them in the `default` FelixConfiguration resource.
+
+:::
 
 #### Provision an egress IP pool
 
 Provision a small IP Pool with the range of source IPs that you want to use for a particular
 application when it connects to an external service. For example:
 
-```bash
+```batch
 kubectl apply -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: IPPool
@@ -323,27 +332,27 @@ Where:
 
 - Set `vxlanMode` to `Always` since [VXLAN](../networking/vxlan-ipip) is the only supported encapsulation in Azure.
 
-#### Copy pull secret into egress gateway namespace
+### Copy pull secret into egress gateway namespace
 
 Identify the pull secret that is needed for pulling {{prodname}} images, and copy this into the
 namespace where you plan to create your egress gateways.  It is typically named
 `tigera-pull-secret`, in the `calico-system` namespace, so the command to copy that to the `default`
 namespace would be:
 
-```bash
+```batch
 kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
    grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
    kubectl apply --namespace=default -f -
 ```
 
-#### Deploy a group of egress gateways
+### Deploy a group of egress gateways
 
 Use a Kubernetes Deployment to deploy a group of egress gateways.
 
 Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and {{prodname}}
 in tandem to get a cluster of egress gateways that uses the user defined IP addresses:
 
-```bash
+```batch
 kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -471,56 +480,48 @@ EOF
         egress-code: red
   ```
 
-> **Note**:
->
-> -  It is advisable to have more than one egress gateway per group, so that the egress IP function
->    continues if one of the gateways crashes or needs to be restarted.  When there are multiple
->    gateways in a group, outbound traffic from the applications using that group is load-balanced
->    across the available gateways.  The number of `replicas` specified must be less than or equal
->    to the number of free IP addresses in the IP Pool.
->
-> -  In the `cni.projectcalico.org/ipv4pools` annotation, the IP Pool can be specified either
->    by its name (e.g. `egress-ippool-1`) or by its CIDR (e.g. `10.10.10.0/31`).
->
-> -  The labels are arbitrary. You can choose whatever names and values are convenient for
->    your cluster's Namespaces and Pods to refer to in their egress selectors.
->
-> -  The image name and `EGRESS_POD_IP` configuration are required. `tigera/egress-gateway` is the
->    image that provides the egress gateway function, and `EGRESS_POD_IP` tells the runtime
->    container what its pod IP is.
->
-> -  The `securityContext` is required, so that the egress gateway can manipulate its own network
->    namespace.
->
-> -  The `policysync` volume mount is required. This exposes the policy sync API to the pod,
->    allowing it to program its own routing based off information from Felix.
->
-> - The `HEALTH_PORT` environment variable controls the port used to serve an HTTP health
->     endpoint, which is used for the `readinessProbe`.  If required, the health port can be disabled
->     entirely by setting the environment variable to 0 (and by removing the `readinessProbe` stanza).
->
-> - The `ICMP_PROBE_IPS` environment variable may be set to a comma-separated list of IPs.
->   If set, the egress gateway pod will probe each IP periodically using an ICMP ping.  If all pings fail then the egress
->   gateway will report non-ready via its health port.  `ICMP_PROBE_INTERVAL` controls the interval between probes.
->   `ICMP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if no probes succeed.
->
-> - The `HTTP_PROBE_URLS` environment variable may be set to a comma-separated list of URLs.
->   If set, the egress gateway pod will probe each external service periodically. If all probes fail then the egress
->   gateway will report non-ready via its health port. `HTTP_PROBE_INTERVAL` controls the interval between probes.
->   `HTTP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if all probes are failing.
->
-> The health port is used by:
->
-> - The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
->   probes).
->
-> - Remote pods to check if the egress gateway is "ready". Only "ready" egress
->   gateways will be used for remote client traffic. This traffic is automatically allowed by {{prodname}} and
->   no policy is required to allow it. {{prodname}} only sends probes to egress gateway pods that have a named
->   "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
-{: .alert .alert-info}
+:::note
 
-#### Configure a Namespace or Pod to use egress gateways
+* It is advisable to have more than one egress gateway per group, so that the egress IP function continues if one of the gateways crashes or needs to be restarted.
+  When there are multiple gateways in a group, outbound traffic from the applications using that group is load-balanced across the available gateways.
+  The number of `replicas` specified must be less than or equal to the number of free IP addresses in the IP Pool.
+* In the `cni.projectcalico.org/ipv4pools` annotation, the IP Pool can be specified either by its name (e.g. `egress-ippool-1`) or by its CIDR (e.g. `10.10.10.0/31`).
+
+* The labels are arbitrary. You can choose whatever names and values are convenient for your cluster's Namespaces and Pods to refer to in their egress selectors.
+
+* The image name and `EGRESS_POD_IP` configuration are required. `tigera/egress-gateway` is the image that provides the egress gateway function, and `EGRESS_POD_IP` tells the runtime container what its pod IP is.
+
+* The `securityContext` is required, so that the egress gateway can manipulate its own network namespace.
+
+* The `policysync` volume mount is required. This exposes the policy sync API to the pod, allowing it to program its own routing based off information from Felix.
+
+* The `HEALTH_PORT` environment variable controls the port used to serve an HTTP health endpoint, which is used for the `readinessProbe`.
+  If required, the health port can be disabled entirely by setting the environment variable to 0 (and by removing the `readinessProbe` stanza).
+
+* The `ICMP_PROBE_IPS` environment variable may be set to a comma-separated list of IPs.
+  If set, the egress gateway pod will probe each IP periodically using an ICMP ping.
+  If all pings fail then the egress gateway will report non-ready via its health port.
+  `ICMP_PROBE_INTERVAL` controls the interval between probes.
+  `ICMP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if no probes succeed.
+
+* The `HTTP_PROBE_URLS` environment variable may be set to a comma-separated list of URLs.
+  If set, the egress gateway pod will probe each external service periodically.
+  If all probes fail then the egress gateway will report non-ready via its health port.
+  `HTTP_PROBE_INTERVAL` controls the interval between probes.
+  `HTTP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if all probes are failing.
+
+The health port is used by:
+
+* The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP probes).
+
+* Remote pods to check if the egress gateway is "ready". Only "ready" egress gateways will be used for remote client traffic.
+  This traffic is automatically allowed by {{prodname}} and no policy is required to allow it.
+  {{prodname}} only sends probes to egress gateway pods that have a named "health" port.
+  This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
+
+:::
+
+### Configure a Namespace or Pod to use egress gateways
 
 In a {{prodname}} deployment, the Kubernetes Namespace and Pod resources honor annotations that
 tell that namespace or pod to use particular egress gateways. These annotations are selectors, and
@@ -529,25 +530,24 @@ their meaning is "the set of pods, anywhere in the cluster, that match those sel
 So, to configure all the pods in a namespace to use the egress gateways that are
 labelled with `egress-code: red`, you would annotate that namespace like this:
 
-```bash
+```batch
 kubectl annotate ns <namespace> egress.projectcalico.org/selector="egress-code == 'red'"
 ```
 
 By default, that selector can only match egress gateways in the same namespace. To select gateways
 in a different namespace, specify a `namespaceSelector` annotation as well, like this:
 
-```bash
+```batch
 kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
 ```
 
-Egress gateway annotations have the same [syntax and range of
-expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
+Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
 {{prodname}} [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
 
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
 creating the pod. For example:
 
-```bash
+```batch
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -562,33 +562,35 @@ spec:
 EOF
 ```
 
-#### Optionally enable ECMP load balancing
+### (Optional) Enable ECMP load balancing
 
 If you are provisioning multiple egress gateways for a given client pod, and you want
 traffic from that client to load balance across the available gateways, set the
 `fib_multipath_hash_policy`
 [sysctl](https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/) to allow that:
 
-```bash
+```batch
 sudo sysctl -w net.ipv4.fib_multipath_hash_policy=1
 ```
 
 You will need this on each node with clients that you want to load balance across multiple
 egress gateways.
 
-#### Verify the feature operation
+### Verify the feature operation
 
 To verify the feature operation, cause the application pod to initiate a connection to a server
 outside the cluster, and observe -- for example using tcpdump -- the source IP of the connection 
 packet as it reaches the server.
 
-> **Note**: In order for such a connection to complete, the server must know how to route back to
-> the egress gateway's IP.
-{: .alert .alert-info}
+:::note
+
+In order for such a connection to complete, the server must know how to route back to the egress gateway's IP.
+
+:::
 
 By way of a concrete example, you could use netcat to run a test server outside the cluster; for example:
 
-```bash
+```batch
 docker run --net=host --privileged subfuzion/netcat -v -l -k -p 8089
 ```
 
@@ -596,7 +598,7 @@ Then provision an egress IP Pool, and egress gateways, as above.
 
 Then deploy a pod, with egress annotations as above, and with any image that includes netcat, for example:
 
-```bash
+```batch
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -614,7 +616,7 @@ EOF
 
 Now you can use `kubectl exec` to initiate an outbound connection from that pod:
 
-```bash
+```batch
 kubectl exec <pod name> -n <pod namespace> -- nc <server IP> 8089 </dev/null
 ```
 
@@ -628,7 +630,7 @@ Connection from <source IP> <source port> received
 
 with `<source IP>` being one of the IPs of the egress IP pool that you provisioned.
 
-#### Controlling the use of egress gateways
+### Controlling the use of egress gateways
 
 If a cluster ascribes special meaning to traffic flowing through egress gateways, it will be
 important to control when cluster users can configure their pods and namespaces to use them, so that
@@ -640,7 +642,7 @@ any egress gateway usage.
 
 Otherwise -- if namespace provisioning is open to users in general, or if it's desirable for egress
 gateway function to be enabled both per-namespace and per-pod -- a [Kubernetes admission
-controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/){:target="_blank"} will be
+controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/) will be
 needed. This is a task for each deployment to implement for itself, but possible approaches include
 the following.
 
@@ -685,7 +687,7 @@ to allow all traffic to at (2) (either by applying no policy or by applying an "
 Alternatively, for maximum "defense in depth" applying policy at both (1) and (2) provides extra protection should
 the policy at (1) be disabled or bypassed by an attacker. Policy at (2) has the following limitations:
 
-- [Domain-based policy](../../security/domain-based-policy) is not supported at egress from egress
+- [Domain-based policy](../../network-policy/domain-based-policy.mdx) is not supported at egress from egress
   gateways. It will either fail to match the expected traffic, or it will work intermittently if the egress gateway
   happens to be scheduled to the same node as its clients. This is because any DNS lookup happens at the client pod.
   By the time the policy reaches (2) the DNS information is lost and only the IP addresses of the traffic are available.
@@ -697,22 +699,25 @@ That means that policies at (2) will usually take the form of rules that match o
 either directly in the rule (via a CIDR match) or via a (non-domain based) NetworkSet. Matching on source has little
 utility since the IP will always be the egress gateway and the port of translated traffic is not always preserved.
 
-> **Note**: Since v3.15.0, {{prodname}} also sends health probes to the egress gateway pods from the nodes where
-> their clients are located. In iptables mode, this traffic is auto-allowed at egress from the host and ingress
-> to the egress gateway. In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic is allowed; this should be fixed in an upcoming
-> patch release.
-{: .alert .alert-info}
+:::note
+
+Since v3.15.0, {{prodname}} also sends health probes to the egress gateway pods from the nodes where their clients are located.
+In iptables mode, this traffic is auto-allowed at egress from the host and ingress to the egress gateway.
+In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic is allowed.
+
+:::
 
 ### Upgrading egress gateways
 
 Because egress gateway deployments are not currently managed by the Tigera Operator, it is necessary to upgrade
 egress gateway deployments manually.
 
->**Note**: When upgrading egress gateway deployments, both the image and the deployment spec need to be changed in
-> tandem; upgrading only the image version can result in a non-functioning egress gateway. Newer versions of the
-> egress gateway image require new volume mounts and environment variables and have other structural changes (such
-> as the addition of an `initContainer` in v3.15.0).
-{: .alert .alert-warn}
+:::note
+
+When upgrading egress gateway deployments, both the image and the deployment spec need to be changed in tandem; upgrading only the image version can result in a non-functioning egress gateway.
+Newer versions of the egress gateway image require new volume mounts and environment variables and have other structural changes (such as the addition of an `initContainer` in v3.15.0).
+
+:::
 
 To upgrade an egress gateway deployment:
 
@@ -742,7 +747,7 @@ By default, upgrading egress gateways will sever any connections that are flowin
 the egress gateway feature supports some advanced options that give feedback to affected pods. For more details see
 the [egress gateway maintenance guide](egress-gateway-maintenance.mdx).
 
-### Above and beyond
+## Above and beyond
 
 Please see also:
 
