@@ -14,7 +14,7 @@ description: Covers the basics of Calico Cloud network policy.
 
 Let's start with a sample Kubernetes cluster.
 
-![policy-tutorial-overview](/img/calico-enterprise/master/policy-tutorial-overview.png)
+![policy-tutorial-overview](/img/calico-enterprise/policy-tutorial-overview.png)
 
 | Item               | Description                                                                                                                                                                                                                                           |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -39,7 +39,7 @@ There are three main parts to every {{prodname}} policy:
   - Ingress - policy rules to apply to connections inbound to the selected objects
   - Egress - policy rules to apply to connections outbound from the selected objects
 
-![policy-parts](/img/calico-enterprise/master/policy-parts.png)
+![policy-parts](/img/calico-enterprise/policy-parts.png)
 
 Let's look at each part.
 
@@ -51,13 +51,13 @@ Scope defines the reach of your policy. Use this dropdown to determine whether y
 
   If you select global, but do not add entries in the **Applies to** field to further limit scope, _every pod and host endpoint (HEP) in our cluster would be in scope_. The following example uses the global option to limit the scope to all pods and HEPs (noted by check marks).
 
-  ![policy-tutorial-global-scope](/img/calico-enterprise/master/policy-tutorial-global-scope.png)
+  ![policy-tutorial-global-scope](/img/calico-enterprise/policy-tutorial-global-scope.png)
 
 - **Namespace**
 
   If you select namespace, but do not add entries in the **Applies to** field to further limit scope, _every pod in this policy's namespace would be in scope_. The following example uses the namespace option to limit the scope to pods in the RED namespace.
 
-  ![policy-tutorial-namespace-scope](/img/calico-enterprise/master/policy-tutorial-namespace-scope.png)
+  ![policy-tutorial-namespace-scope](/img/calico-enterprise/policy-tutorial-namespace-scope.png)
 
 ### Applies to
 
@@ -77,11 +77,11 @@ As discussed above, selecting **Applies to** lets you further limit pods in a po
 
 For example, if we select the BLUE namespace and apply it to only pods with the label, `app/tier == FE`,
 
-![blue-namespace](/img/calico-enterprise/master/blue-namespace.png)
+![blue-namespace](/img/calico-enterprise/blue-namespace.png)
 
 the resulting scope in our diagram would be only the pods labeled, `FE`:
 
-![blue-namespace-pods](/img/calico-enterprise/master/blue-namespace-pods.png)
+![blue-namespace-pods](/img/calico-enterprise/blue-namespace-pods.png)
 
 ### Type
 
@@ -100,7 +100,7 @@ The endpoint selector lets you select the endpoint traffic that is matched withi
 
 In our example, the policy is scoped to endpoints that have the `app/tier == FE` label in the BLUE namespace. In the context of an egress rule, when we add the `app/tier == BE` endpoint selector, all TCP traffic from endpoints that have the`app/tier == BE` label will be allowed to the `app/tier == FE` endpoints.
 
-![policy-tutorial-endpoint-selector](/img/calico-enterprise/master/policy-tutorial-endpoint-selector.png)
+![policy-tutorial-endpoint-selector](/img/calico-enterprise/policy-tutorial-endpoint-selector.png)
 
 Note that endpoints that have the `app/tier == BE` label in other namespaces are not matched because the policy is namespace scoped.
 
@@ -108,17 +108,17 @@ Note that endpoints that have the `app/tier == BE` label in other namespaces are
 
 This is where things can get interesting. In the previous example, we did not select anything in the namespace selector. Let's change the namespace selector to have both the BLUE and GREEN namespaces.
 
-![endpoint-selector-blue-green](/img/calico-enterprise/master/endpoint-selector-blue-green.png)
+![endpoint-selector-blue-green](/img/calico-enterprise/endpoint-selector-blue-green.png)
 
 Although the overall policy is scoped to the BLUE namespace, we can match endpoints in other namespaces on a per-rule basis. Note that the top-level scope that you select remains unchanged, meaning that the policy is still applied only to endpoints in the BLUE namespace.
 
-![namespace-selector](/img/calico-enterprise/master/namespace-selector.png)
+![namespace-selector](/img/calico-enterprise/namespace-selector.png)
 
 ### Network selector
 
 Using the Nets selector, we can add CIDR addresses to be matched by the policy rule.
 
-![network-selector](/img/calico-enterprise/master/network-selector.png)
+![network-selector](/img/calico-enterprise/network-selector.png)
 
 ### Service account selector
 
@@ -126,7 +126,7 @@ Network policies can be also applied to the endpoint’s service account.
 
 Using the service account selector, we can apply rules to traffic from any endpoint whose service account matches the name or label selector.
 
-![service-account-selector](/img/calico-enterprise/master/service-account-selector.png)
+![service-account-selector](/img/calico-enterprise/service-account-selector.png)
 
 ### Use Match All for wider matches in policy rules
 
@@ -142,15 +142,15 @@ Let's look at an example of using **Match All** traffic in a namespaced policy:
 
 Suppose we want to match traffic to the pod labeled `BE`, and the {{prodname}} `networkset-1`.
 
-![match-all-namespace](/img/calico-enterprise/master/match-all-namespace.png)
+![match-all-namespace](/img/calico-enterprise/match-all-namespace.png)
 
 To do this, we can use the policy rule endpoint selector, **Match All**.
 
-![match-all-endpoints](/img/calico-enterprise/master/match-all-endpoints.png)
+![match-all-endpoints](/img/calico-enterprise/match-all-endpoints.png)
 
 Not only is the pod labeled `BE` included, but also the {{prodname}} `networkset-1`.
 
-![match-all-endpoints-example](/img/calico-enterprise/master/match-all-endpoints-example.png)
+![match-all-endpoints-example](/img/calico-enterprise/match-all-endpoints-example.png)
 
 Note that we could have created individual selectors to match pods labeled, `BE` and for the `network-set-1`.
 
@@ -158,23 +158,23 @@ Note that we could have created individual selectors to match pods labeled, `BE`
 
 In the following example, if we select **Match All** endpoints, but in the **Namespace selector**, we select both the BLUE and GREEN namespaces, the results for matching are: all pods and network sets in the BLUE and GREEN namespaces.
 
-![namespace-match-all](/img/calico-enterprise/master/namespace-match-all.png)
+![namespace-match-all](/img/calico-enterprise/namespace-match-all.png)
 
 **Global selector**
 
 Let's see what happens when we select the **Global** selector.
 
-![namespace-selector-global](/img/calico-enterprise/master/namespace-selector-global.png)
+![namespace-selector-global](/img/calico-enterprise/namespace-selector-global.png)
 
 In our example, the Global selector selects HEPs and global network sets are selected. You might think that Global (`global()` in YAML) would select all endpoints, but it doesn't. Global means "do not select any namespaced resources" (which includes namespaced network set resources). Another way to express it is, do not select any workload endpoints.
 
-![heps-networksets](/img/calico-enterprise/master/heps-networksets.png)
+![heps-networksets](/img/calico-enterprise/heps-networksets.png)
 
 **Endpoint selector, unspecified**
 
 Next, let's see what happens when the policy rule does not specify any selection criteria. In this example, the rule selects all workloads, network sets, endpoints, and host endpoints within scope of the policy, including external components (the VM database).
 
-![unspecified](/img/calico-enterprise/master/unspecified.png)
+![unspecified](/img/calico-enterprise/unspecified.png)
 
 Now that you know the basic elements of a network policy, let's move on to policy ordering and tiers.
 
@@ -182,7 +182,7 @@ Now that you know the basic elements of a network policy, let's move on to polic
 
 {{prodname}} policies can have order values that control the order of precedence. For both network policies and global network policies, {{prodname}} applies the policy with the lowest value first.
 
-![policy-ordering](/img/calico-enterprise/master/policy-ordering.png)
+![policy-ordering](/img/calico-enterprise/policy-ordering.png)
 
 ### Mixing Kubernetes and {{prodname}} policies
 
@@ -224,7 +224,7 @@ It is also important to understand that {{prodname}} policy action rules affect 
 
 Action defines what should happen when a connection matches this rule.
 
-![policy-tutorial-action](/img/calico-enterprise/master/policy-tutorial-action.png)
+![policy-tutorial-action](/img/calico-enterprise/policy-tutorial-action.png)
 
 - **Allow or Deny** - traffic is allowed or denied and the connection is handled accordingly. No further rules are processed.
 - **Pass** - skips to the next tier that contains a policy that applies to the endpoint, and processes the connection. If the tier applies to the endpoint but no action is taken on the connection, the connection is dropped.
