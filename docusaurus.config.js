@@ -66,7 +66,7 @@ const config = {
     ({
       algolia: {
         appId: 'Q4GSZWRKBA',
-        apiKey: '2ab3eace97419c5868153aac2e3d2e6c',
+        apiKey: '34ecd6611b6cef7a420bd30587d0d502',
         indexName: 'calico',
         contextualSearch: true,
         searchPagePath: '/search',
