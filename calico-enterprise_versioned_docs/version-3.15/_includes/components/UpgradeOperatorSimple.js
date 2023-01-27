@@ -1,10 +1,9 @@
 import React from 'react';
+import { When } from 'react-if';
 
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
-
-import maybeRender from '@site/src/components/utils/maybeRender';
 
 import { baseUrl, filesUrl } from '../../variables';
 
@@ -12,8 +11,7 @@ export default function UpgradeOperatorSimple(props) {
   return (
     <>
       <ol>
-        {maybeRender(
-          props.provider === 'AKS' && props.upgradeFrom === 'OpenSource',
+        <When condition={props.provider === 'AKS' && props.upgradeFrom === 'OpenSource'}>
           <li>
             <p>
               Switch the active operator to the one that will be installed to the new namespace. First, download the
@@ -26,8 +24,7 @@ export default function UpgradeOperatorSimple(props) {
               ./switch-active-operator.sh tigera-operator-enterprise
             </CodeBlock>
           </li>
-        )}
-
+        </When>
         <li>
           <p>Download the new manifests for Tigera operator.</p>
           <CodeBlock language='batch'>
@@ -71,14 +68,13 @@ export default function UpgradeOperatorSimple(props) {
         <li>
           <p>Apply the manifest for Tigera operator.</p>
           <CodeBlock language='batch'>kubectl apply --server-side --force-conflicts -f tigera-operator.yaml</CodeBlock>
-          {maybeRender(
-            props.upgradeFrom !== 'OpenSource',
+          <When condition={props.upgradeFrom !== 'OpenSource'}>
             <Admonition type='note'>
               If you intend to update any <code>operator.tigera.io</code> or <code>projectcalico.org</code> resources to
               utilize new fields available in the update you must make sure you make those changes after applying the{' '}
               <code>tigera-operator.yaml</code>.
             </Admonition>
-          )}
+          </When>
         </li>
 
         <li>
@@ -88,8 +84,7 @@ export default function UpgradeOperatorSimple(props) {
           </CodeBlock>
         </li>
 
-        {maybeRender(
-          props.upgradeFrom === 'OpenSource',
+        <When condition={props.upgradeFrom === 'OpenSource'}>
           <li>
             <p>Install your pull secret.</p>
             <p>
@@ -117,10 +112,9 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
     -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'`}
             </CodeBlock>
           </li>
-        )}
+        </When>
 
-        {maybeRender(
-          props.upgradeFrom === 'OpenSource',
+        <When condition={props.upgradeFrom === 'OpenSource'}>
           <li>
             <p>
               Install the Tigera custom resources. For more information on configuration options available in this
@@ -134,10 +128,9 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
                 : `kubectl apply -f ${filesUrl}/manifests/custom-resources-upgrade-from-calico.yaml`}
             </CodeBlock>
           </li>
-        )}
+        </When>
 
-        {maybeRender(
-          props.upgradeFrom !== 'OpenSource',
+        <When condition={props.upgradeFrom !== 'OpenSource'}>
           <>
             <li>
               <p>If your cluster has OIDC login configured, follow these steps:</p>
@@ -218,7 +211,7 @@ EOF`}
               </p>
             </li>
           </>
-        )}
+        </When>
       </ol>
     </>
   );
