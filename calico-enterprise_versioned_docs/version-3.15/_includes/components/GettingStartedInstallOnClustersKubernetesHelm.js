@@ -7,7 +7,7 @@ import Heading from '@theme/Heading';
 
 import { chart_version_name, prodname, prodnamedash, version } from '../../variables';
 
-export default function _GettingStarted_InstallOnClusters_Kubernetes_Helm() {
+export default function GettingStartedInstallOnClustersKubernetesHelm() {
   return (
     <>
       {renderCond1()}
@@ -31,9 +31,7 @@ export default function _GettingStarted_InstallOnClusters_Kubernetes_Helm() {
             example:
           </p>
         </li>
-        <CodeBlock language='batch'>
-          {`echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml`}
-        </CodeBlock>
+        <CodeBlock language='batch'>{`echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml`}</CodeBlock>
         <p>
           For Azure AKS cluster with no Kubernetes CNI pre-installed, create <code>values.yaml</code> with the following
           command:
@@ -113,9 +111,7 @@ EOF`}
           <li>
             <p>Install the Google cloud storage helm repo plugin:</p>
           </li>
-          <CodeBlock language='batch'>
-            helm plugin install https://github.com/viglesiasce/helm-gcs.git
-          </CodeBlock>
+          <CodeBlock language='batch'>helm plugin install https://github.com/viglesiasce/helm-gcs.git</CodeBlock>
           <li>
             <p>Add the Calico helm repo:</p>
             <CodeBlock language='batch'>helm repo add tigera gs://tigera-helm-charts</CodeBlock>
@@ -143,9 +139,7 @@ EOF`}
       return <CodeBlock language='batch'>helm show values tigera/tigera-operator --version v0.0</CodeBlock>;
     }
 
-    return (
-      <CodeBlock language='batch'>{`helm show values ./tigera-operator-${chart_version_name}.tgz`}</CodeBlock>
-    );
+    return <CodeBlock language='batch'>{`helm show values ./tigera-operator-${chart_version_name}.tgz`}</CodeBlock>;
   }
 
   function renderCond3() {
