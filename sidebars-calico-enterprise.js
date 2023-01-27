@@ -254,6 +254,15 @@ module.exports = {
         'network-policy/domain-based-policy',
         {
           type: 'category',
+          label: 'Application layer policies',
+          link: {type: 'doc', id: 'network-policy/application-layer-policies/index'},
+          items: [
+            'network-policy/application-layer-policies/alp',
+            'network-policy/application-layer-policies/alp-tutorial',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Policy for firewalls',
           link: {type: 'doc', id: 'network-policy/policy-firewalls/index'},
           items: [
