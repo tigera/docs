@@ -1,0 +1,83 @@
+---
+description: Enabling and enforcing application layer policies in your cluster.
+---
+
+# Enable and enforce application layer policies using Envoy as DaemonSet
+
+{{prodname}} supports application layer policies from version 3.16 onwards. Application layer policies let you enforce policies using application layer attributes like HTTP methods or URL paths.
+Applying these policies to your apps restrict ingress traffic that matches the HTTP methods or URL paths defined in the policy.
+
+:::note
+
+If you want to upgrade from {{prodname}} 3.12 to the current version, do the following steps before proceeding with the upgrade:
+- Uninstall istio
+- Remove the namespace annotation (Istio-injection=enabled) 
+
+:::
+
+
+## Enabling application layer policies (ALP)
+To enable ALP, create or edit this custom resource definition (CRD).
+
+```
+kubectl apply -f - <<EOF                                                                                           
+apiVersion: operator.tigera.io/v1
+kind: ApplicationLayer
+metadata:
+  name: tigera-secure 
+spec:
+  applicationLayerPolicy: Enabled
+EOF
+```
+:::note
+
+ You can disable ALP by setting the value of the applicationLayerPolicy field to Disabled.
+
+:::
+
+## Enforcing application layer policies on your cluster
+
+This how-to guide uses the following {{prodname}} features:
+- **NetworkPolicy** and **GlobalNetworkPolicy** with http match criteria to restrict traffic using:
+  - Standard HTTP methods
+  - Paths (exact and prefix)
+
+## Concepts
+
+### HTTP match criteria: ingress traffic only
+
+Calico network policy supports restricting traffic based on HTTP methods and paths only for ingress traffic.
+
+## Before you begin
+
+  [Enable application layer policy](#enabling-application-layer-policies).
+
+
+## How to
+**Restrict ingress traffic using HTTP match criteria**
+
+In the following example, the trading app is allowed ingress traffic only for HTTP GET requests that match the exact path /projects/calico, or that begins with the prefix, /users.
+
+```
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: customer
+spec:
+  selector: app == 'tradingapp'
+  ingress:
+   - action: Allow
+     http:
+       methods: ["GET"]
+       paths:
+         - exact: "/projects/calico"
+         - prefix: "/users"
+  egress:
+    - action: Allow
+```
+:::note
+
+ Deleting the ApplicationLayer CRD or disabling the ALP will prevent policy enforcement, but it will not affect existing network policies.
+ However, any network policies that rely on HTTP match will remain in place but will no longer have any effect.
+
+:::
