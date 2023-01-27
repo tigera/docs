@@ -143,7 +143,7 @@ const config = {
           {
             label: 'Tutorials',
             // TODO: Marketing is building a page at /tutorials. Using self-paced-workshops as placeholder.
-            to: 'https://www.tigera.io/self-paced-workshops/',
+            to: 'https://www.tigera.io/tutorials/',
             position: 'left',
           },
           {
