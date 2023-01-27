@@ -139,7 +139,7 @@ While the eBPF dataplane has some features that the standard Linux dataplane lac
 well as your data and tunnel interfaces. This allows {{prodname}} to spot workload packets early and handle them
 through a fast-path that bypasses iptables and other packet processing that the kernel would normally do.
 
-![Diagram showing the packet path for pod-to-pod networking; a BPF program is attached to the client pod's veth interface; it does a conntrack lookup in a BPF map, and forwards the packet to the second pod directly, bypassing iptables](/img/calico/3.24/bpf-pod-to-pod.svg 'Pod-to-pod packet path with eBPF enabled')
+![Diagram showing the packet path for pod-to-pod networking; a BPF program is attached to the client pod's veth interface; it does a conntrack lookup in a BPF map, and forwards the packet to the second pod directly, bypassing iptables](/img/calico/bpf-pod-to-pod.svg 'Pod-to-pod packet path with eBPF enabled')
 
 The logic to implement load balancing and packet parsing is pre-compiled ahead of time and relies on a set of BPF
 maps to store the NAT frontend and backend information. One map stores the metadata of the service, allowing
@@ -148,14 +148,14 @@ for `externalTrafficPolicy` and "sticky" services to be honoured. A second map s
 In eBPF mode, {{prodname}} converts your policy into optimised eBPF bytecode, using BPF maps to store the IP sets
 matched by policy selectors.
 
-![Detail of BPF program showing that packets are sent to a separate (generated) policy program,](/img/calico/3.24/bpf-policy.svg 'Expanded view of tc program showing policy.')
+![Detail of BPF program showing that packets are sent to a separate (generated) policy program,](/img/calico/bpf-policy.svg 'Expanded view of tc program showing policy.')
 
 To improve performance for services, {{prodname}} also does connect-time load balancing by hooking into the
 socket BPF hooks. When a program tries to connect to a Kubernetes service, {{prodname}} intercepts the connection
 attempt and configures the socket to connect directly to the backend pod's IP instead. This removes _all_
 NAT overhead from service connections.
 
-![Diagram showing BPF program attached to socket connect call; it does NAT at connect time,](/img/calico/3.24/bpf-connect-time.svg 'BPF program attached to socket connect call.')
+![Diagram showing BPF program attached to socket connect call; it does NAT at connect time,](/img/calico/bpf-connect-time.svg 'BPF program attached to socket connect call.')
 
 ## Above and beyond
 

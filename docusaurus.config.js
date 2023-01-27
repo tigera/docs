@@ -5,6 +5,7 @@ const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 const variablesPlugin = require('./src/remark/variablesPlugin');
+const linkCheckerPlugin = require('./src/remark/linkCheckerPlugin');
 const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
 // First 4 are default and taken from preset.
@@ -52,7 +53,6 @@ const config = {
         theme: {
           customCss: [
             require.resolve('./src/css/custom.css'),
-            require.resolve('./src/css/glyphicons.scss'),
             require.resolve('./src/css/external-links.scss'),
             require.resolve('./src/css/modal.scss'),
           ],
@@ -152,7 +152,7 @@ const config = {
           },
           {
             label: 'Try Calico Cloud',
-            to: 'https://calicocloud.io',
+            to: 'https://www.calicocloud.io/home',
             position: 'left',
           },
           {
@@ -208,7 +208,7 @@ const config = {
               },
               {
                 label: 'Support portal',
-                to: 'http://www.tigera.force.com/community/s/login/',
+                to: 'https://tigera.force.com/community/s/login/',
               },
               {
                 label: 'Security bulletins',
@@ -278,8 +278,8 @@ const config = {
         // TODO: Add appropriate icons and links
         copyright: `
           <div>
-            <div class="footer-copyright__title">Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
-            <div class="footer-copyright__description">Tigera is the creator and maintainer of Project Calico.</div>
+            <div class='footer-copyright__title'>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
+            <div class='footer-copyright__description'>Tigera is the creator and maintainer of Project Calico.</div>
             <div>
               <a
                 href='https://www.linkedin.com/company/tigera/'
@@ -336,12 +336,12 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
-          '3.25': {
+          3.25: {
             label: '3.25',
             path: '3.25',
             banner: 'none',
           },
-          '3.24': {
+          3.24: {
             label: '3.24',
             path: '3.24',
             banner: 'none',
@@ -349,6 +349,7 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         exclude: excludeContentDocsPatterns,
         editUrl: generateEditUrl,
       },
@@ -368,12 +369,12 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
-          '3.15': {
+          3.15: {
             label: '3.15 (beta)',
             path: '3.15',
             banner: 'unreleased',
           },
-          '3.14': {
+          3.14: {
             label: '3.14',
             path: '3.14',
             banner: 'none',
@@ -381,6 +382,7 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         exclude: excludeContentDocsPatterns,
         editUrl: generateEditUrl,
       },
@@ -395,10 +397,12 @@ const config = {
         editCurrentVersion: true,
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         exclude: excludeContentDocsPatterns,
         editUrl: generateEditUrl,
       },
     ],
+    linkCheckerPlugin.docusaurusPlugin,
   ],
   customFields: {
     isTesting: process.env.TESTING || false,
