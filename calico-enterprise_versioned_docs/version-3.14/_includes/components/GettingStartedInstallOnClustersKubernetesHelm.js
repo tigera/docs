@@ -7,7 +7,7 @@ import Heading from '@theme/Heading';
 
 import { chart_version_name, prodname, prodnamedash, version, filesUrl } from '../../variables';
 
-export default function _GettingStarted_InstallOnClusters_Kubernetes_Helm() {
+export default function GettingStartedInstallOnClustersKubernetesHelm() {
   return (
     <>
       {renderCond1()}
