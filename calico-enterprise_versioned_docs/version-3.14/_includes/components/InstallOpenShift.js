@@ -1,11 +1,10 @@
 import React from 'react';
+import { When } from 'react-if';
 
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
-
-import maybeRender from '@site/src/components/utils/maybeRender';
 
 import InstallOpenShiftManifests from './InstallOpenShiftManifests';
 import OpenShiftPullSecret from './OpenShiftPullSecret';
@@ -73,8 +72,7 @@ export default function InstallOpenShift(props) {
       <InstallOpenShiftManifests />
 
       {/* For IPI hybrid clusters (Linux + Windows) we need to enable VXLAN and disable BGP */}
-      {maybeRender(
-        props.clusterOS === 'hybrid',
+      <When condition={props.clusterOS === 'hybrid'}>
         <>
           <p>
             Edit the Installation custom resource manifest <code>manifests/01-cr-installation.yaml</code> so that it
@@ -97,7 +95,7 @@ spec:
       nodeSelector: all()`}
           </CodeBlock>
         </>
-      )}
+      </When>
 
       <Heading
         as='h4'
@@ -122,21 +120,18 @@ spec:
         To include <Link href={`${baseUrl}/reference/resources`}>{prodname} resources</Link> during installation, edit{' '}
         <code>manifests/02-configmap-calico-resources.yaml</code> in order to add your own configuration.
       </p>
-      <blockquote>
-        <p>
-          <strong>Notes</strong>: If you have a directory with the {prodname} resources, you can create the file with
-          the command:
-          <CodeBlock>
-            {`kubectl create configmap -n tigera-operator calico-resources \\
+      <Admonition type='note'>
+        <p>If you have a directory with the {prodname} resources, you can create the file with the command:</p>
+        <CodeBlock>
+          {`kubectl create configmap -n tigera-operator calico-resources \\
   --from-file=<resource-directory> --dry-run -o yaml \\
   > manifests/02-configmap-calico-resources.yaml`}
-          </CodeBlock>
-          <p>
-            With recent versions of <code>kubectl</code> it is necessary to have a kubeconfig configured or add{' '}
-            <code>--server=&#39;127.0.0.1:443&#39;</code> even though it is not used.
-          </p>
+        </CodeBlock>
+        <p>
+          With recent versions of <code>kubectl</code> it is necessary to have a kubeconfig configured or add{' '}
+          <code>--server=&#39;127.0.0.1:443&#39;</code> even though it is not used.
         </p>
-      </blockquote>
+      </Admonition>
       <Admonition type='note'>
         <p>
           If you have provided a <code>calico-resources</code> configmap and the tigera-operator pod fails to come up
@@ -165,8 +160,7 @@ spec:
         <Link href={`${baseUrl}/operations/logstorage/create-storage`}>create a StorageClass for {prodname}</Link>.
       </p>
 
-      {maybeRender(
-        props.clusterType === 'standalone' || props.clusterType === 'management',
+      <When condition={props.clusterType === 'standalone' || props.clusterType === 'management'}>
         <>
           <Heading
             as='h4'
@@ -185,7 +179,7 @@ spec:
           <p>Once the Tigera API server is ready, apply the license:</p>
           <CodeBlock>{'oc create -f </path/to/license.yaml>'}</CodeBlock>
         </>
-      )}
+      </When>
 
       <Heading
         as='h4'
@@ -195,9 +189,7 @@ spec:
       </Heading>
 
       {/* OCP_ENTERPRISE_RESOURCES variable in Makefile needs to be updated for any addition or deletion of enterprise resources */}
-
-      {maybeRender(
-        props.clusterType === 'managed',
+      <When condition={props.clusterType === 'managed'}>
         <>
           <p>
             Download the Tigera custom resources. For more information on configuration options available in this
@@ -233,15 +225,14 @@ spec:
           <p>Now apply the modified manifest.</p>
           <CodeBlock>oc create -f ./tigera-enterprise-resources.yaml</CodeBlock>
         </>
-      )}
+      </When>
 
-      {maybeRender(
-        props.clusterType !== 'managed',
+      <When condition={props.clusterType !== 'managed'}>
         <>
           <p>Apply the custom resources for enterprise features.</p>
           <CodeBlock language='batch'>oc create -f "/manifests/tigera-enterprise-resources.yaml"</CodeBlock>
         </>
-      )}
+      </When>
 
       <OpenShiftPrometheusOperator operation='install' />
 
@@ -264,8 +255,7 @@ spec:
         </>
       )}
 
-      {maybeRender(
-        props.clusterType === 'management',
+      <When condition={props.clusterType === 'management'}>
         <>
           <Heading
             as='h4'
@@ -376,10 +366,9 @@ EOF`}
           </ol>
           <p>You have successfully installed a management cluster.</p>
         </>
-      )}
+      </When>
 
-      {maybeRender(
-        props.clusterType === 'managed',
+      <When condition={props.clusterType === 'managed'}>
         <>
           <ConfigureManagedCluster kubectlCmd='oc' />
           <Heading
@@ -401,9 +390,11 @@ EOF`}
             --clusterrole=tigera-network-admin
           </CodeBlock>
         </>
-      )}
+      </When>
 
-      {maybeRender(props.clusterOS === 'hybrid', <InstallOpenShiftWindows />)}
+      <When condition={props.clusterOS === 'hybrid'}>
+        <InstallOpenShiftWindows />
+      </When>
     </>
   );
 }
