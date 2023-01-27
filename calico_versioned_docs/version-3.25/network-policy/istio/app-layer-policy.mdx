@@ -1,11 +1,10 @@
 ---
 description: Enforce network policy for Istio service mesh including matching on HTTP methods and paths.
 ---
-
-# Enforce network policy for Istio
-
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+
+# Enforce network policy for Istio
 
 ## Big picture
 
@@ -56,11 +55,11 @@ Although we expect future minor versions to work with the corresponding manifest
 ## How to
 
 1. [Enable application layer policy](#enable-application-layer-policy)
-1. [Install Calico CSI Driver](#install-calico-csi-driver)
-1. [Install Istio](#install-istio)
-1. [Update Istio sidecar injector](#update-istio-sidecar-injector)
-1. [Add Calico authorization services to the mesh](#add-calico-authorization-services-to-the-mesh)
-1. [Add namespace labels](#add-namespace-labels)
+2. [Install Calico CSI Driver](#install-calico-csi-driver)
+3. [Install Istio](#install-istio)
+4. [Update Istio sidecar injector](#update-istio-sidecar-injector)
+5. [Add Calico authorization services to the mesh](#add-calico-authorization-services-to-the-mesh)
+6. [Add namespace labels](#add-namespace-labels)
 
 ### Enable application layer policy
 
@@ -106,7 +105,7 @@ kubectl apply -f {{manifestsUrl}}/manifests/csi-driver.yaml
 ### Install Istio
 
 1. Verify [application layer policy requirements](../../getting-started/kubernetes/requirements.mdx#application-layer-policy-requirements).
-1. Install Istio using [installation guide in the project documentation](https://istio.io/v1.15/docs/setup/install/).
+2. Install Istio using [installation guide in the project documentation](https://istio.io/v1.15/docs/setup/install/).
 
 ```batch
 curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.15.2 sh -
@@ -136,7 +135,7 @@ EOF
 The sidecar injector automatically modifies pods as they are created to work with Istio. This step modifies the injector configuration to add Dikastes (a {{prodname}} component), as sidecar containers.
 
 1. Follow the [Automatic sidecar injection instructions](https://archive.istio.io/v1.15/docs/setup/additional-setup/sidecar-injection/#automatic-sidecar-injection) to install the sidecar injector and enable it in your chosen namespace(s).
-1. Patch the istio-sidecar-injector `ConfigMap` to enable injection of Dikastes alongside Envoy.
+2. Patch the istio-sidecar-injector `ConfigMap` to enable injection of Dikastes alongside Envoy.
 
 <Tabs>
 <TabItem label="Istio v1.15.x" value="Istio v1.15.x-2">
@@ -165,17 +164,13 @@ kubectl patch configmap -n istio-system istio-sidecar-injector --patch "$(cat is
 
 Apply the following manifest to configure Istio to query {{prodname}} for application layer policy authorization decisions.
 
-<Tabs>
-<TabItem label="Istio v1.15.x and v1.10.x" value="Istio v1.15.x and v1.10.x-4">
+This applies to Istio v1.15.x and v1.10.x:
 
 ```batch
 kubectl apply -f {{manifestsUrl}}/manifests/alp/istio-app-layer-policy-envoy-v3.yaml
 ```
 
 [View sample manifest]({{manifestsUrl}}/manifests/alp/istio-app-layer-policy-envoy-v3.yaml)
-
-</TabItem>
-</Tabs>
 
 ### Add namespace labels
 
