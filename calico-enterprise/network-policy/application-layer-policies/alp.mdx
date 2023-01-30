@@ -1,23 +1,29 @@
 ---
-description: Enabling and enforcing application layer policies in your cluster.
+description: Enforce application layer policies in your cluster to limit access controls based on L7 attributes.
 ---
 
-# Enable and enforce application layer policies using Envoy as DaemonSet
+# Enable and enforce application layer policies
 
-{{prodname}} supports application layer policies from version 3.16 onwards. Application layer policies let you enforce policies using application layer attributes like HTTP methods or URL paths.
-Applying these policies to your apps restrict ingress traffic that matches the HTTP methods or URL paths defined in the policy.
+Application layer policies let you limit access controls based on L7 attributes. 
 
-:::note
+## Before you begin
 
-If you want to upgrade from {{prodname}} 3.12 to the current version, do the following steps before proceeding with the upgrade:
-- Uninstall istio
-- Remove the namespace annotation (Istio-injection=enabled) 
+### Unsupported
+{{prodname}} implements application layer policy using Envoy as a DaemonSet. This means you cannot use application layer policy alongside a service mesh like Istio.
 
-:::
+### Limitations
+- Application layer policy supports restricting only ingress traffic
+- Support for L7 attributes are limited to HTTP method and URL path 
+- Support for protocols is limited to TCP-based protocols (for example, HTTP, HTTPS, or gRPC)
+- You can control application layer policies only at the cluster level (not per namespace) 
 
+## How to
+- [Enable application layer policies](#enable-application-layer-policies)
+- [Enforce application layer policies for ingress traffic](#enforce-application-layer-policies-for-ingress-traffic)
+- [View policies in Manager UI](TBD)
 
-## Enabling application layer policies (ALP)
-To enable ALP, create or edit this custom resource definition (CRD).
+## Enable application layer policies (ALP)
+In the ApplicationLayer custom resource, set the `applicationLayerPolicy` field to Enabled.
 
 ```
 kubectl apply -f - <<EOF                                                                                           
@@ -29,32 +35,12 @@ spec:
   applicationLayerPolicy: Enabled
 EOF
 ```
-:::note
+Use the same field to disable the application layer policy.
 
- You can disable ALP by setting the value of the applicationLayerPolicy field to Disabled.
+## Enforce application layer policies
 
-:::
-
-## Enforcing application layer policies on your cluster
-
-This how-to guide uses the following {{prodname}} features:
-- **NetworkPolicy** and **GlobalNetworkPolicy** with http match criteria to restrict traffic using:
-  - Standard HTTP methods
-  - Paths (exact and prefix)
-
-## Concepts
-
-### HTTP match criteria: ingress traffic only
-
-Calico network policy supports restricting traffic based on HTTP methods and paths only for ingress traffic.
-
-## Before you begin
-
-  [Enable application layer policy](#enabling-application-layer-policies).
-
-
-## How to
-**Restrict ingress traffic using HTTP match criteria**
+You can restrict ingress traffic using HTTP match criteria using Network policy or Global network policy. 
+For a list of all HTTP match parameters, see [Network policy](../reference/resources/networkpolicy.mdx) and [Global network policy](reference/resources/globalnetworkpolicy.mdx).
 
 In the following example, the trading app is allowed ingress traffic only for HTTP GET requests that match the exact path /projects/calico, or that begins with the prefix, /users.
 
