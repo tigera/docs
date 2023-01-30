@@ -1,11 +1,10 @@
 import React from 'react';
+import { When } from 'react-if';
 
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
-
-import maybeRender from '@site/src/components/utils/maybeRender';
 
 import ConfigureManagedCluster from './ConfigureManagedCluster';
 import { prodname, prodnamedash, baseUrl, filesUrl } from '../../variables';
@@ -20,12 +19,11 @@ export default function InstallGeneric(props) {
         Install {prodname}
       </Heading>
       <ol>
-        {maybeRender(
-          props.clusterType !== 'managed',
+        <When condition={props.clusterType !== 'managed'}>
           <li>
-            <Link href={`${baseUrl}/maintenance/logstorage/create-storage`}>Configure storage for {prodname}</Link>.
+            <Link href={`${baseUrl}/operations/logstorage/create-storage`}>Configure storage for {prodname}</Link>.
           </li>
-        )}
+        </When>
         <li>
           <p>Install the Tigera operator and custom resource definitions.</p>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
@@ -70,8 +68,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
           <Link href={`${baseUrl}/reference/resources`}>{prodname} resources</Link> to function at startup, install them
           now using <Link href={`${baseUrl}/reference/clis/calicoctl/overview`}>calicoctl</Link>.
         </li>
-        {maybeRender(
-          props.clusterType === 'managed',
+        <When condition={props.clusterType === 'managed'}>
           <li>
             <p>
               Download the Tigera custom resources. For more information on configuration options available in this
@@ -107,9 +104,8 @@ spec:
             <p>Now apply the modified manifest.</p>
             <CodeBlock language='batch'>kubectl create -f ./custom-resources.yaml</CodeBlock>
           </li>
-        )}
-        {maybeRender(
-          props.clusterType !== 'managed',
+        </When>
+        <When condition={props.clusterType !== 'managed'}>
           <li>
             <p>
               Install the Tigera custom resources. For more information on configuration options available, see{' '}
@@ -117,7 +113,7 @@ spec:
             </p>
             <CodeBlock>kubectl create -f {filesUrl}/manifests/custom-resources.yaml</CodeBlock>
           </li>
-        )}
+        </When>
         <p>You can now monitor progress with the following command:</p>
         <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
         <p>
@@ -125,8 +121,7 @@ spec:
           section.
         </p>
       </ol>
-      {maybeRender(
-        props.clusterType === 'standalone' || props.clusterType === 'management',
+      <When condition={props.clusterType === 'standalone' || props.clusterType === 'management'}>
         <>
           <Heading
             as='h4'
@@ -152,9 +147,8 @@ spec:
           <p>Install the following network policies to secure {prodname} component communications.</p>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-policies.yaml</CodeBlock>
         </>
-      )}
-      {maybeRender(
-        props.clusterType == 'management',
+      </When>
+      <When condition={props.clusterType == 'management'}>
         <>
           <Heading
             as='h4'
@@ -266,9 +260,8 @@ EOF`}
           </ol>
           <p>You have successfully installed a management cluster.</p>
         </>
-      )}
-      {maybeRender(
-        props.clusterType === 'managed',
+      </When>
+      <When condition={props.clusterType === 'managed'}>
         <>
           <ConfigureManagedCluster />
           <Heading
@@ -290,7 +283,7 @@ EOF`}
             --clusterrole=tigera-network-admin
           </CodeBlock>
         </>
-      )}
+      </When>
     </>
   );
 }

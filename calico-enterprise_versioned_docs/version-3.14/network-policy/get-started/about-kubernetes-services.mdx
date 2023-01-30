@@ -25,7 +25,7 @@ of pods as a network service. The group of pods backing each service is usually 
 When a client connects to a Kubernetes service, the connection is load balanced to one of the pods backing the service,
 as illustrated in this conceptual diagram:
 
-![Kubernetes Service conceptual diagram](/img/calico-enterprise/3.14/k8s-service-concept.svg)
+![Kubernetes Service conceptual diagram](/img/calico-enterprise/k8s-service-concept.svg)
 
 There are three main types of Kubernetes services:
 
@@ -48,7 +48,7 @@ Cluster IP addresses and load balancing across the group of pods backing each se
 chosen backing pod. Response packets on the connection then have the NAT reverse on their way back to the pod that
 initiated the connection.
 
-![kube-proxy cluster IP](/img/calico-enterprise/3.14/kube-proxy-cluster-ip.svg)
+![kube-proxy cluster IP](/img/calico-enterprise/kube-proxy-cluster-ip.svg)
 
 Importantly, network policy is enforced based on the pods, not the service Cluster IP. (i.e. Egress network policy is
 enforced for the client pod after the DNAT has changed the connection's destination IP to the chosen service backing
@@ -68,7 +68,7 @@ mapped from the client IP to the node IP, so that response packets on the connec
 where the NAT can be reversed. (It's the node which performed the NAT that has the connection tracking state needed to
 reverse the NAT.)
 
-![kube-proxy node port](/img/calico-enterprise/3.14/kube-proxy-node-port.svg)
+![kube-proxy node port](/img/calico-enterprise/kube-proxy-node-port.svg)
 
 Note that because the connection source IP address is SNATed to the node IP address, ingress network policy for the
 service backing pod does not see the original client IP address. Typically this means that any such policy is limited to
@@ -85,7 +85,7 @@ integrated with your cluster.
 The service can be accessed from outside of the cluster via a specific IP address on the network load balancer, which by
 default will load balance evenly across the nodes using the service node port.
 
-![kube-proxy load balancer](/img/calico-enterprise/3.14/kube-proxy-load-balancer.svg)
+![kube-proxy load balancer](/img/calico-enterprise/kube-proxy-load-balancer.svg)
 
 Most network load balancers preserve the client source IP address, but because the service then goes via a node port,
 the backing pods themselves do not see the client IP, with the same implications for network policy. As with node
@@ -103,7 +103,7 @@ deployment with standard Top of Rack routers.
 not using Calico as your network plugin then [MetalLB](https://github.com/metallb/metallb) provides similar capabilities that work with a variety of different network
 plugins.
 
-![kube-proxy service advertisement](/img/calico-enterprise/3.14/kube-proxy-service-advertisement.svg)
+![kube-proxy service advertisement](/img/calico-enterprise/kube-proxy-service-advertisement.svg)
 
 ## externalTrafficPolicy:local
 
@@ -118,7 +118,7 @@ only directed to nodes that host at least one pod backing the service. This redu
 between nodes, and perhaps more importantly, to maintain the source IP address all the way to the pod, so network policy
 can restrict specific external clients if desired.
 
-![kube-proxy service advertisement](/img/calico-enterprise/3.14/kube-proxy-service-local.svg)
+![kube-proxy service advertisement](/img/calico-enterprise/kube-proxy-service-local.svg)
 
 Note that in the case of services of type `LoadBalancer`, not all Load Balancers support this mode. And in the case of
 service IP advertisement, the evenness of the load balancing becomes topology dependent. In this case, pod anti-affinity
@@ -132,7 +132,7 @@ dataplane](../../operations/ebpf/enabling-ebpf.mdx) supports native service hand
 simplify network policy, offers DSR (Direct Server Return) to reduce the number of network hops for return traffic, and
 provides even load balancing independent of topology, with reduced CPU and latency compared to kube-proxy.
 
-![kube-proxy service advertisement](/img/calico-enterprise/3.14/calico-native-service-handling.svg)
+![kube-proxy service advertisement](/img/calico-enterprise/calico-native-service-handling.svg)
 
 # Above and beyond
 

@@ -3,7 +3,7 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 
-import { prodname, prodnameWindows, releases } from '../../variables';
+import { prodname, prodnameWindows, manifestsUrl } from '../../variables';
 
 function CalicoWindowsInstallFirstStep(props) {
   if (props.networkingType === 'vxlan') {
@@ -55,8 +55,8 @@ export default function CalicoWindowsInstall(props) {
         <p>Download the {prodnameWindows} installation manifest.</p>
         <CodeBlock language='batch'>
           {props.networkingType === 'vxlan'
-            ? `curl ${releases[0].manifests_url}/manifests/calico-windows-vxlan.yaml -o calico-windows.yaml`
-            : `curl ${releases[0].manifests_url}/manifests/calico-windows-bgp.yaml -o calico-windows.yaml`}
+            ? `curl ${manifestsUrl}/manifests/calico-windows-vxlan.yaml -o calico-windows.yaml`
+            : `curl ${manifestsUrl}/manifests/calico-windows-bgp.yaml -o calico-windows.yaml`}
         </CodeBlock>
       </li>
       <li>
@@ -195,9 +195,7 @@ kubernetes   172.16.101.157:6443   40m`}
           <li>
             <p>Download the kube-proxy manifest:</p>
             {/* TODO [manifest]: Use correct manifest link */}
-            <CodeBlock language='batch'>
-              curl /manifests/windows-kube-proxy.yaml -o windows-kube-proxy.yaml
-            </CodeBlock>
+            <CodeBlock language='batch'>curl /manifests/windows-kube-proxy.yaml -o windows-kube-proxy.yaml</CodeBlock>
           </li>
           <li>
             Edit the downloaded manifest
