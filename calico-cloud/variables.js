@@ -7,6 +7,7 @@ const variables = {
   baseUrl: '/calico-cloud',
   filesUrl: 'https://docs.calicocloud.io',
   filesUrl_CE: 'https://downloads.tigera.io/ee/v3.15.0',
+  tutorialFilesURL: 'https://unified-docs.tigera.io/files',
   prodnameWindows: 'Calico Enterprise for Windows',
   rootDirWindows: 'C:\\TigeraCalico',
   nodecontainer: 'cnx-node',

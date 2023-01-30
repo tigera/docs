@@ -8,15 +8,6 @@ const variablesPlugin = require('./src/remark/variablesPlugin');
 const linkCheckerPlugin = require('./src/remark/linkCheckerPlugin');
 const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
-// First 4 are default and taken from preset.
-// Temporarly adding '../**/_includes/**' until https://github.com/facebook/docusaurus/pull/8275 released to npm
-const excludeContentDocsPatterns = [
-  '**/_*.{js,jsx,ts,tsx,md,mdx}',
-  '**/_*/**',
-  '**/*.test.{js,jsx,ts,tsx}',
-  '**/__tests__/**',
-  '../**/_includes/**',
-];
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   // TODO[dac]: noIndex should be removed, along with robots.txt and the
@@ -143,7 +134,7 @@ const config = {
           {
             label: 'Tutorials',
             // TODO: Marketing is building a page at /tutorials. Using self-paced-workshops as placeholder.
-            to: 'https://www.tigera.io/self-paced-workshops/',
+            to: 'https://www.tigera.io/tutorials/',
             position: 'left',
           },
           {
@@ -350,7 +341,6 @@ const config = {
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         remarkPlugins: [linkCheckerPlugin.remarkPlugin],
-        exclude: excludeContentDocsPatterns,
         editUrl: generateEditUrl,
       },
     ],
@@ -383,7 +373,6 @@ const config = {
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         remarkPlugins: [linkCheckerPlugin.remarkPlugin],
-        exclude: excludeContentDocsPatterns,
         editUrl: generateEditUrl,
       },
     ],
@@ -410,7 +399,6 @@ const config = {
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         remarkPlugins: [linkCheckerPlugin.remarkPlugin],
-        exclude: excludeContentDocsPatterns,
         editUrl: generateEditUrl,
       },
     ],

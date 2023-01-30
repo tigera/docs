@@ -29,8 +29,9 @@ const skipLiteral = [
   'https://web.archive.org/web/20210204031636/https://cumulusnetworks.com/blog/celebrating-ecmp-part-two/',
   'https://www.fluentd.org/',
 ];
-const LC = 'LINK-CHECK', DEAD = 'dead', SKIPPED = 'skipped',
-  ALIVE = 'alive', ERROR = 'error', INVALID = 'invalid';
+const opts = { retryOn429: true, fallbackRetryDelay: '15s', timeout: '30s' };
+const LC = 'LINK-CHECK', DEAD = 'dead', SKIPPED = 'skipped', ALIVE = 'alive',
+  ERROR = 'error', INVALID = 'invalid', WARN = 'warn', INFO = 'info';
 const urlMap = new Map();
 const sys_errors = [];
 
@@ -73,11 +74,6 @@ function linkCheckerPlugin(_options) {
               if (IsExcludedOrInvalid(url)) {
                 continue;
               }
-              const opts = {
-                retryOn429: true,
-                fallbackRetryDelay: '15s',
-                timeout: '30s',
-              };
               linkCheck(url, opts, linkCheckCallback);
             }
           }
@@ -116,25 +112,25 @@ function postBuild() {
   if (invalid > 0) {
     console.info(
       `\n\t[INFO] ${LC} skipped the following ${invalid} invalid link(s):`);
-    enumMap(v => v === INVALID, (v, k) => `\t${k} is ${v}`, 'info');
+    enumMap(v => v === INVALID, (v, k) => `\t${k} is ${v}`, INFO);
   }
 
   if (skipped > 0) {
     console.info(
       `\n\t[INFO] ${LC} skipped the following ${skipped} external link(s) due to built-in skip rules:`);
-    enumMap(v => v === SKIPPED, (v, k) => `\t${k} was ${v}`, 'info');
+    enumMap(v => v === SKIPPED, (v, k) => `\t${k} was ${v}`, INFO);
   }
 
   if (dead > 0) {
     console.warn(
-      `\n\t[WARNING] ${LC} found the following ${dead} dead external link(s):`);
-    enumMap(v => v === DEAD, (v, k) => `\t${k} is ${v}`, 'warn');
+      `\n\t[WARN] ${LC} found the following ${dead} dead external link(s):`);
+    enumMap(v => v === DEAD, (v, k) => `\t${k} is ${v}`, WARN);
   }
 
   if (error > 0) {
     console.warn(`\n\t[ERROR] ${LC} hit the following ${error} error(s):`);
     enumMap(v => typeof v === 'object' && v.state === ERROR,
-      (v, k) => `\t${k} error: ${v.msg}`, 'warn');
+      (v, k) => `\t${k} error: ${v.msg}`, WARN);
   }
 
   if (sys_errors.length > 0) {
@@ -158,9 +154,9 @@ function enumMap(cond, fmt, type) {
   });
   list.sort();
   list.forEach(e => {
-    if (type === 'info') console.info(e);
-    else if (type === 'warn') console.warn(e);
-    else if (type === 'error') console.error(e);
+    if (type === INFO) console.info(e);
+    else if (type === WARN) console.warn(e);
+    else if (type === ERROR) console.error(e);
   });
 }
 
