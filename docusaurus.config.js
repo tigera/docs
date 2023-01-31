@@ -309,6 +309,18 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
         additionalLanguages: ['powershell', 'batch'],
+        magicComments: [
+          // Default highlight class name (should be specified)
+          {
+            className: 'theme-code-block-highlighted-line',
+            line: 'highlight-next-line',
+            block: { start: 'highlight-start', end: 'highlight-end' },
+          },
+          {
+            className: 'code-block-callout',
+            line: 'callout-for-next-line',
+          },
+        ],
       },
     }),
   plugins: [
