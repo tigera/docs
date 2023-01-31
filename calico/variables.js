@@ -8,7 +8,7 @@ const variables = {
   baseUrl: '/calico/next',
   filesUrl: 'https://projectcalico.docs.tigera.io/master',
   tutorialFilesURL: 'https://unified-docs.tigera.io/files',
-  calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download/',
+  calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download',
   prodnameWindows: 'Calico for Windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',
