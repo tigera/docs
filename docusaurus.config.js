@@ -15,7 +15,7 @@ const config = {
   noIndex: true,
   title: 'Calico Documentation',
   tagline:
-    'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials',
+    'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials.',
   url: 'https://unified-docs.tigera.io',
   baseUrl: '/',
   onBrokenLinks: 'warn',
