@@ -230,6 +230,24 @@ Where:
 
 ### (Optional) Configure BGP filters
 
+It is only necessary to advertise the egress IP pool, created in the previous section, to Azure Route Servers. By default {{prodname}}
+advertise all other IP pools, which does not affect any functionality. However, Azure Route Servers have a [limit](https://learn.microsoft.com/en-us/azure/route-server/overview#route-server-limits) of 1000 advertisements per peers. This limit should not be an issue in a small or medium size cluster, but could be for large size cluster.
+In order to prevent hitting the limit, it is possible to create [BGP filters](../configuring/bgp.mdx#configure-a-bgp-filter) to advertise only egress IP pools. As an example, for the IP pool created in the previous section, configure a BGP filter by running the following command:
+
+```batch
+kubectl apply -f - <<EOF
+kind: BGPFilter
+apiVersion: projectcalico.org/v3
+metadata:
+  name: export-egress-ips
+spec:
+  exportV4:
+    - action: Accept
+      matchOperator: In
+      cidr: 10.10.10.0/31
+EOF
+```
+
 ### Configure route reflectors
 
 {{prodname}} nodes can be configured to act as route reflectors. To do this, each node that you want to act as a route reflector
@@ -274,6 +292,8 @@ spec:
   asNumber: 65515
   keepOriginalNextHop: true
   nodeSelector: route-reflector == 'true'
+  filters:
+    - export-egress-ips
 ---
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
@@ -285,6 +305,8 @@ spec:
   asNumber: 65515
   keepOriginalNextHop: true
   nodeSelector: route-reflector == 'true'
+  filters:
+    - export-egress-ips
 ```
 
 :::note
@@ -299,7 +321,7 @@ spec:
    route reflectors, and get dropped.
 - It is mandatory to set `rechableBy` field set to the gateway of the subnet {{prodname}} cluster is running in for
    peering with Azure Route Servers to prevent BGP connection flapping. See [BGP peer](../../reference/resources/bgppeer.mdx) for more information.
-
+- Including `filters` to apply the BGP filter configured in the previous section, is optional.
 :::
 
 ### Enable egress gateway support
