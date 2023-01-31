@@ -1,12 +1,12 @@
 const releases = require('./releases.json');
 
 const variables = {
-  releaseTitle: 'v3.15.0',
+  releaseTitle: 'v3.15.1',
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'v3.15',
   baseUrl: '/calico-enterprise/3.15',
-  filesUrl: 'https://downloads.tigera.io/ee/v3.15.0',
+  filesUrl: 'https://downloads.tigera.io/ee/v3.15.1',
   tutorialFilesURL: 'https://unified-docs.tigera.io/files',
   prodnameWindows: 'Calico Enterprise for Windows',
   downloadsurl: 'https://downloads.tigera.io',
