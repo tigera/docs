@@ -73,13 +73,9 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 
 ### Configure a cluster for WAF
 
-#### Step 1: Enable WAF in your cluster
+#### Step 1: Configure ApplicationLayer CRD
 
-On the Manager UI, click **Threat Defense -> Web Application Firewall -> Configure Web Application Firewall**.
-
-**Alternatively you can enable WAF manually by configuring ApplicationLayer CRD.**
-
-Create or update the [ApplicationLayer](https://docs.tigera.io/reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the `webApplicationFirewall` field, and ensure it is set to `Enabled`.
+Create or update the [ApplicationLayer](https://docs.tigera.io/reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the webApplicationFirewall section of the file. Ensure value of the field is set to Enabled.
 
 Example:
 
@@ -92,41 +88,9 @@ spec:
   webApplicationFirewall: Enabled
 ```
 
-#### Disabling WAF
-
-To disable WAF update the [ApplicationLayer](https://docs.tigera.io/reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the `webApplicationFirewall` field, and ensure it is set to `Disabled`.
-
-Example:
-
-```yaml
-apiVersion: operator.tigera.io/v1
-kind: ApplicationLayer
-metadata:
-  name: tigera-secure
-spec:
-  webApplicationFirewall: Disabled
-```
-
 #### Step 2: Select traffic for WAF
 
-Once your cluster is configured for WAF you will be presented with a list of Kubernetes services available in the cluster:
-
-<img
-  src='/img/calico-enterprise/master/waf-services.png'
-  alt='WAF services'
-  width='600'
-/>
-
-From the **Action** column you can then select **Enable** or **Disable** action to respectively enable or disable WAF for each of the services.
-You will be presented with a window containing a **kubectl** command that you will be required to execute for the action to take effect.
-
-<img
-  src='/img/calico-enterprise/master/waf-enable.png'
-  alt='Enable WAF for a service'
-  width='600'
-/>
-
-**Alternatively you can annotate the services you wish to enable WAF for as shown.**
+Annotate the services you wish to enable WAF for as shown.
 
 ```batch
 kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging=true
