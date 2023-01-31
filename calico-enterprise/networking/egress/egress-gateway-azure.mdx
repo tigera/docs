@@ -126,7 +126,7 @@ Azure Route Server deployment is per VNet, as such each VNet with egress gateway
 - [Disable the default BGP node-to-node mesh](disable-the-default-bgp-node-to-node-mesh)
 - [Enable BGP](#enable-bgp)
 - [Provision an egress IP pool](#provision-an-egress-ip-pool)
-- [(Optional) Configure BGP filters](#configure-bgp-filters)
+- [(Optional) Limit number of route advertisement](#limit-number-of-route-advertisement)
 - [Configure route reflector](#configure-route-reflector)
 - [Enable egress gateway support](#enable-egress-gateway-support)
 - [Enable policy sync API](#enable-policy-sync-api)
@@ -228,7 +228,7 @@ Where:
 
 - Set `vxlanMode` to `Always` since [VXLAN](../networking/vxlan-ipip) is the only supported encapsulation in Azure.
 
-### (Optional) Configure BGP filters
+### (Optional) Limit number of route advertisements
 
 It is only necessary to advertise the egress IP pool, created in the previous section, to Azure Route Servers. By default {{prodname}}
 advertise all other IP pools, which does not affect any functionality. However, Azure Route Servers have a [limit](https://learn.microsoft.com/en-us/azure/route-server/overview#route-server-limits) of 1000 advertisements per peers. This limit should not be an issue in a small or medium size cluster, but could be for large size cluster.
@@ -247,6 +247,8 @@ spec:
       cidr: 10.10.10.0/31
 EOF
 ```
+
+In addition, to prevent {{prodname}} advertising pod IP blocks, it is possible to set `disableBGPExport` to `true` in the default IP pools.
 
 ### Configure route reflectors
 
