@@ -41,6 +41,7 @@ module.exports = {
             'getting-started/install-on-clusters/docker-enterprise',
             'getting-started/install-on-clusters/rancher',
             'getting-started/install-on-clusters/rke2',
+            'getting-started/install-on-clusters/rancher-ui',
             'getting-started/install-on-clusters/tkg',
             {
               type: 'category',
