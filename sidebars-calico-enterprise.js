@@ -171,8 +171,10 @@ module.exports = {
           link: {type: 'doc', id: 'networking/egress/index'},
           items: [
             'networking/egress/egress-gateway-on-prem',
+            'networking/egress/egress-gateway-azure',
             'networking/egress/egress-gateway-aws',
             'networking/egress/egress-gateway-maintenance',
+            'networking/egress/external-network',
             'networking/egress/troubleshoot',
           ],
         },
@@ -716,6 +718,7 @@ module.exports = {
               ]
             },
             'reference/resources/deeppacketinspection',
+            'reference/resources/externalnetwork',
             'reference/resources/felixconfig',
             'reference/resources/globalalert',
             'reference/resources/globalnetworkpolicy',
