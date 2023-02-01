@@ -15,7 +15,7 @@ const config = {
   noIndex: true,
   title: 'Calico Documentation',
   tagline:
-    'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials',
+    'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials.',
   url: 'https://unified-docs.tigera.io',
   baseUrl: '/',
   onBrokenLinks: 'warn',
@@ -309,6 +309,18 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
         additionalLanguages: ['powershell', 'batch'],
+        magicComments: [
+          // Default highlight class name (should be specified)
+          {
+            className: 'theme-code-block-highlighted-line',
+            line: 'highlight-next-line',
+            block: { start: 'highlight-start', end: 'highlight-end' },
+          },
+          {
+            className: 'code-block-callout',
+            line: 'callout-for-next-line',
+          },
+        ],
       },
     }),
   plugins: [
@@ -352,7 +364,7 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        lastVersion: '3.14',
+        lastVersion: '3.15',
         versions: {
           current: {
             label: 'Next',
@@ -360,9 +372,9 @@ const config = {
             banner: 'unreleased',
           },
           3.15: {
-            label: '3.15 (beta)',
+            label: '3.15',
             path: '3.15',
-            banner: 'unreleased',
+            banner: 'none',
           },
           3.14: {
             label: '3.14',

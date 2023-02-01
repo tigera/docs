@@ -7,20 +7,40 @@ const FeatureList = [
   {
     title: 'Calico Open Source',
     img: '/img/calico-logo.webp',
-    link: 'calico/3.25/about',
-    description: <>Calico Open Source is a free, self-managed networking and security solution for containers, virtual machines, and native host-based workloads. Calico provides networking, network policy, and IP address management capabilities for your cloud-native applications.</>,
+    link: 'https://unified-docs.tigera.io/calico/latest',
+    description: (
+      <>
+        Calico Open Source is a free, self-managed networking and security solution for containers, virtual machines,
+        and native host-based workloads. Calico provides networking, network policy, and IP address management
+        capabilities for your cloud-native applications.
+      </>
+    ),
+  },
+  {
+    title: 'Calico Enterprise',
+    img: '/img/calico-enterprise-logo.webp',
+    link: 'https://unified-docs.tigera.io/calico-enterprise/latest',
+    description: (
+      <>
+        Calico Enterprise is a paid, self-managed security and observability solution for containers and Kubernetes.
+        Calico Enterprise extends Calico Open Source’s networking and network security capabilities to offer more
+        advanced security and observability capabilities for organizations running Kubernetes at scale.
+      </>
+    ),
   },
   {
     title: 'Calico Cloud',
     img: '/img/calico-cloud-logo.webp',
     link: 'calico-cloud',
-    description: <>Calico Enterprise is a paid, self-managed security and observability solution for containers and Kubernetes. Calico Enterprise extends Calico Open Source’s networking and network security capabilities to offer more advanced security and observability capabilities for organizations running Kubernetes at scale.</>,
-  },
-  {
-    title: 'Calico Enterprise',
-    img: '/img/calico-enterprise-logo.webp',
-    link: 'calico-enterprise/3.14/about-calico-enterprise/',
-    description: <><p>Calico Cloud is a pay-as-you-go, SaaS application that provides comprehensive container security across the entire container lifecycle. In addition to being a fully managed version of Calico Enterprise, Calico Cloud provides container image scanning and more advanced threat detection capabilities.</p></>,
+    description: (
+      <>
+        <p>
+          Calico Cloud is a pay-as-you-go, SaaS application that provides comprehensive container security across the
+          entire container lifecycle. In addition to being a fully managed version of Calico Enterprise, Calico Cloud
+          provides container image scanning and more advanced threat detection capabilities.
+        </p>
+      </>
+    ),
   },
 ];
 
