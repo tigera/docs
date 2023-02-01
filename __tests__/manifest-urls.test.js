@@ -1,14 +1,14 @@
 const { test, expect } = require('@playwright/test');
 const { PlaywrightCrawler, Dataset } = require('crawlee');
 const linkChecker = require('../src/utils/linkChecker');
-const linkRegexp = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz)/g;
+const linkRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz)/g;
 
 test("Test file links to check if they're all reachable", async () => {
   const lc = linkChecker();
+  lc.setLinkRegex([linkRegex]);
   const crawler = new PlaywrightCrawler({
     // Use the requestHandler to process each of the crawled pages.
     async requestHandler({ request, page, enqueueLinks, log }) {
-      lc.setLinkRegex([linkRegexp]);
       const nodes = await page.getByText(lc.getLinkRegex());
       const allText = await nodes.allInnerTexts();
       for (const text of allText) {
@@ -16,7 +16,7 @@ test("Test file links to check if they're all reachable", async () => {
       }
       await enqueueLinks({
         transformRequestFunction: request => {
-          if (linkRegexp.test(request.url)) {
+          if (linkRegex.test(request.url)) {
             lc.process(request.url);
             request.skipNavigation = true;
           }
