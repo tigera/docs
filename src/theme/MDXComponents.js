@@ -5,6 +5,7 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import MDXComponents from '@theme-original/MDXComponents';
 
 import GeekDetails from '@site/src/components/partials/GeekDetails';
+import Callouts from '@site/src/components/Callouts';
 
 // TO REGISTER A NEW COMPONENT
 //
@@ -45,6 +46,7 @@ export default {
   ...MDXComponents,
   ...wrappedPartials,
   GeekDetails,
+  Callouts,
 };
 
 function resolveComponent(componentName) {
