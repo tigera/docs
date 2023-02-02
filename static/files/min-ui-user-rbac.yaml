@@ -1,0 +1,55 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ui-required
+rules:
+  # UI users need access to authorizationreviews and authenticationreviews.
+  - apiGroups: ["projectcalico.org"]
+    resources: ["authorizationreviews", "authenticationreviews"]
+    verbs: ["create"]
+
+---
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ui-traffic-stats
+rules:
+  - apiGroups: [""]
+    resources: ["services/proxy"]
+    resourceNames: ["https:tigera-api:8080", "calico-node-prometheus:9090"]
+    verbs: ["get","create"]
+  # Access to flow logs, audit logs, and statistics
+  - apiGroups: ["lma.tigera.io"]
+    resources: ["cluster"]
+    resourceNames: ["flows", "audit*", "events", "dns", "l7"]
+    verbs: ["get"]
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <USER>-ui-required
+subjects:
+  - kind: User
+    name: <USER>
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: ui-required
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: <USER>-ui-traffic-stats
+subjects:
+  - kind: User
+    name: <USER>
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: ui-traffic-stats
+  apiGroup: rbac.authorization.k8s.io
