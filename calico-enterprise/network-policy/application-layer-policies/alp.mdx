@@ -21,7 +21,7 @@ Application layer policies let you limit access controls based on L7 attributes.
 - [Enable application layer policies](#enable-application-layer-policies)
 - [Enforce application layer policies for ingress traffic](#enforce-application-layer-policies-for-ingress-traffic)
 
-## Enable application layer policies (ALP)
+### Enable application layer policies (ALP)
 In the ApplicationLayer custom resource, set the `applicationLayerPolicy` field to Enabled.
 
 ```
@@ -39,7 +39,7 @@ To disable the policy, do one of the following steps:
  - Remove the `applicationLayerPolicy` field entirely.
  - Delete the ApplicationLayer` custom resource.
 
-## Enforce application layer policies for ingress traffic
+### Enforce application layer policies for ingress traffic
 
 You can restrict ingress traffic using HTTP match criteria using Network policy or Global network policy. 
 For a list of all HTTP match parameters, see [Network policy](/reference/resources/networkpolicy.mdx) and [Global network policy](/reference/resources/globalnetworkpolicy.mdx).
@@ -69,3 +69,116 @@ spec:
  However, any network policies that rely on HTTP match will remain in place but will no longer have any effect.
 
 :::
+
+## Enforce application layer policies on your apps (tutorial)
+
+This tutorial demonstrates how to use {{prodname}} application layer policy to mitigate some common threats in a sample banking Bank application.
+Assume that the application is installed in your {{prodname}} cluster and that the following application pods are running. 
+
+```
+NAME                        READY     STATUS    RESTARTS   AGE
+customer-2809159614-qqfnx   3/3       Running   0          21h
+database-1601951801-m4w70   3/3       Running   0          21h
+summary-2817688950-g1b3n    3/3       Running   0          21h
+```
+
+Here, we have three microservices - customer, database, and summary. Only pods that need access to a service should get it.
+The customer web service does not need, and should not have direct access to the backend database. The customer web service needs to 
+directly interact with clients outside the cluster, some of whom may be malicious. 
+
+Imagine what would happen if an attacker were to gain control of the customer web pod in our
+application. Let's simulate this by executing a remote shell inside that pod.
+
+    kubectl exec -ti customer-<fill in pod ID> -c customer -- bash
+
+Notice that from here, we get direct access to the backend database. For example, we can list all the entries in the database like this:
+
+    curl http://database:2379/v2/keys?recursive=true | python -m json.tool
+
+(Piping to `python -m json.tool` nicely formats the output.)
+
+
+#### Applying network policy
+
+With a {{prodname}} policy, you can mitigate risks to the YAO Bank application.
+
+    wget {{filesUrl}}/security/tutorials/app-layer-policy/manifests/30-policy.yaml
+    calicoctl create -f 30-policy.yaml
+
+
+Let's examine this policy piece by piece. It consists of three policy objects, one for each
+microservice.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: customer
+spec:
+  selector: app == 'customer'
+  ingress:
+    - action: Allow
+      http:
+        methods: ['GET']
+  egress:
+    - action: Allow
+```
+
+The first policy protects the customer web app. Since this application is customer facing, we do not
+restrict what can communicate with it. We do, however, restrict its communications to HTTP `GET`
+requests.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: summary
+spec:
+  selector: app == 'summary'
+  ingress:
+    - action: Allow
+      source:
+        serviceAccounts:
+          names: ['customer']
+  egress:
+    - action: Allow
+```
+
+The second policy protects the account summary microservice. We know the only consumer of this
+service is the customer web app, so we restrict the source of incoming connections to the service
+account for the customer web app.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: database
+spec:
+  selector: app == 'database'
+    ingress:
+      - action: Allow
+        source:
+          serviceAccounts:
+            names: ["summary"]
+    egress:
+      - action: Allow
+```
+
+The third policy protects the database. Only the summary microservice should have direct access to
+the database.
+
+Let's verify our policy is working as intended. First, return to your browser and refresh to
+ensure policy enforcement has not broken the application.
+
+Next, return to the customer web app. Recall that we simulated an attacker gaining control of that
+pod by executing a remote shell inside it.
+
+    kubectl exec -ti customer-<fill in pod ID> -c customer bash
+
+Repeat our attempt to access the database.
+
+    curl -I http://database:2379/v2/keys?recursive=true
+
+We have left out the JSON formatting because we do not expect to get a valid JSON response. This
+time we should get a `403 Forbidden` response. Only the account summary microservice has database
+access according to our policy.
