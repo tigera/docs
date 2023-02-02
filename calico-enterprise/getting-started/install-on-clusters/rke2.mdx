@@ -6,7 +6,7 @@ description: Install Calico Enterprise on an RKE2 cluster.
 
 ## Big picture
 
-Install {{prodname}} on Rancher's Next-generation Kubernetes Distribution (RKE2) clusters.
+Install {{prodname}} on Rancher's Next-generation Kubernetes Distribution (RKE2) clusters using the CLI or Rancher UI.
 
 ## Before you begin
 
@@ -33,12 +33,6 @@ The geeky details of what you get:
   - Install script: `RKE2_CNI=none`
   - [Configuration file](https://docs.rke2.io/install/configuration#configuration-file): `cni: none`
 
-  :::note
-
-  Rancher UI does not explicitly provide an option to set the RKE2 CNI value as `none`. This is a requirement for installing a non-default CNI on RKE2. To install {{prodname}} using the Rancher UI follow [these instructions](rancher-ui.mdx).
-
-  :::
-
 - Cluster meets [system requirements](requirements.mdx)
 
 - A [Tigera license key and credentials](calico-enterprise.mdx).
@@ -51,8 +45,11 @@ The geeky details of what you get:
 
 ## How to
 
-- [Install {{prodname}}](#install-calico-enterprise)
-- [Install the {{prodname}} license](#install-the-calico-enterprise-license)
+- [Install {{prodname}} using the CLI](#install-calico-enterprise-using-the-cli)
+- [Install {{prodname}} using Rancher UI](#install-calico-enterprise-using-rancher-ui)
+
+<Tabs>
+<TabItem label="CLI" value="CLI-0">
 
 ### Install {{prodname}}
 
@@ -129,6 +126,56 @@ Monitor progress with the following command:
 ```batch
 watch kubectl get tigerastatus
 ```
+
+</TabItem>
+<TabItem label="Rancher UI" value="UI-1">
+
+Rancher UI does not explicitly provide an option to set the RKE2 CNI value as `none`. This is a requirement for installing a non-default CNI on RKE2. To install {{prodname}} using Rancher UI, a base RKE2 cluster with opensource Calico needs to be provisioned by Rancher first. This cluster can then be upgraded to {{prodname}}.
+
+### Prepare a base opensource Calico cluster
+
+1. [Provision a RKE2 cluster using Calico as CNI and default config options](https://ranchermanager.docs.rancher.com/pages-for-subheaders/launch-kubernetes-with-rancher)
+2. Validate the RKE2 cluster is setup and running.
+3. Update the Cluster Config by adding the following `HelmChartConfig` to the Additional Manifest section. In the UI navigate to Edit Config > Add on config > Additional Manifest.
+   ```yaml
+   apiVersion: helm.cattle.io/v1
+   kind: HelmChartConfig
+   metadata:
+     name: rke2-calico
+     namespace: kube-system
+   spec:
+     valuesContent: |-
+      installation:
+        imagePath: ""
+        imagePrefix: ""
+      calicoctl:
+        enabled: false
+   ```
+4. Wait for Config update to take effect and Cluster change state to Active .
+5. SSH to all the Control plane nodes and rename `rke2-calico.yaml` in the `/var/lib/rancher/rke2/server/manifests/` directory to `rke2-calico.yaml.skip`.
+   ```batch
+   sudo mv /var/lib/rancher/rke2/server/manifests/rke2-calico.yaml /var/lib/rancher/rke2/server/manifests/rke2-calico.yaml.skip
+   ```
+
+### Upgrade {{prodname}}
+
+1. Open a `kubectl` shell in the Rancher UI for the cluster.
+
+2. Follow the [steps to upgrade Calico to {{prodname}} in the `kubectl` shell](../upgrading/upgrading-calico-to-calico-enterprise/upgrade-to-tsee/standard.mdx).
+
+### Install the {{prodname}} license
+
+```batch
+kubectl create -f </path/to/license.yaml>
+```
+
+Monitor progress with the following command:
+
+```batch
+watch kubectl get tigerastatus
+```
+</TabItem>
+  </Tabs>
 
 ## Next steps
 
