@@ -38,6 +38,7 @@ export default function ReleaseNotes() {
           <Heading
             as='h2'
             id={`calico-enterprise-${toKebab(release.title)}`}
+            data-bz-version={toKebab(release.title)}
           >
             Calico Enterprise {release.title}
           </Heading>

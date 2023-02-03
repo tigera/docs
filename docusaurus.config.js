@@ -8,23 +8,14 @@ const variablesPlugin = require('./src/remark/variablesPlugin');
 const linkCheckerPlugin = require('./src/remark/linkCheckerPlugin');
 const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
-// First 4 are default and taken from preset.
-// Temporarly adding '../**/_includes/**' until https://github.com/facebook/docusaurus/pull/8275 released to npm
-const excludeContentDocsPatterns = [
-  '**/_*.{js,jsx,ts,tsx,md,mdx}',
-  '**/_*/**',
-  '**/*.test.{js,jsx,ts,tsx}',
-  '**/__tests__/**',
-  '../**/_includes/**',
-];
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   // TODO[dac]: noIndex should be removed, along with robots.txt and the
   // X-Robots-Tag:noindex in the /static/_headers file once we cutover
   noIndex: true,
   title: 'Calico Documentation',
-  tagline:
-    'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials',
+  //tagline:
+    //'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials.',
   url: 'https://unified-docs.tigera.io',
   baseUrl: '/',
   onBrokenLinks: 'warn',
@@ -318,6 +309,18 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
         additionalLanguages: ['powershell', 'batch'],
+        magicComments: [
+          // Default highlight class name (should be specified)
+          {
+            className: 'theme-code-block-highlighted-line',
+            line: 'highlight-next-line',
+            block: { start: 'highlight-start', end: 'highlight-end' },
+          },
+          {
+            className: 'code-block-callout',
+            line: 'callout-for-next-line',
+          },
+        ],
       },
     }),
   plugins: [
@@ -350,7 +353,6 @@ const config = {
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         remarkPlugins: [linkCheckerPlugin.remarkPlugin],
-        exclude: excludeContentDocsPatterns,
         editUrl: generateEditUrl,
       },
     ],
@@ -362,7 +364,7 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        lastVersion: '3.14',
+        lastVersion: '3.15',
         versions: {
           current: {
             label: 'Next',
@@ -370,9 +372,9 @@ const config = {
             banner: 'unreleased',
           },
           3.15: {
-            label: '3.15 (beta)',
+            label: '3.15',
             path: '3.15',
-            banner: 'unreleased',
+            banner: 'none',
           },
           3.14: {
             label: '3.14',
@@ -383,7 +385,6 @@ const config = {
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         remarkPlugins: [linkCheckerPlugin.remarkPlugin],
-        exclude: excludeContentDocsPatterns,
         editUrl: generateEditUrl,
       },
     ],
@@ -410,7 +411,6 @@ const config = {
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         remarkPlugins: [linkCheckerPlugin.remarkPlugin],
-        exclude: excludeContentDocsPatterns,
         editUrl: generateEditUrl,
       },
     ],
