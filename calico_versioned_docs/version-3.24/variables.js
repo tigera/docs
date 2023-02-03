@@ -9,7 +9,7 @@ const variables = {
   filesUrl: 'https://projectcalico.docs.tigera.io/v3.24',
   tutorialFilesURL: 'https://unified-docs.tigera.io/files',
   calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download',
-  tmpScriptsURL: 'https://unified-docs.tigera.io/calico/3.24/scripts',
+  tmpScriptsURL: 'https://unified-docs.tigera.io/calico/3.24',
   prodnameWindows: 'Calico for Windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',
