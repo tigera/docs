@@ -15,26 +15,26 @@ Install {{prodname}} on Rancher's Next-generation Kubernetes Distribution (RKE2)
 
 **CNI support**
 
-Calico CNI for networking with {{prodname}} network policy:
+- Calico CNI for networking with {{prodname}} network policy.
 
-The geeky details of what you get:
+   The geeky details of what you get:
 
-<GeekDetails
-  prodname='{{prodname}}'
-  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes'
-/>
+   <GeekDetails
+    prodname='{{prodname}}'
+    details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes'
+   />
 
 **Required**
 
 - A [compatible RKE2 cluster](../compatibility.mdx#rke2)
+   For help, see [Rancher Kubernetes Engine cluster](https://rancher.com/docs/rke/latest/en/).
 
-  For help, see [Rancher Kubernetes Engine cluster](https://rancher.com/docs/rke/latest/en/).
+- **CLI users only**
+   [Configure cluster without a CNI plugin](https://docs.rke2.io/install/configuration) using any of these methods:
 
-- [Configure cluster with no CNI plugin](https://docs.rke2.io/install/configuration) using any of these methods:
-
-  - RKE2 CLI: `--cni none`
-  - Install script: `RKE2_CNI=none`
-  - [Configuration file](https://docs.rke2.io/install/configuration#configuration-file): `cni: none`
+    - RKE2 CLI: `--cni none`
+    - Install script: `RKE2_CNI=none`
+    - [Configuration file](https://docs.rke2.io/install/configuration#configuration-file): `cni: none`
 
 - Cluster meets [system requirements](requirements.mdx)
 
@@ -48,8 +48,7 @@ The geeky details of what you get:
 
 ## How to
 
-- [Install {{prodname}} using the CLI](#install-calico-enterprise-using-the-cli)
-- [Install {{prodname}} using Rancher UI](#install-calico-enterprise-using-rancher-ui)
+Install {{prodname}} using the CLI or Rancher UI. 
 
 <Tabs>
 <TabItem label="CLI" value="CLI-0">
@@ -74,7 +73,7 @@ The geeky details of what you get:
 
    :::note
 
-   If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with {{prodname}}, your Prometheus operator must be v0.40.0 or higher.
+   If you have an existing Prometheus operator in your cluster that you want to use, skip this step. Your Prometheus operator must be v0.40.0 or higher to work with {{prodname}}.
 
    :::
 
@@ -134,13 +133,14 @@ watch kubectl get tigerastatus
 
 <TabItem label="Rancher UI" value="UI-1">
 
-Rancher UI does not explicitly provide an option to set the RKE2 CNI value as `none`. This is a requirement for installing a non-default CNI on RKE2. To install {{prodname}} using Rancher UI, a base RKE2 cluster with opensource Calico needs to be provisioned by Rancher first. This cluster can then be upgraded to {{prodname}}.
+Unlike the Rancher CLI, the Rancher UI does not provide an option to set the RKE2 CNI value as `none` which is required by RKE2 to install a non-default CNI like {{prodname}}. To install {{prodname}} using Rancher UI, you must first provision an RKE2 cluster with Calico Open Source, then upgrade it to {{prodname}}.
 
-### Prepare a base opensource Calico cluster
+### Provision RKE2 cluster with Calico Open Source
 
-1. [Provision a RKE2 cluster using Calico as CNI and default config options](https://ranchermanager.docs.rancher.com/pages-for-subheaders/launch-kubernetes-with-rancher)
-2. Validate the RKE2 cluster is setup and running.
-3. Update the Cluster Config by adding the following `HelmChartConfig` to the Additional Manifest section. In the UI navigate to Edit Config > Add on config > Additional Manifest.
+1. [Provision an RKE2 cluster using Calico as CNI and the default config options](https://ranchermanager.docs.rancher.com/pages-for-subheaders/launch-kubernetes-with-rancher)
+2. Validate the RKE2 cluster is set up and running.
+3. Update the Cluster Config by adding the following `HelmChartConfig` to the Additional Manifest section. (In the UI, navigate to **Edit Config**, **Add on config**, **Additional Manifest**.)
+
    ```yaml
    apiVersion: helm.cattle.io/v1
    kind: HelmChartConfig
@@ -155,15 +155,15 @@ Rancher UI does not explicitly provide an option to set the RKE2 CNI value as `n
       calicoctl:
         enabled: false
    ```
-4. Wait for Config update to take effect and Cluster change state to Active .
-5. SSH to all the Control plane nodes and rename `rke2-calico.yaml` in the `/var/lib/rancher/rke2/server/manifests/` directory to `rke2-calico.yaml.skip`.
+4. Wait for the Config update to take effect and the state of the cluster to be `Active`.
+5. SSH to all the control plane nodes and rename `rke2-calico.yaml` in the `/var/lib/rancher/rke2/server/manifests/` directory to `rke2-calico.yaml.skip`.
    ```batch
    sudo mv /var/lib/rancher/rke2/server/manifests/rke2-calico.yaml /var/lib/rancher/rke2/server/manifests/rke2-calico.yaml.skip
    ```
 
-### Upgrade {{prodname}}
+### Upgrade to {{prodname}}
 
-1. Open a `kubectl` shell in the Rancher UI for the cluster.
+1. Open a `kubectl` shell for the cluster in the Rancher UI.
 
 2. Follow the [steps to upgrade Calico to {{prodname}} in the `kubectl` shell](../upgrading/upgrading-calico-to-calico-enterprise/upgrade-to-tsee/standard.mdx).
 
