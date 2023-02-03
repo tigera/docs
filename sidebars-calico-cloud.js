@@ -474,6 +474,7 @@ module.exports = {
             'reference/resources/overview',
             'reference/resources/bgpconfig',
             'reference/resources/bgppeer',
+            'reference/resources/bgpfilter',
             'reference/resources/blockaffinity',
             'reference/resources/caliconodestatus',
             {
