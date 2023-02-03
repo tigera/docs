@@ -203,7 +203,7 @@ and then restart the {{prodname}} daemonSet:
 kubectl rollout restart ds calico-node -n calico-system
 ```
 
-#### Provision an egress IP pool
+### Provision an egress IP pool
 
 Provision a small IP Pool with the range of source IPs that you want to use for a particular
 application when it connects to an external service. For example:
@@ -218,6 +218,7 @@ spec:
   cidr: 10.10.10.0/31
   blockSize: 31
   nodeSelector: "!all()"
+  vxlanMode: Never
 EOF
 ```
 
@@ -226,7 +227,7 @@ Where:
 
 - `nodeSelector: "!all()"` is recommended so that this egress IP pool is not accidentally used for cluster pods in general. Specifying this `nodeSelector` means that the IP pool is only used for pods that explicitly identify it in their `cni.projectcalico.org/ipv4pools` annotation.
 
-- Set `vxlanMode` to `Always` since [VXLAN](../networking/vxlan-ipip) is the only supported encapsulation in Azure.
+- Set `vxlanMode` to `Never` since in Azure we rely on Azure fabric to route traffic to egress gateway pods.
 
 ### (Optional) Limit number of route advertisements
 
