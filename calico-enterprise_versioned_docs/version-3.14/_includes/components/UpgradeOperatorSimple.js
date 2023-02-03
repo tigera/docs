@@ -5,7 +5,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { baseUrl, filesUrl, prodname } from '../../variables';
+import { baseUrl, filesUrl, prodname, tmpScriptsURL } from '../../variables';
 
 export default function UpgradeOperatorSimple(props) {
   return (
@@ -17,7 +17,7 @@ export default function UpgradeOperatorSimple(props) {
               Switch the active operator to the one that will be installed to the new namespace. First, download the
               helper script:
             </p>
-            <CodeBlock language='batch'>curl -L -O {filesUrl}/scripts/switch-active-operator.sh</CodeBlock>
+            <CodeBlock language='batch'>curl -L -O {tmpScriptsURL}/scripts/switch-active-operator.sh</CodeBlock>
             <p>Then switch the active operator. This will deactivate the currently running operator.</p>
             <CodeBlock>
               chmod a+x ./switch-active-operator.sh{'\n'}
