@@ -21,6 +21,7 @@ This how-to guide uses the following {{prodname}} features:
 - **BGPPeer resources**
   - **Global peer**
   - **Node-specific peer**
+- **BGPFilter resource**
 
 ## Concepts
 
@@ -61,7 +62,7 @@ For a deeper look at common on-premises deployment models, see [Calico over IP F
 **Required**
 
 - Calico CNI
-- [calicoctl](/operations/clis/calicoctl/install) must be installed and configured
+- [calicoctl](/operations/clis/calicoctl/install.mdx) must be installed and configured
 
 ## How to
 
@@ -80,6 +81,8 @@ Significantly changing {{prodname}}'s BGP topology, such as changing from full-m
 - [View BGP info on all peers for a node](#view-bgp-info-on-all-peers-for-a-node)
 - [Change the default global AS number](#change-the-default-global-as-number)
 - [Change AS number for a particular node](#change-as-number-for-a-particular-node)
+- [Configure a BGP filter](#configure-a-bgp-filter)
+- [Configure a BGP peer with a BGP filter](#configure-a-bgp-peer-with-a-bgp-filter)
 
 ### Configure a global BGP peer
 
@@ -225,7 +228,7 @@ Where `<NODE_NAME>` is the resource name for one of the Calico node pods within 
 
 :::note
 
-The above command can be run from anywhere you have access to kubectl. We recommend running it as a kubectl plugin. [Follow these instructions](/operations/clis/calicoctl/install#install-calicoctl-as-a-kubectl-plugin-on-a-single-host) for how to install `calicoctl` as a kubectl plugin.
+The above command can be run from anywhere you have access to kubectl. We recommend running it as a kubectl plugin. [Follow these instructions](/operations/clis/calicoctl/install.mdx#install-calicoctl-as-a-kubectl-plugin-on-a-single-host) for how to install `calicoctl` as a kubectl plugin.
 
 :::
 If you install the binary as a kubectl plugin using the above instructions, you can then run the command as follows:
@@ -256,8 +259,106 @@ You can configure an AS for a particular node by modifying the node object using
 calicoctl patch node node-1 -p '{"spec": {"bgp": {"asNumber": "64514"}}}'
 ```
 
+### Configure a BGP filter
+
+BGP filters control which routes are imported and exported between BGP peers.
+
+The following example creates a BGPFilter
+
+```yaml
+kind: BGPFilter
+apiVersion: projectcalico.org/v3
+metadata:
+  name: my-first-bgp-filter
+spec:
+  exportV4:
+    - action: Accept
+      matchOperator: In
+      cidr: 77.0.0.0/16
+  importV4:
+    - action: Accept
+      matchOperator: NotIn
+      cidr: 44.0.0.0/16
+  exportV6:
+    - action: Accept
+      matchOperator: Equal
+      cidr: 9000::0/64
+  importV6:
+    - action: Accept
+      matchOperator: NotEqual
+      cidr: 5000::0/64
+```
+
+### Configure a BGP peer with a BGP filter
+
+BGP peers can use BGP filters to control which routes are imported or exported between them.
+
+The following example creates a BGPFilter and associates it with a BGPPeer
+:::note
+
+BGPFilters are applied in the order listed on a BGPPeer
+
+:::
+
+```yaml
+kind: BGPFilter
+apiVersion: projectcalico.org/v3
+metadata:
+  name: first-bgp-filter
+spec:
+  exportV4:
+    - action: Accept
+      matchOperator: In
+      cidr: 77.0.0.0/16
+  importV4:
+    - action: Accept
+      matchOperator: NotIn
+      cidr: 44.0.0.0/16
+  exportV6:
+    - action: Accept
+      matchOperator: Equal
+      cidr: 9000::0/64
+  importV6:
+    - action: Accept
+      matchOperator: NotEqual
+      cidr: 5000::0/64
+---
+kind: BGPFilter
+apiVersion: projectcalico.org/v3
+metadata:
+  name: second-bgp-filter
+spec:
+  exportV4:
+    - action: Accept
+      matchOperator: In
+      cidr: 99.0.0.0/16
+  importV4:
+    - action: Accept
+      matchOperator: NotIn
+      cidr: 55.0.0.0/16
+  exportV6:
+    - action: Accept
+      matchOperator: Equal
+      cidr: 7000::0/64
+  importV6:
+    - action: Accept
+      matchOperator: NotEqual
+      cidr: 4000::0/64
+---
+kind: BGPPeer
+apiVersion: projectcalico.org/v3
+metadata:
+  name: peer-with-filter
+spec:
+  peerSelector: has(filter-bgp)
+  filters:
+    - first-bgp-filter
+    - second-bgp-filter
+```
+
 ## Above and beyond
 
 - [Node resource](../../reference/resources/node.mdx)
 - [BGP configuration resource](../../reference/resources/bgpconfig.mdx)
 - [BGP peer resource](../../reference/resources/bgppeer.mdx)
+- [BGP filter resource](../../reference/resources/bgpfilter.mdx)
