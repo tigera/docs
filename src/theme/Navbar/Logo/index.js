@@ -28,6 +28,10 @@ export default function LogoWrapper(props) {
           to: 'https://www.tigera.io/blog/',
         },
         {
+          label: 'Events',
+          to: 'https://www.tigera.io/events',
+        },
+        {
           label: 'Contact us',
           to: 'https://www.tigera.io/contact/',
         },

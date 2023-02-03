@@ -14,8 +14,8 @@ const config = {
   // X-Robots-Tag:noindex in the /static/_headers file once we cutover
   noIndex: true,
   title: 'Calico Documentation',
-  tagline:
-    'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials.',
+  //tagline:
+    //'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials.',
   url: 'https://unified-docs.tigera.io',
   baseUrl: '/',
   onBrokenLinks: 'warn',

@@ -55,10 +55,10 @@ function Feature({ img, title, description, link }) {
           />
         </Link>
       </div>
-      <div className='text--center padding-horiz--md'>
+      <div className='text--left padding-horiz--md'>
         <h1>{title}</h1>
         <p className={clsx(styles.featureDescription,
-          'text--justify')}>{description}</p>
+          'text--left')}>{description}</p>
       </div>
     </div>
   );
