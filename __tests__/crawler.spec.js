@@ -7,18 +7,19 @@ const {
 } = require('crawlee');
 const linkChecker = require('../src/utils/linkChecker');
 
-const linkRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
+const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
+const httpRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/gi;
 const DOCS = 'https://unified-docs.tigera.io';
 const SITEMAP = 'sitemap.xml';
 const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
 const USE_LC = [
-  linkRegex,
+  fileRegex,
   /\/reference\/legal\/\w+$/i,
 ];
 
 test("Test file links to check if they're all reachable", async () => {
   const lc = linkChecker();
-  lc.setLinkRegex([linkRegex]);
+  lc.setLinkRegex([httpRegex]);
   const cfg = Configuration.getGlobalConfig();
   cfg.set('availableMemoryRatio', 0.75);
 
