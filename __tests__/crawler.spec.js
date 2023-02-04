@@ -1,43 +1,69 @@
 const { test, expect } = require('@playwright/test');
-const { PlaywrightCrawler, downloadListOfUrls } = require('crawlee');
+const {
+  PlaywrightCrawler,
+  downloadListOfUrls,
+  EnqueueStrategy,
+  Configuration,
+} = require('crawlee');
 const linkChecker = require('../src/utils/linkChecker');
 
-const linkRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz)/g;
-const DOCS = 'https://docs.tigera.io';
-const TESTER = /^https:\/\/docs\.tigera\.io/i;
+const linkRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
+const DOCS = 'https://unified-docs.tigera.io';
 const SITEMAP = 'sitemap.xml';
 const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
+const USE_LC = [
+  linkRegex,
+  /\/reference\/legal\/\w+$/i,
+];
 
 test("Test file links to check if they're all reachable", async () => {
   const lc = linkChecker();
   lc.setLinkRegex([linkRegex]);
+  const cfg = Configuration.getGlobalConfig();
+  cfg.set('availableMemoryRatio', 0.75);
+
   const crawler = new PlaywrightCrawler({
+    maxConcurrency: 100,
+    navigationTimeoutSecs: 120,
     // Use the requestHandler to process each of the crawled pages.
     async requestHandler({ request, page, enqueueLinks, log }) {
       if (request.skipNavigation) return;
-      const nodes = await page.getByText(lc.getLinkRegex());
-      const allText = await nodes.allInnerTexts();
-      for (const text of allText) {
+      const allTexts = await page.locator('body').allInnerTexts();
+      for (const text of allTexts) {
         lc.process(text);
       }
       await enqueueLinks({
-        transformRequestFunction: (ro) => {
-          if (linkRegex.test(ro.url)) {
-            lc.process(ro.url);
-            ro.skipNavigation = true;
-          }
-          return ro;
-        }
-      })
+        strategy: EnqueueStrategy.All,
+        transformRequestFunction: transformRequest,
+      });
     },
   });
+
+  function transformRequest(requestOptions) {
+    if (useLinkChecker(requestOptions.url)) {
+      lc.process(requestOptions.url);
+      requestOptions.skipNavigation = true;
+    }
+    return requestOptions;
+  }
+
+  function useLinkChecker(requestOptionsUrl) {
+    const url = requestOptionsUrl.toLowerCase();
+    // if it's external, use linkChecker
+    if (!url.startsWith(DOCS)) return true;
+    // if it matches any in the regex list, use linkChecker
+    for (const regex of USE_LC) {
+      if (regex.test(url)) return true;
+    }
+    return false;
+  }
 
   const urlCache = new Map();
 
   async function processSiteMap(siteMapUrl) {
     const urls = await downloadListOfUrls({ url: siteMapUrl });
     for (const url of urls) {
-      if (!TESTER.test(url)) continue;
+      if (!url.toLowerCase().startsWith(DOCS)) continue;
       if (urlCache.has(url)) continue;
       urlCache.set(url, null);
       if (url.endsWith(SITEMAP)) {
@@ -46,9 +72,9 @@ test("Test file links to check if they're all reachable", async () => {
     }
   }
 
-  await crawler.addRequests([DOCS]);
   await processSiteMap(SITEMAP_URL);
   const urls = [...urlCache.keys()].filter(url => !url.endsWith(SITEMAP));
+  await crawler.addRequests([DOCS]);
   await crawler.addRequests(urls);
   await crawler.run();
   lc.report();
