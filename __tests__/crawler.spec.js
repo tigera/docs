@@ -28,10 +28,8 @@ test("Test file links to check if they're all reachable", async () => {
     // Use the requestHandler to process each of the crawled pages.
     async requestHandler({ request, page, enqueueLinks, log }) {
       if (request.skipNavigation) return;
-      const allTexts = await page.locator('body').allInnerTexts();
-      for (const text of allTexts) {
-        lc.process(text);
-      }
+      const allText = await page.locator('body').innerText();
+      lc.process(allText);
       await enqueueLinks({
         strategy: EnqueueStrategy.All,
         transformRequestFunction: transformRequest,
