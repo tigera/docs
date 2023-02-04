@@ -133,13 +133,13 @@ function linkChecker() {
 
     if (skipped > 0) {
       console.info(
-        `\n\t[INFO] ${LC} skipped the following ${skipped} external link(s) due to built-in skip rules:`);
+        `\n\t[INFO] ${LC} skipped the following ${skipped} link(s) due to built-in skip rules:`);
       enumMap(v => v === SKIPPED, (v, k) => `\t${k} was ${v}`, INFO);
     }
 
     if (dead > 0) {
       console.warn(
-        `\n\t[WARN] ${LC} found the following ${dead} dead external link(s):`);
+        `\n\t[WARN] ${LC} found the following ${dead} dead link(s):`);
       enumMap(v => v === DEAD, (v, k) => `\t${k} is ${v}`, WARN);
     }
 
