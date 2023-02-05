@@ -20,12 +20,16 @@ const USE_LC = [
 test("Test file links to check if they're all reachable", async () => {
   const lc = linkChecker();
   lc.setLinkRegex([httpRegex]);
-  const cfg = Configuration.getGlobalConfig();
-  cfg.set('availableMemoryRatio', 0.75);
+  let concurrency = 100;
+  if (process.env.CI === 'true') {
+    concurrency = 10;
+  } else {
+    Configuration.getGlobalConfig().set('availableMemoryRatio', 0.75);
+  }
 
   const crawler = new PlaywrightCrawler({
-    maxConcurrency: 100,
     navigationTimeoutSecs: 120,
+    maxConcurrency: concurrency,
     // Use the requestHandler to process each of the crawled pages.
     async requestHandler({ request, page, enqueueLinks, log }) {
       if (request.skipNavigation) return;
