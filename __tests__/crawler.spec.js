@@ -16,10 +16,15 @@ const USE_LC = [
   fileRegex,
   /\/reference\/legal\/\w+$/i,
 ];
+const skipList = [
+  /\.md$/,
+  /:\/\/([\w-]+\.)?example\.com/
+];
 
 test("Test file links to check if they're all reachable", async () => {
   const lc = linkChecker();
   lc.setLinkRegex([httpRegex]);
+  lc.setSkipList([...lc.getSkipList(), ...skipList]);
   let concurrency = 50;
   if (process.env.CI === 'true') {
     Configuration.getGlobalConfig().set('availableMemoryRatio', 0.75);
