@@ -20,11 +20,11 @@ const USE_LC = [
 test("Test file links to check if they're all reachable", async () => {
   const lc = linkChecker();
   lc.setLinkRegex([httpRegex]);
-  let concurrency = 100;
+  let concurrency = 50;
   if (process.env.CI === 'true') {
-    concurrency = 10;
-  } else {
     Configuration.getGlobalConfig().set('availableMemoryRatio', 0.75);
+  } else {
+    Configuration.getGlobalConfig().set('availableMemoryRatio', 0.5);
   }
 
   const crawler = new PlaywrightCrawler({
