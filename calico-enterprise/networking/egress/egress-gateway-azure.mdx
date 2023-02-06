@@ -213,7 +213,7 @@ kubectl apply -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
-  name: egress-ippool-1
+  name: egress-ip-red-pool
 spec:
   cidr: 10.10.10.0/30
   blockSize: 31
@@ -285,8 +285,8 @@ spec:
 ```
 
 Finally, Add the IP addresses of Azure Route Servers, usually there are two, as peers to route reflectors. For example, if the {{prodname}}
-cluster is in a subnet with 10.224.0.1 as gateway and Azure Route Servers are deployed with ASN 65515 and IP addresses of 10.225.0.4 and 10.225.0.5,
-create two **BGPPeer** resources:
+cluster is in a subnet with 10.224.0.0 as network address, the 10.224.0.1 [is supposed to be](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq#are-there-any-restrictions-on-using-ip-addresses-within-these-subnets) the gateway and Azure Route Servers are deployed with
+ASN 65515 and IP addresses of 10.225.0.4 and 10.225.0.5, create two **BGPPeer** resources:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -375,7 +375,7 @@ namespace would be:
 ```batch
 kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
    grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
-   kubectl apply --namespace=default -f -
+   kubectl apply --namespace=<egress_gw_namespace> -f -
 ```
 
 ### Deploy a group of egress gateways
@@ -390,23 +390,23 @@ kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: EgressGateway
 metadata:
-  name: "egress-gateway-red"
-  namespace: "calico-egress"
+  name: egress-gateway-red
+  namespace: <egress_gw_namespace>
 spec:
   logSeverity: "Info"
   replicas: 2
   ipPools:
-  - name: "egress-ip-red-pool"
-  egressGatewayFailureDetection:
-    healthTimeoutDataStoreSeconds: 30
-    icmpProbe:
-      ips: ["34.56.2.7"]
-      timeoutSeconds: 15
-      intervalSeconds: 5
-    httpProbe:
-      urls: ["http://example.com"]
-      timeoutSeconds: 30
-      intervalSeconds: 10
+  - name: egress-ip-red-pool
+  # egressGatewayFailureDetection:
+  #  healthTimeoutDataStoreSeconds: 30
+  #  icmpProbe:
+  #    ips: ["34.56.2.7"]
+  #    timeoutSeconds: 15
+  #    intervalSeconds: 5
+  #  httpProbe:
+  #    urls: ["http://example.com"]
+  #    timeoutSeconds: 30
+  #    intervalSeconds: 10
   template:
     metadata:
       labels:
@@ -477,6 +477,7 @@ httpProbe:
   timeoutSeconds: 30
   intervalSeconds: 10
   ```
+[comment]: <> (XXX is this not necessary to be updated?)
 - Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the Egress Gateway resource type.
 
 :::Note
@@ -487,7 +488,7 @@ gateways in a group, outbound traffic from the applications using that group is 
 across the available gateways.  The number of `replicas` specified must be less than or equal
 to the number of free IP addresses in the IP Pool.
 
-*  IPPool can be specified either by its name (e.g. `-name: egress-ippool-1`) or by its CIDR (e.g. `-cidr: 10.10.10.0/31`).
+*  IPPool can be specified either by its name (e.g. `-name: egress-ip-red-pool`) or by its CIDR (e.g. `-cidr: 10.10.10.0/31`).
 
 *  The labels are arbitrary. You can choose whatever names and values are convenient for
 your cluster's Namespaces and Pods to refer to in their egress selectors.
@@ -519,7 +520,7 @@ By default, that selector can only match egress gateways in the same namespace. 
 in a different namespace, specify a `namespaceSelector` annotation as well, like this:
 
 ```batch
-kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
+kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == '<egress_gw_namespace>'"
 ```
 
 Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
@@ -535,7 +536,7 @@ kind: Pod
 metadata:
   annotations:
     egress.projectcalico.org/selector: egress-code == 'red'
-    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == 'default'
+    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == '<egress_gw_namespace>'
   name: my-client,
   namespace: my-namespace,
 spec:
