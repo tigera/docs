@@ -7,7 +7,7 @@ const FeatureList = [
   {
     title: 'Calico Open Source',
     img: '/img/calico-logo.webp',
-    link: 'https://unified-docs.tigera.io/calico/latest',
+    link: '/calico/3.25/about/',
     description: (
       <>
         Calico Open Source is a free, self-managed networking and security solution for containers, virtual machines,
@@ -19,7 +19,7 @@ const FeatureList = [
   {
     title: 'Calico Enterprise',
     img: '/img/calico-enterprise-logo.webp',
-    link: 'https://unified-docs.tigera.io/calico-enterprise/latest',
+    link: '/calico-enterprise/3.15/about-calico-enterprise',
     description: (
       <>
         Calico Enterprise is a paid, self-managed security and observability solution for containers and Kubernetes.
@@ -55,10 +55,10 @@ function Feature({ img, title, description, link }) {
           />
         </Link>
       </div>
-      <div className='text--center padding-horiz--md'>
+      <div className='text--left padding-horiz--md'>
         <h1>{title}</h1>
         <p className={clsx(styles.featureDescription,
-          'text--justify')}>{description}</p>
+          'text--left')}>{description}</p>
       </div>
     </div>
   );

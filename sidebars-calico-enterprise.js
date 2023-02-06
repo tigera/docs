@@ -41,6 +41,7 @@ module.exports = {
             'getting-started/install-on-clusters/docker-enterprise',
             'getting-started/install-on-clusters/rancher',
             'getting-started/install-on-clusters/rke2',
+            'getting-started/install-on-clusters/rancher-ui',
             'getting-started/install-on-clusters/tkg',
             {
               type: 'category',
@@ -171,8 +172,10 @@ module.exports = {
           link: {type: 'doc', id: 'networking/egress/index'},
           items: [
             'networking/egress/egress-gateway-on-prem',
+            'networking/egress/egress-gateway-azure',
             'networking/egress/egress-gateway-aws',
             'networking/egress/egress-gateway-maintenance',
+            'networking/egress/external-network',
             'networking/egress/troubleshoot',
           ],
         },
@@ -710,6 +713,7 @@ module.exports = {
             'reference/resources/overview',
             'reference/resources/bgpconfig',
             'reference/resources/bgppeer',
+            'reference/resources/bgpfilter',
             'reference/resources/blockaffinity',
             'reference/resources/caliconodestatus',
             {
@@ -725,6 +729,7 @@ module.exports = {
               ]
             },
             'reference/resources/deeppacketinspection',
+            'reference/resources/externalnetwork',
             'reference/resources/felixconfig',
             'reference/resources/globalalert',
             'reference/resources/globalnetworkpolicy',

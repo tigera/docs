@@ -8,6 +8,7 @@ const variables = {
   baseUrl: '/calico-enterprise/3.14',
   filesUrl: 'https://downloads.tigera.io/ee/v3.14.4',
   tutorialFilesURL: 'https://unified-docs.tigera.io/files',
+  tmpScriptsURL: 'https://unified-docs.tigera.io/calico-enterprise/3.14',
   prodnameWindows: 'Calico Enterprise for Windows',
   downloadsurl: 'https://downloads.tigera.io',
   nodecontainer: 'cnx-node',
