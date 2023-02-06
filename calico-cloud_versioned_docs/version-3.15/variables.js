@@ -1,7 +1,7 @@
 const releases = require('./releases.json');
 
 const variables = {
-  releaseTitle: 'v3.14.1',
+  releaseTitle: 'v3.15.1',
   prodname: 'Calico Cloud',
   prodnamedash: 'calico-cloud',
   baseUrl: '/calico-cloud',
@@ -12,11 +12,11 @@ const variables = {
   rootDirWindows: 'C:\\TigeraCalico',
   nodecontainer: 'cnx-node',
   noderunning: 'calico-node',
-  cloudversion: 'v3.14.1-16',
-  clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.14.1-16',
+  cloudversion: 'v3.15.1-1',
+  clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.15.1-1',
   clouddownloadbase: 'https://installer.calicocloud.io',
   cloudoperatorimage: 'us-docker.pkg.dev/tigera-prod-01/calico-cloud-public/cc-operator',
-  imageassuranceversion: 'v1.2.1',
+  imageassuranceversion: 'v1.3.4',
   tigeraOperator: releases[0]['tigera-operator'],
   releases,
   registry: 'quay.io/',

@@ -48,17 +48,16 @@ Before we can observe these annotations, we must first configure a _termination 
 
 In order to widen our maintenance window, we must adjust the `terminationGracePeriodSeconds` field on our egress gateway pods. The amount of time we allot for the termination grace period will dictate how much time a dependent workload has to prepare for a gateway going down.
 
-Let's add a termination grace period of 60 seconds to all pods in our egress gateway deploymment, so that our egress-dependent workloads have a wider window to react:
+Let's add a termination grace period of 60 seconds to all pods in our egress gateway deploymment, so that our egress-dependent workloads have a wider window to react. The Egress Gateway resource must be patched with the new `terminationGracePeriodSeconds` as below:
 
 ```sh
-$  patch a termination grace period of 60s into egress gateway deployment
-$ kubectl get deploy
-NAME               READY   UP-TO-DATE   AVAILABLE   AGE
-egress-gateway     2/2     2            2           16m
+$  patch a termination grace period of 60s into egress gateway resource
+$ kubectl get egressgateway
+NAME             AGE
+egress-gateway   8m43s
 
 $  patch our deployment with a 60-second termination grace period
-$ kubectl patch deploy egress-gateway --type=merge -p '{"spec": {"template": {"spec": {"terminationGracePeriodSeconds": 60}}}}'
-deployment.apps/egress-gateway patched
+$ kubectl patch egressgateway egress-gateway --type=merge -p '{"spec": {"template": {"spec": {"terminationGracePeriodSeconds": 60}}}}'
 
 $  wait for change to rollout
 $ kubectl rollout status deploy/egress-gateway
@@ -66,7 +65,8 @@ $ kubectl rollout status deploy/egress-gateway
 
 :::note
 
-- Making the above alterations to an egress gateway deployment will trigger a new rollout - you can monitor the rollout status with `kubectl rollout status deploy/<deployment name>`
+- This assumes that you have upgraded your Egress Gateways to use the new managed resource in v3.16 or above
+- Making the above alterations to an egress gateway resource will trigger a new rollout of the deployment - you can monitor the rollout status with `kubectl rollout status deploy/<egress gateway resource name>`
 - If your rollout seems to have stalled and egress gateway pods are stuck on "ContainerCreating" phase, it's possible the deployment's IPPool has been exhausted. You can check if this is the case by inspecting a stuck pod with `kubectl describe pod <pod name>`
 
 :::
@@ -110,6 +110,7 @@ Success! Our workload's annotations mark a 60-second maintenance window for the 
 :::note
 
 - Adjusting egress deployments, say, by modifying the `terminationGracePeriodSeconds` field, will trigger a new rollout.
+- IPPool specified should be large enough to include terminating pods.
 - Egress pods terminating due to a new rollout will behave the same as if they were deleted for maintenance - dependent workloads will receive gateway maintenance annotations, and gateway pods will terminate after their termination grace period has elapsed.
 - Deleting an egress gateway in a way that overrides the termination grace period, say, by using `kubectl delete pod my-pod --grace-period=0`, will result in the gateway going down immediately, and dependent workloads will not have any time to react to the termination.
 
