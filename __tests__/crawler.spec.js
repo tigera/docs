@@ -17,8 +17,13 @@ const USE_LC = [
   /\/reference\/legal\/\w+$/i,
 ];
 const skipList = [
-  /\.md$/,
-  /:\/\/([\w-]+\.)?example\.com/
+  /^https?:\/\/([\w-]+\.)?example\.com/,
+  /^https:\/\/kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.18/i,
+  /^https:\/\/v1-(15|16|17|18)\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.(15|16|17|18)/i,
+  /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+\.md$/i,
+  /^https:\/\/www\.linkedin\.com\/company\/tigera\/?/,
+  'http://etcd.co',
+  'https://success.docker.com/article/docker-ee-best-practices',
 ];
 
 test("Test file links to check if they're all reachable", async () => {
