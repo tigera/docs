@@ -19,6 +19,10 @@ start: init
 test: init
 	yarn test
 
+.PHONY: local-crawl-test
+local-crawl-test: init
+	PORT=4242 ./scripts/build-serve-test.sh
+
 .PHONY: clear clean
 clear clean:
 	yarn clear
