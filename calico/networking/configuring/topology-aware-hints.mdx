@@ -1,0 +1,331 @@
+---
+description: Use Topology Aware Hints to reduce costs, or to improve network performance.
+---
+
+# Use Topology Aware Hints
+
+## Big picture
+
+Topology Aware Hints enable topology aware routing by including suggestions for how clients should consume endpoints. This approach adds metadata to enable consumers of EndpointSlice (or Endpoints) objects, so that traffic to those network endpoints can be routed closer to where it originated.
+
+## Value
+
+Use Topology Aware Hints such that you can route traffic within a locality to reduce costs, or to improve network performance.
+
+## Features
+
+This how-to guide uses the following {{prodname}} features:
+
+## Before you begin...
+
+Provision a cluster that is Topology Aware Hints compliant and satisfies all [Safeguards](https://kubernetes.io/docs/concepts/services-networking/topology-aware-hints/#safeguards).
+
+For example: provision an AWS Kubeadm cluster with ten worker nodes across at least twon zones in order to achieve balanced allocation.
+
+```code
+kubectl get nodes -L topology.kubernetes.io/zone
+```
+
+Output
+```code
+NAME                                           STATUS   ROLES           AGE   VERSION   ZONE
+ip-172-16-101-163.us-west-2.compute.internal   Ready    <none>          44m   v1.25.6   us-west-2a
+ip-172-16-101-189.us-west-2.compute.internal   Ready    <none>          44m   v1.25.6   us-west-2a
+ip-172-16-101-193.us-west-2.compute.internal   Ready    <none>          44m   v1.25.6   us-west-2a
+ip-172-16-101-242.us-west-2.compute.internal   Ready    <none>          44m   v1.25.6   us-west-2a
+ip-172-16-101-4.us-west-2.compute.internal     Ready    control-plane   47m   v1.25.6   us-west-2a
+ip-172-16-101-7.us-west-2.compute.internal     Ready    <none>          44m   v1.25.6   us-west-2a
+ip-172-16-102-128.us-west-2.compute.internal   Ready    <none>          44m   v1.25.6   us-west-2b
+ip-172-16-102-196.us-west-2.compute.internal   Ready    <none>          44m   v1.25.6   us-west-2b
+ip-172-16-102-200.us-west-2.compute.internal   Ready    <none>          44m   v1.25.6   us-west-2b
+ip-172-16-102-48.us-west-2.compute.internal    Ready    <none>          44m   v1.25.6   us-west-2b
+ip-172-16-102-8.us-west-2.compute.internal     Ready    <none>          44m   v1.25.6   us-west-2b
+```
+
+### Configure a Topology Aware service
+
+Annotate each service you would like to be topology aware with the following key / value pair `service.kubernetes.io/topology-aware-hints: auto`
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer
+  namespace: yaobank
+  labels:
+    app: customer
+  annotations:
+    service.kubernetes.io/topology-aware-hints: auto
+```
+
+### Configure a Topology Aware deployment
+
+Ensure the number of replicas is relative to the number of zones.  For example, this cluster has two zone thus two replicas.  Otherwise, if the deployment only had one replica then all traffic would route to here regardless of the number of zones thus not be topology aware.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer
+  namespace: yaobank
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: customer
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: customer
+        version: v1
+    spec:
+      serviceAccountName: customer
+      containers:
+        - name: customer
+          image: calico/yaobank-customer:multiarch
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80  
+```
+
+### Configure additional artefacts to test a Topology Aware Hints example
+
+Here we have tweaked the YAO Bank configuration found in the Certified Calico Operator: Level 1 [course](https://academy.tigera.io/course/certified-calico-operator-level-1).  Apply the following YAO Bank configuration to your cluster to test Topology Aware Hints. 
+
+```yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: yaobank
+  labels:
+    istio-injection: disabled
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  namespace: yaobank
+  labels:
+    app: database
+spec:
+  ports:
+    - port: 2379
+      name: http
+  selector:
+    app: database
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: database
+  namespace: yaobank
+  labels:
+    app: yaobank
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+  namespace: yaobank
+spec:
+  selector:
+    matchLabels:
+      app: database
+      version: v1
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: database
+        version: v1
+    spec:
+      serviceAccountName: database
+      containers:
+        - name: database
+          image: calico/yaobank-database:multiarch
+          env:
+            - name: ETCD_UNSUPPORTED_ARCH
+              value: "arm64"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 2379
+          command: ["etcd"]
+          args:
+            - "-advertise-client-urls"
+            - "http://database:2379"
+            - "-listen-client-urls"
+            - "http://0.0.0.0:2379"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: summary
+  namespace: yaobank
+  labels:
+    app: summary
+spec:
+  ports:
+    - port: 80
+      name: http
+  selector:
+    app: summary
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: summary
+  namespace: yaobank
+  labels:
+    app: yaobank
+    database: reader
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: summary
+  namespace: yaobank
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: summary
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: summary
+        version: v1
+    spec:
+      serviceAccountName: summary
+      containers:
+        - name: summary
+          image: calico/yaobank-summary:multiarch
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer
+  namespace: yaobank
+  labels:
+    app: customer
+  annotations:
+    service.kubernetes.io/topology-aware-hints: auto
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      nodePort: 30180
+      name: http
+  selector:
+    app: customer
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: customer
+  namespace: yaobank
+  labels:
+    app: yaobank
+    summary: reader
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer
+  namespace: yaobank
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: customer
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: customer
+        version: v1
+    spec:
+      serviceAccountName: customer
+      containers:
+        - name: customer
+          image: calico/yaobank-customer:multiarch
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+---
+```
+
+### Verify the service is Topology Aware
+
+Inspect the endpoint slice resource backing the Customer service; there should now be an additional `Hints` section.  If not then the cluster is not Topology Aware thus may have failed one of the [Safeguards](https://kubernetes.io/docs/concepts/services-networking/topology-aware-hints/#safeguards).
+
+```yaml
+addressType: IPv4
+apiVersion: discovery.k8s.io/v1
+endpoints:
+  - addresses:
+      - 192.168.142.196
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    hints:
+      forZones:
+        - name: us-west-2a
+    nodeName: ip-172-16-101-116.us-west-2.compute.internal
+    targetRef:
+      kind: Pod
+      name: customer-69ff657cf-llt4h
+      namespace: yaobank
+  - addresses:
+      - 192.168.198.199
+    conditions:
+      ready: true
+      serving: true
+      terminating: false
+    hints:
+      forZones:
+        - name: us-west-2b
+    nodeName: ip-172-16-102-196.us-west-2.compute.internal
+    targetRef:
+      kind: Pod
+      name: customer-69ff657cf-wgl74
+      namespace: yaobank
+```
+
+### Identify all Topology Aware resources
+
+Identify all Topology Aware resources in order to test and verify traffic is routed to those network endpoints closer to where the traffic originated.
+
+```code
+kubectl get all -n yaobank -o wide | grep customer
+```
+
+Output
+```code
+service/customer   NodePort    10.96.80.235   <none>        80:30180/TCP   83s   
+
+pod/customer-69ff657cf-llt4h    1/1     Running   0          83s  192.168.142.196   ip-172-16-101-116.us-west-2.compute.internal   us-west-2a
+pod/customer-69ff657cf-wgl74    1/1     Running   0          83s  192.168.198.199   ip-172-16-102-196.us-west-2.compute.internal   us-west-2b
+```
+
+### Complete end-to-end testing
+
+Shell into a worker node in zone `us-west-2a` and send traffic to the Customer service cluster IP address e.g. `curl 10.96.80.235`.  
+Tail the customer backing pod `customer-69ff657cf-llt4h` to verify traffic routed here to service the request.
+
+Shell into a worker node in zone `us-west-2b` and send traffic to the Customer service cluster IP address e.g. `curl 10.96.80.235`.  
+Tail the customer backing pod `customer-69ff657cf-wgl74` to verify traffic routed here to service the request.
