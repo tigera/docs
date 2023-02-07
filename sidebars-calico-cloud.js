@@ -74,10 +74,8 @@ module.exports = {
         {
           type: 'category',
           label: 'Kubernetes networking for beginners',
-          link: {type: 'doc', id:'networking/training/index'},
+          link: {type: 'doc', id:'tutorials/training/index'},
           items: [
-            'networking/training/about-networking',
-            'networking/training/about-kubernetes-networking',
             'tutorials/training/about-network-policy',
             'tutorials/training/about-kubernetes-services',
             'tutorials/training/about-kubernetes-ingress',
@@ -87,7 +85,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Kubernetes tutorials and demos',
-          link: {type: 'doc', id:'tutorials/training/index'},
+          link: {type: 'doc', id:'tutorials/kubernetes-tutorials/index'},
           items: [
             'tutorials/kubernetes-tutorials/kubernetes-demo',
             'tutorials/kubernetes-tutorials/kubernetes-network-policy',
@@ -208,21 +206,6 @@ module.exports = {
           items: [
             'network-policy/extreme-traffic/high-connection-workloads',
             'network-policy/extreme-traffic/defend-dos-attack',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Kubernetes for beginners',
-          link: {type: 'doc', id: 'tutorials/training/index'},
-          items: [
-            'tutorials/training/about-network-policy',
-            'tutorials/kubernetes-tutorials/kubernetes-network-policy',
-            'tutorials/kubernetes-tutorials/kubernetes-demo',
-            'tutorials/kubernetes-tutorials/kubernetes-policy-basic',
-            'tutorials/kubernetes-tutorials/kubernetes-policy-advanced',
-            'tutorials/training/about-kubernetes-services',
-            'tutorials/training/about-kubernetes-ingress',
-            'tutorials/training/about-kubernetes-egress',
           ],
         },
       ],
