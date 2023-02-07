@@ -34,7 +34,6 @@ module.exports = {
         'get-started/upgrade-cluster',
       ],
     },
-    'users/user-management',
     {
       type: 'category',
       label: 'Tutorials',
