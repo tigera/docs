@@ -7,9 +7,12 @@ const {
 } = require('crawlee');
 const linkChecker = require('../src/utils/linkChecker');
 
+const LOCALHOST = process.env.LOCALHOST;
+const isLocalHost = (typeof LOCALHOST === 'string' && LOCALHOST !== '');
+const PROD = 'https://unified-docs.tigera.io'
 const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
 const httpRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/gi;
-const DOCS = 'https://unified-docs.tigera.io';
+const DOCS = `${isLocalHost ? LOCALHOST : PROD}`;
 const SITEMAP = 'sitemap.xml';
 const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
 const USE_LC = [
@@ -21,7 +24,7 @@ const skipList = [
   /^https:\/\/kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.18/i,
   /^https:\/\/v1-(15|16|17|18)\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.(15|16|17|18)/i,
   /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+\.md$/i,
-  /^https:\/\/www\.linkedin\.com\/company\/tigera\/?/,
+  /^https:\/\/www\.linkedin\.com\/company\/tigera\/?$/,
   'http://etcd.co',
   'https://success.docker.com/article/docker-ee-best-practices',
 ];
@@ -49,6 +52,12 @@ test("Test file links to check if they're all reachable", async () => {
         strategy: EnqueueStrategy.All,
         transformRequestFunction: transformRequest,
       });
+    },
+    async errorHandler(context, error) {
+//      console.error(`[ERROR] Playwright request error for url: ${context.request.url} --- error: ${error}`);
+    },
+    async failedRequestHandler(context, error) {
+//      console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
     },
   });
 
@@ -89,6 +98,7 @@ test("Test file links to check if they're all reachable", async () => {
   const urls = [...urlCache.keys()].filter(url => !url.endsWith(SITEMAP));
   await crawler.addRequests([DOCS]);
   await crawler.addRequests(urls);
+
   await crawler.run();
   lc.report();
 
