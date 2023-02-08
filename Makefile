@@ -19,6 +19,10 @@ start: init
 test: init
 	yarn test
 
+.PHONY: local-crawl-test
+local-crawl-test: init build
+	PORT=4242 ./scripts/serve-test.sh
+
 .PHONY: clear clean
 clear clean:
 	yarn clear
@@ -53,4 +57,5 @@ build-operator-reference:
 				./gen-crd-api-reference-docs \
 					-api-dir github.com/tigera/operator/api \
 					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
-					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx'
+					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx && \
+					sed -i "s|<br>|<br/>|g" /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx'

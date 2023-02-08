@@ -1,8 +1,11 @@
 const linkCheck = require('link-check');
+const LOCALHOST = process.env.LOCALHOST;
+const isLocalHost = (typeof LOCALHOST === 'string' && LOCALHOST !== '');
 const LC = 'LINK-CHECK', DEAD = 'dead', SKIPPED = 'skipped', ALIVE = 'alive',
   ERROR = 'error', INVALID = 'invalid', WARN = 'warn', INFO = 'info';
 const defaultLinkRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/g;
 const validURLRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/;
+const trimUrlChars = /(\)|\)\.|\.)$/;
 const defaultSkipList = [
   /:\/\/\d+\.\d+\.\d+\.\d+/,
   /:\/\/transfer\.sh/,
@@ -62,8 +65,10 @@ function linkChecker() {
 
   function isExcludedOrInvalid(url) {
     if (!validURLRegex.test(url)) {
-      urlMap.set(url, INVALID);
-      return true;
+      if (!isLocalHost || !url.startsWith(LOCALHOST, false)) {
+        urlMap.set(url, INVALID);
+        return true;
+      }
     }
     for (const e of skipList) {
       if (typeof e === 'object' && e instanceof RegExp && e.test(url)) return true;
@@ -90,7 +95,7 @@ function linkChecker() {
     for (const lre of linkRegex) {
       const matches = text.matchAll(lre);
       for (const match of matches) {
-        const url = match[0].trim().replace(/(\)|\)\.)$/, '');
+        const url = match[0].trim().replace(trimUrlChars, '');
         if (urlMap.has(url)) continue;
         urlMap.set(url, SKIPPED); // init to skipped
         if (isExcludedOrInvalid(url)) {
@@ -102,6 +107,7 @@ function linkChecker() {
   }
 
   function report() {
+    if (urlMap.size === 0) return;
     let exit = false;
     skipped = 0; invalid = 0; alive = 0; dead = 0; error = 0;
     urlMap.forEach((v, k) => {
@@ -133,13 +139,13 @@ function linkChecker() {
 
     if (skipped > 0) {
       console.info(
-        `\n\t[INFO] ${LC} skipped the following ${skipped} external link(s) due to built-in skip rules:`);
+        `\n\t[INFO] ${LC} skipped the following ${skipped} link(s) due to built-in skip rules:`);
       enumMap(v => v === SKIPPED, (v, k) => `\t${k} was ${v}`, INFO);
     }
 
     if (dead > 0) {
       console.warn(
-        `\n\t[WARN] ${LC} found the following ${dead} dead external link(s):`);
+        `\n\t[WARN] ${LC} found the following ${dead} dead link(s):`);
       enumMap(v => v === DEAD, (v, k) => `\t${k} is ${v}`, WARN);
     }
 
