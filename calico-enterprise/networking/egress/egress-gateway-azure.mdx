@@ -137,7 +137,6 @@ Azure Route Server deployment is per VNet, as such each VNet with egress gateway
 - [Verify the feature operation](#verify-the-feature-operation)
 - [Controlling the use of egress gateways](#controlling-the-use-of-egress-gateways)
 - [Policy enforcement for flows via an egress gateway](#policy-enforcement-for-flows-via-an-egress-gateway)
-- [Upgrading egress gateways](#upgrading-egress-gateways)
 
 ### Choose route reflectors
 
@@ -397,16 +396,21 @@ spec:
   replicas: 2
   ipPools:
   - name: "egress-ip-red-pool"
-  egressGatewayFailureDetection:
-    healthTimeoutDataStoreSeconds: 30
-    icmpProbe:
-      ips: ["34.56.2.7"]
-      timeoutSeconds: 15
-      intervalSeconds: 5
-    httpProbe:
-      urls: ["http://example.com"]
-      timeoutSeconds: 30
-      intervalSeconds: 10
+# Uncomment this block to add ICMP, HTTP probes
+# egressGatewayFailureDetection:
+#   healthTimeoutDataStoreSeconds: 30
+#   icmpProbe:
+#     ips:
+#     - <IP to probe>
+#     - <IP to probe>
+#     timeoutSeconds: 15
+#     intervalSeconds: 5
+#   httpProbe:
+#     urls:
+#     - <URL to probe>
+#     - <URL to probe>
+#     timeoutSeconds: 30
+#     intervalSeconds: 10
   template:
     metadata:
       labels:
@@ -458,8 +462,8 @@ gateway will report non-ready via its health port. `intervalSeconds` controls th
 ```yaml
 icmpProbe:
   ips:
-  - probeIP
-  - probeIP
+  - <IP to probe>
+  - <IP to probe>
   timeoutSeconds: 20
   intervalSeconds: 10
   ```
@@ -472,8 +476,8 @@ gateway will report non-ready via its health port. `intervalSeconds` controls th
 ```yaml
 httpProbe:
   urls:
-  - probeURL
-  - probeURL
+  - <URL to probe>
+  - <URL to probe>
   timeoutSeconds: 30
   intervalSeconds: 10
   ```
@@ -687,24 +691,6 @@ In iptables mode, this traffic is auto-allowed at egress from the host and ingre
 In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic is allowed.
 
 :::
-
-### Upgrading egress gateways
-
-Egress Gateway in Azure is supported from v3.16 where deployments are managed by the Tigera Operator.
-
-* Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To
-enable the policy sync API, follow the steps in [enable policy sync API](#enable-policy-sync-api) above. This API
-allows the egress gateway daemon inside the egress gateway pod to query {{noderunning}} for the set of active
-routes in the cluster. If the egress gateway daemon cannot reach the API, it will fail and report errors to the logs
-as it retries the connection.
-
-* Use `kubectl apply` to create the egress gateway resource. Tigera Operator will read the newly created resource and wait
-for the other {{prodname}} components to be upgraded. Once the other {{prodname}} components are upgraded, Tigera Operator
-will upgrade the existing egress gateway deployment with the new image.
-
-By default, upgrading egress gateways will sever any connections that are flowing through them. To minimise impact,
-the egress gateway feature supports some advanced options that give feedback to affected pods. For more details see
-the [egress gateway maintenance guide](egress-gateway-maintenance.mdx).
 
 ## Above and beyond
 
