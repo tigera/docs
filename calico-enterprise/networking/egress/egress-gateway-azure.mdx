@@ -21,9 +21,8 @@ change the source IP of the traffic to their own IP. The egress gateways used ca
 scope allowing for flexibility in how the cluster is seen from outside.
 
 In Azure, egress gateway source IP addresses are chosen from an arbitrary user-defined IP pool
-using {{prodname}} IPAM. {{prodname}} IPAM allows the IP addresses to be precisely controlled, this allows
-for static configuration of external appliances. {{prodname}} injects necessary routes to the Azure Route Server
-to configure the Azure fabric to route traffic to and from the egress gateway.
+using {{prodname}} IPAM. Egress Gateway pods use dedicated IPPools to use as source IP addresses, which enables static configuration
+of external appliances.
 
 ## Features
 
@@ -377,7 +376,7 @@ namespace would be:
 ```batch
 kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
    grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
-   kubectl apply --namespace=<egress_gw_namespace> -f -
+   kubectl apply --namespace=<egress gateway namespace> -f -
 ```
 
 ### Deploy a group of egress gateways
@@ -393,7 +392,7 @@ apiVersion: operator.tigera.io/v1
 kind: EgressGateway
 metadata:
   name: egress-gateway-red
-  namespace: <egress_gw_namespace>
+  namespace: <egress gateway namespace>
 spec:
   logSeverity: "Info"
   replicas: 2
@@ -521,7 +520,7 @@ By default, that selector can only match egress gateways in the same namespace. 
 in a different namespace, specify a `namespaceSelector` annotation as well, like this:
 
 ```batch
-kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == '<egress_gw_namespace>'"
+kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == '<egress gateway namespace>'"
 ```
 
 Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
@@ -537,7 +536,7 @@ kind: Pod
 metadata:
   annotations:
     egress.projectcalico.org/selector: egress-code == 'red'
-    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == '<egress_gw_namespace>'
+    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == '<egress gateway namespace>'
   name: my-client,
   namespace: <namespace>,
 spec:
