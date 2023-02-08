@@ -49,7 +49,7 @@ function linkChecker() {
   let skipped = 0, invalid = 0, alive = 0, dead = 0, error = 0;
   let linkRegex = [defaultLinkRegex];
   let skipList = [...defaultSkipList];
-  const opts = { retryOn429: true, fallbackRetryDelay: '15s', timeout: '30s' };
+  const opts = { retryOn429: true, fallbackRetryDelay: '65s', timeout: '20s', retryCount: 5 };
   const urlMap = new Map();
   const sys_errors = [];
 
