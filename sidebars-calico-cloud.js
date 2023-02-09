@@ -214,7 +214,6 @@ module.exports = {
       label: 'Observability and troubleshooting',
       link: {type: 'doc', id: 'visibility/index'},
       items: [
-        'tutorials/calico-cloud-features/tour',
         'visibility/alerts',
         'visibility/kibana',
         'visibility/packetcapture',
