@@ -12,7 +12,7 @@ const isLocalHost = (typeof LOCALHOST === 'string' && LOCALHOST !== '');
 const PROD = 'https://docs.tigera.io'
 const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
 const httpRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/gi;
-const DOCS = `${isLocalHost ? LOCALHOST : PROD}`;
+const DOCS = `${isLocalHost ? LOCALHOST : PROD}`.trim().replace(/\/$/, '');
 const SITEMAP = 'sitemap.xml';
 const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
 const USE_LC = [
@@ -25,6 +25,8 @@ const skipList = [
   /^https:\/\/v1-(15|16|17|18)\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.(15|16|17|18)/i,
   /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+\.md$/i,
   /^https:\/\/www\.linkedin\.com\/company\/tigera\/?$/,
+  /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
+  /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/,
   'http://etcd.co',
   'https://success.docker.com/article/docker-ee-best-practices',
 ];
@@ -84,8 +86,9 @@ test("Test file links to check if they're all reachable", async () => {
 
   async function processSiteMap(siteMapUrl) {
     const urls = await downloadListOfUrls({ url: siteMapUrl });
-    for (const url of urls) {
-      if (!url.toLowerCase().startsWith(DOCS)) continue;
+    for (let url of urls) {
+      if (isLocalHost) url = url.replace(PROD, DOCS);
+      if (!url.startsWith(DOCS)) continue;
       if (urlCache.has(url)) continue;
       urlCache.set(url, null);
       if (url.endsWith(SITEMAP)) {
