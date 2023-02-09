@@ -226,7 +226,6 @@ module.exports = {
           items: [
             'visibility/elastic/overview',
             'visibility/elastic/archive-storage',
-            'visibility/elastic/rbac-elasticsearch',
             {
               type: 'category',
               label: 'Flow logs',
