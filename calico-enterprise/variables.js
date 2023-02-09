@@ -18,6 +18,7 @@ const variables = {
   chart_version_name: 'master',
   tigeraOperator: releases[0]['tigera-operator'],
   manifestsUrl: 'https://docs.tigera.io/master',
+  githubURL: 'https://github.com/projectcalico/calico/blob/',
   releases,
   imageNames: {
     node: 'tigera/cnx-node',
