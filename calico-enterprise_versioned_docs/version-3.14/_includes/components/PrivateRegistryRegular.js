@@ -138,7 +138,7 @@ spec:
   imagePullSecrets:
     - name: tigera-pull-secret
     // highlight-next-line
-      registry: myregistry.com<`}</CodeBlock>
+      registry: myregistry.com`}</CodeBlock>
     </>
   );
 
