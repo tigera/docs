@@ -21,9 +21,8 @@ change the source IP of the traffic to their own IP. The egress gateways used ca
 scope allowing for flexibility in how the cluster is seen from outside.
 
 In Azure, egress gateway source IP addresses are chosen from an arbitrary user-defined IP pool
-using {{prodname}} IPAM. {{prodname}} IPAM allows the IP addresses to be precisely controlled, this allows
-for static configuration of external appliances. {{prodname}} injects necessary routes to the Azure Route Server
-to configure the Azure fabric to route traffic to and from the egress gateway.
+using {{prodname}} IPAM. Egress Gateway pods use dedicated IPPools to use as source IP addresses, which enables static configuration
+of external appliances.
 
 ## Features
 
@@ -142,20 +141,21 @@ Azure Route Server deployment is per VNet, as such each VNet with egress gateway
 
 It is possible to establish BGP connections between all {{prodname}} nodes and Azure Route Servers, but
 to avoid hitting Azure Route Server peers [limit](https://learn.microsoft.com/en-us/azure/route-server/overview#route-server-limits),
-it is better to select some nodes as Route Reflectors and set up BGP connections between those and Azure Route Server.
-The number of Route Reflectors depends on the cluster size, but it is recommended to have at least 3 at all times,
+it is better to select some nodes as route reflectors and set up BGP connections between those and Azure Route Server.
+The number of route reflectors depends on the cluster size, but it is recommended to have at least 3 at all times,
 and Azure Route Servers supports up to 8 peers in a VNet.
 
 ### Create Azure Route Server
 
 Deploy Azure [Route Server](https://learn.microsoft.com/en-us/azure/route-server/) in the VNet with egress gateways,
-and add the chosen Route Reflectors as peers to it.
+and add the chosen route reflectors as peers to it.
 
 :::note
 
-- The BGP connections between Calico Route Reflectors and Azure Route Servers are critical for the functionality
-of egress gateways. It is important to maintain Route Reflectors with care, and to make sure there are always
-enough healthy Route Reflectors.
+- The BGP connections between Calico route reflectors and Azure Route Servers are critical for the functionality
+of egress gateways. It is important to maintain route reflectors with care, and to make sure there are always
+enough healthy route reflectors.
+- If possible, assign a static address to the route reflectors so after reboots the same address is kept.
 - In AKS, it is [recommended](https://learn.microsoft.com/en-us/azure/aks/use-system-pools?tabs=azure-cli#system-and-user-node-pools)
 to run applications in user node pools and leave system node pools for running critical system pods.
 The nodes in system node pools are perfect Route Reflector candidates.
@@ -170,14 +170,15 @@ To do this, modify the default **BGP configuration** resource.
 Run the following command to disable the BGP full-mesh:
 
 ```batch
-calicoctl patch bgpconfiguration default -p '{"spec": {"nodeToNodeMeshEnabled": false}}'
+kubectl apply -f - <<EOF
+apiVersion: projectcalico.org/v3
+kind: BGPConfiguration
+metadata:
+  name: default
+spec:
+  nodeToNodeMeshEnabled: false
+EOF
 ```
-
-:::note
-
-If the default BGP configuration resource does not exist, you need to create it first. See [BGP configuration](../../reference/resources/bgpconfig.mdx) for more information.
-
-:::
 
 :::note
 
@@ -212,7 +213,7 @@ kubectl apply -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: IPPool
 metadata:
-  name: egress-ippool-1
+  name: egress-ip-red-pool
 spec:
   cidr: 10.10.10.0/30
   blockSize: 31
@@ -247,7 +248,7 @@ spec:
   exportV4:
     - action: Accept
       matchOperator: In
-      cidr: 10.10.10.0/31
+      cidr: 10.10.10.0/30
 EOF
 ```
 
@@ -262,13 +263,13 @@ must have a cluster ID - typically an unused IPv4 address.
 To configure a node to be a route reflector with cluster ID 244.0.0.1, run the following command:
 
 ```batch
-calicoctl patch node my-node -p '{"spec": {"bgp": {"routeReflectorClusterID": "244.0.0.1"}}}'
+calicoctl patch node <node name> -p '{"spec": {"bgp": {"routeReflectorClusterID": "244.0.0.1"}}}'
 ```
 
 Typically, you will want to label this node to indicate that it is a route reflector, allowing it to be easily selected by a BGPPeer resource. You can do this with kubectl. For example:
 
 ```batch
-kubectl label node my-node route-reflector=true
+kubectl label node <node name> route-reflector=true
 ```
 
 Now it is easy to configure route reflector nodes to peer with each other and other non-route-reflector nodes using label selectors. For example:
@@ -284,8 +285,8 @@ spec:
 ```
 
 Finally, Add the IP addresses of Azure Route Servers, usually there are two, as peers to route reflectors. For example, if the {{prodname}}
-cluster is in a subnet with 10.224.0.1 as gateway and Azure Route Servers are deployed with ASN 65515 and IP addresses of 10.225.0.4 and 10.225.0.5,
-create two **BGPPeer** resources:
+cluster is in a subnet with 10.224.0.0 as network address, the 10.224.0.1 is, [by definition](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq#are-there-any-restrictions-on-using-ip-addresses-within-these-subnets), the gateway and Azure Route Servers are deployed with
+ASN 65515 and IP addresses of 10.225.0.4 and 10.225.0.5, create two **BGPPeer** resources:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -374,7 +375,7 @@ namespace would be:
 ```batch
 kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
    grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
-   kubectl apply --namespace=default -f -
+   kubectl apply --namespace=<egress gateway namespace> -f -
 ```
 
 ### Deploy a group of egress gateways
@@ -389,28 +390,23 @@ kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: EgressGateway
 metadata:
-  name: "egress-gateway-red"
-  namespace: "calico-egress"
+  name: egress-gateway-red
+  namespace: <egress gateway namespace>
 spec:
   logSeverity: "Info"
   replicas: 2
   ipPools:
-  - name: "egress-ip-red-pool"
-# Uncomment this block to add ICMP, HTTP probes
-# egressGatewayFailureDetection:
-#   healthTimeoutDataStoreSeconds: 30
-#   icmpProbe:
-#     ips:
-#     - <IP to probe>
-#     - <IP to probe>
-#     timeoutSeconds: 15
-#     intervalSeconds: 5
-#   httpProbe:
-#     urls:
-#     - <URL to probe>
-#     - <URL to probe>
-#     timeoutSeconds: 30
-#     intervalSeconds: 10
+  - name: egress-ip-red-pool
+  # egressGatewayFailureDetection:
+  #  healthTimeoutDataStoreSeconds: 30
+  #  icmpProbe:
+  #    ips: ["34.56.2.7"]
+  #    timeoutSeconds: 15
+  #    intervalSeconds: 5
+  #  httpProbe:
+  #    urls: ["http://example.com"]
+  #    timeoutSeconds: 30
+  #    intervalSeconds: 10
   template:
     metadata:
       labels:
@@ -483,7 +479,7 @@ httpProbe:
   ```
 - Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the Egress Gateway resource type.
 
-:::Note
+:::note
 
 *  It is advisable to have more than one egress gateway per group, so that the egress IP function
 continues if one of the gateways crashes or needs to be restarted.  When there are multiple
@@ -491,7 +487,7 @@ gateways in a group, outbound traffic from the applications using that group is 
 across the available gateways.  The number of `replicas` specified must be less than or equal
 to the number of free IP addresses in the IP Pool.
 
-*  IPPool can be specified either by its name (e.g. `-name: egress-ippool-1`) or by its CIDR (e.g. `-cidr: 10.10.10.0/31`).
+*  IPPool can be specified either by its name (e.g. `-name: egress-ip-red-pool`) or by its CIDR (e.g. `-cidr: 10.10.10.0/30`).
 
 *  The labels are arbitrary. You can choose whatever names and values are convenient for
 your cluster's Namespaces and Pods to refer to in their egress selectors.
@@ -523,7 +519,7 @@ By default, that selector can only match egress gateways in the same namespace. 
 in a different namespace, specify a `namespaceSelector` annotation as well, like this:
 
 ```batch
-kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
+kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == '<egress gateway namespace>'"
 ```
 
 Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
@@ -539,9 +535,9 @@ kind: Pod
 metadata:
   annotations:
     egress.projectcalico.org/selector: egress-code == 'red'
-    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == 'default'
+    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == '<egress gateway namespace>'
   name: my-client,
-  namespace: my-namespace,
+  namespace: <namespace>,
 spec:
   ...
 EOF
@@ -589,7 +585,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: my-netcat-pod
-  namespace: my-namespace
+  namespace: <namespace>
 spec:
   containers:
   - name: alpine
@@ -602,7 +598,7 @@ EOF
 Now you can use `kubectl exec` to initiate an outbound connection from that pod:
 
 ```batch
-kubectl exec <pod name> -n <pod namespace> -- nc <server IP> 8089 </dev/null
+kubectl exec <pod name> -n <namespace> -- nc <server IP> 8089 </dev/null
 ```
 
 where `<server IP>` should be the IP address of the netcat server.
