@@ -13,7 +13,7 @@ const variables = {
   nodecontainer: 'cnx-node',
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\TigeraCalico',
-  registry: 'gcr.io/unique-caldron-775/cnx/',
+  registry: 'quay.io',
   chart_version_name: 'v3.16.0-0',
   tigeraOperator: releases[0]['tigera-operator'],
   releases,

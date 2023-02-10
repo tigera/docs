@@ -14,7 +14,7 @@ const variables = {
   nodecontainer: 'cnx-node',
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\TigeraCalico',
-  registry: 'gcr.io/unique-caldron-775/cnx/',
+  registry: 'gcr.io/unique-caldron-775/cnx/', // Change to "quay.io" for new release
   chart_version_name: 'master',
   tigeraOperator: releases[0]['tigera-operator'],
   manifestsUrl: 'https://docs.tigera.io/master',
