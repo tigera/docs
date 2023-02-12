@@ -406,6 +406,16 @@ function InstallCalico()
     Write-Host "`n{{site.prodnameWindows}} installed`n"
 }
 
+function SetConfig {
+    param(
+        [parameter(Mandatory=$true)] $RootDir,
+        [parameter(Mandatory=$true)] $OldString,
+        [parameter(Mandatory=$true)] $NewString
+    )
+
+    (Get-Content $RootDir\config.ps1).replace($OldString, $NewString) | Set-Content $RootDir\config.ps1 -Force
+}
+
 # kubectl errors are expected, so there are places where this is reset to "Continue" temporarily
 $ErrorActionPreference = "Stop"
 
@@ -501,6 +511,7 @@ if ($platform -EQ "eks") {
 
     $calicoNs = GetCalicoNamespace -KubeConfigPath C:\ProgramData\kubernetes\kubeconfig
     GetCalicoKubeConfig -CalicoNamespace $calicoNs -KubeConfigPath C:\ProgramData\kubernetes\kubeconfig
+    SetConfig -RootDir $RootDir -OldString "Set-EnvVarIfNotSet -var `"KUBECONFIG`" -defaultValue `"`$PSScriptRoot\calico-kube-config`"" -NewString "`$env:KUBECONFIG = `"`$PSScriptRoot\calico-kube-config`""
 }
 if ($platform -EQ "ec2") {
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "300"} -Method PUT -Uri http://169.254.169.254/latest/api/token -ErrorAction Ignore
