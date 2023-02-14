@@ -17,7 +17,7 @@ start: init
 
 .PHONY: test
 test: init
-	PORT=4242 ./scripts/serve-test.sh
+	./scripts/serve-test.sh
 
 .PHONY: clear clean
 clear clean:
