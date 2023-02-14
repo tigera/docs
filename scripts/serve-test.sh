@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-PORT=${PORT:-3000}
-WAIT=${WAIT:-1m}
+PORT=${PORT:-4242}
+WAIT=${WAIT:-5s}
 SLEEP=${SLEEP:-1}
 EXIT_CODE=0
 
@@ -27,6 +27,12 @@ function KillAndExit() {
 trap 'KillAndExit 1' SIGINT SIGTERM
 trap 'KillAndExit $EXIT_CODE' EXIT
 
-yarn serve --port "${PORT}" &
-timeout "${WAIT}" bash -c "until echo > /dev/tcp/localhost/${PORT}; do sleep ${SLEEP}; done" &>/dev/null
-LOCALHOST="http://localhost:${PORT}" yarn test || EXIT_CODE=$?
+if [[ ! -d "./build" ]]; then
+  echo "No 'build' directory exists - you need to produce a build first: 'make build'"
+  EXIT_CODE=1
+  exit
+fi
+
+yarn serve --no-open --port "${PORT}" 2>./yarn-serve-error.log &
+timeout "${WAIT}" bash -c "until echo > /dev/tcp/localhost/${PORT}; do sleep ${SLEEP}; done" 2>/dev/null
+DOCS_HOST="http://localhost:${PORT}" yarn test || EXIT_CODE=$?

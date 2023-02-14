@@ -7,44 +7,45 @@ const {
 } = require('crawlee');
 const linkChecker = require('../src/utils/linkChecker');
 
-const LOCALHOST = process.env.LOCALHOST;
-const isLocalHost = (typeof LOCALHOST === 'string' && LOCALHOST !== '');
-const PROD = 'https://docs.tigera.io'
-const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
-const httpRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/gi;
-const DOCS = `${isLocalHost ? LOCALHOST : PROD}`.trim().replace(/\/$/, '');
-const SITEMAP = 'sitemap.xml';
-const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
-const USE_LC = [
-  fileRegex,
-  /\/reference\/legal\/\w+$/i,
-];
-const skipList = [
-  /^https?:\/\/([\w-]+\.)?example\.com/,
-  /^https:\/\/kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.18/i,
-  /^https:\/\/v1-(15|16|17|18)\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.(15|16|17|18)/i,
-  /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+\.md$/i,
-  /^https:\/\/www\.linkedin\.com\/company\/tigera\/?$/,
-  /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
-  /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/,
-  'http://etcd.co',
-  'https://success.docker.com/article/docker-ee-best-practices',
-];
+test("Test links to check if they're all reachable", async () => {
+  const PROD = 'https://docs.tigera.io'
+  const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
+    .toLowerCase().replace(/\/$/, '');
+  const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
+  const isExtendedCrawl = process.env.EXTENDED_CRAWL ? (process.env.EXTENDED_CRAWL==='true') : false;
+  const CONCURRENCY = process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 50;
+  const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
+  const SITEMAP = 'sitemap.xml';
+  const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
+  const USE_LC = [
+    { regex: fileRegex, processContent: false},
+    { regex: /\/reference\/legal\/[\w-]+$/i, processContent: true },
+    { regex: /\/calico-cloud\/get-help\/support$/i, processContent: true },
+    { regex: /\/calico-cloud\/get-started\/connect\/connect-cluster$/i, processContent: true },
+  ];
+  const skipList = [
+    /^https?:\/\/([\w-]+\.)?example\.com/,
+    /^https:\/\/kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.18/i,
+    /^https:\/\/v1-(15|16|17|18)\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.(15|16|17|18)/i,
+    /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+\.md$/i,
+    /^https:\/\/www\.linkedin\.com\/company\/tigera\/?$/,
+    'http://etcd.co',
+    'https://success.docker.com/article/docker-ee-best-practices',
+  ];
 
-test("Test file links to check if they're all reachable", async () => {
   const lc = linkChecker();
-  lc.setLinkRegex([httpRegex]);
+  if (isLocalHost) lc.setLocalhost(DOCS);
   lc.setSkipList([...lc.getSkipList(), ...skipList]);
-  let concurrency = 50;
   if (process.env.CI === 'true') {
     Configuration.getGlobalConfig().set('availableMemoryRatio', 0.75);
   } else {
     Configuration.getGlobalConfig().set('availableMemoryRatio', 0.5);
   }
+  let postProcessUrls = new Map();
 
   const crawler = new PlaywrightCrawler({
     navigationTimeoutSecs: 120,
-    maxConcurrency: concurrency,
+    maxConcurrency: CONCURRENCY,
     // Use the requestHandler to process each of the crawled pages.
     async requestHandler({ request, page, enqueueLinks, log }) {
       if (request.skipNavigation) return;
@@ -55,29 +56,43 @@ test("Test file links to check if they're all reachable", async () => {
         transformRequestFunction: transformRequest,
       });
     },
-    async errorHandler(context, error) {
-//      console.error(`[ERROR] Playwright request error for url: ${context.request.url} --- error: ${error}`);
-    },
-    async failedRequestHandler(context, error) {
-//      console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
-    },
+    // async errorHandler(context, error) {
+    //   console.error(`[ERROR] Playwright request error for url: ${context.request.url} --- error: ${error}`);
+    // },
+    // async failedRequestHandler(context, error) {
+    //   console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
+    // },
   });
 
   function transformRequest(requestOptions) {
-    if (useLinkChecker(requestOptions.url)) {
-      lc.process(requestOptions.url);
+    if (checkAndUseLinkChecker(requestOptions.url)) {
       requestOptions.skipNavigation = true;
     }
     return requestOptions;
   }
 
-  function useLinkChecker(requestOptionsUrl) {
-    const url = requestOptionsUrl.toLowerCase();
+  function checkAndUseLinkChecker(url) {
+    const useLinkChecker = (u, p) => {
+      lc.process(u);
+      if (p) postProcessUrls.set(u, null);
+      return true;
+    }
+
     // if it's external, use linkChecker
-    if (!url.startsWith(DOCS)) return true;
+    if (isExtendedCrawl) {
+      if (isLocalHost && !url.startsWith(DOCS) && !url.startsWith(PROD)) {
+        return useLinkChecker(url, false);
+      } else if (!isLocalHost && !url.startsWith(DOCS)) {
+        return useLinkChecker(url, false);
+      }
+    } else {
+      if (!url.startsWith(DOCS)) {
+        return useLinkChecker(url, false);
+      }
+    }
     // if it matches any in the regex list, use linkChecker
-    for (const regex of USE_LC) {
-      if (regex.test(url)) return true;
+    for (const o of USE_LC) {
+      if (o.regex.test(url)) return useLinkChecker(url, o.processContent);
     }
     return false;
   }
@@ -89,10 +104,24 @@ test("Test file links to check if they're all reachable", async () => {
     for (let url of urls) {
       if (isLocalHost) url = url.replace(PROD, DOCS);
       if (!url.startsWith(DOCS)) continue;
+      if (checkAndUseLinkChecker(url)) {
+        continue;
+      }
       if (urlCache.has(url)) continue;
       urlCache.set(url, null);
       if (url.endsWith(SITEMAP)) {
         await processSiteMap(url);
+      }
+    }
+  }
+
+  async function doPostProcessing() {
+    const opts = { url: '', urlRegExp: lc.getLinkRegex()[0]};
+    for (const url of postProcessUrls.keys()) {
+      opts.url = url;
+      const urls = await downloadListOfUrls(opts);
+      for (const u of urls) {
+        lc.process(u);
       }
     }
   }
@@ -102,8 +131,9 @@ test("Test file links to check if they're all reachable", async () => {
   await crawler.addRequests([DOCS]);
   await crawler.addRequests(urls);
 
-  await crawler.run();
-  lc.report();
+  await crawler.run()
+  await doPostProcessing();
+  await lc.report();
 
   // const allErrors = lc.sysErrorsCount() + lc.errorCount() + lc.deadCount();
   // expect(allErrors).toBe(0);

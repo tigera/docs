@@ -1,61 +1,58 @@
 const linkCheck = require('link-check');
-const LOCALHOST = process.env.LOCALHOST;
-const isLocalHost = (typeof LOCALHOST === 'string' && LOCALHOST !== '');
 const LC = 'LINK-CHECK', DEAD = 'dead', SKIPPED = 'skipped', ALIVE = 'alive',
-  ERROR = 'error', INVALID = 'invalid', WARN = 'warn', INFO = 'info';
-const defaultLinkRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/g;
+  ERROR = 'error', INVALID = 'invalid', WARN = 'warn', INFO = 'info',
+  CHECKING = 'checking';
+const defaultLinkRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/gi;
 const validURLRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/;
 const trimUrlChars = /(\)|\)\.|\.)$/;
+
+// Skip patterns are skipped, but remain in the reporting for visibility
 const defaultSkipList = [
-  /:\/\/\d+\.\d+\.\d+\.\d+/,
-  /:\/\/transfer\.sh/,
-  /:\/\/example.com/,
-  /:\/\/an\.example\.threat\.feed/,
-  /:\/\/my\.threatfeed\.com/,
-  /:\/\/mycalicocl-calicodemorg-03a087-36558dbb\.hcp\.canadaeast\.azmk8s\.io/,
-  /:\/\/60F939227672BC3D5A1B3EC9744B2B21\.gr7\.us-west-2\.eks\.amazonaws\.com/,
-  /:\/\/prometheus-dashboard-svc\.calico-monitoring\.svc/,
-  /:\/\/manager\.apps\.demo-ocp\.tigera-solutions\.io/,
-  /:\/\/d881b853ae9313e00302a84f1e346a77\.gr7\.us-west-2\.eks\.amazonaws\.com/,
-  /:\/\/api\.my-ocp-domain\.com/,
+  /^https?:\/\/\d+\.\d+\.\d+\.\d+/,
+  /^https?:\/\/transfer\.sh/,
+  /^https?:\/\/example.com/,
+  /^https?:\/\/an\.example\.threat\.feed/,
+  /^https?:\/\/my\.threatfeed\.com/,
+  /^https?:\/\/mycalicocl-calicodemorg-03a087-36558dbb\.hcp\.canadaeast\.azmk8s\.io/,
+  /^https?:\/\/60F939227672BC3D5A1B3EC9744B2B21\.gr7\.us-west-2\.eks\.amazonaws\.com/,
+  /^https?:\/\/prometheus-dashboard-svc\.calico-monitoring\.svc/,
+  /^https?:\/\/manager\.apps\.demo-ocp\.tigera-solutions\.io/,
+  /^https?:\/\/d881b853ae9313e00302a84f1e346a77\.gr7\.us-west-2\.eks\.amazonaws\.com/,
+  /^https?:\/\/api\.my-ocp-domain\.com/,
   /\/manifests\/alp\/istio-inject-configmap-$/,
-  /:\/\/auth\.calicocloud\.io/,
-  /:\/\/www\.calicocloud\.io/,
+  /^https?:\/\/auth\.calicocloud\.io/,
+  /^https?:\/\/www\.calicocloud\.io/,
   'https://en.wikipedia.org/wiki/Autonomous_System_(Internet',
   'https://github.com/dims/etcd3-gateway.git@5a3157a122368c2314c7a961f61722e47355f981',
   'https://installer.calicocloud.io:443/',
   'https://web.archive.org/web/20150923231827/https://www.cisco.com/web/about/ac123/ac147/archived_issues/ipj_14-3/143_trill.html',
   'https://web.archive.org/web/20210204031636/https://cumulusnetworks.com/blog/celebrating-ecmp-part-two/',
-  'https://www.fluentd.org/',
   'http://ppa.launchpad.net/project-calico/calico-X.X/ubuntu',
-  // TODO[dac]: we need to investigate some of these and figure out a way to
-  // capture the entire URL - many of these URLs are just the base URL and the
-  // final URL is constructed in the code in such a way that we currently
-  // can't pick them up.
-  'https://docs.tigera.io/calico/charts',
-  'https://downloads.tigera.io/ee/binaries/',
-  'https://downloads.tigera.io/ee/charts/tigera-operator-master.tgz',
-  'https://downloads.tigera.io/ee/master/download/binaries/',
-  'https://downloads.tigera.io/ee/v3.14.4/download/binaries/',
-  'https://downloads.tigera.io/ee/v3.15.1/download/binaries/',
-  'https://github.com/projectcalico/calico/releases/download/',
-  'https://github.com/projectcalico/calico/releases/download/master/install-calico-windows.ps1',
-  'https://github.com/projectcalico/calico/releases/latest/download',
-  'https://installer.calicocloud.io/charts',
-  'https://installer.calicocloud.io/manifests/v3.15.1-0/manifests',
+];
+
+// Ignore patterns are skipped and ignored completely - no visibility whatsoever
+const defaultIgnoreList = [
+  /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
+  /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/i,
+  /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+?\.md$/i,
 ];
 
 function linkChecker() {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
   let skipped = 0, invalid = 0, alive = 0, dead = 0, error = 0;
   let linkRegex = [defaultLinkRegex];
   let skipList = [...defaultSkipList];
-  const opts = { retryOn429: true, fallbackRetryDelay: '65s', timeout: '20s', retryCount: 5 };
+  let ignoreList = [...defaultIgnoreList];
+  let ignored = 0;
+  let localhost = undefined;
+  const opts = { retryOn429: true };
   const urlMap = new Map();
   const sys_errors = [];
 
   function linkCheckCallback(err, result) {
     if (err) {
-      sys_errors[sys_errors.length] = `${LC} SYS-ERROR: ${err}`;
+      const url = (typeof result === 'object' && result !== null) ? result.url : undefined;
+      sys_errors[sys_errors.length] = `${LC} SYS-ERROR: ${err}, url: ${url}`;
     } else if (result.err) {
       urlMap.set(result.link, { state: ERROR, msg: `${result.err}` });
     } else {
@@ -63,16 +60,32 @@ function linkChecker() {
     }
   }
 
-  function isExcludedOrInvalid(url) {
+  function checkList(url, list) {
+    for (const e of list) {
+      if (typeof e === 'object' && e instanceof RegExp && e.test(url)) return true;
+      else if (typeof e === 'string' && e === url) return true;
+    }
+    return false;
+  }
+
+  function isInvalidOrSkipped(url) {
     if (!validURLRegex.test(url)) {
-      if (!isLocalHost || !url.startsWith(LOCALHOST, false)) {
+      if (!(localhost && url.startsWith(localhost))) {
         urlMap.set(url, INVALID);
         return true;
       }
     }
-    for (const e of skipList) {
-      if (typeof e === 'object' && e instanceof RegExp && e.test(url)) return true;
-      else if (typeof e === 'string' && e === url) return true;
+    if (checkList(url, skipList)) {
+      urlMap.set(url, SKIPPED);
+      return true;
+    }
+    return false;
+  }
+
+  function isIgnored(url) {
+    if (checkList(url, ignoreList)) {
+      ignored++;
+      return true;
     }
     return false;
   }
@@ -95,20 +108,27 @@ function linkChecker() {
     for (const lre of linkRegex) {
       const matches = text.matchAll(lre);
       for (const match of matches) {
-        const url = match[0].trim().replace(trimUrlChars, '');
+        const url = match[0].trim().replace(trimUrlChars, '').replace(/\/$/, '');
+        if (isIgnored(url)) continue;
         if (urlMap.has(url)) continue;
-        urlMap.set(url, SKIPPED); // init to skipped
-        if (isExcludedOrInvalid(url)) {
-          continue;
-        }
+        urlMap.set(url, undefined);
+        if (isInvalidOrSkipped(url)) continue;
+        urlMap.set(url, CHECKING);
         linkCheck(url, opts, linkCheckCallback);
       }
     }
   }
 
-  function report() {
+  async function report() {
     if (urlMap.size === 0) return;
     let exit = false;
+
+    const cnt = await wait();
+    if (cnt > 0) {
+      exit = true;
+      console.error(`[FATAL] ${LC} did not finish. There are ${cnt} remaining.`);
+    }
+
     skipped = 0; invalid = 0; alive = 0; dead = 0; error = 0;
     urlMap.forEach((v, k) => {
       if (typeof v === 'object' && v.state === ERROR) {
@@ -123,13 +143,13 @@ function linkChecker() {
         invalid++;
       } else {
         console.error(
-          `FATAL: an unknown state exists in the ${LC} urlMap. k: ${k}, v: ${v} -- Exiting now...`);
-        process.exit(1);
+          `FATAL: an unknown state exists in the ${LC} urlMap. k: ${k}, v: ${v}`);
+        exit = true;
       }
     });
 
     console.log(
-      `${LC} REPORT\n\tSummary: skipped: ${skipped}, invalid: ${invalid}, sys_errors: ${sys_errors.length}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
+      `${LC} REPORT\n\tSummary: ignored: ${ignored}, skipped: ${skipped}, invalid: ${invalid}, sys_errors: ${sys_errors.length}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
 
     if (invalid > 0) {
       console.info(
@@ -190,6 +210,15 @@ function linkChecker() {
     return skipList;
   }
 
+  function getIgnoreList() {
+    return ignoreList;
+  }
+
+  function setIgnoreList(il) {
+    ignoreList = il;
+    return ignoreList;
+  }
+
   function sysErrors() {
     return sys_errors;
   }
@@ -222,7 +251,30 @@ function linkChecker() {
     return urlMap;
   }
 
+  function countStatus(status) {
+    let cnt = 0;
+    urlMap.forEach((v, k) => { if (v === status) cnt++; });
+    return cnt;
+  }
+
+  async function wait() {
+    let cnt = 1;
+    let iter = 0;
+    while (true) {
+      cnt = countStatus(CHECKING);
+      if (cnt <= 0 || ++iter > (12 * 15)) break; // 15 min wait
+      console.log(`Waiting for ${cnt} remaining ${LC}s to finish...`)
+      await sleep(5000); // 5s sleep
+    }
+    return cnt;
+  }
+
+  function setLocalhost(lh) {
+    localhost = lh;
+  }
+
   return {
+    setLocalhost,
     process,
     report,
     getDefaultLinkRegex,
@@ -230,6 +282,8 @@ function linkChecker() {
     setLinkRegex,
     getSkipList,
     setSkipList,
+    getIgnoreList,
+    setIgnoreList,
     sysErrors,
     sysErrorsCount,
     errorCount,
@@ -237,6 +291,7 @@ function linkChecker() {
     invalidCount,
     aliveCount,
     skippedCount,
+    rawMap,
   };
 }
 

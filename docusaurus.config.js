@@ -5,7 +5,6 @@ const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 const variablesPlugin = require('./src/remark/variablesPlugin');
-const linkCheckerPlugin = require('./src/remark/linkCheckerPlugin');
 const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
 /** @type {import('@docusaurus/types').Config} */
@@ -349,7 +348,6 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -388,7 +386,6 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -414,11 +411,9 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         editUrl: generateEditUrl,
       },
     ],
-    linkCheckerPlugin.docusaurusPlugin,
   ],
   customFields: {
     isTesting: process.env.TESTING || false,
