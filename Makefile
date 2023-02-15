@@ -17,11 +17,7 @@ start: init
 
 .PHONY: test
 test: init
-	yarn test
-
-.PHONY: local-crawl-test
-local-crawl-test: init build
-	PORT=4242 ./scripts/serve-test.sh
+	./scripts/serve-test.sh
 
 .PHONY: clear clean
 clear clean:

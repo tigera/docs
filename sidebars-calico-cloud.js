@@ -12,6 +12,7 @@ module.exports = {
           link: {type: 'doc', id:'get-started/connect/index'},
           items: [
             'get-started/connect/install-cluster',
+            'get-started/connect/cc-arch-diagram',
             'get-started/connect/setup-private-registry',
           ],
         },
@@ -258,7 +259,6 @@ module.exports = {
                 'visibility/elastic/l7/datatypes',
               ],
             },
-            'visibility/elastic/troubleshoot',
           ],
         },
         'visibility/kube-audit',
