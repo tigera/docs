@@ -354,7 +354,7 @@ module.exports = {
                 'visibility/elastic/flow/hep',
                 'visibility/elastic/flow/tcpstats',
                 'visibility/elastic/flow/processpath',
-                ,              ],
+              ],
             },
             'visibility/elastic/audit-overview',
             {

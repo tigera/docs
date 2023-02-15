@@ -5,7 +5,6 @@ const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 const variablesPlugin = require('./src/remark/variablesPlugin');
-const linkCheckerPlugin = require('./src/remark/linkCheckerPlugin');
 const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
 /** @type {import('@docusaurus/types').Config} */
@@ -349,7 +348,6 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -361,11 +359,18 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
+        //Add '3.16' to next line to publish 3.16 early preview
+        onlyIncludeVersions: ['current','3.15','3.14'],
         lastVersion: '3.15',
         versions: {
           current: {
             label: 'Next',
             path: 'next',
+            banner: 'unreleased',
+          },
+          3.16: {
+            label: '3.16 (early preview)',
+            path: '3.16',
             banner: 'unreleased',
           },
           3.15: {
@@ -381,7 +386,6 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -407,11 +411,9 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         editUrl: generateEditUrl,
       },
     ],
-    linkCheckerPlugin.docusaurusPlugin,
   ],
   customFields: {
     isTesting: process.env.TESTING || false,
