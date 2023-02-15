@@ -2,7 +2,7 @@
 description: Key/value pairs of DNS activity logs and how to construct queries.
 ---
 
-# Configure DNS logs
+# Query DNS logs
 
 {{prodname}} pushes DNS activity logs to Elasticsearch, for DNS information that is obtained from [trusted DNS servers](../../../network-policy/domain-based-policy.mdx#trusted-dns-servers). The following table
 details the key/value pairs in the JSON blob, including their
@@ -55,58 +55,11 @@ The `latency_*` fields provide information about the latency of the DNS lookups 
 this log. For each successful DNS lookup {{prodname}} measures the time between when the DNS
 request was sent and when the corresponding DNS response was received.
 
-## Querying on various DNS log fields
 
-Once a set of DNS logs has accumulated in Elasticsearch, you can perform many interesting queries. For example:
+## Query DNS log fields
 
-- with a query on the `qname` field, you could find all of the DNS response information that was
-  provided to clients trying to resolve a particular domain name
+After a set of DNS logs has accumulated in Elasticsearch, you can perform many interesting queries. For example, if you query on:
 
-- with a query on the `rrsets.rdata` field, you could find all of the DNS lookups that included a
-  particular IP address in their response data.
+- `qname`, you can find all of the DNS response information that was provided to clients trying to resolve a particular domain name
 
-Different techniques are needed, depending on the field that you want to query on.
-
-### Querying on a top-level field
-
-A top-level field is any of those in the first table above. Querying on a top-level field is
-supported in the Kibana web UI and can also be done with the Elasticsearch API, for example:
-
-```shell
-curl 'http://10.111.1.235:9200/tigera_secure_ee_dns.cluster.20190711/_search?q=qname:example.com&pretty=true'
-```
-
-Please note that, to try this and the following examples in your own cluster:
-
-- You should replace the IP address (here `10.111.1.235`) with the cluster IP of the Elasticsearch
-  API service in your cluster (which you can see with `kubectl get svc --all-namespaces -o wide`).
-
-- You should replace the `cluster` and date parts of the full index name (here
-  `tigera_secure_ee_dns.cluster.20190711`) with the configured cluster name in your cluster and
-  the date of the data that you want to search
-  through. The cluster name can be retrieved from the `clusterName` field in the ConfigMap
-  retrieved with `kubectl get configmap -n tigera-operator tigera-secure-elasticsearch -o yaml`.
-
-- You will need to run curl from a host or pod that is allowed by {{prodname}} policy to
-  connect to the Elasticsearch API service. In our non-production demo setup
-  (`monitor-calico.yaml`), the fluentd pods have such access, so you can use `kubectl get po -n tigera-fluentd` to find the name of a fluentd pod and then `kubectl exec <fluentd pod name> -n tigera-fluentd -- curl ...` to perform the query.
-
-Note that that query can also be written with a JSON body, like this:
-
-```shell
-curl 'http://10.111.1.235:9200/tigera_secure_ee_dns.cluster.20190711/_search?pretty=true' \
-    -d '{"query": {"match": {"qname": "example.com"}}}' \
-    -H "Content-Type: application/json"
-```
-
-### Querying on a nested object field
-
-A nested object field is one of those in the second and third tables above, i.e. within the `rrsets`
-and `servers` objects. Querying on a nested object field is not supported by Kibana, but can be
-done with the Elasticsearch API, for example:
-
-```shell
-curl 'http://10.111.1.235:9200/tigera_secure_ee_dns.cluster.20190711/_search?pretty=true' \
-    -d '{"size": 2, "query": {"nested": {"path": "rrsets", "query": {"match": {"rrsets.rdata": "18.103.110.45"}}}}}' \
-    -H "Content-Type: application/json"
-```
+- `rrsets.rdata`, you can find all of the DNS lookups that included a particular IP address in their response data.
