@@ -56,6 +56,7 @@ function NodeRequirementsEnt(props) {
             interfaces. When VXLAN is enabled, {prodname} also needs to be able to manage the <code>vxlan.calico</code>{' '}
             interface.
           </p>
+          {/*
           <Admonition type='note'>
             <p>
               Many Linux distributions, such as most of the above, include NetworkManager. By default, NetworkManager
@@ -67,6 +68,7 @@ function NodeRequirementsEnt(props) {
               before installing {prodname}.
             </p>
           </Admonition>
+          */}
         </li>
         <li>
           <p>
@@ -190,10 +192,9 @@ function NetworkRequirementsEnt(props) {
         Network requirements
       </Heading>
       <p>
-        Ensure that your hosts and firewalls allow the necessary traffic based on your configuration. See{' '}
-        <Link href={`${baseUrl}/reference/architecture/overview`}>Component architecture</Link> to view the following
-        components.
+        Ensure that your hosts and firewalls allow the necessary traffic based on your configuration.
       </p>
+      {/*Above TODO-XREFS-CC */}
       <table>
         <colgroup>
           <col style={{ width: '27%' }} />

@@ -457,6 +457,7 @@ module.exports = {
             'reference/resources/bgpfilter',
             'reference/resources/blockaffinity',
             'reference/resources/caliconodestatus',
+            'reference/resources/containeradmissionpolicy',
             {
               type: 'category',
               label: 'Compliance reports',
