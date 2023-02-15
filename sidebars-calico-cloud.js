@@ -258,7 +258,6 @@ module.exports = {
                 'visibility/elastic/l7/datatypes',
               ],
             },
-            'visibility/elastic/troubleshoot',
           ],
         },
         'visibility/kube-audit',
