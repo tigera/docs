@@ -1,70 +1,57 @@
 const { test, expect } = require('@playwright/test');
-const http = require('node:http');
-const https = require('node:https');
 const fs = require('node:fs');
 const readLine = require('node:readline');
 const events = require('node:events');
 const url = require('node:url');
+const axios = require('axios')
 
 test("Test old site to new site redirects", async () => {
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
+  const ax = axios.create({ maxRedirects: 0 });
 
-  function responseHandler(origin, url, resp) {
+  function get(origin, url) {
     const ctx = urlMap.get(origin);
-    ctx.path.push({url, code: resp.statusCode});
-    if (resp.statusCode === 301 || resp.statusCode === 302) {
-      let rl = resp.headers.location;
-      if (!rl.startsWith('http')) rl = `${new URL(url).origin}${rl}`;
-      return get(origin, rl);
-    } else if (resp.statusCode !== 200 && resp.statusCode !== 404) {
-      console.log(`[WARN] url: ${url} received an unexpected http response: ${resp.statusCode}`);
-    }
-
-    resp.on('error', (err) => {
-      console.error(`[ERROR] error: ${err}`);
-    });
-
-    // 'end' event will not fire without a listener on the data event!
-    resp.on('data', () => {})
-
-    resp.on('end', () => {
-      urlMap.set(origin, {status: DONE, path: ctx.path});
-    });
-  }
-
-  async function get(origin, url) {
-    const opts = { headers: { 'Connection': 'close'} }
-    if (url.startsWith('https')) {
-      https.get(url, opts,(resp) => {
-        responseHandler(origin, url, resp);
-      }).on('error', (e) => {
-        console.error(`[ERROR] error occurred: ${e}`);
+    return ax.get(url)
+      .then(resp => {
+        ctx.path.push({url, code: resp.status});
+        urlMap.set(origin, {status: DONE, path: ctx.path});
+      })
+      .catch(err => {
+        ctx.path.push({url, code: err.response.status});
+        if (err.response.status === 301 || err.response.status === 302) {
+          let rl = err.response.headers.get('location');
+          if (!rl.startsWith('http')) rl = `${new URL(url).origin}${rl}`;
+          return get(origin, rl);
+        } else if (err.response.status !== 404) {
+          urlMap.set(origin, {status: ERROR, path: ctx.path});
+          console.log(`[WARN] url: ${url} received an unexpected http response: ${err.response.status}`);
+        } else {
+          urlMap.set(origin, {status: DONE, path: ctx.path});
+        }
       });
-    } else {
-      http.get(url, opts,(resp) => {
-        responseHandler(origin, url, resp);
-      }).on('error', (e) => {
-        console.error(`[ERROR] error occurred: ${e}`);
-      });
-    }
   }
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   async function processFile(filePath) {
+    const lineMap = new Map();
     const lineReader = readLine.createInterface({
       input: fs.createReadStream(filePath)
     });
-    lineReader.on('line', async function (url) {
-      const u = url.trim();
-      if (u.startsWith('#') || u === '') return;
-      urlMap.set(u, {status: WIP, path: []});
-      return await get(u, u);
-    });
 
+    lineReader.on('line', function (line) {
+      const url = line.trim();
+      if (url.startsWith('#') || url === '') return;
+      lineMap.set(url, null);
+    });
     await events.once(lineReader, 'close');
+
+    lineMap.forEach((v,url) => {
+      urlMap.set(url, {status: WIP, path: []});
+      return get(url, url);
+    });
 
     while (true) {
       let cnt = 0;
