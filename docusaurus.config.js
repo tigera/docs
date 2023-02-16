@@ -359,8 +359,7 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        //Add '3.16' to next line to publish 3.16 early preview
-        onlyIncludeVersions: ['current','3.15','3.14'],
+        onlyIncludeVersions: ['current','3.16','3.15','3.14'],
         lastVersion: '3.15',
         versions: {
           current: {
