@@ -9,8 +9,9 @@ const url = require('node:url');
 test("Test old site to new site redirects", async () => {
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
+  const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
 
-  function responseHandler({origin, url}, resp) {
+    function responseHandler({origin, url}, resp) {
     const ctx = urlMap.get(origin);
     ctx.path.push({url, code: resp.statusCode});
     if (resp.statusCode === 301 || resp.statusCode === 302) {
@@ -68,7 +69,11 @@ test("Test old site to new site redirects", async () => {
       await sleep(5000);
     }
 
-    console.info("\n[INFO] Reporting errors, 404s, and non-redirects");
+    if (isFullReport) {
+      console.info("\n[INFO] Full Reporting is ON");
+    } else {
+      console.info("\n[INFO] Reporting errors, 404s, and non-redirects");
+    }
     urlMap.forEach((v,k) => {
       let cnt = 0, lastCode = 0, lastUrl = '';
       let out = [];
@@ -80,7 +85,7 @@ test("Test old site to new site redirects", async () => {
       const badCode = lastCode !== 200 && lastCode !== 0;
       const badUrl = !lastUrl.startsWith('https://docs.tigera.io') && lastUrl !== '';
       // const diffPath = !lastUrl.endsWith(new URL(k).pathname);
-      if (badCode || badUrl) {
+      if (isFullReport || badCode || badUrl) {
         console.log('');
         for (const l of out) { console.log(l); }
       }
