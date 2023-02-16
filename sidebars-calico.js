@@ -31,6 +31,8 @@ module.exports = {
           label: 'Kubernetes',
           link: { type: 'doc', id: 'getting-started/kubernetes/index' },
           items: [
+            'getting-started/kubernetes/requirements',
+            'getting-started/kubernetes/community-tested',
             'getting-started/kubernetes/quickstart',
             {
               type: 'category',
@@ -163,7 +165,6 @@ module.exports = {
                 'getting-started/kubernetes/hardway/istio-integration',
               ],
             },
-            'getting-started/kubernetes/requirements',
             {
               type: 'category',
               label: 'VPP dataplane',
