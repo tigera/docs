@@ -10,14 +10,14 @@ test("Test old site to new site redirects", async () => {
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
 
-  function responseHandler(ctx, {origin, url}, resp, resolve, reject) {
+  function responseHandler(ctx, {origin, url}, resp) {
     ctx.path.push({url, code: resp.statusCode});
     if (resp.statusCode === 301 || resp.statusCode === 302) {
       let rl = resp.headers.location;
       if (!rl.startsWith('http')) {
         rl = `${new URL(url).origin}${rl}`;
       }
-      return get({origin, url: rl}, resolve, reject);
+      return get({origin, url: rl});
     } else if (resp.statusCode !== 200 && resp.statusCode !== 404) {
       console.log(`[WARN] url: ${url} received an unexpected http response: ${resp.statusCode}`);
     }
@@ -30,44 +30,38 @@ test("Test old site to new site redirects", async () => {
     resp.on('data', () => {})
 
     resp.on('end', () => {
-      try {
-        urlMap.set(origin, {status: DONE, path: ctx.path});
-        resolve(resp.statusCode);
-      } catch (err) {
-        urlMap.set(origin, {status: ERROR, path: ctx.path});
-        console.error(`[ERROR] origin: ${origin}, err: ${err}`);
-        reject(err);
-      }
+      urlMap.set(origin, {status: DONE, path: ctx.path});
     });
   }
 
-  async function get({origin, url}, resolve, reject) {
+  async function get({origin, url}) {
     const ctx = urlMap.get(origin);
     if (url.startsWith('https')) {
       await https.get(url, (resp) => {
-        responseHandler(ctx, {origin, url}, resp, resolve, reject);
+        responseHandler(ctx, {origin, url}, resp);
       });
     } else {
       await http.get(url, (resp) => {
-        responseHandler(ctx, {origin,url}, resp, resolve, reject);
+        responseHandler(ctx, {origin,url}, resp);
       });
     }
   }
 
   async function getData(url) {
     urlMap.set(url, {status: WIP, path: []});
-    return new Promise((resolve, reject) =>
-      get({origin: url, url}, resolve, reject));
+    return await get({origin: url, url});
   }
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  async function main(filePath) {
+  async function processFile(filePath) {
     const lineReader = readLine.createInterface({
       input: fs.createReadStream(filePath)
     });
-    lineReader.on('line', function (url) {
-      getData(url);
+    lineReader.on('line', async function (url) {
+      const u = url.trim();
+      if (u.startsWith('#') || u === '') return;
+      await getData(u);
     });
 
     await events.once(lineReader, 'close');
@@ -80,6 +74,7 @@ test("Test old site to new site redirects", async () => {
       await sleep(5000);
     }
 
+    console.info("[INFO] Reporting errors, 404s, and non-redirects");
     urlMap.forEach((v,k) => {
       let cnt = 0, lastCode = 0, lastUrl = '';
       let out = [];
@@ -105,7 +100,7 @@ test("Test old site to new site redirects", async () => {
 
   for (const f of files) {
     console.info(`\n\n[INFO] Processing URLs in file ${f}...`);
-    await main(f);
+    await processFile(f);
     urlMap.clear();
   }
 });
