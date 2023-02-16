@@ -19,6 +19,10 @@ start: init
 test: init
 	./scripts/serve-test.sh
 
+.PHONY: redirects-test
+redirects-test: init
+	yarn test __tests__/redirects.test.js
+
 .PHONY: clear clean
 clear clean:
 	yarn clear
