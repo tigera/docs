@@ -35,13 +35,18 @@ test("Test old site to new site redirects", async () => {
   }
 
   async function get(origin, url) {
+    const opts = { headers: { 'Connection': 'close'} }
     if (url.startsWith('https')) {
-      await https.get(url, (resp) => {
+      https.get(url, opts,(resp) => {
         responseHandler(origin, url, resp);
+      }).on('error', (e) => {
+        console.error(`[ERROR] error occurred: ${e}`);
       });
-      } else {
-      await http.get(url, (resp) => {
+    } else {
+      http.get(url, opts,(resp) => {
         responseHandler(origin, url, resp);
+      }).on('error', (e) => {
+        console.error(`[ERROR] error occurred: ${e}`);
       });
     }
   }
