@@ -2,11 +2,11 @@
 description: Install Calico Enterprise on an RKE2 cluster.
 ---
 
-# RKE2 - Rancher's Next Generation Kubernetes Distribution
+# RKE2
 
 ## Big picture
 
-Install {{prodname}} on Rancher's Next-generation Kubernetes Distribution (RKE2) clusters.
+Install {{prodname}} on RKE2 (RKE Government) clusters.
 
 ## Before you begin
 
@@ -18,12 +18,12 @@ The geeky details of what you get:
 
 <GeekDetails
   prodname='{{prodname}}'
-  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:Calico,Datastore:Kubernetes'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes'
 />
 
 **Required**
 
-- A [compatible RKE2 cluster](../compatibility.mdx#rke2)
+- A [compatible RKE2 cluster](../compatibility.mdx#rke2) with 2.6.5 or later
 
   For help, see [Rancher Kubernetes Engine cluster](https://rancher.com/docs/rke/latest/en/).
 
@@ -33,19 +33,13 @@ The geeky details of what you get:
   - Install script: `RKE2_CNI=none`
   - [Configuration file](https://docs.rke2.io/install/configuration#configuration-file): `cni: none`
 
-  :::note
-
-  Rancher UI does not explicitly provide an option to set the RKE2 CNI value as `none`. This is a requirement for installing a non-default CNI on RKE2. To install {{prodname}} using the Rancher UI follow [these instructions](rancher-ui.mdx).
-
-  :::
-
 - Cluster meets [system requirements](requirements.mdx)
 
 - A [Tigera license key and credentials](calico-enterprise.mdx).
 
 - A `kubectl` environment with access to your cluster
 
-  - Ensure you have the [Kubeconfig file that was generated when you created the cluster](https://docs.rke2.io/cluster_access).
+  Ensure you have the [Kubeconfig file that was generated when you created the cluster](https://docs.rke2.io/cluster_access).
 
 - If using a Kubeconfig file locally, [install and set up the Kubectl CLI tool](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
 
@@ -58,7 +52,7 @@ The geeky details of what you get:
 
 1. [Configure a storage class for {{prodname}}.](../../operations/logstorage/create-storage.mdx).
 
-1. For RKE2 [CIS hardened clusters](https://docs.rke2.io/security/hardening_guide) with v1.24 or earlier, if the Tigera operator PSP is not installed, add it now.
+1. If you are using RKE2 [CIS hardened clusters](https://docs.rke2.io/security/hardening_guide) with v1.24 or earlier, install the required Tigera operator PSP.
 
    ```batch
    kubectl create -f {{filesUrl}}/manifests/psp-tigera-operator.yaml
@@ -70,7 +64,7 @@ The geeky details of what you get:
    kubectl create -f {{filesUrl}}/manifests/tigera-operator.yaml
    ```
 
-1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator will be used to deploy Prometheus server and Alertmanager to monitor {{prodname}} metrics.
+1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator is used to deploy Prometheus server and Alertmanager to monitor {{prodname}} metrics.
 
    :::note
 
