@@ -11,13 +11,13 @@ test("Test old site to new site redirects", async () => {
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
 
-    function responseHandler({origin, url}, resp) {
+  function responseHandler(origin, url, resp) {
     const ctx = urlMap.get(origin);
     ctx.path.push({url, code: resp.statusCode});
     if (resp.statusCode === 301 || resp.statusCode === 302) {
       let rl = resp.headers.location;
       if (!rl.startsWith('http')) rl = `${new URL(url).origin}${rl}`;
-      return get({origin, url: rl});
+      return get(origin, rl);
     } else if (resp.statusCode !== 200 && resp.statusCode !== 404) {
       console.log(`[WARN] url: ${url} received an unexpected http response: ${resp.statusCode}`);
     }
@@ -34,14 +34,14 @@ test("Test old site to new site redirects", async () => {
     });
   }
 
-  async function get({origin, url}) {
+  async function get(origin, url) {
     if (url.startsWith('https')) {
       await https.get(url, (resp) => {
-        responseHandler({origin, url}, resp);
+        responseHandler(origin, url, resp);
       });
       } else {
       await http.get(url, (resp) => {
-        responseHandler({origin,url}, resp);
+        responseHandler(origin, url, resp);
       });
     }
   }
@@ -56,7 +56,7 @@ test("Test old site to new site redirects", async () => {
       const u = url.trim();
       if (u.startsWith('#') || u === '') return;
       urlMap.set(u, {status: WIP, path: []});
-      return await get({origin: u, url: u});
+      return await get(u, u);
     });
 
     await events.once(lineReader, 'close');
