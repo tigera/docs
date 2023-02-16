@@ -10,13 +10,12 @@ test("Test old site to new site redirects", async () => {
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
 
-  function responseHandler(ctx, {origin, url}, resp) {
+  function responseHandler({origin, url}, resp) {
+    const ctx = urlMap.get(origin);
     ctx.path.push({url, code: resp.statusCode});
     if (resp.statusCode === 301 || resp.statusCode === 302) {
       let rl = resp.headers.location;
-      if (!rl.startsWith('http')) {
-        rl = `${new URL(url).origin}${rl}`;
-      }
+      if (!rl.startsWith('http')) rl = `${new URL(url).origin}${rl}`;
       return get({origin, url: rl});
     } else if (resp.statusCode !== 200 && resp.statusCode !== 404) {
       console.log(`[WARN] url: ${url} received an unexpected http response: ${resp.statusCode}`);
@@ -35,21 +34,15 @@ test("Test old site to new site redirects", async () => {
   }
 
   async function get({origin, url}) {
-    const ctx = urlMap.get(origin);
     if (url.startsWith('https')) {
       await https.get(url, (resp) => {
-        responseHandler(ctx, {origin, url}, resp);
+        responseHandler({origin, url}, resp);
       });
-    } else {
+      } else {
       await http.get(url, (resp) => {
-        responseHandler(ctx, {origin,url}, resp);
+        responseHandler({origin,url}, resp);
       });
     }
-  }
-
-  async function getData(url) {
-    urlMap.set(url, {status: WIP, path: []});
-    return await get({origin: url, url});
   }
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -61,7 +54,8 @@ test("Test old site to new site redirects", async () => {
     lineReader.on('line', async function (url) {
       const u = url.trim();
       if (u.startsWith('#') || u === '') return;
-      await getData(u);
+      urlMap.set(u, {status: WIP, path: []});
+      return await get({origin: u, url: u});
     });
 
     await events.once(lineReader, 'close');
@@ -94,6 +88,7 @@ test("Test old site to new site redirects", async () => {
   }
 
   const files = [
+    '__tests__/urls_docs.calicocloud.io.txt',
     '__tests__/urls_projectcalico.docs.tigera.io.txt',
     '__tests__/urls_docs.projectcalico.org.txt',
   ];
