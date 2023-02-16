@@ -74,7 +74,7 @@ test("Test old site to new site redirects", async () => {
       await sleep(5000);
     }
 
-    console.info("[INFO] Reporting errors, 404s, and non-redirects");
+    console.info("\n[INFO] Reporting errors, 404s, and non-redirects");
     urlMap.forEach((v,k) => {
       let cnt = 0, lastCode = 0, lastUrl = '';
       let out = [];
