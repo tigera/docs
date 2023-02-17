@@ -3,13 +3,22 @@ const fs = require('node:fs');
 const readLine = require('node:readline');
 const events = require('node:events');
 const url = require('node:url');
-const axios = require('axios')
+const axios = require('axios');
+const https = require('node:https');
+const http = require('node:http');
 
 test("Test old site to new site redirects", async () => {
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
-  const ax = axios.create({ maxRedirects: 0 });
+  const ax = axios.create({
+    maxRedirects: 0,
+    timeout: 60000,
+    maxContentLength: 50 * 1000 * 1000,
+    httpAgent: new http.Agent({ keepAlive: true, maxSockets: 2 }),
+    httpsAgent: new https.Agent({ keepAlive: true, maxSockets: 100 }),
+  });
+  let promises = [];
 
   function get(origin, url) {
     const ctx = urlMap.get(origin);
@@ -19,13 +28,19 @@ test("Test old site to new site redirects", async () => {
         urlMap.set(origin, {status: DONE, path: ctx.path});
       })
       .catch(err => {
+        if (!err.response || !err.response.status) {
+          ctx.path.push({url, code: 0});
+          //console.error(`[ERROR] ${err}`);
+          urlMap.set(origin, {status: ERROR, path: ctx.path, msg: err});
+          return;
+        }
         ctx.path.push({url, code: err.response.status});
         if (err.response.status === 301 || err.response.status === 302) {
           let rl = err.response.headers.get('location');
           if (!rl.startsWith('http')) rl = `${new URL(url).origin}${rl}`;
-          return get(origin, rl);
+          promises.push(get(origin, rl));
         } else if (err.response.status !== 404) {
-          urlMap.set(origin, {status: ERROR, path: ctx.path});
+          urlMap.set(origin, {status: DONE, path: ctx.path});
           console.log(`[WARN] url: ${url} received an unexpected http response: ${err.response.status}`);
         } else {
           urlMap.set(origin, {status: DONE, path: ctx.path});
@@ -34,8 +49,14 @@ test("Test old site to new site redirects", async () => {
   }
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
+  function count(s) {
+    let cnt = 0;
+    urlMap.forEach((v, k) => { if (v.status === s) ++cnt; })
+    return cnt;
+  }
 
   async function processFile(filePath) {
+    promises = [];
     const lineMap = new Map();
     const lineReader = readLine.createInterface({
       input: fs.createReadStream(filePath)
@@ -48,17 +69,34 @@ test("Test old site to new site redirects", async () => {
     });
     await events.once(lineReader, 'close');
 
-    lineMap.forEach((v,url) => {
+    for (const url of lineMap.keys()) {
       urlMap.set(url, {status: WIP, path: []});
-      return get(url, url);
-    });
+      promises.push(get(url, url));
+    }
 
     while (true) {
-      let cnt = 0;
-      urlMap.forEach((v, k) => {if (v.status === WIP) cnt++;});
+      const cnt = count(WIP);
       if (cnt <= 0) break;
       console.log(`Waiting to finish: ${cnt} remaining...`);
       await sleep(5000);
+    }
+
+    await Promise.all(promises);
+
+    while (true) {
+      promises = [];
+      const cnt = count(ERROR);
+      if (cnt <= 0) break;
+      for (const url of urlMap.keys()) {
+        const e = urlMap.get(url);
+        if (e.status === ERROR) {
+          urlMap.set(url, { status: ERROR, path: [] });
+          promises.push(get(url, url));
+        }
+      }
+      console.log(`Retrying ${cnt} error(s)...`)
+      await Promise.all(promises);
+      await sleep(1000);
     }
 
     if (isFullReport) {
@@ -72,9 +110,9 @@ test("Test old site to new site redirects", async () => {
       for (const {url, code} of v.path) {
         lastUrl = url;
         lastCode = code;
-        out[out.length] = `${cnt++ > 0 ? '==>' : ''}URL: ${url} --> ${code}`;
+        out[out.length] = `${cnt++ > 0 ? '==> ' : ''}${url} --> ${code}`;
       }
-      const badCode = lastCode !== 200 && lastCode !== 0;
+      const badCode = lastCode !== 200;
       const badUrl = !lastUrl.startsWith('https://docs.tigera.io') && lastUrl !== '';
       // const diffPath = !lastUrl.endsWith(new URL(k).pathname);
       if (isFullReport || badCode || badUrl) {
