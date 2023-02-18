@@ -56,6 +56,7 @@ test("Test old site to new site redirects", async () => {
   }
 
   async function processFile(filePath) {
+    urlMap.clear();
     promises = [];
     const lineMap = new Map();
     const lineReader = readLine.createInterface({
@@ -131,6 +132,5 @@ test("Test old site to new site redirects", async () => {
   for (const f of files) {
     console.info(`\n\n[INFO] Processing URLs in file ${f}...`);
     await processFile(f);
-    urlMap.clear();
   }
 });
