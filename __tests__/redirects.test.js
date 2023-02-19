@@ -20,30 +20,28 @@ test("Test old site to new site redirects", async () => {
   });
   let promises = [];
 
-  function get(origin, url) {
-    const ctx = urlMap.get(origin);
+  function get(origin, url, ctx) {
     return ax.get(url)
       .then(resp => {
         ctx.path.push({url, code: resp.status});
-        urlMap.set(origin, {status: DONE, path: ctx.path});
+        urlMap.set(origin, {status: DONE, path: [...ctx.path]});
       })
-      .catch(err => {
+      .catch(async err => {
         if (!err.response || !err.response.status) {
           ctx.path.push({url, code: 0});
-          //console.error(`[ERROR] ${err}`);
-          urlMap.set(origin, {status: ERROR, path: ctx.path, msg: err});
+          urlMap.set(origin, {status: ERROR, path: [...ctx.path], err});
           return;
         }
         ctx.path.push({url, code: err.response.status});
         if (err.response.status === 301 || err.response.status === 302) {
           let rl = err.response.headers.get('location');
           if (!rl.startsWith('http')) rl = `${new URL(url).origin}${rl}`;
-          promises.push(get(origin, rl));
-        } else if (err.response.status !== 404) {
-          urlMap.set(origin, {status: DONE, path: ctx.path});
-          console.log(`[WARN] url: ${url} received an unexpected http response: ${err.response.status}`);
+          await get(origin, rl, ctx);
         } else {
-          urlMap.set(origin, {status: DONE, path: ctx.path});
+          urlMap.set(origin, {status: DONE, path: [...ctx.path]});
+          if (err.response.status !== 404) {
+            console.log(`[WARN] url: ${url} received an unexpected http response: ${err.response.status}`);
+          }
         }
       });
   }
@@ -71,8 +69,9 @@ test("Test old site to new site redirects", async () => {
     await events.once(lineReader, 'close');
 
     for (const url of lineMap.keys()) {
-      urlMap.set(url, {status: WIP, path: []});
-      promises.push(get(url, url));
+      let ctx = {status: WIP, path: []};
+      urlMap.set(url, ctx);
+      promises.push(get(url, url, ctx));
     }
 
     while (true) {
@@ -91,8 +90,9 @@ test("Test old site to new site redirects", async () => {
       for (const url of urlMap.keys()) {
         const e = urlMap.get(url);
         if (e.status === ERROR) {
-          urlMap.set(url, { status: ERROR, path: [] });
-          promises.push(get(url, url));
+          let ctx = {status: ERROR, path: []};
+          urlMap.set(url, ctx);
+          promises.push(get(url, url, ctx));
         }
       }
       console.log(`Retrying ${cnt} error(s)...`)
@@ -106,15 +106,14 @@ test("Test old site to new site redirects", async () => {
       console.info("\n[INFO] Reporting errors, 404s, and non-redirects");
     }
     urlMap.forEach((v,k) => {
-      let cnt = 0, lastCode = 0, lastUrl = '';
-      let out = [];
-      for (const {url, code} of v.path) {
-        lastUrl = url;
-        lastCode = code;
-        out[out.length] = `${cnt++ > 0 ? '==> ' : ''}${url} --> ${code}`;
+      let cnt = 0, lastCode = 0, lastUrl = '', out = [];
+      for (const e of v.path) {
+        lastUrl = e.url; lastCode = e.code;
+        const err = v.err ? ` (${v.err})`: '';
+        out.push(`${cnt++ > 0 ? '==> ' : ''}${e.url} --> ${e.code}${err}`);
       }
       const badCode = lastCode !== 200;
-      const badUrl = !lastUrl.startsWith('https://docs.tigera.io') && lastUrl !== '';
+      const badUrl = !lastUrl.startsWith('https://docs.tigera.io');
       // const diffPath = !lastUrl.endsWith(new URL(k).pathname);
       if (isFullReport || badCode || badUrl) {
         console.log('');
