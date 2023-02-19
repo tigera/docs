@@ -81,7 +81,7 @@ test("Test old site to new site redirects", async () => {
       await sleep(5000);
     }
 
-    await Promise.all(promises);
+    await Promise.allSettled(promises);
 
     while (true) {
       promises = [];
@@ -96,7 +96,7 @@ test("Test old site to new site redirects", async () => {
         }
       }
       console.log(`Retrying ${cnt} error(s)...`)
-      await Promise.all(promises);
+      await Promise.allSettled(promises);
       await sleep(1000);
     }
 
@@ -105,6 +105,8 @@ test("Test old site to new site redirects", async () => {
     } else {
       console.info("\n[INFO] Reporting errors, 404s, and non-redirects");
     }
+
+    let reported = 0;
     urlMap.forEach((v,k) => {
       let cnt = 0, lastCode = 0, lastUrl = '', out = [];
       for (const e of v.path) {
@@ -117,9 +119,13 @@ test("Test old site to new site redirects", async () => {
       // const diffPath = !lastUrl.endsWith(new URL(k).pathname);
       if (isFullReport || badCode || badUrl) {
         console.log('');
+        if (out.length > 0) reported++;
         for (const l of out) { console.log(l); }
       }
     });
+    if (reported === 0) {
+      console.log(`ALL GOOD! Nothing to report.`)
+    }
   }
 
   const files = [
@@ -129,7 +135,7 @@ test("Test old site to new site redirects", async () => {
   ];
 
   for (const f of files) {
-    console.info(`\n\n[INFO] Processing URLs in file ${f}...`);
+    console.info(`\n${'#'.repeat(30)}\n[INFO] Processing URLs in file ${f}...`);
     await processFile(f);
   }
 });
