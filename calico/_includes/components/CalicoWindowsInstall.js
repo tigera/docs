@@ -194,8 +194,7 @@ kubernetes   172.16.101.157:6443   40m`}
         <ul>
           <li>
             <p>Download the kube-proxy manifest:</p>
-            {/* TODO [manifest]: Use correct manifest link */}
-            <CodeBlock language='batch'>curl /manifests/windows-kube-proxy.yaml -o windows-kube-proxy.yaml</CodeBlock>
+            <CodeBlock language='batch'>curl {manifestsUrl}/manifests/windows-kube-proxy.yaml -o windows-kube-proxy.yaml</CodeBlock>
           </li>
           <li>
             Edit the downloaded manifest
