@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test } = require('@playwright/test');
 const fs = require('node:fs');
 const readLine = require('node:readline');
 const events = require('node:events');
@@ -8,6 +8,7 @@ const https = require('node:https');
 const http = require('node:http');
 
 test("Test old site to new site redirects", async () => {
+  const log = s => process.stdout.write(`${s}`);
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
@@ -40,7 +41,7 @@ test("Test old site to new site redirects", async () => {
         } else {
           urlMap.set(origin, {status: DONE, path: [...ctx.path]});
           if (err.response.status !== 404) {
-            console.log(`[WARN] url: ${url} received an unexpected http response: ${err.response.status}`);
+            log(`[WARN] url: ${url} received an unexpected http response: ${err.response.status}`);
           }
         }
       });
@@ -77,7 +78,7 @@ test("Test old site to new site redirects", async () => {
     while (true) {
       const cnt = count(WIP);
       if (cnt <= 0) break;
-      console.log(`Waiting to finish: ${cnt} remaining...`);
+      log(`Waiting to finish: ${cnt} remaining...`);
       await sleep(5000);
     }
 
@@ -95,15 +96,15 @@ test("Test old site to new site redirects", async () => {
           promises.push(get(url, url, ctx));
         }
       }
-      console.log(`Retrying ${cnt} error(s)...`)
+      log(`Retrying ${cnt} error(s)...`);
       await Promise.allSettled(promises);
       await sleep(1000);
     }
 
     if (isFullReport) {
-      console.info("\n[INFO] Full Reporting is ON");
+      log("\n[INFO] Full Reporting is ON");
     } else {
-      console.info("\n[INFO] Reporting errors, 404s, and non-redirects");
+      log("\n[INFO] Reporting errors, 404s, and non-redirects");
     }
 
     let reported = 0;
@@ -118,13 +119,13 @@ test("Test old site to new site redirects", async () => {
       const badUrl = !lastUrl.startsWith('https://docs.tigera.io');
       // const diffPath = !lastUrl.endsWith(new URL(k).pathname);
       if (isFullReport || badCode || badUrl) {
-        console.log('');
+        log('');
         if (out.length > 0) reported++;
-        for (const l of out) { console.log(l); }
+        for (const l of out) { log(l); }
       }
     });
     if (reported === 0) {
-      console.log(`ALL GOOD! Nothing to report.`)
+      log(`ALL GOOD! Nothing to report.`);
     }
   }
 
@@ -135,7 +136,7 @@ test("Test old site to new site redirects", async () => {
   ];
 
   for (const f of files) {
-    console.info(`\n${'#'.repeat(30)}\n[INFO] Processing URLs in file ${f}...`);
+    log(`\n${'#'.repeat(30)}\n[INFO] Processing URLs in file ${f}...`);
     await processFile(f);
   }
 });
