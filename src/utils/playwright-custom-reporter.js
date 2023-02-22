@@ -1,26 +1,34 @@
 /** @implements {import('@playwright/test/reporter').Reporter} */
 class ThisReporter {
   onBegin(config, suite) {
-    //console.log(`Starting the run with ${suite.allTests().length} tests`);
+    console.log(`${'#'.repeat(80)}\n\nStarting the run with ${suite.allTests().length} tests`);
   }
 
   onTestBegin(test) {
-    //console.log(`Starting test ${test.title}`);
+    console.log(`${'#'.repeat(40)}\n\nStarting test "${test.title}"`);
   }
 
   onTestEnd(test, result) {
-    //console.log(`Finished test ${test.title}: ${result.status}`);
+    console.log(`\nFinished test "${test.title}": ${result.status}\n${'#'.repeat(40)}`);
   }
 
   onEnd(result) {
-    //console.log(`Finished the run: ${result.status}`);
+    console.log(`\n\nFinished the run: ${result.status}\n${'#'.repeat(80)}`);
   }
 
   onStdOut(chunk, test, result) {
-    console.log(`${chunk}`);
+    if (typeof chunk === 'string') {
+      process.stdout.write(`${chunk}`);
+    } else {
+      process.stdout.write(`${chunk.toString()}`);
+    }
   }
   onStdErr(chunk, test, result) {
-    console.error(`${chunk}`);
+    if (typeof chunk === 'string') {
+      process.stderr.write(`${chunk}`);
+    } else {
+      process.stderr.write(`${chunk.toString()}`);
+    }
   }
 
   printsToStdio() {

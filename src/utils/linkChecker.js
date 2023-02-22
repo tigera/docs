@@ -251,19 +251,25 @@ function linkChecker() {
     return urlMap;
   }
 
-  function countStatus(status) {
-    let cnt = 0;
-    urlMap.forEach((v, k) => { if (v === status) cnt++; });
-    return cnt;
+  function getStatus(status) {
+    const ret = [];
+    urlMap.forEach((v, k) => { if (v === status) ret.push(k) });
+    return ret;
   }
 
   async function wait() {
-    let cnt = 1;
-    let iter = 0;
+    let cnt = 0, iter = 0, lastCnt = 0, lastRpt = 0;
     while (true) {
-      cnt = countStatus(CHECKING);
+      const checking = getStatus(CHECKING);
+      cnt = checking.length;
       if (cnt <= 0 || ++iter > (12 * 15)) break; // 15 min wait
       console.log(`Waiting for ${cnt} remaining ${LC}s to finish...`)
+      if (cnt === lastCnt && cnt !== lastRpt) {
+        lastRpt = cnt;
+        console.log(`Here is what we're waiting on:`);
+        for (const c of checking) { console.log(`> ${c}`) }
+      }
+      lastCnt = cnt;
       await sleep(5000); // 5s sleep
     }
     return cnt;

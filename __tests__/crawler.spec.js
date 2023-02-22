@@ -12,7 +12,7 @@ test("Test links to check if they're all reachable", async () => {
   const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
     .toLowerCase().replace(/\/$/, '');
   const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
-  const isExtendedCrawl = process.env.EXTENDED_CRAWL ? (process.env.EXTENDED_CRAWL==='true') : false;
+  const isDeepCrawl = process.env.DEEP_CRAWL ? (process.env.DEEP_CRAWL==='true') : false;
   const CONCURRENCY = process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 50;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
   const SITEMAP = 'sitemap.xml';
@@ -79,7 +79,7 @@ test("Test links to check if they're all reachable", async () => {
     }
 
     // if it's external, use linkChecker
-    if (isExtendedCrawl) {
+    if (isDeepCrawl) {
       if (isLocalHost && !url.startsWith(DOCS) && !url.startsWith(PROD)) {
         return useLinkChecker(url, false);
       } else if (!isLocalHost && !url.startsWith(DOCS)) {

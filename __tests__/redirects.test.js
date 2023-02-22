@@ -8,7 +8,7 @@ const https = require('node:https');
 const http = require('node:http');
 
 test("Test old site to new site redirects", async () => {
-  const log = s => process.stdout.write(`${s}`);
+  const log = s => console.log(`${s}`);
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
