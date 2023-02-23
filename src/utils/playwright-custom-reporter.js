@@ -1,5 +1,5 @@
 /** @implements {import('@playwright/test/reporter').Reporter} */
-class ThisReporter {
+class StdIoErrReporter {
   onBegin(config, suite) {
     console.log(`${'#'.repeat(80)}\n\nStarting the run with ${suite.allTests().length} tests`);
   }
@@ -31,9 +31,17 @@ class ThisReporter {
     }
   }
 
+  onError(error) {
+    if (!error) {
+      console.error('[ERROR] An error has occurred, but no info is available!');
+    } else {
+      console.error(`[ERROR] An error has occurred: ${JSON.stringify(error)}`);
+    }
+  }
+
   printsToStdio() {
     return true;
   }
 }
 
-module.exports = ThisReporter;
+module.exports = StdIoErrReporter;

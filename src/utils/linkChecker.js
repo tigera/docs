@@ -1,4 +1,4 @@
-const linkCheck = require('link-check');
+const urlCheck = require('./urlCheck');
 const LC = 'LINK-CHECK', DEAD = 'dead', SKIPPED = 'skipped', ALIVE = 'alive',
   ERROR = 'error', INVALID = 'invalid', WARN = 'warn', INFO = 'info',
   CHECKING = 'checking';
@@ -32,9 +32,9 @@ const defaultSkipList = [
 
 // Ignore patterns are skipped and ignored completely - no visibility whatsoever
 const defaultIgnoreList = [
-  /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
-  /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/i,
-  /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+?\.md$/i,
+  // /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
+  // /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/i,
+  // /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+?\.md$/i,
 ];
 
 function linkChecker() {
@@ -45,14 +45,12 @@ function linkChecker() {
   let ignoreList = [...defaultIgnoreList];
   let ignored = 0;
   let localhost = undefined;
-  const opts = { retryOn429: true };
   const urlMap = new Map();
   const sys_errors = [];
 
   function linkCheckCallback(err, result) {
     if (err) {
-      const url = (typeof result === 'object' && result !== null) ? result.url : undefined;
-      sys_errors[sys_errors.length] = `${LC} SYS-ERROR: ${err}, url: ${url}`;
+      urlMap.set(result.link, { state: ERROR, msg: `${LC} SYS-ERROR: ${err}` });
     } else if (result.err) {
       urlMap.set(result.link, { state: ERROR, msg: `${result.err}` });
     } else {
@@ -114,7 +112,7 @@ function linkChecker() {
         urlMap.set(url, undefined);
         if (isInvalidOrSkipped(url)) continue;
         urlMap.set(url, CHECKING);
-        linkCheck(url, opts, linkCheckCallback);
+        urlCheck(url, linkCheckCallback);
       }
     }
   }
@@ -262,7 +260,7 @@ function linkChecker() {
     while (true) {
       const checking = getStatus(CHECKING);
       cnt = checking.length;
-      if (cnt <= 0 || ++iter > (12 * 15)) break; // 15 min wait
+      if (cnt <= 0 || ++iter > (12 * 15)) break; // 5 min wait
       console.log(`Waiting for ${cnt} remaining ${LC}s to finish...`)
       if (cnt === lastCnt && cnt !== lastRpt) {
         lastRpt = cnt;
