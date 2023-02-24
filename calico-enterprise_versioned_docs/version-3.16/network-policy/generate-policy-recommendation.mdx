@@ -1,109 +1,122 @@
 ---
-description: Create a Calico Enterprise policy recommendation to secure unprotected namespaces or workloads.
+description: Enable continuous policy recommendations to secure unprotected namespaces or workloads.
 ---
 
-# Create policy recommendation
+# Get started with policy recommendations
 
 ## Big picture
 
-Create a {{prodname}} policy recommendation to secure namespaces or workloads.
+Enable continuous policy recommendations.
 
 ## Value
 
-After installing {{prodname}}, one of the first things developers need to do is secure unprotected workloads that do not have network policy enforcement. (For example, by default, Kubernetes pods accept traffic from any source.) The {{prodname}} Manager policy recommendation feature helps developers with minimal, to no experience to create a {{prodname}} network policy to secure namespaces or workloads.
+After you install Calico Enterprise, the recommended zero-trust security stance is to deny traffic flows to protect the cluster. Although this is a good thing, allowing traffic requires writing tiered network policy. Writing policy for tiers that follows best practices can be an obstacle to quickly getting clusters up to observe allowed traffic. 
 
-This self-service feature for developers allows network security teams to focus on the overall network policy labeling, evaluation, RBAC, and workflow.
+Developers with no experience can get {{prodname}} policy recommendations that allow traffic, but still secure workloads to/from the cluster’s namespaces. In a safe staging environment, developers can immediately get visibility into the impact of network traffic flows. 
 
-## Features
+## Before you begin
 
-This how-to guide uses the following {{prodname}} features:
+**Required**
 
-- **Flow logs**
-- **StagedNetworkPolicy** resource
-- **NetworkPolicy** resource (optional)
+To enable/disable policy recommendation, you must have the **tigera-admin** role or permissions to the **Policy Recommendation** resource. 
 
-## Concepts
+**Recommended**
+Basic knowledge of policies and tiers:
+- [Network policy tutorial]()
+- [Get started with tiered network policy]()
 
-### Policy recommendations: when and why
+**Limitations**
 
-Policy recommendation automatically creates policies that explicitly allow traffic because of {{prodname}}'s [day-one zero trust](policy-best-practices.mdx#policy-best-practices-for-day-one-zero-trust) enhanced security posture.
-
-A typical scenario for using the policy recommendation feature is:
-
-- Your Kubernetes clusters are up and running under {{prodname}}
-- Clusters are successfully running, and workloads have been running long enough to gather traffic for applications
-- Developers want to secure their namespaces (or workloads, pods, and endpoints using advanced options)
-
-Developers without any experience using {{prodname}} network policy, can simply specify a few parameters, click a button, and create a valid {{prodname}} network policy to protect their namespaces.
-
-### Default tier and Kubernetes policies
-
-During installation, all Kubernetes network policies land in the **default tier** in {{prodname}} Manager. This is perfect because the minimum permissions for non-Admin users include the default tier. Developers can run the policy recommendation feature in the default tier.
-
-### Preview and stage the policy
-
-After developers get a recommended {{prodname}} network policy to secure the namespace (or workload), they can **preview it**, and **stage it** to observe the impact of a recommended policy on network traffic before applying it (if they are granted permissions). Remember, the format of a recommended {{prodname}} network policy is valid and accurate; it is only totally “valid” when you validate the intended results during staging.
-
-### Tips for creating policy recommendations
-
-The policy recommendation feature does not look into existing policies. It looks only into _flow logs that match a request, and only at entries with an `Allow` action_. Because of this, you should run your workloads for a reasonable amount of time so “typical network traffic” for your application can be gathered.
-
-## Before you begin...
-
-### Flow logs
-
-Ensure that flow logs are generated and sent to Elasticsearch.
-
-### Permissions
-
-- To create a policy recommendation, you must have permission to read flow logs.
-- To stage a policy recommendation, you must have permission to create a **StagedNetworkPolicy** in the namespace of the workload that is being secured.
-- To enforce a policy, you must have permission to create a **NetworkPolicy** in the namespace that is being secured. It is recommended to stage a policy to verify its impact before enforcing it.
+In this release, managing policy recommendations is available only in Manager UI. `kubectl` commands are available to update Policy Recommendation parameters.
 
 ## How to
 
-### Create a policy recommendation
+- [Enable policy recommendations](#enable-policy-recommendations)
+- [Activate policy recommendations](#activate-policy-recommendations) 
+- [Manage policy recommendations](#manage-policy-recommendations)
+- [Troubleshoot policy recommendations](#troubleshoot-policy-recommendations)
+- [Change policy recommendation parameters](#change-policy-recommendation-parameters)
+- [Disable policy recommendations](#disable-policy-recommendations)
 
-To create a {{prodname}} policy recommendation, go the **Recommend Policy** page,
+### Enable policy recommendations
 
-![Navigate to Policy Recommendation](/img/calico-enterprise/generate-policy-recommendation/recommend-policy-action-bar.png)
+1. In the left navbar in Manager UI, click **Policy**, **Recommendations**.
+1. On the opt-in page, click **Enable Policy Recommendations**.
 
-and specify:
+   ![Enable policy recommendations](/img/calico-enterprise/enable-policy-recommendations.png)
 
-- **Time Range**
-- **Namespace**
+The **Policy Recommendations** board is automatically displayed. 
 
-And click, **Recommend**.
+![Policy recommendations board](/img/calico-enterprise/policy-recommendations-board.png)
 
-![Create a Policy Recommendation](/img/calico-enterprise/generate-policy-recommendation/recommend-policy-screen.png)
+**Notes**:
+- A policy recommendation is generated for every namespace in your cluster (unless namespaces are filtered out using the PolicyRecommendationScope resource)
+- Traffic originating from the policy recommendation namespace is used to generate egress rules, and traffic destined for the namespace is used to define ingress rules
+- Flow log patterns and processes are continuously monitored for policy recommendations. As the cluster changes (new namespaces are created or new components are added), you can get a new policy recommendation. 
+- Policy recommendations are automatically converted to **Staged network policies** so you can safely observe the traffic before enforcing them
+- If you do not want a policy recommendation to be processed or updated with further recommendations, click the **Action** menu, **Dismiss policy**. 
 
-Click on **Advanced Options** and specify:
+### Activate policy recommendations
 
-- **Name** of the workload
-- (optional) "Unprotected only" checkbox considers flow logs that are not explicitly allowed by a network policy.
+Policy recommendations are not active until you move them to the **Policies Board. 
 
-![Create a Policy Recommendation](/img/calico-enterprise/generate-policy-recommendation/recommend-policy-screen-advanced-options.png)
+From the Policy Recommendation board, select a policy recommendation (or bulk select) and select, Add to policy board.  
 
-to create workload endpoint based recommendations.
+In the left navbar, click **Policies**.
 
-If relevant flow logs are found within the selected time range for the namespace or the workload endpoint, the recommended policy is displayed in the **Create Policy** screen.
+![Policies board](/img/calico-enterprise/policies-board.png)
 
-![Preview or Stage a Policy Recommendation](/img/calico-enterprise/generate-policy-recommendation/create-policy-action-buttons.png)
+Policy recommendations are added to the **namespace-segmentation** tier. Note the following:
 
-Then, you can assess the impact of the recommended policy using **Preview** and/or **Stage** to observe the effect on traffic without impacting the actual traffic flows.
+- The `namespace-segmentation` tier name is fixed and cannot be changed
+- Staged network policy recommendations function like any other staged network policies; they are differentiated from regular staged policies by the `recommendation` suffix
+- You can move policy recommendation staged policies to other tiers
 
-:::note
+You are now ready to observe the allowed traffic of your policy in Service Graph to see if the policy meets your needs. A best practice is to assess the impact of a policy recommendation before enforcing it. See [Stage, preview impacts, and enforce policy](staged-network-policies.mdx) for help. 
 
-We do not recommend using **Enforce** without first assessing the impact of the recommended policy using **Preview** and/or **Stage**.
+:::note 
+
+{{prodname}} has an on-the-fly version of policy recommendations called, **Recommend a policy** (on the Policies Board, Edit page). Although similar to policy recommendations (both generate time-stamped policy recommendations), they are different features. To create an on-the-fly policy recommendation, see Recommend a policy](https://docs.tigera.io/calico-enterprise/next/network-policy/generate-policy-recommendation#create-a-policy-recommendation). 
 
 :::
 
-## Troubleshooting
+### Manage policy recommendations
 
-**Error**: No matching flows to compute rules for
+As new namespace and components are added to a cluster, your policy recommendation won’t allow traffic to them. If a policy recommendation has not been enforced, you’ll need to update it to allow traffic.
 
-**Solution/workaround**: Informational message that indicates no flow log entries with an `Allow` action were found in the workflow to create a policy.
+**To get a new policy recommendation for an existing staged recommended policy**:
 
+1. On the Policies Recommendations page, click the **Active tab** which lists the active staged network policies. 
+1. Select the Actions drop-down associated with the policy in question, and click **Dismiss policy**. 
+1. Click the **Dismissed tab**, select the Actions drop-down, and Reactivate the policy.
+
+**To get a new policy recommendation for an existing enforced policy recommendation**, delete or rename the policy so a new staged network policy is recreated in the Policy Recommendations page. 
+
+## Troubleshoot policy recommendations
+
+To view error logs in Kibana, go to **Logs**, and access the `tigera-policy-recommendation` namespace.
+
+**Problem**: I’m not seeing policy recommendations on the Policy Recommendations board.
+**Solution/workaround**: Policy recommendations are based on historical flow logs that match a request, and are generated only for flows that are denying traffic. As such, there are times when policy recommendations will not be generated:
+
+- Not enough traffic history 
+
+   If you recently installed {{prodname}}, you may not have enough traffic history. Workloads must run for some time (ballpark is 5 days) to get “typical network traffic” for applications.
+
+- Denied traffic flows are covered by existing policy
+
+   Even if your cluster has been running for a long time with traffic flows, the flows may already be covered by existing policies. 
+
+To verify that you have traffic flows, follow these steps:
+
+1. In the left navbar, go to **Service Graph**, **Default**.
+1. On the left, click the chevron to open **Namespaces**.
+1. Search for a namespace. 
+   Note: It may take a few minutes for flows to appear in results.
+1. Scroll over to the flow log’s policies field to investigate which policy or policies denied this flow. (For help, see [Flow log types](../../visibility/elastic/flow/datatypes#big-picture).
+
+If you do not have denied traffic, but still want to test policy recommendations, you can create sample pods, namespaces, and denied traffic. For help, see [Create denied traffic flows to get policy recommendations](). 
+   
 ## Above and beyond
 
-- [Stage, preview impacts, and enforce policy](staged-network-policies.mdx)
+[Policy best practices]()
