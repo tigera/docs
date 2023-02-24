@@ -260,7 +260,7 @@ function linkChecker() {
     while (true) {
       const checking = getStatus(CHECKING);
       cnt = checking.length;
-      if (cnt <= 0 || ++iter > (12 * 15)) break; // 5 min wait
+      if (cnt <= 0 || ++iter > (12 * 15)) break; // 15 min wait
       console.log(`Waiting for ${cnt} remaining ${LC}s to finish...`)
       if (cnt === lastCnt && cnt !== lastRpt) {
         lastRpt = cnt;
