@@ -119,11 +119,11 @@ function linkChecker() {
 
   async function report() {
     if (urlMap.size === 0) return;
-    let exit = false;
+    let failed = false;
 
     const cnt = await wait();
     if (cnt > 0) {
-      exit = true;
+      failed = true;
       console.error(`[FATAL] ${LC} did not finish. There are ${cnt} remaining.`);
     }
 
@@ -142,7 +142,7 @@ function linkChecker() {
       } else {
         console.error(
           `FATAL: an unknown state exists in the ${LC} urlMap. k: ${k}, v: ${v}`);
-        exit = true;
+        failed = true;
       }
     });
 
@@ -174,16 +174,13 @@ function linkChecker() {
     }
 
     if (sys_errors.length > 0) {
-      exit = true;
+      failed = true;
       console.error(
         `\n\t[FATAL] ${LC} FATAL ERROR(S): the following ${sys_errors.length} system errors while link checking:`);
       sys_errors.forEach(e => console.error(`\t${e}`));
     }
 
-    if (exit) {
-      console.error(`${LC}: A FATAL ERROR occurred - exiting now...`);
-      process.exit(1);
-    }
+    return !failed;
   }
 
   function getDefaultLinkRegex() {
@@ -260,7 +257,7 @@ function linkChecker() {
     while (true) {
       const checking = getStatus(CHECKING);
       cnt = checking.length;
-      if (cnt <= 0 || ++iter > (12 * 15)) break; // 15 min wait
+      if (cnt <= 0 || ++iter > (12 * 30)) break; // 30 min wait
       console.log(`Waiting for ${cnt} remaining ${LC}s to finish...`)
       if (cnt === lastCnt && cnt !== lastRpt) {
         lastRpt = cnt;
@@ -277,10 +274,19 @@ function linkChecker() {
     localhost = lh;
   }
 
+  function retryErrors() {
+    const errors = getStatus(ERROR);
+    for (const url of errors) {
+      urlMap.set(url, CHECKING);
+      urlCheck(url, linkCheckCallback);
+    }
+  }
+
   return {
     setLocalhost,
     process,
     report,
+    retryErrors,
     getDefaultLinkRegex,
     getLinkRegex,
     setLinkRegex,
@@ -295,6 +301,8 @@ function linkChecker() {
     invalidCount,
     aliveCount,
     skippedCount,
+    wait,
+    getStatus,
     rawMap,
   };
 }
