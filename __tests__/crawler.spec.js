@@ -131,7 +131,8 @@ test("Test links to check if they're all reachable", async () => {
   await crawler.addRequests([DOCS]);
   await crawler.addRequests(urls);
 
-  console.log(`Crawling the docs and testing links`);
+  console.log(`Crawling the docs (${DOCS}) and testing links.`);
+  console.log(`Localhost mode is ${isLocalHost ? 'ON' : 'OFF'}.`)
   await crawler.run()
   console.log(`Performing all post-processing steps`);
   await doPostProcessing();
