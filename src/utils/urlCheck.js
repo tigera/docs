@@ -63,7 +63,7 @@ function doGet(normUrl, callback, calls, delay, ctx) {
     if (endDone) return;
     endDone = true;
     if (!ctx.err && ctx.statusCode === 429 && calls < defMaxRetry) {
-      debugLog(normUrl, `IN get retry-after: ${normUrl}`);
+      debugLog(normUrl, `IN get retry-after (${delay/1000} seconds): ${normUrl}`);
       setTimeout(doGet, delay, normUrl, callback, 1+calls, delay, ctx);
       return;
     }
@@ -83,8 +83,8 @@ function urlCheck(url, callback, calls = undefined) {
       if (resp) ctx.statusCode = resp.statusCode;
       ctx.status = ctx.statusCode === 200 ? 'alive' : 'dead';
       if (!err && resp && resp.statusCode === 429 && calls < defMaxRetry) {
-        debugLog(normUrl, `IN 'head' retry-after: ${normUrl}`);
         delay = parseRetryAfter(resp.headers, delay);
+        debugLog(normUrl, `IN head retry-after (${delay/1000} seconds): ${normUrl}`);
         setTimeout(urlCheck, delay, url, callback, 1+calls);
       } else if (!err && (ctx.statusCode === 200 || ctx.statusCode === 404)) {
         debugLog(normUrl, `IN head 200/404: ${normUrl}`);
