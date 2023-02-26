@@ -139,7 +139,7 @@ test("Test links to check if they're all reachable", async () => {
   console.log(`Waiting on all remaining link checks to complete`);
   const cnt = await lc.wait();
   console.log(`Retrying all remaining errors`);
-  if (cnt === 0) lc.retryErrors();
+  lc.retryErrors();
   console.log(`Writing the final report.`);
   const success = await lc.report();
 
