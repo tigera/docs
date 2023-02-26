@@ -96,7 +96,7 @@ function urlCheck(url, callback, calls = undefined) {
     });
   } catch (err) {
     console.error(`ERROR: caught error: urlCheck: ${url}, err: ${JSON.stringify(err)}`);
-    callback(err, { status: 'error', link: url, err: null })
+    callback(err, { status: 'error', link: url, err: null });
   }
 }
 

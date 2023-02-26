@@ -143,7 +143,7 @@ test("Test links to check if they're all reachable", async () => {
   console.log(`Writing the final report.`);
   const success = await lc.report();
 
-  // const allErrors = lc.sysErrorsCount() + lc.errorCount() + lc.deadCount();
+  // const allErrors = lc.errorCount() + lc.deadCount();
   // expect(allErrors).toBe(0);
 
   // forcing this test to succeed until we get the errors cleaned up

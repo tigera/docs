@@ -46,15 +46,16 @@ function linkChecker() {
   let ignored = 0;
   let localhost = undefined;
   const urlMap = new Map();
-  const sys_errors = [];
 
   function linkCheckCallback(err, result) {
     if (err) {
-      urlMap.set(result.link, { state: ERROR, msg: `${LC} SYS-ERROR: ${err}` });
+      const errMsg = typeof err === 'object' ? JSON.stringify(err) : err;
+      urlMap.set(result.link, { ...result, msg: `${LC} SYS-ERROR: ${errMsg}` });
     } else if (result.err) {
-      urlMap.set(result.link, { state: ERROR, msg: `${result.err}` });
+      const errMsg = typeof result.err === 'object' ? JSON.stringify(result.err) : err;
+      urlMap.set(result.link, { ...result, msg: `${errMsg}` });
     } else {
-      urlMap.set(result.link, result.status);
+      urlMap.set(result.link, { ...result });
     }
   }
 
@@ -69,12 +70,12 @@ function linkChecker() {
   function isInvalidOrSkipped(url) {
     if (!validURLRegex.test(url)) {
       if (!(localhost && url.startsWith(localhost))) {
-        urlMap.set(url, INVALID);
+        urlMap.set(url, { status: INVALID });
         return true;
       }
     }
     if (checkList(url, skipList)) {
-      urlMap.set(url, SKIPPED);
+      urlMap.set(url, { status: SKIPPED });
       return true;
     }
     return false;
@@ -109,9 +110,9 @@ function linkChecker() {
         const url = match[0].trim().replace(trimUrlChars, '').replace(/\/$/, '');
         if (isIgnored(url)) continue;
         if (urlMap.has(url)) continue;
-        urlMap.set(url, undefined);
+        urlMap.set(url, null);
         if (isInvalidOrSkipped(url)) continue;
-        urlMap.set(url, CHECKING);
+        urlMap.set(url, { status: CHECKING });
         urlCheck(url, linkCheckCallback);
       }
     }
@@ -129,55 +130,53 @@ function linkChecker() {
 
     skipped = 0; invalid = 0; alive = 0; dead = 0; error = 0;
     urlMap.forEach((v, k) => {
-      if (typeof v === 'object' && v.state === ERROR) {
-        error++;
-      } else if (v === SKIPPED) {
-        skipped++;
-      } else if (v === DEAD) {
-        dead++;
-      } else if (v === ALIVE) {
-        alive++;
-      } else if (v === INVALID) {
-        invalid++;
+      if (typeof v === 'object') {
+        if (v.status === ERROR) {
+          error++;
+        } else if (v.status === SKIPPED) {
+          skipped++;
+        } else if (v.status === DEAD) {
+          dead++;
+        } else if (v.status === ALIVE) {
+          alive++;
+        } else if (v.status === INVALID) {
+          invalid++;
+        } else {
+          console.error(
+            `FATAL: an invalid status exists in the ${LC} urlMap. k: ${k}, v: ${JSON.stringify(v)}`);
+          failed = true;
+        }
       } else {
         console.error(
-          `FATAL: an unknown state exists in the ${LC} urlMap. k: ${k}, v: ${v}`);
+          `FATAL: an invalid status exists in the ${LC} urlMap. k: ${k}, v: ${v}`);
         failed = true;
       }
     });
 
     console.log(
-      `${LC} REPORT\n\tSummary: ignored: ${ignored}, skipped: ${skipped}, invalid: ${invalid}, sys_errors: ${sys_errors.length}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
+      `${LC} REPORT\n\tSummary: ignored: ${ignored}, skipped: ${skipped}, invalid: ${invalid}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
 
     if (invalid > 0) {
       console.info(
         `\n\t[INFO] ${LC} skipped the following ${invalid} invalid link(s):`);
-      enumMap(v => v === INVALID, (v, k) => `\t${k} is ${v}`, INFO);
+      enumMap(v => v.status === INVALID, (v, k) => `\t${k} is ${v.status}`, INFO);
     }
 
     if (skipped > 0) {
       console.info(
         `\n\t[INFO] ${LC} skipped the following ${skipped} link(s) due to built-in skip rules:`);
-      enumMap(v => v === SKIPPED, (v, k) => `\t${k} was ${v}`, INFO);
+      enumMap(v => v.status === SKIPPED, (v, k) => `\t${k} was ${v.status}`, INFO);
     }
 
     if (dead > 0) {
       console.warn(
         `\n\t[WARN] ${LC} found the following ${dead} dead link(s):`);
-      enumMap(v => v === DEAD, (v, k) => `\t${k} is ${v}`, WARN);
+      enumMap(v => v.status === DEAD, (v, k) => `\t${k} is ${v.status} (${v.statusCode})`, WARN);
     }
 
     if (error > 0) {
       console.warn(`\n\t[ERROR] ${LC} hit the following ${error} error(s):`);
-      enumMap(v => typeof v === 'object' && v.state === ERROR,
-        (v, k) => `\t${k} error: ${v.msg}`, WARN);
-    }
-
-    if (sys_errors.length > 0) {
-      failed = true;
-      console.error(
-        `\n\t[FATAL] ${LC} FATAL ERROR(S): the following ${sys_errors.length} system errors while link checking:`);
-      sys_errors.forEach(e => console.error(`\t${e}`));
+      enumMap(v => v.status === ERROR,(v, k) => `\t${k} (${v.statusCode}) error: ${v.msg}`, WARN);
     }
 
     return !failed;
@@ -214,14 +213,6 @@ function linkChecker() {
     return ignoreList;
   }
 
-  function sysErrors() {
-    return sys_errors;
-  }
-
-  function sysErrorsCount() {
-    return sys_errors.length;
-  }
-
   function errorCount() {
     return error;
   }
@@ -248,7 +239,10 @@ function linkChecker() {
 
   function getStatus(status) {
     const ret = [];
-    urlMap.forEach((v, k) => { if (v === status) ret.push(k) });
+    urlMap.forEach((v, k) => {
+      if (typeof v === 'object' && v.status === status) ret.push(k)
+      else if (v === status) ret.push(k)
+    });
     return ret;
   }
 
@@ -277,7 +271,7 @@ function linkChecker() {
   function retryErrors() {
     const errors = getStatus(ERROR);
     for (const url of errors) {
-      urlMap.set(url, CHECKING);
+      urlMap.set(url, { status: CHECKING });
       urlCheck(url, linkCheckCallback);
     }
   }
@@ -294,8 +288,6 @@ function linkChecker() {
     setSkipList,
     getIgnoreList,
     setIgnoreList,
-    sysErrors,
-    sysErrorsCount,
     errorCount,
     deadCount,
     invalidCount,
