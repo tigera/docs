@@ -1,5 +1,4 @@
 const urlCheck = require('./urlCheck');
-const util = require('util');
 const LC = 'LINK-CHECK', DEAD = 'dead', SKIPPED = 'skipped', ALIVE = 'alive',
   ERROR = 'error', INVALID = 'invalid', WARN = 'warn', INFO = 'info',
   CHECKING = 'checking';
@@ -47,15 +46,16 @@ function linkChecker() {
   let ignored = 0;
   let localhost = undefined;
   const urlMap = new Map();
-  const inspectOpts = {breakLength: Infinity, compact: true, depth: 0}
 
   function linkCheckCallback(err, result) {
+    const getMsg = err => {
+      if (typeof err === 'string') return `error: ${err}`;
+      return `message: '${err?.message}', errno: ${err?.errno}, code: ${err?.code}`;
+    };
     if (err) {
-      const errMsg = typeof err === 'object' ? util.inspect(err, inspectOpts) : err;
-      urlMap.set(result.link, { ...result, msg: `SYS-ERROR: ${errMsg}` });
-    } else if (result.err) {
-      const errMsg = typeof result.err === 'object' ? util.inspect(result.err, inspectOpts) : result.err;
-      urlMap.set(result.link, { ...result, msg: `${errMsg}` });
+      urlMap.set(result.link, { ...result, msg: `SYS-ERROR: ${getMsg(err)}` });
+    } else if (result?.err) {
+      urlMap.set(result.link, { ...result, msg: `${getMsg(result.err)}` });
     } else {
       urlMap.set(result.link, { ...result });
     }
