@@ -1,0 +1,76 @@
+---
+description: Create denied traffic flows to test policy recommendations.
+---
+
+# Create denied traffic flows to get policy recommendations
+
+## Big picture
+
+To use the [policy recommendation feature](../policy-recommendations.mdx), you must have traffic between pods in namespaces that are denying traffic. However, you may already have policies in place to allow traffic. If you want to play with policy recommendations, follow these steps to create namespaces and pods with denied traffic. 
+
+### Create namespaces 
+
+In this example, we create two namespaces: ns1 and ns2.
+
+```batch
+$ kubectl create namespace ns1
+$ kubectl create namespace ns2
+```
+
+### Create pods in namespaces 
+
+Now we create `pod1` in ns1 and `pod2` in ns2 namespaces. 
+
+```batch
+$ kubectl apply -f my-pods.yaml
+```
+
+**my-pods.yaml**
+
+```yaml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod1
+  namespace: ns1
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod2
+  namespace: ns2
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+```
+
+### Create traffic flows between pods
+
+Get the IP address for `pod2`.
+
+```
+$ kubectl get pod pod2 -nns2 -o template --template={{.status.podIP}}
+> 192.168.160.142
+```
+
+Next, curl `pod2` pod from `pod1` using the IP from the previous command, and port 80 (the listening port of the `pod2`).
+
+```batch
+kubectl exec -it pod1 -n ns1 -- curl http://192.168.160.142:80
+```
+
+You should get a 404 error. This is the expected response because flows are not allowed. 
+
+### Next step
+
+You are now ready to [enable policy recommendations](../policy-recommendations#enable-policy-recommendations) and see flows that can be allowed. 
