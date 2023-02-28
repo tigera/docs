@@ -246,7 +246,7 @@ spec:
         <>
           <Heading
             as='h4'
-            id={`sucure-${prodnamedash}-components-with-network-policy`}
+            id={`secure-${prodnamedash}-components-with-network-policy`}
           >
             Secure {prodname} components with network policy
           </Heading>
