@@ -216,7 +216,8 @@ module.exports = {
         },
         'network-policy/networksets',
         'network-policy/default-deny',
-        'network-policy/generate-policy-recommendation',
+        'network-policy/policy-recommendations',
+        'network-policy/denied-traffic-flows',
         'network-policy/staged-network-policies',
         'network-policy/policy-troubleshooting',
         {
