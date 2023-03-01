@@ -1,10 +1,12 @@
+import { expect } from '@playwright/test';
+
 const { test } = require('@playwright/test');
 const fs = require('node:fs');
 const readLine = require('node:readline');
 const events = require('node:events');
 const needle = require('needle');
-const util = require('util');
 import { RateLimiter } from "limiter";
+import * as util from 'util';
 
 test("Test to make sure all old pages with canonical are removed from indexing and following", async () => {
   const log = s => console.log(`${s}`);
@@ -12,7 +14,7 @@ test("Test to make sure all old pages with canonical are removed from indexing a
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
   const metaRegex = /<meta name=["']robots["'][ \t]+content=["']([\w,; -]+)["']\/?>/gi;
-  const rateLimit = process.env.RATE_LIMIT ? process.env.RATE_LIMIT.split('/') : ['500', 'minute'];
+  const rateLimit = process.env.RATE_LIMIT ? process.env.RATE_LIMIT.split('/') : ['10', 'second'];
   const limiter = new RateLimiter({ 
     tokensPerInterval: Number(rateLimit[0]),
     interval: rateLimit[1],
@@ -22,6 +24,7 @@ test("Test to make sure all old pages with canonical are removed from indexing a
   let totalRobotHdrMissing = 0;
   let totalErrors = 0;
   let totalRetryAfter = 0;
+  let totalFailures = 0;
 
   function parseRetryAfter(headers, defValue) {
     let hdrVal = '';
@@ -41,6 +44,7 @@ test("Test to make sure all old pages with canonical are removed from indexing a
     needle.request('get', url, null, {follow_max: 10}, (err, resp) => {
       if (err) {
         totalErrors++;
+        //log(`err: ${util.inspect(err)}`)
         urlMap.set(url,{ status: ERROR, err, statusCode: err?.response?.statusCode });
         return;
       }
@@ -59,7 +63,7 @@ test("Test to make sure all old pages with canonical are removed from indexing a
       }
       if (bd.length === 0) {
         totalRobotHdrMissing++;
-        // leaving this log here, because it seems to be a bug on the netlify side where,
+        // leaving this log here because it seems to be a bug on the netlify side where,
         // under stress / rate limiting conditions, you will occasionally see
         // a 200 response with no bot tag header, but manual inspection later
         // ALWAYS shows that the 'x-robots-tag' is there!
@@ -74,11 +78,10 @@ test("Test to make sure all old pages with canonical are removed from indexing a
     });
   }
 
-
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   function countStatus(s) {
     let cnt = 0;
-    urlMap.forEach((v, k) => { if (v.status === s) ++cnt; })
+    urlMap.forEach((v) => { if (v.status === s) ++cnt; })
     return cnt;
   }
 
@@ -86,32 +89,42 @@ test("Test to make sure all old pages with canonical are removed from indexing a
     await limiter.removeTokens(1);
     if (++totalRequestCnt % 500 === 0) {
       const errCnt = countStatus(ERROR);
-      log(`Rate limit stats: ${totalRequestCnt} total requests - ${errCnt} current error count`)
+      log(`Rate limit stats: ${totalRequestCnt} total requests processed, ${errCnt} current error count`)
     }
     urlMap.set(url, {status});
     get(url);
   }
 
-  async function processFile(filePath) {
-    urlMap.clear();
+  async function fileLine(filePath, callback) {
+    let totalLineCount = 0;
     const lineReader = readLine.createInterface({
       input: fs.createReadStream(filePath)
     });
-
-    log(`Rate limiting: ${rateLimit[0]} requests per ${rateLimit[1]}`);
-
     lineReader.on('line', async (line) => {
       const url = line.trim();
       if (url.startsWith('#') || url === '') return;
-      await doRateLimitedRequest(url);
+      totalLineCount++;
+      if (callback) callback(url);
     });
-
     await events.once(lineReader, 'close');
+    return totalLineCount;
+  }
+
+  async function processFile(filePath) {
+    urlMap.clear();
+    const totalUrlCount = await fileLine(filePath);
+    log(`Rate limiting: ${rateLimit[0]} requests per ${rateLimit[1]}`);
+    log(`Found a total of ${totalUrlCount} URLs to check`);
+
+    await fileLine(filePath, url => {
+      doRateLimitedRequest(url);
+    });
 
     while (true) {
       const cnt = countStatus(WIP);
+      const done = countStatus(DONE);
       if (cnt <= 0) break;
-      log(`Waiting to finish: ${cnt} in-progress, ${totalErrors} total errors, ${totalRobotHdrMissing} total bot hdr missing, ${totalRetryAfter} retry-after requests`);
+      log(`Processing stats: ${cnt} in-progress, ${done} done, ${totalErrors} total errors, ${totalRobotHdrMissing} total bot hdr missing, ${totalRetryAfter} retry-after requests`);
       await sleep(10000);
     }
 
@@ -133,6 +146,8 @@ test("Test to make sure all old pages with canonical are removed from indexing a
       await sleep(10000);  // 10 sec
     }
 
+    log(`FINAL processing stats: ${totalRequestCnt} requests, ${countStatus(DONE)} URLs processed, ${totalErrors} errors, ${totalRobotHdrMissing} bot hdr missing, ${totalRetryAfter} retry-after requests`);
+
     if (isFullReport) {
       log("\n[INFO] Full Reporting is ON");
     } else {
@@ -146,19 +161,18 @@ test("Test to make sure all old pages with canonical are removed from indexing a
     }
 
     urlMap.forEach((v, k) => {
-      if (isFullReport || v.statusCode !== 200) {
+      let noIndex = false, noFollow = false;
+      for (const bd of v.directives) {
+        if (bd.startsWith('x:')) {
+          if (bd.includes('noindex')) noIndex = true;
+          if (bd.includes('nofollow')) noFollow = true;
+        }
+      }
+      if (v.statusCode !== 200 || !noIndex || !noFollow) {
+        totalFailures++;
+      }
+      if (isFullReport || !noIndex || !noFollow || v.statusCode !== 200) {
         report(v, k);
-      } else {
-        let noIndex = false, noFollow = false;
-        for (const bd of v.directives) {
-          if (bd.startsWith('x:')) {
-            if (bd.includes('noindex')) noIndex = true;
-            if (bd.includes('nofollow')) noFollow = true;
-          }
-        }
-        if (!noIndex || !noFollow) {
-          report(v, k);
-        }
       }
     });
     if (reported === 0) {
@@ -174,4 +188,6 @@ test("Test to make sure all old pages with canonical are removed from indexing a
     log(`\n${'#'.repeat(30)}\n[INFO] Processing URLs in file ${f}...`);
     await processFile(f);
   }
+
+  expect(totalFailures).toBe(0);
 });
