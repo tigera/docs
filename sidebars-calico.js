@@ -663,7 +663,7 @@ module.exports = {
               link: { type: 'doc', id: 'reference/architecture/design/index' },
               items: [
                 'reference/architecture/design/l2-interconnect-fabric',
-                'reference/architecture/design/l2-interconnect-fabric',
+                'reference/architecture/design/l3-interconnect-fabric',
               ],
             },
           ],
