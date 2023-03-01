@@ -349,34 +349,11 @@ kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
 
-### Enable policy sync API
-
-The egress gateway container image requires the policy sync API to be enabled. To do this cluster-wide, modify
-the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
-
-```batch
-kubectl patch felixconfiguration.p default --type='merge' -p \
-    '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
-```
-
 :::note
 
-`egressIPSupport` and `policySyncPathPrefix` must be the same on all cluster nodes, so you should only set them in the `default` FelixConfiguration resource.
+`egressIPSupport` must be the same on all cluster nodes, so you should only set them in the `default` FelixConfiguration resource.
 
 :::
-
-### Copy pull secret into egress gateway namespace
-
-Identify the pull secret that is needed for pulling {{prodname}} images, and copy this into the
-namespace where you plan to create your egress gateways.  It is typically named
-`tigera-pull-secret`, in the `calico-system` namespace, so the command to copy that to the `default`
-namespace would be:
-
-```batch
-kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
-   grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
-   kubectl apply --namespace=<egress gateway namespace> -f -
-```
 
 ### Deploy a group of egress gateways
 

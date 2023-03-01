@@ -219,10 +219,8 @@ an instance (for example when scaling up the cluster).
 - [Configure AWS IAM roles](#configure-aws-iam-roles)
 - [Configure IP reservations for each VPC subnet](#configure-ip-reservations-for-each-vpc-subnet)
 - [Enable egress gateway support](#enable-egress-gateway-support)
-- [Enable policy sync API](#enable-policy-sync-api)
 - [Enable AWS-backed IP pools](#enable-aws-backed-ip-pools)
 - [Configure IP pools backed by VPC subnets](#configure-ip-pools-backed-by-vpc-subnets)
-- [Copy pull secret into egress gateway namespace](#copy-pull-secret-into-egress-gateway-namespace)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
 - [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
@@ -405,19 +403,9 @@ kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
 
-### Enable policy sync API
-
-The egress gateway container image requires the policy sync API to be enabled. To do this cluster-wide, modify
-the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
-
-```batch
-kubectl patch felixconfiguration.p default --type='merge' -p \
-    '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
-```
-
 :::note
 
-- `egressIPSupport` and `policySyncPathPrefix` must be the same on all cluster nodes, so you should only set them in the
+- `egressIPSupport` must be the same on all cluster nodes, so you should only set them in the
   `default` FelixConfiguration resource.
 
 :::
@@ -709,19 +697,6 @@ spec:
 
 </TabItem>
 </Tabs>
-
-### Copy pull secret into egress gateway namespace
-
-Identify the pull secret that is needed for pulling {{prodname}} images, and copy this into the
-namespace where you plan to create your egress gateways. It is typically named
-`tigera-pull-secret`, in the `calico-system` namespace, so the command to copy that to the `default`
-namespace would be:
-
-```batch
-kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
-   grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
-   kubectl apply --namespace=default -f -
-```
 
 ### Deploy a group of egress gateways
 

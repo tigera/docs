@@ -202,19 +202,9 @@ kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
 
-### Enable policy sync API
-
-Egress gateways require the policy sync API to be enabled on Felix. To do this cluster-wide, modify
-the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
-
-```batch
-kubectl patch felixconfiguration.p default --type='merge' -p \
-    '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
-```
-
 Where:
 
-- `egressIPSupport` and `policySyncPathPrefix` must be the same on all cluster nodes, so you should only set them in the
+- `egressIPSupport` must be the same on all cluster nodes, so you should only set them in the
   `default` FelixConfiguration resource.
 
 ### Provision an egress IP pool
@@ -248,19 +238,6 @@ Where:
   This setting is not specific to egress gateway. In some cases where nodes happen to be in the same subnet, setting the value to `Never`will work the same as `Always`. It all depends on the hop from the client node to the egress gateway node. For example, if the client nodes are in the same AWS subnet, and you are using `Always` because some of the nodes are in different subnets, then `Never` will work for the egress IP Pool when the client and gateway nodes are in the same subnet.
 
   :::
-
-### Copy pull secret into egress gateway namespace
-
-Identify the pull secret that is needed for pulling {{prodname}} images, and copy this into the
-namespace where you plan to create your egress gateways. It is typically named
-`tigera-pull-secret`, in the `calico-system` namespace, so the command to copy that to the `default`
-namespace would be:
-
-```batch
-kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
-   grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
-   kubectl apply --namespace=default -f -
-```
 
 ### Deploy a group of egress gateways
 
