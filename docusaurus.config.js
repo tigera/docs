@@ -50,7 +50,10 @@ const config = {
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
-    ({
+    {
+      metadata: [
+        {name: 'keywords', content: 'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp'}
+      ],
       algolia: {
         appId: 'Q4GSZWRKBA',
         apiKey: '34ecd6611b6cef7a420bd30587d0d502',
@@ -318,7 +321,7 @@ const config = {
           },
         ],
       },
-    }),
+    },
   plugins: [
     'docusaurus-plugin-sass',
     [
