@@ -46,7 +46,8 @@ test("Test to make sure all old pages with canonical are removed from indexing a
         bd.push(`x: ${hdr}`);
       } else if (Array.isArray(hdr)) {
         bd.push(...(hdr.map(e => `x: ${e}`)));
-      } else {
+      }
+      if (bd.length === 0) {
         log(`x-robots-tag is missing: ${url} (${resp?.statusCode}) '${JSON.stringify(resp?.headers)}'`);
       }
       const matches = resp.body.toString().matchAll(metaRegex);
@@ -84,7 +85,7 @@ test("Test to make sure all old pages with canonical are removed from indexing a
       await limiter.removeTokens(1);
       if (++requestCnt % 500 === 0) {
         const errCnt = countStatus(ERROR);
-        log(`Rate limit stats: ${requestCnt} total requests - ${errCnt} total errors`)
+        log(`Rate limit stats: ${requestCnt} total requests - ${errCnt} errors remaining`)
       }
       get(url);
     }
