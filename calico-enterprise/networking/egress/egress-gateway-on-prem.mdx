@@ -174,9 +174,7 @@ patch release.
 ## How to
 
 - [Enable egress gateway support](#enable-egress-gateway-support)
-- [Enable policy sync API](#enable-policy-sync-api)
 - [Provision an egress IP pool](#provision-an-egress-ip-pool)
-- [Copy pull secret into egress gateway namespace](#copy-pull-secret-into-egress-gateway-namespace)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
 - [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
@@ -202,10 +200,13 @@ kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
 
-Where:
+:::note
 
 - `egressIPSupport` must be the same on all cluster nodes, so you should set them only in the
   `default` FelixConfiguration resource.
+- The operator automatically enables the required policy sync API in the FelixConfiguration.
+
+:::
 
 ### Provision an egress IP pool
 
@@ -241,7 +242,7 @@ Where:
 
 ### Deploy a group of egress gateways
 
-Use an Egress Gateway custom resource to deploy a group of egress gateways, using the egress IP Pool.
+Use an egress gateway custom resource to deploy a group of egress gateways, using the egress IP Pool.
 
 ```batch
 kubectl apply -f - <<EOF
@@ -254,7 +255,7 @@ spec:
   logSeverity: "Info"
   replicas: 1
   ipPools:
-  - cidr: "10.10.10.0/31"
+  - cidr: "10.10.10.0/30"
   egressGatewayFailureDetection:
     healthTimeoutDataStoreSeconds: 30
     icmpProbe:
@@ -313,7 +314,7 @@ Where:
     timeoutSeconds: 30
     intervalSeconds: 10
   ```
-- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the Egress Gateway resource type.
+- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the egress gateway resource type.
 
 The health port `8080` is used by:
 
@@ -326,7 +327,7 @@ The health port `8080` is used by:
 
 ### Deploying on a RKE2 CIS Hardened Cluster
 
-If you are deploying `egress-gateway` on a RKE2 CIS-hardened cluster, its `PodSecurityPolicies` restrict the `securityContext` and `volumes` required by egress gateway. When deploying using the Egress Gateway custom resource, the Tigera Operator sets up `PodSecurityPolicy`, `Role`, `RoleBinding` and associated `ServiceAccount`.
+If you are deploying `egress-gateway` on a RKE2 CIS-hardened cluster, its `PodSecurityPolicies` restrict the `securityContext` and `volumes` required by egress gateway. When deploying using the egress gateway custom resource, the Tigera Operator sets up `PodSecurityPolicy`, `Role`, `RoleBinding` and associated `ServiceAccount`.
 
 ### Configure a Namespace or Pod to use egress gateways
 
@@ -442,16 +443,9 @@ with `<source IP>` being one of the IPs of the egress IP pool that you provision
 
 ## Upgrade egress gateways
 
-From v3.16, Egress Gateway deployments are managed by the Tigera Operator.
+From v3.16, egress gateway deployments are managed by the Tigera Operator.
 
-
-- Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To
-  enable the policy sync API, follow the steps in [enable policy sync API](#enable-policy-sync-api) above. This API
-  allows the egress gateway daemon inside the egress gateway pod to query {{noderunning}} for the set of active
-  routes in the cluster. If the egress gateway daemon cannot reach the API, it will fail and report errors to the logs
-  as it retries the connection.
-
-- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 Egress Gateway deployment,
+- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 egress gateway deployment,
   create an equivalent EgressGateway resource with the same namespace and the same name as mentioned [above](#deploy-a-group-of-egress-gateways);
   the operator will then take over management of the old Deployment resource, replacing it with the upgraded version.
 

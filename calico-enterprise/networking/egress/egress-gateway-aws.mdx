@@ -361,6 +361,11 @@ of resources). In addition, to support elastic IPs, each {{noderunning}} also re
 - AssociateAddress
 - DisassociateAddress
 
+### Configure AWS Security Group rules
+
+In order to allow egress gateway traffic into the egress gateway pod's host from the client, the ingress rules of the security
+group need to be updated. A rule to allow all packets from within the security group must be added to the inbound rules.
+
 ### Configure IP reservations for each VPC subnet
 
 Since the first four IP addresses and the last IP address in a VPC subnet cannot be used, it is important to
@@ -407,6 +412,7 @@ kubectl patch felixconfiguration default --type='merge' -p \
 
 - `egressIPSupport` must be the same on all cluster nodes, so you should set them only in the
   `default` FelixConfiguration resource.
+- The operator automatically enables the required policy sync API in the FelixConfiguration.
 
 :::
 
@@ -700,7 +706,7 @@ spec:
 
 ### Deploy a group of egress gateways
 
-Use an Egress Gateway custom resource to deploy a group of egress gateways.
+Use an egress gateway custom resource to deploy a group of egress gateways.
 
 Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and {{prodname}}
 in tandem to get a cluster of egress gateways that spans both availability zones and uses AWS-backed IP addresses:
@@ -819,7 +825,7 @@ spec:
     timeoutSeconds: 30
     intervalSeconds: 10
   ```
-- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the Egress Gateway resource type.
+- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the egress gateway resource type.
 
 :::note
 
@@ -894,7 +900,7 @@ To add AWS Elastic IPs to the egress gateway pods, follow these steps:
 - Create one or more Elastic IPs for the deployment. This can be done through the AWS Console or using the AWS
   command line interface.
 
-- Add the Elastic IPs to the Egress Gateway resource.
+- Add the Elastic IPs to the egress gateway resource.
 
   ```yaml
   aws:
@@ -1057,15 +1063,9 @@ patch release.
 ## Upgrade egress gateways
 
 
-From v3.16, Egress Gateway deployments are managed by the Tigera Operator.
+From v3.16, egress gateway deployments are managed by the Tigera Operator.
 
-- Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To
-  enable the policy sync API, follow the steps in [enable policy sync API](#enable-policy-sync-api) above. This API
-  allows the egress gateway daemon inside the egress gateway pod to query {{noderunning}} for the set of active
-  routes in the cluster. If the egress gateway daemon cannot reach the API, it will fail and report errors to the logs
-  as it retries the connection.
-
-- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 Egress Gateway deployment, 
+- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 egress gateway deployment, 
   create an equivalent EgressGateway resource with the same namespace and the same name as mentioned [above](#deploy-a-group-of-egress-gateways); 
   the operator will then take over management of the old Deployment resource, replacing it with the upgraded version.
 
