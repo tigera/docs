@@ -21,7 +21,7 @@ change the source IP of the traffic to their own IP. The egress gateways used ca
 scope allowing for flexibility in how the cluster is seen from outside.
 
 In Azure, egress gateway source IP addresses are chosen from an arbitrary user-defined IP pool
-using {{prodname}} IPAM. Egress Gateway pods use dedicated IPPools to use as source IP addresses, which enables static configuration
+using {{prodname}} IPAM. egress gateway pods use dedicated IPPools to use as source IP addresses, which enables static configuration
 of external appliances.
 
 ## Features
@@ -128,8 +128,6 @@ Azure Route Server deployment is per VNet, as such each VNet with egress gateway
 - [(Optional) Limit number of route advertisement](#limit-number-of-route-advertisement)
 - [Configure route reflector](#configure-route-reflector)
 - [Enable egress gateway support](#enable-egress-gateway-support)
-- [Enable policy sync API](#enable-policy-sync-api)
-- [Copy pull secret into egress gateway namespace](#copy-pull-secret-into-egress-gateway-namespace)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
 - [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
 - [(Optional) Enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
@@ -351,7 +349,8 @@ kubectl patch felixconfiguration default --type='merge' -p \
 
 :::note
 
-`egressIPSupport` must be the same on all cluster nodes, so you should set them only in the `default` FelixConfiguration resource.
+- `egressIPSupport` must be the same on all cluster nodes, so you should set them only in the `default` FelixConfiguration resource.
+- The operator automatically enables the required policy sync API in the FelixConfiguration.
 
 :::
 
@@ -374,16 +373,21 @@ spec:
   replicas: 2
   ipPools:
   - name: egress-ip-red-pool
-  # egressGatewayFailureDetection:
-  #  healthTimeoutDataStoreSeconds: 30
-  #  icmpProbe:
-  #    ips: ["34.56.2.7"]
-  #    timeoutSeconds: 15
-  #    intervalSeconds: 5
-  #  httpProbe:
-  #    urls: ["http://example.com"]
-  #    timeoutSeconds: 30
-  #    intervalSeconds: 10
+# Uncomment this block to add ICMP, HTTP probes
+# egressGatewayFailureDetection:
+#   healthTimeoutDataStoreSeconds: 30
+#   icmpProbe:
+#     ips:
+#     - <IP to probe>
+#     - <IP to probe>
+#     timeoutSeconds: 15
+#     intervalSeconds: 5
+#   httpProbe:
+#     urls:
+#     - <URL to probe>
+#     - <URL to probe>
+#     timeoutSeconds: 30
+#     intervalSeconds: 10
   template:
     metadata:
       labels:
@@ -454,7 +458,7 @@ httpProbe:
   timeoutSeconds: 30
   intervalSeconds: 10
   ```
-- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the Egress Gateway resource type.
+- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the egress gateway resource type.
 
 :::note
 
