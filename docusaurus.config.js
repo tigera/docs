@@ -10,8 +10,7 @@ const componentImagePlugin = require('./src/remark/componentImagePlugin');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Calico Documentation',
-  //tagline:
-    //'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials.',
+  tagline: 'Active, zero-trust based security for containers and Kubernetes',
   url: 'https://docs.tigera.io',
   baseUrl: '/',
   onBrokenLinks: 'throw',
