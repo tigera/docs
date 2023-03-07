@@ -1,4 +1,4 @@
-const { test } = require('@playwright/test');
+const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const readLine = require('node:readline');
 const events = require('node:events');
@@ -26,6 +26,7 @@ test("Test old site to new site redirects", async () => {
     httpsAgent: new https.Agent({ keepAlive: true, maxSockets: 100 }),
   });
   let promises = [];
+  let failures = 0;
 
   async function get(origin, url, ctx) {
     await limiter.removeTokens(1);
@@ -125,6 +126,7 @@ test("Test old site to new site redirects", async () => {
       const badCode = lastCode !== 200;
       const badUrl = !lastUrl.startsWith('https://docs.tigera.io');
       // const diffPath = !lastUrl.endsWith(new URL(k).pathname);
+      if (badUrl || badCode) failures++;
       if (isFullReport || badCode || badUrl) {
         log('');
         if (out.length > 0) reported++;
@@ -146,4 +148,6 @@ test("Test old site to new site redirects", async () => {
     log(`\n${'#'.repeat(30)}\n[INFO] Processing URLs in file ${f}...`);
     await processFile(f);
   }
+
+  expect(failures).toBe(0);
 });
