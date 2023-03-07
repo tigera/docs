@@ -35,6 +35,12 @@ init:
 serve: build
 	yarn serve
 
+.PHONY: index
+index:
+	@echo -n "CONFIG=" >.env.local
+	@cat algolia-crawler-config.json | jq -r tostring >>.env.local
+	docker run -it -e APPLICATION_ID -e API_KEY --env-file=.env.local algolia/docsearch-scraper
+
 .PHONY: autogen
 autogen:
 	PRODUCT=calico $(MAKE) build-operator-reference
