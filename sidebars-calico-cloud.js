@@ -430,7 +430,6 @@ module.exports = {
           items: [
             'operations/ebpf/use-cases-ebpf',
             'operations/ebpf/enabling-ebpf',
-            'operations/ebpf/install',
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
