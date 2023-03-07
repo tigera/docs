@@ -6,12 +6,18 @@ const url = require('node:url');
 const axios = require('axios');
 const https = require('node:https');
 const http = require('node:http');
+const { RateLimiter } = require('limiter');
 
 test("Test old site to new site redirects", async () => {
   const log = s => console.log(`${s}`);
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
+  const rateLimit = process.env.RATE_LIMIT ? process.env.RATE_LIMIT.split('/') : ['10', 'second'];
+  const limiter = new RateLimiter({
+    tokensPerInterval: Number(rateLimit[0]),
+    interval: rateLimit[1],
+  });
   const ax = axios.create({
     maxRedirects: 0,
     timeout: 60000,
@@ -21,7 +27,8 @@ test("Test old site to new site redirects", async () => {
   });
   let promises = [];
 
-  function get(origin, url, ctx) {
+  async function get(origin, url, ctx) {
+    await limiter.removeTokens(1);
     return ax.get(url)
       .then(resp => {
         ctx.path.push({url, code: resp.status});
