@@ -2,7 +2,7 @@
 description: Enable continuous policy recommendations to secure unprotected namespaces or workloads.
 ---
 
-# Get started with policy recommendations
+# Get started with policy recommendations to automatically isolate namespaces with network policy.
 
 ## Big picture
 
@@ -10,9 +10,9 @@ Enable continuous policy recommendations.
 
 ## Value
 
-After you install {{prodname}}, the recommended zero-trust security stance is to deny all traffic flows to protect the cluster. Although this is a good thing, allowing traffic requires writing tiered network policy. Writing policy for tiers that follow best practices can be an obstacle to quickly observing allowed traffic. 
+One of the best practices for improving the security posture of your Kubernetes cluster is to implement namespace isolation with network policy. Namespace isolation helps to implement a zero-trust and least-privileged security model, where only required communication between namespaces are authorized and everything else is blocked. This helps mitigate the risk of lateral movement within a cluster in the event of an attack.
 
-Developers with no experience can get {{prodname}} policy recommendations that allow traffic, but still secure workloads to/from the cluster’s namespaces. In a safe staging environment, developers can immediately get visibility into the impact of network traffic flows. 
+{{prodname}} makes it easy for platform operators to implement namespace isolation without experience in authoring network policy or detailed knowledge of how application workloads are communicating. {{prodname}} analyzes the flow logs generated from workloads and automatically recommends and stages policies for each namespace that can be used for isolation.
 
 ## Before you begin
 
@@ -36,8 +36,8 @@ In this release, managing policy recommendations is available only in Manager UI
 - [Activate policy recommendations](#activate-policy-recommendations) 
 - [Manage policy recommendations](#manage-policy-recommendations)
 - [Troubleshoot policy recommendations](#troubleshoot-policy-recommendations)
-- [Change policy recommendations parameters](#change-policy-recommendations-parameters)
-- [Disable policy recommendations](#disable-policy-recommendations)
+- [Change runtime parameters](#change-policy-recommendations-parameters)
+- [Disable the policy recommendations feature](#disable-the-policy-recommendations-feature)
 
 ### Enable policy recommendations
 
@@ -53,8 +53,8 @@ The **Policy Recommendations** board is automatically displayed.
 **Notes**:
 - A policy recommendation is generated for every namespace in your cluster (unless namespaces are filtered out using the PolicyRecommendationScope resource)
 - Traffic originating from the policy recommendation namespace is used to generate egress rules, and traffic destined for the namespace is used to define ingress rules
-- Flow log patterns and processes are continuously monitored for policy recommendations. As the cluster changes (new namespaces are created or new components are added), you can get a new policy recommendation. 
-- Policy recommendations are automatically converted to **Staged network policies** so you can safely observe the traffic before enforcing them
+- Flow log patterns and processes are continuously monitored for policy recommendations. As the cluster changes and new namespaces are created, you can get a new policy recommendation. 
+- Policy recommendations are created as **Staged network policies** so you can safely observe the traffic before enforcing them
 - If you do not want a policy recommendation to be processed or updated with further recommendations, click the **Action** menu, **Dismiss policy**. 
 
 ### Activate policy recommendations
@@ -77,7 +77,9 @@ You are now ready to observe the allowed traffic of your policy in Service Graph
 
 :::note 
 
-{{prodname}} has an on-the-fly version of policy recommendations called, **Recommend a policy** (**Policies Board**, **Edit**). Although both generate time-stamped policy recommendations, they are different features. To create an on-the-fly policy recommendation, see Recommend a policy](../policy-impact-preview). 
+Calico Enterprise has an on-demand version of policy recommendations that is available via theRecommend a policy link in Policies Board(Policies Board, Edit).
+
+{{prodname}} has an on-demand version of policy recommendations that is available as a link in **Policies Board**, **Edit**. Although both generate time-stamped policy recommendations, they are different features. To create an on-the-fly policy recommendation, see Recommend a policy](../policy-impact-preview). 
 
 :::
 
@@ -120,15 +122,15 @@ To verify that you have traffic flows, follow these steps:
 
 If you do not have denied traffic, but still want to test policy recommendations, you can create sample pods, namespaces, and denied traffic. For help, see [Create denied traffic flows to get policy recommendations](../network-policy/denied-traffic-flows). 
 
-### Change policy recommendations parameters
+### Change runtime parameters
 
 You can change how often policy recommendations are processed in the Manager UI. On the Policy Recommendation board, click the `Global Settings` button. 
 
 All other policy recommendations require Admin permissions and can be changed using the [Policy recommendations resource](../reference/resources/stagednetworkpolicy). 
 
-### Disable policy recommendations 
+### Disable the policy recommendations feature
 
-To disable policy recommendations, set the **RecStatus** parameter to `Disabled` in the [Policy recommendations resource](../reference/resources/stagednetworkpolicy) resource.
+To disable the policy recommendations feature, set the **RecStatus** parameter to `Disabled` in the [Policy recommendations resource](../reference/resources/stagednetworkpolicy) resource.
 
 Note that unactivated policy recommendations in the Policies Recommendations board are no longer updated. Existing activated and enforced staged network and policies are not affected by disabling policy recommendations. 
    
