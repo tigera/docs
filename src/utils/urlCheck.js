@@ -13,12 +13,15 @@ const needleOpts = {
 };
 const URL_CHECK_DEBUG = process.env.URL_CHECK_DEBUG
   ? process.env.URL_CHECK_DEBUG.trim() : undefined;
-const rateLimit = process.env.RATE_LIMIT ? process.env.RATE_LIMIT.split('/') : ['10', 'second'];
+const defRateLimit = '10/second';
+const rateLimit = process.env.RATE_LIMIT
+  ? process.env.RATE_LIMIT.split('/') : defRateLimit.split('/');
 const limiter = new RateLimiter({
   tokensPerInterval: Number(rateLimit[0]),
   interval: rateLimit[1],
 });
-console.log(`Rate limiting: ${rateLimit[0]} requests per ${rateLimit[1]}`);
+console.log(`Rate limiting: ${rateLimit[0]}/${rateLimit[1]} (default ${defRateLimit})`);
+console.log('Use env var RATE_LIMIT=N/sec to customize');
 
 function parseRetryAfter(headers, defValue) {
   let hdrVal = '';

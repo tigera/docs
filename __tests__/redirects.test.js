@@ -13,11 +13,15 @@ test("Test old site to new site redirects", async () => {
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
-  const rateLimit = process.env.RATE_LIMIT ? process.env.RATE_LIMIT.split('/') : ['10', 'second'];
+  const defRateLimit = '10/second';
+  const rateLimit = process.env.RATE_LIMIT
+    ? process.env.RATE_LIMIT.split('/') : defRateLimit.split('/');
   const limiter = new RateLimiter({
     tokensPerInterval: Number(rateLimit[0]),
     interval: rateLimit[1],
   });
+  console.log(`Rate limiting: ${rateLimit[0]}/${rateLimit[1]} (default ${defRateLimit})`);
+  console.log('Use env var RATE_LIMIT=N/sec to customize');
   const ax = axios.create({
     maxRedirects: 0,
     timeout: 60000,
@@ -138,12 +142,10 @@ test("Test old site to new site redirects", async () => {
     }
   }
 
-  log(`Rate limiting: ${rateLimit[0]} requests per ${rateLimit[1]}`);
-
   const files = [
-    '__tests__/urls_docs.calicocloud.io.txt',
-    '__tests__/urls_projectcalico.docs.tigera.io.txt',
-    '__tests__/urls_docs.projectcalico.org.txt',
+    '__tests__/data/urls_docs.calicocloud.io.txt',
+    '__tests__/data/urls_projectcalico.docs.tigera.io.txt',
+    '__tests__/data/urls_docs.projectcalico.org.txt',
   ];
 
   for (const f of files) {
