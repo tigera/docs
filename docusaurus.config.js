@@ -10,12 +10,11 @@ const componentImagePlugin = require('./src/remark/componentImagePlugin');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Calico Documentation',
-  //tagline:
-    //'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials.',
+  tagline: 'Active, zero-trust based security for containers and Kubernetes',
   url: 'https://docs.tigera.io',
   baseUrl: '/',
-  onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'throw',
   favicon: 'img/favicon.png',
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -50,7 +49,10 @@ const config = {
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
-    ({
+    {
+      metadata: [
+        {name: 'keywords', content: 'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp'}
+      ],
       algolia: {
         appId: 'Q4GSZWRKBA',
         apiKey: '34ecd6611b6cef7a420bd30587d0d502',
@@ -318,7 +320,7 @@ const config = {
           },
         ],
       },
-    }),
+    },
   plugins: [
     'docusaurus-plugin-sass',
     [

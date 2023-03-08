@@ -11,7 +11,7 @@ import OpenShiftPullSecret from './OpenShiftPullSecret';
 import OpenShiftPrometheusOperator from './OpenShiftPrometheusOperator';
 import ConfigureManagedCluster from './ConfigureManagedCluster';
 
-import { prodname, prodnameWindows, prodnamedash, rootDirWindows, baseUrl, filesUrl } from '../../variables';
+import { prodname, prodnameWindows, prodnamedash, rootDirWindows, baseUrl, filesUrl, tempFilesURL } from '../../variables';
 
 export default function InstallOpenShift(props) {
   return (
@@ -498,7 +498,7 @@ $ ./wni aws create \
             Download the powershell script, <strong>install-calico-windows.ps1</strong>.
           </p>
           <CodeBlock language='powershell'>
-            Invoke-WebRequest {filesUrl}/scripts/install-calico-windows.ps1 -OutFile c:install-calico-windows.ps1
+            Invoke-WebRequest {tempFilesURL}/scripts/install-calico-windows.ps1  -OutFile c:install-calico-windows.ps1
           </CodeBlock>
         </li>
         <li>

@@ -12,12 +12,12 @@ This website is built using [Docusaurus 2](https://docusaurus.io/), a modern sta
 * Install / use Node.js v16.14.2+. Use the outstanding [nvm tool](https://github.com/nvm-sh/nvm) to manage
   your node versions.
 * Install yarn `npm install -g yarn`
-* Fork and clone our docs repo https://github.com/tigera/docs
+* Fork and clone our docs repo <https://github.com/tigera/docs>
 
 ## Install Dependencies
 
 ```bash
-$ yarn install
+yarn install
 ```
 
 This installs all the package dependencies, such as docusaurus.
@@ -25,7 +25,7 @@ This installs all the package dependencies, such as docusaurus.
 ## Local Development
 
 ```bash
-$ yarn start
+yarn start
 ```
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without
@@ -34,8 +34,8 @@ having to restart the server. This build is faster, but does not produce all the
 ## Full Build & Serve
 
 ```bash
-$ yarn build
-$ yarn serve
+yarn build
+yarn serve
 ```
 
 This command generates static content into the `build` directory and can be served using any static content hosting
@@ -44,4 +44,4 @@ warning and error output. If you are trying to reproduce an error on Netlify, th
 
 ## Other Resources
 
-Netlify site: https://app.netlify.com/sites/calico-tigera-docs/overview
+Netlify site: <https://app.netlify.com/sites/calico-tigera-docs/overview>

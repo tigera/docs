@@ -30,7 +30,7 @@ function NodeRequirementsEnt(props) {
             {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.HostProtection) && (
               <>
                 <li>CentOS 8</li>
-                <li>Ubuntu 18.04 and 20.04</li>
+                <li>Ubuntu 20.04 and 22.04</li>
                 <li>RHEL 7 and 8</li>
                 <li>Debian 10</li>
               </>
@@ -42,7 +42,7 @@ function NodeRequirementsEnt(props) {
             )}
             {props.orch === orchestrators.OpenStack && (
               <>
-                <li>Ubuntu 18.04 and 20.04</li>
+                <li>Ubuntu 20.04 and 22.04</li>
                 <li>CentOS 8</li>
               </>
             )}

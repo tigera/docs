@@ -2,17 +2,17 @@
 description: Install Calico Enterprise on a RKE2 cluster using the Rancher UI.
 ---
 
-# Rancher Manager - (Rancher UI)
+# Rancher UI
 
 ## Big picture
 
-Install {{prodname}} on RKE2 using the Rancher UI.
+Install {{prodname}} on RKE2 using the Rancher UI (Rancher Manager).
 
 ## Before you begin
 
 :::note
 
-Rancher UI does not explicitly provide an option to set the RKE2 CNI value as `none`. This is a requirement for installing a non-default CNI on RKE2. To install {{prodname}} using Rancher UI, a base RKE2 cluster with opensource Calico needs to be provisioned by Rancher first. This cluster can then be upgraded to {{prodname}}.
+To install {{prodname}} using Rancher UI, you must provision a base RKE2 cluster with Calico Open Source, then upgrade to {{prodname}}. This is required because Rancher UI does not provide an option to set the RKE2 CNI value as `none`, which is required to install a non-default CNI like {{prodname}}. 
 
 :::
 
@@ -24,7 +24,7 @@ The geeky details of what you get:
 
 <GeekDetails
   prodname='{{prodname}}'
-  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:Calico,Datastore:Kubernetes'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes'
 />
 
 **Required**
@@ -40,19 +40,19 @@ The geeky details of what you get:
 
 ## How to
 
-- [Prepare a base Calico Open Source cluster](#prepare-a-base-calico-open-source-cluster)
+- [Prepare a Calico Open Source cluster](#prepare-a-calico-open-source-cluster)
 - [Upgrade to {{prodname}}](#install-calico-enterprise)
 
-### Prepare a base Calico Open Source cluster
+### Prepare a Calico Open Source cluster
 
-1. [Provision a RKE2 cluster using Calico as CNI and default config options](https://ranchermanager.docs.rancher.com/pages-for-subheaders/launch-kubernetes-with-rancher)
-2. Validate the RKE2 cluster is setup and running.
-3. Open a `kubectl` shell in the Rancher UI for the cluster under consideration, and perform the remaining steps in it.
-4. Annotate the Calico HelmChart with `helmcharts.helm.cattle.io/unmanaged=true`. This avoids Rancher resetting the CNI to Calico when the RKE2 cluster is either shut down or upgraded.
+1. [Provision an RKE2 cluster using Calico as the CNI and default config options](https://ranchermanager.docs.rancher.com/pages-for-subheaders/launch-kubernetes-with-rancher).
+2. Validate that the RKE2 cluster is set up and running.
+3. In Rancher UI, open a `kubectl` shell for the cluster, and perform the next steps.
+4. Annotate the Calico HelmChart with `helmcharts.helm.cattle.io/unmanaged=true`. (This avoids Rancher resetting the CNI to Calico when the RKE2 cluster is shut down or upgraded.)
    ```batch
    kubectl annotate helmchart -n kube-system rke2-calico helmcharts.helm.cattle.io/unmanaged=true
    ```
-5. SSH to all the Control plane nodes and rename `rke2-calico.yaml` in the `/var/lib/rancher/rke2/server/manifests/` directory to `rke2-calico.yaml.skip`.
+5. SSH to all the control plane nodes and rename `rke2-calico.yaml` in the `/var/lib/rancher/rke2/server/manifests/` directory to `rke2-calico.yaml.skip`.
    ```batch
    sudo mv /var/lib/rancher/rke2/server/manifests/rke2-calico.yaml /var/lib/rancher/rke2/server/manifests/rke2-calico.yaml.skip
    ```
@@ -61,9 +61,9 @@ The geeky details of what you get:
    kubectl patch installation default --type='json' -p='[{"op": "remove", "path": "/spec/imagePath"},{"op": "remove", "path": "/spec/imagePrefix"}]'
    ```
 
-### Upgrade {{prodname}}
+### Upgrade to {{prodname}}
 
-1. Open a `kubectl` shell in the Rancher UI for the cluster.
+1. In Rancher UI, open a `kubectl` shell for the cluster.
 
 2. Follow the [steps to upgrade Calico to {{prodname}} in the `kubectl` shell](../upgrading/upgrading-calico-to-calico-enterprise/upgrade-to-tsee/standard.mdx)
 

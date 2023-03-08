@@ -34,7 +34,7 @@ const config = {
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html', {open: 'never'}],
+    ['html', { open: 'on-failure' }],
     ['./src/utils/playwright-custom-reporter.js']
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

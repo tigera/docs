@@ -131,13 +131,18 @@ test("Test links to check if they're all reachable", async () => {
   await crawler.addRequests([DOCS]);
   await crawler.addRequests(urls);
 
+  console.log(`Crawling the docs (${DOCS}) and testing links.`);
+  console.log(`Localhost mode is ${isLocalHost ? 'ON' : 'OFF'}.`)
   await crawler.run()
+  console.log(`Performing all post-processing steps`);
   await doPostProcessing();
-  await lc.report();
+  console.log(`Waiting on all remaining link checks to complete`);
+  const cnt = await lc.wait();
+  console.log(`Retrying all remaining errors`);
+  lc.retryErrors();
+  console.log(`Writing the final report.`);
+  const success = await lc.report();
 
-  // const allErrors = lc.sysErrorsCount() + lc.errorCount() + lc.deadCount();
-  // expect(allErrors).toBe(0);
-
-  // forcing this test to succeed until we get the errors cleaned up
-  expect(true).toBe(true);
+  const allErrors = lc.errorCount() + lc.deadCount();
+  expect(allErrors).toBe(0);
 });
