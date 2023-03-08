@@ -115,7 +115,7 @@ function linkChecker() {
         urlMap.set(url, null);
         if (isInvalidOrSkipped(url)) continue;
         urlMap.set(url, { status: CHECKING });
-        urlCheck(url, linkCheckCallback);
+        urlCheck(url, linkCheckCallback).then(r => {});
       }
     }
   }
@@ -274,7 +274,7 @@ function linkChecker() {
     const errors = getStatus(ERROR);
     for (const url of errors) {
       urlMap.set(url, { status: CHECKING });
-      urlCheck(url, linkCheckCallback);
+      urlCheck(url, linkCheckCallback).then(r => {});
     }
   }
 

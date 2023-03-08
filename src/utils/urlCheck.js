@@ -1,5 +1,6 @@
 const nodeUrl = require('node:url');
 const needle = require('needle');
+const { RateLimiter } = require('limiter');
 const defDelay = 1000;    // ms
 const defMaxRetry = 10;
 const needleOpts = {
@@ -12,6 +13,12 @@ const needleOpts = {
 };
 const URL_CHECK_DEBUG = process.env.URL_CHECK_DEBUG
   ? process.env.URL_CHECK_DEBUG.trim() : undefined;
+const rateLimit = process.env.RATE_LIMIT ? process.env.RATE_LIMIT.split('/') : ['10', 'second'];
+const limiter = new RateLimiter({
+  tokensPerInterval: Number(rateLimit[0]),
+  interval: rateLimit[1],
+});
+console.log(`Rate limiting: ${rateLimit[0]} requests per ${rateLimit[1]}`);
 
 function parseRetryAfter(headers, defValue) {
   let hdrVal = '';
@@ -71,8 +78,9 @@ function doGet(normUrl, callback, calls, delay, ctx) {
   }
 }
 
-function urlCheck(url, callback, calls = undefined) {
+async function urlCheck(url, callback, calls = undefined) {
   try {
+    await limiter.removeTokens(1);
     calls = calls ? calls : 1;
     let delay = defDelay * calls;
     const normUrl = encodeURI(decodeURIComponent(new URL(url).toString()));

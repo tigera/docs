@@ -138,6 +138,8 @@ test("Test old site to new site redirects", async () => {
     }
   }
 
+  log(`Rate limiting: ${rateLimit[0]} requests per ${rateLimit[1]}`);
+
   const files = [
     '__tests__/urls_docs.calicocloud.io.txt',
     '__tests__/urls_projectcalico.docs.tigera.io.txt',
