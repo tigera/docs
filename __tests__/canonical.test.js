@@ -133,7 +133,12 @@ test("Test to make sure all old pages with canonical are removed from indexing a
       doRateLimitedRequest(url);
     });
 
+    let iter = 0;
     while (true) {
+      if (++iter > 360) { // 1 hr
+        log(`ERROR: waited too long to complete - exiting now`);
+        break;
+      }
       const cnt = countStatus(WIP);
       const done = countStatus(DONE);
       if (cnt <= 0) break;
@@ -141,22 +146,24 @@ test("Test to make sure all old pages with canonical are removed from indexing a
       await sleep(10000);
     }
 
-    let retryErrorIter = 0;
-    while (true) {
-      if (++retryErrorIter > 1080) { // 3 hrs
-        log(`ERROR: waited too long for errors to complete - exiting now`);
-        break;
-      }
-      const cnt = countStatus(ERROR);
-      if (cnt <= 0) break;
-      for (const url of urlMap.keys()) {
-        const e = urlMap.get(url);
-        if (e.status === ERROR) {
-          await doRateLimitedRequest(url, ERROR);
+    if (iter <= 360) {
+      iter = 0;
+      while (true) {
+        if (++iter > 180) { // 30 min
+          log(`ERROR: waited too long for errors to complete - exiting now`);
+          break;
         }
+        const cnt = countStatus(ERROR);
+        if (cnt <= 0) break;
+        for (const url of urlMap.keys()) {
+          const e = urlMap.get(url);
+          if (e.status === ERROR) {
+            await doRateLimitedRequest(url, ERROR);
+          }
+        }
+        log(`Retrying ${cnt} error(s), ${totalErrors} total errors, ${totalRobotHdrMissing} total bot hdr missing, ${totalRetryAfter} retry-after requests`);
+        await sleep(10000);  // 10 sec
       }
-      log(`Retrying ${cnt} error(s), ${totalErrors} total errors, ${totalRobotHdrMissing} total bot hdr missing, ${totalRetryAfter} retry-after requests`);
-      await sleep(10000);  // 10 sec
     }
 
     log(`FINAL processing stats: ${totalRequestCnt} requests, ${countStatus(DONE)} URLs processed, ${totalErrors} errors, ${totalRobotHdrMissing} bot hdr missing, ${totalRetryAfter} retry-after requests`);
