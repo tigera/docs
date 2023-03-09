@@ -32,9 +32,9 @@ const defaultSkipList = [
 
 // Ignore patterns are skipped and ignored completely - no visibility whatsoever
 const defaultIgnoreList = [
-  // /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
-  // /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/i,
-  // /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+?\.md$/i,
+  /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
+  /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/i,
+  /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+?\.md$/i,
 ];
 
 function linkChecker() {
