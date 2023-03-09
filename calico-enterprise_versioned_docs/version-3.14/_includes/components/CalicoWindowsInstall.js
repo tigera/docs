@@ -14,7 +14,7 @@ function CalicoWindowsInstallFirstStep(props) {
           <li>
             If you installed {prodname} using the{' '}
             <a
-              href='https://projectcalico.docs.tigera.io/manifests/calico-vxlan.yaml'
+              href='${filesUrl}/manifests/calico-windows-vxlan.yaml'
               target='_blank'
               rel='noopener noreferreer'
             >
