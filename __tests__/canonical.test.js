@@ -6,7 +6,6 @@ const readLine = require('node:readline');
 const events = require('node:events');
 const needle = require('needle');
 import { RateLimiter } from "limiter";
-import * as util from 'util';
 
 test("Test to make sure all old pages with canonical are removed from indexing and following", async () => {
   const log = s => console.log(`${s}`);
@@ -14,11 +13,15 @@ test("Test to make sure all old pages with canonical are removed from indexing a
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
   const metaRegex = /<meta name=["']robots["'][ \t]+content=["']([\w,; -]+)["']\/?>/gi;
-  const rateLimit = process.env.RATE_LIMIT ? process.env.RATE_LIMIT.split('/') : ['10', 'second'];
-  const limiter = new RateLimiter({ 
+  const defRateLimit = '10/second';
+  const rateLimit = process.env.RATE_LIMIT
+    ? process.env.RATE_LIMIT.split('/') : defRateLimit.split('/');
+  const limiter = new RateLimiter({
     tokensPerInterval: Number(rateLimit[0]),
     interval: rateLimit[1],
   });
+  console.log(`Rate limiting: ${rateLimit[0]}/${rateLimit[1]} (default ${defRateLimit})`);
+  console.log('Use env var RATE_LIMIT=N/sec to customize');
 
   let totalRequestCnt = 0;
   let totalRobotHdrMissing = 0;
@@ -42,39 +45,44 @@ test("Test to make sure all old pages with canonical are removed from indexing a
 
   function get(url) {
     needle.request('get', url, null, {follow_max: 10}, (err, resp) => {
-      if (err) {
+      try {
+        if (err) {
+          totalErrors++;
+          urlMap.set(url,{ status: ERROR, err, statusCode: err?.response?.statusCode });
+          return;
+        }
+        if (resp.statusCode === 429) {
+          const delay = parseRetryAfter(resp.headers, 60000);
+          totalRetryAfter++;
+          setTimeout(doRateLimitedRequest, delay, url);
+          return;
+        }
+        const bd = [];
+        const hdr = resp.headers['x-robots-tag'];
+        if (typeof hdr === 'string') {
+          bd.push(`x: ${hdr}`);
+        } else if (Array.isArray(hdr)) {
+          bd.push(...(hdr.map(e => `x: ${e}`)));
+        }
+        if (bd.length === 0) {
+          totalRobotHdrMissing++;
+          // leaving this log here because it seems to be a bug on the netlify side where,
+          // under stress / rate limiting conditions, you will occasionally see
+          // a 200 response with no bot tag header, but manual inspection later
+          // ALWAYS shows that the 'x-robots-tag' is there!
+          // The 'x-robots-tag' is a custom header configured in netlify _headers.
+          log(`x-robots-tag is missing: ${url} (${resp?.statusCode}) '${JSON.stringify(resp?.headers)}'`);
+        }
+        const matches = resp.body.toString().matchAll(metaRegex);
+        for (const match of matches) {
+          bd.push(`m: ${match[1]}`);
+        }
+        urlMap.set(url, { status: DONE, directives: bd, statusCode: resp.statusCode });
+      } catch (caughtErr) {
         totalErrors++;
-        //log(`err: ${util.inspect(err)}`)
-        urlMap.set(url,{ status: ERROR, err, statusCode: err?.response?.statusCode });
-        return;
+        console.error(`An error occurred in callback: ${caughtErr.message}`);
+        urlMap.set(url,{ status: ERROR, err: caughtErr });
       }
-      if (resp.statusCode === 429) {
-        const delay = parseRetryAfter(resp.headers, 60000);
-        totalRetryAfter++;
-        setTimeout(doRateLimitedRequest, delay, url);
-        return;
-      }
-      const bd = [];
-      const hdr = resp.headers['x-robots-tag'];
-      if (typeof hdr === 'string') {
-        bd.push(`x: ${hdr}`);
-      } else if (Array.isArray(hdr)) {
-        bd.push(...(hdr.map(e => `x: ${e}`)));
-      }
-      if (bd.length === 0) {
-        totalRobotHdrMissing++;
-        // leaving this log here because it seems to be a bug on the netlify side where,
-        // under stress / rate limiting conditions, you will occasionally see
-        // a 200 response with no bot tag header, but manual inspection later
-        // ALWAYS shows that the 'x-robots-tag' is there!
-        // The 'x-robots-tag' is a custom header configured in netlify _headers.
-        log(`x-robots-tag is missing: ${url} (${resp?.statusCode}) '${JSON.stringify(resp?.headers)}'`);
-      }
-      const matches = resp.body.toString().matchAll(metaRegex);
-      for (const match of matches) {
-        bd.push(`m: ${match[1]}`);
-      }
-      urlMap.set(url, { status: DONE, directives: bd, statusCode: resp.statusCode });
     });
   }
 
@@ -86,13 +94,19 @@ test("Test to make sure all old pages with canonical are removed from indexing a
   }
 
   async function doRateLimitedRequest(url, status = WIP) {
-    await limiter.removeTokens(1);
-    if (++totalRequestCnt % 500 === 0) {
-      const errCnt = countStatus(ERROR);
-      log(`Rate limit stats: ${totalRequestCnt} total requests processed, ${errCnt} current error count`)
+    try {
+      await limiter.removeTokens(1);
+      if (++totalRequestCnt % 500 === 0) {
+        const errCnt = countStatus(ERROR);
+        log(`Rate limit stats: ${totalRequestCnt} total requests processed, ${errCnt} current error count`)
+      }
+      urlMap.set(url, {status});
+      get(url);
+    } catch (err) {
+      totalErrors++;
+      console.error(`An error occurred in doRateLimitedRequest: ${err.message}`);
+      urlMap.set(url, {status: ERROR, err})
     }
-    urlMap.set(url, {status});
-    get(url);
   }
 
   async function fileLine(filePath, callback) {
@@ -113,14 +127,18 @@ test("Test to make sure all old pages with canonical are removed from indexing a
   async function processFile(filePath) {
     urlMap.clear();
     const totalUrlCount = await fileLine(filePath);
-    log(`Rate limiting: ${rateLimit[0]} requests per ${rateLimit[1]}`);
     log(`Found a total of ${totalUrlCount} URLs to check`);
 
     await fileLine(filePath, url => {
       doRateLimitedRequest(url);
     });
 
+    let iter = 0;
     while (true) {
+      if (++iter > 360) { // 1 hr
+        log(`ERROR: waited too long to complete - exiting now`);
+        break;
+      }
       const cnt = countStatus(WIP);
       const done = countStatus(DONE);
       if (cnt <= 0) break;
@@ -128,22 +146,24 @@ test("Test to make sure all old pages with canonical are removed from indexing a
       await sleep(10000);
     }
 
-    let retryErrorIter = 0;
-    while (true) {
-      if (++retryErrorIter > 1080) { // 3 hrs
-        log(`ERROR: waited too long for errors to complete - exiting now`);
-        break;
-      }
-      const cnt = countStatus(ERROR);
-      if (cnt <= 0) break;
-      for (const url of urlMap.keys()) {
-        const e = urlMap.get(url);
-        if (e.status === ERROR) {
-          await doRateLimitedRequest(url, ERROR);
+    if (iter <= 360) {
+      iter = 0;
+      while (true) {
+        if (++iter > 180) { // 30 min
+          log(`ERROR: waited too long for errors to complete - exiting now`);
+          break;
         }
+        const cnt = countStatus(ERROR);
+        if (cnt <= 0) break;
+        for (const url of urlMap.keys()) {
+          const e = urlMap.get(url);
+          if (e.status === ERROR) {
+            await doRateLimitedRequest(url, ERROR);
+          }
+        }
+        log(`Retrying ${cnt} error(s), ${totalErrors} total errors, ${totalRobotHdrMissing} total bot hdr missing, ${totalRetryAfter} retry-after requests`);
+        await sleep(10000);  // 10 sec
       }
-      log(`Retrying ${cnt} error(s), ${totalErrors} total errors, ${totalRobotHdrMissing} total bot hdr missing, ${totalRetryAfter} retry-after requests`);
-      await sleep(10000);  // 10 sec
     }
 
     log(`FINAL processing stats: ${totalRequestCnt} requests, ${countStatus(DONE)} URLs processed, ${totalErrors} errors, ${totalRobotHdrMissing} bot hdr missing, ${totalRetryAfter} retry-after requests`);
@@ -181,7 +201,7 @@ test("Test to make sure all old pages with canonical are removed from indexing a
   }
 
   const files = [
-    '__tests__/urls_with_canonicals.txt',
+    '__tests__/data/urls_with_canonicals.txt',
   ];
 
   for (const f of files) {

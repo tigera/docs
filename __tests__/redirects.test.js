@@ -1,4 +1,4 @@
-const { test } = require('@playwright/test');
+const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const readLine = require('node:readline');
 const events = require('node:events');
@@ -6,12 +6,22 @@ const url = require('node:url');
 const axios = require('axios');
 const https = require('node:https');
 const http = require('node:http');
+const { RateLimiter } = require('limiter');
 
 test("Test old site to new site redirects", async () => {
   const log = s => console.log(`${s}`);
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
   const isFullReport = process.env.FULL_REPORT ? process.env.FULL_REPORT === 'true' : false;
+  const defRateLimit = '10/second';
+  const rateLimit = process.env.RATE_LIMIT
+    ? process.env.RATE_LIMIT.split('/') : defRateLimit.split('/');
+  const limiter = new RateLimiter({
+    tokensPerInterval: Number(rateLimit[0]),
+    interval: rateLimit[1],
+  });
+  console.log(`Rate limiting: ${rateLimit[0]}/${rateLimit[1]} (default ${defRateLimit})`);
+  console.log('Use env var RATE_LIMIT=N/sec to customize');
   const ax = axios.create({
     maxRedirects: 0,
     timeout: 60000,
@@ -20,8 +30,10 @@ test("Test old site to new site redirects", async () => {
     httpsAgent: new https.Agent({ keepAlive: true, maxSockets: 100 }),
   });
   let promises = [];
+  let failures = 0;
 
-  function get(origin, url, ctx) {
+  async function get(origin, url, ctx) {
+    await limiter.removeTokens(1);
     return ax.get(url)
       .then(resp => {
         ctx.path.push({url, code: resp.status});
@@ -118,6 +130,7 @@ test("Test old site to new site redirects", async () => {
       const badCode = lastCode !== 200;
       const badUrl = !lastUrl.startsWith('https://docs.tigera.io');
       // const diffPath = !lastUrl.endsWith(new URL(k).pathname);
+      if (badUrl || badCode) failures++;
       if (isFullReport || badCode || badUrl) {
         log('');
         if (out.length > 0) reported++;
@@ -130,13 +143,15 @@ test("Test old site to new site redirects", async () => {
   }
 
   const files = [
-    '__tests__/urls_docs.calicocloud.io.txt',
-    '__tests__/urls_projectcalico.docs.tigera.io.txt',
-    '__tests__/urls_docs.projectcalico.org.txt',
+    '__tests__/data/urls_docs.calicocloud.io.txt',
+    '__tests__/data/urls_projectcalico.docs.tigera.io.txt',
+    '__tests__/data/urls_docs.projectcalico.org.txt',
   ];
 
   for (const f of files) {
     log(`\n${'#'.repeat(30)}\n[INFO] Processing URLs in file ${f}...`);
     await processFile(f);
   }
+
+  expect(failures).toBe(0);
 });
