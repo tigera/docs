@@ -202,6 +202,7 @@ module.exports = {
       label: 'Network policy',
       link: {type: 'doc', id: 'network-policy/index'},
       items: [
+        'network-policy/policy-recommendations',
         'network-policy/policy-best-practices',
         {
           type: 'category',
@@ -216,7 +217,6 @@ module.exports = {
         },
         'network-policy/networksets',
         'network-policy/default-deny',
-        'network-policy/policy-recommendations',
         'network-policy/denied-traffic-flows',
         'network-policy/staged-network-policies',
         'network-policy/policy-troubleshooting',
