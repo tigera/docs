@@ -347,6 +347,7 @@ module.exports = {
             'networking/egress/egress-gateway-on-prem',
             'networking/egress/egress-gateway-aws',
             'networking/egress/egress-gateway-maintenance',
+	    'networking/egress/external-network'
             'networking/egress/troubleshoot',
           ],
         },
