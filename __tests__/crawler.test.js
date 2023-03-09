@@ -34,6 +34,20 @@ test("Test links to check if they're all reachable", async () => {
     /^https:\/\/www\.linkedin\.com\/company\/tigera\/?$/,
     'http://etcd.co',
     'https://success.docker.com/article/docker-ee-best-practices',
+    //`https://owasp.org/www-community/vulnerabilities/Heartbleed_Bug`,
+    `https://installer.calicocloud.io/`,
+    `https://installer.calicocloud.io/charts`,
+    `https://docs.tigera.io/calico/charts`,
+    `https://github.com/projectcalico/calico/releases/download/master/ocp.tgz`,
+    `https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl`,
+    `https://projectcalico.docs.tigera.io/manifests/calico-vxlan.yaml`,
+    `https://github.com/projectcalico/calico/releases/download/master/install-calico-windows.ps1`,
+    `https://downloads.tigera.io/ee/master/download/binaries/master/calicoq`,
+    `https://en.wikipedia.org/wiki/Autonomous_System_(Internet)%3E`,
+    `https://installer.calicocloud.io/manifests/v3.15.1-8/manifests`,
+    ///^https?:\/\/localhost[\w\-.~:/?#[\]@!$&'()*+,;=]*$/,
+    /^https?:\/\/csrc\.nist\.gov\/projects\/cryptographic-module-validation-program\/certificate\/\d+$/,
+    /^https:\/\/installer\.calicocloud\.io:[0-9]{3,4}$/,
   ];
 
   const lc = linkChecker();
