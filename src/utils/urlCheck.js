@@ -81,13 +81,13 @@ function doGet(normUrl, callback, calls, delay, ctx) {
   }
 }
 
-async function urlCheck(url, callback, calls = undefined) {
+async function urlCheck(origin, url, callback, calls = undefined) {
   try {
     await limiter.removeTokens(1);
     calls = calls ? calls : 1;
     let delay = defDelay * calls;
     const normUrl = encodeURI(decodeURIComponent(new URL(url).toString()));
-    const ctx = { link: url, statusCode: 0, status: '', err: null };
+    const ctx = { origin, link: url, statusCode: 0, status: '', err: null };
     needle.request('head', normUrl, null, needleOpts, (err, resp) => {
       debugLog(normUrl, `IN head callback: ${normUrl}`);
       ctx.err = err;
@@ -96,7 +96,7 @@ async function urlCheck(url, callback, calls = undefined) {
       if (!err && resp && resp.statusCode === 429 && calls < defMaxRetry) {
         delay = parseRetryAfter(resp.headers, delay);
         debugLog(normUrl, `IN head retry-after (${delay/1000} seconds): ${normUrl}`);
-        setTimeout(urlCheck, delay, url, callback, 1+calls);
+        setTimeout(urlCheck, delay, origin, url, callback, 1+calls);
       } else if (!err && (ctx.statusCode === 200 || ctx.statusCode === 404)) {
         debugLog(normUrl, `IN head 200/404: ${normUrl}`);
         callback(err, ctx);
@@ -107,7 +107,7 @@ async function urlCheck(url, callback, calls = undefined) {
     });
   } catch (err) {
     console.error(`ERROR: caught error: urlCheck: ${url}, err: ${JSON.stringify(err)}`);
-    callback(err, { status: 'error', link: url, err: null });
+    callback(err, { origin, status: 'error', link: url, err: null });
   }
 }
 
