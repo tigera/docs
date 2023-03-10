@@ -156,29 +156,29 @@ function linkChecker() {
     });
 
     console.log(
-      `${LC} REPORT\n\tSummary: ignored: ${ignored}, skipped: ${skipped}, invalid: ${invalid}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
+      `${LC} REPORT\nSummary: ignored: ${ignored}, skipped: ${skipped}, invalid: ${invalid}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
 
     if (invalid > 0) {
       console.info(
-        `\n\t[INFO] ${LC} skipped the following ${invalid} invalid link(s):`);
-      enumMap(v => v.status === INVALID, (v, k) => `\t${k} is ${v.status}`, INFO);
+        `\n[INFO] ${LC} skipped the following ${invalid} invalid link(s):`);
+      enumMap(v => v.status === INVALID, (v, k) => `${k} is ${v.status}`, INFO);
     }
 
     if (skipped > 0) {
       console.info(
-        `\n\t[INFO] ${LC} skipped the following ${skipped} link(s) due to built-in skip rules:`);
-      enumMap(v => v.status === SKIPPED, (v, k) => `\t${k} was ${v.status}`, INFO);
+        `\n[INFO] ${LC} skipped the following ${skipped} link(s) due to built-in skip rules:`);
+      enumMap(v => v.status === SKIPPED, (v, k) => `${k} was ${v.status}`, INFO);
     }
 
     if (dead > 0) {
       console.warn(
-        `\n\t[WARN] ${LC} found the following ${dead} dead link(s):`);
-      enumMap(v => v.status === DEAD, (v, k) => `\t${k} is ${v.status} (${v.statusCode})\n\t==>Origin: ${v?.origin}\n`, WARN);
+        `\n[WARN] ${LC} found the following ${dead} dead link(s):`);
+      enumMap(v => v.status === DEAD, (v, k) => `${k} is ${v.status} (${v.statusCode})\n==>Origin: ${v?.origin}\n`, WARN);
     }
 
     if (error > 0) {
-      console.warn(`\n\t[ERROR] ${LC} hit the following ${error} error(s):`);
-      enumMap(v => v.status === ERROR,(v, k) => `\t${k} (${v.statusCode}) error: ${v.msg}\n\t==>Origin: ${v?.origin}\n`, WARN);
+      console.warn(`\n[ERROR] ${LC} hit the following ${error} error(s):`);
+      enumMap(v => v.status === ERROR,(v, k) => `${k} (${v.statusCode}) error: ${v.msg}\n==>Origin: ${v?.origin}\n`, WARN);
     }
 
     return !failed;
