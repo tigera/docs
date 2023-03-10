@@ -14,10 +14,12 @@ test("Test links to check if they're all reachable", async () => {
   const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
   const isDeepCrawl = process.env.DEEP_CRAWL ? (process.env.DEEP_CRAWL==='true') : false;
   const CONCURRENCY = process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 50;
+  const fileSearch = /https?:\/\/(downloads\.tigera\.io\/|raw\.githubusercontent\.com\/projectcalico\/)[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|ps1|sh|bat|json)/gi;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
   const SITEMAP = 'sitemap.xml';
   const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
   const USE_LC = [
+    { regex: fileSearch, processContent: true},
     { regex: fileRegex, processContent: false},
     { regex: /\/reference\/legal\/[\w-]+$/i, processContent: true },
     { regex: /\/calico-cloud\/get-help\/support$/i, processContent: true },
@@ -95,6 +97,11 @@ test("Test links to check if they're all reachable", async () => {
       return true;
     }
 
+    // if it matches any in the regex list, use linkChecker
+    for (const o of USE_LC) {
+      if (o.regex.test(url)) return useLinkChecker(url, o.processContent);
+    }
+
     // if it's external, use linkChecker
     if (isDeepCrawl) {
       if (isLocalHost && !url.startsWith(DOCS) && !url.startsWith(PROD)) {
@@ -106,10 +113,6 @@ test("Test links to check if they're all reachable", async () => {
       if (!url.startsWith(DOCS)) {
         return useLinkChecker(url, false);
       }
-    }
-    // if it matches any in the regex list, use linkChecker
-    for (const o of USE_LC) {
-      if (o.regex.test(url)) return useLinkChecker(url, o.processContent);
     }
     return false;
   }
@@ -135,9 +138,11 @@ test("Test links to check if they're all reachable", async () => {
   async function doPostProcessing() {
     const opts = { url: '', urlRegExp: lc.getLinkRegex()[0]};
     for (const url of postProcessUrls.keys()) {
+      if (url.includes('/custom-resources.yaml')) console.log(`Post processing URL: ${url}`);
       opts.url = url;
       const urls = await downloadListOfUrls(opts);
       for (const u of urls) {
+        if (url.includes('/custom-resources.yaml')) console.log(`==> Found URL in content: ${u}`);
         lc.process(u);
       }
     }
