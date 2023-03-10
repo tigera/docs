@@ -109,7 +109,7 @@ function linkChecker() {
     for (const lre of linkRegex) {
       const matches = text.matchAll(lre);
       for (const match of matches) {
-        const url = match[0].trim().replace(trimUrlChars, '').replace(/\/$/, '');
+        const url = match[0].trim().replace(trimUrlChars, '');
         if (isIgnored(url)) continue;
         if (urlMap.has(url)) continue;
         urlMap.set(url, null);
