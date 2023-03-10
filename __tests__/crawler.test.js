@@ -55,11 +55,12 @@ test("Test links to check if they're all reachable", async () => {
       const allText = await page.locator('body').innerText();
       const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
       for (const url of urls){
-        checkAndUseLinkChecker(url);
+        checkAndUseLinkChecker(page.url(), url);
       }
       await enqueueLinks({
         strategy: EnqueueStrategy.All,
         transformRequestFunction: transformRequest,
+        userData: {origin: page.url()},
       });
     },
     // async errorHandler(context, error) {
@@ -71,15 +72,15 @@ test("Test links to check if they're all reachable", async () => {
   });
 
   function transformRequest(requestOptions) {
-    if (checkAndUseLinkChecker(requestOptions.url)) {
+    if (checkAndUseLinkChecker(requestOptions.userData.origin, requestOptions.url)) {
       requestOptions.skipNavigation = true;
     }
     return requestOptions;
   }
 
-  function checkAndUseLinkChecker(url) {
+  function checkAndUseLinkChecker(origin, url) {
     const useLinkChecker = (u, p) => {
-      lc.process(u);
+      lc.process(origin, u);
       if (p) postProcessUrls.set(u, null);
       return true;
     }
@@ -111,7 +112,7 @@ test("Test links to check if they're all reachable", async () => {
     for (let url of urls) {
       if (isLocalHost) url = url.replace(PROD, DOCS);
       if (!url.startsWith(DOCS)) continue;
-      if (checkAndUseLinkChecker(url)) {
+      if (checkAndUseLinkChecker(siteMapUrl, url)) {
         continue;
       }
       if (urlCache.has(url)) continue;
@@ -128,7 +129,7 @@ test("Test links to check if they're all reachable", async () => {
       opts.url = url;
       const urls = await downloadListOfUrls(opts);
       for (const u of urls) {
-        lc.process(u);
+        lc.process(url, u);
       }
     }
   }

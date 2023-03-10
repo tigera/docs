@@ -105,7 +105,7 @@ function linkChecker() {
     });
   }
 
-  function process(text) {
+  function process(origin, text) {
     for (const lre of linkRegex) {
       const matches = text.matchAll(lre);
       for (const match of matches) {
@@ -115,7 +115,7 @@ function linkChecker() {
         urlMap.set(url, null);
         if (isInvalidOrSkipped(url)) continue;
         urlMap.set(url, { status: CHECKING });
-        urlCheck(url, linkCheckCallback).then(r => {});
+        urlCheck(origin, url, linkCheckCallback).then(r => {});
       }
     }
   }
@@ -173,12 +173,12 @@ function linkChecker() {
     if (dead > 0) {
       console.warn(
         `\n\t[WARN] ${LC} found the following ${dead} dead link(s):`);
-      enumMap(v => v.status === DEAD, (v, k) => `\t${k} is ${v.status} (${v.statusCode})`, WARN);
+      enumMap(v => v.status === DEAD, (v, k) => `\t${k} is ${v.status} (${v.statusCode})\n\t==>Origin: ${v?.origin}\n`, WARN);
     }
 
     if (error > 0) {
       console.warn(`\n\t[ERROR] ${LC} hit the following ${error} error(s):`);
-      enumMap(v => v.status === ERROR,(v, k) => `\t${k} (${v.statusCode}) error: ${v.msg}`, WARN);
+      enumMap(v => v.status === ERROR,(v, k) => `\t${k} (${v.statusCode}) error: ${v.msg}\n\t==>Origin: ${v?.origin}\n`, WARN);
     }
 
     return !failed;
@@ -273,8 +273,9 @@ function linkChecker() {
   function retryErrors() {
     const errors = getStatus(ERROR);
     for (const url of errors) {
+      const obj = urlMap.get(url);
       urlMap.set(url, { status: CHECKING });
-      urlCheck(url, linkCheckCallback).then(r => {});
+      urlCheck(obj.origin, url, linkCheckCallback).then(r => {});
     }
   }
 
