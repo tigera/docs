@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 const {
   PlaywrightCrawler,
   downloadListOfUrls,
+  extractUrls,
   EnqueueStrategy,
   Configuration,
 } = require('crawlee');
@@ -52,7 +53,10 @@ test("Test links to check if they're all reachable", async () => {
     async requestHandler({ request, page, enqueueLinks, log }) {
       if (request.skipNavigation) return;
       const allText = await page.locator('body').innerText();
-      lc.process(allText);
+      const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
+      for (const url of urls){
+        checkAndUseLinkChecker(url);
+      }
       await enqueueLinks({
         strategy: EnqueueStrategy.All,
         transformRequestFunction: transformRequest,
@@ -121,11 +125,9 @@ test("Test links to check if they're all reachable", async () => {
   async function doPostProcessing() {
     const opts = { url: '', urlRegExp: lc.getLinkRegex()[0]};
     for (const url of postProcessUrls.keys()) {
-      if (url.includes('/custom-resources.yaml')) console.log(`Post processing URL: ${url}`);
       opts.url = url;
       const urls = await downloadListOfUrls(opts);
       for (const u of urls) {
-        if (url.includes('/custom-resources.yaml')) console.log(`==> Found URL in content: ${u}`);
         lc.process(u);
       }
     }
