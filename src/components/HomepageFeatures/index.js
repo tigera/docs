@@ -7,7 +7,7 @@ const FeatureList = [
   {
     title: 'Calico Open Source',
     img: '/img/calico-logo.webp',
-    link: '/calico/3.25/about/',
+    link: '/calico/latest/about/',
     description: (
       <>
         Calico Open Source is a free, self-managed networking and security solution for containers, virtual machines,
@@ -19,7 +19,7 @@ const FeatureList = [
   {
     title: 'Calico Enterprise',
     img: '/img/calico-enterprise-logo.webp',
-    link: '/calico-enterprise/3.15/about-calico-enterprise',
+    link: '/calico-enterprise/latest/about-calico-enterprise',
     description: (
       <>
         Calico Enterprise is a paid, self-managed security and observability solution for containers and Kubernetes.
