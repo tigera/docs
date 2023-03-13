@@ -122,107 +122,49 @@ EOF
 
 ### Create egress gateways
 
-Create an egress gateway deployment running on the egress nodes and use new annotation `egress.projectcalico.org/externalNetworkNames` to associate the egress gateway pods of the deployment with one or more networks as desired. [see our other egress gateway guides](./)
+Use an egress gateway custom resource to deploy a group of egress gateways, and use `externalNetworks` to associate the egress gateway pods of the deployment with one or more networks as desired. [see our other egress gateway guides](./)
 
 ```batch
 kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: operator.tigera.io/v1
+kind: EgressGateway
 metadata:
   name: egress-gateway
   namespace: default
-  labels:
-    egress-code: red
 spec:
+  logSeverity: "Info"
   replicas: 1
-  selector:
-    matchLabels:
-      egress-code: red
+  ipPools:
+  - cidr: "10.10.10.0/30"
+  externalNetworks: ["red"]
+# Uncomment this block to add ICMP, HTTP probes
+# egressGatewayFailureDetection:
+#   healthTimeoutDataStoreSeconds: 30
+#   icmpProbe:
+#     ips:
+#     - <IP to probe>
+#     - <IP to probe>
+#     timeoutSeconds: 15
+#     intervalSeconds: 5
+#   httpProbe:
+#     urls:
+#     - <URL to probe>
+#     - <URL to probe>
+#     timeoutSeconds: 30
+#     intervalSeconds: 10
   template:
     metadata:
-      annotations:
-        cni.projectcalico.org/ipv4pools: "[\"10.10.10.0/31\"]"
-        egress.projectcalico.org/externalNetworkNames: "[\"red\"]"
       labels:
         egress-code: red
     spec:
-      imagePullSecrets:
-      - name: tigera-pull-secret
       nodeSelector:
-        egress: true
-      initContainers:
-      - name: egress-gateway-init
-        command: ["/init-gateway.sh"]
-        image: {{page.registry}}{% include component_image component="egress-gateway" %}
-        env:
-        # Use downward API to tell the pod its own IP address.
-        - name: EGRESS_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        securityContext:
-          privileged: true
-      containers:
-      - name: egress-gateway
-        command: ["/start-gateway.sh"]
-        image: {{page.registry}}{% include component_image component="egress-gateway" %}
-        env:
-        # Optional: comma-delimited list of IP addresses to send ICMP pings to; if all probes fail, the egress
-        # gateway will report non-ready.
-        - name: ICMP_PROBE_IPS
-          value: ""
-        # Only used if ICMP_PROBE_IPS is non-empty: interval to send probes.
-        - name: ICMP_PROBE_INTERVAL
-          value: "5s"
-        # Only used if ICMP_PROBE_IPS is non-empty: timeout before reporting non-ready if there are no successful 
-        # ICMP probes.
-        - name: ICMP_PROBE_TIMEOUT
-          value: "15s"
-        # Optional comma-delimited list of HTTP URLs to send periodic probes to; if all probes fail, the egress
-        # gateway will report non-ready.
-        - name: HTTP_PROBE_URLS
-          value: ""
-        # Only used if HTTP_PROBE_URL is non-empty: interval to send probes.
-        - name: HTTP_PROBE_INTERVAL
-          value: "10s"
-        # Only used if HTTP_PROBE_URL is non-empty: timeout before reporting non-ready if there are no successful 
-        # HTTP probes.
-        - name: HTTP_PROBE_TIMEOUT
-          value: "30s"
-        # Port that the egress gateway serves its health reports.  Must match the readiness probe and health
-        # port defined below.
-        - name: HEALTH_PORT
-          value: "8080"
-        - name: EGRESS_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        securityContext:
-          capabilities:
-            add:
-            - NET_ADMIN
-        volumeMounts:
-        - mountPath: /var/run
-          name: policysync
-        ports:
-        - name: health
-          containerPort: 8080
-        readinessProbe:
-          httpGet:
-            path: /readiness
-            port: 8080
-          initialDelaySeconds: 3
-          periodSeconds: 3
+        kubernetes.io/os: linux
       terminationGracePeriodSeconds: 0
-      volumes:
-      - csi:
-          driver: csi.tigera.io
-        name: policysync
 EOF
 ```
 
 Where:
-- Annotations `egress.projectcalico.org/externalNetworkNames: "[\"red\"]"` associates this egress gateway deployments with external network `red`. All traffic leaving the egress gateway to an external destination will be routed to the destination on external network `red`.
+- Where `externalNetworks` associates this egress gateway deployments with external network `red`. All traffic leaving the egress gateway to an external destination will be routed to the destination on external network `red`.
 - Node selector `egress: true` forces egress gateway pods of the deployment to be scheduled on egress nodes.
 
 :::note

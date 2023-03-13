@@ -19,10 +19,6 @@ start: init
 test: init
 	./scripts/serve-test.sh
 
-.PHONY: redirects-test
-redirects-test: init
-	yarn test __tests__/redirects.test.js
-
 .PHONY: clear clean
 clear clean:
 	yarn clear
@@ -34,6 +30,12 @@ init:
 .PHONY: serve
 serve: build
 	yarn serve
+
+.PHONY: index
+index:
+	@echo -n "CONFIG=" >.env.local
+	@cat algolia-crawler-config.json | jq -r tostring >>.env.local
+	docker run -it -e APPLICATION_ID -e API_KEY --env-file=.env.local algolia/docsearch-scraper
 
 .PHONY: autogen
 autogen:

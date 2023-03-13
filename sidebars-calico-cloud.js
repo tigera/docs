@@ -347,6 +347,7 @@ module.exports = {
             'networking/egress/egress-gateway-on-prem',
             'networking/egress/egress-gateway-aws',
             'networking/egress/egress-gateway-maintenance',
+	    'networking/egress/external-network'
             'networking/egress/troubleshoot',
           ],
         },
@@ -430,7 +431,6 @@ module.exports = {
           items: [
             'operations/ebpf/use-cases-ebpf',
             'operations/ebpf/enabling-ebpf',
-            'operations/ebpf/install',
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
