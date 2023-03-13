@@ -113,25 +113,50 @@ You can scan images and report results back to {{prodname}}, or scan images loca
 - `--warn_threshold` - CVSS threshold for Warn scan results. Range from 0.0 - 10.0.
 - `--fail_threshold` - CVSS threshold for Fail scan results. Range from 0.0 - 10.0.
 - `--vulnerability_db_path` - path to a folder to store vulnerability data (defaults to `$XDG_CACHE_HOME`; if it is not set, defaults to `$HOME/.cache`).
+- `--input_file <file-path>` - Path to a JSON file containing image URLs.
+- `--output_file <file-path>` - File path that will contain scan results in a JSON format.
 
 **Examples**
 
-**Scan image, report results**
+**Scan an image, report results**
 
 ```shell
 ./tigera-scanner scan ubuntu:latest --apiurl https://<my-org>.calicocloud.io --token ezBhbGcetc...
 ```
 
-**Scan image locally, do not report results**
+**Scan an image locally, do not report results**
 
 ```shell
 ./tigera-scanner scan ubuntu:latest
 ```
 
-**Scan images with fail and warn thresholds**
+**Scan an image with a failure and warning threshold**
 
 ```shell
 ./tigera-scanner scan ubuntu:latest --fail_threshold 7.0 --warn_threshold 3.9
+```
+
+**Scan multiple images locally, do not report results**
+
+```shell
+./tigera-scanner scan ubuntu:latest alpine:latest
+```
+
+**Scan multiple images using an input and output file**
+
+The input file must have the following JSON structure:
+
+```json
+{
+  "images": [
+    "ubuntu:latest",
+    "alpine:latest"
+  ]
+}
+```
+
+```shell
+./tigera-scanner scan --input_file images.json --output_file results.json
 ```
 
 ### Scan images using a config file
@@ -153,6 +178,8 @@ Key names must match the full name of arguments passed to the CLI. The configura
 | --warn_threshold        | -w        | CC_WARN_THRESHOLD        | CVSS threshold for Warn scan results. Range from 0.0 - 10.0.                                                                |
 | --fail_threshold        | -f        | CC_FAIL_THRESHOLD        | CVSS threshold for Fail scan results. Range from 0.0 - 10.0.                                                                |
 | --vulnerability_db_path | -p        | CC_VULNERABILITY_DB_PATH | Path to a folder to store vulnerability data (defaults to `$XDG_CACHE_HOME`; if it is not set, defaults to `$HOME/.cache`). |
+| --input_file            | -i        | CC_INPUT_FILE            | Path to the JSON file containing image URLs.                                                                                           |
+| --output_file           | -o        | CC_OUTPUT_FILE           | File path that will contain scan results in a JSON format.                                                                                        |
 
 ### Update the CLI scanner
 
@@ -260,6 +287,7 @@ The export generates a CSV file with image and CVE metadata for the current list
 
 - **Export one row for each image and CVE ID** exports a unique image + CVE combination for each row. For example, if an image has 10 CVEs, 10 rows are created (1 for each CVE).
 - **Export one row per image** exports one row for each image, with all associated CVEs condensed into a single column.
+- **Export for scanning** exports a JSON file that contains image URLs which can be used as an input to the scanner.
 
 :::note
 

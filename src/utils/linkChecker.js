@@ -32,9 +32,9 @@ const defaultSkipList = [
 
 // Ignore patterns are skipped and ignored completely - no visibility whatsoever
 const defaultIgnoreList = [
-  // /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
-  // /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/i,
-  // /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+?\.md$/i,
+  /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
+  /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/i,
+  /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+?\.md$/i,
 ];
 
 function linkChecker() {
@@ -105,17 +105,17 @@ function linkChecker() {
     });
   }
 
-  function process(text) {
+  function process(origin, text) {
     for (const lre of linkRegex) {
       const matches = text.matchAll(lre);
       for (const match of matches) {
-        const url = match[0].trim().replace(trimUrlChars, '').replace(/\/$/, '');
+        const url = match[0].trim().replace(trimUrlChars, '');
         if (isIgnored(url)) continue;
         if (urlMap.has(url)) continue;
         urlMap.set(url, null);
         if (isInvalidOrSkipped(url)) continue;
         urlMap.set(url, { status: CHECKING });
-        urlCheck(url, linkCheckCallback);
+        urlCheck(origin, url, linkCheckCallback).then(r => {});
       }
     }
   }
@@ -156,29 +156,29 @@ function linkChecker() {
     });
 
     console.log(
-      `${LC} REPORT\n\tSummary: ignored: ${ignored}, skipped: ${skipped}, invalid: ${invalid}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
+      `${LC} REPORT\nSummary: ignored: ${ignored}, skipped: ${skipped}, invalid: ${invalid}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
 
     if (invalid > 0) {
       console.info(
-        `\n\t[INFO] ${LC} skipped the following ${invalid} invalid link(s):`);
-      enumMap(v => v.status === INVALID, (v, k) => `\t${k} is ${v.status}`, INFO);
+        `\n[INFO] ${LC} skipped the following ${invalid} invalid link(s):`);
+      enumMap(v => v.status === INVALID, (v, k) => `${k} is ${v.status}`, INFO);
     }
 
     if (skipped > 0) {
       console.info(
-        `\n\t[INFO] ${LC} skipped the following ${skipped} link(s) due to built-in skip rules:`);
-      enumMap(v => v.status === SKIPPED, (v, k) => `\t${k} was ${v.status}`, INFO);
+        `\n[INFO] ${LC} skipped the following ${skipped} link(s) due to built-in skip rules:`);
+      enumMap(v => v.status === SKIPPED, (v, k) => `${k} was ${v.status}`, INFO);
     }
 
     if (dead > 0) {
       console.warn(
-        `\n\t[WARN] ${LC} found the following ${dead} dead link(s):`);
-      enumMap(v => v.status === DEAD, (v, k) => `\t${k} is ${v.status} (${v.statusCode})`, WARN);
+        `\n[WARN] ${LC} found the following ${dead} dead link(s):`);
+      enumMap(v => v.status === DEAD, (v, k) => `${k} is ${v.status} (${v.statusCode})\n==>Origin: ${v?.origin}\n`, WARN);
     }
 
     if (error > 0) {
-      console.warn(`\n\t[ERROR] ${LC} hit the following ${error} error(s):`);
-      enumMap(v => v.status === ERROR,(v, k) => `\t${k} (${v.statusCode}) error: ${v.msg}`, WARN);
+      console.warn(`\n[ERROR] ${LC} hit the following ${error} error(s):`);
+      enumMap(v => v.status === ERROR,(v, k) => `${k} (${v.statusCode}) error: ${v.msg}\n==>Origin: ${v?.origin}\n`, WARN);
     }
 
     return !failed;
@@ -273,8 +273,9 @@ function linkChecker() {
   function retryErrors() {
     const errors = getStatus(ERROR);
     for (const url of errors) {
+      const obj = urlMap.get(url);
       urlMap.set(url, { status: CHECKING });
-      urlCheck(url, linkCheckCallback);
+      urlCheck(obj.origin, url, linkCheckCallback).then(r => {});
     }
   }
 
