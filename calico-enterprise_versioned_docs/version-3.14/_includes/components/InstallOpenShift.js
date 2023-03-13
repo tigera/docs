@@ -242,18 +242,31 @@ spec:
         When it shows all components with status <code>Available</code>, proceed to the next section.
       </p>
 
-      {props.clusterType == 'managed' && (
-        <>
-          <Heading
-            as='h4'
-            id={`sucure-${prodnamedash}-components-with-network-policy`}
-          >
-            Secure {prodname} components with network policy
-          </Heading>
-          <p>To secure the components that make up {prodname}, install the following set of network policies.</p>
-          <CodeBlock>oc create -f {filesUrl}/manifests/ocp/tigera-policies-managed.yaml</CodeBlock>
-        </>
-      )}
+        <When condition={props.clusterType === 'managed'}>
+            <>
+                <Heading
+                    as='h3'
+                    id={`secure-${prodnamedash}-components-with-network-policy`}
+                >
+                    Secure {prodname} components with network policy
+                </Heading>
+                <p>To secure the components that make up {prodname}, install the following set of network policies.</p>
+                <CodeBlock>oc create -f {filesUrl}/manifests/ocp/tigera-policies-managed.yaml</CodeBlock>
+            </>
+        </When>
+
+        <When condition={props.clusterType !== 'managed'}>
+            <>
+                <Heading
+                    as='h4'
+                    id={`secure-${prodnamedash}-components-with-network-policy`}
+                >
+                    Secure {prodname} components with network policy
+                </Heading>
+                <p>To secure the components that make up {prodname}, install the following set of network policies.</p>
+                <CodeBlock>oc create -f {filesUrl}/manifests/ocp/tigera-policies.yaml</CodeBlock>
+            </>
+        </When>
 
       <When condition={props.clusterType === 'management'}>
         <>
