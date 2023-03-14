@@ -40,7 +40,6 @@ test("Test links to check if they're all reachable", async () => {
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl`,
     `https://projectcalico.docs.tigera.io/manifests/calico-vxlan.yaml`,
     `https://github.com/projectcalico/calico/releases/download/master/install-calico-windows.ps1`,
-    `http://localhost:4242/calico/3.24/network-policy/istio/files/30-policy.yaml`,
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoq`,
     `https://en.wikipedia.org/wiki/Autonomous_System_(Internet)%3E`,
     `https://installer.calicocloud.io/manifests/v3.15.1-8/manifests`,
