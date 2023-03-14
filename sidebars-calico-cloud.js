@@ -12,6 +12,7 @@ module.exports = {
           link: {type: 'doc', id:'get-started/connect/index'},
           items: [
             'get-started/connect/install-cluster',
+            'get-started/connect/cc-arch-diagram',
             'get-started/connect/setup-private-registry',
           ],
         },
@@ -34,7 +35,6 @@ module.exports = {
         'get-started/upgrade-cluster',
       ],
     },
-    'users/user-management',
     {
       type: 'category',
       label: 'Tutorials',
@@ -74,10 +74,8 @@ module.exports = {
         {
           type: 'category',
           label: 'Kubernetes networking for beginners',
-          link: {type: 'doc', id:'networking/training/index'},
+          link: {type: 'doc', id:'tutorials/training/index'},
           items: [
-            'networking/training/about-networking',
-            'networking/training/about-kubernetes-networking',
             'tutorials/training/about-network-policy',
             'tutorials/training/about-kubernetes-services',
             'tutorials/training/about-kubernetes-ingress',
@@ -87,7 +85,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Kubernetes tutorials and demos',
-          link: {type: 'doc', id:'tutorials/training/index'},
+          link: {type: 'doc', id:'tutorials/kubernetes-tutorials/index'},
           items: [
             'tutorials/kubernetes-tutorials/kubernetes-demo',
             'tutorials/kubernetes-tutorials/kubernetes-network-policy',
@@ -210,21 +208,6 @@ module.exports = {
             'network-policy/extreme-traffic/defend-dos-attack',
           ],
         },
-        {
-          type: 'category',
-          label: 'Kubernetes for beginners',
-          link: {type: 'doc', id: 'tutorials/training/index'},
-          items: [
-            'tutorials/training/about-network-policy',
-            'tutorials/kubernetes-tutorials/kubernetes-network-policy',
-            'tutorials/kubernetes-tutorials/kubernetes-demo',
-            'tutorials/kubernetes-tutorials/kubernetes-policy-basic',
-            'tutorials/kubernetes-tutorials/kubernetes-policy-advanced',
-            'tutorials/training/about-kubernetes-services',
-            'tutorials/training/about-kubernetes-ingress',
-            'tutorials/training/about-kubernetes-egress',
-          ],
-        },
       ],
     },
     {
@@ -232,7 +215,6 @@ module.exports = {
       label: 'Observability and troubleshooting',
       link: {type: 'doc', id: 'visibility/index'},
       items: [
-        'tutorials/calico-cloud-features/tour',
         'visibility/alerts',
         'visibility/kibana',
         'visibility/packetcapture',
@@ -244,7 +226,6 @@ module.exports = {
           items: [
             'visibility/elastic/overview',
             'visibility/elastic/archive-storage',
-            'visibility/elastic/rbac-elasticsearch',
             {
               type: 'category',
               label: 'Flow logs',
@@ -278,7 +259,6 @@ module.exports = {
                 'visibility/elastic/l7/datatypes',
               ],
             },
-            'visibility/elastic/troubleshoot',
           ],
         },
         'visibility/kube-audit',
@@ -367,6 +347,7 @@ module.exports = {
             'networking/egress/egress-gateway-on-prem',
             'networking/egress/egress-gateway-aws',
             'networking/egress/egress-gateway-maintenance',
+            'networking/egress/external-network',
             'networking/egress/troubleshoot',
           ],
         },
@@ -450,7 +431,6 @@ module.exports = {
           items: [
             'operations/ebpf/use-cases-ebpf',
             'operations/ebpf/enabling-ebpf',
-            'operations/ebpf/install',
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
@@ -477,6 +457,7 @@ module.exports = {
             'reference/resources/bgpfilter',
             'reference/resources/blockaffinity',
             'reference/resources/caliconodestatus',
+            'reference/resources/containeradmissionpolicy',
             {
               type: 'category',
               label: 'Compliance reports',

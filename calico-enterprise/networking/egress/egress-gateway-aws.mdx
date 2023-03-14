@@ -219,16 +219,15 @@ an instance (for example when scaling up the cluster).
 - [Configure AWS IAM roles](#configure-aws-iam-roles)
 - [Configure IP reservations for each VPC subnet](#configure-ip-reservations-for-each-vpc-subnet)
 - [Enable egress gateway support](#enable-egress-gateway-support)
-- [Enable policy sync API](#enable-policy-sync-api)
 - [Enable AWS-backed IP pools](#enable-aws-backed-ip-pools)
 - [Configure IP pools backed by VPC subnets](#configure-ip-pools-backed-by-vpc-subnets)
-- [Copy pull secret into egress gateway namespace](#copy-pull-secret-into-egress-gateway-namespace)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
 - [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
-- [Controlling the use of egress gateways](#controlling-the-use-of-egress-gateways)
+- [Control the use of egress gateways](#control-the-use-of-egress-gateways)
 - [Policy enforcement for flows via an egress gateway](#policy-enforcement-for-flows-via-an-egress-gateway)
+- [Upgrade egress gateways](#upgrade-egress-gateways)
 
 ### Configure IP autodetection
 
@@ -362,6 +361,11 @@ of resources). In addition, to support elastic IPs, each {{noderunning}} also re
 - AssociateAddress
 - DisassociateAddress
 
+### Configure AWS Security Group rules
+
+In order to allow egress gateway traffic into the egress gateway pod's host from the client, the ingress rules of the security
+group need to be updated. A rule to allow all packets from within the security group must be added to the inbound rules.
+
 ### Configure IP reservations for each VPC subnet
 
 Since the first four IP addresses and the last IP address in a VPC subnet cannot be used, it is important to
@@ -404,20 +408,11 @@ kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
 
-### Enable policy sync API
-
-The egress gateway container image requires the policy sync API to be enabled. To do this cluster-wide, modify
-the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
-
-```batch
-kubectl patch felixconfiguration.p default --type='merge' -p \
-    '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
-```
-
 :::note
 
-- `egressIPSupport` and `policySyncPathPrefix` must be the same on all cluster nodes, so you should only set them in the
+- `egressIPSupport` must be the same on all cluster nodes, so you should set them only in the
   `default` FelixConfiguration resource.
+- The operator automatically enables the required policy sync API in the FelixConfiguration.
 
 :::
 
@@ -498,19 +493,19 @@ it will take an IP from the appropriate pool.
 
 For the "west-1" availability zone:
 
-- IP pool "egress-red-west-1", CIDR `100.64.0.4/31` (the first non-reserved /31 CIDR in the VPC subnet). These
+- IP pool "egress-red-west-1", CIDR `100.64.0.4/30` (the first non-reserved /30 CIDR in the VPC subnet). These
   addresses will be used for "red" egress gateways in the "west-1" AZ.
 
-- IP pool "egress-blue-west-1", CIDR `100.64.0.6/31` (the next 2 IPs from the "west-1" subnet). These addresses
+- IP pool "egress-blue-west-1", CIDR `100.64.0.8/30` (the next 4 IPs from the "west-1" subnet). These addresses
   will be used for "blue" egress gateways in the "west-1" AZ.
 
 For the "west-2" availability zone:
 
-- IP pool "egress-red-west-2", CIDR `100.64.4.4/31` (the first non-reserved /31 CIDR in the VPC subnet). These
-  addresses will be used for "red" egress gateways in the "west-1" AZ.
+- IP pool "egress-red-west-2", CIDR `100.64.4.4/30` (the first non-reserved /30 CIDR in the VPC subnet). These
+  addresses will be used for "red" egress gateways in the "west-2" AZ.
 
-- IP pool "egress-blue-west-2", CIDR `100.64.4.6/31` (the next 2 IPs from the "west-2" subnet). These addresses
-  will be used for "blue" egress gateways in the "west-1" AZ.
+- IP pool "egress-blue-west-2", CIDR `100.64.4.8/30` (the next 4 IPs from the "west-2" subnet). These addresses
+  will be used for "blue" egress gateways in the "west-2" AZ.
 
 Converting this to `IPPool` resources:
 
@@ -520,7 +515,7 @@ kind: IPPool
 metadata:
   name: egress-red-west-1
 spec:
-  cidr: 100.64.0.4/31
+  cidr: 100.64.0.4/30
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000001
   blockSize: 32
@@ -532,7 +527,7 @@ kind: IPPool
 metadata:
   name: egress-blue-west-1
 spec:
-  cidr: 100.64.0.6/31
+  cidr: 100.64.0.8/30
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000001
   blockSize: 32
@@ -544,7 +539,7 @@ kind: IPPool
 metadata:
   name: egress-red-west-2
 spec:
-  cidr: 100.64.4.4/31
+  cidr: 100.64.4.4/30
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000002
   blockSize: 32
@@ -556,7 +551,7 @@ kind: IPPool
 metadata:
   name: egress-blue-west-2
 spec:
-  cidr: 100.64.4.6/31
+  cidr: 100.64.4.8/30
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000002
   blockSize: 32
@@ -609,11 +604,11 @@ For the "west-1" availability zone:
   - `100.64.0.0/25` covers the addresses from `100.64.0.0` to `100.64.0.127` (but addresses `100.64.0.0` to `100.64.0.3`
     were reserved above).
 
-- IP pool "egress-red-west-1", CIDR `100.64.0.128/31` (the next 2 IPs from the "west-1" subnet).
+- IP pool "egress-red-west-1", CIDR `100.64.0.128/30` (the next 4 IPs from the "west-1" subnet).
 
   - These addresses will be used for "red" egress gateways in the "west-1" AZ.
 
-- IP pool "egress-blue-west-1", CIDR `100.64.0.130/31` (the next 2 IPs from the "west-1" subnet).
+- IP pool "egress-blue-west-1", CIDR `100.64.0.132/30` (the next 4 IPs from the "west-1" subnet).
 
   - These addresses will be used for "blue" egress gateways in the "west-1" AZ.
 
@@ -624,13 +619,13 @@ For the "west-2" availability zone:
   - `100.64.4.0/25` covers the addresses from `100.64.4.0` to `100.64.4.127` (but addresses `100.64.4.0` to `100.64.4.3`
     were reserved above).
 
-- IP pool "egress-red-west-2", CIDR `100.64.4.128/31` (the next 2 IPs from the "west-2" subnet).
+- IP pool "egress-red-west-2", CIDR `100.64.4.128/30` (the next 4 IPs from the "west-2" subnet).
 
-  - These addresses will be used for "red" egress gateways in the "west-1" AZ.
+  - These addresses will be used for "red" egress gateways in the "west-2" AZ.
 
-- IP pool "egress-blue-west-2", CIDR `100.64.4.130/31` (the next 2 IPs from the "west-2" subnet).
+- IP pool "egress-blue-west-2", CIDR `100.64.4.132/30` (the next 4 IPs from the "west-2" subnet).
 
-  - These addresses will be used for "blue" egress gateways in the "west-1" AZ.
+  - These addresses will be used for "blue" egress gateways in the "west-2" AZ.
 
 Converting this to `IPPool` resources:
 
@@ -651,7 +646,7 @@ kind: IPPool
 metadata:
   name: egress-red-west-1
 spec:
-  cidr: 100.64.0.128/31
+  cidr: 100.64.0.128/30
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000001
   blockSize: 32
@@ -663,7 +658,7 @@ kind: IPPool
 metadata:
   name: egress-blue-west-1
 spec:
-  cidr: 100.64.0.130/31
+  cidr: 100.64.0.132/30
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000001
   blockSize: 32
@@ -686,7 +681,7 @@ kind: IPPool
 metadata:
   name: egress-red-west-2
 spec:
-  cidr: 100.64.4.128/31
+  cidr: 100.64.4.128/30
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000002
   blockSize: 32
@@ -698,7 +693,7 @@ kind: IPPool
 metadata:
   name: egress-blue-west-2
 spec:
-  cidr: 100.64.4.130/31
+  cidr: 100.64.4.132/30
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000002
   blockSize: 32
@@ -709,22 +704,9 @@ spec:
 </TabItem>
 </Tabs>
 
-### Copy pull secret into egress gateway namespace
-
-Identify the pull secret that is needed for pulling {{prodname}} images, and copy this into the
-namespace where you plan to create your egress gateways. It is typically named
-`tigera-pull-secret`, in the `calico-system` namespace, so the command to copy that to the `default`
-namespace would be:
-
-```batch
-kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
-   grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
-   kubectl apply --namespace=default -f -
-```
-
 ### Deploy a group of egress gateways
 
-Use an Egress Gateway custom resource to deploy a group of egress gateways.
+Use an egress gateway custom resource to deploy a group of egress gateways.
 
 Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and {{prodname}}
 in tandem to get a cluster of egress gateways that spans both availability zones and uses AWS-backed IP addresses:
@@ -742,16 +724,21 @@ spec:
   ipPools:
   - name: "egress-red-west-1"
   - name: "egress-red-west-2"
-  egressGatewayFailureDetection:
-    healthTimeoutDataStoreSeconds: 30
-    icmpProbe:
-      ips: ["34.56.2.7"]
-      timeoutSeconds: 15
-      intervalSeconds: 5
-    httpProbe:
-      urls: ["http://example.com"]
-      timeoutSeconds: 30
-      intervalSeconds: 10
+# Uncomment this block to add ICMP, HTTP probes
+# egressGatewayFailureDetection:
+#   healthTimeoutDataStoreSeconds: 30
+#   icmpProbe:
+#     ips:
+#     - <IP to probe>
+#     - <IP to probe>
+#     timeoutSeconds: 15
+#     intervalSeconds: 5
+#   httpProbe:
+#     urls:
+#     - <URL to probe>
+#     - <URL to probe>
+#     timeoutSeconds: 30
+#     intervalSeconds: 10
   aws:
     nativeIP: Enabled
   template:
@@ -819,8 +806,8 @@ spec:
   ```yaml
   icmpProbe:
     ips:
-    - probeIP
-    - probeIP
+    - <IP to probe>
+    - <IP to probe>
     timeoutSeconds: 20
     intervalSeconds: 10
   ```
@@ -833,12 +820,12 @@ spec:
   ```yaml
   httpProbe:
     urls:
-    - probeURL
-    - probeURL
+    - <URL to probe>
+    - <URL to probe>
     timeoutSeconds: 30
     intervalSeconds: 10
   ```
-- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the Egress Gateway resource type.
+- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the egress gateway resource type.
 
 :::note
 
@@ -913,7 +900,7 @@ To add AWS Elastic IPs to the egress gateway pods, follow these steps:
 - Create one or more Elastic IPs for the deployment. This can be done through the AWS Console or using the AWS
   command line interface.
 
-- Add the Elastic IPs to the Egress Gateway resource.
+- Add the Elastic IPs to the egress gateway resource.
 
   ```yaml
   aws:
@@ -995,7 +982,7 @@ Connection from <source IP> <source port> received
 
 with `<source IP>` being one of the IPs of the egress IP pool that you provisioned.
 
-### Controlling the use of egress gateways
+### Control the use of egress gateways
 
 If a cluster ascribes special meaning to traffic flowing through egress gateways, it will be
 important to control when cluster users can configure their pods and namespaces to use them, so that
@@ -1073,18 +1060,12 @@ patch release.
 
 :::
 
-## Upgrading egress gateways
+## Upgrade egress gateways
 
 
-From v3.16, Egress Gateway deployments are managed by the Tigera Operator.
+From v3.16, egress gateway deployments are managed by the Tigera Operator.
 
-- Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To
-  enable the policy sync API, follow the steps in [enable policy sync API](#enable-policy-sync-api) above. This API
-  allows the egress gateway daemon inside the egress gateway pod to query {{noderunning}} for the set of active
-  routes in the cluster. If the egress gateway daemon cannot reach the API, it will fail and report errors to the logs
-  as it retries the connection.
-
-- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 Egress Gateway deployment, 
+- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 egress gateway deployment, 
   create an equivalent EgressGateway resource with the same namespace and the same name as mentioned [above](#deploy-a-group-of-egress-gateways); 
   the operator will then take over management of the old Deployment resource, replacing it with the upgraded version.
 

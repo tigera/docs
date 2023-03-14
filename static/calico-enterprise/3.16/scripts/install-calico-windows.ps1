@@ -1,6 +1,3 @@
----
-layout: null
----
 # Copyright (c) 2020-2022 Tigera, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +13,7 @@ layout: null
 # limitations under the License.
 <#
 .DESCRIPTION
-    This script installs and starts {{site.prodname}} services on a Windows node.
+    This script installs and starts Calico Enterprise services on a Windows node.
 
     Note: EKS requires downloading kubectl.exe to c:\k before running this script: https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 #>
@@ -24,12 +21,6 @@ layout: null
 Param(
     # Note: we don't publish a release artifact for the "master" branch. To test
     # against master, build calico-windows.zip from projectcalico/node.
-{%- if site.url contains "projectcalico" %}
-    [parameter(Mandatory = $false)] $ReleaseBaseURL="https://github.com/projectcalico/calico/releases/download/{{site.data.versions.first.components["calico/node"].version}}/",
-    [parameter(Mandatory = $false)] $ReleaseFile="calico-windows-{{site.data.versions.first.components["calico/node"].version}}.zip",
-{%- else %}
-    [parameter(Mandatory = $false)] $ReleaseBaseURL="{{site.url}}/files/windows/",
-{%- endif %}
     [parameter(Mandatory = $false)] $KubeVersion="",
     [parameter(Mandatory = $false)] $StartCalico="yes",
     # As of Kubernetes version v1.24.0, service account token secrets are no longer automatically created. But this installation script uses that secret
@@ -166,7 +157,7 @@ function GetBackendType()
     if ($Datastore -EQ "kubernetes") {
         $encap=c:\k\kubectl.exe --kubeconfig="$KubeConfigPath" get felixconfigurations.crd.projectcalico.org default -o jsonpath='{.spec.ipipEnabled}'
         if ($encap -EQ "true") {
-            throw "{{site.prodname}} on Linux has IPIP enabled. IPIP is not supported on Windows nodes."
+            throw "Calico Enterprise on Linux has IPIP enabled. IPIP is not supported on Windows nodes."
         }
 
         # Check FelixConfig first.
@@ -397,13 +388,23 @@ function SetAKSCalicoStaticRules {
 
 function InstallCalico()
 {
-    Write-Host "`nStart {{site.prodnameWindows}} install...`n"
+    Write-Host "`nStart Calico Enterprise for Windows install...`n"
 
     pushd
     cd $RootDir
     .\install-calico.ps1
     popd
-    Write-Host "`n{{site.prodnameWindows}} installed`n"
+    Write-Host "`nCalico Enterprise for Windows installed`n"
+}
+
+function SetConfig {
+    param(
+        [parameter(Mandatory=$true)] $RootDir,
+        [parameter(Mandatory=$true)] $OldString,
+        [parameter(Mandatory=$true)] $NewString
+    )
+
+    (Get-Content $RootDir\config.ps1).replace($OldString, $NewString) | Set-Content $RootDir\config.ps1 -Force
 }
 
 # kubectl errors are expected, so there are places where this is reset to "Continue" temporarily
@@ -438,7 +439,7 @@ ipmo -force -DisableNameChecking $helperv2
 
 if (!(Test-Path $CalicoZipPath))
 {
-	throw "Cannot find {{site.prodnameWindows}} zip file $CalicoZipPath."
+	throw "Cannot find Calico Enterprise for Windows zip file $CalicoZipPath."
 }
 
 $platform=GetPlatformType
@@ -449,7 +450,7 @@ if ((Get-Service -exclude 'CalicoUpgrade' | where Name -Like 'Calico*' | where S
 }
 
 Remove-Item $RootDir -Force  -Recurse -ErrorAction SilentlyContinue
-Write-Host "Unzip {{site.prodnameWindows}} release..."
+Write-Host "Unzip Calico Enterprise for Windows release..."
 Expand-Archive -Force $CalicoZipPath c:\
 ipmo -force $RootDir\libs\calico\calico.psm1
 
@@ -458,7 +459,7 @@ if (-Not [string]::IsNullOrEmpty($KubeVersion) -and $platform -NE "eks") {
     PrepareKubernetes
 }
 
-Write-Host "Setup {{site.prodnameWindows}}..."
+Write-Host "Setup Calico Enterprise for Windows..."
 Set-ConfigParameters -var 'CALICO_DATASTORE_TYPE' -value $Datastore
 Set-ConfigParameters -var 'ETCD_ENDPOINTS' -value $EtcdEndpoints
 
@@ -473,7 +474,7 @@ Set-ConfigParameters -var 'K8S_SERVICE_CIDR' -value $ServiceCidr
 Set-ConfigParameters -var 'DNS_NAME_SERVERS' -value $DNSServerIPs
 
 if ($platform -EQ "aks") {
-    Write-Host "Setup {{site.prodnameWindows}} for AKS..."
+    Write-Host "Setup Calico Enterprise for Windows for AKS..."
     $Backend="none"
     Set-ConfigParameters -var 'CALICO_NETWORKING_BACKEND' -value "none"
     Set-ConfigParameters -var 'KUBE_NETWORK' -value "azure.*"
@@ -488,7 +489,7 @@ if ($platform -EQ "eks") {
 
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "300"} -Method PUT -Uri http://169.254.169.254/latest/api/token -ErrorAction Ignore
     $awsNodeName = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/local-hostname -ErrorAction Ignore
-    Write-Host "Setup {{site.prodnameWindows}} for EKS, node name $awsNodeName ..."
+    Write-Host "Setup Calico Enterprise for Windows for EKS, node name $awsNodeName ..."
     $Backend = "none"
 
     Set-ConfigParameters -var 'NODENAME' -value $awsNodeName
@@ -497,11 +498,12 @@ if ($platform -EQ "eks") {
 
     $calicoNs = GetCalicoNamespace -KubeConfigPath C:\ProgramData\kubernetes\kubeconfig
     GetCalicoKubeConfig -CalicoNamespace $calicoNs -KubeConfigPath C:\ProgramData\kubernetes\kubeconfig
+    SetConfig -RootDir $RootDir -OldString "Set-EnvVarIfNotSet -var `"KUBECONFIG`" -defaultValue `"`$PSScriptRoot\calico-kube-config`"" -NewString "`$env:KUBECONFIG = `"`$PSScriptRoot\calico-kube-config`""
 }
 if ($platform -EQ "ec2") {
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "300"} -Method PUT -Uri http://169.254.169.254/latest/api/token -ErrorAction Ignore
     $awsNodeName = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/local-hostname -ErrorAction Ignore
-    Write-Host "Setup {{site.prodnameWindows}} for AWS, node name $awsNodeName ..."
+    Write-Host "Setup Calico Enterprise for Windows for AWS, node name $awsNodeName ..."
     Set-ConfigParameters -var 'NODENAME' -value $awsNodeName
 
     $calicoNs = GetCalicoNamespace
@@ -515,7 +517,7 @@ if ($platform -EQ "ec2") {
 }
 if ($platform -EQ "gce") {
     $gceNodeName = Invoke-RestMethod -UseBasicParsing -Headers @{"Metadata-Flavor"="Google"} "http://metadata.google.internal/computeMetadata/v1/instance/hostname" -ErrorAction Ignore
-    Write-Host "Setup {{site.prodnameWindows}} for GCE, node name $gceNodeName ..."
+    Write-Host "Setup Calico Enterprise for Windows for GCE, node name $gceNodeName ..."
     Set-ConfigParameters -var 'NODENAME' -value $gceNodeName
 
     $calicoNs = GetCalicoNamespace
