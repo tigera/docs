@@ -6,7 +6,6 @@ const variables = {
   prodnamedash: 'calico',
   version: 'v3.25',
   baseUrl: '/calico/latest',
-  //baseUrl: '/calico/3.25',
   filesUrl: 'https://projectcalico.docs.tigera.io/v3.25',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download',
