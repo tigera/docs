@@ -19,9 +19,16 @@ fi
 
 echo 'Switching latest...'
 
-perl -0777 -pi -e "s/^[ \t]*baseUrl:[ \t]*'\/${product}/latest'[ \t]*,[ \t]*\$/m" "./${product}_versioned_docs/version-${fromVersion}/variables.js"
-perl -0777 -pi -e "s/^[ \t]*baseUrl:[ \t]*'\/${product}/${toVersion}'[ \t]*,[ \t]*\$/m" "./${product}_versioned_docs/version-${toVersion}/variables.js"
-perl -0777 -pi -e "s/label:[ \t]*'${fromVersion}'[ \t]*,[ \t]*\n([ \t]*)path:[ \t]*'latest'[ \t]*,/label: '${fromVersion}',\n\${1}path: '${fromVersion}',/" "./docusaurus.config.js"
-perl -0777 -pi -e "s/label:[ \t]*'${toVersion}'[ \t]*,[ \t]*\n([ \t]*)path:[ \t]*'latest'[ \t]*,/label: '${toVersion}',\n\${1}path: 'latest',/" "./docusaurus.config.js"
+regex="s/^[ \t]*baseUrl:[ \t]*'\/${product}/latest'[ \t]*,[ \t]*\$/m"
+perl -0777 -pi -e "${regex}" "./${product}_versioned_docs/version-${fromVersion}/variables.js"
+
+regex="s/^[ \t]*baseUrl:[ \t]*'\/${product}/${toVersion}'[ \t]*,[ \t]*\$/m"
+perl -0777 -pi -e "${regex}" "./${product}_versioned_docs/version-${toVersion}/variables.js"
+
+regex="s/label:[ \t]*'${fromVersion}'[ \t]*,[ \t]*\n([ \t]*)path:[ \t]*'latest'[ \t]*,/label: '${fromVersion}',\n\${1}path: '${fromVersion}',/m"
+perl -0777 -pi -e "${regex}" "./docusaurus.config.js"
+
+regex="s/label:[ \t]*'${toVersion}'[ \t]*,[ \t]*\n([ \t]*)path:[ \t]*'latest'[ \t]*,/label: '${toVersion}',\n\${1}path: 'latest',/m"
+perl -0777 -pi -e "${regex}" "./docusaurus.config.js"
 
 echo "[SUCCESS]: version 'latest' for product '${product}' switched from ${fromVersion} to ${toVersion}"

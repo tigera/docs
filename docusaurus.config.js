@@ -344,7 +344,6 @@ const config = {
           3.25: {
             label: '3.25',
             path: 'latest',
-            //path: '3.25',
             banner: 'none',
           },
           3.24: {
@@ -382,7 +381,6 @@ const config = {
           3.15: {
             label: '3.15',
             path: 'latest',
-            //path: '3.15',
             banner: 'none',
           },
           3.14: {
