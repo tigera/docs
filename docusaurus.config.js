@@ -5,21 +5,16 @@ const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 const variablesPlugin = require('./src/remark/variablesPlugin');
-const linkCheckerPlugin = require('./src/remark/linkCheckerPlugin');
 const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  // TODO[dac]: noIndex should be removed, along with robots.txt and the
-  // X-Robots-Tag:noindex in the /static/_headers file once we cutover
-  noIndex: true,
   title: 'Calico Documentation',
-  //tagline:
-    //'Welcome to the Calico documentation! These pages provide technical documentation for Tigera’s Calico products, covering what our products are, how to use the product, and API reference materials.',
-  url: 'https://unified-docs.tigera.io',
+  tagline: 'Active, zero-trust based security for containers and Kubernetes',
+  url: 'https://docs.tigera.io',
   baseUrl: '/',
-  onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'throw',
   favicon: 'img/favicon.png',
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -40,6 +35,10 @@ const config = {
           path: 'default',
           sidebarPath: false,
         },
+        gtag: {
+          trackingID: 'G-MDDZ0CGXZ4',
+          anonymizeIP: true,
+        },
         blog: false,
         theme: {
           customCss: [
@@ -54,7 +53,10 @@ const config = {
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
-    ({
+    {
+      metadata: [
+        {name: 'keywords', content: 'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp'}
+      ],
       algolia: {
         appId: 'Q4GSZWRKBA',
         apiKey: '34ecd6611b6cef7a420bd30587d0d502',
@@ -103,22 +105,22 @@ const config = {
             dropdownItemsAfter: [
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://unified-docs.tigera.io/v3.13">3.13</a>',
+                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.13">3.13</a>',
                 className: 'product-calico-enterprise',
               },
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://unified-docs.tigera.io/v3.12">3.12</a>',
+                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.12">3.12</a>',
                 className: 'product-calico-enterprise',
               },
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://unified-docs.tigera.io/archive/v3.23">3.23</a>',
+                value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.23">3.23</a>',
                 className: 'product-calico',
               },
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://unified-docs.tigera.io/archive/v3.22">3.22</a>',
+                value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.22">3.22</a>',
                 className: 'product-calico',
               },
               {
@@ -322,7 +324,7 @@ const config = {
           },
         ],
       },
-    }),
+    },
   plugins: [
     'docusaurus-plugin-sass',
     [
@@ -352,7 +354,6 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -364,11 +365,17 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
+        onlyIncludeVersions: ['current','3.16','3.15','3.14'],
         lastVersion: '3.15',
         versions: {
           current: {
             label: 'Next',
             path: 'next',
+            banner: 'unreleased',
+          },
+          3.16: {
+            label: '3.16 (early preview)',
+            path: '3.16',
             banner: 'unreleased',
           },
           3.15: {
@@ -384,7 +391,6 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -410,11 +416,9 @@ const config = {
         },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        remarkPlugins: [linkCheckerPlugin.remarkPlugin],
         editUrl: generateEditUrl,
       },
     ],
-    linkCheckerPlugin.docusaurusPlugin,
   ],
   customFields: {
     isTesting: process.env.TESTING || false,

@@ -208,6 +208,7 @@ module.exports = {
           label: 'Tiered network policy',
           link: {type: 'doc', id: 'network-policy/policy-tiers/index'},
           items: [
+            'network-policy/policy-tiers/tiered-policy',
             'network-policy/policy-tiers/allow-tigera',
             'network-policy/policy-tiers/policy-tutorial-ui',
             'network-policy/policy-tiers/rbac-tiered-policies',
@@ -363,7 +364,7 @@ module.exports = {
                 'visibility/elastic/flow/hep',
                 'visibility/elastic/flow/tcpstats',
                 'visibility/elastic/flow/processpath',
-                ,              ],
+              ],
             },
             'visibility/elastic/audit-overview',
             {

@@ -9,17 +9,18 @@ import { baseUrl } from '../../variables';
 export default function EnvironmentFile(props) {
   return (
     <>
-      <p>
-        <span>
-          Use the following guidelines and sample file to define the environment variables for starting Calico on the
-          host. For more help, see the{' '}
-        </span>
-        {props.install === 'container' ? (
-          <Link href={`${baseUrl}/reference/component-resources/node/configuration`}>{props.nodecontainer} configuration reference</Link>
-        ) : (
-          <Link href={`${baseUrl}/reference/felix/configuration`}>Felix configuration reference</Link>
-        )}
-      </p>
+        <p>
+            {props.install === 'container' ? (
+                <span>
+                    Use the following guidelines and sample file to define the environment variables for starting Calico on the host.
+                    For more help, see the <Link href={`${baseUrl}/reference/component-resources/node/configuration`}>{props.nodecontainer} configuration reference</Link>
+                </span>
+            ) : (
+                <span>
+                    Use the following guidelines and sample file to define the environment variables for starting Calico on the host.
+                </span>
+            )}
+        </p>
       <p>For the Kubernetes datastore set the following:</p>
       <table>
         <thead>

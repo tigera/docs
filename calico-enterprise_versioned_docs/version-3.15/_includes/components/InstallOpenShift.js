@@ -11,7 +11,7 @@ import OpenShiftPullSecret from './OpenShiftPullSecret';
 import OpenShiftPrometheusOperator from './OpenShiftPrometheusOperator';
 import ConfigureManagedCluster from './ConfigureManagedCluster';
 
-import { prodname, prodnameWindows, prodnamedash, rootDirWindows, baseUrl, filesUrl } from '../../variables';
+import { prodname, prodnameWindows, prodnamedash, rootDirWindows, baseUrl, filesUrl, tempFilesURL } from '../../variables';
 
 export default function InstallOpenShift(props) {
   return (
@@ -238,6 +238,35 @@ spec:
 
       <p>You can now monitor progress with the following command:</p>
       <CodeBlock>watch oc get tigerastatus</CodeBlock>
+      <p>
+        When it shows all components with status <code>Available</code>, proceed to the next section.
+      </p>
+
+        <When condition={props.clusterType === 'managed'}>
+            <>
+                <Heading
+                    as='h3'
+                    id={`secure-${prodnamedash}-components-with-network-policy`}
+                >
+                    Secure {prodname} components with network policy
+                </Heading>
+                <p>To secure the components that make up {prodname}, install the following set of network policies.</p>
+                <CodeBlock>oc create -f {filesUrl}/manifests/ocp/tigera-policies-managed.yaml</CodeBlock>
+            </>
+        </When>
+
+        <When condition={props.clusterType !== 'managed'}>
+            <>
+                <Heading
+                    as='h4'
+                    id={`secure-${prodnamedash}-components-with-network-policy`}
+                >
+                    Secure {prodname} components with network policy
+                </Heading>
+                <p>To secure the components that make up {prodname}, install the following set of network policies.</p>
+                <CodeBlock>oc create -f {filesUrl}/manifests/ocp/tigera-policies.yaml</CodeBlock>
+            </>
+        </When>
 
       <When condition={props.clusterType === 'management'}>
         <>
@@ -498,7 +527,7 @@ $ ./wni aws create \
             Download the powershell script, <strong>install-calico-windows.ps1</strong>.
           </p>
           <CodeBlock language='powershell'>
-            Invoke-WebRequest {filesUrl}/scripts/install-calico-windows.ps1 -OutFile c:install-calico-windows.ps1
+            Invoke-WebRequest {tempFilesURL}/scripts/install-calico-windows.ps1  -OutFile c:install-calico-windows.ps1
           </CodeBlock>
         </li>
         <li>

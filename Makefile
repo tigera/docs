@@ -17,7 +17,7 @@ start: init
 
 .PHONY: test
 test: init
-	yarn test
+	./scripts/serve-test.sh
 
 .PHONY: clear clean
 clear clean:
@@ -30,6 +30,12 @@ init:
 .PHONY: serve
 serve: build
 	yarn serve
+
+.PHONY: index
+index:
+	@echo -n "CONFIG=" >.env.local
+	@cat algolia-crawler-config.json | jq -r tostring >>.env.local
+	docker run -it -e APPLICATION_ID -e API_KEY --env-file=.env.local algolia/docsearch-scraper
 
 .PHONY: autogen
 autogen:
@@ -53,4 +59,5 @@ build-operator-reference:
 				./gen-crd-api-reference-docs \
 					-api-dir github.com/tigera/operator/api \
 					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
-					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx'
+					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx && \
+					sed -i "s|<br>|<br/>|g" /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx'

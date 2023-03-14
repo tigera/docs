@@ -24,16 +24,16 @@ blocks:
           - node --version
           - yarn --version
       jobs:
-        - name: yarn install and cache
+        - name: Yarn Install and Cache
           commands:
             - cache restore
             - yarn install
             - cache store
-  - name: Tests
+  - name: Update Search Index
     task:
+      secrets:
+        - name: netlify-docsearch-scraper-creds
       env_vars:
-        - name: NODE_ENV
-          value: test
         - name: CI
           value: 'true'
       prologue:
@@ -42,8 +42,29 @@ blocks:
           - sem-version node 16.14
           - node --version
           - yarn --version
+          - sudo apt-get -y install jq
       jobs:
-        - name: Unit tests
+        - name: Crawl and build search index
           commands:
             - cache restore
-            - yarn test
+            - make index
+  - name: Tests
+    task:
+      env_vars:
+        - name: NODE_ENV
+          value: test
+        - name: CI
+          value: 'true'
+        - name: DEEP_CRAWL
+          value: 'false'
+      prologue:
+        commands:
+          - checkout
+          - sem-version node 16.14
+          - node --version
+          - yarn --version
+      jobs:
+        - name: Crawler Tests for Docs
+          commands:
+            - cache restore
+            - make clean && make build && make test

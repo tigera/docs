@@ -31,6 +31,8 @@ module.exports = {
           label: 'Kubernetes',
           link: { type: 'doc', id: 'getting-started/kubernetes/index' },
           items: [
+            'getting-started/kubernetes/requirements',
+            'getting-started/kubernetes/community-tested',
             'getting-started/kubernetes/quickstart',
             {
               type: 'category',
@@ -163,7 +165,6 @@ module.exports = {
                 'getting-started/kubernetes/hardway/istio-integration',
               ],
             },
-            'getting-started/kubernetes/requirements',
             {
               type: 'category',
               label: 'VPP dataplane',
@@ -462,6 +463,7 @@ module.exports = {
           ],
         },
         'operations/decommissioning-a-node',
+        'operations/fips',
         {
           type: 'category',
           label: 'Troubleshoot',
@@ -662,7 +664,7 @@ module.exports = {
               link: { type: 'doc', id: 'reference/architecture/design/index' },
               items: [
                 'reference/architecture/design/l2-interconnect-fabric',
-                'reference/architecture/design/l2-interconnect-fabric',
+                'reference/architecture/design/l3-interconnect-fabric',
               ],
             },
           ],
