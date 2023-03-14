@@ -209,6 +209,7 @@ module.exports = {
           items: [
             'network-policy/policy-recommendations/policy-recommendations',
             'network-policy/policy-recommendations/denied-traffic-flows',
+          ],  
         },
         'network-policy/policy-best-practices',
         {
