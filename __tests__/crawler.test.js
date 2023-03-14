@@ -35,7 +35,7 @@ test("Test links to check if they're all reachable", async () => {
     'http://etcd.co',
     'https://success.docker.com/article/docker-ee-best-practices',
     //`https://owasp.org/www-community/vulnerabilities/Heartbleed_Bug`,
-    `https://installer.calicocloud.io`,
+    `https://installer.calicocloud.io/`,
     `https://installer.calicocloud.io/charts`,
     `https://docs.tigera.io/calico/charts`,
     `https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy`,
@@ -49,8 +49,6 @@ test("Test links to check if they're all reachable", async () => {
     ///^https?:\/\/localhost[\w\-.~:/?#[\]@!$&'()*+,;=]*$/,
     /^https?:\/\/csrc\.nist\.gov\/projects\/cryptographic-module-validation-program\/certificate\/\d+$/,
     /^https:\/\/installer\.calicocloud\.io:[0-9]{3,4}$/,
-   
-
   ];
 
   const lc = linkChecker();
