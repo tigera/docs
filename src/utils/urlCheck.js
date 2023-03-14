@@ -1,5 +1,6 @@
 const nodeUrl = require('node:url');
 const needle = require('needle');
+const { RateLimiter } = require('limiter');
 const defDelay = 1000;    // ms
 const defMaxRetry = 10;
 const needleOpts = {
@@ -12,6 +13,15 @@ const needleOpts = {
 };
 const URL_CHECK_DEBUG = process.env.URL_CHECK_DEBUG
   ? process.env.URL_CHECK_DEBUG.trim() : undefined;
+const defRateLimit = '10/second';
+const rateLimit = process.env.RATE_LIMIT
+  ? process.env.RATE_LIMIT.split('/') : defRateLimit.split('/');
+const limiter = new RateLimiter({
+  tokensPerInterval: Number(rateLimit[0]),
+  interval: rateLimit[1],
+});
+console.log(`Rate limiting: ${rateLimit[0]}/${rateLimit[1]} (default ${defRateLimit})`);
+console.log('Use env var RATE_LIMIT=N/sec to customize');
 
 function parseRetryAfter(headers, defValue) {
   let hdrVal = '';
@@ -63,7 +73,7 @@ function doGet(normUrl, callback, calls, delay, ctx) {
     if (endDone) return;
     endDone = true;
     if (!ctx.err && ctx.statusCode === 429 && calls < defMaxRetry) {
-      debugLog(normUrl, `IN get retry-after: ${normUrl}`);
+      debugLog(normUrl, `IN get retry-after (${delay/1000} seconds): ${normUrl}`);
       setTimeout(doGet, delay, normUrl, callback, 1+calls, delay, ctx);
       return;
     }
@@ -71,21 +81,22 @@ function doGet(normUrl, callback, calls, delay, ctx) {
   }
 }
 
-function urlCheck(url, callback, calls = undefined) {
+async function urlCheck(origin, url, callback, calls = undefined) {
   try {
+    await limiter.removeTokens(1);
     calls = calls ? calls : 1;
     let delay = defDelay * calls;
     const normUrl = encodeURI(decodeURIComponent(new URL(url).toString()));
-    const ctx = { link: url, statusCode: 0, status: '', err: null };
+    const ctx = { origin, link: url, statusCode: 0, status: '', err: null };
     needle.request('head', normUrl, null, needleOpts, (err, resp) => {
       debugLog(normUrl, `IN head callback: ${normUrl}`);
       ctx.err = err;
       if (resp) ctx.statusCode = resp.statusCode;
       ctx.status = ctx.statusCode === 200 ? 'alive' : 'dead';
       if (!err && resp && resp.statusCode === 429 && calls < defMaxRetry) {
-        debugLog(normUrl, `IN 'head' retry-after: ${normUrl}`);
         delay = parseRetryAfter(resp.headers, delay);
-        setTimeout(urlCheck, delay, url, callback, 1+calls);
+        debugLog(normUrl, `IN head retry-after (${delay/1000} seconds): ${normUrl}`);
+        setTimeout(urlCheck, delay, origin, url, callback, 1+calls);
       } else if (!err && (ctx.statusCode === 200 || ctx.statusCode === 404)) {
         debugLog(normUrl, `IN head 200/404: ${normUrl}`);
         callback(err, ctx);
@@ -96,7 +107,7 @@ function urlCheck(url, callback, calls = undefined) {
     });
   } catch (err) {
     console.error(`ERROR: caught error: urlCheck: ${url}, err: ${JSON.stringify(err)}`);
-    callback(err, { status: 'error', link: url, err: null })
+    callback(err, { origin, status: 'error', link: url, err: null });
   }
 }
 

@@ -463,6 +463,7 @@ module.exports = {
           ],
         },
         'operations/decommissioning-a-node',
+        'operations/fips',
         {
           type: 'category',
           label: 'Troubleshoot',
@@ -663,7 +664,7 @@ module.exports = {
               link: { type: 'doc', id: 'reference/architecture/design/index' },
               items: [
                 'reference/architecture/design/l2-interconnect-fabric',
-                'reference/architecture/design/l2-interconnect-fabric',
+                'reference/architecture/design/l3-interconnect-fabric',
               ],
             },
           ],
