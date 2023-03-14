@@ -2,8 +2,10 @@
 set -e
 
 product=$1
-fromVersion=$2
-toVersion=$3
+fromVersion=${2}
+toVersion=${3}
+fromRegex=${2/./\\.}
+toRegex=${3/./\\.}
 
 function help() {
   echo "This script requires 3 arguments: a product name (calico or calico-enterprise), a 'from' version, and a 'to' version"
@@ -17,18 +19,23 @@ elif [[ -z $fromVersion || -z $toVersion ]]; then
   help
 fi
 
-echo 'Switching latest...'
+echo "Switching latest from ${fromVersion} to ${toVersion}"
 
-regex="s/^[ \t]*baseUrl:[ \t]*'\/${product}/latest'[ \t]*,[ \t]*\$/m"
+echo "Updating ./${product}_versioned_docs/version-${fromVersion}/variables.js"
+regex="s/baseUrl:[ \t]*'.*?'/baseUrl: '\/${product}\/${fromVersion}'/"
 perl -0777 -pi -e "${regex}" "./${product}_versioned_docs/version-${fromVersion}/variables.js"
 
-regex="s/^[ \t]*baseUrl:[ \t]*'\/${product}/${toVersion}'[ \t]*,[ \t]*\$/m"
+echo "Updating ./${product}_versioned_docs/version-${toVersion}/variables.js"
+regex="s/baseUrl:[ \t]*'.*?'/baseUrl: '\/${product}\/latest'/"
 perl -0777 -pi -e "${regex}" "./${product}_versioned_docs/version-${toVersion}/variables.js"
 
-regex="s/label:[ \t]*'${fromVersion}'[ \t]*,[ \t]*\n([ \t]*)path:[ \t]*'latest'[ \t]*,/label: '${fromVersion}',\n\${1}path: '${fromVersion}',/m"
+echo "Updating ./docusaurus.config.js from 'latest'"
+regex="s/${fromRegex}:\s*{(.*?)path:[ \t]*'latest'/${fromVersion}: {\${1}path: '${fromVersion}'/s"
 perl -0777 -pi -e "${regex}" "./docusaurus.config.js"
 
-regex="s/label:[ \t]*'${toVersion}'[ \t]*,[ \t]*\n([ \t]*)path:[ \t]*'latest'[ \t]*,/label: '${toVersion}',\n\${1}path: 'latest',/m"
+echo "Updating ./docusaurus.config.js to 'latest'"
+regex="s/${toRegex}:\s*{(.*?)path:[ \t]*'${toRegex}'/${toVersion}: {\${1}path: 'latest'/s"
 perl -0777 -pi -e "${regex}" "./docusaurus.config.js"
 
-echo "[SUCCESS]: version 'latest' for product '${product}' switched from ${fromVersion} to ${toVersion}"
+echo "Done: version 'latest' for product '${product}' switched from ${fromVersion} to ${toVersion}"
+echo "Please use git diff to evaluate the modifications!"
