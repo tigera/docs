@@ -202,7 +202,14 @@ module.exports = {
       label: 'Network policy',
       link: {type: 'doc', id: 'network-policy/index'},
       items: [
-        'network-policy/policy-recommendations',
+        {
+          type: 'category',
+          label: 'Policy recommendations',
+          link: {type: 'doc', id: 'network-policy/policy-recommendations/index'},
+          items: [
+            'network-policy/policy-recommendations/policy-recommendations',
+            'network-policy/policy-recommendations/denied-traffic-flows',
+        },
         'network-policy/policy-best-practices',
         {
           type: 'category',
