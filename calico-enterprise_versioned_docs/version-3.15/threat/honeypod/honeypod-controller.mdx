@@ -48,7 +48,7 @@ The following manifest enables packet capture on default [honeypods](honeypods.m
 Be sure to modify the namespace and selector if honeypods are placed elsewhere.
 For help, see [PacketCapture](../../visibility/packetcapture.mdx).
 
-```batch
+```bash
 kubectl create -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: PacketCapture
@@ -72,13 +72,13 @@ If you’ve customized or created your own honeypods, be sure to modify the incl
 
 Add the honeypod controller to each cluster configured for honeypods using the following command:
 
-```batch
+```bash
 kubectl apply -f {{filesUrl}}/manifests/threatdef/honeypod/controller.yaml
 ```
 
 For OpenShift deployments, the controller requires privileged access:
 
-```batch
+```bash
 kubectl apply -f {{filesUrl}}/manifests/threatdef/honeypod/controller_os.yaml
 ```
 
@@ -88,7 +88,7 @@ You can add custom Snort rules to the controller using a ConfigMap. By default, 
 
 The following manifest provides the method to add individual custom signatures:
 
-```batch
+```bash
 kubectl create -f - <<EOF
 apiVersion: v1
 kind: ConfigMap
@@ -106,7 +106,7 @@ Refer to [Snort Users Manual](https://www.snort.org/documents) for writing Snort
 
 To add a Snort-compatible ruleset file:
 
-```batch
+```bash
 kubectl create cm localrule -n tigera-intrusion-detection --from-file=rules=<SNORT-RULESET-LOCATION>
 ```
 
@@ -118,7 +118,7 @@ The size limit for ConfigMaps is 1 MiB. If more space is required, use an altern
 
 Update the controller deployment to include the ConfigMap. **Important!** The mountPath `/etc/snort/rules/custom.rules` is required and the path cannot be changed.
 
-```batch
+```bash
 cat <<EOF > patch.yaml
 spec:
   template:
@@ -142,7 +142,7 @@ EOF
 
 Apply the patch to the `honeypod-controller` DaemonSet:
 
-```batch
+```bash
 kubectl patch daemonset honeypod-controller -n tigera-intrusion-detection --patch "$(cat patch.yaml)"
 ```
 
@@ -150,7 +150,7 @@ kubectl patch daemonset honeypod-controller -n tigera-intrusion-detection --patc
 
 To verify the installation, ensure that honeypod controller is running within the `tigera-intrusion-detection` namespace:
 
-```batch
+```bash
 kubectl get pods -n tigera-intrusion-detection
 ```
 
@@ -167,13 +167,13 @@ intrusion-detection-es-job-installer-nfd7t       0/1     Completed   0          
 
 As an example, to trigger an alert for the example custom signature, first get the Pod IP for one of the honeypods:
 
-```batch
+```bash
 kubectl get pod tigera-internal-app-57vwk -n tigera-internal -ojsonpath='{.status.podIP}'
 ```
 
 Then run a `busybox` container with the command `ping` on the honeypod IP:
 
-```batch
+```bash
 kubectl run --restart=Never --image busybox ping-runner -- ping -c1 <honeypod IP>
 ```
 

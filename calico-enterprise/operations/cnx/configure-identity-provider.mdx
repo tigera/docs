@@ -127,7 +127,7 @@ When configuring your cluster, you may be asked for the following inputs:
 1. Create values for some required variables. `MANAGER_URL` is the URL where {{prodname}} Manager will be accessed,
    `CLUSTER_DOMAIN` is the domain (excl. port) where your OpenShift cluster is accessed (run `oc status` to get it) and `CLIENT_SECRET` is a value of your choosing.
 
-   ```batch
+   ```bash
     # This indicates where the Manager UI can be accessed from the browser. Include the port only if the the manager UI is not running on port 443.
    MANAGER_URL=<manager-host>:<port>
    CLUSTER_DOMAIN=<domain-of-your-ocp-cluster>
@@ -136,7 +136,7 @@ When configuring your cluster, you may be asked for the following inputs:
 
 1. Add an OAuthClient to your OpenShift cluster.
 
-   ```batch
+   ```bash
    oc apply -f - <<EOF
    kind: OAuthClient
    apiVersion: oauth.openshift.io/v1
@@ -154,7 +154,7 @@ When configuring your cluster, you may be asked for the following inputs:
 
 1. Apply the Authentication CR to your cluster to let the operator configure your login.
 
-   ```batch
+   ```bash
    oc apply -f - <<EOF
    apiVersion: operator.tigera.io/v1
    kind: Authentication
@@ -170,7 +170,7 @@ When configuring your cluster, you may be asked for the following inputs:
 
 1. Get the certificates that are used to connect with OpenShift and store them in a file called `dex.pem`.
 
-   ```batch
+   ```bash
    echo | openssl s_client -servername oauth-openshift.apps.$CLUSTER_DOMAIN -connect oauth-openshift.apps.$CLUSTER_DOMAIN:443 |  sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > dex.pem
    echo | openssl s_client -servername api.$CLUSTER_DOMAIN -connect api.$CLUSTER_DOMAIN:6443 |  sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' >> dex.pem
    ```
@@ -179,7 +179,7 @@ When configuring your cluster, you may be asked for the following inputs:
 
 1. Apply a secret to your cluster with your OpenShift credentials.
 
-   ```batch
+   ```bash
    oc create secret generic tigera-openshift-credentials -n tigera-operator --from-file=rootCA=dex.pem --from-literal=clientID=tigera-dex --from-literal=clientSecret=$CLIENT_SECRET
    ```
 
@@ -263,19 +263,19 @@ For OpenShift users, replace `kubectl` with `oc` in the following commands, or a
 
 For admin users, apply this cluster role.
 
-```batch
+```bash
 kubectl create clusterrolebinding <user>-tigera-network-admin --user=<user> --clusterrole=tigera-network-admin
 ```
 
 For basic users with view-only permissions, apply this role.
 
-```batch
+```bash
 kubectl create clusterrolebinding <user>-tigera-ui-user --user=<user> --clusterrole=tigera-ui-user
 ```
 
 Or use the groups flag to assign cluster role to a group of users.
 
-```batch
+```bash
 kubectl create clusterrolebinding all-developers-tigera-ui-user --group=<group> --clusterrole=tigera-ui-user
 ```
 

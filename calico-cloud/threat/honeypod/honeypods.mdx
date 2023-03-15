@@ -42,13 +42,13 @@ Honeypods can be configured on a per-cluster basis using "template" honeypod man
 
 Apply the following manifest to create a namespace and RBAC for the honeypods:
 
-```batch
+```bash
 kubectl apply -f {{filesUrl_CE}}/manifests/threatdef/honeypod/common.yaml
 ```
 
 Add `tigera-pull-secret` into the namespace `tigera-internal`:
 
-```batch
+```bash
 kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | sed 's/namespace: .*/namespace: tigera-internal/' | kubectl apply -f -
 ```
 
@@ -66,7 +66,7 @@ When modifying the provided honeypod manifests, be sure to update the [globalale
 
   Expose an empty pod that can only be reached via PodIP; this allows you to see when the attacker is probing the pod network:
 
-```batch
+```bash
 kubectl apply -f {{filesUrl_CE}}/manifests/threatdef/honeypod/ip-enum.yaml
 ```
 
@@ -74,7 +74,7 @@ kubectl apply -f {{filesUrl_CE}}/manifests/threatdef/honeypod/ip-enum.yaml
 
   Expose a nginx service that serves a generic page. The pod can be discovered via ClusterIP or DNS lookup. An unreachable service `tigera-dashboard-internal-service` is created to entice the attacker to find and reach, `tigera-dashboard-internal-debug`:
 
-```batch
+```bash
 kubectl apply -f {{filesUrl_CE}}/manifests/threatdef/honeypod/expose-svc.yaml
 ```
 
@@ -82,7 +82,7 @@ kubectl apply -f {{filesUrl_CE}}/manifests/threatdef/honeypod/expose-svc.yaml
 
   Expose a SQL service that contains an empty database with easy access. The pod can be discovered via ClusterIP or DNS lookup:
 
-```batch
+```bash
 kubectl apply -f {{filesUrl_CE}}/manifests/threatdef/honeypod/vuln-svc.yaml
 ```
 
@@ -90,7 +90,7 @@ kubectl apply -f {{filesUrl_CE}}/manifests/threatdef/honeypod/vuln-svc.yaml
 
 To verify the installation, ensure that honeypods are running within the `tigera-internal` namespace:
 
-```batch
+```bash
 kubectl get pods -n tigera-internal
 ```
 
@@ -106,7 +106,7 @@ tigera-internal-db-5c57bd5987-k5ksj          1/1     Running   0          2m10s
 
 And verify that global alerts are set for honeypods:
 
-```batch
+```bash
 kubectl get globalalerts
 ```
 
@@ -121,13 +121,13 @@ honeypod.vuln.svc      2020-10-22T03:44:40Z
 
 As an example, to trigger an alert for `honeypod.ip.enum`, first get the Pod IP for one of the honeypods:
 
-```batch
+```bash
 kubectl get pod tigera-internal-app-28c85 -n tigera-internal -ojsonpath='{.status.podIP}'
 ```
 
 Then, run a `busybox` container with the command `ping` on the honeypod IP:
 
-```batch
+```bash
 kubectl run --restart=Never --image busybox ping-runner -- ping -c1 <honeypod IP>
 ```
 
@@ -135,7 +135,7 @@ If the ICMP request reaches the honeypod, an alert will be generated within 5 mi
 
 After you have verified that the honeypods are installed and working, a best practice is to remove the pull secret from the namespace:
 
-```batch
+```bash
 kubectl delete secret tigera-pull-secret -n tigera-internal
 ```
 
