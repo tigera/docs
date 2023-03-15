@@ -29,9 +29,11 @@ function NodeRequirementsEnt(props) {
           <ul>
             {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.HostProtection) && (
               <>
-                <li>CentOS 8</li>
+                <li>Red Hat Enterprise Linux 7 and 8 or binary-compatible operating systems</li>
+                  <ul>
+                    <li>See <Link href={`${baseUrl}/operations/selinux`}>SELinux</Link> on how to deploy the specialized policy package.</li>
+                  </ul>
                 <li>Ubuntu 20.04 and 22.04</li>
-                <li>RHEL 7 and 8</li>
                 <li>Debian 10</li>
               </>
             )}

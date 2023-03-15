@@ -575,6 +575,7 @@ module.exports = {
         },
         'operations/decommissioning-a-node',
         'operations/fips',
+        'operations/selinux',
         {
           type: 'category',
           label: 'Troubleshooting',
