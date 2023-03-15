@@ -396,14 +396,14 @@ In the default **FelixConfiguration**, set the `egressIPSupport` field to `Enabl
 `EnabledPerNamespaceOrPerPod`, according to the level of support that you need in your cluster. For
 support on a per-namespace basis only:
 
-```batch
+```bash
 kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
 ```
 
 Or for support both per-namespace and per-pod:
 
-```batch
+```bash
 kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
@@ -424,7 +424,7 @@ kubectl patch felixconfiguration default --type='merge' -p \
 To enable **ENI-per-workload** mode, in the default **FelixConfiguration**, set the `awsSecondaryIPSupport` field to
 `EnabledENIPerWorkload`:
 
-```batch
+```bash
 kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"awsSecondaryIPSupport":"EnabledENIPerWorkload"}}'
 ```
@@ -435,7 +435,7 @@ kubectl patch felixconfiguration default --type='merge' -p \
 To enable **Secondary-IP-per-workload** mode, set the field to `Enabled` (the name `Enabled` predates
 the addition of the **ENI-per-workload** mode):
 
-```batch
+```bash
 kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"awsSecondaryIPSupport":"Enabled"}}'
 ```
@@ -445,7 +445,7 @@ kubectl patch felixconfiguration default --type='merge' -p \
 
 You can verify that the setting took effect by examining the Kubernetes Node resources:
 
-```batch
+```bash
 kubectl describe node <nodename>
 ```
 
@@ -711,7 +711,7 @@ Use an egress gateway custom resource to deploy a group of egress gateways.
 Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and {{prodname}}
 in tandem to get a cluster of egress gateways that spans both availability zones and uses AWS-backed IP addresses:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: EgressGateway
@@ -856,14 +856,14 @@ their meaning is "the set of pods, anywhere in the cluster, that match those sel
 So, to configure all the pods in a namespace to use the egress gateways that are
 labelled with `egress-code: red`, you would annotate that namespace like this:
 
-```batch
+```bash
 kubectl annotate ns <namespace> egress.projectcalico.org/selector="egress-code == 'red'"
 ```
 
 By default, that selector can only match egress gateways in the same namespace. To select gateways
 in a different namespace, specify a `namespaceSelector` annotation as well, like this:
 
-```batch
+```bash
 kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
 ```
 
@@ -874,7 +874,7 @@ expressions](../../reference/resources/networkpolicy.mdx#selector) as the select
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
 creating the pod. For example:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -919,7 +919,7 @@ traffic from that client to load balance across the available gateways, set the
 `fib_multipath_hash_policy`
 [sysctl](https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/) to allow that:
 
-```batch
+```bash
 sudo sysctl -w net.ipv4.fib_multipath_hash_policy=1
 ```
 
@@ -942,7 +942,7 @@ the egress gateway's IP.
 By way of a concrete example, you could use netcat to run a test server outside the cluster (outside
 AWS if you're using Elastic IPs); for example:
 
-```batch
+```bash
 docker run --net=host --privileged subfuzion/netcat -v -l -k -p 8089
 ```
 
@@ -950,7 +950,7 @@ Then provision an egress IP Pool, and egress gateways, as above.
 
 Then deploy a pod, with egress annotations as above, and with any image that includes netcat, for example:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -968,7 +968,7 @@ EOF
 
 Now you can use `kubectl exec` to initiate an outbound connection from that pod:
 
-```batch
+```bash
 kubectl exec <pod name> -n <pod namespace> -- nc <server IP> 8089 </dev/null
 ```
 

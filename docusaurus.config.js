@@ -310,7 +310,7 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        additionalLanguages: ['powershell', 'batch'],
+        additionalLanguages: ['powershell'],
         magicComments: [
           // Default highlight class name (should be specified)
           {

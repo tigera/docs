@@ -57,7 +57,7 @@ A Linux host that meets the following requirements.
 
 1. Initialize the master using the following command.
 
-   ```batch
+   ```bash
    sudo kubeadm init --pod-network-cidr=192.168.0.0/16 \
    --apiserver-cert-extra-sans=127.0.0.1
    ```
@@ -71,7 +71,7 @@ A Linux host that meets the following requirements.
 
 1. Execute the following commands to configure kubectl (also returned by `kubeadm init`).
 
-   ```batch
+   ```bash
    mkdir -p $HOME/.kube
    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
    sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -79,7 +79,7 @@ A Linux host that meets the following requirements.
 
 1. Remove master taint in order to allow kubernetes to schedule pods on the master node.
 
-   ```batch
+   ```bash
    kubectl taint nodes --all node-role.kubernetes.io/master-
    ```
 
@@ -89,13 +89,13 @@ A Linux host that meets the following requirements.
 
 1. In a v1.24 or earlier cluster, if the [PodSecurityPolicy admission controller](https://v1-24.docs.kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#podsecuritypolicy) is enabled, install the required Tigera operator Pod Security Policy.
 
-   ```batch
+   ```bash
    kubectl create -f {{filesUrl}}/manifests/psp-tigera-operator.yaml
    ```
 
 1. Install the Tigera operator and custom resource definitions.
 
-   ```batch
+   ```bash
    kubectl create -f {{filesUrl}}/manifests/tigera-operator.yaml
    ```
 
@@ -107,7 +107,7 @@ A Linux host that meets the following requirements.
 
    :::
 
-   ```batch
+   ```bash
    kubectl create -f {{filesUrl}}/manifests/tigera-prometheus-operator.yaml
    ```
 
@@ -115,7 +115,7 @@ A Linux host that meets the following requirements.
 
    If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
 
-   ```batch
+   ```bash
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-operator \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -123,7 +123,7 @@ A Linux host that meets the following requirements.
 
    For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
 
-   ```batch
+   ```bash
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -133,13 +133,13 @@ A Linux host that meets the following requirements.
 
 1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference](../../../reference/installation/api.mdx).
 
-   ```batch
+   ```bash
    kubectl create -f {{filesUrl}}/manifests/custom-resources.yaml
    ```
 
    Monitor progress with the following command:
 
-   ```batch
+   ```bash
    watch kubectl get tigerastatus
    ```
 
@@ -149,13 +149,13 @@ A Linux host that meets the following requirements.
 
 In order to use {{prodname}}, you must install the license provided to you by Tigera.
 
-```batch
+```bash
 kubectl create -f </path/to/license.yaml>
 ```
 
 Monitor progress with the following command:
 
-```batch
+```bash
 watch kubectl get tigerastatus
 ```
 
@@ -165,7 +165,7 @@ When all components show a status of `Available`, proceed to the next section.
 
 1. Create network admin user "Jane".
 
-   ```batch
+   ```bash
    kubectl create sa jane -n default
    kubectl create clusterrolebinding jane-access --clusterrole tigera-network-admin --serviceaccount default:jane
    ```
@@ -186,7 +186,7 @@ When all components show a status of `Available`, proceed to the next section.
 
 1. Set up a channel from your local computer to the {{prodname}} UI.
 
-   ```batch
+   ```bash
    kubectl port-forward -n tigera-manager svc/tigera-manager 9443
    ```
 

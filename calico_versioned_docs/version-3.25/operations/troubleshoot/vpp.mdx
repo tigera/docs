@@ -16,7 +16,7 @@ If you're encountering issues with the VPP dataplane, feel free to reach out to 
 
 - With curl
 
-```batch
+```bash
 curl https://raw.githubusercontent.com/projectcalico/vpp-dataplane/{{vppbranch}}/test/scripts/vppdev.sh \
   | tee /usr/bin/calivppctl
 chmod +x /usr/bin/calivppctl
@@ -24,14 +24,14 @@ chmod +x /usr/bin/calivppctl
 
 - With docker (and a cluster with calico-vpp running)
 
-```batch
+```bash
 vppcontainer=$(docker ps | grep vpp_calico-vpp | awk '{ print $1 }')
 docker cp ${vppcontainer}:/usr/bin/calivppctl /usr/bin/calivppctl
 ```
 
 - With kubectl (and a cluster with calico-vpp running)
 
-```batch
+```bash
 vpppod=$(kubectl -n calico-vpp-dataplane get pods -o wide | grep calico-vpp-node- | awk '{ print $1 }' | head -1)
 kubectl -n calico-vpp-dataplane exec -it ${vpppod} -c vpp -- cat /usr/bin/calivppctl | tee /usr/bin/calivppctl > /dev/null
 chmod +x /usr/bin/calivppctl
@@ -58,7 +58,7 @@ Once the cluster is correctly started, the next issue can come from the Daemonse
 Best is to start by inspecting the pods : are they running correctly ?
 Usually configuration issues (available hugepages, memory, ...) will be reported here
 
-```batch
+```bash
 kubectl -n calico-vpp-dataplane describe pod/calico-vpp-node-XXXXX
 ```
 
@@ -78,7 +78,7 @@ and the agent handling pod connectivity, service load balancing, BGP, policies, 
 First check that VPP is running correctly. If the connectivity configuration, interface naming
 is not correct, this will be reported here. Once this is running, you should be able to ping your other nodes through VPP.
 
-```batch
+```bash
  Print VPP's log : basic connectivity and NIC configuration
 calivppctl log -vpp myk8node1
 ```
@@ -87,7 +87,7 @@ Then you can check for any issues reported by the Agent (e.g. BGP listen issue
 if the port is already taken, or missing configuration pieces). If this doesn't
 show any errors, you should be able to `nslookup kubernetes.default` from pods.
 
-```batch
+```bash
  Print the logs for the {{prodname}} VPP dataplane agent, programming serviceIPs, BGP, ...
 calivppctl log -agent myk8node1
 ```
@@ -95,7 +95,7 @@ calivppctl log -agent myk8node1
 If all this doesn't play well you can always use the export to generate an export.tar.gz
 bundle and ask for help on the [#vpp channel](https://calicousers.slack.com/archives/C017220EXU1)
 
-```batch
+```bash
 calivppctl export
 ```
 
@@ -104,7 +104,7 @@ calivppctl export
 For further debugging, tracing packets and inspecting VPP's internals, you can
 get a vpp shell using the following
 
-```batch
+```bash
 calivppctl vppctl myk8node1
 ```
 
@@ -201,7 +201,7 @@ then inside your pods (usually with tcpdump)
 The following snippet will allow you to capture all traffic coming from containers on a particular node, grep from a specific packet,
 and see what happened to it.
 
-```batch
+```bash
  Make sure that the trace buffer is clean in VPP
 calivppctl vppctl NODENAME clear trace
  Add a trace from the virtio-input input-node
@@ -288,7 +288,7 @@ ip4-cnat-tx                      active                 14              15      
 
 Same as with traffic from a container, you can use
 
-```batch
+```bash
  Make sure that the trace buffer is clean in VPP
 calivppctl vppctl NODENAME clear trace
  Add a trace from the virtio-input input-node
@@ -312,7 +312,7 @@ This will generate a file named `/tmp/vppcapture`
 
 Then on your host run:
 
-```batch
+```bash
 calivppctl sh vpp NODENAME
 root@server:~ mv /tmp/vppcapture /var/lib/vpp/
 root@server:~ exit
@@ -332,7 +332,7 @@ Provided that you have `tcpdump` installed on the host, you can use `nsenter` to
 
 This works on docker as follows :
 
-```batch
+```bash
 
  Find the container ID you want to inspect
 $ docker ps
@@ -416,7 +416,7 @@ This will generate a `vppcore.vpp_main.<pid>` file in `${DIR}` if vpp aborts une
 
 To explore it run:
 
-```batch
+```bash
 docker run -it --entrypoint=bash -v $DIR/vppcore.vpp_main.12345:/root/vppcore calicovpp/vpp:VERSION
  You should have a shell inside the vpp container
 apt update && apt install -y gdb

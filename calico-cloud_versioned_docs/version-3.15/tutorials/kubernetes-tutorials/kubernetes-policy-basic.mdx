@@ -14,7 +14,7 @@ You can quickly and easily deploy such a cluster by following one of the [instal
 
 This guide will deploy pods in a Kubernetes namespace. Let's create the `Namespace` object for this guide.
 
-```batch
+```bash
 kubectl create ns policy-demo
 ```
 
@@ -24,19 +24,19 @@ We'll use Kubernetes `Deployment` objects to easily create pods in the namespace
 
 1. Create some nginx pods in the `policy-demo` namespace.
 
-   ```batch
+   ```bash
    kubectl create deployment --namespace=policy-demo nginx --image=nginx
    ```
 
 1. Expose them through a service.
 
-   ```batch
+   ```bash
    kubectl expose --namespace=policy-demo deployment nginx --port=80
    ```
 
 1. Ensure the nginx service is accessible.
 
-   ```batch
+   ```bash
    kubectl run --namespace=policy-demo access --rm -ti --image busybox /bin/sh
    ```
 
@@ -52,7 +52,7 @@ We'll use Kubernetes `Deployment` objects to easily create pods in the namespace
 
 1. From inside the `access` pod, attempt to reach the `nginx` service.
 
-   ```batch
+   ```bash
    wget -q nginx -O -
    ```
 
@@ -64,7 +64,7 @@ Let's turn on isolation in our `policy-demo` namespace. {{prodname}} will then p
 
 Running the following command creates a NetworkPolicy which implements a default deny behavior for all pods in the `policy-demo` namespace.
 
-```batch
+```bash
 kubectl create -f - <<EOF
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
@@ -81,7 +81,7 @@ EOF
 
 This will prevent all access to the nginx service. We can see the effect by trying to access the service again.
 
-```batch
+```bash
 kubectl run --namespace=policy-demo access --rm -ti --image busybox /bin/sh
 ```
 
@@ -97,7 +97,7 @@ If you don't see a command prompt, try pressing enter.
 
 Now from within the busybox `access` pod execute the following command to test access to the nginx service.
 
-```batch
+```bash
 wget -q --timeout=5 nginx -O -
 ```
 
@@ -117,7 +117,7 @@ from anywhere else.
 
 Create a network policy `access-nginx` with the following contents:
 
-```batch
+```bash
 kubectl create -f - <<EOF
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
@@ -147,7 +147,7 @@ are based on the name of the resource.
 
 We should now be able to access the service from the `access` pod.
 
-```batch
+```bash
 kubectl run --namespace=policy-demo access --rm -ti --image busybox /bin/sh
 ```
 
@@ -163,14 +163,14 @@ If you don't see a command prompt, try pressing enter.
 
 Now from within the busybox `access` pod execute the following command to test access to the nginx service.
 
-```batch
+```bash
 wget -q --timeout=5 nginx -O -
 ```
 
 However, we still cannot access the service from a pod without the label `run: access`.
 We can verify this as follows.
 
-```batch
+```bash
 kubectl run --namespace=policy-demo cant-access --rm -ti --image busybox /bin/sh
 ```
 
@@ -186,7 +186,7 @@ If you don't see a command prompt, try pressing enter.
 
 Now from within the busybox `cant-access` pod execute the following command to test access to the nginx service.
 
-```batch
+```bash
 wget -q --timeout=5 nginx -O -
 ```
 
@@ -199,7 +199,7 @@ wget: download timed out
 
 You can clean up the demo by deleting the demo namespace.
 
-```batch
+```bash
 kubectl delete ns policy-demo
 ```
 
