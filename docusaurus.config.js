@@ -234,7 +234,7 @@ const config = {
               },
               {
                 label: 'Slack',
-                to: 'https://slack.projectcalico.org/',
+                to: 'https://calicousers.slack.com/',
               },
             ],
           },
