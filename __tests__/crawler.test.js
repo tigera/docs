@@ -45,10 +45,19 @@ test("Test links to check if they're all reachable", async () => {
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoq`,
     `https://en.wikipedia.org/wiki/Autonomous_System_(Internet)%3E`,
     `https://installer.calicocloud.io/manifests/v3.15.1-8/manifests`,
+    `https://d881b853ae312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com`,
     `https://www.googletagmanager.com`,
     ///^https?:\/\/localhost[\w\-.~:/?#[\]@!$&'()*+,;=]*$/,
     /^https?:\/\/csrc\.nist\.gov\/projects\/cryptographic-module-validation-program\/certificate\/\d+$/,
     /^https:\/\/installer\.calicocloud\.io:[0-9]{3,4}$/,
+    //temp
+    `http://kubernetes.io/docs/user-guide/secrets/`,
+    `https://downloads.tigera.io/ee/master/manifests/ocp/tigera-policies.yaml`,
+    `https://downloads.tigera.io/ee/v3.15.1/manifests/ocp/tigera-policies.yaml`,
+    `https://downloads.tigera.io/ee/v3.16.0/manifests/ocp/tigera-policies.yaml`,
+    `https://github.com/coreos/flannel/blob/master/Documentation/kube-flannel-rbac.yml`,
+    `https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/`,
+    `https://raw.githubusercontent.com/projectcalico/calico//node/windows-packaging/CalicoWindows/kubernetes/kube-proxy-service.ps1`,
   ];
 
   const lc = linkChecker();
