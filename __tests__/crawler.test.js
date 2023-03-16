@@ -11,7 +11,7 @@ const linkChecker = require('../src/utils/linkChecker');
 test("Test links to check if they're all reachable", async () => {
   const PROD = 'https://docs.tigera.io'
   const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
-    .toLowerCase().replace(/\/$/, '');
+      .toLowerCase().replace(/\/$/, '');
   const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
   const isDeepCrawl = process.env.DEEP_CRAWL ? (process.env.DEEP_CRAWL==='true') : false;
   const CONCURRENCY = process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 50;
@@ -58,6 +58,8 @@ test("Test links to check if they're all reachable", async () => {
     `https://github.com/coreos/flannel/blob/master/Documentation/kube-flannel-rbac.yml`,
     `https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/`,
     `https://raw.githubusercontent.com/projectcalico/calico//node/windows-packaging/CalicoWindows/kubernetes/kube-proxy-service.ps1`,
+    `https://projectcalico.docs.tigera.io/master/reference/installation/api#operator.tigera.io/v1.APIServer`,
+    `https://projectcalico.docs.tigera.io/master/reference/installation/api#operator.tigera.io/v1.Installation`,
   ];
 
   const lc = linkChecker();
