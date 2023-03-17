@@ -9,7 +9,7 @@ const {
 } = require('crawlee');
 const linkChecker = require('../src/utils/linkChecker');
 
-test("Test links to check if they're all reachable", async () => {
+test("Crawl the docs and test links", async () => {
   const PROD = 'https://docs.tigera.io'
   const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
       .toLowerCase().replace(/\/$/, '');

@@ -8,7 +8,7 @@ const https = require('node:https');
 const http = require('node:http');
 const { RateLimiter } = require('limiter');
 
-test("Test old site to new site redirects", async () => {
+test("Test old site to new site redirects - @archive", async () => {
   const log = s => console.log(`${s}`);
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();
