@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const {
   PlaywrightCrawler,
+  CheerioCrawler,
   downloadListOfUrls,
   extractUrls,
   EnqueueStrategy,
@@ -34,7 +35,6 @@ test("Test links to check if they're all reachable", async () => {
     /^https:\/\/www\.linkedin\.com\/company\/tigera\/?$/,
     'http://etcd.co',
     'https://success.docker.com/article/docker-ee-best-practices',
-    //`https://owasp.org/www-community/vulnerabilities/Heartbleed_Bug`,
     `https://installer.calicocloud.io/`,
     `https://installer.calicocloud.io/charts`,
     `https://docs.tigera.io/calico/charts`,
@@ -47,10 +47,10 @@ test("Test links to check if they're all reachable", async () => {
     `https://installer.calicocloud.io/manifests/v3.15.1-8/manifests`,
     `https://d881b853ae312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com`,
     `https://www.googletagmanager.com`,
-    ///^https?:\/\/localhost[\w\-.~:/?#[\]@!$&'()*+,;=]*$/,
     /^https?:\/\/csrc\.nist\.gov\/projects\/cryptographic-module-validation-program\/certificate\/\d+$/,
     /^https:\/\/installer\.calicocloud\.io:[0-9]{3,4}$/,
     //temp
+    'https://stedolan.github.io/jq/',
     `http://kubernetes.io/docs/user-guide/secrets/`,
     `https://downloads.tigera.io/ee/master/manifests/ocp/tigera-policies.yaml`,
     `https://downloads.tigera.io/ee/v3.15.1/manifests/ocp/tigera-policies.yaml`,
@@ -60,6 +60,17 @@ test("Test links to check if they're all reachable", async () => {
     `https://raw.githubusercontent.com/projectcalico/calico//node/windows-packaging/CalicoWindows/kubernetes/kube-proxy-service.ps1`,
     `https://projectcalico.docs.tigera.io/master/reference/installation/api#operator.tigera.io/v1.APIServer`,
     `https://projectcalico.docs.tigera.io/master/reference/installation/api#operator.tigera.io/v1.Installation`,
+    'http://dpdk.org/git/dpdk', //==>Origin: https://raw.githubusercontent.com/projectcalico/vpp-dataplane/master/scripts/init_eks.sh
+    'http://dpdk.org/git/dpdk-kmods', //==>Origin: https://raw.githubusercontent.com/projectcalico/vpp-dataplane/master/scripts/init_eks.sh
+    'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-darwin-amd64', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
+    'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-windows-amd64.exe', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
+    'https://downloads.tigera.io/ee/master/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/next/multicluster/create-a-managed-cluster
+    'https://downloads.tigera.io/ee/master/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/next/multicluster/create-a-managed-cluster
+    'https://downloads.tigera.io/ee/v3.14.4/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.14/multicluster/create-a-managed-cluster
+    'https://downloads.tigera.io/ee/v3.15.1/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.15/multicluster/create-a-managed-cluster
+    'https://downloads.tigera.io/ee/v3.15.1/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.15/multicluster/create-a-managed-cluster
+    'https://downloads.tigera.io/ee/v3.16.0/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.16/multicluster/create-a-managed-cluster
+    'https://downloads.tigera.io/ee/v3.16.0/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.16/multicluster/create-a-managed-cluster
   ];
 
   const lc = linkChecker();
@@ -71,31 +82,65 @@ test("Test links to check if they're all reachable", async () => {
     Configuration.getGlobalConfig().set('availableMemoryRatio', 0.5);
   }
   let postProcessUrls = new Map();
+  const urlCache = new Map();
 
-  const crawler = new PlaywrightCrawler({
-    navigationTimeoutSecs: 120,
-    maxConcurrency: CONCURRENCY,
-    // Use the requestHandler to process each of the crawled pages.
-    async requestHandler({ request, page, enqueueLinks, log }) {
-      if (request.skipNavigation) return;
-      const allText = await page.locator('body').innerText();
-      const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
-      for (const url of urls){
-        checkAndUseLinkChecker(page.url(), url);
-      }
-      await enqueueLinks({
-        strategy: EnqueueStrategy.All,
-        transformRequestFunction: transformRequest,
-        userData: {origin: page.url()},
+  function getCrawler() {
+    if (process.env.PLAYWRIGHT) {
+      return new PlaywrightCrawler({
+        navigationTimeoutSecs: 120,
+        maxConcurrency: CONCURRENCY,
+        // Use the requestHandler to process each of the crawled pages.
+        async requestHandler({ request, page, enqueueLinks, log }) {
+          if (request.skipNavigation) return;
+          const allText = await page.locator('body').innerText();
+          const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
+          for (const url of urls){
+            checkAndUseLinkChecker(page.url(), url);
+          }
+          await enqueueLinks({
+            strategy: EnqueueStrategy.All,
+            transformRequestFunction: transformRequest,
+            userData: {origin: page.url()},
+          });
+        },
+        // async errorHandler(context, error) {
+        //   console.error(`[ERROR] Playwright request error for url: ${context.request.url} --- error: ${error}`);
+        // },
+        // async failedRequestHandler(context, error) {
+        //   console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
+        // },
       });
-    },
-    // async errorHandler(context, error) {
-    //   console.error(`[ERROR] Playwright request error for url: ${context.request.url} --- error: ${error}`);
-    // },
-    // async failedRequestHandler(context, error) {
-    //   console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
-    // },
-  });
+    }
+
+    return new CheerioCrawler({
+      navigationTimeoutSecs: 120,
+      maxConcurrency: CONCURRENCY,
+      // Use the requestHandler to process each of the crawled pages.
+      async requestHandler({ request, $, enqueueLinks, log }) {
+        if (request.skipNavigation) return;
+        const allText = $('body').html()
+        .replaceAll(/(&quot|&apos)/g, ' ');
+        // .replaceAll(/<\/?[\w=:;,./~&#'" -]*>/g, ' ')
+        // .replaceAll(/\s\s+/g, ' ')
+        // console.log(`allText: ${allText}`);
+        const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
+        for (const url of urls){
+          checkAndUseLinkChecker(request.url, url);
+        }
+        await enqueueLinks({
+          strategy: EnqueueStrategy.All,
+          transformRequestFunction: transformRequest,
+          userData: {origin: request.url},
+        });
+      },
+      // async errorHandler(context, error) {
+      //   console.error(`[ERROR] Playwright request error for url: ${context.request.url} --- error: ${error}`);
+      // },
+      // async failedRequestHandler(context, error) {
+      //   console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
+      // },
+    });
+  }
 
   function transformRequest(requestOptions) {
     if (checkAndUseLinkChecker(requestOptions.userData.origin, requestOptions.url)) {
@@ -131,8 +176,6 @@ test("Test links to check if they're all reachable", async () => {
     return false;
   }
 
-  const urlCache = new Map();
-
   async function processSiteMap(siteMapUrl) {
     const urls = await downloadListOfUrls({ url: siteMapUrl });
     for (let url of urls) {
@@ -160,6 +203,7 @@ test("Test links to check if they're all reachable", async () => {
     }
   }
 
+  const crawler = getCrawler();
   await processSiteMap(SITEMAP_URL);
   const urls = [...urlCache.keys()].filter(url => !url.endsWith(SITEMAP));
   await crawler.addRequests([DOCS]);
