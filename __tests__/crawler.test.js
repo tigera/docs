@@ -7,6 +7,7 @@ const {
   EnqueueStrategy,
   Configuration,
 } = require('crawlee');
+import {decode} from 'html-entities';
 const linkChecker = require('../src/utils/linkChecker');
 
 test("Crawl the docs and test links", async () => {
@@ -71,6 +72,10 @@ test("Crawl the docs and test links", async () => {
     'https://downloads.tigera.io/ee/v3.15.1/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.15/multicluster/create-a-managed-cluster
     'https://downloads.tigera.io/ee/v3.16.0/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.16/multicluster/create-a-managed-cluster
     'https://downloads.tigera.io/ee/v3.16.0/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.16/multicluster/create-a-managed-cluster
+    'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
+    'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#access-log-path', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
+    'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#log-format-upstream', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
+    'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/custom-template/', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
   ];
 
   const lc = linkChecker();
@@ -84,45 +89,33 @@ test("Crawl the docs and test links", async () => {
   let postProcessUrls = new Map();
   const urlCache = new Map();
 
-  function getCrawler() {
-    if (process.env.PLAYWRIGHT) {
-      return new PlaywrightCrawler({
-        navigationTimeoutSecs: 120,
-        maxConcurrency: CONCURRENCY,
-        // Use the requestHandler to process each of the crawled pages.
-        async requestHandler({ request, page, enqueueLinks, log }) {
-          if (request.skipNavigation) return;
-          const allText = await page.locator('body').innerText();
-          const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
-          for (const url of urls){
-            checkAndUseLinkChecker(page.url(), url);
-          }
-          await enqueueLinks({
-            strategy: EnqueueStrategy.All,
-            transformRequestFunction: transformRequest,
-            userData: {origin: page.url()},
-          });
-        },
-        // async errorHandler(context, error) {
-        //   console.error(`[ERROR] Playwright request error for url: ${context.request.url} --- error: ${error}`);
-        // },
-        // async failedRequestHandler(context, error) {
-        //   console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
-        // },
-      });
-    }
-
-    return new CheerioCrawler({
+  function getPlaywrightCrawler() {
+    return new PlaywrightCrawler({
       navigationTimeoutSecs: 120,
       maxConcurrency: CONCURRENCY,
       // Use the requestHandler to process each of the crawled pages.
+      async requestHandler({ request, page, enqueueLinks, log }) {
+        if (request.skipNavigation) return;
+        const allText = await page.locator('body').innerText();
+        const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
+        for (const url of urls){
+          checkAndUseLinkChecker(page.url(), url);
+        }
+        await enqueueLinks({
+          strategy: EnqueueStrategy.All,
+          transformRequestFunction: transformRequest,
+          userData: {origin: page.url()},
+        });
+      },
+    });
+  }
+
+  function getCheerioCrawler() {
+    return new CheerioCrawler({
+      // Use the requestHandler to process each of the crawled pages.
       async requestHandler({ request, $, enqueueLinks, log }) {
         if (request.skipNavigation) return;
-        const allText = $('body').html()
-        .replaceAll(/(&quot|&apos)/g, ' ');
-        // .replaceAll(/<\/?[\w=:;,./~&#'" -]*>/g, ' ')
-        // .replaceAll(/\s\s+/g, ' ')
-        // console.log(`allText: ${allText}`);
+        const allText = decode($.html());
         const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
         for (const url of urls){
           checkAndUseLinkChecker(request.url, url);
@@ -140,6 +133,13 @@ test("Crawl the docs and test links", async () => {
       //   console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
       // },
     });
+  }
+
+  function getCrawler() {
+    if (process.env.PLAYWRIGHT) {
+      return getPlaywrightCrawler();
+    }
+    return getCheerioCrawler();
   }
 
   function transformRequest(requestOptions) {
