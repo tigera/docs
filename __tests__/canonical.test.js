@@ -7,7 +7,7 @@ const events = require('node:events');
 const needle = require('needle');
 import { RateLimiter } from "limiter";
 
-test.skip("Test to make sure all old pages with canonical are removed from indexing and following", async () => {
+test("Test all old pages with canonical have noindex, nofollow - @archive", async () => {
   const log = s => console.log(`${s}`);
   const WIP = 'wip', DONE = 'done', ERROR = 'error';
   const urlMap = new Map();

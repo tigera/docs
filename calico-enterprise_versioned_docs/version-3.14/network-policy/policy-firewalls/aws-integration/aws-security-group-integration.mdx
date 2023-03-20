@@ -36,7 +36,7 @@ AWS security group integration for {{prodname}} allows you to combine AWS securi
 
   Verify the Kubernetes AWS cloud provider is enabled by confirming each node has a ProviderId:
 
-  ```batch
+  ```bash
   kubectl get node -o=jsonpath='{range .items[*]}{.metadata.name}{"\tProviderId: "}{.spec.providerID}{"\n"}{end}'
   ```
 
@@ -45,7 +45,7 @@ AWS security group integration for {{prodname}} allows you to combine AWS securi
 
   Verify the Amazon VPC Networking and CNI plugin is being used by confirming that an `aws-node` pod exists on each node:
 
-  ```batch
+  ```bash
   kubectl get pod -n kube-system -l k8s-app=aws-node -o wide
   ```
 
@@ -54,7 +54,7 @@ AWS security group integration for {{prodname}} allows you to combine AWS securi
 
   Verify {{prodname}} has been installed by confirming that all tigerastatuses are available:
 
-  ```batch
+  ```bash
   kubectl get tigerastatus
   ```
 
@@ -62,7 +62,7 @@ AWS security group integration for {{prodname}} allows you to combine AWS securi
 
   Verify {{prodname}} has been installed by confirming that all tigerastatuses are available:
 
-  ```batch
+  ```bash
    kubectl get tigerastatus
   ```
 
@@ -70,7 +70,7 @@ AWS security group integration for {{prodname}} allows you to combine AWS securi
 
   Verify that there are no entries for {{prodname}} host endpoints using this command:
 
-  ```batch
+  ```bash
   kubectl get hostendpoints
   ```
 
@@ -154,13 +154,13 @@ Because `KOPS_CLUSTER_NAMES` are FQDNs, you must to choose a `CLUSTER_NAME` that
 
     The per-account resources must be applied once per AWS account. Use the following command to see if `tigera-cloudtrail` has already been applied:
 
-    ```batch
+    ```bash
     aws cloudformation describe-stacks --stack-name tigera-cloudtrail
     ```
 
     If the command output does not output a stack run the following command to create the per-account stack:
 
-    ```batch
+    ```bash
     aws cloudformation create-stack \
     --stack-name tigera-cloudtrail \
     --template-body {{filesUrl}}/manifests/aws/security-group-integration/account-cf.yaml
@@ -173,13 +173,13 @@ Because `KOPS_CLUSTER_NAMES` are FQDNs, you must to choose a `CLUSTER_NAME` that
 
     The per-VPC CloudFormation must be created once on a VPC that contains (or will contain) clusters. Run the following command to see if this VPC has had the per-VPC stack applied:
 
-    ```batch
+    ```bash
     aws cloudformation describe-stacks --stack-name tigera-vpc-$VPC_ID
     ```
 
     If the stack is not found, run the following command to create it:
 
-    ```batch
+    ```bash
     aws cloudformation create-stack \
     --stack-name tigera-vpc-$VPC_ID \
     --parameters ParameterKey=VpcId,ParameterValue=$VPC_ID \
@@ -192,7 +192,7 @@ Because `KOPS_CLUSTER_NAMES` are FQDNs, you must to choose a `CLUSTER_NAME` that
 
 1.  Install AWS per-cluster resources.
 
-    ```batch
+    ```bash
     aws cloudformation create-stack \
     --stack-name tigera-cluster-$CLUSTER_NAME \
     --parameters ParameterKey=VpcId,ParameterValue=$VPC_ID \
@@ -206,7 +206,7 @@ Because `KOPS_CLUSTER_NAMES` are FQDNs, you must to choose a `CLUSTER_NAME` that
 
 1.  Add the controller IAM user secrets in Kubernetes.
 
-    ```batch
+    ```bash
      # First, get the name of the created IAM user, which is an output field in your Cluster CF stack
     CONTROLLER_USERNAME=$(aws cloudformation describe-stacks \
     --stack-name tigera-vpc-$VPC_ID \
@@ -232,7 +232,7 @@ Because `KOPS_CLUSTER_NAMES` are FQDNs, you must to choose a `CLUSTER_NAME` that
 
 1.  Gather the remaining bits of information:
 
-    ```batch
+    ```bash
      # Get the SQS URL
     SQS_URL=$(aws cloudformation describe-stacks \
     --stack-name tigera-vpc-$VPC_ID \
@@ -262,7 +262,7 @@ Because `KOPS_CLUSTER_NAMES` are FQDNs, you must to choose a `CLUSTER_NAME` that
 
 Create the operator custom resource using inputs from the previous step.
 
-```batch
+```bash
 kubectl create -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: AmazonCloudIntegration

@@ -41,7 +41,7 @@ We begin by creating a test VM that will be the target of the service IP.
 
 1. Check the name of the available CirrOS image.
 
-   ```batch
+   ```bash
    nova image-list
    ```
 
@@ -59,7 +59,7 @@ We begin by creating a test VM that will be the target of the service IP.
 
 1. Boot a VM.
 
-   ```batch
+   ```bash
    nova boot --flavor m1.tiny --image cirros-0.3.2-x86_64 --nic net-name=demo-net testvm1
    ```
 
@@ -103,7 +103,7 @@ We begin by creating a test VM that will be the target of the service IP.
 
 1. Check when the VM has booted:
 
-   ```batch
+   ```bash
    nova list
    ```
 
@@ -119,7 +119,7 @@ We begin by creating a test VM that will be the target of the service IP.
 
 1. Use the following command to obtain the status of the VM.
 
-   ```batch
+   ```bash
    nova show testvm1
    ```
 
@@ -165,7 +165,7 @@ We begin by creating a test VM that will be the target of the service IP.
 
 1. Let's look at the corresponding Neutron port.
 
-   ```batch
+   ```bash
    neutron port-list
    ```
 
@@ -190,7 +190,7 @@ initially points to that VM, `testvm1`.
 
 1. One way to do that is to add the service IP as a second 'fixed IP' on the Neutron port.
 
-   ```batch
+   ```bash
    neutron port-update --fixed-ip subnet_id=0a1221f2-e6ed-413d-a040-62a266bd0d8f,ip_address=10.28.0.13 \
    --fixed-ip subnet_id=0a1221f2-e6ed-413d-a040-62a266bd0d8f,ip_address=10.28.0.23 9a7e0868-da7a-419e-a7ad-9d37e11091b8
    ```
@@ -203,7 +203,7 @@ initially points to that VM, `testvm1`.
 
 1. Use the following command to get more information about the port.
 
-   ```batch
+   ```bash
    neutron port-show 9a7e0868-da7a-419e-a7ad-9d37e11091b8
    ```
 
@@ -237,7 +237,7 @@ initially points to that VM, `testvm1`.
 
 1. Now look at local IP routes.
 
-   ```batch
+   ```bash
    ip r
    ```
 
@@ -260,7 +260,7 @@ initially points to that VM, `testvm1`.
 1. We can also double check that `10.28.0.23` has appeared as a local device
    route on the relevant compute node.
 
-   ```batch
+   ```bash
    ip r
    ```
 
@@ -281,14 +281,14 @@ initially points to that VM, `testvm1`.
 
 1. SSH into the VM.
 
-   ```batch
+   ```bash
    core@access-node$ ssh cirros@10.28.0.13
    cirros@10.28.0.13's password:
    ```
 
 1. From inside the VM, issue the following command to list the interfaces.
 
-   ```batch
+   ```bash
    ip a
    ```
 
@@ -309,13 +309,13 @@ initially points to that VM, `testvm1`.
 
 1. Next, issue the following command.
 
-   ```batch
+   ```bash
    sudo ip a a 10.28.0.23/16 dev eth0
    ```
 
 1. List the interfaces again.
 
-   ```batch
+   ```bash
    ip a
    ```
 
@@ -343,7 +343,7 @@ initially points to that VM, `testvm1`.
 
 1. And now we can access the VM on its service IP, as shown below.
 
-   ```batch
+   ```bash
    core@access-node$ ssh cirros@10.28.0.23
    The authenticity of host '10.28.0.23 (10.28.0.23)' can't be established.
    RSA key fingerprint is 65:a5:b0:0c:e2:c4:ac:94:2a:0c:64:b8:bc:5a:aa:66.
@@ -359,7 +359,7 @@ initially points to that VM, `testvm1`.
 
 1. You can check this by listing the security groups.
 
-   ```batch
+   ```bash
    neutron security-group-list
    ```
 
@@ -390,13 +390,13 @@ cycle the active VM).
 
 1. To demonstrate that we create a second test VM.
 
-   ```batch
+   ```bash
    nova boot --flavor m1.tiny --image cirros-0.3.2-x86_64 --nic net-name=demo-net testvm2
    ```
 
 1. List the VMs.
 
-   ```batch
+   ```bash
    nova list
    ```
 
@@ -412,7 +412,7 @@ cycle the active VM).
 
 1. Check the ports.
 
-   ```batch
+   ```bash
    neutron port-list
    ```
 
@@ -434,20 +434,20 @@ cycle the active VM).
 
 1. Remove the service IP from the first VM.
 
-   ```batch
+   ```bash
    neutron port-update --fixed-ip subnet_id=0a1221f2-e6ed-413d-a040-62a266bd0d8f,ip_address=10.28.0.13 9a7e0868-da7a-419e-a7ad-9d37e11091b8
    ```
 
 1. And add it to the second.
 
-   ```batch
+   ```bash
    neutron port-update --fixed-ip subnet_id=0a1221f2-e6ed-413d-a040-62a266bd0d8f,ip_address=10.28.0.14 \
    --fixed-ip subnet_id=0a1221f2-e6ed-413d-a040-62a266bd0d8f,ip_address=10.28.0.23 7627a298-a2db-4a1a-bc07-9f0f10f58363
    ```
 
 1. SSH into `testvm2`.
 
-   ```batch
+   ```bash
    core@access-node$ ssh cirros@10.28.0.14
    The authenticity of host '10.28.0.14 (10.28.0.14)' can't be established.
    RSA key fingerprint is 6a:02:7f:3a:bf:0c:91:de:c4:d6:e7:f6:81:3f:6a:85.
@@ -459,13 +459,13 @@ cycle the active VM).
 
 1. Tell `testvm2` that it now has the service IP `10.28.0.23`.
 
-   ```batch
+   ```bash
    sudo ip a a 10.28.0.23/16 dev eth0
    ```
 
 1. Now connections to `10.28.0.23` go to `testvm2`
 
-   ```batch
+   ```bash
    core@access-node$ ssh cirros@10.28.0.23
    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
    @    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
@@ -484,13 +484,13 @@ cycle the active VM).
 
 1. Remove the `known_hosts` files.
 
-   ```batch
+   ```bash
    rm ~/.ssh/known_hosts
    ```
 
 1. Try again to SSH into the VM.
 
-   ```batch
+   ```bash
    core@access-node$ ssh cirros@10.28.0.23
    The authenticity of host '10.28.0.23 (10.28.0.23)' can't be established.
    RSA key fingerprint is 6a:02:7f:3a:bf:0c:91:de:c4:d6:e7:f6:81:3f:6a:85.
@@ -502,7 +502,7 @@ cycle the active VM).
 
 1. Check the host name.
 
-   ```batch
+   ```bash
    hostname
    ```
 

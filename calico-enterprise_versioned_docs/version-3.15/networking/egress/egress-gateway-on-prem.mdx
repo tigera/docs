@@ -189,14 +189,14 @@ In the default **FelixConfiguration**, set the `egressIPSupport` field to `Enabl
 `EnabledPerNamespaceOrPerPod`, according to the level of support that you need in your cluster. For
 support on a per-namespace basis only:
 
-```batch
+```bash
 kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
 ```
 
 Or for support both per-namespace and per-pod:
 
-```batch
+```bash
 kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
@@ -206,7 +206,7 @@ kubectl patch felixconfiguration.p default --type='merge' -p \
 Egress gateways require the policy sync API to be enabled on Felix. To do this cluster-wide, modify
 the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
 
-```batch
+```bash
 kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
 ```
@@ -221,7 +221,7 @@ Where:
 Provision a small IP Pool with the range of source IPs that you want to use for a particular
 application when it connects to an external service. For example:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: IPPool
@@ -255,7 +255,7 @@ namespace where you plan to create your egress gateways. It is typically named
 `tigera-pull-secret`, in the `calico-system` namespace, so the command to copy that to the `default`
 namespace would be:
 
-```batch
+```bash
 kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
    grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
    kubectl apply --namespace=default -f -
@@ -265,7 +265,7 @@ kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
 
 Use a Kubernetes Deployment to deploy a group of egress gateways, using the egress IP Pool.
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -402,13 +402,13 @@ The health port is used by:
 
 If you are deploying `egress-gateway` on a RKE2 CIS-hardened cluster, its `PodSecurityPolicies` restrict the `securityContext` and `volumes` required by egress gateway. To fix this, apply the following manifests to set up a `PodSecurityPolicy`, `ClusterRole` and associated `ServiceAccount`: `tigera-egress-gateway`.
 
-```batch
+```bash
 kubectl apply -f {{filesUrl}}/manifests/rancher/custom-psp-rke2-cis-hardened.yaml
 ```
 
 Set the `serviceAccount` field in the `egress-gateway` `Deployment` to use the created `ServiceAccount`: `tigera-egeress-gateway` assosciated with the `PodSecurityPolicy`,
 
-```batch
+```bash
 kubectl -n default set serviceaccount deployment egress-gateway  tigera-egress-gateway
 ```
 
@@ -421,14 +421,14 @@ their meaning is "the set of pods, anywhere in the cluster, that match those sel
 So, to configure that all of the pods in a namespace should use the egress gateways that are
 labelled with `egress-code: red`, you would annotate that namespace like this:
 
-```batch
+```bash
 kubectl annotate ns <namespace> egress.projectcalico.org/selector="egress-code == 'red'"
 ```
 
 By default that selector can only match egress gateways in the same namespace. To select gateways
 in a different namespace, specify a `namespaceSelector` annotation as well, like this:
 
-```batch
+```bash
 kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
 ```
 
@@ -439,7 +439,7 @@ expressions](../../reference/resources/networkpolicy.mdx#selector) as the select
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
 creating the pod. For example:
 
-```batch
+```bash
 kubectl apply -f - <<'EOF'
 apiVersion: v1
 kind: Pod
@@ -461,7 +461,7 @@ traffic from that client to load balance across the available gateways, set the
 `fib_multipath_hash_policy`
 [sysctl](https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/) to allow that:
 
-```batch
+```bash
 sudo sysctl -w net.ipv4.fib_multipath_hash_policy=1
 ```
 
@@ -484,7 +484,7 @@ the egress gateway's IP.
 By way of a concrete example, you could use netcat to run a test server outside the cluster; for
 example:
 
-```batch
+```bash
 docker run --net=host --privileged subfuzion/netcat -v -l -k -p 8089
 ```
 
@@ -495,7 +495,7 @@ example `laurenceman/alpine`.
 
 Now you can use `kubectl exec` to initiate an outbound connection from that pod:
 
-```batch
+```bash
 kubectl exec <pod name> -n <pod namespace> -- nc <server IP> 8089 </dev/null
 ```
 

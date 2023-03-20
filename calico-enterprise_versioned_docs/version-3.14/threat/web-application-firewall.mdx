@@ -59,7 +59,7 @@ Configure Felix for syncing WAF policy. Note: this is the same step required for
 
 Enable the Policy Sync API in Felix. To do this cluster-wide, modify the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
 
-```batch
+```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
 ```
 
@@ -92,13 +92,13 @@ spec:
 
 Annotate the services you wish to enable WAF for as shown.
 
-```batch
+```bash
 kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging=true
 ```
 
 To disable WAF for the service, remove the annotation.
 
-```batch
+```bash
 kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging-
 ```
 
@@ -146,7 +146,7 @@ In case of an error, HTTP request will return HTTP 403 Response Code from Envoy 
 
 Create a directory, and download the core rules set files that you want to use, for example:
 
-```batch
+```bash
 mkdir my-ruleset && cd my-ruleset
 curl -O https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf
 ```
@@ -158,7 +158,7 @@ Note: For completeness, it is a good practice to download these bootstrapping co
 
 :::
 
-```batch
+```bash
 curl -O https://raw.githubusercontent.com/lsgroup/SmartReverseProxy/master/modsecdefault.conf
 curl https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/crs-setup.conf.example > crs-setup.conf
 ```
@@ -171,7 +171,7 @@ The two bootstrapping files `modsecdefault.conf` and `crs-setup.conf` MUST be na
 
 Change your current directory to the `my-ruleset` folder where your core rules set files live. Create a configMap containing all the files downloaded into your new directory and replace the existing rule set with it:
 
-```batch
+```bash
 kubectl create cm --dry-run=client --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > ../my-ruleset.yaml
 kubectl replace -f ../my-ruleset.yaml
 ```

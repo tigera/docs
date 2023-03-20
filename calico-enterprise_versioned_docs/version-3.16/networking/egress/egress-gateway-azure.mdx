@@ -167,7 +167,7 @@ To do this, modify the default **BGP configuration** resource.
 
 Run the following command to disable the BGP full-mesh:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: BGPConfiguration
@@ -191,13 +191,13 @@ Usually, in the default installation of {{prodname}} in a public cloud, BGP is d
 However, running egress gateways in Azure relies on BGP connections between {{prodname}} and Azure
 Route Servers. To enable BGP routing protocol, set `bgp` field to `Enabled` in the default installation:
 
-```batch
+```bash
 kubectl patch installation default --type='merge' -p '{"spec": {"calicoNetwork": {"bgp": "Enabled"}}}'
 ```
 
 and then restart the {{prodname}} daemonSet:
 
-```batch
+```bash
 kubectl rollout restart ds calico-node -n calico-system
 ```
 
@@ -206,7 +206,7 @@ kubectl rollout restart ds calico-node -n calico-system
 Provision a small IP Pool with the range of source IPs that you want to use for a particular
 application when it connects to an external service. For example:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: projectcalico.org/v3
 kind: IPPool
@@ -236,7 +236,7 @@ This limit should not be an issue in a small or medium size cluster, but could b
 it is possible to create [BGP filters](../configuring/bgp.mdx#configure-a-bgp-filter) to advertise only egress IP pools. As an example,
 for the IP pool created in the previous section, configure a BGP filter by running the following command:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 kind: BGPFilter
 apiVersion: projectcalico.org/v3
@@ -260,13 +260,13 @@ must have a cluster ID - typically an unused IPv4 address.
 
 To configure a node to be a route reflector with cluster ID 244.0.0.1, run the following command:
 
-```batch
+```bash
 calicoctl patch node <node name> -p '{"spec": {"bgp": {"routeReflectorClusterID": "244.0.0.1"}}}'
 ```
 
 Typically, you will want to label this node to indicate that it is a route reflector, allowing it to be easily selected by a BGPPeer resource. You can do this with kubectl. For example:
 
-```batch
+```bash
 kubectl label node <node name> route-reflector=true
 ```
 
@@ -335,14 +335,14 @@ In the default **FelixConfiguration**, set the `egressIPSupport` field to `Enabl
 `EnabledPerNamespaceOrPerPod`, according to the level of support that you need in your cluster. For
 support on a per-namespace basis only:
 
-```batch
+```bash
 kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
 ```
 
 Or for support both per-namespace and per-pod:
 
-```batch
+```bash
 kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
@@ -361,7 +361,7 @@ Use a Kubernetes Deployment to deploy a group of egress gateways.
 Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and {{prodname}}
 in tandem to get a cluster of egress gateways that uses the user defined IP addresses:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: EgressGateway
@@ -492,14 +492,14 @@ their meaning is "the set of pods, anywhere in the cluster, that match those sel
 So, to configure all the pods in a namespace to use the egress gateways that are
 labelled with `egress-code: red`, you would annotate that namespace like this:
 
-```batch
+```bash
 kubectl annotate ns <namespace> egress.projectcalico.org/selector="egress-code == 'red'"
 ```
 
 By default, that selector can only match egress gateways in the same namespace. To select gateways
 in a different namespace, specify a `namespaceSelector` annotation as well, like this:
 
-```batch
+```bash
 kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == '<egress gateway namespace>'"
 ```
 
@@ -509,7 +509,7 @@ Egress gateway annotations have the same [syntax and range of expressions](../..
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
 creating the pod. For example:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -531,7 +531,7 @@ traffic from that client to load balance across the available gateways, set the
 `fib_multipath_hash_policy`
 [sysctl](https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/) to allow that:
 
-```batch
+```bash
 sudo sysctl -w net.ipv4.fib_multipath_hash_policy=1
 ```
 
@@ -552,7 +552,7 @@ In order for such a connection to complete, the server must know how to route ba
 
 By way of a concrete example, you could use netcat to run a test server outside the cluster; for example:
 
-```batch
+```bash
 docker run --net=host --privileged subfuzion/netcat -v -l -k -p 8089
 ```
 
@@ -560,7 +560,7 @@ Then provision an egress IP Pool, and egress gateways, as above.
 
 Then deploy a pod, with egress annotations as above, and with any image that includes netcat, for example:
 
-```batch
+```bash
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -578,7 +578,7 @@ EOF
 
 Now you can use `kubectl exec` to initiate an outbound connection from that pod:
 
-```batch
+```bash
 kubectl exec <pod name> -n <namespace> -- nc <server IP> 8089 </dev/null
 ```
 

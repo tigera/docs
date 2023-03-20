@@ -234,7 +234,7 @@ const config = {
               },
               {
                 label: 'Slack',
-                to: 'https://slack.projectcalico.org/',
+                to: 'https://calicousers.slack.com/',
               },
             ],
           },
@@ -310,7 +310,7 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        additionalLanguages: ['powershell', 'batch'],
+        additionalLanguages: ['powershell'],
         magicComments: [
           // Default highlight class name (should be specified)
           {
