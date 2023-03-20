@@ -230,8 +230,7 @@ spec:
       <When condition={props.clusterType !== 'managed'}>
         <>
           <p>Apply the custom resources for enterprise features.</p>
-          <CodeBlock language='batch'>oc create -f "/manifests/tigera-enterprise-resources.yaml"</CodeBlock>
-        </>
+          <CodeBlock language='batch'>oc create -f {filesUrl}/manifests/ocp/tigera-enterprise-resources.yaml</CodeBlock>        </>
       </When>
 
       <OpenShiftPrometheusOperator operation='install' />
@@ -241,32 +240,6 @@ spec:
       <p>
         When it shows all components with status <code>Available</code>, proceed to the next section.
       </p>
-
-        <When condition={props.clusterType === 'managed'}>
-            <>
-                <Heading
-                    as='h3'
-                    id={`secure-${prodnamedash}-components-with-network-policy`}
-                >
-                    Secure {prodname} components with network policy
-                </Heading>
-                <p>To secure the components that make up {prodname}, install the following set of network policies.</p>
-                <CodeBlock>oc create -f {filesUrl}/manifests/ocp/tigera-policies-managed.yaml</CodeBlock>
-            </>
-        </When>
-
-        <When condition={props.clusterType !== 'managed'}>
-            <>
-                <Heading
-                    as='h4'
-                    id={`secure-${prodnamedash}-components-with-network-policy`}
-                >
-                    Secure {prodname} components with network policy
-                </Heading>
-                <p>To secure the components that make up {prodname}, install the following set of network policies.</p>
-                <CodeBlock>oc create -f {filesUrl}/manifests/ocp/tigera-policies.yaml</CodeBlock>
-            </>
-        </When>
 
       <When condition={props.clusterType === 'management'}>
         <>
