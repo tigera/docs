@@ -342,7 +342,7 @@ const config = {
             banner: 'unreleased',
           },
           3.25: {
-            label: '3.25',
+            label: '3.25 (latest)',
             path: 'latest',
             banner: 'none',
           },
@@ -379,7 +379,7 @@ const config = {
             banner: 'unreleased',
           },
           3.15: {
-            label: '3.15',
+            label: '3.15 (latest)',
             path: 'latest',
             banner: 'none',
           },
