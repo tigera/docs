@@ -53,9 +53,6 @@ test("Crawl the docs and test links", async () => {
     //temp
     'https://stedolan.github.io/jq/',
     `http://kubernetes.io/docs/user-guide/secrets/`,
-    `https://downloads.tigera.io/ee/master/manifests/ocp/tigera-policies.yaml`,
-    `https://downloads.tigera.io/ee/v3.15.1/manifests/ocp/tigera-policies.yaml`,
-    `https://downloads.tigera.io/ee/v3.16.0/manifests/ocp/tigera-policies.yaml`,
     `https://github.com/coreos/flannel/blob/master/Documentation/kube-flannel-rbac.yml`,
     `https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/`,
     `https://raw.githubusercontent.com/projectcalico/calico//node/windows-packaging/CalicoWindows/kubernetes/kube-proxy-service.ps1`,
