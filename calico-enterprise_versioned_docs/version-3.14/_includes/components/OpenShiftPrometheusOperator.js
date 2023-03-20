@@ -4,17 +4,15 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { prodname, baseUrl } from '../../variables';
+import { prodname, baseUrl, filesUrl } from '../../variables';
 
 export default function OpenShiftPrometheusOperator(props) {
   return (
     <>
       <p>Apply the {prodname} manifests for the Prometheus operator.</p>
-      <CodeBlock language='batch'>
-        {props.operation === 'install'
-          ? 'oc create -f "/manifests/ocp/tigera-prometheus-operator.yaml"'
-          : 'oc apply -f "/manifests/ocp/tigera-prometheus-operator.yaml"'}
-      </CodeBlock>
+          {props.operation === 'install'
+              ? <CodeBlock language='bash'>oc create -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>
+              : <CodeBlock language='bash'>oc apply -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>}
       <p>
         Create the pull secret in the <code>tigera-prometheus</code> namespace and then patch the Prometheus operator
         deployment. Use the image pull secret provided to you by Tigera support representative.

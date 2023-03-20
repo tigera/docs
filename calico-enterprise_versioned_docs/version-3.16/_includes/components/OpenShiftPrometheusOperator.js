@@ -4,7 +4,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { prodname, baseUrl } from '../../variables';
+import { prodname, baseUrl, filesUrl } from '../../variables';
 
 export default function OpenShiftPrometheusOperator(props) {
   const createSecret = `oc create secret generic tigera-pull-secret \\
@@ -20,16 +20,14 @@ export default function OpenShiftPrometheusOperator(props) {
         Prometheus operator). Skip this step if you are using{' '}
         <Link href={`${baseUrl}/operations/monitor/prometheus/support`}>BYO Prometheus</Link> that you manage yourself.
       </Admonition>
-      <CodeBlock language='batch'>
-        {props.operation === 'install'
-          ? 'oc create -f "/manifests/ocp/tigera-prometheus-operator.yaml"'
-          : 'oc apply -f "/manifests/ocp/tigera-prometheus-operator.yaml"'}
-      </CodeBlock>
+          {props.operation === 'install'
+              ? <CodeBlock language='bash'>oc create -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>
+              : <CodeBlock language='bash'>oc apply -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>}
       <p>
         Create the pull secret in the <code>tigera-prometheus</code> namespace and then patch the Prometheus operator
         deployment. Use the image pull secret provided to you by Tigera support representative.
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`${notOSCodeBlock}oc patch deployment -n tigera-prometheus calico-prometheus-operator \\
     -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'`}
       </CodeBlock>
