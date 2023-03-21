@@ -12,6 +12,7 @@ const linkChecker = require('../src/utils/linkChecker');
 
 test("Crawl the docs and test links", async () => {
   const PROD = 'https://docs.tigera.io'
+  const PROD_REGEX = /^https:\/\/docs\.tigera\.io/;
   const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
       .toLowerCase().replace(/\/$/, '');
   const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
@@ -114,7 +115,11 @@ test("Crawl the docs and test links", async () => {
         if (request.skipNavigation) return;
         const allText = decode($.html());
         const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
-        for (const url of urls){
+        for (let url of urls) {
+          if (isLocalHost) {
+            const testUrl = url.replace(PROD_REGEX, `${DOCS}`);
+            if (request.url === testUrl) url = testUrl;
+          }
           checkAndUseLinkChecker(request.url, url);
         }
         await enqueueLinks({
