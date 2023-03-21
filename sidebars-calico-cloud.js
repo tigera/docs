@@ -191,8 +191,6 @@ module.exports = {
           label: 'Policy for hosts',
           link: {type: 'doc', id: 'network-policy/hosts/index'},
           items: [
-            'network-policy/hosts/about',
-            'network-policy/hosts/requirements',
             'network-policy/hosts/protect-hosts',
             'network-policy/hosts/kubernetes-nodes',
             'network-policy/hosts/protect-hosts-tutorial',
