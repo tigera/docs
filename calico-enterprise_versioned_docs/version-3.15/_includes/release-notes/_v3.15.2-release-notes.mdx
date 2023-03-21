@@ -1,30 +1,21 @@
-27 Jan 2023
+22 Mar 2023
 
 ### Improvements
 
-- Adding graceful shutdown to Typha improves the "happy case" for upgrade, ensuring that shutting down a Typha instance
-  doesn't cause a thundering herd of `calico-node` subcomponent restarts. Instead, clients are disconnected slowly over a
-  configured interval, thus limiting the rate of `calico-node` subcomponent restarts.
-- Combining graceful restart with new configuration exposed by the operator allows for the Typha deployment's `maxSurge`
-  and `maxUnavailable` settings to be tuned. Setting `maxSurge: "100%"` and `maxUnavailable: 0` means that all up-level
-  Typha instances will start and reach `Ready` before their back-level counterpart is then (gracefully) shut down.
-  (For back-compatibility, the default values of `maxSurge` and `maxUnavailable` have been kept as-is in this release
-  but the upgrade guide explains how to set these during an upgrade.)
-- To mitigate the "unhappy case" where many `calico-node` instances restart at once (for any reason), Typha's handling
-  of new connections has been improved to share much of the work between different clients, this dramatically improves
-  performance when dealing with a "thundering herd".
-- Updated TLS configurations to use only TLS1.2.
-- The images for FlexVolume, CSI, Node Driver Registrar are now pulled from our private `quay.io` registry.
+- Fixed performance issues with listing/resyncing routes when there many interfaces/routes on the system.  Use kernel-side filtering of routes for a dramatic speed improvement. (Auto-enabled on kernel v4.10+.)
+
+- Added tolerations to CSI Driver so it can be scheduled on all nodes.
+
+- Added a missing policy between Guardian and the Apiserver that could cause issues in multi-cluster installations if a global default deny policy is active.
+
+- Fixed an issue where the operator made many meaningless policy updates, resulting in bloated policy details in the UI.
 
 ### Bug Fixes
 
-- Fixed a bug causing Calico Node to restart during upgrades when upgrading from v3.10 and before, due to the  
-  addition of the TPROXYMode setting in the Felix Configuration resource.
-- Fixed a bug causing liveness checks to fail for Calico Node during upgrades, due to changed field names in TLS secrets.
-- Fixed a bug that prevented [controlPlaneNodeSelector](../../reference/installation/api.mdx#operator.tigera.io/v1.InstallationSpec)
-  from being propagated to Prometheus and Alertmanager.
-- Fixed a bug that caused Intrusion Detection Controller to restart whenever a managed cluster would disconnect.
-- CVE updates, most notably: updating our scratch based images to UBI 8.7, golang versions 1.18.9 or 1.19.5, ECK 2.5.0, Elasticsearch 7.17.7, Kibana 7.17.7.
+- Fixed a bug that caused policies to show in the service graph for even if they were deleted before the selected time range.
+- Fixed an issue where publicly-signed Splunk certificates were not trusted.
+- Fixed a bug that caused policy preview to crash due to a malformed query.
+- Fixed a bug that caused Anomaly Detection jobs to fail if incompletele documents are present in our log storage.
 
 ### Known issues
 
