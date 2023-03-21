@@ -5,7 +5,7 @@ version=$2
 
 echo 'Cutting a new version...'
 
-docusaurus docs:version:$product $version
+yarn docusaurus docs:version:$product $version
 
 echo 'Updating MDX imports...'
 regex="s/import (.*) from\s* '\@site\/${product}\/(.*)\.mdx';/import \${1} from '\@site\/${product}_versioned_docs\/version-${version}\/\${2}.mdx';/g"

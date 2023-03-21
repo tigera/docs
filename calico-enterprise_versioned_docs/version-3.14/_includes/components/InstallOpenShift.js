@@ -230,8 +230,7 @@ spec:
       <When condition={props.clusterType !== 'managed'}>
         <>
           <p>Apply the custom resources for enterprise features.</p>
-          <CodeBlock language='batch'>oc create -f "/manifests/tigera-enterprise-resources.yaml"</CodeBlock>
-        </>
+          <CodeBlock language='batch'>oc create -f {filesUrl}/manifests/ocp/tigera-enterprise-resources.yaml</CodeBlock>        </>
       </When>
 
       <OpenShiftPrometheusOperator operation='install' />

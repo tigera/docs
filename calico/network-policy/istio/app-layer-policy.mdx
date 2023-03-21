@@ -70,7 +70,7 @@ In the default **FelixConfiguration**, set the field, `policySyncPathPrefix` to 
 <Tabs>
 <TabItem label="calicoctl" value="calicoctl-0">
 
-```batch
+```bash
 calicoctl patch FelixConfiguration default --patch \
    '{"spec": {"policySyncPathPrefix": "/var/run/nodeagent"}}'
 ```
@@ -78,7 +78,7 @@ calicoctl patch FelixConfiguration default --patch \
 </TabItem>
 <TabItem label="kubectl" value="kubectl-1">
 
-```batch
+```bash
 kubectl patch FelixConfiguration default --type=merge --patch \
    '{"spec": {"policySyncPathPrefix": "/var/run/nodeagent"}}'
 ```
@@ -89,7 +89,7 @@ kubectl patch FelixConfiguration default --type=merge --patch \
 Additionally, if you have installed Calico via the operator, you can optionally disable flexvolumes.
 Flexvolumes were used in earlier implementations and have since been deprecated.
 
-```batch
+```bash
 kubectl patch installation default --type=merge -p '{"spec": {"flexVolumePath": "None"}}'
 ```
 
@@ -98,7 +98,7 @@ kubectl patch installation default --type=merge -p '{"spec": {"flexVolumePath": 
 {{prodname}} utilizes a Container Storage Interface (CSI) driver to help set up the policy sync API on every node.
 Apply the following to install the Calico CSI driver
 
-```batch
+```bash
 kubectl apply -f {{manifestsUrl}}/manifests/csi-driver.yaml
 ```
 
@@ -107,7 +107,7 @@ kubectl apply -f {{manifestsUrl}}/manifests/csi-driver.yaml
 1. Verify [application layer policy requirements](../../getting-started/kubernetes/requirements.mdx#application-layer-policy-requirements).
 2. Install Istio using [installation guide in the project documentation](https://istio.io/v1.15/docs/setup/install/).
 
-```batch
+```bash
 curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.15.2 sh -
 cd $(ls -d istio-* --color=never)
 ./bin/istioctl install
@@ -117,7 +117,7 @@ Next, create the following [PeerAuthentication](https://istio.io/v1.15/docs/refe
 
 Replace `namespace` below by `rootNamespace` value, if it's customized in your environment.
 
-```batch
+```bash
 kubectl create -f - <<EOF
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -140,7 +140,7 @@ The sidecar injector automatically modifies pods as they are created to work wit
 <Tabs>
 <TabItem label="Istio v1.15.x" value="Istio v1.15.x-2">
 
-```batch
+```bash
 curl {{manifestsUrl}}/manifests/alp/istio-inject-configmap-1.15.yaml -o istio-inject-configmap.yaml
 kubectl patch configmap -n istio-system istio-sidecar-injector --patch "$(cat istio-inject-configmap.yaml)"
 ```
@@ -150,7 +150,7 @@ kubectl patch configmap -n istio-system istio-sidecar-injector --patch "$(cat is
 </TabItem>
 <TabItem label="Istio v1.10.x" value="Istio v1.10.x-3">
 
-```batch
+```bash
 curl {{manifestsUrl}}/manifests/alp/istio-inject-configmap-1.10.yaml -o istio-inject-configmap.yaml
 kubectl patch configmap -n istio-system istio-sidecar-injector --patch "$(cat istio-inject-configmap.yaml)"
 ```
@@ -166,7 +166,7 @@ Apply the following manifest to configure Istio to query {{prodname}} for applic
 
 This applies to Istio v1.15.x and v1.10.x:
 
-```batch
+```bash
 kubectl apply -f {{manifestsUrl}}/manifests/alp/istio-app-layer-policy-envoy-v3.yaml
 ```
 
@@ -178,7 +178,7 @@ You can control enforcement of application layer policy on a per-namespace basis
 
 To enable Istio and application layer policy in a namespace, add the label `istio-injection=enabled`.
 
-```batch
+```bash
 kubectl label namespace <your namespace name> istio-injection=enabled
 ```
 
@@ -188,7 +188,7 @@ If the namespace already has pods in it, you must recreate them for this to take
 
 Envoy must be able to communicate with the `istio-pilot.istio-system service`. If you apply any egress policies to your pods, you _must_ enable access.
 
-```batch
+```bash
 kubectl apply -f {{tutorialFilesURL}}/allow-istio-pilot.yaml
 ```
 

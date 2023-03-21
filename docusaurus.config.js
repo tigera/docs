@@ -35,6 +35,10 @@ const config = {
           path: 'default',
           sidebarPath: false,
         },
+        gtag: {
+          trackingID: 'G-MDDZ0CGXZ4',
+          anonymizeIP: true,
+        },
         blog: false,
         theme: {
           customCss: [
@@ -230,7 +234,7 @@ const config = {
               },
               {
                 label: 'Slack',
-                to: 'https://slack.projectcalico.org/',
+                to: 'https://calicousers.slack.com/',
               },
             ],
           },
@@ -306,7 +310,7 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        additionalLanguages: ['powershell', 'batch'],
+        additionalLanguages: ['powershell'],
         magicComments: [
           // Default highlight class name (should be specified)
           {
@@ -338,8 +342,8 @@ const config = {
             banner: 'unreleased',
           },
           3.25: {
-            label: '3.25',
-            path: '3.25',
+            label: '3.25 (latest)',
+            path: 'latest',
             banner: 'none',
           },
           3.24: {
@@ -375,8 +379,8 @@ const config = {
             banner: 'unreleased',
           },
           3.15: {
-            label: '3.15',
-            path: '3.15',
+            label: '3.15 (latest)',
+            path: 'latest',
             banner: 'none',
           },
           3.14: {

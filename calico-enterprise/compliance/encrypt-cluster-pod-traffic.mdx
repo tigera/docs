@@ -85,7 +85,7 @@ Use the following instructions for these platforms that are not listed on the Wi
 
 To install WireGuard on the default Amazon Machine Image (AMI):
 
-```batch
+```bash
 sudo yum install kernel-devel-`uname -r` -y
 sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
 sudo curl -o /etc/yum.repos.d/jdoss-wireguard-epel-7.repo https://copr.fedorainfracloud.org/coprs/jdoss/wireguard/repo/epel-7/jdoss-wireguard-epel-7.repo
@@ -109,7 +109,7 @@ To install WireGuard for OpenShift v4.8:
 
 1.  Download and configure the tools needed for kmods.
 
-```batch
+```bash
 FAKEROOT=$(mktemp -d)
 git clone https://github.com/tigera/kmods-via-containers
 cd kmods-via-containers
@@ -129,7 +129,7 @@ cd ..
 
 1.  Get RHEL Entitlement data from your own RHEL8 system from a host in your cluster.
 
-    ```batch
+    ```bash
     tar -czf subs.tar.gz /etc/pki/entitlement/ /etc/rhsm/ /etc/yum.repos.d/redhat.repo
     ```
 
@@ -137,19 +137,19 @@ cd ..
 
 1.  Copy the `subs.tar.gz` file to your workspace and then extract the contents using the following command.
 
-    ```batch
+    ```bash
     tar -x -C ${FAKEROOT}/root -f subs.tar.gz
     ```
 
 1.  Transpile your machine config using [CoreOS Butane](https://coreos.github.io/butane/getting-started/).
 
-    ```batch
+    ```bash
     cd kvc-wireguard-kmod
     make ignition FAKEROOT=${FAKEROOT} > mc-wg.yaml
     ```
 
 1.  With the KUBECONFIG set for your cluster, run the following command to apply the MachineConfig which will install WireGuard across your cluster.
-    ```batch
+    ```bash
     oc create -f mc-wg.yaml
     ```
 
@@ -160,19 +160,19 @@ cd ..
 
 Enable IPv4 WireGuard encryption across all the nodes using the following command.
 
-```batch
+```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
 ```
 
 Enable IPv6 WireGuard encryption across all the nodes using the following command.
 
-```batch
+```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabledV6":true}}'
 ```
 
 To enable both IPv4 and IPv6 WireGuard encryption across all the nodes, use the following command.
 
-```batch
+```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true,"wireguardEnabledV6":true}}'
 ```
 
@@ -190,7 +190,7 @@ We recommend that you review and modify the MTU used by {{prodname}} networking 
 
 To verify that the nodes are configured for WireGuard encryption, check the node status set by Felix using `kubectl`. For example:
 
-```batch
+```bash
 kubectl get node <NODE-NAME> -o yaml
 ...
 kind: Node
@@ -222,7 +222,7 @@ When viewing WireGuard statistics, you might wonder why the charts in the Manage
 
 To disable WireGuard on a specific node with WireGuard installed, modify the node-specific Felix configuration. e.g., to turn off encryption for pod traffic on node `my-node`, use the following command. This command disables WireGuard for both IPv4 and IPv6, modify it accordingly if disabling only either IP version:
 
-```batch
+```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: projectcalico.org/v3
 kind: FelixConfiguration
@@ -240,7 +240,7 @@ With the above command, Calico will not encrypt any of the pod traffic to or fro
 
 To enable encryption for IPv4 and IPv6 pod traffic on node `my-node` again, patch this node's FelixConfiguration (modify accordingly if only dealing with IPv4 or IPv6):
 
-```batch
+```bash
 kubectl patch felixconfiguration node.my-node --type='merge' -p '{"spec":{"wireguardEnabled":true,"wireguardEnabledV6":true}}'
 ```
 
@@ -248,7 +248,7 @@ kubectl patch felixconfiguration node.my-node --type='merge' -p '{"spec":{"wireg
 
 To disable WireGuard on all nodes modify the default Felix configuration. For example:
 
-```batch
+```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":false,"wireguardEnabledV6":false}}'
 ```
 
