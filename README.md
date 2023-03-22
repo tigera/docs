@@ -40,6 +40,3 @@ This command generates static content into the `build` directory and can be serv
 service. This is a full build which is exactly what Netlify runs to build the site, therefore, you will get more
 warning and error output. If you are trying to reproduce an error on Netlify, this is a great place to start.
 
-## Other Resources
-
-Netlify site: <https://app.netlify.com/sites/calico-tigera-docs/overview>
