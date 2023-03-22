@@ -3,13 +3,13 @@
 ### Improvements
 
 - Added tolerations to CSI Driver so it can be scheduled on all nodes.
-- Adding graceful shutdown to Typha improves the "happy case" for upgrade, ensuring that shutting down a Typha instance doesn't cause a thundering herd of `calico-node` subcomponent restarts. Instead, clients are disconnected slowly over a configured interval, thus limiting the rate of `calico-node` subcomponent restarts.
-- Combining graceful restart with new configuration exposed by the operator allows for the Typha deployment's `maxSurge`
+- Added graceful shutdown to Typha improves the "happy case" for upgrade, ensuring that shutting down a Typha instance doesn't cause a thundering herd of `calico-node` subcomponent restarts. Instead, clients are disconnected slowly over a configured interval, thus limiting the rate of `calico-node` subcomponent restarts.
+  - Combining graceful restart with new configuration exposed by the operator allows for the Typha deployment's `maxSurge`
   and `maxUnavailable` settings to be tuned. Setting `maxSurge: "100%"` and `maxUnavailable: 0` means that all up-level
   Typha instances will start and reach `Ready` before their back-level counterpart is then (gracefully) shut down.
   (For back-compatibility, the default values of `maxSurge` and `maxUnavailable` have been kept as-is in this release
   but the upgrade guide explains how to set these during an upgrade.)
-- To mitigate the "unhappy case" where many `calico-node` instances restart at once (for any reason), Typha's handling
+  - To mitigate the "unhappy case" where many `calico-node` instances restart at once (for any reason), Typha's handling
   of new connections has been improved to share much of the work between different clients, this dramatically improves
   performance when dealing with a "thundering herd".
 - Updated TLS configurations to use only TLS1.2.
@@ -21,7 +21,7 @@
 - Fixed an issue where publicly-signed Splunk certificates were not trusted.
 - Fixed a bug that caused policy preview to crash due to a malformed query.
 - Fixed a bug that caused Anomaly Detection jobs to fail if incomplete documents are present in our log storage.
-- Fixed performance issues with listing/resyncing routes when there are many interfaces/routes on the system.  Use kernel-side filtering of routes for a dramatic speed improvement. (Auto-enabled on kernel v4.10+.)
+- Fixed performance issues with listing/resyncing routes when there are many interfaces/routes on the system. Use kernel-side filtering of routes for a dramatic speed improvement. (Auto-enabled on kernel v4.10+.)
 - Fixed an issue where the operator made many meaningless policy updates, resulting in bloated policy details in the UI.
 - Added a missing policy between Guardian and the Apiserver that could cause issues in multi-cluster installations if a global default deny policy is active.
 - Fixed a bug causing Calico Node to restart during upgrades when upgrading from v3.10 and before, due to the  
@@ -30,9 +30,9 @@
 - Fixed a bug that prevented [controlPlaneNodeSelector](../../reference/installation/api.mdx#operator.tigera.io/v1.InstallationSpec)
   from being propagated to Prometheus and Alertmanager.
 - Fixed a bug that caused Intrusion Detection Controller to restart whenever a managed cluster would disconnect.
-- CVE updates, most notably: updating our scratch-based images to UBI 8.7, golang versions 1.18.9 or 1.19.5, ECK 2.5.0, Elasticsearch 7.17.7, Kibana 7.17.7.
+- CVE updates, most notably: updating our scratch-based images to UBI 8.7, golang versions 1.18.9 or 1.19.5, ECK 2.6.1, Elasticsearch 7.17.9, Kibana 7.17.9.
 
 ### Known issues
 
 - L7 log collection fails to deploy on CIS-hardened clusters. As a result, some cards in the manager UI dashboard will not display any metrics.
-- Upgrading {{prodname}} v3.15.1 on Rancher/RKE from {{prodname}} v3.13.0 currently requires manually terminating the calico-node container for upgrade to proceed.
+- Upgrading {{prodname}} v3.15.2 on Rancher/RKE from {{prodname}} v3.13.0 currently requires manually terminating the calico-node container for upgrade to proceed.
