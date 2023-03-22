@@ -32,10 +32,15 @@ perl -0777 -pi -e "${regex}" "./${product}_versioned_docs/version-${toVersion}/v
 echo "Updating ./docusaurus.config.js from 'latest'"
 regex="s/${fromRegex}:\s*{(.*?)path:[ \t]*'latest'/${fromVersion}: {\${1}path: '${fromVersion}'/s"
 perl -0777 -pi -e "${regex}" "./docusaurus.config.js"
+regex="s/${fromRegex}:\s*{(.*?)label:[ \t]*'${fromRegex} \(latest\)'/${fromVersion}: {\${1}label: '${fromVersion}'/s"
+perl -0777 -pi -e "${regex}" "./docusaurus.config.js"
 
 echo "Updating ./docusaurus.config.js to 'latest'"
 regex="s/${toRegex}:\s*{(.*?)path:[ \t]*'${toRegex}'/${toVersion}: {\${1}path: 'latest'/s"
 perl -0777 -pi -e "${regex}" "./docusaurus.config.js"
+regex="s/${toRegex}:\s*{(.*?)label:[ \t]*'${toRegex}.*?'/${toVersion}: {\${1}label: '${toVersion} (latest)'/s"
+perl -0777 -pi -e "${regex}" "./docusaurus.config.js"
 
 echo "Done: version 'latest' for product '${product}' switched from ${fromVersion} to ${toVersion}"
 echo "Please use git diff to evaluate the modifications!"
+

@@ -49,6 +49,7 @@ test("Crawl the docs and test links", async () => {
     `https://installer.calicocloud.io/manifests/v3.15.1-8/manifests`,
     `https://d881b853ae312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com`,
     `https://www.googletagmanager.com`,
+    'https://csrc.nist.gov/publications/detail/fips/140/2/final',
     /^https?:\/\/csrc\.nist\.gov\/projects\/cryptographic-module-validation-program\/certificate\/\d+$/,
     /^https:\/\/installer\.calicocloud\.io:[0-9]{3,4}$/,
     //temp
