@@ -373,14 +373,19 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
-          3.16: {
-            label: '3.16 (early preview)',
-            path: '3.16',
+          3.17: {
+            label: '3.17',
+            path: '3.17',
             banner: 'unreleased',
           },
+          3.16: {
+            label: '3.16 (latest)',
+            path: '3.16',
+            banner: 'none',
+          },
           3.15: {
-            label: '3.15 (latest)',
-            path: 'latest',
+            label: '3.15',
+            path: '3.15',
             banner: 'none',
           },
           3.14: {
