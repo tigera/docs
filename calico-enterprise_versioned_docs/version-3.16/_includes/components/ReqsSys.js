@@ -3,6 +3,7 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
+import CodeBlock from '@theme/CodeBlock';
 
 import { orchestrators } from '@site/variables';
 import { prodname, baseUrl } from '../../variables';
@@ -28,12 +29,11 @@ function NodeRequirementsEnt(props) {
           </p>
           <ul>
             {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.HostProtection) && (
-              <>
-                <li>CentOS 8</li>
-                <li>Ubuntu 20.04 and 22.04</li>
-                <li>RHEL 7 and 8</li>
-                <li>Debian 10</li>
-              </>
+                <>
+                  <li>Ubuntu 20.04 and 22.04</li>
+                  <li>RHEL 8 and 9</li>
+                  <li>Debian 10</li>
+                </>
             )}
             {props.orch === orchestrators.OpenShift && (
               <>
@@ -46,6 +46,26 @@ function NodeRequirementsEnt(props) {
                 <li>CentOS 8</li>
               </>
             )}
+          </ul>
+        </li>
+        <li>
+          <p>
+            If your node is running RHEL 8 or RHEL 9, you must install a specialized policy package before you install {prodname}.
+            With this package, {prodname} can use SELinux contexts in a series of rules that allow it to interact with persistent and ephemeral data in nonstandard host system locations.
+          </p>
+          <ul>
+            <li>
+              <p>If your node has RHEL 8 installed, then run the following command:</p>
+              <CodeBlock language="bash">
+                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el8.noarch.rpm`}
+              </CodeBlock>
+            </li>
+            <li>
+              <p>If your node has RHEL 9 installed, then run the following command:</p>
+              <CodeBlock language="bash">
+                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el9.noarch.rpm`}
+              </CodeBlock>
+            </li>
           </ul>
         </li>
         <li>
