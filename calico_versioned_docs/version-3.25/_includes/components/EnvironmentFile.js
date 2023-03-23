@@ -178,7 +178,7 @@ export default function EnvironmentFile(props) {
           <p>
             Sample <code>EnvironmentFile</code> - save to <code>/etc/calico/calico.env</code>
           </p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {`${datastore_type}=etcdv3
 ${etcd_endpoints}=https://calico-datastore.example.com:2379
 ${etcd_ca_file}="/pki/ca.pem"

@@ -36,12 +36,12 @@ export default function HostEndpointsUpgrade(props) {
         an allow-all policy that selects existing all-interfaces host endpoints. First, we&#39;ll add a label to the
         existing host endpoints. Get a list of the nodes that have an all-interfaces host endpoint:
       </p>
-      <CodeBlock language='batch'>calicoctl get hep -owide | grep | awk '"{'print $1'}"'</CodeBlock>
+      <CodeBlock language='bash'>calicoctl get hep -owide | grep | awk '"{'print $1'}"'</CodeBlock>
       <p>
         With the names of the all-interfaces host endpoints, we can label each host endpoint with a new label (for
         example, <strong>host-endpoint-upgrade: &quot;&quot;</strong>):
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         calicoctl get hep -owide | grep '*' | awk '"{'print $1'}"' \
         <br />
         {props.orch === 'OpenShift'
@@ -52,7 +52,7 @@ export default function HostEndpointsUpgrade(props) {
         Now that the nodes with an all-interfaces host endpoint are labeled with <strong>host-endpoint-upgrade</strong>,
         we can create a policy to log and allow all traffic going into or out of the host endpoints temporarily:
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`cat > allow-all-upgrade.yaml <<EOF
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
@@ -72,7 +72,7 @@ spec:
 EOF`}
       </CodeBlock>
       <p>Apply the policy:</p>
-      <CodeBlock language='batch'>calicoctl apply -f - {'<'} allow-all-upgrade.yaml</CodeBlock>
+      <CodeBlock language='bash'>calicoctl apply -f - {'<'} allow-all-upgrade.yaml</CodeBlock>
       <p>
         After applying this policy, all-interfaces host endpoints will log and allow all traffic through them. This
         policy will allow all traffic not accounted for by other policies. After upgrading, please review syslog logs

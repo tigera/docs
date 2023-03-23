@@ -8,7 +8,7 @@ export default function InstallOpenShiftManifests() {
   return (
     <>
       <p>Download the {prodname} manifests for OpenShift and add them to the generated manifests directory:</p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         curl https://docs.tigera.io/v3.14/manifests/ocp/crds/01-crd-apiserver.yaml -o manifests/01-crd-apiserver.yaml{'\n'}
         curl https://docs.tigera.io/v3.14/manifests/ocp/crds/01-crd-authentication.yaml -o manifests/01-crd-authentication.yaml{'\n'}
         curl https://docs.tigera.io/v3.14/manifests/ocp/crds/01-crd-applicationlayer.yaml -o manifests/01-crd-applicationlayer.yaml{'\n'}

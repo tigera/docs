@@ -31,7 +31,7 @@ export default function GettingStartedInstallOnClustersKubernetesHelm() {
             example:
           </p>
         </li>
-        <CodeBlock language='batch'>{`echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml`}</CodeBlock>
+        <CodeBlock language='bash'>{`echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml`}</CodeBlock>
         <p>
           For Azure AKS cluster with no Kubernetes CNI pre-installed, create <code>values.yaml</code> with the following
           command:
@@ -89,15 +89,15 @@ EOF`}
             Monitor progress, wait until <code>apiserver</code> shows a status of <code>Available</code>, then proceed
             to the next step.
           </p>
-          <CodeBlock language='batch'>watch kubectl get tigerastatus/apiserver</CodeBlock>
+          <CodeBlock language='bash'>watch kubectl get tigerastatus/apiserver</CodeBlock>
         </li>
         <li>
           <p>Install your {prodname} license:</p>
-          <CodeBlock language='batch'>kubectl apply -f &lt;/path/to/license.yaml&gt;</CodeBlock>
+          <CodeBlock language='bash'>kubectl apply -f &lt;/path/to/license.yaml&gt;</CodeBlock>
         </li>
         <li>
           <p>You can now monitor progress with the following command:</p>
-          <CodeBlock language='batch'>watch kubectl get tigerastatus</CodeBlock>
+          <CodeBlock language='bash'>watch kubectl get tigerastatus</CodeBlock>
         </li>
         <p>Congratulations! You have now installed {prodname} using the Helm 3 chart.</p>
       </ol>
@@ -111,10 +111,10 @@ EOF`}
           <li>
             <p>Install the Google cloud storage helm repo plugin:</p>
           </li>
-          <CodeBlock language='batch'>helm plugin install https://github.com/viglesiasce/helm-gcs.git</CodeBlock>
+          <CodeBlock language='bash'>helm plugin install https://github.com/viglesiasce/helm-gcs.git</CodeBlock>
           <li>
             <p>Add the Calico helm repo:</p>
-            <CodeBlock language='batch'>helm repo add tigera gs://tigera-helm-charts</CodeBlock>
+            <CodeBlock language='bash'>helm repo add tigera gs://tigera-helm-charts</CodeBlock>
           </li>
         </ol>
       );
@@ -125,7 +125,7 @@ EOF`}
         <ol>
           <li>
             <p>Get the Helm chart:</p>
-            <CodeBlock language='batch'>
+            <CodeBlock language='bash'>
               {`curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-${chart_version_name}.tgz`}
             </CodeBlock>
           </li>
@@ -136,17 +136,17 @@ EOF`}
 
   function renderCond2() {
     if (version === 'master') {
-      return <CodeBlock language='batch'>helm show values tigera/tigera-operator --version v0.0</CodeBlock>;
+      return <CodeBlock language='bash'>helm show values tigera/tigera-operator --version v0.0</CodeBlock>;
     }
 
-    return <CodeBlock language='batch'>{`helm show values ./tigera-operator-${chart_version_name}.tgz`}</CodeBlock>;
+    return <CodeBlock language='bash'>{`helm show values ./tigera-operator-${chart_version_name}.tgz`}</CodeBlock>;
   }
 
   function renderCond3() {
     if (version === 'master') {
       return (
         <>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {`helm install calico-enterprise tigera/tigera-operator --version v0.0 \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}
@@ -154,7 +154,7 @@ EOF`}
           <p>
             or if you created a <code>values.yaml</code> above:
           </p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {`helm install calico-enterprise tigera/tigera-operator --version v0.0 -f values.yaml \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}
@@ -165,7 +165,7 @@ EOF`}
 
     return (
       <>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {`helm install calico-enterprise tigera-operator-${chart_version_name}.tgz \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}
@@ -173,7 +173,7 @@ EOF`}
         <p>
           or if you created a <code>values.yaml</code> above:
         </p>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {`helm install calico-enterprise tigera-operator-${chart_version_name}.tgz -f values.yaml \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}

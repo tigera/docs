@@ -45,7 +45,7 @@ export default function EnvironmentFile(props) {
       <p>
         Sample <code>EnvironmentFile</code> - save to <code>/kubernetes/calico/calico.env</code>
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`DATASTORE_TYPE=kubernetes
 CALICO_NODENAME=""
 NO_DEFAULT_POOLS="true"

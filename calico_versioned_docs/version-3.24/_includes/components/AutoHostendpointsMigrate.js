@@ -30,7 +30,7 @@ export default function AutoHostendpointsMigrate(props) {
             existing all-interface host endpoint for node <strong>node1</strong> has the label{' '}
             <strong>environment: dev</strong>, then you must add that same label to its node:
           </p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {props.orch === 'OpenShift'
               ? 'oc label node node1 environment=dev'
               : 'kubectl label node node1 environment=dev'}
@@ -45,7 +45,7 @@ export default function AutoHostendpointsMigrate(props) {
             . Note that automatic host endpoints are created with a profile attached that allows all traffic in the
             absence of network policy.
           </p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             calicoctl patch kubecontrollersconfiguration default --patch =
             {'{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled"}}}}}'}
           </CodeBlock>
@@ -57,7 +57,7 @@ export default function AutoHostendpointsMigrate(props) {
             <strong>projectcalico.org/created-by: calico-kube-controllers</strong>. Secondly, automatic host
             endpoints&#39; name have the suffix <strong>-auto-hep</strong>.
           </p>
-          <CodeBlock language='batch'>calicoctl delete hostendpoint &lt;old_hostendpoint_name&gt;</CodeBlock>
+          <CodeBlock language='bash'>calicoctl delete hostendpoint &lt;old_hostendpoint_name&gt;</CodeBlock>
         </li>
       </ol>
     </>

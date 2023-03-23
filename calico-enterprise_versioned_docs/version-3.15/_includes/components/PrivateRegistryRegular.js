@@ -26,12 +26,12 @@ export default function PrivateRegistryRegular() {
         <li>
           <p>Use the following commands to pull the required {prodname} images.</p>
         </li>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {`docker pull ${tigeraOperator.registry}/${tigeraOperator.image}:${tigeraOperator.version}\n`}
           {componentsWithImage.filter(filters.isNotWindows).map(renderPullCommand)}
         </CodeBlock>
         <p>For hybrid Linux + Windows clusters, pull the following Windows images.</p>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {componentsWithImage.filter(filters.isWindows).map(renderPullCommand)}
         </CodeBlock>
 
@@ -39,7 +39,7 @@ export default function PrivateRegistryRegular() {
           <p>
             Retag the images with the name of your private registry <code>$PRIVATE_REGISTRY</code>.
           </p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {`docker tag ${tigeraOperator.registry}/${tigeraOperator.image}:${tigeraOperator.version} $PRIVATE_REGISTRY/${tigeraOperator.image}:${tigeraOperator.version}\n`}
             {componentsWithImage.filter(filters.isNotWindows).map((component) => {
               const registry = mapComponentToRegistry(component);
@@ -53,7 +53,7 @@ export default function PrivateRegistryRegular() {
             For hybrid Linux + Windows clusters, retag the following Windows images with the name of your private
             registry.
           </p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {componentsWithImage.filter(filters.isWindows).map((component) => {
               const registry = mapComponentToRegistry(component);
               const imageName = component.image.split('/').pop();
@@ -67,14 +67,14 @@ export default function PrivateRegistryRegular() {
 
         <li>
           <p>Push the images to your private registry.</p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {`docker push $PRIVATE_REGISTRY/${tigeraOperator.image}:${tigeraOperator.version}\n`}
             {componentsWithImage.filter(filters.isNotWindows).map((component) => {
               return <>{`docker push $PRIVATE_REGISTRY/${component.image}:${component.version}\n`}</>;
             })}
           </CodeBlock>
           <p>For hybrid Linux + Windows clusters, push the following Windows images to your private registry.</p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {componentsWithImage.filter(filters.isWindows).map((component) => {
               const imageName = component.image.split('/').pop();
 
@@ -100,7 +100,7 @@ export default function PrivateRegistryRegular() {
         <code>PRIVATE_REGISTRY_PULL_SECRET</code> to the secret name. Then add the image pull secret to the operator
         deployment spec:
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`sed -ie "/serviceAccountName: tigera-operator/a \      imagePullSecrets:\\n\      - name: $PRIVATE_REGISTRY_PULL_SECRET"  tigera-operator.yaml`}
       </CodeBlock>
       {/* The second 'sed' should be removed once operator launches Prometheus & Alertmanager */}
@@ -108,7 +108,7 @@ export default function PrivateRegistryRegular() {
         If you are installing Prometheus operator as part of {prodname}, then before applying{' '}
         <code>tigera-prometheus-operator.yaml</code>, modify registry references to use your custom registry:
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`sed -ie "s?quay.io?$PRIVATE_REGISTRY?g" tigera-prometheus-operator.yaml
 sed -ie "/serviceAccountName: calico-prometheus-operator/a \      imagePullSecrets:\\n\      - name: $PRIVATE_REGISTRY_PULL_SECRET"  tigera-prometheus-operator.yaml`}
       </CodeBlock>
@@ -116,7 +116,7 @@ sed -ie "/serviceAccountName: calico-prometheus-operator/a \      imagePullSecre
       <p>
         Before applying <code>custom-resources.yaml</code>, modify registry references to use your custom registry:
       </p>
-      <CodeBlock language='batch'>sed -ie "s?quay.io?$PRIVATE_REGISTRY?g" custom-resources.yaml</CodeBlock>
+      <CodeBlock language='bash'>sed -ie "s?quay.io?$PRIVATE_REGISTRY?g" custom-resources.yaml</CodeBlock>
       {/* This step should be removed once operator launches Prometheus & Alertmanager */}
 
       <Heading
