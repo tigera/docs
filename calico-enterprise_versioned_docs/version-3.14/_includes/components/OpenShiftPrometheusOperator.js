@@ -17,7 +17,7 @@ export default function OpenShiftPrometheusOperator(props) {
         Create the pull secret in the <code>tigera-prometheus</code> namespace and then patch the Prometheus operator
         deployment. Use the image pull secret provided to you by Tigera support representative.
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`oc create secret generic tigera-pull-secret \\
     --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \\
     --from-file=.dockerconfigjson=<path/to/pull/secret>

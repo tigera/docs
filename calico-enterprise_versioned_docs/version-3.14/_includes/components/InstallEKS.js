@@ -113,7 +113,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
                 Download the Tigera custom resources. For more information on configuration options available in this
                 manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
               </p>
-              <CodeBlock language='batch'>curl -O -L {filesUrl}/manifests/eks/custom-resources.yaml</CodeBlock>
+              <CodeBlock language='bash'>curl -O -L {filesUrl}/manifests/eks/custom-resources.yaml</CodeBlock>
               <p>
                 Remove the <code>Manager</code> custom resource from the manifest file.
               </p>
@@ -141,11 +141,11 @@ spec:
     count: 1`}
               </CodeBlock>
               <p>Now apply the modified manifest.</p>
-              <CodeBlock language='batch'>kubectl create -f ./custom-resources.yaml</CodeBlock>
+              <CodeBlock language='bash'>kubectl create -f ./custom-resources.yaml</CodeBlock>
             </li>
             <li>
               <p>Monitor progress with the following command:</p>
-              <CodeBlock language='batch'>watch kubectl get tigerastatus</CodeBlock>
+              <CodeBlock language='bash'>watch kubectl get tigerastatus</CodeBlock>
               <p>
                 Wait until the <code>apiserver</code> shows a status of <code>Available</code>, then proceed to the next
                 section.
@@ -213,14 +213,14 @@ spec:
       <ol>
         <li>
           <p>First, create an Amazon EKS cluster without any nodes.</p>
-          <CodeBlock language='batch'>eksctl create cluster --name my-calico-cluster --without-nodegroup</CodeBlock>
+          <CodeBlock language='bash'>eksctl create cluster --name my-calico-cluster --without-nodegroup</CodeBlock>
         </li>
         <li>
           <p>
             Since this cluster will use {prodname} for networking, you must delete the <code>aws-node</code> daemon set
             to disable AWS VPC networking for pods.
           </p>
-          <CodeBlock language='batch'>kubectl delete daemonset -n kube-system aws-node</CodeBlock>
+          <CodeBlock language='bash'>kubectl delete daemonset -n kube-system aws-node</CodeBlock>
         </li>
       </ol>
       <Heading
@@ -301,7 +301,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
                 Download the Tigera custom resources. For more information on configuration options available in this
                 manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
               </p>
-              <CodeBlock language='batch'>
+              <CodeBlock language='bash'>
                 curl -O -L {filesUrl}/manifests/eks/custom-resources-calico-cni.yaml
               </CodeBlock>
               <p>
@@ -331,17 +331,17 @@ spec:
     count: 1`}
               </CodeBlock>
               <p>Now apply the modified manifest.</p>
-              <CodeBlock language='batch'>{`kubectl create -f ./custom-resources-calico-cni.yaml`}</CodeBlock>
+              <CodeBlock language='bash'>{`kubectl create -f ./custom-resources-calico-cni.yaml`}</CodeBlock>
             </li>
             <li>
               <p>Monitor progress with the following command:</p>
-              <CodeBlock language='batch'>watch kubectl get tigerastatus</CodeBlock>
+              <CodeBlock language='bash'>watch kubectl get tigerastatus</CodeBlock>
             </li>
           </>
         )}
         <li>
           <p>Finally, add nodes to the cluster.</p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {`eksctl create nodegroup --cluster my-calico-cluster --node-type t3.xlarge --node-ami auto --max-pods-per-node 100`}
           </CodeBlock>
           <blockquote>
@@ -418,7 +418,7 @@ spec:
                 .
               </p>
               <p>Apply the following service manifest.</p>
-              <CodeBlock language='batch'>
+              <CodeBlock language='bash'>
                 {`kubectl create -f - <<EOF
 apiVersion: v1
 kind: Service
@@ -442,7 +442,7 @@ EOF`}
                 Export the service port number, and the public IP or host of the management cluster. (Ex.
                 "example.com:1234" or "10.0.0.10:1234".)
               </p>
-              <CodeBlock language='batch'>{`export MANAGEMENT_CLUSTER_ADDR=<your-management-cluster-addr>`}</CodeBlock>
+              <CodeBlock language='bash'>{`export MANAGEMENT_CLUSTER_ADDR=<your-management-cluster-addr>`}</CodeBlock>
             </li>
             <li>
               <p>
@@ -452,7 +452,7 @@ EOF`}
                 </Link>{' '}
                 CR.
               </p>
-              <CodeBlock language='batch'>
+              <CodeBlock language='bash'>
                 {`kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: ManagementCluster
@@ -480,14 +480,14 @@ EOF`}
                 Create an admin user called, <code>mcm-user</code> in the default namespace with full permissions, by
                 applying the following commands.
               </p>
-              <CodeBlock language='batch'>
+              <CodeBlock language='bash'>
                 {`kubectl create sa mcm-user
 kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-user --clusterrole=tigera-network-admin`}
               </CodeBlock>
             </li>
             <li>
               <p>Get the login token for your new admin user, and log in to {prodname} Manager.</p>
-              <CodeBlock language='batch'>
+              <CodeBlock language='bash'>
                 {`kubectl get secret $(kubectl get serviceaccount mcm-user -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo`}
               </CodeBlock>
               <p>
@@ -520,7 +520,7 @@ kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-us
             Let's define admin-level permissions for the service account (<code>mcm-user</code>) we created to log in to
             the Manager UI. Run the following command against your managed cluster.
           </p>
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {`kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-user --clusterrole=tigera-network-admin`}
           </CodeBlock>
         </>

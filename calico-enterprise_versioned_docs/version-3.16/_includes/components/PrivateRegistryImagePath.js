@@ -22,12 +22,12 @@ export default function PrivateRegistryImagePath() {
         <li>
           <p>Use the following commands to pull the required {prodname} images.</p>
         </li>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {`docker pull ${tigeraOperator.registry}/${tigeraOperator.image}:${tigeraOperator.version}\n`}
           {componentsWithImage.filter(filters.isNotWindows).map(renderPullCommand)}
         </CodeBlock>
         <p>For hybrid Linux + Windows clusters, pull the following Windows images.</p>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {componentsWithImage.filter(filters.isWindows).map(renderPullCommand)}
         </CodeBlock>
 
@@ -37,7 +37,7 @@ export default function PrivateRegistryImagePath() {
             <code>$IMAGE_PATH</code>.
           </p>
         </li>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {`docker tag ${tigeraOperator.registry}/${tigeraOperator.image}:${
             tigeraOperator.version
           } $PRIVATE_REGISTRY/$IMAGE_PATH/${mapImageToImageName(tigeraOperator.image)}:${tigeraOperator.version}\n`}
@@ -54,7 +54,7 @@ export default function PrivateRegistryImagePath() {
           For hybrid Linux + Windows clusters, retag the following Windows images with the name of your private
           registry.
         </p>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {componentsWithImage.filter(filters.isWindows).map((component) => {
             const registry = mapComponentToRegistry(component);
             const imageName = mapImageToImageName(component.image);
@@ -68,7 +68,7 @@ export default function PrivateRegistryImagePath() {
         <li>
           <p>Push the images to your private registry.</p>
         </li>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {`docker push $PRIVATE_REGISTRY/$IMAGE_PATH/${mapImageToImageName(tigeraOperator.image)}:${
             tigeraOperator.version
           }`}
@@ -79,7 +79,7 @@ export default function PrivateRegistryImagePath() {
           })}
         </CodeBlock>
         <p>For hybrid Linux + Windows clusters, push the following Windows images to your private registry.</p>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {componentsWithImage.filter(filters.isWindows).map((component) => {
             const imageName = mapImageToImageName(component.image);
 
@@ -95,7 +95,7 @@ export default function PrivateRegistryImagePath() {
       <p>
         Before applying <code>tigera-operator.yaml</code>, modify registry references to use your custom registry:
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`sed -ie "s?quay.io.*/?$PRIVATE_REGISTRY/$IMAGE_PATH/?" tigera-operator.yaml`}
       </CodeBlock>
 
@@ -106,14 +106,14 @@ export default function PrivateRegistryImagePath() {
         <code>PRIVATE_REGISTRY_PULL_SECRET</code> to the secret name. Then add the image pull secret to the operator
         deployment spec:
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`sed -ie "/serviceAccountName: tigera-operator/a \      imagePullSecrets:\\n\      - name: $PRIVATE_REGISTRY_PULL_SECRET"  tigera-operator.yaml`}
       </CodeBlock>
       <p>
         If you are installing Prometheus operator as part of {prodname}, then before applying{' '}
         <code>tigera-prometheus-operator.yaml</code>, modify registry references to use your custom registry:
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`sed -ie "s?quay.io.*/?$PRIVATE_REGISTRY/$IMAGE_PATH/?" tigera-prometheus-operator.yaml
 sed -ie "/serviceAccountName: calico-prometheus-operator/a \      imagePullSecrets:\\n\      - name: $PRIVATE_REGISTRY_PULL_SECRET"  tigera-prometheus-operator.yaml`}
       </CodeBlock>
@@ -123,14 +123,14 @@ sed -ie "/serviceAccountName: calico-prometheus-operator/a \      imagePullSecre
       <p>
         Before applying <code>custom-resources.yaml</code>, modify registry references to use your custom registry:
       </p>
-      <CodeBlock language='batch'>{`sed -ie "s?quay.io.*/?$PRIVATE_REGISTRY/$IMAGE_PATH/?" custom-resources.yaml`}</CodeBlock>
+      <CodeBlock language='bash'>{`sed -ie "s?quay.io.*/?$PRIVATE_REGISTRY/$IMAGE_PATH/?" custom-resources.yaml`}</CodeBlock>
 
       {/* The second 'sed' should be removed once operator launches Prometheus & Alertmanager */}
 
       <p>
         For <b>Openshift</b>, after downloading all manifests modify the following to use your custom registry:
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`sed -ie "s?quay.io.*/?$PRIVATE_REGISTRY/$IMAGE_PATH/?" manifests/02-tigera-operator.yaml`}
       </CodeBlock>
 

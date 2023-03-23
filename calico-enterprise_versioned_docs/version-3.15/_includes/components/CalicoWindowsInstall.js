@@ -14,7 +14,7 @@ function CalicoWindowsInstallFirstStep(props) {
           <li>If you installed {prodname} using the manifest, BGP is already disabled.</li>
           <li>If you installed {prodname} using the operator, run this command:</li>
           <br />
-          <CodeBlock language='batch'>
+          <CodeBlock language='bash'>
             {`kubectl patch installation default --type=merge -p '{"spec": {"calicoNetwork": {"bgp": "Disabled"}}}'`}
           </CodeBlock>
         </ul>
@@ -53,7 +53,7 @@ export default function CalicoWindowsInstall(props) {
       <CalicoWindowsInstallFirstStep {...props} />
       <li>
         <p>Download the {prodnameWindows} installation manifest.</p>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           {props.networkingType === 'vxlan'
             ? `curl ${filesUrl}/manifests/calico-windows-vxlan.yaml -o calico-windows.yaml`
             : `curl ${filesUrl}/manifests/calico-windows-bgp.yaml -o calico-windows.yaml`}
@@ -76,7 +76,7 @@ export default function CalicoWindowsInstall(props) {
               If you have a single API server with a static IP address, you can use its IP address and port. The IP can
               be found by running:
             </p>
-            <CodeBlock language='batch'>kubectl get endpoints kubernetes -o wide</CodeBlock>
+            <CodeBlock language='bash'>kubectl get endpoints kubernetes -o wide</CodeBlock>
             <p>The output should look like the following, with a single IP address and port under "ENDPOINTS":</p>
             <CodeBlock>
               {`NAME         ENDPOINTS             AGE
@@ -164,18 +164,18 @@ kubernetes   172.16.101.157:6443   40m`}
       </li>
       <li>
         <p>Apply the {prodnameWindows} installation manifest.</p>
-        <CodeBlock language='batch'>kubectl create -f calico-windows.yaml</CodeBlock>
+        <CodeBlock language='bash'>kubectl create -f calico-windows.yaml</CodeBlock>
       </li>
       <li>
         <p>Monitor the installation.</p>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c install
         </CodeBlock>
         <p>
           After the log <code>Calico for Windows installed</code> appears, installation is complete. Next, the{' '}
           {prodnameWindows} services are started in separate containers:
         </p>
-        <CodeBlock language='batch'>
+        <CodeBlock language='bash'>
           kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c node{'\n'}
           kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c felix{'\n'}
           {props.networkingType === 'windows-bgp'
@@ -194,7 +194,7 @@ kubernetes   172.16.101.157:6443   40m`}
         <ul>
           <li>
             <p>Download the kube-proxy manifest:</p>
-            <CodeBlock language='batch'>curl {filesUrl}/manifests/windows-kube-proxy.yaml -o windows-kube-proxy.yaml</CodeBlock>
+            <CodeBlock language='bash'>curl {filesUrl}/manifests/windows-kube-proxy.yaml -o windows-kube-proxy.yaml</CodeBlock>
           </li>
           <li>
             Edit the downloaded manifest
@@ -209,11 +209,11 @@ kubernetes   172.16.101.157:6443   40m`}
           </li>
           <li>
             <p>Apply the manifest</p>
-            <CodeBlock language='batch'>kubectl apply -f windows-kube-proxy.yaml</CodeBlock>
+            <CodeBlock language='bash'>kubectl apply -f windows-kube-proxy.yaml</CodeBlock>
           </li>
           <li>
             <p>Verify the kube-proxy-windows daemonset is running</p>
-            <CodeBlock language='batch'>kubectl describe ds -n kube-system kube-proxy-windows</CodeBlock>
+            <CodeBlock language='bash'>kubectl describe ds -n kube-system kube-proxy-windows</CodeBlock>
           </li>
         </ul>
       </li>

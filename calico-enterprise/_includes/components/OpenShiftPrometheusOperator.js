@@ -27,7 +27,7 @@ export default function OpenShiftPrometheusOperator(props) {
         Create the pull secret in the <code>tigera-prometheus</code> namespace and then patch the Prometheus operator
         deployment. Use the image pull secret provided to you by Tigera support representative.
       </p>
-      <CodeBlock language='batch'>
+      <CodeBlock language='bash'>
         {`${notOSCodeBlock}oc patch deployment -n tigera-prometheus calico-prometheus-operator \\
     -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'`}
       </CodeBlock>
