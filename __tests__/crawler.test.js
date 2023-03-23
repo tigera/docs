@@ -12,6 +12,7 @@ const linkChecker = require('../src/utils/linkChecker');
 
 test("Crawl the docs and test links", async () => {
   const PROD = 'https://docs.tigera.io'
+  const PROD_REGEX = /^https:\/\/docs\.tigera\.io/;
   const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
       .toLowerCase().replace(/\/$/, '');
   const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
@@ -48,6 +49,7 @@ test("Crawl the docs and test links", async () => {
     `https://installer.calicocloud.io/manifests/v3.15.1-8/manifests`,
     `https://d881b853ae312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com`,
     `https://www.googletagmanager.com`,
+    'https://csrc.nist.gov/publications/detail/fips/140/2/final',
     /^https?:\/\/csrc\.nist\.gov\/projects\/cryptographic-module-validation-program\/certificate\/\d+$/,
     /^https:\/\/installer\.calicocloud\.io:[0-9]{3,4}$/,
     //temp
@@ -114,7 +116,11 @@ test("Crawl the docs and test links", async () => {
         if (request.skipNavigation) return;
         const allText = decode($.html());
         const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
-        for (const url of urls){
+        for (let url of urls) {
+          if (isLocalHost) {
+            const testUrl = url.replace(PROD_REGEX, `${DOCS}`);
+            if (request.url === testUrl) url = testUrl;
+          }
           checkAndUseLinkChecker(request.url, url);
         }
         await enqueueLinks({
