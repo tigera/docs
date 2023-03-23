@@ -67,14 +67,14 @@ test("Crawl the docs and test links", async () => {
     'https://downloads.tigera.io/ee/master/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/next/multicluster/create-a-managed-cluster
     'https://downloads.tigera.io/ee/master/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/next/multicluster/create-a-managed-cluster
     'https://downloads.tigera.io/ee/v3.14.4/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.14/multicluster/create-a-managed-cluster
-    'https://downloads.tigera.io/ee/v3.15.1/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.15/multicluster/create-a-managed-cluster
     'https://downloads.tigera.io/ee/v3.15.1/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.15/multicluster/create-a-managed-cluster
-    'https://downloads.tigera.io/ee/v3.16.0/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.16/multicluster/create-a-managed-cluster
     'https://downloads.tigera.io/ee/v3.16.0/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.16/multicluster/create-a-managed-cluster
-    'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
-    'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#access-log-path', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
-    'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#log-format-upstream', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
-    'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/custom-template/', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
+    // 'https://downloads.tigera.io/ee/v3.15.1/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.15/multicluster/create-a-managed-cluster
+    // 'https://downloads.tigera.io/ee/v3.16.0/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.16/multicluster/create-a-managed-cluster
+    // 'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
+    // 'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#access-log-path', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
+    // 'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#log-format-upstream', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
+    // 'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/custom-template/', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
   ];
 
   const lc = linkChecker();

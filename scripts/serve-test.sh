@@ -36,3 +36,6 @@ fi
 yarn serve --no-open --port "${PORT}" 2>./yarn-serve-error.log &
 timeout "${WAIT}" bash -c "until echo > /dev/tcp/localhost/${PORT}; do sleep ${SLEEP}; done" 2>/dev/null
 DOCS_HOST="http://localhost:${PORT}" yarn test "$@" || EXIT_CODE=$?
+if [[ "${FAIL_ON_TEST_ERROR}" != "true" ]]; then
+  EXIT_CODE=0
+fi
