@@ -8,7 +8,7 @@ This website is built using [Docusaurus 2](https://docusaurus.io/), a modern sta
 
 ## Prerequisites
 
-* Node.js v16.14.2+. Use the outstanding [nvm tool](https://github.com/nvm-sh/nvm) to manage your node versions.
+* Node.js v16.14.2+ (v18.14.2 recommended). Use the outstanding [nvm tool](https://github.com/nvm-sh/nvm) to manage your node versions.
 * yarn `npm install -g yarn`
 * Fork and clone our docs repo <https://github.com/tigera/docs>
 
