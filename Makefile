@@ -31,6 +31,16 @@ init:
 serve: build
 	yarn serve
 
+.PHONY: full
+full: clean build
+
+.PHONY: all
+all: full
+	-$(MAKE) test
+
+.PHONY: prod
+prod: full test
+
 .PHONY: index
 index:
 	@echo -n "CONFIG=" >.env.local
