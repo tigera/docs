@@ -42,7 +42,7 @@ test("Crawl the docs and test links", async () => {
     `https://docs.tigera.io/calico/charts`,
     `https://github.com/projectcalico/calico/releases/download/master/ocp.tgz`,
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl`,
-    `https://projectcalico.docs.tigera.io/manifests/calico-vxlan.yaml`,
+    // `https://projectcalico.docs.tigera.io/manifests/calico-vxlan.yaml`,
     `https://github.com/projectcalico/calico/releases/download/master/install-calico-windows.ps1`,
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoq`,
     `https://en.wikipedia.org/wiki/Autonomous_System_(Internet)%3E`,
@@ -52,6 +52,7 @@ test("Crawl the docs and test links", async () => {
     'https://csrc.nist.gov/publications/detail/fips/140/2/final',
     /^https?:\/\/csrc\.nist\.gov\/projects\/cryptographic-module-validation-program\/certificate\/\d+$/,
     /^https:\/\/installer\.calicocloud\.io:[0-9]{3,4}$/,
+    'https://help.ubuntu.com/community/NetworkManager', //==>Origin: http://localhost:4242/calico-enterprise/3.14/operations/troubleshoot/troubleshooting
     //temp
     'https://stedolan.github.io/jq/',
     `http://kubernetes.io/docs/user-guide/secrets/`,
