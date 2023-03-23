@@ -195,7 +195,7 @@ spec:
             Download the Tigera custom resources. For more information on configuration options available in this
             manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
           </p>
-          <CodeBlock language='bash'>curl -O -L {filesUrl}/manifests/tigera-enterprise-resources.yaml</CodeBlock>
+          <CodeBlock language='bash'>curl -O -L {filesUrl}/manifests/ocp/tigera-enterprise-resources.yaml</CodeBlock>
           <p>
             Remove the <code>Manager</code> custom resource from the manifest file.
           </p>

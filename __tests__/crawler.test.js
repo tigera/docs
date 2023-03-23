@@ -42,7 +42,6 @@ test("Crawl the docs and test links", async () => {
     `https://docs.tigera.io/calico/charts`,
     `https://github.com/projectcalico/calico/releases/download/master/ocp.tgz`,
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl`,
-    // `https://projectcalico.docs.tigera.io/manifests/calico-vxlan.yaml`,
     `https://github.com/projectcalico/calico/releases/download/master/install-calico-windows.ps1`,
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoq`,
     `https://en.wikipedia.org/wiki/Autonomous_System_(Internet)%3E`,
@@ -65,17 +64,6 @@ test("Crawl the docs and test links", async () => {
     'http://dpdk.org/git/dpdk-kmods', //==>Origin: https://raw.githubusercontent.com/projectcalico/vpp-dataplane/master/scripts/init_eks.sh
     'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-darwin-amd64', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
     'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-windows-amd64.exe', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
-    'https://downloads.tigera.io/ee/master/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/next/multicluster/create-a-managed-cluster
-    'https://downloads.tigera.io/ee/master/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/next/multicluster/create-a-managed-cluster
-    'https://downloads.tigera.io/ee/v3.14.4/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.14/multicluster/create-a-managed-cluster
-    'https://downloads.tigera.io/ee/v3.15.1/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.15/multicluster/create-a-managed-cluster
-    'https://downloads.tigera.io/ee/v3.16.0/manifests/tigera-enterprise-resources.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.16/multicluster/create-a-managed-cluster
-    // 'https://downloads.tigera.io/ee/v3.15.1/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.15/multicluster/create-a-managed-cluster
-    // 'https://downloads.tigera.io/ee/v3.16.0/manifests/ocp/tigera-policies-managed.yaml', //==>Origin: http://localhost:4242/calico-enterprise/3.16/multicluster/create-a-managed-cluster
-    // 'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
-    // 'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#access-log-path', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
-    // 'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#log-format-upstream', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
-    // 'https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/custom-template/', //==>Origin: http://localhost:4242/calico-cloud/threat/suspicious-external-ips
   ];
 
   const lc = linkChecker();
