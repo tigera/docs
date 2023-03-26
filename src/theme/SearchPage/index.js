@@ -7,7 +7,8 @@ import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
 import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
 import { HtmlClassNameProvider, usePluralForm, isRegexpStringMatch, useEvent } from '@docusaurus/theme-common';
-import { useTitleFormatter, useSearchPage } from '@docusaurus/theme-common/internal';
+import { useTitleFormatter } from '@docusaurus/theme-common/internal';
+import { useSearchQueryString } from '@docusaurus/theme-common';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useAllDocsData } from '@docusaurus/plugin-content-docs/client';
 import Translate, { translate } from '@docusaurus/Translate';
@@ -93,7 +94,7 @@ function SearchPageContent() {
   } = themeConfig;
   const documentsFoundPlural = useDocumentsFoundPlural();
   const docsSearchVersionsHelpers = useDocsSearchVersionsHelpers();
-  const { searchQuery, setSearchQuery } = useSearchPage();
+  const [ searchQuery, setSearchQuery ] = useSearchQueryString();
   const [productId, setProductId] = useState();
   const [version, setVersion] = useState();
   useEffect(() => {
