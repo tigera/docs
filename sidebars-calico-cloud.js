@@ -172,39 +172,36 @@ module.exports = {
               ],
             },
             {
-              type: 'category',
-              label: 'Fortinet firewall integrations',
-              link: {type: 'doc', id: 'network-policy/policy-firewalls/fortinet-integration/index'},
-              items: [
-                'network-policy/policy-firewalls/fortinet-integration/overview',
-                'network-policy/policy-firewalls/fortinet-integration/firewall-integration',
-                'network-policy/policy-firewalls/fortinet-integration/fortimgr-integration',
-              ],
+              "type": "category",
+              "label": "Fortinet firewall integrations",
+              "link": {
+                "type": "doc",
+                "id": "network-policy/policy-firewalls/fortinet-integration/index"
+              },
+              "items": [
+                "network-policy/policy-firewalls/fortinet-integration/overview",
+                "network-policy/policy-firewalls/fortinet-integration/firewall-integration",
+                "network-policy/policy-firewalls/fortinet-integration/fortimgr-integration"
+              ]
             },
             {
-              type: 'category',
-              label: 'AWS security groups integration',
-              link: {type: 'doc', id: 'network-policy/policy-firewalls/aws-integration/index'},
-              items: [
-                'network-policy/policy-firewalls/aws-integration/get-started',
-                'network-policy/policy-firewalls/aws-integration/aws-security-group-integration',
-                'network-policy/policy-firewalls/aws-integration/tiers-and-policy',
-                'network-policy/policy-firewalls/aws-integration/metadata-access',
+              "type": "category",
+              "label": "AWS security groups integration",
+              "link": {
+                "type": "doc",
+                "id": "network-policy/policy-firewalls/aws-integration/index"
+              },
+              "items": [
+                "network-policy/policy-firewalls/aws-integration/get-started",
+                "network-policy/policy-firewalls/aws-integration/aws-security-group-integration",
+                "network-policy/policy-firewalls/aws-integration/tiers-and-policy",
+                "network-policy/policy-firewalls/aws-integration/metadata-access"
               ],
             },
           ],
         },
-        {
-          type: 'category',
-          label: 'Policy for hosts',
-          link: {type: 'doc', id: 'network-policy/hosts/index'},
-          items: [
-            'network-policy/hosts/protect-hosts',
-            'network-policy/hosts/kubernetes-nodes',
-            'network-policy/hosts/protect-hosts-tutorial',
-            'network-policy/hosts/host-forwarded-traffic',
-          ],
-        },
+        "network-policy/hosts/kubernetes-nodes",
+        "network-policy/hosts/host-forwarded-traffic",
         {
           type: 'category',
           label: 'Policy for extreme traffic',
