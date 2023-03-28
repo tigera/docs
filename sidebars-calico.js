@@ -515,6 +515,7 @@ module.exports = {
                 'reference/calicoctl/ipam/release',
                 'reference/calicoctl/ipam/show',
                 'reference/calicoctl/ipam/configure',
+                'reference/calicoctl/ipam/split',
               ],
             },
             {
