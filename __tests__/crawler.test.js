@@ -52,6 +52,8 @@ test("Crawl the docs and test links", async () => {
     /^https?:\/\/csrc\.nist\.gov\/projects\/cryptographic-module-validation-program\/certificate\/\d+$/,
     /^https:\/\/installer\.calicocloud\.io:[0-9]{3,4}$/,
     'https://help.ubuntu.com/community/NetworkManager', //==>Origin: http://localhost:4242/calico-enterprise/3.14/operations/troubleshoot/troubleshooting
+    //For frustrating 503 errors:
+    'https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator',
     //temp
     'https://stedolan.github.io/jq/',
     `http://kubernetes.io/docs/user-guide/secrets/`,
