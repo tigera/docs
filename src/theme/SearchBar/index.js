@@ -15,9 +15,17 @@ import { getProductNameById } from '../../utils/getProductNameById';
 let DocSearchModal = null;
 function Hit({ hit, children }) {
   const text = hit.content || hit.hierarchy[hit.type];
-  const scrollTo = `-scroll-to-${encodeURIComponent(text)}`;
   const productId = useProductId();
-  const product = getProductNameById(hit.url.split('/')[1]);
+  const splitUrl = hit.url.split('/');
+  const product = getProductNameById(splitUrl[1]);
+  const selectionPage = getProductNameById(splitUrl[splitUrl.length()-1]);
+  let scrollTo =`-scroll-to-${encodeURIComponent(text)}`;
+  console.log(product)
+  console.log(hit.url + scrollTo)
+  
+  if(!hit.url.includes('#')){
+    scrollTo = `#${selectionPage}-scroll-to-${encodeURIComponent(text)}`;
+  }
 
   return (
     <Link to={hit.url + scrollTo}>
