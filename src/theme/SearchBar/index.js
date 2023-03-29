@@ -18,12 +18,12 @@ function Hit({ hit, children }) {
   const productId = useProductId();
   const splitUrl = hit.url.split('/');
   const product = getProductNameById(splitUrl[1]);
-  const selectionPage = getProductNameById(splitUrl[splitUrl.length()-1]);
   let scrollTo =`-scroll-to-${encodeURIComponent(text)}`;
   console.log(product)
   console.log(hit.url + scrollTo)
-  
+
   if(!hit.url.includes('#')){
+    const selectionPage = getProductNameById(splitUrl[splitUrl.length-1]);
     scrollTo = `#${selectionPage}-scroll-to-${encodeURIComponent(text)}`;
   }
 
