@@ -22,7 +22,7 @@ function Hit({ hit, children }) {
   console.log(hit.url + scrollTo)
 
   if(!hit.url.includes('#')){
-    const selectionPage = getProductNameById(splitUrl[splitUrl.length-1]);
+    const selectionPage = splitUrl[splitUrl.length-1];
     console.log(splitUrl)
     console.log(selectionPage)
     scrollTo = `#${selectionPage}-scroll-to-${encodeURIComponent(text)}`;
