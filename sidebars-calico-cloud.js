@@ -298,6 +298,7 @@ module.exports = {
       link: {type: 'doc', id: 'image-assurance/index'},
       items: [
         'image-assurance/scan-image-registries',
+        "image-assurance/configuring-the-runtime-view",
         'image-assurance/set-up-alerts',
         'image-assurance/install-the-admission-controller'
       ],
