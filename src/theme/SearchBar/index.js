@@ -11,6 +11,7 @@ import { DocSearchButton, useDocSearchKeyboardEvents } from '@docsearch/react';
 import { useAlgoliaContextualFacetFilters } from '@docusaurus/theme-search-algolia/client';
 import Translate from '@docusaurus/Translate';
 import translations from '@theme/SearchTranslations';
+import { useScrollToMatch } from '../../utils/useScrollToMatch';
 import { useProductId } from '../../utils/useProductId';
 import { getProductNameById } from '../../utils/getProductNameById';
 let DocSearchModal = null;
@@ -182,6 +183,8 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
     onInput,
     searchButtonRef,
   });
+
+  useScrollToMatch();
 
   return (
     <>

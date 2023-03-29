@@ -1,6 +1,5 @@
 import React from 'react';
 import { useHistory, useLocation } from '@docusaurus/router';
-import { parseLocationHash } from './parseLocationHash';
 
 function trim(text) {
   return text.replaceAll(/[^\w]/g, '');
@@ -22,14 +21,14 @@ export function useScrollToMatch() {
   const history = useHistory();
 
   React.useEffect(() => {
-    if (!location.hash) {
-      return;
-    }
 
-    const [hash, scrollToMatch] = parseLocationHash(location);
+    const scrollToMatch = decodeURIComponent(location.pathname).match(/(.*)-scroll-to-(.*)/);
+  
 
     if (scrollToMatch) {
-      history.replace({ hash, pathname: location.pathname });
+      const hash = location.hash
+
+      history.replace({ pathname: scrollToMatch[1] });
 
       const scrollTo = scrollToMatch[2];
 
