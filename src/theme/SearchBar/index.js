@@ -19,12 +19,9 @@ function Hit({ hit, children }) {
   const splitUrl = hit.url.split('/');
   const product = getProductNameById(splitUrl[1]);
   let scrollTo =`-scroll-to-${encodeURIComponent(text)}`;
-  console.log(hit.url + scrollTo)
 
   if(!hit.url.includes('#')){
     const selectionPage = splitUrl[splitUrl.length-1];
-    console.log(splitUrl)
-    console.log(selectionPage)
     scrollTo = `#${selectionPage}-scroll-to-${encodeURIComponent(text)}`;
   }
 
