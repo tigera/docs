@@ -33,7 +33,11 @@ const config = {
         // TODO: try to find a way to not specify a default instance
         docs: {
           path: 'default',
-          sidebarPath: false,
+          routeBasePath: '/',
+          breadcrumbs: false,
+          sidebarPath: require.resolve('./sidebars-default.js'),
+          beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+          editUrl: generateEditUrl,
         },
         gtag: {
           trackingID: 'G-MDDZ0CGXZ4',
