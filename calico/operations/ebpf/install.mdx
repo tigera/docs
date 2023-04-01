@@ -126,7 +126,7 @@ requirements, `kubeadm`-provisioned clusters are supported.
 Since `kube-proxy` is not required in eBPF mode, you may wish to disable `kube-proxy` at install time. With `kubeadm`
 you can do that by passing the ` --skip-phases=addon/kube-proxy` flag to `kubeadm init`:
 
-```
+```bash
 kubeadm init --skip-phases=addon/kube-proxy
 ```
 
@@ -216,7 +216,7 @@ API server. Use that (filling in the `<cluster_name>` and `<base_domain>` as app
 
 For AKS clusters, you should use the FQDN of your API server. This can be found by running the following command:
 
-```
+```bash
 kubectl cluster-info
 ```
 
@@ -235,7 +235,7 @@ In this example, you would use `mycalicocl-calicodemorg-03a087-36558dbb.hcp.cana
 For an EKS cluster, it's important to use the domain name of the EKS-provided load balancer that is in front of the API
 server. This can be found by running the following command:
 
-```
+```bash
 kubectl cluster-info
 ```
 
@@ -254,7 +254,7 @@ In this example, you would use `60F939227672BC3D5A1B3EC9744B2B21.gr7.us-west-2.e
 
 Create the following config map in the `tigera-operator` namespace using the host and port determined above:
 
-```
+```bash
 kubectl apply -f - <<EOF
 kind: ConfigMap
 apiVersion: v1
@@ -272,7 +272,7 @@ EOF
 If you forget to create the config map before installing the operator you can create it afterwards and
 then wait 60 seconds (for the config map to propagate) before restarting the operator:
 
-```
+```bash
 kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator
 ```
 
@@ -301,8 +301,8 @@ as shown below.
 For example:
 
 ```yaml
- This section includes base Calico Enterprise installation configuration.
- For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api/#operator.tigera.io/v1
+# This section includes base Calico Enterprise installation configuration.
+# For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api/#operator.tigera.io/v1
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
@@ -381,13 +381,13 @@ in its configuration. You will need to do `kops update cluster` to roll out the 
 
 In OpenShift, you can disable `kube-proxy` as follows:
 
-```
+```bash
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": false}}'
 ```
 
 If you need to re-enable it later:
 
-```
+```bash
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": true}}'
 ```
 
@@ -399,7 +399,7 @@ away any manual changes made to its configuration. To ensure `kube-proxy` and {{
 the Felix configuration parameter `bpfKubeProxyIptablesCleanupEnabled` to false. This can be done with
 `kubectl` as follows:
 
-```
+```bash
 kubectl patch felixconfiguration.p default --type merge --patch='{"spec": {"bpfKubeProxyIptablesCleanupEnabled": false}}'
 ```
 
@@ -409,7 +409,7 @@ kubectl patch felixconfiguration.p default --type merge --patch='{"spec": {"bpfK
 In EKS, you can disable `kube-proxy`, reversibly, by adding a node selector that doesn't match and nodes to
 `kube-proxy`'s `DaemonSet`, for example:
 
-```
+```bash
 kubectl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
 ```
 
