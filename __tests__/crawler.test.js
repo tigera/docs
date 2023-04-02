@@ -56,14 +56,12 @@ test("Crawl the docs and test links", async () => {
     'https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator',
     //temp
     'https://stedolan.github.io/jq/',
-    `http://kubernetes.io/docs/user-guide/secrets/`,
+    //`http://kubernetes.io/docs/user-guide/secrets/`,
     `https://github.com/coreos/flannel/blob/master/Documentation/kube-flannel-rbac.yml`,
     `https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/`,
     `https://raw.githubusercontent.com/projectcalico/calico//node/windows-packaging/CalicoWindows/kubernetes/kube-proxy-service.ps1`,
     `https://projectcalico.docs.tigera.io/master/reference/installation/api#operator.tigera.io/v1.APIServer`,
     `https://projectcalico.docs.tigera.io/master/reference/installation/api#operator.tigera.io/v1.Installation`,
-    'http://dpdk.org/git/dpdk', //==>Origin: https://raw.githubusercontent.com/projectcalico/vpp-dataplane/master/scripts/init_eks.sh
-    'http://dpdk.org/git/dpdk-kmods', //==>Origin: https://raw.githubusercontent.com/projectcalico/vpp-dataplane/master/scripts/init_eks.sh
     'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-darwin-amd64', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
     'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-windows-amd64.exe', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
   ];
