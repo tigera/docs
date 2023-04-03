@@ -366,7 +366,7 @@ const config = {
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
         onlyIncludeVersions: ['current','3.16','3.15','3.14'],
-        lastVersion: '3.15',
+        lastVersion: '3.16',
         versions: {
           current: {
             label: 'Next',
@@ -374,8 +374,8 @@ const config = {
             banner: 'unreleased',
           },
           3.16: {
-            label: '3.16 (Latest)',
-            path: 'latest',
+            label: '3.16 (latest)',
+            path: '3.16',
             banner: 'none',
           },
           3.15: {
