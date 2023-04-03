@@ -57,6 +57,14 @@ const config = {
       metadata: [
         {name: 'keywords', content: 'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp'}
       ],
+      announcementBar: {
+        id: 'os-survey',
+        content:
+            'Take <a target="_blank" rel="noopener noreferrer" href="https://surveymonkey.com">this survey</a>',
+        backgroundColor: '#f69320',
+        textColor: '#091E42',
+        isCloseable: true,
+      },
       algolia: {
         appId: 'Q4GSZWRKBA',
         apiKey: '34ecd6611b6cef7a420bd30587d0d502',

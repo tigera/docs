@@ -85,7 +85,7 @@ export default function InstallAKS(props) {
             registry credentials instead.
           </p>
           <CodeBlock>
-            {`kubectl create kubectl create secret generic tigera-pull-secret \\
+            {`kubectl create secret generic tigera-pull-secret \\
     --type=kubernetes.io/dockerconfigjson -n tigera-operator \\
     --from-file=.dockerconfigjson=<path/to/pull/secret>`}
           </CodeBlock>
