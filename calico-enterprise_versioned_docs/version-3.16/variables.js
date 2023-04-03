@@ -19,7 +19,7 @@ const variables = {
   tigeraOperator: releases[0]['tigera-operator'],
   manifestsUrl: 'https://docs.tigera.io/v3.16.1/',
   releases,
-  imageNames:
+  imageNames: {
     node: 'tigera/cnx-node',
     kubeControllers: 'tigera/kube-controllers',
   },
