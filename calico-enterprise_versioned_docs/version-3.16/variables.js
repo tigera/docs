@@ -5,7 +5,7 @@ const variables = {
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'v3.16',
-  baseUrl: '/calico-enterprise/3.16',
+  baseUrl: '/calico-enterprise/latest',
   filesUrl: 'https://downloads.tigera.io/ee/v3.16.1',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/3.16',
@@ -19,7 +19,7 @@ const variables = {
   tigeraOperator: releases[0]['tigera-operator'],
   manifestsUrl: 'https://docs.tigera.io/v3.16.1/',
   releases,
-  imageNames: {
+  imageNames:
     node: 'tigera/cnx-node',
     kubeControllers: 'tigera/kube-controllers',
   },
