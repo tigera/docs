@@ -64,6 +64,15 @@ const config = {
         contextualSearch: true,
         searchPagePath: '/search',
       },
+      announcementBar: {
+        id: 'survey',
+        content:
+            'Take the <a target="_blank" rel="noopener noreferrer" href="https://www.surveymonkey.com/r/7WVLTW8">Calico Open Source' +
+            ' adoption survey</a>',
+        backgroundColor: '#DCEAF3',
+        textColor: '#091E42',
+        isCloseable: true,
+      },
       navbar: {
         logo: {
           src: 'img/tigera-logo-black.png',
