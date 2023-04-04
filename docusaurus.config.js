@@ -335,7 +335,7 @@ const config = {
         path: 'calico',
         routeBasePath: 'calico',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['current','3.25','3.24'],
+        onlyIncludeVersions: ['current','3.26','3.25','3.24'],
         versions: {
           current: {
             label: 'Next',
@@ -343,13 +343,13 @@ const config = {
             banner: 'unreleased',
           },
           3.26: {
-            label: '3.26',
-            path: '3.26',
+            label: '3.26 (latest)',
+            path: 'latest',
             banner: 'none',
           },
           3.25: {
-            label: '3.25 (latest)',
-            path: 'latest',
+            label: '3.25',
+            path: '3.25',
             banner: 'none',
           },
           3.24: {
@@ -386,7 +386,7 @@ const config = {
           },
           3.15: {
             label: '3.15 (latest)',
-            path: 'latest',
+            path: '3.25',
             banner: 'none',
           },
           3.14: {
