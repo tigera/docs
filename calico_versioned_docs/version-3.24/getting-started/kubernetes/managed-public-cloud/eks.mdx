@@ -60,10 +60,16 @@ Before you get started, make sure you have downloaded and configured the [necess
    eksctl create cluster --name my-calico-cluster --without-nodegroup
    ```
 
-1. Since this cluster will use {{prodname}} for networking, you must delete the `aws-node` daemon set to disable AWS VPC networking for pods.
+1. Since this cluster will use {{prodname}} for networking, you must delete the `aws-node` daemonset to prevent it from writing conflicting CNI config to your nodes.
 
    ```bash
    kubectl delete daemonset -n kube-system aws-node
+   ```
+
+1. Now that the aws-node daemonset is gone, you can add nodes to the cluster.
+
+   ```batch
+   eksctl create nodegroup --cluster my-calico-cluster --node-type t3.medium --max-pods-per-node 100
    ```
 
 1. Now that you have a cluster configured, you can install {{prodname}}.
@@ -94,12 +100,6 @@ Before you get started, make sure you have downloaded and configured the [necess
    EOF
    ```
 
-1. Finally, add nodes to the cluster.
-
-   ```batch
-   eksctl create nodegroup --cluster my-calico-cluster --node-type t3.medium --max-pods-per-node 100
-   ```
-
 </TabItem>
 <TabItem label="Manifest" value="Manifest-1">
 
@@ -113,12 +113,6 @@ Before you get started, make sure you have downloaded and configured the [necess
 
    ```bash
    kubectl -n kube-system set env daemonset/calico-node FELIX_AWSSRCDSTCHECK=Disable
-   ```
-
-1. Finally, add nodes to the cluster.
-
-   ```bash
-   eksctl create nodegroup --cluster my-calico-cluster --node-type t3.medium --max-pods-per-node 100
    ```
 
 </TabItem>
@@ -136,16 +130,15 @@ Before you get started, make sure you have downloaded and configured the [necess
     helm repo update
     ```
 
+1. Create the tigera-operator namespace.
+    ```batch
+    kubectl create namespace tigera-operator
+    ```
+
 1. Install version {{releaseTitle}} of the {{prodname}} operator and custom resource definitions.
 
     ```batch
-    helm install calico projectcalico/tigera-operator --version {{releaseTitle}}
-    ```
-
-1. Finally, add nodes to the cluster.
-
-    ```batch
-    eksctl create nodegroup --cluster my-calico-cluster --node-type t3.medium --max-pods-per-node 100
+    helm install calico projectcalico/tigera-operator --namespace tigera-operator --version {{releaseTitle}}
     ```
 
 </TabItem>
