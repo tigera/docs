@@ -482,6 +482,7 @@ module.exports = {
             'operations/comms/secure-bgp',
             'operations/comms/manager-tls',
             'operations/comms/log-storage-tls',
+            'operations/comms/linseed-tls',
             'operations/comms/apiserver-tls',
             'operations/comms/typha-node-tls',
             'operations/comms/compliance-tls',
