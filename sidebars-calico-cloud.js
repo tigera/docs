@@ -100,6 +100,15 @@ module.exports = {
       label: 'Network policy',
       link: {type: 'doc', id: 'network-policy/index'},
       items: [
+        {
+          type: 'category',
+          label: 'Policy recommendations',
+          link: {type: 'doc', id: 'network-policy/recommendations/index'},
+          items: [
+            'network-policy/recommendations/policy-recommendations',
+            'network-policy/recommendations/denied-traffic-flows',
+          ],
+        },
         'network-policy/policy-best-practices',
         {
           type: 'category',
@@ -114,7 +123,6 @@ module.exports = {
         },
         'network-policy/networksets',
         'network-policy/default-deny',
-        'network-policy/generate-policy-recommendation',
         'network-policy/staged-network-policies',
         'network-policy/policy-troubleshooting',
         {
