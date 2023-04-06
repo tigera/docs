@@ -114,22 +114,7 @@ const config = {
             dropdownItemsAfter: [
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.13">3.13</a>',
-                className: 'product-calico-enterprise',
-              },
-              {
-                type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.12">3.12</a>',
-                className: 'product-calico-enterprise',
-              },
-              {
-                type: 'html',
                 value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.23">3.23</a>',
-                className: 'product-calico',
-              },
-              {
-                type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.22">3.22</a>',
                 className: 'product-calico',
               },
               {
