@@ -202,6 +202,15 @@ module.exports = {
       label: 'Network policy',
       link: {type: 'doc', id: 'network-policy/index'},
       items: [
+        {
+          type: 'category',
+          label: 'Policy recommendations',
+          link: {type: 'doc', id: 'network-policy/recommendations/index'},
+          items: [
+            'network-policy/recommendations/policy-recommendations',
+            'network-policy/recommendations/denied-traffic-flows',
+          ],  
+        },
         'network-policy/policy-best-practices',
         {
           type: 'category',
@@ -216,7 +225,6 @@ module.exports = {
         },
         'network-policy/networksets',
         'network-policy/default-deny',
-        'network-policy/generate-policy-recommendation',
         'network-policy/staged-network-policies',
         'network-policy/policy-troubleshooting',
         {
@@ -482,6 +490,7 @@ module.exports = {
             'operations/comms/secure-bgp',
             'operations/comms/manager-tls',
             'operations/comms/log-storage-tls',
+            'operations/comms/linseed-tls',
             'operations/comms/apiserver-tls',
             'operations/comms/typha-node-tls',
             'operations/comms/compliance-tls',
@@ -748,6 +757,7 @@ module.exports = {
             'reference/resources/networkset',
             'reference/resources/node',
             'reference/resources/packetcapture',
+            'reference/resources/policyrecommendations',
             'reference/resources/profile',
             'reference/resources/remoteclusterconfiguration',
             'reference/resources/stagedglobalnetworkpolicy',

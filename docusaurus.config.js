@@ -114,22 +114,7 @@ const config = {
             dropdownItemsAfter: [
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.13">3.13</a>',
-                className: 'product-calico-enterprise',
-              },
-              {
-                type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.12">3.12</a>',
-                className: 'product-calico-enterprise',
-              },
-              {
-                type: 'html',
                 value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.23">3.23</a>',
-                className: 'product-calico',
-              },
-              {
-                type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.22">3.22</a>',
                 className: 'product-calico',
               },
               {
@@ -375,7 +360,7 @@ const config = {
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
         onlyIncludeVersions: ['current','3.16','3.15','3.14'],
-        lastVersion: '3.15',
+        lastVersion: '3.16',
         versions: {
           current: {
             label: 'Next',
@@ -383,13 +368,13 @@ const config = {
             banner: 'unreleased',
           },
           3.16: {
-            label: '3.16 (early preview)',
-            path: '3.16',
-            banner: 'unreleased',
+            label: '3.16 (latest)',
+            path: 'latest',
+            banner: 'none',
           },
           3.15: {
-            label: '3.15 (latest)',
-            path: 'latest',
+            label: '3.15',
+            path: '3.15',
             banner: 'none',
           },
           3.14: {
