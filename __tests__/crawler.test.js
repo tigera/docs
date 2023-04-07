@@ -30,6 +30,7 @@ test("Crawl the docs and test links", async () => {
     { regex: /\/calico-cloud\/get-help\/support$/i, processContent: true },
     { regex: /\/calico-cloud\/get-started\/connect\/connect-cluster$/i, processContent: true },
   ];
+  const codeBlockErrors = [];
   const skipList = [
     /^https?:\/\/([\w-]+\.)?example\.com/,
     /^https:\/\/kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.18/i,
@@ -69,7 +70,6 @@ test("Crawl the docs and test links", async () => {
     'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-windows-amd64.exe', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
     'http://www.iana.org/assignments/service-names', //==>Origin: https://downloads.tigera.io/ee/v3.14.4/manifests/tigera-operator.yaml
     'https://downloads.tigera.io/ee/master/manifests/threatdef/honeypod/psp-honeypod.yaml',
-
   ];
 
   const lc = linkChecker();
@@ -83,7 +83,7 @@ test("Crawl the docs and test links", async () => {
   let postProcessUrls = new Map();
   const urlCache = new Map();
 
-  function getCheerioCrawler() {
+  function cheerioCrawler() {
     return new CheerioCrawler({
       // Use the requestHandler to process each of the crawled pages.
       async requestHandler({ request, $, enqueueLinks, log }) {
@@ -123,14 +123,13 @@ test("Crawl the docs and test links", async () => {
   function testCodeBlock($, type) {
     const codeBlock = $(`pre.language-${type} code`);
     for (let idx = 0; idx < codeBlock.length; idx++) {
-      let codeLines = [];
+      const codeLines = [];
       const lines = $(codeBlock[idx]).find('span.token-line');
       for (let idx2 = 0; idx2 < lines.length; idx2++) {
         const line = $(lines[idx2]).text();
         codeLines.push(line);
       }
       if (codeLines.length === 0) {
-        // TODO: empty code block error
         continue;
       }
       const code = codeLines.join('\n');
