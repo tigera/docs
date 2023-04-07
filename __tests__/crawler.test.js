@@ -9,6 +9,7 @@ const {
 } = require('crawlee');
 import {decode} from 'html-entities';
 const linkChecker = require('../src/utils/linkChecker');
+import YAML from 'yaml';
 
 test("Crawl the docs and test links", async () => {
   const PROD = 'https://docs.tigera.io'
@@ -115,6 +116,9 @@ test("Crawl the docs and test links", async () => {
           }
           checkAndUseLinkChecker(request.url, url);
         }
+
+        testCodeBlocks($);
+
         await enqueueLinks({
           strategy: EnqueueStrategy.All,
           transformRequestFunction: transformRequest,
@@ -128,6 +132,38 @@ test("Crawl the docs and test links", async () => {
       //   console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
       // },
     });
+  }
+
+  function testCodeBlocks($) {
+    testCodeBlock($, 'yaml');
+    testCodeBlock($, 'json');
+  }
+
+  function testCodeBlock($, type) {
+    const selector = $(`pre.language-${type} code`);
+    for (let idx = 0; idx < selector.length; idx++) {
+      let codeLines = [];
+      const lines = $(selector[idx]).find('span.token-line');
+      for (let idx2 = 0; idx2 < lines.length; idx2++) {
+        const line = $(lines[idx2]).text();
+        codeLines.push(line);
+      }
+      if (codeLines.length === 0) continue;
+      const code = codeLines.join('\n');
+      try {
+        switch (type) {
+          case 'yaml':
+            YAML.parseAllDocuments(code, {strict: true}); break;
+          case 'json':
+            JSON.parse(code); break;
+        }
+      } catch (err) {
+        console.error(`code block error (${type}): ${err.message}`);
+        console.error(`\n###${type}###`);
+        console.error(`${code}`);
+        console.error(`###${type}###`);
+      }
+    }
   }
 
   function getCrawler() {
