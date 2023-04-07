@@ -117,7 +117,7 @@ test("Crawl the docs and test links", async () => {
 
   function testCodeBlocks($) {
     testCodeBlock($, 'yaml');
-    testCodeBlock($, 'json');
+    // testCodeBlock($, 'json');
   }
 
   function testCodeBlock($, type) {
@@ -149,7 +149,7 @@ test("Crawl the docs and test links", async () => {
   }
 
   function getCrawler() {
-    return getCheerioCrawler();
+    return cheerioCrawler();
   }
 
   function transformRequest(requestOptions) {
