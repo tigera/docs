@@ -81,27 +81,6 @@ test("Crawl the docs and test links", async () => {
   let postProcessUrls = new Map();
   const urlCache = new Map();
 
-  function getPlaywrightCrawler() {
-    return new PlaywrightCrawler({
-      navigationTimeoutSecs: 120,
-      maxConcurrency: CONCURRENCY,
-      // Use the requestHandler to process each of the crawled pages.
-      async requestHandler({ request, page, enqueueLinks, log }) {
-        if (request.skipNavigation) return;
-        const allText = await page.locator('body').innerText();
-        const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
-        for (const url of urls){
-          checkAndUseLinkChecker(page.url(), url);
-        }
-        await enqueueLinks({
-          strategy: EnqueueStrategy.All,
-          transformRequestFunction: transformRequest,
-          userData: {origin: page.url()},
-        });
-      },
-    });
-  }
-
   function getCheerioCrawler() {
     return new CheerioCrawler({
       // Use the requestHandler to process each of the crawled pages.
@@ -140,22 +119,23 @@ test("Crawl the docs and test links", async () => {
   }
 
   function testCodeBlock($, type) {
-    const selector = $(`pre.language-${type} code`);
-    for (let idx = 0; idx < selector.length; idx++) {
+    const codeBlock = $(`pre.language-${type} code`);
+    for (let idx = 0; idx < codeBlock.length; idx++) {
       let codeLines = [];
-      const lines = $(selector[idx]).find('span.token-line');
+      const lines = $(codeBlock[idx]).find('span.token-line');
       for (let idx2 = 0; idx2 < lines.length; idx2++) {
         const line = $(lines[idx2]).text();
         codeLines.push(line);
       }
-      if (codeLines.length === 0) continue;
+      if (codeLines.length === 0) {
+        // TODO: empty code block error
+        continue;
+      }
       const code = codeLines.join('\n');
       try {
         switch (type) {
-          case 'yaml':
-            YAML.parseAllDocuments(code, {strict: true}); break;
-          case 'json':
-            JSON.parse(code); break;
+          case 'yaml': YAML.parseAllDocuments(code, {strict: true}); break;
+          case 'json': JSON.parse(code); break;
         }
       } catch (err) {
         console.error(`code block error (${type}): ${err.message}`);
@@ -167,9 +147,6 @@ test("Crawl the docs and test links", async () => {
   }
 
   function getCrawler() {
-    if (process.env.PLAYWRIGHT) {
-      return getPlaywrightCrawler();
-    }
     return getCheerioCrawler();
   }
 
