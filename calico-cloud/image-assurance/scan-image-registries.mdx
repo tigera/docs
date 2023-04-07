@@ -206,6 +206,8 @@ The right pane lists:
 
 - Number of images grouped by Fail, Warn, Pass, and Unknown (the CLI scanner has not yet reported results)
 - High Risk Repos (top five repos based on total Fails)
+- Image details (when you have an image selected from the left panel list) lists associated CVEs, if any
+    - For each CVE listed, you can view the details of the vulnerability or add an exception to ignore the vulnerability (see [Create vulnerability exceptions](#create-vulnerability-exceptions)). 
 
 **Runtime tab**
 
@@ -215,6 +217,7 @@ The right panel lists:
 
 - Number of running pods that have images with scan results of Fail, Warn, Pass, and Unknown (the CLI scanner has not yet reported results)
 - High Risk Namespaces (top five namespaces based on total Fails)
+- Runtime details (when you have an image selected from the left panel list) shows the clusters and namespaces the selected image is running in
 
 :::note
 
@@ -267,34 +270,27 @@ See [the installation reference](../reference/installation/api.mdx#image-assuran
 
 :::
 
-### Create vulnerability exceptions
+### Exclude specific vulnerabilities
 
-In some cases, you may want to ignore specific vulnerabilities or CVEs. For example:
+In some cases, you may want to exclude specific vulnerabilities from your scan results. For example, you may determine that a warning is a false positive because of the way you are using an affected package. By creating a vulnerability exception, you can configure Image Assurance to ignore a CVE for a specific image, all images from the same repo, or for all images.
 
-- You determine scan results are "false positives" (based on how you are using the affected package)
-- You decide to exclude a vulnerability based on your own internal assessment
+:::caution 
+A vulnerability exception can significantly change how Image Assurance determines image health. 
+- **Maximum CVSS score** 
+An image’s maximum CVSS score may be reduced to a lower score. An exception could eliminate the vulnerability with the highest CVSS score for an image. 
+- **Scan results** 
+Scan results for Pass/Warn/Fail could change because they are based on the maximum CVSS score. For example, Fail could change to Warn, and Warn could change to Pass. 
+- **Vulnerability global alerts** 
+Alerts may no longer be triggered. Alerts are triggered based on scan results or maximum CVSS score values of images. 
+- **Admission controller** 
+Pods could be created where they were previously blocked. Admission controller policies are based on vulnerability information (scan result and/or maximum CVSS score). 
+:::
 
-To exclude a vulnerability from scanning results, create a vulnerability exception.
+1. Go to **Image Assurance** > **Scan Results**. 
+2. Select an image from the list. On the **Scan Results** page for that image, find the CVE, and click **Actions** > **Add Exception**. 
+3. From the **Add Exception** dialog, select a scope, add a description, and click **Save**. The new vulnerability exception is immediately applied to your scan results.
 
-In the left navbar in Manager, click **Image Assurance**, **Vulnerability Exceptions**.
-
-Before creating an exception, it is important to understand the effects to Image Assurance.
-
-- **Maximum CVSS score**
-
-  An image’s maximum CVSS score may be reduced to a lower score. An exception could eliminate the vulnerability with the highest CVSS score for an image.
-
-- **Scan results**
-
-  Scan results for Pass/Warn/Fail could change because they are based on the maximum CVSS score. For example, Fail could change to Warn, and Warn could change to Pass.
-
-- **Vulnerability global alerts**
-
-  Alerts may no longer be generated. Alerts are triggered based on scan results or maximum CVSS score values of images.
-
-- **Admission controller**
-
-  Pods could be created where they were previously blocked. Admission controller policies are based on vulnerability information (scan result and/or maximum CVSS score).
+To view your existing vulnerability exceptions, navigate to the Exceptions page, by going to **Image Assurance** > **Vulnerability Exceptions**.
 
 ### Export scan results
 
