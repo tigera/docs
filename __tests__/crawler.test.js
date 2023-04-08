@@ -9,6 +9,7 @@ const {
 import {decode} from 'html-entities';
 const linkChecker = require('../src/utils/linkChecker');
 import YAML from 'yaml';
+import needle from 'needle';
 
 test("Crawl the docs and execute tests", async () => {
   const PASS = 'pass', FAIL = 'fail';
@@ -17,13 +18,15 @@ test("Crawl the docs and execute tests", async () => {
   const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
       .toLowerCase().replace(/\/$/, '');
   const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
-  const isDeepCrawl = process.env.DEEP_CRAWL ? (process.env.DEEP_CRAWL==='true') : false;
-  const fileSearch = /https?:\/\/(installer\.calicocloud\.io|downloads\.tigera\.io|raw\.githubusercontent\.com\/projectcalico)\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|ps1|sh|bat|json)/gi;
+  const validityTests = process.env.VALIDITY_TESTS ? process.env.VALIDITY_TESTS.split(',') : [];
+  const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES==='true' : false;
+  const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL==='true' : false;
+  const fileInspect = /https?:\/\/(installer\.calicocloud\.io|downloads\.tigera\.io|raw\.githubusercontent\.com\/projectcalico)\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|ps1|sh|bat|json)/gi;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
   const SITEMAP = 'sitemap.xml';
   const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
   const USE_LC = [
-    { regex: fileSearch, processContent: true},
+    { regex: fileInspect, processContent: true},
     { regex: fileRegex, processContent: false},
     { regex: /\/reference\/legal\/[\w-]+$/i, processContent: true },
     { regex: /\/calico-cloud\/get-help\/support$/i, processContent: true },
@@ -80,12 +83,11 @@ test("Crawl the docs and execute tests", async () => {
   }
   let postProcessUrls = new Map();
   const urlCache = new Map();
-  const codeBlockTestResults = new Map();
+  const validityTestResults = new Map();
 
 
   function cheerioCrawler() {
     return new CheerioCrawler({
-      // Use the requestHandler to process each of the crawled pages.
       async requestHandler({ request, $, enqueueLinks, log }) {
         if (request.skipNavigation) return;
         const allText = decode($.html());
@@ -106,23 +108,16 @@ test("Crawl the docs and execute tests", async () => {
           userData: {origin: request.url},
         });
       },
-      // async errorHandler(context, error) {
-      //   console.error(`[ERROR] Playwright request error for url: ${context.request.url} --- error: ${error}`);
-      // },
-      // async failedRequestHandler(context, error) {
-      //   console.error(`[ERROR] Playwright request failed with errors for url: ${context.request.url} --- last error: ${error}`);
-      // },
     });
   }
 
   function testCodeBlocks($, origin) {
-    ['yaml', 'json'].forEach(type => {
+    validityTests.forEach(type => {
       testCodeBlocksByType($, origin, type);
     });
   }
 
   function testCodeBlocksByType($, origin, type) {
-    const yamlParseOptions = {strict: true};
     const codeBlocks = $(`pre.language-${type} code`);
     for (let idxBlock = 0; idxBlock < codeBlocks.length; idxBlock++) {
       const codeLines = [];
@@ -136,31 +131,48 @@ test("Crawl the docs and execute tests", async () => {
         continue;
       }
       const code = codeLines.join('\n');
-      try {
-        switch (type) {
-          case 'yaml': YAML.parseAllDocuments(code, yamlParseOptions); break;
-          case 'json': JSON.parse(code); break;
-        }
-        addCodeBlockTestResult(origin, type, PASS);
-      } catch (err) {
-        if (type !== 'json') {
-          // TODO: need to get the json blocks cleaned up
-          addCodeBlockTestResult(origin, type, FAIL);
-        }
-        console.error(`[ERROR] Code block error (${type}) in ${origin}: ${err.message}`);
-        console.error(`####codeblock-${type}####`);
-        console.error(`${code}`);
-        console.error(`####codeblock-${type}####\n`);
-      }
+      testValidity(type, origin, code);
     }
   }
 
-  function addCodeBlockTestResult(origin, type, result) {
-    const existing = codeBlockTestResults.get(origin);
+  function testValidity(type, origin, code) {
+    const yamlParseOptions = {strict: false};
+    try {
+      switch (type) {
+        case 'yaml':
+          const errs = [];
+          const docs = YAML.parseAllDocuments(code, yamlParseOptions);
+          for (const doc of docs) {
+            doc.errors.forEach(e => { errs.push(e.message) });
+          }
+          if (errs.length > 0) {
+            const err = new Error(errs.join('\n'));
+            logAndPrintValidityError(origin, type, code, err);
+          }
+          break;
+        case 'json':
+          JSON.parse(code); break;
+      }
+      addValidityTestResult(origin, type, PASS);
+    } catch (err) {
+      logAndPrintValidityError(origin, type, code, err);
+    }
+  }
+
+  function logAndPrintValidityError(origin, type, code, err) {
+    addValidityTestResult(origin, type, FAIL);
+    console.error(`[ERROR] validity error (${type}) in ${origin} :\n${err.message}`);
+    console.error(`\`\`\`${type}`);
+    console.error(`${code}`);
+    console.error(`\`\`\`\n`);
+  }
+
+  function addValidityTestResult(origin, type, result) {
+    const existing = validityTestResults.get(origin);
     if (existing) {
       existing.push({type, result});
     } else {
-      codeBlockTestResults.set(origin, [{type, result}]);
+      validityTestResults.set(origin, [{type, result}]);
     }
   }
 
@@ -226,6 +238,17 @@ test("Crawl the docs and execute tests", async () => {
       for (const u of urls) {
         lc.process(url, u);
       }
+      if (validityTestFiles) {
+        validityTests.forEach(vt => {
+          const re = vt === 'yaml' ? new RegExp('\.ya?ml$') : new RegExp(/\.json$/);
+          if (!re.test(url)) return;
+          needle.request('get', url, null, {}, (err, resp) => {
+            if (!err && resp.statusCode === 200) {
+              testValidity(vt, url, resp.body);
+            }
+          });
+        });
+      }
     }
   }
 
@@ -235,9 +258,13 @@ test("Crawl the docs and execute tests", async () => {
   await crawler.addRequests([DOCS]);
   await crawler.addRequests(urls);
 
-  console.log(`Crawling the docs (${DOCS}) and testing links.`);
-  console.log(`Localhost mode is ${isLocalHost ? 'ON' : 'OFF'}.`)
-  await crawler.run()
+  console.log(`Crawling the docs (${DOCS}) and executing tests.`);
+  console.log(`Localhost mode is ${isLocalHost ? 'ON' : 'OFF'}.`);
+  console.log(`Validity tests enabled: ${validityTests.length ? validityTests.join(',') : 'none'}`);
+  console.log(`Validity test files: ${validityTestFiles ? 'enabled' : 'disabled'}`);
+  console.log(`To enable validity tests use env var VALIDITY_TESTS= json | yaml | json,yaml`);
+  console.log(`To enable validity tests on files use env var VALIDITY_TEST_FILES=true`);
+  await crawler.run();
   console.log(`Performing all post-processing steps`);
   await doPostProcessing();
   console.log(`Waiting on all remaining link checks to complete`);
@@ -252,7 +279,7 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   let passCount = 0, failCount = 0;
-  codeBlockTestResults.forEach((v, k) => {
+  validityTestResults.forEach((v, k) => {
     v.forEach(e => {
       if (e.result === PASS) passCount++;
       if (e.result === FAIL) failCount++;
