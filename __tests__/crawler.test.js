@@ -1,6 +1,5 @@
 const { test, expect } = require('@playwright/test');
 const {
-  PlaywrightCrawler,
   CheerioCrawler,
   downloadListOfUrls,
   extractUrls,
@@ -11,14 +10,14 @@ import {decode} from 'html-entities';
 const linkChecker = require('../src/utils/linkChecker');
 import YAML from 'yaml';
 
-test("Crawl the docs and test links", async () => {
+test("Crawl the docs and execute tests", async () => {
+  const PASS = 'pass', FAIL = 'fail';
   const PROD = 'https://docs.tigera.io'
   const PROD_REGEX = /^https:\/\/docs\.tigera\.io/;
   const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
       .toLowerCase().replace(/\/$/, '');
   const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
   const isDeepCrawl = process.env.DEEP_CRAWL ? (process.env.DEEP_CRAWL==='true') : false;
-  const CONCURRENCY = process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 50;
   const fileSearch = /https?:\/\/(installer\.calicocloud\.io|downloads\.tigera\.io|raw\.githubusercontent\.com\/projectcalico)\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|ps1|sh|bat|json)/gi;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
   const SITEMAP = 'sitemap.xml';
@@ -30,7 +29,6 @@ test("Crawl the docs and test links", async () => {
     { regex: /\/calico-cloud\/get-help\/support$/i, processContent: true },
     { regex: /\/calico-cloud\/get-started\/connect\/connect-cluster$/i, processContent: true },
   ];
-  const codeBlockErrors = [];
   const skipList = [
     /^https?:\/\/([\w-]+\.)?example\.com/,
     /^https:\/\/kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.18/i,
@@ -82,6 +80,8 @@ test("Crawl the docs and test links", async () => {
   }
   let postProcessUrls = new Map();
   const urlCache = new Map();
+  const codeBlockTestResults = new Map();
+
 
   function cheerioCrawler() {
     return new CheerioCrawler({
@@ -98,7 +98,7 @@ test("Crawl the docs and test links", async () => {
           checkAndUseLinkChecker(request.url, url);
         }
 
-        testCodeBlocks($);
+        testCodeBlocks($, request.url);
 
         await enqueueLinks({
           strategy: EnqueueStrategy.All,
@@ -115,35 +115,52 @@ test("Crawl the docs and test links", async () => {
     });
   }
 
-  function testCodeBlocks($) {
-    testCodeBlock($, 'yaml');
-    // testCodeBlock($, 'json');
+  function testCodeBlocks($, origin) {
+    ['yaml', 'json'].forEach(type => {
+      testCodeBlocksByType($, origin, type);
+    });
   }
 
-  function testCodeBlock($, type) {
-    const codeBlock = $(`pre.language-${type} code`);
-    for (let idx = 0; idx < codeBlock.length; idx++) {
+  function testCodeBlocksByType($, origin, type) {
+    const yamlParseOptions = {strict: true};
+    const codeBlocks = $(`pre.language-${type} code`);
+    for (let idxBlock = 0; idxBlock < codeBlocks.length; idxBlock++) {
       const codeLines = [];
-      const lines = $(codeBlock[idx]).find('span.token-line');
-      for (let idx2 = 0; idx2 < lines.length; idx2++) {
-        const line = $(lines[idx2]).text();
+      const lines = $(codeBlocks[idxBlock]).find('span.token-line');
+      for (let idxLine = 0; idxLine < lines.length; idxLine++) {
+        const line = $(lines[idxLine]).text();
         codeLines.push(line);
       }
       if (codeLines.length === 0) {
+        console.warn(`[WARNING] An empty code block exists in ${origin}`);
         continue;
       }
       const code = codeLines.join('\n');
       try {
         switch (type) {
-          case 'yaml': YAML.parseAllDocuments(code, {strict: true}); break;
+          case 'yaml': YAML.parseAllDocuments(code, yamlParseOptions); break;
           case 'json': JSON.parse(code); break;
         }
+        addCodeBlockTestResult(origin, type, PASS);
       } catch (err) {
-        console.error(`code block error (${type}): ${err.message}`);
-        console.error(`\n###${type}###`);
+        if (type !== 'json') {
+          // TODO: need to get the json blocks cleaned up
+          addCodeBlockTestResult(origin, type, FAIL);
+        }
+        console.error(`[ERROR] Code block error (${type}) in ${origin}: ${err.message}`);
+        console.error(`####codeblock-${type}####`);
         console.error(`${code}`);
-        console.error(`###${type}###`);
+        console.error(`####codeblock-${type}####\n`);
       }
+    }
+  }
+
+  function addCodeBlockTestResult(origin, type, result) {
+    const existing = codeBlockTestResults.get(origin);
+    if (existing) {
+      existing.push({type, result});
+    } else {
+      codeBlockTestResults.set(origin, [{type, result}]);
     }
   }
 
@@ -227,9 +244,25 @@ test("Crawl the docs and test links", async () => {
   const cnt = await lc.wait();
   console.log(`Retrying all remaining errors`);
   lc.retryErrors();
-  console.log(`Writing the final report.`);
   const success = await lc.report();
 
   const allErrors = lc.errorCount() + lc.deadCount();
+  if (allErrors > 0) {
+    console.error(`[ERROR] The crawler tests failed due to error / dead links`);
+  }
+
+  let passCount = 0, failCount = 0;
+  codeBlockTestResults.forEach((v, k) => {
+    v.forEach(e => {
+      if (e.result === PASS) passCount++;
+      if (e.result === FAIL) failCount++;
+    });
+  });
+  console.log(`\n\nCode block testing results: pass: ${passCount}, fail: ${failCount}`)
+  if (failCount > 0) {
+    console.error(`[ERROR] The crawler tests failed due to code block validation errors - check the logs above for details`);
+  }
+
   expect(allErrors).toBe(0);
+  expect(failCount).toBe(0);
 });
