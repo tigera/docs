@@ -65,7 +65,7 @@ The geeky details of what you get:
 
 1. As a regular user with sudo privileges, open a terminal on the host that you installed kubeadm on.
 
-1. Initialize the master using the following command.
+1. Initialize the control-plane using the following command.
 
    ```
    sudo kubeadm init --pod-network-cidr=192.168.0.0/16
@@ -128,13 +128,16 @@ The geeky details of what you get:
 
    :::
 
-1. Remove the taints on the master so that you can schedule pods on it.
-
+1. Remove the taints on the control-plane so that you can schedule pods on it. 
 
    ```bash
    kubectl taint nodes --all node-role.kubernetes.io/control-plane-
-   kubectl taint nodes --all node-role.kubernetes.io/master-
    ```
+   > With the 1.25 release of kubeadm the taint node-role.kubernetes.io/master is no longer applied to control plane nodes.
+   > ```bash
+   > kubectl taint nodes --all node-role.kubernetes.io/master-
+   > ```
+   > In other words, the command above would only be necessary for versions prior to  `1.25`.
 
    It should return the following.
 
@@ -151,8 +154,8 @@ The geeky details of what you get:
    It should return something like the following.
 
    ```
-   NAME              STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-   <your-hostname>   Ready    master   52m   v1.12.2   10.128.0.28   <none>        Ubuntu 18.04.1 LTS   4.15.0-1023-gcp   docker://18.6.1
+   NAME              STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   <your-hostname>   Ready    control-plane   52m   v1.26.3   10.128.0.28   <none>        Ubuntu 22.04.2 LTS   5.15.0-69-generic   containerd://1.6.20
    ```
 
 Congratulations! You now have a single-host Kubernetes cluster with {{prodname}}.
