@@ -329,15 +329,21 @@ const config = {
         path: 'calico',
         routeBasePath: 'calico',
         editCurrentVersion: true,
+        onlyIncludeVersions: ['current','3.25','3.24'],
         versions: {
           current: {
             label: 'Next',
             path: 'next',
             banner: 'unreleased',
           },
-          3.25: {
-            label: '3.25 (latest)',
+          3.26: {
+            label: '3.26 (latest)',
             path: 'latest',
+            banner: 'none',
+          },
+          3.25: {
+            label: '3.25',
+            path: '3.25',
             banner: 'none',
           },
           3.24: {
