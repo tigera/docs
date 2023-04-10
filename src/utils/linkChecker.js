@@ -284,6 +284,8 @@ function linkChecker() {
     process,
     report,
     retryErrors,
+    isInvalidOrSkipped,
+    isIgnored,
     getDefaultLinkRegex,
     getLinkRegex,
     setLinkRegex,

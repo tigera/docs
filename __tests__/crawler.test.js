@@ -18,8 +18,8 @@ test("Crawl the docs and execute tests", async () => {
   const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
       .toLowerCase().replace(/\/$/, '');
   const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
-  const validityTests = process.env.VALIDITY_TESTS ? process.env.VALIDITY_TESTS.split(',') : [];
-  const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES==='true' : false;
+  const validityTest = process.env.VALIDITY_TEST ? process.env.VALIDITY_TEST.split(',') : [];
+  const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES.split(',') : [];
   const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL==='true' : false;
   const fileInspect = /https?:\/\/(installer\.calicocloud\.io|downloads\.tigera\.io|raw\.githubusercontent\.com\/projectcalico)\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|ps1|sh|bat|json)/gi;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
@@ -112,7 +112,7 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function testCodeBlocks($, origin) {
-    validityTests.forEach(type => {
+    validityTest.forEach(type => {
       testCodeBlocksByType($, origin, type);
     });
   }
@@ -136,7 +136,7 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function testValidity(type, origin, code) {
-    const yamlParseOptions = {strict: false};
+    const yamlParseOptions = {strict: true};
     try {
       switch (type) {
         case 'yaml':
@@ -146,8 +146,9 @@ test("Crawl the docs and execute tests", async () => {
             doc.errors.forEach(e => { errs.push(e.message) });
           }
           if (errs.length > 0) {
-            const err = new Error(errs.join('\n'));
+            const err = new Error(errs.join('\nNext Error:\n'));
             logAndPrintValidityError(origin, type, code, err);
+            return;
           }
           break;
         case 'json':
@@ -161,10 +162,12 @@ test("Crawl the docs and execute tests", async () => {
 
   function logAndPrintValidityError(origin, type, code, err) {
     addValidityTestResult(origin, type, FAIL);
-    console.error(`[ERROR] validity error (${type}) in ${origin} :\n${err.message}`);
-    console.error(`\`\`\`${type}`);
-    console.error(`${code}`);
-    console.error(`\`\`\`\n`);
+    console.error(`[ERROR] validity error (${type}) in ${origin} : Error message(s):\n${err.message}`);
+    if (process.env.PRINT_CODE_ON_ERROR) {
+      console.error(`\`\`\`${type}`);
+      console.error(`${code}`);
+      console.error(`\`\`\`\n`);
+    }
   }
 
   function addValidityTestResult(origin, type, result) {
@@ -230,6 +233,28 @@ test("Crawl the docs and execute tests", async () => {
     }
   }
 
+  function doValidityTestRequest(vt, url) {
+    needle.request('get', url, null, {}, (err, resp) => {
+      if (!err && resp.statusCode === 200) {
+        testValidity(vt, url, resp.body.toString());
+      } else {
+        const errMsg = typeof err?.message !== 'undefined' ? `: ${err.message}` : '';
+        console.error(`[ERROR] error while getting file for validity test on ${url} (${resp.statusCode})${errMsg}`);
+      }
+    });
+  }
+
+  function doValidityTestOnFiles(url) {
+    if (lc.isInvalidOrSkipped(url) || lc.isIgnored(url)) return;
+    validityTestFiles.forEach(vt => {
+      if (vt === 'yaml' && /\.ya?ml$/.test(url)) {
+        doValidityTestRequest(vt, url);
+      } else if (vt === 'json' && /\.json$/.test(url)) {
+        doValidityTestRequest(vt, url);
+      }
+    });
+  }
+
   async function doPostProcessing() {
     const opts = { url: '', urlRegExp: lc.getLinkRegex()[0]};
     for (const url of postProcessUrls.keys()) {
@@ -238,17 +263,7 @@ test("Crawl the docs and execute tests", async () => {
       for (const u of urls) {
         lc.process(url, u);
       }
-      if (validityTestFiles) {
-        validityTests.forEach(vt => {
-          const re = vt === 'yaml' ? new RegExp('\.ya?ml$') : new RegExp(/\.json$/);
-          if (!re.test(url)) return;
-          needle.request('get', url, null, {}, (err, resp) => {
-            if (!err && resp.statusCode === 200) {
-              testValidity(vt, url, resp.body);
-            }
-          });
-        });
-      }
+      doValidityTestOnFiles(url);
     }
   }
 
@@ -260,10 +275,10 @@ test("Crawl the docs and execute tests", async () => {
 
   console.log(`Crawling the docs (${DOCS}) and executing tests.`);
   console.log(`Localhost mode is ${isLocalHost ? 'ON' : 'OFF'}.`);
-  console.log(`Validity tests enabled: ${validityTests.length ? validityTests.join(',') : 'none'}`);
-  console.log(`Validity test files: ${validityTestFiles ? 'enabled' : 'disabled'}`);
-  console.log(`To enable validity tests use env var VALIDITY_TESTS= json | yaml | json,yaml`);
-  console.log(`To enable validity tests on files use env var VALIDITY_TEST_FILES=true`);
+  console.log(`Validity tests on code blocks: ${validityTest.length ? validityTest.join(',') : 'none'}`);
+  console.log(`Validity tests on files: ${validityTestFiles.length ? validityTestFiles.join(',') : 'none'}`);
+  console.log(`To enable validity tests on code blocks use env var VALIDITY_TEST=json|yaml|json,yaml`);
+  console.log(`To enable validity tests on files use env var VALIDITY_TEST_FILES=json|yaml|json,yaml`);
   await crawler.run();
   console.log(`Performing all post-processing steps`);
   await doPostProcessing();
@@ -285,9 +300,9 @@ test("Crawl the docs and execute tests", async () => {
       if (e.result === FAIL) failCount++;
     });
   });
-  console.log(`\n\nCode block testing results: pass: ${passCount}, fail: ${failCount}`)
+  console.log(`\n\nValidity testing results: pass: ${passCount}, fail: ${failCount}`)
   if (failCount > 0) {
-    console.error(`[ERROR] The crawler tests failed due to code block validation errors - check the logs above for details`);
+    console.error(`[ERROR] The crawler tests failed due to validity testing errors - check the logs above for details`);
   }
 
   expect(allErrors).toBe(0);
