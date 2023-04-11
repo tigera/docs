@@ -74,6 +74,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-windows-amd64.exe', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
     'http://www.iana.org/assignments/service-names', //==>Origin: https://downloads.tigera.io/ee/v3.14.4/manifests/tigera-operator.yaml
     'https://downloads.tigera.io/ee/master/manifests/threatdef/honeypod/psp-honeypod.yaml',
+    'https://docs.openstack.org', //This seems to be temporarily down.
   ];
 
   const lc = linkChecker();
