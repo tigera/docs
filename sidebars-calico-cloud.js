@@ -449,6 +449,7 @@ module.exports = {
       items: [
         'reference/api',
         'reference/installation/api',
+        'reference/installation/ia-api',
         'reference/anomaly-detection',
         {
           type: 'category',
