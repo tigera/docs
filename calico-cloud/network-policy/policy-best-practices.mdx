@@ -127,103 +127,80 @@ If you follow a few simple guidelines, you’ll be well on your way to writing e
 The following policy is a global network policy for a microservice that limits all egress communication external to the cluster in the security tier. Does this policy work? Yes. And logically, it seems to cleanly implement application controls.
 
 ```yaml
-1  apiVersion: projectcalico.org/v3
-2  kind: GlobalNetworkPolicy
-3  metadata:
-4    name: security.allow-egress-from-pods
-5  spec:
-6    tier: security
-7    order: 1
-8    selector: all()
-9    egress:
-10     - action: Deny
-11       source:
-12         namespaceSelector: projectcalico.org/namespace starts with "tigera"
-13       destination:
-14         selector: threatfeed == "feodo"
-15     - action: Allow
-16       protocol: TCP
-17       source:
-18         namespaceSelector: projectcalico.org/name == "sso"
-19         ports:
-20           - '443'
-21           - '80'
-22       destination:
-23         domains:
-24           - '*.googleapis.com'
-25     - action: Allow
-26       protocol: TCP
-27       source:
-28         selector: psql == "external"
-29       destination:
-30         ports:
-31           - '5432'
-32         domains:
-33           - '*.postgres.database.azure.com'
-34     - action: Allow
-35       protocol: TCP
-36       source: {}
-37       destination:
-38         ports:
-39           - '443'
-40           - '80'
-41         domains:
-42           - '*.logic.azure.com'
-43     - action: Allow
-44       protocol: TCP
-45       source: {}
-46       destination:
-47         ports:
-48           - '443'
-49           - '80'
-50         domains:
-51           - '*.azurewebsites.windows.net'
-52     - action: Allow
-53       protocol: TCP
-54       source:
-55         selector: 'app in { "call-archives-api" }||app in { "finwise" }'
-56       destination:
-57         domains:
-58           - '*.documents.azure.com'
-59     - action: Allow
-60       protocol: TCP
-61       source:
-62         namespaceSelector: projectcalico.org/name == "warehouse"
-63       destination:
-64         ports:
-65           - '1433'
-66         domains:
-67           - '*.database.windows.net'
-68     - action: Allow
-69       protocol: TCP
-70       source: {}
-71       destination:
-72         nets:
-73           - 65.132.216.26/32
-74.          - 10.10.10.1/32
-75         ports:
-76           - '80'
-77           - '443'
-78     - action: Allow
-79       protocol: TCP
-80       source:
-81         selector: app == "api-caller"
-82       destination:
-83         ports:
-84           - '80'
-85           - '443'
-86         domains:
-87           - api.example.com
-88     - action: Allow
-89       source:
-90         selector: component == "tunnel"
-91     - action: Allow
-92       destination:
-93         selector: all()
-94         namespaceSelector: all()
-95     - action: Deny
-96   types:
-97     - Egress
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: security.allow-egress-from-pods
+spec:
+  tier: security
+  order: 1
+  selector: all()
+  egress:
+    - action: Deny
+      source:
+        namespaceSelector: projectcalico.org/namespace starts with "tigera"
+      destination:
+        selector: threatfeed == "feodo"
+    - action: Allow
+      protocol: TCP
+      source:
+        namespaceSelector: projectcalico.org/name == "sso"
+        ports: ['443', '80']
+      destination:
+        domains: ['*.googleapis.com']
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: psql == "external"
+      destination:
+        ports: ['5432']
+        domains: ['*.postgres.database.azure.com']
+    - action: Allow
+      protocol: TCP
+      source: {}
+      destination:
+        ports: ['443', '80']
+        domains: ['*.logic.azure.com']
+    - action: Allow
+      protocol: TCP
+      source: {}
+      destination:
+        ports: ['443', '80']
+        domains: ['*.azurewebsites.windows.net']
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: 'app in { "call-archives-api" }||app in { "finwise" }'
+      destination:
+        domains: ['*.documents.azure.com']
+    - action: Allow
+      protocol: TCP
+      source:
+        namespaceSelector: projectcalico.org/name == "warehouse"
+      destination:
+        ports: ['1433']
+        domains: ['*.database.windows.net']
+    - action: Allow
+      source:
+        nets: ['65.132.216.26/32', '10.10.10.1/32']
+        ports: ['80', '443']
+      destination: {}
+    - action: Allow
+      source:
+        selector: app == "api-caller"
+      destination:
+        ports: ['80', '443']
+        domains: ['api.example.com']
+    - action: Allow
+      source:
+        selector: component == "tunnel"
+    - action: Allow
+      destination:
+        selector: all()
+        namespaceSelector: all()
+    - action: Deny
+  types:
+    - Egress
 ```
 
 **Why this policy is inefficient**
@@ -298,7 +275,8 @@ selector: all()
 ingress:
   source:
     selector: label == 'bar'
-    destination: selector: label == 'foo'
+  destination:
+    selector: label == 'foo'
 ```
 
 The best practice policy below allows the same traffic, but is more efficient and scalable. Why? Because the policy will be rendered only on nodes with workloads that match the selector `label==foo`.
