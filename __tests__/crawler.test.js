@@ -5,6 +5,7 @@ const {
   extractUrls,
   EnqueueStrategy,
   Configuration,
+  sleep,
 } = require('crawlee');
 import {decode} from 'html-entities';
 const linkChecker = require('../src/utils/linkChecker');
@@ -12,7 +13,7 @@ import YAML from 'yaml';
 import needle from 'needle';
 
 test("Crawl the docs and execute tests", async () => {
-  const PASS = 'pass', FAIL = 'fail';
+  const PASS = 'pass', FAIL = 'fail', WIP = 'wip', DONE = 'done';
   const PROD = 'https://docs.tigera.io'
   const PROD_REGEX = /^https:\/\/docs\.tigera\.io/;
   const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
@@ -60,6 +61,8 @@ test("Crawl the docs and execute tests", async () => {
     //For frustrating 503 errors:
     'https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator',
     //temp
+    /^https:\/\/v1-21\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.21\//,
+    'https://www.iana.org/assignments/service-names',//==>Origin: https://downloads.tigera.io/ee/v3.15.2/manifests/tigera-operator.yaml'
     'https://stedolan.github.io/jq/',
     `http://kubernetes.io/docs/user-guide/secrets/`,
     `https://github.com/coreos/flannel/blob/master/Documentation/kube-flannel-rbac.yml`,
@@ -112,9 +115,18 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function testCodeBlocks($, origin) {
+    if (validityTest.length === 0) return;
+    validityTestResultSetStatus(origin, WIP);
     validityTest.forEach(type => {
       testCodeBlocksByType($, origin, type);
     });
+    validityTestResultSetStatus(origin, DONE);
+  }
+
+  function validityTestResultSetStatus(url, status) {
+    const ctx = validityTestResults.get(url);
+    const results = ctx ? ctx.results : [];
+    validityTestResults.set(url, {status, results});
   }
 
   function testCodeBlocksByType($, origin, type) {
@@ -136,7 +148,7 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function testValidity(type, origin, code) {
-    const yamlParseOptions = {strict: true};
+    const yamlParseOptions = {strict: true, uniqueKeys: false};
     try {
       switch (type) {
         case 'yaml':
@@ -148,13 +160,15 @@ test("Crawl the docs and execute tests", async () => {
           if (errs.length > 0) {
             const err = new Error(errs.join('\nNext Error:\n'));
             logAndPrintValidityError(origin, type, code, err);
-            return;
+          } else {
+            addValidityTestResult(origin, type, PASS);
           }
           break;
         case 'json':
-          JSON.parse(code); break;
+          JSON.parse(code);
+          addValidityTestResult(origin, type, PASS);
+          break;
       }
-      addValidityTestResult(origin, type, PASS);
     } catch (err) {
       logAndPrintValidityError(origin, type, code, err);
     }
@@ -171,12 +185,8 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function addValidityTestResult(origin, type, result) {
-    const existing = validityTestResults.get(origin);
-    if (existing) {
-      existing.push({type, result});
-    } else {
-      validityTestResults.set(origin, [{type, result}]);
-    }
+    const {status, results} = validityTestResults.get(origin);
+    validityTestResults.set(origin, {status, results: [...results, {type, result}]});
   }
 
   function getCrawler() {
@@ -234,22 +244,27 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function doValidityTestRequest(vt, url) {
-    needle.request('get', url, null, {}, (err, resp) => {
+    const opts = {follow_max: 5, follow_keep_method: true}
+    needle.request('get', url, null, opts, (err, resp) => {
       if (!err && resp.statusCode === 200) {
         testValidity(vt, url, resp.body.toString());
       } else {
         const errMsg = typeof err?.message !== 'undefined' ? `: ${err.message}` : '';
         console.error(`[ERROR] error while getting file for validity test on ${url} (${resp.statusCode})${errMsg}`);
       }
+      validityTestResultSetStatus(url, DONE);
     });
   }
 
   function doValidityTestOnFiles(url) {
     if (lc.isInvalidOrSkipped(url) || lc.isIgnored(url)) return;
+    if (validityTestResults.has(url)) return;
     validityTestFiles.forEach(vt => {
       if (vt === 'yaml' && /\.ya?ml$/.test(url)) {
+        validityTestResultSetStatus(url, WIP);
         doValidityTestRequest(vt, url);
       } else if (vt === 'json' && /\.json$/.test(url)) {
+        validityTestResultSetStatus(url, WIP);
         doValidityTestRequest(vt, url);
       }
     });
@@ -265,6 +280,38 @@ test("Crawl the docs and execute tests", async () => {
       }
       doValidityTestOnFiles(url);
     }
+  }
+
+  async function reportValidityTestResults() {
+    if (validityTestResults.size === 0) return 0;
+    let passCount = 0, failCount = 0, totalCount = 0, urlCount = 0;
+
+    while (true) {
+      let wipCount = 0;
+      validityTestResults.forEach((v, k) => {
+        if (v.status === WIP) wipCount++;
+      })
+      if (wipCount === 0) break;
+      console.log(`\nWaiting on validity tests to complete: ${wipCount} remaining`);
+      await sleep(1000);
+    }
+
+    const keys = [...validityTestResults.keys()].sort();
+    for (const key of keys) {
+      const ctx = validityTestResults.get(key);
+      urlCount++;
+      // console.log(`validity test url: ${key}:`);
+      for (const val of ctx.results) {
+        // console.log(`\t==> type: ${val.type}, result: ${val.result}`);
+        totalCount++;
+        if (val.result === PASS) passCount++;
+        if (val.result === FAIL) failCount++;
+      }
+    }
+
+    console.log(`\nValidity testing results: url total: ${urlCount}, test total: ${totalCount}, pass: ${passCount}, fail: ${failCount}`);
+
+    return failCount;
   }
 
   const crawler = getCrawler();
@@ -293,14 +340,7 @@ test("Crawl the docs and execute tests", async () => {
     console.error(`[ERROR] The crawler tests failed due to error / dead links`);
   }
 
-  let passCount = 0, failCount = 0;
-  validityTestResults.forEach((v, k) => {
-    v.forEach(e => {
-      if (e.result === PASS) passCount++;
-      if (e.result === FAIL) failCount++;
-    });
-  });
-  console.log(`\n\nValidity testing results: pass: ${passCount}, fail: ${failCount}`)
+  const failCount = await reportValidityTestResults();
   if (failCount > 0) {
     console.error(`[ERROR] The crawler tests failed due to validity testing errors - check the logs above for details`);
   }
