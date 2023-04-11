@@ -250,7 +250,8 @@ test("Crawl the docs and execute tests", async () => {
         testValidity(vt, url, resp.body.toString());
       } else {
         const errMsg = typeof err?.message !== 'undefined' ? `: ${err.message}` : '';
-        console.error(`[ERROR] error while getting file for validity test on ${url} (${resp.statusCode})${errMsg}`);
+        const scMsg = typeof resp?.statusCode !== 'undefined' ? ` (${resp.statusCode})` : '';
+        console.error(`[ERROR] error while getting file for validity test on ${url}${scMsg}${errMsg}`);
       }
       validityTestResultSetStatus(url, DONE);
     });
