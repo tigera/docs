@@ -96,5 +96,5 @@ build-ia-operator-reference:
 				./gen-crd-api-reference-docs \
 					-api-dir github.com/tigera/image-assurance/operator/api \
 					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
-					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia_api.mdx && \
-					sed -i "s|<br>|<br/>|g" /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia_api.mdx'
+					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx && \
+					sed -i "s|<br>|<br/>|g" /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx'
