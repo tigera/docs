@@ -50,6 +50,7 @@ test("Crawl the docs and execute tests", async () => {
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoq`,
     `https://en.wikipedia.org/wiki/Autonomous_System_(Internet)%3E`,
     `https://installer.calicocloud.io/manifests/v3.15.1-8/manifests`,
+    `https://installer.calicocloud.io/manifests/v3.16.1-0/manifests`,
     `https://d881b853ae312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com`,
     `https://www.googletagmanager.com`,
     'https://csrc.nist.gov/publications/detail/fips/140/2/final',
@@ -74,7 +75,8 @@ test("Crawl the docs and execute tests", async () => {
     'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-windows-amd64.exe', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
     'http://www.iana.org/assignments/service-names', //==>Origin: https://downloads.tigera.io/ee/v3.14.4/manifests/tigera-operator.yaml
     'https://downloads.tigera.io/ee/master/manifests/threatdef/honeypod/psp-honeypod.yaml',
-    'https://docs.openstack.org', //This seems to be temporarily down.
+    'http://docs.openstack.org/',
+    'http://docs.openstack.org', //This seems to be temporarily down.
   ];
 
   const lc = linkChecker();
