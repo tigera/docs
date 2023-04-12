@@ -54,7 +54,7 @@ export default function ReleaseNotes() {
           )}
           {release.note}
           <Heading
-            as='h2'
+            as='h3'
             id='component-versions'
           >
             Component Versions
