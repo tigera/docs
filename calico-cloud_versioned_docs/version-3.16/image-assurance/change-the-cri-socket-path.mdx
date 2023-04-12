@@ -1,0 +1,41 @@
+---
+description: Change the Runtime View CRI socket path from the default value.
+---
+
+# Change the Runtime View CRI socket path.
+
+## Big picture
+
+Change the CRI socket path in connected Managed Clusters from the path
+
+## Value
+
+Runtime View collects image information from the pods running in your Managed Clusters by using the CRI interface on the nodes
+they're running on. By default, Kubernetes uses Containerd and the socket path is located at `/run/containerd/containerd.sock`,
+but some systems use different CRI implementations or the containerd socket is located somewhere else.
+
+If the location of the CRI socket is not the default value, you will need to update this path for your Managed Clusters
+before enabling the Runtime View.
+
+## Before you begin
+
+**Required**
+
+Find out what the CRI socket path for you Managed Clusters is. If it is something other than `/run/containerd/containerd.sock`,
+you will need to change the path in our system.
+
+Below is a list of systems that are known to use CRI implementations other than Containerd, or the Containerd socket
+is located some other than the default location:
+1. Rancher uses cri-dockerd, so the CRI socket path should be located at `/var/run/cri-dockerd.sock`.
+2. EKS installations with kubernetes version lower than 1.23 use docker shim, located at `/var/run/dockershim.sock`
+3. RKE2 installation use Containerd but it's located at `/run/k3s/containerd/containerd.sock`
+4. Installations of Kubernetes versions lower than 1.23 might be using `dockershim` by default, located at `/var/run/dockershim.sock`
+
+**Configuring the CRI socket path for Managed Cluster**
+
+To update the CRI socket path for you Managed Cluster use the following command:
+```bash
+kubectl patch imageassurance default --type='merge' -p '{"spec":{"criSocketPath":"<path-to-cri-socket"}}'
+```
+
+See [the installation reference](../reference/installation/api.mdx#image-assurance.operator.tigera.io/v1.ImageAssuranceSpec) for more details on the ImageAssurance CR.
