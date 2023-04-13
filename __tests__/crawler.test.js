@@ -119,11 +119,9 @@ test("Crawl the docs and execute tests", async () => {
 
   function testCodeBlocks($, origin) {
     if (validityTest.length === 0) return;
-    validityTestResultSetStatus(origin, WIP);
     validityTest.forEach(type => {
       testCodeBlocksByType($, origin, type);
     });
-    validityTestResultSetStatus(origin, DONE);
   }
 
   function validityTestResultSetStatus(url, status) {
@@ -135,18 +133,25 @@ test("Crawl the docs and execute tests", async () => {
   function testCodeBlocksByType($, origin, type) {
     const codeBlocks = $(`pre.language-${type} code`);
     for (let idxBlock = 0; idxBlock < codeBlocks.length; idxBlock++) {
-      const codeLines = [];
-      const lines = $(codeBlocks[idxBlock]).find('span.token-line');
-      for (let idxLine = 0; idxLine < lines.length; idxLine++) {
-        const line = $(lines[idxLine]).text();
-        codeLines.push(line);
+      try {
+        validityTestResultSetStatus(origin, WIP);
+        const codeLines = [];
+        const lines = $(codeBlocks[idxBlock]).find('span.token-line');
+        for (let idxLine = 0; idxLine < lines.length; idxLine++) {
+          const line = $(lines[idxLine]).text();
+          codeLines.push(line);
+        }
+        if (codeLines.length === 0) {
+          console.warn(`[WARNING] An empty code block exists in ${origin}`);
+          continue;
+        }
+        const code = codeLines.join('\n');
+        testValidity(type, origin, code);
+      } catch (err) {
+        console.error(`[ERROR] an error occurred while validity testing code blocks: ${err.message}`);
+      } finally {
+        validityTestResultSetStatus(origin, DONE);
       }
-      if (codeLines.length === 0) {
-        console.warn(`[WARNING] An empty code block exists in ${origin}`);
-        continue;
-      }
-      const code = codeLines.join('\n');
-      testValidity(type, origin, code);
     }
   }
 
