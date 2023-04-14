@@ -131,7 +131,7 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function testCodeBlocksByType($, origin, type) {
-    const codeBlocks = $(`pre.language-${type} code`);
+    const codeBlocks = $(`div[data-codeblock-validation="true"] pre.language-${type} code`);
     for (let idxBlock = 0; idxBlock < codeBlocks.length; idxBlock++) {
       try {
         validityTestResultSetStatus(origin, WIP);
