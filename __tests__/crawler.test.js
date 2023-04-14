@@ -79,6 +79,11 @@ test("Crawl the docs and execute tests", async () => {
     'https://downloads.tigera.io/ee/master/manifests/threatdef/honeypod/psp-honeypod.yaml',
     'http://docs.openstack.org/',
     'http://docs.openstack.org', //This seems to be temporarily down.
+    'https://tools.ietf.org/html/rfc5925',
+    'https://datatracker.ietf.org/doc/html/rfc1149',
+    'https://datatracker.ietf.org/doc/html/rfc7938',
+    'https://tools.ietf.org/html/rfc5890',
+    'https://tools.ietf.org/html/rfc1123',
   ];
 
   const lc = linkChecker();
