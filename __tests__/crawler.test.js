@@ -44,6 +44,7 @@ test("Crawl the docs and execute tests", async () => {
     `https://installer.calicocloud.io/`,
     `https://installer.calicocloud.io/charts`,
     `https://docs.tigera.io/calico/charts`,
+    'https://Q4GSZWRKBA-dsn.algolia.net',
     `https://github.com/projectcalico/calico/releases/download/master/ocp.tgz`,
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl`,
     `https://github.com/projectcalico/calico/releases/download/master/install-calico-windows.ps1`,
@@ -63,6 +64,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator',
     //temp
     /^https:\/\/v1-21\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.21\//,
+    'https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm',
     'https://www.iana.org/assignments/service-names',//==>Origin: https://downloads.tigera.io/ee/v3.15.2/manifests/tigera-operator.yaml'
     'https://stedolan.github.io/jq/',
     `http://kubernetes.io/docs/user-guide/secrets/`,
