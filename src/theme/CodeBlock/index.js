@@ -4,13 +4,10 @@ import Details from '@theme/Details';
 import styles from './styles.module.css';
 
 export default function CodeBlockWrapper(props) {
-  const { collapsible, title, metastring, ...otherProps } = props;
-  const NO_VAL = 'noValidation';
+  const { collapsible, noValidation, title, metastring, ...otherProps } = props;
 
-  const noValidation = typeof props[NO_VAL] !== 'undefined'
-    || (typeof metastring === 'string' && metastring.includes(NO_VAL));
-
-  const codeBlockValidation = <div data-codeblock-validation={!noValidation}>
+  const nv = typeof noValidation === 'boolean' && noValidation;
+  const codeBlockValidation = <div data-codeblock-validation={!nv}>
     { collapsible ? <CodeBlock {...otherProps} /> : <CodeBlock {...props} /> }
   </div>;
 
