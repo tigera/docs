@@ -22,12 +22,11 @@ test("Crawl the docs and execute tests", async () => {
   const validityTest = process.env.VALIDITY_TEST ? process.env.VALIDITY_TEST.split(',') : [];
   const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES.split(',') : [];
   const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL==='true' : false;
-  const fileInspect = /https?:\/\/(installer\.calicocloud\.io|downloads\.tigera\.io|raw\.githubusercontent\.com\/projectcalico)\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|ps1|sh|bat|json)/gi;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
   const SITEMAP = 'sitemap.xml';
   const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
   const USE_LC = [
-    { regex: fileInspect, processContent: true},
+    { regex: inspectFilesRegExp(), processContent: true},
     { regex: fileRegex, processContent: false},
     { regex: /\/reference\/legal\/[\w-]+$/i, processContent: true },
     { regex: /\/calico-cloud\/get-help\/support$/i, processContent: true },
@@ -45,6 +44,9 @@ test("Crawl the docs and execute tests", async () => {
     `https://installer.calicocloud.io/charts`,
     `https://docs.tigera.io/calico/charts`,
     'https://Q4GSZWRKBA-dsn.algolia.net',
+    'http://backend.stars:6379/status',
+    'http://client.client:9000/status',
+    'http://frontend.stars:80/status',
     `https://github.com/projectcalico/calico/releases/download/master/ocp.tgz`,
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl`,
     `https://github.com/projectcalico/calico/releases/download/master/install-calico-windows.ps1`,
@@ -98,6 +100,22 @@ test("Crawl the docs and execute tests", async () => {
   const urlCache = new Map();
   const validityTestResults = new Map();
 
+  function inspectFilesRegExp() {
+    const ext = '(ya?ml|ps1|sh|bat|json)';
+    const domains = [
+      'installer.calicocloud.io',
+      'downloads.tigera.io',
+      'raw.githubusercontent.com/projectcalico',
+      'docs.tigera.io',
+    ]
+    if (isLocalHost) {
+      domains.push(DOCS.replace(/^http:\/\//, ''));
+    }
+    const red = `(https?://${domains.join(`|https?://`)})`
+      .replace('.', '\\.');
+    const res = `${red}/[-a-zA-Z0-9()@:%._+~#?&/=]+?\\.${ext}`;
+    return new RegExp(res, 'gi');
+  }
 
   function cheerioCrawler() {
     return new CheerioCrawler({
@@ -107,7 +125,7 @@ test("Crawl the docs and execute tests", async () => {
         const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
         for (let url of urls) {
           if (isLocalHost) {
-            const testUrl = url.replace(PROD_REGEX, `${DOCS}`);
+            const testUrl = url.replace(PROD_REGEX, DOCS);
             if (request.url === testUrl) url = testUrl;
           }
           checkAndUseLinkChecker(request.url, url);
@@ -259,6 +277,7 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function doValidityTestRequest(vt, url) {
+    validityTestResultSetStatus(url, WIP);
     const opts = {follow_max: 5, follow_keep_method: true}
     needle.request('get', url, null, opts, (err, resp) => {
       if (!err && resp.statusCode === 200) {
@@ -276,11 +295,8 @@ test("Crawl the docs and execute tests", async () => {
     if (lc.isInvalidOrSkipped(url) || lc.isIgnored(url)) return;
     if (validityTestResults.has(url)) return;
     validityTestFiles.forEach(vt => {
-      if (vt === 'yaml' && /\.ya?ml$/.test(url)) {
-        validityTestResultSetStatus(url, WIP);
-        doValidityTestRequest(vt, url);
-      } else if (vt === 'json' && /\.json$/.test(url)) {
-        validityTestResultSetStatus(url, WIP);
+      if ((vt === 'yaml' && /\.ya?ml$/.test(url)) ||
+          (vt === 'json' && /\.json$/.test(url))) {
         doValidityTestRequest(vt, url);
       }
     });
