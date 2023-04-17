@@ -86,6 +86,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://datatracker.ietf.org/doc/html/rfc7938',
     'https://tools.ietf.org/html/rfc5890',
     'https://tools.ietf.org/html/rfc1123',
+    'http://cr.yp.to/libtai/tai64.html#tai64n',
   ];
 
   const lc = linkChecker();
