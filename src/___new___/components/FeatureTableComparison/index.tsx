@@ -14,10 +14,17 @@ import {
 } from '@chakra-ui/react';
 import { CheckIcon } from '@chakra-ui/icons';
 
-import { heading2Styles } from '../styles';
+import { heading2Styles, tableStyle } from '../styles';
 import featureTableComparisonInfo from '../../data/featureTableComparisonInfo';
 
-import { sectionOuterStyles, tableContainerStyle, headerTextStyle, checkStyle, headerTextStyleSmall } from './styles';
+import {
+  sectionOuterStyles,
+  rowStyle,
+  tableContainerStyle,
+  headerTextStyle,
+  checkStyle,
+  headerTextStyleSmall,
+} from './styles';
 
 interface ProductComparisonProps {
   sx?: SystemStyleObject;
@@ -49,7 +56,10 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ ...rest }) => (
           </Heading>
 
           <TableContainer>
-            <Table size='xl'>
+            <Table
+              size='xl'
+              sx={tableStyle}
+            >
               {/* <TableCaption>Product comparison by feature</TableCaption> */}
               <Thead>
                 <Tr>
@@ -62,7 +72,7 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ ...rest }) => (
               <Tbody>
                 {info.content.map((info, index_inner) => (
                   <Tr key={`${index}-${index_inner}`}>
-                    <Td sx={{ w: '700px' }}>{info.rowHeader}</Td>
+                    <Td sx={rowStyle}>{info.rowHeader}</Td>
                     <Td sx={checkStyle}>{info.CalicoOpenSource === 'Y' ? <CheckIcon sx={iconStyles} /> : ''}</Td>
                     <Td sx={checkStyle}>{info.CalicoEntreprise === 'Y' ? <CheckIcon sx={iconStyles} /> : ''}</Td>
                     <Td sx={checkStyle}>{info.CalicoCloud === 'Y' ? <CheckIcon sx={iconStyles} /> : ''}</Td>

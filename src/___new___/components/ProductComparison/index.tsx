@@ -17,7 +17,14 @@ import {
 import { heading2Styles } from '../styles';
 import compareInfo from '../../data/compareInfo';
 
-import { sectionOuterStyles, iconContainerStyle, iconStyle, tableContainerStyle, headerTextStyle } from './styles';
+import {
+  sectionOuterStyles,
+  iconContainerStyle,
+  iconStyle,
+  tableContainerStyle,
+  headerTextStyle,
+  tableStyle,
+} from './styles';
 
 interface ProductComparisonProps {
   sx?: SystemStyleObject;
@@ -37,7 +44,10 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ ...rest }) => (
     </Heading>
     <Box sx={tableContainerStyle}>
       <TableContainer>
-        <Table size='xl'>
+        <Table
+          size='xl'
+          sx={tableStyle}
+        >
           <Thead>
             <Tr>
               <Th></Th>

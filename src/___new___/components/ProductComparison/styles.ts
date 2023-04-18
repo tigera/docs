@@ -10,11 +10,9 @@ export const sectionOuterStyles = (hasDarkBg: boolean) => ({
 
 export const tableContainerStyle = {
   justifyContent: 'center',
-  // width: '1660px',
-  // alignSelf: 'center',
-  // textAlignLast: 'center',
+
   alignItems: 'center',
-  p: 8,
+  m: [3, 4, 8],
 };
 
 export const headerTextStyle = {
@@ -53,17 +51,8 @@ export const iconStyle = {
   height: '64px',
 };
 
-export const rectangleStyle = {
-  width: ['100%', '371px'],
-  border: '1px',
-  borderColor: 'tigeraCloudGrey',
-  borderRadius: 'lg',
-  bg: 'tigeraWhite',
-  ml: [0, 4],
-  mr: [0, 4],
-  mt: [4, 4, 4, 4, ''],
-  mb: [4, 4, 4, 4, ''],
-  pb: '40px',
+export const tableStyle = {
+  width: ['92vw', '92vw', '92vw', '92vw', '1320px'],
 };
 
 export const actionBoxStyles = {

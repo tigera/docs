@@ -31,3 +31,7 @@ export const headerTextStyle = {
   pt: 14,
   mb: 4,
 };
+
+export const tableStyle = {
+    width: ['92vw', '92vw', '92vw', '92vw', '1320px'],
+  };

@@ -10,11 +10,11 @@ export const sectionOuterStyles = (hasDarkBg: boolean) => ({
 
 export const tableContainerStyle = {
   justifyContent: 'center',
-  width: '1093px',
+  maxWidth: '1093px',
   alignSelf: 'center',
   // textAlignLast: 'center',
   alignItems: 'center',
-  // p: 8,
+  m: [3, 4, 8],
 };
 
 export const checkStyle = {
@@ -57,22 +57,8 @@ export const iconContainerStyle = {
   pt: '44px',
 };
 
-export const iconStyle = {
-  width: 32,
-  height: 32,
-};
-
-export const rectangleStyle = {
-  width: ['100%', '371px'],
-  border: '1px',
-  borderColor: 'tigeraCloudGrey',
-  borderRadius: 'lg',
-  bg: 'tigeraWhite',
-  ml: [0, 4],
-  mr: [0, 4],
-  mt: [4, 4, 4, 4, ''],
-  mb: [4, 4, 4, 4, ''],
-  pb: '40px',
+export const rowStyle = {
+  width: ['22vw', '32vw', '32vw', '49vw', '600px'],
 };
 
 export const actionBoxStyles = {
