@@ -54,8 +54,8 @@ export default function ReleaseNotes() {
           )}
           {release.note}
           <Heading
-            as='h2'
-            id='component-versions'
+            as='h3'
+            id={`component-versions-${toKebab(release.title)}`}
           >
             Component Versions
           </Heading>

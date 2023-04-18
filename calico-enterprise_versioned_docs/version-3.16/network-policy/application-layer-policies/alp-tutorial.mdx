@@ -5,12 +5,42 @@ description: Learn how to apply ALP to your workloads and control ingress traffi
 # Application layer policy tutorial
 
 This tutorial shows how to use {{prodname}} application layer policy to restrict ingress traffic for applications and microservices.
-Assume that the application is installed in your {{prodname}} cluster and that the following application pods are running. 
+ 
+### Install the demo application
 
-## Set up
-- A {{prodname}} cluster is running with application layer policy enabled
-- Cluster has three microservices: customer, database, summary
-- The customer web service should not have access to the backend database, but should have access to clients outside the cluster
+We will use a simple microservice application to demonstrate {{prodname}}
+application layer policy. The [YAO Bank](https://github.com/projectcalico/yaobank) application creates a
+customer-facing web application, a microservice that serves up account
+summaries, and an [etcd](https://github.com/coreos/etcd) datastore.
+
+```bash
+kubectl apply -f {{tutorialFilesURL}}/10-yaobank.yaml
+```
+```bash
+namespace/yaobank configured
+service/database created
+serviceaccount/database created
+deployment.apps/database created
+service/summary created
+serviceaccount/summary created
+deployment.apps/summary created
+service/customer created
+serviceaccount/customer created
+deployment.apps/customer created
+```
+:::note
+
+You can also
+[view the manifest in your browser](/files/10-yaobank.yaml).
+
+:::
+
+Verify that the application pods have been created and are ready.
+```bash
+    kubectl rollout status deploy/summary deploy/customer deploy/database
+```
+
+When the demo application is displayed, you will see three pods.
 
 ```
 NAME                        READY     STATUS    RESTARTS   AGE
@@ -18,6 +48,11 @@ customer-2809159614-qqfnx   3/3       Running   0          21h
 database-1601951801-m4w70   3/3       Running   0          21h
 summary-2817688950-g1b3n    3/3       Running   0          21h
 ```
+
+## Set up
+- A {{prodname}} cluster is running with application layer policy enabled
+- Cluster has three microservices: customer, database, summary
+- The customer web service should not have access to the backend database, but should have access to clients outside the cluster
 
 Imagine what would happen if an attacker were to gain control of the customer web pod in our
 application. Let's simulate this by executing a remote shell inside that pod.

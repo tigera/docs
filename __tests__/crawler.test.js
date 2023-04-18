@@ -22,12 +22,11 @@ test("Crawl the docs and execute tests", async () => {
   const validityTest = process.env.VALIDITY_TEST ? process.env.VALIDITY_TEST.split(',') : [];
   const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES.split(',') : [];
   const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL==='true' : false;
-  const fileInspect = /https?:\/\/(installer\.calicocloud\.io|downloads\.tigera\.io|raw\.githubusercontent\.com\/projectcalico)\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|ps1|sh|bat|json)/gi;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
   const SITEMAP = 'sitemap.xml';
   const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
   const USE_LC = [
-    { regex: fileInspect, processContent: true},
+    { regex: inspectFilesRegExp(), processContent: true},
     { regex: fileRegex, processContent: false},
     { regex: /\/reference\/legal\/[\w-]+$/i, processContent: true },
     { regex: /\/calico-cloud\/get-help\/support$/i, processContent: true },
@@ -44,6 +43,10 @@ test("Crawl the docs and execute tests", async () => {
     `https://installer.calicocloud.io/`,
     `https://installer.calicocloud.io/charts`,
     `https://docs.tigera.io/calico/charts`,
+    'https://Q4GSZWRKBA-dsn.algolia.net',
+    'http://backend.stars:6379/status',
+    'http://client.client:9000/status',
+    'http://frontend.stars:80/status',
     `https://github.com/projectcalico/calico/releases/download/master/ocp.tgz`,
     `https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl`,
     `https://github.com/projectcalico/calico/releases/download/master/install-calico-windows.ps1`,
@@ -63,6 +66,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator',
     //temp
     /^https:\/\/v1-21\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.21\//,
+    'https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm',
     'https://www.iana.org/assignments/service-names',//==>Origin: https://downloads.tigera.io/ee/v3.15.2/manifests/tigera-operator.yaml'
     'https://stedolan.github.io/jq/',
     `http://kubernetes.io/docs/user-guide/secrets/`,
@@ -77,6 +81,12 @@ test("Crawl the docs and execute tests", async () => {
     'https://downloads.tigera.io/ee/master/manifests/threatdef/honeypod/psp-honeypod.yaml',
     'http://docs.openstack.org/',
     'http://docs.openstack.org', //This seems to be temporarily down.
+    'https://tools.ietf.org/html/rfc5925',
+    'https://datatracker.ietf.org/doc/html/rfc1149',
+    'https://datatracker.ietf.org/doc/html/rfc7938',
+    'https://tools.ietf.org/html/rfc5890',
+    'https://tools.ietf.org/html/rfc1123',
+    'http://cr.yp.to/libtai/tai64.html#tai64n',
   ];
 
   const lc = linkChecker();
@@ -91,6 +101,22 @@ test("Crawl the docs and execute tests", async () => {
   const urlCache = new Map();
   const validityTestResults = new Map();
 
+  function inspectFilesRegExp() {
+    const ext = '(ya?ml|ps1|sh|bat|json)';
+    const domains = [
+      'installer.calicocloud.io',
+      'downloads.tigera.io',
+      'raw.githubusercontent.com/projectcalico',
+      'docs.tigera.io',
+    ]
+    if (isLocalHost) {
+      domains.push(DOCS.replace(/^http:\/\//, ''));
+    }
+    const red = `(https?://${domains.join(`|https?://`)})`
+      .replace('.', '\\.');
+    const res = `${red}/[-a-zA-Z0-9()@:%._+~#?&/=]+?\\.${ext}`;
+    return new RegExp(res, 'gi');
+  }
 
   function cheerioCrawler() {
     return new CheerioCrawler({
@@ -100,7 +126,7 @@ test("Crawl the docs and execute tests", async () => {
         const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
         for (let url of urls) {
           if (isLocalHost) {
-            const testUrl = url.replace(PROD_REGEX, `${DOCS}`);
+            const testUrl = url.replace(PROD_REGEX, DOCS);
             if (request.url === testUrl) url = testUrl;
           }
           checkAndUseLinkChecker(request.url, url);
@@ -119,11 +145,9 @@ test("Crawl the docs and execute tests", async () => {
 
   function testCodeBlocks($, origin) {
     if (validityTest.length === 0) return;
-    validityTestResultSetStatus(origin, WIP);
     validityTest.forEach(type => {
       testCodeBlocksByType($, origin, type);
     });
-    validityTestResultSetStatus(origin, DONE);
   }
 
   function validityTestResultSetStatus(url, status) {
@@ -133,20 +157,27 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function testCodeBlocksByType($, origin, type) {
-    const codeBlocks = $(`pre.language-${type} code`);
+    const codeBlocks = $(`div[data-codeblock-validation="true"] pre.language-${type} code`);
     for (let idxBlock = 0; idxBlock < codeBlocks.length; idxBlock++) {
-      const codeLines = [];
-      const lines = $(codeBlocks[idxBlock]).find('span.token-line');
-      for (let idxLine = 0; idxLine < lines.length; idxLine++) {
-        const line = $(lines[idxLine]).text();
-        codeLines.push(line);
+      try {
+        validityTestResultSetStatus(origin, WIP);
+        const codeLines = [];
+        const lines = $(codeBlocks[idxBlock]).find('span.token-line');
+        for (let idxLine = 0; idxLine < lines.length; idxLine++) {
+          const line = $(lines[idxLine]).text();
+          codeLines.push(line);
+        }
+        if (codeLines.length === 0) {
+          console.warn(`[WARNING] An empty code block exists in ${origin}`);
+          continue;
+        }
+        const code = codeLines.join('\n');
+        testValidity(type, origin, code);
+      } catch (err) {
+        console.error(`[ERROR] an error occurred while validity testing code blocks: ${err.message}`);
+      } finally {
+        validityTestResultSetStatus(origin, DONE);
       }
-      if (codeLines.length === 0) {
-        console.warn(`[WARNING] An empty code block exists in ${origin}`);
-        continue;
-      }
-      const code = codeLines.join('\n');
-      testValidity(type, origin, code);
     }
   }
 
@@ -247,6 +278,7 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function doValidityTestRequest(vt, url) {
+    validityTestResultSetStatus(url, WIP);
     const opts = {follow_max: 5, follow_keep_method: true}
     needle.request('get', url, null, opts, (err, resp) => {
       if (!err && resp.statusCode === 200) {
@@ -264,11 +296,8 @@ test("Crawl the docs and execute tests", async () => {
     if (lc.isInvalidOrSkipped(url) || lc.isIgnored(url)) return;
     if (validityTestResults.has(url)) return;
     validityTestFiles.forEach(vt => {
-      if (vt === 'yaml' && /\.ya?ml$/.test(url)) {
-        validityTestResultSetStatus(url, WIP);
-        doValidityTestRequest(vt, url);
-      } else if (vt === 'json' && /\.json$/.test(url)) {
-        validityTestResultSetStatus(url, WIP);
+      if ((vt === 'yaml' && /\.ya?ml$/.test(url)) ||
+          (vt === 'json' && /\.json$/.test(url))) {
         doValidityTestRequest(vt, url);
       }
     });
