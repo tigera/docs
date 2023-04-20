@@ -485,6 +485,12 @@ no policy is required to allow it. {{prodname}} only sends probes to egress gate
 
 ### Configure a Namespace or Pod to use egress gateways
 
+There are two ways to use egress gateways, both by annotating a Kubernetes Namespace or Pod. In the first method, it is possible to
+annotate a Kubernetes Namespace or Pod to use an egress gateway directly. While, in the second method, a Kubernetes Namespace or Pod is annotated to
+use an Egress Gateway Policy resource which allows to use an egress gateway for a specific destination or completely skip one.
+
+#### Annotating a Namespace or pod to use an egress gateway directly
+
 In a {{prodname}} deployment, the Kubernetes Namespace and Pod resources honor annotations that
 tell that namespace or pod to use particular egress gateways. These annotations are selectors, and
 their meaning is "the set of pods, anywhere in the cluster, that match those selectors".
@@ -523,6 +529,82 @@ spec:
   ...
 EOF
 ```
+
+#### Annotating a Namespace or pod to use an Egress Gateway Policy
+
+In a {{prodname}} cluster, it is possible annotate a Kubernetes Namespace or Pod for advanced use cases like:
+  - Sending egress traffic to multiple egress gateways based on destination
+  - Skipping egress gateways for reaching to local, but not in cluster, endpoints
+
+The following is an example of Egress Gateway Policy:
+
+```
+apiVersion: projectcalico.org/v3
+kind: EgressGatewayPolicy
+metadata:
+  name: "egw-policy1"
+spec:
+  rules:
+  - destination:
+      cidr: 10.0.0.0/8
+    description: "Local: no gateway"
+  - destination:
+      cidr: 11.0.0.0/8
+    description: "Gateway to on prem"
+    gateway:
+      namespaceSelector: ...
+      selector: ...
+      maxNextHops: ...
+  - description: "Gateway to internet"
+    gateway:
+      namespaceSelector: ...
+      selector: ...
+      maxNextHops: ...
+```
+
+:::note
+- If *destination* is not provided, it would be treated as 0.0.0.0/0 acting as the default rule.
+- If no gateway is specified, then egress traffic won't be sent to an egress gateway, and would be routed locally. This is helpful for reaching
+to local endpoints that are not part of cluster.
+- If gateway is specified, it's mandatory to set both selector and namespaceSelector. Selector and namespaceSelector both have the same meaning
+as explained in the previous section, except that setting namespaceSelector is mandatory when gateway is set in an Egress Gateway resource.
+- maxNextHops specifies the maximum number of egress gateway replicas from the selected deployment that a pod should depend on, as described in 
+[Optimize egress networking for workloads with long-lived TCP connections](egress-gateway-maintenance.mdx#reduce-the-impact-of-gateway-downtime).
+- {{prodname}} rejects an Egress Gateway Policy resource that has:
+  - no rule.
+  - no rule that specifies either gateway or destination.
+  - rule with empty `selector` or `namespaceSelector`.
+  - two or more rules with the identical destination.
+:::
+
+To configure all the pods in a namespace to use an Egress Gateway Policy, for example named `egw-policy1`, you would annotate that namespace like this:
+
+```bash
+kubectl annotate ns <namespace> egress.projectcalico.org/egressGatewayPolicy="egw-policy1"
+```
+
+To configure a specific Kubernetes Pod to use the same Egress Gateway Policy, specify the same annotations when
+creating the pod. For example:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    egress.projectcalico.org/egressGatewayPolicy: "egw-policy1"
+  name: my-client,
+  namespace: <namespace>,
+spec:
+  ...
+EOF
+```
+
+:::note
+If a namespace or pod refer to an Egress Gateway Policy using annotations, but the actual Egress Gateway Policy is not created,
+{{prodname}} considers it as a misconfiguration, and blocks traffic from that namespace or pod. This is also the case, even
+the namespace or pod uses other egress annotaions like the ones mentioned in the previous section.
+:::
 
 ### (Optional) Enable ECMP load balancing
 
