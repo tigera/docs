@@ -24,15 +24,17 @@ import {
   headerTextStyle,
   checkStyle,
   headerTextStyleSmall,
+  thStyle,
 } from './styles';
 
 interface ProductComparisonProps {
   sx?: SystemStyleObject;
+  isDarkMode: boolean;
 }
 
 export const iconStyles = { color: 'tigeraGreen.900', w: '21px', h: '21px' };
 
-const ProductComparison: React.FC<ProductComparisonProps> = ({ ...rest }) => (
+const ProductComparison: React.FC<ProductComparisonProps> = ({ isDarkMode, ...rest }) => (
   <Flex
     sx={sectionOuterStyles(true)}
     {...rest}
@@ -58,15 +60,14 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ ...rest }) => (
           <TableContainer>
             <Table
               size='xl'
-              sx={tableStyle}
+              sx={tableStyle(isDarkMode)}
             >
-              {/* <TableCaption>Product comparison by feature</TableCaption> */}
               <Thead>
                 <Tr>
                   <Th></Th>
-                  <Th>Calico Open Source</Th>
-                  <Th>Calico Enterprise</Th>
-                  <Th>Calico Cloud</Th>
+                  <Th sx={thStyle(isDarkMode)}>Calico Open Source</Th>
+                  <Th sx={thStyle(isDarkMode)}>Calico Enterprise</Th>
+                  <Th sx={thStyle(isDarkMode)}>Calico Cloud</Th>
                 </Tr>
               </Thead>
               <Tbody>

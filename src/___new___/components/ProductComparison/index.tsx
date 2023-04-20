@@ -8,9 +8,7 @@ import {
   Image,
   TableContainer,
   Table,
-  Thead,
   Tr,
-  Th,
   Tbody,
   Td,
 } from '@chakra-ui/react';
@@ -28,17 +26,18 @@ import {
 
 interface ProductComparisonProps {
   sx?: SystemStyleObject;
+  isDarkMode: boolean;
 }
 
-const ProductComparison: React.FC<ProductComparisonProps> = ({ ...rest }) => (
+const ProductComparison: React.FC<ProductComparisonProps> = ({ isDarkMode, ...rest }) => (
   <Flex
-    sx={sectionOuterStyles(false)}
+    sx={sectionOuterStyles(isDarkMode)}
     {...rest}
   >
     <Heading
       as='h2'
       size='md'
-      sx={{ ...heading2Styles(false), ...headerTextStyle }}
+      sx={{ ...heading2Styles(isDarkMode), ...headerTextStyle }}
     >
       Best fit
     </Heading>
@@ -46,15 +45,8 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ ...rest }) => (
       <TableContainer>
         <Table
           size='xl'
-          sx={tableStyle}
+          sx={tableStyle(isDarkMode)}
         >
-          <Thead>
-            <Tr>
-              <Th></Th>
-              <Th> </Th>
-              <Th>Best fit</Th>
-            </Tr>
-          </Thead>
           <Tbody>
             {compareInfo.bestFit.map((info, index) => (
               <Tr key={index}>

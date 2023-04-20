@@ -4,7 +4,7 @@ export const sectionOuterStyles = (hasDarkBg: boolean) => ({
   flexDirection: 'column',
   h: 'auto',
   w: '100%',
-  bg: hasDarkBg ? 'linear-gradient(105.96deg, #0964AD 56.79%, #06547A 100%)' : 'tigeraGrey.100',
+  bg: hasDarkBg ? 'tigeraBlack' : 'tigeraGrey.100',
   pb: '60px',
 });
 

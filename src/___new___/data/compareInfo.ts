@@ -10,7 +10,7 @@ export default {
         'The base product that comprises both Calico Enterprise and Calico Cloud. It provides the core networking and network policy features.',
       ],
       linkDescription: 'Learn more about Calico Open Source',
-      image: 'img/calicoOpenPI.png',
+      image: 'img/calico-open-source.svg',
     },
     {
       title: 'Calico Enterprise',
@@ -20,7 +20,7 @@ export default {
         'Includes Calico Open Source core networking and network policy, but adds advanced features for networking, network policy, visibility and troubleshooting, threat defense, and compliance reports. ',
       ],
       linkDescription: 'Learn more about Enterprise',
-      image: 'img/calicoEntreprisePI.png',
+      image: 'img/calico-enterprise.drawio.svg',
     },
     {
       title: 'Calico Cloud',
@@ -30,7 +30,7 @@ export default {
         'The SaaS version of Calico Enterprise. It adds Image Assurance to scan and detect vulnerabilities in images, and container threat defense to detect malware. It also adds onboarding tutorials, and eliminates the cost to manage Elasticsearch logs and storage that comes with Calico Enterprise.',
       ],
       linkDescription: 'Learn more about Calico Cloud',
-      image: 'img/calicoCloudPI.png',
+      image: 'img/calico-cloud-features.svg',
     },
   ],
   bestFit: [

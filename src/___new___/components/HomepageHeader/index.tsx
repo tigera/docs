@@ -13,10 +13,11 @@ import { heading1Styles } from '../styles';
 
 interface HeroBannerProps {
   siteConfig: any;
+  isDarkMode: boolean;
   sx?: SystemStyleObject;
 }
 
-const HomepageHeader: React.FC<HeroBannerProps> = ({ sx, siteConfig, ...rest }) => {
+const HomepageHeader: React.FC<HeroBannerProps> = ({ sx, siteConfig, isDarkMode, ...rest }) => {
   return (
     <Flex
       sx={{ ...heroContainerStyles, ...sx }}

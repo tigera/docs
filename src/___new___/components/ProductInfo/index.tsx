@@ -14,18 +14,19 @@ import LearnMoreButton from '../LearnMoreButton';
 
 interface ProductInfoProps {
   sx?: SystemStyleObject;
+  isDarkMode: boolean;
 }
 
-const ProductInfo: React.FC<ProductInfoProps> = ({ sx, ...rest }) => {
+const ProductInfo: React.FC<ProductInfoProps> = ({ sx, isDarkMode, ...rest }) => {
   return (
     <Flex
-      sx={{ ...prodContainerStyles, ...sx }}
+      sx={{ ...prodContainerStyles(isDarkMode), ...sx }}
       {...rest}
     >
       <Heading
         as='h2'
         size='md'
-        sx={{ ...heading2Styles(false), ...headerTextStyle }}
+        sx={{ ...heading2Styles(isDarkMode), ...headerTextStyle }}
       >
         About Tigera products
       </Heading>
@@ -34,7 +35,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ sx, ...rest }) => {
 
         return (
           <Flex
-            sx={sectionOuterStyles(false)}
+            sx={sectionOuterStyles(isDarkMode)}
             key={index}
           >
             <Flex sx={sectionInnerStyles(hasDarkBg)}>
@@ -48,7 +49,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ sx, ...rest }) => {
                 <Heading
                   as='h2'
                   size='md'
-                  sx={heading2Styles(false)}
+                  sx={heading2Styles(isDarkMode)}
                 >
                   {info.title}
                 </Heading>
@@ -56,7 +57,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ sx, ...rest }) => {
                   {info.description.map((desc, index) => (
                     <Text
                       key={index}
-                      sx={textContentStyles(false)}
+                      sx={textContentStyles(isDarkMode)}
                     >
                       {desc}
                     </Text>
@@ -67,7 +68,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ sx, ...rest }) => {
                   <LearnMoreButton
                     href={info.link}
                     ariaLabel={info.linkDescription}
-                    hasDarkBg={false}
+                    hasDarkBg={isDarkMode}
                   />
                 </Flex>
               </Flex>

@@ -8,11 +8,16 @@ export const sectionOuterStyles = (hasDarkBg: boolean) => ({
   pb: '60px',
 });
 
+
+export const thStyle = (isDarkMode: boolean) => ({
+  color: isDarkMode ? 'tigeraWhite' : 'tigeraGrey.800',
+});
+
+
 export const tableContainerStyle = {
   justifyContent: 'center',
   maxWidth: '1093px',
   alignSelf: 'center',
-  // textAlignLast: 'center',
   alignItems: 'center',
   m: [3, 4, 8],
 };

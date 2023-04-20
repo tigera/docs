@@ -32,6 +32,8 @@ export const headerTextStyle = {
   mb: 4,
 };
 
-export const tableStyle = {
-    width: ['92vw', '92vw', '92vw', '92vw', '1320px'],
-  };
+export const tableStyle = (isDarkMode: boolean) => ({
+  width: ['92vw', '92vw', '92vw', '92vw', '1320px'],
+  bg: isDarkMode ? 'tigeraBlack' : 'tigeraGrey.100',
+  color: isDarkMode ? 'tigeraWhite' : 'tigeraGrey.800',
+});

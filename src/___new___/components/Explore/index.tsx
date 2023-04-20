@@ -5,7 +5,6 @@ import howItWorksInfo from '../../data/exploreInfo';
 
 import {
   howItWorksSyle,
-  iconContainerStyle,
   innerTextStyle,
   rectangleStyle,
   stackStyle,
@@ -15,9 +14,11 @@ import {
 
 interface HowItWorksProps {
   sx?: SystemStyleObject;
+  isDarkMode: boolean;
+
 }
 
-const HowItWorks: React.FC<HowItWorksProps> = ({ ...rest }) => (
+const HowItWorks: React.FC<HowItWorksProps> = ({ isDarkMode,...rest }) => (
   <Flex
     sx={howItWorksSyle}
     {...rest}
@@ -36,20 +37,14 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ ...rest }) => (
       {howItWorksInfo.howItWorksInfo.map((info, index) => (
         <Box key={index}>
           <Box
-            sx={rectangleStyle}
+            sx={rectangleStyle(isDarkMode)}
             key={index}
           >
-            <Box sx={iconContainerStyle}>
-              {/* <Image
-                src={info.image}
-                sx={iconStyle}
-              /> */}
-            </Box>
-            <Text sx={subHeaderTextStyle}>{info.title}</Text>
+            <Text sx={subHeaderTextStyle(isDarkMode)}>{info.title}</Text>
             {info.description.map((desc, index) => (
               <Text
                 key={index}
-                sx={innerTextStyle}
+                sx={innerTextStyle(isDarkMode)}
               >
                 {desc}
               </Text>

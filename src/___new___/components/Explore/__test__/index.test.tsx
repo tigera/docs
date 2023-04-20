@@ -5,7 +5,7 @@ import Explore from '../index';
 
 describe('<Explore/>', () => {
   it('should render the Explore component', () => {
-    const { asFragment } = render(<Explore />);
+    const { asFragment } = render(<Explore isDarkMode={true} />);
     expect(asFragment()).toMatchSnapshot();
   });
 });

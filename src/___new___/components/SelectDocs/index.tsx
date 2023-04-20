@@ -15,17 +15,18 @@ import {
 
 interface SelectDocsProps {
   sx?: SystemStyleObject;
+  isDarkMode: boolean;
 }
 
-const SelectDocs: React.FC<SelectDocsProps> = ({ ...rest }) => (
+const SelectDocs: React.FC<SelectDocsProps> = ({ isDarkMode, ...rest }) => (
   <Flex
-    sx={sectionOuterStyles(false)}
+    sx={sectionOuterStyles(isDarkMode)}
     {...rest}
   >
     <Heading
       as='h2'
       size='md'
-      sx={{ ...heading2Styles(false), ...headerTextStyle }}
+      sx={{ ...heading2Styles(isDarkMode), ...headerTextStyle }}
     >
       Select your doc set
     </Heading>

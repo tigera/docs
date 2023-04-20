@@ -10,7 +10,7 @@ export const sectionOuterStyles = (hasDarkBg: boolean) => ({
 
 export const tableContainerStyle = {
   justifyContent: 'center',
-
+  alignSelf: 'center',
   alignItems: 'center',
   m: [3, 4, 8],
 };
@@ -51,9 +51,11 @@ export const iconStyle = {
   height: '64px',
 };
 
-export const tableStyle = {
+export const tableStyle = (isDarkMode: boolean) => ({
   width: ['92vw', '92vw', '92vw', '92vw', '1320px'],
-};
+  bg: isDarkMode ? 'tigeraBlack' : 'tigeraGrey.100',
+  color: isDarkMode ? 'tigeraWhite' : 'tigeraGrey.800',
+});
 
 export const actionBoxStyles = {
   mb: 14,

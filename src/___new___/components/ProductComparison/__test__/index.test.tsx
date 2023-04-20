@@ -4,7 +4,7 @@ import ProductComparison from '../index';
 
 describe('<ProductComparison/>', () => {
   it('should render the ProductComparison component', () => {
-    const { asFragment } = render(<ProductComparison />);
+    const { asFragment } = render(<ProductComparison isDarkMode={true}  />);
     expect(asFragment()).toMatchSnapshot();
   });
 });

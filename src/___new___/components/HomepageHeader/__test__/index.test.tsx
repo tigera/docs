@@ -9,7 +9,7 @@ const siteConfig = {
 
 describe('<HomepageHeader/>', () => {
   it('should render the HomepageHeader component', () => {
-    const { asFragment } = render(<HomepageHeader siteConfig={siteConfig} />);
+    const { asFragment } = render(<HomepageHeader siteConfig={siteConfig} isDarkMode={true} />);
     expect(asFragment()).toMatchSnapshot();
   });
 });
