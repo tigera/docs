@@ -125,7 +125,7 @@ If you follow a few simple guidelines, you’ll be well on your way to writing e
 
 The following policy is a global network policy for a microservice that limits all egress communication external to the cluster in the security tier. Does this policy work? Yes. And logically, it seems to cleanly implement application controls.
 
-```yaml
+```yaml noValidation
 1  apiVersion: projectcalico.org/v3
 2  kind: GlobalNetworkPolicy
 3  metadata:
@@ -295,9 +295,10 @@ The following policy shows an inefficient use of selectors. Using `selector: all
 ```yaml
 selector: all()
 ingress:
-  source:
-    selector: label == 'bar'
-    destination: selector: label == 'foo'
+  - source:
+      selector: label == 'bar'
+    destination:
+      selector: label == 'foo'
 ```
 
 The best practice policy below allows the same traffic, but is more efficient and scalable. Why? Because the policy will be rendered only on nodes with workloads that match the selector `label==foo`.
