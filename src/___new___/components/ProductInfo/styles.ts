@@ -45,4 +45,5 @@ export const sectionScreenImage = {
   w: '100%',
   maxHeight: '372px',
   mt: [4, 4, 0],
+  pt: '65px',
 };

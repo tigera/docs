@@ -3,7 +3,8 @@ export const heroContainerStyles = {
   w: '100%',
   bg: 'linear-gradient(105.96deg, #0964AD 56.79%, #06547A 100%)',
   textAlign: 'left',
-  padding: '0 6rem',
+  //   padding: '0 6rem',
+  padding: '0 0 0 18vw',
 };
 
 export const heroInnerContainerStyles = {
