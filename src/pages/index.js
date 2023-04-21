@@ -1,7 +1,7 @@
 import React from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
-import InnerLayout from './innerLayout';
+import InnerLayout from '../___new___/components/InnerLayout/innerLayout';
 
 
 export default function Home() {

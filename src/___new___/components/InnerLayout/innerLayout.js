@@ -1,13 +1,13 @@
 import React from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import SelectDocs from '../___new___/components/SelectDocs';
-import HomepageHeader from '../___new___/components/HomepageHeader';
-import ProductComparison from '../___new___/components/ProductComparison';
-import ProductInfo from '../___new___/components/ProductInfo';
-import FeatureTableComparison from '../___new___/components/FeatureTableComparison';
+import SelectDocs from '../SelectDocs';
+import HomepageHeader from '../HomepageHeader';
+import ProductComparison from '../ProductComparison';
+import ProductInfo from '../ProductInfo';
+import FeatureTableComparison from '../FeatureTableComparison';
 import {useColorMode} from '@docusaurus/theme-common';
 
-import {theme} from '../___new___/theme';
+import {theme} from '../../theme';
 
 import {Grid, GridItem} from '@chakra-ui/react';
 
