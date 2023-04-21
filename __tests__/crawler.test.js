@@ -87,6 +87,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://tools.ietf.org/html/rfc5890',
     'https://tools.ietf.org/html/rfc1123',
     'http://cr.yp.to/libtai/tai64.html#tai64n',
+    'https://thenewstack.io/faster-troubleshooting-with-dynamic-packet-capture/', //==>Origin: http://localhost:4242/calico-cloud/visibility/packetcapture
   ];
 
   const lc = linkChecker();
