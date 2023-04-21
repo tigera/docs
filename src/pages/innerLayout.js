@@ -1,6 +1,5 @@
 import React from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import Explore from '../___new___/components/Explore';
 import SelectDocs from '../___new___/components/SelectDocs';
 import HomepageHeader from '../___new___/components/HomepageHeader';
 import ProductComparison from '../___new___/components/ProductComparison';
@@ -30,12 +29,13 @@ export default function Home() {
                 <Grid
                     gap={0}
                     templateAreas={
-                        '"selectdocs" "explore" "productinfo" "productcomparison" "featuretablecomparison" '
+                        '"selectdocs"  "productinfo" "productcomparison" "featuretablecomparison" '
                     }
                     templateColumns={'1fr'}
                     // note: just loose heights for now, not based on wireframes, please change!
+                    //minmax(720px, max-content) for explore
                     templateRows={
-                        'minmax(200px, max-content) minmax(720px, max-content) minmax(500px, max-content) minmax(400px, max-content) minmax(200px, max-content)'
+                        'minmax(200px, max-content)  minmax(500px, max-content) minmax(400px, max-content) minmax(200px, max-content)'
                     }
                     >
                     <GridItem
@@ -44,12 +44,7 @@ export default function Home() {
                         data-testid='selectdocs-section'>
                         <SelectDocs isDarkMode={isDarkMode} />
                     </GridItem>
-                    <GridItem
-                        gridArea='explore'
-                        as='section'
-                        data-testid='explore-section'>
-                        <Explore isDarkMode={isDarkMode} />
-                    </GridItem>
+                   
                     <GridItem
                         gridArea='productinfo'
                         as='section'

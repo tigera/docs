@@ -28,7 +28,7 @@ const SelectDocs: React.FC<SelectDocsProps> = ({ isDarkMode, ...rest }) => (
       size='md'
       sx={{ ...heading2Styles(isDarkMode), ...headerTextStyle }}
     >
-      Select your doc set
+      Select a doc set
     </Heading>
     <Stack
       sx={stackStyle}

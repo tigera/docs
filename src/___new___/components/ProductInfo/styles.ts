@@ -9,8 +9,6 @@ export const prodContainerStyles = (hasDarkBg: boolean) => ({
 export const sectionOuterStyles = (hasDarkBg: boolean) => ({
   w: '100%',
   bg: hasDarkBg ? 'tigeraBlack' : 'tigeraGrey.100',
-
-  //   bg: hasDarkBg ? 'linear-gradient(105.96deg, #0964AD 56.79%, #06547A 100%)' : 'tigeraGrey.100',
   padding: '0 6rem',
 });
 

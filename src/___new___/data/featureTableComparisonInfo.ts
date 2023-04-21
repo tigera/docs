@@ -31,7 +31,7 @@ export default {
         },
         {
           rowHeader: 'Egress gateway',
-          CalicoOpenSource: 'Y',
+          CalicoOpenSource: 'N',
           CalicoEntreprise: 'Y',
           CalicoCloud: 'Y',
         },
@@ -107,10 +107,10 @@ export default {
           CalicoCloud: 'Y',
         },
         {
-          rowHeader: 'Policy recommendation',
+          rowHeader: 'Policy recommendations',
           CalicoOpenSource: '',
-          CalicoEntreprise: '',
-          CalicoCloud: '',
+          CalicoEntreprise: 'Y',
+          CalicoCloud: 'Y',
         },
         {
           rowHeader: 'Preview and staged network policy',
@@ -156,13 +156,13 @@ export default {
           rowHeader: 'Restrict traffic to/from hosts using network policy',
           CalicoOpenSource: 'Y',
           CalicoEntreprise: 'Y',
-          CalicoCloud: 'Y',
+          CalicoCloud: 'N',
         },
         {
           rowHeader: 'Automatic host endpoints',
           CalicoOpenSource: 'Y',
           CalicoEntreprise: 'Y',
-          CalicoCloud: 'Y',
+          CalicoCloud: 'N',
         },
         {
           rowHeader: 'Secure Kubernetes nodes with host endpoints managed by Calico',
@@ -294,7 +294,7 @@ export default {
         {
           rowHeader: 'Container threat detection',
           CalicoOpenSource: '',
-          CalicoEntreprise: 'Y',
+          CalicoEntreprise: '',
           CalicoCloud: 'Y',
         },
         {

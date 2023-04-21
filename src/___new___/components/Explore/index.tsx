@@ -1,3 +1,5 @@
+//Possibly to be removed
+
 import * as React from 'react';
 import { Box, Flex, Text, SystemStyleObject, Stack, Heading } from '@chakra-ui/react';
 import { heading2Styles } from '../styles';

@@ -7,9 +7,10 @@ export default {
       link: '/calico/latest/about/',
 
       description: [
-        'The base product that comprises both Calico Enterprise and Calico Cloud. It provides the core networking and network policy features.',
+        'A free, self-managed networking and security solution for containers, virtual machines, and native host-based workloads.',
+        'Provides networking, network policy, and IP address management capabilities for cloud-native applications.',
       ],
-      linkDescription: 'Learn more about Calico Open Source',
+      linkDescription: 'Go to docs',
       image: 'img/calico-open-source.svg',
     },
     {
@@ -17,9 +18,10 @@ export default {
       link: '/calico-enterprise/latest/about-calico-enterprise',
 
       description: [
-        'Includes Calico Open Source core networking and network policy, but adds advanced features for networking, network policy, visibility and troubleshooting, threat defense, and compliance reports. ',
+        'A paid, self-managed security and observability solution for containers and Kubernetes.',
+        'Extends Calico Open Source’s networking and network security capabilities to offer more advanced security and observability capabilities for organizations running Kubernetes at scale.',
       ],
-      linkDescription: 'Learn more about Enterprise',
+      linkDescription: 'Go to docs',
       image: 'img/calico-enterprise.drawio.svg',
     },
     {
@@ -27,9 +29,10 @@ export default {
 
       link: 'calico-cloud',
       description: [
-        'The SaaS version of Calico Enterprise. It adds Image Assurance to scan and detect vulnerabilities in images, and container threat defense to detect malware. It also adds onboarding tutorials, and eliminates the cost to manage Elasticsearch logs and storage that comes with Calico Enterprise.',
+        'A pay-as-you-go, SaaS application that provides comprehensive container security across the entire container lifecycle (build, deploy, runtime).',
+        'A fully-managed version of Calico Enterprise that adds container image scanning and advanced threat detection capabilities.',
       ],
-      linkDescription: 'Learn more about Calico Cloud',
+      linkDescription: 'Go to docs',
       image: 'img/calico-cloud-features.svg',
     },
   ],
@@ -40,7 +43,7 @@ export default {
       target: 'Users',
       image: 'img/calico-logo.webp',
 
-      bestFit: [' who want best-in-class networking and network policy capabilities.'],
+      bestFit: [' - Who want best-in-class networking and network policy capabilities.'],
     },
     {
       title: 'Calico Enterprise',
@@ -50,9 +53,9 @@ export default {
       target: 'Enterprise teams',
 
       bestFit: [
-        ' who need full control to customize their networking security deployment to meet regulatory and',
+        ' - Who need full control to customize their networking security deployment to meet regulatory and',
         ' compliance requirements for Kubernetes at scale.',
-        ' Teams who require Tigera Customer Support for best practices to get from day zero to production,',
+        ' - Who want Tigera Customer Support best practices for day zero to production best practices',
         ' custom training and workshops, and Solution Architects to customize solutions.',
       ],
     },
@@ -63,7 +66,7 @@ export default {
 
       target: 'Small teams',
       bestFit: [
-        ' who need to manage the full spectrum of compliance in a web-based console for novice users:',
+        ' - Who need to manage the full spectrum of compliance in a web-based console for novice users:',
         '- Secure clusters, pods, and applications',
         '- Scan images for vulnerabilities',
         '- Web-based UI for visibility to troubleshoot Kubernetes',
@@ -72,7 +75,7 @@ export default {
       ],
       target2: 'Enterprise teams',
       bestFit2: [
-        ' who want to scale their Calico Enterprise on-premises deployments by providing more self-service to developers.',
+        ' - Who want to scale their Calico Enterprise on-premises deployments by providing more self-service to developers.',
       ],
     },
   ],
