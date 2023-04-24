@@ -223,7 +223,7 @@ an instance (for example when scaling up the cluster).
 - [Enable AWS-backed IP pools](#enable-aws-backed-ip-pools)
 - [Configure IP pools backed by VPC subnets](#configure-ip-pools-backed-by-vpc-subnets)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
-- [Configuring namespaces or pods to use egress gateways](#configuring-namespaces-or-pods-to-use-egress-gateways)
+- [Configuring namespaces and pods to use egress gateways](#configuring-namespaces-and-pods-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
 - [Control the use of egress gateways](#control-the-use-of-egress-gateways)
@@ -873,7 +873,7 @@ By default, that selector can only match egress gateways in the same namespace. 
 in a different namespace, specify a `namespaceSelector` annotation as well, like this:
 
 ```bash
-kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == '<egress gateway namespace>'"
+kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
 ```
 
 Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
@@ -889,9 +889,9 @@ kind: Pod
 metadata:
   annotations:
     egress.projectcalico.org/selector: egress-code == 'red'
-    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == '<egress gateway namespace>'
+    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == 'default'
   name: my-client,
-  namespace: <namespace>,
+  namespace: my-namespace,
 spec:
   ...
 EOF
@@ -906,7 +906,7 @@ For example, you can:
 
 The following is an example of Egress Gateway Policy:
 
-```yaml
+```yaml noValidation
 apiVersion: projectcalico.org/v3
 kind: EgressGatewayPolicy
 metadata:
@@ -966,7 +966,14 @@ creating the pod.
 For example:
 
 ```bash
-kubectl apply -f - <,
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    egress.projectcalico.org/egressGatewayPolicy: "egw-policy1"
+  name: my-client,
+  namespace: my-namespace,
 spec:
   ...
 EOF
