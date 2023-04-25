@@ -161,14 +161,13 @@ test("Crawl the docs and execute tests", async () => {
   function testCodeBlocksByType($, origin, type) {
     const bashEOF = type === 'bashEOF';
     const cbType = bashEOF ? 'bash' : type;
-    let langType = bashEOF ? 'yaml' : type;
     const codeBlocks = $(`div[data-codeblock-validation="true"] pre.language-${cbType} code`);
     for (let idxBlock = 0; idxBlock < codeBlocks.length; idxBlock++) {
       try {
         if (bashEOF) {
-          processCodeBlockEOF($, codeBlocks[idxBlock], langType, origin);
+          processCodeBlockEOF($, codeBlocks[idxBlock], origin);
         } else {
-          processCodeBlock($, codeBlocks[idxBlock], langType, origin);
+          processCodeBlock($, codeBlocks[idxBlock], type, origin);
         }
       } catch (err) {
         console.error(`[ERROR] an error occurred while validity testing code blocks: ${err.message}`);
@@ -193,14 +192,14 @@ test("Crawl the docs and execute tests", async () => {
     testValidity(type, origin, codeLines.join('\n'));
   }
 
-  function processCodeBlockEOF($, codeBlock, type, origin) {
+  function processCodeBlockEOF($, codeBlock, origin) {
     const codeLines = [];
-    let eofStart = false, eofEnd = false;
+    let type = 'yaml', eofStart = false, eofEnd = false;
     const lines = $(codeBlock).find('span.token-line');
     for (let idxLine = 0; idxLine < lines.length; idxLine++) {
       const line = $(lines[idxLine]).text();
       const trimLine = line.trim();
-      if (!eofStart && /<<\s*'?EOF'?/i.test(trimLine)) {
+      if (!eofStart && /<<\s*(EOF|'EOF'|"EOF")/i.test(trimLine)) {
         eofStart = true; eofEnd = false;
         codeLines.length = 0;
       } else if (eofStart && !eofEnd && /^EOF$/i.test(trimLine)) {
