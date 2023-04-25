@@ -153,27 +153,60 @@ test("Crawl the docs and execute tests", async () => {
 
   function validityTestResultSetStatus(url, status) {
     const ctx = validityTestResults.get(url);
+    if (!ctx && status === DONE) return;
     const results = ctx ? ctx.results : [];
     validityTestResults.set(url, {status, results});
   }
 
   function testCodeBlocksByType($, origin, type) {
-    const codeBlocks = $(`div[data-codeblock-validation="true"] pre.language-${type} code`);
+    const bashEOF = type === 'bashEOF';
+    const cbType = bashEOF ? 'bash' : type;
+    let langType = bashEOF ? 'yaml' : type;
+    const codeBlocks = $(`div[data-codeblock-validation="true"] pre.language-${cbType} code`);
     for (let idxBlock = 0; idxBlock < codeBlocks.length; idxBlock++) {
       try {
-        validityTestResultSetStatus(origin, WIP);
         const codeLines = [];
+        let eofStart = false, eofEnd = false;
         const lines = $(codeBlocks[idxBlock]).find('span.token-line');
         for (let idxLine = 0; idxLine < lines.length; idxLine++) {
           const line = $(lines[idxLine]).text();
-          codeLines.push(line);
+          if (bashEOF) {
+            const testLine = line.trim();
+            if (!eofStart && /<<\s*'?EOF'?/i.test(testLine)) {
+              eofStart = true; eofEnd = false;
+              codeLines.length = 0;
+            } else if (eofStart && !eofEnd && /^EOF$/i.test(testLine)) {
+              eofEnd = true; eofStart = false;
+              if (codeLines.length === 0) {
+                console.warn(`[WARNING] An empty EOF code block exists in ${origin}`);
+                continue;
+              }
+              validityTestResultSetStatus(origin, WIP);
+              testValidity(langType, origin, codeLines.join('\n'));
+            } else if (eofStart && !eofEnd) {
+              if (codeLines.length === 0 && /^[{\[]/.test(testLine)) {
+                langType = 'json';
+              }
+              codeLines.push(line);
+            }
+          } else {
+            codeLines.push(line);
+          }
         }
-        if (codeLines.length === 0) {
-          console.warn(`[WARNING] An empty code block exists in ${origin}`);
-          continue;
+        if (bashEOF) {
+          if (eofStart && !eofEnd) {
+            console.error(`[ERROR] An unterminated EOF code block exists in ${origin}`);
+            validityTestResultSetStatus(origin, WIP);
+            addValidityTestResult(origin, type, FAIL);
+          }
+        } else {
+          if (codeLines.length === 0) {
+            console.warn(`[WARNING] An empty code block exists in ${origin}`);
+            continue;
+          }
+          validityTestResultSetStatus(origin, WIP);
+          testValidity(langType, origin, codeLines.join('\n'));
         }
-        const code = codeLines.join('\n');
-        testValidity(type, origin, code);
       } catch (err) {
         console.error(`[ERROR] an error occurred while validity testing code blocks: ${err.message}`);
       } finally {
@@ -213,9 +246,9 @@ test("Crawl the docs and execute tests", async () => {
     addValidityTestResult(origin, type, FAIL);
     console.error(`[ERROR] validity error (${type}) in ${origin} : Error message(s):\n${err.message}`);
     if (process.env.PRINT_CODE_ON_ERROR) {
-      console.error(`\`\`\`${type}`);
+      console.error(`######## BEGIN ${type} ########`);
       console.error(`${code}`);
-      console.error(`\`\`\`\n`);
+      console.error(`######## END ${type} ########\n`);
     }
   }
 
@@ -358,8 +391,8 @@ test("Crawl the docs and execute tests", async () => {
   console.log(`Localhost mode is ${isLocalHost ? 'ON' : 'OFF'}.`);
   console.log(`Validity tests on code blocks: ${validityTest.length ? validityTest.join(',') : 'none'}`);
   console.log(`Validity tests on files: ${validityTestFiles.length ? validityTestFiles.join(',') : 'none'}`);
-  console.log(`To enable validity tests on code blocks use env var VALIDITY_TEST=json|yaml|json,yaml`);
-  console.log(`To enable validity tests on files use env var VALIDITY_TEST_FILES=json|yaml|json,yaml`);
+  console.log(`To enable validity tests on code blocks use env var VALIDITY_TEST=json,yaml,bashEOF`);
+  console.log(`To enable validity tests on files use env var VALIDITY_TEST_FILES=json,yaml`);
   await crawler.run();
   console.log(`Performing all post-processing steps`);
   await doPostProcessing();
