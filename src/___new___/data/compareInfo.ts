@@ -55,7 +55,7 @@ export default {
       bestFit: [
         ' - Who need full control to customize their networking security deployment to meet regulatory and',
         ' compliance requirements for Kubernetes at scale.',
-        ' - Who want Tigera Customer Support day-zero to production best practices',
+        ' - Who want Tigera Customer Support for day-zero to production best practices',
         ' custom training and workshops, and Solution Architects to customize solutions.',
       ],
     },
@@ -67,11 +67,11 @@ export default {
       target: 'Small teams',
       bestFit: [
         ' - Who need to manage the full spectrum of compliance in a web-based console for novice users:',
-        '- Secure clusters, pods, and applications',
-        '- Scan images for vulnerabilities',
-        '- Web-based UI for visibility to troubleshoot Kubernetes',
-        '- Detect and mitigate threats',
-        '- Run compliance reports',
+        ' -- Secure clusters, pods, and applications',
+        ' -- Scan images for vulnerabilities',
+        ' -- Web-based UI for visibility to troubleshoot Kubernetes',
+        ' -- Detect and mitigate threats',
+        ' -- Run compliance reports',
       ],
       target2: 'Enterprise teams',
       bestFit2: [

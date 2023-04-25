@@ -1,21 +1,21 @@
 export default (hasDarkBg: boolean) => ({
-    w: 'auto',
-    ml: '-16px',
-    fontStyle: 'normal',
-    fontWeight: 'semibold',
-    fontSize: ['md', 'lg', 'xl'],
-    lineHeight: 7,
-    color: hasDarkBg ? 'white' : 'tigeraBlueDark',
+  w: 'auto',
+  ml: '-23px',
+  fontStyle: 'normal',
+  fontWeight: 'semibold',
+  fontSize: ['md', 'lg', 'xl'],
+  lineHeight: 7,
+  color: hasDarkBg ? 'white' : 'tigeraBlueDark',
+  svg: {
+    path: {
+      stroke: hasDarkBg ? 'white' : 'tigeraBlueDark',
+    },
+  },
+  _hover: {
     svg: {
-        path: {
-            stroke: hasDarkBg ? 'white' : 'tigeraBlueDark',
-        },
+      path: {
+        stroke: 'tigeraBlueMedium',
+      },
     },
-    _hover: {
-        svg: {
-            path: {
-                stroke: 'tigeraBlueMedium',
-            },
-        },
-    },
+  },
 });

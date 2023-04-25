@@ -62,33 +62,18 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ isDarkMode, ...re
                 <Td>
                   <b>
                     {info.costSupport.map((desc, index) => (
-                      <Text
-                        key={index}
-                        // sx={textContentStyles(hasDarkBg)}
-                      >
-                        {desc}
-                      </Text>
+                      <Text key={index}>{desc}</Text>
                     ))}
                   </b>
                 </Td>
                 <Td>
                   <b>{info.target}</b>
                   {info.bestFit.map((desc, index) => (
-                    <Text
-                      key={index}
-                      // sx={textContentStyles(hasDarkBg)}
-                    >
-                      {desc}
-                    </Text>
+                    <Text key={index}>{desc}</Text>
                   ))}
                   <b>{info?.target2}</b>
                   {info.bestFit2?.map((desc, index) => (
-                    <Text
-                      key={index}
-                      // sx={textContentStyles(hasDarkBg)}
-                    >
-                      {desc.trim() === '' ? <br /> : desc}
-                    </Text>
+                    <Text key={index}>{desc.trim() === '' ? <br /> : desc}</Text>
                   ))}
                 </Td>
               </Tr>
