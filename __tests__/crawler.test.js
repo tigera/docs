@@ -165,53 +165,63 @@ test("Crawl the docs and execute tests", async () => {
     const codeBlocks = $(`div[data-codeblock-validation="true"] pre.language-${cbType} code`);
     for (let idxBlock = 0; idxBlock < codeBlocks.length; idxBlock++) {
       try {
-        const codeLines = [];
-        let eofStart = false, eofEnd = false;
-        const lines = $(codeBlocks[idxBlock]).find('span.token-line');
-        for (let idxLine = 0; idxLine < lines.length; idxLine++) {
-          const line = $(lines[idxLine]).text();
-          if (bashEOF) {
-            const testLine = line.trim();
-            if (!eofStart && /<<\s*'?EOF'?/i.test(testLine)) {
-              eofStart = true; eofEnd = false;
-              codeLines.length = 0;
-            } else if (eofStart && !eofEnd && /^EOF$/i.test(testLine)) {
-              eofEnd = true; eofStart = false;
-              if (codeLines.length === 0) {
-                console.warn(`[WARNING] An empty EOF code block exists in ${origin}`);
-                continue;
-              }
-              validityTestResultSetStatus(origin, WIP);
-              testValidity(langType, origin, codeLines.join('\n'));
-            } else if (eofStart && !eofEnd) {
-              if (codeLines.length === 0 && /^[{\[]/.test(testLine)) {
-                langType = 'json';
-              }
-              codeLines.push(line);
-            }
-          } else {
-            codeLines.push(line);
-          }
-        }
         if (bashEOF) {
-          if (eofStart && !eofEnd) {
-            console.error(`[ERROR] An unterminated EOF code block exists in ${origin}`);
-            validityTestResultSetStatus(origin, WIP);
-            addValidityTestResult(origin, type, FAIL);
-          }
+          processCodeBlockEOF($, codeBlocks[idxBlock], langType, origin);
         } else {
-          if (codeLines.length === 0) {
-            console.warn(`[WARNING] An empty code block exists in ${origin}`);
-            continue;
-          }
-          validityTestResultSetStatus(origin, WIP);
-          testValidity(langType, origin, codeLines.join('\n'));
+          processCodeBlock($, codeBlocks[idxBlock], langType, origin);
         }
       } catch (err) {
         console.error(`[ERROR] an error occurred while validity testing code blocks: ${err.message}`);
       } finally {
         validityTestResultSetStatus(origin, DONE);
       }
+    }
+  }
+
+  function processCodeBlock($, codeBlock, type, origin) {
+    const codeLines = [];
+    const lines = $(codeBlock).find('span.token-line');
+    for (let idxLine = 0; idxLine < lines.length; idxLine++) {
+      const line = $(lines[idxLine]).text();
+      codeLines.push(line);
+    }
+    if (codeLines.length === 0) {
+      console.warn(`[WARNING] An empty code block exists in ${origin}`);
+      return;
+    }
+    validityTestResultSetStatus(origin, WIP);
+    testValidity(type, origin, codeLines.join('\n'));
+  }
+
+  function processCodeBlockEOF($, codeBlock, type, origin) {
+    const codeLines = [];
+    let eofStart = false, eofEnd = false;
+    const lines = $(codeBlock).find('span.token-line');
+    for (let idxLine = 0; idxLine < lines.length; idxLine++) {
+      const line = $(lines[idxLine]).text();
+      const trimLine = line.trim();
+      if (!eofStart && /<<\s*'?EOF'?/i.test(trimLine)) {
+        eofStart = true; eofEnd = false;
+        codeLines.length = 0;
+      } else if (eofStart && !eofEnd && /^EOF$/i.test(trimLine)) {
+        eofEnd = true; eofStart = false;
+        if (codeLines.length > 0) {
+          validityTestResultSetStatus(origin, WIP);
+          testValidity(type, origin, codeLines.join('\n'));
+        } else {
+          console.warn(`[WARNING] An empty EOF code block exists in ${origin}`);
+        }
+      } else if (eofStart && !eofEnd) {
+        if (codeLines.length === 0 && /^[{\[]/.test(trimLine)) {
+          type = 'json';
+        }
+        codeLines.push(line);
+      }
+    }
+    if (eofStart && !eofEnd) {
+      console.error(`[ERROR] An unterminated EOF code block exists in ${origin}`);
+      validityTestResultSetStatus(origin, WIP);
+      addValidityTestResult(origin, type, FAIL);
     }
   }
 
