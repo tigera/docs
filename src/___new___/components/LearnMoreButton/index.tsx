@@ -22,7 +22,7 @@ const LearnMoreButton: React.FC<LearnMoreButtonProps> = ({ sx, ariaLabel, href, 
       }}
       {...rest}
     >
-      Go to docs
+      Visit the documentation
     </Button>
   );
 };

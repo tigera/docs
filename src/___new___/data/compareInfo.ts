@@ -55,7 +55,7 @@ export default {
       bestFit: [
         ' - Who need full control to customize their networking security deployment to meet regulatory and',
         ' compliance requirements for Kubernetes at scale.',
-        ' - Who want Tigera Customer Support best practices for day zero to production best practices',
+        ' - Who want Tigera Customer Support day-zero to production best practices',
         ' custom training and workshops, and Solution Architects to customize solutions.',
       ],
     },

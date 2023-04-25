@@ -228,19 +228,13 @@ export default {
       title: 'Observability and troubleshooting',
       content: [
         {
-          rowHeader: 'Application level observability and troubleshooting',
+          rowHeader: 'Application-level observability and troubleshooting',
           CalicoOpenSource: '',
           CalicoEntreprise: 'Y',
           CalicoCloud: 'Y',
         },
         {
           rowHeader: 'Service Graph',
-          CalicoOpenSource: '',
-          CalicoEntreprise: 'Y',
-          CalicoCloud: 'Y',
-        },
-        {
-          rowHeader: 'Threat graph',
           CalicoOpenSource: '',
           CalicoEntreprise: 'Y',
           CalicoCloud: 'Y',
@@ -304,7 +298,7 @@ export default {
           CalicoCloud: 'Y',
         },
         {
-          rowHeader: 'Honeypods to see intruder activity',
+          rowHeader: 'Honeypods to view intruder activity',
           CalicoOpenSource: '',
           CalicoEntreprise: 'Y',
           CalicoCloud: 'Y',
