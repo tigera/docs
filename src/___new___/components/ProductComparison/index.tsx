@@ -31,13 +31,13 @@ interface ProductComparisonProps {
 
 const ProductComparison: React.FC<ProductComparisonProps> = ({ isDarkMode, ...rest }) => (
   <Flex
-    sx={sectionOuterStyles(isDarkMode)}
+    sx={sectionOuterStyles}
     {...rest}
   >
     <Heading
       as='h2'
       size='md'
-      sx={{ ...heading2Styles(isDarkMode), ...headerTextStyle }}
+      sx={{ ...heading2Styles(true), ...headerTextStyle }}
     >
       Best fit
     </Heading>
@@ -70,6 +70,9 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ isDarkMode, ...re
                   <b>{info.target}</b>
                   {info.bestFit.map((desc, index) => (
                     <Text key={index}>{desc}</Text>
+                  ))}
+                  {info.bestFitSub?.map((desc, index) => (
+                    <Text key={index}>&ensp;{desc}</Text>
                   ))}
                   <b>{info?.target2}</b>
                   {info.bestFit2?.map((desc, index) => (

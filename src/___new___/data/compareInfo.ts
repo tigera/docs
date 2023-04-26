@@ -65,13 +65,13 @@ export default {
       image: '/img/calico-enterprise-logo.webp',
 
       target: 'Small teams',
-      bestFit: [
-        ' - Who need to manage the full spectrum of compliance in a web-based console for novice users:',
-        ' -- Secure clusters, pods, and applications',
-        ' -- Scan images for vulnerabilities',
-        ' -- Web-based UI for visibility to troubleshoot Kubernetes',
-        ' -- Detect and mitigate threats',
-        ' -- Run compliance reports',
+      bestFit: [' - Who need to manage the full spectrum of compliance in a web-based console for novice users:'],
+      bestFitSub: [
+        ' - Secure clusters, pods, and applications',
+        ' - Scan images for vulnerabilities',
+        ' - Web-based UI for visibility to troubleshoot Kubernetes',
+        ' - Detect and mitigate threats',
+        ' - Run compliance reports',
       ],
       target2: 'Enterprise teams',
       bestFit2: [
