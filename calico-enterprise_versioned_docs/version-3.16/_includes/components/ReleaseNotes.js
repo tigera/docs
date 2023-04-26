@@ -43,14 +43,14 @@ export default function ReleaseNotes() {
             Calico Enterprise {release.title}
           </Heading>
           {release.title !== 'master' && (
-            <p>
+            <p> {/*
               <Link
                 href={`${downloadsurl}/ee/archives/release-${release.title}-${release['tigera-operator'].version}.tgz`}
               >
                 Release archive
               </Link>{' '}
               with Kubernetes manifests. Based on Calico {releases[0].calico.minor_version}.
-            </p>
+            */}</p>
           )}
           {release.note}
           <Heading
