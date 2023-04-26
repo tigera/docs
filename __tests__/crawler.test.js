@@ -23,6 +23,12 @@ test("Crawl the docs and execute tests", async () => {
   const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES.split(',') : [];
   const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL==='true' : false;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
+  const varRegex = /\{\{[ \t]*[\w-\[\]]+[ \t]*}}/g;
+  const varSkipList = [
+    '{{end}}',
+  ];
+  const liquidRegex = /\{%.*?%}/gs;
+  const liquidSkipList = [];
   const SITEMAP = 'sitemap.xml';
   const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
   const USE_LC = [
@@ -87,6 +93,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://tools.ietf.org/html/rfc5890',
     'https://tools.ietf.org/html/rfc1123',
     'http://cr.yp.to/libtai/tai64.html#tai64n',
+    'https://thenewstack.io/faster-troubleshooting-with-dynamic-packet-capture/', //==>Origin: http://localhost:4242/calico-cloud/visibility/packetcapture
   ];
 
   const lc = linkChecker();
@@ -134,6 +141,10 @@ test("Crawl the docs and execute tests", async () => {
 
         testCodeBlocks($, request.url);
 
+        testUnprocessedVariables(allText, request.url);
+
+        testLiquid(allText, request.url);
+
         await enqueueLinks({
           strategy: EnqueueStrategy.All,
           transformRequestFunction: transformRequest,
@@ -141,6 +152,32 @@ test("Crawl the docs and execute tests", async () => {
         });
       },
     });
+  }
+
+  function testUnprocessedVariables(allText, url) {
+    // check for variables which have not been processed
+    const found = new Map();
+    const matches = allText.matchAll(varRegex);
+    for (const match of [...matches]) {
+      const key = match.toString();
+      if (varSkipList.includes(key)) continue;
+      if (found.has(key)) continue;
+      found.set(key, true);
+      console.error(`[ERROR] variable '${key}' exists in ${url}`);
+    }
+  }
+
+  function testLiquid(allText, url) {
+    // check for liquid template that may still exist (leftover from jekyll)
+    const found = new Map();
+    const matches = allText.matchAll(liquidRegex);
+    for (const match of [...matches]) {
+      const key = match.toString();
+      if (liquidSkipList.includes(key)) continue;
+      if (found.has(key)) continue;
+      found.set(key, true);
+      console.error(`[ERROR] liquid syntax '${key}' exists in ${url}`);
+    }
   }
 
   function testCodeBlocks($, origin) {
@@ -152,32 +189,74 @@ test("Crawl the docs and execute tests", async () => {
 
   function validityTestResultSetStatus(url, status) {
     const ctx = validityTestResults.get(url);
+    if (!ctx && status === DONE) return;
     const results = ctx ? ctx.results : [];
     validityTestResults.set(url, {status, results});
   }
 
   function testCodeBlocksByType($, origin, type) {
-    const codeBlocks = $(`div[data-codeblock-validation="true"] pre.language-${type} code`);
+    const bashEOF = type === 'bashEOF';
+    const cbType = bashEOF ? 'bash' : type;
+    const codeBlocks = $(`div[data-codeblock-validation="true"] pre.language-${cbType} code`);
     for (let idxBlock = 0; idxBlock < codeBlocks.length; idxBlock++) {
       try {
-        validityTestResultSetStatus(origin, WIP);
-        const codeLines = [];
-        const lines = $(codeBlocks[idxBlock]).find('span.token-line');
-        for (let idxLine = 0; idxLine < lines.length; idxLine++) {
-          const line = $(lines[idxLine]).text();
-          codeLines.push(line);
+        if (bashEOF) {
+          processCodeBlockEOF($, codeBlocks[idxBlock], origin);
+        } else {
+          processCodeBlock($, codeBlocks[idxBlock], type, origin);
         }
-        if (codeLines.length === 0) {
-          console.warn(`[WARNING] An empty code block exists in ${origin}`);
-          continue;
-        }
-        const code = codeLines.join('\n');
-        testValidity(type, origin, code);
       } catch (err) {
         console.error(`[ERROR] an error occurred while validity testing code blocks: ${err.message}`);
       } finally {
         validityTestResultSetStatus(origin, DONE);
       }
+    }
+  }
+
+  function processCodeBlock($, codeBlock, type, origin) {
+    const codeLines = [];
+    const lines = $(codeBlock).find('span.token-line');
+    for (let idxLine = 0; idxLine < lines.length; idxLine++) {
+      const line = $(lines[idxLine]).text();
+      codeLines.push(line);
+    }
+    if (codeLines.length === 0) {
+      console.warn(`[WARNING] An empty code block exists in ${origin}`);
+      return;
+    }
+    validityTestResultSetStatus(origin, WIP);
+    testValidity(type, origin, codeLines.join('\n'));
+  }
+
+  function processCodeBlockEOF($, codeBlock, origin) {
+    const codeLines = [];
+    let type = 'yaml', eofStart = false, eofEnd = false;
+    const lines = $(codeBlock).find('span.token-line');
+    for (let idxLine = 0; idxLine < lines.length; idxLine++) {
+      const line = $(lines[idxLine]).text();
+      const trimLine = line.trim();
+      if (!eofStart && /<<\s*(EOF|'EOF'|"EOF")/i.test(trimLine)) {
+        eofStart = true; eofEnd = false;
+        codeLines.length = 0;
+      } else if (eofStart && !eofEnd && /^EOF$/i.test(trimLine)) {
+        eofEnd = true; eofStart = false;
+        if (codeLines.length > 0) {
+          validityTestResultSetStatus(origin, WIP);
+          testValidity(type, origin, codeLines.join('\n'));
+        } else {
+          console.warn(`[WARNING] An empty EOF code block exists in ${origin}`);
+        }
+      } else if (eofStart && !eofEnd) {
+        if (codeLines.length === 0 && /^[{\[]/.test(trimLine)) {
+          type = 'json';
+        }
+        codeLines.push(line);
+      }
+    }
+    if (eofStart && !eofEnd) {
+      console.error(`[ERROR] An unterminated EOF code block exists in ${origin}`);
+      validityTestResultSetStatus(origin, WIP);
+      addValidityTestResult(origin, type, FAIL);
     }
   }
 
@@ -212,9 +291,9 @@ test("Crawl the docs and execute tests", async () => {
     addValidityTestResult(origin, type, FAIL);
     console.error(`[ERROR] validity error (${type}) in ${origin} : Error message(s):\n${err.message}`);
     if (process.env.PRINT_CODE_ON_ERROR) {
-      console.error(`\`\`\`${type}`);
+      console.error(`######## BEGIN ${type} ########`);
       console.error(`${code}`);
-      console.error(`\`\`\`\n`);
+      console.error(`######## END ${type} ########\n`);
     }
   }
 
@@ -357,8 +436,8 @@ test("Crawl the docs and execute tests", async () => {
   console.log(`Localhost mode is ${isLocalHost ? 'ON' : 'OFF'}.`);
   console.log(`Validity tests on code blocks: ${validityTest.length ? validityTest.join(',') : 'none'}`);
   console.log(`Validity tests on files: ${validityTestFiles.length ? validityTestFiles.join(',') : 'none'}`);
-  console.log(`To enable validity tests on code blocks use env var VALIDITY_TEST=json|yaml|json,yaml`);
-  console.log(`To enable validity tests on files use env var VALIDITY_TEST_FILES=json|yaml|json,yaml`);
+  console.log(`To enable validity tests on code blocks use env var VALIDITY_TEST=json,yaml,bashEOF`);
+  console.log(`To enable validity tests on files use env var VALIDITY_TEST_FILES=json,yaml`);
   await crawler.run();
   console.log(`Performing all post-processing steps`);
   await doPostProcessing();

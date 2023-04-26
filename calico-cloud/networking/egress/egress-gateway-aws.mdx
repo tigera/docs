@@ -49,6 +49,7 @@ This how-to guide uses the following features:
 
 - Egress gateway pods and their associated Kubernetes **Namespace** and **Pod** annotations:
 
+  - `egress.projectcalico.org/egressGatewayPolicy`
   - `egress.projectcalico.org/namespaceSelector`
   - `egress.projectcalico.org/selector`
 
@@ -94,7 +95,7 @@ In overview, the AWS-backed feature works as follows:
 - Since they are a limited resource, {{prodname}} IPAM does not use AWS-backed pools by default. To request an
   AWS-backed IP address, a pod must have a resource request:
 
-  ```yaml
+  ```yaml noValidation
   spec:
     containers:
     - ...
@@ -222,7 +223,7 @@ an instance (for example when scaling up the cluster).
 - [Enable AWS-backed IP pools](#enable-aws-backed-ip-pools)
 - [Configure IP pools backed by VPC subnets](#configure-ip-pools-backed-by-vpc-subnets)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
-- [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
+- [Configuring namespaces and pods to use egress gateways](#configuring-namespaces-and-pods-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
 - [Control the use of egress gateways](#control-the-use-of-egress-gateways)
@@ -243,8 +244,10 @@ For other AWS clusters, {{prodname}} may default to `firstFound`, which is **not
 
 To examine the autodetection method, check the operator's installation resource:
 
-```yaml
+```bash
 $ kubectl get installations.operator.tigera.io -o yaml default
+```
+```yaml noValidation
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
@@ -847,9 +850,17 @@ spec:
 
 :::
 
-### Configure a Namespace or Pod to use egress gateways
+### Configuring namespaces and pods to use egress gateways
 
-In a {{prodname}} deployment, the Kubernetes Namespace and Pod resources honor annotations that
+You can configure namespaces and pods to use an egress gateway by:
+* annotating the namespace or pod
+* applying an egress gateway policy to the namespace or pod.
+
+Using an egress gateway policy is more complicated, but it allows advanced use cases.
+
+#### Configure a namepace or pod to use an egress gateway (annotation method)
+
+In a {{prodname}} deployment, the Kubernetes namespace and pod resources honor annotations that
 tell that namespace or pod to use particular egress gateways. These annotations are selectors, and
 their meaning is "the set of pods, anywhere in the cluster, that match those selectors".
 
@@ -867,8 +878,7 @@ in a different namespace, specify a `namespaceSelector` annotation as well, like
 kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
 ```
 
-Egress gateway annotations have the same [syntax and range of
-expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
+Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
 {{prodname}} [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
 
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
@@ -888,6 +898,96 @@ spec:
   ...
 EOF
 ```
+
+#### Configure a namespace or pod to use an egress gateway (egress gateway policy method)
+
+Creating an egress gateway policy allows gives you more control over how your egress gateways work.
+For example, you can:
+  - Send egress gateway traffic to multiple egress gateways, depending on the destination.
+  - Skip egress gateways for traffic that is bound for local endpoints that aren't in the cluster.
+
+The following is an example of Egress Gateway Policy:
+
+```yaml noValidation
+apiVersion: projectcalico.org/v3
+kind: EgressGatewayPolicy
+metadata:
+  name: "egw-policy1"
+spec:
+  rules:
+  // callout-for-next-line
+  - destination:
+      cidr: 10.0.0.0/8
+    description: "Local: no gateway"
+  - destination:
+      cidr: 11.0.0.0/8
+    description: "Gateway to on prem"
+    // callout-for-next-line
+    gateway:
+      // callout-for-next-line
+      namespaceSelector: ...
+      // callout-for-next-line
+      selector: ...
+      // callout-for-next-line
+      maxNextHops: ...
+  - description: "Gateway to internet"
+    gateway:
+      namespaceSelector: ...
+      selector: ...
+      maxNextHops: ...
+```
+
+
+
+1. If the `destination` field is not specified, it takes the default value of 0.0.0.0/0.
+
+1. If the `gateway` field is not specified, then egress traffic is routed locally, and not through an egress gateway.
+   This is helpful for reaching local endpoints that are not part of a cluster.
+
+1. Required when `gateway` field is specified.
+
+1. Required when `gateway` field is specified.
+
+1. The `maxNextHops` field specifies the maximum number of egress gateway replicas from the selected deployment that a pod depends on. For more information, see [Optimize egress networking for workloads with long-lived TCP connections](egress-gateway-maintenance.mdx#reduce-the-impact-of-gateway-downtime).
+
+
+
+{{prodname}} rejects egress gateway policies that do any of the following:
+* The policy has no rule that specifies a gateway or a destination
+* The policy has a rule with empty `selector` or `namespaceSelector` fields.
+* The policy has two or more rules with the same destination.
+
+To configure all the pods in a namespace to use an egress gateway policy named `egw-policy1`, you could annotate the namespace like this:
+
+```bash
+kubectl annotate ns  egress.projectcalico.org/egressGatewayPolicy="egw-policy1"
+```
+
+To configure a specific Kubernetes pod to use the same policy, specify the same annotations when
+creating the pod.
+For example:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    egress.projectcalico.org/egressGatewayPolicy: "egw-policy1"
+  name: my-client,
+  namespace: my-namespace,
+spec:
+  ...
+EOF
+```
+
+:::caution
+
+You must create the egress gateway policy before you apply it to a namespace or pod.
+If you attempt to apply an egress gateway policy that has not been created, {{prodname}} will block all traffic from the namespace or pod.
+
+:::
+
 
 ### Add AWS Elastic IPs to the egress gateway deployment
 
