@@ -23,7 +23,7 @@ test("Crawl the docs and execute tests", async () => {
   const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES.split(',') : [];
   const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL==='true' : false;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
-  const varRegex = /\{\{[ \t]*[\w-]+[ \t]*}}/g;
+  const varRegex = /\{\{(?!end|operator_version)[ \t]*[\w-]+[ \t]*}}/g;
   const SITEMAP = 'sitemap.xml';
   const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
   const USE_LC = [
