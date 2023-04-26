@@ -52,7 +52,7 @@ export const iconStyle = {
 };
 
 export const tableStyle = (isDarkMode: boolean) => ({
-  width: ['92vw', '92vw', '92vw', '92vw', '1360px'],
+  width: ['92vw', '92vw', '92vw', '92vw', '1338px'],
   bg: isDarkMode ? 'tigeraBlack' : 'tigeraGrey.100',
   color: isDarkMode ? 'tigeraWhite' : 'tigeraGrey.800',
 });
