@@ -23,7 +23,12 @@ test("Crawl the docs and execute tests", async () => {
   const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES.split(',') : [];
   const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL==='true' : false;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
-  const varRegex = /\{\{[ \t]*[\w-]+[ \t]*}}/g;
+  const varRegex = /\{\{[ \t]*[\w-\[\]]+[ \t]*}}/g;
+  const varSkipList = [
+    '{{end}}',
+  ];
+  const liquidRegex = /\{%.*?%}/gs;
+  const liquidSkipList = [];
   const SITEMAP = 'sitemap.xml';
   const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
   const USE_LC = [
@@ -136,15 +141,9 @@ test("Crawl the docs and execute tests", async () => {
 
         testCodeBlocks($, request.url);
 
-        // check for variables which have not been processed
-        const found = new Map();
-        const matches = allText.matchAll(varRegex);
-        for (const match of [...matches]) {
-          const key = match.toString();
-          if (found.has(key)) continue;
-          found.set(key, true);
-          console.error(`[ERROR] variable '${key}' exists in ${request.url}`);
-        }
+        testUnprocessedVariables(allText, request.url);
+
+        testLiquid(allText, request.url);
 
         await enqueueLinks({
           strategy: EnqueueStrategy.All,
@@ -153,6 +152,32 @@ test("Crawl the docs and execute tests", async () => {
         });
       },
     });
+  }
+
+  function testUnprocessedVariables(allText, url) {
+    // check for variables which have not been processed
+    const found = new Map();
+    const matches = allText.matchAll(varRegex);
+    for (const match of [...matches]) {
+      const key = match.toString();
+      if (varSkipList.includes(key)) continue;
+      if (found.has(key)) continue;
+      found.set(key, true);
+      console.error(`[ERROR] variable '${key}' exists in ${url}`);
+    }
+  }
+
+  function testLiquid(allText, url) {
+    // check for liquid template that may still exist (leftover from jekyll)
+    const found = new Map();
+    const matches = allText.matchAll(liquidRegex);
+    for (const match of [...matches]) {
+      const key = match.toString();
+      if (liquidSkipList.includes(key)) continue;
+      if (found.has(key)) continue;
+      found.set(key, true);
+      console.error(`[ERROR] liquid syntax '${key}' exists in ${url}`);
+    }
   }
 
   function testCodeBlocks($, origin) {
