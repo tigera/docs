@@ -35,6 +35,46 @@ module.exports = {
       ],
     },
     {
+      "type": "category",
+      "label": "Install and upgrade",
+      "link": {
+        "type": "doc",
+        "id": "get-started/index"
+      },
+      "items": [
+        {
+          "type": "category",
+          "label": "Connect clusters to Calico Cloud",
+          "link": {
+            "type": "doc",
+            "id": "get-started/connect/index"
+          },
+          "items": [
+            "get-started/connect/install-cluster",
+            "get-started/connect/cc-arch-diagram",
+            "get-started/connect/setup-private-registry"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Requirements",
+          "link": {
+            "type": "doc",
+            "id": "get-started/connect/requirements/index"
+          },
+          "items": [
+            "get-started/connect/requirements/system-requirements",
+            "get-started/connect/requirements/aks",
+            "get-started/connect/requirements/gke"
+          ]
+        },
+        "get-started/connect/connect-cluster",
+        "get-started/connect/checklist",
+        "get-started/connect/operator-checklist",
+        "get-started/upgrade-cluster"
+      ]
+    },
+    {
       type: 'category',
       label: 'Tutorials',
       link: {type: 'doc', id:'tutorials/index'},
