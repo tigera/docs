@@ -1,36 +1,37 @@
 module.exports = {
   calicoCloudSidebar: [
-    'index',
     {
       type: 'category',
-      label: 'Install and upgrade',
-      link: {type: 'doc', id:'get-started/index'},
+      label: 'About',
+      link: {
+        type: 'doc',
+        id: 'about/index',
+      },
       items: [
-        {
-          type: 'category',
-          label: 'Connect clusters to Calico Cloud',
-          link: {type: 'doc', id:'get-started/connect/index'},
-          items: [
-            'get-started/connect/install-cluster',
-            'get-started/connect/cc-arch-diagram',
-            'get-started/connect/setup-private-registry',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Requirements',
-          link: {type: 'doc', id:'get-started/connect/requirements/index'},
-          items: [
-            'get-started/connect/requirements/system-requirements',
-            'get-started/connect/requirements/aks',
-            'get-started/connect/requirements/gke',
-          ],
-        },
-        'get-started/connect/connect-cluster',
-        'get-started/connect/checklist',
-        'get-started/connect/operator-checklist',
-
-        'get-started/upgrade-cluster',
+        'about/about-calico-cloud',
+        'about/product-comparison',
+        'about/training-resources',
+      {
+       type: 'category',
+       label: 'Kubernetes training',
+       link: {
+         type: 'doc', 
+         id: 'about/kubernetes-training/index',
+       },
+         items: [
+           'about/kubernetes-training/about-k8s-networking',
+           'about/kubernetes-training/about-networking',
+           'about/kubernetes-training/about-network-policy',
+           'about/kubernetes-training/about-kubernetes-ingress',
+           'about/kubernetes-training/about-kubernetes-egress',
+           'about/kubernetes-training/about-kubernetes-services',
+           'about/kubernetes-training/about-ebpf',
+           'about/kubernetes-training/kubernetes-demo',
+           'about/kubernetes-training/kubernetes-network-policy',
+           'about/kubernetes-training/kubernetes-policy-basic',
+           'about/kubernetes-training/kubernetes-policy-advanced',
+        ],
+       }, 
       ],
     },
     {
