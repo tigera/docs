@@ -35,9 +35,8 @@ const config = {
           path: 'default',
           sidebarPath: false,
         },
-        gtag: {
-          trackingID: 'G-MDDZ0CGXZ4',
-          anonymizeIP: true,
+        googleTagManager: {
+          containerId: 'GTM-KCHDXB2',
         },
         blog: false,
         theme: {
