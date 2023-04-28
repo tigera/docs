@@ -14,8 +14,10 @@ IA_OPERATOR_VERSION?=v1.5.7-0.dev.0.20230410154742-6850d977e93b
 NODE_VER=20
 
 YARN=yarn
+YARN_ACTION_SUFFIX=
 ifeq ($(CONTAINERIZED),true)
-YARN=docker run -i --rm -v "$(shell pwd):/docs" --net=host -w /docs node:$(NODE_VER) yarn
+YARN=docker run -i --rm -v "$(shell pwd):/docs" -p 127.0.0.1:3000:3000 -w /docs node:$(NODE_VER) yarn
+YARN_ACTION_SUFFIX=-container
 endif
 
 build: init
@@ -23,7 +25,7 @@ build: init
 
 .PHONY: start
 start: init
-	$(YARN) start
+	$(YARN) start$(YARN_ACTION_SUFFIX)
 
 .PHONY: test
 test: init
@@ -39,7 +41,7 @@ init:
 
 .PHONY: serve
 serve: build
-	$(YARN) serve
+	$(YARN) serve$(YARN_ACTION_SUFFIX)
 
 .PHONY: full
 full: clean build
