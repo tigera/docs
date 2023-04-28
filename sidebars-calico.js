@@ -10,12 +10,26 @@ module.exports = {
         id: 'about/index',
       },
       items: [
-        'about/about-k8s-networking',
-        'about/about-network-policy',
-        'about/about-kubernetes-services',
-        'about/about-kubernetes-ingress',
-        'about/about-kubernetes-egress',
-        'about/about-ebpf',
+        'about/about-calico',
+        'about/product-comparison',
+        'about/training-resources',
+      {
+       type: 'category',
+       label: 'Kubernetes training',
+       link: {
+         type: 'doc', 
+         id: 'about/kubernetes-training/index',
+       },
+         items: [
+           'about/kubernetes-training/about-k8s-networking',
+           'about/kubernetes-training/about-networking',
+           'about/kubernetes-training/about-network-policy',
+           'about/kubernetes-training/about-kubernetes-ingress',
+           'about/kubernetes-training/about-kubernetes-egress',
+           'about/kubernetes-training/about-kubernetes-services',
+           'about/kubernetes-training/about-ebpf',
+        ],
+       }, 
       ],
     },
     {
