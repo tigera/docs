@@ -163,30 +163,30 @@ metadata:
 spec:
   rules:
   - destination:
-      cidr: 192.168.0.0/16
+      cidr: 10.0.0.0/8
     description: "Local: no gateway"
   - destination:
-      cidr: 10.10.0.0/16
+      cidr: 11.0.0.0/8
     description: "Gateway to on prem"
     gateway:
-      namespaceSelector: ...
-      selector: ...
+      namespaceSelector: "projectcalico.org/name == 'default'"
+      selector: "egress-code == 'blue'"
+      maxNextHops: 2
   - description: "Gateway to internet"
     gateway:
-      namespaceSelector: ...
-      selector: ...
-      maxNextHops: 2
+      namespaceSelector: "projectcalico.org/name == 'default'"
+      selector: "egress-code == 'red'"
 ```
 
 ```
 default onlink
       nexthop via  11.11.11.1 dev egress.calico weight 1 onlink
       nexthop via  11.11.11.2 dev egress.calico weight 1 onlink
-throw 192.168.0.0/16
-10.10.0.0/16 onlink
+      nexthop via  11.11.11.3 dev egress.calico weight 1 onlink
+throw 10.0.0.0/8
+11.0.0.0/8 onlink
       nexthop via 11.11.12.1 dev egress.calico weight 1 onlink
       nexthop via 11.11.12.2 dev egress.calico weight 1 onlink
-      nexthop via 11.11.12.3 dev egress.calico weight 1 onlink
 ```
 
 If you see nothing at all, or the following:
