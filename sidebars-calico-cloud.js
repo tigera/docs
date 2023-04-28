@@ -10,7 +10,6 @@ module.exports = {
       items: [
         'about/about-calico-cloud',
         'about/product-comparison',
-        'about/training-resources',
       {
        type: 'category',
        label: 'Kubernetes training',
