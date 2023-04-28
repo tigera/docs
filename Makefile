@@ -11,12 +11,19 @@ PRODUCT?=calico
 IA_OPERATOR_REPO?=tigera/image-assurance
 IA_OPERATOR_VERSION?=v1.5.7-0.dev.0.20230410154742-6850d977e93b
 
+NODE_VER=20
+
+YARN=yarn
+ifeq ($(CONTAINERIZED),true)
+YARN=docker run -i --rm -v "$(shell pwd):/docs" --net=host -w /docs node:$(NODE_VER) yarn
+endif
+
 build: init
-	yarn build
+	$(YARN) build
 
 .PHONY: start
 start: init
-	yarn start
+	$(YARN) start
 
 .PHONY: test
 test: init
@@ -24,15 +31,15 @@ test: init
 
 .PHONY: clear clean
 clear clean:
-	yarn clear
+	$(YARN) clear
 
 .PHONY: init
 init:
-	yarn install
+	$(YARN) install
 
 .PHONY: serve
 serve: build
-	yarn serve
+	$(YARN) serve
 
 .PHONY: full
 full: clean build
