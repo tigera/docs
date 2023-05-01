@@ -64,12 +64,12 @@ const config = {
         searchPagePath: '/search',
       },
       announcementBar: {
-        id: 'survey',
+        id: 'calico_ebpf',
         content:
-            'Take the <a target="_blank" rel="noopener noreferrer" href="https://www.surveymonkey.com/r/7WVLTW8">Calico Open Source' +
-            ' adoption survey</a>',
-        backgroundColor: '#DCEAF3',
-        textColor: '#091E42',
+            'Use Calico <img src="/img/brands/ebpf_logo.svg" style="height:1.5rem; margin: 0 5px 0 5px; display: inline-flex;" alt="eBPF" /> dataplane' + 
+            ' to enhance your Kubernetes networking performance. Click <a href="https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf">here</a> to learn more.',
+        backgroundColor: '#FCE181',
+        textColor: '#000',
         isCloseable: true,
       },
       navbar: {
