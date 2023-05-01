@@ -1,0 +1,103 @@
+---
+description: Improve cluster DNS performance with NodeLocal DNSCache
+---
+
+# Improve cluster DNS performance with NodeLocal DNSCache
+
+## Big picture
+
+NodeLocal DNSCache deploys `node-local-dns` pods as hostnetwork on all cluster nodes to improve DNS perfomance.
+This means the route for DNS traffic is changing and new hops are being introduced in your network when enabling this feature.
+Thus, you need appropriate policies in place to allow for this new traffic in your cluster.
+
+After deploying NodeLocal DNSCache to your {{prodname}} cluster, you need to add a policy for `kube-dns` to allow ingress
+traffic from `node-local-dns` pods. In cases where the `node-local-dns` does not have the information cached, it needs to
+be able to communicate to `kube-dns` service and thus `kube-dns` should allow this incoming traffic.
+
+In this documentation we are providing some guidance to help you define required network policies in your {{prodname}}
+cluster to allow for NodeLocal DNSCache traffic.
+
+## Value
+
+NodeLocal DNSCache is a Kubernetes feature that improves cluster DNS performance.  When you deploy NodeLocal DNSCache
+on your {{prodname}} cluster, you need to adjust your network policies accordingly to allow for the new traffic in your cluster.
+
+## Unsupported
+
+- OpenShift
+
+### OpenShift
+
+Openshift has its own DNS caching mechanism which deploys CoreDNS pods as Daemonsets. {{prodname}} is expected to function
+normally in Openshift. Deploying NodeLocal DNSCache on {{prodname}} clusters in OpenShift is not currently supported.
+Read more on the [Openshift DNS setup](https://docs.openshift.com/container-platform/4.10/networking/dns-operator.html).
+
+## Features
+
+This how-to guide uses the following Calico features:
+
+- GlobalNetworkPolicies
+
+## Before you begin...
+
+**Required**
+
+- {{prodname}} is installed
+- [NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/) deployed or ready to be
+deployed to your cluster
+
+## How to
+
+A broad network policy in the example below will allow all incoming TCP traffic on port 53 on `kube-dns` which will
+include the incoming traffic from `node-local-dns` pods, too.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: default.local-dns-to-core-dns
+  namespace: kube-system
+spec:
+  tier: default
+  selector: k8s-app == "kube-dns"
+  ingress:
+    - action: Allow
+      protocol: TCP
+      destination:
+        selector: k8s-app == "kube-dns"
+        ports:
+          - '53'
+  types:
+    - Ingress
+```
+
+
+However, if you want to be more precise and only allow traffic from `node-local-dns` pods, you need to define these
+pods as the source of the ingress traffic in your policy ingress rule.
+
+Note that `node-local-dns` pods are deployed as hostnetwork and will not have it's own IP address, which makes it
+challenging to address them in network policies directly. Here we provide some options for you to consider while designing
+you policy rules.
+
+**Address node-local-dns pods in network policy**
+
+You can consider the following options for specifying the source of the traffic in your ingress policy rule more precisely.
+
+- For clusters with IPIP or VXLAN enabled, the ingress rule should allow ingress traffic from the IPIP / VXLAN tunnel
+IP addresses.
+- For unencapsualted clusters, the rule should allow ingress traffic from real node IP addresses.
+
+to implement the above, you can allocate IP addresses using the following suggestions:
+- Using CIDR in policy rules:
+  - For IPIP/VXLAN, create a new IP pool (small pool) for allocating tunnel IPs. With this option you are ensuring that
+  tunnel IPs are allocated from a small well-known range. Using CIDR from this secondary IP pool can reduce the breadth
+  of the rule by reducing the amount of IPs that are allowed.
+  - For unencapsualted, the size of the CIDR depends on the CIDR range allocated by the cluster admin for node IP addresses.
+
+- Using (auto) host endpoints:
+  - Using host endpoints enables you to address cluster nodes in network policies. However, as a side-effect it will
+  enforce policies on cluster nodes which might not be a desirable behaviour for all clusters. Enabling host endpoints
+  without adding policies to allow traffic from / to them will result in traffic being denied.
+
+Depending on your specific cluster and requirements, you need to evaluate your options and make an informed decision for
+what works better.
