@@ -27,7 +27,7 @@ export default {
     {
       title: 'Calico Cloud',
 
-      link: 'calico-cloud',
+      link: 'calico-cloud/about',
       description: [
         'A pay-as-you-go, SaaS application that provides comprehensive container security across the entire container lifecycle (build, deploy, runtime).',
         'A fully-managed version of Calico Enterprise that adds container image scanning and advanced threat detection capabilities.',

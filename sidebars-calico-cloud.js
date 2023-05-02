@@ -1,6 +1,16 @@
 module.exports = {
   calicoCloudSidebar: [
-    'index',
+    {
+      type: 'category',
+      label: 'About',
+      link: {
+        type: 'doc',
+        id: 'about/index',
+      },
+      items: [
+        'about/product-comparison',
+      ],
+    },
     {
       type: 'category',
       label: 'Install and upgrade',
