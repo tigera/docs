@@ -14,7 +14,7 @@ export default {
     },
     {
       title: 'Calico Cloud',
-      link: 'calico-cloud',
+      link: 'calico-cloud/about',
       image: '/img/calico-cloud-logo.webp',
     },
   ],
