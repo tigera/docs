@@ -23,7 +23,7 @@ test("Crawl the docs and execute tests", async () => {
   const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES.split(',') : [];
   const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL==='true' : false;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
-  const varRegex = /\{\{[ \t]*[\w-\[\]]+[ \t]*}}/g;
+  const varRegex = /\{\{[ \t]*[-\w\[\]]+[ \t]*}}/g;
   const varSkipList = [
     '{{end}}',
   ];
@@ -260,11 +260,40 @@ test("Crawl the docs and execute tests", async () => {
     }
   }
 
+  function spacePrefixLen(str) {
+    const match = str.match(/^[ \t]*/);
+    if (match != null && match.length > 0 && typeof match[0] === 'string') {
+      return match[0].replace('\t', '  ').length;
+    }
+    return 0;
+  }
+
+  function warnOnNoIndentation(code, origin) {
+    if (!process.env.YAML_INDENTATION_WARNING) return;
+    let startLen = 0;
+    let indentationExists = false;
+    const lines = code.split('\n');
+    if (lines.length < 2) return;
+    for (let idx = 0; idx < lines.length; idx++) {
+      if (idx === 0) {
+        startLen = spacePrefixLen(lines[idx]);
+      } else {
+        const prefixLen = spacePrefixLen(lines[idx]);
+        indentationExists = prefixLen > startLen;
+        if (indentationExists) break;
+      }
+    }
+    if (!indentationExists) {
+      console.warn(`[WARN] no indentation exists in yaml block on page ${origin}`);
+    }
+  }
+
   function testValidity(type, origin, code) {
     const yamlParseOptions = {strict: true, uniqueKeys: false};
     try {
       switch (type) {
         case 'yaml':
+          warnOnNoIndentation(code, origin);
           const errs = [];
           const docs = YAML.parseAllDocuments(code, yamlParseOptions);
           for (const doc of docs) {
