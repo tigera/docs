@@ -28,7 +28,7 @@ start: init
 	$(YARN) start$(YARN_ACTION_SUFFIX)
 
 .PHONY: test
-test: init
+test: ci-cloud-image-list init
 	./scripts/serve-test.sh
 
 .PHONY: clear clean
