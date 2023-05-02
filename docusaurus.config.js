@@ -63,6 +63,15 @@ const config = {
         contextualSearch: true,
         searchPagePath: '/search',
       },
+      announcementBar: {
+        id: 'calico_ebpf',
+        content:
+            'Use Calico <img src="/img/brands/ebpf_logo.svg" style="height:1.5rem; margin: 0 5px 0 5px; display: inline-flex;" alt="eBPF" /> dataplane' + 
+            ' to enhance your Kubernetes networking performance. Click <a href="https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf">here</a> to learn more.',
+        backgroundColor: '#FCE181',
+        textColor: '#000',
+        isCloseable: true,
+      },
       navbar: {
         logo: {
           src: 'img/tigera-logo-black.png',
