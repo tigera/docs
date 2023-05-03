@@ -276,10 +276,10 @@ test("Crawl the docs and execute tests", async () => {
     const lines = code.split('\n');
     if (lines.length < 2) return;
     for (let idx = 0; idx < lines.length; idx++) {
+      const prefixLen = spacePrefixLen(lines[idx]);
       if (idx === 0) {
-        startLen = spacePrefixLen(lines[idx]);
+        startLen = prefixLen;
       } else {
-        const prefixLen = spacePrefixLen(lines[idx]);
         indentationExists = prefixLen > startLen;
         if (indentationExists) break;
       }
