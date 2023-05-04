@@ -40,7 +40,7 @@ The following table details the key/value pairs in the JSON blob, including thei
 | `packets_in`                      | long              | Number of incoming packets since the last export.                                                                                                                                                                                                                                                                                        |
 | `packets_out`                     | long              | Number of outgoing packets since the last export.                                                                                                                                                                                                                                                                                        |
 | `proto`                           | keyword           | Protocol.                                                                                                                                                                                                                                                                                                                                |
-| `policies`                        | array of keywords | Policy or policies that allowed or denied this flow. Staged policy names are prefixed with "staged:".                                                                                                                                                                                                                                    |
+| `policies`                        | array of keywords | List of policies that interacted with this flow. See [Format of the policies field](#format-of-the-policies-field).                                                                                                                                                                                                                                                |
 | `process_name`                    | keyword           | The name of the process that initiated or received the connection or connection request. This field will have the executable path if flowLogsCollectProcessPath is enabled. A "-" indicates that the process name is not logged. A "\*" indicates that the per flow process limit has exceeded and the process names are now aggregated. |
 | `process_id`                      | keyword           | The process ID of the corresponding process (indicated by the `process_name` field) that initiated or received the connection or connection request. A "-" indicates that the process ID is not logged. A "\*" indicates that there are more than one unique process IDs for the corresponding process name.                             |
 | `process_args`                    | array of strings  | The arguments with which the executable was invoked. The size of the list depends on the per flow process args limit.                                                                                                                                                                                                                    |
@@ -64,3 +64,40 @@ The following table details the key/value pairs in the JSON blob, including thei
 | `tcp_total_retransmissions`       | long              | Total retranmitted packets. This field is only available if flowLogsEnableTcpStats is enabled                                                                                                                                                                                                                                            |
 | `tcp_lost_packets`                | long              | Total lost packets. This field is only available if flowLogsEnableTcpStats is enabled                                                                                                                                                                                                                                                    |
 | `tcp_unrecovered_to`              | long              | Total unrecovered timeouts. This field is only available if flowLogsEnableTcpStats is enabled                                                                                                                                                                                                                                            |
+
+### Format of the policies field
+
+The `policies` field contains a comma-delimited list of policy rules that matched the flow.  Each entry in the
+list has the following format:
+
+```
+<index>|<tier name>|<policy name>|<action>|<rule index>
+```
+
+Where,
+
+* `<index>` numbers the order in which the rules were hit, starting with `0`.
+  :::tip
+  Sort the entries of the list by the `<index>` to see the order that rules were hit.  The entries are displayed in
+  random order due to the way they are stored in the datastore.
+  :::
+
+* `<tier name>` is the name of the policy tier containing the policy, or `__PROFILE__` for a rule derived from a
+  `Profile` resource (this is the internal datatype used to represent a Kubernetes namespace and its associated
+  "default allow" rule).
+* `<policy name>` is the name of the policy/profile; its format depends on the type of policy:
+
+  * `<tier>.<name>` for {{prodname}} `GlobalNetworkPolicy`.
+  * `<namespace>/knp.default.<name>` for Kubernetes `NetworkPolicy`.
+  * `<namespace>/<tier>.<name>` for {{prodname}} `NetworkPolicy`.
+
+  Staged policy names are prefixed with "staged:".
+
+* `<action>` is the action performed by the rule; one of `allow`, `deny`, `pass`.
+* `<rule index>` if non-negative, is the index of the rule that was matched within the policy, starting with 0.
+  Otherwise, a special value:
+
+  * `-1` means the reporting endpoint was selected by the policy but no rule matched.  The traffic hit the default
+    action for the tier.  In this case, the `<policy name>` is selected arbitrarily from the set of policies within
+    the tier that apply to the endpoint.
+  * `-2` means "unknown". The rule index was not recorded.
