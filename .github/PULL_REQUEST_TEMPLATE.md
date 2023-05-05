@@ -22,9 +22,9 @@ Additional information:
 
 Merge checklist:
 <!--- Mandatory for docs team members before merging code --->
-- [] Deploy preview inspected wherever changes were made 
-- [] Build completed successfully
-- [] Test have passed 
+- [ ] Deploy preview inspected wherever changes were made 
+- [ ] Build completed successfully
+- [ ] Test have passed 
 
 
 <!--- After you open your PR, ask for review from docs team:
