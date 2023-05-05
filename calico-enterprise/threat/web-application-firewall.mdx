@@ -54,9 +54,9 @@ You simply enable WAF in Manager UI, and determine the services that you want to
 
 **Required**
 
-Configure Felix for syncing WAF policy. If you have already [configured L7 logs](../visibility/elastic/l7/Configure), you can ignore this step.
-
-Enable the Policy Sync API in Felix. To do this cluster-wide, modify the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
+If you intend to enable WAF using the CLI rather than in Manager UI, or you have not yet
+[configured L7 logs](../visibility/elastic/l7/Configure), you must enable the Policy Sync API in Felix. To do this cluster-wide,
+modify the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
 
 ```bash
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
@@ -166,9 +166,10 @@ you must edit the modsecurity rules.
 
 #### Deny traffic
 
-For example, suppose you want to deny traffic with a 403 response. 
-Modify the modsecurity core rulesets' `SecDefaultAction` to deny rules by commenting and uncommenting these sections in the `crs-setup.conf`, 
-which will change the `SecDefaultAction` from `pass` to `deny` with a `403` response.
+For example, if you want to deny traffic with a 403 response, do the following steps: 
+
+1. Modify the modsecurity core rulesets' `SecDefaultAction` to deny rules by commenting and uncommenting these sections in the `crs-setup.conf`, 
+which will change the `SecDefaultAction` from `pass` to `deny`.
 
 Comment
 
@@ -180,8 +181,15 @@ Comment
 Uncomment
 
 ```
-SecDefaultAction "phase:1,log,auditlog,deny,status:403"
-SecDefaultAction "phase:2,log,auditlog,deny,status:403"
+ SecDefaultAction "phase:1,log,auditlog,deny,status:403"
+ SecDefaultAction "phase:2,log,auditlog,deny,status:403"
+```
+
+2. Run these commands:
+
+```bash
+  kubectl create cm --dry-run=client --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > ../my-ruleset.yaml
+  kubectl replace -f ../my-ruleset.yaml
 ```
 
 Note that switching to deny means the request is not processed and a 403 forbidden error is returned when a rule is triggered. 
