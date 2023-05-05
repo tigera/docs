@@ -300,7 +300,7 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Security',
+      label: 'Network policy',
       link: { type: 'doc', id: 'network-policy/index' },
       items: [
         'network-policy/adopt-zero-trust',
