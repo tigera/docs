@@ -4,7 +4,6 @@ LOCAL_USER_ID?=$(shell id -u $$USER)
 PACKAGE_NAME?=github.com/projectcalico/calico/calico
 API_GEN_REPO?=tmjd/gen-crd-api-reference-docs
 API_GEN_BRANCH?=kb_v2
-OPERATOR_VERSION?=v1.28.1
 OPERATOR_REPO?=tigera/operator
 PRODUCT?=calico
 
@@ -75,9 +74,12 @@ build-operator-reference:
 			-v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
 			-e LOCAL_USER_ID=$(LOCAL_USER_ID) \
 			-w /go/src/$(PACKAGE_NAME) \
-			$(CALICO_BUILD) /bin/bash -c 'rm -rf builder && mkdir builder && cd builder && \
+			$(CALICO_BUILD) /bin/bash -c '\
+			    op_ver=$$(jq ".[0].\"tigera-operator\".version" -r $(PRODUCT)/releases.json) && \
+				echo Building reference from operator $$op_ver && \
+				rm -rf builder && mkdir builder && cd builder && \
 				git clone --depth=1 -b $(API_GEN_BRANCH) https://github.com/$(API_GEN_REPO) api-gen && cd api-gen && \
-				go mod edit -replace github.com/tigera/operator=github.com/$(OPERATOR_REPO)@$(OPERATOR_VERSION) && \
+				go mod edit -replace github.com/tigera/operator=github.com/$(OPERATOR_REPO)@$$op_ver && \
 				go mod download all && go build && \
 				./gen-crd-api-reference-docs \
 					-api-dir github.com/tigera/operator/api \
