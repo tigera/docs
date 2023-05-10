@@ -28,7 +28,7 @@ start: init
 	$(YARN) start$(YARN_ACTION_SUFFIX)
 
 .PHONY: test
-test: ci-cloud-image-list init
+test: init
 	./scripts/serve-test.sh
 
 .PHONY: clear clean
@@ -48,6 +48,7 @@ full: clean build
 
 .PHONY: all
 all: full
+	-$(MAKE) ci-cloud-image-list
 	-$(MAKE) test
 
 .PHONY: prod
