@@ -38,6 +38,12 @@ test("Crawl the docs and execute tests", async () => {
     { regex: /\/calico-cloud\/get-help\/support$/i, processContent: true },
     { regex: /\/calico-cloud\/get-started\/connect\/connect-cluster$/i, processContent: true },
   ];
+  const skipOriginsForLC = [
+    // All origins to skip link checking (literal or regex)
+    // Examples:
+    // /\/reference\/legal\/felix$/,
+    // 'http://localhost:4242/calico/3.24/reference/legal/felix',
+  ];
   const skipList = [
     /^https?:\/\/([\w-]+\.)?example\.com/,
     /^https:\/\/kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.18/i,
@@ -347,7 +353,9 @@ test("Crawl the docs and execute tests", async () => {
 
   function checkAndUseLinkChecker(origin, url) {
     const useLinkChecker = (u, p) => {
-      lc.process(origin, u);
+      if (!inOriginSkipList(origin)) {
+        lc.process(origin, u);
+      }
       if (p) postProcessUrls.set(u, null);
       return true;
     }
@@ -367,6 +375,22 @@ test("Crawl the docs and execute tests", async () => {
     } else {
       if (!url.startsWith(DOCS)) {
         return useLinkChecker(url, false);
+      }
+    }
+    return false;
+  }
+
+  function inOriginSkipList(origin) {
+    for (const item of skipOriginsForLC) {
+      let skip = false;
+      if (typeof item === 'string') {
+        skip = item === origin;
+      } else if (typeof item === 'object' && item && item instanceof RegExp) {
+        skip = item.test(origin);
+      }
+      if (skip) {
+        console.log(`[INFO] skipping origin for link checking: ${origin}`);
+        return true;
       }
     }
     return false;
@@ -417,10 +441,12 @@ test("Crawl the docs and execute tests", async () => {
   async function doPostProcessing() {
     const opts = { url: '', urlRegExp: lc.getLinkRegex()[0]};
     for (const url of postProcessUrls.keys()) {
-      opts.url = url;
-      const urls = await downloadListOfUrls(opts);
-      for (const u of urls) {
-        lc.process(url, u);
+      if (!inOriginSkipList(url)) {
+        opts.url = url;
+        const urls = await downloadListOfUrls(opts);
+        for (const u of urls) {
+          lc.process(url, u);
+        }
       }
       doValidityTestOnFiles(url);
     }
