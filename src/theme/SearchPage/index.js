@@ -216,12 +216,25 @@ function SearchPageContent() {
     algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', 'default');
     algoliaHelper.addDisjunctiveFacetRefinement('language', currentLocale);
     if (productId) {
-      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${productId}-${version}`);
+      //TODO: figure this out
+      //current search is disabled for calico-cloud
+      // see docusaurus.config.js
+      if(productId === 'calico-cloud'){
+        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-3.16`); 
+      }else{
+        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${productId}-${version}`);
+      }
     } else {
       Object.entries(docsSearchVersionsHelpers.searchVersions).forEach(([pluginId]) => {
         const searchVersion = localStorage.getItem(`docs-preferred-version-${pluginId}`) || 'current';
         algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${pluginId}-${searchVersion}`);
       });
+     
+      //TODO: figure this out
+      //current search is disabled for calico-cloud
+      // see docusaurus.config.js
+      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-3.16`);
+
     }
     algoliaHelper.setQuery(searchQuery).setPage(page).search();
   });

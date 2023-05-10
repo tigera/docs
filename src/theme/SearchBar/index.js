@@ -37,6 +37,12 @@ function ResultsFooter({ state, onClose, productId }) {
   if (productId) {
     version = localStorage.getItem(`docs-preferred-version-${productId}`) || 'current';
   }
+  if(productId === 'calico-cloud'){
+    //TODO: figure this out
+    //current search is disabled for calico-cloud
+    // see docusaurus.config.js
+    version = '3.16'
+  }
 
   const to = `/search?q=${encodeURIComponent(state.query)}&p=${productId || ''}&v=${version}`;
 
@@ -97,6 +103,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
       ...props.searchParameters,
       facetFilters: productId ? filterFacetFiltersByProduct(facetFilters, productId) : facetFilters,
     });
+    console.log('searchParameters',searchParameters)
   }, [productId]);
   const [footer, setFooter] = useState();
   const { withBaseUrl } = useBaseUrlUtils();
