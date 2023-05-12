@@ -46,12 +46,7 @@ serve: build
 full: clean build
 
 .PHONY: all
-all: full
-	-$(MAKE) ci-cloud-image-list
-	-$(MAKE) test
-
-.PHONY: prod
-prod: full test
+all: full ci-cloud-image-list test
 
 .PHONY: index
 index:
