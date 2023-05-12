@@ -111,11 +111,18 @@ build-ia-operator-reference:
 					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx && \
 					sed -i "s|<br>|<br/>|g" /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx'
 
+UNAME_s := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+	SED_CMD := sed -i '' -e
+else
+	SED_CMD := sed -i -e
+endif
+
 update-cloud-image-list:
 	sed -i  '/^\$$INSTALLER_IMAGE/,/^)/{/^\$$/!{/^)/!d}}' $(PRODUCT)/get-started/connect/setup-private-registry.mdx
 	dl=$$(cat $(PRODUCT)/variables.js | grep clouddownloadurl | sed -e "s/^[^']*'\([^']*\)'.*$$/\1/" ) && \
 	curl -O $$dl/image-list &&\
-	sed -i -e "/^\$$INSTALLER_IMAGE/r image-list" $(PRODUCT)/get-started/connect/setup-private-registry.mdx
+	$(SED_CMD) "/^\$$INSTALLER_IMAGE/r image-list" $(PRODUCT)/get-started/connect/setup-private-registry.mdx
 	rm -f image-list
 
 ci-cloud-image-list:
