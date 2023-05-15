@@ -103,6 +103,13 @@ test("Crawl the docs and execute tests", async () => {
     'https://tools.ietf.org/html/rfc1123',
     'http://cr.yp.to/libtai/tai64.html#tai64n',
     'https://thenewstack.io/faster-troubleshooting-with-dynamic-packet-capture/', //==>Origin: http://localhost:4242/calico-cloud/visibility/packetcapture
+    // The following links are broken and used in the OSS 3.24 license page. We cannot modify them as they are in the license page.
+    'http://fsf.org/&amp',
+    'http://fsf.org/&gt',
+    'http://unlicense.org/&amp',
+    'http://www.openssl.org/)&amp',
+    'https://proxy.golang.org/github.com/',
+    'https://proxy.golang.org/github.com/antlr/antlr4/runtime/',
   ];
 
   const lc = linkChecker();
