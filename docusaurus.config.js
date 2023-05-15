@@ -263,9 +263,12 @@ const config = {
         ],
         // TODO: Add appropriate icons and links
         copyright: `
-          <div>
+          <div> 
+          </br>
             <div class='footer-copyright__title'>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
             <div class='footer-copyright__description'>Tigera is the creator and maintainer of Project Calico.</div>
+            <a href="#" onClick="Clym.showWidget('', '', event);">Privacy Center</a> | 
+            <a href="#" onclick="Clym.showWidget('/requests/new/do_not_sell_my_information', '', event);">Do not sell or share my personal information</a>
             <div>
               <a
                 href='https://www.linkedin.com/company/tigera/'
