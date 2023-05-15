@@ -213,6 +213,9 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
           href={`https://${props.appId}-dsn.algolia.net`}
           crossOrigin='anonymous'
         />
+        {/* This loads libraries for clym privacy popups. */}
+        <script src="https://widget.clym-sdk.net/blocking.js"></script>
+        <script src="https://widget.clym-sdk.net/clym.js"></script>
       </Head>
 
       <DocSearchButton
