@@ -2,22 +2,24 @@
 description: Install NodeLocal DNSCache
 ---
 
-# Install NodeLocal DNSCache
+# Use NodeLocal DNSCache in your cluster
 
 ## Big picture
 
-If you choose to use [NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/) in your cluster,
-follow these steps to enable connectivity for your components.
+Set up NodeLocal DNSCache to improve DNS lookup latency.
 
-## Unsupported
+## Before you begin
 
-- OpenShift
+### Required
 
-### OpenShift
+Follow these [steps](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/) to enable NodeLocal DNSCache connectivity.
 
-Openshift has its own DNS caching mechanism which deploys CoreDNS pods as Daemonsets. NodeLocal DNSCache does not support
-OpenShift.
-Read more on the [Openshift DNS setup](https://docs.openshift.com/container-platform/4.10/networking/dns-operator.html).
+### Unsupported
+
+- OpenShift 
+  
+NodeLocal DNSCache does not support OpenShift. Openshift has its own DNS caching mechanism which deploys CoreDNS pods as DaemonSets.
+For more information, see [Openshift DNS setup](https://docs.openshift.com/container-platform/4.10/networking/dns-operator.html).
 
 ## Features
 
@@ -25,19 +27,10 @@ This how-to guide uses the following Calico features:
 
 - GlobalNetworkPolicies
 
-## Before you begin...
+## Create a policy to allow traffic from NodeLocal DNSCache
 
-**Required**
-
-- {{prodname}} is installed
-- [NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/) deployed or ready to be
-deployed to your cluster
-
-## How to
-
-Create a network policy to allow traffic from NodeLocal DNSCache to `kube-dns`. A broad network policy in the example
-below will allow all incoming TCP traffic on port 53 on `kube-dns` which will include the incoming traffic from
-`node-local-dns` pods, too.
+The following is a sample network policy that allows all incoming TCP traffic (including incoming traffic from
+`node-local-dns` pods) on port 53 on `kube-dns`.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -59,10 +52,9 @@ spec:
     - Ingress
 ```
 
-
-If you want to refine the sources allowed by this policy, note that NodeLocal DNSCache pods are host networked,
-and ensure you allow traffic from the addresses of your hosts. If you're using encapsulation, you will need to allow
-connectivity from the tunnel IPs.
+To refine the sources permitted by this policy, take into account that NodeLocal DNSCache pods are host networked, 
+and make sure to allow traffic from the addresses of your hosts.
+If you're using encapsulation, you will need to allow connectivity from the tunnel IPs.
 
 The Tigera operator creates policy to allow Tigera components to connect to NodeLocal DNSCache when detected.
 Felix accounts for the NodeLocal DNSCache in creating DNS Logs and enforcing DNS Policy.
