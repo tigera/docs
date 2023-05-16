@@ -51,6 +51,7 @@ test("Crawl the docs and execute tests", async () => {
     /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+\.md$/i,
     /^https:\/\/www\.linkedin\.com\/company\/tigera\/?$/,
     'http://etcd.co',
+    'https://openid.net/connect/',
     'https://success.docker.com/article/docker-ee-best-practices',
     `https://installer.calicocloud.io/`,
     `https://installer.calicocloud.io/charts`,
