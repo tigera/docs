@@ -39,8 +39,8 @@ module.exports = {
         'get-started/connect/connect-cluster',
         'get-started/connect/checklist',
         'get-started/connect/operator-checklist',
-
         'get-started/upgrade-cluster',
+        'get-started/connect/usage-metrics',
       ],
     },
     {
