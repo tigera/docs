@@ -144,7 +144,7 @@ spec:
         of EKS's custom networking support, not specific to {prodname}.) As a workaround, trusted pods that require
         control plane nodes to connect to them, such as those implementing admission controller webhooks, can include{' '}
         <code>hostNetwork:true</code> in their pod spec. See the Kuberentes API{' '}
-        <Link href='https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#podspec-v1-core'>
+        <Link href='https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec'>
           pod spec
         </Link>{' '}
         definition for more information on this setting.

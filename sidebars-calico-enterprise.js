@@ -2,6 +2,17 @@
 
 module.exports = {
   calicoEnterpriseSidebar: [
+    {
+      type: 'category',
+      label: 'About',
+      link: {
+        type: 'doc',
+        id: 'about/index',
+      },
+      items: [
+        'about/product-comparison',
+      ],
+    },
     'about-calico-enterprise',
     {
       type: 'category',
