@@ -12,6 +12,7 @@ import Translate from '@docusaurus/Translate';
 import translations from '@theme/SearchTranslations';
 import { useProductId } from '../../utils/useProductId';
 import { getProductNameById } from '../../utils/getProductNameById';
+import clym from './clym'
 let DocSearchModal = null;
 function Hit({ hit, children }) {
   const text = hit.content || hit.hierarchy[hit.type];
@@ -202,6 +203,20 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
     searchButtonRef,
   });
 
+  (function (d, s, i, w, o) {
+    var js,
+        cjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(i)) return;
+
+    js = d.createElement('script');
+    js.id = i;
+    js.src = 'https://widget.clym-sdk.net/clym.js';
+    js.onload = function () {
+        Clym && Clym.load(i, w, o);
+    };
+    cjs.parentNode.insertBefore(js, cjs);
+})(document, 'script', 'clym-privacy', 'efccb797d8fa43acba85c4d5dutupsek', {});
+
   return (
     <>
       <Head>
@@ -215,7 +230,8 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
         />
         {/* This loads libraries for clym privacy popups. */}
         <script src="https://widget.clym-sdk.net/blocking.js"></script> 
-        <script> (function(d,s,i,w,o){ var js,cjs=d.getElementsByTagName(s)[0]; if(d.getElementById(i))return; js=d.createElement('script'); js.id=i; js.src="https://widget.clym-sdk.net/clym.js"; js.onload=function(){Clym&&Clym.load(i,w,o);}; cjs.parentNode.insertBefore(js, cjs); }(document,'script','clym-privacy','efccb797d8fa43acba85c4d5dutupsek',{})); </script>
+        <script>{`(function(d,s,i,w,o){ var js,cjs=d.getElementsByTagName(s)[0]; if(d.getElementById(i))return; js=d.createElement('script'); js.id=i; js.src='https://widget.clym-sdk.net/clym.js';js.onload=function(){Clym&&Clym.load(i,w,o)};cjs.parentNode.insertBefore(js, cjs) }(document,'script','clym-privacy','efccb797d8fa43acba85c4d5dutupsek',{}))`}</script>
+
       </Head>
 
       <DocSearchButton
