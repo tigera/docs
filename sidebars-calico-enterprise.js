@@ -13,7 +13,6 @@ module.exports = {
         'about/product-comparison',
       ],
     },
-    'about-calico-enterprise',
     {
       type: 'category',
       label: 'Install and upgrade',
