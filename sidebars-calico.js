@@ -17,7 +17,7 @@ module.exports = {
        type: 'category',
        label: 'Kubernetes training',
        link: {
-         type: 'doc', 
+         type: 'doc',
          id: 'about/kubernetes-training/index',
        },
          items: [
@@ -29,7 +29,7 @@ module.exports = {
            'about/kubernetes-training/about-kubernetes-services',
            'about/kubernetes-training/about-ebpf',
         ],
-       }, 
+       },
       ],
     },
     {
@@ -701,13 +701,7 @@ module.exports = {
           label: 'Attributions',
           link: { type: 'doc', id: 'reference/legal/index' },
           items: [
-            'reference/legal/alp',
-            'reference/legal/calicoctl',
-            'reference/legal/cni',
-            'reference/legal/confd',
-            'reference/legal/felix',
-            'reference/legal/node',
-            'reference/legal/typha',
+            'reference/legal/projectcalico',
           ],
         },
       ],
