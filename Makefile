@@ -46,7 +46,7 @@ serve: build
 full: clean build
 
 .PHONY: all
-all: full ci-cloud-image-list test
+all: full run-update-cloud-image-list test
 
 .PHONY: index
 index:
@@ -107,16 +107,17 @@ build-ia-operator-reference:
 					sed -i "s|<br>|<br/>|g" /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx'
 
 update-cloud-image-list:
+	@if [ -z "${RUN_UPDATE_CLOUD_IMAGE_LIST}" ]; then echo "Use 'make run-update-cloud-image-list' instead"; false; fi
 	sed -i  '/^\$$INSTALLER_IMAGE/,/^)/{/^\$$/!{/^)/!d}}' $(PRODUCT)/get-started/connect/setup-private-registry.mdx
 	dl=$$(cat $(PRODUCT)/variables.js | grep clouddownloadurl | sed -e "s/^[^']*'\([^']*\)'.*$$/\1/" ) && \
-	curl -O $$dl/image-list &&\
+	curl -O $$dl/image-list && \
 	sed -i -e "/^\$$INSTALLER_IMAGE/r image-list" $(PRODUCT)/get-started/connect/setup-private-registry.mdx
 	rm -f image-list
 
-ci-cloud-image-list:
-	PRODUCT=calico-cloud make update-cloud-image-list
+run-update-cloud-image-list:
+	RUN_UPDATE_CLOUD_IMAGE_LIST=1 PRODUCT=calico-cloud make update-cloud-image-list
 	for x in $$(ls calico-cloud_versioned_docs/); do \
-		PRODUCT=calico-cloud_versioned_docs/$$x make update-cloud-image-list; \
+		RUN_UPDATE_CLOUD_IMAGE_LIST=1 PRODUCT=calico-cloud_versioned_docs/$$x make update-cloud-image-list; \
 	done
-	@if [ "$$(git diff --stat)" != "" ]; then \
+	@if [ "$$(git diff --stat ./calico-cloud*/**/get-started/connect/setup-private-registry.mdx)" != "" ]; then \
 	echo "You might need to run 'make update-cloud-image-list' and commit the changes"; exit 1; fi
