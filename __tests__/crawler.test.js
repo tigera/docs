@@ -107,6 +107,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://tools.ietf.org/html/rfc1123',
     'http://cr.yp.to/libtai/tai64.html#tai64n',
     'https://thenewstack.io/faster-troubleshooting-with-dynamic-packet-capture/', //==>Origin: http://localhost:4242/calico-cloud/visibility/packetcapture
+    'https://www.eksworkshop.com/beginner/120_network-policies/tigera/tsce-sg-integration/', //This is a temporary fix. A ticket created to fix the docs
   ];
 
   const lc = linkChecker();
