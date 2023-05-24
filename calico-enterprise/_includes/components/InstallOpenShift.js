@@ -56,7 +56,7 @@ export default function InstallOpenShift(props) {
         <Link href={`${baseUrl}/getting-started/install-on-clusters/openshift/requirements`}>system requirements</Link>:
       </p>
       <CodeBlock language='bash'>
-        sed -i 's/OpenShiftSDN/Calico/' install-config.yaml{'\n'}
+        sed -i 's/\(OpenShiftSDN\|OVNKubernetes\)/Calico/' install-config.yaml{'\n'}
         sed -i 's/platform: {}/platform:\n{'\t'}aws:\n{'\t'}type: m4.xlarge/g' install-config.yaml
       </CodeBlock>
 
