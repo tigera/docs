@@ -120,4 +120,4 @@ run-update-cloud-image-list:
 		RUN_UPDATE_CLOUD_IMAGE_LIST=1 PRODUCT=calico-cloud_versioned_docs/$$x make update-cloud-image-list; \
 	done
 	@if [ "$$(git diff --stat ./calico-cloud*/**/get-started/connect/setup-private-registry.mdx)" != "" ]; then \
-	echo "You might need to run 'make update-cloud-image-list' and commit the changes"; exit 1; fi
+	echo "You might need to run 'make run-update-cloud-image-list' and commit the changes"; exit 1; fi
