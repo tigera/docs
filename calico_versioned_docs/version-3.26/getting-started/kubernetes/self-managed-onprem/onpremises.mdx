@@ -1,0 +1,211 @@
+---
+description: Install Calico networking and network policy for on-premises deployments.
+---
+
+# Install Calico networking and network policy for on-premises deployments
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Big picture
+
+Install {{prodname}} to provide both networking and network policy for self-managed on-premises deployments.
+
+## Value
+
+**{{prodname}} networking** and **network policy** are a powerful choice for a CaaS implementation. If you have the networking infrastructure and resources to manage Kubernetes on-premises, installing the full {{prodname}} product provides the most customization and control.
+
+## Concepts
+
+### {{prodname}} operator
+
+{{prodname}} is installed by an operator which manages the installation, upgrade, and general lifecycle of a {{prodname}} cluster. The operator is
+installed directly on the cluster as a Deployment, and is configured through one or more custom Kubernetes API resources.
+
+### {{prodname}} manifests
+
+{{prodname}} can also be installed using raw manifests as an alternative to the operator. The manifests contain the necessary resources for installing {{prodname}} on each node in your Kubernetes cluster. Using manifests is not recommended as they cannot automatically manage the lifecycle of the {{prodname}} as the operator does. However, manifests may be useful for clusters that require highly specific modifications to the underlying Kubernetes resources.
+
+## Before you begin...
+
+- Ensure that your Kubernetes cluster meets [requirements](../requirements.mdx).
+  If you do not have a cluster, see [Installing kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/).
+
+## How to
+
+- [Install Calico](#install-calico)
+
+### Install Calico
+
+<Tabs>
+<TabItem label="Operator" value="Operator-0">
+
+1. First, install the operator on your cluster.
+
+   ```
+   kubectl create -f {{manifestsUrl}}/manifests/tigera-operator.yaml
+   ```
+
+1. Download the custom resources necessary to configure {{prodname}}
+
+   ```
+   curl {{manifestsUrl}}/manifests/custom-resources.yaml -O
+   ```
+
+   If you wish to customize the {{prodname}} install, customize the downloaded custom-resources.yaml manifest locally.
+
+1. Create the manifest in order to install {{prodname}}.
+
+   ```
+   kubectl create -f custom-resources.yaml
+   ```
+
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+</TabItem>
+<TabItem label="Manifest" value="Manifest-1">
+
+Based on your datastore and number of nodes, select a link below to install {{prodname}}.
+
+:::note
+
+The option, **Kubernetes API datastore, more than 50 nodes** provides scaling using [Typha daemon](../../../reference/typha/index.mdx). Typha is not included for etcd because etcd already handles many clients so using Typha is redundant and not recommended.
+
+:::
+
+- [Install Calico with Kubernetes API datastore, 50 nodes or less](#install-calico-with-kubernetes-api-datastore-50-nodes-or-less)
+- [Install Calico with Kubernetes API datastore, more than 50 nodes](#install-calico-with-kubernetes-api-datastore-more-than-50-nodes)
+- [Install Calico with etcd datastore](#install-calico-with-etcd-datastore)
+
+#### Install Calico with Kubernetes API datastore, 50 nodes or less
+
+1. Download the {{prodname}} networking manifest for the Kubernetes API datastore.
+
+   ```bash
+   curl {{manifestsUrl}}/manifests/calico.yaml -O
+   ```
+
+1. <PodCidrSed yaml='calico' />
+1. Customize the manifest as necessary.
+1. Apply the manifest using the following command.
+
+   ```bash
+   kubectl apply -f calico.yaml
+   ```
+
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+#### Install Calico with Kubernetes API datastore, more than 50 nodes
+
+1. Download the {{prodname}} networking manifest for the Kubernetes API datastore.
+
+   ```bash
+   curl {{manifestsUrl}}/manifests/calico-typha.yaml -o calico.yaml
+   ```
+
+1. <PodCidrSed yaml='calico' />
+1. Modify the replica count to the desired number in the `Deployment` named, `calico-typha`.
+
+   ```yaml noValidation
+   apiVersion: apps/v1beta1
+   kind: Deployment
+   metadata:
+     name: calico-typha
+     ...
+   spec:
+     ...
+     replicas: <number of replicas>
+   ```
+
+   We recommend at least one replica for every 200 nodes, and no more than
+   20 replicas. In production, we recommend a minimum of three replicas to reduce
+   the impact of rolling upgrades and failures. The number of replicas should
+   always be less than the number of nodes, otherwise rolling upgrades will stall.
+   In addition, Typha only helps with scale if there are fewer Typha instances than
+   there are nodes.
+
+   :::note
+
+   If you set `typha_service_name` and set the Typha deployment replica
+   count to 0, Felix will not start.
+
+   :::
+
+1. Customize the manifest if desired.
+1. Apply the manifest.
+
+   ```bash
+   kubectl apply -f calico.yaml
+   ```
+
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+#### Install Calico with etcd datastore
+
+:::note
+
+The **etcd** database is not recommended for new installs. However, it is an option if you are running {{prodname}} as the network plugin for both OpenStack and Kubernetes.
+
+:::
+
+1. Download the {{prodname}} networking manifest for etcd.
+
+   ```bash
+   curl {{manifestsUrl}}/manifests/calico-etcd.yaml -o calico.yaml
+   ```
+
+1. <PodCidrSed yaml='calico' />
+1. In the `ConfigMap` named, `calico-config`, set the value of `etcd_endpoints` to the IP address and port of your etcd server.
+   :::note
+
+   You can specify more than one `etcd_endpoint` using commas as delimiters.
+
+   :::
+
+1. Customize the manifest if desired.
+1. Apply the manifest using the following command.
+
+   ```bash
+   kubectl apply -f calico.yaml
+   ```
+
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:etcd'
+/>
+
+</TabItem>
+</Tabs>
+
+## Next steps
+
+**Required**
+
+- [Install and configure calicoctl](../../../operations/calicoctl/install.mdx)
+
+**Recommended - Networking**
+
+- If you are using the default BGP networking with full-mesh node-to-node peering with no encapsulation, go to [Configure BGP peering](../../../networking/configuring/bgp.mdx) to get traffic flowing between pods.
+- If you are unsure about networking options, or want to implement encapsulation (overlay networking), see [Determine best networking option](../../../networking/determine-best-networking.mdx).
+
+**Recommended - Security**
+
+- [Secure Calico component communications](../../../network-policy/comms/crypto-auth.mdx)
+- [Secure hosts by installing Calico on hosts](../../bare-metal/about.mdx)
+- [Secure pods with Calico network policy](../../../network-policy/get-started/calico-policy/calico-network-policy.mdx)
+- If you are using {{prodname}} with Istio service mesh, get started here: [Enable application layer policy](../../../network-policy/istio/app-layer-policy.mdx)
