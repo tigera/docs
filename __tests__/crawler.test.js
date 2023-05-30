@@ -47,7 +47,6 @@ test("Crawl the docs and execute tests", async () => {
     // Skip this license attribution file, since we need to include the text of licenses unmodified,
     // and some have dead links
     'http://localhost:4242/calico/3.24/reference/legal/projectcalico',
-    'http://localhost:4242/calico-cloud/archive',
   ];
   const skipList = [
     /^https?:\/\/([\w-]+\.)?example\.com/,
