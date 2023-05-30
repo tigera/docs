@@ -46,4 +46,4 @@ description: Links to all versions of product documentation for Calico, Calico E
 
 ## Calico Cloud
 
-* [Calico Cloud](https://docs.tigera.io/calico-cloud)
+* [Calico Cloud](https://docs.tigera.io/calico-cloud/about)
