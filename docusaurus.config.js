@@ -35,9 +35,9 @@ const config = {
           path: 'default',
           sidebarPath: false,
         },
-        googleTagManager: {
-          containerId: 'GTM-KCHDXB2',
-        },
+//        googleTagManager: {
+//          containerId: 'GTM-KCHDXB2',
+//        },
         blog: false,
         theme: {
           customCss: [
