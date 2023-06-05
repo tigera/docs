@@ -187,6 +187,7 @@ module.exports = {
                 'getting-started/kubernetes/vpp/getting-started',
                 'getting-started/kubernetes/vpp/ipsec',
                 'getting-started/kubernetes/vpp/specifics',
+                'getting-started/kubernetes/vpp/openshift'
               ],
             },
           ],
