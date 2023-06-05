@@ -314,7 +314,17 @@ module.exports = {
       label: 'Image Assurance',
       link: {type: 'doc', id: 'image-assurance/index'},
       items: [
-        'image-assurance/scan-image-registries',
+        'image-assurance/overview',
+        {
+          type: 'category',
+          label: 'Scan images for vulnerabilities',
+          link: {type: 'doc', id: 'image-assurance/scanners/index'},
+          items: [
+            'image-assurance/scanners/cli-based-scanner',
+            'image-assurance/scanners/cluster-scanner'
+          ],
+        },
+        'image-assurance/understanding-scan-results',
         'image-assurance/set-up-alerts',
         'image-assurance/install-the-admission-controller'
       ],
