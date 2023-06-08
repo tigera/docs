@@ -58,6 +58,7 @@ test("Crawl the docs and execute tests", async () => {
     /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+\.md$/i,
     /^https:\/\/www\.linkedin\.com\/company\/tigera\/?$/,
     'http://etcd.co',
+    'https://www.tigera.io/project-calico/community',
     'https://openid.net/connect/',
     'https://fedoraproject.org/wiki/EPEL',
     'http://kubernetes.io/docs/user-guide/identifiers#names',
