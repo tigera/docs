@@ -28,12 +28,6 @@ export default function ReleaseNotes() {
 
   return (
     <>
-      <p>
-        The following table shows component versioning for {prodname} <strong>{version}</strong>.
-      </p>
-      <p>
-        To select a different version, click <strong>Releases</strong> in the top navigation bar.
-      </p>
       {releases.map((release) => (
         <div key={release.title}>
           <Heading
@@ -41,7 +35,7 @@ export default function ReleaseNotes() {
             id={toKebab(release.title)}
             data-bz-version={toKebab(release.title)}
           >
-            {release.title}
+            Calico Open Source {release.title}
           </Heading>
           {release.title !== 'master' && (
             <p>
