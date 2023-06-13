@@ -9,7 +9,7 @@ export default {
     },
     {
       title: 'Calico Enterprise',
-      link: '/calico-enterprise/latest/about-calico-enterprise',
+      link: '/calico-enterprise/latest/about/',
       image: '/img/calico-enterprise-logo.webp',
     },
     {
