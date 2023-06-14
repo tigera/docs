@@ -124,6 +124,7 @@ test("Crawl the docs and execute tests", async () => {
     'http://cr.yp.to/libtai/tai64.html#tai64n',
     'https://thenewstack.io/faster-troubleshooting-with-dynamic-packet-capture/', //==>Origin: http://localhost:4242/calico-cloud/visibility/packetcapture
     'https://golang.org/pkg/crypto/tls/#ClientAuthType', //==>Origin: https://downloads.tigera.io/ee/v3.17.0/manifests/tigera-prometheus-operator.yaml. The dead link is automatically redirected to a working page, so no fix needed in the origin.
+    'https://downloads.tigera.io/ee/archives/release-master-master.tgz', //==> This started after redesigning the archive procedure.
   ];
 
   const lc = linkChecker();
