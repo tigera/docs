@@ -1,0 +1,209 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: public-domain-curl
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: service-1
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: service-curl
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: service-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: docker.io/library/nginx:latest
+        name: nginx
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl
+  namespace: public-domain-curl
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://www.tigera.io:8080; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl
+  namespace: service-curl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://nginx-svc.service-1-namespace.svc:81; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-8888
+  namespace: public-domain-curl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://8.8.8.8:80; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-208.67.222.222
+  namespace: public-domain-curl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://208.67.222.222:80; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-calico-org
+  namespace: public-domain-curl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://www.calico.org:80; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+  namespace: service-1
+spec:
+  ports:
+  - name: nginx
+    port: 81
+    protocol: TCP
+    targetPort: 81
+  selector:
+    app: nginx
+  sessionAffinity: None
+
+--- 
+
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkSet
+metadata:
+  name: public-ips
+spec:
+  nets:
+    - 8.8.0.0/16
+    - 208.67.0.0/16
