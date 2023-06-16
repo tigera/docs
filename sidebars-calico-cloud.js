@@ -114,7 +114,7 @@ module.exports = {
           link: {type: 'doc', id: 'network-policy/recommendations/index'},
           items: [
             'network-policy/recommendations/policy-recommendations',
-            'network-policy/recommendations/denied-traffic-flows',
+            'network-policy/recommendations/learn-about-policy-recommendations',
           ],
         },
         'network-policy/policy-best-practices',
