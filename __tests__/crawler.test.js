@@ -50,6 +50,7 @@ test("Crawl the docs and execute tests", async () => {
     'http://localhost:4242/calico/3.26/reference/legal/projectcalico',
     'http://localhost:4242/calico/latest/reference/legal/projectcalico',
     'http://localhost:4242/calico/next/reference/legal/projectcalico',
+    'http://localhost:4242/calico/3.25/reference/legal/node',
   ];
   const skipList = [
     /^https?:\/\/([\w-]+\.)?example\.com/,
@@ -122,7 +123,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://tools.ietf.org/html/rfc1123',
     'http://cr.yp.to/libtai/tai64.html#tai64n',
     'https://thenewstack.io/faster-troubleshooting-with-dynamic-packet-capture/', //==>Origin: http://localhost:4242/calico-cloud/visibility/packetcapture
-    'https://www.eksworkshop.com/beginner/120_network-policies/tigera/tsce-sg-integration/', //This is a temporary fix. A ticket created to fix the docs
+  
   ];
 
   const lc = linkChecker();
