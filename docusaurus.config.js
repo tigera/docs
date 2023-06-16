@@ -13,8 +13,8 @@ const config = {
   tagline: 'Active, zero-trust based security for containers and Kubernetes',
   url: 'https://docs.tigera.io',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
+  onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -65,9 +65,7 @@ const config = {
       },
       announcementBar: {
         id: 'calico_ebpf',
-        content:
-            'Use Calico <img src="/img/brands/ebpf_logo.svg" style="height:1.5rem; margin: 0 5px 0 5px; display: inline-flex;" alt="eBPF" /> dataplane' + 
-            ' to enhance your Kubernetes networking performance. Click <a href="https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf">here</a> to learn more.',
+        content: `Docs archive for Calico Enterprise 3.14. This version is no longer maintained. For the latest documentation, go to <a href="https://docs.tigera.io">https://docs.tigera.io</a>.`,
         backgroundColor: '#FCE181',
         textColor: '#000',
         isCloseable: true,
@@ -366,8 +364,7 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['current','3.16','3.15','3.14'],
-        lastVersion: '3.16',
+        onlyIncludeVersions: ['3.14'],
         versions: {
           current: {
             label: 'Next',
@@ -387,7 +384,7 @@ const config = {
           3.14: {
             label: '3.14',
             path: '3.14',
-            banner: 'none',
+            banner: 'unmaintained',
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
