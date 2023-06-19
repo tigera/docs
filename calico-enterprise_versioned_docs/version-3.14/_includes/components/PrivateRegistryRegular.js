@@ -28,11 +28,11 @@ export default function PrivateRegistryRegular() {
         </li>
         <CodeBlock language='bash'>
           {`docker pull ${tigeraOperator.registry}/${tigeraOperator.image}:${tigeraOperator.version}\n`}
-          {componentsWithImage.filter(filters.isNotWindows).map(renderPullCommand)}
+          {componentsWithImage.filter(filters.isNotWindows).map(renderPullCommand).join('')}
         </CodeBlock>
         <p>For hybrid Linux + Windows clusters, pull the following Windows images.</p>
         <CodeBlock language='bash'>
-          {componentsWithImage.filter(filters.isWindows).map(renderPullCommand)}
+          {componentsWithImage.filter(filters.isWindows).map(renderPullCommand).join('')}
         </CodeBlock>
 
         <li>
@@ -45,9 +45,9 @@ export default function PrivateRegistryRegular() {
               const registry = mapComponentToRegistry(component);
 
               return (
-                <>{`docker tag ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/${component.image}:${component.version}\n`}</>
+                `docker tag ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/${component.image}:${component.version}\n`
               );
-            })}
+            }).join('')}
           </CodeBlock>
           <p>
             For hybrid Linux + Windows clusters, retag the following Windows images with the name of your private
@@ -59,9 +59,9 @@ export default function PrivateRegistryRegular() {
               const imageName = component.image.split('/').pop();
 
               return (
-                <>{`docker tag ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`}</>
+                `docker tag ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`
               );
-            })}
+            }).join('')}
           </CodeBlock>
         </li>
 
@@ -70,16 +70,16 @@ export default function PrivateRegistryRegular() {
           <CodeBlock language='bash'>
             {`docker push $PRIVATE_REGISTRY/${tigeraOperator.image}:${tigeraOperator.version}\n`}
             {componentsWithImage.filter(filters.isNotWindows).map((component) => {
-              return <>{`docker push $PRIVATE_REGISTRY/${component.image}:${component.version}\n`}</>;
-            })}
+              return `docker push $PRIVATE_REGISTRY/${component.image}:${component.version}\n`;
+            }).join('')}
           </CodeBlock>
           <p>For hybrid Linux + Windows clusters, push the following Windows images to your private registry.</p>
           <CodeBlock language='bash'>
             {componentsWithImage.filter(filters.isWindows).map((component) => {
               const imageName = component.image.split('/').pop();
 
-              return <>{`docker push $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`}</>;
-            })}
+              return `docker push $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`;
+            }).join('')}
           </CodeBlock>
           <Admonition type='caution'>Do not push the private {prodname} images to a public registry.</Admonition>
         </li>
@@ -145,7 +145,7 @@ spec:
   function renderPullCommand(component) {
     const registry = mapComponentToRegistry(component);
 
-    return <>{`docker pull ${registry}${component.image}:${component.version}\n`}</>;
+    return `docker pull ${registry}${component.image}:${component.version}\n`;
   }
 
   function mapComponentToRegistry(component) {
