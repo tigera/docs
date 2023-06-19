@@ -216,11 +216,20 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
           href={`https://${props.appId}-dsn.algolia.net`}
           crossOrigin='anonymous'
         />
-        {/* This loads libraries for clym privacy popups. disabled for testing */}
-        {/*
-        <script src="https://widget.clym-sdk.net/blocking.js"></script> 
-        <script>{`(function(d,s,i,w,o){ var js,cjs=d.getElementsByTagName(s)[0]; if(d.getElementById(i))return; js=d.createElement('script'); js.id=i; js.src='https://widget.clym-sdk.net/clym.js';js.onload=function(){Clym&&Clym.load(i,w,o)};cjs.parentNode.insertBefore(js, cjs) }(document,'script','clym-privacy','efccb797d8fa43acba85c4d5dutupsek',{}))`}</script> */}
+        {/* This loads libraries for clym privacy popups. */}
 
+        <script src="https://widget.clym-sdk.net/blocking.js"></script>
+        <script>{`
+        (function(d,s,i,w,o){
+        var js,cjs=d.getElementsByTagName(s)[0];
+        if(d.getElementById(i))return;
+        js=d.createElement('script');
+        js.id=i;
+        js.src="https://widget.clym-sdk.net/clym.js";
+        js.onload=function(){Clym&&Clym.load(i,w,o);};
+        cjs.parentNode.insertBefore(js, cjs);
+        }(document,'script','clym-privacy','cc30df9b54f64e58b2b835f53sw0mymj',{}));
+        `}</script>
       </Head>
 
       <DocSearchButton
