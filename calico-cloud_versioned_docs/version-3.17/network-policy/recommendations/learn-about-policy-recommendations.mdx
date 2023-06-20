@@ -6,7 +6,7 @@ description: Learn more about policy recommendations.
 
 ## Big picture
 
-To use the [policy recommendation feature](policy-recommendations.mdx), you must have traffic between endpoints in namespaces, private, public network IPs or domains. In this tutorial we show you how to generate recommendations allowing traffic from to a namespace, a network set, a private network IP and a public domain.
+To use the [policy recommendation feature](policy-recommendations.mdx), you must have traffic between endpoints. In this tutorial we show you how recommendations might be generated to allow traffic to/from namespaces, network sets, a private network IPs and public domains.
 
 ### Configure felix for fast flow logs collection
 
@@ -14,7 +14,7 @@ To use the [policy recommendation feature](policy-recommendations.mdx), you must
 kubectl patch felixconfiguration.p default -p '{"spec":{"flowLogsFlushInterval":"10s"}}'
 ```
 
-### Apply the tutorial YAML, creating the namespaces, deployments, containers, services and global network sets used in this tutorial.
+### Apply the tutorial YAML, creating the necessary resources.
 
 ```bash
 kubectl create -f {{tutorialFilesURL}}/00-namespace.yaml
@@ -26,46 +26,47 @@ kubectl create -f {{tutorialFilesURL}}/00-namespace.yaml
 1. Select **Recommendations**.
 1. Click on **Enable Policy Recommendations**.
 
-Wait for the recommendations to be generated. Unless otherwise configured, the recommendations will take at least 2m30s to be generated, time equal to the default **Processing Interval**.
+Wait for the recommendations to be generated. Unless otherwise configured, the recommendations will take at least 2m30s to be generated, time equal to the default [Processing Interval spec](../resources/globalnetworkpolicy.mdx#spec) https://deploy-preview-746--tigera.netlify.app/calico-enterprise/next/reference/resources/policyrecommendations#spec **Processing Interval**.
 
 Once ready, the recommendations will be listed in the main **Policy Recommendations** page, under the **Recommendations** tab.
 
-You should find three recommendations:
-* `public-domain-curl-namespace-recommendation` in the `public-domain-curl-namespace` namespace 
-
-With selector:
+You should find a recommendation named `curl-ns-recommendation`, with policy selector:
 ```
 Policy Label selector:	[[projectcalico.org/namespace == 'public-domain-curl-namespace']]
 ```
-meaning that the policy addresses traffic to/from the public-domain-curl-namespace namespace.
+meaning that the policy addresses traffic to/from the `curl-ns` namespace.
 
 You will also find egress rules:
 ```
 Allow:Protocol is TCP
 To:Ports [Port is 8080 ]  Domains [www.tigera.io]  
-
-Allow:Protocol is UDP
-To:Ports [Port is 53 ]  Endpoints [[projectcalico.org/orchestrator == 'k8s']]  Namespaces [[projectcalico.org/name == 'kube-system']]  
-
-Allow:Protocol is UDP
-To:Ports [Port is 53 ]  Nets [Is 10.0.0.0/8 OR Is 172.16.0.0/12 OR Is 192.168.0.0/16 ]  
 ```
+allows egress traffic, for protocol TCP, on port 8080, from the `curl-ns` namespace to domain `www.tigera.io`.
 
-* `service-curl-namespace-recommendation` in namespace `service-curl`
-
-with selector:
-```
-Policy Label selector:	[[projectcalico.org/namespace == 'service-curl-namespace']]
-```
-
-and egress Rules:
 ```
 Allow:Protocol is UDP
-To:Ports [Port is 53 ]  Endpoints [[projectcalico.org/orchestrator == 'k8s']]  Namespaces [[projectcalico.org/name == 'kube-system']]  
-
-Allow:Protocol is UDP
-To:Ports [Port is 53 ]  Nets [Is 10.0.0.0/8 OR Is 172.16.0.0/12 OR Is 192.168.0.0/16 ]  
+To:Ports [Port is 53 ]  Endpoints [[projectcalico.org/orchestrator == 'k8s']]  Namespaces [[projectcalico.org/name == 'kube-system']]
 ```
+allows egress traffic, for protocol UDP, on port 53, from the `curl-ns` namespace to namespace `kube-system`.
+
+```
+Allow:Protocol is TCP
+To:Ports [Port is 80 ]  Endpoints [[projectcalico.org/name == 'public-ips' and projectcalico.org/kind == 'NetworkSet']]  Namespaces global()
+```
+allows egress traffic, for protocol TCP, on port 80, from the `curl-ns` namespace to global network set named: `public-ips`.
+
+
+```
+Allow:Protocol is TCP
+To:Ports [Port is 8080 ]  Nets [Is 10.0.0.0/8 OR Is 172.16.0.0/12 OR Is 192.168.0.0/16 ]
+```
+allows egress traffic, for protocol TCP, on port 8080, from the `curl-ns` namespace to private range IPs.
+
+```
+Allow:Protocol is TCP
+To:Ports [Port is 80 ]
+```
+allows egress traffic, for protocol TCP, on port 80, from the `curl-ns` namespace to public range IPs.
 
 ### Investigate the flows that are used to generate the policy rules
 
@@ -75,29 +76,16 @@ To view flow logs in Service Graph:
 1. Select **Default** under the VIEWS option.
 1. In the bottom pane you will see flow logs in the Flows tab.
 
-The recommendation engine queries the flow logs and specifically, it queries flows that have been allowed by the default kubernetes policy. Search for flows with policies containing an entry like `*__PROFILE__|__PROFILE__.kns.public-domain-curl|allow*`.
+To generate rules, the recommendation engine queries flows logs that have been allowed by the default kubernetes policy. The result of that query contains flows for which no currently enforced policy defines a rule. Subsequently, it uses that information to define the missing rules necessary for allowing traffic expressed by these flow logs. 
+
+To get a better understanding of which flows contributed to generating the rules in your policy.
 
 Select to **Filter Flows**
 
-1. Add `source_namespace = "public-domain-curl"`
-1. OR dest_domains = "www.projectcalico.org"
-1. OR dest_name_aggr = "public-ips"
-1. OR dest-namespace = "kube-system"
+1. To find the flows that were used to generate the egress to global network set rule, add `source_namespace = "curl-ns" AND  dest_name_aggr = "public-ips"`
+1. To find the flows that generated the egress rule to namespace `kube-system`, define query `source_namespace = "curl-ns" AND  dest_namenamespace = "kube-system"`
 
-Each flow was used to generate a specific rule in the `public-domain-curl-recommendation` recommendation (staged network policy).
-
-The flows with `dest_domains = "www.projectcalico.org"` was mapped and generated the rule:
-```
-Allow:Protocol is TCP
-To:Ports [Port is 80 ]  Domains [www.projectcalico.org, www.google.com, www.tigera.io]  
-```
-
-The flow with `dest_name_aggr = "public-ips"` was mapped and generated the rule:
-
-```
-Allow:Protocol is TCP
-To:Ports [Port is 80 ]  Endpoints [[projectcalico.org/name == 'public-ips' and projectcalico.org/kind == 'NetworkSet']]  Namespaces global() 
-```
+You'll notice that each of the flow logs contains a policies field with a entry like `1|__PROFILE__|__PROFILE__.kns.curl-ns|allow|0`, meaning that the particular flow was not addressed by any other policy within the cluster.
 
 ### Why are recommendations not generated, even though there is traffic between endpoints
 
