@@ -1,62 +1,93 @@
 ---
-description: Identify vulnerabilities in Kubernetes clusters.
+description: Detect vulnerabilities in a Kubernetes cluster.
 ---
 
-# Enable automatic image scanning inside a cluster
+# Scan all images in a Kubernetes cluster
 
-## Big picture
+Scan all images in a Kubernetes cluster to achieve a continuous clean bill of health and defense in depth.
 
-Scan Kubernetes workloads automatically using {{prodname}} Image Assurance cluster scanner.
+Common use cases for scanning in a Kubernetes cluster are:
 
+- Images may pass scanning during the build phase, but they could contain vulnerabilities days or weeks later
+- Third-party images that are pulled from public registries are often not scanned in build pipelines and can contain Critical or High vulnerabilities
+- Application teams may build one-off images outside of their pipeline to make an emergency patch and fix a critical bug.
+
+## About Image Assurance scanner
+
+The Image Assurance scanner that runs in a Kubernetes cluster is out-of-the-box ready to use without configuration. It runs as a daemonset in a managed cluster where images are located, and is installed on all nodes in the cluster.
+
+Vulnerability detection consists of these steps:
+
+- **Image Assurance scanner** - generates a dependency list Software Bill of Materials (SBOM) using Syft
+- **Vulnerability lookup** - {{prodname}} uploads the SBOM where packages are matched with known CVEs in the vulnerability databases based on dependencies using Grype
+
+![vulnerability-detection](/img/calico-cloud/vulnerability-detection.png)
+
+{{prodname}} checks running images for new vulnerabilities every 24 hours and reports scan results to the Image dashboard in Manager UI.
 
 ## Before you begin
 
-**Cluster requirements**
+**Unsupported**
+- OpenShift
+- GCP-Kubeadm
+- AWS-Kubeadm
+- AKS
+- GKE
 
-To be included in scan results, cluster must be:
+**Required**
 
-- Using containerd as the container runtime.
-- Containerd must be using `overlayfs` or `native` file system snapshotter.
-
-**Image requirements**
-
-- Workloads must be running an image that has RepoDigest ID
+- Cluster
+ - Containerd is the container runtime
+ - Containerd must be using overlayfs or native file system snapshotter
 
 ## How to
+- [Get latest version of Image Assurance](#get-latest-version-of-image-assurance)
+- [Enable scanner](#enable-scanner)
+- [Customize scanner settings](#customize-scanner-settings)
+- [Disable the scanner](#disable-the-scanner)
 
-- [Enable cluster scanner](#enable-the-cluster-scanner)
-- [Configure cluster scanner](#configure-cluster-scanner)
-- [Disable cluster scanner](#disable-cluster-scanner)
+### Get the latest version of Image Assurance
 
-### Enable the cluster scanner
+1. On the **Managed Clusters** page, select the cluster from the list, and click **Reinstall**.
+1. Copy the updated installation script command and run it against your cluster.
 
-1. In your cluster, enable the cluster scanner by modifying the `imageassurances` custom resource.
+### Enable scanner
 
-   ```shell
-      kubectl edit imageassurances default
+To enable the scanner for all nodes in the cluster:
+
+1. Modify the `imageassurances` custom resource.
+
+```shell
+   kubectl edit imageassurances default
    ```
 
 2. Set the `clusterScanner` field to `Enabled` and save the file.
 
-3. This will deploy the cluster scanner as a daemonset in your cluster. The scanner is deployed as a container inside `tigera-image-assurance-crawdad`
-daemonset. You can verify that the scanner is deployed by verifying that a new container with name `cluster-scanner` is created inside the daemonset.
+The cluster scanner is deployed as a container inside the `tigera-image-assurance-crawdad` daemonset.
 
+3. Verify that a new container with name, `cluster-scanner` is created inside the daemonset.
 
-### Configure cluster scanner
+That’s it. Images will start scanning. For help, see [Understanding scan results in Manager UI](./understanding-scan-results).
 
-You can configure the cluster scanner with custom settings. To do so, modify the `imageassurances` custom resource.
+### Customize scanner settings
 
-1. To modify container runtime socket path used by the cluster scanner, set the `criSocketPath` field to the path of the container runtime socket.
-The default value is set to `/run/containerd/containerd.sock`.
+To change default settings, modify the `imageassurances` custom resource.
 
-2. To modify the containerd file system root path, modify `containerdVolumeMountPath`. The default value is set to `/var/lib/containerd/`.
+- Container runtime socket path
 
-### Disable the cluster scanner
+Set the `criSocketPath` field to the path of the container runtime socket. Default: `/run/containerd/containerd.sock`
 
-1. You can disable the cluster scanner by modifying the `imageassurances` custom resource.
+- Containerd file system root path
 
-   ```shell
-    kubectl edit imageassurances default
+Set the `containerdVolumeMountPath`. Default: `/var/lib/containerd/`.
+
+### Disable the scanner
+
+1. Modify the `imageassurances` custom resource.
+
+```bash
+ kubectl edit imageassurances default
    ```
 
-2. Set the `clusterScanner` field to `Disabled` and save the file. This will delete the cluster scanner container from the daemonset from your cluster.
+2. Set the `clusterScanner` field to `Disabled` and save the file. This deletes the cluster scanner container from the daemonset from your cluster.
+

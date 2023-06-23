@@ -311,24 +311,27 @@ module.exports = {
       ],
     },
     {
-      type: 'category',
-      label: 'Image Assurance',
-      link: {type: 'doc', id: 'image-assurance/index'},
-      items: [
-        'image-assurance/overview',
+      "type": "category",
+      "label": "Image Assurance",
+      "link": {"type": "doc", "id": "image-assurance/index"},
+      "items": [
+        "image-assurance/overview",
         {
-          type: 'category',
-          label: 'Scan images for vulnerabilities',
-          link: {type: 'doc', id: 'image-assurance/scanners/index'},
-          items: [
-            'image-assurance/scanners/cli-based-scanner',
-            'image-assurance/scanners/cluster-scanner'
-          ],
+          "type": "category",
+          "label": "Scan images for vulnerabilities",
+          "link": {
+            "type": "doc",
+            "id": "image-assurance/scanners/index"
+          },
+          "items": [
+            "image-assurance/scanners/cluster-scanner",
+            "image-assurance/scanners/pipeline-scanner"
+          ]
         },
-        'image-assurance/understanding-scan-results',
-        'image-assurance/set-up-alerts',
-        'image-assurance/install-the-admission-controller'
-      ],
+        "image-assurance/understanding-scan-results",
+        "image-assurance/set-up-alerts",
+        "image-assurance/install-the-admission-controller"
+      ]
     },
     {
       type: 'category',
