@@ -24,7 +24,7 @@ export default function PrivateRegistryImagePath() {
         </li>
         <CodeBlock language='bash'>
           {`docker pull ${tigeraOperator.registry}/${tigeraOperator.image}:${tigeraOperator.version}\n`}
-          {componentsWithImage.filter(filters.isNotWindows).map(renderPullCommand)}
+          {componentsWithImage.filter(filters.isNotWindows).map(renderPullCommand).join('')}
         </CodeBlock>
         <p>For hybrid Linux + Windows clusters, pull the following Windows images.</p>
         <CodeBlock language='bash'>
@@ -46,9 +46,9 @@ export default function PrivateRegistryImagePath() {
             const imageName = mapImageToImageName(component.image);
 
             return (
-              <>{`docker tag ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`}</>
+              `docker tag ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`
             );
-          })}
+          }).join('')}
         </CodeBlock>
         <p>
           For hybrid Linux + Windows clusters, retag the following Windows images with the name of your private
@@ -60,9 +60,9 @@ export default function PrivateRegistryImagePath() {
             const imageName = mapImageToImageName(component.image);
 
             return (
-              <>{`docker tag ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`}</>
+              `docker tag ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`
             );
-          })}
+          }).join('')}
         </CodeBlock>
 
         <li>
@@ -75,16 +75,16 @@ export default function PrivateRegistryImagePath() {
           {componentsWithImage.filter(filters.isNotWindows).map((component) => {
             const imageName = mapImageToImageName(component.image);
 
-            return <>{`docker push $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`}</>;
-          })}
+            return `docker push $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`;
+          }).join('')}
         </CodeBlock>
         <p>For hybrid Linux + Windows clusters, push the following Windows images to your private registry.</p>
         <CodeBlock language='bash'>
           {componentsWithImage.filter(filters.isWindows).map((component) => {
             const imageName = mapImageToImageName(component.image);
 
-            return <>{`docker push $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`}</>;
-          })}
+            return `docker push $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`;
+          }).join('')}
         </CodeBlock>
         <Admonition type='caution'>Do not push the private {prodname} images to a public registry.</Admonition>
       </ol>
@@ -165,8 +165,9 @@ spec:
   function renderPullCommand(component) {
     const registry = mapComponentToRegistry(component);
 
-    return <>{`docker pull ${registry}${component.image}:${component.version}\n`}</>;
+      return `docker pull ${registry}${component.image}:${component.version}\n`;
   }
+
 
   function mapComponentToRegistry(component) {
     if (!component.registry) {
