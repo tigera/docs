@@ -35,7 +35,7 @@ This how-to-guide uses the following {{prodname}} features:
 ### About {{prodname}} WAF
 
 WAF is deployed in your cluster as an Envoy DaemonSet. {{prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry-standard 
-[ModSecurity module](https://owasp.org/www-project-modsecurity-core-rule-set/). To view the rule set that is bundled with WAF, see https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf.
+[ModSecurity module](https://owasp.org/www-project-modsecurity-core-rule-set/). To view the rule set that is bundled with WAF, see https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules.
 
 You simply enable WAF in Manager UI, and determine the services that you want to enable for WAF protection. You can view WAF events as HTTP logs in Service Graph and Kibana. And you can set up global alerts to get notifications on the Alerts page. 
 
@@ -160,7 +160,7 @@ spec:
   dataSet: waf
   period: 1m
   lookback: 1h
-  query: '"rule_info" IN {"*942100*"}'
+  query: '"rules.id" = "942100"'
   threshold: 0
   condition: gt
 ```
@@ -178,39 +178,36 @@ Now if a SQL Injection attack is detected for rule ID 942100, you will see the g
 
 #### Change WAF rules
 
-By default, the WAF OWASP Core Rule set is configured to log a warning if there is an attack. However, if you want traffic for the service to also be denied or dropped, 
+By default, the WAF OWASP Core Rule set is configured to log all matched rules and block offending requestis using Anomaly Scoring Mode. However, if you want traffic for the service to not be blocked and only logged,
 you must edit the modsecurity rules. 
 
-#### Deny traffic
+#### Allow traffic
 
-For example, if you want to deny traffic with a 403 response, do the following steps: 
+For example, if you want to allow traffic, do the following steps:
 
-1. Modify the modsecurity core rulesets' `SecDefaultAction` to deny rules by commenting and uncommenting these sections in the `crs-setup.conf`, 
-which will change the `SecDefaultAction` from `pass` to `deny`.
+1. Change the disruptive action, on file `RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example` section `'Changing the Disruptive Action for Anomaly Mode'`.
 
-Comment
-
-```
- SecDefaultAction "phase:1,log,auditlog,pass"
- SecDefaultAction "phase:2,log,auditlog,pass"
-```
-
-Uncomment
+Append the lines
 
 ```
- SecDefaultAction "phase:1,log,auditlog,deny,status:403"
- SecDefaultAction "phase:2,log,auditlog,deny,status:403"
+SecRuleUpdateActionById 949110 "t:none,pass"
+SecRuleUpdateActionById 959100 "t:none,pass"
 ```
 
-2. Run these commands:
+2. Rename the file to remove `.example` suffix:
+
+```bash
+mv RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+```
+
+3. Run these commands:
 
 ```bash
   kubectl create cm --dry-run=client --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > ../my-ruleset.yaml
   kubectl replace -f ../my-ruleset.yaml
 ```
 
-Note that switching to deny means the request is not processed and a 403 forbidden error is returned when a rule is triggered. 
-All denied traffic means that any HTTP request will return HTTP 403 Response Code from Envoy to the originating service. 
+Note that switching to pass means the request is now processed and the 403 forbidden error is gone even if a rule is triggered.
 For example:
 
 ```
@@ -251,12 +248,15 @@ ModSecurity provides the following actions that you update in SecAction:
 
 #### Add or edit the rule set
 
-1. Create a directory, and download the core rules set files that you want to use.
+1. Create a directory, and download the core rules set files for customization.
 
 ```bash
 mkdir my-ruleset && cd my-ruleset
-curl -O https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf
+curl -L https://github.com/coreruleset/coreruleset/archive/refs/heads/v3.4/dev.zip -o crs.zip
+unzip -j crs.zip 'coreruleset-3.4-dev/rules/*'
+rm crs.zip
 ```
+
 2. Download bootstrap files.
 
   Download the following required bootstrapping configuration files [Reference](https://medium.com/lightbaseio/web-application-firewall-in-go-feat-owasp-modsecurity-core-rule-set-3f97a26e3311) that are used by Tigera operator:
@@ -274,7 +274,9 @@ curl -O https://raw.githubusercontent.com/lsgroup/SmartReverseProxy/master/modse
 curl https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/crs-setup.conf.example > crs-setup.conf
 ```
 
-3. Change your current directory to the my-ruleset folder where your core rules set files live. Create a configMap containing all the files downloaded into your new directory and replace the existing rule set with it:
+3. Do your customized settings on the default files, probably on the `.example` files and after renaming, like previously on this doc.
+
+4. Still at the my-ruleset folder where your core rules set files live. Create a configMap containing all the files downloaded into your new directory and replace the existing rule set with it:
 
 
 ```bash
