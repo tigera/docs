@@ -228,7 +228,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
         js.src="https://widget.clym-sdk.net/clym.js";
         js.onload=function(){Clym&&Clym.load(i,w,o);};
         cjs.parentNode.insertBefore(js, cjs);
-        }(document,'script','clym-privacy','cc30df9b54f64e58b2b835f53sw0mymj',{}));
+        }(document,'script','clym-privacy','91ec4c5ce86a4d7abc26c44cn0osl70w',{}));
         `}</script>
       </Head>
 
