@@ -1,1 +1,308 @@
-# Add yaml here.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: curl-ns
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: service-ns
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: service-curl-ns
+
+---
+
+# Generates traffic from 'service-ns' to the nginx-svc service, in the 'curl-ns' namespace.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-service-curl-ns
+  namespace: service-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://nginx-svc.curl-ns.svc.cluster.local:80; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+# Generates traffic from 'curl-ns' to the nginx-svc service, in the 'service-ns' namespace.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-service-ns
+  namespace: curl-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://nginx-svc.service-ns.svc.cluster.local:80; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+# Generates traffic from 'curl-ns' to an unknown private range IP 10.10.10.10.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-private-ip
+  namespace: curl-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://10.10.10.10:8080; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+# Generates traffic from 'curl-ns' to an unknown public range IP 192.0.1.0.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-public-ip
+  namespace: curl-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://192.0.1.0:80; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+# Generates traffic from 'curl-ns' to an IP defined in the global network set 'public-ips'.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-globalnetworkset-8.8.8.8
+  namespace: curl-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://8.8.8.8:80; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+# Generates traffic from 'curl-ns' to an IP defined in the global network set 'public-ips'.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-globalnetworkset-208.67.222.222
+  namespace: curl-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://208.67.222.222:80; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+# Generates traffic from 'curl-ns' to the public domain 'www.tigera.io'.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-public-tigera
+  namespace: curl-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      containers:
+      - image: curlimages/curl
+        name: curl
+        command: ["sh"]
+        args: ["-c", "while true; do curl http://www.tigera.io:80; sleep 5;done"]
+        securityContext:
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: service-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: docker.io/library/nginx:latest
+        name: nginx
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: curl-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: docker.io/library/nginx:latest
+        name: nginx
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+  namespace: service-ns
+spec:
+  ports:
+  - name: nginx
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+  sessionAffinity: None
+
+--- 
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+  namespace: curl-ns
+spec:
+  ports:
+  - name: nginx
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+  sessionAffinity: None
+
+--- 
+
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkSet
+metadata:
+  name: public-ips
+spec:
+  nets:
+    - 8.8.0.0/16
+    - 208.67.0.0/16

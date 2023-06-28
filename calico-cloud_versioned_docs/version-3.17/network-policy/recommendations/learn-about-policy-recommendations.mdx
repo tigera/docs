@@ -1,14 +1,16 @@
 ---
-description: Learn more about policy recommendations.
+description: Policy recommendations tutorial.
 ---
 
-# Learn more about policy recommendations
+# Policy recommendations tutorial
 
 ## Big picture
 
-To use the [policy recommendation feature](policy-recommendations.mdx), you must have traffic between endpoints. In this tutorial we show you how recommendations are generated using flow logs in your cluster, for traffic to/from namespaces, network sets, private network IPs and public domains.
+In this tutorial, we show you how recommendations are generated using flow logs in your cluster, for traffic to/from namespaces, network sets, private network IPs and public domains.
 
 ### Configure felix for fast flow logs collection
+
+Because the policy recommendation feature requires traffic between endpoints, this step provides these resources for this hands-on tutorial. If your cluster is already generating traffic for policy recommendations, you can skip this step and follow along using your own cluster.
 
 ```bash
 kubectl patch felixconfiguration.p default -p '{"spec":{"flowLogsFlushInterval":"10s"}}'
@@ -17,21 +19,20 @@ kubectl patch felixconfiguration.p default -p '{"spec":{"flowLogsFlushInterval":
 ### Apply the tutorial YAML, creating the necessary resources
 
 ```bash
-kubectl create -f {{tutorialFilesURL}}/00-namespace.yaml
+kubectl create -f {{tutorialFilesURL}}/policy-recommendation-deployments.yaml
 ```
 
 ### Enable Policy Recommendation
 
-1. In the Manager UI left navbar, click on the **Policies** icon
-1. Select **Recommendations**
-1. Click on **Enable Policy Recommendations**
+1. In the Manager UI left navbar, click the **Policies** icon.
+1. Select **Recommendations**.
+1. Click on **Enable Policy Recommendations**.
 
-Wait for the recommendations to be generated. 
-
-**Notes**:
-Unless otherwise configured, recommendations will take at least 2m30s to be generated, time equal to the default [Processing Interval](../../reference/resources/policyrecommendations.mdx#spec).
+Wait for the recommendations to be generated. Unless otherwise configured, recommendations will take at least 2m30s to be generated, which is default time for the [Processing Interval](../../reference/resources/policyrecommendations.mdx#spec) setting. The recommendations will be listed on the Policy recommendations page, under the Recommendations tab.
 
 Once ready, the recommendations will be listed in the main page, under the **Recommendations** tab.
+
+### Understand the policy recommendation
 
 You should find a recommendation named `curl-ns-recommendation`, with policy selector:
 ```
@@ -90,9 +91,11 @@ allows egress traffic, for protocol TCP, on port 80, to public range IPs.
 
 To view flow logs in Service Graph:
 
-1. In the Manager UI left navbar, click **Service Graph**
-1. Select **Default** under the VIEWS option
-1. In the bottom pane you will see flow logs in the Flows tab
+1. In the Manager UI left navbar, click **Service Graph**.
+1. Select **Default** under the VIEWS option.
+1. In the bottom pane you will see flow logs in the Flows tab.
+
+### Understand the flow logs used in policy recommendations
 
 To generate rules, the recommendation engine queries for flow logs that are not addressed by any other policy in the cluster. Subsequently, it builds the missing policies necessary for allowing that traffic.
 
@@ -108,7 +111,7 @@ source_namespace = "curl-ns" AND  dest_name_aggr = "public-ips"
 source_namespace = "curl-ns" AND  dest_namenamespace = "kube-system"
 ```
 
-You'll notice that each of the flow logs contains a field named `policies` with a entry like: 
+You'll notice that each of the flow logs contains a field named, `policies` with a entry like: 
 ```
 1|__PROFILE__|__PROFILE__.kns.curl-ns|allow|0
 ```
@@ -126,18 +129,17 @@ In the `policies` field of the flow logs, you will find input like:
 ```
 0|namespace-isolation|curl-ns/namespace-isolation.staged:curl-ns-recommendation|allow|0
 ```
-indicating that the policy named **curl-ns-recommendation**, will allow traffic defined by this flow once the policy is enforced.
+indicating that the policy named **curl-ns-recommendation**, will allow traffic defined by this flow after the policy is enforced.
 
 ### Examine policy traffic
 
-Examine the **Allowed Bytes** field in the **Recommendations** tab for the `curl-ns-recommendation` policy, to get a sense of the total bytes allowed by the policy.
+Examine the **Allowed Bytes** field in the **Recommendations** tab for the `curl-ns-recommendation` policy to get a sense of the total bytes allowed by the policy.
 
 Examine the **Allowed/sec** of each rule in the policy to get a sense of the quantity of traffic allowed per second by the rule in question. 
 
-### Why are recommendations not generated, even though there is traffic between endpoints
+### When policy recommendations are not generated
 
-A recommendation will generate policy rules for flows that are not captured by any other policy in your cluster. Verify that no other enforced policy captures the traffic in question.
-
+You may wonder why you are not getting policy recommendations, even though there is traffic between endpoints. This is because policy recommendations are generated only for flows that are not captured by any other policy in your cluster. To see if policy is already enforcing the traffic in question, search for the flow log in question, examine the `policies` field, and verify that no other enforced policy allows or denies traffic for that flow.
 Search for the flow log in question, examine the `policies` field and verify that no other enforced policy allows or denies traffic for that flow.
 
 ### Next step
