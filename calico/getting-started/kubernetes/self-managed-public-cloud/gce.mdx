@@ -35,64 +35,64 @@ You will need at least one VM to serve as a control plane node and one or more w
 
 The following worked example creates a single control node and three workers on a dedicated virtual private network (VPC). Adjust the example as needed for your requirements. Consider a dedicated infrastructure management tool like [Terraform](https://www.terraform.io/) for managing cloud resources. (This example is adapted from [Kubernetes the Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/03-compute-resources.md).)
 
-**Create the VPC**
+1. Create the VPC.
 
-```
-gcloud compute networks create example-k8s --subnet-mode custom
-```
+  ```
+  gcloud compute networks create example-k8s --subnet-mode custom
+  ```
 
-Create the k8s-nodes subnet in the example-k8s VPC network:
+2. Create the k8s-nodes subnet in the example-k8s VPC network:
 
-```
-gcloud compute networks subnets create k8s-nodes \
+  ```
+  gcloud compute networks subnets create k8s-nodes \
   --network example-k8s \
   --range 10.240.0.0/24
-```
+  ```
 
-Create a firewall rule that allows internal communication across TCP, UDP, ICMP and IP in IP (used for the Calico overlay):
+3. Create a firewall rule that allows internal communication across TCP, UDP, ICMP and IP in IP (used for the Calico overlay):
 
-```
-gcloud compute firewall-rules create example-k8s-allow-internal \
+  ```
+  gcloud compute firewall-rules create example-k8s-allow-internal \
   --allow tcp,udp,icmp,ipip \
   --network example-k8s \
   --source-ranges 10.240.0.0/24
-```
+  ```
 
-Create a firewall rule that allows external SSH, ICMP, and HTTPS:
+4. Create a firewall rule that allows external SSH, ICMP, and HTTPS:
 
-```
-gcloud compute firewall-rules create example-k8s-allow-external \
+  ```
+  gcloud compute firewall-rules create example-k8s-allow-external \
   --allow tcp:22,tcp:6443,icmp \
   --network example-k8s \
   --source-ranges 0.0.0.0/0
-```
+  ```
 
-Create the controller VM:
+5. Create the controller VM.
 
-```
-gcloud compute instances create controller \
+  ```
+  gcloud compute instances create controller \
     --async \
     --boot-disk-size 200GB \
     --can-ip-forward \
-    --image-family ubuntu-1804-lts \
+    --image-family ubuntu-2204-lts \
     --image-project ubuntu-os-cloud \
     --machine-type n1-standard-2 \
     --private-network-ip 10.240.0.11 \
     --scopes compute-rw,storage-ro,service-management,service-control,logging-write,monitoring \
     --subnet k8s-nodes \
     --zone us-central1-f \
-    --tags example-k8s,controller
-```
+    --tags example-k8s,controller    
+  ```
 
-**Create three worker VMs**
+6. Create three worker VMs.
 
-```
-for i in 0 1 2; do
-  gcloud compute instances create worker-${i} \
+  ```
+  for i in 0 1 2; do
+    gcloud compute instances create worker-${i} \
     --async \
     --boot-disk-size 200GB \
     --can-ip-forward \
-    --image-family ubuntu-1804-lts \
+    --image-family ubuntu-2204-lts \
     --image-project ubuntu-os-cloud \
     --machine-type n1-standard-2 \
     --private-network-ip 10.240.0.2${i} \
@@ -100,57 +100,56 @@ for i in 0 1 2; do
     --subnet k8s-nodes \
     --zone us-central1-f \
     --tags example-k8s,worker
-done
-```
+  done
+  ```
+7. Install Docker on the controller VM and each worker VM. On each VM run:
 
-Install Docker on the controller VM and each worker VM. On each VM run:
-
-```
-sudo apt update
-sudo apt install -y docker.io
-sudo systemctl enable docker.service
-sudo apt install -y apt-transport-https curl
-```
+  ```
+  sudo apt update
+  sudo apt install -y docker.io
+  sudo systemctl enable docker.service
+  sudo apt install -y apt-transport-https curl
+  ```
 
 #### Install Kubernetes and create the cluster
 
-Install `kubeadm`,` kubelet`, and `kubectl` on each node (see [kubeadm docs](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl) for more details).
+1. Install `kubeadm`,` kubelet`, and `kubectl` on each node (see [kubeadm docs](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl) for more details).
 
-```
-curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | sudo apt-key add -
-cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
-```
+  ```
+  curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | sudo apt-key add -
+  cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+  deb https://apt.kubernetes.io/ kubernetes-xenial main
+  EOF
+  sudo apt-get update
+  sudo apt-get install -y kubelet kubeadm kubectl
+  sudo apt-mark hold kubelet kubeadm kubectl
+  ```
 
-Create the controller node of a new cluster. On the controller VM, execute:
+2. Create the controller node of a new cluster. On the controller VM, execute:
 
-```
-sudo kubeadm init --pod-network-cidr 192.168.0.0/16
-```
+  ```
+  sudo kubeadm init --pod-network-cidr 192.168.0.0/16
+  ```
 
-To set up kubectl for the ubuntu user, run:
+3. To set up kubectl for the ubuntu user, run:
 
-```
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
-```
+  ```
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  ```
 
-The final line of the kubeadm init output contains the command for joining your workers to the controller. Run this on each worker, prepending `sudo` to run it as root. It will look something like this:
+4. The final line of the kubeadm init output contains the command for joining your workers to the controller. Run this on each worker, prepending `sudo` to run it as root. It will look something like this:
 
-```
-sudo kubeadm join 10.240.0.11:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
-```
+  ```
+  sudo kubeadm join 10.240.0.11:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
+  ```
 
-On the controller, verify that all nodes have joined
+5. On the controller, verify that all nodes have joined
 
-```
-kubectl get nodes
-```
+  ```
+  kubectl get nodes
+  ```
 
 which should output something similar to:
 
@@ -166,9 +165,9 @@ worker-2     NotReady   <none>   5s      v1.17.2
 
 On the controller, install {{prodname}} using the operator:
 
-```
-kubectl create -f {{manifestsUrl}}/manifests/tigera-operator.yaml
-```
+  ```
+  kubectl create -f {{manifestsUrl}}/manifests/tigera-operator.yaml
+  ```
 
 Download the custom resources necessary to configure {{prodname}}
 
