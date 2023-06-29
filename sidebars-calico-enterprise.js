@@ -439,6 +439,7 @@ module.exports = {
       label: 'Threat defense',
       link: {type: 'doc', id: 'threat/index'},
       items: [
+        'threat/security-event-management',
         {
           type: 'category',
           label: 'Anomaly detection',
