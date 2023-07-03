@@ -35,9 +35,8 @@ const config = {
           path: 'default',
           sidebarPath: false,
         },
-        gtag: {
-          trackingID: 'G-MDDZ0CGXZ4',
-          anonymizeIP: true,
+        googleTagManager: {
+          containerId: 'GTM-KCHDXB2',
         },
         blog: false,
         theme: {
@@ -63,6 +62,15 @@ const config = {
         indexName: 'calico',
         contextualSearch: true,
         searchPagePath: '/search',
+      },
+      announcementBar: {
+        id: 'calico_ebpf',
+        content:
+            'Use Calico <img src="/img/brands/ebpf_logo.svg" style="height:1.5rem; margin: 0 5px 0 5px; display: inline-flex;" alt="eBPF" /> dataplane' + 
+            ' to enhance your Kubernetes networking performance. Click <a href="https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf">here</a> to learn more.',
+        backgroundColor: '#FCE181',
+        textColor: '#000',
+        isCloseable: true,
       },
       navbar: {
         logo: {
@@ -105,22 +113,7 @@ const config = {
             dropdownItemsAfter: [
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.13">3.13</a>',
-                className: 'product-calico-enterprise',
-              },
-              {
-                type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/v3.12">3.12</a>',
-                className: 'product-calico-enterprise',
-              },
-              {
-                type: 'html',
                 value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.23">3.23</a>',
-                className: 'product-calico',
-              },
-              {
-                type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.22">3.22</a>',
                 className: 'product-calico',
               },
               {
@@ -270,9 +263,12 @@ const config = {
         ],
         // TODO: Add appropriate icons and links
         copyright: `
-          <div>
+          <div> 
+          </br>
             <div class='footer-copyright__title'>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
             <div class='footer-copyright__description'>Tigera is the creator and maintainer of Project Calico.</div>
+            <a href="#" onClick="Clym.showWidget('', '', event);">Privacy Center</a> | 
+            <a href="#" onclick="Clym.showWidget('/requests/new/do_not_sell_my_information', '', event);">Do not sell or share my personal information</a>
             <div>
               <a
                 href='https://www.linkedin.com/company/tigera/'
@@ -341,9 +337,14 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
-          3.25: {
-            label: '3.25 (latest)',
+          3.26: {
+            label: '3.26 (latest)',
             path: 'latest',
+            banner: 'none',
+          },
+          3.25: {
+            label: '3.25',
+            path: '3.25',
             banner: 'none',
           },
           3.24: {
@@ -365,22 +366,27 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['current','3.16','3.15','3.14'],
-        lastVersion: '3.15',
+        onlyIncludeVersions: ['current','3.17','3.16','3.15','3.14'],
+        lastVersion: '3.16',
         versions: {
           current: {
             label: 'Next',
             path: 'next',
             banner: 'unreleased',
           },
-          3.16: {
-            label: '3.16 (early preview)',
-            path: '3.16',
+          3.17: {
+            label: '3.17 (early preview)',
+            path: '3.17',
             banner: 'unreleased',
           },
-          3.15: {
-            label: '3.15 (latest)',
+          3.16: {
+            label: '3.16 (latest)',
             path: 'latest',
+            banner: 'none',
+          },
+          3.15: {
+            label: '3.15',
+            path: '3.15',
             banner: 'none',
           },
           3.14: {
@@ -402,15 +408,24 @@ const config = {
         path: 'calico-cloud',
         routeBasePath: 'calico-cloud',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.15'],
+        //To see builds for unreleased versions, remove comments in the next line.
+        onlyIncludeVersions: [/*'current','3.17'*/'3.16'/*,'3.15'*/],
         versions: {
           current: {
             label: 'Next',
             path: 'next',
             banner: 'unreleased',
           },
-          3.15: {
+          3.17: {
+            path: '3.17',
+            banner: 'none',
+          },
+          3.16: {
             path: '/',
+            banner: 'none',
+          },
+          3.15: {
+            path: '3.15',
             banner: 'none',
           },
         },

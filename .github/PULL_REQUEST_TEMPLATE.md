@@ -20,5 +20,12 @@ DOCS review:
 Additional information:
 <!--- Optional: Include additional context or expand the description here.--->
 
+Merge checklist:
+<!--- Mandatory for docs team members before merging code --->
+- [ ] Deploy preview inspected wherever changes were made 
+- [ ] Build completed successfully
+- [ ] Test have passed 
+
+
 <!--- After you open your PR, ask for review from docs team:
   For community authors: tag @tigera/docs to ask for a review when your PR is ready --->

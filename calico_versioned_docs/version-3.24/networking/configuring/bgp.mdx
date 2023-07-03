@@ -4,6 +4,9 @@ description: Configure BGP peering with full mesh, node-specific peering, ToR, a
 
 # Configure BGP peering
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 ## Big picture
 
 Configure BGP (Border Gateway Protocol) between Calico nodes or peering with network infrastructure to distribute routing information.
@@ -116,13 +119,26 @@ spec:
 
 To configure a node to be a route reflector with cluster ID 244.0.0.1, run the following command.
 
+<Tabs>
+<TabItem label="Kubernetes API datastore" value="kubernetes-api-datastore" default>
+
+```bash
+kubectl annotate node my-node projectcalico.org/RouteReflectorClusterID=244.0.0.1
 ```
+
+</TabItem>
+<TabItem label="etcd datastore" value="etcd-datastore">
+
+```bash
 calicoctl patch node my-node -p '{"spec": {"bgp": {"routeReflectorClusterID": "244.0.0.1"}}}'
 ```
 
+</TabItem>
+</Tabs>
+
 Typically, you will want to label this node to indicate that it is a route reflector, allowing it to be easily selected by a BGPPeer resource. You can do this with kubectl. For example:
 
-```
+```bash
 kubectl label node my-node route-reflector=true
 ```
 
@@ -154,7 +170,7 @@ The default **node-to-node BGP mesh** may be turned off to enable other BGP topo
 
 Run the following command to disable the BGP full-mesh:
 
-```
+```bash
 calicoctl patch bgpconfiguration default -p '{"spec": {"nodeToNodeMeshEnabled": false}}'
 ```
 
@@ -211,7 +227,7 @@ This command communicates with the local {{prodname}} agent, so you must execute
 
 By default, all Calico nodes use the 64512 autonomous system, unless a per-node AS has been specified for the node. You can change the global default for all nodes by modifying the default **BGPConfiguration** resource. The following example command sets the global default AS number to **64513**.
 
-```
+```bash
 calicoctl patch bgpconfiguration default -p '{"spec": {"asNumber": "64513"}}'
 ```
 
@@ -225,11 +241,11 @@ If the default BGP configuration resource does not exist, you need to create it 
 
 You can configure an AS for a particular node by modifying the node object using `calicoctl`. For example, the following command changes the node named **node-1** to belong to **AS 64514**.
 
-```
+```bash
 calicoctl patch node node-1 -p '{"spec": {"bgp": {"asNumber": "64514"}}}'
 ```
 
-## Above and beyond
+## Additional resources
 
 - [Node resource](../../reference/resources/node.mdx)
 - [BGP configuration resource](../../reference/resources/bgpconfig.mdx)

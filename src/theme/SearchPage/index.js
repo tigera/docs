@@ -7,7 +7,8 @@ import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
 import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
 import { HtmlClassNameProvider, usePluralForm, isRegexpStringMatch, useEvent } from '@docusaurus/theme-common';
-import { useTitleFormatter, useSearchPage } from '@docusaurus/theme-common/internal';
+import { useTitleFormatter } from '@docusaurus/theme-common/internal';
+import { useSearchQueryString } from '@docusaurus/theme-common';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useAllDocsData } from '@docusaurus/plugin-content-docs/client';
 import Translate, { translate } from '@docusaurus/Translate';
@@ -93,7 +94,7 @@ function SearchPageContent() {
   } = themeConfig;
   const documentsFoundPlural = useDocumentsFoundPlural();
   const docsSearchVersionsHelpers = useDocsSearchVersionsHelpers();
-  const { searchQuery, setSearchQuery } = useSearchPage();
+  const [ searchQuery, setSearchQuery ] = useSearchQueryString();
   const [productId, setProductId] = useState();
   const [version, setVersion] = useState();
   useEffect(() => {
@@ -215,12 +216,25 @@ function SearchPageContent() {
     algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', 'default');
     algoliaHelper.addDisjunctiveFacetRefinement('language', currentLocale);
     if (productId) {
-      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${productId}-${version}`);
+      //TODO: figure this out
+      //current search is disabled for calico-cloud
+      // see docusaurus.config.js
+      if(productId === 'calico-cloud'){
+        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-3.16`); 
+      }else{
+        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${productId}-${version}`);
+      }
     } else {
       Object.entries(docsSearchVersionsHelpers.searchVersions).forEach(([pluginId]) => {
         const searchVersion = localStorage.getItem(`docs-preferred-version-${pluginId}`) || 'current';
         algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${pluginId}-${searchVersion}`);
       });
+     
+      //TODO: figure this out
+      //current search is disabled for calico-cloud
+      // see docusaurus.config.js
+      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-3.16`);
+
     }
     algoliaHelper.setQuery(searchQuery).setPage(page).search();
   });

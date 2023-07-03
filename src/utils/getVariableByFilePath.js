@@ -22,7 +22,7 @@ const rootDir = path.posix.resolve('src', '..');
 
 function getContextVariables(file) {
   const posixFriendlyPath = convertToPosixFriendlyPath(file.path);
-  const pathToVersionedDocsRoot = posixFriendlyPath.match(/calico.*_versioned_docs\/version-.*?\//g);
+  const pathToVersionedDocsRoot = posixFriendlyPath.match(/calico(-(enterprise|cloud))?_versioned_docs\/version-.*?\//g);
 
   if (pathToVersionedDocsRoot) {
     return require(path.resolve(`${pathToVersionedDocsRoot[0]}variables.js`));

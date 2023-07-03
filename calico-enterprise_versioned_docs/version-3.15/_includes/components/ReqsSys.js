@@ -31,7 +31,7 @@ function NodeRequirementsEnt(props) {
               <>
                 <li>CentOS 8</li>
                 <li>Ubuntu 20.04 and 22.04</li>
-                <li>RHEL 7 and 8</li>
+                <li>RHEL 7, 8, and 9</li>
                 <li>Debian 10</li>
               </>
             )}

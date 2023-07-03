@@ -130,7 +130,7 @@ kubeadm init --skip-phases=addon/kube-proxy
 requirements, `kops`-provisioned clusters are supported.
 
 Since `kube-proxy` is not required in eBPF mode, you may wish to disable `kube-proxy` at install time. With `kops` you
-can do that by setting the follwing in your `kops` configuration:
+can do that by setting the following in your `kops` configuration:
 
 ```yaml
 kubeProxy:
@@ -265,7 +265,7 @@ EOF
 If you forget to create the config map before installing the operator you can create it afterwards and
 then wait 60 seconds (for the config map to propagate) before restarting the operator:
 
-```
+```bash
 kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator
 ```
 
@@ -283,7 +283,7 @@ When the main install guide tells you to apply the `custom-resources.yaml`, typi
 the URL of the file directly, you should instead download the file, so that you can edit it:
 
 ```bash
-curl -o custom-resources.yaml <url of the file from the main install guide>
+  curl -o custom-resources.yaml {{manifestsUrl}}/manifests/custom-resources.yaml
 ```
 
 Edit the file in your editor of choice and find the `Installation` resource, which should be at the top of the file.
@@ -294,8 +294,8 @@ as shown below.
 For example:
 
 ```yaml
- This section includes base Calico Enterprise installation configuration.
- For more information, see: https://docs.tigera.io/calico-enterprise/3.16/reference/installation/api/#operator.tigera.io/v1
+# This section includes base Calico Enterprise installation configuration.
+# For more information, see: https://docs.tigera.io/calico-enterprise/latest/reference/installation/api/#operator.tigera.io/v1
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
@@ -308,7 +308,7 @@ spec:
    # EKS with Bottlerocket as node image only:
    # flexVolumePath: /var/lib/kubelet/plugins
 
-   Install Calico Enterprise
+  # Install Calico Enterprise
   variant: TigeraSecureEnterprise
 
    # ... remainder of the Installation resource varies by platform ...
@@ -351,7 +351,7 @@ your cluster then follow the steps below to avoid conflicts:
 For a cluster that runs `kube-proxy` in a `DaemonSet` (such as a `kubeadm`-created cluster), you can disable
 `kube-proxy`, reversibly, by adding a node selector to `kube-proxy`'s `DaemonSet` that matches no nodes, for example:
 
-```
+```bash
 kubectl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
 ```
 
@@ -374,13 +374,13 @@ in its configuration. You will need to do `kops update cluster` to roll out the 
 
 In OpenShift, you can disable `kube-proxy` as follows:
 
-```
+```bash
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": false}}'
 ```
 
 If you need to re-enable it later:
 
-```
+```bash
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": true}}'
 ```
 
@@ -392,8 +392,8 @@ away any manual changes made to its configuration. To ensure `kube-proxy` and {{
 the Felix configuration parameter `bpfKubeProxyIptablesCleanupEnabled` to false. This can be done with
 `kubectl` as follows:
 
-```
-kubectl patch felixconfiguration.p default --type merge --patch='{"spec": {"bpfKubeProxyIptablesCleanupEnabled": false}}'
+```bash
+kubectl patch felixconfiguration default --type merge --patch='{"spec": {"bpfKubeProxyIptablesCleanupEnabled": false}}'
 ```
 
 </TabItem>
@@ -402,7 +402,7 @@ kubectl patch felixconfiguration.p default --type merge --patch='{"spec": {"bpfK
 In EKS, you can disable `kube-proxy`, reversibly, by adding a node selector that doesn't match and nodes to
 `kube-proxy`'s `DaemonSet`, for example:
 
-```
+```bash
 kubectl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
 ```
 

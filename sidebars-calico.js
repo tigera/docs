@@ -10,12 +10,25 @@ module.exports = {
         id: 'about/index',
       },
       items: [
-        'about/about-k8s-networking',
-        'about/about-network-policy',
-        'about/about-kubernetes-services',
-        'about/about-kubernetes-ingress',
-        'about/about-kubernetes-egress',
-        'about/about-ebpf',
+        'about/product-comparison',
+        'about/training-resources',
+      {
+       type: 'category',
+       label: 'Kubernetes training',
+       link: {
+         type: 'doc',
+         id: 'about/kubernetes-training/index',
+       },
+         items: [
+           'about/kubernetes-training/about-k8s-networking',
+           'about/kubernetes-training/about-networking',
+           'about/kubernetes-training/about-network-policy',
+           'about/kubernetes-training/about-kubernetes-ingress',
+           'about/kubernetes-training/about-kubernetes-egress',
+           'about/kubernetes-training/about-kubernetes-services',
+           'about/kubernetes-training/about-ebpf',
+        ],
+       },
       ],
     },
     {
@@ -286,7 +299,7 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Security',
+      label: 'Network policy',
       link: { type: 'doc', id: 'network-policy/index' },
       items: [
         'network-policy/adopt-zero-trust',
@@ -515,6 +528,7 @@ module.exports = {
                 'reference/calicoctl/ipam/release',
                 'reference/calicoctl/ipam/show',
                 'reference/calicoctl/ipam/configure',
+                'reference/calicoctl/ipam/split',
               ],
             },
             {
@@ -686,13 +700,7 @@ module.exports = {
           label: 'Attributions',
           link: { type: 'doc', id: 'reference/legal/index' },
           items: [
-            'reference/legal/alp',
-            'reference/legal/calicoctl',
-            'reference/legal/cni',
-            'reference/legal/confd',
-            'reference/legal/felix',
-            'reference/legal/node',
-            'reference/legal/typha',
+            'reference/legal/projectcalico',
           ],
         },
       ],

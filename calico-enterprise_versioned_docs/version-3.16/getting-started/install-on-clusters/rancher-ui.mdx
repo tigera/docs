@@ -60,6 +60,35 @@ The geeky details of what you get:
    ```bash
    kubectl patch installation default --type='json' -p='[{"op": "remove", "path": "/spec/imagePath"},{"op": "remove", "path": "/spec/imagePrefix"}]'
    ```
+7. Create ClusterRole and ClusterRoleBinding to allow Tigera Operator to update Pod Security Admission.
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRole
+   metadata:
+     name: tigera-operator-psa
+   rules:
+   - apiGroups:
+     - management.cattle.io
+     resources:
+     - projects
+     verbs:
+     - updatepsa
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRoleBinding
+   metadata:
+     name: tigera-operator-psa
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: ClusterRole
+     name: tigera-operator-psa
+   subjects:
+   - kind: ServiceAccount
+     name: tigera-operator
+     namespace: tigera-operator
+   EOF
+   ```
 
 ### Upgrade to {{prodname}}
 
@@ -78,7 +107,7 @@ The geeky details of what you get:
 
 **Recommended - Networking**
 
-- The default networking uses VXLAN encapsulation with BPG routing. For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).
+- The default networking uses VXLAN encapsulation with BGP routing. For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).
 
 **Recommended - Security**
 

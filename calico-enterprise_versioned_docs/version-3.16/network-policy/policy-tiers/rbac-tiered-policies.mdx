@@ -87,7 +87,7 @@ A rough idea of your tiered policy workflow, and who should access what. See [Co
 
 :::note
 
-` kubectl auth can-i` cannot be used the check RBAC for tiered policy.
+` kubectl auth can-i` cannot be used to check RBAC for tiered policy.
 
 :::
 
@@ -95,7 +95,7 @@ A rough idea of your tiered policy workflow, and who should access what. See [Co
 
 Create an Admin user with full access to the {{prodname}} Manager (as well as everything else in the cluster) using the following command. See the Kubernetes documentation to identify users based on your chosen [authentication method](https://kubernetes.io/docs/reference/access-authn-authz/authentication/), and how to use the [RBAC resources](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
 
-```
+```bash
 kubectl create clusterrolebinding permissive-binding \
     --clusterrole=cluster-admin \
     --user=<USER\>
@@ -113,13 +113,13 @@ license information through the services/proxy https:tigera-api:8080.
 
 1. Run the following command to replace <USER\> with the name or email of the user you are providing permissions to:
 
-   ```
+   ```bash
    sed -i -e 's/<USER\>/<name or email>/g' min-ui-user-rbac.yaml
    ```
 
 1. Use the following command to install the bindings:
 
-   ```
+   ```bash
    kubectl apply -f min-ui-user-rbac.yaml
    ```
 
@@ -143,7 +143,7 @@ User 'john' is forbidden from reading policies in any tier (**default** tier, an
 
 When John issues the following command:
 
-```
+```bash
 kubectl get networkpolicies.p
 ```
 
@@ -155,7 +155,7 @@ Error from server (Forbidden): networkpolicies.projectcalico.org is forbidden: U
 
 Similarly, when John issues this command:
 
-```
+```bash
 kubectl get networkpolicies.p -l projectcalico.org/tier==net-sec
 ```
 
@@ -181,7 +181,7 @@ When a label selector is not specified, the server defaults the selection to the
 `default` tier. Alternatively, a field selector (`spec.tier`) may be used to select
 a tier.
 
-```
+```bash
 kubectl get networkpolicies.p --field-selector spec.tier=net-sec
 ```
 
@@ -194,13 +194,13 @@ kubectl get networkpolicies.p --field-selector spec.tier=net-sec
 1. Run the following command to replace `<USER\>` with the `name or email` of
    the user you are providing permissions to:
 
-   ```
+   ```bash
    sed -i -e 's/<USER\>/<name or email>/g' read-all-crud-default-rbac.yaml
    ```
 
 1. Use the following command to install the bindings:
 
-   ```
+   ```bash
    kubectl apply -f read-all-crud-default-rbac.yaml
    ```
 
@@ -217,7 +217,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tigera-example-get-default-tier
 rules:
- To access Calico policy in a tier, the user requires "get" access to that tier.
+ # To access Calico policy in a tier, the user requires "get" access to that tier.
 - apiGroups: ["projectcalico.org"]
   resources: ["tiers"]
   resourceNames: ["default"]
@@ -230,7 +230,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tigera-example-read-policies-in-default-tier
 rules:
- This allows "get" and "list" of the Calico NetworkPolicy resources in the default tier.
+ # This allows "get" and "list" of the Calico NetworkPolicy resources in the default tier.
 - apiGroups: ["projectcalico.org"]
   resources: ["tier.networkpolicies"]
   resourceNames: ["default.*"]
@@ -238,7 +238,7 @@ rules:
 
 ---
 
- tigera-example-get-default-tier is applied globally
+# tigera-example-get-default-tier is applied globally
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -254,7 +254,7 @@ roleRef:
 
 ---
 
- tigera-example-read-policies-in-default-tier is applied per-namespace
+# tigera-example-read-policies-in-default-tier is applied per-namespace
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -321,7 +321,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tigera-example-get-net-sec-tier
 rules:
- To access Calico policy in a tier, the user requires "get" access to that tier.
+ # To access Calico policy in a tier, the user requires "get" access to that tier.
 - apiGroups: ["projectcalico.org"]
   resources: ["tiers"]
   resourceNames: ["net-sec"]
@@ -334,7 +334,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tigera-example-read-policies-in-net-sec-tier
 rules:
- This allows "get" and "list" of the Calico NetworkPolicy resources in the net-sec tier.
+ # This allows "get" and "list" of the Calico NetworkPolicy resources in the net-sec tier.
 - apiGroups: ["projectcalico.org"]
   resources: ["tier.networkpolicies"]
   resourceNames: ["net-sec.*"]
@@ -342,7 +342,7 @@ rules:
 
 ---
 
- tigera-example-get-net-sec-tier is applied globally
+# tigera-example-get-net-sec-tier is applied globally
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -358,7 +358,7 @@ roleRef:
 
 ---
 
- tigera-example-read-policies-in-net-sec-tier is applied per-namespace
+# tigera-example-read-policies-in-net-sec-tier is applied per-namespace
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -386,7 +386,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tigera-example-make-net-sec-tier-visible
 rules:
- To access Calico policy in a tier, the user requires "get" access to that tier.
+# To access Calico policy in a tier, the user requires "get" access to that tier.
 - apiGroups: ["projectcalico.org"]
   resources: ["tiers"]
   resourceNames: ["net-sec"]
@@ -394,7 +394,7 @@ rules:
 
 ---
 
- tigera-example-make-net-sec-tier-visible is applied globally
+# tigera-example-make-net-sec-tier-visible is applied globally
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -419,25 +419,25 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tigera-example-all-tiers-and-namespaces-policy-reader
 rules:
- To access Calico policy in a tier, the user requires "get" access to that tier.
- Not specifying any specific "resourceNames" provides access to all tiers.
+ # To access Calico policy in a tier, the user requires "get" access to that tier.
+ # Not specifying any specific "resourceNames" provides access to all tiers.
 - apiGroups: ["projectcalico.org"]
   resources: ["tiers"]
   verbs: ["get"]
- This allows read access to the Kubernetes NetworkPolicy resources (these are always in the default tier).
+ # This allows read access to the Kubernetes NetworkPolicy resources (these are always in the default tier).
 - apiGroups: ["networking.k8s.io", "extensions"]
   resources: ["networkpolicies"]
   verbs: ["get","watch","list"]
- This allows read access to the Calico NetworkPolicy and GlobalNetworkPolicies.
- Not specifying any specific "resourceNames" provides access to them in all tiers.
+ # This allows read access to the Calico NetworkPolicy and GlobalNetworkPolicies.
+ # Not specifying any specific "resourceNames" provides access to them in all tiers.
 - apiGroups: ["projectcalico.org"]
   resources: ["tier.networkpolicies","tier.globalnetworkpolicies"]
   verbs: ["get","watch","list"]
 
 ---
 
- tigera-example-all-tiers-and-namespaces-policy-reader is applied globally, with a single ClusterRoleBinding,
- since all the rules it contains apply to all current and future namespaces on the cluster.
+# tigera-example-all-tiers-and-namespaces-policy-reader is applied globally, with a single ClusterRoleBinding,
+# since all the rules it contains apply to all current and future namespaces on the cluster.
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -471,7 +471,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tigera-example-get-net-sec-tier
 rules:
- To access Calico policy in a tier, the user requires "get" access to that tier.
+ # To access Calico policy in a tier, the user requires "get" access to that tier.
 - apiGroups: ["projectcalico.org"]
   resources: ["tiers"]
   resourceNames: ["net-sec"]
@@ -484,7 +484,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tigera-example-crud-policies-in-net-sec-tier
 rules:
- This allows full CRUD access to the Calico NetworkPolicy resources in the net-sec tier.
+ # This allows full CRUD access to the Calico NetworkPolicy resources in the net-sec tier.
 - apiGroups: ["projectcalico.org"]
   resources: ["tier.networkpolicies"]
   resourceNames: ["net-sec.*"]
@@ -492,7 +492,7 @@ rules:
 
 ---
 
- tigera-example-get-net-sec-tier is applied globally
+# tigera-example-get-net-sec-tier is applied globally
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -508,7 +508,7 @@ roleRef:
 
 ---
 
- tigera-example-crud-policies-in-net-sec-tier is applied per-namespace
+# tigera-example-crud-policies-in-net-sec-tier is applied per-namespace
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:

@@ -55,7 +55,7 @@ The geeky details of what you get:
 will not be able to initiate network connections to {{prodname}} pods. (This is a general limitation of EKS's custom networking support,
 not specific to {{prodname}}.) As a workaround, trusted pods that require control plane nodes to connect to them, such as those implementing
 admission controller webhooks, can include `hostNetwork:true` in their pod spec. See the Kubernetes API
-[pod spec](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#podspec-v1-core)
+[pod spec](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec)
 definition for more information on this setting.
 
 :::
@@ -104,6 +104,12 @@ Before you get started, make sure you have downloaded and configured the [necess
    EOF
    ```
 
+1. Finally, add nodes to the cluster.
+
+   ```batch
+   eksctl create nodegroup --cluster my-calico-cluster --node-type t3.medium --max-pods-per-node 100
+   ```
+
 </TabItem>
 <TabItem label="Manifest" value="Manifest-1">
 
@@ -119,20 +125,53 @@ Before you get started, make sure you have downloaded and configured the [necess
    kubectl -n kube-system set env daemonset/calico-node FELIX_AWSSRCDSTCHECK=Disable
    ```
 
-</TabItem>
-</Tabs>
-
 1. Finally, add nodes to the cluster.
 
    ```bash
    eksctl create nodegroup --cluster my-calico-cluster --node-type t3.medium --max-pods-per-node 100
    ```
 
-   :::tip
+</TabItem>
+<TabItem label="Helm" value="Helm-2">
+
+1. Add {{prodname}} into your Helm repository.
+
+    ```batch
+    helm repo add projectcalico https://docs.tigera.io/calico/charts
+    ```
+
+1. If {{prodname}} is already added, update it to get the latest released version.
+
+    ```batch
+    helm repo update
+    ```
+
+1. Install version {{releaseTitle}} of the {{prodname}} operator and custom resource definitions.
+
+    ```batch
+    helm install calico projectcalico/tigera-operator --version {{releaseTitle}}
+    ```
+
+1. Patch the CNI type with value `Calico`.
+
+    ```batch
+    kubectl patch installation default --type='json' -p='[{"op": "replace", "path": "/spec/cni/type", "value": "Calico"}]'
+    ```
+
+1. Finally, add nodes to the cluster.
+
+    ```batch
+    eksctl create nodegroup --cluster my-calico-cluster --node-type t3.medium --max-pods-per-node 100
+    ```
+
+</TabItem>
+</Tabs>
+
+:::tip
 
    Without the `--max-pods-per-node` option above, EKS will limit the [number of pods based on node-type](https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt). See `eksctl create nodegroup --help` for the full set of node group options.
 
-   :::
+:::
 
 ## Next steps
 

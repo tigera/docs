@@ -129,6 +129,7 @@ Azure Route Server deployment is per VNet, as such each VNet with egress gateway
 - [Configure route reflector](#configure-route-reflector)
 - [Enable egress gateway support](#enable-egress-gateway-support)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
+- [Configure iptables backend for egress gateways](#configure-iptables-backend-for-egress-gateways)
 - [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
 - [(Optional) Enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
@@ -261,7 +262,7 @@ must have a cluster ID - typically an unused IPv4 address.
 To configure a node to be a route reflector with cluster ID 244.0.0.1, run the following command:
 
 ```bash
-calicoctl patch node <node name> -p '{"spec": {"bgp": {"routeReflectorClusterID": "244.0.0.1"}}}'
+kubectl annotate node <node name> projectcalico.org/RouteReflectorClusterID=244.0.0.1
 ```
 
 Typically, you will want to label this node to indicate that it is a route reflector, allowing it to be easily selected by a BGPPeer resource. You can do this with kubectl. For example:
@@ -336,7 +337,7 @@ In the default **FelixConfiguration**, set the `egressIPSupport` field to `Enabl
 support on a per-namespace basis only:
 
 ```bash
-kubectl patch felixconfiguration.p default --type='merge' -p \
+kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
 ```
 
@@ -482,6 +483,14 @@ gateways will be used for remote client traffic. This traffic is automatically a
 no policy is required to allow it. {{prodname}} only sends probes to egress gateway pods that have a named
 "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
 :::
+
+### Configure iptables backend for egress gateways
+
+As of v3.16.3, the operator automatically configures egress gateways to use the same iptables backend as calico-node.
+This is controlled by the `iptablesBackend` field in the FelixConfiguration.  If not specified or set to `auto`,
+the egress gateway will attempt to autodetect the correct value preferring nft if available.
+
+Prior to v3.16.3, it was not possible to set the iptables backend; the effective value was fixed at `legacy`.
 
 ### Configure a Namespace or Pod to use egress gateways
 
@@ -669,7 +678,7 @@ In eBPF mode, the probe traffic can be blocked by policy, so you must ensure tha
 
 :::
 
-## Above and beyond
+## Additional resources
 
 Please see also:
 

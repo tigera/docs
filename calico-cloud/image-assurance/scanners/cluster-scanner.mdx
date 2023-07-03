@@ -1,0 +1,62 @@
+---
+description: Identify vulnerabilities in Kubernetes clusters.
+---
+
+# Enable automatic image scanning inside a cluster
+
+## Big picture
+
+Scan Kubernetes workloads automatically using {{prodname}} Image Assurance cluster scanner.
+
+
+## Before you begin
+
+**Cluster requirements**
+
+To be included in scan results, cluster must be:
+
+- Using containerd as the container runtime.
+- Containerd must be using `overlayfs` or `native` file system snapshotter.
+
+**Image requirements**
+
+- Workloads must be running an image that has RepoDigest ID
+
+## How to
+
+- [Enable cluster scanner](#enable-the-cluster-scanner)
+- [Configure cluster scanner](#configure-cluster-scanner)
+- [Disable cluster scanner](#disable-cluster-scanner)
+
+### Enable the cluster scanner
+
+1. In your cluster, enable the cluster scanner by modifying the `imageassurances` custom resource.
+
+   ```shell
+      kubectl edit imageassurances default
+   ```
+
+2. Set the `clusterScanner` field to `Enabled` and save the file.
+
+3. This will deploy the cluster scanner as a daemonset in your cluster. The scanner is deployed as a container inside `tigera-image-assurance-crawdad`
+daemonset. You can verify that the scanner is deployed by verifying that a new container with name `cluster-scanner` is created inside the daemonset.
+
+
+### Configure cluster scanner
+
+You can configure the cluster scanner with custom settings. To do so, modify the `imageassurances` custom resource.
+
+1. To modify container runtime socket path used by the cluster scanner, set the `criSocketPath` field to the path of the container runtime socket.
+The default value is set to `/run/containerd/containerd.sock`.
+
+2. To modify the containerd file system root path, modify `containerdVolumeMountPath`. The default value is set to `/var/lib/containerd/`.
+
+### Disable the cluster scanner
+
+1. You can disable the cluster scanner by modifying the `imageassurances` custom resource.
+
+   ```shell
+    kubectl edit imageassurances default
+   ```
+
+2. Set the `clusterScanner` field to `Disabled` and save the file. This will delete the cluster scanner container from the daemonset from your cluster.

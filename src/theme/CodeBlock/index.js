@@ -4,7 +4,12 @@ import Details from '@theme/Details';
 import styles from './styles.module.css';
 
 export default function CodeBlockWrapper(props) {
-  const { collapsible, title, metastring, ...otherProps } = props;
+  const { collapsible, noValidation, title, metastring, ...otherProps } = props;
+
+  const nv = typeof noValidation === 'boolean' && noValidation;
+  const codeBlockValidation = <div data-codeblock-validation={!nv}>
+    { collapsible ? <CodeBlock {...otherProps} /> : <CodeBlock {...props} /> }
+  </div>;
 
   if (collapsible) {
     const summary = <summary className={styles.codeBlockSummary}>{title}</summary>;
@@ -14,14 +19,14 @@ export default function CodeBlockWrapper(props) {
         summary={summary}
         className={styles.codeBlockDetails}
       >
-        <CodeBlock {...otherProps} />
+        {codeBlockValidation}
       </Details>
     );
   }
 
   return (
     <>
-      <CodeBlock {...props} />
+      {codeBlockValidation}
     </>
   );
 }

@@ -3,5 +3,9 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testTimeout: 30 * 60 * 1000,
-  testPathIgnorePatterns: [],
+  testEnvironment: 'jest-environment-jsdom',
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '__tests__',
+],
 };

@@ -2,7 +2,17 @@
 
 module.exports = {
   calicoEnterpriseSidebar: [
-    'about-calico-enterprise',
+    {
+      type: 'category',
+      label: 'About',
+      link: {
+        type: 'doc',
+        id: 'about/index',
+      },
+      items: [
+        'about/product-comparison',
+      ],
+    },
     {
       type: 'category',
       label: 'Install and upgrade',
@@ -164,6 +174,7 @@ module.exports = {
             'networking/configuring/custom-bgp-config',
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/pod-mac-address',
+            'networking/configuring/node-local-dns-cache',
           ],
         },
         {
@@ -202,6 +213,15 @@ module.exports = {
       label: 'Network policy',
       link: {type: 'doc', id: 'network-policy/index'},
       items: [
+        {
+          type: 'category',
+          label: 'Policy recommendations',
+          link: {type: 'doc', id: 'network-policy/recommendations/index'},
+          items: [
+            'network-policy/recommendations/policy-recommendations',
+            'network-policy/recommendations/denied-traffic-flows',
+          ],  
+        },
         'network-policy/policy-best-practices',
         {
           type: 'category',
@@ -216,7 +236,6 @@ module.exports = {
         },
         'network-policy/networksets',
         'network-policy/default-deny',
-        'network-policy/generate-policy-recommendation',
         'network-policy/staged-network-policies',
         'network-policy/policy-troubleshooting',
         {
@@ -252,6 +271,15 @@ module.exports = {
           ],
         },
         'network-policy/domain-based-policy',
+        {
+          type: 'category',
+          label: 'Application layer policies',
+          link: {type: 'doc', id: 'network-policy/application-layer-policies/index'},
+          items: [
+            'network-policy/application-layer-policies/alp',
+            'network-policy/application-layer-policies/alp-tutorial',
+          ],
+        },
         {
           type: 'category',
           label: 'Policy for firewalls',
@@ -473,6 +501,7 @@ module.exports = {
             'operations/comms/secure-bgp',
             'operations/comms/manager-tls',
             'operations/comms/log-storage-tls',
+            'operations/comms/linseed-tls',
             'operations/comms/apiserver-tls',
             'operations/comms/typha-node-tls',
             'operations/comms/compliance-tls',
@@ -739,6 +768,7 @@ module.exports = {
             'reference/resources/networkset',
             'reference/resources/node',
             'reference/resources/packetcapture',
+            'reference/resources/policyrecommendations',
             'reference/resources/profile',
             'reference/resources/remoteclusterconfiguration',
             'reference/resources/stagedglobalnetworkpolicy',

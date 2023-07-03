@@ -61,7 +61,7 @@ kubectl get heps -o wide
 The output may look similar to this:
 
 ```
-$ kubectl get heps -o wide
+kubectl get heps -o wide
 NAME                                                    CREATED AT
 ip-172-16-101-147.us-west-2.compute.internal-auto-hep   2021-05-12T22:16:47Z
 ip-172-16-101-54.us-west-2.compute.internal-auto-hep    2021-05-12T22:16:47Z
@@ -90,7 +90,7 @@ metadata:
   name: all-nodes-policy
 spec:
   selector: has(kubernetes-host)
-  <rest of the policy>
+  #<rest of the policy>
 ```
 
 To select a specific set of host endpoints (and their corresponding Kubernetes nodes), use a policy selector that selects a label unique to that set of host endpoints.
@@ -111,23 +111,23 @@ metadata:
   name: some-nodes-policy
 spec:
   selector: has(kubernetes-host) && environment == 'dev'
-  <rest of the policy>
+  #<rest of the policy>
 ```
 
 ## Tutorial
 
 This tutorial will lock down Kubernetes node ingress to only allow SSH and required ports for Kubernetes to function.
-We will apply two policies: one for the master nodes. and one for the worker nodes.
+We will apply two policies: one for the control plane nodes. and one for the worker nodes.
 
 :::note
 
 Note: This tutorial was tested on a cluster created with kubeadm v1.18.2 on AWS, using a "stacked etcd" [topology](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/). Stacked etcd topology means the etcd pods are running on the masters. kubeadm uses stacked etcd by default.
 If your Kubernetes cluster is on a different platform, is running a variant of Kubernetes, or is running a topology with an external etcd cluster,
-please review the required ports for master and worker nodes in your cluster and adjust the policies in this tutorial as needed.
+please review the required ports for control plane and worker nodes in your cluster and adjust the policies in this tutorial as needed.
 
 :::
 
-First, let's restrict ingress traffic to the master nodes. The ingress policy below contains three rules.
+First, let's restrict ingress traffic to the control plane nodes. The ingress policy below contains three rules.
 The first rule allows access to the API server port from anywhere. The second rule allows all traffic to localhost, which
 allows Kubernetes to access control plane processes. These control plane processes includes the etcd server client API, the scheduler, and the controller-manager.
 This rule also allows localhost access to the kubelet API and calico/node health checks.
@@ -171,7 +171,7 @@ spec:
 EOF
 ```
 
-Note that the above policy selects the standard **node-role.kubernetes.io/master** label that kubeadm sets on master nodes.
+Note that the above policy selects the standard **node-role.kubernetes.io/master** label that kubeadm sets on control plane nodes.
 
 Next, we need to apply policy to restrict ingress to the Kubernetes workers.
 Before adding the policy we will add a label to all of our worker nodes, which then gets added to its automatic host endpoint.
@@ -210,7 +210,7 @@ spec:
 EOF
 ```
 
-## Above and beyond
+## Additional resources
 
 - [Protect hosts tutorial](protect-hosts-tutorial.mdx)
 - [Apply policy to Kubernetes node ports](../beginners/services/kubernetes-node-ports.mdx)

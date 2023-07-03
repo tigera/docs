@@ -27,12 +27,6 @@ export default function ReleaseNotes() {
 
   return (
     <>
-      <p>
-        The following table shows component versioning for {prodname} <strong>{version}</strong>.
-      </p>
-      <p>
-        To select a different version, click <strong>Releases</strong> in the top navigation bar.
-      </p>
       {releases.map((release) => (
         <div key={release.title}>
           <Heading
@@ -43,7 +37,7 @@ export default function ReleaseNotes() {
             Calico Enterprise {release.title}
           </Heading>
           {release.title !== 'master' && (
-            <p>
+            <p> 
               <Link
                 href={`${downloadsurl}/ee/archives/release-${release.title}-${release['tigera-operator'].version}.tgz`}
               >
@@ -54,8 +48,8 @@ export default function ReleaseNotes() {
           )}
           {release.note}
           <Heading
-            as='h2'
-            id='component-versions'
+            as='h3'
+            id={`component-versions-${toKebab(release.title)}`}
           >
             Component Versions
           </Heading>

@@ -78,7 +78,7 @@ way have the normal AWS semantics: when accessing resources inside the AWS netwo
 (from the IP pool) is used. When accessing resources outside the AWS network, AWS translates the workload's IP to
 the Elastic IP. Elastic IPs also allow for incoming requests from outside the AWS fabric, direct to the workload.
 
-In overview, the AWS-backed feature works as follows:
+In overview, the AWS-backed IP Pools feature works as follows:
 
 - An IP pool is created with its `awsSubnetID` field set to the ID of a VPC subnet. This "AWS-backed" IP pool's
   CIDR must be contained within the VPC subnet's CIDR.
@@ -94,7 +94,7 @@ In overview, the AWS-backed feature works as follows:
 - Since they are a limited resource, {{prodname}} IPAM does not use AWS-backed pools by default. To request an
   AWS-backed IP address, a pod must have a resource request:
 
-  ```yaml
+  ```yaml noValidation
   spec:
     containers:
     - ...
@@ -222,6 +222,7 @@ an instance (for example when scaling up the cluster).
 - [Enable AWS-backed IP pools](#enable-aws-backed-ip-pools)
 - [Configure IP pools backed by VPC subnets](#configure-ip-pools-backed-by-vpc-subnets)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
+- [Configure iptables backend for egress gateways](#configure-iptables-backend-for-egress-gateways)
 - [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
@@ -243,8 +244,10 @@ For other AWS clusters, {{prodname}} may default to `firstFound`, which is **not
 
 To examine the autodetection method, check the operator's installation resource:
 
-```yaml
+```bash
 $ kubectl get installations.operator.tigera.io -o yaml default
+```
+```yaml noValidation
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
@@ -397,7 +400,7 @@ In the default **FelixConfiguration**, set the `egressIPSupport` field to `Enabl
 support on a per-namespace basis only:
 
 ```bash
-kubectl patch felixconfiguration.p default --type='merge' -p \
+kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
 ```
 
@@ -756,6 +759,7 @@ spec:
           labelSelector:
             matchLabels:
               egress-code: red
+EOF
 ```
 
 - `replicas: 2` tells Kubernetes to schedule two egress gateways in the "red" cluster.
@@ -847,6 +851,14 @@ spec:
 
 :::
 
+### Configure iptables backend for egress gateways
+
+As of v3.16.3, the operator automatically configures egress gateways to use the same iptables backend as calico-node.
+This is controlled by the `iptablesBackend` field in the FelixConfiguration.  If not specified or set to `auto`,
+the egress gateway will attempt to autodetect the correct value preferring nft if available.
+
+Prior to v3.16.3, it was not possible to set the iptables backend; the effective value was fixed at `legacy`.
+
 ### Configure a Namespace or Pod to use egress gateways
 
 In a {{prodname}} deployment, the Kubernetes Namespace and Pod resources honor annotations that
@@ -892,6 +904,15 @@ EOF
 ### Add AWS Elastic IPs to the egress gateway deployment
 
 To add AWS Elastic IPs to the egress gateway pods, follow these steps:
+
+- Ensure that your worker nodes are either in a private subnet, or they are using Elastic IPs for their public IP.
+
+  :::warning
+  If your worker nodes are using ["standard" VPC public IPs](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-ip-addressing.html#vpc-public-ipv4-addresses),
+  adding the Elastic IP to the node triggers the node to lose its VPC Public IP. This is because in AWS networking,
+  a node is not allowed to have a VPC public IP and an Elastic IP. However, we have found this is only enforced at
+  boot time.
+  :::
 
 - Ensure that your VPC has an [Internet Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html)
   and a (default) route to the Internet Gateway from the AWS subnets used for egress gateways. (This is a
@@ -1077,7 +1098,7 @@ By default, upgrading egress gateways will sever any connections that are flowin
 the egress gateway feature supports some advanced options that give feedback to affected pods. For more details see
 the [egress gateway maintenance guide](egress-gateway-maintenance.mdx).
 
-## Above and beyond
+## Additional resources
 
 Please see also:
 

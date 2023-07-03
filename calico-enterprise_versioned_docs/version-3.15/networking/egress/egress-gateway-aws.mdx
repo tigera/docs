@@ -78,7 +78,7 @@ way have the normal AWS semantics: when accessing resources inside the AWS netwo
 (from the IP pool) is used. When accessing resources outside the AWS network, AWS translates the workload's IP to
 the Elastic IP. Elastic IPs also allow for incoming requests from outside the AWS fabric, direct to the workload.
 
-In overview, the AWS-backed feature works as follows:
+In overview, the AWS-backed IP Pools feature works as follows:
 
 - An IP pool is created with its `awsSubnetID` field set to the ID of a VPC subnet. This "AWS-backed" IP pool's
   CIDR must be contained within the VPC subnet's CIDR.
@@ -94,7 +94,7 @@ In overview, the AWS-backed feature works as follows:
 - Since they are a limited resource, {{prodname}} IPAM does not use AWS-backed pools by default. To request an
   AWS-backed IP address, a pod must have a resource request:
 
-  ```yaml
+  ```yaml noValidation
   spec:
     containers:
     - ...
@@ -244,8 +244,10 @@ For other AWS clusters, {{prodname}} may default to `firstFound`, which is **not
 
 To examine the autodetection method, check the operator's installation resource:
 
-```yaml
+```bash
 $ kubectl get installations.operator.tigera.io -o yaml default
+```
+```yaml noValidation
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
@@ -770,6 +772,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        # Optional: Used to specify IP tables backend (legacy or nft).
+        # For example on RHEL9, nft can be used.
+        # As of v3.15.3, the egress gateway will attempt to autodetect 
+        # the correct value preferring `nft` if available.
+        #- name: IPTABLES_BACKEND
+        #  value: "legacy"
         securityContext:
           privileged: true
       containers:
@@ -906,6 +914,8 @@ EOF
   If set, the egress gateway pod will probe each external service periodically. If all probes fail then the egress
   gateway will report non-ready via its health port. `HTTP_PROBE_INTERVAL` controls the interval between probes.
   `HTTP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if all probes are failing.
+- The `IPTABLES_BACKEND` environment variable may be set to `legacy` or `nft`. As of v3.15.3, the egress gateway 
+  will attempt to autodetect the correct value preferring `nft` if available.
   The health port is used by:
 - The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
   probes).
@@ -961,6 +971,15 @@ EOF
 ### Add AWS Elastic IPs to the egress gateway deployment
 
 To add AWS Elastic IPs to the egress gateway pods, follow these steps:
+
+- Ensure that your worker nodes are either in a private subnet, or they are using Elastic IPs for their public IP.
+
+  :::warning
+  If your worker nodes are using ["standard" VPC public IPs](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-ip-addressing.html#vpc-public-ipv4-addresses),
+  adding the Elastic IP to the node triggers the node to lose its VPC Public IP. This is because in AWS networking,
+  a node is not allowed to have a VPC public IP and an Elastic IP. However, we have found this is only enforced at
+  boot time.
+  :::
 
 - Ensure that your VPC has an [Internet Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html)
   and a (default) route to the Internet Gateway from the AWS subnets used for egress gateways. (This is a
@@ -1159,7 +1178,7 @@ By default, upgrading egress gateways will sever any connections that are flowin
 the egress gateway feature supports some advanced options that give feedback to affected pods. For more details see
 the [egress gateway maintenance guide](egress-gateway-maintenance.mdx).
 
-## Above and beyond
+## Additional resources
 
 Please see also:
 

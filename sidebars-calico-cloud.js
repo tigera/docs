@@ -1,6 +1,16 @@
 module.exports = {
   calicoCloudSidebar: [
-    'index',
+    {
+      type: 'category',
+      label: 'About',
+      link: {
+        type: 'doc',
+        id: 'about/index',
+      },
+      items: [
+        'about/product-comparison',
+      ],
+    },
     {
       type: 'category',
       label: 'Install and upgrade',
@@ -24,15 +34,13 @@ module.exports = {
             'get-started/connect/requirements/system-requirements',
             'get-started/connect/requirements/aks',
             'get-started/connect/requirements/gke',
-            'get-started/connect/requirements/rke',
-            'get-started/connect/requirements/rke2',
           ],
         },
         'get-started/connect/connect-cluster',
         'get-started/connect/checklist',
         'get-started/connect/operator-checklist',
-
         'get-started/upgrade-cluster',
+        'get-started/connect/usage-metrics',
       ],
     },
     {
@@ -100,6 +108,15 @@ module.exports = {
       label: 'Network policy',
       link: {type: 'doc', id: 'network-policy/index'},
       items: [
+        {
+          type: 'category',
+          label: 'Policy recommendations',
+          link: {type: 'doc', id: 'network-policy/recommendations/index'},
+          items: [
+            'network-policy/recommendations/policy-recommendations',
+            'network-policy/recommendations/denied-traffic-flows',
+          ],
+        },
         'network-policy/policy-best-practices',
         {
           type: 'category',
@@ -114,7 +131,6 @@ module.exports = {
         },
         'network-policy/networksets',
         'network-policy/default-deny',
-        'network-policy/generate-policy-recommendation',
         'network-policy/staged-network-policies',
         'network-policy/policy-troubleshooting',
         {
@@ -152,6 +168,15 @@ module.exports = {
         'network-policy/domain-based-policy',
         {
           type: 'category',
+          label: 'Application layer policies',
+          link: {type: 'doc', id: 'network-policy/application-layer-policies/index'},
+          items: [
+            'network-policy/application-layer-policies/alp',
+            'network-policy/application-layer-policies/alp-tutorial',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Policy for firewalls',
           link: {type: 'doc', id: 'network-policy/policy-firewalls/index'},
           items: [
@@ -164,41 +189,36 @@ module.exports = {
               ],
             },
             {
-              type: 'category',
-              label: 'Fortinet firewall integrations',
-              link: {type: 'doc', id: 'network-policy/policy-firewalls/fortinet-integration/index'},
-              items: [
-                'network-policy/policy-firewalls/fortinet-integration/overview',
-                'network-policy/policy-firewalls/fortinet-integration/firewall-integration',
-                'network-policy/policy-firewalls/fortinet-integration/fortimgr-integration',
-              ],
+              "type": "category",
+              "label": "Fortinet firewall integrations",
+              "link": {
+                "type": "doc",
+                "id": "network-policy/policy-firewalls/fortinet-integration/index"
+              },
+              "items": [
+                "network-policy/policy-firewalls/fortinet-integration/overview",
+                "network-policy/policy-firewalls/fortinet-integration/firewall-integration",
+                "network-policy/policy-firewalls/fortinet-integration/fortimgr-integration"
+              ]
             },
             {
-              type: 'category',
-              label: 'AWS security groups integration',
-              link: {type: 'doc', id: 'network-policy/policy-firewalls/aws-integration/index'},
-              items: [
-                'network-policy/policy-firewalls/aws-integration/get-started',
-                'network-policy/policy-firewalls/aws-integration/aws-security-group-integration',
-                'network-policy/policy-firewalls/aws-integration/tiers-and-policy',
-                'network-policy/policy-firewalls/aws-integration/metadata-access',
+              "type": "category",
+              "label": "AWS security groups integration",
+              "link": {
+                "type": "doc",
+                "id": "network-policy/policy-firewalls/aws-integration/index"
+              },
+              "items": [
+                "network-policy/policy-firewalls/aws-integration/get-started",
+                "network-policy/policy-firewalls/aws-integration/aws-security-group-integration",
+                "network-policy/policy-firewalls/aws-integration/tiers-and-policy",
+                "network-policy/policy-firewalls/aws-integration/metadata-access"
               ],
             },
           ],
         },
-        {
-          type: 'category',
-          label: 'Policy for hosts',
-          link: {type: 'doc', id: 'network-policy/hosts/index'},
-          items: [
-            'network-policy/hosts/about',
-            'network-policy/hosts/requirements',
-            'network-policy/hosts/protect-hosts',
-            'network-policy/hosts/kubernetes-nodes',
-            'network-policy/hosts/protect-hosts-tutorial',
-            'network-policy/hosts/host-forwarded-traffic',
-          ],
-        },
+        "network-policy/hosts/kubernetes-nodes",
+        "network-policy/hosts/host-forwarded-traffic",
         {
           type: 'category',
           label: 'Policy for extreme traffic',
@@ -294,7 +314,17 @@ module.exports = {
       label: 'Image Assurance',
       link: {type: 'doc', id: 'image-assurance/index'},
       items: [
-        'image-assurance/scan-image-registries',
+        'image-assurance/overview',
+        {
+          type: 'category',
+          label: 'Scan images for vulnerabilities',
+          link: {type: 'doc', id: 'image-assurance/scanners/index'},
+          items: [
+            'image-assurance/scanners/cli-based-scanner',
+            'image-assurance/scanners/cluster-scanner'
+          ],
+        },
+        'image-assurance/understanding-scan-results',
         'image-assurance/set-up-alerts',
         'image-assurance/install-the-admission-controller'
       ],
@@ -346,6 +376,7 @@ module.exports = {
           items: [
             'networking/egress/egress-gateway-on-prem',
             'networking/egress/egress-gateway-aws',
+            'networking/egress/egress-gateway-azure',
             'networking/egress/egress-gateway-maintenance',
             'networking/egress/external-network',
             'networking/egress/troubleshoot',
@@ -445,6 +476,7 @@ module.exports = {
       items: [
         'reference/api',
         'reference/installation/api',
+        'reference/installation/ia-api',
         'reference/anomaly-detection',
         {
           type: 'category',

@@ -295,11 +295,17 @@ spec:
         command: ["/init-gateway.sh"]
         image: {{registry}}{% component_image("egress-gateway") %}
         env:
-         Use downward API to tell the pod its own IP address.
+         # Use downward API to tell the pod its own IP address.
         - name: EGRESS_POD_IP
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        # Optional: Used to specify IP tables backend (legacy or nft).
+        # For example on RHEL9, nft can be used.
+	# As of v3.15.3, the egress gateway will attempt to autodetect
+	# the correct value preferring `nft` if available.
+        #- name: IPTABLES_BACKEND
+        #  value: "legacy"
         securityContext:
           privileged: true
       containers:
@@ -388,6 +394,9 @@ Where:
   If set, the egress gateway pod will probe each external service periodically. If all probes fail then the egress
   gateway will report non-ready via its health port. `HTTP_PROBE_INTERVAL` controls the interval between probes.
   `HTTP_PROBE_TIMEOUT` controls the timeout before reporting non-ready if all probes are failing.
+
+- The `IPTABLES_BACKEND` environment variable may be set to `legacy` or `nft`. As of v3.15.3, the egress gateway
+  will attempt to autodetect the correct value preferring `nft` if available.
 
 The health port is used by:
 
@@ -551,7 +560,7 @@ By default, upgrading egress gateways will sever any connections that are flowin
 the egress gateway feature supports some advanced options that give feedback to affected pods. For more details see
 the [egress gateway maintenance guide](egress-gateway-maintenance.mdx).
 
-## Above and beyond
+## Additional resources
 
 Please see also:
 

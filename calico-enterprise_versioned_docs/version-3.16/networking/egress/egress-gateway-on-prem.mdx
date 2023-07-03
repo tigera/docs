@@ -176,6 +176,7 @@ patch release.
 - [Enable egress gateway support](#enable-egress-gateway-support)
 - [Provision an egress IP pool](#provision-an-egress-ip-pool)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
+- [Configure iptables backend for egress gateways](#configure-iptables-backend-for-egress-gateways)
 - [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
@@ -189,14 +190,14 @@ In the default **FelixConfiguration**, set the `egressIPSupport` field to `Enabl
 support on a per-namespace basis only:
 
 ```bash
-kubectl patch felixconfiguration.p default --type='merge' -p \
+kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
 ```
 
 Or for support both per-namespace and per-pod:
 
 ```bash
-kubectl patch felixconfiguration.p default --type='merge' -p \
+kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
 
@@ -329,6 +330,14 @@ The health port `8080` is used by:
 
 If you are deploying `egress-gateway` on a RKE2 CIS-hardened cluster, its `PodSecurityPolicies` restrict the `securityContext` and `volumes` required by egress gateway. When deploying using the egress gateway custom resource, the Tigera Operator sets up `PodSecurityPolicy`, `Role`, `RoleBinding` and associated `ServiceAccount`.
 
+### Configure iptables backend for egress gateways
+
+As of v3.16.3, the operator automatically configures egress gateways to use the same iptables backend as calico-node.
+This is controlled by the `iptablesBackend` field in the FelixConfiguration.  If not specified or set to `auto`,
+the egress gateway will attempt to autodetect the correct value preferring nft if available.
+
+Prior to v3.16.3, it was not possible to set the iptables backend; the effective value was fixed at `legacy`.
+
 ### Configure a Namespace or Pod to use egress gateways
 
 In a {{prodname}} deployment, the Kubernetes Namespace and Pod resources honor annotations that
@@ -457,7 +466,7 @@ By default, upgrading egress gateways will sever any connections that are flowin
 the egress gateway feature supports some advanced options that give feedback to affected pods. For more details see
 the [egress gateway maintenance guide](egress-gateway-maintenance.mdx).
 
-## Above and beyond
+## Additional resources
 
 Please see also:
 

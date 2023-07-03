@@ -131,7 +131,7 @@ data:
 
 The operator will pick up the change to the config map automatically and do a rolling update of {{prodname}} to pass on the change. Confirm that pods restart and then reach the `Running` state with the following command:
 
-```
+```bash
 watch kubectl get pods -n calico-system
 ```
 
@@ -146,7 +146,7 @@ This section explains how to disable `kube-proxy` in some common environments.
 
 For a cluster that runs `kube-proxy` in a `DaemonSet` (such as a `kubeadm`-created cluster), you can disable `kube-proxy` reversibly by adding a node selector to `kube-proxy`'s `DaemonSet` that matches no nodes, for example:
 
-```
+```bash
 kubectl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
 ```
 
@@ -164,13 +164,13 @@ below.
 
 If you are running OpenShift, you can disable `kube-proxy` as follows:
 
-```
+```bash
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": false}}'
 ```
 
 To re-enable it:
 
-```
+```bash
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": true}}'
 ```
 
@@ -178,8 +178,8 @@ kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"
 
 If you cannot disable `kube-proxy` (for example, because it is managed by your Kubernetes distribution), then you _must_ change Felix configuration parameter `BPFKubeProxyIptablesCleanupEnabled` to `false`. This can be done with `kubectl` as follows:
 
-```
-kubectl patch felixconfiguration.p default --patch='{"spec": {"bpfKubeProxyIptablesCleanupEnabled": false}}'
+```bash
+kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyIptablesCleanupEnabled": false}}'
 ```
 
 If both `kube-proxy` and `BPFKubeProxyIptablesCleanupEnabled` is enabled then `kube-proxy` will write its iptables rules and Felix will try to clean them up resulting in iptables flapping between the two.
@@ -210,14 +210,14 @@ Direct return mode skips a hop through the network for traffic to services (such
 
 DSR mode is disabled by default; to enable it, set the `BPFExternalServiceMode` Felix configuration parameter to `"DSR"`. This can be done with `kubectl`:
 
-```
-kubectl patch felixconfiguration.p default --patch='{"spec": {"bpfExternalServiceMode": "DSR"}}'
+```bash
+kubectl patch felixconfiguration default --patch='{"spec": {"bpfExternalServiceMode": "DSR"}}'
 ```
 
 To switch back to tunneled mode, set the configuration parameter to `"Tunnel"`:
 
-```
-kubectl patch felixconfiguration.p default --patch='{"spec": {"bpfExternalServiceMode": "Tunnel"}}'
+```bash
+kubectl patch felixconfiguration default --patch='{"spec": {"bpfExternalServiceMode": "Tunnel"}}'
 ```
 
 Switching external traffic mode can disrupt in-progress connections.
@@ -234,7 +234,7 @@ To revert to standard Linux networking:
 
 1. If you disabled `kube-proxy`, re-enable it (for example, by removing the node selector added above).
 
-   ```
+   ```bash
    kubectl patch ds -n kube-system kube-proxy --type merge -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": null}}}}}'
    ```
 
