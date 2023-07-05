@@ -474,7 +474,6 @@ module.exports = {
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
-        'operations/decommissioning-a-node',
         'operations/component-logs',
       ],
     },
