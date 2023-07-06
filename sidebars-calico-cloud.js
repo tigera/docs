@@ -45,6 +45,15 @@ module.exports = {
     },
     {
       type: 'category',
+      label: 'Users',
+      link: {type: 'doc', id:'users/index'},
+      items: [
+        'users/user-management',
+        'users/create-and-assign-custom-roles',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Tutorials',
       link: {type: 'doc', id:'tutorials/index'},
       items: [
