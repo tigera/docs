@@ -45,6 +45,15 @@ module.exports = {
     },
     {
       type: 'category',
+      label: 'Users',
+      link: {type: 'doc', id:'users/index'},
+      items: [
+        'users/user-management',
+        'users/create-and-assign-custom-roles',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Tutorials',
       link: {type: 'doc', id:'tutorials/index'},
       items: [
@@ -114,7 +123,7 @@ module.exports = {
           link: {type: 'doc', id: 'network-policy/recommendations/index'},
           items: [
             'network-policy/recommendations/policy-recommendations',
-            'network-policy/recommendations/denied-traffic-flows',
+            'network-policy/recommendations/learn-about-policy-recommendations',
           ],
         },
         'network-policy/policy-best-practices',
