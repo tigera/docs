@@ -16,9 +16,16 @@ One of the best practices for improving the security posture of your Kubernetes 
 
 ## Before you begin
 
-**Required**
+**Required RBAC**
 
-To enable/disable policy recommendations, you must have the **tigera-network-admin** role or permissions to the **Policy Recommendations** resource.
+To enable/disable and use policy recommendations, you must have the **tigera-network-admin** role or permissions to the **update**, **patch**, **get**, **list**, **watch** `projectcalico.org` resources:
+* tiers
+* policyrecommendationscopes
+* stagednetworkpolicies
+* tier.stagednetworkpolicies
+* networkpolicies
+* tier.networkpolicies
+* globalnetworksets
 
 **Recommended**
 
@@ -37,7 +44,6 @@ Creating and managing policy recommendations is available only in Manager UI.
 - [Review global settings for workloads](#review-global-settings-for-workloads)
 - [Update policy recommendations](#update-policy-recommendations)
 - [Private network recommendations](#private-network-recommendations)
-- [Why are egress-to-domain rules being generated for a Kubernetes service?](#why-are-egress-to-domain-rules-being-generated-for-a-kubernetes-service)
 - [Troubleshoot policy recommendations](#troubleshoot-policy-recommendations)
 - [Disable the policy recommendations feature](#disable-the-policy-recommendations-feature)
 
@@ -125,10 +131,6 @@ If any flow to a private network in your cluster is found, a private rule is aut
 **Notes**:
 Exclude any CIDR ranges used by the cluster for nodes and pods.
 
-### Why are egress-to-domain rules being generated for a Kubernetes service?
-
-The policy recommendation controller can only read the cluster domain of the cluster it runs in. If you have managed clusters with a non-default domain (`cluster.local`), the controller will treat egress traffic as though it is to a domain.
-
 ### Troubleshoot policy recommendations
 
 **Problem**: I’m not seeing policy recommendations on the Policy Recommendations board.
@@ -149,6 +151,10 @@ To verify why there may not be any recommendations, follow these steps:
 1. Filter flow logs for your namespace.
 1. Investigate the content within the `policies` field for the flow logs in question.
 1. Validate that no other enforced policy already addresses the flow.
+
+**Problem**: Why are egress-to-domain rules being generated for a Kubernetes service?
+
+**Solution/workaround**: The policy recommendation controller can only read the cluster domain of the cluster it runs in. If you have managed clusters with a non-default domain (`cluster.local`), the controller will treat egress traffic as though it is to a domain.
 
 ### Disable the policy recommendations feature
 
