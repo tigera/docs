@@ -624,6 +624,7 @@ module.exports = {
       items: [
         'reference/api',
         'reference/installation/api',
+        'reference/installation/helm_customization',
         'reference/anomaly-detection',
         {
           type: 'category',
