@@ -377,7 +377,7 @@ const config = {
           3.17: {
             label: '3.17 (latest)',
             path: 'latest',
-            banner: 'unreleased',
+            banner: 'none',
           },
           3.16: {
             label: '3.16',
