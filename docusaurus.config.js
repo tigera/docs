@@ -380,13 +380,13 @@ const config = {
             banner: 'unreleased',
           },
           3.17: {
-            label: '3.17 (early preview)',
-            path: '3.17',
-            banner: 'unreleased',
+            label: '3.17 (latest)',
+            path: 'latest',
+            banner: 'none',
           },
           3.16: {
-            label: '3.16 (latest)',
-            path: 'latest',
+            label: '3.16',
+            path: '3.16',
             banner: 'none',
           },
           3.15: {
