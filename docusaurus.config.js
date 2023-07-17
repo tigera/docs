@@ -417,7 +417,7 @@ const config = {
             banner: 'unreleased',
           },
           3.17: {
-            path: '3.17',
+            path: 'latest',
             banner: 'none',
           },
           3.16: {
