@@ -142,6 +142,11 @@ const config = {
             position: 'left',
           },
           {
+            label: 'Contact us',
+            to: 'https://www.tigera.io/contact/',
+            position: 'left',
+          },
+          {
             href: 'https://github.com/projectcalico',
             position: 'right',
             className: 'header-icon-link github-icon',
