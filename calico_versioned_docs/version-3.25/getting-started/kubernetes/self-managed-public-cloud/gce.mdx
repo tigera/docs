@@ -37,13 +37,13 @@ The following worked example creates a single control node and three workers on 
 
 1. Create the VPC.
 
-  ```
+  ```bash
   gcloud compute networks create example-k8s --subnet-mode custom
   ```
 
 2. Create the k8s-nodes subnet in the example-k8s VPC network:
 
-  ```
+  ```bash
   gcloud compute networks subnets create k8s-nodes \
   --network example-k8s \
   --range 10.240.0.0/24
@@ -51,7 +51,7 @@ The following worked example creates a single control node and three workers on 
 
 3. Create a firewall rule that allows internal communication across TCP, UDP, ICMP and IP in IP (used for the Calico overlay):
 
-  ```
+  ```bash
   gcloud compute firewall-rules create example-k8s-allow-internal \
   --allow tcp,udp,icmp,ipip \
   --network example-k8s \
@@ -60,7 +60,7 @@ The following worked example creates a single control node and three workers on 
 
 4. Create a firewall rule that allows external SSH, ICMP, and HTTPS:
 
-  ```
+  ```bash
   gcloud compute firewall-rules create example-k8s-allow-external \
   --allow tcp:22,tcp:6443,icmp \
   --network example-k8s \
@@ -69,7 +69,7 @@ The following worked example creates a single control node and three workers on 
 
 5. Create the controller VM.
 
-  ```
+  ```bash
   gcloud compute instances create controller \
     --async \
     --boot-disk-size 200GB \
@@ -86,7 +86,7 @@ The following worked example creates a single control node and three workers on 
 
 6. Create three worker VMs.
 
-  ```
+  ```bash
   for i in 0 1 2; do
     gcloud compute instances create worker-${i} \
     --async \
@@ -104,7 +104,7 @@ The following worked example creates a single control node and three workers on 
   ```
 7. Install Docker on the controller VM and each worker VM. On each VM run:
 
-  ```
+  ```bash
   sudo apt update
   sudo apt install -y docker.io
   sudo systemctl enable docker.service
@@ -113,9 +113,11 @@ The following worked example creates a single control node and three workers on 
 
 #### Install Kubernetes and create the cluster
 
-1. Install `kubeadm`,` kubelet`, and `kubectl` on each node (see [kubeadm docs](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl) for more details).
+1. Install `kubeadm`,` kubelet`, and `kubectl` on each worker node and the controller node (see [kubeadm docs](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl) for more details).
 
-  ```
+   Connect to each node and run these commands:
+  
+  ```bash
   curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | sudo apt-key add -
   cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
   deb https://apt.kubernetes.io/ kubernetes-xenial main
@@ -125,29 +127,52 @@ The following worked example creates a single control node and three workers on 
   sudo apt-mark hold kubelet kubeadm kubectl
   ```
 
-2. Create the controller node of a new cluster. On the controller VM, execute:
+2. Create the controller node of a new cluster.
 
-  ```
+   Connect to the controller VM, and run the following command:
+
+  ```bash
   sudo kubeadm init --pod-network-cidr 192.168.0.0/16
   ```
+:::note
 
-3. To set up kubectl for the ubuntu user, run:
+  The final line of the `kubeadm init` output contains the command for joining your workers to the controller.
+  Make a note of the command, which needs to be used in a later step. 
 
+  The command looks something similar to this:
+
+  ```bash
+  kubeadm join 10.240.0.11:6443 --token ar77y2.7274jxuumt8vhhvw \
+	--discovery-token-ca-cert-hash sha256:d913182b646660c7be5bd76c1b9e9fa3e613ed9c18ef36ad0d475f8f7c887331 
   ```
+:::
+
+3. Set up kubectl for the ubuntu user.
+
+   Connect to the controller VM, and run the following commands:
+
+  ```bash
   mkdir -p $HOME/.kube
   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
   ```
 
-4. The final line of the kubeadm init output contains the command for joining your workers to the controller. Run this on each worker, prepending `sudo` to run it as root. It will look something like this:
+4. Join your worker nodes to the controller node. 
+ 
+  :::note
+   Use the command that you copied in the earlier step. 
+  ::: 
+   Run this on each worker, prepending `sudo` to run it as root. It will look something like this:
 
-  ```
+  ```bash
   sudo kubeadm join 10.240.0.11:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
   ```
 
-5. On the controller, verify that all nodes have joined
+5. Verify that all nodes have joined.
 
-  ```
+  Run this command on the controller node.
+  
+  ```bash
   kubectl get nodes
   ```
 
@@ -163,23 +188,23 @@ worker-2     NotReady   <none>   5s      v1.17.2
 
 #### Install {{prodname}}
 
-On the controller, install {{prodname}} using the operator:
+1. On the controller, install {{prodname}} using the operator:
 
-```
-kubectl create -f {{manifestsUrl}}/manifests/tigera-operator.yaml
-```
+  ```bash
+  kubectl create -f {{manifestsUrl}}/manifests/tigera-operator.yaml
+  ```
 
-Download the custom resources necessary to configure {{prodname}}
+2. Download the custom resources necessary to configure {{prodname}}
 
-```
-curl {{manifestsUrl}}/manifests/custom-resources.yaml -O
-```
+  ```bash
+  curl {{manifestsUrl}}/manifests/custom-resources.yaml -O
+  ```
 
-If you wish to customize the {{prodname}} install, customize the downloaded custom-resources.yaml manifest. Then create the manifest to install {{prodname}}.
+3. If you wish to customize the {{prodname}} install, customize the downloaded custom-resources.yaml manifest. Then create the manifest to install {{prodname}}.
 
-```
-kubectl create -f custom-resources.yaml
-```
+  ```bash
+  kubectl create -f custom-resources.yaml
+  ```
 
 The geeky details of what you get:
 
