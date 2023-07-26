@@ -252,6 +252,13 @@ calicoctl patch node node-1 -p '{"spec": {"bgp": {"asNumber": "64514"}}}'
 
 BGP filters control which routes are imported and exported between BGP peers.
 
+The BGP filter rules (importVX, exportVX) are applied sequentially, taking the
+`action` of the first matching rule. When no rules are matched, the default
+`action` is `Accept`.
+
+In order for a BGPFilter to be used in a BGP peering, its `name`
+must be added to `filters` of the corresponding BGPPeer resource.
+
 The following example creates a BGPFilter
 
 ```yaml
@@ -264,17 +271,23 @@ spec:
     - action: Accept
       matchOperator: In
       cidr: 77.0.0.0/16
+    - action: Reject
+      matchOperator: NotIn
+      cidr: 88.0.0.0/16
   importV4:
-    - action: Accept
+    - action: Reject
       matchOperator: NotIn
       cidr: 44.0.0.0/16
   exportV6:
-    - action: Accept
-      matchOperator: Equal
+    - action: Reject
+      matchOperator: NotEqual
       cidr: 9000::0/64
   importV6:
     - action: Accept
-      matchOperator: NotEqual
+      matchOperator: Equal
+      cidr: 5000::0/64
+    - action: Reject
+      matchOperator: NotIn
       cidr: 5000::0/64
 ```
 
@@ -299,17 +312,23 @@ spec:
     - action: Accept
       matchOperator: In
       cidr: 77.0.0.0/16
+    - action: Reject
+      matchOperator: NotIn
+      cidr: 88.0.0.0/16
   importV4:
-    - action: Accept
+    - action: Reject
       matchOperator: NotIn
       cidr: 44.0.0.0/16
   exportV6:
-    - action: Accept
-      matchOperator: Equal
+    - action: Reject
+      matchOperator: NotEqual
       cidr: 9000::0/64
   importV6:
     - action: Accept
-      matchOperator: NotEqual
+      matchOperator: Equal
+      cidr: 5000::0/64
+    - action: Reject
+      matchOperator: NotIn
       cidr: 5000::0/64
 ---
 kind: BGPFilter
@@ -318,19 +337,31 @@ metadata:
   name: second-bgp-filter
 spec:
   exportV4:
-    - action: Accept
+    - action: Reject
       matchOperator: In
       cidr: 99.0.0.0/16
+    - action: Reject
+      matchOperator: In
+      cidr: .0.0.0/16
   importV4:
     - action: Accept
       matchOperator: NotIn
       cidr: 55.0.0.0/16
+    - action: Reject
+      matchOperator: In
+      cidr: 66.0.0.0/16
   exportV6:
     - action: Accept
       matchOperator: Equal
       cidr: 7000::0/64
-  importV6:
     - action: Accept
+      matchOperator: Equal
+      cidr: 8000::0/64
+    - action: Reject
+      matchOperator: NotIn
+      cidr: 7000::0/64
+  importV6:
+    - action: Reject
       matchOperator: NotEqual
       cidr: 4000::0/64
 ---
