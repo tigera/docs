@@ -27,7 +27,7 @@ This dashboard lets you:
 
 In this panel, you can:
 
-- View all scanned images for CVEs and remediate prior to run time
+- View all scanned images for CVEs
 - Change default scan settings
 - Exclude vulnerabilities from scan results
 
@@ -48,17 +48,15 @@ On the right panel, click the **Settings** icon. When changing the CVSS threshol
 
 **Why do I have images with `unknown` results**?
 
-If scan results contain `unknowns` it can mean:
-- The Image Assurance scanner is not enabled and running
-- The scanner has not yet reported results yet
+The Image Assurance cluster scanner is not enabled and running, or has not yet reported results.
 
 **How long does it take for scan results?**
 
 Anywhere from 2-10 minutes. The variability occurs because the scanner watches, reports, and then sleeps to balance efficiency and resources.
 
-**What is Download Scanner?**
+**Download Scanner link**
 
-This link goes to steps to integrate the Image Assurance scanner as part of your build pipeline. If you want to scan images only in your Kubernetes cluster, see [Enable automatic scanning inside a cluster](./scanners/cluster-scanner).
+This link goes to the docs with steps to integrate the Image Assurance scanner as part of your build pipeline. 
 
 ### Scan settings panel
 
@@ -70,7 +68,7 @@ If you disable Runtime View, some runtime information for existing images will r
 
 **What are the `API URL` and `API Token` fields used for?**
 
-They are used to authenticate the connection to the Image Assurance scanner if you have integrated Image Assurance scanner in your build pipeline.
+They are used to authenticate API requests between the scanner to the Image Assurance API if you have integrated the Image Assurance scanner in your build pipeline.
 
 ### Exclude vulnerabilities from scan results
 
@@ -78,7 +76,8 @@ In some cases, you may want to exclude specific vulnerabilities from your scan r
 
 1. Go to **Image Assurance**, **All Scanned Images**. 
 2. Select an image from the list.
-3. On the details page for that image, find the CVE, and click **Actions**, **Add Exception**.
+3. Click one of the packages listed in the side panel.
+3. Select a CVE and click **Actions**, **Add Exception**.
 4. From the **Add Exception** dialog, select a scope, add a description, and click **Save**. The new vulnerability exception is immediately applied to your scan results.
 5. To view all vulnerability exceptions, go to: **Image Assurance**, **Vulnerability Exceptions**.
 
@@ -106,14 +105,14 @@ Images with no associated CVEs are not included in the exported data (regardless
 
 ### Running Images tab
 
-This tab shows CVEs associated with running pods in your cluster so you can assess pod vulnerability and remediate.For example, you can see image exposure by viewing the  **Clusters** and **Running Instances** columns that show the number of running instances in clusters that are connected to {{prodname}}.
+This tab shows CVEs associated with running pods in your cluster so you can assess pod vulnerability and remediate. For example, you can see image exposure by viewing the  **Clusters** and **Running Instances** columns that show the number of running instances in clusters that are connected to {{prodname}}.
 
 ### Troubleshooting 
 
 #### No results in the Running Images tab
 
-- The Image Assurance may not be enabled and running
-- If you integrated the Image Assurance scanner into your build pipeline, and you are not using the default you may containerd socket path (`/run/containerd/containerd.sock`), image information won't be available. To update the CRI socket path for a cluster, run the following command:
+- The Image Assurance feature may not be enabled 
+- If you have modified the default containerd socket path (`/run/containerd/containerd.sock`), runtime information will not be available. To update the CRI socket path to collect pod metadata for the cluster, run the following command:
 
    ```bash
    kubectl patch imageassurance default --type='merge' -p '{"spec":{"criSocketPath":"<path-to-cri-socket>"}}'
