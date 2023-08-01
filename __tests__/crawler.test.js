@@ -126,6 +126,8 @@ test("Crawl the docs and execute tests", async () => {
     'https://downloads.tigera.io/ee/archives/release-master-master.tgz', //==> This started after redesigning the archive procedure.
     'http://nginx-svc.curl-ns.svc.cluster.local:80',
     'http://nginx-svc.service-ns.svc.cluster.local:80',
+    'https://calicousers.slack.com/',
+    'https://calicousers.slack.com/archives/C017220EXU1',
   ];
 
   const lc = linkChecker();
