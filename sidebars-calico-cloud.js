@@ -322,8 +322,8 @@ module.exports = {
           label: 'Scan images for vulnerabilities',
           link: {type: 'doc', id: 'image-assurance/scanners/index'},
           items: [
-            'image-assurance/scanners/cli-based-scanner',
-            'image-assurance/scanners/cluster-scanner'
+            'image-assurance/scanners/cluster-scanner',
+            'image-assurance/scanners/pipeline-scanner'
           ],
         },
         'image-assurance/understanding-scan-results',

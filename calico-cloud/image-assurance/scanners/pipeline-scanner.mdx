@@ -1,73 +1,79 @@
 ---
-description: Scan images using CLI scanner.
+description: Scan images in your build pipeline using Image Assurance.
 ---
 
-# Scan images using the CLI scanner
+# Integrate Image Assurance scanner in your build pipeline
 
 ## Big picture
 
-Scan images manually or via CI/CD pipeline for vulnerabilities using {{prodname}} Image Assurance CLI scanner.
+Integrate the Image Assurance scanner into your build pipeline and private registries to ensure builds are checked by Image Assurance before deployment. You can also use the scanner offline and on-demand for ad hoc scanning and emergency patching. For a real-world use case, see [Hands-on guide: How to scan and block container images to mitigate SBOM attacks](https://www.tigera.io/blog/hands-on-guide-how-to-scan-and-block-container-images-to-mitigate-sbom-attacks/).
+
+This article describes how to install the Image Assurance binary. To integrate the containerized version of Image Assurance scanner into your CI/CD platform, go to: [Image Assurance containerized scanner](https://quay.io/repository/tigera/image-assurance-scanner-cli) and pull the latest image. For example:
+
+```bash
+   docker pull quay.io/tigera/image-assurance-scanner-cli:v1.8.4
+```
 
 ## Before you begin
 
 **Image requirements**
 
-To be included in scan results, images must:
+Images must be available locally through the container runtime environment where the Image Assurance scanner is running
 
-- Be available locally through the container runtime environment where the CLI scanner is running
-- Have a RepoDigest ID
-
-  To verify RepoDigestIDs, run this command:
-
-  `docker images --digests`
-
-**CLI scanner requirements**
+**Scanner requirements**
 
 - Must have internet access to download and update the vulnerability database
-- To see image scan results in Manager UI, the CLI scanner must communicate with an external API endpoint outside your environment
+- To see image scan results in Manager UI, the scanner must communicate with an external API endpoint outside your environment
 
 ## How to
 
-- [Start the CLI scanner](#start-the-cli-scanner)
-- [Scan images using CLI](#scan-images-using-cli)
-- [Scan images using a config file](#scan-images-using-a-config-file)
+- [Get latest version of Image Assurance](#get-latest-version-of-image-assurance)
+- [Start the scanner](#start-the-scanner)
+- [Scan images](#scan-images)
+- [Scan images using a configuration file](#scan-images-using-a-configuration-file)
+- [Get scanner updates](#get-scanner-updates)
 
-### Start the CLI scanner
+### Get latest version of Image Assurance
 
-1. Download the latest version of the CLI scanner.
+1. On the **Managed Clusters** page, select the cluster from the list, and click **Reinstall**.
+1. Copy the updated installation script command and run it against your cluster.
 
-   **Linux**
+### Start the scanner
 
-   ```shell
-   curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-linux-amd64
+1. Download the latest version of the scanner.
+
+**Linux**
+
+```shell
+curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-linux-amd64
    ```
 
-   **MacOS**
+**MacOS**
 
-   ```shell
-   curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-darwin-amd64
+```shell
+curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-darwin-amd64
    ```
 
 2. Set the executable flag on the binary.
 
-   ```shell
-   chmod +x ./tigera-scanner
+```shell
+chmod +x ./tigera-scanner
    ```
 
-   :::note
+:::note
 
-   You must download and set the executable flag each time you get a new version of the CLI.
+You must download and set the executable flag each time you get a new version of the scanner.
 
-   :::
+:::
 
-3. Verify the CLI scanner works correctly by running the version command.
+3. Verify that the scanner works correctly by running the version command.
 
-   ```shell
-   ./tigera-scanner version
-   {{imageassuranceversion}}
+```shell
+./tigera-scanner version
+{{imageassuranceversion}}
    ```
 
-### Scan images using CLI
+### Scan images
 
 You can scan images and report results back to {{prodname}}, or scan images locally without reporting results to {{prodname}}.
 
@@ -128,13 +134,13 @@ The input file must have the following JSON structure:
 ./tigera-scanner scan --input_file images.json --output_file results.json
 ```
 
-### Scan images using a config file
+### Scan images using a configuration file
 
-Create a configuration file in `$HOME/.tigera-scanner.yaml` for the CLI to read.
+Create a configuration file in `$HOME/.tigera-scanner.yaml` for the scanner to read.
 
 :::note
 
-Key names must match the full name of arguments passed to the CLI. The configuration precedence order is options > environment variables > file configuration.
+Key names must match the full name of arguments passed to the scanner. The configuration precedence order is options > environment variables > file configuration.
 
 :::
 
@@ -150,9 +156,9 @@ Key names must match the full name of arguments passed to the CLI. The configura
 | --input_file            | -i        | CC_INPUT_FILE            | Path to the JSON file containing image URLs.                                                                                           |
 | --output_file           | -o        | CC_OUTPUT_FILE           | File path that will contain scan results in a JSON format.                                                                                        |
 
-### Update the CLI scanner
+### Get scanner updates
 
-To get the latest updates, you'll need to update the CLI scanner binary. To see the current version you are running, run this command:
+To get the latest updates, you must update the scanner binary. To see the current version you are running, run this command. For example:
 
 ```shell
 ./tigera-scanner version
@@ -161,4 +167,8 @@ To get the latest updates, you'll need to update the CLI scanner binary. To see 
 
 To see the latest version, see [Release notes](../../release-notes/index.mdx).
 
-To download the latest version, see [Start the CLI scanner](#start-the-cli-scanner).
+To download the latest version, see [Start the scanner](#start-the-scanner).
+
+## Next step
+
+[Set up alerts](../set-up-alerts)
