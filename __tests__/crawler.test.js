@@ -128,6 +128,7 @@ test("Crawl the docs and execute tests", async () => {
     'http://nginx-svc.service-ns.svc.cluster.local:80',
     'https://calicousers.slack.com/',
     'https://calicousers.slack.com/archives/C017220EXU1',
+    'https://tigera-manager.mycompany.com',
   ];
 
   const lc = linkChecker();
