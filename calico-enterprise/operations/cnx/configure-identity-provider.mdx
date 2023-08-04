@@ -31,6 +31,7 @@ When configuring your cluster, you may be asked for the following inputs:
 - **OIDC authentication**: User identity is managed outside of the cluster by an OIDC authorization server.
 - **Google OIDC authentication**: User identity is managed by Google OIDC. Choose this option if you want to use GSuite groups.
 - **OpenShift authentication**: User identity is provided by the OpenShift OAuth server.
+- **LDAP authentication**: User identify is provided using the LDAP server.
 
 **Required**
 
@@ -186,6 +187,8 @@ When configuring your cluster, you may be asked for the following inputs:
 </TabItem>
 <TabItem label="LDAP" value="LDAP-3">
 
+  For detailed steps, see the Support KB article [How to Configure LDAP Authentication with Active Directory](https://tigeraio.my.site.com/help/s/article/How-to-configure-LDAP-Authentication-with-Active-Directory).
+
 1. Apply the Authentication CR to your cluster to let the operator configure your login.
 
    ```yaml noValidation
@@ -197,11 +200,11 @@ When configuring your cluster, you may be asked for the following inputs:
       # This indicates where the Manager UI can be accessed from the browser. Include the port only if the the manager UI is not running on port 443.
      managerDomain: https://<manager-host>:<port>
      ldap:
-        # The host and port of the LDAP server. Example: ad.example.com:636.
+       # The host and port of the LDAP server. Example: ad.example.com:636.
        host: <ldap-host>:<ldap-port>
-        # (optional) StartTLS whether to enable the startTLS feature for establishing TLS on an existing LDAP session.
-        # If true, the ldap protocol is used and then issues a StartTLS command, otherwise, connections will use
-        # the ldaps: protocol.
+       # (optional) StartTLS whether to enable the startTLS feature for establishing TLS on an existing LDAP session.
+       # If true, the ldap protocol is used and then issues a StartTLS command, otherwise, connections will use
+       # the ldaps: protocol.
        startTLS: true
 
        # User entry search configuration.
@@ -209,11 +212,11 @@ When configuring your cluster, you may be asked for the following inputs:
           # To start the user search from. Example: "cn=users,dc=example,dc=com".
          baseDN: <base-dn>
 
-         # Optional filter to apply when searching the directory. Example: "(objectClass=posixAccount)"
+        # Optional filter to apply when searching the directory. Example: "(objectClass=posixAccount)"
          filter: <filter>
 
           # A mapping of attributes to the username. This value can be used for applying RBAC to a user.
-          # Default: uid
+          Default: uid
          nameAttribute: <name-attribute>
 
         # (Optional) Group search configuration. This value can be used to apply RBAC to a user group.
@@ -222,7 +225,7 @@ When configuring your cluster, you may be asked for the following inputs:
          # BaseDN to start the search from. Example: "cn=groups,dc=example,dc=com".
          baseDN: <base-dn>
 
-         # Optional filter to apply when searching the directory. Example: "(objectClass=posixGroup)"
+        # Optional filter to apply when searching the directory. Example: "(objectClass=posixGroup)"
          filter: <filter>
 
          # A mapping of attributes to the group name. This value can be used for applying RBAC to a user group. Example: "cn".
@@ -248,7 +251,33 @@ When configuring your cluster, you may be asked for the following inputs:
      bindPW: <your-base64-bind-password>
      rootCA: <your-base64-ca-cert-pem>
    ```
-###
+  ### Troubleshooting LDAP
+
+  **Problem**: Error: (502 bad gateway nginx) when logging in to Manager UI
+
+  **Solution**: nginx ingress cannot handle the length of the token when a groupSearch matches too many groups.
+  To resolve this, apply a filter as shown in the following example.
+
+  ```yaml
+  apiVersion: operator.tigera.io/v1
+  kind: Authentication
+    name: tigera-secure
+  spec:
+    ldap:
+      groupSearch:
+        baseDN: OU=GroupID,OU=Groups,DC=mycompany,DC=com
+        filter: (&(objectClass=group)(|(cn=example-dn1)(cn=example-dn2)))
+        nameAttribute: cn
+        userMatchers:
+        - groupAttribute: member
+          userAttribute: distinguishedName
+  host: ldap.mycompany.com:636
+  startTLS: false
+  userSearch:
+    baseDN: OU=Accounts,DC=mycompany.com,DC=com
+    nameAttribute: userPrimaryName
+  managerDomain: https://tigera-manager.mycompany.com
+  ```
 
 </TabItem>
 
