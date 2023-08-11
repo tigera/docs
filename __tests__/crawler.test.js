@@ -129,6 +129,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://calicousers.slack.com/',
     'https://calicousers.slack.com/archives/C017220EXU1',
     'https://tigera-manager.mycompany.com',
+    'https://kb.isc.org/article/AA-01141/31/How-to-workaround-IPv6-prefix-length-issues-with-ISC-DHCP-clients.html',
   ];
 
   const lc = linkChecker();
