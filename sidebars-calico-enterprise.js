@@ -219,7 +219,7 @@ module.exports = {
           link: {type: 'doc', id: 'network-policy/recommendations/index'},
           items: [
             'network-policy/recommendations/policy-recommendations',
-            'network-policy/recommendations/denied-traffic-flows',
+            'network-policy/recommendations/learn-about-policy-recommendations',
           ],  
         },
         'network-policy/policy-best-practices',
@@ -285,14 +285,6 @@ module.exports = {
           label: 'Policy for firewalls',
           link: {type: 'doc', id: 'network-policy/policy-firewalls/index'},
           items: [
-            {
-              type: 'category',
-              label: 'Panorama firewall integrations',
-              link: {type: 'doc', id: 'network-policy/policy-firewalls/panorama-integration/index'},
-              items: [
-                'network-policy/policy-firewalls/panorama-integration/tigera-panorama-policy-integration',
-              ],
-            },
             {
               type: 'category',
               label: 'Fortinet firewall integrations',
@@ -439,6 +431,7 @@ module.exports = {
       label: 'Threat defense',
       link: {type: 'doc', id: 'threat/index'},
       items: [
+        'threat/security-event-management',
         {
           type: 'category',
           label: 'Anomaly detection',
@@ -623,6 +616,7 @@ module.exports = {
       items: [
         'reference/api',
         'reference/installation/api',
+        'reference/installation/helm_customization',
         'reference/anomaly-detection',
         {
           type: 'category',

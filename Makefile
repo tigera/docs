@@ -8,7 +8,7 @@ OPERATOR_REPO?=tigera/operator
 PRODUCT?=calico
 
 IA_OPERATOR_REPO?=tigera/image-assurance
-IA_OPERATOR_VERSION?=v1.5.7-0.dev.0.20230410154742-6850d977e93b
+IA_OPERATOR_VERSION?=v1.7.3
 
 NODE_VER=20
 
@@ -44,6 +44,9 @@ serve: build
 
 .PHONY: full
 full: clean build
+
+.PHONY: netlify
+netlify: build run-update-cloud-image-list test
 
 .PHONY: all
 all: full run-update-cloud-image-list test
