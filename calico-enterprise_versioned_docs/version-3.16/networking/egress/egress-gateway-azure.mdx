@@ -129,6 +129,7 @@ Azure Route Server deployment is per VNet, as such each VNet with egress gateway
 - [Configure route reflector](#configure-route-reflector)
 - [Enable egress gateway support](#enable-egress-gateway-support)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
+- [Configure iptables backend for egress gateways](#configure-iptables-backend-for-egress-gateways)
 - [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
 - [(Optional) Enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
@@ -244,13 +245,13 @@ metadata:
   name: export-egress-ips
 spec:
   exportV4:
-    - action: Accept
-      matchOperator: In
+    - action: Reject
+      matchOperator: NotIn
       cidr: 10.10.10.0/30
 EOF
 ```
 
-Even with BGP filter, {{prodname}} still advertise pod IP blocks. To prevent {{prodname}} advertising pod IP blocks, it is possible to set
+Even with BGP filter, {{prodname}} still advertises pod IP blocks. To prevent {{prodname}} from advertising pod IP blocks, it is possible to set
 `disableBGPExport` to `true` in the default IP pools.
 
 ### Configure route reflectors
@@ -483,6 +484,14 @@ no policy is required to allow it. {{prodname}} only sends probes to egress gate
 "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
 :::
 
+### Configure iptables backend for egress gateways
+
+As of v3.16.3, the operator automatically configures egress gateways to use the same iptables backend as calico-node.
+This is controlled by the `iptablesBackend` field in the FelixConfiguration.  If not specified or set to `auto`,
+the egress gateway will attempt to autodetect the correct value preferring nft if available.
+
+Prior to v3.16.3, it was not possible to set the iptables backend; the effective value was fixed at `legacy`.
+
 ### Configure a Namespace or Pod to use egress gateways
 
 In a {{prodname}} deployment, the Kubernetes Namespace and Pod resources honor annotations that
@@ -669,7 +678,7 @@ In eBPF mode, the probe traffic can be blocked by policy, so you must ensure tha
 
 :::
 
-## Above and beyond
+## Additional resources
 
 Please see also:
 

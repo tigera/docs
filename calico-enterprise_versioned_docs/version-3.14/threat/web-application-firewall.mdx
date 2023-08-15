@@ -43,15 +43,24 @@ With {{prodname}} WAF, you gain visibility into internal east/west traffic at th
 ## Before you begin
 
 **Not supported**
-
+- GKE
+- RKE
+- RKE2
 - Windows
 - eBPF dataplane
-- RKE clusters
 
 **Limitations**
 
-- WAF is not supported for host-networked client pods
-- When selecting and deselecting traffic for WAF, active connections may be disrupted
+WAF cannot be used with:
+  - Host-networked client pods
+  - TLS traffic
+  - [LoadBalancer services](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
+  - Egress gateways
+  - WireGuard on AKS or EKS (unless you apply a specific kernel variable). Contact Support for help.
+
+:::note
+When selecting and deselecting traffic for WAF, active connections may be disrupted.
+:::
 
 **Required**
 
@@ -75,7 +84,7 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 
 #### Step 1: Configure ApplicationLayer CRD
 
-Create or update the [ApplicationLayer](https://docs.tigera.io/reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the webApplicationFirewall section of the file. Ensure value of the field is set to Enabled.
+Create or update the [ApplicationLayer](../reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the webApplicationFirewall section of the file. Ensure value of the field is set to Enabled.
 
 Example:
 

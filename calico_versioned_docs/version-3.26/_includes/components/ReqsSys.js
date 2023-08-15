@@ -41,7 +41,7 @@ function NodeRequirementsOSS(props) {
                 <li>CentOS 7</li>
                 <li>Flatcar Container Linux</li>
                 <li>Fedora CoreOS</li>
-                <li>Ubuntu 16.04</li>
+                <li>Ubuntu 18.04</li>
                 <li>Debian 8</li>
               </>
             )}
