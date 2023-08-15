@@ -2,6 +2,8 @@
 
 export default {
   'html, body': {
+    bg: 'white',
+    color: 'tigeraBlack',
     fontFamily: '"Poppins", "Helvetica Neue", "Helvetica", "Arial", sans-serif',
   },
   img: {

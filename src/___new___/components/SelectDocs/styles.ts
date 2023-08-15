@@ -53,7 +53,7 @@ export const iconStyle = {
 };
 
 export const rectangleStyle = {
-  minW: ['290px', '371px'],
+  width: ['100%', '371px'],
   border: '1px',
   borderColor: 'tigeraCloudGrey',
   borderRadius: 'lg',

@@ -51,9 +51,8 @@ EOF`}
         </CodeBlock>
         <li>
           <p>
-              Add any other customizations you require to <code>values.yaml</code> by running the following command.
-              For help, see <a href='../../../reference/installation/helm_customization'>Helm installation reference</a>,
-              or <a href='https://helm.sh/docs/'>helm docs</a>.
+            Add any other customizations you require to <code>values.yaml</code>. You might like to refer to the{' '}
+            <a href='https://helm.sh/docs/'>helm docs</a> or run:
           </p>
         </li>
         {renderCond2()}

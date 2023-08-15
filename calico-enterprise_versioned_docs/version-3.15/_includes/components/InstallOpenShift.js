@@ -238,11 +238,8 @@ spec:
       <p>You can now monitor progress with the following command:</p>
       <CodeBlock>watch oc get tigerastatus</CodeBlock>
       <p>
-        When it shows all components with status <code>Available</code>, proceed to the next step.
+        When it shows all components with status <code>Available</code>, proceed to the next section.
       </p>
-
-      <p>(Optional) Apply the full CRDs including descriptions.</p>
-      <CodeBlock language='bash'>oc apply --server-side --force-conflicts -f {filesUrl}/manifests/operator-crds.yaml</CodeBlock>
 
       <When condition={props.clusterType === 'management'}>
         <>

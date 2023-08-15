@@ -35,31 +35,22 @@ This how-to-guide uses the following {{prodname}} features:
 ### About {{prodname}} WAF
 
 WAF is deployed in your cluster as an Envoy DaemonSet. {{prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry-standard 
-[ModSecurity module](https://owasp.org/www-project-modsecurity-core-rule-set/). To view the rule set that is bundled with WAF, see [rule-set](https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf).
+[ModSecurity module](https://owasp.org/www-project-modsecurity-core-rule-set/). To view the rule set that is bundled with WAF, see https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf.
 
 You simply enable WAF in Manager UI, and determine the services that you want to enable for WAF protection. You can view WAF events as HTTP logs in Service Graph and Kibana. And you can set up global alerts to get notifications on the Alerts page. 
 
 ## Before you begin
 
 **Not supported**
-- GKE
-- RKE
-- RKE2
+
 - Windows
 - eBPF dataplane
+- RKE and RKE2 clusters
 
 **Limitations**
 
-WAF cannot be used with:
-  - Host-networked client pods
-  - TLS traffic
-  - [LoadBalancer services](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
-  - Egress gateways
-  - WireGuard on AKS or EKS (unless you apply a specific kernel variable). Contact Support for help.
-
-:::note
-When selecting and deselecting traffic for WAF, active connections may be disrupted.
-:::
+- WAF is not supported for host-networked client pods
+- When selecting and deselecting traffic for WAF, active connections may be disrupted
 
 :::caution
 
@@ -103,7 +94,7 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 2. Select the services you want WAF to inspect, and then click **Confirm Selections**.
     
    <img
-    src='/img/calico-enterprise/waf-select-services-3.17.png'
+    src='/img/calico-enterprise/waf-select-services.png'
     alt='WAF services'
     width='600'
   />
@@ -119,7 +110,7 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 
 To view WAF events in Service Graph,
 
-1. Select a service.
+1. Selec a service.
 2. Click the HTTP tab.
 
 To simulate an attack to view the default warning in Service Graph, follow these steps:
@@ -145,7 +136,7 @@ In Service Graph, go to the service and click the HTTP tab. You will see the fol
 
 To view WAF events In Kibana:
 
-1. Create the `tigera_secure_ee_waf*` index pattern. For help with index patterns, see [Kibana index pattern](../visibility/kibana.mdx).
+1. Create the `tigera_secure_ee_waf*` index pattern. For help with index patterns, see [Kibana index pattern](https://docs.tigera.io/calico-cloud/visibility/kibana).
 2. Select the `tigera_secure_ee_waf*` index pattern. 
 
 You should see the relevant WAF assessment from your request.
@@ -175,7 +166,13 @@ spec:
 ```
 Apply the YAML to your cluster using: `kubectl apply -f test-demo-alert.yaml`
 
-If a SQL Injection attack is detected for rule ID 942100, you will see a security event in the dashboard here: **Threat defense**, **Security Events**.
+Now if a SQL Injection attack is detected for rule ID 942100, you will see the global alert in Manager UI, Activity, Alerts.
+
+<img
+  src='/img/calico-enterprise/waf-alert.png'
+  alt='WAF alert'
+  width='600'
+/>
 
 ### Manage WAF
 
@@ -287,7 +284,7 @@ kubectl replace -f ../my-ruleset.yaml
 
 ### Enable WAF using CLIs
 
-1. Create or update the [ApplicationLayer](../reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the `webApplicationFirewall` field, and ensure it is set to `Enabled`.
+1. Create or update the [ApplicationLayer](https://docs.tigera.io/reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the `webApplicationFirewall` field, and ensure it is set to `Enabled`.
 
 ```yaml
 apiVersion: operator.tigera.io/v1
@@ -319,7 +316,7 @@ kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-
 
 #### Disable WAF feature
 
-To disable WAF, update the [ApplicationLayer](../reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the `webApplicationFirewall` field, and ensure it is set to `Disabled`.
+To disable WAF, update the [ApplicationLayer](https://docs.tigera.io/reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the `webApplicationFirewall` field, and ensure it is set to `Disabled`.
 
 Example:
 

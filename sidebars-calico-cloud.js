@@ -45,15 +45,6 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Users',
-      link: {type: 'doc', id:'users/index'},
-      items: [
-        'users/user-management',
-        'users/create-and-assign-custom-roles',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Tutorials',
       link: {type: 'doc', id:'tutorials/index'},
       items: [
@@ -123,7 +114,7 @@ module.exports = {
           link: {type: 'doc', id: 'network-policy/recommendations/index'},
           items: [
             'network-policy/recommendations/policy-recommendations',
-            'network-policy/recommendations/learn-about-policy-recommendations',
+            'network-policy/recommendations/denied-traffic-flows',
           ],
         },
         'network-policy/policy-best-practices',
@@ -189,6 +180,14 @@ module.exports = {
           label: 'Policy for firewalls',
           link: {type: 'doc', id: 'network-policy/policy-firewalls/index'},
           items: [
+            {
+              type: 'category',
+              label: 'Panorama firewall integrations',
+              link: {type: 'doc', id: 'network-policy/policy-firewalls/panorama-integration/index'},
+              items: [
+                'network-policy/policy-firewalls/panorama-integration/tigera-panorama-policy-integration',
+              ],
+            },
             {
               "type": "category",
               "label": "Fortinet firewall integrations",
@@ -315,17 +314,7 @@ module.exports = {
       label: 'Image Assurance',
       link: {type: 'doc', id: 'image-assurance/index'},
       items: [
-        'image-assurance/overview',
-        {
-          type: 'category',
-          label: 'Scan images for vulnerabilities',
-          link: {type: 'doc', id: 'image-assurance/scanners/index'},
-          items: [
-            'image-assurance/scanners/cli-based-scanner',
-            'image-assurance/scanners/cluster-scanner'
-          ],
-        },
-        'image-assurance/understanding-scan-results',
+        'image-assurance/scan-image-registries',
         'image-assurance/set-up-alerts',
         'image-assurance/install-the-admission-controller'
       ],
@@ -368,7 +357,6 @@ module.exports = {
             'networking/configuring/custom-bgp-config',
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/pod-mac-address',
-            'networking/configuring/node-local-dns-cache',
           ],
         },
         {
@@ -467,6 +455,7 @@ module.exports = {
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
+        'operations/decommissioning-a-node',
         'operations/component-logs',
       ],
     },

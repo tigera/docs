@@ -10,6 +10,7 @@ module.exports = {
         id: 'about/index',
       },
       items: [
+        'about/about-calico',
         'about/product-comparison',
         'about/training-resources',
       {

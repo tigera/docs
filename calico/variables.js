@@ -9,7 +9,7 @@ const variables = {
   filesUrl: 'https://projectcalico.docs.tigera.io/master',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download',
-  windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
+  tmpScriptsURL: 'https://docs.tigera.io/calico/next',
   prodnameWindows: 'Calico for Windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',

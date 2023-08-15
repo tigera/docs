@@ -15,7 +15,7 @@ export default {
     },
     {
       title: 'Calico Enterprise',
-      link: '/calico-enterprise/latest/about/',
+      link: '/calico-enterprise/latest/about-calico-enterprise',
 
       description: [
         'A paid, self-managed security and observability solution for containers and Kubernetes.',
