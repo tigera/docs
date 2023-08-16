@@ -42,15 +42,22 @@ You simply enable WAF in Manager UI, and determine the services that you want to
 ## Before you begin
 
 **Not supported**
-
+- GKE
 - Windows
 - eBPF dataplane
-- RKE and RKE2 clusters
 
 **Limitations**
 
-- WAF is not supported for host-networked client pods
-- When selecting and deselecting traffic for WAF, active connections may be disrupted
+WAF cannot be used with:
+  - Host-networked client pods
+  - TLS traffic
+  - [LoadBalancer services](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
+  - Egress gateways
+  - WireGuard on AKS or EKS (unless you apply a specific kernel variable). Contact Support for help.
+
+:::note
+When selecting and deselecting traffic for WAF, active connections may be disrupted.
+:::
 
 :::caution
 
@@ -69,7 +76,9 @@ Enabling WAF for certain system services may result in an undesired cluster stat
 
 :::
 
-**Required**
+### Prerequisites
+
+#### Enable the Policy Sync API in Felix
 
 If you intend to enable WAF using the CLI rather than in Manager UI, or you have not yet
 [configured L7 logs](../visibility/elastic/l7/Configure), you must enable the Policy Sync API in Felix. To do this cluster-wide,
@@ -79,22 +88,80 @@ modify the `default` FelixConfiguration to set the field `policySyncPathPrefix` 
 kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
 ```
 
+#### (Optional) Deploy a sample application
+If you don’t have an application to test WAF with or don’t want to use it right away against your own application,
+we recommend that you install the [GoogleCloudPlatform/microservices-demo app](https://github.com/GoogleCloudPlatform/microservices-demo):
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/microservices-demo/release/v0.7.0/release/kubernetes-manifests.yaml
+```
 ## How to
 
-- [Enable WAF](#enable-waf)
+- [Enable WAF on your cluster](#enable-waf-on-your-cluster)
+- [Apply WAF to your services](#apply-waf)
 - [View WAF events](#view-waf-events)
 - [Create global alerts](#create-global-alerts)
-- [Manage WAF](#manage-waf)
-   - [Change rules](#change-waf-rules)
-   - [Disable WAF for a service](#disable-waf-for-a-service)
 
-### Enable WAF
+### Enable WAF on your cluster
 
-1. On the Manager UI, click **Threat Defense**, **Web Application Firewall**, **Configure Web Application Firewall**.
+Enabling WAF is a one-time activity. You can enable it either [through UI](#enable-waf-using-the-ui) or [CLIs](#enable-waf-using-kubectl-clis).
+
+#### Enable WAF using the UI
+
+On the Manager UI, click **Threat Defense**, **Web Application Firewall**, **Configure Web Application Firewall**.
+
+ <img
+    src='/img/calico-enterprise/waf-config-first-step.png'
+    alt='WAF services'
+    width='600'
+  />
+
+:::note
+
+If WAF is already enabled in your cluster, you do not see this page.
+:::
+
+#### Enable WAF using kubectl CLIs
+
+In the ApplicationLayer custom resource, named `tigera-secure`, set the `webApplicationFirewall` field to `Enabled`.
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: ApplicationLayer
+metadata:
+  name: tigera-secure
+spec:
+  webApplicationFirewall: Enabled
+EOF
+```
+
+## Apply WAF
+
+Now that your cluster is enabled for WAF, you can apply WAF to your services and make sure that your
+Web apps are protected from application layer attacks. 
+
+If you have deployed the sample application, you can apply WAF on a service associated with your app, as follows:
+
+```bash
+kubectl annotate svc frontend -n default --overwrite projectcalico.org/l7-logging=true
+```
+Alternatively, you can [use the Manager UI](#apply-waf-to-your-services) to apply WAF to the `frontend` service.
+
+In this example, we applied WAF to the `frontend` service. This means that every traffic that goes through the `frontend` service is inspected.
+However, the traffic is not blocked because the WAF rule is set to `DetectionOnly` by default.  
+When you are convinced that the traffic for the service to be denied or dropped, you can [set it to block](#set-waf-rule-to-block-traffic).
+
+### Apply WAF to your services
+
+In the previous example, we applied WAF to the `frontend` service of the sample application. Here, we are
+applying WAF to a service of your own application.
+
+1. On the Manager UI, click **Threat Defense**, **Web Application Firewall**.
 2. Select the services you want WAF to inspect, and then click **Confirm Selections**.
     
    <img
-    src='/img/calico-enterprise/waf-select-services-CE3.17-CC-3.16.png'
+    src='/img/calico-enterprise/waf-select-services-3.17.png'
     alt='WAF services'
     width='600'
   />
@@ -103,6 +170,68 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 
 4. To make further changes to a service, click **Actions**, and then **Enable** or **Disable**.
 
+You have now applied WAF rule sets to your own services, and note that the traffic that goes through the selected services will be alerted but not blocked by default.
+
+### Set WAF rule to block traffic
+You can change WAF rule so that the traffic is blocked.
+
+1. Edit the configmap: 
+   ```bash
+   kubectl edit cm -n tigera-operator modsecurity-ruleset
+   ```
+2. Look for `SecRuleEngine DetectionOnly` and change it to `SecRuleEngine On`.
+
+| Action | Description                                                                                                                                                             | Disruptive? |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| DetectionOnly | Traffic is not denied nor dropped. {{prodname}}  will log events. | No
+| On     | Denies HTTP traffic. {{prodname}}  will log the event in Elasticsearch. | Yes          |
+| Off    | Be cautious about using this option. Traffic is not denied nor alerted. |No                                                                      | Yes         |
+                                         
+
+### Manage your rulesets
+
+The default rulesets work fine for most deployments. However, you can customize them to suit your requirements.
+
+By default, {{prodname}} ships with CoreRuleset v3.x with the following setup files pre-loaded:
+
+- [modsecdefault.conf](https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/modsec-core-ruleset/modsecdefault.conf)
+- [crs-setup.conf](https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/modsec-core-ruleset/crs-setup.conf)
+- [Ruleset files](https://github.com/tigera/operator/tree/master/pkg/render/applicationlayer/modsec-core-ruleset)
+
+To start creating your rules, it is recommended that you download the files (all three) and create your modifications from there, as follows:
+
+1. Clone our operator code which contains the ConfigMap source.
+
+  ```bash
+  git clone -depth=1 https://github.com/tigera/operator 
+  ```
+2. Change directory into the actual modsec ruleset files we use.
+
+  ```bash
+  cd pkg/render/applicationlayer/modsec-core-ruleset
+  ```
+3. Create a ConfigMap.
+
+  ```bash
+  kubectl create cm --dry-run=client --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > $HOME/my-tigera-waf-ruleset.yaml
+  ```
+4. Apply the ConfigMap to your cluster.
+
+  ```bash
+  kubectl replace -f $HOME/my-tigera-waf-ruleset.yaml
+  ```
+
+After you do these steps, the `modsecurity-ruleset` ConfigMap will be replaced in the `tigera-operator` namespace, 
+which then triggers a rolling restart of your L7 pods. This means that the HTTP connections going through L7 pods at the time of pod termination will be (RST) reset. 
+
+:::note
+
+It is important to adhere to [CoreRuleset documentation](https://coreruleset.org/docs) on how to edit the behaviour of
+ your WAF. A good place to begin at is the [CoreRuleset Quick Start](https://coreruleset.org/docs/deployment/quick_start/).
+
+In many scenarios, the default example CRS configuration will be a good enough starting point. It is recommended to review the example configuration file before 
+you deploy it to make sure it’s right for your environment.
+:::
 
 ### View WAF events
 
@@ -110,7 +239,7 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 
 To view WAF events in Service Graph,
 
-1. Selec a service.
+1. Select a service.
 2. Click the HTTP tab.
 
 To simulate an attack to view the default warning in Service Graph, follow these steps:
@@ -123,20 +252,25 @@ To simulate an attack to view the default warning in Service Graph, follow these
 ##### Example: SQL Injection attack
 
 ```
-  curl http://<host>//test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
+  curl http://my.loadbalancer.address/cart?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
 ```
 
 In Service Graph, go to the service and click the HTTP tab. You will see the following warning:
 
 ```
   level=warning msg="WAF Process Http Request [2f435aca-4a3e-4f96-a7b2-a60c9745bd7b] URL '/test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user' OWASP Warning'[2] Host:'10.224.0.38' File:'/etc/modsecurity-ruleset/REQUEST-942-APPLICATION-ATTACK-SQLI.conf' Line:'45' ID:'942100' Data:'' Severity:'0' Version:'OWASP_CRS/3.3.2' Message:'Warning. detected SQLi using libinjection.''"
-```
+```  
+
+#### Threat defense
+
+To view WAF events in a centralized security events dashboard, go to: **Threat defense**, **Security Events**. For help, see [Security Event Management](./security-event-management).
 
 #### Kibana
 
 To view WAF events In Kibana:
 
 1. Create the `tigera_secure_ee_waf*` index pattern. For help with index patterns, see [Kibana index pattern](../visibility/kibana.mdx).
+
 2. Select the `tigera_secure_ee_waf*` index pattern. 
 
 You should see the relevant WAF assessment from your request.
@@ -158,163 +292,25 @@ spec:
   description: 'Test WAF Global Alert'
   severity: 1
   dataSet: waf
-  period: 1m
-  lookback: 1h
-  query: '"rule_info" IN {"*942100*"}'
+  period: 5m
+  lookback: 5m
+  query: '"rules.id" = "942100"'
   threshold: 0
   condition: gt
 ```
 Apply the YAML to your cluster using: `kubectl apply -f test-demo-alert.yaml`
 
-Now if a SQL Injection attack is detected for rule ID 942100, you will see the global alert in Manager UI, Activity, Alerts.
-
-<img
-  src='/img/calico-enterprise/waf-alert.png'
-  alt='WAF alert'
-  width='600'
-/>
-
-### Manage WAF
-
-#### Change WAF rules
-
-By default, the WAF OWASP Core Rule set is configured to log a warning if there is an attack. However, if you want traffic for the service to also be denied or dropped, 
-you must edit the modsecurity rules. 
-
-#### Deny traffic
-
-For example, if you want to deny traffic with a 403 response, do the following steps: 
-
-1. Modify the modsecurity core rulesets' `SecDefaultAction` to deny rules by commenting and uncommenting these sections in the `crs-setup.conf`, 
-which will change the `SecDefaultAction` from `pass` to `deny`.
-
-Comment
-
-```
- SecDefaultAction "phase:1,log,auditlog,pass"
- SecDefaultAction "phase:2,log,auditlog,pass"
-```
-
-Uncomment
-
-```
- SecDefaultAction "phase:1,log,auditlog,deny,status:403"
- SecDefaultAction "phase:2,log,auditlog,deny,status:403"
-```
-
-2. Run these commands:
-
-```bash
-  kubectl create cm --dry-run=client --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > ../my-ruleset.yaml
-  kubectl replace -f ../my-ruleset.yaml
-```
-
-Note that switching to deny means the request is not processed and a 403 forbidden error is returned when a rule is triggered. 
-All denied traffic means that any HTTP request will return HTTP 403 Response Code from Envoy to the originating service. 
-For example:
-
-```
-root@waf-attacker-1234:/ curl http://host//test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user -v
-*   Trying 10.0.40.16:80...
-* Connected to 10.0.40.16 (10.0.40.16) port 80 (#0)
-> GET /test/artists.php?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user HTTP/1.1
-> Host: 10.0.40.16
-> User-Agent: curl/7.74.0
-> Accept: */*
->
-* Mark bundle as not supporting multiuse
-< HTTP/1.1 403 Forbidden
-< date: Thu, 23 Jun 2022 19:02:10 GMT
-< server: envoy
-< content-length: 0
-```
-
-#### ModSecurity rules and actions
-
-ModSecurity provides the following rule sets and options:
-
-- **DetectionOnly**:
-  Allows all traffic to pass, regardless of action specified. However, potentially malicious traffic warning(s) are returned from ModSecurity and logged accordingly with the OWASP violation details.
-- **On or Off**:
-  Denies all traffic if the SecAction is set to "deny" or "drop". However "block" traffic is not denied or dropped - this is slightly counter-intuitive.
-
-In case of an error, the HTTP request will return HTTP 403 Response Code from Envoy to the originating service.
-
-ModSecurity provides the following actions that you update in SecAction:
-
-| Action | Description                                                                                                                                                             | Disruptive? |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| Block  | Despite the name, this **will not block or drop the request**. ModSecurity will return detection=0 in this case and Calico will **not** log the event in Elasticsearch. | No          |
-| Deny   | Denies HTTP traffic. ModSecurity returns detection=1 and logs the event in Elasticsearch.                                                                     | Yes         |
-| Drop   | Denies HTTP traffic. ModSecurity returns detection=1 and logs the event in Elasticsearch.                                          
-
-
-#### Add or edit the rule set
-
-1. Create a directory, and download the core rules set files that you want to use.
-
-```bash
-mkdir my-ruleset && cd my-ruleset
-curl -O https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf
-```
-2. Download bootstrap files.
-
-  Download the following required bootstrapping configuration files [Reference](https://medium.com/lightbaseio/web-application-firewall-in-go-feat-owasp-modsecurity-core-rule-set-3f97a26e3311) that are used by Tigera operator:
-    - `modsecdefault.conf`
-    - `crs-setup.conf`
-
-:::note
-
-The file names MUST be in all lowercase or they will fail to upload. They are loaded into ModSec before any REQUST-*.conf Core Rules Set files.
-
-:::
-
-```bash
-curl -O https://raw.githubusercontent.com/lsgroup/SmartReverseProxy/master/modsecdefault.conf
-curl https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/crs-setup.conf.example > crs-setup.conf
-```
-
-3. Change your current directory to the my-ruleset folder where your core rules set files live. Create a configMap containing all the files downloaded into your new directory and replace the existing rule set with it:
-
-
-```bash
-kubectl create cm --dry-run=client --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > ../my-ruleset.yaml
-kubectl replace -f ../my-ruleset.yaml
-```
-
-### Enable WAF using CLIs
-
-1. Create or update the [ApplicationLayer](../reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the `webApplicationFirewall` field, and ensure it is set to `Enabled`.
-
-```yaml
-apiVersion: operator.tigera.io/v1
-kind: ApplicationLayer
-metadata:
-  name: tigera-secure
-spec:
-  webApplicationFirewall: Enabled
-```
-2. Annotate the services you want to enable WAF for.
-
-  ```bash
-     kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging=true
-  ```
-
-   To remove annotation for the service.
-
-  ```bash
-     kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging-
-  ``
+If a SQL Injection attack is detected for rule ID 942100, you will see a security event in the dashboard here: **Threat defense**, **Security Events**.
 
 #### Disable WAF for a service
 
 To disable WAF on a service, use the Actions menu on the WAF board, or use the following command:
 
-```
+```bash
 kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging-
 ```
 
-#### Disable WAF feature
+#### Disable WAF feature from your cluster
 
 To disable WAF, update the [ApplicationLayer](../reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the `webApplicationFirewall` field, and ensure it is set to `Disabled`.
 

@@ -142,6 +142,11 @@ const config = {
             position: 'left',
           },
           {
+            label: 'Contact us',
+            to: 'https://www.tigera.io/contact/',
+            position: 'left',
+          },
+          {
             href: 'https://github.com/projectcalico',
             position: 'right',
             className: 'header-icon-link github-icon',
@@ -367,7 +372,7 @@ const config = {
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
         onlyIncludeVersions: ['current','3.17','3.16','3.15','3.14'],
-        lastVersion: '3.16',
+        lastVersion: '3.17',
         versions: {
           current: {
             label: 'Next',
@@ -375,13 +380,13 @@ const config = {
             banner: 'unreleased',
           },
           3.17: {
-            label: '3.17 (early preview)',
-            path: '3.17',
-            banner: 'unreleased',
+            label: '3.17 (latest)',
+            path: 'latest',
+            banner: 'none',
           },
           3.16: {
-            label: '3.16 (latest)',
-            path: 'latest',
+            label: '3.16',
+            path: '3.16',
             banner: 'none',
           },
           3.15: {

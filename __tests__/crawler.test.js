@@ -113,7 +113,6 @@ test("Crawl the docs and execute tests", async () => {
     'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-darwin-amd64', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
     'https://downloads.tigera.io/ee/master/download/binaries/master/calicoctl-windows-amd64.exe', //==>Origin: http://localhost:4242/calico-enterprise/next/operations/clis/calicoctl/install
     'http://www.iana.org/assignments/service-names', //==>Origin: https://downloads.tigera.io/ee/v3.14.4/manifests/tigera-operator.yaml
-    'https://downloads.tigera.io/ee/master/manifests/threatdef/honeypod/psp-honeypod.yaml',
     'http://docs.openstack.org/',
     'http://docs.openstack.org', //This seems to be temporarily down.
     'https://tools.ietf.org/html/rfc5925',
@@ -127,6 +126,12 @@ test("Crawl the docs and execute tests", async () => {
     'https://downloads.tigera.io/ee/archives/release-master-master.tgz', //==> This started after redesigning the archive procedure.
     'http://nginx-svc.curl-ns.svc.cluster.local:80',
     'http://nginx-svc.service-ns.svc.cluster.local:80',
+    'https://calicousers.slack.com/',
+    'https://calicousers.slack.com/archives/C017220EXU1',
+    'https://tigera-manager.mycompany.com',
+    'https://kb.isc.org/article/AA-01141/31/How-to-workaround-IPv6-prefix-length-issues-with-ISC-DHCP-clients.html',
+    'https://www.snort.org/documents',
+    'https://www.snort.org/downloads/#rule-downloads',
   ];
 
   const lc = linkChecker();

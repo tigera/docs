@@ -122,7 +122,7 @@ The path of the traffic through policy is as follows:
 1. Packet leaves the client pod and passes through its egress policy.
 2. The packet is encapsulated by the client pod's host and sent to the egress gateway
 3. The encapsulated packet is sent from the host to the egress gateway pod.
-4. The egress gateway pod de-encapsulates the packet and send the packet out again with its own address.
+4. The egress gateway pod de-encapsulates the packet and sends the packet out again with its own address.
 5. The packet leaves the egress gateway pod through its egress policy.
 
 To ensure correct operation, (as of v3.15) the encapsulated traffic between host and egress gateway is auto-allowed by
@@ -178,10 +178,11 @@ patch release.
 - [Provision an egress IP pool](#provision-an-egress-ip-pool)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
 - [Configure iptables backend for egress gateways](#configure-iptables-backend-for-egress-gateways)
-- [Configuring namespaces and pods to use egress gateways](#configuring-namespaces-and-pods-to-use-egress-gateways)
+- [Configure namespaces and pods to use egress gateways](#configure-namespaces-and-pods-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
 - [Control the use of egress gateways](#control-the-use-of-egress-gateways)
+- [Make local egress gateways the default](#make-local-egress-gateways-the-default)
 - [Upgrade egress gateways](#upgrade-egress-gateways)
 
 ### Enable egress gateway support
@@ -327,7 +328,7 @@ The health port `8080` is used by:
   no policy is required to allow it. {{prodname}} only sends probes to egress gateway pods that have a named
   "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
 
-### Deploying on a RKE2 CIS Hardened Cluster
+### Deploy on a RKE2 CIS-hardened cluster
 
 If you are deploying `egress-gateway` on a RKE2 CIS-hardened cluster, its `PodSecurityPolicies` restrict the `securityContext` and `volumes` required by egress gateway. When deploying using the egress gateway custom resource, the Tigera Operator sets up `PodSecurityPolicy`, `Role`, `RoleBinding` and associated `ServiceAccount`.
 
@@ -336,7 +337,7 @@ If you are deploying `egress-gateway` on a RKE2 CIS-hardened cluster, its `PodSe
 The Tigera Operator configures egress gateways to use the same iptables backend as `calico-node`.
 To modify the iptables backend for egress gateways, you must change the `iptablesBackend` field in the [Felix configuration](../../reference/resources/felixconfig.mdx).
 
-### Configuring namespaces and pods to use egress gateways
+### Configure namespaces and pods to use egress gateways
 
 You can configure namespaces and pods to use an egress gateway by:
 * annotating the namespace or pod
@@ -542,6 +543,39 @@ Connection from <source IP> <source port> received
 ```
 
 with `<source IP>` being one of the IPs of the egress IP pool that you provisioned.
+
+## Make local egress gateways the default
+
+To set the default to use local egress gateways, set the `GatewayPreference` to `PreferNodeLocal` or `None` (the default) in the egress gateway policy. When set to `PreferNodeLocal`, egress gateways local to the client's node will be used if available. If there are no local egress gateways, we will fallback to using the other egress gateways.
+
+The following is an example of an egress gateway policy with GatewayPreference set to use local egress gateways.
+
+```yaml noValidation
+apiVersion: projectcalico.org/v3
+kind: EgressGatewayPolicy
+metadata:
+  name: "egw-policy1"
+spec:
+  rules:
+  - destination:
+      cidr: 10.0.0.0/8
+    description: "Local: no gateway"
+  - destination:
+      cidr: 11.0.0.0/8
+    description: "Gateway to on prem"
+    gateway:
+      namespaceSelector: "projectcalico.org/name == 'default'"
+      selector: "egress-code == 'blue'"
+      maxNextHops: 2
+    gatewayPreference: PreferNodeLocal
+  - description: "Gateway to internet"
+    gateway:
+      namespaceSelector: "projectcalico.org/name == 'default'"
+      selector: "egress-code == 'red'"
+    gatewayPreference: None
+```
+
+For destination `11.0.0.0/8`, Egress Gateways local to the client node will be used if present. If not, all the egress gateways matching the selector will be used.
 
 ## Upgrade egress gateways
 

@@ -6,7 +6,16 @@ description: API for this Calico Cloud resource.
 
 A BGP filter resource (`BGPFilter`) represents a way to control
 routes imported by and exported to BGP peers specified using a
-BGP peer resource (`BGPPeer`)
+BGP peer resource (`BGPPeer`).
+
+The BGPFilter rules are applied sequentially: the `action` for
+the **first** rule that matches an address to its `cidr` +
+`matchOperator` is executed immediately. If an address does not
+match any explicit BGP filter rule, the default action is
+`accept`.
+
+In order for a BGPFilter to be used in a BGP peering, its `name`
+must be added to `filters` of the corresponding BGPPeer resource.
 
 For `kubectl` commands, the following case-sensitive aliases may
 be used to specify the resource type on the CLI: `bgpfilters.crd.projectcalico.org`
@@ -23,17 +32,23 @@ spec:
     - action: Accept
       matchOperator: In
       cidr: 77.0.0.0/16
+    - action: Reject
+      matchOperator: NotIn
+      cidr: 88.0.0.0/16
   importV4:
-    - action: Accept
+    - action: Reject
       matchOperator: NotIn
       cidr: 44.0.0.0/16
   exportV6:
-    - action: Accept
-      matchOperator: Equal
+    - action: Reject
+      matchOperator: NotEqual
       cidr: 9000::0/64
   importV6:
     - action: Accept
-      matchOperator: NotEqual
+      matchOperator: Equal
+      cidr: 5000::0/64
+    - action: Reject
+      matchOperator: NotIn
       cidr: 5000::0/64
 ```
 

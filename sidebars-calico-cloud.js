@@ -190,14 +190,6 @@ module.exports = {
           link: {type: 'doc', id: 'network-policy/policy-firewalls/index'},
           items: [
             {
-              type: 'category',
-              label: 'Panorama firewall integrations',
-              link: {type: 'doc', id: 'network-policy/policy-firewalls/panorama-integration/index'},
-              items: [
-                'network-policy/policy-firewalls/panorama-integration/tigera-panorama-policy-integration',
-              ],
-            },
-            {
               "type": "category",
               "label": "Fortinet firewall integrations",
               "link": {
@@ -376,6 +368,7 @@ module.exports = {
             'networking/configuring/custom-bgp-config',
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/pod-mac-address',
+            'networking/configuring/node-local-dns-cache',
           ],
         },
         {
@@ -474,7 +467,6 @@ module.exports = {
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
-        'operations/decommissioning-a-node',
         'operations/component-logs',
       ],
     },

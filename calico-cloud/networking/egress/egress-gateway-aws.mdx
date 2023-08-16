@@ -223,11 +223,13 @@ an instance (for example when scaling up the cluster).
 - [Enable AWS-backed IP pools](#enable-aws-backed-ip-pools)
 - [Configure IP pools backed by VPC subnets](#configure-ip-pools-backed-by-vpc-subnets)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
-- [Configuring namespaces and pods to use egress gateways](#configuring-namespaces-and-pods-to-use-egress-gateways)
+- [Configure iptables backend for egress gateways](#configure-iptables-backend-for-egress-gateways)
+- [Configure namespaces and pods to use egress gateways](#configure-namespaces-and-pods-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
 - [Control the use of egress gateways](#control-the-use-of-egress-gateways)
 - [Policy enforcement for flows via an egress gateway](#policy-enforcement-for-flows-via-an-egress-gateway)
+- [Make local egress gateways the default](#make-local-egress-gateways-the-default)
 - [Upgrade egress gateways](#upgrade-egress-gateways)
 
 ### Configure IP autodetection
@@ -762,9 +764,8 @@ spec:
 EOF
 ```
 
-
 - `replicas: 2` tells Kubernetes to schedule two egress gateways in the "red" cluster.
-- ipPools tells {{site.prodname}} IPAM to use one of the "red" IP pools: 
+- ipPools tells {{site.prodname}} IPAM to use one of the "red" IP pools:
 
   ```yaml
   ipPools:
@@ -852,7 +853,12 @@ EOF
 
 :::
 
-### Configuring namespaces and pods to use egress gateways
+### Configure iptables backend for egress gateways
+
+The Tigera Operator configures egress gateways to use the same iptables backend as `calico-node`.
+To modify the iptables backend for egress gateways, you must change the `iptablesBackend` field in the [Felix configuration](../../reference/resources/felixconfig.mdx).
+
+### Configure namespaces and pods to use egress gateways
 
 You can configure namespaces and pods to use an egress gateway by:
 * annotating the namespace or pod
@@ -1130,7 +1136,7 @@ The path of the traffic through policy is as follows:
 1. Packet leaves the client pod and passes through its egress policy.
 2. The packet is encapsulated by the client pod's host and sent to the egress gateway
 3. The encapsulated packet is sent from the host to the egress gateway pod.
-4. The egress gateway pod de-encapsulates the packet and send the packet out again with its own address.
+4. The egress gateway pod de-encapsulates the packet and sends the packet out again with its own address.
 5. The packet leaves the egress gateway pod through its egress policy.
 
 To ensure correct operation, (as of v3.15) the encapsulated traffic between host and egress gateway is auto-allowed by
@@ -1170,13 +1176,46 @@ patch release.
 
 :::
 
+## Make local egress gateways the default
+
+To set the default to use local egress gateways, set the `GatewayPreference` to `PreferNodeLocal` or `None` (the default) in the egress gateway policy. When set to `PreferNodeLocal`, egress gateways local to the client's node will be used if available. If there are no local egress gateways, we will fallback to using the other egress gateways.
+
+The following is an example of an egress gateway policy with GatewayPreference set to use local egress gateways.
+
+```yaml noValidation
+apiVersion: projectcalico.org/v3
+kind: EgressGatewayPolicy
+metadata:
+  name: "egw-policy1"
+spec:
+  rules:
+  - destination:
+      cidr: 10.0.0.0/8
+    description: "Local: no gateway"
+  - destination:
+      cidr: 11.0.0.0/8
+    description: "Gateway to on prem"
+    gateway:
+      namespaceSelector: "projectcalico.org/name == 'default'"
+      selector: "egress-code == 'blue'"
+      maxNextHops: 2
+    gatewayPreference: PreferNodeLocal
+  - description: "Gateway to internet"
+    gateway:
+      namespaceSelector: "projectcalico.org/name == 'default'"
+      selector: "egress-code == 'red'"
+    gatewayPreference: None
+```
+
+For destination `11.0.0.0/8`, Egress Gateways local to the client node will be used if present. If not, all the egress gateways matching the selector will be used.
+
 ## Upgrade egress gateways
 
 
 From v3.16, egress gateway deployments are managed by the Tigera Operator.
 
-- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 egress gateway deployment, 
-  create an equivalent EgressGateway resource with the same namespace and the same name as mentioned [above](#deploy-a-group-of-egress-gateways); 
+- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 egress gateway deployment,
+  create an equivalent EgressGateway resource with the same namespace and the same name as mentioned [above](#deploy-a-group-of-egress-gateways);
   the operator will then take over management of the old Deployment resource, replacing it with the upgraded version.
 
 - Use `kubectl apply` to create the egress gateway resource. Tigera Operator will read the newly created resource and wait

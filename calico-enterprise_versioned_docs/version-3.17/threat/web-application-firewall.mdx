@@ -42,15 +42,22 @@ You simply enable WAF in Manager UI, and determine the services that you want to
 ## Before you begin
 
 **Not supported**
-
+- GKE
 - Windows
 - eBPF dataplane
-- RKE and RKE2 clusters
 
 **Limitations**
 
-- WAF is not supported for host-networked client pods
-- When selecting and deselecting traffic for WAF, active connections may be disrupted
+WAF cannot be used with:
+  - Host-networked client pods
+  - TLS traffic
+  - [LoadBalancer services](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
+  - Egress gateways
+  - WireGuard on AKS or EKS (unless you apply a specific kernel variable). Contact Support for help.
+
+:::note
+When selecting and deselecting traffic for WAF, active connections may be disrupted.
+:::
 
 :::caution
 
@@ -94,7 +101,7 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 2. Select the services you want WAF to inspect, and then click **Confirm Selections**.
     
    <img
-    src='/img/calico-enterprise/waf-select-services.png'
+    src='/img/calico-enterprise/waf-select-services-3.17.png'
     alt='WAF services'
     width='600'
   />
@@ -110,7 +117,7 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 
 To view WAF events in Service Graph,
 
-1. Selec a service.
+1. Select a service.
 2. Click the HTTP tab.
 
 To simulate an attack to view the default warning in Service Graph, follow these steps:
@@ -166,13 +173,7 @@ spec:
 ```
 Apply the YAML to your cluster using: `kubectl apply -f test-demo-alert.yaml`
 
-Now if a SQL Injection attack is detected for rule ID 942100, you will see the global alert in Manager UI, Activity, Alerts.
-
-<img
-  src='/img/calico-enterprise/waf-alert.png'
-  alt='WAF alert'
-  width='600'
-/>
+If a SQL Injection attack is detected for rule ID 942100, you will see a security event in the dashboard here: **Threat defense**, **Security Events**.
 
 ### Manage WAF
 

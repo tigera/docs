@@ -125,16 +125,27 @@ Use the push method if your threat feeds that are not in newline-delimited forma
    kubectl apply -f <your_threatfeed_filename>
    ```
 
-3. Configure or program your threat feed to write updates to Elasticsearch. This Elasticsearch document is in the index **.tigera.ipset.\<cluster_name\>** and must have the ID set to the name of the global threat feed object. The doc should have a single field called **ips**, containing a list of IP prefixes. For example:
+3. Configure or program your threat feed to write updates to Elasticsearch. This Elasticsearch document is written using the **tigera_secure_ee_threatfeeds_domainnameset.\<cluster_name\>.** alias and must have the ID set to the name of the global threat feed object. The doc should have a single field called **ips**, containing a list of IP prefixes. For example:
 
    ```
-   PUT .tigera.ipset.cluster/_doc/my-threat-feed
+   PUT tigera_secure_ee_threatfeeds_domainnameset.cluster./_doc/my-threat-feed/_doc/my-threat-feed
    {
        "ips" : ["99.99.99.99/32", "100.100.100.0/24"]
    }
    ```
 
    See the Elasticsearch document APIs for how to create and update documents in Elasticsearch.
+
+      If no alias exists in your Elasticsearch cluster, configure to write the Elastic document by specifying an index.
+      Since the index name `<tigera_secure_ee_threatfeeds_ipset.cluster.linseed-{now/s{yyyyMMdd}}-000001>` contains a date pattern, make sure to send the request using the index name URL encoded.
+
+      ```
+      PUT /%3Ctigera_secure_ee_threatfeeds_ipset.cluster.linseed-%7Bnow%2Fs%7ByyyyMMdd%7D%7D-000001%3E/_doc/my-threat-feed
+         {
+             "domains" : ["malicious.badstuff", "hacks.r.us"]
+         }
+      ```
+
 
 4. In {{prodname}} Manager, go the “Alerts" page to view events that are generated when an IP is displayed on the threat feed list.
 
