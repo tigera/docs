@@ -291,6 +291,7 @@ module.exports = {
       label: 'Threat defense',
       link: {type: 'doc', id: 'threat/index'},
       items: [
+        'threat/security-event-management',
         'threat/security-anomalies',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
