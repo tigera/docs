@@ -100,6 +100,7 @@ kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/microserv
 - [Enable WAF on your cluster](#enable-waf-on-your-cluster)
 - [Apply WAF to your services](#apply-waf)
 - [View WAF events](#view-waf-events)
+- [Create global alerts](#create-global-alerts)
 - [Disable WAF feature from your cluster](#disable-waf-in-your-cluster)
 
 ### Enable WAF on your cluster
@@ -270,6 +271,33 @@ To view WAF events In Kibana:
 2. Select the `tigera_secure_ee_waf*` index pattern. 
 
 You should see the relevant WAF assessment from your request.
+
+### Create global alerts
+
+To get notifications on WAF events, create Global Alerts.
+
+The following example creates a Global Alert for a SQL Injection attack. Specifically, for Rule ID 942100 [Core Rule Set file](https://raw.githubusercontent.com/coreruleset/coreruleset/v3.3/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf)
+that will "deny" all traffic instead of "block" traffic.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalAlert
+metadata:
+  name: waf-new-alert-rule-info
+spec:
+  summary: 'WAF new waf-alert-942100'
+  description: 'Test WAF Global Alert'
+  severity: 1
+  dataSet: waf
+  period: 1m
+  lookback: 1h
+  query: '"rule_info" IN {"*942100*"}'
+  threshold: 0
+  condition: gt
+```
+Apply the YAML to your cluster using: `kubectl apply -f test-demo-alert.yaml`
+
+Now if a SQL Injection attack is detected for rule ID 942100, you will see the global alert in Manager UI, Activity, Alerts.
 
 #### Disable WAF for a service
 
