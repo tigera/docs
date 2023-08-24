@@ -39,8 +39,7 @@ module.exports = {
         'get-started/connect/connect-cluster',
         'get-started/connect/checklist',
         'get-started/connect/operator-checklist',
-        'get-started/upgrade-cluster',
-        'get-started/connect/usage-metrics',
+        'get-started/upgrade-cluster'
       ],
     },
     {
@@ -421,6 +420,7 @@ module.exports = {
       items: [
         'operations/cluster-management',
         'operations/disconnect',
+        'operations/usage-metrics',
         {
           type: 'category',
           label: 'Secure component communications',
