@@ -216,22 +216,17 @@ To install the MetalLB controller for allocating addresses, perform the followin
 
    However, do not install the `metallb-system/speaker` component. The speaker component also attempts to establish BGP sessions on the node, and will conflict with Calico.
 
-1. Configure MetalLB to provision addresses by creating the following config map, replacing `x.x.x.x/16` with the CIDR given to {{prodname}} in the steps above.
+1. Configure MetalLB to provision addresses by creating the following IPAddressPool, replacing `x.x.x.x/16` with the CIDR given to {{prodname}} in the steps above. Please note IPAddressPool require Metallb `0.13+`.
 
    ```bash
    kubectl create -f - <<EOF
-   apiVersion: v1
-   kind: ConfigMap
+   kind: IPAddressPool
    metadata:
+     name: default
      namespace: metallb-system
-     name: config
-   data:
-     config: |
-       address-pools:
-       - name: default
-         protocol: bgp
-         addresses:
-         - x.x.x.x/16
+   spec:
+     addresses:
+     - x.x.x.x/16
    EOF
    ```
 
@@ -257,3 +252,4 @@ Other topics on creating network policy for Kubernetes services:
 
 - [Apply policy to services exposed externally as cluster IPs](../../network-policy/services/services-cluster-ips.mdx)
 - [Apply policy to Kubernetes node ports](../../network-policy/services/kubernetes-node-ports.mdx)
+
