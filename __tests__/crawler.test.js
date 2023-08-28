@@ -133,6 +133,16 @@ test("Crawl the docs and execute tests", async () => {
     'https://kb.isc.org/article/AA-01141/31/How-to-workaround-IPv6-prefix-length-issues-with-ISC-DHCP-clients.html',
     'https://www.snort.org/documents',
     'https://www.snort.org/downloads/#rule-downloads',
+    'https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-networking-on-azure/',
+    'https://www.tigera.io/calico-support/',
+    'https://www.tigera.io/legal/calico-cloud-support-policy',
+    'https://www.tigera.io/tutorials/?_sf_s=Deploy%20Service%20Mesh',
+    'https://www.projectcalico.org/comparing-kube-proxy-modes-iptables-or-ipvs/',
+    'https://www.projectcalico.org/hands-on-with-calicos-ebpf-service-handling/',
+    'https://www.tigera.io/blog/?_sft_post_tag=project-calico',
+    'https://www.tigera.io/tutorials/?_sf_s=%27calico%20ebpf%20and%20xdp%27,',
+    'https://www.tigera.io/tutorials/?_sf_s=Calico%20Basics',
+    'https://www.tigera.io/tutorials/?_sf_s=WireGuard',
   ];
 
   const lc = linkChecker();
