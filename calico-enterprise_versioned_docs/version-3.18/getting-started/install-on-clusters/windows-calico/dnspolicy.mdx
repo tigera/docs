@@ -1,0 +1,45 @@
+---
+description: Configure DNS policy for Calico Enterprise for Windows workloads.
+---
+
+# Configure DNS policy for workloads
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## Big picture
+
+Configure {{prodnameWindows}} domain based policy (DNS policy) for Windows workloads in Kubernetes clusters.
+
+## Value
+
+Using domain names in policies to identify services outside of the cluster is often operationally simpler and more robust than using IP
+addresses. In particular, they are useful when an external service does not map to a well known set of static IP addresses.
+
+## Before you begin
+
+**Limitations**
+
+{{prodname}} supports DNS policy on Windows with these limitations:
+
+- It could take up to 5 seconds for the first TCP SYN packet to go through, for a connection to a DNS domain name. This is because DNS policies are dynamically programmed. The first TCP packet could be dropped since there is no policy to allow it until {{prodnameWindows}} detects domain IPs from DNS response and programs DNS policy rules. The Windows TCPIP stack will send SYN again after TCP Retransmission timeout (RTO) if previous SYN has been dropped.
+- Some runtime libraries do not honour DNS TTL. Instead, they manage their own DNS cache which has a different TTL value for DNS entries. On .NET Framework, the value to control DNS TTL is ServicePointManager.DnsRefreshTimeout which has default value of 120 seconds - [DNS refresh timeout](https://docs.microsoft.com/en-us/dotnet/api/system.net.servicepointmanager.dnsrefreshtimeout). It is important that {{prodnameWindows}} uses a longer TTL value than the one used by the application, so that DNS policy will be in place when the application is making outbound connections. The configuration item “WindowsDNSExtraTTL” should have a value bigger than the maximum value of DNS TTL used by the runtime libraries for your applications.
+- Due to the limitations of Windows container networking, a policy update could have an impact on performance. Programming DNS policy may result in more policy updates. Setting “WindowsDNSExtraTTL” to a bigger number will reduce the performance impact.
+
+## How to
+
+{{prodnameWindows}} DNS policy is enabled by default and is configured the same way as [DNS policy for Linux](../../../network-policy/domain-based-policy.mdx). Use the following Windows-specific parameters for specifying the file to preserve learned DNS information and extra TTL in addition to DNS TTL.
+
+### Felix configurations
+
+| Field               | Description                                                                                                                           | Accepted Values | Schema | Default                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------ | --------------------------------------- |
+| WindowsDNSCacheFile | Specify the name of the file that {{prodnameWindows}} uses to preserve learned DNS information when restarting.                       | string          | string | `c:\\TigeraCalico\\felix-dns-cache.txt` |
+| WindowsDNSExtraTTL  | Specify extra time in seconds to keep IPs and alias names that are learned from DNS, in addition to each name or IP's advertised TTL. | int             | int    | `120`                                   |
+
+## Additional resources
+
+- [DNS policy](../../../network-policy/domain-based-policy.mdx)
