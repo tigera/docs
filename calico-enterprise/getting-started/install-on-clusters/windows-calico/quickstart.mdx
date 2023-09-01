@@ -23,7 +23,7 @@ Before beginning the quickstart, setup a {{prodname}} cluster on Linux nodes and
 
 ## How to
 
-- [Configure strict affinity for clusters using {{prodname}} networking](#configure-strict-affinity-for-clusters-using-calico-enterprise-networking)
+- [Configure strict affinity for clusters using {{prodname}} networking](#configure-strict-affinity-for-clusters-using-{{prodnamedash}}-networking)
 - [Install {{prodnameWindows}} manually](#install-calico-enterprise-for-windows-manually)
 - [Install {{prodnameWindows}} using HostProcess containers](#install-calico-enterprise-for-windows-using-hostprocess-containers)
 - [Configure installation parameters](#configure-installation-parameters)
@@ -34,7 +34,7 @@ For Linux control nodes using {{prodname}} networking, strict affinity must be s
 This is required to prevent Linux nodes from borrowing IP addresses from Windows nodes:
 
 ```bash
-kubectl patch ipamconfigurations default --type merge --patch='{"spec": {"strictAffinity": true}}'
+calicoctl ipam configure --strictaffinity=true
 ```
 
 ### Install {{prodnameWindows}} manually
@@ -68,14 +68,30 @@ The following steps install a Kubernetes cluster on a single Windows node with a
     details='Policy:Calico,IPAM:AWS,CNI:AWS,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
   />
 
-- **AKS**
+:::note
 
-  The geeky details of what you get by default:
+If your Kubernetes version is v1.24.0 or higher, service account token secrets are no longer automatically created. Before continuing with the install, [manually create](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#manually-create-a-service-account-api-token) the calico-node service account token:
 
-  <GeekDetails
-    prodname='{{prodname}}'
-    details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
-  />
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: calico-node-token
+  namespace: calico-system
+  annotations:
+    kubernetes.io/service-account.name: calico-node
+type: kubernetes.io/service-account-token
+EOF
+```
+
+:::
+
+:::note
+
+Note: if {{prodname}} is installed in kube-system, update the `namespace` in the above command.
+
+:::
 
 <Tabs>
 <TabItem label="Kubernetes VXLAN" value="Kubernetes VXLAN-0">
@@ -88,8 +104,6 @@ The following steps install a Kubernetes cluster on a single Windows node with a
    ```bash
    kubectl patch installation default --type=merge -p '{"spec": {"calicoNetwork": {"bgp": "Disabled"}}}'
    ```
-
-   If you installed Calico using the manifest then BGP is already disabled.
 
 1. Prepare the directory for Kubernetes files on Windows node.
 
@@ -107,8 +121,8 @@ The following steps install a Kubernetes cluster on a single Windows node with a
    Invoke-WebRequest {{tmpScriptsURL}}/scripts/install-calico-windows.ps1 -OutFile c:\install-calico-windows.ps1
    ```
 
-1. Install {{prodnameWindows}} for your datastore with using the default parameters or [customize installation parameters](#configure-installation-parameters).
-   The PowerShell script downloads {{prodnameWindows}} release binary, Kubernetes binaries, Windows utilities files, configures {{prodnameWindows}}, and starts the Calico service.
+1. Install {{prodnameWindows}} for your datastore using the default parameters or [customize installation parameters](#configure-installation-parameters).
+   The PowerShell script downloads the {{prodnameWindows}} release binary, Kubernetes binaries, Windows utilities files, configures {{prodnameWindows}}, and starts the Calico service.
 
    **Kubernetes datastore (default)**
 
@@ -198,7 +212,7 @@ The following steps install a Kubernetes cluster on a single Windows node with a
    Invoke-WebRequest {{tmpScriptsURL}}/scripts/install-calico-windows.ps1 -OutFile c:\install-calico-windows.ps1
    ```
 
-1. Install {{prodnameWindows}} for your datastore with using the default parameters or [customize installation parameters](#configure-installation-parameters).
+1. Install {{prodnameWindows}} for your datastore using the default parameters or [customize installation parameters](#configure-installation-parameters).
    The PowerShell script downloads {{prodnameWindows}} release binary, Kubernetes binaries, Windows utilities files, configures {{prodnameWindows}}, and starts the Calico service.
 
    You do not need to pass a parameter if the default value of the parameter is correct for your cluster.
@@ -320,7 +334,6 @@ The following steps install a Kubernetes cluster on a single Windows node with a
    ```
 
 </TabItem>
-
 </Tabs>
 
 Congratulations! You now have a Kubernetes cluster with {{prodnameWindows}} and a Linux control node.
@@ -352,8 +365,8 @@ this installation method has [additional requirements](https://kubernetes.io/doc
 To install ContainerD on the Windows node and configure the ContainerD service:
 
 ```powershell
-Invoke-WebRequest {{windowsScriptsURL}}/Install-Containerd.ps1 -OutFile c:\Install-Containerd.ps1
-c:\Install-Containerd.ps1 -ContainerDVersion 1.7.1 -netAdapterName Ethernet -skipHypervisorSupportCheck -CNIConfigPath "c:/etc/cni/net.d" -CNIBinPath "c:/opt/cni/bin"
+Invoke-WebRequest {{tmpScriptsURL}}/scripts/Install-Containerd.ps1 -OutFile c:\Install-Containerd.ps1
+c:\Install-Containerd.ps1 -ContainerDVersion 1.6.2 -CNIConfigPath "c:/etc/cni/net.d" -CNIBinPath "c:/opt/cni/bin"
 ```
 
 If you have an existing {{prodnameWindows}} installation using the manual method, your Windows nodes may have already joined the cluster.
@@ -363,8 +376,8 @@ To join a Windows node to a cluster provisioned with kubeadm:
 - Install kubeadm and kubelet binaries and install the kubelet service
 
 ```powershell
-Invoke-WebRequest {{windowsScriptsURL}}/PrepareNode.ps1 -OutFile c:\PrepareNode.ps1
-c:\PrepareNode.ps1 -KubernetesVersion v1.26.6
+Invoke-WebRequest {{tmpScriptsURL}}/scripts/PrepareNode.ps1 -OutFile c:\PrepareNode.ps1
+c:\PrepareNode.ps1 -KubernetesVersion v1.23.4 -ContainerRuntime ContainerD
 ```
 
 - Run kubeadm on a control plane host and copy the join command

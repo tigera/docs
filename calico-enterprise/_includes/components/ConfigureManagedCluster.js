@@ -4,7 +4,7 @@ import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 
-import { baseUrl } from '../../variables';
+import { baseUrl, prodname, filesUrl } from '../../variables';
 
 export default function ConfigureManagedCluster(props) {
   const kubectlCmd = props.kubectlCmd || 'kubectl';
@@ -114,6 +114,10 @@ EOF`}
           <CodeBlock language='bash'>{`watch ${kubectlCmd} get tigerastatus`}</CodeBlock>
           Wait until the <code>management-cluster-connection</code> and <code>tigera-compliance</code> show a status of{' '}
           <code>Available</code>.
+        </li>
+        <li>
+          <p>Secure {prodname} on the managed cluster with network policy.</p>
+          <CodeBlock language='bash'>{`${kubectlCmd} create -f ${filesUrl}/manifests/tigera-policies-managed.yaml`}</CodeBlock>
         </li>
       </ol>
       <p>You have now successfully installed a managed cluster!</p>

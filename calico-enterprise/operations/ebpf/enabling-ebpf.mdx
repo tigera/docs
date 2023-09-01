@@ -1,8 +1,8 @@
 ---
-description: Steps to enable the eBPF dataplane on an existing cluster.
+description: Step-by-step instructions for enabling the eBPF dataplane.
 ---
 
-# Enable eBPF on an existing cluster
+# Enable the eBPF dataplane
 
 import EbpfValue from '@site/calico-enterprise/_includes/content/_ebpf-value.mdx';
 
@@ -29,9 +29,57 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
 
 ## Before you begin
 
-**Required**
+### Supported
 
-- Review [Requirements, limitations, and performance](install.mdx#before-you-begin)
+- x86-64
+
+- Distributions:
+
+  - Generic or kubeadm
+  - kOps
+  - OpenShift
+  - EKS (requires non-default OS image, as described in [Creating an EKS cluster for eBPF mode](ebpf-and-eks.mdx))
+  - AKS
+  - RKE
+
+- Linux distribution/kernel:
+
+  - Ubuntu 20.04.
+  - Red Hat v8.2 with Linux kernel v4.18.0-193 or above (Red Hat have backported the required features to that build).
+  - Another [supported distribution](../../getting-started/install-on-clusters/requirements.mdx) with Linux kernel v5.3 or above. Kernel v5.8 or above with CO-RE enabled is recommended for better performance.
+
+- An underlying network fabric that allows VXLAN traffic between hosts. In eBPF mode, VXLAN is used to forward Kubernetes NodePort traffic.
+
+### Not supported
+
+- Other processor architectures.
+
+- Distributions:
+
+  - GKE. This is because of an incompatibility with the GKE CNI plugin. A fix for the issue has already been accepted upstream but at the time of writing it is not publicly available.
+
+  - EKS using the default Ubuntu or Amazon Linux images. At the time of writing, these do not have a recent enough kernel.
+
+  - Mirantis Kubernetes Engine (MKE): eBPF mode is incompatible with MKE at this time. The Tigera team is investigating the issue.
+
+- Clusters with some eBPF nodes and some standard dataplane and/or Windows nodes.
+- IPv6.
+- Host endpoint `doNotTrack` policy (other policy types are supported).
+- Floating IPs.
+- SCTP (either for policy or services).
+- `Log` action in policy rules.
+- Tagged VLAN devices.
+
+### Performance
+
+For best pod-to-pod performance, we recommend using an underlying network that doesn't require Calico to use an overlay. For example:
+
+- A cluster within a single AWS subnet.
+- A cluster using a compatible cloud provider's CNI (such as the AWS VPC CNI plugin).
+- An on-prem cluster with BGP peering configured.
+
+If you must use an overlay, we recommend that you use VXLAN, not IPIP. VXLAN has much better performance than IPIP in
+eBPF mode due to various kernel optimisations.
 
 ## How to
 
@@ -131,7 +179,7 @@ data:
 
 The operator will pick up the change to the config map automatically and do a rolling update of {{prodname}} to pass on the change. Confirm that pods restart and then reach the `Running` state with the following command:
 
-```bash
+```
 watch kubectl get pods -n calico-system
 ```
 
@@ -139,14 +187,14 @@ If you do not see the pods restart then it's possible that the `ConfigMap` wasn'
 
 ### Configure kube-proxy
 
-In eBPF mode {{prodname}} replaces `kube-proxy` so it wastes resources (and reduces performance) to run both.  
-This section explains how to disable `kube-proxy` in some common environments.
+In eBPF mode {{prodname}} replaces `kube-proxy` so it wastes resources to run both. This section explains how
+to disable `kube-proxy` in some common environments.
 
 #### Clusters that run `kube-proxy` with a `DaemonSet` (such as `kubeadm`)
 
 For a cluster that runs `kube-proxy` in a `DaemonSet` (such as a `kubeadm`-created cluster), you can disable `kube-proxy` reversibly by adding a node selector to `kube-proxy`'s `DaemonSet` that matches no nodes, for example:
 
-```bash
+```
 kubectl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
 ```
 
@@ -154,7 +202,7 @@ Then, should you want to start `kube-proxy` again, you can simply remove the nod
 
 :::note
 
-This approach is not suitable for AKS with Azure CNI since that platform makes use of the Kubernetes add-on manager.
+This approach is not suitable for AKS since that platform makes use of the Kubernetes add-on manager.
 the change will be reverted by the system. For AKS, you should follow [Avoiding conflicts with kube-proxy](#avoiding-conflicts-with-kube-proxy)
 below.
 
@@ -164,13 +212,13 @@ below.
 
 If you are running OpenShift, you can disable `kube-proxy` as follows:
 
-```bash
+```
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": false}}'
 ```
 
 To re-enable it:
 
-```bash
+```
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": true}}'
 ```
 
@@ -178,7 +226,7 @@ kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"
 
 If you cannot disable `kube-proxy` (for example, because it is managed by your Kubernetes distribution), then you _must_ change Felix configuration parameter `BPFKubeProxyIptablesCleanupEnabled` to `false`. This can be done with `kubectl` as follows:
 
-```bash
+```
 kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyIptablesCleanupEnabled": false}}'
 ```
 
@@ -210,13 +258,13 @@ Direct return mode skips a hop through the network for traffic to services (such
 
 DSR mode is disabled by default; to enable it, set the `BPFExternalServiceMode` Felix configuration parameter to `"DSR"`. This can be done with `kubectl`:
 
-```bash
+```
 kubectl patch felixconfiguration default --patch='{"spec": {"bpfExternalServiceMode": "DSR"}}'
 ```
 
 To switch back to tunneled mode, set the configuration parameter to `"Tunnel"`:
 
-```bash
+```
 kubectl patch felixconfiguration default --patch='{"spec": {"bpfExternalServiceMode": "Tunnel"}}'
 ```
 
@@ -234,7 +282,7 @@ To revert to standard Linux networking:
 
 1. If you disabled `kube-proxy`, re-enable it (for example, by removing the node selector added above).
 
-   ```bash
+   ```
    kubectl patch ds -n kube-system kube-proxy --type merge -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": null}}}}}'
    ```
 

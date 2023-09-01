@@ -21,6 +21,12 @@ This how-to guide uses the following {{prodname}} features:
 
 ## Before you begin...
 
+**Supported**
+
+- Kubernetes on-premises
+- OpenShift
+- GKE, EKS, and AKS
+
 **Required**
 
 - A Calico Enterprise cluster, see [here](../getting-started/install-on-clusters/index.mdx) for help
@@ -83,33 +89,7 @@ To access resources in a managed cluster from the {{prodname}} Manager within th
    kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-user --clusterrole=tigera-network-admin
    ```
 
-1. Create a secret for the service account
-
-   :::note
-
-   This step is needed if your Kubernetes cluster is version v1.24 or above. Prior to Kubernetes v1.24, this secret is created automatically.
-
-   :::
-
-   ```bash
-   kubectl apply -f - <<EOF
-   apiVersion: v1
-   kind: Secret
-   type: kubernetes.io/service-account-token
-   metadata:
-     name: mcm-user
-     annotations:
-       kubernetes.io/service-account.name: "mcm-user"
-   EOF
-   ```
-
-1. For Kubernetes v1.24+, use the following command to obtain the token for the secret associated with your host
-
-   ```bash
-   kubectl describe secret mcm-user
-   ```
-
-   For Kubernetes clusters prior to version v1.24, use the following command to retrieve your token:
+1. Get the login token for your new admin user, and log in to {{prodname}} Manager.
 
    ```bash
    kubectl get secret $(kubectl get serviceaccount mcm-user -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo

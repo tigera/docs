@@ -13,7 +13,7 @@ Deploy Envoy and use {{prodname}} L7 logs to monitor application activity.
 Just like L3/4 {{prodname}} logs, platform operators and
 development teams want visibility into L7 logs to see how applications are interacting with each
 other. {{prodname}} flow logs only display which workloads are communicating
-with each other, not the specific request details. {{prodname}} provides visibility into L7 traffic without the need for a service mesh.
+with each other, not the specific request details. {{prodname}} provides visibility into L7 traffic without the need of a service mesh.
 
 L7 logs are also key for detecting anomalous behaviors like attempts to
 access applications, restricted URLs, and scans for particular URLs.
@@ -37,14 +37,17 @@ L7 logs are visible in the Manager UI, service graph, in the HTTP tab.
 ## Before you begin
 
 **Not supported**
+
+- Windows
 - eBPF dataplane
+- RKE clusters
 
 **Limitations**
 
 - L7 log collection is not supported for host-networked client pods.
 - When selecting and deselecting traffic for L7 log collection, active connections may be disrupted.
 
-**Log storage requirements**
+**Required**
 
 :::note
 
@@ -52,34 +55,28 @@ L7 logs require a minimum of 1 additional GB of log storage per node, per one-da
 
 :::
 
+- Configure Felix for log data collection
+
+  Enable the Policy Sync API in Felix. To do this cluster-wide, modify the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`.
+
+  ```bash
+  kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
+  ```
+
+  Configure L7 log aggregation, retention, and reporting. See the
+  [Felix Configuration documentation](../../../reference/component-resources/node/felix/configuration.mdx#calico-enterprise-specific-configuration)
+  for more details.
+
 ## How to
-- [Configure Felix for log data collection](#configure-felix-for-log-data-collection)
-- [Configure L7 logs](#configure-l7-logs)
-- [View L7 logs in Manager UI](#view-l7-logs-in-manager-ui)
-
-### Configure Felix for log data collection
-
-1. Enable the Policy Sync API in Felix.
-
-   For cluster-wide enablement, modify the `default` FelixConfiguration and set the field `policySyncPathPrefix` to `/var/run/nodeagent`.
-
-   ```bash
-   kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
-   ```
-
-1. Configure L7 log aggregation, retention, and reporting.
-
-   For help, see [Felix Configuration documentation](../../../reference/component-resources/node/felix/configuration.mdx#calico-enterprise-specific-configuration).
 
 ### Configure L7 logs
 
-In this step, you will configure L7 logs, select logs for collection, and test the configuration.
+**Step 1: Configure ApplicationLayer CRD**
 
-**Configure the ApplicationLayer resource for L7 logs**
+In this step, you configure ApplicationLayer resource to gather the L7 logs.
 
-1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) resource named, `tigera-secure` to include a logCollection section of the file, `_api.html` [here](../../../reference/installation/api.mdx).
-
-1. Ensure that the `collectLogs` field is set to `Enabled`.
+1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer)
+   resource named, `tigera-secure` to include a logCollection section of the file, `_api.html` [here]: (/reference/installation/). Ensure that `collectLogs` fields is set to `Enabled`.
 
    Example:
 
@@ -95,21 +92,18 @@ In this step, you will configure L7 logs, select logs for collection, and test t
        logRequestsPerInterval: -1
    ```
 
-1. Apply the resource. This creates `l7-log-collector` daemonset in `calico-system` namespace.
+   Apply the resource. This creates `l7-log-collector` daemonset in `calico-system` namespace. Ensure that the daemonset progresses and `l7-collector` and `envoy-proxy` containers inside the daemonset are in a `Running` state.
 
-1. Ensure that the daemonset progresses and `l7-collector` and `envoy-proxy` containers inside the daemonset are in a `Running` state.
-
-**Select traffic for L7 log collection**
+**Step 2: Select traffic for L7 log collection**
 
 1. Annotate the services you wish to collect L7 logs as shown.
 
-   ```bash
+   ```
    kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging=true
    ```
 
-2. To disable the L7 log collection, remove the annotation.
-
-   ```bash
+2. To disable L7 log collection remove the annotation.
+   ```
    kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging-
    ```
 
@@ -117,37 +111,19 @@ After annotating a service for L7 log collection, only newly-established connect
 
 Conversely, when a service is deselected, any previous connections established through the annotated service continue to be proxied by Envoy until they are terminated, and logs are generated.
 
-**Test your configuration**
+**Step 3: Test your configuration**
 
-1. Identify the path to access your cluster. Where <path\> can be:
+To test your installation, you must first know the appropriate path to access your cluster.
+The path can be either of the following:
 
-   - Public address of your cluster/service
-     or
-   - Cluster IP of your application's service (if testing within the cluster)
+- The public address of your cluster/service
+- The cluster IP of your application's service (if testing within the cluster)
 
-1. `curl` your service with a command similar to the following. You will see `Server` header as `envoy`.
+After identifying the path, `curl` your service with a command similar to the following. You will see `Server` header as `envoy`.
 
-   ```bash
-   curl --head <path to access service>:<optional port>/<path>
-   ```
+```
+curl --head <path to access service>:<optional port>/<path>
+```
 
-### View L7 logs in Manager UI
-
-**Service Graph**
-
-To view L7 logs in Service Graph:
-
-1. In the Manager UI left navbar, click **Service Graph**.
-1. In the bottom pane you will see L7 logs in the HTTP tab.
-
-   ![l7-logs](/img/calico-enterprise/l7-logs.png)
-
-**Kibana**
-
-To view L7 logs by index pattern in Kibana:
-
-1. In the Manager UI left navbar, click **Kibana**.
-
-1. In the new Kibana browser, click the hamburger icon in the top left corner, and select **Analytics**, **Discover**.
-
-1. Select the index pattern, `tigera_secure_ee_l7`.
+Now view the L7 logs in Kibana by selecting the `tigera_secure_ee_l7` index pattern. You
+should see the relevant L7 data from your request recorded.

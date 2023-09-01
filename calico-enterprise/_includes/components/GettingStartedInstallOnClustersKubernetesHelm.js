@@ -5,7 +5,7 @@ import React from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
 
-import { chart_version_name, prodname, prodnamedash, version } from '../../variables';
+import { chart_version_name, prodname, prodnamedash, version, filesUrl } from '../../variables';
 
 export default function GettingStartedInstallOnClustersKubernetesHelm() {
   return (
@@ -51,9 +51,8 @@ EOF`}
         </CodeBlock>
         <li>
           <p>
-              Add any other customizations you require to <code>values.yaml</code> by running the following command.
-              For help, see <a href='../../../reference/installation/helm_customization'>Helm installation reference</a>,
-              or <a href='https://helm.sh/docs/'>helm docs</a>.
+            Add any other customizations you require to <code>values.yaml</code>. You might like to refer to the{' '}
+            <a href='https://helm.sh/docs/'>helm docs</a> or run:
           </p>
         </li>
         {renderCond2()}
@@ -97,8 +96,15 @@ EOF`}
           <CodeBlock language='bash'>kubectl apply -f &lt;/path/to/license.yaml&gt;</CodeBlock>
         </li>
         <li>
-          <p>You can now monitor progress with the following command:</p>
+          <p>
+            Monitor progress, wait until all components show a status of <code>Available</code>, then proceed to the
+            next step.
+          </p>
           <CodeBlock language='bash'>watch kubectl get tigerastatus</CodeBlock>
+        </li>
+        <li>
+          <p>Apply the following manifest to secure {prodname} with network policy:</p>
+          <CodeBlock language='bash'>{`kubectl apply -f  ${filesUrl}/manifests/tigera-policies.yaml`}</CodeBlock>
         </li>
         <p>Congratulations! You have now installed {prodname} using the Helm 3 chart.</p>
       </ol>

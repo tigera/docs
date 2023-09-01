@@ -11,7 +11,17 @@ function CalicoWindowsInstallFirstStep(props) {
       <li>
         Ensure that BGP is disabled.
         <ul>
-          <li>If you installed {prodname} using the manifest, BGP is already disabled.</li>
+          <li>
+            If you installed {prodname} using the{' '}
+            <a
+              href='${filesUrl}/manifests/calico-windows-vxlan.yaml'
+              target='_blank'
+              rel='noopener noreferreer'
+            >
+              manifest
+            </a>
+            , BGP is already disabled.
+          </li>
           <li>If you installed {prodname} using the operator, run this command:</li>
           <br />
           <CodeBlock language='bash'>

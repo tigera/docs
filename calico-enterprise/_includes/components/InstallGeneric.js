@@ -18,12 +18,12 @@ export default function InstallGeneric(props) {
       >
         Install {prodname}
       </Heading>
-      <When condition={props.clusterType !== 'managed'}>
-        <li>
-          <Link href={`${baseUrl}/operations/logstorage/create-storage`}>Configure storage for {prodname}</Link>.
-        </li>
-      </When>
       <ol>
+        <When condition={props.clusterType !== 'managed'}>
+          <li>
+            <Link href={`${baseUrl}/operations/logstorage/create-storage`}>Configure storage for {prodname}</Link>.
+          </li>
+        </When>
         <li>
           <p>Install the Tigera operator and custom resource definitions.</p>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
@@ -135,6 +135,17 @@ spec:
           </CodeBlock>
           <p>You can now monitor progress with the following command:</p>
           <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
+          <p>
+            When all components show a status of <code>Available</code>, proceed to the next section.
+          </p>
+          <Heading
+            as='h4'
+            id={`secure-${prodnamedash}-with-network-policy`}
+          >
+            Secure {prodname} with network policy
+          </Heading>
+          <p>Install the following network policies to secure {prodname} component communications.</p>
+          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-policies.yaml</CodeBlock>
         </>
       </When>
       <When condition={props.clusterType == 'management'}>

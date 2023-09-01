@@ -4,6 +4,8 @@ description: Upgrade to a newer version of Calico Enterprise installed with Open
 
 # Upgrade Calico Enterprise installed with OpenShift
 
+import OpenshiftManifests from '@site/calico-enterprise/_includes/content/_openshift-manifests.mdx';
+
 :::note
 
 All upgrades in {{prodname}} are free with a valid license.
@@ -24,7 +26,8 @@ Always check the [Release Notes](../../../release-notes/index.mdx) for exception
 
 ## Prerequisites
 
-Ensure that your {{prodname}} OpenShift cluster is running a supported version of [OpenShift Container Platform](../../compatibility.mdx#openshift), and the {{prodname}} operator version is v1.2.4 or greater.
+Ensure that your {{prodname}} OpenShift cluster is running OpenShift Container Platform
+4.8, 4.9 and 4.10, and the {{prodname}} operator version is v1.2.4 or greater.
 
 :::note
 
@@ -45,15 +48,7 @@ have their reclaim policy set to [retain data](https://kubernetes.io/docs/tasks/
 Data retention is recommended only for users that have a valid Elasticsearch license. (Trial licenses can be invalidated
 during upgrade).
 
-### Default Deny
-
-{{prodname}} creates a default-deny for the calico-system namespace. If you deploy workloads into the calico-system namespace, you must create policy that allows the required traffic for your workloads prior to upgrade.
-
-### Windows
-
 If your cluster has Windows nodes and uses custom TLS certificates for log storage, prior to upgrade, prepare and apply new certificates for [log storage](../../../operations/comms/log-storage-tls.mdx) that include the required service DNS names.
-
-### Multi-cluster management
 
 For {{prodname}} v3.5 and v3.7, upgrading multi-cluster management setups must include updating all managed and management clusters.
 
@@ -65,7 +60,7 @@ Make a manifests directory.
 mkdir manifests
 ```
 
-<InstallOpenShiftManifests upgradeFrom='Enterprise' />
+<OpenshiftManifests />
 
 # Upgrade from 3.0 or later
 
@@ -107,16 +102,38 @@ The steps differ based on your cluster type. If you are unsure of your cluster t
    EOF
    ```
 
-1. If your cluster is v3.16 or older, apply a new [PolicyRecommendation](../../../reference/installation/api.mdx#operator.tigera.io/v1.PolicyRecommendation)
-   CR to your cluster.
+1. Wait until the `apiserver` shows a status of `Available`, then proceed to the next section. You can monitor progress with the following command:
 
    ```bash
-   oc apply -f - <<EOF
-   apiVersion: operator.tigera.io/v1
-   kind: PolicyRecommendation
-   metadata:
-     name: tigera-secure
-   EOF
+   watch oc get tigerastatus/apiserver
+   ```
+
+1. If your cluster is management or standalone cluster using v3.8 or older, follow these steps:
+
+   a. Install the network policies to secure {{prodname}} component communications with ElasticSearch
+
+   ```bash
+   kubectl apply -f {{filesUrl}}/manifests/ocp/tigera-policies-es-access.yaml
+   ```
+
+   b. Wait until all components of tigerastatus shows a status of `Available`, then proceed to the next section. You can monitor progress with the following
+
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+
+1. Update the network policies.
+
+   a. If your cluster is a managed cluster:
+
+   ```bash
+   oc apply -f {{filesUrl}}/manifests/ocp/tigera-policies-managed.yaml
+   ```
+
+   a. If your cluster is a standalone or management cluster:
+
+   ```bash
+   oc apply -f {{filesUrl}}/manifests/ocp/tigera-policies.yaml
    ```
 
 1. You can now monitor the upgrade progress with the following command:

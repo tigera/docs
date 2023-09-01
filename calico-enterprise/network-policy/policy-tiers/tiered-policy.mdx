@@ -2,7 +2,7 @@
 description: Understand how tiered policy works and supports microsegmentation.
 ---
 
-# Get started with policy tiers
+# Get started with tiered policies
 
 ## Seamless network policy integration
 
@@ -20,7 +20,7 @@ All {{prodname}} and Kubernetes network policies reside in tiers. You can start 
 
 ![policy-types](/img/calico-enterprise/policy-types.png)
 
-Next, you can determine the priority of policies in tiers (from top to bottom). In the following example, the platform and security tiers use {{prodname}} global network policies that apply to all pods, while developer teams can safely manage pods within namespaces using Kubernetes network policy for their applications and microservices.
+Next, you can determine the priority of policies in tiers (from top to bottom). In the following example, that platform and security tiers use {{prodname}} global network policies that apply to all pods, while developer teams can safely manage pods within namespaces using Kubernetes network policy for their applications and microservices.
 
 ![policy-tiers](/img/calico-enterprise/policy-tiers.png)
 
@@ -66,11 +66,11 @@ The default tier is where:
 
 System tiers are added during installation and are hidden by default.
 
-- **allow-tigera** tier contains policies to secure {{prodname}} components and are controlled by the Tigera Operator. These policies should not be edited, and the tier should not be moved. Inadvertent changes are automatically reverted by the Operator to ensure your cluster is always protected.
+- **allow-tigera** - contains component policies
 
-:::warning
+:::note
 
-Although it is possible to change the behavior of the `allow-tigera` using adjacent tiers, it is not a trivial task. You can break critical cluster traffic and impact the operation of {{prodname}}. To prevent loss of cluster services, see [Change allow-tigera tier behavior](allow-tigera.mdx), and contact Support for help.
+Do not modify these tiers or change their order. Create all of your tiers after system tiers.
 
 :::
 
@@ -137,7 +137,7 @@ As shown in the following diagram, at the end of each tier is an implicit defaul
 
 ![implicit-deny](/img/calico-enterprise/implicit-deny.svg)
 
-Let’s look at a Dev/Ops global network policy in a high precedence tier (Platform). The policy denies ingress and egress traffic to workloads that match selector, `env == "stage"`. To ensure that policies continue to evaluate traffic after this policy, the policy adds a Pass action for both ingress and egress.
+Let’s look at a Dev/Ops global network policy in a high precedence tier (Platform). The policy denies ingress and egress traffic to workloads that match selector, `env != "stage"`. To ensure that policies continue to evaluate traffic after this policy, the policy adds a Pass action for both ingress and egress.
 
 **Pass action rule example**
 

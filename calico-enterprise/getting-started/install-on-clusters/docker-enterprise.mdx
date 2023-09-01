@@ -4,15 +4,36 @@ description: Install Calico Enterprise on an MKE cluster.
 
 # Mirantis Kubernetes Engine (MKE)
 
+import DockerEe from '@site/calico-enterprise/_includes/content/_docker-ee.mdx';
+
 ## Big picture
 
 Install {{prodname}} on a Mirantis Kubernetes Engine (MKE) cluster (formerly Docker Enterprise).
 
 ## Before you begin
 
-**CNI support**
+**MKE requirements**
 
-Calico CNI for networking with {{prodname}} network policy:
+- <DockerEe /> install with:
+
+  - A minimum of three nodes for non-production deployments
+  - CNI flag set to unmanaged, `--unmanaged-cni` so UCP does not install the default {{prodname}} networking plugin
+
+  For help, see [Docker Enterprise](https://docs.docker.com/) and [Docker EE Best Practices and Design Considerations](https://docs.mirantis.com/docker-enterprise/v3.0/dockeree-ref-arch/deploy-manage/best-practices-design.html)
+
+- Install UCP control plane to access the cluster using [Docker Universal Control Plane CLI-Based Access](https://dockerlabs.collabnix.com/advanced/Docker-UCP-overview.html). After installing the control plane, enable the option "Allow all authenticated users, including service accounts, to schedule on all nodes, including UCP managers and DTR nodes."
+
+**{{prodname}} requirements**
+
+- Your MKE cluster meets the [{{prodname}} system requirements](requirements.mdx)
+
+- If using a private registry, familiarize yourself with this guide on [using a private registry](private-registry/index.mdx).
+
+- [Credentials for the Tigera private registry and a license key](calico-enterprise.mdx)
+
+- Install `kubectl` CLI tool. See [Install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+
+## How to
 
 The geeky details of what you get:
 
@@ -21,44 +42,24 @@ The geeky details of what you get:
   details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
 />
 
-**Required**
-
-- A [compatible MKE cluster](../compatibility.mdx#mke) with:
-
-  - A minimum of three nodes for non-production deployments
-  - CNI flag set to unmanaged, `--unmanaged-cni` so UCP does not install the default {{prodname}} networking plugin
-
-  For help, see [Docker Enterprise](https://docs.docker.com/), and [Docker EE Best Practices and Design Considerations](https://docs.mirantis.com/docker-enterprise/v3.0/dockeree-ref-arch/deploy-manage/best-practices-design.html)
-
-- Install UCP control plane to access the cluster using [Docker Universal Control Plane CLI-Based Access](https://dockerlabs.collabnix.com/advanced/Docker-UCP-overview.html). After installing the control plane, enable the option "Allow all authenticated users, including service accounts, to schedule on all nodes, including UCP managers and DTR nodes."
-
-- Cluster meets [system requirements](requirements.mdx)
-
-- A [Tigera license key and credentials](calico-enterprise.mdx)
-
-- Install [Install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-
-## How to
-
 - [Install {{prodname}}](#install-calico-enterprise)
 - [Install the {{prodname}} license](#install-the-calico-enterprise-license)
+- [Secure {{prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
 ### Install {{prodname}}
 
 1. [Configure a storage class for {{prodname}}](../../operations/logstorage/create-storage.mdx).
 
-1. Configure Tigera operator and Calico CNI plugin role bindings for Docker EE.
+1. Configure Tigera operator role bindings for Docker EE.
 
-   ```bash
+   ```
    kubectl create clusterrolebinding tigera-operator-cluster-admin -n tigera-operator \
     --clusterrole cluster-admin --serviceaccount tigera-operator:tigera-operator
-   kubectl create clusterrolebinding calico-cni-plugin-cluster-admin -n calico-system \
-    --clusterrole cluster-admin --serviceaccount calico-system:calico-cni-plugin
    ```
 
 1. Install the Tigera operator and custom resource definitions.
 
-   ```bash
+   ```
    kubectl create -f {{filesUrl}}/manifests/tigera-operator.yaml
    ```
 
@@ -70,7 +71,7 @@ The geeky details of what you get:
 
    :::
 
-   ```bash
+   ```
    kubectl create -f {{filesUrl}}/manifests/tigera-prometheus-operator.yaml
    ```
 
@@ -78,7 +79,7 @@ The geeky details of what you get:
 
    If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
 
-   ```bash
+   ```
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-operator \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -86,7 +87,7 @@ The geeky details of what you get:
 
    For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
 
-   ```bash
+   ```
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -98,13 +99,13 @@ The geeky details of what you get:
 
 1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference](../../reference/installation/api.mdx).
 
-   ```bash
+   ```
    kubectl create -f {{filesUrl}}/manifests/custom-resources.yaml
    ```
 
-   Monitor progress with the following command:
+   You can now monitor progress with the following command:
 
-   ```bash
+   ```
    watch kubectl get tigerastatus
    ```
 
@@ -114,14 +115,24 @@ The geeky details of what you get:
 
 In order to use {{prodname}}, you must install the license provided to you by Tigera.
 
-```bash
+```
 kubectl create -f </path/to/license.yaml>
 ```
 
-Monitor progress with the following command:
+You can now monitor progress with the following command:
 
-```bash
+```
 watch kubectl get tigerastatus
+```
+
+When all components show a status of `Available`, proceed to the next section.
+
+### Secure {{prodname}} with network policy
+
+To secure {{prodname}} component communications, install the following set of network policies.
+
+```
+kubectl create -f {{filesUrl}}/manifests/tigera-policies.yaml
 ```
 
 ## Next steps

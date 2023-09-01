@@ -6,22 +6,19 @@ description: Install Calico Enterprise on a single-host Kubernetes cluster for t
 
 ## Big picture
 
-Install {{prodname}} on a single-host Kubernetes cluster in approximately 15 minutes.
+This quickstart gets you a single-host Kubernetes cluster with {{prodname}} in approximately 15 minutes.
 
-To deploy a cluster suitable for production, see [{{prodname}} on Kubernetes](../kubernetes/index.mdx).
+## Value
+
+Use this quickstart to quickly and easily try {{prodname}} features. To deploy a cluster suitable for production, refer to [{{prodname}} on Kubernetes](../kubernetes/index.mdx).
+
+## Concepts
+
+### Operator based installation
+
+This quickstart guide uses the Tigera operator to install {{prodname}}. The operator provides lifecycle management for {{prodname}} exposed via the Kubernetes API defined as a custom resource definition.
 
 ## Before you begin
-
-**CNI support**
-
-Calico CNI for networking with {{prodname}} network policy:
-
-The geeky details of what you get:
-
-<GeekDetails
-  prodname='{{prodname}}'
-  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
-/>
 
 **Required**
 
@@ -37,14 +34,22 @@ A Linux host that meets the following requirements.
 
 ## How to
 
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:kubernetes'
+/>
+
 - [Install Kubernetes](#install-kubernetes)
 - [Install {{prodname}}](#install-calico-enterprise)
 - [Install the {{prodname}} license](#install-the-calico-enterprise-license)
 - [Log in to {{prodname}} Manager](#log-in-to-calico-enterprise-manager)
+- [Secure {{prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
 ### Install Kubernetes
 
-1. [Follow the Kubernetes instructions to install kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/). For a compatible version for this release, see [Support and compatibility](../../compatibility.mdx#kubernetes-kubeadm).
+1. [Follow the Kubernetes instructions to install kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
 
    :::note
 
@@ -89,7 +94,7 @@ A Linux host that meets the following requirements.
 
 1. Install the Tigera operator and custom resource definitions.
 
-   ```bash
+   ```
    kubectl create -f {{filesUrl}}/manifests/tigera-operator.yaml
    ```
 
@@ -101,7 +106,7 @@ A Linux host that meets the following requirements.
 
    :::
 
-   ```bash
+   ```
    kubectl create -f {{filesUrl}}/manifests/tigera-prometheus-operator.yaml
    ```
 
@@ -109,7 +114,7 @@ A Linux host that meets the following requirements.
 
    If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
 
-   ```bash
+   ```
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-operator \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -117,7 +122,7 @@ A Linux host that meets the following requirements.
 
    For the Prometheus operator, create the pull secret in the `tigera-prometheus` namespace and then patch the deployment.
 
-   ```bash
+   ```
    kubectl create secret generic tigera-pull-secret \
        --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \
        --from-file=.dockerconfigjson=<path/to/pull/secret>
@@ -127,13 +132,13 @@ A Linux host that meets the following requirements.
 
 1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference](../../../reference/installation/api.mdx).
 
-   ```bash
+   ```
    kubectl create -f {{filesUrl}}/manifests/custom-resources.yaml
    ```
 
-   Monitor progress with the following command:
+   You can now monitor progress with the following command:
 
-   ```bash
+   ```
    watch kubectl get tigerastatus
    ```
 
@@ -143,13 +148,13 @@ A Linux host that meets the following requirements.
 
 In order to use {{prodname}}, you must install the license provided to you by Tigera.
 
-```bash
+```
 kubectl create -f </path/to/license.yaml>
 ```
 
-Monitor progress with the following command:
+You can now monitor progress with the following command:
 
-```bash
+```
 watch kubectl get tigerastatus
 ```
 
@@ -159,32 +164,34 @@ When all components show a status of `Available`, proceed to the next section.
 
 1. Create network admin user "Jane".
 
-   ```bash
+   ```
    kubectl create sa jane -n default
    kubectl create clusterrolebinding jane-access --clusterrole tigera-network-admin --serviceaccount default:jane
    ```
 
-1. Create a login token for use with the {{prodname}} UI.
+1. Extract the login `token` for use with the {{prodname}} UI.
 
    ```
-   kubectl create token jane --duration=24h
+   kubectl get secret $(kubectl get serviceaccount jane -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo
    ```
 
-   Copy the `token` from the above command to your clipboard for use in the next step.
-
-   :::note
-
-   The token created above will expire after 24 hours.
-
-   :::
+   Copy the above `token` to your clipboard for use in the next step.
 
 1. Set up a channel from your local computer to the {{prodname}} UI.
 
-   ```bash
+   ```
    kubectl port-forward -n tigera-manager svc/tigera-manager 9443
    ```
 
    Visit https://localhost:9443/ to log in to the {{prodname}} UI. Use the `token` from the previous step to authenticate.
+
+### Secure {{prodname}} with network policy
+
+To secure {{prodname}} component communications, install the following set of network policies.
+
+```
+kubectl create -f {{filesUrl}}/manifests/tigera-policies.yaml
+```
 
 Congratulations! You now have a single-host Kubernetes cluster with {{prodname}}.
 

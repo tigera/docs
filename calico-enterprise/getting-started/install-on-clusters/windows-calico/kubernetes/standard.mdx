@@ -6,25 +6,18 @@ description: Install Calico Enterprise for Windows to enable a workload-to-workl
 
 ## Big picture
 
-Install {{prodnameWindows}} on Kubernetes clusters. This {{prodnameWindows}} standard installation requires time and expertise for configuration. To get started quickly, we recommend the [Quickstart](../quickstart.mdx).
+Install {{prodnameWindows}} on Kubernetes clusters. The standard installation for {{prodnameWindows}} requires more time and expertise to configure. If you need to get started quickly, we recommend the [Quickstart](../quickstart.mdx)
+
+## Value
+
+Extend your Kubernetes deployment to Windows environments.
 
 ## Before you begin
-
-**CNI support**
-
-Calico CNI for networking with {{prodname}} network policy:
-
-The geeky details of what you get by default:
-
-<GeekDetails
-  prodname='{{prodname}}'
-  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes'
-/>
 
 **Required**
 
 - Linux and Windows nodes [meet requirements](requirements.mdx)
-- The {{prodnameWindows}} zip archive provided to you by your support representative.
+- You will need the {{prodnameWindows}} zip archive provided to you by your support representative.
 - If using {{prodname}} networking:
   - Copy the kubeconfig file (used by kubelet) to each Windows node to the file, `c:\k\config`.
   - Install and configure [calicoctl](../../../../operations/clis/calicoctl/install.mdx)
@@ -58,6 +51,13 @@ The geeky details of what you get by default:
 ## How to
 
 Because the Kubernetes and {{prodname}} control components do not run on Windows yet, a hybrid Linux/Windows cluster is required. First you create a Linux cluster for {{prodname}} components, then you join Windows nodes to the Linux cluster.
+
+The geeky details of what you get by default:
+
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes'
+/>
 
 **Kubernetes**
 
@@ -235,7 +235,7 @@ The script will pause at the first stage until {{prodname}} is installed by foll
 
 1. Disable BGP routing by updating the Installation instance:
    ```bash
-   kubectl patch ipamconfigurations default --type merge --patch='{"spec": {"strictAffinity": true}}'
+   kubectl patch installation default --type=merge -p '{"spec": {"calicoNetwork": {"bgp": "Disabled"}}}'
    ```
 
 For Linux control nodes using {{prodname}} networking, strict affinity must be set to `true`.

@@ -4,63 +4,70 @@ description: Enable Calico network policy in GKE.
 
 # Google Kubernetes Engine (GKE)
 
+import Gke from '@site/calico-enterprise/_includes/content/_gke.mdx';
+
 ## Big picture
 
 Install {{prodname}} on a GKE managed Kubernetes cluster.
 
-<!-- CE supports only GKE CNI, even though OS/Calico supports Calico CNI. Verified with Shaun, Casey, and Sujeet in 3.15. So docs will continue to be misaligned so be careful during merges. Note that OS support of Calico CNI is only in v1 of the dataplane; in v2, Cillium is the supported CNI. Another misalignment is that CE install docs list all platforms supported; OS/Calico lists of supported CNIs based on an opinionated view. -->
+## Concepts
 
-## Before you begin
-
-**CNI support**
-
-GKE CNI with {{prodname}} network policy:
+{{prodname}} supports the Calico CNI with {{prodname}} network policy:
 
 The geeky details of what you get:
 
 <GeekDetails
   prodname='{{prodname}}'
-  details='Policy:Calico,IPAM:Host Local,CNI:GKE,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
+  details='Policy:Calico,IPAM:Host Local,CNI:Calico,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
 />
 
-**Required**
+## Before you begin
 
-- A [compatible GKE cluster](../compatibility.mdx#gke)
+### Supported
 
-- Cluster has these Networking settings:
+- <Gke />
 
-  - Intranode visability is enabled
-  - Network policy is disabled
-  - Dataplane V2 is disabled
-  - GKE control plane access to TCP ports 5443, 8080 and 9090
-    The GKE control plane must be able to access the {{prodname}} API server which runs with pod networking on TCP ports 5443 and 8080, and the {{prodname}} Prometheus server which runs with pod networking on TCP port 9090. For multi-zone clusters and clusters with the "master IP range" configured, you will need to add a GCP firewall rule to allow access to those ports from the control plane nodes.
+### Required
 
-- User account has IAM permissions
+**Verify cluster settings**
 
-  Verify your user account has IAM permissions to create Kubernetes ClusterRoles, ClusterRoleBindings, Deployments, Service Accounts, and Custom Resource Definitions. The easiest way to grant permissions is to assign the "Kubernetes Service Cluster Admin Role” to your user account. For help, see [GKE access control](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control).
+Verify the cluster has these Networking settings:
 
-  :::note
+- Intranode visability is enabled
+- Network policy is disabled
+- Dataplane V2 is disabled
+- GKE control plane access to TCP ports 5443, 8080 and 9090
+  The GKE control plane must be able to access the {{prodname}} API server which runs with pod networking on TCP ports 5443 and 8080, and the {{prodname}} Prometheus server which runs with pod networking on TCP port 9090. For multi-zone clusters and clusters with the "master IP range" configured, you will need to add a GCP firewall rule to allow access to those ports from the control plane nodes.
 
-  By default, GCP users often have permissions to create basic Kubernetes resources (such as Pods and Services) but lack the permissions to create ClusterRoles and other admin resources. Even if you can create basic resources, it's worth verifying that you can create admin resources before continuing.
+**Verify IAM permissions**
 
-  :::
+Verify your user account has IAM permissions to create Kubernetes ClusterRoles, ClusterRoleBindings, Deployments, Service Accounts, and Custom Resource Definitions. The easiest way to grant permissions is to assign the "Kubernetes Service Cluster Admin Role” to your user account. For help, see [GKE access control](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control).
 
-- Cluster meets [system requirements](requirements.mdx)
+:::tip
 
-- A [Tigera license key and credentials](calico-enterprise.mdx#get-private-registry-credentials-and-license-key)
+By default, GCP users often have permissions to create basic Kubernetes resources (such as Pods and Services) but lack the permissions to create ClusterRoles and other admin resources. Even if you can create basic resources, it's worth verifying that you can create admin resources before continuing.
 
-- [Install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+:::
+
+**Review {{prodname}} requirements**
+
+- [Network requirements](requirements.mdx#network-requirements) to ensure network access is properly configured for {{prodname}} components
+
+- If using a private registry, familiarize yourself with this guide on [using a private registry](private-registry/index.mdx)
+
+- Ensure that you have the [credentials for the Tigera private registry and a license key](calico-enterprise.mdx#get-private-registry-credentials-and-license-key).
 
 ## How to
 
 1. [Install {{prodname}}](#install-calico-enterprise)
 1. [Install the {{prodname}} license](#install-the-calico-enterprise-license)
+1. [Secure {{prodname}} with network policy](#secure-calico-enterprise-with-network-policy)
 
 <InstallGKE clusterType='standalone' />
 
 ## Next steps
 
-- [Configure access to {{prodname}} Manager UI](../../operations/cnx/access-the-manager.mdx)
+- [Configure access to {{prodname}} Manager](../../operations/cnx/access-the-manager.mdx)
 - [Video: Everything you need to know about Kubernetes networking on Google cloud](https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-networking-on-google-cloud/)
 - [Get started with Kubernetes network policy](../../network-policy/get-started/kubernetes-network-policy.mdx)
 - [Get started with {{prodname}} network policy](../../network-policy/beginners/calico-network-policy.mdx)

@@ -12,7 +12,7 @@ description: Use checklist to troubleshoot common problems.
 
 Use the following checklist to troubleshoot, or to collect details before opening a Support ticket.
 
-### Is the egress gateway feature enabled?
+### Is the egress gateway enabled?
 
 Egress gateway is disabled by default.  Have you enabled it in [Felix configuration](../../reference/resources/felixconfig.mdx) by setting `egressIPSupport` to `EnabledPerNamespace` or `EnabledPerNamespaceOrPerPod`?
 
@@ -39,7 +39,6 @@ For most egress gateway scenarios you should have: `natOutgoing: false` on the e
 
 Review the following annotations that are required for the client to identify its egress gateways:
 
-- egress.projectcalico.org/egressGatewayPolicy
 - egress.projectcalico.org/selector
 - egress.projectcalico.org/namespaceSelector
 
@@ -55,29 +54,6 @@ On Linux, Calico claims a number of routing tables for various purposes. The exa
 Under these conditions, `calico-node` pods will log error messages and report [unhealthy](#check-calico-node-health).
 
 [See more about routeTableRanges](../../reference/resources/felixconfig.mdx#routetableranges)
-
-### Check egress gateway health
-
-As of v3.15.0, the egress gateway `Deployment` includes a Kubernetes `readinessProbe`. The egress gateway will
-only report ready if it is able to connect to the local `calico-node` pod and if any configured HTTP/ICMP probes
-are succeeding.
-
-If the egress gateway reports not-Ready then more information can be found in its logs. The egress gateway logs to
-`stdout` so its logs are available via `kubectl logs -n <namespace> <egress gateway pod name>`.
-
-### Check health of calico-node to egress gateway probes
-
-As of v3.15.0, each `calico-node` pod probes the health of the remote egress gateways that its local pods are using.
-If probes fail, the failures are logged in `calico-node`'s log (search for `egress_gw_tracker`) and reported via Prometheus metrics:
-
-```
-felix_egress_gateway_remote_polls{status="probe-failed"} 0
-felix_egress_gateway_remote_polls{status="total"} 2
-felix_egress_gateway_remote_polls{status="up"} 2
-```
-
-Where, the `total` metric reports the total number of remote egress gateways that are being polled and the `up` and `probe-failed`
-metrics report the number of egress gateways in each of those states.
 
 ### Check calico-node health
 
@@ -149,44 +125,9 @@ default via 11.11.11.1 dev egress.calico onlink
 
 ```
 default onlink
+
       nexthop via  11.11.11.1 dev egress.calico weight 1 onlink
       nexthop via  11.11.11.2 dev egress.calico weight 1 onlink
-```
-
-**Sample: clients using the following egress gateway policy**
-
-```yaml noValidation
-apiVersion: projectcalico.org/v3
-kind: EgressGatewayPolicy
-metadata:
-  name: "egw-policy1"
-spec:
-  rules:
-  - destination:
-      cidr: 10.0.0.0/8
-    description: "Local: no gateway"
-  - destination:
-      cidr: 11.0.0.0/8
-    description: "Gateway to on prem"
-    gateway:
-      namespaceSelector: "projectcalico.org/name == 'default'"
-      selector: "egress-code == 'blue'"
-      maxNextHops: 2
-  - description: "Gateway to internet"
-    gateway:
-      namespaceSelector: "projectcalico.org/name == 'default'"
-      selector: "egress-code == 'red'"
-```
-
-```
-default onlink
-      nexthop via  11.11.11.1 dev egress.calico weight 1 onlink
-      nexthop via  11.11.11.2 dev egress.calico weight 1 onlink
-      nexthop via  11.11.11.3 dev egress.calico weight 1 onlink
-throw 10.0.0.0/8
-11.0.0.0/8 onlink
-      nexthop via 11.11.12.1 dev egress.calico weight 1 onlink
-      nexthop via 11.11.12.2 dev egress.calico weight 1 onlink
 ```
 
 If you see nothing at all, or the following:

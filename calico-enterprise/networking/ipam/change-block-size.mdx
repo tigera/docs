@@ -36,10 +36,10 @@ apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
   name: default
-spec:
+  pec:
     # Configures Calico networking.
-  calicoNetwork:
-     # Note: The ipPools section cannot be modified post-install.
+   calicoNetwork:
+      # Note: The ipPools section cannot be modified post-install.
     ipPools:
     - blockSize: 26
       cidr: 10.48.0.0/21
@@ -60,10 +60,10 @@ apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
   name: default
-spec:
+  spec:
     # Configures Calico networking.
-  calicoNetwork:
-     # Note: The ipPools section cannot be modified post-install.
+   calicoNetwork:
+      # Note: The ipPools section cannot be modified post-install.
     ipPools:
     - blockSize: 26
       cidr: 10.48.0.0/21
@@ -75,6 +75,7 @@ spec:
       encapsulation: IPIP
       natOutgoing: Enabled
       nodeSelector: all()
+
 ```
 
 ### Expand or shrink IP pool block sizes
@@ -98,6 +99,7 @@ Verify that you are using {{prodname}} IPAM.
 :::note
 
 Follow the steps in order to minimize pod connectivity disruption. Pods may lose connectivity when they are redeployed, and may lose external connectivity while in the temporary pool. Also, when pods are deleted, applications may be temporarily unavailable (depending on the type of application). Plan your changes accordingly.
+
 :::
 
 The high-level steps to follow are:
@@ -137,13 +139,13 @@ spec:
 
 Apply the changes.
 
-```bash
+```
 kubectl apply -f temporary-pool.yaml
 ```
 
 Let’s verify the temporary IP pool.
 
-```bash
+```
 calicoctl get ippool -o wide
 ```
 
@@ -157,13 +159,13 @@ temporary-pool        10.0.0.0/16      true   Always     false
 
 Disable allocations in the default pool.
 
-```bash
+```
 kubectl patch ippool default-ipv4-ippool -p '{"spec": {"disabled": "true"}}'
 ```
 
 Verify the changes.
 
-```bash
+```
 calicoctl get ippool -o wide
 ```
 

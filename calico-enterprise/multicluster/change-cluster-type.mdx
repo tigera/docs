@@ -126,6 +126,11 @@ If you wish to retain LogStorage data for your managed cluster, verify that the 
    kubectl delete manager tigera-secure
    kubectl delete logstorage tigera-secure
    ```
+1. Replace the network policies to secure the standalone cluster with network policies for the managed cluster.
+   ```bash
+   kubectl delete -f {{filesUrl}}/manifests/tigera-policies.yaml
+   kubectl create -f {{filesUrl}}/manifests/tigera-policies-managed.yaml
+   ```
 1. Monitor progress until everything has the status, `Available`.
    ```bash
    watch kubectl get tigerastatus
@@ -176,11 +181,19 @@ If you wish to retain LogStorage data for your managed cluster, verify that the 
    ```bash
    kubectl apply -f {{filesUrl}}/manifests/custom-resources.yaml
    ```
+1. Delete the network policies that secure managed clusters.
+   ```bash
+   kubectl delete -f {{filesUrl}}/manifests/tigera-policies-managed.yaml
+   ```
 1. Monitor the progress with the following command:
    ```bash
    watch kubectl get tigerastatus
    ```
    When all components show a status of `Available`, go to the next step.
+1. Apply the network policies that secure standalone clusters.
+   ```bash
+   kubectl create -f {{filesUrl}}/manifests/tigera-policies.yaml
+   ```
 1. Remove your managed cluster from the **management cluster**.
    ```bash
    kubectl delete managedcluster <your-managed-cluster-name>

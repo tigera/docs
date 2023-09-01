@@ -7,7 +7,7 @@ import Admonition from '@theme/Admonition';
 import Heading from '@theme/Heading';
 
 import ConfigureManagedCluster from './ConfigureManagedCluster';
-import { prodname, baseUrl, filesUrl } from '../../variables';
+import { prodname, prodnamedash, baseUrl, filesUrl } from '../../variables';
 
 export default function InstallGKE(props) {
   return (
@@ -143,7 +143,22 @@ spec:
         <CodeBlock>{`kubectl create -f </path/to/license.yaml>`}</CodeBlock>
         <p>You can now monitor progress with the following command:</p>
         <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
+        <p>
+          When all components show a status of <code>Available</code>, proceed to the next section.
+        </p>
       </When>
+      {props.clusterType !== 'managed' && (
+        <>
+          <Heading
+            as='h4'
+            id={`secure-${prodnamedash}-with-network-policy`}
+          >
+            Secure {prodname} with network policy
+          </Heading>
+          <p>To secure {prodname} component communications, install the following set of network policies.</p>
+          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-policies.yaml</CodeBlock>
+        </>
+      )}
       <When condition={props.clusterType === 'management'}>
         <Heading
           as='h4'

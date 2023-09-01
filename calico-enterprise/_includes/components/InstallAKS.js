@@ -5,6 +5,8 @@ import Link from '@docusaurus/Link';
 import Admonition from '@theme/Admonition';
 import Heading from '@theme/Heading';
 
+import GeekDetails from '@site/src/components/partials/GeekDetails';
+
 import ConfigureManagedCluster from './ConfigureManagedCluster';
 import { prodname, prodnamedash, baseUrl, filesUrl } from '../../variables';
 
@@ -15,7 +17,41 @@ export default function InstallAKS(props) {
         as='h4'
         id='install-aks-with-azure-cni-networking'
       >
-        Install with Azure CNI networking
+        Install AKS with Azure CNI networking
+      </Heading>
+      {props.clusterType === 'standalone' && (
+        <>
+          <p>The geeky details of what you get:</p>
+          <GeekDetails details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' />
+        </>
+      )}
+      <Heading
+        as='h5'
+        id='create-an-aks-cluster'
+      >
+        Create an AKS cluster
+      </Heading>
+      <p>
+        Make sure you have a <Link href={`${baseUrl}/getting-started/install-on-clusters/aks`}>compatible</Link> AKS
+        cluster with:
+      </p>
+      <ul>
+        <li>
+          <Link href='https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni'>Azure CNI networking</Link>
+        </li>
+        <li>
+          <Link
+            href={`${baseUrl}/getting-started/install-on-clusters/requirements#supported-managed-kubernetes-versions`}
+          >
+            A supported {prodname} managed Kubernetes version
+          </Link>
+        </li>
+      </ul>
+      <Heading
+        as='h5'
+        id={`install-${prodnamedash}`}
+      >
+        Install {prodname}
       </Heading>
       <ol>
         <li>
@@ -136,7 +172,70 @@ spec:
         as='h4'
         id={`install-aks-with-${prodnamedash}-networking`}
       >
-        Install with {prodname} networking
+        Install AKS with {prodname} networking
+      </Heading>
+      {props.clusterType === 'standalone' && (
+        <>
+          <p>The geeky details of what you get:</p>
+          <GeekDetails details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VxLAN,Routing:Calico,Datastore:Kubernetes' />
+        </>
+      )}
+      <Heading
+        as='h5'
+        id='create-an-aks-cluster'
+      >
+        Create an AKS cluster
+      </Heading>
+      <p>
+        Make sure you have a <Link href={`${baseUrl}/getting-started/install-on-clusters/aks`}>compatible</Link> AKS
+        cluster with:
+      </p>
+      <ul>
+        <li>
+          <Link href='https://docs.microsoft.com/en-us/azure/aks/use-byo-cni?tabs=azure-cli'>Bring your own CNI</Link>
+        </li>
+        <li>
+          <Link
+            href={`${baseUrl}/getting-started/install-on-clusters/requirements#supported-managed-kubernetes-versions`}
+          >
+            A supported {prodname} managed Kubernetes version
+          </Link>
+        </li>
+      </ul>
+      <Admonition type='note'>
+        Bring your own Container Network Interface (CNI) plugin is a preview feature with AKS.
+      </Admonition>
+      <ol>
+        <li>
+          <p>
+            Create an Azure AKS cluster with no Kubernetes CNI pre-installed. Please refer to{' '}
+            <Link href='https://docs.microsoft.com/en-us/azure/aks/use-byo-cni?tabs=azure-cli'>
+              Bring your own CNI with AKS
+            </Link>{' '}
+            for details.
+          </p>
+          <CodeBlock>
+            {`# Install aks-preview extension
+    az extension add --name aks-preview
+    # Update aks-preview to ensure latest version is installed
+    az extension update --name aks-preview
+    # Create a resource group
+    az group create --name my-calico-rg --location westcentralus
+    az aks create --resource-group my-calico-rg --name my-calico-cluster --location westcentralus --pod-cidr 192.168.0.0/16 --network-plugin none`}
+          </CodeBlock>
+        </li>
+        <li>
+          <p>
+            Get credentials to allow you to access the cluster with <code>kubectl</code>:
+          </p>
+          <CodeBlock>az aks get-credentials --resource-group my-calico-rg --name my-calico-cluster</CodeBlock>
+        </li>
+      </ol>
+      <Heading
+        as='h5'
+        id={`install-${prodnamedash}`}
+      >
+        Install {prodname}
       </Heading>
       <ol>
         <li>
@@ -265,6 +364,21 @@ spec:
           <CodeBlock>{`kubectl create -f </path/to/license.yaml>`}</CodeBlock>
           <p>You can now monitor progress with the following command:</p>
           <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
+          <p>
+            When all components show a status of <code>Available</code>, proceed to the next section.
+          </p>
+        </>
+      )}
+      {props.clusterType !== 'managed' && (
+        <>
+          <Heading
+            as='h4'
+            id={`secure-${prodnamedash}-with-network-policy`}
+          >
+            Secure {prodname} with network policy
+          </Heading>
+          <p>To secure {prodname} component communications, install the following set of network policies.</p>
+          <CodeBlock>{`kubectl create -f ${filesUrl}/manifests/tigera-policies.yaml`}</CodeBlock>
         </>
       )}
       {props.clusterType === 'management' && (

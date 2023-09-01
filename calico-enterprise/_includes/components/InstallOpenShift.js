@@ -56,7 +56,7 @@ export default function InstallOpenShift(props) {
         <Link href={`${baseUrl}/getting-started/install-on-clusters/openshift/requirements`}>system requirements</Link>:
       </p>
       <CodeBlock language='bash'>
-        sed -i 's/\(OpenShiftSDN\|OVNKubernetes\)/Calico/' install-config.yaml{'\n'}
+        sed -i 's/OpenShiftSDN/Calico/' install-config.yaml{'\n'}
         sed -i 's/platform: {}/platform:\n{'\t'}aws:\n{'\t'}type: m4.xlarge/g' install-config.yaml
       </CodeBlock>
 
@@ -96,6 +96,7 @@ spec:
           </CodeBlock>
         </>
       </When>
+
       <Heading
         as='h4'
         id='add-an-image-pull-secret'
@@ -175,7 +176,7 @@ spec:
           <p>
             Wait until the <code>apiserver</code> shows a status of <code>Available</code>.
           </p>
-          <p>After the Tigera API server is ready, apply the license:</p>
+          <p>Once the Tigera API server is ready, apply the license:</p>
           <CodeBlock>{'oc create -f </path/to/license.yaml>'}</CodeBlock>
         </>
       </When>
@@ -188,7 +189,6 @@ spec:
       </Heading>
 
       {/* OCP_ENTERPRISE_RESOURCES variable in Makefile needs to be updated for any addition or deletion of enterprise resources */}
-
       <When condition={props.clusterType === 'managed'}>
         <>
           <p>
@@ -238,11 +238,34 @@ spec:
       <p>You can now monitor progress with the following command:</p>
       <CodeBlock>watch oc get tigerastatus</CodeBlock>
       <p>
-        When it shows all components with status <code>Available</code>, proceed to the next step.
+        When it shows all components with status <code>Available</code>, proceed to the next section.
       </p>
 
-      <p>(Optional) Apply the full CRDs including descriptions.</p>
-      <CodeBlock language='bash'>oc apply --server-side --force-conflicts -f {filesUrl}/manifests/operator-crds.yaml</CodeBlock>
+        <When condition={props.clusterType === 'managed'}>
+            <>
+                <Heading
+                    as='h3'
+                    id={`secure-${prodnamedash}-components-with-network-policy`}
+                >
+                    Secure {prodname} components with network policy
+                </Heading>
+                <p>To secure the components that make up {prodname}, install the following set of network policies.</p>
+                <CodeBlock>oc create -f {filesUrl}/manifests/ocp/tigera-policies-managed.yaml</CodeBlock>
+            </>
+        </When>
+
+        <When condition={props.clusterType !== 'managed'}>
+            <>
+                <Heading
+                    as='h4'
+                    id={`secure-${prodnamedash}-components-with-network-policy`}
+                >
+                    Secure {prodname} components with network policy
+                </Heading>
+                <p>To secure the components that make up {prodname}, install the following set of network policies.</p>
+                <CodeBlock>oc create -f {filesUrl}/manifests/ocp/tigera-policies.yaml</CodeBlock>
+            </>
+        </When>
 
       <When condition={props.clusterType === 'management'}>
         <>

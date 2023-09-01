@@ -49,7 +49,6 @@ This how-to guide uses the following features:
 
 - Egress gateway pods and their associated Kubernetes **Namespace** and **Pod** annotations:
 
-  - `egress.projectcalico.org/egressGatewayPolicy`
   - `egress.projectcalico.org/namespaceSelector`
   - `egress.projectcalico.org/selector`
 
@@ -202,15 +201,9 @@ an instance (for example when scaling up the cluster).
 
 ## Before you begin
 
-**Required**
+**Supported**
 
-- Calico CNI
-
-**Not Supported**
-
-- Amazon VPC CNI
-
-  {{prodname}} CNI and IPAM is required. The ability to control the egress gateway’s IP is a feature of {{prodname}} CNI and IPAM. AWS VPC CNI does not support that feature, so it is incompatible with egress gateways.
+- Kubernetes in AWS only; for on-prem, see [this guide](egress-gateway-on-prem.mdx)
 
 ## How to
 
@@ -220,17 +213,16 @@ an instance (for example when scaling up the cluster).
 - [Configure AWS IAM roles](#configure-aws-iam-roles)
 - [Configure IP reservations for each VPC subnet](#configure-ip-reservations-for-each-vpc-subnet)
 - [Enable egress gateway support](#enable-egress-gateway-support)
+- [Enable policy sync API](#enable-policy-sync-api)
 - [Enable AWS-backed IP pools](#enable-aws-backed-ip-pools)
 - [Configure IP pools backed by VPC subnets](#configure-ip-pools-backed-by-vpc-subnets)
+- [Copy pull secret into egress gateway namespace](#copy-pull-secret-into-egress-gateway-namespace)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
-- [Configure iptables backend for egress gateways](#configure-iptables-backend-for-egress-gateways)
-- [Configure namespaces and pods to use egress gateways](#configure-namespaces-and-pods-to-use-egress-gateways)
+- [Configure a Namespace or Pod to use egress gateways](#configure-a-namespace-or-pod-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
-- [Control the use of egress gateways](#control-the-use-of-egress-gateways)
+- [Controlling the use of egress gateways](#controlling-the-use-of-egress-gateways)
 - [Policy enforcement for flows via an egress gateway](#policy-enforcement-for-flows-via-an-egress-gateway)
-- [Make local egress gateways the default](#make-local-egress-gateways-the-default)
-- [Upgrade egress gateways](#upgrade-egress-gateways)
 
 ### Configure IP autodetection
 
@@ -366,11 +358,6 @@ of resources). In addition, to support elastic IPs, each {{noderunning}} also re
 - AssociateAddress
 - DisassociateAddress
 
-### Configure AWS Security Group rules
-
-In order to allow egress gateway traffic into the egress gateway pod's host from the client, the ingress rules of the security
-group need to be updated. A rule to allow all packets from within the security group must be added to the inbound rules.
-
 ### Configure IP reservations for each VPC subnet
 
 Since the first four IP addresses and the last IP address in a VPC subnet cannot be used, it is important to
@@ -402,7 +389,7 @@ In the default **FelixConfiguration**, set the `egressIPSupport` field to `Enabl
 support on a per-namespace basis only:
 
 ```bash
-kubectl patch felixconfiguration default --type='merge' -p \
+kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
 ```
 
@@ -413,11 +400,20 @@ kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
 ```
 
+### Enable policy sync API
+
+The egress gateway container image requires the policy sync API to be enabled. To do this cluster-wide, modify
+the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
+
+```bash
+kubectl patch felixconfiguration.p default --type='merge' -p \
+    '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
+```
+
 :::note
 
-- `egressIPSupport` must be the same on all cluster nodes, so you should set them only in the
+- `egressIPSupport` and `policySyncPathPrefix` must be the same on all cluster nodes, so you should only set them in the
   `default` FelixConfiguration resource.
-- The operator automatically enables the required policy sync API in the FelixConfiguration.
 
 :::
 
@@ -498,19 +494,19 @@ it will take an IP from the appropriate pool.
 
 For the "west-1" availability zone:
 
-- IP pool "egress-red-west-1", CIDR `100.64.0.4/30` (the first non-reserved /30 CIDR in the VPC subnet). These
+- IP pool "egress-red-west-1", CIDR `100.64.0.4/31` (the first non-reserved /31 CIDR in the VPC subnet). These
   addresses will be used for "red" egress gateways in the "west-1" AZ.
 
-- IP pool "egress-blue-west-1", CIDR `100.64.0.8/30` (the next 4 IPs from the "west-1" subnet). These addresses
+- IP pool "egress-blue-west-1", CIDR `100.64.0.6/31` (the next 2 IPs from the "west-1" subnet). These addresses
   will be used for "blue" egress gateways in the "west-1" AZ.
 
 For the "west-2" availability zone:
 
-- IP pool "egress-red-west-2", CIDR `100.64.4.4/30` (the first non-reserved /30 CIDR in the VPC subnet). These
-  addresses will be used for "red" egress gateways in the "west-2" AZ.
+- IP pool "egress-red-west-2", CIDR `100.64.4.4/31` (the first non-reserved /31 CIDR in the VPC subnet). These
+  addresses will be used for "red" egress gateways in the "west-1" AZ.
 
-- IP pool "egress-blue-west-2", CIDR `100.64.4.8/30` (the next 4 IPs from the "west-2" subnet). These addresses
-  will be used for "blue" egress gateways in the "west-2" AZ.
+- IP pool "egress-blue-west-2", CIDR `100.64.4.6/31` (the next 2 IPs from the "west-2" subnet). These addresses
+  will be used for "blue" egress gateways in the "west-1" AZ.
 
 Converting this to `IPPool` resources:
 
@@ -520,7 +516,7 @@ kind: IPPool
 metadata:
   name: egress-red-west-1
 spec:
-  cidr: 100.64.0.4/30
+  cidr: 100.64.0.4/31
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000001
   blockSize: 32
@@ -532,7 +528,7 @@ kind: IPPool
 metadata:
   name: egress-blue-west-1
 spec:
-  cidr: 100.64.0.8/30
+  cidr: 100.64.0.6/31
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000001
   blockSize: 32
@@ -544,7 +540,7 @@ kind: IPPool
 metadata:
   name: egress-red-west-2
 spec:
-  cidr: 100.64.4.4/30
+  cidr: 100.64.4.4/31
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000002
   blockSize: 32
@@ -556,7 +552,7 @@ kind: IPPool
 metadata:
   name: egress-blue-west-2
 spec:
-  cidr: 100.64.4.8/30
+  cidr: 100.64.4.6/31
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000002
   blockSize: 32
@@ -609,11 +605,11 @@ For the "west-1" availability zone:
   - `100.64.0.0/25` covers the addresses from `100.64.0.0` to `100.64.0.127` (but addresses `100.64.0.0` to `100.64.0.3`
     were reserved above).
 
-- IP pool "egress-red-west-1", CIDR `100.64.0.128/30` (the next 4 IPs from the "west-1" subnet).
+- IP pool "egress-red-west-1", CIDR `100.64.0.128/31` (the next 2 IPs from the "west-1" subnet).
 
   - These addresses will be used for "red" egress gateways in the "west-1" AZ.
 
-- IP pool "egress-blue-west-1", CIDR `100.64.0.132/30` (the next 4 IPs from the "west-1" subnet).
+- IP pool "egress-blue-west-1", CIDR `100.64.0.130/31` (the next 2 IPs from the "west-1" subnet).
 
   - These addresses will be used for "blue" egress gateways in the "west-1" AZ.
 
@@ -624,13 +620,13 @@ For the "west-2" availability zone:
   - `100.64.4.0/25` covers the addresses from `100.64.4.0` to `100.64.4.127` (but addresses `100.64.4.0` to `100.64.4.3`
     were reserved above).
 
-- IP pool "egress-red-west-2", CIDR `100.64.4.128/30` (the next 4 IPs from the "west-2" subnet).
+- IP pool "egress-red-west-2", CIDR `100.64.4.128/31` (the next 2 IPs from the "west-2" subnet).
 
-  - These addresses will be used for "red" egress gateways in the "west-2" AZ.
+  - These addresses will be used for "red" egress gateways in the "west-1" AZ.
 
-- IP pool "egress-blue-west-2", CIDR `100.64.4.132/30` (the next 4 IPs from the "west-2" subnet).
+- IP pool "egress-blue-west-2", CIDR `100.64.4.130/31` (the next 2 IPs from the "west-2" subnet).
 
-  - These addresses will be used for "blue" egress gateways in the "west-2" AZ.
+  - These addresses will be used for "blue" egress gateways in the "west-1" AZ.
 
 Converting this to `IPPool` resources:
 
@@ -651,7 +647,7 @@ kind: IPPool
 metadata:
   name: egress-red-west-1
 spec:
-  cidr: 100.64.0.128/30
+  cidr: 100.64.0.128/31
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000001
   blockSize: 32
@@ -663,7 +659,7 @@ kind: IPPool
 metadata:
   name: egress-blue-west-1
 spec:
-  cidr: 100.64.0.132/30
+  cidr: 100.64.0.130/31
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000001
   blockSize: 32
@@ -686,7 +682,7 @@ kind: IPPool
 metadata:
   name: egress-red-west-2
 spec:
-  cidr: 100.64.4.128/30
+  cidr: 100.64.4.128/31
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000002
   blockSize: 32
@@ -698,7 +694,7 @@ kind: IPPool
 metadata:
   name: egress-blue-west-2
 spec:
-  cidr: 100.64.4.132/30
+  cidr: 100.64.4.130/31
   allowedUses: ['Workload']
   awsSubnetID: subnet-000000000000000002
   blockSize: 32
@@ -709,81 +705,108 @@ spec:
 </TabItem>
 </Tabs>
 
+### Copy pull secret into egress gateway namespace
+
+Identify the pull secret that is needed for pulling {{prodname}} images, and copy this into the
+namespace where you plan to create your egress gateways. It is typically named
+`tigera-pull-secret`, in the `calico-system` namespace, so the command to copy that to the `default`
+namespace would be:
+
+```bash
+kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
+   grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
+   kubectl apply --namespace=default -f -
+```
+
 ### Deploy a group of egress gateways
 
-Use an egress gateway custom resource to deploy a group of egress gateways.
+Use a Kubernetes Deployment to deploy a group of egress gateways.
 
 Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and {{prodname}}
 in tandem to get a cluster of egress gateways that spans both availability zones and uses AWS-backed IP addresses:
 
 ```bash
 kubectl apply -f - <<EOF
-apiVersion: operator.tigera.io/v1
-kind: EgressGateway
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: "egress-gateway-red"
-  namespace: "calico-egress"
+  name: egress-gateway
+  namespace: default
+  labels:
+    egress-code: red
 spec:
-  logSeverity: "Info"
   replicas: 2
-  ipPools:
-  - name: "egress-red-west-1"
-  - name: "egress-red-west-2"
-# Uncomment this block to add ICMP, HTTP probes
-# egressGatewayFailureDetection:
-#   healthTimeoutDataStoreSeconds: 30
-#   icmpProbe:
-#     ips:
-#     - <IP to probe>
-#     - <IP to probe>
-#     timeoutSeconds: 15
-#     intervalSeconds: 5
-#   httpProbe:
-#     urls:
-#     - <URL to probe>
-#     - <URL to probe>
-#     timeoutSeconds: 30
-#     intervalSeconds: 10
-  aws:
-    nativeIP: Enabled
+  selector:
+    matchLabels:
+      egress-code: red
   template:
     metadata:
+      annotations:
+        cni.projectcalico.org/ipv4pools: '["egress-red-west-1","egress-red-west-2"]'
       labels:
         egress-code: red
     spec:
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            egress-code: red
+      imagePullSecrets:
+      - name: tigera-pull-secret
       nodeSelector:
         kubernetes.io/os: linux
+      containers:
+      - name: egress-gateway
+        image: {{registry}}{% component_image("egress-gateway") %}
+        env:
+        - name: EGRESS_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /var/run
+          name: policysync
+        resources:
+          requests:
+            projectcalico.org/aws-secondary-ipv4: 1
+          limits:
+            projectcalico.org/aws-secondary-ipv4: 1
       terminationGracePeriodSeconds: 0
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: "topology.kubernetes.io/zone"
-          whenUnsatisfiable: "DoNotSchedule"
-          labelSelector:
-            matchLabels:
-              egress-code: red
+      volumes:
+      - flexVolume:
+          driver: nodeagent/uds
+        name: policysync
 EOF
 ```
 
 - `replicas: 2` tells Kubernetes to schedule two egress gateways in the "red" cluster.
-- ipPools tells {{site.prodname}} IPAM to use one of the "red" IP pools:
+
+- This annotation tells {{prodname}} IPAM to use one of the "red" IP pools:
 
   ```yaml
-  ipPools:
-  - name: "egress-red-west-1"
-  - name: "egress-red-west-2"
+  annotations:
+    cni.projectcalico.org/ipv4pools: '["egress-red-west-1","egress-red-west-2"]'
   ```
+
   Depending on which AZ the pod is scheduled in, {{prodname}} IPAM will automatically ignore IP pools that
   are backed by AWS subnets that are not in the local AZ.
 
   External services and appliances can recognise "red" traffic because it will all come from the CIDRs of the "red"
   IP pools.
 
-- When nativeIP is enabled, IPPools must be AWS-backed. It also tells Kubernetes to only schedule the gateway to a node
-  with available AWS IP capacity:
+- The following resource request tells Kubernetes to only schedule the gateway to a node with available AWS IP capacity;
+  it also tells {{prodname}} to use an AWS-backed IP pool for allocating the IP address:
 
   ```yaml
-  aws:
-    nativeIP: Enabled
+  resources:
+    requests:
+      projectcalico.org/aws-secondary-ipv4: 1
+    limits:
+      projectcalico.org/aws-secondary-ipv4: 1
   ```
 
 - The following [topology spread constraint](https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/)
@@ -801,38 +824,6 @@ EOF
           egress-code: red
   ```
 
-- The labels are arbitrary. You can choose whatever names and values are convenient for your cluster's Namespaces and Pods to refer to in their egress selectors.
-  If labels are not specified, a default label `projectcalico.org/egw`:`name` will be added by the Tigera Operator.
-
-- icmpProbe may be used to specify the Probe IPs, ICMP interval and timeout in seconds. `ips` if set, the
-  egress gateway pod will probe each IP periodically using an ICMP ping. If all pings fail then the egress
-  gateway will report non-ready via its health port. `intervalSeconds` controls the interval between probes.
-  `timeoutSeconds` controls the timeout before reporting non-ready if no probes succeed.
-
-  ```yaml
-  icmpProbe:
-    ips:
-    - <IP to probe>
-    - <IP to probe>
-    timeoutSeconds: 20
-    intervalSeconds: 10
-  ```
-
-- httpProbe may be used to specify the Probe URLs, HTTP interval and timeout in seconds. `urls` if set, the
-  egress gateway pod will probe each external service periodically. If all probes fail then the egress
-  gateway will report non-ready via its health port. `intervalSeconds` controls the interval between probes.
-  `timeoutSeconds` controls the timeout before reporting non-ready if all probes are failing.
-
-  ```yaml
-  httpProbe:
-    urls:
-    - <URL to probe>
-    - <URL to probe>
-    timeoutSeconds: 30
-    intervalSeconds: 10
-  ```
-- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the egress gateway resource type.
-
 :::note
 
 - It is advisable to have more than one egress gateway per group, so that the egress IP function
@@ -840,35 +831,23 @@ EOF
   gateways in a group, outbound traffic from the applications using that group is load-balanced
   across the available gateways. The number of `replicas` specified must be less than or equal
   to the number of free IP addresses in the IP Pool.
-- IPPool can be specified either by its name (e.g. `-name: egress-ippool-1`) or by its CIDR (e.g. `-cidr: 10.10.10.0/31`).
+- In the `cni.projectcalico.org/ipv4pools` annotation, the IP Pool can be specified either
+  by its name (e.g. `egress-ippool-1`) or by its CIDR (e.g. `10.10.10.0/31`).
 - The labels are arbitrary. You can choose whatever names and values are convenient for
   your cluster's Namespaces and Pods to refer to in their egress selectors.
-  The health port `8080` is used by:
-- The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
-  probes).
-- Remote pods to check if the egress gateway is "ready". Only "ready" egress
-  gateways will be used for remote client traffic. This traffic is automatically allowed by {{prodname}} and
-  no policy is required to allow it. {{prodname}} only sends probes to egress gateway pods that have a named
-  "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
+- The image name and `EGRESS_POD_IP` configuration are required. `tigera/egress-gateway` is the
+  image that provides the egress gateway function, and `EGRESS_POD_IP` tells the runtime
+  container what its pod IP is.
+- The `securityContext` is required, so that the egress gateway can manipulate its own network
+  namespace.
+- The `policysync` volume mount is required. This exposes the policy sync API to the pod,
+  allowing it to program its own routing based off information from Felix.
 
 :::
 
-### Configure iptables backend for egress gateways
+### Configure a Namespace or Pod to use egress gateways
 
-The Tigera Operator configures egress gateways to use the same iptables backend as `calico-node`.
-To modify the iptables backend for egress gateways, you must change the `iptablesBackend` field in the [Felix configuration](../../reference/resources/felixconfig.mdx).
-
-### Configure namespaces and pods to use egress gateways
-
-You can configure namespaces and pods to use an egress gateway by:
-* annotating the namespace or pod
-* applying an egress gateway policy to the namespace or pod.
-
-Using an egress gateway policy is more complicated, but it allows advanced use cases.
-
-#### Configure a namespace or pod to use an egress gateway (annotation method)
-
-In a {{prodname}} deployment, the Kubernetes namespace and pod resources honor annotations that
+In a {{prodname}} deployment, the Kubernetes Namespace and Pod resources honor annotations that
 tell that namespace or pod to use particular egress gateways. These annotations are selectors, and
 their meaning is "the set of pods, anywhere in the cluster, that match those selectors".
 
@@ -886,14 +865,15 @@ in a different namespace, specify a `namespaceSelector` annotation as well, like
 kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
 ```
 
-Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
+Egress gateway annotations have the same [syntax and range of
+expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
 {{prodname}} [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
 
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
 creating the pod. For example:
 
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -f - <<'EOF'
 apiVersion: v1
 kind: Pod
 metadata:
@@ -906,95 +886,6 @@ spec:
   ...
 EOF
 ```
-
-#### Configure a namespace or pod to use an egress gateway (egress gateway policy method)
-
-Creating an egress gateway policy allows gives you more control over how your egress gateways work.
-For example, you can:
-  - Send egress gateway traffic to multiple egress gateways, depending on the destination.
-  - Skip egress gateways for traffic that is bound for local endpoints that aren't in the cluster.
-
-The following is an example of Egress Gateway Policy:
-
-```yaml noValidation
-apiVersion: projectcalico.org/v3
-kind: EgressGatewayPolicy
-metadata:
-  name: "egw-policy1"
-spec:
-  rules:
-  // callout-for-next-line
-  - destination:
-      cidr: 10.0.0.0/8
-    description: "Local: no gateway"
-  - destination:
-      cidr: 11.0.0.0/8
-    description: "Gateway to on prem"
-    // callout-for-next-line
-    gateway:
-      // callout-for-next-line
-      namespaceSelector: "projectcalico.org/name == 'default'"
-      // callout-for-next-line
-      selector: "egress-code == 'blue'"
-      // callout-for-next-line
-      maxNextHops: 2
-  - description: "Gateway to internet"
-    gateway:
-      namespaceSelector: "projectcalico.org/name == 'default'"
-      selector: "egress-code == 'red'"
-```
-
-
-
-1. If the `destination` field is not specified, it takes the default value of 0.0.0.0/0.
-
-1. If the `gateway` field is not specified, then egress traffic is routed locally, and not through an egress gateway.
-   This is helpful for reaching local endpoints that are not part of a cluster.
-
-1. Required when `gateway` field is specified.
-
-1. Required when `gateway` field is specified.
-
-1. The `maxNextHops` field specifies the maximum number of egress gateway replicas from the selected deployment that a pod depends on. For more information, see [Optimize egress networking for workloads with long-lived TCP connections](egress-gateway-maintenance.mdx#reduce-the-impact-of-gateway-downtime).
-
-
-
-{{prodname}} rejects egress gateway policies that do any of the following:
-* The policy has no rule that specifies a gateway or a destination
-* The policy has a rule with empty `selector` or `namespaceSelector` fields.
-* The policy has two or more rules with the same destination.
-
-To configure all the pods in a namespace to use an egress gateway policy named `egw-policy1`, you could annotate the namespace like this:
-
-```bash
-kubectl annotate ns  egress.projectcalico.org/egressGatewayPolicy="egw-policy1"
-```
-
-To configure a specific Kubernetes pod to use the same policy, specify the same annotations when
-creating the pod.
-For example:
-
-```bash
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    egress.projectcalico.org/egressGatewayPolicy: "egw-policy1"
-  name: my-client,
-  namespace: my-namespace,
-spec:
-  ...
-EOF
-```
-
-:::caution
-
-You must create the egress gateway policy before you apply it to a namespace or pod.
-If you attempt to apply an egress gateway policy that has not been created, {{prodname}} will block all traffic from the namespace or pod.
-
-:::
-
 
 ### Add AWS Elastic IPs to the egress gateway deployment
 
@@ -1016,13 +907,16 @@ To add AWS Elastic IPs to the egress gateway pods, follow these steps:
 - Create one or more Elastic IPs for the deployment. This can be done through the AWS Console or using the AWS
   command line interface.
 
-- Add the Elastic IPs to the egress gateway resource.
+- Add the `cni.projectcalico.org/awsElasticIPs` annotation to the pod template, within the egress gateway deployment.
+  The format of the annotation is a string containing a JSON-formatted list of Elastic IP addresses:
 
   ```yaml
-  aws:
-    nativeIP: Enabled
-    elasticIPs: ["37.1.2.3", "43.2.5.6"]
-
+  ---
+  template:
+    metadata:
+      annotations:
+        cni.projectcalico.org/ipv4pools: '["egress-red-west-1","egress-red-west-2"]'
+        cni.projectcalico.org/awsElasticIPs: '["37.1.2.3", "43.2.5.6"]'
   ```
 
 Once the update has rolled out, {{prodname}} will try to add one of the requested Elastic IPs to each pod in
@@ -1064,23 +958,8 @@ docker run --net=host --privileged subfuzion/netcat -v -l -k -p 8089
 
 Then provision an egress IP Pool, and egress gateways, as above.
 
-Then deploy a pod, with egress annotations as above, and with any image that includes netcat, for example:
-
-```bash
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-netcat-pod
-  namespace: my-namespace
-spec:
-  containers:
-  - name: alpine
-    image: alpine
-    command: ["/bin/sleep"]
-    args: ["infinity"]
-EOF
-```
+Then deploy a pod, with egress annotations as above, and with any image that includes netcat, for
+example `laurenceman/alpine`.
 
 Now you can use `kubectl exec` to initiate an outbound connection from that pod:
 
@@ -1098,7 +977,7 @@ Connection from <source IP> <source port> received
 
 with `<source IP>` being one of the IPs of the egress IP pool that you provisioned.
 
-### Control the use of egress gateways
+### Controlling the use of egress gateways
 
 If a cluster ascribes special meaning to traffic flowing through egress gateways, it will be
 important to control when cluster users can configure their pods and namespaces to use them, so that
@@ -1139,8 +1018,7 @@ The path of the traffic through policy is as follows:
 4. The egress gateway pod de-encapsulates the packet and sends the packet out again with its own address.
 5. The packet leaves the egress gateway pod through its egress policy.
 
-To ensure correct operation, (as of v3.15) the encapsulated traffic between host and egress gateway is auto-allowed by
-{{prodname}} and other ingress traffic is blocked. That means that there are effectively two places where
+Because the encapsulated traffic from host to egress gateway is "opaque" to policy, there are effectively two places where
 policy can be applied:
 
 1.  on egress from the client pod
@@ -1167,60 +1045,38 @@ That means that policies at (2) will usually take the form of rules that match o
 either directly in the rule (via a CIDR match) or via a (non-domain based) NetworkSet. Matching on source has little
 utility since the IP will always be the egress gateway and the port of translated traffic is not always preserved.
 
+## Upgrading egress gateways
+
+Because egress gateway deployments are not currently managed by the Tigera Operator, it is necessary to upgrade
+egress gateway deployments manually.
+
 :::note
 
-Since v3.15.0, {{prodname}} also sends health probes to the egress gateway pods from the nodes where
-their clients are located. In iptables mode, this traffic is auto-allowed at egress from the host and ingress
-to the egress gateway. In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic is allowed; this should be fixed in an upcoming
-patch release.
+When upgrading egress gateway deployments, both the image and the deployment spec need to be changed in
+tandem; upgrading only the image version can result in a non-functioning egress gateway. Newer versions of the
+egress gateway image require new volume mounts and environment variables and have other structural changes.
 
 :::
 
-## Make local egress gateways the default
+To upgrade an egress gateway deployment:
 
-To set the default to use local egress gateways, set the `GatewayPreference` to `PreferNodeLocal` or `None` (the default) in the egress gateway policy. When set to `PreferNodeLocal`, egress gateways local to the client's node will be used if available. If there are no local egress gateways, we will fallback to using the other egress gateways.
+- Before upgrading egress gateways to a particular version, upgrade the other {{prodname}} components
+  first. The egress gateway image should never be newer than the other {{prodname}} components. We recommend
+  keeping the gress gateway version up-to-date with the overall product version to minimise the chance of
+  incompatibilities.
 
-The following is an example of an egress gateway policy with GatewayPreference set to use local egress gateways.
+- Ensure that the policy sync API is enabled; this is required by egress gateway images starting with v3.11.0. To
+  enable the policy sync API, follow the steps in [enable policy sync API](#enable-policy-sync-api) above. This API
+  allows the egress gateway daemon inside the egress gateway pod to query {{noderunning}} for the set of active
+  routes in the cluster. If the egress gateway daemon cannot reach the API, it will fail and report errors to the logs
+  as it retries the connection.
 
-```yaml noValidation
-apiVersion: projectcalico.org/v3
-kind: EgressGatewayPolicy
-metadata:
-  name: "egw-policy1"
-spec:
-  rules:
-  - destination:
-      cidr: 10.0.0.0/8
-    description: "Local: no gateway"
-  - destination:
-      cidr: 11.0.0.0/8
-    description: "Gateway to on prem"
-    gateway:
-      namespaceSelector: "projectcalico.org/name == 'default'"
-      selector: "egress-code == 'blue'"
-      maxNextHops: 2
-    gatewayPreference: PreferNodeLocal
-  - description: "Gateway to internet"
-    gateway:
-      namespaceSelector: "projectcalico.org/name == 'default'"
-      selector: "egress-code == 'red'"
-    gatewayPreference: None
-```
+- Follow the steps [above](#deploy-a-group-of-egress-gateways) to prepare a deployment manifest for the new version
+  egress gateways with the same name as the old. As noted above, the deployment must be updated in lockstep with
+  the image version because different versions require different volumes/environment variables and other settings.
 
-For destination `11.0.0.0/8`, Egress Gateways local to the client node will be used if present. If not, all the egress gateways matching the selector will be used.
-
-## Upgrade egress gateways
-
-
-From v3.16, egress gateway deployments are managed by the Tigera Operator.
-
-- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 egress gateway deployment,
-  create an equivalent EgressGateway resource with the same namespace and the same name as mentioned [above](#deploy-a-group-of-egress-gateways);
-  the operator will then take over management of the old Deployment resource, replacing it with the upgraded version.
-
-- Use `kubectl apply` to create the egress gateway resource. Tigera Operator will read the newly created resource and wait
-  for the other {{prodname}} components to be upgraded. Once the other {{prodname}} components are upgraded, Tigera Operator
-  will upgrade the existing egress gateway deployment with the new image.
+- Use `kubectl replace` to apply the manifest over the existing one. Kubernetes will roll out the new egress gateways,
+  replacing the old.
 
 By default, upgrading egress gateways will sever any connections that are flowing through them. To minimise impact,
 the egress gateway feature supports some advanced options that give feedback to affected pods. For more details see

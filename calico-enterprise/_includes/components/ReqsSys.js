@@ -3,7 +3,6 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
-import CodeBlock from '@theme/CodeBlock';
 
 import { orchestrators } from '@site/variables';
 import { prodname, baseUrl } from '../../variables';
@@ -30,8 +29,9 @@ function NodeRequirementsEnt(props) {
           <ul>
             {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.HostProtection) && (
               <>
-                <li>Ubuntu 20.04 and 22.04</li>
-                <li>RHEL 8 and 9</li>
+                <li>CentOS 8</li>
+                <li>Ubuntu 18.04 and 20.04</li>
+                <li>RHEL 8</li>
                 <li>Debian 10</li>
               </>
             )}
@@ -42,30 +42,10 @@ function NodeRequirementsEnt(props) {
             )}
             {props.orch === orchestrators.OpenStack && (
               <>
-                <li>Ubuntu 20.04 and 22.04</li>
+                <li>Ubuntu 18.04</li>
                 <li>CentOS 8</li>
               </>
             )}
-          </ul>
-        </li>
-        <li>
-          <p>
-            If your node is running RHEL 8 or RHEL 9, you must install a specialized policy package before you install {prodname}.
-            With this package, {prodname} can use SELinux contexts in a series of rules that allow it to interact with persistent and ephemeral data in nonstandard host system locations.
-          </p>
-          <ul>
-            <li>
-              <p>If your node has RHEL 8 installed, then run the following command:</p>
-              <CodeBlock language="bash">
-                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el8.noarch.rpm`}
-              </CodeBlock>
-            </li>
-            <li>
-              <p>If your node has RHEL 9 installed, then run the following command:</p>
-              <CodeBlock language="bash">
-                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el9.noarch.rpm`}
-              </CodeBlock>
-            </li>
           </ul>
         </li>
         <li>
@@ -170,9 +150,9 @@ function KeyValueStore(props) {
     <>
       <Heading
         as='h2'
-        id='datastore-requirements'
+        id='keyvalue-store'
       >
-        Datastore requirements
+        Key/value store
       </Heading>
       <p>
         {prodname} requires a key/value store accessible by all {prodname} components.&nbsp;
@@ -244,16 +224,6 @@ function NetworkRequirementsEnt(props) {
             <td></td>
             <td>VXLAN</td>
             <td>UDP 4789</td>
-          </tr>
-          <tr className='even'>
-            <td></td>
-            <td>Wireguard</td>
-            <td>UDP 51820 (default)</td>
-          </tr>
-          <tr className='odd'>
-            <td></td>
-            <td>IPv6 Wireguard</td>
-            <td>UDP 51821 (default)</td>
           </tr>
           <tr className='even'>
             <td>
@@ -409,9 +379,9 @@ function Privileges(props) {
     <>
       <Heading
         as='h2'
-        id='privilege-requirements'
+        id='privileges'
       >
-        Privilege requirements
+        Privileges
       </Heading>
       <p>
         Ensure that {prodname} has the <code>CAP_SYS_ADMIN</code> privilege.

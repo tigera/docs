@@ -19,6 +19,42 @@ export default function InstallEKS(props) {
       >
         Install EKS with Amazon VPC networking
       </Heading>
+      {props.clusterType === 'standalone' && (
+        <>
+          <p>The geeky details of what you get:</p>
+          <GeekDetails details='Policy:Calico,IPAM:AWS,CNI:AWS,Overlay:No,Routing:VPC Native,Datastore:Kubernetes' />
+        </>
+      )}
+      <Heading
+        as='h5'
+        id='create-an-eks-cluster'
+      >
+        Create an EKS cluster
+      </Heading>
+      <p>
+        Make sure you have an EKS cluster <strong>without {prodname} installed</strong> and:
+      </p>
+      <ul>
+        <li>
+          <Link href='https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html'>
+            A supported EKS Kubernetes version
+          </Link>
+        </li>
+        <li>
+          <Link
+            href={`${baseUrl}/getting-started/install-on-clusters/requirements#supported-managed-kubernetes-versions`}
+          >
+            A supported {prodname} managed Kubernetes version
+          </Link>
+          .
+        </li>
+      </ul>
+      <Heading
+        as='h5'
+        id={`install-${prodnamedash}`}
+      >
+        Install {prodname}
+      </Heading>
       <ol>
         <li>
           <Link href={`${baseUrl}/operations/logstorage/create-storage`}>
@@ -138,7 +174,13 @@ spec:
       >
         Install EKS with Calico networking
       </Heading>
-      <p>
+      {props.clusterType === 'standalone' && (
+        <>
+          <p>The geeky details of what you get:</p>
+          <GeekDetails details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:Calico,Datastore:Kubernetes' />
+        </>
+      )}
+      <Admonition type='note'>
         {prodname} networking cannot currently be installed on the EKS control plane nodes. As a result the control
         plane nodes will not be able to initiate network connections to {prodname} pods. (This is a general limitation
         of EKS's custom networking support, not specific to {prodname}.) As a workaround, trusted pods that require
@@ -148,7 +190,7 @@ spec:
           pod spec
         </Link>{' '}
         definition for more information on this setting.
-      </p>
+      </Admonition>
       <Heading
         as='h5'
         id='create-an-eks-cluster'
@@ -333,6 +375,21 @@ spec:
           <CodeBlock>{`kubectl create -f </path/to/license.yaml>`}</CodeBlock>
           <p>You can now monitor progress with the following command:</p>
           <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
+          <p>
+            When all components show a status of <code>Available</code>, proceed to the next section.
+          </p>
+        </>
+      )}
+      {props.clusterType !== 'managed' && (
+        <>
+          <Heading
+            as='h4'
+            id={`secure-${prodnamedash}-with-network-policy`}
+          >
+            Secure {prodname} with network policy
+          </Heading>
+          <p>To secure {prodname} component communications, install the following set of network policies.</p>
+          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-policies.yaml</CodeBlock>
         </>
       )}
       {props.clusterType === 'management' && (

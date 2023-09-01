@@ -1,7 +1,6 @@
 import React from 'react';
 
 import Link from '@docusaurus/Link';
-import GeekDetails from '@site/src/components/partials/GeekDetails';
 
 import { prodname, prodnameWindows, baseUrl } from '../../variables';
 
@@ -9,19 +8,10 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
   return (
     <>
       <p>
-        <strong>CNI support</strong>
-      </p>
-      <p>Calico CNI for networking with {prodname} network policy</p>
-      <p>The geeky details of what you get:</p>
-      <GeekDetails details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:Calico,Datastore:Kubernetes' />
-      <p>
         <strong>Required</strong>
       </p>
       <ul>
         <li>
-          <p>
-            A <Link href={`${baseUrl}/getting-started/compatibility#openshift`}>compatible OpenShift cluster</Link>
-          </p>
           <p>
             Your environment meets the {prodname}{' '}
             <Link href={`${baseUrl}/getting-started/install-on-clusters/openshift/requirements`}>
@@ -31,33 +21,9 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
         </li>
         <li>
           <p>
-            A{' '}
-            <Link
-              href='https://cloud.redhat.com/'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              RedHat account
-            </Link>{' '}
-            for the pull secret to provision an OpenShift cluster.
-          </p>
-        </li>
-        <li>
-          <p>
-            OpenShift command line interface from{' '}
-            <Link
-              href='https://cloud.redhat.com/openshift/install/aws/installer-provisioned'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              cloud.redhat.com
+            <Link href={`${baseUrl}/getting-started/install-on-clusters/calico-enterprise`}>
+              Private registry credentials and license key
             </Link>
-          </p>
-        </li>
-        <li>
-          <p>
-            Cluster meets the {prodname}{' '}
-            <Link href={`${baseUrl}//getting-started/install-on-clusters/openshift/requirements`}>system requirements</Link>
           </p>
         </li>
         <li>
@@ -79,6 +45,12 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
         </li>
         <li>
           <p>
+            A <Link href='https://cloud.redhat.com/'>RedHat account</Link> for the pull secret to provision an OpenShift
+            cluster.
+          </p>
+        </li>
+        <li>
+          <p>
             OpenShift installer <strong>v4.8 or 4.9</strong> and OpenShift command line interface from{' '}
             <Link href='https://cloud.redhat.com/openshift/install/aws/installer-provisioned'>cloud.redhat.com</Link>
           </p>
@@ -90,11 +62,6 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
               generated a local SSH private key
             </Link>{' '}
             that is added to your ssh-agent
-          </p>
-        </li>
-        <li>
-          <p>
-            A <Link href={`${baseUrl}/getting-started/install-on-clusters/calico-enterprise`}>Tigera license key and credentials</Link>
           </p>
         </li>
         {props.clusterOS === 'hybrid' && (

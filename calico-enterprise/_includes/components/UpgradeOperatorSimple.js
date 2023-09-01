@@ -5,7 +5,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { baseUrl, filesUrl, tmpScriptsURL } from '../../variables';
+import { baseUrl, filesUrl, prodname, tmpScriptsURL } from '../../variables';
 
 export default function UpgradeOperatorSimple(props) {
   return (
@@ -127,6 +127,21 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
                 ? `kubectl apply -f ${filesUrl}/manifests/aks/custom-resources-upgrade-from-calico.yaml`
                 : `kubectl apply -f ${filesUrl}/manifests/custom-resources-upgrade-from-calico.yaml`}
             </CodeBlock>
+            <p>
+              Remove the opensource Calico apiserver resource if it exists. Check if multiple apiserver resources exist:
+            </p>
+            <CodeBlock language='bash'>kubectl get apiserver</CodeBlock>
+            <p>If a default apiserver resource exists, you will see output similar to this:</p>
+            <CodeBlock>
+              {`$ kubectl get apiserver
+NAME            AGE
+default         18h
+tigera-secure   19h`}
+            </CodeBlock>
+            <p>
+              Remove the <code>default</code> apiserver:
+            </p>
+            <CodeBlock language='bash'>kubectl delete apiserver default</CodeBlock>
           </li>
         </When>
 
@@ -196,18 +211,37 @@ EOF`}
             </li>
             <li>
               <p>
-                If your cluster is v3.16 or older, apply a new{' '}
-                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.PolicyRecommendation`}>PolicyRecommendation </Link>
-                CR to your cluster.
+                Wait until the `apiserver` shows a status of <code>Available</code>, then proceed to the next section.
+                You can monitor progress with the following command:
               </p>
-              <CodeBlock language='bash'>
-                {`kubectl apply -f - <<EOF
-apiVersion: operator.tigera.io/v1
-kind: PolicyRecommendation
-metadata:
-  name: tigera-secure
-EOF`}
-              </CodeBlock>
+              <CodeBlock language='bash'>watch kubectl get tigerastatus/apiserver</CodeBlock>
+            </li>
+            <li>
+              <p>If your cluster is management or standalone cluster using v3.8 or older, follow these steps:</p>
+              <ul>
+                <li>
+                  <p>Install the network policies to secure {prodname} component communications with ElasticSearch</p>
+                  <CodeBlock language='bash'>
+                    kubectl apply -f {filesUrl}/manifests/tigera-policies-es-access.yaml
+                  </CodeBlock>
+                </li>
+                <li>
+                  <p>
+                    Wait until all components of tigerastatus shows a status of <code>Available</code>, then proceed to
+                    the next section. You can monitor progress with the following
+                  </p>
+                  <CodeBlock language='bash'>watch kubectl get tigerastatus</CodeBlock>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <p>Install the new network policies to secure {prodname} component communications.</p>
+              <p>
+                If your cluster is a <strong>managed</strong> cluster, apply this manifest.
+              </p>
+              <CodeBlock language='bash'>kubectl apply -f {filesUrl}/manifests/tigera-policies-managed.yaml</CodeBlock>
+              <p>For other clusters, use this manifest.</p>
+              <CodeBlock language='bash'>kubectl apply -f {filesUrl}/manifests/tigera-policies.yaml</CodeBlock>
             </li>
             <li>
               <p>You can monitor progress with the following command:</p>

@@ -2,17 +2,15 @@
 description: Install Calico Enterprise on an RKE2 cluster.
 ---
 
-# RKE2
+# RKE2 - Rancher's Next Generation Kubernetes Distribution
 
 ## Big picture
 
-Install {{prodname}} on RKE2 (RKE Government) clusters.
+Install {{prodname}} as the required CNI for networking and/or network policy on Rancher's Next-generation Kubernetes Distribution (RKE2) clusters.
 
-## Before you begin
+## Concepts
 
-**CNI support**
-
-Calico CNI for networking with {{prodname}} network policy:
+{{prodname}} supports the Calico CNI with {{prodname}} network policy:
 
 The geeky details of what you get:
 
@@ -21,25 +19,24 @@ The geeky details of what you get:
   details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes'
 />
 
+## Before you begin
+
 **Required**
 
-- A [compatible RKE2 cluster](../compatibility.mdx#rke2) with 2.6.5 or later
-
-  For help, see [Rancher Kubernetes Engine cluster](https://rancher.com/docs/rke/latest/en/).
-
+- RKE2 cluster meets the [{{prodname}} requirements](requirements.mdx)
+- A compatible [RKE2 cluster](https://docs.rke2.io/).
+- The version of RKE2 aligns with the [{{prodname}} Kubernetes versions requirements](requirements.mdx#supported-kubernetes-versions)
 - [Configure cluster with no CNI plugin](https://docs.rke2.io/install/configuration) using any of these methods:
 
   - RKE2 CLI: `--cni none`
   - Install script: `RKE2_CNI=none`
   - [Configuration file](https://docs.rke2.io/install/configuration#configuration-file): `cni: none`
 
-- Cluster meets [system requirements](requirements.mdx)
-
-- A [Tigera license key and credentials](calico-enterprise.mdx).
+- [Credentials for the Tigera private registry and a license key](calico-enterprise.mdx).
 
 - A `kubectl` environment with access to your cluster
 
-  Ensure you have the [Kubeconfig file that was generated when you created the cluster](https://docs.rke2.io/cluster_access).
+  - Ensure you have the [Kubeconfig file that was generated when you created the cluster](https://docs.rke2.io/cluster_access).
 
 - If using a Kubeconfig file locally, [install and set up the Kubectl CLI tool](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
 
@@ -47,6 +44,7 @@ The geeky details of what you get:
 
 - [Install {{prodname}}](#install-calico-enterprise)
 - [Install the {{prodname}} license](#install-the-calico-enterprise-license)
+- [Secure {{prodname}} components with network policy](#secure-calico-enterprise-components-with-network-policy)
 
 ### Install {{prodname}}
 
@@ -58,7 +56,7 @@ The geeky details of what you get:
    kubectl create -f {{filesUrl}}/manifests/tigera-operator.yaml
    ```
 
-1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator is used to deploy Prometheus server and Alertmanager to monitor {{prodname}} metrics.
+1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator will be used to deploy Prometheus server and Alertmanager to monitor {{prodname}} metrics.
 
    :::note
 
@@ -72,7 +70,7 @@ The geeky details of what you get:
 
 1. Install your pull secret.
 
-   If pulling images directly from `quay.io/tigera`, you can use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
+   If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
 
    ```bash
    kubectl create secret generic tigera-pull-secret \
@@ -98,7 +96,7 @@ The geeky details of what you get:
    kubectl create -f {{filesUrl}}/manifests/rancher/custom-resources-rke2.yaml
    ```
 
-   Monitor progress with the following command:
+   You can now monitor progress with the following command:
 
    ```bash
    watch kubectl get tigerastatus
@@ -108,14 +106,26 @@ The geeky details of what you get:
 
 ### Install the {{prodname}} license
 
+In order to use {{prodname}}, you must install the license provided to you by Tigera.
+
 ```bash
 kubectl create -f </path/to/license.yaml>
 ```
 
-Monitor progress with the following command:
+You can now monitor progress with the following command:
 
 ```bash
 watch kubectl get tigerastatus
+```
+
+When all components show a status of `Available`, proceed to the next section.
+
+### Secure {{prodname}} components with network policy
+
+To secure {{prodname}} component communications, install the following set of network policies.
+
+```bash
+kubectl create -f {{filesUrl}}/manifests/tigera-policies.yaml
 ```
 
 ## Next steps
