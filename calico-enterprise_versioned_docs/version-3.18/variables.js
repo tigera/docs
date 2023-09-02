@@ -6,7 +6,7 @@ const variables = {
   prodnamedash: 'calico-enterprise',
   version: 'v3.18',
   baseUrl: '/calico-enterprise/3.18',
-  filesUrl: 'https://downloads.tigera.io/ee/3.18.0',
+  filesUrl: 'https://downloads.tigera.io/ee/v3.18.0',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/3.18',
   prodnameWindows: 'Calico Enterprise for Windows',
