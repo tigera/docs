@@ -35,7 +35,7 @@ This how-to-guide uses the following {{prodname}} features:
 ### About {{prodname}} WAF
 
 WAF is deployed in your cluster as an Envoy DaemonSet. {{prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry-standard 
-[ModSecurity module](https://owasp.org/www-project-modsecurity-core-rule-set/). To view the rule set that is bundled with WAF, see [rule-set](https://github.com/coreruleset/coreruleset/blob/v3.4/dev/rules/REQUEST-942-APPLICATION-ATTACK-SQLI.conf).
+[ModSecurity module](https://owasp.org/www-project-modsecurity-core-rule-set/). To view the rule set that is bundled with WAF, see [rule-set](https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/modsec-core-ruleset).
 
 You simply enable WAF in Manager UI, and determine the services that you want to enable for WAF protection. You can view WAF events as HTTP logs in Service Graph and Kibana. And you can set up global alerts to get notifications on the Alerts page. 
 
@@ -74,9 +74,9 @@ Enabling WAF for certain system services may result in an undesired cluster stat
   - name: `openshift`, namespace: `default`
   - name: `gatekeeper-webhook-service`, namespace: `gatekeeper-system`
 
-The rules are not overridden during upgrade, you will have to manage deploying updates to the OWASP CoreRuleSet to the cluster over time. 
+The rules are not overridden during upgrade, you will have to manage deploying updates of the OWASP CoreRuleSet to your cluster over time. 
 
-If you modify rules, it is recommended to keep your main version in git or similar source control systems. If you enable WAF, modify rules, and then disable WAF again then the rule modifications will be lost. 
+If you modify rules, it is recommended to keep your main version in git or similar version control systems. If you enable WAF, modify rules, and then disable WAF again then the rule modifications will be lost. 
 
 :::
 
@@ -94,7 +94,7 @@ You choose the traffic you want to monitor and then we proxy it through our WAF,
 
 WAF can match multiple different rules in a single HTTP request. Each rule has a score associated with it and by adding these scores together, the WAF decides to allow or deny traffic by comparing the total to the overall anomaly threshold score (100 by default). If the score is under the threshold the request is allowed and if the score is over the threshold the request is denied. Our WAF starts in detection mode only and with a high default scoring threshold so is safe to turn on and then [fine-tune the WAF](#fine-tuning-your-waf) for your specific needs in your cluster.
 
-Every HTTP request that has a WAF finds an issue with will result in an event being created for [you to review in the UI](#view-waf-events), regardless of whether the traffic was allowed or denied. This can greatly help in tuning later.  
+A Security Event is created for [you to review in the UI](#view-waf-events) for every request in which WAF detects a rule match, regardless of whether it was ultimately allowed or denied. This can greatly help in tuning later.  
 
 :::note
 These are the default scoring points for each severity level, applied to each rule.
@@ -165,7 +165,7 @@ kubectl annotate svc frontend -n default --overwrite projectcalico.org/l7-loggin
 Alternatively, you can use the Manager UI to apply WAF to the `frontend` service.
 
 In this example, we applied WAF to the `frontend` service. This means that every request that goes through the `frontend` service is inspected.
-However, the traffic is not blocked because the WAF rule is set to `DetectionOnly` by default. You can then begin [fine-tuning your WAF](). 
+However, the traffic is not blocked because the WAF rule is set to `DetectionOnly` by default. You can then begin [fine-tuning your WAF](#fine-tuning-your-waf). 
 
 In the previous example, we applied WAF to the `frontend` service of the sample application. Here, we are
 applying WAF to a service of your own application.
@@ -221,7 +221,7 @@ To download and modify the rule files:
   ```bash
   cd pkg/render/applicationlayer/modsec-core-ruleset
   ```
-3. Make the changes you want in the setup, conf or exclusiong files and save.
+3. Make the changes you want in the setup, conf or exclusion files and save.
 4. Create a ConfigMap.
 
   ```bash
@@ -270,7 +270,7 @@ The default threshold is set to 100, a high value that is unlikely to result in 
 The lower the anomaly scoring threshold value is, the more likely it is that traffic will be denied. 
 :::
 
-1. Edit the crs-setup.conf file: 
+1. Edit the crs-setup.conf file and set the `tx.inbound_anomaly_score_threshold` to the value of your choice: 
    ```bash
      SecAction \
       "id:900110,\
