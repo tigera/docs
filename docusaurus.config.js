@@ -364,12 +364,17 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['current','3.17','3.16','3.15','3.14'],
+        onlyIncludeVersions: ['current','3.18','3.17','3.16','3.15'],
         lastVersion: '3.17',
         versions: {
           current: {
             label: 'Next',
             path: 'next',
+            banner: 'unreleased',
+          },
+          3.18: {
+            label: '3.18 (early preview)',
+            path: '3.18',
             banner: 'unreleased',
           },
           3.17: {
@@ -385,11 +390,6 @@ const config = {
           3.15: {
             label: '3.15',
             path: '3.15',
-            banner: 'none',
-          },
-          3.14: {
-            label: '3.14',
-            path: '3.14',
             banner: 'none',
           },
         },
