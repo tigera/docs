@@ -89,6 +89,7 @@ test("Crawl the docs and execute tests", async () => {
     `https://installer.calicocloud.io/manifests/v3.16.1-5/manifests`,
     `https://installer.calicocloud.io/manifests/v3.16.1-11/manifests`,
     `https://installer.calicocloud.io/manifests/v3.17.1-0/manifests`,
+    `https://installer.calicocloud.io/manifests/v3.17.1-3/manifests`,
     `https://d881b853ae312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com`,
     `https://www.googletagmanager.com`,
     'https://twitter.com/tigeraio',
