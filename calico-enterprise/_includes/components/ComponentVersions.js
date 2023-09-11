@@ -6,7 +6,7 @@ import { toKebab } from '@site/src/components/utils/formatters';
 
 import variables from '../../variables';
 
-export default function ReleaseNotes() {
+export default function ComponentVersions() {
   const { prodname, version, downloadsurl } = variables;
 
   const releases = variables.releases.map((release) => {
@@ -29,31 +29,27 @@ export default function ReleaseNotes() {
     <>
       {releases.map((release) => (
         <div key={release.title}>
+          <p>
+            This page lists the specific component versions that go into {variables.prodname} patch releases.
+          </p>
           <Heading
             as='h2'
-            id={`calico-enterprise-${toKebab(release.title)}`}
+            id={`component-versions-${toKebab(release.title)}`}
             data-bz-version={toKebab(release.title)}
           >
-            Calico Enterprise {release.title}
-          </Heading>
-          {release.title !== 'master' && (
-            <p>
-              <Link
-                href={`${downloadsurl}/ee/archives/release-${release.title}-${release['tigera-operator'].version}.tgz`}
-              >
-                Release archive
-              </Link>{' '}
-              with Kubernetes manifests. Based on Calico {releases[0].calico.minor_version}.
-            </p>
-          )}
-          {release.note}
-          <Heading
-            as='h3'
-            id={`component-versions-${toKebab(release.title)}`}
-          >
-            Component Versions
+            Component versions for {variables.prodname} {variables.releaseTitle.startsWith('v') ? variables.releaseTitle.substring(1) : variables.releaseTitle}
           </Heading>
           <p>
+            {release.title !== 'master' && (
+              <p>
+                <Link
+                  href={`${downloadsurl}/ee/archives/release-${release.title}-${release['tigera-operator'].version}.tgz`}
+                >
+                  Release archive
+                </Link>{' '}
+                with Kubernetes manifests. Based on Calico {releases[0].calico.minor_version}.
+              </p>
+            )}
             This release comprises the following components, and can be installed using{' '}
             <code>
               {release['tigera-operator'].registry}/{release['tigera-operator'].image}:
