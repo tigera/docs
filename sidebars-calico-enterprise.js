@@ -862,10 +862,15 @@ module.exports = {
         },
         'reference/attribution',
         'reference/rest-api-reference',
+        'reference/component-versions',
         'reference/faq',
         'reference/support-policy',
       ],
     },
-    'release-notes/index'
+    {
+      type: 'doc',
+      id: 'release-notes/index',
+      label: 'Release notes', // sidebar label
+    },
   ],
 };

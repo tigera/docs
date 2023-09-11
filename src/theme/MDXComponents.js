@@ -38,6 +38,7 @@ const partials = [
   'CliConfigIntro',
   'PrivateRegistryImagePath',
   'GettingStartedInstallOnClustersKubernetesHelm',
+  'ComponentVersions',
 ];
 
 const wrappedPartials = wrapPartials(partials);
@@ -129,6 +130,8 @@ function getCalicoVersionedComponent(version, componentName) {
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReqsKernel`).default;
     case 'ReqsSys':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReqsSys`).default;
+    case 'ComponentVersions':
+      return require(`../../calico_versioned_docs/version-${version}/_includes/components/ComponentVersions`).default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico`);
   }
@@ -208,6 +211,9 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'GettingStartedInstallOnClustersKubernetesHelm':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/GettingStartedInstallOnClustersKubernetesHelm`)
+        .default;
+    case 'ComponentVersions':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ComponentVersions`)
         .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Enterprise`);
