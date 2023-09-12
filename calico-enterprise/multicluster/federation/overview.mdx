@@ -1,5 +1,5 @@
 ---
-description: Configure local clusters for cross-cluster endpoints sharing, cross-cluster connectivity, and cross-cluster service discovery.
+description: Configure a cluster mesh for cross-cluster endpoints sharing, cross-cluster connectivity, and cross-cluster service discovery.
 ---
 
 # Overview
@@ -13,9 +13,9 @@ Utilize {{prodname}} to establish cross-cluster connectivity.
 
 ## Value
 
-At some point in your Kubernetes journey, you may wish to connect workloads between environments, replicate workloads between clusters, or establish clusters that provide services to other clusters.
+At some point in your Kubernetes journey, you may have applications that need to access services and workloads running in another cluster.
 
-By default, pods can only communicate with pods within the same cluster. Additionally, services and network policy only select pods from within the same cluster. {{prodname}} can help overcome these barriers with the following features:
+By default, pods can only communicate with pods within the same cluster. Additionally, services and network policy only select pods from within the same cluster. {{prodname}} can help overcome these barriers by forming a cluster mesh the following features:
 - **Federated endpoint identity**
 
   Allow a local Kubernetes cluster to include the workload endpoints (pods) and host endpoints of a remote cluster in the calculation of local network policies applied on each node of the local cluster.
@@ -33,22 +33,22 @@ By default, pods can only communicate with pods within the same cluster. Additio
 
 ### Pod IP routability
 
-Federated workload endpoint identity and federated services are implemented in Kubernetes at the network layer, based on pod IPs.
+{{prodname}} cluster mesh is implemented at Kubernetes at the network layer, based on pod IPs.
 
-Taking advantage of these features requires that pod IPs are routable between clusters. This is because identity-aware network policy requires source and destination pod IPs to be preserved in order to establish pod identity. Additionally, the Endpoint IPs of pods selected by a federated Service must be routable in order for that Service to be of value.
+Taking advantage of federated workload endpoint identity and federated services requires that pod IPs are routable between clusters. This is because identity-aware network policy requires source and destination pod IPs to be preserved in order to establish pod identity. Additionally, the Endpoint IPs of pods selected by a federated Service must be routable in order for that Service to be of value.
 
 You can utilize {{prodname}} multi-cluster networking to establish pod IP routability between clusters via overlay. Alternatively, you can manually set up pod IP routability between clusters without encapsulation (e.g. VPC routing, BGP routing).
 
 
 ### Federated endpoint identity
 
-Federated endpoint identity allows a local Kubernetes cluster to include the workload endpoints (pods) and host endpoints of a remote cluster in the calculation of the local policies for each node, e.g. Cluster A network policy allows its application pods to talk to database pods in Cluster B.
+Federated endpoint identity in a cluster mesh allows a local Kubernetes cluster to include the workload endpoints (pods) and host endpoints of a remote cluster in the calculation of the local policies for each node, e.g. Cluster A network policy allows its application pods to talk to database pods in Cluster B.
 
 This feature does not _federate network policies_; policies from a remote cluster are not applied to the endpoints on the local cluster, and the policy from the local cluster is rendered only locally and applied to the local endpoints.
 
 ### Federated services
 
-Federated services works with federated endpoint identity, providing cross-cluster service discovery for a local cluster. If you have an existing service discovery mechanism, this feature is optional.
+Federated services in a cluster mesh works with federated endpoint identity, providing cross-cluster service discovery for a local cluster. If you have an existing service discovery mechanism, this feature is optional.
 
 Federated services use the Tigera Federated Services Controller to federate all [Kubernetes endpoints](https://v1-21.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#endpoints-v1-core) (workload and host endpoints) across all of the clusters. The Federated Services Controller accesses service and endpoints data in the remote clusters directly through the Kubernetes API.
 

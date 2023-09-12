@@ -415,7 +415,7 @@ module.exports = {
         'multicluster/change-cluster-type',
         {
           type: 'category',
-          label: 'Federation and multi-cluster networking',
+          label: 'Cluster mesh',
           link: {type: 'doc', id: 'multicluster/federation/index'},
           items: [
             'multicluster/federation/overview',
