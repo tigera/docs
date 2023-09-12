@@ -1,44 +1,50 @@
 ---
-description: Configure local clusters for cross-cluster workload and host endpoints sharing, and cross-cluster service discovery.
+description: Configure local clusters for cross-cluster endpoints sharing, cross-cluster connectivity, and cross-cluster service discovery.
 ---
 
 # Overview
 
 ## Big picture
 
-Configure local clusters for cross-cluster workload and host endpoints sharing, and cross-cluster service discovery.
+Secure cross-cluster connections with identity-aware network policy, and federate services for cross-cluster service discovery.
+
+Utilize {{prodname}} to establish cross-cluster connectivity.
+
 
 ## Value
 
-At some point in your Kubernetes journey, you may have multiple teams (development, QA, and others) that need to work in parallel across multiple clusters, without negative impacts on each other. By default, deployed Kubernetes pods can only see pods within their cluster. Using network policy and services, you can grant access to other clusters and the applications they are running. {{prodname}} provides these federation features:
+At some point in your Kubernetes journey, you may wish to connect workloads between environments, replicate workloads between clusters, or establish clusters that provide services to other clusters.
 
+By default, pods can only communicate with pods within the same cluster. Additionally, services and network policy only select pods from within the same cluster. {{prodname}} can help overcome these barriers with the following features:
 - **Federated endpoint identity**
 
-  Allow a local Kubernetes cluster to include the workload endpoints (pods) and host endpoints of a remote cluster in the calculation of local policies applied on each node of the local cluster.
+  Allow a local Kubernetes cluster to include the workload endpoints (pods) and host endpoints of a remote cluster in the calculation of local network policies applied on each node of the local cluster.
 
 - **Federated services**
 
-  Provides cross-cluster service discovery for a local cluster.
+  Enable a local Kubernetes Service to populate with Endpoints selected from both local cluster and remote cluster Services.
+
+- **Multi-cluster networking**
+
+  Establish an overlay network between clusters to provide cross-cluster connectivity with {{prodname}}.
+
 
 ## Concepts
 
-### Federation: network layer features
+### Pod IP routability
 
-{{prodname}} federated endpoint identity and federated services are implemented in Kubernetes at the network layer. To apply fine-grained network policy between multiple clusters, the pod source and destination IPs must be preserved. So these features are valuable only if your clusters are designed with common networking across clusters with no encapsulation (for example, BGP routing or VPC routing). (Although there are ways to achieve a common networking equivalent across clusters using overlays, this is outside the realm of this article.)
+Federated workload endpoint identity and federated services are implemented in Kubernetes at the network layer, based on pod IPs.
+
+Taking advantage of these features requires that pod IPs are routable between clusters. This is because identity-aware network policy requires source and destination pod IPs to be preserved in order to establish pod identity. Additionally, the Endpoint IPs of pods selected by a federated Service must be routable in order for that Service to be of value.
+
+You can utilize {{prodname}} multi-cluster networking to establish pod IP routability between clusters via overlay. Alternatively, you can manually set up pod IP routability between clusters without encapsulation (e.g. VPC routing, BGP routing).
+
 
 ### Federated endpoint identity
 
-A simple example of implementing policy across multiple clusters is:
-
-"Cluster A's network policy allows **web** to talk to **db**, but all of the **web** is in cluster A, and all of the **db** is in cluster B."
-
-Federated endpoint identity solves this by allowing a local Kubernetes cluster to include the workload endpoints (pods) and host endpoints of a remote cluster in the calculation of the local policies for each node.
-
-:::note
+Federated endpoint identity allows a local Kubernetes cluster to include the workload endpoints (pods) and host endpoints of a remote cluster in the calculation of the local policies for each node, e.g. Cluster A network policy allows its application pods to talk to database pods in Cluster B.
 
 This feature does not _federate network policies_; policies from a remote cluster are not applied to the endpoints on the local cluster, and the policy from the local cluster is rendered only locally and applied to the local endpoints.
-
-:::
 
 ### Federated services
 
@@ -48,4 +54,4 @@ Federated services use the Tigera Federated Services Controller to federate all 
 
 ## Next steps
 
-[Configure federated endpoint identity ](kubeconfig.mdx)
+[Configure remote-aware policy and multi-cluster networking](kubeconfig.mdx)
