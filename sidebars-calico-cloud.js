@@ -404,7 +404,7 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Multi-cluster management',
+      label: 'Cluster mesh',
       link: {type: 'doc', id: 'multicluster/index'},
       items: [
         'multicluster/overview',
