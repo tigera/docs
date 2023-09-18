@@ -613,7 +613,11 @@ module.exports = {
       ],
     },
     'get-help/support',
-    'release-notes/index',
+    {
+      type: 'doc',
+      label: 'Release notes',
+      id: 'release-notes/index',
+    },
   ],
 };
 
