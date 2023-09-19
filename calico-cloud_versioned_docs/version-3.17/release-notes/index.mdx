@@ -16,6 +16,21 @@ description: What's new, and why features provide value for upgrading.
 * We fixed a problem that caused the user interface to crash when a user attempted to edit a policy.
 * We fixed a problem that prevented certain images from being scanned.
 
+### Known issues
+
+* If your cluster was connected to Calico Cloud using Helm, upgrading to Calico Cloud 17.1.1 may result in an error: "Error: rendered manifests contain a resource that already exists."
+  In earlier versions of Calico Cloud, the `installers.operator.calicocloud.io` custom resource definition (CRD) installed by Helm had to be upgraded manually.
+  Calico Cloud 17.1.1 includes changes that allow this CRD to be updated automatically in the future.
+  These changes cause an error during Helm upgrades from older versions to 17.1.1.
+
+  As a workaround, label the CRD so that it is managed by Helm by running the following command:
+
+  ```bash
+  kubectl patch crd installers.operator.calicocloud.io -p '{"metadata": {"annotations": {"meta.helm.sh/release-name":"calico-cloud-crds","meta.helm.sh/release-namespace":"calico-cloud"},"labels":{"app.kubernetes.io/managed-by":"Helm"}}}'
+  ```
+
+  This allows you to successfully upgrade to Calico Cloud 17.1.1 by following [Upgrade Calico Cloud](../get-started/upgrade-cluster.mdx).
+
 ## September 5, 2023 (version 17.1.0)
 
 ### New features and enhancements
