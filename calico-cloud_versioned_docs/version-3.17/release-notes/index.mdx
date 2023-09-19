@@ -56,6 +56,17 @@ For more information, see [Security event management](../threat/security-event-m
 ### Known issues
 
 * Enabling WAF and Container Threat Detection through the UI is not possible for clusters running Kubernetes v1.27+. Both features can be enabled using kubectl.
+* If you connected your cluster to Calico Cloud using Helm before the release of version 17.1.0, reinstalling or upgrading to any version of Calico Cloud may result in an error: "Error: rendered manifests contain a resource that already exists."
+  Previously, the `installers.operator.calicocloud.io` custom resource definition (CRD) installed by Helm required manual upgrades.
+  After the release of Calico Cloud 17.1.0, this CRD is updated automatically, but this change causes errors the first time you attempt to reinstall or upgrade Calico Cloud on a cluster that was connected using Helm before the release of Calico Cloud 17.1.0.
+
+  As a workaround, label the CRD so that it is managed by Helm by running the following command:
+
+  ```bash
+  kubectl patch crd installers.operator.calicocloud.io -p '{"metadata": {"annotations": {"meta.helm.sh/release-name":"calico-cloud-crds","meta.helm.sh/release-namespace":"calico-cloud"},"labels":{"app.kubernetes.io/managed-by":"Helm"}}}'
+  ```
+
+  This allows you to successfully reinstall or upgrade to Calico Cloud by following the procedure in [Upgrade Calico Cloud](../get-started/upgrade-cluster.mdx).
 
 ### Security updates
 
