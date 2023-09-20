@@ -147,6 +147,8 @@ test("Crawl the docs and execute tests", async () => {
     'https://www.tigera.io/tutorials/?_sf_s=%27calico%20ebpf%20and%20xdp%27,',
     'https://www.tigera.io/tutorials/?_sf_s=Calico%20Basics',
     'https://www.tigera.io/tutorials/?_sf_s=WireGuard',
+    'https://www.elastic.co/guide/en/apm/server/current/configuring-howto-apm-server.html',
+    'https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html',
   ];
 
   const lc = linkChecker();
