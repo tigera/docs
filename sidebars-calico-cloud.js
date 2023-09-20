@@ -39,8 +39,7 @@ module.exports = {
         'get-started/connect/connect-cluster',
         'get-started/connect/checklist',
         'get-started/connect/operator-checklist',
-        'get-started/upgrade-cluster',
-        'get-started/connect/usage-metrics',
+        'get-started/upgrade-cluster'
       ],
     },
     {
@@ -291,6 +290,7 @@ module.exports = {
       label: 'Threat defense',
       link: {type: 'doc', id: 'threat/index'},
       items: [
+        'threat/security-event-management',
         'threat/security-anomalies',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
@@ -321,8 +321,8 @@ module.exports = {
           label: 'Scan images for vulnerabilities',
           link: {type: 'doc', id: 'image-assurance/scanners/index'},
           items: [
-            'image-assurance/scanners/cli-based-scanner',
-            'image-assurance/scanners/cluster-scanner'
+            'image-assurance/scanners/cluster-scanner',
+            'image-assurance/scanners/pipeline-scanner'
           ],
         },
         'image-assurance/understanding-scan-results',
@@ -404,7 +404,7 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Multi-cluster management',
+      label: 'Cluster mesh',
       link: {type: 'doc', id: 'multicluster/index'},
       items: [
         'multicluster/overview',
@@ -420,6 +420,7 @@ module.exports = {
       items: [
         'operations/cluster-management',
         'operations/disconnect',
+        'operations/usage-metrics',
         {
           type: 'category',
           label: 'Secure component communications',
@@ -612,7 +613,11 @@ module.exports = {
       ],
     },
     'get-help/support',
-    'release-notes/index',
+    {
+      type: 'doc',
+      label: 'Release notes',
+      id: 'release-notes/index',
+    },
   ],
 };
 

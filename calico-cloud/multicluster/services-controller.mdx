@@ -10,7 +10,7 @@ Configure local clusters to discover services across multiple clusters.
 
 ## Value
 
-Use federate services discovery along with federated endpoint identity to extend and automate endpoints sharing. (Optional if you have your own service discovery mechanism.)
+Use cluster mesh and federated services discovery along with federated endpoint identity to extend and automate endpoints sharing. (Optional if you have your own service discovery mechanism.)
 
 ## Features
 
@@ -23,7 +23,7 @@ This how to guide uses the following {{prodname}} features:
 
 ### Federated services
 
-A federated service (also called a backing service), is a set of services with consolidated endpoints. {{prodname}} discovers services across all clusters (both local cluster and remote clusters) and creates a "federated service" on the local cluster that encompasses all of the individual services.
+A federated service (also called a backing service), is a set of services with consolidated endpoints. {{prodname}} discovers services across a cluster mesh (both local cluster and remote clusters) and creates a "federated service" on the local cluster that encompasses all of the individual services.
 
 Federated services are managed by the Tigera Federated Service Controller, which monitors and maintains endpoints for each locally-federated service. The controller does not change configuration on remote clusters.
 
@@ -84,7 +84,7 @@ You can also match services using a label. The label is implicitly added to each
 
 ### Create service resources
 
-On each cluster that is providing a particular service, create your service resources as you normal would with the following requirements:
+On each cluster in the mesh that is providing a particular service, create your service resources as you normal would with the following requirements:
 
 - Services must all be in the same namespace.
 - Configure each service with a common label key and value to identify the common set of services across your clusters (for example, `run=my-app`).
@@ -165,7 +165,7 @@ spec:
 
 The `spec.selector` is not specified so it will not be managed by Kubernetes. Instead, we use a `federation.tigera.io/selector` annotation, indicating that this is a federated service managed by the Federated Services Controller.
 
-The controller matches the `my-app` services (matching the run label) on both the local and remote clusters, consolidates endpoints from the `my-app-ui` TCP port for both of those services. Because the federated service does not specify the `my-app-console` port, the controller does not include these endpoints in the federated service.
+The controller matches the `my-app` services (matching the run label) on both the local and remote clusters, and consolidates endpoints from the `my-app-ui` TCP port for both of those services. Because the federated service does not specify the `my-app-console` port, the controller does not include these endpoints in the federated service.
 
 The endpoints data for the federated service is similar to the following. Note that the name of the remote cluster is included in `targetRef.name`.
 
@@ -212,5 +212,5 @@ subsets:
 
 ## Additional resources
 
-- [Federated identity and services example for AWS](aws.mdx)
+- [Cluster mesh example for AWS](aws.mdx)
 - [Federated service controller](../reference/component-resources/kube-controllers/configuration.mdx)

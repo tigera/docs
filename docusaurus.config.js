@@ -63,14 +63,12 @@ const config = {
         contextualSearch: true,
         searchPagePath: '/search',
       },
-      announcementBar: {
-        id: 'calico_ebpf',
-        content:
-            'Use Calico <img src="/img/brands/ebpf_logo.svg" style="height:1.5rem; margin: 0 5px 0 5px; display: inline-flex;" alt="eBPF" /> dataplane' + 
-            ' to enhance your Kubernetes networking performance. Click <a href="https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf">here</a> to learn more.',
-        backgroundColor: '#FCE181',
-        textColor: '#000',
-        isCloseable: true,
+      "announcementBar": {
+        "id": "calico_ebpf",
+        "content": "Just released! <b>State of Calico Open Source: Usage & Adoption Report.</b>  Click <a href=\"https://www.tigera.io/lp/calico-open-source-usage-adoption-2023/\">here</a> to see how your peers are using Calico.",
+        "backgroundColor": "#FCE181",
+        "textColor": "#000",
+        "isCloseable": true
       },
       navbar: {
         logo: {
@@ -111,11 +109,6 @@ const config = {
             position: 'left',
             // className for product specific items must start with 'product-'
             dropdownItemsAfter: [
-              {
-                type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.23">3.23</a>',
-                className: 'product-calico',
-              },
               {
                 type: 'html',
                 value: '<hr class="dropdown-separator" />',
@@ -371,12 +364,17 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['current','3.17','3.16','3.15','3.14'],
+        onlyIncludeVersions: ['current','3.18','3.17','3.16','3.15'],
         lastVersion: '3.17',
         versions: {
           current: {
             label: 'Next',
             path: 'next',
+            banner: 'unreleased',
+          },
+          3.18: {
+            label: '3.18 (early preview)',
+            path: '3.18',
             banner: 'unreleased',
           },
           3.17: {
@@ -394,11 +392,6 @@ const config = {
             path: '3.15',
             banner: 'none',
           },
-          3.14: {
-            label: '3.14',
-            path: '3.14',
-            banner: 'none',
-          },
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
@@ -414,19 +407,23 @@ const config = {
         routeBasePath: 'calico-cloud',
         editCurrentVersion: true,
         //To see builds for unreleased versions, remove comments in the next line.
-        onlyIncludeVersions: [/*'current','3.17'*/'3.16'/*,'3.15'*/],
+        onlyIncludeVersions: [/*'current','18'*/'3.17'/*,'3.16','3.15'*/],
         versions: {
           current: {
             label: 'Next',
             path: 'next',
             banner: 'unreleased',
           },
+          18: {
+            path: '18',
+            banner: 'none',
+          },
           3.17: {
-            path: '3.17',
+            path: '/',
             banner: 'none',
           },
           3.16: {
-            path: '/',
+            path: '3.16',
             banner: 'none',
           },
           3.15: {

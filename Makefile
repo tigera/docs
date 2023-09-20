@@ -1,4 +1,4 @@
-GO_BUILD_VER?=v0.74
+GO_BUILD_VER?=v0.87
 CALICO_BUILD?=calico/go-build:$(GO_BUILD_VER)
 LOCAL_USER_ID?=$(shell id -u $$USER)
 PACKAGE_NAME?=github.com/projectcalico/calico/calico
