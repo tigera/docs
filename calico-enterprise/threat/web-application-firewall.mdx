@@ -146,7 +146,7 @@ kubectl annotate svc frontend -n default --overwrite projectcalico.org/l7-loggin
 Alternatively, you can use the Manager UI to apply WAF to the `frontend` service.
 
 In this example, we applied WAF to the `frontend` service. This means that every request that goes through the `frontend` service is inspected.
-However, the traffic is not blocked because the WAF rule is set to `DetectionOnly` by default. You can then begin [fine-tuning your WAF](#fine-tuning-your-waf). 
+However, the traffic is not blocked because the WAF rule is set to `DetectionOnly` by default. You can adjust rules and start blocking traffic by [fine-tuning your WAF](#fine-tuning-your-waf). 
 
 In the previous example, we applied WAF to the `frontend` service of the sample application. Here, we are
 applying WAF to a service of your own application.
@@ -179,6 +179,12 @@ Run a simple curl command from any pod inside your cluster targeting a service y
 
 #### Manage your rules
 The default rulesets work fine for most deployments. However, you can customize them to suit your requirements.
+Some common changes are detailed below, for example:
+
+- [Enabling blocking mode](#set-waf-rule-to-block-traffic)
+- [Changing the scoring threshold](#change-anomaly-scoring-threshold)
+- [Fine-tuning a rule](#change-other-default-settings)
+- [Disabling certain rules](#disable-certain-rules)
 
 By default, {{prodname}} ships with CoreRuleset v3.3.5 with the following setup files pre-loaded:
 
@@ -196,14 +202,15 @@ To download and modify the rule files:
 1. Clone our operator code which contains the ConfigMap source.
 
   ```bash
-  git clone -depth=1 https://github.com/tigera/operator 
+  git clone --depth=1 https://github.com/tigera/operator
+  cd operator
   ```
 2. Change directory into the actual modsec ruleset files we use.
 
   ```bash
   cd pkg/render/applicationlayer/modsec-core-ruleset
   ```
-3. Make the changes you want in the setup, conf or exclusiong files and save.
+3. Make the changes you want in the setup, conf or exclusion files and save.
 4. Create a ConfigMap.
 
   ```bash
@@ -290,7 +297,7 @@ The CoreRuleSet has several default values and settings that you can fine-tune. 
 
 You may want to disable a rule entirely. For example, if you find the allowed Content-Type rule mentioned above too restrictive, you can disable it unconditionally by changing `RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example` and renaming that file to remove the `.example`:
 
-1. Edit `RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example` and add the rule ID you want to disable
+1. Edit `RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example` and add a line such as the following, referencing the rule ID you want to disable.
 
   ```bash
   SecRuleRemoveById 920420
