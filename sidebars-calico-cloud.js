@@ -320,7 +320,8 @@ module.exports = {
           link: {type: 'doc', id: 'image-assurance/scanners/index'},
           items: [
             'image-assurance/scanners/cluster-scanner',
-            'image-assurance/scanners/pipeline-scanner'
+            'image-assurance/scanners/pipeline-scanner',
+            'image-assurance/scanners/registry-scanner',
           ],
         },
         'image-assurance/understanding-scan-results',
