@@ -61,36 +61,44 @@ Container admission policies are custom Kubernetes resources that allow you to c
 
    :::caution
 
-   If you generate the key and certificate pair yourself, you must set the SANS to `tigera-image-assurance-admission-controller-service.tigera-image-assurance.svc`
+   If you generate the key and certificate pair yourself, you must set the SANS to `tigera-image-assurance-admission-controller-service.tigera-image-assurance.svc`.
 
    :::
 
 1. Download and configure the Admission Controller manifests.
 
-   As a safety mechanism, we require that you specify the namespaces that the Admission Controller will apply in
-   the `IN_NAMESPACE_SELECTOR_KEY` and the `IN_NAMESPACE_SELECTOR_VALUES`. These values configure the Kubernetes API server to send admission requests to our Admission Controller only for resources from relevant namespaces.
+As a safety mechanism, we require that you specify the namespaces that the Admission Controller will apply in
+the `IN_NAMESPACE_SELECTOR_KEY` and the `IN_NAMESPACE_SELECTOR_VALUES`. These values configure the Kubernetes API server to send admission requests to our Admission Controller only for resources from relevant namespaces.
 
-   For example, to configure the Kubernetes API server to send admission requests for resources created in any namespace with label key `foo`, and label values either `bar` or `baz`, the variables would be set as follows:
+For example, to configure the Kubernetes API server to send admission requests for
+resources created in any namespace with label key `name`, and label values either `prod` or `staging-test`, set the variables as follows:
 
    ```bash
-   export IN_NAMESPACE_SELECTOR_KEY="foo" && IN_NAMESPACE_SELECTOR_VALUES="bar baz"
+   export IN_NAMESPACE_SELECTOR_KEY="name" && IN_NAMESPACE_SELECTOR_VALUES="prod staging-test"
    ```
+Here is the namespace manifest with the staging-test label and name key.
 
-   :::caution
+   ```yaml
+   kind: Namespace
+   apiVersion: v1
+   metadata:
+     name: staging-test
+     labels:
+       name: staging-test
+   ```
+:::caution
 
-   Do not add Kubernetes critical namespaces such as the `kube-system` namespace. This could create a
-   deadlock situation where you cannot bring up the Admission Controller because a critical Kubernetes pod is not running, but you also cannot bring up the critical Kubernetes pod because the Admission Controller is not running.
-
-   :::
+Do not add Kubernetes critical namespaces such as the `kube-system` namespace. This could create a
+deadlock situation where you cannot bring up the Admission Controller because a critical Kubernetes pod is not running, but you also cannot bring up the critical Kubernetes pod because the Admission Controller is not running.
+:::
 
    ```bash
-   export URL="{{clouddownloadurl}}/manifests" && \
    export IN_NAMESPACE_SELECTOR_KEY="name" && \
-   export IN_NAMESPACE_SELECTOR_VALUES="default" && \
+   export IN_NAMESPACE_SELECTOR_VALUES="prod staging-test" && \
    curl ${URL}/install-ia-admission-controller.sh | bash
    ```
 
-1. Apply the Admission Controller manifests.
+4. Apply the Admission Controller manifests.
 
    ```bash
    kubectl apply -f ./tigera-image-assurance-admission-controller-deploy.yaml
