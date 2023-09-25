@@ -66,7 +66,6 @@ module.exports = {
             'tutorials/calico-cloud-features/networksets',
           ],
         },
-        'tutorials/about-calico-enterprise',
         {
           type: 'category',
           label: 'Secure ingress and egress for applications',
