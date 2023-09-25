@@ -306,7 +306,7 @@ const config = {
         darkTheme: darkCodeTheme,
         additionalLanguages: ['powershell'],
         magicComments: [
-          // Default highlight class name (should be specified)
+          // Default highlight class name (should be specified)-
           {
             className: 'theme-code-block-highlighted-line',
             line: 'highlight-next-line',
