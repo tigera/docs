@@ -56,13 +56,12 @@ function resolveComponent(componentName) {
     const context = useDocusaurusContext();
 
     const [, prodnamedash, maybeVersion] = pathname.match(/\/(.*?)\/(.*?)\//);
-    const [, ...versions] = context.globalData['docusaurus-plugin-content-docs'][prodnamedash].versions;
+    const versions = context.globalData['docusaurus-plugin-content-docs'][prodnamedash].versions;
 
     let Component = null;
 
     const isNext = maybeVersion === 'next';
     const noVersions = !versions || !versions.length;
-
     if (isNext || noVersions) {
       Component = getComponentForNextVersion(prodnamedash, componentName);
     } else {
