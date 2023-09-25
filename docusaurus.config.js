@@ -63,14 +63,12 @@ const config = {
         contextualSearch: true,
         searchPagePath: '/search',
       },
-      announcementBar: {
-        id: 'calico_ebpf',
-        content:
-            'Use Calico <img src="/img/brands/ebpf_logo.svg" style="height:1.5rem; margin: 0 5px 0 5px; display: inline-flex;" alt="eBPF" /> dataplane' + 
-            ' to enhance your Kubernetes networking performance. Click <a href="https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf">here</a> to learn more.',
-        backgroundColor: '#FCE181',
-        textColor: '#000',
-        isCloseable: true,
+      "announcementBar": {
+        "id": "calico_ebpf",
+        "content": "Just released! <b>State of Calico Open Source: Usage & Adoption Report.</b>  Click <a href=\"https://www.tigera.io/lp/calico-open-source-usage-adoption-2023/\">here</a> to see how your peers are using Calico.",
+        "backgroundColor": "#FCE181",
+        "textColor": "#000",
+        "isCloseable": true
       },
       navbar: {
         logo: {
@@ -113,11 +111,6 @@ const config = {
             dropdownItemsAfter: [
               {
                 type: 'html',
-                value: '<a class="dropdown__link" href="https://docs.tigera.io/archive/v3.23">3.23</a>',
-                className: 'product-calico',
-              },
-              {
-                type: 'html',
                 value: '<hr class="dropdown-separator" />',
               },
               {
@@ -139,6 +132,11 @@ const config = {
           {
             label: 'Try Calico Cloud',
             to: 'https://www.calicocloud.io/home',
+            position: 'left',
+          },
+          {
+            label: 'Contact us',
+            to: 'https://www.tigera.io/contact/',
             position: 'left',
           },
           {
@@ -409,19 +407,23 @@ const config = {
         routeBasePath: 'calico-cloud',
         editCurrentVersion: true,
         //To see builds for unreleased versions, remove comments in the next line.
-        onlyIncludeVersions: [/*'current','3.17'*/'3.16'/*,'3.15'*/],
+        onlyIncludeVersions: [/*'current','18'*/'3.17'/*,'3.16','3.15'*/],
         versions: {
           current: {
             label: 'Next',
             path: 'next',
             banner: 'unreleased',
           },
+          18: {
+            path: '18',
+            banner: 'none',
+          },
           3.17: {
-            path: '3.17',
+            path: '/',
             banner: 'none',
           },
           3.16: {
-            path: '/',
+            path: '3.16',
             banner: 'none',
           },
           3.15: {
