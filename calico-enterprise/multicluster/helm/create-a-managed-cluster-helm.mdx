@@ -1,5 +1,5 @@
 ---
-description: Install Calico Enterprise using Helm application package manager.
+description: Install Calico Enterprise managed cluster using Helm application package manager.
 ---
 
 # Helm
@@ -20,7 +20,7 @@ Helm charts are a way to package up an application for Kubernetes (similar to `a
 
 - Install Helm 3
 - `kubeconfig` is configured to work with your cluster (check by running `kubectl get nodes`)
-- [Credentials for the Tigera private registry and a license key](../calico-enterprise.mdx)
+- [Credentials for the Tigera private registry and a license key](../../getting-started/install-on-clusters/calico-enterprise.mdx)
 
 ## Concepts
 
@@ -42,7 +42,7 @@ Add the Calico helm repo:
 
 If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), or you need to customize TLS certificates, you **must** customize this Helm chart by creating a `values.yaml` file. Otherwise, you can skip this step.
 
-1. If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), set the `kubernetesProvider` as described in the [Installation reference](../../../reference/installation/api.mdx#operator.tigera.io/v1.Provider). For example:
+1. If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), set the `kubernetesProvider` as described in the [Installation reference](../../reference/installation/api.mdx#operator.tigera.io/v1.Provider). For example:
 
   ```bash
   echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml
@@ -72,37 +72,52 @@ If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubern
 
 ### Install {{prodname}}
 
-Standalone is a standard Kubernetes cluster.
+Managed clusters are used if you are implementing the Multi-cluster management feature.
 
-To install a standard {{prodname}} cluster with Helm:
+To install a {{prodname}} [managed](../create-a-managed-cluster#value) cluster with Helm:
 
-1. [Configure a storage class for Calico Enterprise](../../../operations/logstorage/create-storage).
+1. Export the service port number, and the public IP or host of the management cluster. (Ex. "example.com:1234" or "10.0.0.10:1234".)
+
+  ```bash
+  export MANAGEMENT_CLUSTER_ADDR=<your-management-cluster-addr>
+  ```
+
+1. Export the management cluster certificate and managed cluster certificate and key.
+  
+  ```bash
+  export MANAGEMENT_CLUSTER_CRT=<management-cluster-crt>
+  export MANAGED_CLUSTER_CRT=<managed-cluster-crt>
+  export MANAGED_CLUSTER_KEY=<managed-cluster-key>
+  ```
+
+1. Append the managementCluster context to your values.yaml:
+
+  ```bash
+  echo "managementClusterConnection:
+    enabled: true
+    managementClusterAddress: $MANAGEMENT_CLUSTER_ADDR
+    management:
+      tls:
+        crt: $MANAGEMENT_CLUSTER_CRT
+    managed:
+      tls:
+        crt: $MANAGED_CLUSTER_CRT
+        key: $MANAGED_CLUSTER_KEY" > values.yaml
+  ```
 
 1. Install the Tigera {{prodname}} operator and custom resource definitions using the Helm 3 chart:
-
-  <CodeBlock language='bash'>
-     {'{{version}}' === 'master'
-       ? `helm install {{prodnamedash}} tigera/tigera-operator --version tigera-operator-v0.0 \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
---set-file licenseKeyContent=<path/to/license/file/yaml> \\
---namespace tigera-operator --create-namespace`
-       : `helm install {{prodnamedash}} tigera/tigera-operator --version tigera-operator-{{chart_version_name}} \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
---set-file licenseKeyContent=<path/to/license/file/yaml> \\
---namespace tigera-operator --create-namespace`}
-  </CodeBlock>
-
-  or if you created a `values.yaml` above:
 
   <CodeBlock language='bash'>
      {'{{version}}' === 'master'
        ? `helm install {{prodnamedash}} tigera/tigera-operator --version tigera-operator-v0.0 -f values.yaml \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --set-file licenseKeyContent=<path/to/license/file/yaml> \\
+--set logStorage.enabled=false --set manager.enabled=false \\
 --namespace tigera-operator --create-namespace`
        : `helm install {{prodnamedash}} tigera/tigera-operator --version tigera-operator-{{chart_version_name}} -f values.yaml \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --set-file licenseKeyContent=<path/to/license/file/yaml> \\
+--set logStorage.enabled=false --set manager.enabled=false \\
 --namespace tigera-operator --create-namespace`}
   </CodeBlock>
 
@@ -112,20 +127,30 @@ To install a standard {{prodname}} cluster with Helm:
   watch kubectl get tigerastatus
   ```
 
-  Congratulations! You have now installed {{prodname}} using the Helm 3 chart.
+#### Provide permissions to view the managed cluster
+
+  To access resources belonging to a managed cluster from the {{prodname}} Manager UI, the service or user account used to log in must have appropriate permissions defined in the managed cluster.
+
+Define admin-level permissions for the service account `mcm-user` we created to log in to the Manager UI. Run the following command against your managed cluster.
+
+  ```bash
+  kubectl create clusterrolebinding mcm-user-admin --clusterrole=tigera-network-admin --serviceaccount=default:mcm-user
+  ```
+
+  Congratulations! You have now installed {{prodname}} for a managed cluster using the Helm 3 chart.
 
 ## Next steps
 
 **Recommended**
 
-- [Configure access to {{prodname}} Manager UI](../../../operations/cnx/access-the-manager.mdx)
-- [Authentication quickstart](../../../operations/cnx/authentication-quickstart.mdx)
-- [Configure your own identity provider](../../../operations/cnx/configure-identity-provider.mdx)
+- [Configure access to {{prodname}} Manager UI](../../operations/cnx/access-the-manager.mdx)
+- [Authentication quickstart](../../operations/cnx/authentication-quickstart.mdx)
+- [Configure your own identity provider](../../operations/cnx/configure-identity-provider.mdx)
 
 **Recommended - Networking**
 
-- The default networking is IP in IP encapsulation using BGP routing. For all networking options, see [Determine best networking option](../../../networking/determine-best-networking.mdx).
+- The default networking is IP in IP encapsulation using BGP routing. For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).
 
 **Recommended - Security**
 
-- [Get started with {{prodname}} tiered network policy](../../../network-policy/policy-tiers/tiered-policy.mdx)
+- [Get started with {{prodname}} tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)

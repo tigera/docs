@@ -424,6 +424,15 @@ module.exports = {
             'multicluster/federation/aws',
           ],
         },
+        {
+          type: 'category',
+          label: 'Helm',
+          link: {type: 'doc', id: 'multicluster/helm/index'},
+          items: [
+            'multicluster/helm/create-a-management-cluster-helm',
+            'multicluster/helm/create-a-managed-cluster-helm',
+          ],
+        },
       ],
     },
     {
