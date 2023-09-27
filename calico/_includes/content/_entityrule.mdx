@@ -1,11 +1,14 @@
 Entity rules specify the attributes of the source or destination of a packet that must match for the rule as a whole
-to match. Packets are matched on their IPs and ports. If the rule contains multiple match criteria (for example, an
-IP and a port) then all match criteria must match for the rule as a whole to match.
+to match. Packets can be matched on combinations of:
 
-[Selectors](#selectors) offer a powerful way to select the source or destination to match based on labels.
-Selectors can match [workload endpoints](../../reference/resources/workloadendpoint.mdx), host endpoint and
-([namespaced](../../reference/resources/networkset.mdx) or
-[global](../../reference/resources/globalnetworkset.mdx)) network sets.
+- Identity of the source/destination, by using [Selectors](#selectors) or by specifying a particular
+  Kubernetes `Service`. Selectors can match [workload endpoints](../../reference/resources/workloadendpoint.mdx),
+  [host endpoints](../../reference/resources/hostendpoint.mdx) and ([namespaced](../../reference/resources/networkset.mdx) or
+  [global](../../reference/resources/globalnetworkset.mdx)) network sets.
+- Source/destination IP address, protocol and port.
+
+If the rule contains multiple match criteria (for example, an IP and a port) then all match criteria must match
+for the rule as a whole to match a packet.
 
 | Field             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Accepted Values                                                                                           | Schema                                      | Default |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------- |
@@ -23,7 +26,7 @@ When using selectors in network policy, remember that selectors only match (know
 packets. A rule with a selector `all()` won't match "all packets", it will match "packets from all in-scope
 endpoints and network sets". To match all packets, do not include a selector in the rule at all.
 
-:::note
+#### Understanding `notSelector`
 
 `notSelector` is somewhat subtle because the `not` in `notSelector` negates the packet match
 rather than the selector:
@@ -31,4 +34,35 @@ rather than the selector:
 - `selector: !has(foo)` matches packets from/to endpoints and network sets that do not have the label "foo".
 - `notSelector: has(foo)` matches packets from/to **anywhere** (including outside the cluster), **except** traffic from/to endpoints and network sets that have the label "foo".
 
-:::
+#### Selector Performance
+
+When rendering policy into the dataplane, {{prodname}} must identify the endpoints that match the selectors
+in all active rules.  This calculation is optimized for certain selector types.
+Using the optimized selector types can reduce CPU usage (and policy rendering time) by orders of magnitude.
+This becomes important at very high scale (hundreds of active rules, hundreds of thousands of endpoints).
+
+The optimized operators are as follows:
+
+- `label == "value"`
+- `label in { 'v1', 'v2' }`
+- `has(label)`
+- `<expresion 1> && <expression 2>` is as optimized if **either** of `<expresion 1>` or `<expression 2>` are
+  optimized.
+
+The following are partially optimized:
+
+- `label contains 's'`
+- `label starts with 's'`
+- `label ends with 's'`
+
+The other operators, and in particular, `all()`, `!`, `||` and `!=` are not optimized.
+
+Examples:
+
+- `a == 'b'` - optimized
+- `a == 'b' && has(c)` - optimized
+- `a == 'b' || has(c)` - **not** optimized due to use of `||`
+- `c != 'd'` - **not** optimized due to use of `!=`
+- `!has(a)` - **not** optimized due to use of `!`
+- `a == 'b' && c != 'd'` - optimized, `a =='b'` is optimized so `a == 'b' && <anything>` is optimized.
+- `c != 'd' && a == 'b'` - optimized, `a =='b'` is optimized so `<anything> && a == 'b'` is optimized.
