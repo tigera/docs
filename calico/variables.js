@@ -11,6 +11,7 @@ const variables = {
   calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
   prodnameWindows: 'Calico for Windows',
+  prodnamedashWindows: 'calico-for-windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\CalicoWindows',

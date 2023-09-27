@@ -11,6 +11,7 @@ const variables = {
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/next',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
   prodnameWindows: 'Calico Enterprise for Windows',
+  prodnamedashWindows: 'calico-enterprise-for-windows',
   downloadsurl: 'https://downloads.tigera.io',
   nodecontainer: 'cnx-node',
   noderunning: 'calico-node',
