@@ -2,11 +2,17 @@
 description: Install Calico for Windows to enable a workload-to-workload Zero Trust model that protects modern business and legacy applications.
 ---
 
-# Install Calico for Windows
+# Install Calico for Windows manually
+
+:::note
+
+The manual method for installing {{prodnameWindows}} is deprecated in favor of using [the Operator and Windows HostProcess containers (HPC)](../operator.mdx#install-{{prodnamedashWindows}}-using-the-operator). Support for this method will be dropped in a future {{prodname}} version.
+
+:::
 
 ## Big picture
 
-Install {{prodnameWindows}} on Kubernetes clusters. The standard installation for {{prodnameWindows}} requires more time and expertise to configure. If you need to get started quickly, we recommend the [Quickstart](../quickstart.mdx).
+Install {{prodnameWindows}} on Kubernetes clusters using the manual installation method. The standard installation for {{prodnameWindows}} requires more time and expertise to configure. If you need to get started quickly, we recommend the [Quickstart guide](quickstart.mdx).
 
 ## Value
 
@@ -16,9 +22,9 @@ Extend your Kubernetes deployment to Windows environments.
 
 **Required**
 
-- Install and configure [calicoctl](../../../../operations/calicoctl/index.mdx)
-- Linux and Windows nodes [meet requirements](requirements.mdx)
-- If using {{prodname}} networking, copy the kubeconfig file (used by kubelet) to each Windows node to the file, `c:\k\config`.
+- Install and configure the [{{prodname}} API Server](../../../../operations/install-apiserver.mdx) or [calicoctl](../../../../operations/calicoctl/index.mdx)
+- Linux and Windows nodes [meet the requirements](../requirements.mdx)
+- If using {{prodname}} networking, copy the kubeconfig file (used by kubelet) to each Windows node to the file `c:\k\config`.
 - Download {{prodnameWindows}} and Kubernetes binaries to each Windows nodes to prepare for install:
 
   On each of your Windows nodes, download and run {{prodnameWindows}} installation scripts:
@@ -32,6 +38,8 @@ Extend your Kubernetes deployment to Windows environments.
 
 ## How to
 
+### Manual install
+
 Because the Kubernetes and {{prodname}} control components do not run on Windows yet, a hybrid Linux/Windows cluster is required. First you create a Linux cluster for {{prodname}} components, then you join Windows nodes to the Linux cluster.
 
 The geeky details of what you get by default:
@@ -40,6 +48,12 @@ The geeky details of what you get by default:
   prodname='{{prodname}}'
   details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes'
 />
+
+:::note
+
+The manual method for installing {{prodnameWindows}} is deprecated in favor of using [the Operator and Windows HostProcess containers](#operator-install). Support for this method will be dropped in a future {{prodname}} version.
+
+:::
 
 **Kubernetes**
 
@@ -52,11 +66,11 @@ The geeky details of what you get by default:
 1. [Install Calico on Linux control and worker nodes](#install-calico-on-linux-control-and-worker-nodes)
 1. [Install Calico and Kubernetes on Windows nodes](#install-calico-and-kubernetes-on-windows-nodes)
 
-### Create a Linux cluster
+#### Create a Linux cluster
 
 There are many ways to create a Linux Kubernetes cluster. We regularly test {{prodnameWindows}} with `kubeadm`.
 
-### Ensure pods run on the correct nodes
+#### Ensure pods run on the correct nodes
 
 A primary issue of running a hybrid Kubernetes cluster is that many Kubernetes manifests do not specify a **node selector** to restrict where their pods can run. For example, `kubeadm` installs `kube-proxy` (Kubernetes per-host NAT daemon) using a DaemonSet that does not include a node selector. This means that the kube-proxy pod, which only supports Linux, will be scheduled to both Linux and Windows nodes. Services/pods that should run only on Linux nodes (such as the `kube-proxy` DaemonSet) should be started with a node selector to avoid attempting to schedule them to Windows nodes.
 
@@ -88,7 +102,7 @@ To get around this for `kube-proxy`:
 
 A similar change may be needed for other Kubernetes services (such as `kube-dns` or `core-dns`).
 
-### Prepare Windows nodes to join the Linux cluster
+#### Prepare Windows nodes to join the Linux cluster
 
 On each Windows node, follow the steps below to configure `kubelet` and `kube-proxy` service.
 
@@ -163,7 +177,7 @@ The script will pause at the first stage until {{prodname}} is installed by foll
 
 :::
 
-**Step 2: Configure kube-proxy**
+**Step 2: Configure kube-proxy on Windows**
 
 `kube-proxy` must be configured as follows:
 
@@ -183,35 +197,37 @@ adjust other kube-proxy parameters.
 
 The script will pause at the first stage until {{prodname}} is installed by following the instructions in the next section.
 
-### Install Calico on Linux control and worker nodes
+#### Install Calico on Linux control and worker nodes
 
 **If using {{prodname}} BGP networking**
 
+<!--FIXME: update for operator linux installation-->
 1. Disable the default {{prodname}} IP-in-IP networking (which is not compatible with Windows), by modifying the {{prodname}} manifest, and setting the `CALICO_IPV4POOL_IPIP` environment variable to "Never" before applying the manifest.
 
    If you do apply the manifest with the incorrect value, changing the manifest and re-applying will have no effect. To adjust the already-created IP pool:
 
    ```bash
-   calicoctl get ippool -o yaml > ippool.yaml
+   kubectl get ippool -o yaml > ippool.yaml
    ```
 
    Then, modify ippool.yaml by setting the `ipipMode` to `Never` and then apply the updated manifest:
 
    ```bash
-   calicoctl apply -f ippool.yaml
+   kubectl apply -f ippool.yaml
    ```
 
 **If using {{prodname}} VXLAN networking**
 
+<!--FIXME: update for operator linux installation-->
 1. Modify VXLAN as described in [Customize the manifests](../../self-managed-onprem/config-options.mdx) guide. Note the following:
 
    - Windows can support only a single type of IP pool so it is important that you use only a single VXLAN IP pool in this mode.
    - Windows supports only VXLAN on port 4789 and VSID >=4096. {{prodname}}'s default (on Linux and Windows) is to use port 4789 and VSID 4096.
 
-1. Apply the manifest using `calicoctl`, and verify that you have a single pool with `VXLANMODE Always`.
+1. Apply the manifest using `kubectl`, and verify that you have a single pool with `VXLANMODE Always`.
 
    ```bash
-   calicoctl get ippool -o wide
+   kubectl get ippool -o wide
    ```
 
 1. For Linux control nodes using {{prodname}} networking, strict affinity must be set to `true`.
@@ -220,7 +236,7 @@ The script will pause at the first stage until {{prodname}} is installed by foll
    kubectl patch ipamconfigurations default --type merge --patch='{"spec": {"strictAffinity": true}}'
    ```
 
-### Install Calico and Kubernetes on Windows nodes
+#### Install {{prodname}} and Kubernetes on Windows nodes using the manual install method
 
 Follow the steps below on each Windows node to install Kubernetes and {{prodname}}:
 
@@ -262,7 +278,7 @@ Start-Service RemoteAccess
    | $env:CNI\_ variables           | Location of your Kubernetes installation.                                                                                                                                                                                                              |
    | $env:K8S_SERVICE_CIDR          | Your Kubernetes service cluster IP CIDR.                                                                                                                                                                                                               |
    | $env:CALICO_DATASTORE_TYPE     | {{prodname}} datastore you want to use.                                                                                                                                                                                                                |
-   | $env:KUBECONFIG                | Location of the kubeconfig file {{prodname}} should use to access the Kubernetes API server. To set up a secure kubeconfig with the correct permissions for {{prodnameWindows}}, see [Create a kubeconfig](../kubeconfig.mdx) for {{prodnameWindows}}. |
+   | $env:KUBECONFIG                | Location of the kubeconfig file {{prodname}} should use to access the Kubernetes API server. To set up a secure kubeconfig with the correct permissions for {{prodnameWindows}}, see [Create a kubeconfig](kubeconfig.mdx) for {{prodnameWindows}}. |
    | $env:ETCD\_ parameters         | etcd3 datastore parameters. **Note**: Because of a limitation of the Windows dataplane, a Kubernetes service ClusterIP cannot be used for the etcd endpoint (the host compartment cannot reach Kubernetes services).                                   |
    | $env:NODENAME                  | Hostname used by kubelet. The default uses the node's hostname. **Note**: If you are using the sample kubelet start-up script from the {{prodname}} package, kubelet is started with a hostname override that forces it to use this value.             |
    |                                | For AWS to work properly, kubelet should use the node's internal domain name for the AWS integration.                                                                                                                                                  |
@@ -302,8 +318,12 @@ After you run the installer, do not move the directory because the service regis
    Get-Service -Name CalicoNode
    Get-Service -Name CalicoFelix
    ```
+### Operator install
+<!--FIXME: is there a need for more detailed steps here? should the steps be written out here instead of linking?-->
+
+- Refer to [this guide for the steps to install {{prodnameWindows}} using the Operator and Windows hostprocess containers (HPC)](../operator.mdx)
 
 ## Next steps
 
-- [Create a kubeconfig](../kubeconfig.mdx)
+- [Create a kubeconfig](kubeconfig.mdx)
 - [Review network policy limitations in Windows](../limitations.mdx)

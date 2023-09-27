@@ -141,6 +141,33 @@ spec:
 EOF
 ```
 
+If running {{prodnameWindows}}, also create a service for Windows nodes:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: felix-windows-metrics-svc
+  namespace: calico-system
+spec:
+  clusterIP: None
+  selector:
+    k8s-app: calico-node-windows
+  ports:
+  - port: 9091
+    targetPort: 9091
+EOF
+```
+
+By default, the Windows firewall blocks listening on ports. To have {{prodname}} manage the Prometheus metrics ports Windows firewall rules, enabled the `windowsManageFirewallRules` setting in FelixConfiuration:
+
+```bash
+kubectl patch felixConfiguration default --type merge --patch '{"spec":{"windowsManageFirewallRules": Enabled}}'
+```
+
+[See here for more details](../../reference/resources/felixconfig.mdx). You can also add a Windows firewall rule allowing listening on the Prometheus metrics port instead of having {{prodname}} manage it.
+
 </TabItem>
 <TabItem label="Manifest" value="Manifest-5">
 
@@ -453,6 +480,16 @@ data:
         regex: felix-metrics-svc
         replacement: $1
         action: keep
+    - job_name: 'felix_windows_metrics'
+      scrape_interval: 5s
+      scheme: http
+      kubernetes_sd_configs:
+      - role: endpoints
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        regex: felix-windows-metrics-svc
+        replacement: $1
+        action: keep
     - job_name: 'typha_metrics'
       scrape_interval: 5s
       scheme: http
@@ -510,6 +547,16 @@ data:
         regex: felix-metrics-svc
         replacement: $1
         action: keep
+    - job_name: 'felix_windows_metrics'
+      scrape_interval: 5s
+      scheme: http
+      kubernetes_sd_configs:
+      - role: endpoints
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        regex: felix-windows-metrics-svc
+        replacement: $1
+        action: keep
     - job_name: 'typha_metrics'
       scrape_interval: 5s
       scheme: http
@@ -551,6 +598,8 @@ metadata:
     app: prometheus-pod
     role: monitoring
 spec:
+  nodeSelector:
+    kubernetes.io/os: linux
   serviceAccountName: calico-prometheus-user
   containers:
   - name: prometheus-pod
@@ -614,6 +663,11 @@ First remove the services by executing the following command:
 ```bash
 kubectl delete service felix-metrics-svc -n calico-system
 kubectl delete service typha-metrics-svc -n calico-system
+```
+
+If running {{prodnameWindows}}, also clean up the Windows nodes service:
+```bash
+kubectl delete service felix-windows-metrics-svc -n calico-system
 ```
 
 </TabItem>

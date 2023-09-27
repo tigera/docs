@@ -2,11 +2,17 @@
 description: Install Calico on an OpenShift 4 cluster on Windows nodes
 ---
 
-# Install an OpenShift 4 cluster on Windows nodes
+# Calico for Windows on an OpenShift 4 cluster (manual install)
+
+:::note
+
+The manual method for installing {{prodnameWindows}} is deprecated in favor of using [the Operator and Windows HostProcess containers (HPC)](../operator.mdx#install-{{prodnamedashWindows}}-using-the-operator). Support for this method will be dropped in a future {{prodname}} version.
+
+:::
 
 ## Big picture
 
-Install an OpenShift 4 cluster on AWS with {{prodname}} on Windows nodes.
+Install an OpenShift 4 cluster on AWS with {{prodname}} on Windows nodes using the manual installation method.
 
 ## Value
 
@@ -16,7 +22,7 @@ Run Windows workloads on OpenShift 4 with {{prodname}}.
 
 ### Before you begin
 
-- Ensure that your environment meets the {{prodname}} [system requirements](../openshift/requirements.mdx).
+- Ensure that your environment meets the {{prodname}} [system requirements](../../openshift/requirements.mdx).
 
 - Ensure that you have [configured an AWS account](https://docs.openshift.com/container-platform/4.4/installing/installing_aws/installing-aws-account.html) appropriate for OpenShift 4,
   and have [set up your AWS credentials](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html).
@@ -58,7 +64,7 @@ Once the installer has finished, your staging directory will contain the configu
 
 ### Update the configuration file to use {{prodname}}
 
-Override the OpenShift networking to use Calico and update the AWS instance types to meet the [system requirements](../openshift/requirements.mdx):
+Override the OpenShift networking to use Calico and update the AWS instance types to meet the [system requirements](../../openshift/requirements.mdx):
 
 ```bash
 sed -i 's/\(OpenShiftSDN\|OVNKubernetes\)/Calico/' install-config.yaml
@@ -115,14 +121,17 @@ To get more information, add `-o yaml` to the above command.
 
 :::
 
-Next, [install calicoctl](../../../operations/calicoctl/install.mdx) and ensure strict affinity is true:
+<!--FIXME: check if calicoctl can be replaced by kubectl here (i.e. check if the calico apiserver runs fine with these steps)-->
+Next, [install calicoctl](../../../../operations/calicoctl/install.mdx) and ensure strict affinity is true:
 
 ```bash
-kubectl patch ipamconfigurations default --type merge --patch='{"spec": {"strictAffinity": true}}'
+calicoctl patch ipamconfigurations default --type merge --patch='{"spec": {"strictAffinity": true}}'
 ```
 
 ### Add Windows nodes to the cluster
 
+<!--FIXME: on more recent openshift versions, there is no WNI and now Windows machines are supposed to be added via the
+           Red Hat Windows Machine Config Operator (WMCO). This might need substantial changes to this guide.-->
 Download the latest [Windows Node Installer (WNI)](https://github.com/openshift/windows-machine-config-bootstrapper/releases) binary `wni` that matches your OpenShift minor version.
 
 :::note
@@ -328,6 +337,6 @@ If the Windows node registered itself successfully, it should appear in the list
 
 **Recommended - Security**
 
-- [Secure Calico component communications](../../../network-policy/comms/crypto-auth.mdx)
-- [Secure pods with Calico network policy](../../../network-policy/get-started/calico-policy/calico-network-policy.mdx)
-- If you are using {{prodname}} with Istio service mesh, get started here: [Enable application layer policy](../../../network-policy/istio/app-layer-policy.mdx)
+- [Secure Calico component communications](../../../../network-policy/comms/crypto-auth.mdx)
+- [Secure pods with Calico network policy](../../../../network-policy/get-started/calico-policy/calico-network-policy.mdx)
+- If you are using {{prodname}} with Istio service mesh, get started here: [Enable application layer policy](../../../../network-policy/istio/app-layer-policy.mdx)

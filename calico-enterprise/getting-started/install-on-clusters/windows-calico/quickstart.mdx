@@ -39,6 +39,12 @@ kubectl patch ipamconfigurations default --type merge --patch='{"spec": {"strict
 
 ### Install {{prodnameWindows}} manually
 
+:::note
+
+The manual method for installing {{prodnameWindows}} is deprecated in favor of using [Windows HostProcess containers](#install-calico-enterprise-for-windows-using-hostprocess-containers). Support for this method will be dropped in a future {{prodname}} version.
+
+:::
+
 The following steps install a Kubernetes cluster on a single Windows node with a [minimum](../requirements.mdx#node-requirements) of 4 Linux worker nodes.
 
 - **Kubernetes VXLAN**
@@ -83,7 +89,7 @@ The following steps install a Kubernetes cluster on a single Windows node with a
 1. Setup a {{prodname}} Kubernetes cluster with [Windows nodes](https://docs.microsoft.com/en-us/virtualization/windowscontainers/kubernetes/getting-started-kubernetes-windows).
 
 1. Ensure that BGP is disabled since you're using VXLAN.
-   If you installed Calico using operator, you can do this by:
+   If you installed {{prodname}} using operator, you can do this by:
 
    ```bash
    kubectl patch installation default --type=merge -p '{"spec": {"calicoNetwork": {"bgp": "Disabled"}}}'
@@ -118,15 +124,11 @@ The following steps install a Kubernetes cluster on a single Windows node with a
                                  -DNSServerIPs <your DNS service IP (default 10.96.0.10)>
    ```
 
-   :::note
-
-   You do not need to pass a parameter if the default value of the parameter is correct for your cluster.
-
-   :::
 
    :::note
 
-   If your Windows nodes have multiple network adapters, you can configure the one used for VXLAN by editing `VXLAN_ADAPTER` in `{{rootDirWindows}}\config.ps1`, then restarting {{prodnameWindows}}.
+    - You do not need to pass a parameter if the default value of the parameter is correct for your cluster.
+    - If your Windows nodes have multiple network adapters, you can configure the one used for VXLAN by editing `VXLAN_ADAPTER` in `{{rootDirWindows}}\config.ps1`, then restarting {{prodnameWindows}}.
 
    :::
 
@@ -325,16 +327,20 @@ The following steps install a Kubernetes cluster on a single Windows node with a
 
 Congratulations! You now have a Kubernetes cluster with {{prodnameWindows}} and a Linux control node.
 
+### Configure installation parameters
+
+| **Parameter Name** | **Description**                                                                                                                                                                                                                           | **Default**  |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| KubeVersion        | Version of Kubernetes binaries to use. If the value is an empty string (default), the {{prodnameWindows}} installation script does not download Kubernetes binaries and run Kubernetes service. Use the default for managed public cloud. | ""           |
+| DownloadOnly       | Download without installing {{prodnameWindows}}. Set to `yes` to manually install and configure {{prodnameWindows}}. For example, {{prodnameWindows}} the hard way.                                                                       | no           |
+| Datastore          | {{prodnameWindows}} datastore type [`kubernetes`] for reading endpoints and policy information.                                                                                                                                           | kubernetes   |
+| ServiceCidr        | Service IP range of the Kubernetes cluster. Not required for most managed Kubernetes clusters. Note: EKS has non-default value.                                                                                                           | 10.96.0.0/12 |
+| DNSServerIPs       | Comma-delimited list of DNS service IPs used by Windows pod. Not required for most managed Kubernetes clusters. Note: EKS has a non-default value.                                                                                        | 10.96.0.10   |
+| CalicoBackend      | Calico backend network type (`vxlan` or `bgp`). If the value is an empty string (default), backend network type is auto detected.                                                                                                         | ""           |
+
 ### Install {{prodnameWindows}} using HostProcess containers
 
-:::note
-
-This installation method is a tech preview and should not be used for production clusters. Upgrades from a tech preview version of this
-installation method to the GA version might not be seamless.
-
-:::
-
-With Kubernetes v1.22, a new Windows container type called "HostProcess containers" can run directly on the host with access to the host network namespace,
+With Kubernetes v1.22, there is a new Windows container type called **HostProcess containers (HPC)** that can run directly on the host with access to the host network namespace,
 storage, and devices. With this feature, {{prodnameWindows}} can now be installed and managed using Kubernetes resources such as Daemonsets and ConfigMaps,
 instead of needing to configure and install {{prodnameWindows}} manually on each node. Using this installation method, the {{prodnameWindows}}
 services are no longer registered on the host. Instead, the services are run directly within HostProcess containers.
@@ -345,11 +351,11 @@ In addition to the [{{prodnameWindows}} requirements](kubernetes/requirements.md
 this installation method has [additional requirements](https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/):
 
 - Kubernetes v1.22+
-- HostProcess containers support enabled: for v1.22, HostProcess containers support has to be [enabled](https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/#before-you-begin). For Kubernetes v1.23+, HostProcess containers are enabled by default.
-- ContainerD 1.6.0+
+- Enable HostProcess containers support. For Kubernetes v1.22, see [here](https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/#before-you-begin). For Kubernetes v1.23+, HostProcess containers are enabled by default.
+- containerd 1.6.0+
 - The Windows nodes have joined the cluster
 
-To install ContainerD on the Windows node and configure the ContainerD service:
+To install containerd on the Windows node and configure the containerd service:
 
 ```powershell
 Invoke-WebRequest {{windowsScriptsURL}}/Install-Containerd.ps1 -OutFile c:\Install-Containerd.ps1
@@ -373,7 +379,8 @@ c:\PrepareNode.ps1 -KubernetesVersion v1.26.6
 kubeadm token create --print-join-command
 ```
 
-- Edit the join command by appending `--cri-socket "npipe:////./pipe/containerd-containerd"` and update the kubeadm.exe path to `c:\k\kubeadm.exe`.
+- Edit the join command by updating the kubeadm.exe path to `c:\k\kubeadm.exe`.
+- If using a Kubernetes version earlier than v1.25, also append `--cri-socket "npipe:////./pipe/containerd-containerd"` to the join command.
   An example join command:
 
 ```
@@ -383,11 +390,9 @@ c:\k\kubeadm.exe join 172.16.101.139:6443 --token v8w2jt.jmc45acn85dbll1e --disc
 - Run the join command on the Windows node. Shortly after it completes successfully, the Windows node will appear in `kubectl get nodes`.
   The new node's status will be NotReady since the Calico CNI has not yet been installed.
 
-#### Migrating from {{prodnameWindows}} installed manually
+#### Migrating from {{prodnameWindows}} installed manually to an HPC installation
 
-If your Windows nodes already have {{prodnameWindows}} installed using the manual installation method, you can continue this quickstart guide
-to migrate to a manifest-based installation. This installation process will uninstall any existing {{prodnameWindows}} services and overwrite the {{prodnameWindows}} installation files with those included in the `calico/windows` image. If `kubelet` and `kube-proxy` were installed using `{{rootDirWindows}}\kubernetes\install-kube-services.ps1`, those services will updated in-place and remain installed. If those services were running, they are restarted so those services
-will be updated in place and remain installed.
+The HPC installation in this guide is operator-based and will automatically migrate your Windows nodes that have {{prodnameWindows}} installed using the manual installation method. This installation process will uninstall any existing {{prodnameWindows}} services and overwrite the {{prodnameWindows}} installation files with those included in the `tigera/cni-windows` and `tigera/cnx-node-windows` images. If `kubelet` was installed using `{{rootDirWindows}}\kubernetes\install-kube-services.ps1`, this service will remain installed. If the `kube-proxy` service was also installed using `{{rootDirWindows}}\kubernetes\install-kube-services.ps1`, it will be stopped and uninstalled by the `calico-node-windows` HPC initContainers. It is recommended to run `kube-proxy-windows` as hostprocess container images using the [manifest provided in the kubernetes-sigs sig-windows-tools repository](https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/calico/kube-proxy/kube-proxy.yml).
 
 :::note
 
@@ -395,7 +400,7 @@ Before proceeding, take note of the configuration parameters in `{{rootDirWindow
 
 :::
 
-#### Install
+#### HPC Installation
 
 <Tabs>
 <TabItem label="Kubernetes VXLAN" value="Kubernetes VXLAN-3">
@@ -411,17 +416,6 @@ Before proceeding, take note of the configuration parameters in `{{rootDirWindow
 </Tabs>
 
 Congratulations! You now have a Kubernetes cluster with {{prodnameWindows}} and a Linux control node.
-
-### Configure installation parameters
-
-| **Parameter Name** | **Description**                                                                                                                                                                                                                           | **Default**  |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| KubeVersion        | Version of Kubernetes binaries to use. If the value is an empty string (default), the {{prodnameWindows}} installation script does not download Kubernetes binaries and run Kubernetes service. Use the default for managed public cloud. | ""           |
-| DownloadOnly       | Download without installing {{prodnameWindows}}. Set to `yes` to manually install and configure {{prodnameWindows}}. For example, {{prodnameWindows}} the hard way.                                                                       | no           |
-| Datastore          | {{prodnameWindows}} datastore type [`kubernetes`] for reading endpoints and policy information.                                                                                                                                           | kubernetes   |
-| ServiceCidr        | Service IP range of the Kubernetes cluster. Not required for most managed Kubernetes clusters. Note: EKS has non-default value.                                                                                                           | 10.96.0.0/12 |
-| DNSServerIPs       | Comma-delimited list of DNS service IPs used by Windows pod. Not required for most managed Kubernetes clusters. Note: EKS has a non-default value.                                                                                        | 10.96.0.10   |
-| CalicoBackend      | Calico backend network type (`vxlan` or `bgp`). If the value is an empty string (default), backend network type is auto detected.                                                                                                         | ""           |
 
 ## Next steps
 
