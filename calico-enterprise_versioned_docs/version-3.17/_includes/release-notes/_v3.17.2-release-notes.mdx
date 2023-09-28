@@ -1,0 +1,20 @@
+29 Sept 2023
+
+### Improvements
+- Added federation metrics to Typha, similar to our current federation metrics in kube-controllers.
+
+### Bug fixes
+- Fixed a security issue.
+- Fixed an issue where the use of subPath in a volumeMount could prevent pod creation on Windows when Docker is the runtime.
+- Added a decoupling buffer between the Typha client library and downstream code. This prevents the Typha client from being blocked if the downstream code blocks for too long, and prevents timeouts at very high scale.
+- Fixed DNS policy for DNS responses that are larger than around 1024 bytes and the Linux kernel is 4.8 or later.
+- **Multi-cluster management users only**. Fixed an issue where the operator would create overlapping DNS names. If the `manager-tls` and `internal-manager-tls` secrets have overlapping DNS names, components such as `es-calico-kube-controllers` will log certificate errors. If you have previously installed a version older than v3.13.0 and never changed your manager-tls secret from the tigera-operator namespace, you must delete both of these secrets. This applies to you if the following command prints a certificate: $ kubectl get secret manager-tls -n tigera-operator -o "jsonpath={.data['cert']}".
+- Fixed an issue where the policy created for NodeLocal DNSCache would not select the Rancher DNS server.
+
+### Known issues {#known-issues-3.17.2}
+- The canvas on Service Graph may zoom and pan unexpectedly when modifying Views or Layers
+- Dragging tiers to modify their order is currently not working in the UI, though you can still change its order when editing a tier
+- Policy recommendations may generate rules with ports and protocols for intra-namespace traffic. This will be modified in the next patch release to exclude ports and protocols and provide an option to Allow or Pass this traffic.
+- Installing {{prodname}} on OpenShift Container Platform (OCP) 4.13 with the eBPF dataplane is currently not working
+- Upgrading to {{prodname}} 3.17.2 on Rancher/RKE from {{prodname}} 3.13.0 currently requires manually terminating the calico-node container for an upgrade to proceed.
+- Multi-cluster management of managed clusters with version before v3.17.0 is currently not working.
