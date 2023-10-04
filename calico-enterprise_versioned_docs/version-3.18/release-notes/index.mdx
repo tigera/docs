@@ -2,6 +2,37 @@
 description: What's new, and why features provide value for upgrading.
 ---
 
-# Release notes
+# Calico Enterprise 3.18 release notes
 
-<ReleaseNotes />
+## New features and enhancements
+
+#### Security event management
+
+We've added a new Security event management dashboard for threat detection. Security events provides context for suspicious activity detected in your cluster. Combined with the Kubernetes context, you can see what workloads are affected. [Security event management](../threat/security-event-management).
+
+#### New performance optimizations for egress gateways
+
+We've added new performance options for egress gateway policies to ensure that application client and gateway pods are on the same cluster node. [Optimize egress networking for workloads with long-lived TCP connections](../networking/egress/egress-gateway-maintenance).
+
+#### Configurable XFF headers for Envoy
+
+We've added support for XFF to propagate the original IP address when proxying application layer traffic with Envoy within a Kubernetes cluster. [Installation reference](../reference/installation/api#operator.tigera.io/v1.EnvoySettings).
+
+#### Alert-only mode for Workload-based Web Application Firewall (WAF)
+
+We've added a new default mode for WAF that is monitor/event only. This allows operators and security teams to verify the accuracy of configured rules before actively blocking traffic. [Web application firewall](../threat/web-application-firewall).
+
+#### Additional options for Helm-based installs
+
+We've added new options for Helm installs including: set the number of replicas for specific deployments, node affinity rules, and configure Wireguard. [Helm installation reference](../reference/installation/helm_customization).
+
+#### Support for Azure CNI with overlay networking for AKS
+
+We've added supported for Azure CNI with overlay networking for AKS clusters, which is useful if you've exhausted your IP addresses. This option augments support for the Azure CNI with no overlay (where a VNET IP address is assigned to every pod). To review Azure CNI options, see [Microsoft Azure Kubernetes Service (AKS)](../getting-started/install-on-clusters/aks).
+
+## Known issues
+
+- TKG v1.x and MKE v3.6 are not supported at this time
+- L7 logs with source name `pvt` is not visible in Service Graph
+- *Multi-cluster management users only*. If the `manager-tls` and `internal-manager-tls` secrets have overlapping DNS names, components such as `es-calico-kube-controllers` will log certificate errors. If you have previously installed a version older than v3.13.0 and never changed your manager-tls secret from the tigera-operator namespace, you must delete both of these secrets. This applies to you if the following command prints a certificate: `$ kubectl get secret manager-tls -n tigera-operator -o "jsonpath={.data['cert']}"`
+- Upgrading to {{prodname}} 3.18.0 on Rancher/RKE from {{prodname}} 3.13.0 currently requires manually terminating the calico-node container for an upgrade to proceed
