@@ -280,12 +280,6 @@ export default {
       title: 'Threat defense',
       content: [
         {
-          rowHeader: 'Anomaly detection',
-          CalicoOpenSource: '',
-          CalicoEntreprise: 'Y',
-          CalicoCloud: 'Y',
-        },
-        {
           rowHeader: 'Container threat detection',
           CalicoOpenSource: '',
           CalicoEntreprise: '',
