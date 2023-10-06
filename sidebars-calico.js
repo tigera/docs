@@ -693,6 +693,7 @@ module.exports = {
             'reference/vpp/host-network',
           ],
         },
+        'reference/component-versions',
         'reference/faq',
         'reference/involved',
         {
@@ -705,7 +706,10 @@ module.exports = {
         },
       ],
     },
-    'release-notes/index',
+    {
+      type: 'doc',
+      id: 'release-notes/index',
+      label: 'Release notes', // sidebar label
+    },
   ],
-
 };
