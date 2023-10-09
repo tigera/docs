@@ -290,7 +290,6 @@ module.exports = {
       link: {type: 'doc', id: 'threat/index'},
       items: [
         'threat/security-event-management',
-        'threat/security-anomalies',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
         'threat/suspicious-external-ips',
@@ -478,7 +477,6 @@ module.exports = {
         'reference/api',
         'reference/installation/api',
         'reference/installation/ia-api',
-        'reference/anomaly-detection',
         {
           type: 'category',
           label: 'Resource definitions',
@@ -619,4 +617,3 @@ module.exports = {
     },
   ],
 };
-
