@@ -1,0 +1,174 @@
+---
+description: Scan images in your build pipeline using Image Assurance.
+---
+
+# Integrate Image Assurance scanner in your build pipeline
+
+## Big picture
+
+Integrate the Image Assurance scanner into your build pipeline and private registries to ensure builds are checked by Image Assurance before deployment. You can also use the scanner offline and on-demand for ad hoc scanning and emergency patching. For a real-world use case, see [Hands-on guide: How to scan and block container images to mitigate SBOM attacks](https://www.tigera.io/blog/hands-on-guide-how-to-scan-and-block-container-images-to-mitigate-sbom-attacks/).
+
+This article describes how to install the Image Assurance binary. To integrate the containerized version of Image Assurance scanner into your CI/CD platform, go to: [Image Assurance containerized scanner](https://quay.io/repository/tigera/image-assurance-scanner-cli) and pull the latest image. For example:
+
+```bash
+   docker pull quay.io/tigera/image-assurance-scanner-cli:v1.8.4
+```
+
+## Before you begin
+
+**Image requirements**
+
+Images must be available locally through the container runtime environment where the Image Assurance scanner is running
+
+**Scanner requirements**
+
+- Must have internet access to download and update the vulnerability database
+- To see image scan results in Manager UI, the scanner must communicate with an external API endpoint outside your environment
+
+## How to
+
+- [Get latest version of Image Assurance](#get-latest-version-of-image-assurance)
+- [Start the scanner](#start-the-scanner)
+- [Scan images](#scan-images)
+- [Scan images using a configuration file](#scan-images-using-a-configuration-file)
+- [Get scanner updates](#get-scanner-updates)
+
+### Get latest version of Image Assurance
+
+1. On the **Managed Clusters** page, select the cluster from the list, and click **Reinstall**.
+1. Copy the updated installation script command and run it against your cluster.
+
+### Start the scanner
+
+1. Download the latest version of the scanner.
+
+**Linux**
+
+```shell
+curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-linux-amd64
+   ```
+
+**MacOS**
+
+```shell
+curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-darwin-amd64
+   ```
+
+2. Set the executable flag on the binary.
+
+```shell
+chmod +x ./tigera-scanner
+   ```
+
+:::note
+
+You must download and set the executable flag each time you get a new version of the scanner.
+
+:::
+
+3. Verify that the scanner works correctly by running the version command.
+
+```shell
+./tigera-scanner version
+{{imageassuranceversion}}
+   ```
+
+### Scan images
+
+You can scan images and report results back to {{prodname}}, or scan images locally without reporting results to {{prodname}}.
+
+**Syntax**:
+
+`tigera-scanner scan [OPTIONS] <image_name>`
+
+**Options**:
+
+- `--apiurl` - {{prodname}} API URL path. You can get this URL in Manager UI, **Image Assurance**, **Scan settings**.
+- `--token` - secure API or authorization token to make requests to {{prodname}} API URL. You can get this URL in Manager UI, **Image Assurance**, **Scan settings**.
+- `--warn_threshold` - CVSS threshold for Warn scan results. Range from 0.0 - 10.0.
+- `--fail_threshold` - CVSS threshold for Fail scan results. Range from 0.0 - 10.0.
+- `--vulnerability_db_path` - path to a folder to store vulnerability data (defaults to `$XDG_CACHE_HOME`; if it is not set, defaults to `$HOME/.cache`).
+- `--input_file <file-path>` - Path to a JSON file containing image URLs.
+- `--output_file <file-path>` - File path that will contain scan results in a JSON format.
+
+**Examples**
+
+**Scan an image, report results**
+
+```shell
+./tigera-scanner scan ubuntu:latest --apiurl https://<my-org>.calicocloud.io --token ezBhbGcetc...
+```
+
+**Scan an image locally, do not report results**
+
+```shell
+./tigera-scanner scan ubuntu:latest
+```
+
+**Scan an image with a failure and warning threshold**
+
+```shell
+./tigera-scanner scan ubuntu:latest --fail_threshold 7.0 --warn_threshold 3.9
+```
+
+**Scan multiple images locally, do not report results**
+
+```shell
+./tigera-scanner scan ubuntu:latest alpine:latest
+```
+
+**Scan multiple images using an input and output file**
+
+The input file must have the following JSON structure:
+
+```json
+{
+  "images": [
+    "ubuntu:latest",
+    "alpine:latest"
+  ]
+}
+```
+
+```shell
+./tigera-scanner scan --input_file images.json --output_file results.json
+```
+
+### Scan images using a configuration file
+
+Create a configuration file in `$HOME/.tigera-scanner.yaml` for the scanner to read.
+
+:::note
+
+Key names must match the full name of arguments passed to the scanner. The configuration precedence order is options > environment variables > file configuration.
+
+:::
+
+**Options**
+
+| Options                 | Shorthand | Environment variable     | Description                                                                                                                 |
+| ----------------------- | --------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| --apiurl                | -a        | CC_API_URL               | {{prodname}} API URL path. You can get this URL in Manager UI, Image Assurance, Scan settings.                              |
+| --token                 | -t        | CC_TOKEN                 | Secure API or authorization token to make requests to {{prodname}} API URL.                                                 |
+| --warn_threshold        | -w        | CC_WARN_THRESHOLD        | CVSS threshold for Warn scan results. Range from 0.0 - 10.0.                                                                |
+| --fail_threshold        | -f        | CC_FAIL_THRESHOLD        | CVSS threshold for Fail scan results. Range from 0.0 - 10.0.                                                                |
+| --vulnerability_db_path | -p        | CC_VULNERABILITY_DB_PATH | Path to a folder to store vulnerability data (defaults to `$XDG_CACHE_HOME`; if it is not set, defaults to `$HOME/.cache`). |
+| --input_file            | -i        | CC_INPUT_FILE            | Path to the JSON file containing image URLs.                                                                                           |
+| --output_file           | -o        | CC_OUTPUT_FILE           | File path that will contain scan results in a JSON format.                                                                                        |
+
+### Get scanner updates
+
+To get the latest updates, you must update the scanner binary. To see the current version you are running, run this command. For example:
+
+```shell
+./tigera-scanner version
+{{imageassuranceversion}}
+```
+
+To see the latest version, see [Release notes](../../release-notes/index.mdx).
+
+To download the latest version, see [Start the scanner](#start-the-scanner).
+
+## Next step
+
+[Set up alerts](../set-up-alerts)

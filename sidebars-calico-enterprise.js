@@ -220,7 +220,7 @@ module.exports = {
           items: [
             'network-policy/recommendations/policy-recommendations',
             'network-policy/recommendations/learn-about-policy-recommendations',
-          ],  
+          ],
         },
         'network-policy/policy-best-practices',
         {
@@ -415,13 +415,22 @@ module.exports = {
         'multicluster/change-cluster-type',
         {
           type: 'category',
-          label: 'Federate identity endpoints and services',
+          label: 'Cluster mesh',
           link: {type: 'doc', id: 'multicluster/federation/index'},
           items: [
             'multicluster/federation/overview',
             'multicluster/federation/kubeconfig',
             'multicluster/federation/services-controller',
             'multicluster/federation/aws',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Helm',
+          link: {type: 'doc', id: 'multicluster/helm/index'},
+          items: [
+            'multicluster/helm/create-a-management-cluster-helm',
+            'multicluster/helm/create-a-managed-cluster-helm',
           ],
         },
       ],
@@ -432,15 +441,6 @@ module.exports = {
       link: {type: 'doc', id: 'threat/index'},
       items: [
         'threat/security-event-management',
-        {
-          type: 'category',
-          label: 'Anomaly detection',
-          link: {type: 'doc', id: 'threat/anomaly-detection/index'},
-          items: [
-            'threat/anomaly-detection/security-anomalies',
-            'threat/anomaly-detection/storage'
-          ],
-        },
         'threat/suspicious-ips',
         'threat/suspicious-domains',
         'threat/suspicious-external-ips',
@@ -617,7 +617,6 @@ module.exports = {
         'reference/api',
         'reference/installation/api',
         'reference/installation/helm_customization',
-        'reference/anomaly-detection',
         {
           type: 'category',
           label: 'CLIs',
@@ -862,10 +861,15 @@ module.exports = {
         },
         'reference/attribution',
         'reference/rest-api-reference',
+        'reference/component-versions',
         'reference/faq',
         'reference/support-policy',
       ],
     },
-    'release-notes/index'
+    {
+      type: 'doc',
+      id: 'release-notes/index',
+      label: 'Release notes', // sidebar label
+    },
   ],
 };

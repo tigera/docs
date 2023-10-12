@@ -1,13 +1,14 @@
-import DomainNames from '@site/calico-cloud/_includes/content/_domain-names.mdx';
-
 Entity rules specify the attributes of the source or destination of a packet that must match for the rule as a whole
-to match. Packets are matched on their IPs and ports. If the rule contains multiple match criteria (for example, an
-IP and a port) then all match criteria must match for the rule as a whole to match.
+to match. Packets can be matched on combinations of:
 
-[Selectors](#selector) offer a powerful way to select the source or destination to match based on labels.  
-Selectors can match workload endpoints, host endpoint and
-([namespaced](../../reference/resources/networkset.mdx) or
-[global](../../reference/resources/globalnetworkset.mdx)) network sets.
+- Identity of the source/destination, by using [Selectors](#selectors) or by specifying a particular
+  Kubernetes `Service`. Selectors can match [workload endpoints](../../reference/resources/workloadendpoint.mdx),
+  [host endpoints](../../reference/resources/hostendpoint.mdx) and ([namespaced](../../reference/resources/networkset.mdx) or
+  [global](../../reference/resources/globalnetworkset.mdx)) network sets.
+- Source/destination IP address, protocol and port.
+
+If the rule contains multiple match criteria (for example, an IP and a port) then all match criteria must match
+for the rule as a whole to match a packet.
 
 | Field             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Accepted Values                                                                                           | Schema                                      | Default |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------- |
@@ -27,6 +28,39 @@ Selectors can match workload endpoints, host endpoint and
 You cannot mix IPv4 and IPv6 CIDRs in a single rule using `nets` or `notNets`. If you need to match both, create 2 rules.
 
 :::
+
+#### Selector performance in EntityRules
+
+When rendering policy into the dataplane, {{prodname}} must identify the endpoints that match the selectors
+in all active rules.  This calculation is optimized for certain common selector types.
+Using the optimized selector types reduces CPU usage (and policy rendering time) by orders of magnitude.
+This becomes important at high scale (hundreds of active rules, hundreds of thousands of endpoints).
+
+The optimized operators are as follows:
+
+- `label == "value"`
+- `label in { 'v1', 'v2' }`
+- `has(label)`
+- `<expresion 1> && <expression 2>` is optimized if **either** `<expresion 1>` or `<expression 2>` is
+  optimized.
+
+The following perform like `has(label)`.  All endpoints with the label will be scanned to find matches:
+
+- `label contains 's'`
+- `label starts with 's'`
+- `label ends with 's'`
+
+The other operators, and in particular, `all()`, `!`, `||` and `!=` are not optimized.
+
+Examples:
+
+- `a == 'b'` - optimized
+- `a == 'b' && has(c)` - optimized
+- `a == 'b' || has(c)` - **not** optimized due to use of `||`
+- `c != 'd'` - **not** optimized due to use of `!=`
+- `!has(a)` - **not** optimized due to use of `!`
+- `a == 'b' && c != 'd'` - optimized, `a =='b'` is optimized so `a == 'b' && <anything>` is optimized.
+- `c != 'd' && a == 'b'` - optimized, `a =='b'` is optimized so `<anything> && a == 'b'` is optimized.
 
 ### Exact and wildcard domain names
 

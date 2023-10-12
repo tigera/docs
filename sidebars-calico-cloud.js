@@ -39,8 +39,7 @@ module.exports = {
         'get-started/connect/connect-cluster',
         'get-started/connect/checklist',
         'get-started/connect/operator-checklist',
-        'get-started/upgrade-cluster',
-        'get-started/connect/usage-metrics',
+        'get-started/upgrade-cluster'
       ],
     },
     {
@@ -67,7 +66,6 @@ module.exports = {
             'tutorials/calico-cloud-features/networksets',
           ],
         },
-        'tutorials/about-calico-enterprise',
         {
           type: 'category',
           label: 'Secure ingress and egress for applications',
@@ -292,7 +290,6 @@ module.exports = {
       link: {type: 'doc', id: 'threat/index'},
       items: [
         'threat/security-event-management',
-        'threat/security-anomalies',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
         'threat/suspicious-external-ips',
@@ -405,7 +402,7 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Multi-cluster management',
+      label: 'Cluster mesh',
       link: {type: 'doc', id: 'multicluster/index'},
       items: [
         'multicluster/overview',
@@ -421,6 +418,7 @@ module.exports = {
       items: [
         'operations/cluster-management',
         'operations/disconnect',
+        'operations/usage-metrics',
         {
           type: 'category',
           label: 'Secure component communications',
@@ -479,7 +477,6 @@ module.exports = {
         'reference/api',
         'reference/installation/api',
         'reference/installation/ia-api',
-        'reference/anomaly-detection',
         {
           type: 'category',
           label: 'Resource definitions',
@@ -613,7 +610,10 @@ module.exports = {
       ],
     },
     'get-help/support',
-    'release-notes/index',
+    {
+      type: 'doc',
+      label: 'Release notes',
+      id: 'release-notes/index',
+    },
   ],
 };
-
