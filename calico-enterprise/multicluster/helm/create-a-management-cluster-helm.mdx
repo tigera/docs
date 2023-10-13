@@ -110,10 +110,20 @@ To install a {{prodname}} [management](../create-a-management-cluster#value) clu
 
 1. Export one or more managed clusters.
 
+  Generate the base64 encoded CRT and KEY for a managed cluster:
+
+  ```bash
+  openssl genrsa 2048 | base64 -w 0 > my-managed-cluster.key.base64
+  openssl req -new -key <(base64 -d my-managed-cluster.key.base64) -subj "/CN=tigera-voltron" | \
+  openssl x509 -req -signkey <(base64 -d my-managed-cluster.key.base64) -days 365 | base64 -w 0 > my-managed-cluster.crt.base64
+  ```
+
+  Export the managed cluster variables:
+
   ```bash
   export MANAGED_CLUSTER_NAME=my-managed-cluster
   export MANAGED_CLUSTER_OPERATOR_NAMESPACE=tigera-operator
-  export MANAGED_CLUSTER_CERTIFICATE=<managed-cluster-certificate>
+  export MANAGED_CLUSTER_CERTIFICATE=my-managed-cluster.crt.base64
   ```
 
 1. Append the managementCluster context to your `values.yaml` for NodePort:

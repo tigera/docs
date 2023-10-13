@@ -82,6 +82,22 @@ To install a {{prodname}} [managed](../create-a-managed-cluster#value) cluster w
 
 1. Export the management cluster certificate and managed cluster certificate and key.
   
+  If you haven't already done so already, generate the base64 encoded CRT and KEY for this managed cluster:
+
+  ```bash
+  openssl genrsa 2048 | base64 -w 0 > my-managed-cluster.key.base64
+  openssl req -new -key <(base64 -d my-managed-cluster.key.base64) -subj "/CN=tigera-voltron" | \
+  openssl x509 -req -signkey <(base64 -d my-managed-cluster.key.base64) -days 365 | base64 -w 0 > my-managed-cluster.crt.base64
+  ```
+
+  Get the MANAGEMENT_CLUSTER_CRT by running the following command on the management cluster:
+
+  ```bash
+  kubectl get secret tigera-pull-secret -n tigera-operator -o jsonpath='{.data.tls\.crt}' | base64 -d > management-cluster.crt.base64
+  ```
+
+  Export the managed cluster variables:
+
   ```bash
   export MANAGEMENT_CLUSTER_CRT=<management-cluster-crt>
   export MANAGED_CLUSTER_CRT=<managed-cluster-crt>
