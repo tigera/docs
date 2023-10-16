@@ -37,7 +37,7 @@ export default function ComponentVersions() {
             id={`component-versions-${toKebab(release.title)}`}
             data-bz-version={toKebab(release.title)}
           >
-            Component versions for {variables.prodname} {variables.releaseTitle.startsWith('v') ? variables.releaseTitle.substring(1) : variables.releaseTitle}
+            Component versions for {variables.prodname} {release.title.startsWith('v') ? release.title.substring(1) : release.title}
           </Heading>
           <p>
             {release.title !== 'master' && (
