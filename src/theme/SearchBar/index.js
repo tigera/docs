@@ -218,7 +218,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
         />
         {/* This loads libraries for clym privacy popups. */}
 
-        <script src="https://widget.clym-sdk.net/blocking.js"></script>
+        {/* <script src="https://widget.clym-sdk.net/blocking.js"></script> */}
         <script>{`
         (function(d,s,i,w,o){
         var js,cjs=d.getElementsByTagName(s)[0];
