@@ -245,6 +245,7 @@ module.exports = {
           items: [
             'network-policy/beginners/kubernetes-default-deny',
             'network-policy/beginners/calico-network-policy',
+            "network-policy/beginners/calico-labels",
             'network-policy/beginners/simple-policy-cnx',
             {
               type: 'category',

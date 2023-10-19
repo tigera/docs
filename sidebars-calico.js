@@ -318,6 +318,7 @@ module.exports = {
               },
               items: [
                 'network-policy/get-started/calico-policy/calico-network-policy',
+                'network-policy/get-started/calico-policy/calico-labels',
                 'network-policy/get-started/calico-policy/network-policy-openstack',
                 'network-policy/get-started/calico-policy/calico-policy-tutorial',
               ],
