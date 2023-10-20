@@ -46,10 +46,10 @@ serve: build
 full: clean build
 
 .PHONY: netlify
-netlify: build run-update-cloud-image-list test
+netlify: build test
 
 .PHONY: all
-all: full run-update-cloud-image-list test
+all: full test
 
 .PHONY: index
 index:
