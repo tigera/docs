@@ -66,7 +66,6 @@ module.exports = {
             'tutorials/calico-cloud-features/networksets',
           ],
         },
-        'tutorials/about-calico-enterprise',
         {
           type: 'category',
           label: 'Secure ingress and egress for applications',
@@ -291,7 +290,6 @@ module.exports = {
       link: {type: 'doc', id: 'threat/index'},
       items: [
         'threat/security-event-management',
-        'threat/security-anomalies',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
         'threat/suspicious-external-ips',
@@ -315,14 +313,15 @@ module.exports = {
       label: 'Image Assurance',
       link: {type: 'doc', id: 'image-assurance/index'},
       items: [
-        'image-assurance/overview',
         {
           type: 'category',
           label: 'Scan images for vulnerabilities',
           link: {type: 'doc', id: 'image-assurance/scanners/index'},
           items: [
+            'image-assurance/scanners/overview',
             'image-assurance/scanners/cluster-scanner',
-            'image-assurance/scanners/pipeline-scanner'
+            'image-assurance/scanners/pipeline-scanner',
+            'image-assurance/scanners/registry-scanner',
           ],
         },
         'image-assurance/understanding-scan-results',
@@ -479,7 +478,6 @@ module.exports = {
         'reference/api',
         'reference/installation/api',
         'reference/installation/ia-api',
-        'reference/anomaly-detection',
         {
           type: 'category',
           label: 'Resource definitions',
@@ -620,4 +618,3 @@ module.exports = {
     },
   ],
 };
-

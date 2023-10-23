@@ -2,23 +2,24 @@
 description: Scan images in your build pipeline using Image Assurance.
 ---
 
-# Integrate Image Assurance scanner in your build pipeline
+# Integrate the scanner into your build pipeline
 
 ## Big picture
 
-Integrate the Image Assurance scanner into your build pipeline and private registries to ensure builds are checked by Image Assurance before deployment. You can also use the scanner offline and on-demand for ad hoc scanning and emergency patching. For a real-world use case, see [Hands-on guide: How to scan and block container images to mitigate SBOM attacks](https://www.tigera.io/blog/hands-on-guide-how-to-scan-and-block-container-images-to-mitigate-sbom-attacks/).
+Integrate the Image Assurance CLI scanner into your build pipeline to ensure builds are checked by Image Assurance before deployment.
 
-This article describes how to install the Image Assurance binary. To integrate the containerized version of Image Assurance scanner into your CI/CD platform, go to: [Image Assurance containerized scanner](https://quay.io/repository/tigera/image-assurance-scanner-cli) and pull the latest image. For example:
+## Value
 
-```bash
-   docker pull quay.io/tigera/image-assurance-scanner-cli:v1.8.4
-```
+The Image Assurance CLI scanner allows you to manually scan container images locally or remotely for on-demand scanning and emergency scanning. The CLI scanner is ideal for use in a CI/CD pipeline to automatically scan images before pushing them to a registry.
+
+If the CLI scanner is part of your pipeline, scanning is done before runtime and the results are displayed in the Image Assurance dashboard in Manager UI. You can then use [Image Assurance Admission Controller](../install-the-admission-controller) to automatically blocks resources that would create containers with vulnerable images from entering your cluster. For a real-world use case, see [Hands-on guide: How to scan and block container images to mitigate SBOM attacks](https://www.tigera.io/blog/hands-on-guide-how-to-scan-and-block-container-images-to-mitigate-sbom-attacks/).
 
 ## Before you begin
 
 **Image requirements**
 
-Images must be available locally through the container runtime environment where the Image Assurance scanner is running
+- Docker container runtime
+- Images must be available locally through the Docker container runtime environment where the Image Assurance scanner is running.
 
 **Scanner requirements**
 
@@ -27,53 +28,67 @@ Images must be available locally through the container runtime environment where
 
 ## How to
 
-- [Get latest version of Image Assurance](#get-latest-version-of-image-assurance)
-- [Start the scanner](#start-the-scanner)
-- [Scan images](#scan-images)
+- [Get the latest version of Image Assurance](#get-the-latest-version-of-image-assurance)
+- [Download the scanner](#download-the-scanner)
+- [Integrate the scanner in your build pipeline](#integrate-the-scanner-in-your-build-pipeline)
+- [Manually scan images](#manually-scan-images)
 - [Scan images using a configuration file](#scan-images-using-a-configuration-file)
-- [Get scanner updates](#get-scanner-updates)
 
-### Get latest version of Image Assurance
+### Get the latest version of Image Assurance
 
 1. On the **Managed Clusters** page, select the cluster from the list, and click **Reinstall**.
 1. Copy the updated installation script command and run it against your cluster.
 
-### Start the scanner
+### Download the scanner
 
 1. Download the latest version of the scanner.
 
-**Linux**
+   **Linux**
 
-```shell
-curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-linux-amd64
+   ```shell
+   curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-linux-amd64
    ```
 
-**MacOS**
+   **MacOS**
 
-```shell
-curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-darwin-amd64
+   ```shell
+   curl -Lo tigera-scanner {{clouddownloadbase}}/tigera-scanner/{{cloudversion}}/image-assurance-scanner-cli-darwin-amd64
    ```
 
 2. Set the executable flag on the binary.
 
-```shell
-chmod +x ./tigera-scanner
+   ``shell
+   chmod +x ./tigera-scanner
    ```
 
 :::note
-
 You must download and set the executable flag each time you get a new version of the scanner.
 
 :::
 
 3. Verify that the scanner works correctly by running the version command.
 
-```shell
-./tigera-scanner version
-{{imageassuranceversion}}
+   ```shell
+   ./tigera-scanner version
+   {{imageassuranceversion}}
    ```
+### Integrate the scanner into your build pipeline
 
-### Scan images
+You can include the CLI scanner in your CI/CD pipelines (for example, Jenkins, Github actions). Ensure the following:
+
+- Download the CLI scanner binary onto your CI runner
+- If you are running an ephemeral environment in the pipeline, include the download, and update the executable steps in your pipeline to download the scanner on every execution
+- Create a secret containing the API-Token and API URL and make it available in the pipeline (for example, using a SECURE_API_TOKEN environment variable)
+- Add a step in your pipeline to run the `image-assurance-scanner` after building the container image, and specify the image name as a parameter. For example:
+        `./image-assurance-cli-scanner --apiurl <sysdig-api-url> ${IMAGE_NAME}`
+
+If your CI platform supports it, you can also use the containerized version of Image Assurance scanner for integrations with other tools like Harness. To integrate the containerized version of Image Assurance scanner into your CI/CD platform, go to: [Image Assurance containerized scanner](https://quay.io/repository/tigera/image-assurance-scanner-cli) and pull the latest image. For example:
+
+```bash
+   docker pull quay.io/tigera/image-assurance-scanner-cli:vx.x.x
+```
+
+### Manually scan images
 
 You can scan images and report results back to {{prodname}}, or scan images locally without reporting results to {{prodname}}.
 
@@ -155,19 +170,6 @@ Key names must match the full name of arguments passed to the scanner. The confi
 | --vulnerability_db_path | -p        | CC_VULNERABILITY_DB_PATH | Path to a folder to store vulnerability data (defaults to `$XDG_CACHE_HOME`; if it is not set, defaults to `$HOME/.cache`). |
 | --input_file            | -i        | CC_INPUT_FILE            | Path to the JSON file containing image URLs.                                                                                           |
 | --output_file           | -o        | CC_OUTPUT_FILE           | File path that will contain scan results in a JSON format.                                                                                        |
-
-### Get scanner updates
-
-To get the latest updates, you must update the scanner binary. To see the current version you are running, run this command. For example:
-
-```shell
-./tigera-scanner version
-{{imageassuranceversion}}
-```
-
-To see the latest version, see [Release notes](../../release-notes/index.mdx).
-
-To download the latest version, see [Start the scanner](#start-the-scanner).
 
 ## Next step
 

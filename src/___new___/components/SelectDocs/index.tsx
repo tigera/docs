@@ -45,6 +45,7 @@ const SelectDocs: React.FC<SelectDocsProps> = ({ isDarkMode, ...rest }) => (
                 <Image
                   src={info.image}
                   sx={iconStyle}
+                  loading='lazy'
                 />
               </Box>
               <Text sx={subHeaderTextStyle}>{info.title}</Text>

@@ -19,14 +19,6 @@ export default function InstallAKS(props) {
       </Heading>
       <ol>
         <li>
-          <p>
-            <Link href={`${baseUrl}/operations/logstorage/create-storage`}>
-              Configure a storage class for {prodname}
-            </Link>
-            .
-          </p>
-        </li>
-        <li>
           <p>Install the Tigera operator and custom resource definitions.</p>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
         </li>
