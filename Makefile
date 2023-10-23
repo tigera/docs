@@ -46,7 +46,7 @@ serve: build
 full: clean build
 
 .PHONY: netlify
-netlify: build test
+netlify: build run-update-cloud-image-list test
 
 .PHONY: all
 all: full test
