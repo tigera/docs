@@ -409,8 +409,31 @@ module.exports = {
       label: 'Multi-cluster management',
       link: {type: 'doc', id: 'multicluster/index'},
       items: [
-        'multicluster/create-a-management-cluster',
-        'multicluster/create-a-managed-cluster',
+        {
+          type: 'category',
+          label: 'Set up multi-cluster management',
+          link: {type: 'doc', id: 'multicluster/set-up-multi-cluster-management/index'},
+          items: [
+            {
+              type: 'category',
+              label: 'Standard operator install',
+              link: {type: 'doc', id: 'multicluster/set-up-multi-cluster-management/standard-install/index'},
+              items: [
+                'multicluster/set-up-multi-cluster-management/standard-install/create-a-management-cluster',
+                'multicluster/set-up-multi-cluster-management/standard-install/create-a-managed-cluster',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Helm install',
+              link: {type: 'doc', id: 'multicluster/set-up-multi-cluster-management/helm-install/index'},
+              items: [
+                'multicluster/set-up-multi-cluster-management/helm-install/create-a-management-cluster-helm',
+                'multicluster/set-up-multi-cluster-management/helm-install/create-a-managed-cluster-helm',
+              ],
+            },
+          ],
+        },
         'multicluster/fine-tune-deployment',
         'multicluster/change-cluster-type',
         {
@@ -422,15 +445,6 @@ module.exports = {
             'multicluster/federation/kubeconfig',
             'multicluster/federation/services-controller',
             'multicluster/federation/aws',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Helm',
-          link: {type: 'doc', id: 'multicluster/helm/index'},
-          items: [
-            'multicluster/helm/create-a-management-cluster-helm',
-            'multicluster/helm/create-a-managed-cluster-helm',
           ],
         },
       ],

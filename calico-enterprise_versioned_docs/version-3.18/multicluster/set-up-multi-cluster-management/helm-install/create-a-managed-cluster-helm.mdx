@@ -1,14 +1,14 @@
 ---
-description: Install Calico Enterprise using Helm application package manager.
+description: Install Calico Enterprise managed cluster using Helm application package manager.
 ---
 
-# Helm
+# Create a Calico Enterprise managed cluster
 
 import CodeBlock from '@theme/CodeBlock';
 
 ## Big picture
 
-Install {{prodname}} on a Kubernetes cluster using Helm 3.
+Create a {{prodname}} managed cluster that you can control from your management cluster using Helm 3.
 
 ## Value
 
@@ -20,11 +20,11 @@ Helm charts are a way to package up an application for Kubernetes (similar to `a
 
 - Install Helm 3
 - `kubeconfig` is configured to work with your cluster (check by running `kubectl get nodes`)
-- [Credentials for the Tigera private registry and a license key](../calico-enterprise.mdx)
+- [Credentials for the Tigera private registry and a license key](../../../getting-started/install-on-clusters/calico-enterprise.mdx)
 
 ## Concepts
 
-### Operator based installation
+### Operator-based installation
 
 In this guide, you install the Tigera Calico operator and custom resource definitions using the Helm 3 chart. The Tigera operator provides lifecycle management for {{prodname}} exposed via the Kubernetes API defined as a custom resource definition.
 
@@ -64,7 +64,7 @@ If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubern
   EOF
   ```
 
-1. Add any other customizations you require to `values.yaml`. To see values that can be customized in the chart, see the [helm docs](https://helm.sh/docs/) or run the following command:
+1. Add any other customizations you require to `values.yaml`. To see values that can be customized in the chart run the following command:
 
   <CodeBlock language='bash'>
      {'{{version}}' === 'master'
@@ -74,37 +74,67 @@ If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubern
 
 ### Install {{prodname}}
 
-Standalone is a standard Kubernetes cluster.
+To install a {{prodname}} [managed](../standard-install/create-a-managed-cluster#value) cluster with Helm:
 
-To install a standard {{prodname}} cluster with Helm:
+1. Export the service port number, and the public IP or host of the management cluster. (Ex. "example.com:1234" or "10.0.0.10:1234".)
 
-1. [Configure a storage class for Calico Enterprise](../../../operations/logstorage/create-storage).
+  ```bash
+  export MANAGEMENT_CLUSTER_ADDR=<your-management-cluster-addr>
+  ```
+
+1. Export the management cluster certificate and managed cluster certificate and key.
+  
+  If you haven't already done so, generate the base64 encoded CRT and KEY for this managed cluster:
+
+  ```bash
+  openssl genrsa 2048 | base64 -w 0 > my-managed-cluster.key.base64
+  openssl req -new -key <(base64 -d my-managed-cluster.key.base64) -subj "/CN=my-managed-cluster" | \
+  openssl x509 -req -signkey <(base64 -d my-managed-cluster.key.base64) -days 365 | base64 -w 0 > my-managed-cluster.crt.base64
+  ```
+
+  Get the MANAGEMENT_CLUSTER_CRT by running the following command on the management cluster:
+
+  ```bash
+  kubectl get secret -n tigera-operator $(kubectl get managementcluster tigera-secure -o jsonpath='{.spec.tls.secretName}') -o jsonpath='{.data.tls\.crt}' > management-cluster.crt.base64
+  ```
+
+  Export the managed cluster variables:
+
+  ```bash
+  export MANAGEMENT_CLUSTER_CRT=$(cat management-cluster.crt.base64)
+  export MANAGED_CLUSTER_CRT=$(cat my-managed-cluster.crt.base64)
+  export MANAGED_CLUSTER_KEY=$(cat my-managed-cluster.key.base64)
+  ```
+
+1. Append the management cluster context to your `values.yaml`:
+
+  ```bash
+  echo "
+  managementClusterConnection:
+    enabled: true
+    managementClusterAddress: $MANAGEMENT_CLUSTER_ADDR
+    management:
+      tls:
+        crt: $MANAGEMENT_CLUSTER_CRT
+    managed:
+      tls:
+        crt: $MANAGED_CLUSTER_CRT
+        key: $MANAGED_CLUSTER_KEY" >> values.yaml
+  ```
 
 1. Install the Tigera {{prodname}} operator and custom resource definitions using the Helm 3 chart:
-
-  <CodeBlock language='bash'>
-     {'{{version}}' === 'master'
-       ? `helm install {{prodnamedash}} tigera/tigera-operator --version tigera-operator-v0.0 \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
---set-file licenseKeyContent=<path/to/license/file/yaml> \\
---namespace tigera-operator --create-namespace`
-       : `helm install {{prodnamedash}} tigera/tigera-operator --version tigera-operator-{{chart_version_name}} \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
---set-file licenseKeyContent=<path/to/license/file/yaml> \\
---namespace tigera-operator --create-namespace`}
-  </CodeBlock>
-
-  or if you created a `values.yaml` above:
 
   <CodeBlock language='bash'>
      {'{{version}}' === 'master'
        ? `helm install {{prodnamedash}} tigera/tigera-operator --version tigera-operator-v0.0 -f values.yaml \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --set-file licenseKeyContent=<path/to/license/file/yaml> \\
+--set logStorage.enabled=false --set manager.enabled=false \\
 --namespace tigera-operator --create-namespace`
        : `helm install {{prodnamedash}} tigera/tigera-operator --version tigera-operator-{{chart_version_name}} -f values.yaml \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --set-file licenseKeyContent=<path/to/license/file/yaml> \\
+--set logStorage.enabled=false --set manager.enabled=false \\
 --namespace tigera-operator --create-namespace`}
   </CodeBlock>
 
@@ -114,14 +144,19 @@ To install a standard {{prodname}} cluster with Helm:
   watch kubectl get tigerastatus
   ```
 
-  Congratulations! You have now installed {{prodname}} using the Helm 3 chart.
+#### Provide permissions to view the managed cluster
+
+  To access resources belonging to a managed cluster from the {{prodname}} Manager UI, the service or user account used to log in must have appropriate permissions defined in the managed cluster.
+
+Define admin-level permissions for the service account `mcm-user` we created to log in to the Manager UI. Run the following command against your managed cluster.
+
+  ```bash
+  kubectl create clusterrolebinding mcm-user-admin --clusterrole=tigera-network-admin --serviceaccount=default:mcm-user
+  ```
+
+  Congratulations! You have now installed {{prodname}} for a managed cluster using the Helm 3 chart.
 
 ## Next steps
-
-**Multicluster Management**
-
-- [Create a {{prodname}} management cluster](../../../multicluster/set-up-multi-cluster-management/standard-install/create-a-management-cluster.mdx)
-- [Create a {{prodname}} managed cluster](../../../multicluster/set-up-multi-cluster-management/standard-install/create-a-managed-cluster.mdx)
 
 **Recommended**
 
