@@ -571,7 +571,7 @@ Kubernetes Version: v1.18.3+5302882`}
         published yet.
       </Admonition>
       <p>
-        Next, we will download the the <code>worker.ign</code> file from the API server:
+        Next, we will download the <code>worker.ign</code> file from the API server:
       </p>
       <CodeBlock language='powershell'>
         {`$apiServer = c:\k\kubectl --kubeconfig c:\k\config get po -n  openshift-kube-apiserver -l apiserver=true --no-headers -o custom-columns=":metadata.name" | select -first 1
