@@ -406,7 +406,7 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Multi-cluster management',
+      label: 'Multi-cluster management and federation',
       link: {type: 'doc', id: 'multicluster/index'},
       items: [
         'multicluster/create-a-management-cluster',
