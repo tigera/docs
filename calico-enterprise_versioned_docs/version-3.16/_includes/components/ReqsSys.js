@@ -378,6 +378,13 @@ function NetworkRequirementsEnt(props) {
             <td>Additional port required for Manager UI</td>
             <td>TCP 9449</td>
           </tr>
+          <tr className='odd'>
+            <td>
+              <strong>Egress gateway</strong>
+            </td>
+            <td>{prodname} egress gateway</td>
+            <td>UDP 4790</td>
+          </tr>
         </tbody>
       </table>
       {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.OpenShift) && (
