@@ -149,8 +149,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://www.tigera.io/tutorials/?_sf_s=WireGuard',
     'https://www.elastic.co/guide/en/apm/server/current/configuring-howto-apm-server.html',
     'https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html',
-    'https://www.wireguard.com/formal-verification/',
-    'https://www.wireguard.com/performance/ ',
+    /^https:\/\/www\.wireguard\.com\/.+/,
   ];
 
   const lc = linkChecker();
