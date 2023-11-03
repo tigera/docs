@@ -66,10 +66,6 @@ Let’s look at some specific cases where it would make sense to use eBPF, and s
 
 ### When not to use eBPF
 
-### ✘ Building a service mesh control plane
-
-Service mesh relies on proxies like Envoy. A lot of thought has gone into designing this process over the years. The main reason for doing it this way is that, in many cases, it is not viable to do inline processing for application protocols like HTTP at the high speeds seen inside a cluster. Therefore, you should think of using eBPF to route traffic to a proxy like Envoy in an efficient way, rather than using it to replace the proxy itself.
-
 ### ✘ Packet-by-packet processing
 
 Using eBPF to perform CPU intensive or packet-by-packet processing, such as decryption and re-encryption for encrypted flows, would not be efficient because you would need to build a structure and do a lookup for every packet, which is expensive.
@@ -83,6 +79,10 @@ eBPF provides an efficient way to examine raw packet buffers as they enter the s
 ### ✔ Connect-time load balancing
 
 With eBPF, you can load balance at the source using a program you’ve loaded into the kernel, instead of using a virtual IP. Since DNAT does not need to take place on the packet processing path, all NAT overhead from service connections is removed.
+
+### ✔ Building a service mesh control plane
+
+Service mesh relies on proxies like Envoy. A lot of thought has gone into designing this process over the years. The main reason for doing it this way is that, in many cases, it is not viable to do inline processing for application protocols like HTTP at the high speeds seen inside a cluster. Therefore, you should think of using eBPF to route traffic to a proxy like Envoy in an efficient way, rather than using it to replace the proxy itself. However, you do need to turn off connect-time load balancing (CTLB) so sidecars can see the service addresses. Given you are already taking a performance hit by the extra hop to the sidecar, not using CTLB performance optimization to avoid NAT overhead is likely not a big deal.
 
 ## Summary
 
