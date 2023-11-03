@@ -120,7 +120,6 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
   echo "
   managementCluster:
     enabled: true
-    address: $MANAGEMENT_CLUSTER_ADDR
     service:
       type: NodePort
       port: 9449
@@ -155,6 +154,27 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
   ```bash
   watch kubectl get tigerastatus
   ```
+
+
+#### Update the ManagementCluster address.
+
+1. Export the service port number
+
+  ```bash
+  export EXT_NODE_PORT=<your-load-balancer-external-node-port>
+  ```
+
+  Export the public address or host of the management cluster, in this case the load-balancer's external IP (Ex. "example.com:1234" or "10.0.0.10:1234".)
+
+  ```bash
+  export MANAGEMENT_CLUSTER_ADDR=<your-load-balancer-external-addr>:$EXT_NODE_PORT
+  ```
+
+  Replace the `address` field in the ManagementCluster resource.
+    
+  ```bash
+  kubectl patch managementcluster tigera-secure --type merge -p "{\"spec\":{\"address\":\"${MANAGEMENT_CLUSTER_ADDR}\"}}"
+  ``` 
 
 </TabItem>
 <TabItem label="LoadBalancer" value="LoadBalancer">
@@ -256,6 +276,7 @@ See [Create a network load balancer for AWS](https://docs.aws.amazon.com/eks/lat
 
 </TabItem>
 </Tabs>
+
 
 #### Create an admin user and verify management cluster connection.
 
