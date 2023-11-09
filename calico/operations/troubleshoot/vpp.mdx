@@ -16,26 +16,25 @@ If you're encountering issues with the VPP dataplane, feel free to reach out to 
 
 - With curl
 
-```bash
-curl https://raw.githubusercontent.com/projectcalico/vpp-dataplane/{{vppbranch}}/test/scripts/vppdev.sh \
-  | tee /usr/bin/calivppctl
-chmod +x /usr/bin/calivppctl
-```
+  ```bash
+  curl https://raw.githubusercontent.com/projectcalico/vpp-dataplane/{{vppbranch}}/test/scripts/vppdev.sh | tee /usr/bin/calivppctl
+  chmod +x /usr/bin/calivppctl
+  ```
 
-- With docker (and a cluster with calico-vpp running)
+- With docker (and a cluster with {{prodname}} VPP running)
 
-```bash
-vppcontainer=$(docker ps | grep vpp_calico-vpp | awk '{ print $1 }')
-docker cp ${vppcontainer}:/usr/bin/calivppctl /usr/bin/calivppctl
-```
+  ```bash
+  vppcontainer=$(docker ps | grep vpp_calico-vpp | awk '{ print $1 }')
+  docker cp ${vppcontainer}:/usr/bin/calivppctl /usr/bin/calivppctl
+  ```
 
-- With kubectl (and a cluster with calico-vpp running)
+- With kubectl (and a cluster with {{prodname}} VPP running)
 
-```bash
-vpppod=$(kubectl -n calico-vpp-dataplane get pods -o wide | grep calico-vpp-node- | awk '{ print $1 }' | head -1)
-kubectl -n calico-vpp-dataplane exec -it ${vpppod} -c vpp -- cat /usr/bin/calivppctl | tee /usr/bin/calivppctl > /dev/null
-chmod +x /usr/bin/calivppctl
-```
+  ```bash
+  vpppod=$(kubectl -n calico-vpp-dataplane get pods -o wide | grep calico-vpp-node- | awk '{ print $1 }' | head -1)
+  kubectl -n calico-vpp-dataplane exec -it ${vpppod} -c vpp -- cat /usr/bin/calivppctl | tee /usr/bin/calivppctl > /dev/null
+  chmod +x /usr/bin/calivppctl
+  ```
 
 ## Troubleshooting
 
@@ -56,7 +55,7 @@ Kubernetes does not run with swap enabled.
 
 Once the cluster is correctly started, the next issue can come from the Daemonset configuration.
 Best is to start by inspecting the pods : are they running correctly ?
-Usually configuration issues (available hugepages, memory, ...) will be reported here
+Usually configuration issues (available hugepages, memory, ...) will be reported here:
 
 ```bash
 kubectl -n calico-vpp-dataplane describe pod/calico-vpp-node-XXXXX
@@ -72,27 +71,27 @@ after allocating them for taking it into account (using for instance `service ku
 ### Having VPP up and running
 
 Once the pods don't report any issue, the pods should have started. There are two
-containers for each node : VPP that starts the vpp process and setups connectivity,
+containers for each node : `vpp-manager` that starts the VPP process and sets up connectivity,
 and the agent handling pod connectivity, service load balancing, BGP, policies, etc.
 
 First check that VPP is running correctly. If the connectivity configuration, interface naming
 is not correct, this will be reported here. Once this is running, you should be able to ping your other nodes through VPP.
 
 ```bash
- Print VPP's log : basic connectivity and NIC configuration
+# Print VPP's log : basic connectivity and NIC configuration
 calivppctl log -vpp myk8node1
 ```
 
-Then you can check for any issues reported by the Agent (e.g. BGP listen issue
+Then you can check for any issues reported by the agent (e.g. BGP listen issue
 if the port is already taken, or missing configuration pieces). If this doesn't
 show any errors, you should be able to `nslookup kubernetes.default` from pods.
 
 ```bash
- Print the logs for the {{prodname}} VPP dataplane agent, programming serviceIPs, BGP, ...
+# Print the logs for the {{prodname}} VPP dataplane agent, programming serviceIPs, BGP, ...
 calivppctl log -agent myk8node1
 ```
 
-If all this doesn't play well you can always use the export to generate an export.tar.gz
+If all this doesn't play well you can always use the export to generate an `export.tar.gz`
 bundle and ask for help on the [#vpp channel](https://calicousers.slack.com/archives/C017220EXU1)
 
 ```bash
@@ -102,7 +101,7 @@ calivppctl export
 ## Accessing the VPP cli
 
 For further debugging, tracing packets and inspecting VPP's internals, you can
-get a vpp shell using the following
+get a vpp shell using the following:
 
 ```bash
 calivppctl vppctl myk8node1
@@ -113,23 +112,23 @@ calivppctl vppctl myk8node1
 To list existing interfaces and basic counters use
 
 ```
-vpp show int
-vpp show int addr
+vpp# show int
+vpp# show int addr
 ```
 
 To get more insights on the main interface (e.g. if you're using dpdk) you can check
 for errors & drops in
 
 ```
-vpp show hardware-interfaces
+vpp# show hardware-interfaces
 ```
 
 Other places to look for errors
 
 ```
-vpp show log       # VPP startup log
-vpp show err       # Prints out packet counters (not always actual errors, but includes drops)
-vpp show buffers   # You should have non zero free buffers, otherwise traffic won't flow
+vpp# show log       # VPP startup log
+vpp# show err       # Prints out packet counters (not always actual errors, but includes drops)
+vpp# show buffers   # You should have non zero free buffers, otherwise traffic won't flow
 ```
 
 ## Tracing packets
@@ -139,60 +138,64 @@ vpp show buffers   # You should have non zero free buffers, otherwise traffic wo
 For starters, here is a small schematic of how the network looks like:
 ![k8-calico-vpp](/img/calico/vpp-tracing-net.svg)
 
-Container interfaces are named `tun[0-9]+`. You can find which one belong to which container as follows.
+Container interfaces are named `tun[0-9]+`. You can find which one belong to which container as follows:
 
-```
- Connect to vppctl
-$ calivppctl vppctl NODENAME
-
- List interfaces
-vpp show interface
-              Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
-avf-0/d8/a/0                      1      up          9000/0/0/0     tx packets                     2
-                                                                    tx bytes                     216
-local0                            0     down          0/0/0/0
-tap0                              2      up           0/0/0/0       rx packets                     9
-[...]
-tun3                              5      up           0/0/0/0       rx packets                     5
-                                                                    rx bytes                     431
-                                                                    tx packets                     5
-                                                                    tx bytes                     387
-                                                                    ip4                            5
-
- Show the route for address 11.0.166.132
-vpp show ip fib 11.0.166.132
-ipv4-VRF:0, fib_index:0, flow hash:[src dst sport dport symmetric ] epoch:0 flags:none locks:[adjacency:1, default-route:1, ]
-11.0.166.132/32 fib:0 index:19 locks:5
-  cnat refs:1 entry-flags:uRPF-exempt,interpose, src-flags:added,contributing,active, cover:-1 interpose:
-      [@0]: [4] cnat-client:[11.0.166.132] tr:0 sess:1
-    path-list:[26] locks:3 flags:shared, uPRF-list:24 len:1 itfs:[5, ]
-      path:[32] pl-index:26 ip4 weight=1 pref=0 attached-nexthop:  oper-flags:resolved, cfg-flags:attached,
-        11.0.166.132 tun3 (p2p)
-      [@0]: ipv4 via 0.0.0.0 tun3: mtu:9000 next:7
+- Connect to VPP
+  ```
+  calivppctl vppctl NODENAME
+  ```
+- List interfaces
+  ```
+  vpp# show interface
+                Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
+  avf-0/d8/a/0                      1      up          9000/0/0/0     tx packets                     2
+                                                                      tx bytes                     216
+  local0                            0     down          0/0/0/0
+  tap0                              2      up           0/0/0/0       rx packets                     9
   [...]
+  tun3                              5      up           0/0/0/0       rx packets                     5
+                                                                      rx bytes                     431
+                                                                      tx packets                     5
+                                                                      tx bytes                     387
+                                                                      ip4                            5
+  ```
 
- This one is behind `tun3`
- If you want more info about this interface (name in Linux, queues, descriptors, ...)
-vpp show tun tun3
-Interface: tun3 (ifindex 5)
-  name "eth0"
-  host-ns "/proc/17675/ns/net"
-  [...]
-```
+- Show the route for address 11.0.166.132
+  ```
+  vpp# show ip fib 11.0.166.132
+  ipv4-VRF:0, fib_index:0, flow hash:[src dst sport dport symmetric ] epoch:0 flags:none locks:[adjacency:1, default-route:1, ]
+  11.0.166.132/32 fib:0 index:19 locks:5
+    cnat refs:1 entry-flags:uRPF-exempt,interpose, src-flags:added,contributing,active, cover:-1 interpose:
+        [@0]: [4] cnat-client:[11.0.166.132] tr:0 sess:1
+      path-list:[26] locks:3 flags:shared, uPRF-list:24 len:1 itfs:[5, ]
+        path:[32] pl-index:26 ip4 weight=1 pref=0 attached-nexthop:  oper-flags:resolved, cfg-flags:attached,
+          11.0.166.132 tun3 (p2p)
+        [@0]: ipv4 via 0.0.0.0 tun3: mtu:9000 next:7
+    [...]
+  ```
 
-`tap0` is the interface providing connectivity to the host, using the original interface name on the Linux side (use `show tap tap0` and `show ip punt redirect`).
+- This one is behind `tun3`. If you want more info about this interface (name in Linux, queues, descriptors, ...)
+  ```
+  vpp# show tun tun3
+  Interface: tun3 (ifindex 5)
+    name "eth0"
+    host-ns "/proc/17675/ns/net"
+    [...]
+  ```
+
+  `tap0` is the interface providing connectivity to the host, using the original interface name on the Linux side (use `show tap tap0` and `show ip punt redirect`).
 
 ### Capturing traffic inside the cluster
 
 Let's take the case of two pods talking to each other in your cluster (see the schema above).
-You might want to inspect the traffic at 3 different locations :
+You might want to inspect the traffic at 3 different locations:
 
 - as it exits the pod (in Linux inside the first pod)
 - as it goes through VPP
 - as it is received in the second pod (in Linux again)
 
 We cover the three cases, first inside VPP (depending on where your traffic is coming from : a pod or outside your host)
-then inside your pods (usually with tcpdump)
+then inside your pods (usually with `tcpdump`)
 
 ### Traffic capture inside VPP
 
@@ -202,20 +205,20 @@ The following snippet will allow you to capture all traffic coming from containe
 and see what happened to it.
 
 ```bash
- Make sure that the trace buffer is clean in VPP
+# Make sure that the trace buffer is clean in VPP
 calivppctl vppctl NODENAME clear trace
- Add a trace from the virtio-input input-node
+# Add a trace from the virtio-input input-node
 calivppctl vppctl NODENAME trace add virtio-input 500
- generate some traffic
+# generate some traffic
 calivppctl vppctl NODENAME show trace max 500 > somefile
- Grep for your IPs
+# Grep for your IPs
 cat somefile | grep '1.2.3.4 -> 5.6.7.8' -A40 -B40
 ```
 
 Output looks quite cumbersome at first as it contains the whole path of a packet through VPP, from reception to tx.
 
 ```
-vpp show trace
+vpp# show trace
 Packet 1
 
 00:09:46:518858: virtio-input
@@ -268,12 +271,14 @@ Packet 2
 
 #### Traffic from the phy
 
-If you want to capture traffic coming from the physical NIC, you should use `trace add` but with a different source node a.k.a `dpdk-input` `af-packet-input` `af_xdp-input` `avf-input` instead of `virtio-input`.
+If you want to capture traffic coming from the physical NIC, you should use `trace add` but with a different source node a.k.a `dpdk-input` or  `af-packet-input` or  `af_xdp-input` or `avf-input` instead of `virtio-input`.
 
 `show run` should give you a hint of the `X-input` node you want to trace from.
 
+For example, going by the output of `show run` below we seem to want to use `avf-input` as the node to trace from:
+
 ```
-vpp show run
+vpp# show run
 Thread 1 vpp_wk_0 (lcore 25)
 Time 1.9, 10 sec internal node vector rate 1.05 loops/sec 1074819.68
   vector rates in 7.5356e0, out 7.5356e0, drop 0.0000e0, punt 0.0000e0
@@ -282,20 +287,18 @@ avf-input                        polling           2233530               0      
 ip4-cnat-snat                    active                  1               1               0          5.35e3            1.00
 ip4-cnat-tx                      active                 14              15               0          1.18e3            1.07
 [...]
-
- Here we seem to want to use trace add avf-input 200
 ```
 
-Same as with traffic from a container, you can use
+So, same as with traffic from a container, you can use
 
 ```bash
- Make sure that the trace buffer is clean in VPP
+# Make sure that the trace buffer is clean in VPP
 calivppctl vppctl NODENAME clear trace
- Add a trace from the virtio-input input-node
+# Add a trace from the virtio-input input-node
 calivppctl vppctl NODENAME trace add avf-input 500
- generate some traffic
+# generate some traffic
 calivppctl vppctl NODENAME show trace max 500 > somefile
- Grep for your IPs
+# Grep for your IPs
 cat somefile | grep '1.2.3.4 -> 5.6.7.8' -A40 -B40
 ```
 
@@ -304,11 +307,11 @@ cat somefile | grep '1.2.3.4 -> 5.6.7.8' -A40 -B40
 Alternatively to the trace, you can do a capture and analyze it inside Wireshark. You can do this with:
 
 ```
-vpp pcap dispatch trace on max 1000 file vppcapture buffer-trace dpdk-input 1000
-vpp pcap dispatch trace off
+vpp# pcap dispatch trace on max 1000 file vppcapture buffer-trace dpdk-input 1000
+vpp# pcap dispatch trace off
 ```
 
-This will generate a file named `/tmp/vppcapture`
+This will generate a file named `/tmp/vppcapture`.
 
 Then on your host run:
 
@@ -316,11 +319,9 @@ Then on your host run:
 calivppctl sh vpp NODENAME
 root@server:~ mv /tmp/vppcapture /var/lib/vpp/
 root@server:~ exit
- The file should now be at /var/lib/vpp/vppcapture on your host 'NODENAME'
 ```
 
-You can then `scp NODENAME:/var/lib/vpp/vppcapture .` on your machine and open it with Wireshark
-[More info about this here](https://haryachyy.wordpress.com/2019/09/29/learning-vpp-trace-with-wireshark/)
+The file should now be at `/var/lib/vpp/vppcapture` on your host 'NODENAME'. You can then `scp NODENAME:/var/lib/vpp/vppcapture .` on your machine and open it with Wireshark. More info about this [here](https://haryachyy.wordpress.com/2019/09/29/learning-vpp-trace-with-wireshark/).
 
 ### Traffic received in the pods
 
@@ -330,28 +331,29 @@ To inspect traffic actually received by the pods (if `tcpdump` is installed in t
 
 Provided that you have `tcpdump` installed on the host, you can use `nsenter` to attach to the pod's network namespace and use the host's `tcpdump` on the container's interface.
 
-This works on docker as follows :
+This works on docker as follows:
 
-```bash
+- Find the container ID you want to inspect
+  ```bash
+  docker ps
+  CONTAINER ID        IMAGE                        COMMAND                CREATED              STATUS              PORTS               NAMES
+  4c01db0b339c        ubuntu:12.04                 bash                   17 seconds ago       Up 16 seconds       3300-3310/tcp       webapp
+  ```
 
- Find the container ID you want to inspect
-$ docker ps
-CONTAINER ID        IMAGE                        COMMAND                CREATED              STATUS              PORTS               NAMES
-4c01db0b339c        ubuntu:12.04                 bash                   17 seconds ago       Up 16 seconds       3300-3310/tcp       webapp
+- Get the container PID out of it
+  ```
+  docker inspect --format '{{ .State.Pid }}' 4c01db0b339c
+  12345
+  ```
 
- Get the container PID out of it
-$ docker inspect --format '{{ .State.Pid }}' 4c01db0b339c
-12345
-
- Attach
-$ nsenter -t 12345 -n bash
-
-```
+- Attach
+  ```
+  nsenter -t 12345 -n bash
+  ```
 
 #### No tcpdump, but we have python !
 
-Open an AF_PACKET socket in python with the following code
-and run it attached to the running namespace as previously.
+Open an AF_PACKET socket in python with the following code and run it attached to the running namespace as previously.
 
 ```python
 #!/usr/bin/env python
@@ -388,37 +390,16 @@ On the host, you can use `tcpdump` normally to check the traffic.
 
 ## Crashes & coredumps
 
-In order to instruct vpp to leave a coredump in the event of a crash, you can pass the `CALICOVPP_CORE_PATTERN` environment variable to the vpp container:
+If VPP aborts unexpectedly, it will generate a coredump file, `vppcore.vpp_main.<pid>`, in the `/var/lib/vpp/` dir. If you encounter this situation, please note the exact version of the vpp image that generated the corefile (using the image hash) to facilitate further troubleshooting.
 
-```yaml
-kind: DaemonSet
-apiVersion: apps/v1
-metadata:
-  name: calico-vpp-node
-
----
-- name: vpp
-  env:
-    - name: CALICOVPP_CORE_PATTERN
-      value: '/home/hostuser/vppcore.%e.%p'
-  volumeMounts:
-    - name: userhome
-      mountPath: /home/hostuser
-
----
-volumes:
-  - name: userhome
-    hostPath:
-      path: ${SOME_DIRECTORY}
-```
-
-This will generate a `vppcore.vpp_main.<pid>` file in `${DIR}` if vpp aborts unexpectedly. If you encounter this situation, please note the exact version of the vpp image that generated the corefile (using the image hash) to facilitate further troubleshooting.
-
-To explore it run:
+To explore the corefile run:
 
 ```bash
-docker run -it --entrypoint=bash -v $DIR/vppcore.vpp_main.12345:/root/vppcore calicovpp/vpp:VERSION
- You should have a shell inside the vpp container
+docker run -it --entrypoint=bash -v /var/lib/vpp/vppcore.vpp_main.12345:/root/vppcore calicovpp/vpp:VERSION
+```
+You should now have a shell inside the vpp container.
+
+```bash
 apt update && apt install -y gdb
 gdb vpp ./vppcore
 ```

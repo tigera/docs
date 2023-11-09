@@ -6,23 +6,23 @@ description: Technical details on the VPP dataplane integration.
 
 ## Software architecture
 
-The VPP dataplane integration is split in two components, `vpp-manager` which handles the VPP startup configuration and lifecycle; and `calico-vpp-agent` which is responsible for all the runtime configuration of VPP for {{prodname}}. Both processes run in separate containers in the calico-vpp-node pod, which runs in the host's root network namespace.
+The VPP dataplane integration is split in two components, `vpp-manager` which handles the VPP startup configuration and lifecycle; and `calico-vpp-agent` which is responsible for all the runtime configuration of VPP for {{prodname}}. Both processes run in separate containers in the `calico-vpp-node` pod, which runs in the host's root network namespace.
 
 ![Implementation architecture](/img/calico/vpp-soft-arch.svg)
 
 ### vpp-manager
 
-VPP Manager is a very light process responsible for the bootstrap of VPP, including uplink interface addressing and routing configuration. It also restores the Linux configuration on shutdown. The code can be found in this directory: [https://github.com/projectcalico/vpp-dataplane/tree/{{vppbranch}}/vpp-manager](https://github.com/projectcalico/vpp-dataplane/tree/{{vppbranch}}/vpp-manager).
+VPP Manager is a very lightweight process responsible for the bootstrap of VPP, including uplink interface addressing and routing configuration. It also restores the Linux configuration on shutdown. The code can be found in this directory: [https://github.com/projectcalico/vpp-dataplane/tree/{{vppbranch}}/vpp-manager](https://github.com/projectcalico/vpp-dataplane/tree/{{vppbranch}}/vpp-manager).
 
-On startup, vpp-manager starts by determining the desired configuration for the VPP uplink by checking it's configuration in Linux, including addresses and routes. It then renders an appropriate configuration file for VPP, and starts the VPP process.
+On startup, `vpp-manager` starts by determining the desired configuration for the VPP uplink by checking it's configuration in Linux, including addresses and routes. It then renders an appropriate configuration file for VPP, and starts the VPP process.
 
-Once VPP is running, vpp-manager connects to it using the API and starts configuring the uplink interface as it was configured in Linux. Once this is done, it configures a tap interface in the host to restore its connectivity.
+Once VPP is running, `vpp-manager` connects to it using the API and starts configuring the uplink interface as it was configured in Linux. Once this is done, it configures a tap interface in the host to restore its connectivity.
 
-Once it is running, vpp-manager forwards all received Unix signals to VPP to handle stops gracefully.
+Once it is running, `vpp-manager` forwards all received Unix signals to VPP to handle stops gracefully.
 
-When VPP stops, either in reaction to a received signal or in case of a crash, vpp-manager restores the configuration of the Linux interface so that the host recovers its connectivity to the outside through the original uplink interface.
+When VPP stops, either in reaction to a received signal or in case of a crash, `vpp-manager` restores the configuration of the Linux interface so that the host recovers its connectivity to the outside through the original uplink interface.
 
-vpp-manager is voluntarily kept as simple as possible, in order to minimize the risk of bugs, as these could leave the host without connectivity, requiring a reboot.
+`vpp-manager` is voluntarily kept as simple as possible, in order to minimize the risk of bugs, as these could leave the host without connectivity, requiring a reboot.
 
 ### calico-vpp-agent
 
@@ -32,7 +32,7 @@ This agent is split in four main components, which interact with the k8s and {{p
 
 **Routing manager**
 
-The {{prodname}} VPP agent embeds a GoBGP daemon, and dynamically updates its configuration (including peers, ASN, etc.) according to the {{prodname}} configuration. As the calico-vpp-node pod runs in the host network namespace, the BGP daemon uses the host's TCP stack, and sends and receives traffic through the host's interface `vpptap0`.
+The {{prodname}} VPP agent embeds a GoBGP daemon, and dynamically updates its configuration (including peers, ASN, etc.) according to the {{prodname}} configuration. As the `calico-vpp-node` pod runs in the host network namespace, the BGP daemon uses the host's TCP stack, and sends and receives traffic through the host's interface `vpptap0`.
 
 When routes are added or removed in BGP, the routing manager reflects the changes in VPP. The routes are installed differently depending on the {{prodname}} configuration. If the configuration requires the use of an IPIP or VXLAN tunnel, then the tunnel interface will be created on demand in VPP, and the route will be added through the tunnel. Otherwise, the route is simply added as-is in VPP.
 
@@ -54,7 +54,7 @@ This component implements {{prodname}} policies in VPP. Felix ({{prodname}}'s po
 
 ### Primary interface configuration
 
-In order to send and receive the packets on behalf on the containers, VPP needs to use one of the host's network interfaces. There are various ways to do so, which differ in performance and configuration complexity:
+In order to send and receive the packets on behalf of the containers, VPP needs to use one of the host's network interfaces. There are various ways to do so, which differ in performance and configuration complexity:
 
 - AF_PACKET: the slowest option, but also the most universally supported one as it works for every Linux network device. The interface is placed in a dedicated network namespace in order not to disrupt the host connectivity that is set up by VPP.
 - AF_XDP: much more performant than AF_PACKET, but it requires a recent kernel version (5.4+). The interface is placed in a dedicated network namespace in order not to disrupt the host connectivity that is set up by VPP.
