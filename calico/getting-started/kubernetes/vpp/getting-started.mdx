@@ -9,13 +9,8 @@ import TabItem from '@theme/TabItem';
 
 ## Big picture
 
-Install {{prodname}} and enable the beta release of the VPP dataplane.
+Install {{prodname}} and enable the VPP dataplane.
 
-:::caution
-
-The VPP dataplane is in beta and should not be used in production clusters. It has had lots of testing and is pretty stable. However, chances are that some bugs are still lurking around (please report these on the [Calico Users slack](https://calicousers.slack.com/archives/C017220EXU1) or [Github](https://github.com/projectcalico/vpp-dataplane/issues)). In addition, it still does not support all the features of {{prodname}}.
-
-:::
 
 ## Value
 
@@ -31,7 +26,12 @@ The VPP dataplane is entirely compatible with the other {{prodname}} dataplanes,
 
 In addition, the VPP dataplane offers some specific features for network-intensive applications, such as providing `memif` userspace packet interfaces to the pods (instead of regular Linux network devices), or exposing the VPP Host Stack to run optimized L4+ applications in the pods.
 
-Trying out the beta will give you a taste of these benefits and an opportunity to give feedback to the VPP dataplane team.
+:::note
+
+The VPP dataplane has some minor behavioural differences wrt the other {{prodname}} dataplanes and some of the features are not supported. For details please refer to [Known issues & unsupported features](./specifics.mdx).
+Please report bugs on the [Calico Users slack](https://calicousers.slack.com/archives/C017220EXU1) or [Github](https://github.com/projectcalico/vpp-dataplane/issues)).
+
+:::
 
 ## Features
 
@@ -54,11 +54,11 @@ and configure it for VPP using manifests directly, only operator based installat
 
 ## How to
 
-This guide details two ways to install {{prodname}} with the VPP dataplane:
+This guide details ways to install {{prodname}} with the VPP dataplane:
 
-- On a managed EKS cluster. This is the option that requires the least configuration
-- On a managed EKS cluster with the DPDK interface driver. This options is more complex to setup but provides better performance
-- On any Kubernetes cluster
+- On a managed EKS cluster. This is the option that requires the least configuration.
+- On a managed EKS cluster with the DPDK interface driver. This options is more complex to setup but provides better performance.
+- On any Kubernetes cluster.
 
 In all cases, here are the details of what you will get:
 
@@ -144,7 +144,7 @@ Before you get started, make sure you have downloaded and configured the [necess
 
 ### Requirements
 
-DPDK provides better performance compared to the standard install but it requires some additional customisations (hugepages, for instance) in the EKS worker instances. We have a bash script, `init_eks.sh`, which takes care of applying the required customizations and we make use of the `preBootstrapCommands` property of `eksctl` [configuration file](https://eksctl.io/usage/schema) to execute the script during the worker node creation. These instructions require the latest version of `eksctl`.
+DPDK provides better performance compared to the standard install but it requires some additional customisations (hugepages, for instance) in the EKS worker instances. We have a bash script, [init_eks.sh](https://raw.githubusercontent.com/projectcalico/vpp-dataplane/{{vppbranch}}/scripts/init_eks.sh), which takes care of applying the required customizations and we make use of the `preBootstrapCommands` property of `eksctl` [configuration file](https://eksctl.io/usage/schema) to execute the script during the worker node creation. These instructions require the latest version of `eksctl`.
 
 ### Provision the cluster
 
@@ -208,7 +208,7 @@ DPDK provides better performance compared to the standard install but it require
      instanceType: t3.large
      labels: {role: worker}
      preBootstrapCommands:
-       - sudo curl -o /tmp/init_eks.sh "https://raw.githubusercontent.com/projectcalico/vpp-dataplane/master/scripts/init_eks.sh"
+       - sudo curl -o /tmp/init_eks.sh "https://raw.githubusercontent.com/projectcalico/vpp-dataplane/{{vppbranch}}/scripts/init_eks.sh"
        - sudo chmod +x /tmp/init_eks.sh
        - sudo /tmp/init_eks.sh
    EOF
@@ -232,7 +232,7 @@ DPDK provides better performance compared to the standard install but it require
 
 The VPP dataplane has the following requirements:
 
-**Required**
+#### Required
 
 - A blank Kubernetes cluster, where no CNI was ever configured.
 - These [base requirements](../requirements.mdx), except those related to the management of `cali*`, `tunl*` and `vxlan.calico` interfaces.
@@ -243,7 +243,9 @@ The VPP dataplane has the following requirements:
 
   :::
 
-**Optional**
+
+#### Optional
+
 For some hardware, the following hugepages configuration may enable VPP to use more efficient drivers:
 
 - At least 512 x 2MB-hugepages are available (`grep HugePages_Free /proc/meminfo`)
@@ -288,7 +290,7 @@ For some hardware, the following hugepages configuration may enable VPP to use m
 
 ### Install the VPP dataplane components
 
-Start by getting the appropriate yaml manifest for the VPP dataplane resources:
+Start by getting the appropriate yaml manifest file for the VPP dataplane resources:
 
 ```bash
 # If you have configured hugepages on your machines
@@ -300,69 +302,67 @@ curl -o calico-vpp.yaml https://raw.githubusercontent.com/projectcalico/vpp-data
 curl -o calico-vpp.yaml https://raw.githubusercontent.com/projectcalico/vpp-dataplane/{{vppbranch}}/yaml/generated/calico-vpp-nohuge.yaml
 ```
 
-Then locate the `calico-vpp-config` ConfigMap in this yaml manifest and configure it as follows.
+Then locate the `calico-vpp-config` ConfigMap in this yaml manifest file and configure it as follows.
 
-**Required Configuration**
+#### Required Configuration
 
-- `CALICOVPP_INTERFACES` contains a dictionary with parameteres specific to interfaces in calicovpp. The field `uplinkInterfaces` contains a list of interfaces and their configuration, with the first element being the primary interface, and the rest (if any) being the secondary host interfaces.
+- `SERVICE_PREFIX` is the Kubernetes service CIDR. You can retrieve it by running:
 
-```yaml
-CALICOVPP_INTERFACES: |-
+  ```bash
+  kubectl cluster-info dump | grep -m 1 service-cluster-ip-range
+  ```
+
+  If this command doesn't return anything, you can leave the default value of `10.96.0.0/12`.
+
+- `CALICOVPP_INTERFACES` contains a dictionary with parameteres specific to interfaces in VPP. The field `uplinkInterfaces` contains a list of uplink interfaces and their configuration, with the first element of the list being the primary/main uplink interface, and the rest (if any) being the secondary host interfaces. You **must** specify at the least the primary/main uplink interface name, for example,
+
+  ```yaml
+  CALICOVPP_INTERFACES: |-
   {
       "uplinkInterfaces": [ { "interfaceName": "eth0" } ]
   }
-```
+  ```
+  Please make sure that the interface name is that of a valid Linux interface and that it is up and configured with an address. Also, the address configured on this interface **must** be the node address in Kubernetes (`kubectl get nodes -o wide`).
 
-The name of the used interface must be the name of a Linux interface, up and configured with an address. The address configured on this interface **must** be the node address in Kubernetes (`kubectl get nodes -o wide`).
+  ##### CALICOVPP_INTERFACES spec
 
-**Configuration options**
+  | Field            | Description                                              | Type                                                |
+  | ---------------- | -------------------------------------------------------- | --------------------------------------------------- |
+  | maxPodIfSpec     | spec containing max values for pod interfaces config     | [InterfaceSpec](#interfacespec)                     |
+  | defaultPodIfSpec | spec containing default values for pod interfaces config | [InterfaceSpec](#interfacespec)                     |
+  | vppHostTapSpec   | spec containing config for host tap interface in vpp     | [InterfaceSpec](#interfacespec)                     |
+  | uplinkInterfaces | list of host interfaces in vpp                           | List of [UplinkInterfaceSpec](#uplinkinterfacespec) |
 
-`CALICOVPP_INTERFACES`
+  ##### InterfaceSpec
 
-| Field            | Description                                              | Type                                                |
-| ---------------- | -------------------------------------------------------- | --------------------------------------------------- |
-| maxPodIfSpec     | spec containing max values for pod interfaces config     | [InterfaceSpec](#InterfaceSpec)                     |
-| defaultPodIfSpec | spec containing default values for pod interfaces config | [InterfaceSpec](#InterfaceSpec)                     |
-| vppHostTapSpec   | spec containing config for host tap interface in vpp     | [InterfaceSpec](#InterfaceSpec)                     |
-| uplinkInterfaces | list of host interfaces in vpp                           | List of [UplinkInterfaceSpec](#UplinkInterfaceSpec) |
+  | Field  | Description                        | Type                                               | Default                           |
+  | ------ | ---------------------------------- | -------------------------------------------------- | --------------------------------- |
+  | rx     | Number of RX queues                | int                                                | 1                                 |
+  | tx     | Number of TX queues                | int                                                | 1                                 |
+  | rxqsz  | RX queue size                      | int                                                | 1024                              |
+  | txqsz  | TX queue size                      | int                                                | 1024                              |
+  | isl3   | Defines the interface mode (L2/L3) | boolean                                            | true for tuntap ; false for memif |
+  | rxMode | RX mode                            | string among "interrupt", "adaptive", or "polling" | `adaptive`                        |
 
-#### InterfaceSpec
+  ##### UplinkInterfaceSpec
 
-| Field  | Description                        | Type                                               | Default                           |
-| ------ | ---------------------------------- | -------------------------------------------------- | --------------------------------- |
-| rx     | Number of RX queues                | int                                                | 1                                 |
-| tx     | Number of TX queues                | int                                                | 1                                 |
-| rxqsz  | RX queue size                      | int                                                | 1024                              |
-| txqsz  | TX queue size                      | int                                                | 1024                              |
-| isl3   | Defines the interface mode (L2/L3) | boolean                                            | true for tuntap ; false for memif |
-| rxMode | RX mode                            | string among "interrupt", "adaptive", or "polling" | `adaptive`                        |
+  | Field         | Description                                                    | Type                                               | Default                       |
+  | ------------- | -------------------------------------------------------------- | -------------------------------------------------- | ----------------------------- |
+  | rx            | Number of RX queues                                            | int                                                | 1                             |
+  | tx            | Number of TX queues                                            | int                                                | 1                             |
+  | rxqsz         | RX queue size                                                  | int                                                | 1024                          |
+  | txqsz         | TX queue size                                                  | int                                                | 1024                          |
+  | isl3          | Defines the interface mode (L2/L3) for drivers that support it | boolean                                            | true                          |
+  | rxMode        | RX mode                                                        | string among "interrupt", "adaptive", or "polling" | `adaptive`                    |
+  | InterfaceName | interface name                                                 | string                                             | unset                         |
+  | vppDriver     | driver to use in vpp                                           | string                                             | unset                         |
+  | newDriver     | linux driver to use before passing the interface to VPP        | string                                             | unset                         |
+  | mtu           | the interface's mtu                                            | int                                                | use the existing MTU in linux |
 
-#### UplinkInterfaceSpec
 
-| Field         | Description                                                    | Type                                               | Default                       |
-| ------------- | -------------------------------------------------------------- | -------------------------------------------------- | ----------------------------- |
-| rx            | Number of RX queues                                            | int                                                | 1                             |
-| tx            | Number of TX queues                                            | int                                                | 1                             |
-| rxqsz         | RX queue size                                                  | int                                                | 1024                          |
-| txqsz         | TX queue size                                                  | int                                                | 1024                          |
-| isl3          | Defines the interface mode (L2/L3) for drivers that support it | boolean                                            | true                          |
-| rxMode        | RX mode                                                        | string among "interrupt", "adaptive", or "polling" | `adaptive`                    |
-| InterfaceName | interface name                                                 | string                                             | unset                         |
-| vppDriver     | driver to use in vpp                                           | string                                             | unset                         |
-| newDriver     | linux driver to use before passing the interface to VPP        | string                                             | unset                         |
-| mtu           | the interface's mtu                                            | int                                                | use the existing MTU in linux |
+#### Optional Configuration
 
-- `service_prefix` is the Kubernetes service CIDR. You can retrieve it by running:
-
-```bash
-kubectl cluster-info dump | grep -m 1 service-cluster-ip-range
-```
-
-If this command doesn't return anything, you can leave the default value of `10.96.0.0/12`.
-
-**Optional**
-
-- To configure how VPP drives the physical interface, use `vppDriver` field for `uplinkInterfaces` elements in `CALICOVPP_INTERFACES`.
+To configure how VPP drives the uplink interface, use the `vppDriver` field in `uplinkInterfaces` in `CALICOVPP_INTERFACES`.
 
 The supported values will depend on the interface type. Available values are:
 
@@ -376,18 +376,29 @@ The supported values will depend on the interface type. Available values are:
 - `dpdk` : use the DPDK interface drivers with VPP (requires hugepages, works with most interfaces)
 - `none` : do not configure connectivity automatically. This can be used when [configuring the interface manually](../../../reference/vpp/uplink-configuration.mdx)
 
-**Legacy options**
+For example,
 
-We maintain legacy support for the `CALICOVPP_INTERFACE` and `CALICOVPP_NATIVE_DRIVER` environment variables:
+```yaml
+  CALICOVPP_INTERFACES: |-
+    {
+      ...
+      "uplinkInterfaces": [
+        {
+          "interfaceName": "eth0",
+          "vppDriver": "af_packet"
+        }
+      ]
+      ...
+    }
+```
 
-`CALICOVPP_INTERFACE` -> `uplinkInterfaces[0].interfaceName`
+#### Legacy options
 
-`CALICOVPP_NATIVE_DRIVER` -> `uplinkInterfaces[0].vppDriver`
+We still maintain legacy support for the `CALICOVPP_INTERFACE` and `CALICOVPP_NATIVE_DRIVER` environment variables. If `CALICOVPP_INTERFACES` is unspecified, `CALICOVPP_INTERFACE` is the primary interface to be used and `CALICOVPP_NATIVE_DRIVER` the uplink driver to be used by VPP.
 
-If `CALICOVPP_INTERFACES` is unspecified, `CALICOVPP_INTERFACE` is the primary interface to be used.
-In that case, use `CALICOVPP_NATIVE_DRIVER` instead of `vppDriver`.
+`CALICOVPP_INTERFACE`  -->  `uplinkInterfaces[0].interfaceName`
 
-So either patch `CALICOVPP_INTERFACES` with the suitable interface in `uplinkInterfaces`, or delete `CALICOVPP_INTERFACES` and use `CALICOVPP_INTERFACE` instead.
+`CALICOVPP_NATIVE_DRIVER`  -->  `uplinkInterfaces[0].vppDriver`
 
 **Example**
 
@@ -395,14 +406,20 @@ So either patch `CALICOVPP_INTERFACES` with the suitable interface in `uplinkInt
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: calico-config
+  name: calico-vpp-config
   namespace: calico-vpp-dataplane
 data:
-  service_prefix: 10.96.0.0/12
-  vpp_dataplane_interface: eth1
-  vpp_uplink_driver: ""
+  ...
+  CALICOVPP_INTERFACE: eth1
+  CALICOVPP_NATIVE_DRIVER: "af_packet"
   ...
 ```
+
+:::caution
+
+Please note that `CALICOVPP_INTERFACE` and `CALICOVPP_NATIVE_DRIVER` are marked **deprecated** and will no longer be supported in the future releases. Please use `CALICOVPP_INTERFACES` instead.
+
+:::
 
 ### Apply the configuration
 
