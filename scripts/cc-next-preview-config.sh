@@ -11,6 +11,6 @@ sed -i "/lastVersion/d" docusaurus.config.js
 # Changes links from landing page to version next
 sed -i "s/calico\/latest\/about/calico\/next\/about/" src/___new___/data/selectDocsInfo.ts
 sed -i "s/calico-enterprise\/latest\/about/calico-enterprise\/next\/about/" src/___new___/data/selectDocsInfo.ts
-sed -i "s/calico-cloud\/about/calico\/next\/about/" src/___new___/data/selectDocsInfo.ts
+sed -i "s/calico-cloud\/about/calico-cloud\/next\/about\//" src/___new___/data/selectDocsInfo.ts
 
 yarn build

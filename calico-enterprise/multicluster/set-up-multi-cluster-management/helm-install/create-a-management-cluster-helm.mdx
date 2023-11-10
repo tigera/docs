@@ -163,18 +163,6 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
 
 1. [Configure a storage class for Calico Enterprise](../../../operations/logstorage/create-storage).
 
-1. Export the service port number
-
-  ```bash
-  export EXT_SERVICE_PORT=9449
-  ```
-
-  Export the public address or host of the management cluster. (Ex. "example.com:1234" or "10.0.0.10:1234".)
-
-  ```bash
-  export MANAGEMENT_CLUSTER_ADDR=<your-management-cluster-addr>:$EXT_SERVICE_PORT
-  ```
-
 1. Export one or more managed clusters.
 
   Generate the base64 encoded CRT and KEY for a managed cluster:
@@ -199,7 +187,6 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
   echo "
   managementCluster:
     enabled: true
-    address: $MANAGEMENT_CLUSTER_ADDR
     service:
       type: LoadBalancer
       port: 9449
@@ -233,6 +220,26 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
   ```bash
   watch kubectl get tigerastatus
   ```
+
+#### Update the ManagementCluster address.
+
+1. Export the service port number
+
+  ```bash
+  export EXT_NODE_PORT=<your-load-balancer-external-node-port>
+  ```
+
+  Export the public address or host of the management cluster, in this case the load-balancer's external IP (Ex. "example.com:1234" or "10.0.0.10:1234".)
+
+  ```bash
+  export MANAGEMENT_CLUSTER_ADDR=<your-load-balancer-external-addr>:$EXT_NODE_PORT
+  ```
+
+  Replace the `address` field in the ManagementCluster resource.
+    
+  ```bash
+  kubectl patch managementcluster tigera-secure --type merge -p "{\"spec\":{\"address\":\"${MANAGEMENT_CLUSTER_ADDR}\"}}"
+  ``` 
 
 :::note
 
