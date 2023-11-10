@@ -19,9 +19,9 @@ YARN=docker run -i --rm -v "$(shell pwd):/docs" -p 127.0.0.1:3000:3000 -w /docs 
 YARN_ACTION_SUFFIX=-container
 endif
 
-CALICO_BRANCHES=$(addsuffix __operator_reference,$(wildcard calico_versioned_docs/*))
-CALICO_ENT_BRANCHES=$(addsuffix __operator_reference,$(wildcard calico-enterprise_versioned_docs/*))
-CALICO_CLOUD_BRANCHES=$(addsuffix __operator_reference,$(wildcard calico-cloud_versioned_docs/*))
+CALICO_BRANCHES=calico__operator_reference $(addsuffix __operator_reference,$(wildcard calico_versioned_docs/*))
+CALICO_ENT_BRANCHES=calico-enterprise__operator_reference $(addsuffix __operator_reference,$(wildcard calico-enterprise_versioned_docs/*))
+CALICO_CLOUD_BRANCHES=calico-cloud__operator_reference $(addsuffix __operator_reference,$(wildcard calico-cloud_versioned_docs/*))
 
 build: init
 	$(YARN) build
