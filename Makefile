@@ -19,6 +19,10 @@ YARN=docker run -i --rm -v "$(shell pwd):/docs" -p 127.0.0.1:3000:3000 -w /docs 
 YARN_ACTION_SUFFIX=-container
 endif
 
+CALICO_BRANCHES=$(addsuffix __operator_reference,$(wildcard calico_versioned_docs/*))
+CALICO_ENT_BRANCHES=$(addsuffix __operator_reference,$(wildcard calico-enterprise_versioned_docs/*))
+CALICO_CLOUD_BRANCHES=$(addsuffix __operator_reference,$(wildcard calico-cloud_versioned_docs/*))
+
 build: init
 	$(YARN) build
 
@@ -57,12 +61,19 @@ index:
 	@cat algolia-crawler-config.json | jq -r tostring >>.env.local
 	docker run -it -e APPLICATION_ID -e API_KEY --env-file=.env.local algolia/docsearch-scraper
 
-.PHONY: autogen
-autogen:
-	PRODUCT=calico $(MAKE) build-operator-reference
-	PRODUCT=calico-enterprise $(MAKE) build-operator-reference
-	PRODUCT=calico-cloud $(MAKE) build-operator-reference
-	PRODUCT=calico-cloud make build-ia-operator-reference
+.PHONY: $(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES) $(CALICO_CLOUD_BRANCHES)
+$(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES): %__operator_reference : %
+	PRODUCT=$< $(MAKE) build-operator-reference
+
+$(CALICO_CLOUD_BRANCHES) : %__operator_reference : %
+	PRODUCT=$< $(MAKE) build-operator-reference
+	PRODUCT=$< $(MAKE) build-ia-operator-reference
+
+.PHONY: autogen autogen_calico autogen_enterprise autogen_cloud
+autogen: autogen_calico autogen_enterprise autogen_cloud
+autogen_calico: $(CALICO_BRANCHES)
+autogen_enterprise: $(CALICO_ENTERPRISE_BRANCHES)
+autogen_cloud: $(CALICO_CLOUD_BRANCHES)
 
 .PHONY: build-operator-reference
 build-operator-reference:
