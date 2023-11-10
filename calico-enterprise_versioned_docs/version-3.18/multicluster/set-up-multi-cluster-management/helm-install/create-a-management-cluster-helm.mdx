@@ -47,7 +47,7 @@ If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubern
 1. If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), set the `kubernetesProvider` as described in the [Installation reference](../../../reference/installation/api.mdx#operator.tigera.io/v1.Provider). For example:
 
   ```bash
-  echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml
+  echo 'installation: {kubernetesProvider: EKS }' > values.yaml
   ```
 
    For Azure AKS cluster with no Kubernetes CNI pre-installed, create `values.yaml` with the following command:
@@ -181,19 +181,27 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
 
 To install a {{prodname}} [management](create-a-management-cluster-helm#value) cluster with Helm, using a LoadBalancer service:
 
+#### Set-up an EKS LoadBalancer.
+
+  You must meet the requirements defined in [create a network load balancer for AWS](https://docs.aws.amazon.com/eks/latest/userguide/network-load-balancing.html)
+
+  Make sure your management cluster has the following annotations:
+
+  ```bash
+  managementCluster:
+    service:
+      annotations:
+      - key: service.beta.kubernetes.io/aws-load-balancer-type
+        value: "external"
+        key: service.beta.kubernetes.io/aws-load-balancer-nlb-target-type
+        value: "instance"
+        key: service.beta.kubernetes.io/aws-load-balancer-scheme
+        value: "internet-facing"
+  ```
+
+#### Install the management cluster.
+
 1. [Configure a storage class for Calico Enterprise](../../../operations/logstorage/create-storage).
-
-1. Export the service port number
-
-  ```bash
-  export EXT_SERVICE_PORT=9449
-  ```
-
-  Export the public address or host of the management cluster. (Ex. "example.com:1234" or "10.0.0.10:1234".)
-
-  ```bash
-  export MANAGEMENT_CLUSTER_ADDR=<your-management-cluster-addr>:$EXT_SERVICE_PORT
-  ```
 
 1. Export one or more managed clusters.
 
@@ -219,7 +227,6 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
   echo "
   managementCluster:
     enabled: true
-    address: $MANAGEMENT_CLUSTER_ADDR
     service:
       type: LoadBalancer
       port: 9449
@@ -254,25 +261,25 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
   watch kubectl get tigerastatus
   ```
 
-:::note
+#### Update the ManagementCluster address.
 
-If the external service is a LoadBalancer on AWS, then set the necessary service annotations:
-  
+1. Export the service port number
+
   ```bash
-  managementCluster:
-    service:
-      annotations:
-        - key: service.beta.kubernetes.io/aws-load-balancer-type
-          value: "external"
-          key: service.beta.kubernetes.io/aws-load-balancer-nlb-target-type
-          value: "instance"
-          key: service.beta.kubernetes.io/aws-load-balancer-scheme
-          value: "internet-facing"
+  export EXT_NODE_PORT=<your-load-balancer-external-node-port>
   ```
 
-See [Create a network load balancer for AWS](https://docs.aws.amazon.com/eks/latest/userguide/network-load-balancing.html) for more information.
+  Export the public address or host of the management cluster, in this case the load-balancer's external IP (Ex. "example.com:1234" or "10.0.0.10:1234".)
 
-:::
+  ```bash
+  export MANAGEMENT_CLUSTER_ADDR=<your-load-balancer-external-addr>:$EXT_NODE_PORT
+  ```
+
+  Replace the `address` field in the ManagementCluster resource.
+    
+  ```bash
+  kubectl patch managementcluster tigera-secure --type merge -p "{\"spec\":{\"address\":\"${MANAGEMENT_CLUSTER_ADDR}\"}}"
+  ```
 
 </TabItem>
 </Tabs>
