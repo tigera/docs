@@ -47,7 +47,7 @@ If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubern
 1. If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), set the `kubernetesProvider` as described in the [Installation reference](../../../reference/installation/api.mdx#operator.tigera.io/v1.Provider). For example:
 
   ```bash
-  echo 'installation: {kubernetesProvider: EKS }' > values.yaml
+  echo 'installation: { kubernetesProvider: EKS }' > values.yaml
   ```
 
    For Azure AKS cluster with no Kubernetes CNI pre-installed, create `values.yaml` with the following command:
@@ -155,49 +155,16 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
   watch kubectl get tigerastatus
   ```
 
-
-#### Update the ManagementCluster address.
-
-1. Export the service port number
-
-  ```bash
-  export EXT_NODE_PORT=<your-load-balancer-external-node-port>
-  ```
-
-  Export the public address or host of the management cluster, in this case the load-balancer's external IP (Ex. "example.com:1234" or "10.0.0.10:1234".)
-
-  ```bash
-  export MANAGEMENT_CLUSTER_ADDR=<your-load-balancer-external-addr>:$EXT_NODE_PORT
-  ```
-
-  Replace the `address` field in the ManagementCluster resource.
-    
-  ```bash
-  kubectl patch managementcluster tigera-secure --type merge -p "{\"spec\":{\"address\":\"${MANAGEMENT_CLUSTER_ADDR}\"}}"
-  ``` 
-
 </TabItem>
 <TabItem label="LoadBalancer" value="LoadBalancer">
 
 To install a {{prodname}} [management](create-a-management-cluster-helm#value) cluster with Helm, using a LoadBalancer service:
 
-#### Set-up an EKS LoadBalancer.
+#### Meet cloud provider requirements.
 
-  You must meet the requirements defined in [create a network load balancer for AWS](https://docs.aws.amazon.com/eks/latest/userguide/network-load-balancing.html)
+You must ensure that you have met the requirements for your cloud provider to provision a load balancer in your environment.
 
-  Make sure your management cluster has the following annotations:
-
-  ```bash
-  managementCluster:
-    service:
-      annotations:
-      - key: service.beta.kubernetes.io/aws-load-balancer-type
-        value: "external"
-        key: service.beta.kubernetes.io/aws-load-balancer-nlb-target-type
-        value: "instance"
-        key: service.beta.kubernetes.io/aws-load-balancer-scheme
-        value: "internet-facing"
-  ```
+For example, if you are using EKS, you must meet the requirements defined in [create a network load balancer for AWS](https://docs.aws.amazon.com/eks/latest/userguide/network-load-balancing.html)
 
 #### Install the management cluster.
 
@@ -241,6 +208,19 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
       certificate: $MANAGED_CLUSTER_CERTIFICATE" >> values.yaml
   ```
 
+  If you are using EKS, make sure your management cluster has the following annotations:
+  ```bash
+  managementCluster:
+    service:
+      annotations:
+      - key: service.beta.kubernetes.io/aws-load-balancer-type
+        value: "external"
+        key: service.beta.kubernetes.io/aws-load-balancer-nlb-target-type
+        value: "instance"
+        key: service.beta.kubernetes.io/aws-load-balancer-scheme
+        value: "internet-facing"
+  ```
+
 1. Install the Tigera {{prodname}} operator and custom resource definitions using the Helm 3 chart:
 
   <CodeBlock language='bash'>
@@ -266,7 +246,7 @@ To install a {{prodname}} [management](create-a-management-cluster-helm#value) c
 1. Export the service port number
 
   ```bash
-  export EXT_NODE_PORT=<your-load-balancer-external-node-port>
+  export EXT_NODE_PORT=<your-external-load-balancer-port>
   ```
 
   Export the public address or host of the management cluster, in this case the load-balancer's external IP (Ex. "example.com:1234" or "10.0.0.10:1234".)
