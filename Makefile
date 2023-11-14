@@ -19,6 +19,12 @@ YARN=docker run -i --rm -v "$(shell pwd):/docs" -p 127.0.0.1:3000:3000 -w /docs 
 YARN_ACTION_SUFFIX=-container
 endif
 
+# Generate a list of all the calico/ent/cloud branches (including the 'unversioned' docs, which
+# represent the `next` branch.
+CALICO_BRANCHES=calico__operator_reference $(addsuffix __operator_reference,$(wildcard calico_versioned_docs/*))
+CALICO_ENT_BRANCHES=calico-enterprise__operator_reference $(addsuffix __operator_reference,$(wildcard calico-enterprise_versioned_docs/*))
+CALICO_CLOUD_BRANCHES=calico-cloud__operator_reference $(addsuffix __operator_reference,$(wildcard calico-cloud_versioned_docs/*))
+
 build: init
 	$(YARN) build
 
@@ -57,16 +63,30 @@ index:
 	@cat algolia-crawler-config.json | jq -r tostring >>.env.local
 	docker run -it -e APPLICATION_ID -e API_KEY --env-file=.env.local algolia/docsearch-scraper
 
-.PHONY: autogen
-autogen:
-	PRODUCT=calico $(MAKE) build-operator-reference
-	PRODUCT=calico-enterprise $(MAKE) build-operator-reference
-	PRODUCT=calico-cloud $(MAKE) build-operator-reference
-	PRODUCT=calico-cloud make build-ia-operator-reference
+.PHONY: $(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES) $(CALICO_CLOUD_BRANCHES)
+# This represents the list of branches  for Calico and Calico Enterprise,
+# which need the `build-operator-reference` target executed.
+$(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES): %__operator_reference : %
+	PRODUCT=$< $(MAKE) build-operator-reference 2>&1 | sed 's|^|[$<] |'
+
+# Calico Cloud requires `build-operator-reference` but also requires
+# the `build-ia-operator-reference` target to be run as well.
+$(CALICO_CLOUD_BRANCHES) : %__operator_reference : %
+	PRODUCT=$< $(MAKE) build-operator-reference  2>&1 | sed 's|^|[$<] |'
+	PRODUCT=$< $(MAKE) build-ia-operator-reference  2>&1 | sed 's|^|[$<] |'
+
+# This breaks up automatic generation by the three product
+# categories - OSS, cloud, and enterprise - but also retains
+# the `autogen` target, which updates all three.
+.PHONY: autogen autogen_calico autogen_enterprise autogen_cloud
+autogen: autogen_calico autogen_enterprise autogen_cloud
+autogen_calico: $(CALICO_BRANCHES)
+autogen_enterprise: $(CALICO_ENTERPRISE_BRANCHES)
+autogen_cloud: $(CALICO_CLOUD_BRANCHES)
 
 .PHONY: build-operator-reference
 build-operator-reference:
-	mkdir -p .go-pkg-cache && \
+	@mkdir -p .go-pkg-cache && \
 		docker run --rm \
 			--net=host \
 			-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
@@ -89,7 +109,7 @@ build-operator-reference:
 GIT_CONFIG_SSH ?= git config --global url."ssh://git@github.com/".insteadOf "https://github.com/";
 
 build-ia-operator-reference:
-	mkdir -p .go-pkg-cache && \
+	@mkdir -p .go-pkg-cache && \
 		docker run --rm \
 			--net=host \
 			-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
