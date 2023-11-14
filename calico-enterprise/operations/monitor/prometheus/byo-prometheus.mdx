@@ -256,6 +256,35 @@ spec:
 EOF
 ```
 
+If running {{prodnameWindows}}, also create a service for Windows nodes:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: felix-windows-metrics-svc
+  namespace: calico-system
+  labels:
+    k8s-app: felix-metrics
+spec:
+  clusterIP: None
+  selector:
+    k8s-app: calico-node-windows
+  ports:
+  - port: 9091
+    targetPort: 9091
+EOF
+```
+
+By default, the Windows firewall blocks listening on ports. For {{prodname}} to manage the Prometheus metrics ports Windows firewall rules, enable the `windowsManageFirewallRules` setting in FelixConfiguration:
+
+```bash
+kubectl patch felixConfiguration default --type merge --patch '{"spec":{"windowsManageFirewallRules": "Enabled"}}'
+```
+
+[See the FelixConfiguration reference for more details](../../../reference/resources/felixconfig.mdx). You can also add a Windows firewall rule that allows listening on the Prometheus port(s) instead of having {{prodname}} manage it.
+
 **Create the service monitor**
 
 Apply the ServiceMonitor to the namespace where Prometheus is running.
@@ -360,7 +389,7 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 
    ```bash
    $:tls_key=<tls.key content>
-   $:echo $tsls_key|base64 -d >key.pem
+   $:echo $tls_key|base64 -d >key.pem
 
    $:tls_cert=<tls.crt content>
    $:echo $cert|base64 -d>cert.pem

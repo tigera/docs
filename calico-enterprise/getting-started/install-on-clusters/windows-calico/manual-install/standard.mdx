@@ -2,11 +2,17 @@
 description: Install Calico Enterprise for Windows to enable a workload-to-workload Zero Trust model.
 ---
 
-# Install Calico Enterprise for Windows
+# Install Calico Enterprise for Windows manually
+
+:::note
+
+The manual method for installing {{prodnameWindows}} is deprecated in favor of using [the Operator and Windows HostProcess containers (HPC)](../operator.mdx#install-{{prodnamedashWindows}}-using-the-operator). Support for this method will be dropped in a future {{prodname}} version.
+
+:::
 
 ## Big picture
 
-Install {{prodnameWindows}} on Kubernetes clusters. This {{prodnameWindows}} standard installation requires time and expertise for configuration. To get started quickly, we recommend the [Quickstart](../quickstart.mdx).
+Install {{prodnameWindows}} on Kubernetes clusters using the manual installation method. The standard installation for {{prodnameWindows}} requires more time and expertise to configure. If you need to get started quickly, we recommend the [Quickstart guide](quickstart.mdx).
 
 ## Before you begin
 
@@ -23,7 +29,7 @@ The geeky details of what you get by default:
 
 **Required**
 
-- Linux and Windows nodes [meet requirements](requirements.mdx)
+- Linux and Windows nodes [meet requirements](../requirements.mdx)
 - The {{prodnameWindows}} zip archive provided to you by your support representative.
 - If using {{prodname}} networking:
   - Copy the kubeconfig file (used by kubelet) to each Windows node to the file, `c:\k\config`.
@@ -57,7 +63,16 @@ The geeky details of what you get by default:
 
 ## How to
 
+### Manual install
+
 Because the Kubernetes and {{prodname}} control components do not run on Windows yet, a hybrid Linux/Windows cluster is required. First you create a Linux cluster for {{prodname}} components, then you join Windows nodes to the Linux cluster.
+
+
+:::note
+
+The manual method for installing {{prodnameWindows}} is deprecated in favor of using [the Operator and Windows HostProcess containers](#operator-install). Support for this method will be dropped in a future {{prodname}} version.
+
+:::
 
 **Kubernetes**
 
@@ -70,11 +85,11 @@ Because the Kubernetes and {{prodname}} control components do not run on Windows
 1. [Install {{prodname}} on Linux control and worker nodes](#install-calico-enterprise-on-linux-control-and-worker-nodes)
 1. [Install {{prodnameWindows}} and Kubernetes on Windows nodes](#install-calico-enterprise-for-windows-and-kubernetes-on-windows-nodes)
 
-### Create a Linux cluster
+#### Create a Linux cluster
 
 There are many ways to create a Linux Kubernetes cluster. We regularly test {{prodnameWindows}} with `kubeadm`.
 
-### Ensure pods run on the correct nodes
+#### Ensure pods run on the correct nodes
 
 A primary issue of running a hybrid Kubernetes cluster is that many Kubernetes manifests do not specify a **node selector** to restrict where their pods can run. For example, `kubeadm` installs `kube-proxy` (Kubernetes per-host NAT daemon) using a DaemonSet that does not include a node selector. This means that the kube-proxy pod, which only supports Linux, will be scheduled to both Linux and Windows nodes. Services/pods that should run only on Linux nodes (such as the `kube-proxy` DaemonSet) should be started with a node selector to avoid attempting to schedule them to Windows nodes.
 
@@ -106,7 +121,7 @@ To get around this for `kube-proxy`:
 
 A similar change may be needed for other Kubernetes services (such as `kube-dns` or `core-dns`).
 
-### Prepare Windows nodes to join the Linux cluster
+#### Prepare Windows nodes to join the Linux cluster
 
 On each Windows node, follow the steps below to configure `kubelet` and `kube-proxy` service.
 
@@ -181,7 +196,7 @@ The script will pause at the first stage until {{prodname}} is installed by foll
 
 :::
 
-**Step 2: Configure kube-proxy**
+**Step 2: Configure kube-proxy on Windows**
 
 `kube-proxy` must be configured as follows:
 
@@ -201,7 +216,7 @@ adjust other kube-proxy parameters.
 
 The script will pause at the first stage until {{prodname}} is installed by following the instructions in the next section.
 
-### Install {{prodname}} on Linux control and worker nodes
+#### Install {{prodname}} on Linux control and worker nodes
 
 **If using {{prodname}} BGP networking**
 
@@ -245,7 +260,7 @@ This is required to prevent Linux nodes from borrowing IP addresses from Windows
 calicoctl ipam configure --strictaffinity=true
 ```
 
-### Install {{prodnameWindows}} and Kubernetes on Windows nodes
+#### Install {{prodnameWindows}} and Kubernetes on Windows nodes
 
 Follow the steps below on each Windows node to install Kubernetes and {{prodname}}:
 
@@ -287,7 +302,7 @@ Start-Service RemoteAccess
    | $env:CNI_variables             | Location of your Kubernetes installation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
    | $env:K8S_SERVICE_CIDR          | Your Kubernetes service cluster IP CIDR.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
    | $env:CALICO_DATASTORE_TYPE     | {{prodname}} datastore you want to use.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-   | $env:KUBECONFIG                | Location of the kubeconfig file {{prodname}} should use to access the Kubernetes API server. To set up a secure kubeconfig with the correct permissions for {{prodnameWindows}}, see [Create a kubeconfig](../kubeconfig.mdx) for {{prodnameWindows}}.                                                                                                                                                                                                                                                                                                                                                                                                     |
+   | $env:KUBECONFIG                | Location of the kubeconfig file {{prodname}} should use to access the Kubernetes API server. To set up a secure kubeconfig with the correct permissions for {{prodnameWindows}}, see [Create a kubeconfig](kubeconfig.mdx) for {{prodnameWindows}}.                                                                                                                                                                                                                                                                                                                                                                                                     |
    | $env:NODENAME                  | Hostname used by kubelet. The default uses the node's hostname. **Note**: If you are using the sample kubelet start-up script from the {{prodname}} package, kubelet is started with a hostname override that forces it to use this value.                                                                                                                                                                                                                                                                                                                                                                                                                 |
    |                                | For AWS to work properly, kubelet should use the node's internal domain name for the AWS integration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
    |                                | If using {{prodname}} BGP networking, the install script will generate a CNI NetConf file from the file cni.conf.template. Certain advanced configuration can be accessed by modifying the template before install. **Note**: Prior to Kubernetes v1.13, Kubernetes lacked support for setting the correct DNS configuration on each pod. To work around that limitation, the CNI configuration includes DNS settings that are applied to pods whenever the kubelet fails to pass DNS configuration to the CNI plugin. For v1.13 and above, the DNS configuration of the template is ignored in favour of correct per-pod values learned from the kubelet. |
@@ -329,7 +344,12 @@ Start-Service RemoteAccess
    Get-Service -Name CalicoFelix
    ```
 
+### Operator install
+<!--FIXME: is there a need for more detailed steps here? should the steps be written out here instead of linking?-->
+
+- Refer to [this guide for the steps to install {{prodnameWindows}} using the Operator and Windows hostprocess containers (HPC)](../operator.mdx)
+
 ## Next steps
 
-- [Create a kubeconfig](../kubeconfig.mdx)
+- [Create a kubeconfig](kubeconfig.mdx)
 - [Review network policy limitations in Windows](../limitations.mdx)

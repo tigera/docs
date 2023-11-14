@@ -144,7 +144,7 @@ EOF`}
         </p>
       </li>
       <li>
-        Install kube-proxy.
+        Install kube-proxy on Windows nodes.
         <p>
           Depending on your platform, you may already have kube-proxy running on your Windows nodes. If kube-proxy is
           already running on your Windows nodes, skip this step. If kube-proxy is not running, you must install and run
@@ -153,7 +153,7 @@ EOF`}
           provided by the <code>kube-proxy</code> ConfigMap in the <code>kube-system</code> namespace.
         </p>
         <p>
-          Replace <code>KUBE_PROXY_VERSION</code> with your cluster's Kubernetes version in <code>kube-proxy.yml</code> and apply it. For example:
+          You <b>must</b> replace <code>KUBE_PROXY_VERSION</code> with your cluster's Kubernetes version in <code>kube-proxy.yml</code> to ensure the daemonset uses a kube-proxy Windows image that is compatible with your Kubernetes cluster. Use a command like the following to retrieve the YAML file, replace the version, and apply it:
           <CodeBlock language='bash'>{`curl -L  https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/calico/kube-proxy/kube-proxy.yml | sed "s/KUBE_PROXY_VERSION/\<YOUR_KUBERNETES_VERSION>/g" | kubectl apply -f -`}</CodeBlock>
         </p>
       </li>
@@ -176,6 +176,9 @@ EOF`}
             ? `kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c confd`
             : null}
         </CodeBlock>
+        <p>
+          The <code>calico-node-windows</code> pods will be ready after their containers finish initializing.
+        </p>
       </li>
     </ol>
   );

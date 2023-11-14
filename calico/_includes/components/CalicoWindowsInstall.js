@@ -153,7 +153,7 @@ EOF`}
           provided by the <code>kube-proxy</code> ConfigMap in the <code>kube-system</code> namespace.
         </p>
         <p>
-          You <b>must</b> replace <code>KUBE_PROXY_VERSION</code> with your cluster's Kubernetes version in <code>kube-proxy.yml</code> in order to make sure the daemonset will use a kube-proxy Windows image that is compatible with your Kubernetes cluster. Use a command like this to retrieve the yml file, replace the version and apply it:
+          You <b>must</b> replace <code>KUBE_PROXY_VERSION</code> with your cluster's Kubernetes version in <code>kube-proxy.yml</code> to ensure the daemonset uses a kube-proxy Windows image that is compatible with your Kubernetes cluster. Use a command like the following to retrieve the YAML file, replace the version, and apply it:
           <CodeBlock language='bash'>{`curl -L  https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/calico/kube-proxy/kube-proxy.yml | sed "s/KUBE_PROXY_VERSION/\<YOUR_KUBERNETES_VERSION>/g" | kubectl apply -f -`}</CodeBlock>
         </p>
       </li>
@@ -177,7 +177,7 @@ EOF`}
             : null}
         </CodeBlock>
         <p>
-          The <code>calico-node-windows</code> pods will become ready once all its containers finish initializing and become ready themselves.
+          The <code>calico-node-windows</code> pods will be ready after their containers finish initializing.
         </p>
       </li>
     </ol>
