@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# This script makes changes to docusuarus.config.js.
-# These changes make Docusuarus publish only version Next for each product doc set.
+# This script makes changes to docusaurus.config.js.
+# These changes make Docusaurus publish only version Next for each product doc set.
 
 sed -i "s/onBrokenLinks: 'throw'/onBrokenLinks: 'warn'/" docusaurus.config.js
 sed -i "s/onBrokenMarkdownLinks: 'throw'/onBrokenMarkdownLinks: 'warn'/" docusaurus.config.js
