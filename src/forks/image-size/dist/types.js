@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.typeHandlers = void 0;
-// load all available handlers explicitely for browserify support
+// load all available handlers explicitly for browserify support
 const bmp_1 = require("./types/bmp");
 const cur_1 = require("./types/cur");
 const dds_1 = require("./types/dds");
