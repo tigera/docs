@@ -75,7 +75,7 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ isDarkMode, ...re
                   <Tr key={`${index}-${index_inner}`}>
                     <Td sx={rowStyle}>{info.rowHeader}</Td>
                     <Td sx={checkStyle}>{info.CalicoOpenSource === 'Y' ? <CheckIcon sx={iconStyles} /> : ''}</Td>
-                    <Td sx={checkStyle}>{info.CalicoEntreprise === 'Y' ? <CheckIcon sx={iconStyles} /> : ''}</Td>
+                    <Td sx={checkStyle}>{info.CalicoEnterprise === 'Y' ? <CheckIcon sx={iconStyles} /> : ''}</Td>
                     <Td sx={checkStyle}>{info.CalicoCloud === 'Y' ? <CheckIcon sx={iconStyles} /> : ''}</Td>
                   </Tr>
                 ))}
