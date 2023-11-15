@@ -48,9 +48,13 @@ init:
 serve: build
 	$(YARN) serve$(YARN_ACTION_SUFFIX)
 
-.PHONY: spell
-spell:
-	$(YARN) spell$(YARN_ACTION_SUFFIX)
+.PHONY: spell-diff
+spell-diff:
+	$(YARN) spell-diff$(YARN_ACTION_SUFFIX)
+
+.PHONY: spell-full
+spell-full:
+	$(YARN) spell-full$(YARN_ACTION_SUFFIX)
 
 .PHONY: full
 full: clean build
