@@ -48,6 +48,10 @@ init:
 serve: build
 	$(YARN) serve$(YARN_ACTION_SUFFIX)
 
+.PHONY: spell
+spell:
+	$(YARN) spell$(YARN_ACTION_SUFFIX)
+
 .PHONY: full
 full: clean build
 
