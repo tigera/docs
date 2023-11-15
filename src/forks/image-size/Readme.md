@@ -75,7 +75,7 @@ sizeOf('images/funny-cats.png')
   .catch(err => console.error(err))
 ```
 
-### Async/Await (Typescript & ES7)
+### Async/Await (TypeScript & ES7)
 
 ```javascript
 const { promisify } = require('util')
