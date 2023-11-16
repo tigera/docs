@@ -1,6 +1,6 @@
 export default {};
 
-export const howItWorksSyle = {
+export const howItWorksStyle = {
   width: '100%',
   h: 'auto',
   bg: 'linear-gradient(105.96deg, #0964AD 56.79%, #06547A 100%)',
