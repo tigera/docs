@@ -86,7 +86,7 @@ export default {
     sizes: {
         sm: smallStyles,
         md: defaultStyles,
-        lg: defaultStyles, //could do with updting if required at some point
+        lg: defaultStyles, //could do with updating if required at some point
     },
     variants: {
         simple: {
