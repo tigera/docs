@@ -48,6 +48,10 @@ init:
 serve: build
 	$(YARN) serve$(YARN_ACTION_SUFFIX)
 
+.PHONY: spell-branch
+spell-branch:
+	$(YARN) spell-branch$(YARN_ACTION_SUFFIX)
+
 .PHONY: spell-diff
 spell-diff:
 	$(YARN) spell-diff$(YARN_ACTION_SUFFIX)
