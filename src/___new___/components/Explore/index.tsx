@@ -6,7 +6,7 @@ import { heading2Styles } from '../styles';
 import howItWorksInfo from '../../data/exploreInfo';
 
 import {
-  howItWorksSyle,
+  howItWorksStyle,
   innerTextStyle,
   rectangleStyle,
   stackStyle,
@@ -22,7 +22,7 @@ interface HowItWorksProps {
 
 const HowItWorks: React.FC<HowItWorksProps> = ({ isDarkMode,...rest }) => (
   <Flex
-    sx={howItWorksSyle}
+    sx={howItWorksStyle}
     {...rest}
   >
     <Heading
