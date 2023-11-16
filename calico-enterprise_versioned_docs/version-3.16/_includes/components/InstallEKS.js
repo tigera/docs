@@ -143,7 +143,7 @@ spec:
         plane nodes will not be able to initiate network connections to {prodname} pods. (This is a general limitation
         of EKS's custom networking support, not specific to {prodname}.) As a workaround, trusted pods that require
         control plane nodes to connect to them, such as those implementing admission controller webhooks, can include{' '}
-        <code>hostNetwork:true</code> in their pod spec. See the Kuberentes API{' '}
+        <code>hostNetwork:true</code> in their pod spec. See the Kubernetes API{' '}
         <Link href='https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec'>
           pod spec
         </Link>{' '}
