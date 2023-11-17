@@ -38,6 +38,7 @@ and in particular, pushing the networking capabilities of the latest Linux kerne
 ### Supported
 
 - x86-64
+- arm64 (little-endian)
 
 - Distributions:
 
@@ -55,6 +56,18 @@ and in particular, pushing the networking capabilities of the latest Linux kerne
 
 - An underlying network fabric that allows VXLAN traffic between hosts. In eBPF mode, VXLAN is used to forward Kubernetes NodePort traffic.
 
+- IPv6
+
+IPv6 is currently (3.27) in a preview mode. It means that it was tested in common
+situations, but it is likely to have issues in other environments and that there are
+some limitations in general:
+
+  - dual stack is not supported - however, ipv4 traffic is allowed into hosts (not workloads) as many managed k8s environments have ipv4 based control plane.
+  - doNotTrack policies (xdp) are not supported
+  - IPIP is not supported (won't be as Calico iptables does not supporte it either) - vxlan is the recomended overlay for eBPF mode.
+
+To enable IPv6 in eBPF mode follow [Configure dual stack or IPv6 only](../../networking/ipam/ipv6.mdx). You may be able to run with non-Calico IPAM. eks-cni is known to work.
+
 ### Not supported
 
 - Other processor architectures.
@@ -68,8 +81,6 @@ and in particular, pushing the networking capabilities of the latest Linux kerne
     it can be enabled as a post-install step.
 
 - Clusters with some eBPF nodes and some standard dataplane and/or Windows nodes.
-- IPv6.
-- Host endpoint `doNotTrack` policy (other policy types are supported).
 - Floating IPs.
 - SCTP (either for policy or services).
 - `Log` action in policy rules.
