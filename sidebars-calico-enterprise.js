@@ -461,7 +461,7 @@ module.exports = {
         'threat/suspicious-domains',
         'threat/suspicious-external-ips',
         'threat/tor-vpn-feed-and-dashboard',
-        'threat/honeypod/honeypods',
+        'threat/honeypods',
         'threat/deeppacketinspection',
         'threat/web-application-firewall',
       ],
