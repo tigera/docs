@@ -42,7 +42,7 @@ export default function EnvironmentFile(props) {
         </Admonition>
       )}
       <p>
-        Sample <code>EnvironmentFile</code> - save to <code>/kubernetes/calico/calico.env</code>
+        Sample <code>EnvironmentFile</code> - save to <code>/etc/calico/calico.env</code>
       </p>
       <CodeBlock language='bash'>
         {`DATASTORE_TYPE=kubernetes
