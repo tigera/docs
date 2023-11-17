@@ -1,0 +1,120 @@
+---
+description: View the overall risk of your Kubernetes cluster and address high-priority security issues.
+---
+
+# Security Posture Overview dashboard
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## Big picture
+
+View the overall risk score of your Kubernetes cluster and use a prioritized list of recommended actions to improve your score over time.
+
+## Value
+
+Is the security posture of your cluster getting worse or better over time? Do your stakeholders ask for evidence that you are addressing security issues and showing improvement?
+
+The {{prodname}} Security Posture Overview dashboard in Manager UI provides:
+- An overall cluster score that looks at these high-risk areas:
+  - Namespaces without network policy
+  - Images with vulnerabilities
+  - Egress communications outside the cluster without network policy
+- A prioritized list of recommended actions to improve the score
+- The top 10 namespaces at risk
+
+Because the dashboard is based on existing {{prodname}} data, no configuration is required. You can start improving the risk of your Kubernetes cluster from day one.
+
+The Security Posture Overview dashboard is a part of {{prodname}}’s Kubernetes Security Posture Management (KPSM) strategy.
+
+## Concepts
+
+### Dashboard: reflects build and deploy time security
+
+The Security Posture Overview dashboard reflects security events related to build and deploy time only. Security events that come from runtime threat defense features (DPI, container threat detection, WAF) are not included. You can view threat security events in the [Security Events Management dashboard](./security-events-management).
+
+### Implementation
+
+By default, {{prodname}} automatically runs risk calculators on every managed cluster (except for Image Assurance, which must first be enabled).
+Risk calculators run in MongoDB where all data is encrypted using unique keys per tenant. Each API call is authenticated and authorized, and data is retained for 90 days.
+
+## Before you begin
+
+**Required**
+
+To include high-risk images in the Cluster Security Score, you must [enable Image Assurance scanning](../image-assurance/scanners/overview.mdx)
+
+**Limitations**
+- The Security Posture Overview dashboard cannot be disabled
+- You cannot customize the Cluster Security Score or the risk assessment time interval
+- You cannot remove remediation actions from the dashboard
+- The security score is available only for a single Kubernetes cluster (not for an entire organization)
+
+## Dashboard walkthrough
+
+### Security Posture Overview dashboard
+
+The Security Posture Overview dashboard provides a real-time view of a cluster’s risk. As a strategic dashboard, you typically won’t have bandwidth to tackle everything at once, but with planning, you can achieve your goals over time.
+
+You will see results in the dashboard immediately after you install a new managed cluster.
+
+[security-posture-overview](/img/calico-cloud/security-posture-overview.png)
+
+#### Updates to the dashboard
+
+The Cluster Security Score is updated once a week. Data used by the risk calculators is updated once a day.
+
+In the left navbar, go to: **Dashboards**, **Security Posture**.
+
+### Cluster security score
+
+The Cluster Security Score measures the overall security posture of your Kubernetes cluster based on contributing risks (listed under the score).
+
+[security-posture-score](/img/calico-cloud/security-posture-score.png)
+
+**How the score is calculated**
+
+The security score is a complex combination of cluster score, namespace score, and risk calculator scores (based on percentages and averages). The score is calculated by taking the total risk score for the cluster (current and previous value) and subtracting it from 100. The higher the score, the better the cluster is doing.
+
+**Contributing risk types**
+
+Each risk type that contributes to the score is calculated and aggregated at two levels: for each namespace, and each cluster.
+
+| **Risk**               | **Enabled by default?** | **Score reflects…**                                          | **Why it matters**                                           |
+| ---------------------- | ----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| High Risk Images       | No                      | The number of images running in the namespace with High or Critical vulnerabilities, or have not been scanned. | Scanning images for known vulnerabilities is one of the most effective ways to prevent attackers from leveraging known exploits to gain access to systems and data. |
+| Egress Access Security | Yes                     | The percentage of workloads that are communicating with endpoints external to the cluster that are not secured by network policy. | Implementing egress access controls helps mitigate the risk of unauthorized communication with malicious destinations, and helps prevent several phases of the [MITRE Attack Matrix](https://attack.mitre.org/matrices/enterprise/). |
+| Namespace isolation    | Yes                     | The percentage of egress and ingress network traffic to/from namespaces that are not secured by network policy. | Isolating namespaces enforces multi-tenancy in your cluster to reduce the impact of potential issues. It also improves security to prevent several phases of the [MITRE Attack Matrix](https://attack.mitre.org/matrices/enterprise/). |
+
+#### About High Risk Images
+Scanning images for vulnerabilities is an optional feature (Image Assurance) that must be enabled to see “High-risk Images” results in the dashboard.
+
+**If I do not enable Image Assurance, is the security score affected?**
+No. If Image Assurance is not enabled, your cluster will still achieve improved/higher security scores using the default risk contributors. However, if you decide to enable Image Assurance, your overall score will likely change.
+
+**How are unscanned images treated in scoring?**
+Unscanned images are considered high risk until they are scanned.
+
+**How do I remediate scores related to high-risk images?**
+Use the Remediation panel in the Security Posture Overview dashboard to understand the priority actions, then use the [Image Assurance dashboard](../image-assurance/understanding-scan-results.mdx) for remediation.
+
+### Historical graph
+
+The historical graph is a time series of cluster risk scores. The historical scores are static (recorded once and do not change). Data starts to display in the graph approximately 15 days after you install a managed cluster.
+
+[security-posture-historical-graph](/img/calico-cloud/security-posture-historical-graph.png)
+
+#### Top 5 recommended actions
+The Recommended Actions panel provides a prioritized list of actions you can take to improve your security score.
+
+[security-posture-recommendations](/img/calico-cloud/security-posture-recommendations.png)
+
+### Dismissing recommended actions
+Although you can dismiss and revert a recommended action, {{prodname}} controls removing and updating existing actions.
+
+### Top 10 namespaces at risk
+TBD
+
