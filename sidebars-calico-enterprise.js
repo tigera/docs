@@ -461,15 +461,7 @@ module.exports = {
         'threat/suspicious-domains',
         'threat/suspicious-external-ips',
         'threat/tor-vpn-feed-and-dashboard',
-        {
-          type: 'category',
-          label: 'Honeypods',
-          link: {type: 'doc', id: 'threat/honeypod/index'},
-          items: [
-            'threat/honeypod/honeypods',
-            'threat/honeypod/honeypod-controller'
-          ],
-        },
+        'threat/honeypod/honeypods',
         'threat/deeppacketinspection',
         'threat/web-application-firewall',
       ],
