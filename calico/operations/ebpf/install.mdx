@@ -265,6 +265,18 @@ In this example, you would use `60F939227672BC3D5A1B3EC9744B2B21.gr7.us-west-2.e
 </TabItem>
 </Tabs>
 
+### Install the Tigera Operator
+
+Follow the steps in the main install for your platform that installs the Tigera Operator, without applying the custom-resources.yaml (you will update this file in a later step in this doc). 
+
+If you have a kOps cluster, you must also patch the tigera-operator deployment with DNS config so the operator can resolve the apiserver DNS.
+
+```bash
+kubectl patch deployment -n tigera-operator tigera-operator -p '{"spec":{"template":{"spec":{"dnsConfig":{"nameservers":["127.0.0.53"]}}}}}'
+```
+
+### Create the Config Map
+
 Create the following config map in the `tigera-operator` namespace using the host and port determined above:
 
 ```bash
@@ -279,23 +291,6 @@ data:
   KUBERNETES_SERVICE_PORT: "<API server port>"
 EOF
 ```
-
-:::tip
-
-If you forget to create the config map before installing the operator you can create it afterwards and
-then wait 60 seconds (for the config map to propagate) before restarting the operator:
-
-```bash
-kubectl delete pod -n tigera-operator -l k8s-app=tigera-operator
-```
-
-:::
-
-### Install the Tigera Operator
-
-Follow the steps in the main install guide for your platform to install the Tigera Operator (and possibly the
-Prometheus Operator). However, **stop** before applying the `custom-resources.yaml`; we'll customise that file
-to enable eBPF mode in the next step...
 
 ### Tweak and apply installation Custom Resources
 
