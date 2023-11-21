@@ -223,7 +223,7 @@ an instance (for example when scaling up the cluster).
 - [Enable AWS-backed IP pools](#enable-aws-backed-ip-pools)
 - [Configure IP pools backed by VPC subnets](#configure-ip-pools-backed-by-vpc-subnets)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
-- [Configuring namespaces and pods to use egress gateways](#configuring-namespaces-and-pods-to-use-egress-gateways)
+- [Configure namespaces and pods to use egress gateways](#configure-namespaces-and-pods-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
 - [Control the use of egress gateways](#control-the-use-of-egress-gateways)
@@ -762,7 +762,6 @@ spec:
 EOF
 ```
 
-
 - `replicas: 2` tells Kubernetes to schedule two egress gateways in the "red" cluster.
 - ipPools tells {{site.prodname}} IPAM to use one of the "red" IP pools:
 
@@ -852,7 +851,7 @@ EOF
 
 :::
 
-### Configuring namespaces and pods to use egress gateways
+### Configure namespaces and pods to use egress gateways
 
 You can configure namespaces and pods to use an egress gateway by:
 * annotating the namespace or pod
@@ -938,8 +937,6 @@ spec:
       selector: "egress-code == 'red'"
 ```
 
-
-
 1. If the `destination` field is not specified, it takes the default value of 0.0.0.0/0.
 
 1. If the `gateway` field is not specified, then egress traffic is routed locally, and not through an egress gateway.
@@ -951,7 +948,11 @@ spec:
 
 1. The `maxNextHops` field specifies the maximum number of egress gateway replicas from the selected deployment that a pod depends on. For more information, see [Optimize egress networking for workloads with long-lived TCP connections](egress-gateway-maintenance.mdx#reduce-the-impact-of-gateway-downtime).
 
+:::note
 
+CIDRs specified in rules in an egress gateway policy are matched in Longest Prefix Match(LPM) fashion. 
+
+:::
 
 {{prodname}} rejects egress gateway policies that do any of the following:
 * The policy has no rule that specifies a gateway or a destination
@@ -988,7 +989,6 @@ You must create the egress gateway policy before you apply it to a namespace or 
 If you attempt to apply an egress gateway policy that has not been created, {{prodname}} will block all traffic from the namespace or pod.
 
 :::
-
 
 ### Add AWS Elastic IPs to the egress gateway deployment
 
