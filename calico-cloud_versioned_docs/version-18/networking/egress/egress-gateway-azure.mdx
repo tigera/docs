@@ -105,8 +105,6 @@ using Border Gateway Protocol (BGP). {{prodname}} can establish BGP sessions wit
 to advertise the IPs of egress gateways to that VNet. The learned routes are then propagated to the rest of VNets through
 VNet peering, or to external datacenters through ExpressRoute, allowing communication with egress gateway.
 
-Azure Route Server deployment is per VNet, as such each VNet with egress gateways needs one Azure Route Server.
-
 ## Before you begin
 
 **Required**
@@ -137,7 +135,6 @@ Azure Route Server deployment is per VNet, as such each VNet with egress gateway
 - [Verify the feature operation](#verify-the-feature-operation)
 - [Control the use of egress gateways](#control-the-use-of-egress-gateways)
 - [Policy enforcement for flows via an egress gateway](#policy-enforcement-for-flows-via-an-egress-gateway)
-- [Make local egress gateways the default](#make-local-egress-gateways-the-default)
 
 ### Choose route reflectors
 
@@ -149,8 +146,8 @@ and Azure Route Servers supports up to 8 peers in a VNet.
 
 ### Create Azure Route Server
 
-Deploy Azure [Route Server](https://learn.microsoft.com/en-us/azure/route-server/) in the VNet with egress gateways,
-and add the chosen route reflectors as peers to it.
+Deploy Azure [Route Server](https://learn.microsoft.com/en-us/azure/route-server/) in the VNet (hub or spoke VNet) that routes
+egress addresses. Then, add the selected route reflectors as peers to the Azure Route Server. 
 
 :::note
 
@@ -254,7 +251,7 @@ spec:
 EOF
 ```
 
-Even with BGP filter, {{prodname}} still advertises pod IP blocks. To prevent {{prodname}} from advertising pod IP blocks, it is possible to set
+Even with the BGP filter, {{prodname}} still advertises pod IP blocks. To prevent {{prodname}} advertising pod IP blocks, it is possible to set
 `disableBGPExport` to `true` in the default IP pools.
 
 ### Configure route reflectors
@@ -576,9 +573,9 @@ spec:
     gateway:
       namespaceSelector: "projectcalico.org/name == 'default'"
       selector: "egress-code == 'red'"
+    // callout-for-next-line
+    gatewayPreference: PreferNodeLocal
 ```
-
-
 
 1. If the `destination` field is not specified, it takes the default value of 0.0.0.0/0.
 
@@ -591,7 +588,13 @@ spec:
 
 1. The `maxNextHops` field specifies the maximum number of egress gateway replicas from the selected deployment that a pod depends on. For more information, see [Optimize egress networking for workloads with long-lived TCP connections](egress-gateway-maintenance.mdx#reduce-the-impact-of-gateway-downtime).
 
+1. `gatewayPreference` specifies hints to the gateway selection process. The default `None`, selects the default selection process. If set to `PreferNodeLocal`, then egress gateways local to the client's node are used if available. If there are no local egress gateways, {{prodname}} uses other egress gateways. In this example, for the default route, egress gateways local to the client's node are used if present. If not, all egress gateways matching the selector are used.
 
+:::note
+
+CIDRs specified in rules in an egress gateway policy are matched in Longest Prefix Match(LPM) fashion. 
+
+:::
 
 {{prodname}} rejects egress gateway policies that do any of the following:
 * The policy has no rule that specifies a gateway or a destination
@@ -773,39 +776,6 @@ In iptables mode, this traffic is auto-allowed at egress from the host and ingre
 In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic is allowed.
 
 :::
-
-## Make local egress gateways the default
-
-To set the default to use local egress gateways, set the `GatewayPreference` to `PreferNodeLocal` or `None` (the default) in the egress gateway policy. When set to `PreferNodeLocal`, egress gateways local to the client's node will be used if available. If there are no local egress gateways, we will fallback to using the other egress gateways.
-
-The following is an example of an egress gateway policy with GatewayPreference set to use local egress gateways.
-
-```yaml noValidation
-apiVersion: projectcalico.org/v3
-kind: EgressGatewayPolicy
-metadata:
-  name: "egw-policy1"
-spec:
-  rules:
-  - destination:
-      cidr: 10.0.0.0/8
-    description: "Local: no gateway"
-  - destination:
-      cidr: 11.0.0.0/8
-    description: "Gateway to on prem"
-    gateway:
-      namespaceSelector: "projectcalico.org/name == 'default'"
-      selector: "egress-code == 'blue'"
-      maxNextHops: 2
-    gatewayPreference: PreferNodeLocal
-  - description: "Gateway to internet"
-    gateway:
-      namespaceSelector: "projectcalico.org/name == 'default'"
-      selector: "egress-code == 'red'"
-    gatewayPreference: None
-```
-
-For destination `11.0.0.0/8`, Egress Gateways local to the client node will be used if present. If not, all the egress gateways matching the selector will be used.
 
 ## Additional resources
 

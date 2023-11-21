@@ -179,7 +179,7 @@ patch release.
 - [Provision an egress IP pool](#provision-an-egress-ip-pool)
 - [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
 - [Configure iptables backend for egress gateways](#configure-iptables-backend-for-egress-gateways)
-- [Configuring namespaces and pods to use egress gateways](#configuring-namespaces-and-pods-to-use-egress-gateways)
+- [Configure namespaces and pods to use egress gateways](#configure-namespaces-and-pods-to-use-egress-gateways)
 - [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
 - [Verify the feature operation](#verify-the-feature-operation)
 - [Control the use of egress gateways](#control-the-use-of-egress-gateways)
@@ -328,7 +328,7 @@ The health port `8080` is used by:
   no policy is required to allow it. {{prodname}} only sends probes to egress gateway pods that have a named
   "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
 
-### Deploying on a RKE2 CIS Hardened Cluster
+### Deploy on a RKE2 CIS-hardened cluster
 
 If you are deploying `egress-gateway` on a RKE2 CIS-hardened cluster, its `PodSecurityPolicies` restrict the `securityContext` and `volumes` required by egress gateway. When deploying using the egress gateway custom resource, the Tigera Operator sets up `PodSecurityPolicy`, `Role`, `RoleBinding` and associated `ServiceAccount`.
 
@@ -345,14 +345,14 @@ auto-detection method to pick up the stable IP, for example using the `interface
 (The default first-found setting skips over the lo interface). This can be configured via the
 {{prodname}} [Installation resource](../../reference/installation/api.mdx#operator.tigera.io/v1.NodeAddressAutodetection).
 
-
-### Configuring namespaces and pods to use egress gateways
+### Configure namespaces and pods to use egress gateways
 
 You can configure namespaces and pods to use an egress gateway by:
 * annotating the namespace or pod
 * applying an egress gateway policy to the namespace or pod.
 
 Using an egress gateway policy is more complicated, but it allows advanced use cases.
+
 
 #### Configure a namespace or pod to use an egress gateway (annotation method)
 
@@ -432,8 +432,6 @@ spec:
       selector: "egress-code == 'red'"
 ```
 
-
-
 1. If the `destination` field is not specified, it takes the default value of 0.0.0.0/0.
 
 1. If the `gateway` field is not specified, then egress traffic is routed locally, and not through an egress gateway.
@@ -445,7 +443,11 @@ spec:
 
 1. The `maxNextHops` field specifies the maximum number of egress gateway replicas from the selected deployment that a pod depends on. For more information, see [Optimize egress networking for workloads with long-lived TCP connections](egress-gateway-maintenance.mdx#reduce-the-impact-of-gateway-downtime).
 
+:::note
 
+CIDRs specified in rules in an egress gateway policy are matched in Longest Prefix Match(LPM) fashion. 
+
+:::
 
 {{prodname}} rejects egress gateway policies that do any of the following:
 * The policy has no rule that specifies a gateway or a destination
