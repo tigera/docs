@@ -81,7 +81,7 @@ $(CALICO_CLOUD_BRANCHES) : %__operator_reference : %
 .PHONY: autogen autogen_calico autogen_enterprise autogen_cloud
 autogen: autogen_calico autogen_enterprise autogen_cloud
 autogen_calico: $(CALICO_BRANCHES)
-autogen_enterprise: $(CALICO_ENTERPRISE_BRANCHES)
+autogen_enterprise: $(CALICO_ENT_BRANCHES)
 autogen_cloud: $(CALICO_CLOUD_BRANCHES)
 
 .PHONY: build-operator-reference
