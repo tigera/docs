@@ -47,7 +47,7 @@ export default function ComponentVersions() {
                 >
                   Release archive
                 </Link>{' '}
-                with Kubernetes manifests. Based on Calico {releases[0].calico.minor_version}.
+                with Kubernetes manifests.
               </p>
             )}
             This release comprises the following components, and can be installed using{' '}
