@@ -269,11 +269,29 @@ In this example, you would use `60F939227672BC3D5A1B3EC9744B2B21.gr7.us-west-2.e
 
 Follow the steps in the main install for your platform that installs the Tigera Operator, without applying the custom-resources.yaml (you will update this file in a later step in this doc). 
 
-If you have a kOps cluster, you must also patch the tigera-operator deployment with DNS config so the operator can resolve the apiserver DNS.
+The tabs below explain how the operator must be patched with the DNS config so the operator can resolve the apiserver DNS.
+
+<Tabs>
+<TabItem label="kOps" value="kOps-10">
+
+For a KOPS cluster, DNS server is 127.0.0.53.
 
 ```bash
 kubectl patch deployment -n tigera-operator tigera-operator -p '{"spec":{"template":{"spec":{"dnsConfig":{"nameservers":["127.0.0.53"]}}}}}'
 ```
+
+</TabItem>
+<TabItem label="EKS" value="EKS-11">
+
+For an EKS cluster, DNS server is the VPC's primary private IPV4 CIDR range plus two. For example, if you have a VPC with an IPv4 CIDR of 192.168.0.0/16,
+DNS server is at 192.168.0.2.
+
+```bash
+kubectl patch deployment -n tigera-operator tigera-operator -p '{"spec":{"template":{"spec":{"dnsConfig":{"nameservers":["192.168.0.2"]}}}}}'
+```
+
+</TabItem>
+</Tabs>
 
 ### Create the Config Map
 
