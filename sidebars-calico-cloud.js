@@ -435,6 +435,7 @@ module.exports = {
               link: {type: 'doc', id: 'operations/monitor/prometheus/index'},
               items: [
                 'operations/monitor/prometheus/support',
+                'operations/monitor/metrics/recommended-metrics',
                 'operations/monitor/prometheus/byo-prometheus',
                 'operations/monitor/prometheus/configure-prometheus',
                 'operations/monitor/prometheus/alertmanager',
