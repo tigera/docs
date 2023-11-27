@@ -585,6 +585,7 @@ module.exports = {
               label: 'Metrics',
               link: {type: 'doc', id: 'operations/monitor/metrics/index'},
               items: [
+                'operations/monitor/metrics/recommended-metrics',
                 'operations/monitor/metrics/bgp-metrics',
                 'operations/monitor/metrics/license-agent',
                 'operations/monitor/metrics/policy-metrics',
