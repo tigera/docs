@@ -33,7 +33,7 @@ export default function LogoWrapper(props) {
         },
         {
           label: 'Contact us',
-          to: 'https://www.tigera.io/contact/',
+          to: 'https://www.tigera.io/contact',
         },
       ]}
       label={<Logo {...props} />}

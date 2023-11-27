@@ -137,7 +137,7 @@ const config = {
           },
           {
             label: 'Contact us',
-            to: 'https://www.tigera.io/contact/',
+            to: 'https://www.tigera.io/contact',
             position: 'left',
           },
           {
