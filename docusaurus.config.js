@@ -426,6 +426,11 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
+          '18-2': {
+            label: '18-2',
+            path: '18-2',
+            banner: 'unreleased',
+          },
           18: {
             path: '/',
             banner: 'none',
