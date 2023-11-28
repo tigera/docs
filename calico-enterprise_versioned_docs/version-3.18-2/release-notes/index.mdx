@@ -5,22 +5,64 @@ title: Release notes
 
 # Calico Enterprise 3.18 release notes
 
-:::info early preview release
-
-Calico Enterprise 3.18 can be used for previewing and testing purposes only.
-It is not supported for use in production.
-
-:::
-
 Learn about the new features, bug fixes, and other updates in this release of {{prodname}}.
 
 ## New features and enhancements
 
+### VXLAN support for cluster mesh and federation
+
+We've expanded our support of cluster mesh to clusters using VXLAN for networking. Cluster mesh can be used to federate services and endpoints to authorize cross-cluster communication with {{prodname}} network policies.
+
+For more information, see [Configure federated endpoint identity and services](../multicluster/federation/kubeconfig.mdx).
+
+### Helm-based install for multi-cluster management deployments
+
+We've added the support for Helm for installing and setting up deployments that use the multi-cluster management feature. With Helm, DevOps teams can automate these complex deployments more easily.
+
+For more information, see [Helm for multi-cluster management](../multicluster/set-up-multi-cluster-management/standard-install/).
+
+### HPC-based Windows install and upgrade
+
+We've added support for operator-based install and upgrade for Windows nodes using HPC (HostProcess/Privileged containers). {{prodname}} can now bootstrap Windows worker nodes just like Linux worker nodes. Platform engineers can scale Windows worker nodes with an auto-scaling node pool without bootstrapping each node manually, and upgrade {{prodname}} deployments without manually upgrading nodes one at a time.
+
+For more information, see [the {{prodnameWindows}} Operator guide](../getting-started/install-on-clusters/windows-calico/operator).
+
+### Support for Azure CNI with overlay networking for AKS
+
+We now officially support AKS clusters that are using overlay networking. This option is useful if you've exhausted your IP addresses. This option augments existing support for Azure CNI with no overlay (where a VNET IP address is assigned to every pod).
+
+To review Azure CNI options, see [Microsoft Azure Kubernetes Service (AKS)](../getting-started/install-on-clusters/aks).
+
+### Support for Kubernetes 1.28
+
+We now support Kubernetes v1.28 for most platforms.
+
+To review platform support, see [Support and compatibility](../getting-started/compatibility).
+
+### Performance improvements for Service Graph
+
+We've added backend improvements to Service Graph that increases the performance when rendering a large number of graph nodes.
+
+### New flow logs panel for the Endpoints page
+
+We've add a link to view flow logs for a selected endpoint on the Endpoints page in Manager UI.
+
+### Improved Felix performance for extremely large clusters
+
+We've improved how Felix processes active policy rules for clusters with extremely high numbers of endpoints and policy rules.
+Previously, calculating selector-based rules in these circumstances could take a long time or end in failure.
+Now Felix can perform these calculations quickly while reducing CPU usage by orders of magnitude.
+
+For more information, see [Selector performance in EntityRules](../reference/resources/globalnetworkpolicy.mdx#selector-performance-in-entityrules).
+
+### Improved scalability for large number of policies when using the eBPF dataplane
+
+We've made several improvements that allow you to enforce a larger number of {{prodname}} network policies when using the eBPF dataplane.
+
 ### Security event management
 
-We've added a new Security event management dashboard for threat detection.
-Security events provides context for suspicious activity detected in your cluster.
-Combined with the Kubernetes context, you can see what workloads are affected.
+We've added container threat detection events to the Security event management page in Manager UI.
+Security events provides context for suspicious activity detected in your cluster. Combined with the Kubernetes context, you can see which workloads are affected.
 
 For more information, see [Security event management](../threat/security-event-management).
 
@@ -49,88 +91,61 @@ We've added new options for Helm installs including: set the number of replicas 
 
 For more information, see [Helm installation reference](../reference/installation/helm_customization).
 
-<!-- BELOW ARE 3.18 EP2 features -->
-
-### VXLAN encapsulation for cross-cluster connectivity
-
-Added support for VXLAN overlay networking to federated endpoint identity and services. Using VXLAN overlay networking alleviates the work of configuring routable pod CIDRs for cross-cluster connectivity, and provides a solution if IPs are exhausted. {{prodname}} uses the VXLAN overlay network to establish pod CIDR routes to remote nodes.
-
-For more information, see [Configure federated endpoint identity and services](../multicluster/federation/kubeconfig).
-
-### Helm installation and upgrade for multi-cluster management deployments
-
-We've added the option to use Helm to install and upgrade if you are using the multi-cluster management feature. With Helm, your DevOps teams can automate these complex deployments more easily.
-
-For more information, see [Helm for multi-cluster management](../multicluster/set-up-multi-cluster-management/standard-install/).
-
-### Support for Azure CNI with overlay networking for AKS
-
-We've added supported for Azure CNI with overlay networking for AKS clusters, which is useful if you've exhausted your IP addresses.
-This option augments support for the Azure CNI with no overlay (where a VNET IP address is assigned to every pod).
-
-To review Azure CNI options, see [Microsoft Azure Kubernetes Service (AKS)](../getting-started/install-on-clusters/aks).
-
-<!-- We can break this up by component. H3 subheads or additions to titles -->
-
 ### Deprecated and removed features
 
-* The anomaly detection feature has been removed in this release.
+* The anomaly detection feature is removed in this release. If anomaly detection is enabled and you upgrade to {{prodname}} 3.18, you will stop receiving anomaly detection alerts. 
+* [Manual install for Windows](../getting-started/install-on-clusters/windows-calico/manual-install/) will be deprecated in a future release. Starting in this release, the [standard installation is operator-based](../getting-started/install-on-clusters/windows-calico/operator).
 
-<!-- Optional, as needed
 ## Technology Preview features
 
-A sentence that explains what technology preview features are.
+- [Web application firewall](../threat/web-application-firewall)
 
-### TP feature name
+   Protect cloud-native applications from application layer attacks.
 
-stuff about this feature
+- [Security events management](../threat/security-event-management)
 
-For more information, see [link](https://docs.tigera.io).
--->
+   Get alerts on security events that may indicate a threat is present in your Kubernetes cluster.
 
-<!-- ## Bug fixes -->
+- [DNS policy for Windows](../getting-started/install-on-clusters/windows-calico/limitations#dns-policy-limitations)
 
-<!-- Follow this template: Problem-Cause-Fix-Result -->
-
-<!--
-* Bug 1.
-* Bug 2.
--->
-<!--
-## Security fixes
-
-* Security fix.
--->
+   Use domain names in policies to identify services outside the cluster, which is often operationally simpler and more robust than using IP addresses.
 
 ## Known issues
 
-* TKG v1.x and MKE v3.6 are not supported at this time
-* L7 logs with source name `pvt` is not visible in Service Graph
-* *Multi-cluster management users only*. If the `manager-tls` and `internal-manager-tls` secrets have overlapping DNS names, components such as `es-calico-kube-controllers` will log certificate errors. If you have previously installed a version older than v3.13.0 and never changed your manager-tls secret from the tigera-operator namespace, you must delete both of these secrets. This applies to you if the following command prints a certificate: `$ kubectl get secret manager-tls -n tigera-operator -o "jsonpath={.data['cert']}"`
-* Upgrading to {{prodname}} 3.18.0 on Rancher/RKE from {{prodname}} 3.13.0 currently requires manually terminating the calico-node container for an upgrade to proceed
+* Flow logs for the Windows workloads currently do not display entries with a Deny action.
+* Before upgrading a {{prodname}} cluster on MKE v3.6 to the latest {{prodname}} version: 1) upgrade MKE from 3.6 to 3.7, then 2) upgrade {{prodname}}.
+* L7 logs with source name `pvt` is not visible in Service Graph.
+* *Multi-cluster management users only*. If the `manager-tls` and `internal-manager-tls` secrets have overlapping DNS names, components such as `es-calico-kube-controllers` will log certificate errors. If you have previously installed a version older than v3.13.0 and never changed your manager-tls secret from the tigera-operator namespace, you must delete both of these secrets. This applies to you if the following command prints a certificate: `$ kubectl get secret manager-tls -n tigera-operator -o "jsonpath={.data['cert']}"`.
+* Upgrading to {{prodname}} 3.18.0 on Rancher/RKE from {{prodname}} 3.13.0 currently requires manually terminating the calico-node container for an upgrade to proceed.
 
 ## Release details
 
 ### Calico Enterprise 3.18.0 (early preview)
 
-1 September 2023
+September 1, 2023
 
 Calico Enterprise 3.18.0 is now available as an early preview release.
 This release is for previewing and testing purposes only.
 It is not supported for use in production.
 
-<!--
-### Calico Enterprise 3.18.0-1.1 early preview release
+### Calico Enterprise 3.18.0-1.1 (early preview)
 
-DD M YYYY
+October 13, 2023
 
-#### New features
+Calico Enterprise 3.18.0-1-1 is now available as an early preview release.
 
-#### Enhancements
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+This release includes improvements and bug fixes.
 
-#### Bug fixes
+### Calico Enterprise 3.18.0-2.0 (early preview)
 
-#### How to update
+December 1, 2023
 
-To update an existing installation of Calico Enterprise 3.18, see [Install a patch release](../getting-started/manifest-archive.mdx).
--->
+Calico Enterprise 3.18.0-2-0 is now available as an early preview release.
+
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+This release includes improvements and bug fixes.
+
+To update an existing installation of {{prodname}} 3.18, see [Install a patch release](../getting-started/manifest-archive.mdx).
