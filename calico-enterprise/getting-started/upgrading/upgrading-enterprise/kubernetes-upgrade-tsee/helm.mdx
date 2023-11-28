@@ -74,31 +74,32 @@ These steps differ based on your cluster type. If you are unsure of your cluster
    kubectl apply --server-side --force-conflicts -f {{filesUrl}}/manifests/eck-operator-crds.yaml
    ```
 
-1. Run the Helm upgrade command for `tigera-operator`:
+1. Run the Helm upgrade command for `tigera-operator` and make sure to either update `values.yaml` with your configuration or use custom `values.yaml` file:
 
-   <CodeBlock language='bash'>
-     {'{{version}}' === 'master'
-       ? (
-         `helm upgrade calico-enterprise tigera-operator-v0.0.tgz \\
-   --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
-   --namespace tigera-operator`
-       )
-       : (
-         `helm upgrade calico-enterprise tigera-operator-{{chart_version_name}}.tgz \\
-   --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
-   --namespace tigera-operator`
-       )
-     }
-   </CodeBlock>
+  <CodeBlock language='bash'>
+    {'{{version}}' === 'master'
+      ? (
+        `helm upgrade calico-enterprise --values=<path-to-values-yaml> tigera-operator-v0.0.tgz \\
+  --set-file imagePullSecrets.tigera-pull-secret=<path-to-pull-secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path-to-pull-secret> \\
+  --namespace tigera-operator`
+      )
+      : (
+        `helm upgrade calico-enterprise --values=<path-to-values-yaml> tigera-operator-{{chart_version_name}}.tgz \\
+  --set-file imagePullSecrets.tigera-pull-secret=<path-to-pull-secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path-to-pull-secret> \\
+  --namespace tigera-operator`
+        )
+    }
+  </CodeBlock>
 
 1. You can monitor progress with the following command:
 
-   ```bash
+  ```bash
    watch kubectl get tigerastatus
    ```
 
-   :::note
+:::note
 
-   If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
+Make sure you have the `CNI Type` defined in your `values.yaml` file, especially if it is different from the default `CNI` type.
+If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
 
-   :::
+:::
