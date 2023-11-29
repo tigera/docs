@@ -153,6 +153,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://godoc.org/time#Duration',
     'https://www.tigera.io/contact',
     'https://www.projectcalico.org/contact',
+    'https://downloads.tigera.io/ee/binaries/v3.18.0-1.1/calicoctl',
   ];
 
   const lc = linkChecker();
