@@ -43,7 +43,7 @@ export default function ComponentVersions() {
             {release.title !== 'master' && (
               <p>
                 <Link
-                  href={`${downloadsurl}/ee/archives/release-${release.title}-${release['tigera-operator'].version}.tgz`}
+                  href={`https://github.com/projectcalico/calico/releases/download/${release.title}/release-${release.title}.tgz`}
                 >
                   Release archive
                 </Link>{' '}
