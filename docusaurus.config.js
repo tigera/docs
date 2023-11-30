@@ -141,6 +141,12 @@ const config = {
             position: 'left',
           },
           {
+            href: 'https://calicousers.slack.com/',
+            position: 'right',
+            className: 'header-icon-link slack-icon',
+            'aria-label': 'Slack team',
+          },
+          {
             href: 'https://github.com/projectcalico',
             position: 'right',
             className: 'header-icon-link github-icon',
