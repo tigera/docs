@@ -709,10 +709,6 @@ module.exports = {
         },
       ],
     },
-    {
-      type: 'doc',
-      id: 'release-notes/index',
-      label: 'Release notes', // sidebar label
-    },
+    'release-notes/index',
   ],
 };

@@ -34,7 +34,6 @@ const partials = [
   'InstallOpenShiftManifests',
   'OpenShiftPullSecret',
   'OpenShiftPrometheusOperator',
-  'ReleaseNotes',
   'CliConfigIntro',
   'PrivateRegistryImagePath',
   'GettingStartedInstallOnClustersKubernetesHelm',
@@ -124,8 +123,6 @@ function getCalicoVersionedComponent(version, componentName) {
         .default;
     case 'PodCidrSed':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/PodCidrSed`).default;
-    case 'ReleaseNotes':
-      return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReleaseNotes`).default;
     case 'ReqsKernel':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReqsKernel`).default;
     case 'ReqsSys':
@@ -194,9 +191,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'PrivateRegistryRegular':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/PrivateRegistryRegular`)
-        .default;
-    case 'ReleaseNotes':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReleaseNotes`)
         .default;
     case 'ReqsKernel':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReqsKernel`)
