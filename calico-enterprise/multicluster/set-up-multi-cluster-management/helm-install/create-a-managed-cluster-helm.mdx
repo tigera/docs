@@ -38,17 +38,22 @@ In this guide, you install the Tigera Calico operator and custom resource defini
        : `curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-{{chart_version_name}}.tgz`}
   </CodeBlock>
 
-### Customize the Helm chart
+### Prepare the Installation Configuration
 
-If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), or you need to customize TLS certificates, you **must** customize this Helm chart by creating a `values.yaml` file. Otherwise, you can skip this step.
+You **must** provide the desired configuration for your cluster via the `values.yaml`, otherwise installation will use the default settings based on the auto-detected provider.
+The configurations you need to provide depends on your cluster's settings and your desired state.
 
-1. If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), set the `kubernetesProvider` as described in the [Installation reference](../../../reference/installation/api.mdx#operator.tigera.io/v1.Provider). For example:
+Some important configurations you might need to provide to the installer (via `values.yaml`) includes (but not limited to): _kubernetesProvider_, _cni type_, or if you need to customize _TLS certificates_.
+
+Here are some examples for updating `values.yaml` with your configurations:
+
+Example 1. Providing `kubernetesProvider`:  if you are installing on a cluster installed by EKS, set the `kubernetesProvider` as described in the [Installation reference](../../../reference/installation/api.mdx#operator.tigera.io/v1.Provider)
 
   ```bash
-  echo 'installation: { kubernetesProvider: EKS }' > values.yaml
+  echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml
   ```
 
-   For Azure AKS cluster with no Kubernetes CNI pre-installed, create `values.yaml` with the following command:
+Example 2. Providing custom settings in `values.yaml` for Azure AKS cluster with no Kubernetes CNI pre-installed:
 
   ```yaml
   cat > values.yaml <<EOF
@@ -64,13 +69,7 @@ If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubern
   EOF
   ```
 
-1. Add any other customizations you require to `values.yaml`. To see values that can be customized in the chart run the following command:
-
-  <CodeBlock language='bash'>
-     {'{{version}}' === 'master'
-       ? `helm show values tigera/tigera-operator --version v0.0`
-       : `helm show values ./tigera-operator-{{chart_version_name}}.tgz`}
-  </CodeBlock>
+For more information about configurable options via `values.yaml` please see [Helm installation reference](../../../reference/installation/helm_customization).
 
 ### Install {{prodname}}
 
