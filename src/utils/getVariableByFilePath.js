@@ -1,10 +1,11 @@
-const path = require('path');
-const globalVariables = require(path.resolve('variables'));
-const convertToPosixFriendlyPath = require('./convertToPosixFriendlyPath');
-const objProp = require('./objProp');
-const isVarValue = require('./isVarValue');
+import path from 'path';
+import isVarValue from './isVarValue';
+import objProp from './objProp';
+import convertToPosixFriendlyPath from './convertToPosixFriendlyPath';
 
-module.exports = function getVariableByFilePath(file, varName) {
+const globalVariables = path.resolve('variables');
+
+function getVariableByFilePath(file, varName) {
   const contextVariables = getContextVariables(file);
 
   let varValue = objProp(contextVariables, varName);
@@ -34,3 +35,5 @@ function getContextVariables(file) {
     return require(path.resolve('calico-enterprise/variables.js'));
   }
 }
+
+export default getVariableByFilePath;
