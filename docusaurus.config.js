@@ -72,7 +72,7 @@ const config = {
 
         "announcementBar": {
           "id": "calico_slack",
-          "content": "Got questions? <a href=\"https://slack.projectcalico.org/\">Join our community Slack channel</> to get help from Calico Open Source creators and other community members.",
+          "content": "Got questions? <a href=\"https://slack.projectcalico.org/\">Join our community Slack channel</a> to get help from Calico Open Source creators and other community members.",
           "backgroundColor": "#FCE181",
           "textColor": "#000",
           "isCloseable": true
