@@ -1,12 +1,12 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const {themes} = require('prism-react-renderer');
+// const {themes} = require('prism-react-renderer');
+import { themes } from 'prism-react-renderer';
+import componentImagePlugin from './src/remark/componentImagePlugin';
+
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
-
-const variablesPlugin = require('./src/remark/variablesPlugin');
-const componentImagePlugin = require('./src/remark/componentImagePlugin');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -359,7 +359,7 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        beforeDefaultRemarkPlugins: [componentImagePlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -406,7 +406,7 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        beforeDefaultRemarkPlugins: [componentImagePlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -437,7 +437,7 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        beforeDefaultRemarkPlugins: [componentImagePlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -447,7 +447,7 @@ const config = {
   },
 };
 
-module.exports = config;
+export default config;
 
 function generateEditUrl(params) {
   const { versionDocsDirPath, docPath } = params;
