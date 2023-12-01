@@ -1,7 +1,7 @@
-const path = require('path');
-const visit = require('unist-util-visit');
-const componentImage = require(path.resolve('src/components/utils/componentImage'));
-const getVariableByFilePath = require('../utils/getVariableByFilePath');
+import path from 'path';
+import { visit } from 'unist-util-visit';
+import getVariableByFilePath from '../utils/getVariableByFilePath';
+import componentImage from '../components/utils/componentImage';
 
 const COMPONENT_IMAGE_REGEX = new RegExp(/%%\s+component_image\(["']([\w-]+)["']\)\s+%%/, 'g');
 
@@ -21,4 +21,4 @@ function componentImagePlugin(_options) {
   return transformer;
 }
 
-module.exports = componentImagePlugin;
+export default componentImagePlugin;
