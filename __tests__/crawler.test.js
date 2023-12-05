@@ -153,6 +153,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://godoc.org/time#Duration',
     'https://www.tigera.io/contact',
     'https://www.projectcalico.org/contact',
+    'https://hub.docker.com/_/microsoft-windows-servercore',
   ];
 
   const lc = linkChecker();
