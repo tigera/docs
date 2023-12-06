@@ -710,5 +710,6 @@ module.exports = {
       ],
     },
     'release-notes/index',
+    'get-help/support',
   ],
 };
