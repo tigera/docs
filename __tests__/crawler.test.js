@@ -154,6 +154,10 @@ test("Crawl the docs and execute tests", async () => {
     'https://www.tigera.io/contact',
     'https://www.projectcalico.org/contact',
     'https://hub.docker.com/_/microsoft-windows-servercore',
+    'https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/modsec-core-ruleset/modsecdefault.conf',
+    'https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/modsec-core-ruleset/crs-setup.conf',
+    'https://github.com/tigera/operator/tree/master/pkg/render/applicationlayer/modsec-core-ruleset',
+
   ];
 
   const lc = linkChecker();
