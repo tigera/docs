@@ -2,16 +2,19 @@
 description: Upgrade to a newer version of Calico for Kubernetes.
 ---
 
+import variables from '@site/calico_versioned_docs/version-3.26/variables';
+import CodeBlock from '@theme/CodeBlock';
+
 # Upgrade Calico on Kubernetes
 
-## About upgrading {{prodname}}
+## About upgrading {variables.prodname}
 
-This page describes how to upgrade to {{version}} from {{prodname}} v3.0 or later. The
+This page describes how to upgrade to {variables.version} from {variables.prodname} v3.0 or later. The
 procedure varies by datastore type and install method.
 
-If you are using {{prodname}} in etcd mode on a Kubernetes cluster, we recommend upgrading to the Kubernetes API datastore [as discussed here](../datastore-migration.mdx).
+If you are using {variables.prodname} in etcd mode on a Kubernetes cluster, we recommend upgrading to the Kubernetes API datastore [as discussed here](../datastore-migration.mdx).
 
-If you have installed {{prodname}} using the `calico.yaml` manifest, we recommend upgrading to the {{prodname}} operator, [as discussed here](../operator-migration.mdx).
+If you have installed {variables.prodname} using the `calico.yaml` manifest, we recommend upgrading to the {variables.prodname} operator, [as discussed here](../operator-migration.mdx).
 
 - [Upgrading an installation that was installed using Helm](#upgrading-an-installation-that-was-installed-using-helm)
 
@@ -53,17 +56,17 @@ ownership of the helm resources to the new chart location.
    kubectl patch clusterrolebinding tigera-operator tigera-operator --type=merge -p '{"metadata": {"annotations": {"meta.helm.sh/release-namespace": "tigera-operator"}}}'
    ```
 
-1. Apply the {{version}} CRDs:
+1. Apply the {variables.version} CRDs:
 
-   ```bash
-   kubectl apply --server-side --force-conflicts -f {{manifestsUrl}}/manifests/operator-crds.yaml
-   ```
+   <CodeBlock language='bash'>
+   kubectl apply --server-side --force-conflicts -f {variables.manifestsUrl}/manifests/operator-crds.yaml
+   </CodeBlock>
 
 1. Install the helm chart in the `tigera-operator` namespace.
 
-   ```
-   helm install {{prodnamedash}} projectcalico/tigera-operator --version {{releaseTitle}} --namespace tigera-operator
-   ```
+   <CodeBlock language=''>
+   helm install {variables.prodnamedash} projectcalico/tigera-operator --version {variables.releaseTitle} --namespace tigera-operator
+   </CodeBlock>
 
 1. Once the install has succeeded, you can delete any old releases in the `default` namespace.
 
@@ -80,25 +83,25 @@ the output and then re-running the command without --dry-run to commit to the ch
 
 ### All other upgrades
 
-1. Apply the {{version}} CRDs:
+1. Apply the {variables.version} CRDs:
 
-   ```bash
-   kubectl apply --server-side --force-conflicts -f {{manifestsUrl}}/manifests/operator-crds.yaml
-   ```
+   <CodeBlock language='bash'>
+   kubectl apply --server-side --force-conflicts -f {variables.manifestsUrl}/manifests/operator-crds.yaml
+   </CodeBlock>
 
 1. Run the helm upgrade:
 
-   ```bash
-   helm upgrade {{prodnamedash}} projectcalico/tigera-operator
-   ```
+   <CodeBlock language='bash'>
+   helm upgrade {variables.prodnamedash} projectcalico/tigera-operator
+   </CodeBlock>
 
 ## Upgrading an installation that uses the operator
 
-1. Download the {{version}} operator manifest.
+1. Download the {variables.version} operator manifest.
 
-   ```bash
-   curl {{manifestsUrl}}/manifests/tigera-operator.yaml -O
-   ```
+   <CodeBlock language='bash'>
+   curl {variables.manifestsUrl}/manifests/tigera-operator.yaml -O
+   </CodeBlock>
 
 1. Use the following command to initiate an upgrade.
 
@@ -108,25 +111,25 @@ the output and then re-running the command without --dry-run to commit to the ch
 
 ## Upgrading an installation that uses manifests and the Kubernetes API datastore
 
-1. Download the {{version}} manifest that corresponds to your original installation method.
+1. Download the {variables.version} manifest that corresponds to your original installation method.
 
-   **{{prodname}} for policy and networking**
+   **{variables.prodname} for policy and networking**
 
-   ```bash
-   curl {{manifestsUrl}}/manifests/calico.yaml -o upgrade.yaml
-   ```
+   <CodeBlock language='bash'>
+   curl {variables.manifestsUrl}/manifests/calico.yaml -o upgrade.yaml
+   </CodeBlock>
 
-   **{{prodname}} for policy and flannel for networking**
+   **{variables.prodname} for policy and flannel for networking**
 
-   ```bash
-   curl {{manifestsUrl}}/manifests/canal.yaml -o upgrade.yaml
-   ```
+   <CodeBlock language='bash'>
+   curl {variables.manifestsUrl}/manifests/canal.yaml -o upgrade.yaml
+   </CodeBlock>
 
-   **{{prodname}} for policy (advanced)**
+   **{variables.prodname} for policy (advanced)**
 
-   ```bash
-   curl {{manifestsUrl}}/manifests/calico-policy-only.yaml -o upgrade.yaml
-   ```
+   <CodeBlock language='bash'>
+   curl {variables.manifestsUrl}/manifests/calico-policy-only.yaml -o upgrade.yaml
+   </CodeBlock>
 
    :::note
 
@@ -147,53 +150,53 @@ the output and then re-running the command without --dry-run to commit to the ch
    watch kubectl get pods -n kube-system
    ```
 
-   Verify that the status of all {{prodname}} pods indicate `Running`.
+   Verify that the status of all {variables.prodname} pods indicate `Running`.
 
    ```
-   {{noderunning}}-hvvg8     2/2   Running   0    3m
-   {{noderunning}}-vm8kh     2/2   Running   0    3m
-   {{noderunning}}-w92wk     2/2   Running   0    3m
+   {variables.noderunning}-hvvg8     2/2   Running   0    3m
+   {variables.noderunning}-vm8kh     2/2   Running   0    3m
+   {variables.noderunning}-w92wk     2/2   Running   0    3m
    ```
 
 1. Remove any existing `calicoctl` instances, [install the new `calicoctl`](../calicoctl/install.mdx)
    and [configure it to connect to your datastore](../calicoctl/configure/overview.mdx).
 
-1. Use the following command to check the {{prodname}} version number.
+1. Use the following command to check the {variables.prodname} version number.
 
    ```bash
    calicoctl version
    ```
 
-   It should return a `Cluster Version` of `{{version}}.x`.
+   It should return a `Cluster Version` of `{variables.version}.x`.
 
 1. If you have [enable application layer policy](../../network-policy/istio/app-layer-policy.mdx),
-   follow [the instructions below](#upgrading-if-you-have-application-layer-policy-enabled) to complete your upgrade. Skip this if you are not using Istio with {{prodname}}.
+   follow [the instructions below](#upgrading-if-you-have-application-layer-policy-enabled) to complete your upgrade. Skip this if you are not using Istio with {variables.prodname}.
 
 1. If you were upgrading from a version of Calico prior to v3.14 and followed the pre-upgrade steps for host endpoints above, review traffic logs from the temporary policy,
    add any global network policies needed to allow traffic, and delete the temporary network policy **allow-all-upgrade**.
 
-1. Congratulations! You have upgraded to {{prodname}} {{version}}.
+1. Congratulations! You have upgraded to {variables.prodname} {variables.version}.
 
 ## Upgrading an installation that uses an etcd datastore
 
-1. Download the {{version}} manifest that corresponds to your original installation method.
+1. Download the {variables.version} manifest that corresponds to your original installation method.
 
-   **{{prodname}} for policy and networking**
+   **{variables.prodname} for policy and networking**
 
-   ```bash
-   curl {{manifestsUrl}}/manifests/calico-etcd.yaml -o upgrade.yaml
-   ```
+   <CodeBlock language='bash'>
+   curl {variables.manifestsUrl}/manifests/calico-etcd.yaml -o upgrade.yaml
+   </CodeBlock>
 
-   **{{prodname}} for policy and flannel for networking**
+   **{variables.prodname} for policy and flannel for networking**
 
-   ```bash
-   curl {{manifestsUrl}}/manifests/canal-etcd.yaml -o upgrade.yaml
-   ```
+   <CodeBlock language='bash'>
+   curl {variables.manifestsUrl}/manifests/canal-etcd.yaml -o upgrade.yaml
+   </CodeBlock>
 
    :::note
 
    You must manually apply the changes you made to the manifest
-   during installation to the downloaded {{version}} manifest. At a minimum,
+   during installation to the downloaded {variables.version} manifest. At a minimum,
    you must set the `etcd_endpoints` value.
 
    :::
@@ -210,55 +213,55 @@ the output and then re-running the command without --dry-run to commit to the ch
    watch kubectl get pods -n kube-system
    ```
 
-   Verify that the status of all {{prodname}} pods indicate `Running`.
+   Verify that the status of all {variables.prodname} pods indicate `Running`.
 
    ```
    calico-kube-controllers-6d4b9d6b5b-wlkfj   1/1       Running   0          3m
-   {{noderunning}}-hvvg8                          1/2       Running   0          3m
-   {{noderunning}}-vm8kh                          1/2       Running   0          3m
-   {{noderunning}}-w92wk                          1/2       Running   0          3m
+   {variables.noderunning}-hvvg8                          1/2       Running   0          3m
+   {variables.noderunning}-vm8kh                          1/2       Running   0          3m
+   {variables.noderunning}-w92wk                          1/2       Running   0          3m
    ```
 
    :::tip
 
-   The {{noderunning}} pods will report `1/2` in the `READY` column, as shown.
+   The {variables.noderunning} pods will report `1/2` in the `READY` column, as shown.
 
    :::
 
 1. Remove any existing `calicoctl` instances, [install the new `calicoctl`](../calicoctl/install.mdx)
    and [configure it to connect to your datastore](../calicoctl/configure/overview.mdx).
 
-1. Use the following command to check the {{prodname}} version number.
+1. Use the following command to check the {variables.prodname} version number.
 
    ```bash
    calicoctl version
    ```
 
-   It should return a `Cluster Version` of `{{version}}`.
+   It should return a `Cluster Version` of `{variables.version}`.
 
 1. If you have [enabled application layer policy](../../network-policy/istio/app-layer-policy.mdx),
-   follow [the instructions below](#upgrading-if-you-have-application-layer-policy-enabled) to complete your upgrade. Skip this if you are not using Istio with {{prodname}}.
+   follow [the instructions below](#upgrading-if-you-have-application-layer-policy-enabled) to complete your upgrade. Skip this if you are not using Istio with {variables.prodname}.
 
 1. If you were upgrading from a version of Calico prior to v3.14 and followed the pre-upgrade steps for host endpoints above, review traffic logs from the temporary policy,
    add any global network policies needed to allow traffic, and delete the temporary network policy **allow-all-upgrade**.
 
-1. Congratulations! You have upgraded to {{prodname}} {{version}}.
+1. Congratulations! You have upgraded to {variables.prodname} {variables.version}.
 
 ## Upgrading if you have Application Layer Policy enabled
 
-Dikastes is versioned the same as the rest of {{prodname}}, but an upgraded `calico-node` will still be able to work with a downlevel Dikastes
+Dikastes is versioned the same as the rest of {variables.prodname}, but an upgraded `calico-node` will still be able to work with a downlevel Dikastes
 so that you will not lose data plane connectivity during the upgrade. Once `calico-node` is upgraded, you can begin redeploying your service pods
 with the updated version of Dikastes.
 
 If you have [enabled application layer policy](../../network-policy/istio/app-layer-policy.mdx),
-take the following steps to upgrade the Dikastes sidecars running in your application pods. Skip these steps if you are not using Istio with {{prodname}}.
+take the following steps to upgrade the Dikastes sidecars running in your application pods. Skip these steps if you are not using Istio with {variables.prodname}.
 
-1. Update the Istio sidecar injector template to use the new version of Dikastes. Replace `<your Istio version>` below with
+1. Update the Istio sidecar injector template to use the new version of Dikastes. Replace `pickle` below with
    the full version string of your Istio install, for example `1.4.2`.
 
-   ```bash
-   kubectl apply -f {{manifestsUrl}}/manifests/alp/istio-inject-configmap-<your Istio version>.yaml
-   ```
+   <CodeBlock language='bash'>
+   kubectl apply -f {variables.manifestsUrl}/manifests/alp/istio-inject-configmap-pickle.yaml
+   </CodeBlock>
 
 1. Once the new template is in place, newly created pods use the upgraded version of Dikastes. Perform a rolling update of each of your service deployments
    to get them on the new version of Dikastes.
