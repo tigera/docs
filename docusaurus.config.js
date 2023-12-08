@@ -327,7 +327,7 @@ const config = {
           current: {
             label: 'Next',
             path: 'next',
-            banner: 'unreleased',
+            banner: 'none',
           },
         },
         sidebarPath: require.resolve('./sidebars-calico.js'),
