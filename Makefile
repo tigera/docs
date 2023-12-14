@@ -32,9 +32,9 @@ build: init
 start: init
 	$(YARN) start$(YARN_ACTION_SUFFIX)
 
-.PHONY: start-with-vnext
-start-with-vnext: init
-	$(YARN) start-with-vnext$(YARN_ACTION_SUFFIX)
+.PHONY: start-next
+start-next: init
+	$(YARN) start-next$(YARN_ACTION_SUFFIX)
 
 .PHONY: test
 test: init

@@ -1,8 +1,10 @@
 // This file imports the config from docusaurus.config.js and adds the 'current' version to
 // onlyIncludeVersions, so that the 'next' version is available when running
-// 'make start-with-vnext' locally.
+// 'make start-next' locally.
 
-let config = require('./docusaurus.config.js');
+// TODO: Replace this line with the one below it when upgrading to docusaurus v3
+let config = require('../docusaurus.config.js');
+//import { config } from '../docusaurus.config.js';
 
 for (let i = 0; i < config['plugins'].length; i++) {
     let onlyIncludeVersions = config['plugins'][i][1].onlyIncludeVersions;
@@ -14,4 +16,6 @@ for (let i = 0; i < config['plugins'].length; i++) {
     }
 }
 
+// TODO: Replace this line with the one below it when upgrading to docusaurus v3
 module.exports = config;
+//export { config };
