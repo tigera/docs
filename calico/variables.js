@@ -18,7 +18,7 @@ const variables = {
   manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.27.0',
   releases,
   registry: '',
-  vppbranch: 'master',
+  vppbranch: 'v3.26.0',
   tigeraOperator: releases[0]['tigera-operator'],
   tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {
