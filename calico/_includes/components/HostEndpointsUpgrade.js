@@ -45,8 +45,8 @@ export default function HostEndpointsUpgrade(props) {
         calicoctl get hep -owide | grep '*' | awk '"{'print $1'}"' \
         <br />
         {props.orch === 'OpenShift'
-          ? '| xargs -I {} oc exec -i -n kube-system calicoctl -- /calicoctl label hostendpoint {} host-endpoint-upgrade='
-          : '| xargs -I {} kubectl exec -i -n kube-system calicoctl -- /calicoctl label hostendpoint {} host-endpoint-upgrade=	'}
+          ? '| xargs -I {} oc exec -i -n kube-system calicoctl -- calicoctl label hostendpoint {} host-endpoint-upgrade='
+          : '| xargs -I {} kubectl exec -i -n kube-system calicoctl -- calicoctl label hostendpoint {} host-endpoint-upgrade=	'}
       </CodeBlock>
       <p>
         Now that the nodes with an all-interfaces host endpoint are labeled with <strong>host-endpoint-upgrade</strong>,
