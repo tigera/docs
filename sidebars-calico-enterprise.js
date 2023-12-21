@@ -457,6 +457,7 @@ module.exports = {
       link: {type: 'doc', id: 'threat/index'},
       items: [
         'threat/security-event-management',
+        'threat/configuring-webhooks',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
         'threat/suspicious-external-ips',
