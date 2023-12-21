@@ -34,6 +34,7 @@ module.exports = {
             'get-started/connect/requirements/system-requirements',
             'get-started/connect/requirements/aks',
             'get-started/connect/requirements/gke',
+            'get-started/connect/requirements/rke2',
           ],
         },
         'get-started/connect/connect-cluster',
@@ -290,6 +291,7 @@ module.exports = {
       label: 'Threat defense',
       link: {type: 'doc', id: 'threat/index'},
       items: [
+        'threat/security-posture-overview',
         'threat/security-event-management',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
