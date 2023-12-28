@@ -626,6 +626,7 @@ module.exports = {
         'reference/api',
         'reference/installation/api',
         'reference/installation/helm_customization',
+        'reference/installation/tigerastatus',
         {
           type: 'category',
           label: 'CLIs',
