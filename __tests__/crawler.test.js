@@ -157,6 +157,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/modsec-core-ruleset/modsecdefault.conf',
     'https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/modsec-core-ruleset/crs-setup.conf',
     'https://github.com/tigera/operator/tree/master/pkg/render/applicationlayer/modsec-core-ruleset',
+    'https://kubernetes.io/docs/setup/production-environment/tools/kops/#2-5-create-a-route53-domain-for-your-cluster',
 
   ];
 

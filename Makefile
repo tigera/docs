@@ -28,9 +28,16 @@ CALICO_CLOUD_BRANCHES=calico-cloud__operator_reference $(addsuffix __operator_re
 build: init
 	$(YARN) build
 
+build-next: init
+	$(YARN) build-next
+
 .PHONY: start
 start: init
 	$(YARN) start$(YARN_ACTION_SUFFIX)
+
+.PHONY: start-next
+start-next: init
+	$(YARN) start-next$(YARN_ACTION_SUFFIX)
 
 .PHONY: test
 test: init
