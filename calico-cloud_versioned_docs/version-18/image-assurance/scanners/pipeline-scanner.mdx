@@ -64,10 +64,10 @@ If you change the name of above heading, open a ticket to update the hardcoded C
    chmod +x ./tigera-scanner
    ```
 
-:::note
-You must download and set the executable flag each time you get a new version of the scanner.
+   :::note
+   You must download and set the executable flag each time you get a new version of the scanner.
 
-:::
+   :::
 
 3. Verify that the scanner works correctly by running the version command.
 
@@ -77,13 +77,21 @@ You must download and set the executable flag each time you get a new version of
    ```
 ### Integrate the scanner into your build pipeline
 
-You can include the CLI scanner in your CI/CD pipelines (for example, Jenkins, Github actions). Ensure the following:
+You can include the Image Assurance CLI scanner in your CI/CD pipelines (for example, Jenkins, Github actions). Follow these steps to authenticate your scanning process with {{prodname}} Image Assurance in Manager UI:
 
-- Download the CLI scanner binary onto your CI runner
-- If you are running an ephemeral environment in the pipeline, include the download, and update the executable steps in your pipeline to download the scanner on every execution
-- Create a secret containing the API-Token and API URL and make it available in the pipeline (for example, using a SECURE_API_TOKEN environment variable)
-- Add a step in your pipeline to run the `image-assurance-scanner` after building the container image, and specify the image name as a parameter. For example:
-        `./image-assurance-cli-scanner --apiurl <sysdig-api-url> ${IMAGE_NAME}`
+1. Download the Image Assurance CLI scanner binary onto your CI runner.
+1. If you are running an ephemeral environment in the pipeline, include the download and update the executable steps in your pipeline to download the scanner on every execution.
+1. Using the API token and API URL (from Manager UI, Image Assurance, All Scanned Images, Scan Settings), create a secret and make it available in the pipeline (for example, using a <secure_api_token> environment variable)
+1. Add the Image Assurance CLI scanner in your pipeline using the following command:
+
+   **Command**: `./tigera-scanner scan --apiurl <api_url> --token <api_token> <image_name>:<tag>`
+
+   **Where**:
+   - <api_url> - path to uploading information to the Image Assurance system.
+   - <api_token> - key-value pair (variable type=secret) that is set in your pipeline
+   - <image_name> - container image name
+
+   **Example**: `./tigera-scanner scan --apiurl``xxxx://qq8psbdn-management.calicocloud.io/eng` `--token $(SECURE_API_TOKEN) my-image-repo:$(tag)`
 
 If your CI platform supports it, you can also use the containerized version of Image Assurance scanner for integrations with other tools like Harness. To integrate the containerized version of Image Assurance scanner into your CI/CD platform, go to: [Image Assurance containerized scanner](https://quay.io/repository/tigera/image-assurance-scanner-cli) and pull the latest image. For example:
 
