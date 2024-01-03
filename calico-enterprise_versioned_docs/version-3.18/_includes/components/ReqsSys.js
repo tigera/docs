@@ -165,41 +165,6 @@ function NodeRequirementsEnt(props) {
   );
 }
 
-function KeyValueStore(props) {
-  return (
-    <>
-      <Heading
-        as='h2'
-        id='datastore-requirements'
-      >
-        Datastore requirements
-      </Heading>
-      <p>
-        {prodname} requires a key/value store accessible by all {prodname} components.&nbsp;
-        {
-          {
-            OpenShift: <span>With OpenShift, the Kubernetes API datastore is used for the key/value store.</span>,
-            Kubernetes: (
-              <span>
-                On Kubernetes, you can configure {prodname} to access an etcdv3 cluster directly or to use the
-                Kubernetes API datastore.
-              </span>
-            ),
-            OpenStack: (
-              <span>
-                For production you will likely want multiple nodes for greater performance and reliability. If you don’t
-                already have an etcdv3 cluster to connect to, please refer to{' '}
-                <Link href='https://coreos.com/etcd/'>the upstream etcd docs</Link> for detailed advice and setup.
-              </span>
-            ),
-            'host protection': <span>The key/value store must be etcdv3.</span>,
-          }[props.orch]
-        }
-      </p>
-    </>
-  );
-}
-
 function NetworkRequirementsEnt(props) {
   return (
     <>
