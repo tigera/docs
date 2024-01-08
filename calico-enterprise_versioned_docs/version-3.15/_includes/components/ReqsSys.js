@@ -397,7 +397,6 @@ export default function ReqsSys(props) {
   return (
     <>
       <NodeRequirementsEnt {...props} />
-      <KeyValueStore {...props} />
       <NetworkRequirementsEnt {...props} />
       <Privileges {...props} />
     </>
