@@ -14,8 +14,8 @@ const config = {
   tagline: 'Active, zero-trust based security for containers and Kubernetes',
   url: 'https://docs.tigera.io',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
+  onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -72,11 +72,11 @@ const config = {
         //"isCloseable":false
 
         "announcementBar": {
-          "id": "calico_slack",
-          "content": "Got questions? <a href=\"https://slack.projectcalico.org/\">Join our community Slack channel</a> to get help from Calico Open Source creators and other community members.",
+          "id": "archive",
+          "content": "Documentation archive for Calico Enterprise 3.15. This version is no longer maintained. For the latest documentation, go to <a href=\"https://docs.tigera.io\">https://docs.tigera.io</a>.",
           "backgroundColor": "#FCE181",
           "textColor": "#000",
-          "isCloseable": true
+          "isCloseable": false
       },
       navbar: {
         logo: {
@@ -89,20 +89,6 @@ const config = {
             label: 'Documentation',
             className: 'documentation-dropdown',
             items: [
-              {
-                label: 'Calico Open Source',
-                type: 'docSidebar',
-                sidebarId: 'calicoSidebar',
-                docsPluginId: 'calico',
-                className: 'navbar-product-link_calico',
-              },
-              {
-                label: 'Calico Cloud',
-                type: 'docSidebar',
-                sidebarId: 'calicoCloudSidebar',
-                docsPluginId: 'calico-cloud',
-                className: 'navbar-product-link_calico-cloud',
-              },
               {
                 label: 'Calico Enterprise',
                 type: 'docSidebar',
@@ -332,49 +318,13 @@ const config = {
     [
       '@docusaurus/plugin-content-docs',
       /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      {
-        id: 'calico',
-        path: 'calico',
-        routeBasePath: 'calico',
-        editCurrentVersion: true,
-        onlyIncludeVersions: ['3.27','3.26','3.25'],
-        versions: {
-          current: {
-            label: 'Next',
-            path: 'next',
-            banner: 'unreleased',
-          },
-          3.27: {
-            label: '3.27 (latest)',
-            path: 'latest',
-            banner: 'none',
-          },
-          3.26: {
-            label: '3.26',
-            path: '3.26',
-            banner: 'none',
-          },
-          3.25: {
-            label: '3.25',
-            path: '3.25',
-            banner: 'none',
-          },
-        },
-        sidebarPath: require.resolve('./sidebars-calico.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        editUrl: generateEditUrl,
-      },
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      {
+     {
         id: 'calico-enterprise',
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.18-2','3.17','3.16','3.15'],
-        lastVersion: '3.17',
+        onlyIncludeVersions: ['3.15'],
+        lastVersion: undefined,
         versions: {
           current: {
             label: 'Next',
@@ -384,12 +334,12 @@ const config = {
           '3.18-2': {
             label: '3.18 (early preview)',
             path: '3.18',
-            banner: 'unreleased',
+            banner: 'none',
           },
           3.18: {
             label: '3.18 (early preview)',
             path: '3.18',
-            banner: 'unreleased',
+            banner: 'none',
           },
           3.17: {
             label: '3.17 (latest)',
@@ -404,41 +354,10 @@ const config = {
           3.15: {
             label: '3.15',
             path: '3.15',
-            banner: 'none',
+            banner: 'unmaintained',
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        editUrl: generateEditUrl,
-      },
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      {
-        id: 'calico-cloud',
-        path: 'calico-cloud',
-        routeBasePath: 'calico-cloud',
-        editCurrentVersion: true,
-        //To see builds for unreleased versions, remove comments in the next line.
-        onlyIncludeVersions: [/*'current'*/'18'],
-        versions: {
-          current: {
-            label: 'Next',
-            path: 'next',
-            banner: 'unreleased',
-          },
-          '18-2': {
-            label: '18-2',
-            path: '18-2',
-            banner: 'unreleased',
-          },
-          18: {
-            path: '/',
-            banner: 'none',
-          },
-        },
-        sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         editUrl: generateEditUrl,
       },
