@@ -318,10 +318,13 @@ kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-
 
 ### Disable WAF feature from your cluster
 
-To disable WAF, update the [ApplicationLayer](../reference/installation/api#operator.tigera.io/v1.ApplicationLayer) resource to include the `webApplicationFirewall` field, and ensure it is set to `Disabled`.
+To disable WAF safely, update the [ApplicationLayer](../reference/installation/api#operator.tigera.io/v1.ApplicationLayer) accordingly:
 
-Example:
+#### If you have more than one ApplicationLayer feature enabled:
 
+[ApplicationLayer Specification](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerSpec) can specify configuration for [Application Logging](../reference/installation/api#operator.tigera.io/v1.LogCollectionSpec) and [Application Layer Policy](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerPolicyStatusType) as well. However, for this custom resource to be valid, at least one of these features have to be enabled e.g.:
+
+Example: WAF enabled, ALP disabled -- this is valid
 ```yaml
 apiVersion: operator.tigera.io/v1
 kind: ApplicationLayer
@@ -329,4 +332,20 @@ metadata:
   name: tigera-secure
 spec:
   webApplicationFirewall: Disabled
+  applicationLayerPolicy: Enabled
 ```
+
+Example: WAF and ALP both set as disabled, log collection is omitted but the default is disabled -- this is invalid
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: ApplicationLayer
+metadata:
+  name: tigera-secure
+spec:
+  webApplicationFirewall: Disabled
+  applicationLayerPolicy: Disabled
+```
+
+If there are no ApplicationLayer feature intended to be enabled, then the ApplcationLayer CR `tigera-secure` must be deleted:
+
+    kubectl delete applicationlayer tigera-secure
