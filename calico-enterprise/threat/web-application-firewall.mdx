@@ -318,13 +318,27 @@ kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-
 
 ### Disable WAF feature from your cluster
 
-To disable WAF safely, update the [ApplicationLayer](../reference/installation/api#operator.tigera.io/v1.ApplicationLayer) accordingly:
+To safely disable WAF, determine how to handle ApplicationLayer features and follow the steps:
 
-#### If you have more than one ApplicationLayer feature enabled:
+#### Disable all ApplicationLayer features, including WAF
 
-[ApplicationLayer Specification](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerSpec) can specify configuration for [Application Logging](../reference/installation/api#operator.tigera.io/v1.LogCollectionSpec) and [Application Layer Policy](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerPolicyStatusType) as well. However, for this custom resource to be valid, at least one of these features have to be enabled e.g.:
+```bash
+kubectl delete applicationlayer tigera-secure
+```
 
-Example: WAF enabled, ALP disabled -- this is valid
+#### Keep some ApplicationLayer features enabled
+
+To disable WAF, but keep some ApplicationLayer features enabled, you must update the [ApplicationLayer](https://github.com/tigera/docs/reference/installation/api#operator.tigera.io/v1.ApplicationLayer) custom resource.
+
+Note that the [ApplicationLayer Specification](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerSpec) can specify configuration for [Application Logging](../reference/installation/api#operator.tigera.io/v1.LogCollectionSpec) and [Application Layer Policy](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerPolicyStatusType) also. 
+
+For the ApplicationLayer custom resource to be valid, at least one of these features have to be enabled, for example:
+
+
+##### Valid YAML
+
+WAF enabled, ALP disabled, and Log collection is unspecified (and the default is disabled)
+
 ```yaml
 apiVersion: operator.tigera.io/v1
 kind: ApplicationLayer
@@ -335,7 +349,9 @@ spec:
   applicationLayerPolicy: Enabled
 ```
 
-Example: WAF and ALP both set as disabled, log collection is omitted but the default is disabled -- this is invalid
+###### Invalid YAML
+
+WAF and ALP both set as disabled, log collection is unspecified (and the default is disabled)
 ```yaml
 apiVersion: operator.tigera.io/v1
 kind: ApplicationLayer
@@ -345,7 +361,3 @@ spec:
   webApplicationFirewall: Disabled
   applicationLayerPolicy: Disabled
 ```
-
-If there are no ApplicationLayer feature intended to be enabled, then the ApplcationLayer CR `tigera-secure` must be deleted:
-
-    kubectl delete applicationlayer tigera-secure
