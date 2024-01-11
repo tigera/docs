@@ -72,11 +72,11 @@ const config = {
         //"isCloseable":false
 
         "announcementBar": {
-          "id": "calico_slack",
+          "id": "archive",
           "content": "Documentation archive for Calico Enterprise 3.15. This version is no longer maintained. For the latest documentation, go to <a href=\"https://docs.tigera.io\">https://docs.tigera.io</a>.",
           "backgroundColor": "#FCE181",
           "textColor": "#000",
-          "isCloseable":false
+          "isCloseable": false
       },
       navbar: {
         logo: {
@@ -318,16 +318,24 @@ const config = {
     [
       '@docusaurus/plugin-content-docs',
       /** @type {import('@docusaurus/plugin-content-docs').Options} */
+<<<<<<< HEAD
     ],
     [
       '@docusaurus/plugin-content-docs',
       /** @type {import('@docusaurus/plugin-content-docs').Options} */
       {
+=======
+     {
+>>>>>>> bb5eb668f255618cc3b08537594a0eb22f2c2ec9
         id: 'calico-enterprise',
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
         onlyIncludeVersions: ['3.15'],
+<<<<<<< HEAD
+=======
+        lastVersion: undefined,
+>>>>>>> bb5eb668f255618cc3b08537594a0eb22f2c2ec9
         versions: {
           current: {
             label: 'Next',
@@ -337,12 +345,12 @@ const config = {
           '3.18-2': {
             label: '3.18 (early preview)',
             path: '3.18',
-            banner: 'unreleased',
+            banner: 'none',
           },
           3.18: {
             label: '3.18 (early preview)',
             path: '3.18',
-            banner: 'unreleased',
+            banner: 'none',
           },
           3.17: {
             label: '3.17 (latest)',
