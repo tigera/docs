@@ -54,6 +54,7 @@ test("Crawl the docs and execute tests", async () => {
     'http://localhost:4242/calico/3.25/reference/legal/node',
   ];
   const skipList = [
+    /^https:\/\/tigera\.io.*/,
     /^https?:\/\/([\w-]+\.)?example\.com/,
     /^https:\/\/kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.18/i,
     /^https:\/\/v1-(15|16|17|18)\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.(15|16|17|18)/i,
