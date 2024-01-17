@@ -97,10 +97,16 @@ For more information, see [Enable the eBPF data plane](../operations/ebpf/enabli
  - eBPF: handles IPv4 packets with IP options. XDP only does so in kernels 5.18+ it drops them in older kernels. [calico #7701](https://github.com/projectcalico/calico/pull/7701) (@tomastigera)
  - eBPF - only report errors setting /proc/sys/net/../accept_local etc. if the device is present [calico #7631](https://github.com/projectcalico/calico/pull/7631) (@tomastigera)
 
+## Known issues
+
+- Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim.
+
+   Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.)
+
+    Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned".
+
 <!--
 ## Security fixes
-
-## Known issues
 -->
 
 ## Release details
