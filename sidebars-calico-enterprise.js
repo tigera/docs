@@ -774,6 +774,7 @@ module.exports = {
             'reference/resources/policyrecommendations',
             'reference/resources/profile',
             'reference/resources/remoteclusterconfiguration',
+            'reference/resources/securityeventwebhook',
             'reference/resources/stagedglobalnetworkpolicy',
             'reference/resources/stagedkubernetesnetworkpolicy',
             'reference/resources/stagednetworkpolicy',
