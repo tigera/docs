@@ -373,12 +373,17 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.18-2','3.17','3.16'],
+        onlyIncludeVersions: ['3.19-1','3.18-2','3.17','3.16'],
         lastVersion: '3.17',
         versions: {
           current: {
             label: 'Next',
             path: 'next',
+            banner: 'unreleased',
+          },
+          '3.19-1': {
+            label: '3.19 (early preview)',
+            path: 'latest',
             banner: 'unreleased',
           },
           '3.18-2': {

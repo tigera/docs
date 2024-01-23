@@ -1,0 +1,52 @@
+---
+description: Customize your BGP configuration.
+---
+
+# Custom BGP configuration
+
+## Big picture
+
+Customize BGP configurations for special use-cases.
+
+:::caution
+Customizing BGP configuration templates is not supported by Tigera for production because they are not guaranteed to work when upgrading. However, if you want to use custom templates for POCs and other temporary uses cases, contact your Tigera Support representative for help.
+
+:::
+
+## Concepts
+
+In {{prodname}}, BGP is handled by [BIRD](https://github.com/projectcalico/bird).
+The BIRD configurations are templated out through [confd](https://github.com/projectcalico/confd).
+You can modify the BIRD configuration to use BIRD features which are not typically exposed using the
+default configuration provided with {{prodname}}.
+
+## Before you begin
+
+**Required**
+
+- Calico CNI
+
+## How to
+
+- [Update BGP configuration](#update-bgp-configuration)
+- [Apply BGP customizations](#apply-bgp-customizations) based on how you've deployed {{prodname}}:
+
+### Update BGP configuration
+
+Using the directions provided with the templates, set the correct values
+for the BGP configuration using these resources:
+
+- [BGP Configuration](../../reference/resources/bgpconfig.mdx)
+- [BGP Peer](../../reference/resources/bgppeer.mdx)
+- [calicoctl](../../reference/clis/calicoctl/index.mdx)
+
+### Apply BGP Customizations
+
+1. Create your confd templates.
+1. Create a ConfigMap from the templates.
+
+```
+kubectl create configmap bird-templates -n tigera-operator --from-file=<path to directory of templates>
+```
+
+The created config map will be used to populate the {{prodname}} BIRD configuration file templates. If a template with the same name already exists within the node container, it will be overwritten with the contents from the config map.
