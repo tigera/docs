@@ -136,9 +136,23 @@ const config = {
             position: 'left',
           },
           {
-            label: 'Contact us',
-            to: 'https://www.tigera.io/contact',
+            type: 'dropdown',
+            label: 'Use cases',
             position: 'left',
+            items: [
+              {
+                label: 'Microsegmentation',
+                to: '/use-cases/microsegmentation',
+              },
+              {
+                label: 'Egress gateways',
+                to: '/use-cases/egress-gateways',
+              },
+              {
+                label: 'Nifty tricks',
+                to: '/use-cases/nifty-tricks',
+              },
+            ],
           },
           {
             href: 'https://github.com/projectcalico',
@@ -439,6 +453,18 @@ const config = {
         editUrl: generateEditUrl,
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      {
+        id: 'use-cases',
+        path: 'use-cases',
+        routeBasePath: 'use-cases',
+        //To see builds for unreleased versions, remove comments in the next line.
+        sidebarPath: undefined,
+        editUrl: generateEditUrl,
+      },
+    ]
   ],
   customFields: {
     isTesting: process.env.TESTING || false,
