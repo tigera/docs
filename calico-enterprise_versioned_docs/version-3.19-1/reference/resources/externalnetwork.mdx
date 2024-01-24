@@ -1,0 +1,40 @@
+---
+description: API for this Calico Enterprise resource.
+---
+
+# External network
+
+An external network resource (`ExternalNetwork`) represents an external network outside the cluster.
+External networks can provide service endpoint with overlapping IPs.
+A BGP peer can declare itself as part of an external network and propagate routes to the service endpoints in the external network to allow egress traffic from the cluster to reach the service endpoints via the egress gateways.
+Those routes are programmed in the dedicated kernel routing table which has the index defined by the external network resource.
+
+For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
+may be used to specify the resource type on the CLI:
+`externalnetwork.projectcalico.org`, `externalnetworks.projectcalico.org` and abbreviations such as
+`externalnetwork.p` and `externalnetworks.p`.
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: ExternalNetwork
+metadata:
+  name: network-a
+spec:
+  routeTableIndex: 500
+```
+
+## Definition
+
+### Metadata
+
+| Field | Description  | Accepted Values   | Schema |
+|-------|--------------|-------------------|--------|
+| name | The name of the external network.   |         | string |
+
+### Spec
+
+| Field      | Description                                                                                                                                                         | Accepted Values | Schema                | Default               |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------|-----------------------|
+| routeTableIndex      | The index of a linux kernel routing table that should be used for the routes associated with the external network. The value should be unique for each external network. The value should not be in the range of `RouteTableRanges` field in FelixConfiguration. The kernel routing table index should not be used by other processes on the node.                     |                 | int                |  |
