@@ -35,6 +35,7 @@ module.exports = {
             'get-started/connect/requirements/aks',
             'get-started/connect/requirements/gke',
             'get-started/connect/requirements/rke2',
+            'get-started/connect/requirements/windows-limitations',
           ],
         },
         'get-started/connect/connect-cluster',
