@@ -44,6 +44,74 @@ Store the key and certificate in a Secret that `calico/node` will access
 kubectl create secret generic -n kube-system calico-node-certs --from-file=calico-node.key --from-file=calico-node.crt
 ```
 
+Validate the key and certificate that `calico/node` will use to access Typha using TLS:
+
+```bash
+curl https://calico-typha:5473 -v --cacert typhaca.crt --resolve calico-typha:5473:$TYPHA_CLUSTERIP --cert calico-node.crt --key calico-node.key
+```
+
+Result
+
+```bash
+* Added calico-typha:5473:10.103.120.116 to DNS cache
+* Hostname calico-typha was found in DNS cache
+*   Trying 10.103.120.116:5473...
+* Connected to calico-typha (10.103.120.116) port 5473 (#0)
+* ALPN, offering h2
+* ALPN, offering http/1.1
+*  CAfile: typhaca.crt
+*  CApath: /etc/ssl/certs
+* TLSv1.0 (OUT), TLS header, Certificate Status (22):
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+* TLSv1.2 (IN), TLS header, Certificate Status (22):
+* TLSv1.3 (IN), TLS handshake, Server hello (2):
+* TLSv1.2 (IN), TLS header, Certificate Status (22):
+* TLSv1.2 (IN), TLS handshake, Certificate (11):
+* TLSv1.2 (IN), TLS header, Certificate Status (22):
+* TLSv1.2 (IN), TLS handshake, Server key exchange (12):
+* TLSv1.2 (IN), TLS header, Certificate Status (22):
+* TLSv1.2 (IN), TLS handshake, Request CERT (13):
+* TLSv1.2 (IN), TLS header, Certificate Status (22):
+* TLSv1.2 (IN), TLS handshake, Server finished (14):
+* TLSv1.2 (OUT), TLS header, Certificate Status (22):
+* TLSv1.2 (OUT), TLS handshake, Certificate (11):
+* TLSv1.2 (OUT), TLS header, Certificate Status (22):
+* TLSv1.2 (OUT), TLS handshake, Client key exchange (16):
+* TLSv1.2 (OUT), TLS header, Certificate Status (22):
+* TLSv1.2 (OUT), TLS handshake, CERT verify (15):
+* TLSv1.2 (OUT), TLS header, Finished (20):
+* TLSv1.2 (OUT), TLS change cipher, Change cipher spec (1):
+* TLSv1.2 (OUT), TLS header, Certificate Status (22):
+* TLSv1.2 (OUT), TLS handshake, Finished (20):
+* TLSv1.2 (IN), TLS header, Finished (20):
+* TLSv1.2 (IN), TLS header, Certificate Status (22):
+* TLSv1.2 (IN), TLS handshake, Finished (20):
+* SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
+* ALPN, server did not agree to a protocol
+* Server certificate:
+*  subject: CN=calico-typha
+*  start date: Jan 27 19:35:44 2024 GMT
+*  expire date: Jan 26 19:35:44 2025 GMT
+*  common name: calico-typha (matched)
+*  issuer: CN=Calico Typha CA
+*  SSL certificate verify ok.
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+> GET / HTTP/1.1
+> Host: calico-typha:5473
+> User-Agent: curl/7.81.0
+> Accept: */*
+>
+* TLSv1.2 (IN), TLS header, Unknown (21):
+* TLSv1.2 (IN), TLS alert, close notify (256):
+* Empty reply from server
+* Closing connection 0
+* TLSv1.2 (OUT), TLS header, Unknown (21):
+* TLSv1.2 (OUT), TLS alert, close notify (256):
+curl: (52) Empty reply from server
+```
+
+This demonstrates that Typha is presenting its TLS certificate and accepting our connection when we presented with the `calico/node` certificate and key.
+
 ## Provision RBAC
 
 Create the ServiceAccount that `calico/node` will run as
