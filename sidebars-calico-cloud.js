@@ -51,6 +51,7 @@ module.exports = {
       items: [
         'users/user-management',
         'users/create-and-assign-custom-roles',
+        'users/create-custom-role-for-entra-id-group'
       ],
     },
     {
