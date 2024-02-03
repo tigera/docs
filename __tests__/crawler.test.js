@@ -160,7 +160,8 @@ test("Crawl the docs and execute tests", async () => {
     'https://kubernetes.io/docs/setup/production-environment/tools/kops/#2-5-create-a-route53-domain-for-your-cluster',
     'https://pkgs.k8s.io/',
     'https://apt.kubernetes.io/',
-    'https://docs.tigera.io/calico-enterprise/3.15/about-calico-enterprise'
+    'https://docs.tigera.io/calico-enterprise/3.15/about-calico-enterprise',
+    'https://your-jira-instance-name.atlassian.net/rest/api/2/issue/'
   ];
 
   const lc = linkChecker();
