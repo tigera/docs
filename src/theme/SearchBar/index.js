@@ -81,10 +81,7 @@ function filterFacetFiltersByProduct(filters, product) {
 
   return [
     language,
-    products.filter((p) => {
-      const match = p.match(/(.*)-/);
-      return match && match[1].endsWith(product);
-    }),
+    products.filter((p) => new RegExp(`.*${product}-\\d+(\\.\\d+)*.*`).test(p)),
   ];
 }
 function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
