@@ -20,18 +20,7 @@ Scrape {{prodname}} metrics for Bring Your Own (BYO) Prometheus.
 - calico-node
 - kube-controllers
 - felix
-- typha
-
-To use BYO Prometheus, you must create your own:
-
-- Service monitors
-- Alerts
-
-:::note
-
-With BYO Prometheus, {{prodname}} metrics and alerts are not visible in Manager UI.
-
-:::
+- typha (not enabled by default)
 
 ## Before you begin
 
@@ -41,11 +30,56 @@ For the supported version of Prometheus in this release, see the [Release Notes]
 
 ## How to
 
-- [Scrape metrics](#scrape-metrics)
+- [Scrape all enabled metrics](#scrape-all-enabled-metrics)
+- [Scrape metrics from specific components directly](#scrape-metrics-from-specific-components-directly)
 - [Verify BYO Prometheus](#verify-byo-prometheus)
 - [Create policy to secure traffic between pods](#create-policy-to-secure-traffic-between-pods)
+- [Troubleshooting](#troubleshooting)
 
-### Scrape metrics
+### Scrape all enabled metrics
+
+In this section we create a service monitor that scrapes all enabled metrics. To enable metrics that
+are not enabled by default, please consult the [next section](#scrape-metrics-from-specific-components).
+
+The following example shows a Prometheus server installed in namespace "external-prometheus" with a `serviceMonitorSelector` that selects all service monitors with the label `k8s-app=tigera-external-prometheus`.
+
+1. Save the following configuration in a file called `monitor.yaml`.
+
+    ```yaml
+    apiVersion: operator.tigera.io/v1
+    kind: Monitor
+    metadata:
+      name: tigera-secure
+    spec:
+      externalPrometheus:
+        namespace: external-prometheus
+        serviceMonitor:
+          labels:
+            k8s-app: tigera-external-prometheus
+    ```
+    For a list of all configuration options, see the [Installation API reference](../../../reference/installation/api.mdx).
+
+2. Apply the manifest to your cluster.
+
+    ```bash
+    kubectl apply -f monitor.yaml
+    ```
+
+3. Verify that the new configuration has been added to your cluster
+    ```bash
+    export NS=external-prometheus
+    kubectl get servicemonitor -n $NS tigera-external-prometheus
+    kubectl get serviceaccount -n $NS tigera-external-prometheus
+    kubectl get secret -n $NS tigera-external-prometheus
+    kubectl get clusterrole tigera-external-prometheus
+    kubectl get clusterrolebinding tigera-external-prometheus
+    ```
+    That's it. You should be seeing the new metrics show up in your Prometheus instance within a minute. For more information on verifying metrics, see the section, [Verify BYO Prometheus](#verify-byo-prometheus).
+
+### Scrape metrics from specific components directly
+
+We recommend the previous section for scraping all enabled metrics. Read on if you wish to scrape metrics from specific
+components directly using mTLS, or if you wish to enable metrics that are disabled by default.
 
 <Tabs>
 <TabItem label="elasticsearch" value="elasticsearch-0">
@@ -83,7 +117,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f {{filesUrl_CE}}/manifests/prometheus/elasticsearch-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f {{filesUrl}}/manifests/prometheus/elasticsearch-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -124,7 +158,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f  {{filesUrl_CE}}/manifests/prometheus/fluentd-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  {{filesUrl}}/manifests/prometheus/fluentd-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -165,7 +199,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f  {{filesUrl_CE}}/manifests/prometheus/calico-node-monitor-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  {{filesUrl}}/manifests/prometheus/calico-node-monitor-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in $NAMESPACE.
@@ -173,7 +207,29 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 </TabItem>
 <TabItem label="kube-controllers" value="kube-controllers-3">
 
-Note that kube-controllers metrics are not TLS enabled, so configuration is not required.
+**Configure TLS certificates**
+
+1. Copy the required secret and configmap to your namespace.
+2. Save the manifest of the required TLS secret and CA configmap.
+
+   ```bash
+   kubectl get secret calico-node-prometheus-client-tls -n tigera-prometheus -o yaml >  calico-node-prometheus-client-tls.yaml
+   ```
+
+   ```bash
+   kubectl get configmap -n tigera-prometheus tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
+   ```
+
+3. Edit `calico-node-prometheus-client-tls.yaml` and `tigera-ca-bundle.yaml` by changing the namespace to the namespace where your prometheus instance is running.
+4. Apply the manifests to your cluster.
+
+   ```bash
+   kubectl apply -f calico-node-prometheus-client-tls.yaml
+   ```
+
+   ```bash
+   kubectl apply -f tigera-ca-bundle.yaml
+   ```
 
 **Create the service monitor**
 
@@ -184,7 +240,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f  {{filesUrl_CE}}/manifests/prometheus/kube-controller-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  {{filesUrl}}/manifests/prometheus/kube-controller-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -234,6 +290,35 @@ spec:
 EOF
 ```
 
+If running {{prodnameWindows}}, also create a service for Windows nodes:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: felix-windows-metrics-svc
+  namespace: calico-system
+  labels:
+    k8s-app: felix-metrics
+spec:
+  clusterIP: None
+  selector:
+    k8s-app: calico-node-windows
+  ports:
+  - port: 9091
+    targetPort: 9091
+EOF
+```
+
+By default, the Windows firewall blocks listening on ports. For {{prodname}} to manage the Prometheus metrics ports Windows firewall rules, enable the `windowsManageFirewallRules` setting in FelixConfiguration:
+
+```bash
+kubectl patch felixConfiguration default --type merge --patch '{"spec":{"windowsManageFirewallRules": "Enabled"}}'
+```
+
+[See the FelixConfiguration reference for more details](../../../reference/resources/felixconfig.mdx). You can also add a Windows firewall rule that allows listening on the Prometheus port(s) instead of having {{prodname}} manage it.
+
 **Create the service monitor**
 
 Apply the ServiceMonitor to the namespace where Prometheus is running.
@@ -243,7 +328,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f  {{filesUrl_CE}}/manifests/prometheus/felix-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  {{filesUrl}}/manifests/prometheus/felix-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -298,7 +383,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f  {{filesUrl_CE}}/manifests/prometheus/typha-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  {{filesUrl}}/manifests/prometheus/typha-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -306,9 +391,7 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 </TabItem>
   </Tabs>
 
-## Verify BYO Prometheus
-
-**Verify metrics in the Prometheus console**
+### Verify BYO Prometheus
 
 1. Access the Prometheus dashboard using the port-forwarding feature.
 
@@ -322,7 +405,10 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 
    The Console table is populated with all of your nodes with the number of endpoints.
 
-**Verify endpoint authentication**
+### Troubleshooting
+
+This section is applicable only if you experience issues with mTLS after following the [Scrape metrics from specific components directly](#scrape-metrics-from-specific-components)
+section.
 
 1. Use the following command to retrieve the tls.key and tls.cert.
 
@@ -360,6 +446,6 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 
 You should be able to see the metrics.
 
-## Create policy to secure traffic between pods
+### Create policy to secure traffic between pods
 
 To support zero trust, we recommend that you create {{prodname}} network policy to allow the traffic between BYO Prometheus pods, and the respective metrics pods. For samples of ingress and egress policies, see [Get started with Calico network policy](../../../network-policy/beginners/calico-network-policy.mdx).
