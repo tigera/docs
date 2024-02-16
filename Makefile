@@ -59,7 +59,7 @@ serve: build
 full: clean build
 
 .PHONY: netlify
-netlify: build run-update-cloud-image-list test
+netlify: build test
 
 .PHONY: all
 all: full test
@@ -146,6 +146,7 @@ update-cloud-image-list:
 	sed -i -e "/^\$$INSTALLER_IMAGE/r image-list" $(PRODUCT)/get-started/connect/setup-private-registry.mdx
 	rm -f image-list
 
+# Add this back to the netlify target when the missing windows images are addressed in the image-list
 run-update-cloud-image-list:
 	RUN_UPDATE_CLOUD_IMAGE_LIST=1 PRODUCT=calico-cloud make update-cloud-image-list
 	for x in $$(ls calico-cloud_versioned_docs/); do \
