@@ -294,6 +294,7 @@ module.exports = {
       link: {type: 'doc', id: 'threat/index'},
       items: [
         'threat/security-posture-overview',
+        'threat/configuring-webhooks',
         'threat/security-event-management',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
@@ -519,6 +520,7 @@ module.exports = {
             'reference/resources/node',
             'reference/resources/packetcapture',
             'reference/resources/remoteclusterconfiguration',
+            'reference/resources/securityeventwebhook',
             'reference/resources/stagedglobalnetworkpolicy',
             'reference/resources/stagedkubernetesnetworkpolicy',
             'reference/resources/stagednetworkpolicy',
