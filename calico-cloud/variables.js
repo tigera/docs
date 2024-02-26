@@ -16,7 +16,7 @@ const variables = {
   clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.19.0-1.0-4',
   clouddownloadbase: 'https://installer.calicocloud.io',
   cloudoperatorimage: 'quay.io/tigera/cc-operator',
-  imageassuranceversion: 'v1.13.0',
+  imageassuranceversion: 'v1.14.1',
   tigeraOperator: releases[0]['tigera-operator'],
   releases,
   registry: 'quay.io/',
