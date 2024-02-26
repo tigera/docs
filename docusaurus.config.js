@@ -414,7 +414,7 @@ const config = {
         routeBasePath: 'calico-cloud',
         editCurrentVersion: true,
         //To see builds for unreleased versions, remove comments in the next line.
-        onlyIncludeVersions: [/*'current'*/'18-2'],
+        onlyIncludeVersions: [/*'current'*/'19-1'],
         versions: {
           current: {
             label: 'Next',
@@ -422,16 +422,8 @@ const config = {
             banner: 'unreleased',
           },
           '19-1': {
-            path: '19',
-            banner: 'none',
-          },
-          '18-2': {
             path: '/',
             banner: 'none',
-          },
-          18: {
-            path: '18',
-            banner: 'unmaintained',
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
