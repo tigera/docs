@@ -506,6 +506,7 @@ module.exports = {
           id: 'reference/installation/api',
           label: 'Installation API',
         },
+        'reference/installation/helm_customization',
         // TODO: 'Installation' category needs to be collapsed into single Operator API page
         {
           type: 'category',
