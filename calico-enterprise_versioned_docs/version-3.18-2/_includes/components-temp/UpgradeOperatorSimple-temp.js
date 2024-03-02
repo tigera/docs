@@ -130,7 +130,7 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
                   <Link href={`${baseUrl}/getting-started/install-on-clusters/private-registry`}>
                     installing using a private registry
                   </Link>
-                  , you will need to update the manifest downloaded in the previous step. Update the <code>spec.registry</code>, <code>spec.imagePath</code>, and <code>spec.imagePrefix</code> fields of the Installation resource accordingly.
+                  , you will need to update the manifest downloaded in the previous step. Update the <code>spec.registry</code>, <code>spec.imagePath</code>, and <code>spec.imagePrefix</code> fields of the installation resource with the registry name, image path, and image prefix of your private registry.
                 </p>
               </li>
 
