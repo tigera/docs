@@ -18,6 +18,7 @@ const config = {
   onBrokenMarkdownLinks: 'throw',
   favicon: 'img/favicon.png',
 
+
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".
@@ -25,7 +26,17 @@ const config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
-
+  scripts: [
+    {
+      src: "https://widget.kapa.ai/kapa-widget.bundle.js",
+      "data-website-id": "578b0d26-ff67-42e3-b465-5839865a7471",
+      "data-project-name": "Tigera",
+      "data-project-color": "#F89C1E",
+      "data-project-logo":
+        "https://www.tigera.io/app/uploads/2021/06/Tigera-orange.png",
+      async: true,
+    },
+  ],
   presets: [
     [
       'classic',
