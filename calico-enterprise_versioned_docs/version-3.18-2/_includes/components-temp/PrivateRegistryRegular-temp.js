@@ -4,7 +4,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
 
-import { tigeraOperator, prodname, prodnamedash, registry, releases } from '../../variables';
+import { tigeraOperator, prodname, prodnamedash, prodnameWindows, registry, releases } from '../../variables';
 
 export default function PrivateRegistryRegular() {
     const components = releases[0].components;
@@ -30,10 +30,6 @@ export default function PrivateRegistryRegular() {
                     {`docker pull ${tigeraOperator.registry}/${tigeraOperator.image}:${tigeraOperator.version}\n`}
                     {componentsWithImage.filter(filters.isNotWindows).map(renderPullCommand).join('')}
                 </CodeBlock>
-                <p>For hybrid Linux + Windows clusters, pull the following Windows images.</p>
-                <CodeBlock language='bash'>
-                    {componentsWithImage.filter(filters.isWindows).map(renderPullCommand).join('')}
-                </CodeBlock>
 
                 <li>
                     <p>
@@ -49,20 +45,6 @@ export default function PrivateRegistryRegular() {
                             );
                         }).join('')}
                     </CodeBlock>
-                    <p>
-                        For hybrid Linux + Windows clusters, retag the following Windows images with the name of your private
-                        registry.
-                    </p>
-                    <CodeBlock language='bash'>
-                        {componentsWithImage.filter(filters.isWindows).map((component) => {
-                            const registry = mapComponentToRegistry(component);
-                            const imageName = component.image.split('/').pop();
-
-                            return (
-                                `docker tag ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`
-                            );
-                        }).join('')}
-                    </CodeBlock>
                 </li>
 
                 <li>
@@ -73,15 +55,21 @@ export default function PrivateRegistryRegular() {
                             return `docker push $PRIVATE_REGISTRY/${component.image}:${component.version}\n`;
                         }).join('')}
                     </CodeBlock>
-                    <p>For hybrid Linux + Windows clusters, push the following Windows images to your private registry.</p>
-                    <CodeBlock language='bash'>
-                        {componentsWithImage.filter(filters.isWindows).map((component) => {
-                            const imageName = component.image.split('/').pop();
-
-                            return `docker push $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`;
-                        }).join('')}
-                    </CodeBlock>
                     <Admonition type='caution'>Do not push the private {prodname} images to a public registry.</Admonition>
+                </li>
+                <li>
+                <p>Use <code>crane cp</code> to copy the Windows images to your private registry.</p>
+                <p>For hybrid Linux + Windows clusters, use <code>crane cp</code> on the following Windows images to copy them to your private registry.</p>
+                <CodeBlock language='bash'>
+                    {componentsWithImage.filter(filters.isWindows).map((component) => {
+                        const registry = mapComponentToRegistry(component);
+                        const imageName = component.image.split('/').pop();
+
+                        return `crane cp ${registry}${component.image}:${component.version} $PRIVATE_REGISTRY/$IMAGE_PATH/${imageName}:${component.version}\n`;
+                    }).join('')}
+                </CodeBlock>
+
+                <Admonition type='caution'>Do not <code>crane cp</code> the private {prodnameWindows} images to a public registry.</Admonition>
                 </li>
             </ol>
 

@@ -7,17 +7,25 @@ import CodeBlock from '@theme/CodeBlock';
 import { imageNames, prodname, registry, releases, tigeraOperator } from '../../variables';
 
 export default function MaintenanceImageOptionsAlternateRegistry() {
-  const cmds1 = renderInstallCommands(
-    (componentData, reg, componentNames, i) => `docker pull ${reg}${componentNames[i]}:${componentData.version}`
+  const pullCmds = renderRetagCommands(
+    (componentData, reg, componentNames, i) => `docker pull ${reg}${componentNames[i]}:${componentData.version}`,
+    (c) => imageNames[c] && !c.includes('flannel') && !c.includes('-windows')
   );
 
-  const cmds2 = renderInstallCommands(
+  const tagCmds = renderRetagCommands(
     (componentData, reg, componentNames, i) =>
-      `docker tag ${reg}${componentNames[i]}:${componentData.version} $REGISTRY/${componentNames[i]}:${componentData.version}`
+      `docker tag ${reg}${componentNames[i]}:${componentData.version} $REGISTRY/${componentNames[i]}:${componentData.version}`,
+    (c) => imageNames[c] && !c.includes('flannel') && !c.includes('-windows')
   );
 
-  const cmds3 = renderInstallCommands(
-    (componentData, reg, componentNames, i) => `docker push $REGISTRY/${componentNames[i]}:${componentData.version}`
+  const pushCmds = renderRetagCommands(
+    (componentData, reg, componentNames, i) => `docker push $REGISTRY/${componentNames[i]}:${componentData.version}`,
+    (c) => imageNames[c] && !c.includes('flannel') && !c.includes('-windows')
+  );
+
+  const craneCmds = renderRetagCommands(
+    (componentData, reg, componentNames, i) => `crane cp ${reg}${componentNames[i]}:${componentData.version} $REGISTRY/${componentNames[i]}:${componentData.version}`,
+    (c) => imageNames[c] && c.includes('-windows')
   );
 
   return (
@@ -28,7 +36,7 @@ export default function MaintenanceImageOptionsAlternateRegistry() {
       <CodeBlock language='bash'>
         docker pull {tigeraOperator.registry}/{tigeraOperator.image}:{tigeraOperator.version}
         {'\n'}
-        {cmds1}
+        {pullCmds}
       </CodeBlock>
       <li>
         <p>
@@ -39,7 +47,7 @@ export default function MaintenanceImageOptionsAlternateRegistry() {
         docker tag {tigeraOperator.registry}/{tigeraOperator.image}:{tigeraOperator.version} $REGISTRY/
         {tigeraOperator.image}:{tigeraOperator.version}
         {'\n'}
-        {cmds2}
+        {tagCmds}
       </CodeBlock>
       <li>
         <p>Push the images to your registry.</p>
@@ -47,16 +55,23 @@ export default function MaintenanceImageOptionsAlternateRegistry() {
       <CodeBlock language='bash'>
         docker push $REGISTRY/{tigeraOperator.image}:{tigeraOperator.version}
         {'\n'}
-        {cmds3}
+        {pushCmds}
+      </CodeBlock>
+      <li>
+        <p>Use <code>crane cp</code> to copy the Windows images to your private registry.</p>
+      </li>
+      <p>For hybrid Linux + Windows clusters, use <code>crane cp</code> on the following Windows images to copy them to your private registry.</p>
+      <CodeBlock language='bash'>
+        {craneCmds}
       </CodeBlock>
     </ol>
   );
 }
 
-function renderInstallCommands(renderCommand) {
+function renderRetagCommands(renderCommand, filterFunc) {
   const releaseComponents = releases[0].components;
   const components = Object.keys(releaseComponents);
-  const filteredComponents = components.filter((c) => imageNames[c] && !c.includes('flannel'));
+  const filteredComponents = components.filter(filterFunc);
   const componentNames = filteredComponents.map((c) => imageNames[c]);
 
   const result = filteredComponents
