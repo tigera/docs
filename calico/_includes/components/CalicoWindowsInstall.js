@@ -162,8 +162,8 @@ EOF`}
         The {prodnameWindows} HPC installation has 2 initContainers: <code>uninstall-calico</code>, which deals with removing previous manually installed {prodnameWindows} services, if any
         and <code>install-cni</code>, which installs needed CNI binaries and configuration, when using Calico CNI.
         <CodeBlock language='bash'>
-          kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c uninstall-calico
-          kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c install-cni
+          kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c uninstall-calico{'\n'}
+          kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c install-cni{'\n'}
         </CodeBlock>
         <p>
           After these initContainers finish their execution, installation is complete. Next, the
