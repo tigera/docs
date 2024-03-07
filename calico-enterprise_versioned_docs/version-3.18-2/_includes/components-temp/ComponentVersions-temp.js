@@ -11,18 +11,6 @@ export default function ComponentVersions() {
 
   const releases = variables.releases.map((release) => {
     let note = release.note;
-    try {
-      if (!note) {
-        note = require(`../release-notes/_${release.title}-release-notes.mdx`).default({});
-      }
-    } catch {
-      console.error(`Cannot find "/_includes/release-notes/_${release.title}-release-notes.mdx" file`);
-    }
-
-    return {
-      ...release,
-      note,
-    };
   });
 
   return (
