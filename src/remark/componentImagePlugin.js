@@ -3,7 +3,7 @@ const visit = require('unist-util-visit');
 const componentImage = require(path.resolve('src/components/utils/componentImage'));
 const getVariableByFilePath = require('../utils/getVariableByFilePath');
 
-const COMPONENT_IMAGE_REGEX = new RegExp(/{%\s+component_image\(["']([\w-]+)["']\)\s+%}/, 'g');
+const COMPONENT_IMAGE_REGEX = new RegExp(/%%\s+component_image\(["']([\w-]+)["']\)\s+%%/, 'g');
 
 function componentImagePlugin(_options) {
   async function transformer(tree, file) {
