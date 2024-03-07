@@ -10,8 +10,8 @@ export default function ComponentVersions() {
   const { prodname, version, downloadsurl } = variables;
 
   const releases = variables.releases.map((release) => {
-    let note = release.note;
-  });
+    return release;
+  }).filter(release => release);
 
   return (
     <>
