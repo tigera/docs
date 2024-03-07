@@ -1,4 +1,7 @@
-This section describes how to run `{{nodecontainer}}` as a Docker container.
+import variables from '@site/calico_versioned_docs/version-3.26/variables';
+import CodeBlock from '@theme/CodeBlock';
+
+This section describes how to run `{variables.nodecontainer}` as a Docker container.
 
 :::note
 
@@ -10,28 +13,28 @@ applied to other init daemons such as upstart.
 ### Step 1: Create environment file
 
 <EnvironmentFile
-  nodecontainer='{{nodecontainer}}'
+  nodecontainer='{variables.nodecontainer}'
   install='container'
   target='calico/node'
 />
 
 ### Step 2: Configure the init system
 
-Use an init daemon (like systemd or upstart) to start the {{nodecontainer}} image as a service using the EnvironmentFile values.
+Use an init daemon (like systemd or upstart) to start the {variables.nodecontainer} image as a service using the EnvironmentFile values.
 
-Sample systemd service file: `{{noderunning}}.service`
+Sample systemd service file: `{variables.noderunning}.service`
 
 ```shell
 [Unit]
-Description={{noderunning}}
+Description={variables.noderunning}
 After=docker.service
 Requires=docker.service
 
 [Service]
 EnvironmentFile=/etc/calico/calico.env
-ExecStartPre=-/usr/bin/docker rm -f {{noderunning}}
+ExecStartPre=-/usr/bin/docker rm -f {variables.noderunning}
 ExecStart=/usr/bin/docker run --net=host --privileged \
- --name={{noderunning}} \
+ --name={variables.noderunning} \
  -e NODENAME=${CALICO_NODENAME} \
  -e IP=${CALICO_IP} \
  -e IP6=${CALICO_IP6} \
@@ -50,9 +53,9 @@ ExecStart=/usr/bin/docker run --net=host --privileged \
  -v /run/docker/plugins:/run/docker/plugins \
  -v /lib/modules:/lib/modules \
  -v /etc/pki:/pki \
- {{registry}}{{imageNames.calico/node}}:{{releaseTitle}} /bin/calico-node -felix
+ {variables.registry}{variables.imageNames.calico/node}:{variables.releaseTitle} /bin/calico-node -felix
 
-ExecStop=-/usr/bin/docker stop {{noderunning}}
+ExecStop=-/usr/bin/docker stop {variables.noderunning}
 
 Restart=on-failure
 StartLimitBurst=3
@@ -66,10 +69,10 @@ Upon start, the systemd service:
 
 - Confirms Docker is installed under the `[Unit]` section
 - Gets environment variables from the environment file above
-- Removes existing `{{nodecontainer}}` container (if it exists)
-- Starts `{{nodecontainer}}`
+- Removes existing `{variables.nodecontainer}` container (if it exists)
+- Starts `{variables.nodecontainer}`
 
-The script also stops the `{{nodecontainer}}` container when the service is stopped.
+The script also stops the `{variables.nodecontainer}` container when the service is stopped.
 
 :::note
 
