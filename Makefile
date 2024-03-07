@@ -59,7 +59,7 @@ serve: build
 full: clean build
 
 .PHONY: netlify
-netlify: build test
+netlify: full test
 
 .PHONY: all
 all: full test
