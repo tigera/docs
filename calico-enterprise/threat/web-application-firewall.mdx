@@ -187,46 +187,13 @@ The configuration file starts with importing the appropriate rule set config. We
 1. Coraza recommended [config](https://github.com/corazawaf/coraza/blob/main/coraza.conf-recommended)
 1. The rest of the [corerule set](https://github.com/corerule set/corerule set) files, currently [v4.0.0-rc2](https://github.com/corerule set/corerule set/tree/v4.0.0-rc2)
 
-These files can be customized if desired. 
-
-1. (Recommended) Add all your customizations directly under `tigera.conf`
+These files can be customized if desired. Add all your customizations directly under `tigera.conf`:
 
 ```bash
-kubectl edit cm -n tigera-operator modsecurity-rule set
+kubectl edit cm -n tigera-operator modsecurity-ruleset
 ``` 
 
-1. (Not recommended) Starting your configmap from scratch
-
-```bash
-# create your own working copy corerule set
-git clone -b v4.0.0-rc2 https://github.com/corerule set/corerule set --depth=1 
-cd corerule set
-
-# download a recommend configuration to begin with
-wget https://raw.githubusercontent.com/corazawaf/coraza/v4/main/coraza.conf-recommended -O coraza.conf
-
-# create tigera.conf
-cat <<EOF > tigera.conf
-Include /etc/modsecurity-rule set/coraza.conf
-Include /etc/modsecurity-rule set/crs-setup.conf.example
-Include /etc/modsecurity-rule set/REQUEST-*.conf
-
-SecRuleEngine DetectionOnly
-EOF
-
-## create the configuration map itself
-kubectl create cm --dry-run=client --from-file=tigera.conf --from-file=coraza.conf --from-file=rules --from-file=crs-setup.conf.example -n tigera-operator modsecurity-rule set -o yaml  > rule set.configmap.yaml
-
-## replace active configmap
-kubectl replace -f rule set.configmap.yaml
-```
-
-:::note
-the path `/etc/modsecurity-rule set/` is the designated mount path for files found in the configmap 
-:::
-
-
-After you do these steps, the `modsecurity-rule set` ConfigMap will be replaced in the `tigera-operator` namespace,
+After editing this ConfigMap successfully, the `modsecurity-ruleset` ConfigMap will be replaced in the `tigera-operator` namespace,
 which then triggers a rolling restart of your L7 pods. This means that the HTTP connections going through L7 pods at the time of pod termination will be (RST) reset.
 
 :::note
@@ -245,7 +212,7 @@ By default WAF will not block a request even if it has matching rule violations.
 
 1. Edit the configmap:
    ```bash
-   kubectl edit cm -n tigera-operator modsecurity-rule set
+   kubectl edit cm -n tigera-operator modsecurity-ruleset
    ```
 2. Look for `SecRuleEngine DetectionOnly` and change it to `SecRuleEngine On`.
 3. Save your changes. This triggers a rolling update of the L7 pods.
@@ -340,15 +307,15 @@ and then tigera.conf contents should be:
 ```bash
 Include @coraza.conf-recommended
 
-Include /etc/modsecurity-rule set/wordpress-rule-exclusions-config.conf
-Include /etc/modsecurity-rule set/wordpress-rule-exclusions-before.conf
+Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-config.conf
+Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-before.conf
 
 Include @crs-setup.conf.example
 Include @owasp_crs/*.conf
 
 # if your plugin has an -after.conf, include them here
 # but wordpress rule exclusions doesn't so we're adding a comment placeholder
-# Include /etc/modsecurity-rule set/wordpress-rule-exclusions-after.conf
+# Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-after.conf
 
 SecRuleEngine DetectionOnly
 ```
@@ -361,7 +328,7 @@ kubectl create cm --dry-run=client \
   --from-file=tigera.conf \
   --from-file=wordpress-rule-exclusions-config.conf \
   --from-file=wordpress-rule-exclusions-before.conf \
-  -n tigera-operator modsecurity-rule set -o yaml  > rule set.configmap.yaml
+  -n tigera-operator modsecurity-ruleset -o yaml  > rule set.configmap.yaml
 
 ## replace active configmap
 kubectl replace -f rule set.configmap.yaml
