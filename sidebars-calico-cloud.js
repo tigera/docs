@@ -204,20 +204,6 @@ module.exports = {
                 "network-policy/policy-firewalls/fortinet-integration/fortimgr-integration"
               ]
             },
-            {
-              "type": "category",
-              "label": "AWS security groups integration",
-              "link": {
-                "type": "doc",
-                "id": "network-policy/policy-firewalls/aws-integration/index"
-              },
-              "items": [
-                "network-policy/policy-firewalls/aws-integration/get-started",
-                "network-policy/policy-firewalls/aws-integration/aws-security-group-integration",
-                "network-policy/policy-firewalls/aws-integration/tiers-and-policy",
-                "network-policy/policy-firewalls/aws-integration/metadata-access"
-              ],
-            },
           ],
         },
         "network-policy/hosts/kubernetes-nodes",
@@ -294,10 +280,10 @@ module.exports = {
       link: {type: 'doc', id: 'threat/index'},
       items: [
         'threat/security-posture-overview',
+        'threat/configuring-webhooks',
         'threat/security-event-management',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
-        'threat/suspicious-external-ips',
         'threat/tor-vpn-feed-and-dashboard',
         'threat/honeypods',
         'threat/deeppacketinspection',
@@ -519,6 +505,7 @@ module.exports = {
             'reference/resources/node',
             'reference/resources/packetcapture',
             'reference/resources/remoteclusterconfiguration',
+            'reference/resources/securityeventwebhook',
             'reference/resources/stagedglobalnetworkpolicy',
             'reference/resources/stagedkubernetesnetworkpolicy',
             'reference/resources/stagednetworkpolicy',
