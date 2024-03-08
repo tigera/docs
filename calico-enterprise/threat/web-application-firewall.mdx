@@ -32,7 +32,7 @@ This how-to-guide uses the following {{prodname}} features:
 
 WAF is deployed in your cluster along with Envoy DaemonSet. {{prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry-standard
 [ModSecurity](https://owasp.org/www-project-modsecurity-core-rule-set/) with OWASP Core Rule Set v3.3.5 modified for kubernetes workloads.
-<!--To review the rules deployed with the WAF, see [Ruleset files](https://github.com/tigera/operator/tree/master/pkg/render/applicationlayer/embed/coreruleset/rules).-->
+<!--To review the rules deployed with the WAF, see [Ruleset files](https://github.com/tigera/operator/tree/master/pkg/render/applicationlayer/embed/corerule set/rules).-->
 
 You simply enable WAF in Manager UI, and determine the services that you want to enable for WAF protection. By default WAF is set to `DetectionOnly` so no traffic will be denied until you are ready to turn on blocking mode.
 
@@ -40,7 +40,7 @@ Every request that WAF finds an issue with, will result in a Security Event bein
 
 #### How WAF determines if a request should be allowed or denied
 
-If you configure WAF in blocking mode, WAF will use something called [anomaly scoring mode](https://coreruleset.org/docs/concepts/anomaly_scoring/) to determine if a request is allowed with `200 OK` or denied `403 Forbidden`.
+If you configure WAF in blocking mode, WAF will use something called [anomaly scoring mode](https://corerule set.org/docs/concepts/anomaly_scoring/) to determine if a request is allowed with `200 OK` or denied `403 Forbidden`.
 
 This works by matching a single HTTP request against all the configured WAF rules. Each rule has a score and WAF adds all the matched rule scores together, and compares it to the overall anomaly threshold score (100 by default). If the score is under the threshold the request is allowed and if the score is over the threshold the request is denied. Our WAF starts in detection mode only and with a high default scoring threshold so is safe to turn on and then [fine-tune the WAF](#manage-your-waf) for your specific needs in your cluster.
 
@@ -172,7 +172,7 @@ Run a simple curl command from any pod inside your cluster targeting a service y
 
 ### Manage WAF configuration
 
-Reviewing the default rulset config:
+Reviewing the default rule set config:
 
 ```bash
 Include @coraza.conf-recommended
@@ -182,57 +182,57 @@ Include @owasp_crs/*.conf
 SecRuleEngine DetectionOnly
 ```
 
-The configuration file starts with importing the appropriate ruleset config. We use Coraza WAF's recommended [Core Ruleset setup](https://coraza.io/docs/tutorials/coreruleset/) files:
+The configuration file starts with importing the appropriate rule set config. We use Coraza WAF's recommended [Core Ruleset setup](https://coraza.io/docs/tutorials/corerule set/) files:
 
 1. Coraza recommended [config](https://github.com/corazawaf/coraza/blob/main/coraza.conf-recommended)
-1. The rest of the [coreruleset](https://github.com/coreruleset/coreruleset) files, currently [v4.0.0-rc2](https://github.com/coreruleset/coreruleset/tree/v4.0.0-rc2)
+1. The rest of the [corerule set](https://github.com/corerule set/corerule set) files, currently [v4.0.0-rc2](https://github.com/corerule set/corerule set/tree/v4.0.0-rc2)
 
 These files can be customized if desired. 
 
 1. (Recommended) Add all your customizations directly under `tigera.conf`
 
 ```bash
-kubectl edit cm -n tigera-operator modsecurity-ruleset
+kubectl edit cm -n tigera-operator modsecurity-rule set
 ``` 
 
 1. (Not recommended) Starting your configmap from scratch
 
 ```bash
-# create your own working copy coreruleset
-git clone -b v4.0.0-rc2 https://github.com/coreruleset/coreruleset --depth=1 
-cd coreruleset
+# create your own working copy corerule set
+git clone -b v4.0.0-rc2 https://github.com/corerule set/corerule set --depth=1 
+cd corerule set
 
 # download a recommend configuration to begin with
 wget https://raw.githubusercontent.com/corazawaf/coraza/v4/main/coraza.conf-recommended -O coraza.conf
 
 # create tigera.conf
 cat <<EOF > tigera.conf
-Include /etc/modsecurity-ruleset/coraza.conf
-Include /etc/modsecurity-ruleset/crs-setup.conf.example
-Include /etc/modsecurity-ruleset/REQUEST-*.conf
+Include /etc/modsecurity-rule set/coraza.conf
+Include /etc/modsecurity-rule set/crs-setup.conf.example
+Include /etc/modsecurity-rule set/REQUEST-*.conf
 
 SecRuleEngine DetectionOnly
 EOF
 
 ## create the config map itself
-kubectl create cm --dry-run=client --from-file=tigera.conf --from-file=coraza.conf --from-file=rules --from-file=crs-setup.conf.example -n tigera-operator modsecurity-ruleset -o yaml  > ruleset.configmap.yaml
+kubectl create cm --dry-run=client --from-file=tigera.conf --from-file=coraza.conf --from-file=rules --from-file=crs-setup.conf.example -n tigera-operator modsecurity-rule set -o yaml  > rule set.configmap.yaml
 
 ## replace active configmap
-kubectl replace -f ruleset.configmap.yaml
+kubectl replace -f rule set.configmap.yaml
 ```
 
 :::note
-the path `/etc/modsecurity-ruleset/` is the designated mount path for files found in the configmap 
+the path `/etc/modsecurity-rule set/` is the designated mount path for files found in the configmap 
 :::
 
 
-After you do these steps, the `modsecurity-ruleset` ConfigMap will be replaced in the `tigera-operator` namespace,
+After you do these steps, the `modsecurity-rule set` ConfigMap will be replaced in the `tigera-operator` namespace,
 which then triggers a rolling restart of your L7 pods. This means that the HTTP connections going through L7 pods at the time of pod termination will be (RST) reset.
 
 :::note
 
-It is important to adhere to [CoreRuleset documentation](https://coreruleset.org/docs) on how to edit the behaviour of
- your WAF. A good place to begin at is the [Installing Core Rule Set](https://coreruleset.org/docs/deployment/install/).
+It is important to adhere to [CoreRuleset documentation](https://corerule set.org/docs) on how to edit the behaviour of
+ your WAF. A good place to begin at is the [Installing Core Rule Set](https://corerule set.org/docs/deployment/install/).
 
 In many scenarios, the default example CRS configuration will be a good enough starting point. It is recommended to review the example configuration file before
 you deploy it to make sure it’s right for your environment.
@@ -245,7 +245,7 @@ By default WAF will not block a request even if it has matching rule violations.
 
 1. Edit the configmap:
    ```bash
-   kubectl edit cm -n tigera-operator modsecurity-ruleset
+   kubectl edit cm -n tigera-operator modsecurity-rule set
    ```
 2. Look for `SecRuleEngine DetectionOnly` and change it to `SecRuleEngine On`.
 3. Save your changes. This triggers a rolling update of the L7 pods.
@@ -259,7 +259,7 @@ By default WAF will not block a request even if it has matching rule violations.
 
 ##### Other basic customizations
 
-For basic customizations, it's best to add it after all the includes in `tigera.conf`. In fact, this is the reason why the `SecRuleEngine` directive and the rest of [our customizations](https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/embed/coreruleset/tigera.conf#L8-L17) are situated there.
+For basic customizations, it's best to add it after all the includes in `tigera.conf`. In fact, this is the reason why the `SecRuleEngine` directive and the rest of [our customizations](https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/embed/corerule set/tigera.conf#L8-L17) are situated there.
 
 An example is adding a sampling mode. For that, the tigera.conf will look like this:
 
@@ -274,7 +274,7 @@ SecRuleEngine DetectionOnly
 # --- all customisations appear below this line, unless they need a specific loading order like plugins ---
 
 # --- Add sampling mode
-# Read about sampling mode here https://coreruleset.org/docs/concepts/sampling_mode/
+# Read about sampling mode here https://corerule set.org/docs/concepts/sampling_mode/
 SecAction "id:900400,\
   phase:1,\
   pass,\
@@ -316,9 +316,9 @@ SecAction \
 ```
 
 
-##### Using coreruleset plugins
+##### Using corerule set plugins
 
-Let's go with an example plugin: [Wordpress Rule Exclusions](https://github.com/coreruleset/wordpress-rule-exclusions-plugin/).
+Let's go with an example plugin: [Wordpress Rule Exclusions](https://github.com/corerule set/wordpress-rule-exclusions-plugin/).
 
 Plugin files are the following:
 
@@ -340,15 +340,15 @@ and then tigera.conf contents should be:
 ```bash
 Include @coraza.conf-recommended
 
-Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-config.conf
-Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-before.conf
+Include /etc/modsecurity-rule set/wordpress-rule-exclusions-config.conf
+Include /etc/modsecurity-rule set/wordpress-rule-exclusions-before.conf
 
 Include @crs-setup.conf.example
 Include @owasp_crs/*.conf
 
 # if your plugin has an -after.conf, include them here
 # but wordpress rule exclusions doesn't so we're adding a comment placeholder
-# Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-after.conf
+# Include /etc/modsecurity-rule set/wordpress-rule-exclusions-after.conf
 
 SecRuleEngine DetectionOnly
 ```
@@ -361,13 +361,13 @@ kubectl create cm --dry-run=client \
   --from-file=tigera.conf \
   --from-file=wordpress-rule-exclusions-config.conf \
   --from-file=wordpress-rule-exclusions-before.conf \
-  -n tigera-operator modsecurity-ruleset -o yaml  > ruleset.configmap.yaml
+  -n tigera-operator modsecurity-rule set -o yaml  > rule set.configmap.yaml
 
 ## replace active configmap
-kubectl replace -f ruleset.configmap.yaml
+kubectl replace -f rule set.configmap.yaml
 ```
 
-Read more about the order of execution for plugins here: https://coreruleset.org/docs/concepts/plugins/
+Read more about the order of execution for plugins here: https://corerule set.org/docs/concepts/plugins/
 
 ### View WAF events
 
