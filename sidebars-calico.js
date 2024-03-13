@@ -701,12 +701,9 @@ module.exports = {
         'reference/faq',
         'reference/involved',
         {
-          type: 'category',
+          type: 'link',
           label: 'Attributions',
-          link: { type: 'doc', id: 'reference/legal/index' },
-          items: [
-            'reference/legal/projectcalico',
-          ],
+          href: 'pathname:///calico/next/licenses/third-party-attributions.html',
         },
       ],
     },
