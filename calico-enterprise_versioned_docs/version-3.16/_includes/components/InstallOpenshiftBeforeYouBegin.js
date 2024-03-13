@@ -57,7 +57,7 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
         <li>
           <p>
             Cluster meets the {prodname}{' '}
-            <Link href={`${baseUrl}//getting-started/install-on-clusters/openshift/requirements`}>system requirements</Link>
+            <Link href={`${baseUrl}/getting-started/install-on-clusters/openshift/requirements`}>system requirements</Link>
           </p>
         </li>
         <li>
