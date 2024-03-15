@@ -50,6 +50,38 @@ version
 vppbranch
 windowsScriptsURL
 )
+#variables_standard=(
+#baseUrl
+#calicoReleasesURL
+#chart_version_name
+#clouddownloadbase
+#clouddownloadurl
+#cloudoperatorimage
+#cloudversion
+#downloadsurl
+#filesUrl
+#filesUrl_CE
+#imageassuranceversion
+#manifestsUrl
+#manifestsURL
+#nodecontainer
+#noderunning
+#ppa_repo_name
+#prodname
+#prodnameWindows
+#prodnamedash
+#prodnamedashWindows
+#registry
+#releaseTitle
+#rootDirWindows
+#tigeraOperator
+#tigeraOperatorVersionShort
+#tmpScriptsURL
+#tutorialFilesURL
+#version
+#vppbranch
+#windowsScriptsURL
+#)
 
 # The basic find and replace function.
 find_and_replace () {
@@ -106,10 +138,25 @@ global_variables (){
 # Converts fenced code blocks to use component <CodeBlock/>.
 # In MDX3, text inside fenced code blocks is not interpreted.
 # All code blocks that need variable substitution must use the <CodeBlock/> component.
+sequence_code_fences () {
+  regex_sequence="s/(\s*)(\x60\x60\x60)(.+?)(\s*)(\x60\x60\x60)/\$1§§§start\$3\$4§§§end/gs"
+  find_and_replace "$regex_sequence"
+}
+restore_code_fences () {
+  regex_restore="s/(\s*)(§§§start)(.+?)(\s*)(§§§end)/\$1\x60\x60\x60\$3\$4\x60\x60\x60/gs"
+  find_and_replace "$regex_restore"
+}
 convert_fenced_code_blocks () {
-  regex="s/(\s*)(\x60\x60\x60)(\w*?)\n(?=.*?{variables\..*?})(.+?)(\s*)(\x60\x60\x60)/\${1}<CodeBlock language='\${3}'>\n\${4}\${5}<\/CodeBlockpickle>/g"
-  #regex="s/(\s*)(\x60\x60\x60)(\w*?)\n(?=.*{variables.*?\x60\x60\x60})(.+?)(\s*)(\x60\x60\x60)/\${1}<CodeBlock language='\${3}'>\n\${4}\${5}<\/CodeBlockpickle>/g"
-  find_and_replace "$regex"
+  regex_convert="s/(\s*)(§§§start)(\w*?)\n(?=[^§]*?{variables\..*?})(.+?)(\s*)(§§§end)/\${1}<CodeBlock language='\${3}'>\n\${4}\${5}<\/CodeBlockpickle>/gs"
+  sequence_code_fences
+  find_and_replace "$regex_convert"
+  restore_code_fences
+}
+convert_md_links_to_link_component () {
+  find_and_replace "s/\[([^\]]+?)\]\(\{(variables\..+?)\}(.+?)\)/\<Link to=\{\$2 + \'\$3\'\}>\$1\<\/Link>/gs"
+  #find_and_replace "s/\[([^\]]+?)\]\(\{(variables\..+?)\}(.+?)\)/cheesey and \$1 and2 \$2 and3 \$3/gs"
+  #find_and_replace "s/\[([^\]]+?)\]\(\{(variables\..+?)\}(.+?)\)/cheesey/gs"
+  #<Link to={$2 + '$3'}>$1</Link>
 }
 
 # This adds the import line to files that have a <CodeBlock/> component.
@@ -138,59 +185,53 @@ add_import_variables () {
     find "$path" -type f -name "_*.mdx" -exec perl -0777 -pi -e "s/^(?!---)/$import_line\n\n/s" {} +
     #find "$path" -type f -name "_*.mdx" -exec perl -0777 -pi -e "s/^"
 }
-
+add_import_links () {
+  find_and_replace "s/(^---.+?---.+?import variables.+?\n)(.+?<Link)/\$1import Link from \'\@docusaurus\/Link\'\;\n\$2/s"
+  # For reasons I lack the patience to understand, the previous regex sometimes repeated the import line a dozen time on the same line.
+  # This next one puts it back to one import statment for the Link component.
+  #find_and_replace "s/import Link from.+?\n/import Link from \'\@docusaurus\/Link\'\;\n\n/s"
+}
 add_import_statements () {
   for path in "${base_dir[@]}"; do
     add_import_codeblocks "$path"
     add_import_variables "$path"
+    #add_import_links "$path"
     find $path -type f -name "*.mdx" -exec perl -0777 -pi -e "s/;\n\nimport CodeBlock/;\nimport CodeBlock/s" {} +
   done
 }
 
-temp_rm_troublesome_files () {
-  files=(
-  recommended-metrics.mdx
-  projectcalico.mdx
-  )
-  for file in "${files[@]}"; do
-    find . -type f -name "*$file" -exec bash -c 'echo -e "---\ndescription: placeholder\n---\n\n# Placeholder text" > "{}"' \;
-  done
+
+temp_fix_CodeBlocks () {
+  find_and_replace "s/(\<CodeBlock.*?\>)(.+?)(\<\/CodeBlock>)/$1PICKLECODE$2/gs"
 }
 
 # Uncomment for testing
-git restore . && echo "git restore ."
-#
+git restore .
+
+sleep 1
 echo "Converting global variables"
 global_variables
+
 echo "Converting global variables COMPLETE"
-#exit
 echo "Converting fenced code blocks"
 convert_fenced_code_blocks
-#echo "stop"
-#exit
+convert_fenced_code_blocks
 echo "Converting fenced code blocks COMPLETE"
-#
+echo "Converting markdown links with variables to <Link/> component"
+convert_md_links_to_link_component
+echo "Converting markdown links with variables to <Link/> component COMPLETE"
 echo "Adding import statements"
 add_import_statements
+add_import_links
 echo "Adding import statements COMPLETE"
 
-#echo "(You can run the MDX2 checker by uncommenting the final section in the script.))"
-## Check for MDX errors on converted files
-## npx docusaurus-mdx-checker -c calico && echo "Running MDX checker"   # check directory
-## npx docusaurus-mdx-checker && echo "Running MDX checker              # check all
-#sleep 2
-#echo "Have a nice day!"
-
 convert_componentImage_tokens
-#
-## [1] Wraps legit {{ vars }} and <user-supplied> in <Codeblocks/> with {' '}
-#find_and_replace "s/(<CodeBlock.+)(\{\{.+?}})(.+<\/CodeBlock>)/\${1}\{'\${2}'}\${3}/gs"
-#=find_and_replace "s/(<CodeBlock.+)(<your Istio version>)(.+<\/CodeBlock>)/\${1}\{'<your Istio version>'}\${3}/gs"
-#I think this fixes an error in operations/upgrading/kubernetes-upgrade.mdx
+
 find_and_replace "s/<your Istio version>/\{'<your Istio version>'}/gs"
 
-echo "Dealing with troublesome files"
-temp_rm_troublesome_files
+echo "Dealing with CodeBlocks"
+temp_fix_CodeBlocks
+#qtemp_rm_troublesome_files
 #
 #find calico/operations/calicoctl -type f -name "*.mdx" -exec perl -0777 -pi -e "s/(^import CodeBlock.*?$)(.+?)(^import CodeBlock.*?$\n)/$\{1}\${2}\n/gs" {} +
 
@@ -202,5 +243,7 @@ temp_rm_troublesome_files
 ##TODO It's erasing export function build Url'
 ##time npx docusaurus-mdx-checker -c calico; say finished
 #add_import_variables calico
-npx docusaurus-mdx-checker  && echo "Running MDX checker"
+echo "Running MDX checker"
+npx docusaurus-mdx-checker -c calico
+
 exit
