@@ -225,6 +225,50 @@ you must also run `{{imageNames.kubeControllers}}` with the policy, profile, and
 
 When using `type: k8s`, the {{prodname}} CNI plugin requires read-only Kubernetes API access to the `Pods` resource in all namespaces.
 
+### Enabling policy setup timeout
+
+The `policy_setup_timeout_seconds` option makes the {{prodname}} CNI plugin wait to start a new pod until one of the following conditions occurs:
+
+- The pod's policy has finished being programmed.
+- A specified amount of time has elapsed.
+
+By setting this option, you can avoid errors that can occur when a pod tries to start before the pod's policy is programmed.
+
+Example CNI config:
+
+```json
+{
+  "name": "any_name",
+  "cniVersion": "0.1.0",
+  "type": "calico",
+  "ipam": {
+    "type": "calico-ipam",
+    "policy_setup_timeout_seconds": 10
+  }
+}
+```
+
+The {{prodname}} CNI plugin uses {{prodname}}'s `endpoint-status` directory to determine when the dataplane has been programmed for a pod.
+By default, the {{prodname}} CNI plugin will look for the directory at: `/var/run/calico/endpoint-status`.
+To enable and adjust where {{prodname}} writes `endpoint-status`, the `endpointStatusPathPrefix` option must be configured for [Felix](./felix/configuration.mdx).
+
+To adjust where the {{prodname}} CNI plugin looks for {{prodname}}'s `endpoint-status` directory, you must set the `endpoint_status_dir` option.
+
+Example CNI config:
+
+```json
+{
+  "name": "any_name",
+  "cniVersion": "0.1.0",
+  "type": "calico",
+  "ipam": {
+    "type": "calico-ipam",
+    "policy_setup_timeout_seconds": 10,
+    "endpoint_status_dir": "/path/to/endpoint-status"
+  }
+}
+```
+
 ## IPAM
 
 ### Using host-local IPAM
