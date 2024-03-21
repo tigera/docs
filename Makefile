@@ -157,9 +157,9 @@ run-update-cloud-image-list:
 
 # This allow generating the components version for a specific product
 # NOTE: currently only implemented for calico-enterprise; there is validation in the script to check this
-# If you want to use a different product branch from the dafault, specify GIT_VERSION_REF
+# If you want to use a different product branch from the default, specify GIT_VERSION_REF
 # 	e.g. for new versions of v3.18.0-1, GIT_VERSION_REF=3.18-1
-# If you want to use a different doc folder from the dafault, specify DOCS_VERSION_STREAM
+# If you want to use a different doc folder from the default, specify DOCS_VERSION_STREAM
 # 	e.g. for new versions of v3.18.0-2, DOCS_VERSION_STREAM=3.18-2
 # If the version to updates is the latest version for the product, specify IS_LATEST=true
 # 	e.g. if 3,18,1 is the latest version, IS_LATEST=true
