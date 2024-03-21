@@ -8,12 +8,13 @@ title: Microsegmentation
 This guide will walk Kubernetes users how to approach and implement segmenting their environment with network policies to achieve different levels of security granularity, depending on the requirement to segment at a cluster, tenant, namespace or workload level.
 
 ## Overview
-Microsegmentation is a network security technique that allows organizations to divide their networks into smaller segments than might have been secured with legacy firewall approaches that target perimeters. This approach is used to enhance the security and control of a network by limiting communication between different segments which has the benefit of isolating critical workloads, preventing lateral movement of threats, and meeting compliance requirements.
+Calico enables Kubernetes users to segment their environment using network policies. With Calico, richer network policies compared to the Kubernetes standard can be applied from a global to a namespace scope, with ordering, and can protect hosts. This enables users to protect and divide their cluster into smaller segments, and apply network policy at a level of granularity appropriate for the application or environment.
 
-In Kubernetes, this is implemented using network policies that allow for different levels of granularity to secure workloads, applications, namespaces, or clusters. Network policies are the tool of choice for achieving network security over traditional firewalls due to their ability to apply to Kubernetes objects based on label selectors and not IP addresses, which are often dynamic and ephemeral. 
+Traditional or legacy firewall approaches (which Calico can integrate with) may protect the perimeter but do not protect lateral movement within a cluster, and may not have the ability to adequately protect such a dynamic and ephemeral environment as Kubernetes. Applying a segmentation approach enables security and protection of individual workloads, tenants, and namespaces. Network policies are the tool of choice for achieving network security over traditional firewalls due to their ability to apply to Kubernetes objects based on label selectors and not IP addresses.
 
+Microsegmentation has the advantage of scalability. As networks or clusters grow and evolve, identity-aware microsegmentation (Calico has wider support for more selectors) allows for the addition of new segments without disrupting or exposing the existing network infrastructure. 
 
-Microsegmentation has the advantage of scalability. As networks or clusters grow and evolve, identity-aware microsegmentation (leveraging Kubernetes selectors) allows for the addition of new segments without disrupting or exposing the existing network infrastructure.  
+Microsegmentation can be achieved with Project Calico (the open source CNI), however Calico Enterprise and Calico Cloud have a richer set of functionality that makes this easier, including observability tools and policy editors and visualization. 
 
 When organizations need to segment and isolate their Kubernetes environments this is typically done at three different levels: [Workload Isolation](https://www.tigera.io/blog/enabling-microsegmentation-with-calico-enterprise-2/), [Namespace Isolation](https://www.tigera.io/blog/automated-namespace-isolation-with-calico/) and [Tenant Isolation](https://www.tigera.io/blog/deep-dive/implementing-tenant-isolation-in-multi-tenant-kubernetes-clusters/).
 
@@ -51,9 +52,9 @@ If you are a Calico Enterprise or Calico Cloud user there are more features avai
 
 Anyone implementing microsegmentation and zero-trust should first identify all of the security domains that need to be secured. A security domain could be:
 
-**Cluster**: The cluster can be considered a security domain. 
+**Cluster**: The cluster can be regarded as a distinct security domain, as both platform and security teams often implement cluster-wide controls governing egress and ingress. These controls might include restricting egress connectivity to public domains or specifying the trusted sources allowed to send ingress traffic to the cluster. 
 
-**Tenants**: Each tenant can be considered a separate security domain. A tenant may be comprised of a team or individuals that share the same Kubernetes infrastructure. It is a collection of applications or namespaces for which a specific security declaration is enforced.
+**Tenants**: Customers, business units, or teams that share the same Kubernetes infrastructure can be considered as tenants in the cluster. Each tenant is a distinct security domain as tailored controls may have to be applied to isolate tenants and ensure that they meet regulatory requirements such as PCI and HIPAA.
 
 **Namespaces**: Microservices that make up an application are typically organized into a single namespace and can be treated as separate security domains. For example, consider protecting an application from other applications in the cluster or the same tenant.
 
@@ -221,3 +222,5 @@ You can do this by deploying test pods inside different namespaces within the cl
 In Calico Cloud or Calico Enterprise, the policies board will be the first sign of misconfigurations, making it easy to spot policies that are denying traffic or have no endpoints assigned to them.
 
 Additionally, refer to the section on analyzing flows. This will be useful to use logs and observability to identify denied traffic that may need investigation or remediation.
+
+
