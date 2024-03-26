@@ -1,3 +1,25 @@
+## This Makefile includes rules for building the docs site, as well as
+## utility rules for updating the Operator API docs.
+##
+## To build the docs site, these rules are the most interesting:
+##
+## init  - initializes the local environment
+## build - builds the site (implies init)
+## serve - starts a web server to serve the site (implies serve)
+## clean - removes the build artifacts
+##
+## To update the operator docs, these rules are the most interesting:
+##
+## autogen - Automatically detects all branches for Calico, Calico
+##           Enterprise, and Calico Cloud, and updates them one by
+##           one
+## autogen_calico / autogen_enterprise / autogen_cloud
+##         - As above, but only for that category of branch (but all
+##           versions of that branch)
+## show_current_branches
+##         - Outputs all of the branch-related targets that you can
+##           use to update a specific branch's operator docs.
+
 GO_BUILD_VER?=v0.87
 CALICO_BUILD?=calico/go-build:$(GO_BUILD_VER)
 LOCAL_USER_ID?=$(shell id -u $$USER)
@@ -90,6 +112,18 @@ autogen: autogen_calico autogen_enterprise autogen_cloud
 autogen_calico: $(CALICO_BRANCHES)
 autogen_enterprise: $(CALICO_ENT_BRANCHES)
 autogen_cloud: $(CALICO_CLOUD_BRANCHES)
+
+.PHONY: show_current_branches
+show_current_branches:
+	$(info Calico branch targets:)
+	$(foreach CAL_BRANCH,$(CALICO_BRANCHES),$(info * $(CAL_BRANCH)))
+	$(info )
+	$(info Calico enterprise branch targets:)
+	$(foreach CAL_BRANCH,$(CALICO_ENT_BRANCHES),$(info * $(CAL_BRANCH)))
+	$(info )
+	$(info Calico cloud branch targets:)
+	$(foreach CAL_BRANCH,$(CALICO_CLOUD_BRANCHES),$(info * $(CAL_BRANCH)))
+	@true
 
 .PHONY: build-operator-reference
 build-operator-reference:
