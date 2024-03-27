@@ -2,6 +2,9 @@
 description: Limit access to Calico Enterprise metric endpoints using network policy.
 ---
 
+import variables from '@site/calico-enterprise_versioned_docs/version-3.16/variables';
+import CodeBlock from '@theme/CodeBlock';
+
 # Secure Calico Enterprise Prometheus endpoints
 
 ## About securing access to {variables.prodname}'s metrics endpoints
@@ -53,20 +56,20 @@ This example shows how to limit access to the {variables.nodecontainer} Promethe
 
    To do this, create a file named `default-host-policy.yaml` with the following contents.
 
-   ```yaml
+   <CodeBlock language='yaml'>
    apiVersion: projectcalico.org/v3
    kind: GlobalNetworkPolicy
    metadata:
      name: default-host
    spec:
-     # Select all {variables.prodname} nodes.
+     # Select all \{variables.prodname} nodes.
      selector: running-calico == "true"
      order: 5000
      ingress:
        - action: Allow
      egress:
        - action: Allow
-   ```
+   </CodeBlock>
 
    Then, use `kubectl` to apply this policy.
 
@@ -138,7 +141,7 @@ This example shows how to limit access to the {variables.nodecontainer} Promethe
 
    To do this, create a file named `calico-prometheus-policy.yaml` with the following contents.
 
-   ```yaml
+   <CodeBlock language='yaml'>
    # Allow traffic to Prometheus only from sources that are
    # labeled as such, but don't impact any other traffic.
    apiVersion: projectcalico.org/v3
@@ -146,7 +149,7 @@ This example shows how to limit access to the {variables.nodecontainer} Promethe
    metadata:
      name: restrict-calico-node-prometheus
    spec:
-     # Select all {variables.prodname} nodes.
+     # Select all \{variables.prodname} nodes.
      selector: running-calico == "true"
      order: 500
      types:
@@ -161,7 +164,7 @@ This example shows how to limit access to the {variables.nodecontainer} Promethe
          destination:
            ports:
              - 9091
-   ```
+   </CodeBlock>
 
    This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule.
    The ingress rule denies traffic to port 9091 unless the source of traffic has the label `calico-prometheus-access: true`, meaning
@@ -212,7 +215,7 @@ Prometheus endpoints.
 
 After following the steps above, create a file named `typha-prometheus-policy.yaml` with the following contents.
 
-```yaml
+<CodeBlock language='yaml'>
 # Allow traffic to Prometheus only from sources that are
 # labeled as such, but don't impact any other traffic.
 apiVersion: projectcalico.org/v3
@@ -220,7 +223,7 @@ kind: GlobalNetworkPolicy
 metadata:
   name: restrict-calico-node-prometheus
 spec:
-  # Select all {variables.prodname} nodes.
+  # Select all \{variables.prodname} nodes.
   selector: running-calico == "true"
   order: 500
   types:
@@ -235,7 +238,7 @@ spec:
       destination:
         ports:
           - 9093
-```
+</CodeBlock>
 
 This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule.
 The ingress rule denies traffic to port 9093 unless the source of traffic has the label `calico-prometheus-access: true`, meaning
@@ -377,13 +380,13 @@ The basic process is as follows:
 
    To do this, create a file named `calico-prometheus-policy.yaml` with the following contents.
 
-   ```yaml
+   <CodeBlock language='yaml'>
    apiVersion: projectcalico.org/v3
    kind: GlobalNetworkPolicy
    metadata:
      name: restrict-calico-node-prometheus
    spec:
-     # Select all {variables.prodname} nodes.
+     # Select all \{variables.prodname} nodes.
      selector: running-calico == "true"
      order: 500
      types:
@@ -397,7 +400,7 @@ The basic process is as follows:
          destination:
            ports:
              - 9091
-   ```
+   </CodeBlock>
 
    This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule.
    The ingress rule allows traffic to port 9091 from any source with the label `calico-prometheus-access: true`, meaning
@@ -446,13 +449,13 @@ Prometheus endpoints.
 
 After following the steps above, create a file named `typha-prometheus-policy.yaml` with the following contents.
 
-```yaml
+<CodeBlock language='yaml'>
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
   name: restrict-typha-prometheus
 spec:
-  # Select all {variables.prodname} nodes.
+  # Select all \{variables.prodname} nodes.
   selector: running-calico == "true"
   order: 500
   types:
@@ -465,7 +468,7 @@ spec:
       destination:
         ports:
           - 9093
-```
+</CodeBlock>
 
 This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule.
 The ingress rule allows traffic to port 9093 from any source with the label `calico-prometheus-access: true`, meaning
