@@ -1,7 +1,7 @@
-const path = require('path');
+import path from 'path';
 
 function convertToPosixFriendlyPath(maybeWindowsPath) {
   return maybeWindowsPath.split(path.sep).join(path.posix.sep);
 }
 
-module.exports = convertToPosixFriendlyPath;
+export default convertToPosixFriendlyPath;

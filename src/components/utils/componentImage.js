@@ -5,4 +5,4 @@ function componentImage(comp, release) {
   return `${registry}${component.image}:${component.version}`;
 }
 
-module.exports = componentImage;
+export default componentImage;

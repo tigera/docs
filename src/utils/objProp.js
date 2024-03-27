@@ -13,4 +13,4 @@ function objProp(obj, path) {
 	}, obj);
 }
 
-module.exports = objProp;
+export default objProp;

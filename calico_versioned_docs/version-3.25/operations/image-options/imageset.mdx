@@ -2,6 +2,9 @@
 description: Specify the digests for operator to use to deploy images.
 ---
 
+import variables from '@site/calico_versioned_docs/version-3.25/variables';
+import CodeBlock from '@theme/CodeBlock';
+
 # Install images by registry digest
 
 import Tabs from '@theme/Tabs';
@@ -14,7 +17,7 @@ Deploy images by container registry digest for operator installations.
 ## Value
 
 Some deployments have strict security requirements that require deploying images by immutable digest instead of tags.
-Once released, official {{prodname}} images and tags will not be modified. However using an immutable digest allows specific images to be reviewed
+Once released, official {variables.prodname} images and tags will not be modified. However using an immutable digest allows specific images to be reviewed
 and verified by security teams.
 
 ## Concepts
@@ -35,7 +38,7 @@ Container images, when added to a container registry, have a unique hash created
 
 **Required**
 
-- {{prodname}} managed by the operator
+- {variables.prodname} managed by the operator
 - Docker client is configured to pull images from the container registries where images are stored
 - Kubernetes permissions to apply an ImageSet manifest to your cluster
 
@@ -60,10 +63,10 @@ Before applying `tigera-operator.yaml`, modify the operator deployment to use th
 
 Use commands like the following to get the image digest (adjust the image in the commands if you are using a different operator image):
 
-```bash
-docker pull {{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}}
-docker inspect {{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}} -f '{{range .RepoDigests}}{{printf "%s\n" .}}{{end}}'
-```
+<CodeBlock language='bash'>
+docker pull {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version}
+docker inspect {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version} -f '\{\{range .RepoDigests}}\{\{printf "%s\n" .}}\{\{end}}'
+</CodeBlock>
 
 If multiple digests are returned, select the one matching the registry you are using.
 
@@ -77,11 +80,11 @@ sed -ie "s|\(image: .*/operator\):.*|?\1@<put-digest-here>|" tigera-operator.yam
 
 Create an [ImageSet](../../reference/installation/api.mdx#operator.tigera.io/v1.ImageSet) manifest file named `imageset.yaml` like the following:
 
-```yaml
+<CodeBlock language='yaml'>
 apiVersion: operator.tigera.io/v1
 kind: ImageSet
 metadata:
-  name: calico-{{releaseTitle}}
+  name: calico-{variables.releaseTitle}
 spec:
   images:
     - image: 'calico/apiserver'
@@ -102,7 +105,7 @@ spec:
       digest: 'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
     - image: 'tigera/key-cert-provisioner'
       digest: 'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
-```
+</CodeBlock>
 
 You can create an ImageSet manifest manually or by script.
 
@@ -110,18 +113,18 @@ You can create an ImageSet manifest manually or by script.
 <TabItem label="Manual" value="Manual-0">
 
 1. Copy the above example into a file called `imageset.yaml` and edit that file in the steps below.
-1. Set the name for your ImageSet to `calico-<version>` (Example: `calico-{{releaseTitle}}`).
+1. Set the name for your ImageSet to `calico-<version>` (Example: `calico-{variables.releaseTitle}`).
    The version can be obtained by running:
-   ```
-   docker run {{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}} --version
-   ```
+   <CodeBlock language=''>
+   docker run {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version} --version
+   </CodeBlock>
 1. Add the correct digest for each image. If you are using a private registry, ensure you pull the image from the private registry and use the digest associated with the private registry.
 
    1. If using the default images, get a list of them by running:
 
-      ```
-      docker run {{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}} --print-images=list
-      ```
+      <CodeBlock language=''>
+      docker run {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version} --print-images=list
+      </CodeBlock>
 
       :::note
 
@@ -158,12 +161,12 @@ This script will only work if using the default registries and image paths.
 
 :::
 
-```
+<CodeBlock language=''>
 #!/bin/bash -e
 
 images=(calico/apiserver calico/cni calico/kube-controllers calico/node calico/typha calico/pod2daemon-flexvol calico/windows-upgrade tigera/key-cert-provisioner tigera/operator)
 
-OPERATOR_IMAGE={{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}}
+OPERATOR_IMAGE={variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version}
 echo "Pulling $OPERATOR_IMAGE"
 echo
 docker pull $OPERATOR_IMAGE -q >/dev/null
@@ -172,7 +175,7 @@ ver=$(echo -e "$versions" | grep 'Calico:')
 
 imagelist=($(docker run $OPERATOR_IMAGE --print-images=list))
 
-cat > ./imageset.yaml <<EOF
+cat > ./imageset.yaml \<\<EOF
 apiVersion: operator.tigera.io/v1
 kind: ImageSet
 metadata:
@@ -181,10 +184,10 @@ spec:
   images:
 EOF
 
-for x in "${imagelist[@]}"; do
-  for y in ${images[*]}; do
+for x in "$\{imagelist[@]}"; do
+  for y in $\{images[*]}; do
     if [[ $x =~ $y: ]]; then
-      digest=$(docker run --rm gcr.io/go-containerregistry/crane:v0.7.0 digest ${x})
+      digest=$(docker run --rm gcr.io/go-containerregistry/crane:v0.7.0 digest $\{x})
       echo "Adding digest for $x"
       echo
       echo "  - image: \"$(echo $x | sed -e 's|^.*/\([^/]*/[^/]*\):.*$|\1|')\"" >> ./imageset.yaml
@@ -192,7 +195,7 @@ for x in "${imagelist[@]}"; do
     fi
   done
 done
-```
+</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -214,9 +217,9 @@ Apply the created `imageset.yaml` to your cluster.
    kubectl get installation default -o yaml | grep imageSet
    ```
    You should see output similar to:
-   ```
-       imageSet: calico-{{releaseTitle}}
-   ```
+   <CodeBlock language=''>
+       imageSet: calico-{variables.releaseTitle}
+   </CodeBlock>
 
 ## Other tasks
 
