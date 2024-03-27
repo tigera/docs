@@ -87,7 +87,7 @@ routers and Linux kernel need to be configured for efficient ECMP.
 
 ### Calico's early networking architecture
 
-{{prodname}}'s {variables.nodecontainer} image can be run in an "early networking" mode,
+{variables.prodname}'s {variables.nodecontainer} image can be run in an "early networking" mode,
 on each node, to perform all of the above points that are needed before Kubernetes starts
 running. That means that it:
 
@@ -247,7 +247,7 @@ longer matters if there is any other programming of the true default route on th
 - [Prepare YAML resources describing the layout of your cluster](#prepare-yaml-resources-describing-the-layout-of-your-cluster)
 - [Arrange for dual-homed nodes to run {variables.nodecontainer} on each boot](#arrange-for-dual-homed-nodes-to-run-cnx-node-on-each-boot)
 - [Configure your ToR routers and infrastructure](#configure-your-tor-routers-and-infrastructure)
-- [Install Kubernetes and {{prodname}}](#install-kubernetes-and-calico-enterprise)
+- [Install Kubernetes and {variables.prodname}](#install-kubernetes-and-calico-enterprise)
 - [Verify the deployment](#verify-the-deployment)
 
 ### Prepare YAML resources describing the layout of your cluster
@@ -300,7 +300,7 @@ longer matters if there is any other programming of the true default route on th
 
       :::note
 
-      {{prodname}} only supports BFD on directly connected peerings, but
+      {variables.prodname} only supports BFD on directly connected peerings, but
       in practice nodes are normally directly connected to their ToRs.
 
       :::
@@ -324,7 +324,7 @@ longer matters if there is any other programming of the true default route on th
       add itself as the BGP next hop (aka "next hop self") when forwarding routes from
       outside the rack. If your ToRs can be configured to do that, fine.
       If they cannot, an effective workaround is to configure the ToRs to do "next hop
-      keep" for all routes, with "gateway direct" on the {{prodname}} nodes. In
+      keep" for all routes, with "gateway direct" on the {variables.prodname} nodes. In
       effect the “gateway direct” applies a “next hop self” when needed, but otherwise
       not.
 
@@ -362,9 +362,9 @@ longer matters if there is any other programming of the true default route on th
 
     :::note
 
-    These IPPool definitions tell {{prodname}}'s BGP component to export
+    These IPPool definitions tell {variables.prodname}'s BGP component to export
     routes within the given CIDRs, which is essential for the core BGP infrastructure to
-    learn how to route to each stable address. `disabled: true` tells {{prodname}}
+    learn how to route to each stable address. `disabled: true` tells {variables.prodname}
     _not_ to use these CIDRs for pod IPs.
 
     :::
@@ -479,7 +479,7 @@ resources after successful startup.
 
 ### Arrange for dual-homed nodes to run {variables.nodecontainer} on each boot
 
-{{prodname}}'s {variables.nodecontainer} image normally runs as a Kubernetes pod, but
+{variables.prodname}'s {variables.nodecontainer} image normally runs as a Kubernetes pod, but
 for dual ToR setup it must also run as a container after each boot of a dual-homed node.
 For example:
 
@@ -562,21 +562,21 @@ whatever API the platform provides to define and enable services on new nodes.
 ### Configure your ToR routers and infrastructure
 
 You should configure your ToR routers to accept all the BGP peerings from
-{{prodname}} nodes, to reflect routes between the nodes in that rack, and to
+{variables.prodname} nodes, to reflect routes between the nodes in that rack, and to
 propagate routes between the ToR routers in different racks. In addition we recommend
 consideration of the following points.
 
-BFD should be enabled if possible on all BGP sessions - both to the {{prodname}}
+BFD should be enabled if possible on all BGP sessions - both to the {variables.prodname}
 nodes, and between racks in your core infrastructure - so that a break in connectivity
 anywhere can be rapidly detected. The handling should be to initiate LLGR procedures if
 possible, or else terminate the BGP session non-gracefully.
 
 LLGR should be enabled if possible on all BGP sessions - again, both to the
-{{prodname}} nodes, and between racks in your core infrastructure. Traditional BGP
+{variables.prodname} nodes, and between racks in your core infrastructure. Traditional BGP
 graceful restart should not be used, because this will delay the cluster's response to a
 break in one of the connectivity planes.
 
-### Install Kubernetes and {{prodname}}
+### Install Kubernetes and {variables.prodname}
 
 Details here vary, depending on **when** your Kubernetes installer gives an opportunity
 for you to define custom resources, but fundamentally what is needed here is to perform
@@ -607,7 +607,7 @@ resources.
 
 Also use `kubectl` to install the "bgp-layout" ConfigMap.
 
-Now continue with the {{prodname}} install process, and you should observe each node
+Now continue with the {variables.prodname} install process, and you should observe each node
 establishing BGP sessions with its ToRs.
 
 ### Verify the deployment
@@ -634,7 +634,7 @@ The only connections using interface-specific addresses should be BGP.
 If you plan to use [Egress Gateways](../egress/egress-gateway-on-prem.mdx) in your cluster, you must also adjust the {variables.nodecontainer} IP
 auto-detection method to pick up the stable IP, for example using the `interface: lo` setting
 (The default first-found setting skips over the lo interface). This can be configured via the
-{{prodname}} [Installation resource](../../reference/installation/api.mdx#operator.tigera.io/v1.NodeAddressAutodetection).
+{variables.prodname} [Installation resource](../../reference/installation/api.mdx#operator.tigera.io/v1.NodeAddressAutodetection).
 
 :::
 
