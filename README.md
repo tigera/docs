@@ -18,12 +18,13 @@ Or
 * yarn `npm install -g yarn`
 * Fork and clone our docs repo <https://github.com/tigera/docs>
 
-## Local Development
+## Local development
 
 ```bash
 make start 
 ```
-or 
+or
+
 ```bash
 make start CONTAINERIZED=true
 ```
@@ -31,7 +32,7 @@ make start CONTAINERIZED=true
 This command starts a local development server on http://localhost:3000. Most changes are reflected live without
 having to restart the server. This build is faster, but does not produce all the warnings and errors of a full build.
 
-## Full Build & Serve
+## Full build and serve
 
 ```bash
 make build
@@ -46,6 +47,20 @@ make serve CONTAINERIZED=true
 This command generates static content into the `build` directory and can be served using any static content hosting
 service. This is a full build which is exactly what Netlify runs to build the site, therefore, you will get more
 warning and error output. If you are trying to reproduce an error on Netlify, this is a great place to start.
+
+## Building the site with unreleased docs versions
+
+In production, we don't build or publish unreleased doc sets.
+If you'd like to preview changes to those versions locally, you can run the following commands:
+
+```bash
+make serve-next
+```
+
+```bash
+make build-next
+make serve
+```
 
 # Updating the Operator API docs
 
