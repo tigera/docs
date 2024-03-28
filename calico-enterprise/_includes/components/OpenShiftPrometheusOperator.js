@@ -23,14 +23,6 @@ export default function OpenShiftPrometheusOperator(props) {
         {props.operation === 'install'
             ? <CodeBlock language='bash'>oc create -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>
             : <CodeBlock language='bash'>oc apply -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>}
-      <p>
-        Create the pull secret in the <code>tigera-prometheus</code> namespace and then patch the Prometheus operator
-        deployment. Use the image pull secret provided to you by Tigera support representative.
-      </p>
-      <CodeBlock language='bash'>
-        {`${notOSCodeBlock}oc patch deployment -n tigera-prometheus calico-prometheus-operator \\
-    -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'`}
-      </CodeBlock>
     </>
   );
 }
