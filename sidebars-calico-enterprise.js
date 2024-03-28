@@ -794,6 +794,7 @@ module.exports = {
           link: {type: 'doc', id: 'reference/component-resources/index'},
           items: [
             'reference/component-resources/configuration',
+            'reference/component-resources/configure-resources',
             {
               type: 'category',
               label: 'Calico Enterprise Kubernetes controllers',
