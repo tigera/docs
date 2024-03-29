@@ -51,17 +51,6 @@ export default function InstallGeneric(props) {
   --type=kubernetes.io/dockerconfigjson -n tigera-operator \\
   --from-file=.dockerconfigjson=<path/to/pull/secret>`}
           </CodeBlock>
-          <p>
-            For the Prometheus operator, create the pull secret in the <code>tigera-prometheus</code> namespace and then
-            patch the deployment.
-          </p>
-          <CodeBlock>
-            {`kubectl create secret generic tigera-pull-secret \\
-  --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \\
-  --from-file=.dockerconfigjson=<path/to/pull/secret>
-kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
-  -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'`}
-          </CodeBlock>
         </li>
         <li>
           (Optional) If your cluster architecture requires any custom{' '}
