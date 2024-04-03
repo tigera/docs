@@ -9,7 +9,7 @@ description: Configure Resource requests and limits.
 Resource requests and limits are essential configurations for managing resource allocation and ensuring optimal performance of Kubernetes workloads. In {{prodname}}, these configurations can be customized using custom resources to meet specific requirements and optimize resource utilization.
 
 :::note
-It's important to note that the CPU and memory values used in the examples are for demonstration purposes and should be adjusted based on individual system requirements.
+It's important to note that the CPU and memory values used in the examples are for demonstration purposes and should be adjusted based on individual system requirements. To find the list of all applicable containers for a component, please refer to its specification.
 :::
 
 ## APIServer custom resource
@@ -499,6 +499,57 @@ This command will output the configured resource requests and limits for the Cal
 }
 
 ```
+
+### CSINodeDriverDaemonSet
+
+To configure resource requests for the [CSINodeDriverDaemonSet](../../reference/installation/api.mdx#operator.tigera.io/v1.CSINodeDriverDaemonSet) component, patch the installation CR using the below command:
+
+```bash
+$ kubectl patch installations default --type=merge --patch='{"spec": {"csiNodeDriverDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"calico-csi","resources":{"requests":{"cpu":"100m", "memory":"100Mi"}, "limits":{"cpu":"1", "memory":"1000Mi"}}},{"name":"csi-node-driver-registrar","resources":{"requests":{"cpu":"50m", "memory":"50Mi"}, "limits":{"cpu":"1", "memory":"1000Mi"}}}]}}}}}}'
+installation.operator.tigera.io/default patched
+```
+This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
+
+#### Verification
+
+You can verify the configured resources using the following command:
+
+```bash
+$ kubectl get daemonset.apps/csi-node-driver -n calico-system -o json | jq '.spec.template.spec.containers[]| {name:.name,resources:.resources}'
+```
+
+This command will output the configured resource requests and limits for the Calico calicoNodeDaemonSet component in JSON format.
+
+```bash
+{
+  "name": "calico-csi",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
+  }
+}
+{
+  "name": "csi-node-driver-registrar",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "50m",
+      "memory": "50Mi"
+    }
+  }
+}
+```
+
+
 
 ## IntrusionDetection custom resource
 
