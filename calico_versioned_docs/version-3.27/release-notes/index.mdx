@@ -66,6 +66,11 @@ For more information, see [Selector performance in EntityRules](../reference/res
  - eBPF: kube-proxy ServiceInternalTrafficPolicy is now GA and setting the gate would generate a warning message. [calico #8242](https://github.com/projectcalico/calico/pull/8242) (@tomastigera)
  - eBPF: fixed policy cleanup after felix restart if a device is not present anymore [calico #8231](https://github.com/projectcalico/calico/pull/8231) (@fasaxc)
 
+## Deprecated and removed features
+
+* In {{prodname}} 3.27, the Felix configuration parameter `BPFConnectTimeLoadBalancingEnabled` is deprecated and is planned to be removed in a future release.
+  As an alternative, you can use the `bpfConnectTimeLoadBalancing` and `BPFHostNetworkedNATWithoutCTLB` configuration parameters.
+
 ## Technology preview features
 
 ### IPv6 support for eBPF
@@ -97,10 +102,16 @@ For more information, see [Enable the eBPF data plane](../operations/ebpf/enabli
  - eBPF: handles IPv4 packets with IP options. XDP only does so in kernels 5.18+ it drops them in older kernels. [calico #7701](https://github.com/projectcalico/calico/pull/7701) (@tomastigera)
  - eBPF - only report errors setting /proc/sys/net/../accept_local etc. if the device is present [calico #7631](https://github.com/projectcalico/calico/pull/7631) (@tomastigera)
 
+## Known issues
+
+- Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim.
+
+   Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.)
+
+    Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned".
+
 <!--
 ## Security fixes
-
-## Known issues
 -->
 
 ## Release details
@@ -111,17 +122,57 @@ December 18, 2023
 
 Calico Open Source release 3.27.0 is now generally available.
 
-<!--
-### Calico Open Source 3.18.1 bux fix update
+### Calico Open Source 3.27.2 bug fix release
 
-DD M YYYY
+February 17, 2024
 
 #### Enhancements
 
+ - ebpf: alternative cgroup2 mount path can be specified by setting CALICO_CGROUP_PATH env var for node. [calico #8512](https://github.com/projectcalico/calico/pull/8512) (@tomastigera)
+ - Host MTU auto-detection now ignores interfaces that are down. [calico #8499](https://github.com/projectcalico/calico/pull/8499) (@fasaxc)
+ - Bump iptables version of calico-node to 1.8.8 [calico #8485](https://github.com/projectcalico/calico/pull/8485) (@coutinhop)
+ - Fix crypto UT after upgrading to golang v1.21.6 [calico #8478](https://github.com/projectcalico/calico/pull/8478) (@hjiawei)
+ - ebpf: setting BPFExcludeIPsFromNAT allows node-local dns cache to work [calico #8473](https://github.com/projectcalico/calico/pull/8473) (@tomastigera)
+ - Update runc [calico #8471](https://github.com/projectcalico/calico/pull/8471) (@Behnam-Shobiri)
+ - Enable CGO for arm64 when building felix and node [calico #8470](https://github.com/projectcalico/calico/pull/8470) (@hjiawei)
+ - ebpf: align defaultEndpointToHostAction with iptables - do not apply normal *-hep policy to wep [calico #8459](https://github.com/projectcalico/calico/pull/8459) (@tomastigera)
+ - Felix now avoids accessing non-Calico IP sets. This reduces the scope for IP set compatibility errors when another app has created an IP set that Calico's version of IP set can't parse. [calico #8412](https://github.com/projectcalico/calico/pull/8412) (@mazdakn)
+ - Remove spammy BIRD log about ignoring DOWN interfaces [calico #8401](https://github.com/projectcalico/calico/pull/8401) (@lbogdan)
+ - Skip apiserver etcd3 healthcheck and disable profiling [calico #8396](https://github.com/projectcalico/calico/pull/8396) (@hjiawei)
+
 #### Bug fixes
+
+ - Added retry mechanism to Windows version retrieval in install-cni to address possible panics when the OS is not ready. [calico #8466](https://github.com/projectcalico/calico/pull/8466) (@coutinhop)
+ - ebpf: fixes possible holes in the list NAT backends if there is a terminating pod. [calico #8460](https://github.com/projectcalico/calico/pull/8460) (@tomastigera)
+ - ebpf: fixed pods in nat-outgoing should not SNAT when accessing local host [calico #8458](https://github.com/projectcalico/calico/pull/8458) (@tomastigera)
+ - ebpf: fixed leakage of nodeport healthcheck servers [calico #8457](https://github.com/projectcalico/calico/pull/8457) (@tomastigera)
+ - ebpf: don't stumble on unknown prog types passed as int in json [calico #8456](https://github.com/projectcalico/calico/pull/8456) (@tomastigera)
+ - Only program failsafe rules for IP version of the CIDR [calico #8455](https://github.com/projectcalico/calico/pull/8455) (@tomastigera)
+ - Fix confd issues when running on Windows operator installations (using HPC). [calico #8422](https://github.com/projectcalico/calico/pull/8422) (@coutinhop)
 
 #### How to update
 
-To update an existing installation of Calico Enterprise 3.18, see .
+To update an existing installation of Calico Open Source 3.27, see [the upgrade guides](../operations/upgrading/index.mdx).
 
--->
+
+### Calico Open Source 3.27.3 bug fix release
+
+April 02, 2024
+
+#### Bug fixes
+
+* Fix CVE-2023-48795: bump crypto package to 0.19.0 [calico #8639](https://github.com/projectcalico/calico/pull/8639) (@cyclinder)
+* ebpf: Update map definitions in programs used in iptables mode to let libbpf v1.0+ load them successfully. [calico #8624](https://github.com/projectcalico/calico/pull/8624) (@mazdakn)
+* Route reflector nodes now properly advertise Service LoadBalancer IP addresses even if there is no local endpoint on the node. [calico #8593](https://github.com/projectcalico/calico/pull/8593) (@AMacedoP)
+* ebpf: host can access self via a service without CTLB [calico #8588](https://github.com/projectcalico/calico/pull/8588) (@tomastigera)
+* Add running of token refresher to Calico for Windows. [calico #8571](https://github.com/projectcalico/calico/pull/8571) (@coutinhop)
+* Fix tigera-operator Helm chart missing RBAC for uninstall job [calico #8547](https://github.com/projectcalico/calico/pull/8547) (@sridhartigera)
+* Fix libpcap.so.0.8 missing on arm64 [calico #8533](https://github.com/projectcalico/calico/pull/8533) (@hjiawei)
+* Fix missing libresolv.so in node-driver-registrar [calico #8516](https://github.com/projectcalico/calico/pull/8516) (@hjiawei)
+
+#### Other changes
+* Update Flannel to v1.2.0-flannel2-go1.21.8 [calico #8661](https://github.com/projectcalico/calico/pull/8661)] (@coutinhop)
+
+#### How to update
+
+To update an existing installation of Calico Open Source 3.27, see [the upgrade guides](../operations/upgrading/index.mdx).

@@ -1,5 +1,5 @@
 import React from 'react';
-import { When } from 'react-if';
+import {Else, If, Then, When} from 'react-if';
 
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
@@ -115,19 +115,47 @@ kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
         </When>
 
         <When condition={props.upgradeFrom === 'OpenSource'}>
-          <li>
-            <p>
-              Install the Tigera custom resources. For more information on configuration options available in this
-              manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
-            </p>
-            <CodeBlock language='bash'>
-              {props.provider === 'EKS'
-                ? `kubectl apply -f ${filesUrl}/manifests/eks/custom-resources-upgrade-from-calico.yaml`
-                : props.provider === 'AKS'
-                ? `kubectl apply -f ${filesUrl}/manifests/aks/custom-resources-upgrade-from-calico.yaml`
-                : `kubectl apply -f ${filesUrl}/manifests/custom-resources-upgrade-from-calico.yaml`}
-            </CodeBlock>
-          </li>
+          <If condition={props.provider === 'AKS'}>
+            <Then>
+              <li>
+                <p>Download the custom resources manifest.</p>
+                <CodeBlock language='bash'>
+                  curl -L -o custom-resources.yaml {filesUrl}/manifests/aks/custom-resources-upgrade-from-calico.yaml
+                </CodeBlock>
+              </li>
+
+              <li>
+                <p>
+                  If you are{' '}
+                  <Link href={`${baseUrl}/getting-started/install-on-clusters/private-registry`}>
+                    installing using a private registry
+                  </Link>
+                  , you will need to update the manifest downloaded in the previous step. Update the <code>spec.registry</code>, <code>spec.imagePath</code>, and <code>spec.imagePrefix</code> fields of the installation resource with the registry name, image path, and image prefix of your private registry.
+                </p>
+              </li>
+
+              <li>
+                <p>
+                  Apply the Tigera custom resources manifest. For more information on configuration options available in this
+                  manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
+                </p>
+                <CodeBlock language='bash'>kubectl apply -f custom-resources.yaml</CodeBlock>
+              </li>
+            </Then>
+            <Else>
+              <li>
+                <p>
+                  Install the Tigera custom resources. For more information on configuration options available in this
+                  manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
+                </p>
+                <CodeBlock language='bash'>
+                  {props.provider === 'EKS'
+                      ? `kubectl apply -f ${filesUrl}/manifests/eks/custom-resources-upgrade-from-calico.yaml`
+                      : `kubectl apply -f ${filesUrl}/manifests/custom-resources-upgrade-from-calico.yaml`}
+                </CodeBlock>
+              </li>
+            </Else>
+          </If>
         </When>
 
         <When condition={props.upgradeFrom !== 'OpenSource'}>

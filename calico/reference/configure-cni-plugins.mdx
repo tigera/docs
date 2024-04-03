@@ -191,7 +191,7 @@ Example CNI config:
 
 ## Kubernetes specific
 
-When using the {{prodname}} CNI plugin with Kubernetes, the plugin must be able to access the Kubernetes API server in order to find the labels assigned to the Kubernetes pods. The recommended way to configure access is through a `kubeconfig` file specified in the `kubernetes` section of the network config. e.g.
+When using the {{prodname}} CNI plugin with Kubernetes, the plugin must be able to access the Kubernetes API server to find the labels assigned to the Kubernetes pods. The recommended way to configure access is through a `kubeconfig` file specified in the `kubernetes` section of the network config. e.g.
 
 ```json
 {
@@ -248,6 +248,52 @@ you must also run calico/kube-controllers with the policy, profile, and workload
 
 When using `type: k8s`, the {{prodname}} CNI plugin requires read-only Kubernetes API access to the `Pods` resource in all namespaces.
 
+
+### Enabling policy setup timeout
+
+The `policy_setup_timeout_seconds` option makes the {{prodname}} CNI plugin wait to start a new pod until one of the following conditions occurs:
+
+- The pod's policy has finished being programmed.
+- A specified amount of time has elapsed.
+
+By setting this option, you can avoid errors that can occur when a pod tries to start before the pod's policy is programmed.
+
+Example CNI config:
+
+```json
+{
+  "name": "any_name",
+  "cniVersion": "0.1.0",
+  "type": "calico",
+  "ipam": {
+    "type": "calico-ipam",
+    "policy_setup_timeout_seconds": 10
+  }
+}
+```
+
+The {{prodname}} CNI plugin uses {{prodname}}'s `endpoint-status` directory to determine when the dataplane has been programmed for a pod.
+By default, the {{prodname}} CNI plugin will look for the directory at: `/var/run/calico/endpoint-status`.
+To enable and adjust where {{prodname}} writes `endpoint-status`, the `endpointStatusPathPrefix` option must be configured for [Felix](./felix/configuration.mdx).
+
+To adjust where the {{prodname}} CNI plugin looks for {{prodname}}'s `endpoint-status` directory, you must set the `endpoint_status_dir` option.
+
+Example CNI config:
+
+```json
+{
+  "name": "any_name",
+  "cniVersion": "0.1.0",
+  "type": "calico",
+  "ipam": {
+    "type": "calico-ipam",
+    "policy_setup_timeout_seconds": 10,
+    "endpoint_status_dir": "/path/to/endpoint-status"
+  }
+}
+```
+
+
 ## IPAM
 
 ### Using host-local IPAM
@@ -257,7 +303,7 @@ local IPAM uses a pre-determined CIDR per-host, and stores allocations locally o
 allocates blocks of addresses and single addresses alike in response to cluster needs.
 
 Host local IPAM is generally only used on clusters where integration with the Kubernetes [route controller](https://kubernetes.io/docs/concepts/architecture/cloud-controller/#route-controller) is necessary.
-Note that some Calico features - such as the ability to request a specific address or pool for a pod - require Calico IPAM in order to function, and will not work with host-local IPAM enabled.
+Note that some Calico features - such as the ability to request a specific address or pool for a pod - require Calico IPAM to function, and will not work with host-local IPAM enabled.
 
 <Tabs>
 <TabItem label="Operator" value="Operator-0">
@@ -478,8 +524,8 @@ The specified address must belong to an IP Pool for advertisement to work proper
 
 Nodes will only assign workload addresses from IP pools which select them. By
 default, IP pools select all nodes, but this can be configured using the
-`nodeSelector` field. Check out the [IP pool resource
-document](resources/ippool.mdx)
+`nodeSelector` field. Check out the [IP pool resource document](resources/ippool.mdx)
+
 for more details.
 
 Example:
@@ -507,8 +553,8 @@ Example:
    kubectl label nodes kube-node-0 rack=0
    ```
 
-Check out the usage guide on [assign IP addresses based on
-topology](../networking/ipam/assign-ip-addresses-topology.mdx)
+Check out the usage guide on [assign IP addresses based on topology](../networking/ipam/assign-ip-addresses-topology.mdx)
+
 for a full example.
 
 ### CNI network configuration lists

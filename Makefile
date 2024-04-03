@@ -1,3 +1,25 @@
+## This Makefile includes rules for building the docs site, as well as
+## utility rules for updating the Operator API docs.
+##
+## To build the docs site, these rules are the most interesting:
+##
+## init  - initializes the local environment
+## build - builds the site (implies init)
+## serve - starts a web server to serve the site (implies serve)
+## clean - removes the build artifacts
+##
+## To update the operator docs, these rules are the most interesting:
+##
+## autogen - Automatically detects all branches for Calico, Calico
+##           Enterprise, and Calico Cloud, and updates them one by
+##           one
+## autogen_calico / autogen_enterprise / autogen_cloud
+##         - As above, but only for that category of branch (but all
+##           versions of that branch)
+## show_current_branches
+##         - Outputs all of the branch-related targets that you can
+##           use to update a specific branch's operator docs.
+
 GO_BUILD_VER?=v0.87
 CALICO_BUILD?=calico/go-build:$(GO_BUILD_VER)
 LOCAL_USER_ID?=$(shell id -u $$USER)
@@ -59,7 +81,7 @@ serve: build
 full: clean build
 
 .PHONY: netlify
-netlify: build run-update-cloud-image-list test
+netlify: build test
 
 .PHONY: all
 all: full test
@@ -90,6 +112,18 @@ autogen: autogen_calico autogen_enterprise autogen_cloud
 autogen_calico: $(CALICO_BRANCHES)
 autogen_enterprise: $(CALICO_ENT_BRANCHES)
 autogen_cloud: $(CALICO_CLOUD_BRANCHES)
+
+.PHONY: show_current_branches
+show_current_branches:
+	$(info Calico branch targets:)
+	$(foreach CAL_BRANCH,$(CALICO_BRANCHES),$(info * $(CAL_BRANCH)))
+	$(info )
+	$(info Calico enterprise branch targets:)
+	$(foreach CAL_BRANCH,$(CALICO_ENT_BRANCHES),$(info * $(CAL_BRANCH)))
+	$(info )
+	$(info Calico cloud branch targets:)
+	$(foreach CAL_BRANCH,$(CALICO_CLOUD_BRANCHES),$(info * $(CAL_BRANCH)))
+	@true
 
 .PHONY: build-operator-reference
 build-operator-reference:
@@ -146,6 +180,7 @@ update-cloud-image-list:
 	sed -i -e "/^\$$INSTALLER_IMAGE/r image-list" $(PRODUCT)/get-started/connect/setup-private-registry.mdx
 	rm -f image-list
 
+# Add this back to the netlify target when the missing windows images are addressed in the image-list
 run-update-cloud-image-list:
 	RUN_UPDATE_CLOUD_IMAGE_LIST=1 PRODUCT=calico-cloud make update-cloud-image-list
 	for x in $$(ls calico-cloud_versioned_docs/); do \
@@ -153,3 +188,63 @@ run-update-cloud-image-list:
 	done
 	@if [ "$$(git diff --stat ./calico-cloud*/**/get-started/connect/setup-private-registry.mdx)" != "" ]; then \
 	echo "You might need to run 'make run-update-cloud-image-list' and commit the changes"; exit 1; fi
+
+# This allow generating the components version for a specific product
+# NOTE: currently only implemented for calico-enterprise; there is validation in the script to check this
+# If you want to use a different product branch from the default, specify GIT_VERSION_REF
+# 	e.g. for new versions of v3.18.0-1, GIT_VERSION_REF=3.18-1
+# If you want to use a different doc folder from the default, specify DOCS_VERSION_STREAM
+# 	e.g. for new versions of v3.18.0-2, DOCS_VERSION_STREAM=3.18-2
+# If the version to updates is the latest version for the product, specify IS_LATEST=true
+# 	e.g. if 3,18,1 is the latest version, IS_LATEST=true
+version/autogen:
+	$(if $(GITHUB_TOKEN),,$(error GITHUB_TOKEN is not set or empty, but is required))
+	$(if $(PRODUCT),,$(error PRODUCT is not set or empty, but is required))
+	$(if $(VERSION),,$(error VERSION is not set or empty, but is required))
+	./scripts/update-component-versions.sh
+
+# Call the github API. $(1) is the http method type for the https request, $(2) is the repo slug, and is $(3) is for json
+# data (if omitted then no data is set for the request). If GITHUB_API_EXIT_ON_FAILURE is set then the macro exits with 1
+# on failure. On success, the ENV variable GITHUB_API_RESPONSE will contain the response from github
+define github_call_api
+	$(eval CMD := curl -f -X$(1) \
+		-H "Content-Type: application/json"\
+		-H "Authorization: token ${GITHUB_TOKEN}"\
+		https://api.github.com/repos/$(2) $(if $(3),--data '$(3)',))
+	$(eval GITHUB_API_RESPONSE := $(shell $(CMD) | sed -e 's/#/\\\#/g'))
+	$(if $(GITHUB_API_EXIT_ON_FAILURE), $(if $(GITHUB_API_RESPONSE),,exit 1),)
+endef
+
+# Create the pull request. $(1) is the repo slug, $(2) is the title, $(3) is the head branch and $(4) is the base branch.
+# If the call was successful then the ENV variable PR_NUMBER will contain the pull request number of the created pull request.
+define github_pr_create
+	$(eval JSON := {"title": "$(2)", "head": "$(3)", "base": "$(4)"})
+	$(call github_call_api,POST,$(1)/pulls,$(JSON))
+	$(eval PR_NUMBER := $(filter-out null,$(shell echo '$(GITHUB_API_RESPONSE)' | jq '.number')))
+endef
+
+release-prep: version/autogen autogen_$(lastword $(subst -, ,$(PRODUCT)))
+	$(MAKE) release-prep/create-and-push-branch
+
+GIT_REMOTE?=origin
+ifneq ($(if $(GIT_REPO_SLUG),$(shell dirname $(GIT_REPO_SLUG)),), $(shell dirname `git config remote.$(GIT_REMOTE).url | cut -d: -f2`))
+GIT_FORK_USER:=$(shell dirname `git config remote.$(GIT_REMOTE).url | cut -d: -f2`)
+endif
+GIT_PR_BRANCH_BASE?=$(if $(SEMAPHORE),$(SEMAPHORE_GIT_BRANCH),)
+GIT_REPO_SLUG?=$(if $(SEMAPHORE),$(SEMAPHORE_GIT_REPO_SLUG),)
+RELEASE_UPDATE_BRANCH?=$(if $(SEMAPHORE),semaphore-,)auto-build-updates-$(PRODUCT)-$(VERSION)
+GIT_PR_BRANCH_HEAD?=$(if $(GIT_FORK_USER),$(GIT_FORK_USER):$(RELEASE_UPDATE_BRANCH),$(RELEASE_UPDATE_BRANCH))
+release-prep/create-and-push-branch:
+ifeq ($(shell git rev-parse --abbrev-ref HEAD),$(RELEASE_UPDATE_BRANCH))
+	$(error Current branch is pull request head, cannot set it up.)
+endif
+	-git branch -D $(RELEASE_UPDATE_BRANCH)
+	-git push $(GIT_REMOTE) --delete $(RELEASE_UPDATE_BRANCH)
+	git checkout -b $(RELEASE_UPDATE_BRANCH)
+	git add $(PRODUCT)*/\*_api.mdx $(PRODUCT)*/\*releases.json
+	git commit -m "Automatic updates for $(PRODUCT) $(VERSION) release"
+	$(GIT) push $(GIT_REMOTE) $(RELEASE_UPDATE_BRANCH)
+
+release-prep/create-pr:
+	$(call github_pr_create,$(GIT_REPO_SLUG),[$(GIT_PR_BRANCH_BASE)] $(if $(SEMAPHORE), Semaphore,) Auto Release Update for $(PRODUCT) $(VERSION),$(GIT_PR_BRANCH_HEAD),$(GIT_PR_BRANCH_BASE))
+	echo 'Created release update pull request for $(VERSION): $(PR_NUMBER)'

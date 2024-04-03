@@ -506,6 +506,7 @@ module.exports = {
           id: 'reference/installation/api',
           label: 'Installation API',
         },
+        'reference/installation/helm_customization',
         // TODO: 'Installation' category needs to be collapsed into single Operator API page
         {
           type: 'category',
@@ -700,12 +701,9 @@ module.exports = {
         'reference/faq',
         'reference/involved',
         {
-          type: 'category',
+          type: 'link',
           label: 'Attributions',
-          link: { type: 'doc', id: 'reference/legal/index' },
-          items: [
-            'reference/legal/projectcalico',
-          ],
+          href: 'pathname:///calico/next/licenses/third-party-attributions.html',
         },
       ],
     },

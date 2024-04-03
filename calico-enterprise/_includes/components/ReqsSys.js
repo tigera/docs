@@ -19,7 +19,7 @@ function NodeRequirementsEnt(props) {
       </Heading>
       <ul>
         <li>
-          <p>x86-64 processor with at least 2 cores, 8.0GB RAM and 20 GB free disk space</p>
+          <p>x86-64 or arm64 processor with at least 2 cores, 8.0GB RAM and 20 GB free disk space</p>
         </li>
         <li>
           <p>
@@ -33,6 +33,7 @@ function NodeRequirementsEnt(props) {
                 <li>Ubuntu 20.04 and 22.04</li>
                 <li>RHEL 8 and 9</li>
                 <li>Debian 10</li>
+                <li>Azure Linux Container Host</li>
               </>
             )}
             {props.orch === orchestrators.OpenShift && (

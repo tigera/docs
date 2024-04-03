@@ -16,15 +16,6 @@ Using domain names in policies to identify services outside of the cluster is of
 
 Domain names can include a wildcard (`*`), making it easier to manage large numbers of domains/subdomains.
 
-## Features
-
-This how-to guide uses the following {{prodname}} features:
-
-- **GlobalNetworkPolicy** with exact or wildcard domain names
-- **NetworkPolicy** with exact or wildcard domain names
-- **GlobalNetworkSet** with exact or wildcard domain names, where the network set is referenced in a GlobalNetworkPolicy
-- **NetworkSet** with exact or wildcard domain names, where the network set is referenced in a NetworkPolicy
-
 ## Concepts
 
 ### Allowed egress domains
@@ -62,8 +53,6 @@ the IP addresses that the cluster nodes use for DNS resolution.
 ## Before you begin
 
 **Not supported**
-
-{{prodname}} DNS policy does not support Kubernetes [Using NodeLocal DNSCache in Kubernetes clusters](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/) because it interferes with the ability to capture DNS traffic everywhere.
 
 DNS policy is not supported at egress of egress gateway pods. Domain-based rules will either never match in
 that hook, or, they may match intermittently. Intermittent matches occur when a pod on the same node as the
@@ -229,6 +218,24 @@ spec:
       destination:
         selector: color == 'red'
 ```
+:::note
+
+Newly initialized pods sometimes fail to connect to domains that are allowed by a DNS policy (staged or enforced).
+In these cases, the pod tries to connect to a domain before {{prodname}} has finished processing the DNS policy that allows the connection.
+As soon as the processing is complete, the pod is able to connect.
+
+To avoid these failed connections, you can add the following to your `FelixConfiguration` resource:
+
+```yaml
+...
+spec:
+  DNSPolicyMode: DelayDNSResponse
+...
+```
+
+For more information, see [DNSPolicyMode](../reference/resources/felixconfig#dnspolicymode).
+
+:::
 
 ## Additional resources
 

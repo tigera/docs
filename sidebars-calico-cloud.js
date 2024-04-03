@@ -35,6 +35,7 @@ module.exports = {
             'get-started/connect/requirements/aks',
             'get-started/connect/requirements/gke',
             'get-started/connect/requirements/rke2',
+            'get-started/connect/requirements/windows-limitations',
           ],
         },
         'get-started/connect/connect-cluster',
@@ -50,6 +51,7 @@ module.exports = {
       items: [
         'users/user-management',
         'users/create-and-assign-custom-roles',
+        'users/create-custom-role-for-entra-id-group'
       ],
     },
     {
@@ -202,20 +204,6 @@ module.exports = {
                 "network-policy/policy-firewalls/fortinet-integration/fortimgr-integration"
               ]
             },
-            {
-              "type": "category",
-              "label": "AWS security groups integration",
-              "link": {
-                "type": "doc",
-                "id": "network-policy/policy-firewalls/aws-integration/index"
-              },
-              "items": [
-                "network-policy/policy-firewalls/aws-integration/get-started",
-                "network-policy/policy-firewalls/aws-integration/aws-security-group-integration",
-                "network-policy/policy-firewalls/aws-integration/tiers-and-policy",
-                "network-policy/policy-firewalls/aws-integration/metadata-access"
-              ],
-            },
           ],
         },
         "network-policy/hosts/kubernetes-nodes",
@@ -292,10 +280,10 @@ module.exports = {
       link: {type: 'doc', id: 'threat/index'},
       items: [
         'threat/security-posture-overview',
+        'threat/configuring-webhooks',
         'threat/security-event-management',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
-        'threat/suspicious-external-ips',
         'threat/tor-vpn-feed-and-dashboard',
         'threat/honeypods',
         'threat/deeppacketinspection',
@@ -435,6 +423,7 @@ module.exports = {
               link: {type: 'doc', id: 'operations/monitor/prometheus/index'},
               items: [
                 'operations/monitor/prometheus/support',
+                'operations/monitor/metrics/recommended-metrics',
                 'operations/monitor/prometheus/byo-prometheus',
                 'operations/monitor/prometheus/configure-prometheus',
                 'operations/monitor/prometheus/alertmanager',
@@ -516,6 +505,7 @@ module.exports = {
             'reference/resources/node',
             'reference/resources/packetcapture',
             'reference/resources/remoteclusterconfiguration',
+            'reference/resources/securityeventwebhook',
             'reference/resources/stagedglobalnetworkpolicy',
             'reference/resources/stagedkubernetesnetworkpolicy',
             'reference/resources/stagednetworkpolicy',

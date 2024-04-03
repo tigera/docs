@@ -297,17 +297,6 @@ module.exports = {
                 'network-policy/policy-firewalls/fortinet-integration/fortimgr-integration',
               ],
             },
-            {
-              type: 'category',
-              label: 'AWS security groups integration',
-              link: {type: 'doc', id: 'network-policy/policy-firewalls/aws-integration/index'},
-              items: [
-                'network-policy/policy-firewalls/aws-integration/get-started',
-                'network-policy/policy-firewalls/aws-integration/aws-security-group-integration',
-                'network-policy/policy-firewalls/aws-integration/tiers-and-policy',
-                'network-policy/policy-firewalls/aws-integration/metadata-access',
-              ],
-            },
           ],
         },
         {
@@ -460,7 +449,6 @@ module.exports = {
         'threat/configuring-webhooks',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
-        'threat/suspicious-external-ips',
         'threat/tor-vpn-feed-and-dashboard',
         'threat/honeypods',
         'threat/deeppacketinspection',
@@ -585,6 +573,7 @@ module.exports = {
               label: 'Metrics',
               link: {type: 'doc', id: 'operations/monitor/metrics/index'},
               items: [
+                'operations/monitor/metrics/recommended-metrics',
                 'operations/monitor/metrics/bgp-metrics',
                 'operations/monitor/metrics/license-agent',
                 'operations/monitor/metrics/policy-metrics',
@@ -605,7 +594,6 @@ module.exports = {
           ],
         },
         'operations/decommissioning-a-node',
-        'operations/fips',
         {
           type: 'category',
           label: 'Troubleshooting',
@@ -774,6 +762,7 @@ module.exports = {
             'reference/resources/policyrecommendations',
             'reference/resources/profile',
             'reference/resources/remoteclusterconfiguration',
+            'reference/resources/securityeventwebhook',
             'reference/resources/stagedglobalnetworkpolicy',
             'reference/resources/stagedkubernetesnetworkpolicy',
             'reference/resources/stagednetworkpolicy',
@@ -805,6 +794,7 @@ module.exports = {
           link: {type: 'doc', id: 'reference/component-resources/index'},
           items: [
             'reference/component-resources/configuration',
+            'reference/component-resources/configure-resources',
             {
               type: 'category',
               label: 'Calico Enterprise Kubernetes controllers',

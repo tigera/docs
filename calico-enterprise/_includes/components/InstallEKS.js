@@ -47,17 +47,6 @@ export default function InstallEKS(props) {
     --type=kubernetes.io/dockerconfigjson -n tigera-operator \\
     --from-file=.dockerconfigjson=<path/to/pull/secret>`}
           </CodeBlock>
-          <p>
-            For the Prometheus operator, create the pull secret in the <code>tigera-prometheus</code> namespace and then
-            patch the deployment.
-          </p>
-          <CodeBlock>
-            {`kubectl create secret generic tigera-pull-secret \\
-    --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \\
-    --from-file=.dockerconfigjson=<path/to/pull/secret>
-kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
-    -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'`}
-          </CodeBlock>
         </li>
         <li>
           <p>
@@ -138,7 +127,7 @@ spec:
         plane nodes will not be able to initiate network connections to {prodname} pods. (This is a general limitation
         of EKS's custom networking support, not specific to {prodname}.) As a workaround, trusted pods that require
         control plane nodes to connect to them, such as those implementing admission controller webhooks, can include{' '}
-        <code>hostNetwork:true</code> in their pod spec. See the Kuberentes API{' '}
+        <code>hostNetwork:true</code> in their pod spec. See the Kubernetes API{' '}
         <Link href='https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec'>
           pod spec
         </Link>{' '}
@@ -216,17 +205,6 @@ spec:
             {`kubectl create secret generic tigera-pull-secret \\
     --type=kubernetes.io/dockerconfigjson -n tigera-operator \\
     --from-file=.dockerconfigjson=<path/to/pull/secret>`}
-          </CodeBlock>
-          <p>
-            For the Prometheus operator, create the pull secret in the <code>tigera-prometheus</code> namespace and then
-            patch the deployment.
-          </p>
-          <CodeBlock>
-            {`kubectl create secret generic tigera-pull-secret \\
-    --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \\
-    --from-file=.dockerconfigjson=<path/to/pull/secret>
-kubectl patch deployment -n tigera-prometheus calico-prometheus-operator \\
-    -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name": "tigera-pull-secret"}]}}}}'`}
           </CodeBlock>
         </li>
         <li>

@@ -52,7 +52,7 @@ const config = {
   ],
 
   themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     {
       metadata: [
         {name: 'keywords', content: 'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp'}
@@ -64,19 +64,12 @@ const config = {
         contextualSearch: true,
         searchPagePath: '/search',
       },
-      //"announcementBar": {
-        //"id": "calico_ebpf",
-        //"content": "Use Calico <img src=\"/img/brands/ebpf_logo.svg\" style=\"height:1.5rem; margin: 0 5px 0 5px; display: inline-flex;\" alt=\"eBPF\" /> dataplane to enhance your Kubernetes networking performance. Click <a href=\"https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf/\">here </a> to learn more.",
-        //"backgroundColor": "#FCE181",
-        //"textColor": "#000",
-        //"isCloseable":false
-
-        "announcementBar": {
-          "id": "calico_slack",
-          "content": "Got questions? <a href=\"https://slack.projectcalico.org/\">Join our community Slack channel</a> to get help from Calico Open Source creators and other community members.",
-          "backgroundColor": "#FCE181",
-          "textColor": "#000",
-          "isCloseable": true
+      "announcementBar": {
+        "id": "calico_ebpf",
+        "content": "Use Calico <img src=\"/img/brands/ebpf_logo.svg\" style=\"height:1.5rem; margin: 0 5px 0 5px; display: inline-flex;\" alt=\"eBPF\" /> dataplane to enhance your Kubernetes networking performance. Click <a href=\"https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf/\">here </a> to learn more.",
+        "backgroundColor": "#FCE181",
+        "textColor": "#000",
+        "isCloseable": true,
       },
       navbar: {
         logo: {
@@ -373,37 +366,37 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.18-2','3.17','3.16','3.15'],
-        lastVersion: '3.17',
+        onlyIncludeVersions: ['3.19-1','3.18-2','3.17','3.16'],
+        lastVersion: '3.18-2',
         versions: {
           current: {
             label: 'Next',
             path: 'next',
             banner: 'unreleased',
           },
-          '3.18-2': {
-            label: '3.18 (early preview)',
-            path: '3.18',
+          '3.19-1': {
+            label: '3.19 (early preview)',
+            path: '3.19',
             banner: 'unreleased',
+          },
+          '3.18-2': {
+            label: '3.18 (latest)',
+            path: 'latest',
+            banner: 'none',
           },
           3.18: {
-            label: '3.18 (early preview)',
+            label: '3.18',
             path: '3.18',
-            banner: 'unreleased',
+            banner: 'none',
           },
           3.17: {
-            label: '3.17 (latest)',
-            path: 'latest',
+            label: '3.17',
+            path: '3.17',
             banner: 'none',
           },
           3.16: {
             label: '3.16',
             path: '3.16',
-            banner: 'none',
-          },
-          3.15: {
-            label: '3.15',
-            path: '3.15',
             banner: 'none',
           },
         },
@@ -421,19 +414,14 @@ const config = {
         routeBasePath: 'calico-cloud',
         editCurrentVersion: true,
         //To see builds for unreleased versions, remove comments in the next line.
-        onlyIncludeVersions: [/*'current'*/'18'],
+        onlyIncludeVersions: [/*'current'*/'19-1'],
         versions: {
           current: {
             label: 'Next',
             path: 'next',
             banner: 'unreleased',
           },
-          '18-2': {
-            label: '18-2',
-            path: '18-2',
-            banner: 'unreleased',
-          },
-          18: {
+          '19-1': {
             path: '/',
             banner: 'none',
           },

@@ -20,18 +20,13 @@ Our workload-centric Web Application Firewall (WAF) protects your workloads from
 
 Historically, web application firewalls (WAFs) were deployed at the edge of your cluster to filter incoming traffic. Our workload-based WAF solution takes a unique, cloud-native approach to web security by allowing you to implement zero-trust rules for workloads inside your cluster.
 
-## Features
-
-This how-to-guide uses the following {{prodname}} features:
-
-- Application Layer resource
-
 ## Concepts
 
 ### About {{prodname}} WAF
 
 WAF is deployed in your cluster along with Envoy DaemonSet. {{prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry-standard
-[ModSecurity](https://owasp.org/www-project-modsecurity-core-rule-set/) with OWASP CoreRuleSet v3.3.5 modified for kubernetes workloads. To review the rules deployed with the WAF, see [Ruleset files](https://github.com/tigera/operator/tree/master/pkg/render/applicationlayer/embed/coreruleset/rules).
+[ModSecurity](https://owasp.org/www-project-modsecurity-core-rule-set/) with OWASP Core Rule Set `v4.0.0-rc2` with some modifications for Kubernetes workloads.
+
 
 You simply enable WAF in Manager UI, and determine the services that you want to enable for WAF protection. By default WAF is set to `DetectionOnly` so no traffic will be denied until you are ready to turn on blocking mode.
 
@@ -41,7 +36,7 @@ Every request that WAF finds an issue with, will result in a Security Event bein
 
 If you configure WAF in blocking mode, WAF will use something called [anomaly scoring mode](https://coreruleset.org/docs/concepts/anomaly_scoring/) to determine if a request is allowed with `200 OK` or denied `403 Forbidden`.
 
-This works by matching a single HTTP request against all the configured WAF rules. Each rule has a score and WAF adds all the matched rule scores together, and compares it to the overall anomaly threshold score (100 by default). If the score is under the threshold the request is allowed and if the score is over the threshold the request is denied. Our WAF starts in detection mode only and with a high default scoring threshold so is safe to turn on and then [fine-tune the WAF](#fine-tuning-your-waf) for your specific needs in your cluster.
+This works by matching a single HTTP request against all the configured WAF rules. Each rule has a score and WAF adds all the matched rule scores together, and compares it to the overall anomaly threshold score (100 by default). If the score is under the threshold the request is allowed and if the score is over the threshold the request is denied. Our WAF starts in detection mode only and with a high default scoring threshold so is safe to turn on and then [fine-tune the WAF](#manage-your-waf) for your specific needs in your cluster.
 
 ## Before you begin
 
@@ -53,7 +48,7 @@ This works by matching a single HTTP request against all the configured WAF rule
 WAF cannot be used with:
   - Host-networked client pods
   - TLS traffic
-  - [LoadBalancer services](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
+  - [LoadBalancer services](https://Kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
   - Egress gateways
   - WireGuard on AKS or EKS (unless you apply a specific kernel variable). Contact Support for help.
 
@@ -72,11 +67,11 @@ Enabling WAF for certain system services may result in an undesired cluster stat
   - `openshift-*`
 
 - Do not enable WAF for system services with the following combination of name and namespaces:
-  - name: `kubernetes`, namespace: `default`
+  - name: `Kubernetes`, namespace: `default`
   - name: `openshift`, namespace: `default`
   - name: `gatekeeper-webhook-service`, namespace: `gatekeeper-system`
 
-The rules are not overridden during upgrade, you will have to manage deploying updates to the OWASP CoreRuleSet to the cluster over time.
+The rules are not overridden during upgrade, you will have to manage deploying updates to the OWASP Core Rule Set to the cluster over time.
 
 If you modify the rules, it is recommended to keep your rules in git or similar source control systems.
 
@@ -87,7 +82,7 @@ If you modify the rules, it is recommended to keep your rules in git or similar 
 - [Enable WAF on your cluster](#enable-waf)
 - [Apply WAF to your services](#apply-waf)
 - [View WAF events](#view-waf-events)
-- [Fine-tuning your WAF](#fine-tuning-your-waf)
+- [Manage your WAF](#manage-waf-configuration)
 - [Disable WAF feature from your cluster](#disable-waf-feature-from-your-cluster)
 
 ### Enable WAF
@@ -97,7 +92,7 @@ If you don’t have an application to test WAF with or don’t want to use it ri
 we recommend that you install the [GoogleCloudPlatform/microservices-demo app](https://github.com/GoogleCloudPlatform/microservices-demo):
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/microservices-demo/release/v0.7.0/release/kubernetes-manifests.yaml
+kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/microservices-demo/release/v0.7.0/release/Kubernetes-manifests.yaml
 ```
 
 #### Enable WAF using the CLI
@@ -140,7 +135,7 @@ kubectl annotate svc frontend -n default --overwrite projectcalico.org/l7-loggin
 Alternatively, you can use the Manager UI to apply WAF to the `frontend` service.
 
 In this example, we applied WAF to the `frontend` service. This means that every request that goes through the `frontend` service is inspected.
-However, the traffic is not blocked because the WAF rule is set to `DetectionOnly` by default. You can adjust rules and start blocking traffic by [fine-tuning your WAF](#fine-tuning-your-waf).
+However, the traffic is not blocked because the WAF rule is set to `DetectionOnly` by default. You can adjust rules and start blocking traffic by [fine-tuning your WAF](#manage-your-waf).
 
 In the previous example, we applied WAF to the `frontend` service of the sample application. Here, we are
 applying WAF to a service of your own application.
@@ -169,67 +164,44 @@ Run a simple curl command from any pod inside your cluster targeting a service y
   curl http://cartservice/cart?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
 ```
 
-### Fine-tuning your WAF
+### Manage WAF configuration
 
-#### Manage your rules
-The default rulesets work fine for most deployments. However, you can customize them to suit your requirements.
-Some common changes are detailed below, for example:
+Reviewing the default rule set config:
 
-- [Enabling blocking mode](#set-waf-rule-to-block-traffic)
-- [Changing the scoring threshold](#change-anomaly-scoring-threshold)
-- [Fine-tuning a rule](#change-other-default-settings)
-- [Disabling certain rules](#disable-certain-rules)
+```bash
+Include @coraza.conf-recommended
+Include @crs-setup.conf.example
+Include @owasp_crs/*.conf
 
-By default, {{prodname}} ships with CoreRuleset v3.3.5 with the following setup files pre-loaded:
+SecRuleEngine DetectionOnly
+```
 
-- [modsecdefault.conf](https://github.com/tigera/operator/tree/master/pkg/render/applicationlayer/embed/coreruleset/modsecdefault.conf)
-- [crs-setup.conf](https://github.com/tigera/operator/tree/master/pkg/render/applicationlayer/embed/coreruleset/crs-setup.conf)
-- [Ruleset files](https://github.com/tigera/operator/tree/master/pkg/render/applicationlayer/embed/coreruleset/rules)
+The configuration file starts with importing the appropriate rule set config. We use Coraza WAF's recommended [Core Rule Set setup](https://coraza.io/docs/tutorials/coreruleset/) files:
 
-There are two ways to edit your rules.
-1. Edit the configmap directly using kubectl. The config map combines all the rule files together, so you will need to know how to search and find the exact place in the configmap that you want to update.
+1. Coraza recommended [configuration](https://github.com/corazawaf/coraza/blob/main/coraza.conf-recommended)
+1. The rest of the [coreruleset](https://github.com/coreruleset/coreruleset) files, currently [v4.0.0-rc2](https://github.com/coreruleset/coreruleset/tree/v4.0.0-rc2)
 
-2. If you want to modify the rules in any meaningful way, it is recommended that you download the files locally and modify before replacing the configmap. In OWASP, it is recommended you disable rules or change configuration by modifying a set of specific metadata files and exclusion files, and not modify any of the main rule files directly. You can, of course, decide to replace the ruleset entirely with your own set of custom rules. This is completely fine once the rules are written in the same SecRule syntax understood by ModSecurity. We recommend you keep a version of your rule files safe in version control like git.
+These files can be customized if desired. Add all your customizations directly under `tigera.conf`:
 
-To download and modify the rule files:
+```bash
+kubectl edit cm -n tigera-operator modsecurity-ruleset
+``` 
 
-1. Clone our operator code which contains the ConfigMap source.
-
-  ```bash
-  git clone --depth=1 https://github.com/tigera/operator
-  cd operator
-  ```
-2. Change directory into the actual modsec ruleset files we use.
-
-  ```bash
-  cd pkg/render/applicationlayer/modsec-core-ruleset
-  ```
-3. Make the changes you want in the setup, conf or exclusion files and save.
-4. Create a ConfigMap.
-
-  ```bash
-  kubectl create cm --dry-run=client --from-file=. -o yaml -n tigera-operator modsecurity-ruleset > $HOME/my-tigera-waf-ruleset.yaml
-  ```
-5. Apply the ConfigMap to your cluster.
-
-  ```bash
-  kubectl replace -f $HOME/my-tigera-waf-ruleset.yaml
-  ```
-
-After you do these steps, the `modsecurity-ruleset` ConfigMap will be replaced in the `tigera-operator` namespace,
+After editing this ConfigMap successfully, the `modsecurity-ruleset` ConfigMap will be replaced in the `tigera-operator` namespace,
 which then triggers a rolling restart of your L7 pods. This means that the HTTP connections going through L7 pods at the time of pod termination will be (RST) reset.
 
 :::note
 
-It is important to adhere to [CoreRuleset documentation](https://coreruleset.org/docs) on how to edit the behaviour of
- your WAF. A good place to begin at is the [CoreRuleset Quick Start](https://coreruleset.org/docs/deployment/quick_start/).
+It is important to adhere to  the [Core Rule Set documentation](https://coreruleset.org/docs) on how to edit the behaviour of
+ your WAF. A good place to begin at is the [Installing Core Rule Set](https://coreruleset.org/docs/deployment/install/).
 
 In many scenarios, the default example CRS configuration will be a good enough starting point. It is recommended to review the example configuration file before
 you deploy it to make sure it’s right for your environment.
 :::
 
+#### Customization options
 
-#### Set WAF rule to block traffic
+##### Set WAF to block traffic
 By default WAF will not block a request even if it has matching rule violations. The rule engine is set to `DetectionOnly`. You can configure to block traffic instead with an `HTTP 403 Forbidden` response status code when the combined matched rules scores exceed a certain threshold.
 
 1. Edit the configmap:
@@ -245,58 +217,118 @@ By default WAF will not block a request even if it has matching rule violations.
 | On     | Denies HTTP traffic. {{prodname}}  will log the event in Security Events. | Yes          |
 | Off    | Be cautious about using this option. Traffic is not denied, and there are no events. |No                                                                      | Yes         |
 
-#### Change anomaly scoring threshold
 
-The default scoring threshold is set to 100, a high value that is unlikely to result in blocked requests, even if blocking mode is enabled. A critical rule violation scores 5 by default so a single HTTP request would need many rule violations to pass the default threshold of 100. You are encouraged to fine-tune and lower this threshold value iteratively until you are happy with the requests being allowed and denied for your cluster.
+##### Other basic customizations
 
-1. Edit the `crs-setup.conf` file and set `tx.inbound_anomaly_score_threshold` to the value of your choice:
-   ```bash
-     SecAction \
-      "id:900110,\
-      phase:1,\
-      nolog,\
-      pass,\
-      t:none,\
-      setvar:tx.inbound_anomaly_score_threshold=100,\
-      setvar:tx.outbound_anomaly_score_threshold=100"
-   ```
+For basic customizations, it's best to add it after all the includes in `tigera.conf`. In fact, this is the reason why the `SecRuleEngine` directive and the rest of [our customizations](https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/embed/coreruleset/tigera.conf#L8-L17) are situated there.
 
-These are the default scoring points for each severity level, applied to each rule individually.
-The lower the overall anomaly scoring threshold value is, the more likely it is that traffic will be denied.
+An example is adding a sampling mode. For that, the `tigera.conf` will look like this:
 
-| Severity | Score                                                                                                                                                             | Description |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| Critical | 5 | Mostly generated by the application attack rules (93x and 94x files)
-| Error     | 4 | Generated mostly from outbound leakage rules (95x files) |
-| Warning    | 3 | Generated mostly by malicious client rules (91x files) |
-| Notice    | 2 | Generated mostly by the protocol rules (92x files) |
+```bash
+# Core Rule Set activation
+Include @coraza.conf-recommended
+Include @crs-setup.conf.example
+Include @owasp_crs/*.conf
 
-#### Change other default settings
+SecRuleEngine DetectionOnly
 
-The CoreRuleSet has several default values and settings that you can fine-tune. Example: Rule 920420 checks the HTTP request Content-Type header against a list of allowed values. You may want to allow traffic through the WAF that has a certain Content-Type that is not allowed by default, e.g. you may have Content-Types in your micro-services workloads that are not allowed by default.
+# --- all customizations appear below this line, unless they need a specific loading order like plugins ---
 
-1. Edit the `crs-setup.conf` file and add a new Content-Type by modifying `id:900220` and appending to the default list named `tx.allowed_request_content_type`
+# --- Add sampling mode
+# Read about sampling mode here https://coreruleset.org/docs/concepts/sampling_mode/
+SecAction "id:900400,\
+  phase:1,\
+  pass,\
+  nolog,\
+  setvar:tx.sampling_percentage=50"
+```
 
-  ```bash
-    SecAction \
-     "id:900220,\
-      phase:1,\
-      nolog,\
-      pass,\
-      t:none,\
-      setvar:'tx.allowed_request_content_type=|application/x-www-form-urlencoded| |multipart/form-data| |multipart/related| |text/xml| |application/xml| |application/soap+xml| |application/json| |application/cloudevents+json| |application/cloudevents-batch+json| |application/grpc|'"
-  ```
+Also you can disable certain rules here:
 
-#### Disable certain rules
+```bash
+# --- disable 'Request content type is not allowed by policy'
+SecRuleRemoveById 920420
+```
 
-You may want to disable a rule entirely. For example, if you find the allowed Content-Type rule mentioned above too restrictive, you can disable it unconditionally by changing `RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example` and renaming that file to remove the `.example`:
+Change anomaly scoring threshold:
 
-1. Edit `RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example` and add a line such as the following, referencing the rule ID you want to disable.
+```bash
+  SecAction \
+  "id:900110,\
+  phase:1,\
+  nolog,\
+  pass,\
+  t:none,\
+  setvar:tx.inbound_anomaly_score_threshold=25,\
+  setvar:tx.outbound_anomaly_score_threshold=20"
+```
 
-  ```bash
-  SecRuleRemoveById 920420
-  ```
-2. Rename `RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example` to `RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf` removing the *.example* in order for ModSecurity to load the file.
+Or even change rule action parameters or behavior. For example:
+
+ ```bash
+ # --- append to more allowed content types to request bodies
+SecAction \
+  "id:900220,\
+  phase:1,\
+  nolog,\
+  pass,\
+  t:none,\
+  setvar:'tx.allowed_request_content_type=|application/x-www-form-urlencoded| |multipart/form-data| |multipart/related| |text/xml| |application/xml| |application/soap+xml| |application/json| |application/cloudevents+json| |application/cloudevents-batch+json| |application/grpc|'"
+```
+
+
+##### Using Core Rule Set plugins
+
+Let's go with an example plugin: [Wordpress Rule Exclusions](https://github.com/coreruleset/wordpress-rule-exclusions-plugin/).
+
+Plugin files are the following:
+
+```
+wordpress-rule-exclusions-before.conf
+wordpress-rule-exclusions-config.conf
+```
+
+To include these files properly, structure your work directory like so:
+
+```
+tigera.conf
+wordpress-rule-exclusions-before.conf
+wordpress-rule-exclusions-config.conf
+```
+
+and then `tigera.conf` contents should be:
+
+```bash
+Include @coraza.conf-recommended
+
+Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-config.conf
+Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-before.conf
+
+Include @crs-setup.conf.example
+Include @owasp_crs/*.conf
+
+# if your plugin has an -after.conf, include them here
+# but wordpress rule exclusions doesn't so we're adding a comment placeholder
+# Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-after.conf
+
+SecRuleEngine DetectionOnly
+```
+
+Then create and apply the configmap:
+
+```bash
+## create the configuration map itself
+kubectl create cm --dry-run=client \
+  --from-file=tigera.conf \
+  --from-file=wordpress-rule-exclusions-config.conf \
+  --from-file=wordpress-rule-exclusions-before.conf \
+  -n tigera-operator modsecurity-ruleset -o yaml  > rule set.configmap.yaml
+
+## replace active configmap
+kubectl replace -f rule set.configmap.yaml
+```
+
+Read more about the order of execution for plugins here: https://coreruleset.org/docs/concepts/plugins/
 
 ### View WAF events
 
