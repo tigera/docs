@@ -198,6 +198,7 @@ module.exports = {
           items: [
             'networking/ipam/get-started-ip-addresses',
             'networking/ipam/initial-ippool',
+            'networking/ipam/ippools',
             'networking/ipam/ip-autodetection',
             'networking/ipam/ipv6',
             'networking/ipam/use-specific-ip',
