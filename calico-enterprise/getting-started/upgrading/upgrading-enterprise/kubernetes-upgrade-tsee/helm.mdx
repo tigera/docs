@@ -46,6 +46,18 @@ the upgrade.
 
 If your cluster has Windows nodes and uses custom TLS certificates for log storage then, prior to upgrade, prepare and apply new certificates for [log storage](../../../../operations/comms/log-storage-tls.mdx) that include the required service DNS names.
 
+### Upgrade OwnerReferences
+
+If you do not use OwnerReferences on resources in the projectcalico.org/v3 API group, you can skip this section.
+
+Starting in {{prodname}} v3.19, a change in the way UIDs are generated for projectcalico.org/v3 resources requires that you update any OwnerReferences
+that refer to projectcalico.org/v3 resources as an owner. After upgrade, the UID for all projectcalico.org/v3 resources will be changed, resulting in any
+owned resources being garbage collected by Kubernetes.
+
+1. Remove any OwnerReferences from resources in your cluster that have `apiGroup: projectcalico.org/v3`.
+1. Perform the upgrade normally.
+1. Add new OwnerReferences to your resources referencing the new UID.
+
 ### Default Deny
 
 {{prodname}} creates a default-deny for the calico-system namespace. If you deploy workloads into the calico-system namespace, you must create policy that allows the required traffic for your workloads prior to upgrade.
