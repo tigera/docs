@@ -267,6 +267,7 @@ module.exports = {
           link: { type: 'doc', id: 'networking/ipam/index' },
           items: [
             'networking/ipam/get-started-ip-addresses',
+            'networking/ipam/ippools',
             'networking/ipam/ip-autodetection',
             'networking/ipam/ipv6',
             'networking/ipam/ipv6-control-plane',

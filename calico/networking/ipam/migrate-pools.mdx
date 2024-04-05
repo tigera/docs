@@ -5,6 +5,8 @@ description: Migrate pods from one IP pool to another on a running cluster witho
 # Migrate from one IP pool to another
 
 import DetermineIpam from '@site/calico/_includes/content/_determine-ipam.mdx';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 ## Big picture
 
@@ -70,7 +72,114 @@ Disabling an IP pool only prevents new IP address allocations; it does not affec
 In the following example, we created a Kubernetes cluster using **kubeadm**. But the IP pool CIDR we configured (192.168.0.0/16) doesn't match the
 Kubernetes cluster CIDR. Let's change the CIDR to **10.0.0.0/16**, which for the purposes of this example falls within the cluster CIDR.
 
-Let’s run `calicoctl get ippool -o wide` to see the IP pool, **default-ipv4-ippool**.
+<Tabs>
+<TabItem label="Operator" value="Operator-0">
+
+Let’s run `kubectl get ippools` to see the IP pool `default-ipv4-ippool`.
+
+```
+NAME                  CREATED AT
+default-ipv4-ippool   2024-03-28T16:14:28Z
+```
+
+### Step 1: Add a new IP pool
+
+We add a new `IPPool` resource with the CIDR range `10.0.0.0/16`.
+
+Add the following to your `default` installation, below the existing IP pool.
+
+```bash
+kubectl edit installation default
+```
+
+```yaml
+- name: new-ipv4-pool
+  cidr: 10.0.0.0/16
+  encapsulation: IPIP
+```
+
+Let’s verify the new IP pool.
+
+```bash
+kubectl get ippools
+```
+
+```
+NAME                  CREATED AT
+default-ipv4-ippool   2024-03-28T16:14:28Z
+test-pool             2024-03-28T18:30:15Z
+```
+
+### Step 2: Disable the old IP pool
+
+Edit the `default` installation, and modify `default-ipv4-ippool` so it no longer selects
+any nodes. This prevents IP allocation from the pool.
+
+```bash
+kubectl edit installation default
+```
+
+```yaml
+- name: 192.168.0.0-16
+  allowedUses:
+  - Workload
+  - Tunnel
+  blockSize: 26
+  cidr: 192.168.0.0/16
+  disableBGPExport: false
+  encapsulation: VXLANCrossSubnet
+  natOutgoing: Enabled
+- nodeSelector: all()
++ nodeSelector: "!all()"
+```
+
+Apply the changes.
+
+Remember, disabling a pool only affects new IP allocations; networking for existing pods is not affected.
+
+### Step 3: Delete pods from the old IP pool
+
+Next, we delete all of the existing pods from the old IP pool. (In our example, `coredns` is our only pod; for multiple pods you would trigger a deletion for all pods in the cluster.)
+
+```bash
+kubectl delete pod -n kube-system coredns-6f4fd4bdf-8q7zp
+```
+
+### Step 4: Verify that new pods get an address from the new IP pool
+
+1. Create a test namespace and nginx pod.
+
+   ```bash
+   kubectl create ns ippool-test
+   ```
+
+1. Create an nginx pod.
+
+   ```bash
+   kubectl -n ippool-test create deployment nginx --image nginx
+   ```
+
+1. Verify that the new pod gets an IP address from the new range.
+
+   ```bash
+   kubectl -n ippool-test get pods -l app=nginx -o wide
+   ```
+
+1. Clean up the `ippool-test` namespace.
+
+   ```bash
+   kubectl delete ns ippool-test
+   ```
+
+### Step 5: Delete the old IP pool
+
+Now that you've verified that pods are getting IPs from the new range, you can safely delete the old pool. To do this,
+remove it from the default installation, leaving only the newly create IP pool.
+
+</TabItem>
+<TabItem label="Manifest" value="Manifest-1">
+
+Let’s run `calicoctl get ippool -o wide` to see the IP pool, `default-ipv4-ippool`.
 
 ```
 NAME                  CIDR             NAT    IPIPMODE   VXLANMODE   DISABLED
@@ -208,7 +317,7 @@ kubectl delete pod -n kube-system coredns-6f4fd4bdf-8q7zp
    kubectl -n ippool-test get pods -l app=nginx -o wide
    ```
 
-1. Clean up the ippool-test namespace.
+1. Clean up the `ippool-test` namespace.
 
    ```bash
    kubectl delete ns ippool-test
@@ -221,6 +330,9 @@ Now that you've verified that pods are getting IPs from the new range, you can s
 ```bash
 calicoctl delete pool default-ipv4-ippool
 ```
+
+</TabItem>
+</Tabs>
 
 ## Additional resources
 
