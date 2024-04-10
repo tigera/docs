@@ -614,6 +614,7 @@ module.exports = {
           ],
         },
         'reference/configure-calico-node',
+        'reference/configure-resources',
         {
           type: 'category',
           label: 'Felix',
