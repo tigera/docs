@@ -742,6 +742,7 @@ module.exports = {
               ]
             },
             'reference/resources/deeppacketinspection',
+            'reference/resources/egressgatewaypolicy',
             'reference/resources/externalnetwork',
             'reference/resources/felixconfig',
             'reference/resources/globalalert',
