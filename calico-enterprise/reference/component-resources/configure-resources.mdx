@@ -68,8 +68,6 @@ This command will output the configured resource requests and limits for the Cal
 
 The [ApplicationLayer](../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) CR provides a way to configure resources for L7LogCollectorDaemonSet. The following sections provide example configurations for this CR.
 
-Example Configurations:
-
 ### L7LogCollectorDaemonSet
 
 To configure resource specification for the [L7LogCollectorDaemonSet](../../reference/installation/api.mdx#operator.tigera.io/v1.L7LogCollectorDaemonSet), patch the ApplicationLayer CR using the below command:
@@ -121,8 +119,6 @@ This command will output the configured resource requests and limits for the Cal
 ## Authentication custom resource
 
 The [Authentication](../../reference/installation/api.mdx#operator.tigera.io/v1.Authentication) CR provides a way to configure resources for DexDeployment. The following sections provide example configurations for this CR.
-
-Example Configurations:
 
 ### DexDeployment
 
@@ -344,14 +340,12 @@ This command will output the configured resource requests and limits for the Com
 
 The [Installation CR](../../reference/installation/api.mdx) provides a way to configure resources for various Calico Enterprise components, including TyphaDeployment, calicoNodeDaemonSet, CalicoNodeWindowsDaemonSet, csiNodeDriverDaemonSet and KubeControllersDeployment. The following sections provide example configurations for this CR.
 
-Example Configurations:
-
 ### TyphaDeployment
 
 To configure resource specification for the [TyphaDeployment](../../reference/installation/api.mdx#operator.tigera.io/v1.TyphaDeployment), patch the installation CR using the below command:
 
 ```bash
-kubectl patch installations default --type=merge --patch='{"spec": {"typhaDeployment": {"spec": {"template": {"spec": {"containers": [{"name": "calico-typha", "resources": {"requests": {"cpu": "100m", "memory": "100Mi"}, "limits": {"cpu": "1", "memory": "1000Mi"}}]}}}}}}'
+kubectl patch installations default --type=merge --patch='{"spec": {"typhaDeployment": {"spec": {"template": {"spec": {"containers": [{"name": "calico-typha", "resources": {"requests": {"cpu": "100m", "memory": "100Mi"}, "limits": {"cpu": "1", "memory": "1000Mi"}}}]}}}}}}'
 ```
 This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
 
@@ -596,7 +590,7 @@ The [LogCollector](../../reference/installation/api.mdx#operator.tigera.io/v1.Lo
 To configure resource specification for the [FluentdDaemonSet](../../reference/installation/api.mdx#operator.tigera.io/v1.FluentdDaemonSet), patch the LogCollector CR using the below command:
 
 ```bash
-$  kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"fluentdDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"fluentd","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
+kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"fluentdDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"fluentd","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
 ```
 This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
 
@@ -631,7 +625,7 @@ This command will output the configured resource requests and limits for the Flu
 To configure resource specification for the [EKSLogForwarderDeployment](../../reference/installation/api.mdx#operator.tigera.io/v1.EKSLogForwarderDeployment), patch the LogCollector CR using the below command:
 
 ```bash
-$  kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"eksLogForwarderDeployment": {"spec": {"template": {"spec": {"containers":[{"name":"eks-log-forwarder","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
+kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"eksLogForwarderDeployment": {"spec": {"template": {"spec": {"containers":[{"name":"eks-log-forwarder","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
 ```
 This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
 
@@ -749,7 +743,7 @@ This command sets the CPU request to 100 milliCPU (mCPU) and the memory request 
 You can verify the configured resources using the following command:
 
 ```bash
-kubectl get deployment.apps/tigera-linseed -n tigera-elasticsearch  -o json| jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}
+kubectl get deployment.apps/tigera-linseed -n tigera-elasticsearch  -o json| jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
 ```
 
 This command will output the configured resource requests and limits for the LinseedDeployment in JSON format.
@@ -830,13 +824,16 @@ This command will output the configured resource requests and limits for the Gua
 
 ```bash
 {
-  "limits": {
-    "cpu": "1",
-    "memory": "1000Mi"
-  },
-  "requests": {
-    "cpu": "100m",
-    "memory": "100Mi"
+  "name": "tigera-guardian",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
   }
 }
 ```
@@ -916,42 +913,7 @@ The [Monitor](../../reference/installation/api.mdx#operator.tigera.io/v1.Monitor
 To configure resource specification for the [Prometheus](../../reference/installation/api.mdx#operator.tigera.io/v1.Prometheus), Resources for the default container "prometheus" can be configured using the "resources" field under "commonPrometheusFields". For all other injected containers, such as "authn-proxy", resource configuration can be set using the "containers" struct, as shown below in the patch command below.
 
 ```bash
-kubectl patch monitor tigera-secure --type=merge --patch='{
-  "spec": {
-    "prometheus": {
-      "spec": {
-        "commonPrometheusFields": {
-          "resources": {
-            "limits": {
-              "cpu": "500m",
-              "memory": "500Mi"
-            },
-            "requests": {
-              "cpu": "50m",
-              "memory": "50Mi"
-            }
-          },
-          "containers": [
-            {
-              "name": "authn-proxy",
-              "resources": {
-                "limits": {
-                  "cpu": "250m",
-                  "memory": "500Mi"
-                },
-                "requests": {
-                  "cpu": "25m",
-                  "memory": "50Mi"
-                }
-              }
-            }
-          ]
-        }
-      }
-    }
-  }
-}'
-monitor.operator.tigera.io/tigera-secure patched
+kubectl patch monitor tigera-secure --type=merge --patch='{"spec": {"prometheus": {"spec":{ "commonPrometheusFields": {"resources": {"limits": {"cpu":"500m","memory":"500Mi"}, "requests": {"cpu":"50m", "memory":"50Mi"}}, "containers":[{"name":"authn-proxy","resources":{"limits": {"cpu":"250m","memory":"500Mi"},"requests": {"cpu":"25m","memory":"50Mi"}}}]}}}}}'
 ```
 This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
 
@@ -1081,20 +1043,23 @@ This command sets the CPU request to 100 milliCPU (mCPU) and the memory request 
 You can verify the configured resources using the following command:
 
 ```bash
-kubectl get deployment.apps/tigera-manager -n tigera-manager -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
+kubectl get deployment.apps/tigera-policy-recommendation  -n tigera-policy-recommendation -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
 ```
 
-This command will output the configured resource requests and limits for the ManagerDeployment in JSON format.
+This command will output the configured resource requests and limits for the PolicyRecommendationDeployment in JSON format.
 
 ```bash
 {
-  "limits": {
-    "cpu": "1",
-    "memory": "512Mi"
-  },
-  "requests": {
-    "cpu": "100m",
-    "memory": "100Mi"
+  "name": "policy-recommendation-controller",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "512Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
   }
 }
 ```
