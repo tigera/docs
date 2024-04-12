@@ -7,6 +7,7 @@ const darkCodeTheme = themes.dracula;
 
 const variablesPlugin = require('./src/remark/variablesPlugin');
 const componentImagePlugin = require('./src/remark/componentImagePlugin');
+const { useCaseSidebar } = require('./sidebars-use-cases');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -164,9 +165,15 @@ const config = {
             position: 'left',
           },
           {
-            label: 'Contact us',
-            to: 'https://www.tigera.io/contact',
+            type: 'dropdown',
+            label: 'Use cases',
             position: 'left',
+            items: [
+              {
+                label: 'Microsegmentation',
+                to: '/use-cases/microsegmentation',
+              },
+            ],
           },
           {
             href: 'https://github.com/projectcalico',
@@ -459,6 +466,18 @@ const config = {
         editUrl: generateEditUrl,
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      {
+        id: 'use-cases',
+        path: 'use-cases',
+        routeBasePath: 'use-cases',
+        //To see builds for unreleased versions, remove comments in the next line.
+        sidebarPath: require.resolve('./sidebars-use-cases.js'),
+        editUrl: generateEditUrl,
+      },
+    ]
   ],
   customFields: {
     isTesting: process.env.TESTING || false,
