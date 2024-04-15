@@ -84,7 +84,7 @@ full: clean build
 netlify: build test
 
 .PHONY: all
-all: full test
+all: clear full test
 
 .PHONY: index
 index:
