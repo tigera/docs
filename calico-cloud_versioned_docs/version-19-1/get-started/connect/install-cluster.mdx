@@ -17,6 +17,7 @@ Although not required, it may save you troubleshooting if you verify your cluste
 - Default (kubectl)
 - Private image registry using Helm charts
 - Helm charts
+- Automated
 
 Choose your install option and follow the steps.
 
@@ -69,6 +70,67 @@ Choose your install option and follow the steps.
    ![helm](/img/calico-cloud/helm.png)
 1. Click **Connect** and follow the wizard.
 1. Monitor the progress on the Managed Clusters page.
+
+
+## Automated
+The installation methods above require the user to log in to the UI and generate a cluster specific installation command.
+
+An alternative method is to create a single set of Client Credentials that can be used to install {{prodname}} on multiple clusters
+without any further need to interact with the UI.
+
+The installation could be managed by using GitOps or other automated workflows.
+
+The instructions below contain the most basic steps that can be integrated into any workflow:
+1. Create a set of [Client Credentials](../../users/client-credentials.mdx) in the UI
+    1. Add a Key to the Client Credentials
+    1. Save the resulting secret to a secure location
+1. Apply the {{prodname}} Installer manifests to your cluster
+    * Via Helm
+     ```shell
+     # add / update the calico-cloud helm repository
+     helm repo add calico-cloud https://installer.calicocloud.io/charts --force-update
+     # install the calico-cloud-crds chart
+     helm upgrade --install calico-cloud-crds calico-cloud/calico-cloud-crds \
+       --namespace calico-cloud \
+       --create-namespace
+     ```
+    * Via the Manifests File
+     ```shell
+     kubectl apply -f https://installer.dev.calicocloud.io/manifests/cc-operator/latest/deploy.yaml
+     ```
+1. Apply the client credentials secret to your cluster
+   Note that in this example we are applying the secret directly to the cluster, but we recommend using Secret Management System
+     ```shell
+     kubectl apply -f /the/secret/you/saved/earlier.yaml
+     ```
+1. Configure and apply the {{prodname}} Installer Custom Resource
+    * Via Helm
+     ```shell
+     # install the installer chart
+     #   installer.clusterName is the unique name this cluster will have in {{prodname}}
+     #   installer.calicoCloudVersion is the version to install
+     helm upgrade --install calico-cloud calico-cloud/calico-cloud \
+       --namespace calico-cloud \
+       --set installer.clusterName=my-cluster \
+       --set installer.calicoCloudVersion=v19.1.0
+     ```
+    * Via the Manifests File
+     ```shell
+     # apply the installer for this cluster
+     #  clusterName is the unique name this cluster will have in {{prodname}}
+     #  calicoCloudVersion is the version to install
+     kubectl apply -f - <<EOF
+     apiVersion: operator.calicocloud.io/v1
+     kind: Installer
+     metadata:
+     name: default
+     namespace: calico-cloud
+     spec:
+     clusterName: my-cluster
+     calicoCloudVersion: v19.1.0
+     EOF
+     ```
+
 
 ## Need help?
 
