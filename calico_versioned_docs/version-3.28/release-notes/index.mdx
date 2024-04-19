@@ -8,6 +8,39 @@ Learn about the new features, bug fixes, and other updates in this release of {{
 
 ## New features and enhancements
 
+### Configure multiple IP pools during installation
+
+You can now configure multiple IP pools when you install Calico on your clusters.
+Specifying multiple IP pools during installation is important for clusters where IP address assignment is tied to the topology of the cluster.
+This can be helpful, for example, when IP pools are assigned to particular nodes, racks, or availability zones in order to satisfy internal policy or firewalling restrictions.
+
+For more information, see [Create multiple IP pools](../networking/ipam/ippools.mdx).
+
+### Delay pod Ready status until after network policies are rendered
+
+This update lets you prevent new pods from moving to a ready status until after their network policies have finished rendering.
+In some high-churn environments, pods may be deployed and marked as ready before network policies have been rendered, causing problems when traffic to those pods is denied.
+The new `policy_setup_timeout_seconds` configuration option allows you build in a delay to give those polices time to finish processing.
+
+You may find this option useful if you're running traditional applications that assume resiliency in the architecture.
+
+For more information, see [Enabling policy setup timeout](../reference/configure-cni-plugins.mdx#enabling-policy-setup-timeout).
+
+### IPv6 support for eBPF mode is generally available
+
+Calico Open Source 3.28 introduces full support for IPv6 for clusters using the eBPF data plane.
+
+For more information, see [Enable the eBPF dataplane](../operations/ebpf/enabling-ebpf.mdx) and [Configure dual stack or IPv6 only](../networking/ipam/ippools.mdx).
+
+### Enhancements
+
+* We made it easier to migrate your cluster from iptables to eBPF data plan modes.
+Previously, having a mix of nodes in iptables and eBPF modes could cause a breakdown in cluster networking.
+Now, the operator makes the transition with minimal disruption.
+* We improved how Felix calculates rules in situations where there are high numbers (up to 200) of shared policies per endpoint.
+Depending on the number of shared policies, this can reduce the number of rules per pod by several hundred.
+These improvements apply only when Calico is running in iptables mode.
+
 ## Technology preview features
 
 ## Deprecated and removed features
