@@ -659,6 +659,45 @@ This command will output the configured resource requests and limits for the Gua
 }
 ```
 
+## PacketCapture custom resource
+
+The [PacketCapture](../../reference/installation/api.mdx#operator.tigera.io/v1.PacketCapture) CR provides a way to configure resources for PacketCapture. The following sections provide example configurations for this CR.
+
+### PacketCaptureDeployment
+
+To configure resource specification for the [PacketCapture](../../reference/installation/api.mdx#operator.tigera.io/v1.PacketCapture), patch the PacketCapture CR using the below command:
+
+```bash
+kubectl patch packetcaptures.operator.tigera.io tigera-secure  --type=merge --patch='{"spec": {"packetCaptureDeployment":{"spec": {"template": {"spec": {"containers":[{"name":"tigera-packetcapture-server","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
+```
+This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
+
+#### Verification
+
+You can verify the configured resources using the following command:
+
+```bash
+kubectl get deployment.apps/tigera-packetcapture -n tigera-packetcapture -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
+```
+
+This command will output the configured resource requests and limits for the PacketCaptureDeployment in JSON format.
+
+```bash
+{
+  "name": "tigera-packetcapture-server",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
+  }
+}
+```
+
 ## Update via Helm
 
 To update configurations during installation via the [Helm chart](../../getting-started/install-on-clusters/kubernetes/helm#install-calico-enterprise), modify the values.yaml with the necessary resource values for the components prior to executing the helm install.
