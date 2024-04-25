@@ -62,7 +62,54 @@ make build-next
 make serve
 ```
 
-# Updating the Operator API docs
+## Viewing changes in preview builds
+
+Each pull request against the `main` branch generates two preview builds.
+You can find links to these preview builds as comments from Netlify.
+
+* Deploy preview. A full build with our production configuration. 
+* Deploy preview for _calico-docs-preview-next_. This builds the site based on the current state of our unversioned development directories: 
+  * `calico/`
+  * `calico-enteprise/`
+  * `calico-cloud/`
+
+If you're making changes to an upcoming version of any of the products, review your changes in _calico-docs-preview-next_. 
+
+### Viewing your changes locally for unreleased documentation
+
+If you prefer to view changes to unreleased documentation locally, you must modify the `docusuarus.config.js` file.
+Add 'next' to the list for `onlyIncludeVersions` for the product docs you want to build. 
+
+```js
+      {
+        id: 'calico',
+        path: 'calico',
+        routeBasePath: 'calico',
+        editCurrentVersion: true,
+        onlyIncludeVersions: ['next','3.27','3.26','3.25'], // 'next' is added to build the in-development docs  
+        versions: {
+          current: {
+            label: 'Next',
+            path: 'next',
+            banner: 'unreleased',
+          },
+          3.28: {
+            label: '3.28 (latest)',
+            path: '3.28',
+            banner: 'none'
+          },
+          3.27: {
+            label: '3.27 (latest)',
+            path: 'latest',
+            banner: 'none',
+          },
+
+```
+
+With this configuration, run `yarn start` or `yarn build && yarn serve` to see your changes.
+
+
+## Updating the Operator API docs
 
 This repo includes functionality to automatically update the Operator API docs from the current version of Operator
 for each branch. The following Makefile targets will help you update the docs you want to update:
