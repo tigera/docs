@@ -1,0 +1,403 @@
+---
+description: A guide for using Calico's observability tools.
+title: Observability
+---
+
+# Observability
+
+This guide will walk Kubernetes users through the different observability and monitoring capabilities in Calico to learn how to observe and troubleshoot workload communications, performance, and operations in a Kubernetes cluster.
+
+## Overview
+
+### What is observability?
+
+Observability is the ability to understand the internals of a system by analyzing the internals of a system. 
+In the context of Kubernetes, that system would be the cluster, and the internals could be nodes, pods, resources, network policies, etc.
+In complex systems, with lots of dynamic, interconnected parts, observability puts a visual frontend on what would otherwise likely be a series of recursive commands in a CLI to obtain the same information.
+What that front-end is will depend on the software that’s integrated within the cluster, and will likely depend on which internals are being shown, and who the target audience is.
+One example might be a dashboard, showing various metrics to an end-user who needs an overview of a system to monitor it’s health. 
+Observability could also go more granular than that, representing visually how different resources installed in the cluster are connected and dependent on each other.
+In summary, observability is a way to visualize, organize and understand what’s going on in our Kubernetes clusters.
+
+### Why do people use observability tools?
+
+Kubernetes is by design a dynamic, distributed system, which can make it difficult to get the full picture of what’s happening inside a cluster.
+This can make managing and troubleshooting difficult and time consuming, and may require the integration of multiple third-party tools to get the desired outputs.
+Without observabiltity, organizations may struggle to:
+* Troubleshoot issues between services
+* Troubleshooting network issues, such as latency, dropped packets or increases in load
+* Identify workload interdependencies
+* Implement security measures, such as network policies, partly due to the above
+* Monitor the health of a cluster and quickly identify issues
+
+### What is Calico’s approach to observability?
+
+When Calico Enterprise or Calico Cloud is installed in a cluster, it collects a lot of information about the flows happening within it to provide purpose-built observability with microservice specificity.
+This comes without the additional need for a service mesh, additional compute resources for log correlation and aggregation, and at no extra cost.
+This flow information is stored in Elasticsearch, and gives commercial Calico users visibility into:
+* Communication patterns and traffic flows of workloads
+* Dependencies and interactions between namespaces, pods, and microservices
+* Communication to external services
+* Workload performance (traffic volume and speeds)
+* Network policy mapping
+* Alerts (for threats)
+This information can be used to monitor a cluster to ensure its network traffic is healthy, or to identify issues as they occur, such as workloads communicating with endpoints that they shouldn’t be or network slowdowns and latency issues.
+Calico has a range of different observability tools that suit different purposes.
+As an example, when implementing a security strategy such as microsegmentation, a user may visualize workload interdependencies in order to write network policies (dynamic service and threat graph).
+They may use the same tool to visualize the impact of those policies on traffic flows, or choose other tools that show all network policies (Policies Board), or volumetric cluster traffic (Flow Visualizer).
+If further troubleshooting is required, detailed queries can be made on logs (Kibana).
+Finally, built-in dashboards can be used for ongoing monitoring.
+
+This document will go through the multiple use-cases of observability tools, how to use them, and guidance on real-world troubleshooting scenarios.
+
+Project Calico users do not have access to UI-based observability, but may be able to set up their own integrations with general-purpose monitoring tools such as Prometheus and Grafana.
+However, these may lack the depth and specificity required, require additional domain expertise, and cost more in terms of time vs a commercial out-of-the-box solution.
+Additionally, kubectl can be used to list running pods, get network policies, etc.
+Collecting these outputs are time consuming and requires manually stitching together data or results to get insights.
+Without purpose-built observability, troubleshooting Kubernetes specific issues may take longer and increase the time to resolution.
+
+
+## Observability tools for different uses
+
+As mentioned, Calico collects a lot of information on network traffic within a cluster. 
+To maximize usability for Calico users, flow metadata is the source of information for many observability tools with Calico Enterprise and Calico Cloud. 
+Each of these tools serves a different purpose, depending on the use case for observability and can be distinguished by the level of detail required. 
+For example, a predominantly healthy cluster should not require someone to read through lines and lines of flow logs to determine cluster health regularly.
+However, someone who has identified an issue with a workload may find it useful to do a deep dive into log files, and a tool that makes it easy to find the relevant logs would make the troubleshooting process more efficient.
+As such, in Calico Enterprise and Calico Cloud, there are many features that contribute to observability and provide a different level of detail that are suited to different cluster operations.
+While the observability features discussed in this use case are commercial, Calico Open Source does allow you to create policies with a log action to get insights into traffic flows for defined endpoints.
+These logs can then be passed to other tools, such as Fluent Bit or [Prometheus](https://www.youtube.com/watch?v=FQueSlnGOpk).
+Using [Grafana](/calico/latest/operations/monitor/monitor-component-visual) can be beneficial by providing a means to visualize metrics through graphs that can help you quickly identify unusual activity.
+This may be a sufficient method for some users to [monitor Calico metrics](/calico/latest/operations/monitor/monitor-component-metrics).
+
+### Cluster monitoring
+
+As Kubernetes clusters often contain multiple distributed, dynamic resources, anyone responsible for managing a cluster needs an easy way to see important and critical data at a glance.
+Particularly for organizations with business critical applications running in Kubernetes, a quick, easy-to-digest view of important cluster metrics is paramount for operational efficiency, reducing potentially expensive or reputation damaging outages or slowdowns.
+
+Dashboards are often the tool of choice to combine disparate data sources into appropriate visualizations, providing multiple views in one.
+This provides a single place for teams to go to access real-time data, identify trends and make informed decisions or take action quickly.
+
+Calico’s built-in dashboards are intended for monitoring and maintaining the state of a healthy cluster, and may be a springboard for taking action or troubleshooting.
+
+Calico provides two built-in dashboards: Cluster Health and Security Posture.
+
+*For users looking to monitor the overall health of their cluster:*
+
+*Cluster Health:* This is a customizable view for either a cluster or namespace showing policies, endpoints, services, and more.
+It provides an overview of network and security-related activities and behavior within a defined timeframe, such as: 
+* Number of policies, including unused or policies denying traffic
+* DNS requests and their latency
+* Running processes and services
+* HTTP requests, duration, and responses
+
+![Cluster health](/img/use-cases/cluster-health.png)
+
+This dashboard provides a holistic view of namespace or cluster activity, making it easy to identify anomalous behavior.
+
+*For users looking to quickly assess how secure their cluster is, with actionable insights:*
+
+*Security Posture:* Calico generates a security score based on image risk, egress access security, and namespace isolation.
+Security Score can be viewed over time, with recommended actions and riskiest namespaces in one view to get a holistic view of cluster security.
+This dashboard makes it easy for someone to monitor cluster security over time with recommended actions to improve the security posture of a cluster.
+Providing security posture in a dashboard with a low level of detail makes it easy for a Calico user to identify potential weaknesses in security posture without the need to manually check all image scan results, review network policies for every namespace, and flow logs for unsecured egress access.
+
+![Security posture](/img/calico-cloud/security-posture-overview.png)
+
+Calico Enterprise and Calico Cloud also provide dashboards through Kibana which are more specific and contain more details than these dashboards, so will be covered further on in this document.
+
+### Understanding and taking action
+
+The next category of observability tools provide more detailed insights and information about cluster resources than a dashboard, but not at the level of detail logs would provide.
+
+The observability tools that Calico provides in this category are well suited to users who need to get an understanding of how different resources in their cluster interact, what the dependencies are, and more details on communication patterns.
+This is crucial before implementing any security measures, allowing you to correctly design, validate and monitor.
+
+In Calico Enterprise and Calico Cloud you can visualize cluster traffic topographically, making it easy to identify any namespaces or pods that might be experiencing issues, from denied network flows to security alerts.
+Calico’s two visualization capabilities are Dynamic Service and Threat Graph and Flow Visualizer.
+Both tools show traffic flows, color-coded traffic actions (denied or allowed), and allow you to filter views to focus on a cluster view, namespace, or service.
+These tools are valuable when defining, applying, and reviewing network policy within a cluster because it is very easy to visualize dependencies and interactions between namespaces, pods, and microservices, and assess the impact of any network policy changes.
+
+#### Network policy management and visualization
+
+Calico has an additional tool for network policy visibility and management.
+Oftentimes implementing network policy is considered complex, so being able to observe all policies applied to a cluster, in the correct order, with the impacts of those policies visible is a big time saver for implementing and managing network policies.
+
+![Policy board](/img/use-cases/policy-board.png)
+
+On the Policy Board, you can see all of the network policies applied to a cluster, in which order and tier, and whether the policy is allowing or denying traffic, and how many endpoints it’s targeting.
+
+#### Visualize cluster communications
+
+*Dynamic Service and Threat Graph* provides a point-to-point, topographical representation of traffic within a cluster. 
+In Dynamic Service and Threat Graph, the default view shows a topographical view of network activity at a namespace level.
+It is possible to change the view to look at other clusters, or on the default view, double-clicking any icon will navigate to that resource (a namespace, for example) and then traffic will be visible at a workload level within that namespace.
+
+![Service graph](/img/use-cases/service-graph.png)
+
+Other troubleshooting or monitoring behaviors can be initiated or viewed from the Dynamic Service and Threat Graph, such as security events or packet captures.
+Security alerts will also be displayed visually, so that anyone viewing the cluster can quickly see any cause for concern and act.
+
+For a video walkthrough of Dynamic Service and Threat Graph, click [here](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=46g9yglrpt).
+
+*Flow Visualizer* gives a 360-degree view of a cluster, where network traffic is represented volumetrically.
+The views, and color-coding of Flow Visualizer can be filtered on the right-hand side by namespace, service, flow.
+Zooming in by clicking the magnifying glass shows a 360’ view of traffic within the selected object.
+
+![Service graph](/img/use-cases/flowviz.png)
+
+### When to use logs
+
+If the aforementioned visualization tools have highlighted a cause for concern that needs further investigation, analysis or troubleshooting, a user will need more information.
+This will likely be in the form of logs, where the user can view and filter logs to target specific flows, workloads, or namespaces where the flow metadata can then be reviewed.
+Logs typically hold all of the information relating to a flow, and that information is simplified or extracted to provide a clearer focus in dashboards or visualizations.
+Using other tools before log files helps users narrow down the scope of troubleshooting or analysis.
+When a user is ready to dive into log files they should already have a good idea of metadata to filter on or target, providing a more efficient approach to their investigation.
+
+In Calico Enterprise and Calico Cloud, logs are stored in Elasticsearch.
+There are several different log types that Calico supports and collects:
+* *Flow logs:* Network flows for workloads: source and destination namespaces, pods, labels, and policies*
+* *Audit logs:* Audit logs for Calico and Kubernetes resources
+* *BGP:* Calico networking, BGP peering and route propagation
+* *DNS:* DNS lookups and responses from Calico domain-based policy\*
+* *IDS:* Calico intrusion detection events: suspicious IPs, suspicious domains, and global alerts
+
+\* *Because of their high-volume, flow and dns logs support aggregation.*
+
+Flow Logs are available through the Dynamic Service and Threat Graph, and automatically filter based on the view or selected resource.
+
+![Service graph flow logs](/img/use-cases/service-graph-flow-logs.png)
+
+The default view is to have the flow metadata collapsed, with the flow logs table configured with different columns to allow a Calico user to choose a table summary that best suits their needs.
+
+Logs can also be viewed and queried through Kibana for more advanced use cases, and will be covered in the next section.
+Flow metadata provides an extra level of detail for understanding, investigating, and troubleshooting network flow issues, such as:
+* Identifying policy impact on traffic flow: which policies are evaluating traffic flow, in which order, is the flow allowed or denied
+* Which processes are initiating flows
+* Issues where connections could not be established
+* Changes in application or service load 
+* Performance issues with latency or packets dropping
+* Knowing which IP addresses or FQDNs are communicating with your cluster
+
+Specific examples of how to use these observability features for these issues can be found below.
+
+### Most-detailed observability
+
+As Calico Enterprise and Calico Cloud store logs in Elasticsearch, these applications also provide Kibana as an interface to explore Elasticsearch logs and gain insights into workload communication, traffic volume, performance, and other key aspects of cluster operations.
+The in-built dashboards within the Calico UI may be suited to most users who need to observe cluster health more generally.
+Kibana dashboards suit more advanced users who have a deeper understanding of the cluster and applications running within it, who are comfortable building queries and filters for more comprehensive insights or troubleshooting efforts.
+
+Similarly, the flow logs paired with the dynamic service and threat graph are well suited to less complex troubleshooting, and useful when compared with cluster visualizations.
+More in-depth investigations will benefit from Kibana logs, where the full breadth of metadata is accessible and can be filtered and reviewed using more sophisticated queries and filters. 
+
+#### Kibana dashboards
+
+There are a number of prebuilt dashboards in Kibana, such as:
+* DNS dashboard
+* L7 HTTP dashboard
+* Tigera Secure EE audit logs dashboard
+* Tigera Secure EE flow logs dashboard
+* Tigera Secure EE Tor-VPN logs
+
+Each dashboard has advanced filtering options if the pre-built dashboards are insufficient. 
+
+As an example, the pre-built DNS dashboard is shown below, which allows users to quickly identify DNS health and performance.
+
+![Kibana DNS dashboard](/img/use-cases/kibana-dns-dashboard.png)
+
+A targeted DNS dashboard provides one view for all DNS-related metrics, including:
+
+* Grouping DNS requests by the type of requested resource record.
+* Identifying DNS response codes to distinguish successful and erroneous DNS resolution attempts.
+* Monitoring external domain resolution to track connections to services outside the cluster.
+* Analyzing the rate of DNS queries to identify potential performance bottlenecks.
+* Measuring DNS response latency to pinpoint application performance issues.
+
+Filters and queries can be added to dashboards to increase the level of detail, such as filtering for specific namespaces.
+It is possible to create new dashboards based on user-defined queries and filters.
+
+This example dashboard only includes egress traffic from a cluster.
+A user viewing this dashboard can create and validate egress access controls, or DNS policies, based on insights from dashboard.
+
+![Kibana egress access](/img/use-cases/kibana-egress-dashboard.png)
+
+Using Kibana to troubleshoot issues is discussed below.
+
+#### Kibana Logs
+
+Different types of logs are categorized into indexes.
+All logs are enabled by default except l7 logs, which must be explicitly enabled.
+
+Using logs in Kibana gives users more control over the queries and filters used to get information about traffic.
+For example, the built-in flow logs are restricted to show specific columns.
+In Kibana, logs can be filtered and columns chosen based on all of the metadata available.
+
+![Kibana egress access](/img/use-cases/kibana-logs.png)
+
+This data can also be represented in Kibana dashboards as a table to combine custom log views with graphical monitoring.
+
+This suits users who are using logs to narrow focus for a specific use or complex troubleshooting.
+
+### Specific Use Cases
+
+Calico’s observability features go beyond visualizing the internals of a cluster, and provide a place to highlight potential issues or security concerns, troubleshoot communication issues, and even identify flows that need to be secured.
+
+Observability in Calico is often used to view, monitor and troubleshoot:
+* Network policies and flows
+* Cluster traffic
+* Flow properties and metadata
+* DNS issues
+* TCP performance
+
+Each section has been grouped into a few different scenarios that outlines how Calico features can help solve these use cases.
+
+#### Network policies and flows
+
+**Identify “deny” flows**
+
+Flow logs can be used to identify flows that are either allowed or denied by policies.
+Each flow is reported twice, once by the source and by the destination, so there are two different perspective for each flow.
+
+Denied flows can easily be identified in many places within Calico:
+* **Dashboards** - Unless the view has been customized, there is a policies widget on the built-in dashboard showing ‘Policies’, which will show a count of policies that are denying traffic.
+* **Dynamic Service and Threat Graph** - Dynamic Service and Threat Graph flow lines will change to red/orange if flows are being denied.
+* **Flow Viz** - Easily toggle the ‘status’ view or filter to easily list or visualize denied flows (in red). 
+* **Logs** - Flow logs viewed through Dynamic Service and Threat Graph and will automatically filter based on the current view, or create custom filters for denied traffic.
+* **Kibana** - Dashboards or logs accessed through Kibana can be filtered with queries specifically targeting flows with action : deny
+
+You can see Kibana in action [here](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=3ezb78hxy2).
+
+**Identify flows denied by a policy**
+
+Identifying flows denied by a policy is similar to identifying denied flows, but instead of taking a flow-first approach, this takes a policy-first approach.
+You may need to see all flows being impacted by a policy for analysis or to confirm the policy is working as expected.
+
+* **Policy Board** - In the Policy Board you can now see flow logs filtered by policy when selecting a policy and looking at the flows. 
+* **Logs** - Flow logs viewed through Dynamic Service and Threat Graph and will automatically filter based on the current view, or create custom filters for denied traffic.
+* **Kibana** - Dashboards or logs accessed through Kibana can be filtered with queries specifically targeting policies with queries like: policies:{all_policies: deny and all_policies: tenant-01-restrict}. This query would show all flows being denied by the tenant-01-restrict policy.
+
+You can see Kibana in action [here](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=hfe7untjrb)
+
+#### Cluster traffic
+
+**Inbound and outbound bytes**
+
+Visualizing and watching inbound and outbound bytes may help identify if your application is experiencing higher than normal load or if there is malicious activity causing more traffic to flow than before.
+
+* **Dynamic Service and Threat Graph** - Hovering over flow lines between objects in Dynamic Service and Threat Graph brings up a popup reporting the number of allowed or denied packets and bytes.
+* **Flow Viz** - Flow Viz by default is a volumetric view of traffic making it easy to identify which namespaces or services are generating the most traffic. The right-hand panel in Flow Viz also displays the CPS, PP, and BPS.
+* **Logs** - Flow logs record the number of bytes in and bytes out for each flow.
+* **Kibana** - Dashboards in Kibana have pie charts that show volumetric traffic by bytes in/out for source and destination namespaces. Dashboards can be additionally filtered to provide more detailed insights.
+
+To see how filtering can be set up in dashboards to view bytes in/out for specific namespaces and find flows of interest, watch [this video](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=6qmpv3il71).
+
+**Identify flows with “bytes_in : 0”**
+
+Flows with “bytes_in : 0” and “action : allow” indicate that an upstream firewall denied a flow, or the server is not responding to the connection.
+This can be used to troubleshoot issues related to firewall policies outside of Kubernetes.
+Typically, Calico will show that the flow was allowed but the user will complain that the connection was not established.
+
+This could be due to:
+*There is a firewall in front of the external service
+*The service is no longer live or active
+When this happens, Calico will show X number of bytes going out, but no bytes coming in.
+
+* **Logs** - Flow logs record the number of bytes in and bytes out for each flow, so you can identify flows with 0 bytes in.
+* **Kibana** - Dashboards and logs in Kibana show bytes in/out for flows, making it easy to find flows that are not being denied by network policies (ruling out issues with Calico) and have 0 bytes in.
+
+To see this shown in a Flow Log Dashboard you can watch [here](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=of8f6qwxul).
+
+#### Flow properties and metadata
+
+**Identify flows to and from specific processes**
+
+Within a pod there could be more than one container, and each container could have different processes initiating or receiving flows.
+Typically, identifying the port or container level might be easier, but identifying the specific process is harder.
+Calico uses eBPF probes to record this data and enrich flow logs with a process id.
+
+This is useful to identify a workload initiating communication with decommissioned services or services it shouldn’t be communicating with.
+It can also be used to identify any communication related to a vulnerability, such as log4j. 
+
+* **Logs** - Flow logs contain process metadata such as process id, name and process arguments.
+* **Kibana** - Dashboards and logs in Kibana can be queried using kql to search for flows with specific process ids, names or arguments. This will return all flows that match, helping to identify the source and destination of flows for those processes.
+
+To view an example using Kibana to filter and identify flows related to log4j communication watch [this video](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=ooka4wvfxz)
+
+**Identify traffic to specific service ports**
+
+* **Dynamic Service and Threat Graph** - Dynamic Service and Threat Graph flow lines will show (in the right-hand information panel) the protocols and ports when clicked on. This will automatically filter the Flow Logs for more insights.
+* **Logs** - Flow logs include the destination port of a flow.
+* **Kibana** - Dashboards or logs accessed through Kibana can be filtered to show each flow, which contains destination ports. It can also aggregate destination port information to show the destination ports and the number of flow records per port.
+
+This makes it easy to identify which ports are being communicated to from within the cluster, and for example, identify all traffic communicating with a database, or identify SSH traffic.
+This makes it easy to identify workloads communicating over particular service ports.
+
+To see how to do this in Kibana watch [this video](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=0n4rioj2jk)
+
+**Identify traffic to specific FQDNs**
+
+If workloads are communicating with external services where the IP address correlates with a DNS entry, Calico can record the Fully Qualified Domain Name (FQDN) of that service. This makes it easy for users to identify workloads that are communicating with public external services.
+
+* **Logs** - Flow logs contain the FQDN. The destination will show as ‘pub’, and the dest_domains field will show the domain name based on a DNS lookup.
+* **Kibana** - The Kibana dashboards have a ‘unique-domains’ widget which lists the top values of dest_domains from flow logs, with a record count. Clicking on a domain name in that widget will filter all flows that sent traffic to that FQDN.
+
+To see this in Kibana, watch [this video](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=huq9luzvux)
+
+**Identify traffic to specific destination IPs**
+
+Identifying traffic to IP addresses within a cluster is unlikely due to the ephemeral and dynamic nature of services and workloads, but there may be a need to to identify communication to IPs outside of the cluster.
+This could be a service within your organization or environment, public IP addresses or potentially malicious IP addresses. 
+
+* **Logs** - Flow logs contain the destination IP address. 
+* **Kibana** - The Kibana dashboards have a ‘unique destination IP’ widget which lists the top values of dest_ip from flow logs, with a record count. Clicking on an ip address creates a filter, and you can use that to filter flows that have been communicating with that IP address.
+
+To watch an example in Kibana watch [this video](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=lsb7b97015).
+
+**Identify all egress connections from a workload**
+
+Egress connections from a workload could be internal services inside your environment, external or public services on teh internet.
+Knowing what external services your workload(s) are communicating with may be useful to create DNS policies for your cluster or for validating that services are communicating with the correct, expected services.
+
+* **Dynamic Service and Threat Graph** - Dynamic Service and Threat Graph will show connections outside of the cluster with a globe-type icon, and will be named according to if it’s public, private or a defined network set. Clicking on the icon or flow lines leading to it will filter the flow logs view within Dynamic Service and Threat Graph. 
+* **Logs** - Flow logs viewed through Dynamic Service and Threat Graph will automatically filter based on the current view, or create custom filters for denied traffic.
+* **Kibana** - Dashboards in Kibana contain a widget that lists unique domains and this can be exported to CSV. Kibana also allows for advanced queries so the unique domains can be filtered down to a namespace or workload level. 
+
+This approach is similar to the *Identify FQDN* section, and can combined with other filters or widgets to identify service ports, and potentially highlight connections to insecure services (using 80 instead of 443, for example).
+
+A video showing this approach in Calico and Kibana can be seen [here](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=d9zrz6qjmg).
+
+#### DNS
+
+DNS issues within a cluster can significantly impact an application’s performance and reliability.
+This issues could be a result of misconfigurations, DNS infrastructure failures or DNS infrastructure performance issues.
+This issues often manifest as application issues rather than DNS issues, leading to poor user experience and making troubleshooting and diagnostics difficult.
+
+DNS infrastructure in Kubernetes interact with upstream DNS servers for external domain lookups, which could impact your Kubernetes workloads.
+Some organizations may have complex DNS queries, matrix, multiple DNS servers, and go through several recursive loops before a client receives an IP address.
+This may be more true if there are multiple DNS zones, global load balancing between geolocated services, which have their own backend servers.
+If any of those other servers are experiencing issues they could manifest as DNS issues impacting your workloads.
+
+Calico provides the following features to troubleshoot DNS issues:
+* **Dynamic Service and Threat Graph** - Dynamic Service and Threat Graph provides a graphical view of connectivity to kube-dns from different namespaces and workloads, and the interactive interface aids with troubleshooting, for example automatically filtering logs. 
+* **DNS Logs** - DNS logs are available out -of-the-box and include DNS queries within the cluster from pods to kube-dns to external DNS servers. Each of these logs contains a variety of metadata. [link to doc if there is one?]. For every DNS transaction you can identify the initiator, ip address, labels, namespce, DNS domain queried, DNS response code, etc.
+* **DNS Dashboard** - The DNS dashboard provides an overview of a cluster’s DNS health and statistics, which at a high level can identify any issues. 
+
+Using these observability features can help troubleshoot:
+* denied DNS traffic (possibly as a result of misconfigured policies)
+* SERVFAIL errors, where DNS servers fail to respond to queries, which might be due to DNS server outages or misconfigurations
+* NXDOMAIN issues, where an resource record is missing for a domain, which could be due to a misconfigured application, incorrect or decommissioned domain
+
+To see exactly how to troubleshoot DNS issues in Calico explore the [Introduction to DNS Observability Challenges](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=kxwsd05vqg) video series.
+
+#### TCP
+
+Calico provides the following features to troubleshoot TCP issues:
+* **TCP Dashboard** - In Kibana is a DNS dashboard that shows minimum round trip time, maximum round trip time, TCP retransmissions and TCP packet drops, throughput (bytes and packets in/out), for each node, as well as detailed logs.
+The dashboard can be filtered to show TCP statistics for a specific application, and each node can be analyzed for difference in performance between nodes, retransmissions or packet losses.
+If there is a difference in performance between nodes that could signify an unhealthy node.
+Using filters can help narrow down the scope of performance issues and what applications or workloads might be impacted.
+
+The TCP performance dashboard is a starting point for identifying anomalies and getting an overview of TCP performance that might highlight any issues.
+Filters can be used to narrow down to nodes, applications, ports, destination etc.
+
+You can watch how to do this in more detail [here](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=sk1g5jn0cv).
