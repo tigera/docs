@@ -173,6 +173,10 @@ const config = {
                 label: 'Microsegmentation',
                 to: '/use-cases/microsegmentation',
               },
+              {
+                label: 'Observability',
+                to: '/use-cases/observability',
+              },
             ],
           },
           {
