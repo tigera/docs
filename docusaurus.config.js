@@ -414,6 +414,11 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
+          '3.19-2': {
+            label: '3.19 (early preview)',
+            path: '3.19',
+            banner: 'unreleased',
+          },
           '3.19-1': {
             label: '3.19 (early preview)',
             path: '3.19',
