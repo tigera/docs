@@ -483,6 +483,13 @@ const config = {
         id: 'use-cases',
         path: 'use-cases',
         routeBasePath: 'use-cases',
+        editCurrentVersion: true,
+        onlyIncludeVersions: ['current'],
+        versions: {
+          current:{
+            path: '/',
+          },
+        },
         //To see builds for unreleased versions, remove comments in the next line.
         sidebarPath: require.resolve('./sidebars-use-cases.js'),
         editUrl: generateEditUrl,

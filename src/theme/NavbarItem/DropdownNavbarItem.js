@@ -10,7 +10,7 @@ function useDropdownLabel(props) {
     return props.label;
   }
 
-  return getProductNameById(productId) || props.label;
+  return productId === 'use-cases' ? props.label : getProductNameById(productId) || props.label;
 }
 
 export default function DropdownNavbarItemWrapper(props) {
