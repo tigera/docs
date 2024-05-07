@@ -7,6 +7,7 @@ module.exports = {
       collapsed: false,
       items: [
         'microsegmentation',
+        'observability'
       ],
     },
   ],
