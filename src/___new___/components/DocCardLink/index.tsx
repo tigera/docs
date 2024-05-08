@@ -24,10 +24,11 @@ const useDocUrl = (docId: string) => {
 
 type DocCardLinkProps = {
   docId: string;
-  version: string;
+  title?: string;
+  description?: string;
 };
 
-const CardLink: React.FC<DocCardLinkProps> = ({ docId }) => {
+const CardLink: React.FC<DocCardLinkProps> = ({ docId, title, description }) => {
   const doc = useDocById(docId);
   const href = useDocUrl(docId);
 
@@ -39,10 +40,10 @@ const CardLink: React.FC<DocCardLinkProps> = ({ docId }) => {
       >
         <Card sx={cardStyles}>
           <CardHeader sx={cardHeaderStyles}>
-            <Heading sx={headingStyles}>{doc.title}</Heading>
+            <Heading sx={headingStyles}>{title ?? doc.title}</Heading>
           </CardHeader>
           <CardBody sx={cardBodyStyles}>
-            <Text sx={cardTextStyles}>{doc.description}</Text>
+            <Text sx={cardTextStyles}>{description ?? doc.description}</Text>
           </CardBody>
         </Card>
       </Link>
