@@ -4,23 +4,8 @@ import { theme } from '../../theme';
 import { ChakraProvider } from '@chakra-ui/react';
 import { useDocById } from '@docusaurus/theme-common/internal';
 import Link from '@docusaurus/Link';
-import { useLocation } from '@docusaurus/router';
-import { useProductId } from '../../../utils/useProductId';
 import { cardBodyStyles, cardHeaderStyles, cardStyles, cardTextStyles, headingStyles, linkStyles } from './styles';
-
-const useDocVersion = (productId: string | undefined) => {
-  const { pathname } = useLocation();
-  const regex = new RegExp(`${productId}\/(latest|\d+(\.\d+)*)\/`);
-
-  return productId === 'calico-cloud' || !productId ? null : (pathname.match(regex) ?? [])[1];
-};
-
-const useDocUrl = (docId: string) => {
-  const productId = useProductId();
-  const version = useDocVersion(productId);
-
-  return `/${[productId, version, docId].filter(Boolean).join('/')}`;
-};
+import { useDocUrl } from '../../hooks';
 
 type DocCardLinkProps = {
   docId: string;
