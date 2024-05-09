@@ -18,29 +18,78 @@ Learn about the new features, bug fixes, and other updates in this release of {{
 
 ### Improved flow log filtering for destination domains
 
-We’ve updated the Felix parameter (`dest_domains`) for DNS policy to make it easy to find only domain names that the deployment actually connected to (not all the domain names that got translated to the same IP address).
+We’ve updated the Felix parameter (`dest_domains`) for DNS policy to make it easy to find only domain names that the deployment connected to (not all the domain names that got translated to the same IP address).
 For more information, see [Flow log data types](../visibility/elastic/flow/datatypes.mdx).
 
 ### New flow logs panel on Endpoints page
 
 We've updated the Endpoints page in Manager UI with a new flow logs panel so you can view and filter Endpoints associated with denied traffic. Flow log metadata includes the source, destination, ports, protocols, and other key forms. We've also updated the Policy Board to highlight policies with denied traffic.
 
-### Improvements to security events dashboard
+### Improvements to security events
 
-We've added the following improvements to the [Security events dashboard](../threat/security-event-management.mdx):
+We've added the following improvements to the [Security events list](../threat/security-event-management):
+
+We've added the following improvements to the [Security events list](../threat/security-event-management):
 
 - Jira and Slack webhook integration for security event alerts
 
-   By [configuring webhooks](../threat/configuring-webhooks.mdx), you can now push alerts from the Security Overview dashboard in Manager UI to Jira and Slack so incident response and security teams can use native tools to respond to security event alerts.
+  By [configuring security event alerts](../threat/configuring-webhooks), you can push security event alerts to Slack, Jira, or an external HTTP endpoint of your choice.
+  This lets incident response and security teams to use native tools to respond to security event alerts.
 
 - Added threat feed alerts
 
-   If you have implemented global threat feeds for suspicious activity (domains or suspicious IPs), alerts are now visible in the Security Overview dashboard. For more information on threatfeeds, see  [Trace and block suspicious IPs](../threat/suspicious-ips).
+  If you have implemented global threat feeds for suspicious activity (domains or suspicious IPs), alerts are now visible in the Security Overview dashboard.
+  For more information on threat feeds, see [Trace and block suspicious IPs](../threat/suspicious-ips).
 
-### Deprecated and removed features
+### Security events dashboard
 
-* The anomaly detection feature was removed in v3.18.1 If anomaly detection is enabled and you upgrade to {{prodname}} 3.18, you will stop receiving anomaly detection alerts.
-* [Manual install for Windows](../getting-started/install-on-clusters/windows-calico/manual-install/) will be deprecated in a future release. Starting in v3.18.1, the [standard installation is operator-based](../getting-started/install-on-clusters/windows-calico/operator).
+A new dashboard summarizes security events and helps practitioners easily understand how events map across namespaces, MITRE techniques, event types, and attack phases. This allows first responders to quickly make sense of potential threats, engage the right stakeholders, and start the incident response and investigation process.
+
+For more information, see [Security event management](../threat/security-event-management.mdx).
+
+### Exceptions for security events
+
+{{prodname}} now allows users to create exceptions for Security Events with varying levels of scope, from excluding an entire namespace to a specific deployment or workload. This gives operators a way to tune the runtime threat detection they have deployed and focus their investigations and response on critical applications and infrastructure.
+
+For more information, see [Security event management](../threat/security-event-management.mdx).
+
+### New flow logs panel for Endpoints and View Policy pages
+
+{{prodname}} has added new entry points to view flow logs directly from the Endpoints listing and View Policy pages in the UI.
+Users can easily see which endpoints are involved in denied traffic, filter on those workloads, and click a link to open a panel that shows associated flows.
+A similar link has been added for View Policy pages, which allows users to quickly see the flows that have been recently evaluated by that policy to make sense of denied traffic or updates to rules.
+
+### Security Events in Service Graph
+
+{{prodname}} now includes a new tab for Security Events which has taken the Alerts. Most runtime threat detection features now generate Security Events, and their inclusion Service Graph enables users to automatically filter events based on where they are occurring in a cluster.
+
+### Security Events IP addresses enriched with ASN and geolocation
+
+For security events that contain external IP addresses, {{prodname}} now automatically performs a geolocation lookup. Understanding the country of origin for an IP address can often be the quickest and easiest way to distinguish legitimate traffic from malicious traffic.
+
+### Extend Workload-based WAF to Ingress Gateways
+
+This latest release enables operators to plug-in a modifiedsimplified version of WAF to their own instances of Envoy.
+This allows users to deploy this version of WAF at the edge of their cluster integrated with an Ingress Gateway (if based on Envoy), with fully customizable rules based on OWASP CoreRuleSet 4.0 and powered by the Coraza engine.
+
+For more information, see [Deploying WAF with an ingress gateway ](../threat/deploying-waf-ingress-gateway.mdx).
+
+### ARM64 support
+
+This release expands our support to clusters with nodes running ARM64-based architectures.
+
+### Specifying resource requests and limits in {{prodname}} components
+
+{{prodname}} now provides the ability to set resource requests and limits for the components that run as part of {{prodname}}. Please see documentation for specific guidance on setting these limits.
+
+## Deprecated and removed features
+
+* The FIPS mode feature is removed in this release.
+* The AWS security groups integration is removed in this release.
+  It will be removed in Calico Enterprise 3.19.
+* The ingress log collection feature is removed in this release.
+* The [manual installation method for Windows](../getting-started/install-on-clusters/windows-calico/manual-install/) is deprecated and will be removed in a future release.
+  The recommended installation method is now [operator-based](../getting-started/install-on-clusters/windows-calico/operator).
 
 ## Technology Preview features
 
@@ -48,27 +97,15 @@ We've added the following improvements to the [Security events dashboard](../thr
 
    Protect cloud-native applications from application layer attacks.
 
-- [Security events management](../threat/security-event-management)
-
-   Get alerts on security events that may indicate a threat is present in your Kubernetes cluster.
-
 - [DNS policy for Windows](../getting-started/install-on-clusters/windows-calico/limitations#dns-policy-limitations)
 
    Use domain names in policies to identify services outside the cluster, which is often operationally simpler and more robust than using IP addresses.
 
-<!-- ## Bug fixes -->
 
-<!-- Follow this template: Problem-Cause-Fix-Result -->
+## Bug fixes
 
-<!--
-* Bug 1.
-* Bug 2.
--->
-<!--
-## Security fixes
+* Updates have been made to the Calico API server to ensure that Calico network policies can be sync with GitOps tools such as ArgoCD.
 
-* Security fix.
--->
 
 ## Known issues
 
@@ -78,17 +115,24 @@ We've added the following improvements to the [Security events dashboard](../thr
 * *Multi-cluster management users only*. If the `manager-tls` and `internal-manager-tls` secrets have overlapping DNS names, components such as `es-calico-kube-controllers` will log certificate errors. If you have previously installed a version older than v3.13.0 and never changed your manager-tls secret from the tigera-operator namespace, you must delete both of these secrets. This applies to you if the following command prints a certificate: `$ kubectl get secret manager-tls -n tigera-operator -o "jsonpath={.data['cert']}"`.
 * Upgrading to {{prodname}} 3.18.0 on Rancher/RKE from {{prodname}} 3.13.0 currently requires manually terminating the calico-node container for an upgrade to proceed.
 * Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim. Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.) Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned".
+* When a tier order is set to the maximum float value (1.7976931348623157e+308), this can cause policy re-ordering in the UI not to work properly. Since the `namespace-isolation` tier has this value by default, policy recommendation users are affected. To workaround this issue edit any tier that has this value for the order. For example: use `kubectl edit tier namespace-isolation` and set the order to `10000`.
 
 ## Release details
 
-### Calico Enterprise 3.19.0 (early preview)
+### Calico Enterprise 3.19.0-1.0 (early preview)
 
-January xx, 2024
+February 2, 2024
 
-Calico Enterprise 3.19.0 is now available as an early preview release.
+Calico Enterprise 3.19.-1.0 is now available as an early preview release.
 This release is for previewing and testing purposes only.
 It is not supported for use in production.
 
-<!--
+### Calico Enterprise 3.19.0-2.0 (early preview)
+
+May 9, 2024
+
+Calico Enterprise 3.19.-2.0 is now available as an early preview release.
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+
 To update an existing installation of Calico Enterprise 3.18, see [Install a patch release](../getting-started/manifest-archive.mdx).
--->
