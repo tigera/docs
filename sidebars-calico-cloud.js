@@ -22,6 +22,9 @@ module.exports = {
           link: {type: 'doc', id:'get-started/connect/index'},
           items: [
             'get-started/connect/install-cluster',
+            'get-started/connect/install-helm',
+            'get-started/connect/install-private-registry',
+            'get-started/connect/install-automated',
             'get-started/connect/cc-arch-diagram',
             'get-started/connect/setup-private-registry',
           ],

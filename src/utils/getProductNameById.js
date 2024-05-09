@@ -6,5 +6,8 @@ export function getProductNameById(productId) {
       return 'Calico Cloud';
     case 'calico-enterprise':
       return 'Calico Enterprise';
+    case 'use-cases':
+      return 'All products';
+      o;
   }
 }

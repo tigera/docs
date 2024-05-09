@@ -300,7 +300,7 @@ spec:
           <blockquote>
             <p>
               <strong>Tip</strong>: Without the <code>--max-pods-per-node</code> option above, EKS will limit the{' '}
-              <Link href='https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt'>
+              <Link href='https://github.com/awslabs/amazon-eks-ami/blob/main/nodeadm/internal/kubelet/eni-max-pods.txt'>
                 number of pods based on node-type
               </Link>
               . See <code>eksctl create nodegroup --help</code> for the full set of node group options.
