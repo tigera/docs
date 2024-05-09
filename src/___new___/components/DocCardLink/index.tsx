@@ -25,7 +25,7 @@ const CardLink: React.FC<DocCardLinkProps> = ({ docId, title, description }) => 
       >
         <Card sx={cardStyles}>
           <CardHeader sx={cardHeaderStyles}>
-            <Heading sx={headingStyles}>{title ?? doc.title}</Heading>
+            <Heading sx={headingStyles} as='h5'>{title ?? doc.title}</Heading>
           </CardHeader>
           <CardBody sx={cardBodyStyles}>
             <Text sx={cardTextStyles}>{description ?? doc.description}</Text>
