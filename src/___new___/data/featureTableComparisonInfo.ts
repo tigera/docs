@@ -298,12 +298,6 @@ export default {
           CalicoCloud: 'Y',
         },
         {
-          rowHeader: 'Honeypods to view intruder activity',
-          CalicoOpenSource: '',
-          CalicoEntreprise: 'Y',
-          CalicoCloud: 'Y',
-        },
-        {
           rowHeader: 'Add threatfeeds to trace suspicious network flows',
           CalicoOpenSource: '',
           CalicoEntreprise: 'Y',
