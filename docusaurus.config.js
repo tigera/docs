@@ -405,7 +405,7 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.19-1','3.18-2','3.17','3.16'],
+        onlyIncludeVersions: ['3.19-2','3.18-2','3.17','3.16'],
         lastVersion: '3.18-2',
         versions: {
           current: {
