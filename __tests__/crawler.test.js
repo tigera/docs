@@ -161,7 +161,8 @@ test("Crawl the docs and execute tests", async () => {
     'https://pkgs.k8s.io/',
     'https://apt.kubernetes.io/',
     'https://docs.tigera.io/calico-enterprise/3.15/about-calico-enterprise',
-    'https://your-jira-instance-name.atlassian.net/rest/api/2/issue/'
+    'https://your-jira-instance-name.atlassian.net/rest/api/2/issue/',
+    'https://bugzilla.netfilter.org/show_bug.cgi?id=1119'
   ];
 
   const lc = linkChecker();
