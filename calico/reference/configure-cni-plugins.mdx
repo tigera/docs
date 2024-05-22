@@ -250,12 +250,34 @@ When using `type: k8s`, the {{prodname}} CNI plugin requires read-only Kubernete
 
 ### Enabling policy setup timeout
 
-The `policy_setup_timeout_seconds` option makes the {{prodname}} CNI plugin wait to start a new pod until one of the following conditions occurs:
+The {{prodname}} CNI plugin can be configured to delay new pods from starting their containers until one of the following conditions occurs:
 
 - The pod's policy has finished being programmed.
 - A specified amount of time has elapsed.
 
-By setting this option, you can avoid errors that can occur when a pod tries to start before the pod's policy is programmed.
+By enabling this feature, you can avoid errors that can occur when a pod tries to start before the pod's policy is programmed by its host.
+
+<Tabs>
+<TabItem label="Operator" value="Operator-0">
+
+The policy setup timeout can be configured by setting the `linuxPolicySetupTimeoutSeconds` field in the [calicoNetwork spec](installation/api#operator.tigera.io/v1.CalicoNetworkSpec) of the default `operator.tigera.io/v1/installation` resource.
+
+The following example configures the CNI to delay a pod from starting its containers for up to 10 seconds, or until the pod's dataplane has been programmed:
+
+```yaml
+kind: Installation
+apiVersion: operator.tigera.io/v1
+metadata:
+  name: default
+spec:
+  calicoNetwork:
+    linuxPolicySetupTimeoutSeconds: 10
+```
+
+</TabItem>
+<TabItem label="Manifest" value="Manifest-0">
+
+The policy setup timeout can be configured by setting the `policy_setup_timeout_seconds` option in the CNI config.
 
 Example CNI config:
 
@@ -272,10 +294,10 @@ Example CNI config:
 ```
 
 The {{prodname}} CNI plugin uses {{prodname}}'s `endpoint-status` directory to determine when the dataplane has been programmed for a pod.
-By default, the {{prodname}} CNI plugin will look for the directory at: `/var/run/calico/endpoint-status`.
-To enable and adjust where {{prodname}} writes `endpoint-status`, the `endpointStatusPathPrefix` option must be configured for [Felix](./felix/configuration.mdx).
+If left unset, the {{prodname}} CNI plugin will look for the directory at `/var/run/calico/endpoint-status`. The path `/var/run/calico` is commonly mounted to the {{prodname}} DaemonSet, meaning it can be written to by {{prodname}} containers, and read by the {{prodname}} CNI-plugin, running in the host namespace.
+To enable the `endpoint-status` directory, and adjust which {{prodname}} container directory it is written to, the `endpointStatusPathPrefix` option must be configured for [Felix](./felix/configuration.mdx).
 
-To adjust where the {{prodname}} CNI plugin looks for {{prodname}}'s `endpoint-status` directory, you must set the `endpoint_status_dir` option.
+To adjust where the {{prodname}} CNI plugin looks for {{prodname}}'s `endpoint-status` directory in the host filesystem, you must set the `endpoint_status_dir` option.
 
 Example CNI config:
 
@@ -291,6 +313,8 @@ Example CNI config:
   }
 }
 ```
+</TabItem>
+</Tabs>
 
 ## IPAM
 
