@@ -286,18 +286,18 @@ Example CNI config:
   "name": "any_name",
   "cniVersion": "0.1.0",
   "type": "calico",
+  "policy_setup_timeout_seconds": 10,
   "ipam": {
-    "type": "calico-ipam",
-    "policy_setup_timeout_seconds": 10
+    "type": "calico-ipam"
   }
 }
 ```
 
-The {{prodname}} CNI plugin uses {{prodname}}'s `endpoint-status` directory to determine when the dataplane has been programmed for a pod.
-If left unset, the {{prodname}} CNI plugin will look for the directory at `/var/run/calico/endpoint-status`. The path `/var/run/calico` is commonly mounted to the {{prodname}} DaemonSet, meaning it can be written to by {{prodname}} containers, and read by the {{prodname}} CNI-plugin, running in the host namespace.
-To enable the `endpoint-status` directory, and adjust which {{prodname}} container directory it is written to, the `endpointStatusPathPrefix` option must be configured for [Felix](./felix/configuration.mdx).
+The {{prodname}} CNI plugin reads Felix's `endpoint-status` directory to determine when the dataplane has been programmed for a pod.
+If left unset, the {{prodname}} CNI plugin will look for the directory at `/var/run/calico/endpoint-status`. The path `/var/run/calico` is commonly mounted to the {{prodname}} DaemonSet, meaning it can be written to by the Felix container, and read by the (host-namespace) {{prodname}} CNI plugin.
+To enable the `endpoint-status` directory, and adjust which directory of the Felix container it is written to, the `endpointStatusPathPrefix` option must be configured for [Felix](./felix/configuration.mdx).
 
-To adjust where the {{prodname}} CNI plugin looks for {{prodname}}'s `endpoint-status` directory in the host filesystem, you must set the `endpoint_status_dir` option.
+To adjust where the {{prodname}} CNI plugin looks for the `endpoint-status` directory in the host filesystem, you must set the `endpoint_status_dir` option.
 
 Example CNI config:
 
@@ -306,10 +306,10 @@ Example CNI config:
   "name": "any_name",
   "cniVersion": "0.1.0",
   "type": "calico",
+  "policy_setup_timeout_seconds": 10,
+  "endpoint_status_dir": "/path/to/endpoint-status",
   "ipam": {
-    "type": "calico-ipam",
-    "policy_setup_timeout_seconds": 10,
-    "endpoint_status_dir": "/path/to/endpoint-status"
+    "type": "calico-ipam"
   }
 }
 ```
