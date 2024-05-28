@@ -33,8 +33,8 @@ The following table summarizes the aggregation levels by flow log traffic:
 |-----------|-------------------------------------|-------------------------------------------------------------------|
 | 0         |                                     | No aggregation                                                    |
 | 1         | AnyProcessInSameSourcePod           | Identity fields below source pod level are masked out. It means that if multiple processes or containers, within the same source pod, perform the same operation, the events are aggregated.       |
-| 2         | AnyProcessInSameSourcePodPrefix     | Identity fields below source pod-prefix level are masked out. It means that if multiple processes or containers, within pods with the same prefix, perform the same operation, the events are aggregated. |
-| 3         | AnyProcessInSamePodPrefix           | Identity fields below source and destination pod-prefix level are masked out. It means that if multiple processes or containers, within pods with the same prefix, perform the same operation towards pods with the same prefix, the events are aggregated. |
+| 2         | AnyProcessInSameSourcePodPrefix     | In addition to the above, source pod names are aggregated based on their shared prefixes. This means that flows, to the same destination, from pods within the same Deployment/ReplicaSet are aggregated together. |
+| 3         | AnyProcessInSamePodPrefix           | This level of aggregation builds on the previous two levels and also groups destination pod names based on their shared prefixes. |
 
 ### Understanding aggregation level differences
 
@@ -45,7 +45,7 @@ type minimizes the flow logs generated for traffic coming from different contain
 and port. The two flows originating from `client-a` without aggregation are combined into one. 
 
 In Kubernetes, ReplicaSets and StatefulSets can automatically create names for pods. For example, the pods `nginx-1` and `nginx-2` are created by the
-ReplicaSet nginx. The ReplicaSet name is considered a pod-prefix and is used to aggregate flow log entries (indicated with an asterisk * at the end
+ReplicaSet `nginx`. The ReplicaSet name is considered a pod-prefix and is used to aggregate flow log entries (indicated with an asterisk * at the end
 of the name). Flow logs originating from pods with the same prefix will be aggregated as long as the traffic is on the same protocol, and destined
 towards the same IP, and destination port. The three flow logs without aggregation originating from `client-a` and `client-b` are combined into a 
 single flow log. This aggregation level is called `AnyProcessInSameSourcePodPrefix`.
@@ -87,7 +87,7 @@ kubectl get felixconfiguration -o yaml
 Before [changing the default aggregation level](../../../reference/resources/felixconfig.mdx#aggregationkind), note the following:
 
 - Although any change in aggregation level affects flow log volume, lowering the aggregation number (especially to `0` for no aggregation) will cause significant impacts to log storage. If you allow more flow logs, ensure that you provision more log storage.
-- Verify that the parameters that you want to see in your aggregation level, are not already [filtered](filtering.mdx)
+- Verify that the parameters that you want to see in your aggregation level, are not already [filtered](filtering.mdx).
 
 ### Troubleshoot logs with aggregation levels
 
