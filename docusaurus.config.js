@@ -166,7 +166,7 @@ const config = {
           },
           {
             type: 'dropdown',
-            label: 'Use cases',
+            label: 'Use Cases',
             position: 'left',
             items: [
               {
@@ -176,6 +176,10 @@ const config = {
               {
                 label: 'Observability',
                 to: '/use-cases/observability',
+              },
+              {
+                label: 'Egress Access Controls',
+                to: '/use-cases/egress-access-controls',
               },
             ],
           },
