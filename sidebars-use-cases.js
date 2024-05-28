@@ -7,7 +7,8 @@ module.exports = {
       collapsed: false,
       items: [
         'microsegmentation',
-        'observability'
+        'observability',
+        'egress-access-controls'
       ],
     },
   ],
