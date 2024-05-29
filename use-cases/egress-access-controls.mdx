@@ -9,21 +9,21 @@ This document will outline what egress access controls are, what they protect yo
 ## Overview
 ### What are egress access controls?
 
-Kubernete egress access controls manage egress traffic from a Kubernetes cluster.
+Kubernetes egress access controls manage egress traffic from a Kubernetes cluster.
 Egress traffic can be defined as any traffic leaving itself to communicate with a different entity.
 This could be a pod communicating with another pod within the same cluster, or communicating with another application or service outside the cluster entirely.
 Common egress communications are to other applications, APIs, services, or databases.
 
 In Kubernetes, the default behavior is to allow all ingress and egress traffic.
 For controlling egress traffic in Kubernetes you can use Calico or Kubernetes outbound network policies.
-This could be considered akin to Kubernetes firewall settings, where you can define none, one, or multiple ingress or egress rules, which will then apply to a specified entity using labels and selectors. 
+This could be considered akin to a Kubernetes firewall, as you can define none, one, or multiple ingress or egress rules, which will then apply to a specified entity using labels and selectors. 
 This allows you secure Kubernetes egress traffic to known and trusted endpoints over specific ports and protocols.
 
-If you’re new to network policies we recommend you reading this: [What is network policy?](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-network-policy)
+If you’re new to network policies we recommend that you read this: [What is network policy?](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-network-policy)
 
 ### What can egress access controls protect you from?
 
-Egress access controls protect you and your network from multiple attack vectors, mainly revolving around initiating malicious communications with intent to control, or data exfiltration.
+Egress access controls protect you and your network from multiple attack vectors, mainly revolving around initiating malicious communications with intent to control, download or run malware, or data exfiltration.
 
 Kubernetes outbound traffic control allows you to restrict and protect your environment as necessary.
 This mitigates against the possible effects of leaving unrestricted network access in, out or within your cluster, as is the default Kubernetes behaviour.
@@ -41,10 +41,10 @@ All of these attack vectors require a threat actor to initiate communication out
 We have a blog with more details on how [Calico can protect against attacks across the cyber kill chain.](https://www.tigera.io/blog/defense-in-depth-with-calico-cloud/)
 
 Securing Kubernetes egress makes the above vectors less likely to succeed by:
-*Reducing the number of accessible egress traffic channels where threat actors can hide or disguise malicious traffic
-*Blocking communication to known malicious endpoints or control centers
-*Limiting the possibility of lateral movement with workload isolation to minimize privilege escalation techniques or reconnaissance activities
-*Restricting access to unknown endpoints protects can prevent data exfiltration
+* Reducing the number of accessible egress traffic channels where threat actors can hide or disguise malicious traffic
+* Blocking communication to known malicious endpoints or control centers
+* Limiting the possibility of lateral movement with workload isolation to minimize privilege escalation techniques or reconnaissance activities
+* Restricting access to unknown endpoints protects can prevent data exfiltration
 
 Egress access controls shouldn’t be used in isolation as a security defense mechanism, but when combined with microsegmentation, egress gateways (for integration with external firewalls) and runtime security, it can greatly enhance your security posture by offering prevention and increasing the likelihood of earlier detection.
 
@@ -83,8 +83,9 @@ For example, if you were to monitor a pod's communication to the Google API serv
 It would be an endless process trying to capture and allow all of Google’s IP addresses.
 * **Group IP addresses and domain names** into network sets for a centralized way of managing them and referring to network sets from network policies.
 Additionally, network sets are visible in observability tools such as the dynamic service and threat graph and associated flow logs, making it easy to identify and differentiate egress traffic based on the destination.
-**Threat intelligence feeds** are a common use case of network sets, which are a data stream containing up-to-date details of current cyber security risks or threats.
-You can configure your own threat feeds, create network policies to block egress access to malicious ip addresses or domain names, and set up alerts or security events if any workloads within the cluster attempt to communicate with an endpoint on the threat feed. 
+
+   **Threat intelligence feeds** are a common use case of network sets, which are a data stream containing up-to-date details of current cyber security risks or threats.
+   You can configure your own threat feeds, create network policies to block egress access to malicious ip addresses or domain names, and set up alerts or security events if any workloads within the cluster attempt to communicate with an endpoint on the threat feed. 
 * **Network policy management** using Calico’s policies board, making it easy to visualize policies that are applied to a cluster, group policies into hierarchical tiers, and control the order of evaluation and see the volumne of egress traffic that is being allowed or denied.
 Additionally, staged policies allow you to preview the impact of a policy and evaluate the impact before enforcing it, reducing downtime because of enforcing policies prematurely and inadvertently blocking egress access to critical services.
 
@@ -92,17 +93,19 @@ Additionally, staged policies allow you to preview the impact of a policy and ev
 
 Set up controls for your egress access with a methodical approach to ensure that you’re mitigating the default Kubernetes allow all behaviour while still allowing egress access to trusted endpoints.
 
-*Isolate pods for egress by implementing Kubernetes security best practices with a global default-deny policy that blocks egress access, mitigating against the default Kubernetes networking behavior of allow all.
-*Identify / define egress access controls by determining what egress access your workloads, namespaces, or hosts require, and whether you will use domain names or IP addresses.
+* Isolate pods for egress by implementing Kubernetes security best practices with a global default-deny policy that blocks egress access, mitigating against the default Kubernetes networking behavior of allow all.
+* Identify / define egress access controls by determining what egress access your workloads, namespaces, or hosts require, and whether you will use domain names or IP addresses.
 Label assets for egress access so that network policies will apply to the correct endpoints.
-*Author policy and network sets to allow egress access to the previously identified destinations.
-*Simulate and validate to ensure that egress access control is set up correctly and only allowed destinations are communicable.
-Once you’ve verified the behabiour of your policies you can enforce any staged (Calico Enterprise or Calico Cloud) or logged (Calico Open Source) default deny policies.
+* Author policy and network sets to allow egress access to the previously identified destinations.
+* Simulate and validate to ensure that egress access control is set up correctly and only allowed destinations are communicable.
+Once you’ve verified the behaviour of your policies you can enforce any staged (Calico Enterprise or Calico Cloud) or logged (Calico Open Source) default deny policies.
 
 ### Isolate pods for egress
 
 Implementing a global default deny using Calico global network policy ensures that all resources are isolated and prevents against forgetting to restrict traffic and unintentionally leaving a cluster, namespace, or pod vulnerable.
 This is considered part of Kubernetes security best practices.
+
+
 At this stage, if you’re a Calico Enterprise or Calico Cloud user a staged policy, or in Calico Open Source a log action policy, allows you to evaluate the effectiveness of your egress policies without altering the traffic prematurely.
 You can find out more in our documentation about [staged policies](https://docs.tigera.io/calico-cloud/reference/resources/stagednetworkpolicy) or the [log action.](https://docs.tigera.io/calico/3.26/network-policy/get-started/calico-policy/calico-network-policy#generate-logs-for-specific-traffic)
 .
@@ -205,7 +208,7 @@ This will ensure new deployments are appropriately secured from the beginning.
 If you are using Calico Enterprise or Calico Cloud and intend to use network sets, create those before the network policies, because you will need to refer to them within the outbound network policies.
 Calico Open Source does not support domain names within network policy.
 
-Network sets
+#### Network sets
 
 Network sets are a way of grouping IP address or domain names into a centrally managed list.
 If you have a number of related endpoints that you’d prefer to manage outside of network policy you may want to create a network set.
@@ -239,7 +242,7 @@ Any applied network sets will be visible there:
 
 ![Network sets](/img/use-cases/network-sets.png)
 
-DNS Policies
+#### DNS Policies
 
 DNS policies for egress traffic control in Kubernetes allows you to target destinations by domain names, IP address or network sets.
 
@@ -315,14 +318,14 @@ You can understand how the policies field is formatted and how to interpret it h
 This will verify if the default deny policy is catching the simulated traffic that you expect not to be allowed.
 It may also highlight any egress traffic that you failed to capture correctly in a network policy.
 
-Ongoing policy monitoring
+### Ongoing policy monitoring
 After the intial testing and validation, you can continue to monitor your egress access controls in Calico Enterprise or Calico Cloud using the following tools:
 
-Policies board
+#### Policies board
 In Calico Cloud and Calico Enterprise, the [policies board](https://docs.tigera.io/calico-cloud/tutorials/calico-cloud-features/tour#policies) is the first place to look for misconfigurations.
 From here, you can spot policies that are denying traffic or that have no endpoints assigned to them because they will be highlighted red.
 
-Observability
+#### Observability
 Calico Enterprise and Calico Cloud have tools that help you visually identify misconfigured policies and whether cluster traffic is being allowed or denied..
 These include Dynamic Service and Threat Graph and Kibana as a frontend for elasticsearch.
 As well as being useful when identifying egress communications, they are also a valuable tool to monitor and verify that policies are working correctly.
@@ -335,7 +338,9 @@ The denied flows (red lines) will be ‌simulated egress flows testing network p
 
 ![Service Graph](/img/use-cases/service-graph-network-set.png)
 
-**Kibana** is incredibly powerful if you create purpose-built egress traffic dashboards.
+#### Kibana
+
+Kibana is incredibly powerful if you create purpose-built egress traffic dashboards.
 If you used Kibana when identifying egress traffic in the early step of authoring DNS policies, you can use the same visualizations to validate and monitor egress network traffic.
 
 We have a video series that includes an overview into using [flow logs for observability and troubleshooting](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy).
@@ -350,7 +355,7 @@ The pie chart breaks down traffic by ‌action, and splits the records by source
 
 ![Egress access dashboard](/img/use-cases/egress-access-dashboard.png)
 
-**Read the logs**
+#### Read the logs
 Calico supports a log action for its network policies, which will be useful for Calico Open Source.
 Calico Enterprise and Calico Cloud can collect a wide range of logs that can be used to investigate flows and validate policies.
 You can watch an [introduction to the flow log dashboard here](https://fast.wistia.com/embed/channel/lhjf79y3oy?wchannelid=lhjf79y3oy&wmediaid=24q8l9o7dt) or view the flow, DNS and HTTP logs  through the [dynamic service and threat graph](https://docs.tigera.io/calico-cloud/tutorials/calico-cloud-features/tour#service-graph).
