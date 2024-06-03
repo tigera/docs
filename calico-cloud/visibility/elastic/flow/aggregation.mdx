@@ -24,33 +24,33 @@ depends on your deployment; we recommend reviewing aggregation levels to underst
 
 ### Aggregation types and levels
 
-For allowed flows, the default aggregation level is 2, `AnyProcessInSamePodPrefix` and for denied flows the default aggregation level is 1,
-`AnyProcessInSameSourcePod`.
+For allowed flows, the default aggregation level is 2, `AnyConnectionFromSamePodPrefix` and for denied flows the default aggregation level is 1,
+`AnyConnectionFromSameSourcePod`.
 
 The following table summarizes the aggregation levels by flow log traffic:
 
 | **Level** | **Name**                            | **Description**                                                   |
 |-----------|-------------------------------------|-------------------------------------------------------------------|
 | 0         |                                     | No aggregation                                                    |
-| 1         | AnyProcessInSameSourcePod           | Identity fields below source pod level are masked out. It means that if multiple processes or containers, within the same source pod, perform the same operation, the events are aggregated.       |
-| 2         | AnyProcessInSameSourcePodPrefix     | In addition to the above, source pod names are aggregated based on their shared prefixes. This means that flows, to the same destination, from pods within the same Deployment/ReplicaSet are aggregated together. |
-| 3         | AnyProcessInSamePodPrefix           | This level of aggregation builds on the previous two levels and also groups destination pod names based on their shared prefixes. |
+| 1         | AnyConnectionFromSameSourcePod      | Identity fields below source pod level are masked out. It means that flows, to the same destination, from processes or controllers in the same source pod, are aggregated together. |
+| 2         | AnyConnectionFromSamePodPrefix      | In addition to the above, source pod names are aggregated based on their shared prefixes. This means that flows, to the same destination, from pods within the same pod controller (Deployment/ReplicaSet) are aggregated together. |
+| 3         | AnyConnectionBetweenSamePodPrefixes | This level of aggregation builds on the previous two levels and also groups destination pod names based on their shared prefixes. |
 
 ### Understanding aggregation level differences
 
 Here are examples of pod-to-pod flows, highlighting the differences between flow logs at various aggregation levels.
 
-The source port is usually ephemeral and does not convey useful information. By suppressing the source port, `AnyProcessInSameSourcePod` aggregation
+The source port is usually ephemeral and does not convey useful information. By suppressing the source port, `AnyConnectionFromSameSourcePod` aggregation
 type minimizes the flow logs generated for traffic coming from different containers within the same pod and going to the same destination endpoint
 and port. The two flows originating from `client-a` without aggregation are combined into one. 
 
-In Kubernetes, ReplicaSets and StatefulSets can automatically create names for pods. For example, the pods `nginx-1` and `nginx-2` are created by the
-ReplicaSet `nginx`. The ReplicaSet name is considered a pod-prefix and is used to aggregate flow log entries (indicated with an asterisk * at the end
-of the name). Flow logs originating from pods with the same prefix will be aggregated as long as the traffic is on the same protocol, and destined
-towards the same IP, and destination port. The three flow logs without aggregation originating from `client-a` and `client-b` are combined into a 
-single flow log. This aggregation level is called `AnyProcessInSameSourcePodPrefix`.
+In Kubernetes, pod controllers (Deployments, DaemonSets, ReplicaSets etc.) can automatically create names for pods. For example, the pods `nginx-1` 
+and `nginx-2` are created by the ReplicaSet `nginx`. The controller's name is considered a pod-prefix and is used to aggregate flow log entries 
+(indicated with an asterisk * at the end of the name). Flow logs originating from pods with the same prefix will be aggregated as long as the traffic 
+is on the same protocol, and destined towards the same IP, and destination port. The three flow logs without aggregation originating from `client-a` 
+and `client-b` are combined into a single flow log. This aggregation level is called `AnyConnectionFromSameSourcePodPrefix`.
 
-Finally, with `AnyProcessInSamePodPrefix` we combine source and destination pods that are part of the same ReplicaSets. With level 3, the flow logs
+Finally, with `AnyConnectionBetweenSamePodPrefixes` we combine source and destination pods that are part of the same pod controller. With level 3, the flow logs
 are aggregated by the destination port and protocol, as long as they originate from pods with the same pod-prefix and destined for pods of the same 
 pod-prefix. All logs previously distinct, are aggregated into a single flow log (see the last row).
 
