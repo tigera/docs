@@ -9,6 +9,7 @@ const variables = {
   filesUrl: 'https://downloads.tigera.io/ee/v3.18.3',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/3.18',
+  windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
   prodnameWindows: 'Calico Enterprise for Windows',
   downloadsurl: 'https://downloads.tigera.io',
   nodecontainer: 'cnx-node',
