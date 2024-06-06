@@ -1,0 +1,387 @@
+---
+description: A guide for using Calico's egress gateways.
+title: Egress gateways
+---
+
+# Egress gateways
+
+This guide explains what egress gateways are, what they are used for, and how you can use Calico to create and configure egress gateways in your environment.
+
+## Overview
+
+### What are egress gateways?
+
+An egress gateway is a means of assigning fixed IP addresses to Kubernetes traffic by having it leave a cluster through a defined gateway.
+It also offers a method of managing egress routing, by controlling which gateways egress traffic is routed through or by integrating with external firewalls.
+
+Traditional, non-Kubernetes deployments are more static and long-lived, making it easier to manage and secure egress traffic from VMs, for example, through firewalls.
+Kubernetes’ dynamic, scalable, and ephemeral nature makes it difficult to assign static egress identities to workloads, namespaces and deployments.
+It's possible to do this without an egress gateway, by configuring the `natOutgoing` behaviour with Calico CNI.
+This will either preserve a pod’s IP as traffic leaves a cluster, or be translated to the node’s IP.
+Both of these options require allowing a larger CIDR range in any security rules, and the egress IP address is not necessarily ascribed to a particular namespace, deployment or pod.
+
+### When to use egress gateways
+
+#### Integrate Kubernetes with external firewalls
+
+Giving egress traffic a static IP allows an external firewall to manage traffic coming from your Kubernetes cluster.
+You may do this to use centralized, existing firewall rules and security measures as an extra line of defense.
+
+![Egress gateway universal firewall](/img/use-cases/Universal-Firewall-Integration-diagram.png)
+
+#### Provide a smaller range of IP addresses for other applications or services to allow requests from
+
+Security teams or other applications may restrict access to a small range of static IP addresses for external service or applications.
+Limiting the range of IP addresses that are allowed reduces the attack surface.
+Without an egress gateway, this could be a dynamic, sizable, ever-changing IP block.
+You can route workloads through a specific egress gateway depending on the traffic destination, ensuring that the source is consistent with the allowed CIDR.
+
+![Egress gateway destination routing](/img/use-cases/Destination-Based-Routing-diagram.png)
+
+#### Avoid IP address exhaustion
+
+It’s not unusual for people to try to  solve the issue without egress gateway by giving all pods a publicly routable IP address. 
+This can lead to IP exhaustion, becauseIPv4 addresses are a limited, expensive resource.
+Assigning a smaller quantity of publicly routable IP addresses to egress gateways allows you to use private IP addresses behind the gateway.
+
+#### Audit, log, and track the source of egress traffic
+
+If you need to trace egress traffic back to a source namespace, application, or tenant for any reason (compliance, costing, auditing, etc) this becomes difficult or impossible without an egress gateway.
+Using network security software such as Calico also logs egress traffic which is valuable for compliance, auditing, and troubleshooting.
+Setting up routing rules so that specific resources use a specific gateway makes it very easy to audit traffic flows and determine the source of egress flows.
+
+#### Restrict egress access
+
+Egress gateway can work in conjunction with egress access controls to manage or restrict outgoing communications for a deeper line of defense when used with an external firewall.
+
+Using egress gateway policy allows you to control routing based on the destination of egress traffic.
+
+## Egress Gateways with Calico Enterprise and Calico Cloud
+
+Egress gateways are supported in both Calico Enterprise and Calico Cloud.
+When an egress gateway is deployed, it creates a transit pod for configured outbound application traffic so that the original source IP is changed to that of the egress gateway pod.
+
+You can create IP pools for the egress gateway pods, giving you control over the outgoing source IPs.
+You specify which pods or namespaces use which egress gateways using either annotations, egress gateway policy, or a combination of the two.
+Using egress gateway policy allows you to control routing based on the destination of egress traffic.
+
+![Egress gateway](/img/use-cases/egress-gateway.png)
+
+A pod-based egress gateway architecture offers a cost-effective and scalable approach, as egress gateway pods likely fit on existing nodes.
+Without Calico’s pod-based egress gateway you would need to provision additional nodes to perform SNAT on egress traffic, which would increase infrastructure costs as the number of gateways increases.
+Ensuring that an egress gateway pod is present on each node that needs one saves an additional hop, improving request time, which may be crucial for low-latency services.
+It also makes it easy to protect egress gateway pods using network policies, the same way you protect and secure your other workloads.
+
+## Egress IPs with Calico Open Source
+
+Calico Open Source does not support egress gateways.
+If you are a Calico Open Source user, the closest you can get to similar functionality of an egress gateway is to allow either the pod or node CIDR in external firewall rules, or external application, etc.
+
+![natOutgoing true](/img/use-cases/natoutgoing-true.png)
+
+This would be the default Kubernetes behavior, where a pod’s source IP is translated  to the node IP, unless natOutgoing: false, where it would retain its pod IP.
+
+![natOutgoing false](/img/use-cases/natoutgoing-false.png)
+
+If this is an approach you would like to take with Calico Open Source, you may want to review our documentation on [IP pools](https://docs.tigera.io/calico/latest/reference/resources/ippool), [using a specific IP address with a pod](https://docs.tigera.io/calico/latest/networking/ipam/use-specific-ip), and [network address translation](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-egress#nat-outgoing).
+A more complex solution using open source products could be to set up an [Istio and Calico Open Source integration](https://www.tigera.io/blog/how-to-build-a-service-mesh-with-istio-and-calico/) and combine that with [Istio’s egress gateway functionality](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/).
+
+## Common questions and considerations before deploying egress gateways
+
+### What egress gateway deployment patterns are supported?
+
+Depending on the number and type of applications in your cluster, you may want to set up one egress gateway or several egress gateways.
+
+The following sections show the different ways you can configure workloads, namespaces, or deployments to use one or multiple egress gateways
+
+#### Shared egress gateway
+
+Workloads in multiple namespaces route traffic through a single egress gateway.
+
+![Shared egress gateway](/img/use-cases/shared-egw.png)
+
+#### One egress gateway per namespace
+
+Each namespace is allocated its own egress gateway.
+This may be best suited for multitenant deployments to extend the identity of a namespace to upstream security devices, such as firewalls.
+Each namespace, which may belong to a different team or application, has its own egress IP.
+
+![1 to 1 egress gateway](/img/use-cases/egw-1to1.png)
+
+#### One egress gateway per deployment
+
+Different deployments within a namespace use their own egress gateways.
+This extends the identity of each deployment to upstream network security devices.
+This is useful if one backend deployment needs egress access to an on-premises database, while the frontend deployment needs access to public, external services.
+Each deployment would require different rules in an upstream firewall.
+
+![1 to 1 egress gateway](/img/use-cases/egw-1to1-deployment.png)
+
+#### Egress gateway load balancing and failover
+
+If you require traffic load balancing, high availability, and fast failover, egress gateways can help with performing health checks on network links and rerouting traffic as needed.
+
+![Egress gateway load balancing](/img/use-cases/egw-lb.png)
+
+You can read more in our blog post [Using Calico Egress gateway and access controls to secure traffic](https://www.tigera.io/blog/using-calico-egress-gateway-and-access-controls-to-secure-traffic/).
+
+#### How can I secure egress traffic?
+
+Security measures can also be applied to egress traffic (known as egress access controls) with egress gateways.
+Network policies can be applied on egress from a client (source) pod, on the egress gateway pod, or both.
+The documentation includes more information, including limitations of [policy enforcement for flows via an egress gateway](https://docs.tigera.io/calico-cloud/networking/egress/egress-gateway-on-prem#policy-enforcement-for-flows-via-an-egress-gateway).
+
+The benefit of using Calico Enterprise or Calico Cloud is that security measures and egress gateways are managed in the same product, unlike other solutions that may require external solutions to secure egress traffic, and may not protect sidecar deployments from being circumnavigated by attackers and avoiding the egress gateways.
+Egress access controls should be implemented in conjunction with egress gateways.
+
+#### Where do source IP addresses come from?
+
+An egress gateway pod will use a source IP from a defined pool, which you configure when you create the egress gateway.
+This allows you to configure an appropriate block of IP addresses.
+If you’re using the public cloud and want to use routable IP addresses, we support [AWS-backed IP pool](https://www.tigera.io/blog/deep-dive/calico-egress-gateway-how-to-provide-a-stable-public-network-identity-for-eks-workloads-to-securely-connect-with-approved-saas/#:~:text=Calico%20assigns%20IP%20addresses%20to,subnets%20using%20Secondary%20VPC%20CIDRs.) and [Azure native VNet subnet IP addresses](https://www.tigera.io/blog/deep-dive/enabling-workload-level-security-for-aks-with-azure-firewall-and-calico-egress-gateway/).
+
+#### Do egress gateways need BGP?
+
+If you have multiple external networks and the service endpoints have overlapping IPs you must configure external network support, resources, and routes to ensure the egress traffic goes to the correct service endpoint in the correct network.
+If you have different services that you need to access where the destination subnets are the same you might be interested in our blog post [Multi-VRF support for Egress Gateways using Calico](https://www.tigera.io/blog/deep-dive/multi-vrf-support-for-egress-gateways-using-calico/).
+
+#### Do I need a service mesh to use an egress gateway?
+
+No, you do not need to use a service mesh in order to create an egress gateway with Calico, but you do need to be using Calico as your CNI.
+Calico is a service mesh-less solution.
+When you install Calico Enterprise or Calico Cloud, you get a unified control that addresses the typical service mesh use cases: security, observability, and control.
+To understand more about the differences in Calico’s approach vs a service mesh, review our blog post [“Do you really need a service mesh?”](https://www.tigera.io/blog/do-you-really-need-a-service-mesh/) or our [Service Mesh guide](https://www.tigera.io/learn/guides/devsecops/service-mesh/).
+
+## Implementing egress gateways with Calico Enterprise or Calico Cloud
+
+In order to create an egress gateway with Calico Enterprise or Calico Cloud, you will need to make sure that you are using Calico CNI, and that you have enabled egress gateway support.
+
+An overview of the key steps to set up egress gateways are outlined below.
+
+:::note
+This is not a  prescriptive list, and it doesn’t include any specific networking prerequisites that will vary depending on your environment.
+Please refer to our detailed instructions that are available for on-premises, AWS and Azure in either the [Calico Enterprise](https://docs.tigera.io/calico-enterprise/latest/networking/egress/) or [Calico Cloud documentation](https://docs.tigera.io/calico-cloud/networking/egress/).
+:::
+
+### Enable egress gateways
+
+For support on a per-namespace basis only:
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
+```
+
+Or for support both per-namespace and per-pod:
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
+```
+If you intend to use egress gateway policy to control destination routing, ensure you specify `EnabledPerNamespaceOrPerPod`.
+
+### Provision an egress IP pool
+
+The egress IP pool is how egress gateway pods get their source IP addresses.
+This is where you will define a suitable IP block for each gateway.
+
+The egress IP pool will be applied to the cluster as a YAML manifest, like the example below:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+ name: egress-ippool-1
+spec:
+ cidr: 10.10.10.0/30
+ blockSize: 31
+ nodeSelector: "!all()"
+```
+
+### Deploy an egress gateway
+
+Egress gateways are deployed using a custom resource.
+The custom resource definition outlines the name of the egress gateway, which IP pool it should use, and the number of replicas.
+You can also configure `icmpProbes` and/or `httpProbes` that can check the health of downstream endpoints.
+If downstream endpoints do not respond before the defined timeout, the egress gateway will report as unhealthy and will not send traffic.
+
+An example egress gateway definition can be seen below:
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: EgressGateway
+metadata:
+ name: egress-gateway
+ namespace: default
+spec:
+ logSeverity: "Info"
+ replicas: 1
+ ipPools:
+ - cidr: "10.10.10.0/30"
+ egressGatewayFailureDetection:
+   healthTimeoutDataStoreSeconds: 30
+   icmpProbe:
+     ips: ["34.56.2.7"]
+     timeoutSeconds: 15
+     intervalSeconds: 5
+   httpProbe:
+     urls: ["http://example.com"]
+     timeoutSeconds: 30
+     intervalSeconds: 10
+ template:
+   metadata:
+     labels:
+       egress-code: red
+   spec:
+     nodeSelector:
+       kubernetes.io/os: linux
+     terminationGracePeriodSeconds: 0
+```
+
+### Configure namespaces and pods to use egress gateways
+
+If you are using one gateway per namespace, as shown in the shared egress gateway or one egress gateway per namespace pattern, you can annotate your namespaces with an egress gateway selector.
+
+To configure all of the pods in a namespace to use the egress gateways that are labelled with `egress-code: red`, as shown in the example above, you would annotate that namespace like this:
+
+```bash
+kubectl annotate ns <namespace> egress.projectcalico.org/selector="egress-code == 'red'"
+```
+
+To select gateways in a different namespace, specify a `namespaceSelector` annotation as well, like this:
+
+```bash
+kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
+```
+
+If you specified `"egressIPSupport":"EnabledPerNamespaceOrPerPod"` in step 1 then you can also annotate pods in the same way, as shown below:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    egress.projectcalico.org/selector: egress-code == 'red'
+    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == 'default'
+  name: my-client,
+  namespace: my-namespace,
+spec:
+  ...
+```
+
+If you need more granular control, such as routing to different gateways based on the destination of egress traffic, you can use an egress gateway policy.
+This also allows you to skip egress gateways for traffic that is bound for local endpoints that aren't in the cluster.
+
+An example egress gateway policy is shown below.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: EgressGatewayPolicy
+metadata:
+ name: "egw-policy1"
+spec:
+ rules:
+ - destination:
+     cidr: 10.0.0.0/8
+   description: "Local: no gateway"
+ - destination:
+     cidr: 11.0.0.0/8
+   description: "Gateway to on prem"
+   gateway:
+     namespaceSelector: "projectcalico.org/name == 'default'"
+     selector: "egress-code == 'blue'"
+     maxNextHops: 2
+ - description: "Gateway to internet"
+   gateway:
+     namespaceSelector: "projectcalico.org/name == 'default'"
+     selector: "egress-code == 'red'"
+   gatewayPreference: PreferNodeLocal
+```
+
+## Using egress gateways
+
+After configuring your egress gateway with a suitable IP pool, you should be able to see traffic leaving your cluster with the correct source IP.
+You can easily verify this by making a curl request from a pod that is configured to use a gateway to a service like ifconfig.me.
+
+For more information on how to use an egress gateway to achieve common use cases, see below.
+
+### If you want to integrate with external firewalls
+
+Once you have configured your egress gateways with a correctly sized IP pool, you can route different namespaces, pods, deployments, etc through those gateways.
+Depending on which IP pool is associated with each gateway, you can use that IP block as an identifier in your external firewall.
+
+We have a number of blog posts that address specific integrations with different firewalls.
+Some of our most popular firewall integrations are:
+
+* [Calico Egress Gateway integration with AWS Network Firewall](https://www.tigera.io/blog/deep-dive/calico-egress-gateway-integration-with-aws-network-firewall/)
+* [Enabling Workload-Level Security for AKS with Azure Firewall and Calico Egress Gateway](https://www.tigera.io/blog/deep-dive/enabling-workload-level-security-for-aks-with-azure-firewall-and-calico-egress-gateway/)
+* [Enabling Workload-Level Security for Kubernetes with Cisco Secure Firewall & Calico Egress Gateway on AWS](https://www.tigera.io/blog/deep-dive/enabling-workload-level-security-for-kubernetes-with-cisco-secure-firewall-calico-egress-gateway-on-aws/)
+
+### Providing a smaller range of IP addresses for other applications or services to allow
+
+When you create an IP pool for an egress gateway to use, you can choose the size of the IP block.
+This allows you to size an IP block based on your needs, meaning you only need to whitelist a few IP addresses for other applications or services.
+
+You can use egress gateway policy to ensure that any traffic destined for a specific service or application uses a specific gateway, and therefore an expected egress IP address.
+Egress gateway policy destinations expect the CIDR of the destination network.
+Alternatively, if you know that a particular  pod needs to communicate with a particular  service (and you don’t know the destination CIDR), you can use annotations.
+
+The blog post  [“Calico Egress Gateway: How to provide a stable public network identity for EKS workloads to securely connect with approved SaaS”](https://www.tigera.io/blog/deep-dive/calico-egress-gateway-how-to-provide-a-stable-public-network-identity-for-eks-workloads-to-securely-connect-with-approved-saas/) shows how to configure this in AWS, using egress gateway policy to control which gateways are used, depending on the traffic destination.
+
+### Audit, log, and track the source of egress traffic
+
+How you set up your egress gateway will determine the granularity that you can use the egress IP as an identifier for an application, deployment, namespace, tenant, etc.
+Destination applications, services or firewalls may provide logs with the source IP.
+
+You can use this source IP and destination to filter flow logs in the Calico UI or Kibana to determine the source of the request.
+You can also compare the source IP to the IP pools configured for the cluster.
+
+Calico Enterprise and Calico Cloud records traffic leaving the egress gateway through flow logs, which are represented visually on the dynamic service and threat graph.
+These egress logs (through a gateway or not) may be required for regulatory compliance.
+
+In the screenshot below, you can see traffic to the private network.
+In this case, it was a dedicated test host outside of the EKS cluster, in the same VPC.
+The test host was running tcpdump to verify the source IP and verify the egress gateway is working.
+This example was taken from the [Calico Cloud Egress Gateway on AWS EKS Cluster](https://github.com/tigera-solutions/cc-eks-egress-gw/tree/main) workshop.
+
+![Egress gateway flow logs](/img/use-cases/egw-sg.png)
+
+The first two flow logs (orange outline) are before the `netshoot-default` pod was annotated to use the egress gateway (`egress-gateway-red`).
+
+The last two flow logs (blue outline) are after the netshoot-default pod was annotated to use the egress gateway (`egress-gateway-red`).
+You can see the timestamp is the same for both flows, and in the service graph you can see a flow from `egress-gateway-red` to the `private network`.
+
+Even though two flows are reported, only one flow will make it to the destination from the egress gateway.
+We can verify this by comparing the output from the service graph to the tcpdump on the test host.
+
+The tcp dump from that flow demonstrates that it received one request, and the source IP matches the egress gateway:
+
+```bash
+tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+22:05:46.980112 IP (tos 0x0, ttl 124, id 60229, offset 0, flags [DF], proto TCP (6), length 60)
+    192.168.0.112.37664 > 192.168.0.25.cbt: Flags [S], cksum 0x7d89 (correct), seq 1639302245, win 62377, options [mss 8911,sackOK,TS val 59530415 ecr 0,nop,wscale 7], length 0
+22:05:46.980135 IP (tos 0x0, ttl 255, id 0, offset 0, flags [DF], proto TCP (6), length 40)
+    192.168.0.25.cbt > 192.168.0.112.37664: Flags [R.], cksum 0x5659 (correct), seq 0, ack 1639302246, win 0, length 0
+```
+
+The IP address from the dump matches `egress-gateway-red`:
+
+```bash
+kubectl get pods  -o=custom-columns='NAME:.metadata.name,IP ADDRESS:.status.podIP'
+NAME                                  IP ADDRESS
+egress-gateway-red-76d7f5dc66-njpwd   192.168.0.80
+egress-gateway-red-76d7f5dc66-v7577   192.168.0.112
+netshoot-default                      172.16.69.78
+```
+
+You can also do more sophisticated filtering and create your own views using Kibana, a frontend for Elasticsearch, which is where Calico Enterprise and Calico Cloud store log files.
+
+![Egress gateway logs](/img/use-cases/egw-logs.png)
+
+### Restrict or secure egress access
+
+Egress gateways can work in conjunction with egress access controls to manage or restrict outgoing communications, and they’re  often used as an extra layer of defense when combined with external firewalls.
+
+It is recommended to apply egress access controls, in particular DNS policy to the client pod, due to documented limitations when applying DNS policies to egress gateway pods.
+The [Policy enforcement for flows via an egress gateway](https://docs.tigera.io/calico-enterprise/latest/networking/egress/egress-gateway-on-prem#policy-enforcement-for-flows-via-an-egress-gateway) documentation expands on this topic.
+
+This defense-in-depth approach may appeal if your organization has a strict approach to security, and is required to be compliant with any regulatory requirements.
+The [Using Calico Egress gateway and access controls to secure egress traffic](https://www.tigera.io/blog/using-calico-egress-gateway-and-access-controls-to-secure-traffic/) blog expands on this approach.
