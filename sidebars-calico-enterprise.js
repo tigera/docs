@@ -454,6 +454,7 @@ module.exports = {
         'threat/honeypods',
         'threat/deeppacketinspection',
         'threat/web-application-firewall',
+        'threat/deploying-waf-ingress-gateway',
       ],
     },
     {

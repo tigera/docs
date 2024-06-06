@@ -292,6 +292,7 @@ module.exports = {
         'threat/deeppacketinspection',
         'threat/container-threat-detection',
         'threat/web-application-firewall',
+        'threat/deploying-waf-ingress-gateway',
       ],
     },
     {
