@@ -181,6 +181,10 @@ const config = {
                 label: 'Egress access controls',
                 to: '/use-cases/egress-access-controls',
               },
+              {
+                label: 'Egress gateways',
+                to: '/use-cases/egress-gateways',
+              },
             ],
           },
           {

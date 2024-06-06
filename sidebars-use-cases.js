@@ -8,7 +8,8 @@ module.exports = {
       items: [
         'microsegmentation',
         'observability',
-        'egress-access-controls'
+        'egress-access-controls',
+        'egress-gateways'
       ],
     },
   ],
