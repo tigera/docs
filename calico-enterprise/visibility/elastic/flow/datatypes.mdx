@@ -101,3 +101,66 @@ Where,
     action for the tier.  In this case, the `<policy name>` is selected arbitrarily from the set of policies within
     the tier that apply to the endpoint.
   * `-2` means "unknown". The rule index was not recorded.
+
+### Flow log example, with `no aggregation`
+
+A flow log with aggregation level 0, `no aggregation`, might look like:
+
+```
+  {
+    "start_time": 1597166083,
+    "end_time": 1597166383,
+    "source_ip": "192.168.47.9",
+    "source_name": "access-6b687c8dcb-zn5s2",
+    "source_name_aggr": "access-6b687c8dcb-*",
+    "source_namespace": "policy-demo",
+    "source_port": 42106,
+    "source_type": "wep",
+    "source_labels": {
+      "labels": [
+        "pod-template-hash=6b687c8dcb",
+        "app=access"
+      ]
+    },
+    "dest_ip": "192.168.138.79",
+    "dest_name": "nginx-86c57db685-h6792",
+    "dest_name_aggr": "nginx-86c57db685-*",
+    "dest_namespace": "policy-demo",
+    "dest_port": 80,
+    "dest_type": "wep",
+    "dest_labels": {
+      "labels": [
+        "pod-template-hash=86c57db685",
+        "app=nginx"
+      ]
+    },
+    "proto": "tcp",
+    "action": "allow",
+    "reporter": "dst",
+    "policies": {
+      "all_policies": [
+        "0|default|policy-demo/default.access-nginx|allow"
+      ]
+    },
+    "bytes_in": 388,
+    "bytes_out": 1113,
+    "num_flows": 1,
+    "num_flows_started": 1,
+    "num_flows_completed": 1,
+    "packets_in": 6,
+    "packets_out": 5,
+    "http_requests_allowed_in": 0,
+    "http_requests_denied_in": 0,
+    "original_source_ips": null,
+    "num_original_source_ips": 0,
+    "host": "bz-n8kf-kadm-node-1",
+    "@timestamp": 1597166383000
+  }
+```
+
+The log shows an incoming connection reported by the destination node, allowed by a policy on port 80. The **`start_time`** and **`end_time`** 
+describe the aggregation period (5 min.) During this interval, one flow (**`"num_flow": 1`**) was recorded. At higher aggregation levels, flows from 
+endpoints performing the same operation and originating from the same Deployment/ReplicaSet are grouped into a single log. In this example, the 
+common source endpoints that are prefixed with **`access-6b687c8dcb-`**. Parameters like **`source_ip`** may be dropped and set to **`null`**, depending on 
+the aggregation level. As aggregation levels increase, more flows will be grouped together based on your data. For more details on aggregation 
+levels, see [configure flow log aggregation](./aggregation.mdx).
