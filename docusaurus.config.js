@@ -462,7 +462,7 @@ const config = {
         routeBasePath: 'calico-cloud',
         editCurrentVersion: true,
         //To see builds for unreleased versions, remove comments in the next line.
-        onlyIncludeVersions: [/*'current','19-2',*/'19-1'],
+        onlyIncludeVersions: ['19-2'],
         versions: {
           current: {
             label: 'Next',
@@ -470,10 +470,6 @@ const config = {
             banner: 'unreleased',
           },
           '19-2': {
-            path: '/',
-            banner: 'none',
-          },
-          '19-1': {
             path: '/',
             banner: 'none',
           },
