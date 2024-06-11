@@ -28,6 +28,7 @@ const defaultSkipList = [
   'https://web.archive.org/web/20150923231827/https://www.cisco.com/web/about/ac123/ac147/archived_issues/ipj_14-3/143_trill.html',
   'https://web.archive.org/web/20210204031636/https://cumulusnetworks.com/blog/celebrating-ecmp-part-two/',
   'http://ppa.launchpad.net/project-calico/calico-X.X/ubuntu',
+  'https://kb.isc.org/docs/aa-01141',
 ];
 
 // Ignore patterns are skipped and ignored completely - no visibility whatsoever
