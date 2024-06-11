@@ -227,6 +227,21 @@ EOF`}
               </CodeBlock>
             </li>
             <li>
+              <p>
+                If your cluster is v3.19 or older, apply a new{' '}
+                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.PacketCaptureAPI`}>PacketCaptureAPI </Link>
+                 CR to your cluster.
+              </p>
+              <CodeBlock language='bash'>
+                {`kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: PacketCaptureAPI
+metadata:
+  name: tigera-secure
+EOF`}
+              </CodeBlock>
+            </li>
+            <li>
               <p>You can monitor progress with the following command:</p>
               <CodeBlock language='bash'>watch kubectl get tigerastatus</CodeBlock>
               <Admonition type='note'>
