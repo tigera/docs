@@ -322,6 +322,7 @@ module.exports = {
       label: 'Compliance and security',
       link: {type: 'doc', id: 'compliance/index'},
       items: [
+        'compliance/enable-compliance',
         'compliance/overview',
         'compliance/compliance-reports-cis',
         'compliance/encrypt-cluster-pod-traffic',
