@@ -1,0 +1,69 @@
+---
+description: Exclude vulnerabilities from image scan results.
+---
+
+# Exclude vulnerabilities from image scan results
+
+You can exclude specific vulnerabilities from the image scan results (for example, a false positive).
+It can be excluded for an image version, all images in the same repository, or all images in the system.
+
+:::caution
+Excluding vulnerabilities from image results can significantly change how Image Assurance determines image health and can create actions you need to take to stabilize your workflow.
+- **Maximum CVSS score** - an image’s maximum CVSS score may be reduced to a lower score. An exception could eliminate the vulnerability with the highest CVSS score for an image.
+- **Scan assessment** - the assessment value of Pass/Warn/Fail could change because it is based on the maximum CVSS score. For example, Fail could change to Warn, and Warn could change to Pass.
+- **Vulnerability global alerts** - alerts may no longer be triggered. Alerts are triggered based on scan results or maximum CVSS score values of images.
+- **Admission controller policies** - pods could be created where they were previously blocked. Admission controller policies are based on vulnerability information (scan result and/or maximum CVSS score).
+:::
+
+## Exclude a vulnerability
+
+To create a vulnerability exception:
+1. Go to **Image Assurance**, **All Scanned Images**.
+2. Select an image from the list.
+3. On the panel, open the Package, and click **Actions**, **Add Exception**.
+3. Enter the required information and click **Save**. The exception is immediately applied to your scan results.
+
+## Exclude many vulnerabilities
+
+To create many vulnerability exceptions using a CSV file, follow these steps:
+
+1. Go to **Image Assurance**, **All Scanned Images**.
+2. Click the **Export** button and select **Export data**.
+3. Select **CSV** as the file type and **Export a row for each image and CVE IDs** as the table style.
+4. Open the exported CSV file in your preferred editor.
+5. Add two columns: **Justification** and **Scope**.
+
+The **Scope** column can have three values:
+
+- **any**: The exception applies to all images.
+- **image**: The exception applies to all versions of the image.
+- **image_tags**: The exception applies to specific tags of an image.
+
+Required CSV headers and their explanation:
+
+| Header        | Explanation                                       | Required By The **any** Scope | Required By The **image** Scope | Required By The **image_tags** Scope |
+|---------------|---------------------------------------------------|-------------------------------|---------------------------------|--------------------------------------|
+| CVE           | The name of the CVE (e.g., CVE-2021-44228)        | Yes                           | Yes                             | Yes                                  |
+| Registry      | Where the collection of images is stored          | No                            | Yes                             | Yes                                  |
+| Repository    | The name of the image                             | No                            | Yes                             | Yes                                  |
+| Tags          | A JSON list of image tags                         | No                            | No                              | Yes                                  |
+| Justification | Explanation for creating the exception            | Yes                           | Yes                             | Yes                                  |
+| Scope         | How the exception is applied                      | Yes                           | Yes                             | Yes                                  |
+
+Example CSV:
+
+```
+CVE,Registry,Repository,Tags,Justification,Scope
+CVE-2024-1234,mycontainerregistry.io/my-org,my-application,"[""v3.4.5""]",justification,image_tags
+CVE-2024-2345,mycontainerregistry.io/my-org,my-application,"[""v1.2.3"",""v2.3.4""]",justification,image_tags
+CVE-2024-3456,mycontainerregistry.io/my-org,my-application,,justification,image
+CVE-2024-4567,,,,justification,any
+```
+
+Upload the formatted CSV:
+
+1. TODO write this
+
+## View list of vulnerability exceptions
+
+To view the list of vulnerability exceptions, go to the left navbar: **Image Assurance**, **Vulnerability Exceptions**.
