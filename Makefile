@@ -20,17 +20,18 @@
 ##         - Outputs all of the branch-related targets that you can
 ##           use to update a specific branch's operator docs.
 
-GO_BUILD_VER?=v0.87
+GO_BUILD_VER?=v0.91
 CALICO_BUILD?=calico/go-build:$(GO_BUILD_VER)
 LOCAL_USER_ID?=$(shell id -u $$USER)
 PACKAGE_NAME?=github.com/projectcalico/calico/calico
 API_GEN_REPO?=tmjd/gen-crd-api-reference-docs
 API_GEN_BRANCH?=kb_v2
+API_GEN_VERSION=v0.3.0
 OPERATOR_REPO?=tigera/operator
 PRODUCT?=calico
 
 IA_OPERATOR_REPO?=tigera/image-assurance
-IA_OPERATOR_VERSION?=v1.7.3
+IA_OPERATOR_VERSION?=v1.17.7
 
 NODE_VER=20
 
@@ -162,14 +163,12 @@ build-ia-operator-reference:
 			--env SSH_AUTH_SOCK=/ssh-agent\
 			-w /go/src/$(PACKAGE_NAME) \
 			$(CALICO_BUILD) /bin/bash -c '$(GIT_CONFIG_SSH) rm -rf builder && mkdir builder && cd builder && \
-				git clone --depth=1 -b ia_kb_v2 https://github.com/Brian-McM/gen-crd-api-reference-docs api-gen && cd api-gen && \
-				go mod edit -replace github.com/tigera/image-assurance=github.com/$(IA_OPERATOR_REPO)@$(IA_OPERATOR_VERSION) && \
-				go mod tidy && go mod download all && go build && \
-				./gen-crd-api-reference-docs \
-					-api-dir github.com/tigera/image-assurance/operator/api \
+				git clone --depth=1 -b $(API_GEN_VERSION) git@github.com:ahmetb/gen-crd-api-reference-docs.git && cd gen-crd-api-reference-docs && go build && \
+				cd ../ && git clone --depth=1 -b $(IA_OPERATOR_VERSION) git@github.com:tigera/image-assurance.git && cd image-assurance && \
+				../gen-crd-api-reference-docs/gen-crd-api-reference-docs  \
+					-template-dir /go/src/$(PACKAGE_NAME)/crd-gen-template -api-dir github.com/tigera/image-assurance/operator/api \
 					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
 					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx && \
-					sed -i "s|<br>|<br/>|g" /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx && \
                     /go/src/$(PACKAGE_NAME)/scripts/api-jsx.sh /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx'
 
 update-cloud-image-list:
