@@ -1,12 +1,12 @@
 const releases = require('./releases.json');
 
 const variables = {
-  releaseTitle: 'v3.18.3',
+  releaseTitle: 'v3.18.4',
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'v3.18',
   baseUrl: '/calico-enterprise/latest',
-  filesUrl: 'https://downloads.tigera.io/ee/v3.18.3',
+  filesUrl: 'https://downloads.tigera.io/ee/v3.18.4',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/3.18',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
@@ -16,7 +16,7 @@ const variables = {
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\TigeraCalico',
   registry: 'quay.io/',
-  chart_version_name: 'v3.18.3-0',
+  chart_version_name: 'v3.18.4-0',
   tigeraOperator: releases[0]['tigera-operator'],
   releases,
   imageNames: {
