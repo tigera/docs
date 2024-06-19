@@ -14,7 +14,7 @@ export default function InstallOpenShiftManifests(props) {
   return (
     <>
       <p>Download the {prodname} manifests for OpenShift and add them to the generated manifests directory:</p>
-      <CodeBlock language='bash'>
+      <CodeBlock id='data-install-openshift-manifests' language='bash'>
         {`mkdir calico
 wget -qO- ${filesUrl}/manifests/ocp.tgz | tar xvz --strip-components=1 -C calico ${flag1}${flag2}
 cp calico/* manifests/`}
