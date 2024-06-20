@@ -9,25 +9,23 @@ module.exports = {
         type: 'doc',
         id: 'about/index',
       },
-      items: [
-        'about/product-comparison',
-      ],
+      items: ['about/product-comparison'],
     },
     {
       type: 'category',
       label: 'Install and upgrade',
-      link: {type: 'doc', id:'getting-started/index'},
+      link: { type: 'doc', id: 'getting-started/index' },
       items: [
         'getting-started/compatibility',
         {
           type: 'category',
           label: 'Install on clusters',
-          link: {type: 'doc', id:'getting-started/install-on-clusters/index'},
+          link: { type: 'doc', id: 'getting-started/install-on-clusters/index' },
           items: [
             {
               type: 'category',
               label: 'Kubernetes',
-              link: {type: 'doc', id:'getting-started/install-on-clusters/kubernetes/index'},
+              link: { type: 'doc', id: 'getting-started/install-on-clusters/kubernetes/index' },
               items: [
                 'getting-started/install-on-clusters/kubernetes/quickstart',
                 'getting-started/install-on-clusters/kubernetes/options-install',
@@ -38,7 +36,7 @@ module.exports = {
             {
               type: 'category',
               label: 'OpenShift',
-              link: {type: 'doc', id:'getting-started/install-on-clusters/openshift/index'},
+              link: { type: 'doc', id: 'getting-started/install-on-clusters/openshift/index' },
               items: [
                 'getting-started/install-on-clusters/openshift/requirements',
                 'getting-started/install-on-clusters/openshift/installation',
@@ -56,7 +54,7 @@ module.exports = {
             {
               type: 'category',
               label: 'Calico Enterprise for Windows',
-              link: {type: 'doc', id:'getting-started/install-on-clusters/windows-calico/index'},
+              link: { type: 'doc', id: 'getting-started/install-on-clusters/windows-calico/index' },
               items: [
                 'getting-started/install-on-clusters/windows-calico/limitations',
                 'getting-started/install-on-clusters/windows-calico/requirements',
@@ -64,7 +62,7 @@ module.exports = {
                 {
                   type: 'category',
                   label: 'Manual Install',
-                  link: {type: 'doc', id:'getting-started/install-on-clusters/windows-calico/manual-install/index'},
+                  link: { type: 'doc', id: 'getting-started/install-on-clusters/windows-calico/manual-install/index' },
                   items: [
                     'getting-started/install-on-clusters/windows-calico/manual-install/quickstart',
                     'getting-started/install-on-clusters/windows-calico/manual-install/standard',
@@ -83,7 +81,7 @@ module.exports = {
             {
               type: 'category',
               label: 'Install from a private registry',
-              link: {type: 'doc', id:'getting-started/install-on-clusters/private-registry/index'},
+              link: { type: 'doc', id: 'getting-started/install-on-clusters/private-registry/index' },
               items: [
                 'getting-started/install-on-clusters/private-registry/private-registry-regular',
                 'getting-started/install-on-clusters/private-registry/private-registry-image-path',
@@ -96,26 +94,26 @@ module.exports = {
         {
           type: 'category',
           label: 'Install on non-cluster hosts',
-          link: {type: 'doc', id:'getting-started/bare-metal/index'},
-          items: [
-            'getting-started/bare-metal/about',
-            'getting-started/bare-metal/requirements',
-          ],
+          link: { type: 'doc', id: 'getting-started/bare-metal/index' },
+          items: ['getting-started/bare-metal/about', 'getting-started/bare-metal/requirements'],
         },
         {
           type: 'category',
           label: 'Upgrade',
-          link: {type: 'doc', id:'getting-started/upgrading/index'},
+          link: { type: 'doc', id: 'getting-started/upgrading/index' },
           items: [
             {
               type: 'category',
               label: 'Upgrade Calico Enterprise',
-              link: {type: 'doc', id:'getting-started/upgrading/upgrading-enterprise/index'},
+              link: { type: 'doc', id: 'getting-started/upgrading/upgrading-enterprise/index' },
               items: [
                 {
                   type: 'category',
                   label: 'Kubernetes',
-                  link: {type: 'doc', id:'getting-started/upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/index'},
+                  link: {
+                    type: 'doc',
+                    id: 'getting-started/upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/index',
+                  },
                   items: [
                     'getting-started/upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/helm',
                     'getting-started/upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/operator',
@@ -127,12 +125,15 @@ module.exports = {
             {
               type: 'category',
               label: 'Upgrade from Calico to Calico Enterprise',
-              link: {type: 'doc', id:'getting-started/upgrading/upgrading-calico-to-calico-enterprise/index'},
+              link: { type: 'doc', id: 'getting-started/upgrading/upgrading-calico-to-calico-enterprise/index' },
               items: [
                 {
                   type: 'category',
                   label: 'Kubernetes',
-                  link: {type: 'doc', id:'getting-started/upgrading/upgrading-calico-to-calico-enterprise/upgrade-to-tsee/index'},
+                  link: {
+                    type: 'doc',
+                    id: 'getting-started/upgrading/upgrading-calico-to-calico-enterprise/upgrade-to-tsee/index',
+                  },
                   items: [
                     'getting-started/upgrading/upgrading-calico-to-calico-enterprise/upgrade-to-tsee/standard',
                     'getting-started/upgrading/upgrading-calico-to-calico-enterprise/upgrade-to-tsee/helm',
@@ -149,22 +150,19 @@ module.exports = {
     {
       type: 'category',
       label: 'Networking',
-      link: {type: 'doc', id: 'networking/index'},
+      link: { type: 'doc', id: 'networking/index' },
       items: [
         'networking/determine-best-networking',
         {
           type: 'category',
           label: 'Networking basics',
-          link: {type: 'doc', id: 'networking/training/index'},
-          items: [
-            'networking/training/about-networking',
-            'networking/training/about-kubernetes-networking',
-          ],
+          link: { type: 'doc', id: 'networking/training/index' },
+          items: ['networking/training/about-networking', 'networking/training/about-kubernetes-networking'],
         },
         {
           type: 'category',
           label: 'Configure Calico Enterprise networking',
-          link: {type: 'doc', id: 'networking/configuring/index'},
+          link: { type: 'doc', id: 'networking/configuring/index' },
           items: [
             'networking/configuring/bgp',
             'networking/configuring/dual-tor',
@@ -181,7 +179,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Egress gateways',
-          link: {type: 'doc', id: 'networking/egress/index'},
+          link: { type: 'doc', id: 'networking/egress/index' },
           items: [
             'networking/egress/egress-gateway-on-prem',
             'networking/egress/egress-gateway-azure',
@@ -194,7 +192,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Customize IP address management',
-          link: {type: 'doc', id: 'networking/ipam/index'},
+          link: { type: 'doc', id: 'networking/ipam/index' },
           items: [
             'networking/ipam/get-started-ip-addresses',
             'networking/ipam/initial-ippool',
@@ -213,12 +211,12 @@ module.exports = {
     {
       type: 'category',
       label: 'Network policy',
-      link: {type: 'doc', id: 'network-policy/index'},
+      link: { type: 'doc', id: 'network-policy/index' },
       items: [
         {
           type: 'category',
           label: 'Policy recommendations',
-          link: {type: 'doc', id: 'network-policy/recommendations/index'},
+          link: { type: 'doc', id: 'network-policy/recommendations/index' },
           items: [
             'network-policy/recommendations/policy-recommendations',
             'network-policy/recommendations/learn-about-policy-recommendations',
@@ -228,7 +226,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Tiered network policy',
-          link: {type: 'doc', id: 'network-policy/policy-tiers/index'},
+          link: { type: 'doc', id: 'network-policy/policy-tiers/index' },
           items: [
             'network-policy/policy-tiers/tiered-policy',
             'network-policy/policy-tiers/allow-tigera',
@@ -243,16 +241,16 @@ module.exports = {
         {
           type: 'category',
           label: 'Calico Enterprise network policy for beginners',
-          link: {type: 'doc', id: 'network-policy/beginners/index'},
+          link: { type: 'doc', id: 'network-policy/beginners/index' },
           items: [
             'network-policy/beginners/kubernetes-default-deny',
             'network-policy/beginners/calico-network-policy',
-            "network-policy/beginners/calico-labels",
+            'network-policy/beginners/calico-labels',
             'network-policy/beginners/simple-policy-cnx',
             {
               type: 'category',
               label: 'Policy rules',
-              link: {type: 'doc', id: 'network-policy/beginners/policy-rules/index'},
+              link: { type: 'doc', id: 'network-policy/beginners/policy-rules/index' },
               items: [
                 'network-policy/beginners/policy-rules/policy-rules-overview',
                 'network-policy/beginners/policy-rules/namespace-policy',
@@ -265,7 +263,7 @@ module.exports = {
             {
               type: 'category',
               label: 'Policy for services',
-              link: {type: 'doc', id: 'network-policy/beginners/services/index'},
+              link: { type: 'doc', id: 'network-policy/beginners/services/index' },
               items: [
                 'network-policy/beginners/services/kubernetes-node-ports',
                 'network-policy/beginners/services/services-cluster-ips',
@@ -277,7 +275,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Application layer policies',
-          link: {type: 'doc', id: 'network-policy/application-layer-policies/index'},
+          link: { type: 'doc', id: 'network-policy/application-layer-policies/index' },
           items: [
             'network-policy/application-layer-policies/alp',
             'network-policy/application-layer-policies/alp-tutorial',
@@ -286,12 +284,12 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for firewalls',
-          link: {type: 'doc', id: 'network-policy/policy-firewalls/index'},
+          link: { type: 'doc', id: 'network-policy/policy-firewalls/index' },
           items: [
             {
               type: 'category',
               label: 'Fortinet firewall integrations',
-              link: {type: 'doc', id: 'network-policy/policy-firewalls/fortinet-integration/index'},
+              link: { type: 'doc', id: 'network-policy/policy-firewalls/fortinet-integration/index' },
               items: [
                 'network-policy/policy-firewalls/fortinet-integration/overview',
                 'network-policy/policy-firewalls/fortinet-integration/firewall-integration',
@@ -303,7 +301,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for hosts',
-          link: {type: 'doc', id: 'network-policy/hosts/index'},
+          link: { type: 'doc', id: 'network-policy/hosts/index' },
           items: [
             'network-policy/hosts/protect-hosts',
             'network-policy/hosts/kubernetes-nodes',
@@ -314,7 +312,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for extreme traffic',
-          link: {type: 'doc', id: 'network-policy/extreme-traffic/index'},
+          link: { type: 'doc', id: 'network-policy/extreme-traffic/index' },
           items: [
             'network-policy/extreme-traffic/high-connection-workloads',
             'network-policy/extreme-traffic/defend-dos-attack',
@@ -323,7 +321,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Kubernetes for beginners',
-          link: {type: 'doc', id: 'network-policy/get-started/index'},
+          link: { type: 'doc', id: 'network-policy/get-started/index' },
           items: [
             'network-policy/get-started/about-network-policy',
             'network-policy/get-started/kubernetes-network-policy',
@@ -340,7 +338,7 @@ module.exports = {
     {
       type: 'category',
       label: 'Visibility and troubleshooting',
-      link: {type: 'doc', id: 'visibility/index'},
+      link: { type: 'doc', id: 'visibility/index' },
       items: [
         'visibility/get-started-cem',
         'visibility/alerts',
@@ -350,7 +348,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Calico Enterprise logs',
-          link: {type: 'doc', id: 'visibility/elastic/index'},
+          link: { type: 'doc', id: 'visibility/elastic/index' },
           items: [
             'visibility/elastic/overview',
             'visibility/elastic/retention',
@@ -359,7 +357,7 @@ module.exports = {
             {
               type: 'category',
               label: 'Flow logs',
-              link: {type: 'doc', id: 'visibility/elastic/flow/index'},
+              link: { type: 'doc', id: 'visibility/elastic/flow/index' },
               items: [
                 'visibility/elastic/flow/datatypes',
                 'visibility/elastic/flow/filtering',
@@ -373,21 +371,15 @@ module.exports = {
             {
               type: 'category',
               label: 'DNS logs',
-              link: {type: 'doc', id: 'visibility/elastic/dns/index'},
-              items: [
-                'visibility/elastic/dns/dns-logs',
-                'visibility/elastic/dns/filtering-dns',
-              ],
+              link: { type: 'doc', id: 'visibility/elastic/dns/index' },
+              items: ['visibility/elastic/dns/dns-logs', 'visibility/elastic/dns/filtering-dns'],
             },
             'visibility/elastic/bgp',
             {
               type: 'category',
               label: 'L7 logs',
-              link: {type: 'doc', id: 'visibility/elastic/l7/index'},
-              items: [
-                'visibility/elastic/l7/configure',
-                'visibility/elastic/l7/datatypes',
-              ],
+              link: { type: 'doc', id: 'visibility/elastic/l7/index' },
+              items: ['visibility/elastic/l7/configure', 'visibility/elastic/l7/datatypes'],
             },
             'visibility/elastic/troubleshoot',
           ],
@@ -399,17 +391,17 @@ module.exports = {
     {
       type: 'category',
       label: 'Multi-cluster management',
-      link: {type: 'doc', id: 'multicluster/index'},
+      link: { type: 'doc', id: 'multicluster/index' },
       items: [
         {
           type: 'category',
           label: 'Set up multi-cluster management',
-          link: {type: 'doc', id: 'multicluster/set-up-multi-cluster-management/index'},
+          link: { type: 'doc', id: 'multicluster/set-up-multi-cluster-management/index' },
           items: [
             {
               type: 'category',
               label: 'Standard operator install',
-              link: {type: 'doc', id: 'multicluster/set-up-multi-cluster-management/standard-install/index'},
+              link: { type: 'doc', id: 'multicluster/set-up-multi-cluster-management/standard-install/index' },
               items: [
                 'multicluster/set-up-multi-cluster-management/standard-install/create-a-management-cluster',
                 'multicluster/set-up-multi-cluster-management/standard-install/create-a-managed-cluster',
@@ -418,7 +410,7 @@ module.exports = {
             {
               type: 'category',
               label: 'Helm install',
-              link: {type: 'doc', id: 'multicluster/set-up-multi-cluster-management/helm-install/index'},
+              link: { type: 'doc', id: 'multicluster/set-up-multi-cluster-management/helm-install/index' },
               items: [
                 'multicluster/set-up-multi-cluster-management/helm-install/create-a-management-cluster-helm',
                 'multicluster/set-up-multi-cluster-management/helm-install/create-a-managed-cluster-helm',
@@ -431,7 +423,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Cluster mesh',
-          link: {type: 'doc', id: 'multicluster/federation/index'},
+          link: { type: 'doc', id: 'multicluster/federation/index' },
           items: [
             'multicluster/federation/overview',
             'multicluster/federation/kubeconfig',
@@ -444,14 +436,13 @@ module.exports = {
     {
       type: 'category',
       label: 'Threat defense',
-      link: {type: 'doc', id: 'threat/index'},
+      link: { type: 'doc', id: 'threat/index' },
       items: [
         'threat/security-event-management',
         'threat/configuring-webhooks',
         'threat/suspicious-ips',
         'threat/suspicious-domains',
         'threat/tor-vpn-feed-and-dashboard',
-        'threat/honeypods',
         'threat/deeppacketinspection',
         'threat/web-application-firewall',
         'threat/deploying-waf-ingress-gateway',
@@ -471,12 +462,12 @@ module.exports = {
     {
       type: 'category',
       label: 'Operations',
-      link: {type: 'doc', id: 'operations/index'},
+      link: { type: 'doc', id: 'operations/index' },
       items: [
         {
           type: 'category',
           label: 'Calico Enterprise Manager UI',
-          link: {type: 'doc', id: 'operations/cnx/index'},
+          link: { type: 'doc', id: 'operations/cnx/index' },
           items: [
             'operations/cnx/access-the-manager',
             'operations/cnx/authentication-quickstart',
@@ -487,7 +478,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Secure component communications',
-          link: {type: 'doc', id: 'operations/comms/index'},
+          link: { type: 'doc', id: 'operations/comms/index' },
           items: [
             'operations/comms/crypto-auth',
             'operations/comms/secure-metrics',
@@ -505,18 +496,18 @@ module.exports = {
         {
           type: 'category',
           label: 'CLIs',
-          link: {type: 'doc', id: 'operations/clis/index'},
+          link: { type: 'doc', id: 'operations/clis/index' },
           items: [
             {
               type: 'category',
               label: 'calicoctl',
-              link: {type: 'doc', id: 'operations/clis/calicoctl/index'},
+              link: { type: 'doc', id: 'operations/clis/calicoctl/index' },
               items: [
                 'operations/clis/calicoctl/install',
                 {
                   type: 'category',
                   label: 'Configure calicoctl',
-                  link: {type: 'doc', id: 'operations/clis/calicoctl/configure/index'},
+                  link: { type: 'doc', id: 'operations/clis/calicoctl/configure/index' },
                   items: [
                     'operations/clis/calicoctl/configure/overview',
                     'operations/clis/calicoctl/configure/datastore',
@@ -527,17 +518,14 @@ module.exports = {
             {
               type: 'category',
               label: 'calicoq',
-              link: {type: 'doc', id: 'operations/clis/calicoq/index'},
+              link: { type: 'doc', id: 'operations/clis/calicoq/index' },
               items: [
                 'operations/clis/calicoq/installing',
                 {
                   type: 'category',
                   label: 'Configure calicoq',
-                  link: {type: 'doc', id: 'operations/clis/calicoq/configure/index'},
-                  items: [
-                    'operations/clis/calicoq/configure/overview',
-                    'operations/clis/calicoq/configure/datastore',
-                  ],
+                  link: { type: 'doc', id: 'operations/clis/calicoq/configure/index' },
+                  items: ['operations/clis/calicoq/configure/overview', 'operations/clis/calicoq/configure/datastore'],
                 },
               ],
             },
@@ -546,7 +534,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Storage',
-          link: {type: 'doc', id: 'operations/logstorage/index'},
+          link: { type: 'doc', id: 'operations/logstorage/index' },
           items: [
             'operations/logstorage/log-storage-recommendations',
             'operations/logstorage/create-storage',
@@ -558,12 +546,12 @@ module.exports = {
         {
           type: 'category',
           label: 'Monitoring',
-          link: {type: 'doc', id: 'operations/monitor/index'},
+          link: { type: 'doc', id: 'operations/monitor/index' },
           items: [
             {
               type: 'category',
               label: 'Prometheus',
-              link: {type: 'doc', id: 'operations/monitor/prometheus/index'},
+              link: { type: 'doc', id: 'operations/monitor/prometheus/index' },
               items: [
                 'operations/monitor/prometheus/support',
                 'operations/monitor/prometheus/byo-prometheus',
@@ -574,7 +562,7 @@ module.exports = {
             {
               type: 'category',
               label: 'Metrics',
-              link: {type: 'doc', id: 'operations/monitor/metrics/index'},
+              link: { type: 'doc', id: 'operations/monitor/metrics/index' },
               items: [
                 'operations/monitor/metrics/recommended-metrics',
                 'operations/monitor/metrics/bgp-metrics',
@@ -588,7 +576,7 @@ module.exports = {
         {
           type: 'category',
           label: 'eBPF',
-          link: {type: 'doc', id: 'operations/ebpf/index'},
+          link: { type: 'doc', id: 'operations/ebpf/index' },
           items: [
             'operations/ebpf/use-cases-ebpf',
             'operations/ebpf/enabling-ebpf',
@@ -600,7 +588,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Troubleshooting',
-          link: {type: 'doc', id: 'operations/troubleshoot/index'},
+          link: { type: 'doc', id: 'operations/troubleshoot/index' },
           items: [
             'operations/troubleshoot/troubleshooting',
             'operations/troubleshoot/commands',
@@ -612,7 +600,7 @@ module.exports = {
     {
       type: 'category',
       label: 'Reference',
-      link: {type: 'doc', id: 'reference/index'},
+      link: { type: 'doc', id: 'reference/index' },
       items: [
         'reference/api',
         'reference/installation/api',
@@ -621,35 +609,27 @@ module.exports = {
         {
           type: 'category',
           label: 'CLIs',
-          link: {type: 'doc', id: 'reference/clis/index'},
+          link: { type: 'doc', id: 'reference/clis/index' },
           items: [
             {
               type: 'category',
               label: 'calicoctl',
-              link: {type: 'doc', id: 'reference/clis/calicoctl/index'},
+              link: { type: 'doc', id: 'reference/clis/calicoctl/index' },
               items: [
                 'reference/clis/calicoctl/overview',
                 'reference/clis/calicoctl/apply',
                 {
                   type: 'category',
                   label: 'bgp',
-                  link: {type: 'doc', id: 'reference/clis/calicoctl/bgp/index'},
-                  items: [
-                    'reference/clis/calicoctl/bgp/overview',
-                    'reference/clis/calicoctl/bgp/peers',
-                  ],
+                  link: { type: 'doc', id: 'reference/clis/calicoctl/bgp/index' },
+                  items: ['reference/clis/calicoctl/bgp/overview', 'reference/clis/calicoctl/bgp/peers'],
                 },
                 'reference/clis/calicoctl/captured-packets',
                 {
                   type: 'category',
                   label: 'cluster',
-                  link: {type: 'doc', id: 'reference/clis/calicoctl/cluster/index'},
-                  items: [
-                    'reference/clis/calicoctl/cluster/overview',
-                    'reference/clis/calicoctl/cluster/diags',
-
-                  ]
-
+                  link: { type: 'doc', id: 'reference/clis/calicoctl/cluster/index' },
+                  items: ['reference/clis/calicoctl/cluster/overview', 'reference/clis/calicoctl/cluster/diags'],
                 },
                 'reference/clis/calicoctl/convert',
                 'reference/clis/calicoctl/create',
@@ -658,7 +638,7 @@ module.exports = {
                 {
                   type: 'category',
                   label: 'ipam',
-                  link: {type: 'doc', id: 'reference/clis/calicoctl/ipam/index'},
+                  link: { type: 'doc', id: 'reference/clis/calicoctl/ipam/index' },
                   items: [
                     'reference/clis/calicoctl/ipam/overview',
                     'reference/clis/calicoctl/ipam/check',
@@ -671,13 +651,13 @@ module.exports = {
                 {
                   type: 'category',
                   label: 'datastore',
-                  link: {type: 'doc', id: 'reference/clis/calicoctl/datastore/index'},
+                  link: { type: 'doc', id: 'reference/clis/calicoctl/datastore/index' },
                   items: [
                     'reference/clis/calicoctl/datastore/overview',
                     {
                       type: 'category',
                       label: 'migrate',
-                      link: {type: 'doc', id: 'reference/clis/calicoctl/datastore/migrate/index'},
+                      link: { type: 'doc', id: 'reference/clis/calicoctl/datastore/migrate/index' },
                       items: [
                         'reference/clis/calicoctl/datastore/migrate/overview',
                         'reference/clis/calicoctl/datastore/migrate/lock',
@@ -690,7 +670,7 @@ module.exports = {
                 {
                   type: 'category',
                   label: 'node',
-                  link: {type: 'doc', id: 'reference/clis/calicoctl/node/index'},
+                  link: { type: 'doc', id: 'reference/clis/calicoctl/node/index' },
                   items: [
                     'reference/clis/calicoctl/node/overview',
                     'reference/clis/calicoctl/node/run',
@@ -707,7 +687,7 @@ module.exports = {
             {
               type: 'category',
               label: 'calicoq',
-              link: {type: 'doc', id: 'reference/clis/calicoq/index'},
+              link: { type: 'doc', id: 'reference/clis/calicoq/index' },
               items: [
                 'reference/clis/calicoq/overview',
                 'reference/clis/calicoq/selectors',
@@ -723,7 +703,7 @@ module.exports = {
         {
           type: 'category',
           label: 'Resource definitions',
-          link: {type: 'doc', id: 'reference/resources/index'},
+          link: { type: 'doc', id: 'reference/resources/index' },
           items: [
             'reference/resources/overview',
             'reference/resources/bgpconfig',
@@ -734,14 +714,14 @@ module.exports = {
             {
               type: 'category',
               label: 'Compliance reports',
-              link: {type: 'doc', id: 'reference/resources/compliance-reports/index'},
+              link: { type: 'doc', id: 'reference/resources/compliance-reports/index' },
               items: [
                 'reference/resources/compliance-reports/overview',
                 'reference/resources/compliance-reports/inventory',
                 'reference/resources/compliance-reports/network-access',
                 'reference/resources/compliance-reports/policy-audit',
                 'reference/resources/compliance-reports/cis-benchmark',
-              ]
+              ],
             },
             'reference/resources/deeppacketinspection',
             'reference/resources/egressgatewaypolicy',
@@ -777,14 +757,14 @@ module.exports = {
         {
           type: 'category',
           label: 'Architecture and network design',
-          link: {type: 'doc', id: 'reference/architecture/index'},
+          link: { type: 'doc', id: 'reference/architecture/index' },
           items: [
             'reference/architecture/overview',
             'reference/architecture/data-path',
             {
               type: 'category',
               label: 'Network design',
-              link: {type: 'doc', id: 'reference/architecture/design/index'},
+              link: { type: 'doc', id: 'reference/architecture/design/index' },
               items: [
                 'reference/architecture/design/l2-interconnect-fabric',
                 'reference/architecture/design/l3-interconnect-fabric',
@@ -795,14 +775,14 @@ module.exports = {
         {
           type: 'category',
           label: 'Component resources',
-          link: {type: 'doc', id: 'reference/component-resources/index'},
+          link: { type: 'doc', id: 'reference/component-resources/index' },
           items: [
             'reference/component-resources/configuration',
             'reference/component-resources/configure-resources',
             {
               type: 'category',
               label: 'Calico Enterprise Kubernetes controllers',
-              link: {type: 'doc', id: 'reference/component-resources/kube-controllers/index'},
+              link: { type: 'doc', id: 'reference/component-resources/kube-controllers/index' },
               items: [
                 'reference/component-resources/kube-controllers/configuration',
                 'reference/component-resources/kube-controllers/prometheus',
@@ -811,13 +791,13 @@ module.exports = {
             {
               type: 'category',
               label: 'Calico Enterprise node (cnx-node)',
-              link: {type: 'doc', id: 'reference/component-resources/node/index'},
+              link: { type: 'doc', id: 'reference/component-resources/node/index' },
               items: [
                 'reference/component-resources/node/configuration',
                 {
                   type: 'category',
                   label: 'Felix',
-                  link: {type: 'doc', id: 'reference/component-resources/node/felix/index'},
+                  link: { type: 'doc', id: 'reference/component-resources/node/felix/index' },
                   items: [
                     'reference/component-resources/node/felix/configuration',
                     'reference/component-resources/node/felix/prometheus',
@@ -828,7 +808,7 @@ module.exports = {
             {
               type: 'category',
               label: 'Typha for scaling',
-              link: {type: 'doc', id: 'reference/component-resources/typha/index'},
+              link: { type: 'doc', id: 'reference/component-resources/typha/index' },
               items: [
                 'reference/component-resources/typha/overview',
                 'reference/component-resources/typha/configuration',
@@ -840,17 +820,13 @@ module.exports = {
         {
           type: 'category',
           label: 'Configuration on public clouds',
-          link: {type: 'doc', id: 'reference/public-cloud/index'},
-          items: [
-            'reference/public-cloud/aws',
-            'reference/public-cloud/azure',
-            'reference/public-cloud/gce',
-          ],
+          link: { type: 'doc', id: 'reference/public-cloud/index' },
+          items: ['reference/public-cloud/aws', 'reference/public-cloud/azure', 'reference/public-cloud/gce'],
         },
         {
           type: 'category',
           label: 'Host endpoints',
-          link: {type: 'doc', id: 'reference/host-endpoints/index'},
+          link: { type: 'doc', id: 'reference/host-endpoints/index' },
           items: [
             'reference/host-endpoints/overview',
             'reference/host-endpoints/connectivity',
