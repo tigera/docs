@@ -57,6 +57,14 @@ export default function InstallGeneric(props) {
           <Link href={`${baseUrl}/reference/resources`}>{prodname} resources</Link> to function at startup, install them
           now using <Link href={`${baseUrl}/reference/clis/calicoctl/overview`}>calicoctl</Link>.
         </li>
+        <li>
+          <p>
+            (Optional) Compliance and packet capture features are optional. To enable these features during installation, download and review the custom-resources.yaml file. Uncomment the necessary CRs and use this custom-resources.yaml for installation.
+          </p>
+          <p>
+            <CodeBlock language='bash'>curl -O -L {filesUrl}/manifests/custom-resources.yaml</CodeBlock>
+          </p>
+        </li>
         <When condition={props.clusterType === 'managed'}>
           <li>
             <p>
