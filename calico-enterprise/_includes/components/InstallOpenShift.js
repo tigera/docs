@@ -57,8 +57,20 @@ export default function InstallOpenShift(props) {
       </p>
       <CodeBlock language='bash'>
         sed -i 's/\(OpenShiftSDN\|OVNKubernetes\)/Calico/' install-config.yaml{'\n'}
-        sed -i 's/platform: {}/platform:\n{'\t'}aws:\n{'\t'}type: m4.xlarge/g' install-config.yaml
       </CodeBlock>
+
+      <Admonition type='note'>
+        <p>By default openshift-installer creates 3 replicas, you can change these settings by modifying the cloud-provider part in the install-config.yaml</p>
+        <p>The following example changes the default deployment instance type and replica quantity.</p>
+        <CodeBlock language='yaml' title='install-config.yaml'>
+        {`...
+          platform: 
+            aws:
+              type: m5.xlarge
+          replicas: 2
+          ...`}
+        </CodeBlock>
+      </Admonition>
 
       <Heading
         as='h4'
