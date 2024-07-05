@@ -185,6 +185,10 @@ const config = {
                 label: 'Egress gateways',
                 to: '/use-cases/egress-gateways',
               },
+              {
+                label: 'Cluster mesh',
+                to: '/use-cases/clustermesh',
+              },
             ],
           },
           {
