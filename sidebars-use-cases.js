@@ -9,7 +9,8 @@ module.exports = {
         'microsegmentation',
         'observability',
         'egress-access-controls',
-        'egress-gateways'
+        'egress-gateways',
+        'cluster-mesh',
       ],
     },
   ],

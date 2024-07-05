@@ -185,6 +185,10 @@ const config = {
                 label: 'Egress gateways',
                 to: '/use-cases/egress-gateways',
               },
+              {
+                label: 'Cluster mesh',
+                to: '/use-cases/cluster-mesh',
+              },
             ],
           },
           {
@@ -378,6 +382,7 @@ const config = {
         routeBasePath: 'calico',
         editCurrentVersion: true,
         onlyIncludeVersions: ['3.28','3.27','3.26'],
+        lastVersion: '3.28',
         versions: {
           current: {
             label: 'Next',
