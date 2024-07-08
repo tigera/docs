@@ -15,8 +15,8 @@ const config = {
   tagline: 'Active, zero-trust based security for containers and Kubernetes',
   url: 'https://docs.tigera.io',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
+  onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
 
 
@@ -27,24 +27,24 @@ const config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
-  scripts: [
-    {
-      src: "https://widget.kapa.ai/kapa-widget.bundle.js",
-      "data-website-id": "578b0d26-ff67-42e3-b465-5839865a7471",
-      "data-project-name": "Calico",
-      "data-project-color": "#F89C1D",
-      "data-project-logo":
-        "https://www.tigera.io/app/uploads/2021/06/Tigera-orange.png",
-      "data-modal-disclaimer": "The Calico Docs AI answers questions based on what it finds in our product documentation. As with all AI solutions, it's a good idea to verify answers in the source material. ",
-      //"data-modal-example-questions": "Docs Calico use eBPF?,Get started with egress gateways",
-      "data-modal-ask-ai-input-placeholder": "Ask me a question about Calico",
-      "data-font-family": "Poppins,Helvetica Neue,Helvetica,Arial,sans-serif",
-      "data-modal-border-radius": "6px",
-      "data-button-box-shadow": "2px 2px 8px rgba(0, 0, 0, 0.2)",
-      "data-modal-header-bg-color": "#FFFFFF",
-      async: true,
-    },
-  ],
+  //scripts: [
+  //  {
+  //    src: "https://widget.kapa.ai/kapa-widget.bundle.js",
+  //    "data-website-id": "578b0d26-ff67-42e3-b465-5839865a7471",
+  //    "data-project-name": "Calico",
+  //    "data-project-color": "#F89C1D",
+  //    "data-project-logo":
+  //      "https://www.tigera.io/app/uploads/2021/06/Tigera-orange.png",
+  //    "data-modal-disclaimer": "The Calico Docs AI answers questions based on what it finds in our product documentation. As with all AI solutions, it's a good idea to verify answers in the source material. ",
+  //    //"data-modal-example-questions": "Docs Calico use eBPF?,Get started with egress gateways",
+  //    "data-modal-ask-ai-input-placeholder": "Ask me a question about Calico",
+  //    "data-font-family": "Poppins,Helvetica Neue,Helvetica,Arial,sans-serif",
+  //    "data-modal-border-radius": "6px",
+  //    "data-button-box-shadow": "2px 2px 8px rgba(0, 0, 0, 0.2)",
+  //    "data-modal-header-bg-color": "#FFFFFF",
+  //    async: true,
+  //  },
+  //],
   presets: [
     [
       'classic',
@@ -84,22 +84,13 @@ const config = {
         searchPagePath: '/search',
       },
       announcementBar: {
-        id: 'ai-bot-announcement',
-        content: "🤖 Try exploring Calico Documentation with our new AI bot. Look for the <b>Ask AI</b> button at the" +
-          " bottom of your screen. 🤖",
-        backgroundColor: '#FCE181',
-        textColor: '#000',
+        id: "calico_ebpf",
+        content: "Documentation archive for Calico Enterprise 3.16. This version is no longer maintained. For the" +
+          " latest documentation, go to <a href=\"https://docs.tigera.io\">https://docs.tigera.io</a>.",
+        backgroundColor: "#FCE181",
+        textColor: "#000",
         isCloseable: true,
       },
-//      "announcementBar": {
-//        "id": "calico_ebpf",
-//        "content": "Use Calico <img src=\"/img/brands/ebpf_logo.svg\" style=\"height:1.5rem; margin: 0 5px 0 5px;" +
-//" display: inline-flex;\" alt=\"eBPF\" /> dataplane to enhance your Kubernetes networking performance. Click <a
-// href=\"https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf/\">here </a> to learn more.",
-//        "backgroundColor": "#FCE181",
-//        "textColor": "#000",
-//        "isCloseable": true,
-//      },
       navbar: {
         logo: {
           src: 'img/tigera-logo-black.png',
@@ -111,20 +102,6 @@ const config = {
             label: 'Documentation',
             className: 'documentation-dropdown',
             items: [
-              {
-                label: 'Calico Open Source',
-                type: 'docSidebar',
-                sidebarId: 'calicoSidebar',
-                docsPluginId: 'calico',
-                className: 'navbar-product-link_calico',
-              },
-              {
-                label: 'Calico Cloud',
-                type: 'docSidebar',
-                sidebarId: 'calicoCloudSidebar',
-                docsPluginId: 'calico-cloud',
-                className: 'navbar-product-link_calico-cloud',
-              },
               {
                 label: 'Calico Enterprise',
                 type: 'docSidebar',
@@ -377,49 +354,11 @@ const config = {
       '@docusaurus/plugin-content-docs',
       /** @type {import('@docusaurus/plugin-content-docs').Options} */
       {
-        id: 'calico',
-        path: 'calico',
-        routeBasePath: 'calico',
-        editCurrentVersion: true,
-        onlyIncludeVersions: ['3.28','3.27','3.26'],
-        lastVersion: '3.28',
-        versions: {
-          current: {
-            label: 'Next',
-            path: 'next',
-            banner: 'unreleased',
-          },
-          3.28: {
-            label: '3.28 (latest)',
-            path: 'latest',
-            banner: 'none'
-          },
-          3.27: {
-            label: '3.27',
-            path: '3.27',
-            banner: 'none',
-          },
-          3.26: {
-            label: '3.26',
-            path: '3.26',
-            banner: 'none',
-          },
-        },
-        sidebarPath: require.resolve('./sidebars-calico.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        editUrl: generateEditUrl,
-      },
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      {
         id: 'calico-enterprise',
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.19-2','3.18-2','3.17','3.16'],
-        lastVersion: '3.19-2',
+        onlyIncludeVersions: ['3.16'],
         versions: {
           current: {
             label: 'Next',
@@ -458,32 +397,6 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
-        editUrl: generateEditUrl,
-      },
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      /** @type {import('@docusaurus/plugin-content-docs').Options} */
-      {
-        id: 'calico-cloud',
-        path: 'calico-cloud',
-        routeBasePath: 'calico-cloud',
-        editCurrentVersion: true,
-        //To see builds for unreleased versions, remove comments in the next line.
-        onlyIncludeVersions: ['19-2'],
-        versions: {
-          current: {
-            label: 'Next',
-            path: 'next',
-            banner: 'unreleased',
-          },
-          '19-2': {
-            path: '/',
-            banner: 'none',
-          },
-        },
-        sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
         editUrl: generateEditUrl,
       },
