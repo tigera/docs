@@ -163,7 +163,21 @@ test("Crawl the docs and execute tests", async () => {
     'https://docs.tigera.io/calico-enterprise/3.15/about-calico-enterprise',
     'https://your-jira-instance-name.atlassian.net/rest/api/2/issue/',
     'https://bugzilla.netfilter.org/show_bug.cgi?id=1119',
-    'https://webexapis.com/v1/messages'
+    'https://webexapis.com/v1/messages',
+    'https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-ingress-networking/',
+    'https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-networking-on-google-cloud/',
+    'https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-pod-networking-on-aws/',
+    'https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-services-networking/',
+    'https://www.projectcalico.org/introducing-the-calico-ebpf-dataplane/',
+    'https://www.projectcalico.org/kubernetes-service-ip-route-advertisement/',
+    'https://www.projectcalico.org/live-migration-from-flannel-to-calico/',
+    'https://www.projectcalico.org/why-bgp/',
+    'https://www.tigera.io/blog/calico-ipam-explained-and-enhanced/',
+    'https://www.tigera.io/blog/faster-troubleshooting-of-microservices-containers-and-kubernetes-with-dynamic-packet-capture/',
+    'https://www.tigera.io/blog/hands-on-guide-how-to-scan-and-block-container-images-to-mitigate-sbom-attacks/',
+    'https://www.tigera.io/blog/kubernetes-security-policy-10-critical-best-practices/',
+    'https://www.tigera.io/blog/when-linux-conntrack-is-no-longer-your-friend/',
+    'https://www.tigera.io/blog/why-bgp/',
   ];
 
   const lc = linkChecker();
