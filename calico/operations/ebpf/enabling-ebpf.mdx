@@ -40,6 +40,7 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
     - [AKS with Azure CNI and Calico network policy](../../getting-started/kubernetes/managed-public-cloud/aks.mdx#install-aks-with-calico-for-network-policy) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
     - [AKS with {{prodname}} networking](../../getting-started/kubernetes/managed-public-cloud/aks.mdx#install-aks-with-calico-networking) is in testing with the eBPF dataplane. This should be a better solution overall but, at time of writing, the testing was not complete.
   - RKE (RKE2 recommended because it supports disabling `kube-proxy`)
+  - MKE
 
 - Linux distribution/kernel:
 
@@ -87,7 +88,7 @@ eBPF mode due to various kernel optimisations.
 - [Verify that your cluster is ready for eBPF mode](#verify-that-your-cluster-is-ready-for-ebpf-mode)
 - [Configure {{prodname}} to talk directly to the API server](#configure-calico-to-talk-directly-to-the-api-server)
 - [Configure kube-proxy](#configure-kube-proxy)
-- [Disable host conntrack bypass in MKE](#disable-host-conntrack-bypass-in-MKE)
+- [Disable host conntrack bypass in MKE](#disable-host-conntrack-bypass-in-mke)
 - [Enable eBPF mode](#enable-ebpf-mode)
 - [Try out DSR mode](#try-out-dsr-mode)
 - [Reversing the process](#reversing-the-process)
@@ -292,11 +293,8 @@ kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"
 
 If you are running MKE, you can disable `kube-proxy` as follows:
 
-Download the cluster configuration as mentioned in https://docs.mirantis.com/mke/3.7/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration.
-
-Change the `kube_proxy_mode` to `disabled` and `kube_default_drop_masq_bits ` to `true`
-
-Upload the modified cluster configuration as mentioned in the above the link.
+Download the cluster configuration, set `kube_proxy_mode` to `disabled` and `kube_default_drop_masq_bits` to `true` and upload the cluster configuration.
+Steps to update the cluster configuration can be found in https://docs.mirantis.com/mke/3.7/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration.
 
 ### Avoiding conflicts with kube-proxy
 
