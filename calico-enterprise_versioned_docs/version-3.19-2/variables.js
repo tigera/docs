@@ -16,7 +16,7 @@ const variables = {
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\TigeraCalico',
   registry: 'quay.io/',
-  chart_version_name: 'v3.19.1-0',
+  chart_version_name: 'v3.19.1-1',
   tigeraOperator: releases[0]['tigera-operator'],
   releases,
   imageNames: {
