@@ -1,4 +1,4 @@
-import DocCardLink from './DocCardLink';
+import DocCardLink, { PaidProductDocCardLink } from './DocCardLink';
 import DocCardLinkLayout from './DocCardLinkLayout';
 
-export { DocCardLink, DocCardLinkLayout };
+export { DocCardLink, DocCardLinkLayout, PaidProductDocCardLink };

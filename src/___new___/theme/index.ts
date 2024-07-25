@@ -18,7 +18,7 @@ import Radio from './components/Checkbox';
 import Tabs from './components/Tabs';
 
 const config: ThemeConfig = {
-  initialColorMode: 'light',
+  initialColorMode: 'system',
   useSystemColorMode: false,
 };
 
@@ -27,6 +27,11 @@ const theme = extendTheme({
   colors,
   styles: {
     global: () => global,
+  },
+  layerStyles: {
+    docsGradientBlueGreen: {
+      backgroundImage: 'linear-gradient(to right bottom, #7e70ff, #b366ed, #d75fd8, #ef5bc1, #ff5eab)',
+    },
   },
   components: {
     Tabs,
