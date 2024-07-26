@@ -1,0 +1,120 @@
+---
+description: Install Calico Enterprise on a RKE2 cluster using the Rancher UI.
+---
+
+# Rancher UI
+
+## Big picture
+
+Install {{prodname}} on RKE2 using the Rancher UI (Rancher Manager).
+
+## Before you begin
+
+:::note
+
+To install {{prodname}} using Rancher UI, you must provision a base RKE2 cluster with Calico Open Source, then upgrade to {{prodname}}. This is required because Rancher UI does not provide an option to set the RKE2 CNI value as `none`, which is required to install a non-default CNI like {{prodname}}. 
+
+:::
+
+**CNI support**
+
+Calico CNI for networking with {{prodname}} network policy:
+
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:VXLAN,Routing:BGP,Datastore:Kubernetes'
+/>
+
+**Required**
+
+- A compatible cluster that can host the Rancher Manager with v2.6.5 or later
+
+  For help, see [Rancher](https://ranchermanager.docs.rancher.com/).
+
+- A [Tigera license key and credentials](calico-enterprise.mdx).
+
+- Rancher's `kubectl` shell with access to provisioned cluster.
+
+## How to
+
+- [Prepare a Calico Open Source cluster](#prepare-a-calico-open-source-cluster)
+- [Upgrade to {{prodname}}](#install-calico-enterprise)
+
+### Prepare a Calico Open Source cluster
+
+1. [Provision an RKE2 cluster using Calico as the CNI and default config options](https://ranchermanager.docs.rancher.com/pages-for-subheaders/launch-kubernetes-with-rancher).
+2. Validate that the RKE2 cluster is set up and running.
+3. In Rancher UI, open a `kubectl` shell for the cluster, and perform the next steps.
+4. Annotate the Calico Helm chart with `helmcharts.helm.cattle.io/unmanaged=true`. (This avoids Rancher resetting the CNI to Calico when the RKE2 cluster is shut down or upgraded.)
+
+   ```bash
+   kubectl annotate helmchart -n kube-system rke2-calico helmcharts.helm.cattle.io/unmanaged=true && \
+   kubectl annotate helmchart -n kube-system rke2-calico-crd helmcharts.helm.cattle.io/unmanaged=true
+   ```
+
+5. SSH to all the control plane nodes and rename `rke2-calico.yaml` in the `/var/lib/rancher/rke2/server/manifests/` directory to `rke2-calico.yaml.skip`.
+
+   ```bash
+   sudo mv /var/lib/rancher/rke2/server/manifests/rke2-calico.yaml /var/lib/rancher/rke2/server/manifests/rke2-calico.yaml.skip
+   ```
+
+6. Patch the Calico `Installation` resource to remove the image path prefix.
+
+   ```bash
+   kubectl patch installation default --type='json' -p='[{"op": "remove", "path": "/spec/imagePath"},{"op": "remove", "path": "/spec/imagePrefix"}]'
+   ```
+
+7. Create ClusterRole and ClusterRoleBinding to allow Tigera Operator to update Pod Security Admission.
+
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRole
+   metadata:
+     name: tigera-operator-psa
+   rules:
+   - apiGroups:
+     - management.cattle.io
+     resources:
+     - projects
+     verbs:
+     - updatepsa
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: ClusterRoleBinding
+   metadata:
+     name: tigera-operator-psa
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: ClusterRole
+     name: tigera-operator-psa
+   subjects:
+   - kind: ServiceAccount
+     name: tigera-operator
+     namespace: tigera-operator
+   EOF
+   ```
+
+### Upgrade to {{prodname}}
+
+1. In Rancher UI, open a `kubectl` shell for the cluster.
+
+2. Follow the [steps to upgrade Calico to {{prodname}} in the `kubectl` shell](../upgrading/upgrading-calico-to-calico-enterprise/upgrade-to-tsee/standard.mdx)
+
+## Next steps
+
+**Recommended**
+
+- [Configure access to {{prodname}} Manager UI](../../operations/cnx/access-the-manager.mdx)
+- [Authentication quickstart](../../operations/cnx/authentication-quickstart.mdx)
+- [Configure your own identity provider](../../operations/cnx/configure-identity-provider.mdx)
+
+**Recommended - Networking**
+
+- The default networking uses VXLAN encapsulation with BGP routing. For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).
+
+**Recommended - Security**
+
+- [Get started with {{prodname}} tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)

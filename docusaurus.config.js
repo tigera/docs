@@ -426,6 +426,11 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
+          '3.20-1': {
+            label: '3.20 (early preview)',
+            path: '3.20',
+            banner: 'unreleased',
+          },
           '3.19-2': {
             label: '3.19 (latest)',
             path: 'latest',
