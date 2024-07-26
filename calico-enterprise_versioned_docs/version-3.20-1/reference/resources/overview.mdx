@@ -1,0 +1,117 @@
+---
+description: Calico Enterprise resources (APIs) that you can manage using calicoctl.
+---
+
+# Resource definitions
+
+This section describes the set of valid resource types that can be managed
+through `calicoctl` or `kubectl`.
+
+While resources may be supplied in YAML or JSON format, this guide provides examples in YAML.
+
+## Overview of resource structure
+
+The calicoctl commands for resource management (create, apply, delete, replace, get)
+all take resource manifests as input.
+
+Each manifest may contain a single resource
+(e.g. a profile resource), or a list of multiple resources (e.g. a profile and two
+hostEndpoint resources).
+
+The general structure of a single resource is as follows:
+
+```yaml noValidation
+apiVersion: projectcalico.org/v3
+kind: <type of resource>
+metadata:
+  # Identifying information
+  name: <name of resource>
+  ...
+spec:
+  # Specification of the resource
+  ...
+```
+
+### Schema
+
+| Field      | Description                                                                             | Accepted Values      | Schema                   |
+| ---------- | --------------------------------------------------------------------------------------- | -------------------- | ------------------------ |
+| apiVersion | Indicates the version of the API that the data corresponds to.                          | projectcalico.org/v3 | string                   |
+| kind       | Specifies the type of resource described by the YAML document.                          |                      | [kind](#supported-kinds) |
+| metadata   | Contains information used to uniquely identify the particular instance of the resource. |                      | map                      |
+| spec       | Contains the resource specification.                                                    |                      | map                      |
+
+### Supported kinds
+
+The following resources are supported:
+
+- [AlertException](alertexception.mdx)
+- [BGPConfiguration](bgpconfig.mdx)
+- [BGPPeer](bgppeer.mdx)
+- [DeepPacketInspection](deeppacketinspection.mdx)
+- [EgressGatewayPolicy](egressgatewaypolicy.mdx)
+- [FelixConfiguration](felixconfig.mdx)
+- [GlobalAlert](globalalert.mdx)
+- [GlobalNetworkPolicy](globalnetworkpolicy.mdx)
+- [GlobalNetworkSet](globalnetworkset.mdx)
+- [GlobalReport](globalreport.mdx)
+- [GlobalThreatFeed](globalthreatfeed.mdx)
+- [HostEndpoint](hostendpoint.mdx)
+- [IPPool](ippool.mdx)
+- [IPReservation](ipreservation.mdx)
+- [KubeControllersConfiguration](kubecontrollersconfig.mdx)
+- [LicenseKey](licensekey.mdx)
+- [ManagedCluster](managedcluster.mdx)
+- [NetworkPolicy](networkpolicy.mdx)
+- [NetworkSet](networkset.mdx)
+- [Node](node.mdx)
+- [PacketCapture](packetcapture.mdx)
+- [Profile](profile.mdx)
+- [RemoteClusterConfiguration](remoteclusterconfiguration.mdx)
+- [StagedGlobalNetworkPolicy](stagedglobalnetworkpolicy.mdx)
+- [StagedKubernetesNetworkPolicy](stagedkubernetesnetworkpolicy.mdx)
+- [StagedNetworkPolicy](stagednetworkpolicy.mdx)
+- [Tier](tier.mdx)
+- [WorkloadEndpoint](workloadendpoint.mdx)
+
+### Resource name requirements
+
+Every resource must have the `name` field specified. Name must be unique within a namespace.
+Name required when creating resources, and cannot be updated.
+A valid resource name can have alphanumeric characters with optional `.`, `_`, or `-`. of up to 128 characters total.
+
+### Multiple resources in a single file
+
+A file may contain multiple resource documents specified in a YAML list format. For example, the following is the contents of a file containing two `HostEndpoint` resources:
+
+```yaml
+- apiVersion: projectcalico.org/v3
+  kind: HostEndpoint
+  metadata:
+    name: endpoint1
+    labels:
+      type: database
+  spec:
+    interface: eth0
+    node: host1
+    profiles:
+      - prof1
+      - prof2
+    expectedIPs:
+      - 1.2.3.4
+      - '00:bb::aa'
+- apiVersion: projectcalico.org/v3
+  kind: HostEndpoint
+  metadata:
+    name: endpoint2
+    labels:
+      type: frontend
+  spec:
+    interface: eth1
+    node: host1
+    profiles:
+      - prof1
+      - prof2
+    expectedIPs:
+      - 1.2.3.5
+```
