@@ -178,6 +178,8 @@ test("Crawl the docs and execute tests", async () => {
     'https://www.tigera.io/blog/kubernetes-security-policy-10-critical-best-practices/',
     'https://www.tigera.io/blog/when-linux-conntrack-is-no-longer-your-friend/',
     'https://www.tigera.io/blog/why-bgp/',
+    'https://docs.nginx.com/nginx-ingress-controller/configuration/',
+    'https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource',
   ];
 
   const lc = linkChecker();
