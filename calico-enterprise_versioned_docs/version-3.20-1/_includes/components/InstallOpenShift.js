@@ -180,7 +180,7 @@ spec:
             Install the {prodname} license
           </Heading>
           <p>
-            In order to use {prodname}, you must install the license provided to you by Tigera support representative.
+            In order to use {prodname}, you must install the license provided to you by a Tigera support representative.
             Before applying the license, wait until the Tigera API server is ready with the following command:
           </p>
           <CodeBlock>watch oc get tigerastatus</CodeBlock>
