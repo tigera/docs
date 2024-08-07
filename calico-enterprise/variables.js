@@ -19,6 +19,7 @@ const variables = {
   registry: 'gcr.io/unique-caldron-775/cnx/', // Change to 'quay.io/' for new release
   chart_version_name: 'master',
   tigeraOperator: releases[0]['tigera-operator'],
+  dikastesVersion: releases[0].components.dikastes.version,
   manifestsUrl: 'https://docs.tigera.io/master',
   releases,
   imageNames: {

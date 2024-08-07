@@ -18,6 +18,7 @@ const variables = {
   registry: 'quay.io/',
   chart_version_name: 'v3.19.1-1',
   tigeraOperator: releases[0]['tigera-operator'],
+  dikastesVersion: releases[0].components.dikastes.version,
   releases,
   imageNames: {
     node: 'tigera/cnx-node',

@@ -18,6 +18,7 @@ const variables = {
   cloudoperatorimage: 'quay.io/tigera/cc-operator',
   imageassuranceversion: 'v1.14.1',
   tigeraOperator: releases[0]['tigera-operator'],
+  dikastesVersion: releases[0].components.dikastes.version,
   releases,
   registry: 'quay.io/',
   imageNames: {
