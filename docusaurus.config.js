@@ -437,17 +437,7 @@ const config = {
             path: 'latest',
             banner: 'none',
           },
-          '3.19-1': {
-            label: '3.19',
-            path: '3.19',
-            banner: 'none',
-          },
           '3.18-2': {
-            label: '3.18',
-            path: '3.18',
-            banner: 'none',
-          },
-          3.18: {
             label: '3.18',
             path: '3.18',
             banner: 'none',
