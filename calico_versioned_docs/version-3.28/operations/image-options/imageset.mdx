@@ -2,6 +2,9 @@
 description: Specify the digests for operator to use to deploy images.
 ---
 
+import variables from '@site/calico_versioned_docs/version-3.28/variables';
+import CodeBlock from '@theme/CodeBlock';
+
 # Install images by registry digest
 
 import Tabs from '@theme/Tabs';
@@ -60,10 +63,10 @@ Before applying `tigera-operator.yaml`, modify the operator deployment to use th
 
 Use commands like the following to get the image digest (adjust the image in the commands if you are using a different operator image):
 
-```bash
-docker pull {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version}
-docker inspect {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version} -f '{{range .RepoDigests}}{{printf "%s\n" .}}{{end}}'
-```
+<CodeBlock language='bash'>
+docker pull \{variables.tigeraOperator.registry}/\{variables.tigeraOperator.image}:\{variables.tigeraOperator.version}
+docker inspect \{variables.tigeraOperator.registry}/\{variables.tigeraOperator.image}:\{variables.tigeraOperator.version} -f '\{\{range .RepoDigests}}\{\{printf "%s\n" .}}\{\{end}}'
+</CodeBlock>
 
 If multiple digests are returned, select the one matching the registry you are using.
 
@@ -77,11 +80,11 @@ sed -ie "s|\(image: .*/operator\):.*|?\1@<put-digest-here>|" tigera-operator.yam
 
 Create an [ImageSet](../../reference/installation/api.mdx#operator.tigera.io/v1.ImageSet) manifest file named `imageset.yaml` like the following:
 
-```yaml
+<CodeBlock language='yaml'>
 apiVersion: operator.tigera.io/v1
 kind: ImageSet
 metadata:
-  name: calico-{variables.releaseTitle}
+  name: calico-\{variables.releaseTitle}
 spec:
   images:
     - image: 'calico/apiserver'
@@ -102,7 +105,7 @@ spec:
       digest: 'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
     - image: 'tigera/key-cert-provisioner'
       digest: 'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
-```
+</CodeBlock>
 
 You can create an ImageSet manifest manually or by script.
 
@@ -112,16 +115,16 @@ You can create an ImageSet manifest manually or by script.
 1. Copy the above example into a file called `imageset.yaml` and edit that file in the steps below.
 1. Set the name for your ImageSet to `calico-<version>` (Example: `calico-{variables.releaseTitle}`).
    The version can be obtained by running:
-   ```
-   docker run {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version} --version
-   ```
+   <CodeBlock language=''>
+   docker run \{variables.tigeraOperator.registry}/\{variables.tigeraOperator.image}:\{variables.tigeraOperator.version} --version
+   </CodeBlock>
 1. Add the correct digest for each image. If you are using a private registry, ensure you pull the image from the private registry and use the digest associated with the private registry.
 
    1. If using the default images, get a list of them by running:
 
-      ```
-      docker run {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version} --print-images=list
-      ```
+      <CodeBlock language=''>
+      docker run \{variables.tigeraOperator.registry}/\{variables.tigeraOperator.image}:\{variables.tigeraOperator.version} --print-images=list
+      </CodeBlock>
 
       :::note
 
@@ -158,7 +161,7 @@ This script will only work if using the default registries and image paths.
 
 :::
 
-```
+<CodeBlock language=''>
 #!/bin/bash -e
 
 images=(calico/apiserver calico/cni calico/kube-controllers calico/node calico/typha calico/pod2daemon-flexvol calico/node-windows tigera/key-cert-provisioner tigera/operator)
@@ -192,7 +195,7 @@ for x in "${imagelist[@]}"; do
     fi
   done
 done
-```
+</CodeBlock>
 
 </TabItem>
 </Tabs>
@@ -217,9 +220,9 @@ Apply the created `imageset.yaml` to your cluster.
 
    You should see output similar to:
 
-   ```yaml
-   imageSet: calico-{variables.releaseTitle}
-   ```
+   <CodeBlock language='yaml'>
+   imageSet: calico-\{variables.releaseTitle}
+   </CodeBlock>
 
 ## Other tasks
 
