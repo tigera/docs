@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   calicoCloudSidebar: [
     {
       type: 'category',
@@ -304,7 +304,7 @@ module.exports = {
     {
       type: 'category',
       label: 'Compliance and security',
-      link: {type: 'doc', id: 'compliance/index'},
+      link: { type: 'doc', id: 'compliance/index' },
       items: [
         'compliance/enable-compliance',
         'compliance/overview',

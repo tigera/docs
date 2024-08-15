@@ -1,6 +1,6 @@
 // This is the navigation file for Calico Open Source
 
-module.exports = {
+export default {
   calicoSidebar: [
     {
       type: 'category',
@@ -12,23 +12,23 @@ module.exports = {
       items: [
         'about/product-comparison',
         'about/training-resources',
-      {
-       type: 'category',
-       label: 'Kubernetes training',
-       link: {
-         type: 'doc',
-         id: 'about/kubernetes-training/index',
-       },
-         items: [
-           'about/kubernetes-training/about-k8s-networking',
-           'about/kubernetes-training/about-networking',
-           'about/kubernetes-training/about-network-policy',
-           'about/kubernetes-training/about-kubernetes-ingress',
-           'about/kubernetes-training/about-kubernetes-egress',
-           'about/kubernetes-training/about-kubernetes-services',
-           'about/kubernetes-training/about-ebpf',
-        ],
-       },
+        {
+          type: 'category',
+          label: 'Kubernetes training',
+          link: {
+            type: 'doc',
+            id: 'about/kubernetes-training/index',
+          },
+          items: [
+            'about/kubernetes-training/about-k8s-networking',
+            'about/kubernetes-training/about-networking',
+            'about/kubernetes-training/about-network-policy',
+            'about/kubernetes-training/about-kubernetes-ingress',
+            'about/kubernetes-training/about-kubernetes-egress',
+            'about/kubernetes-training/about-kubernetes-services',
+            'about/kubernetes-training/about-ebpf',
+          ],
+        },
       ],
     },
     {
@@ -85,7 +85,6 @@ module.exports = {
               items: [
                 'getting-started/kubernetes/self-managed-onprem/onpremises',
                 'getting-started/kubernetes/self-managed-onprem/config-options',
-
               ],
             },
             {
@@ -149,10 +148,7 @@ module.exports = {
               type: 'category',
               label: 'K3s',
               link: { type: 'doc', id: 'getting-started/kubernetes/k3s/index' },
-              items: [
-                'getting-started/kubernetes/k3s/quickstart',
-                'getting-started/kubernetes/k3s/multi-node-install',
-              ],
+              items: ['getting-started/kubernetes/k3s/quickstart', 'getting-started/kubernetes/k3s/multi-node-install'],
             },
             'getting-started/kubernetes/helm',
             'getting-started/kubernetes/microk8s',
@@ -188,7 +184,7 @@ module.exports = {
                 'getting-started/kubernetes/vpp/getting-started',
                 'getting-started/kubernetes/vpp/ipsec',
                 'getting-started/kubernetes/vpp/specifics',
-                'getting-started/kubernetes/vpp/openshift'
+                'getting-started/kubernetes/vpp/openshift',
               ],
             },
           ],
@@ -355,7 +351,6 @@ module.exports = {
             'network-policy/policy-rules/service-accounts',
             'network-policy/policy-rules/external-ips-policy',
             'network-policy/policy-rules/icmp-ping',
-
           ],
         },
         {
@@ -373,10 +368,7 @@ module.exports = {
           type: 'category',
           label: 'Policy for services',
           link: { type: 'doc', id: 'network-policy/services/index' },
-          items: [
-            'network-policy/services/kubernetes-node-ports',
-            'network-policy/services/services-cluster-ips',
-          ],
+          items: ['network-policy/services/kubernetes-node-ports', 'network-policy/services/services-cluster-ips'],
         },
         {
           type: 'category',
@@ -452,10 +444,7 @@ module.exports = {
           type: 'category',
           label: 'Deploy image options',
           link: { type: 'doc', id: 'operations/image-options/index' },
-          items: [
-            'operations/image-options/imageset',
-            'operations/image-options/alternate-registry',
-          ],
+          items: ['operations/image-options/imageset', 'operations/image-options/alternate-registry'],
         },
         'operations/datastore-migration',
         'operations/operator-migration',
@@ -475,10 +464,7 @@ module.exports = {
           type: 'category',
           label: 'Monitor',
           link: { type: 'doc', id: 'operations/monitor/index' },
-          items: [
-            'operations/monitor/monitor-component-metrics',
-            'operations/monitor/monitor-component-visual',
-          ],
+          items: ['operations/monitor/monitor-component-metrics', 'operations/monitor/monitor-component-visual'],
         },
         'operations/decommissioning-a-node',
         'operations/fips',
@@ -620,30 +606,20 @@ module.exports = {
           type: 'category',
           label: 'Felix',
           link: { type: 'doc', id: 'reference/felix/index' },
-          items: [
-            'reference/felix/configuration',
-            'reference/felix/prometheus',
-          ],
+          items: ['reference/felix/configuration', 'reference/felix/prometheus'],
         },
         {
           type: 'category',
           label: 'Typha',
           link: { type: 'doc', id: 'reference/typha/index' },
-          items: [
-            'reference/typha/overview',
-            'reference/typha/configuration',
-            'reference/typha/prometheus',
-          ],
+          items: ['reference/typha/overview', 'reference/typha/configuration', 'reference/typha/prometheus'],
         },
         'reference/configure-cni-plugins',
         {
           type: 'category',
           label: 'Calico Kubernetes controllers',
           link: { type: 'doc', id: 'reference/kube-controllers/index' },
-          items: [
-            'reference/kube-controllers/configuration',
-            'reference/kube-controllers/prometheus',
-          ],
+          items: ['reference/kube-controllers/configuration', 'reference/kube-controllers/prometheus'],
         },
         {
           type: 'category',

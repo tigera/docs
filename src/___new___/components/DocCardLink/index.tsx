@@ -1,6 +1,6 @@
 import { Card, CardBody, CardHeader, Heading, Text } from '@chakra-ui/react';
 import React from 'react';
-import { useDocById } from '@docusaurus/theme-common/internal';
+import { useDocById } from '@docusaurus/plugin-content-docs/client';
 import Link from '@docusaurus/Link';
 import { cardBodyStyles, cardHeaderStyles, cardStyles, cardTextStyles, headingStyles, linkStyles } from './styles';
 import { useDocUrl } from '../../hooks';

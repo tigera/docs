@@ -1,9 +1,16 @@
 const urlCheck = require('./urlCheck');
-const LC = 'LINK-CHECK', DEAD = 'dead', SKIPPED = 'skipped', ALIVE = 'alive',
-  ERROR = 'error', INVALID = 'invalid', WARN = 'warn', INFO = 'info',
+const LC = 'LINK-CHECK',
+  DEAD = 'dead',
+  SKIPPED = 'skipped',
+  ALIVE = 'alive',
+  ERROR = 'error',
+  INVALID = 'invalid',
+  WARN = 'warn',
+  INFO = 'info',
   CHECKING = 'checking';
 const defaultLinkRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/gi;
-const validURLRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/;
+const validURLRegex =
+  /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/;
 const trimUrlChars = /(\)|\)\.|\.)$/;
 
 // Skip patterns are skipped, but remain in the reporting for visibility
@@ -39,8 +46,12 @@ const defaultIgnoreList = [
 ];
 
 function linkChecker() {
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-  let skipped = 0, invalid = 0, alive = 0, dead = 0, error = 0;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let skipped = 0,
+    invalid = 0,
+    alive = 0,
+    dead = 0,
+    error = 0;
   let linkRegex = [defaultLinkRegex];
   let skipList = [...defaultSkipList];
   let ignoreList = [...defaultIgnoreList];
@@ -49,7 +60,7 @@ function linkChecker() {
   const urlMap = new Map();
 
   function linkCheckCallback(err, result) {
-    const getMsg = err => {
+    const getMsg = (err) => {
       if (typeof err === 'string') return `error: ${err}`;
       return `message: '${err?.message}', errno: ${err?.errno}, code: ${err?.code}`;
     };
@@ -99,7 +110,7 @@ function linkChecker() {
       list[list.length] = fmt(v, k);
     });
     list.sort();
-    list.forEach(e => {
+    list.forEach((e) => {
       if (type === INFO) console.info(e);
       else if (type === WARN) console.warn(e);
       else if (type === ERROR) console.error(e);
@@ -116,7 +127,7 @@ function linkChecker() {
         urlMap.set(url, null);
         if (isInvalidOrSkipped(url)) continue;
         urlMap.set(url, { status: CHECKING });
-        urlCheck(origin, url, linkCheckCallback).then(r => {});
+        urlCheck(origin, url, linkCheckCallback).then((r) => {});
       }
     }
   }
@@ -131,7 +142,11 @@ function linkChecker() {
       console.error(`[FATAL] ${LC} did not finish. There are ${cnt} remaining.`);
     }
 
-    skipped = 0; invalid = 0; alive = 0; dead = 0; error = 0;
+    skipped = 0;
+    invalid = 0;
+    alive = 0;
+    dead = 0;
+    error = 0;
     urlMap.forEach((v, k) => {
       if (typeof v === 'object') {
         if (v.status === ERROR) {
@@ -145,41 +160,53 @@ function linkChecker() {
         } else if (v.status === INVALID) {
           invalid++;
         } else {
-          console.error(
-            `FATAL: an invalid status exists in the ${LC} urlMap. k: ${k}, v: ${JSON.stringify(v)}`);
+          console.error(`FATAL: an invalid status exists in the ${LC} urlMap. k: ${k}, v: ${JSON.stringify(v)}`);
           failed = true;
         }
       } else {
-        console.error(
-          `FATAL: an invalid status exists in the ${LC} urlMap. k: ${k}, v: ${v}`);
+        console.error(`FATAL: an invalid status exists in the ${LC} urlMap. k: ${k}, v: ${v}`);
         failed = true;
       }
     });
 
     console.log(
-      `${LC} REPORT\nSummary: ignored: ${ignored}, skipped: ${skipped}, invalid: ${invalid}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`);
+      `${LC} REPORT\nSummary: ignored: ${ignored}, skipped: ${skipped}, invalid: ${invalid}, errors: ${error}, dead: ${dead}, alive: ${alive}, total: ${urlMap.size}`
+    );
 
     if (invalid > 0) {
-      console.info(
-        `\n[INFO] ${LC} skipped the following ${invalid} invalid link(s):`);
-      enumMap(v => v.status === INVALID, (v, k) => `${k} is ${v.status}`, INFO);
+      console.info(`\n[INFO] ${LC} skipped the following ${invalid} invalid link(s):`);
+      enumMap(
+        (v) => v.status === INVALID,
+        (v, k) => `${k} is ${v.status}`,
+        INFO
+      );
     }
 
     if (skipped > 0) {
-      console.info(
-        `\n[INFO] ${LC} skipped the following ${skipped} link(s) due to built-in skip rules:`);
-      enumMap(v => v.status === SKIPPED, (v, k) => `${k} was ${v.status}`, INFO);
+      console.info(`\n[INFO] ${LC} skipped the following ${skipped} link(s) due to built-in skip rules:`);
+      enumMap(
+        (v) => v.status === SKIPPED,
+        (v, k) => `${k} was ${v.status}`,
+        INFO
+      );
     }
 
     if (dead > 0) {
-      console.warn(
-        `\n[WARN] ${LC} found the following ${dead} dead link(s):`);
-      enumMap(v => v.status === DEAD, (v, k) => `${k} is ${v.status} (${v.statusCode})\n==>Origin: ${v?.origin}\n`, WARN);
+      console.warn(`\n[WARN] ${LC} found the following ${dead} dead link(s):`);
+      enumMap(
+        (v) => v.status === DEAD,
+        (v, k) => `${k} is ${v.status} (${v.statusCode})\n==>Origin: ${v?.origin}\n`,
+        WARN
+      );
     }
 
     if (error > 0) {
       console.warn(`\n[ERROR] ${LC} hit the following ${error} error(s):`);
-      enumMap(v => v.status === ERROR,(v, k) => `${k} (${v.statusCode}) error: ${v.msg}\n==>Origin: ${v?.origin}\n`, WARN);
+      enumMap(
+        (v) => v.status === ERROR,
+        (v, k) => `${k} (${v.statusCode}) error: ${v.msg}\n==>Origin: ${v?.origin}\n`,
+        WARN
+      );
     }
 
     return !failed;
@@ -243,23 +270,28 @@ function linkChecker() {
   function getStatus(status) {
     const ret = [];
     urlMap.forEach((v, k) => {
-      if (typeof v === 'object' && v.status === status) ret.push(k)
-      else if (v === status) ret.push(k)
+      if (typeof v === 'object' && v.status === status) ret.push(k);
+      else if (v === status) ret.push(k);
     });
     return ret;
   }
 
   async function wait() {
-    let cnt = 0, iter = 0, lastCnt = 0, lastRpt = 0;
+    let cnt = 0,
+      iter = 0,
+      lastCnt = 0,
+      lastRpt = 0;
     while (true) {
       const checking = getStatus(CHECKING);
       cnt = checking.length;
-      if (cnt <= 0 || ++iter > (12 * 30)) break; // 30 min wait
-      console.log(`Waiting for ${cnt} remaining ${LC}s to finish...`)
+      if (cnt <= 0 || ++iter > 12 * 30) break; // 30 min wait
+      console.log(`Waiting for ${cnt} remaining ${LC}s to finish...`);
       if (cnt === lastCnt && cnt !== lastRpt) {
         lastRpt = cnt;
         console.log(`Here is what we're waiting on:`);
-        for (const c of checking) { console.log(`> ${c}`) }
+        for (const c of checking) {
+          console.log(`> ${c}`);
+        }
       }
       lastCnt = cnt;
       await sleep(5000); // 5s sleep
@@ -276,7 +308,7 @@ function linkChecker() {
     for (const url of errors) {
       const obj = urlMap.get(url);
       urlMap.set(url, { status: CHECKING });
-      urlCheck(obj.origin, url, linkCheckCallback).then(r => {});
+      urlCheck(obj.origin, url, linkCheckCallback).then((r) => {});
     }
   }
 
@@ -305,4 +337,4 @@ function linkChecker() {
   };
 }
 
-module.exports = linkChecker;
+export default linkChecker;

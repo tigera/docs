@@ -1,15 +1,10 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-// const {themes} = require('prism-react-renderer');
 import { themes } from 'prism-react-renderer';
-import componentImagePlugin from './src/remark/componentImagePlugin';
 
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
-
-const { useCaseSidebar } = require('./sidebars-use-cases');
-
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -20,7 +15,6 @@ const config = {
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
   favicon: 'img/favicon.png',
-
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
@@ -63,21 +57,28 @@ const config = {
         },
         blog: false,
         theme: {
-          customCss: [
-            require.resolve('./src/css/custom.css'),
-            require.resolve('./src/css/external-links.scss'),
-            require.resolve('./src/css/modal.scss'),
-          ],
+          customCss: ['./src/css/custom.css', './src/css/external-links.scss', './src/css/modal.scss'],
+          customCss: ['./src/css/custom.css', './src/css/external-links.scss', './src/css/modal.scss'],
         },
       }),
     ],
   ],
 
   themeConfig:
-  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     {
       metadata: [
-        {name: 'keywords', content: 'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp'}
+        {
+          name: 'keywords',
+          content:
+            'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp',
+        },
+        {
+          name: 'keywords',
+          content:
+            'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp',
+        },
       ],
       algolia: {
         appId: 'Q4GSZWRKBA',
@@ -88,21 +89,25 @@ const config = {
       },
       announcementBar: {
         id: 'ai-bot-announcement',
-        content: "🤖 Try exploring Calico Documentation with our new AI bot. Look for the <b>Ask AI</b> button at the" +
-          " bottom of your screen. 🤖",
+        content:
+          '🤖 Try exploring Calico Documentation with our new AI bot. Look for the <b>Ask AI</b> button at the' +
+          ' bottom of your screen. 🤖',
+        content:
+          '🤖 Try exploring Calico Documentation with our new AI bot. Look for the <b>Ask AI</b> button at the' +
+          ' bottom of your screen. 🤖',
         backgroundColor: '#FCE181',
         textColor: '#000',
         isCloseable: true,
       },
-//      "announcementBar": {
-//        "id": "calico_ebpf",
-//        "content": "Use Calico <img src=\"/img/brands/ebpf_logo.svg\" style=\"height:1.5rem; margin: 0 5px 0 5px;" +
-//" display: inline-flex;\" alt=\"eBPF\" /> dataplane to enhance your Kubernetes networking performance. Click <a
-// href=\"https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf/\">here </a> to learn more.",
-//        "backgroundColor": "#FCE181",
-//        "textColor": "#000",
-//        "isCloseable": true,
-//      },
+      //      "announcementBar": {
+      //        "id": "calico_ebpf",
+      //        "content": "Use Calico <img src=\"/img/brands/ebpf_logo.svg\" style=\"height:1.5rem; margin: 0 5px 0 5px;" +
+      //" display: inline-flex;\" alt=\"eBPF\" /> dataplane to enhance your Kubernetes networking performance. Click <a
+      // href=\"https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf/\">here </a> to learn more.",
+      //        "backgroundColor": "#FCE181",
+      //        "textColor": "#000",
+      //        "isCloseable": true,
+      //      },
       navbar: {
         logo: {
           src: 'img/tigera-logo-black.png',
@@ -121,20 +126,20 @@ const config = {
                 docsPluginId: 'calico',
                 className: 'navbar-product-link_calico',
               },
-              {
-                label: 'Calico Cloud',
-                type: 'docSidebar',
-                sidebarId: 'calicoCloudSidebar',
-                docsPluginId: 'calico-cloud',
-                className: 'navbar-product-link_calico-cloud',
-              },
-              {
-                label: 'Calico Enterprise',
-                type: 'docSidebar',
-                sidebarId: 'calicoEnterpriseSidebar',
-                docsPluginId: 'calico-enterprise',
-                className: 'navbar-product-link_calico-enterprise',
-              },
+              // {
+              //   label: 'Calico Cloud',
+              //   type: 'docSidebar',
+              //   sidebarId: 'calicoCloudSidebar',
+              //   docsPluginId: 'calico-cloud',
+              //   className: 'navbar-product-link_calico-cloud',
+              // },
+              // {
+              //   label: 'Calico Enterprise',
+              //   type: 'docSidebar',
+              //   sidebarId: 'calicoEnterpriseSidebar',
+              //   docsPluginId: 'calico-enterprise',
+              //   className: 'navbar-product-link_calico-enterprise',
+              // },
             ],
           },
           {
@@ -384,7 +389,7 @@ const config = {
         path: 'calico',
         routeBasePath: 'calico',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.28','3.27','3.26'],
+        onlyIncludeVersions: ['3.28', '3.27', '3.26'],
         lastVersion: '3.28',
         versions: {
           current: {
@@ -395,7 +400,8 @@ const config = {
           3.28: {
             label: '3.28 (latest)',
             path: 'latest',
-            banner: 'none'
+            banner: 'none',
+            banner: 'none',
           },
           3.27: {
             label: '3.27',
@@ -408,8 +414,8 @@ const config = {
             banner: 'none',
           },
         },
-        sidebarPath: require.resolve('./sidebars-calico.js'),
-        beforeDefaultRemarkPlugins: [componentImagePlugin],
+        sidebarPath: './sidebars-calico.js',
+        sidebarPath: './sidebars-calico.js',
         editUrl: generateEditUrl,
       },
     ],
@@ -451,7 +457,6 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
-        beforeDefaultRemarkPlugins: [componentImagePlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -477,7 +482,6 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
-        beforeDefaultRemarkPlugins: [componentImagePlugin],
         editUrl: generateEditUrl,
       },
     ],

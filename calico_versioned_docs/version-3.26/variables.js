@@ -1,4 +1,4 @@
-const releases = require('./releases.json');
+import releases from './releases.json';
 
 const variables = {
   releaseTitle: 'v3.26.4',
@@ -40,4 +40,4 @@ const variables = {
   },
 };
 
-module.exports = variables;
+export default variables;

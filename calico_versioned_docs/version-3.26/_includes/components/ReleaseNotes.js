@@ -8,7 +8,7 @@ import { componentUrl } from '@site/src/components/utils/componentUrl';
 import variables from '../../variables';
 
 export default function ReleaseNotes() {
-  const { prodname, version, imageNames } = variables;
+  const { imageNames } = variables;
 
   const releases = variables.releases.map((release) => {
     let note = release.note;
