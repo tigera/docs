@@ -7,7 +7,7 @@ import { toKebab } from '@site/src/components/utils/formatters';
 import variables from '../../variables';
 
 export default function ComponentVersions() {
-  const { prodname, version, downloadsurl } = variables;
+  const { downloadsurl } = variables;
 
   const releases = variables.releases.map((release) => {
     return release;

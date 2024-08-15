@@ -5,9 +5,11 @@ import React from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
 
-import { chart_version_name, prodname, prodnamedash, version } from '../../variables';
+import variables from '../../variables';
 
 export default function GettingStartedInstallOnClustersKubernetesHelm() {
+  const { chart_version_name, prodname, prodnamedash, version } = variables;
+  
   return (
     <>
       {renderCond1()}

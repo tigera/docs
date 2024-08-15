@@ -2,7 +2,7 @@ import React from 'react';
 
 import CodeBlock from '@theme/CodeBlock';
 
-import { prodname, filesUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function InstallOpenShiftManifests(props) {
   const uf = props.upgradeFrom;
@@ -10,6 +10,7 @@ export default function InstallOpenShiftManifests(props) {
   const exclude2 = ' --exclude=02-pull-secret.yaml';
   const flag1 = uf ? exclude1 : '';
   const flag2 = uf === 'Enterprise' ? exclude2 : '';
+  const { prodname, filesUrl } = variables;
 
   return (
     <>

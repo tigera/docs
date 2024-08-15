@@ -6,9 +6,11 @@ import Admonition from '@theme/Admonition';
 import Heading from '@theme/Heading';
 
 import ConfigureManagedCluster from './ConfigureManagedCluster';
-import { prodname, prodnamedash, baseUrl, filesUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function InstallAKS(props) {
+  const { prodname, prodnamedash, baseUrl, filesUrl } = variables;
+  
   return (
     <>
       <Heading

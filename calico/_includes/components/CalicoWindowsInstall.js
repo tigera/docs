@@ -3,8 +3,7 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
-
-import { prodname, prodnameWindows } from '../../variables';
+import variables from '../../variables';
 
 function CalicoWindowsInstallFirstStep(props) {
   if (props.networkingType === 'vxlan') {
@@ -12,8 +11,8 @@ function CalicoWindowsInstallFirstStep(props) {
       <li>
         Ensure that BGP is disabled.
         <ul>
-          <li>If you installed {prodname} using the manifest, BGP is already disabled.</li>
-          <li>If you installed {prodname} using the operator, run this command:</li>
+          <li>If you installed {variables.prodname} using the manifest, BGP is already disabled.</li>
+          <li>If you installed {variables.prodname} using the operator, run this command:</li>
           <br />
           <CodeBlock language='bash'>
             {`kubectl patch installation default --type=merge -p '{"spec": {"calicoNetwork": {"bgp": "Disabled"}}}'`}
@@ -54,9 +53,9 @@ export default function CalicoWindowsInstall(props) {
       <CalicoWindowsInstallFirstStep {...props} />
       <li>
         <p>
-          Get the cluster's Kubernetes API server host and port, which will be used to update the {prodnameWindows}{' '}
-          config map. The API server host and port is required so that the {prodnameWindows} installation script can
-          create a kubeconfig file for {prodname} services. If your Windows nodes already have {prodnameWindows}{' '}
+          Get the cluster's Kubernetes API server host and port, which will be used to update the {variables.prodnameWindows}{' '}
+          config map. The API server host and port is required so that the {variables.prodnameWindows} installation script can
+          create a kubeconfig file for {variables.prodname} services. If your Windows nodes already have {variables.prodnameWindows}{' '}
           installed manually, skip this step. The installation script will use the API server host and port from your
           node's existing kubeconfig file if the <code>KUBERNETES_SERVICE_HOST</code> and{' '}
           <code>KUBERNETES_SERVICE_PORT</code> variables are not provided in the <code>calico-windows-config</code>{' '}
@@ -114,7 +113,7 @@ kubernetes   172.16.101.157:6443   40m`}
       <li>
         <p>
           Create the <code>kubernetes-services-endpoint</code> ConfigMap with the Kubernetes API server
-          host and port (discovered in the previous step) used to create a kubeconfig file for {prodname} services.
+          host and port (discovered in the previous step) used to create a kubeconfig file for {variables.prodname} services.
           <CodeBlock language='bash'>{`kubectl apply -f - << EOF
 kind: ConfigMap
 apiVersion: v1
@@ -136,7 +135,7 @@ EOF`}
       </li>
       <li>
         <p>
-          Add the Kubernetes service CIDR (discovered in the previous step) enable {prodnameWindows} on the Tigera operator installation resource.
+          Add the Kubernetes service CIDR (discovered in the previous step) enable {variables.prodnameWindows} on the Tigera operator installation resource.
         </p>
         <p>
           For example, with a Kubernetes service clusterIP range of 10.96.0.0/12:
@@ -159,7 +158,7 @@ EOF`}
       </li>
       <li>
         <p>Monitor the installation.</p>
-        The {prodnameWindows} HPC installation has 2 initContainers: <code>uninstall-calico</code>, which deals with removing previous manually installed {prodnameWindows} services, if any
+        The {variables.prodnameWindows} HPC installation has 2 initContainers: <code>uninstall-calico</code>, which deals with removing previous manually installed {variables.prodnameWindows} services, if any
         and <code>install-cni</code>, which installs needed CNI binaries and configuration, when using Calico CNI.
         <CodeBlock language='bash'>
           kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c uninstall-calico{'\n'}
@@ -167,7 +166,7 @@ EOF`}
         </CodeBlock>
         <p>
           After these initContainers finish their execution, installation is complete. Next, the
-          {prodnameWindows} services are started in separate containers:
+          {variables.prodnameWindows} services are started in separate containers:
         </p>
         <CodeBlock language='bash'>
           kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c node{'\n'}

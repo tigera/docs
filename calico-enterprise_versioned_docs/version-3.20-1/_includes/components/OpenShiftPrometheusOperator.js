@@ -4,13 +4,14 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { prodname, baseUrl, filesUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function OpenShiftPrometheusOperator(props) {
   const createSecret = `oc create secret generic tigera-pull-secret \\
   --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \\
   --from-file=.dockerconfigjson=<path/to/pull/secret>\n`;
   const notOSCodeBlock = props.upgradeFrom !== 'OpenSource' ? createSecret : '';
+  const { prodname, baseUrl, filesUrl } = variables;
 
   return (
     <>

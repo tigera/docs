@@ -4,13 +4,13 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { prodname, baseUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function CliConfigIntro(props) {
   return (
     <>
       <p>
-        Many <code>{props.cli}</code> commands require access to the {prodname} datastore. In most circumstances,{' '}
+        Many <code>{props.cli}</code> commands require access to the {variables.prodname} datastore. In most circumstances,{' '}
         <code>{props.cli}</code> cannot achieve this connection by default. You can provide
         <code>{props.cli}</code> with the information it needs using either of the following.
       </p>
@@ -39,7 +39,7 @@ spec:
         </li>
       </ol>
       <p>
-        See the section that corresponds to your <Link href={`${baseUrl}/operations/clis`}>datastore type</Link> for a
+        See the section that corresponds to your <Link href={`${variables.baseUrl}/operations/clis`}>datastore type</Link> for a
         full set of options and examples.
       </p>
       <Admonition type='note'>

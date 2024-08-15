@@ -4,7 +4,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { baseUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function EnvironmentFile(props) {
   return (
@@ -13,7 +13,7 @@ export default function EnvironmentFile(props) {
             {props.install === 'container' ? (
                 <span>
                     Use the following guidelines and sample file to define the environment variables for starting Calico on the host.
-                    For more help, see the <Link href={`${baseUrl}/reference/component-resources/node/configuration`}>{props.nodecontainer} configuration reference</Link>
+                    For more help, see the <Link href={`${variables.baseUrl}/reference/component-resources/node/configuration`}>{props.nodecontainer} configuration reference</Link>
                 </span>
             ) : (
                 <span>

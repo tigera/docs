@@ -5,12 +5,11 @@ import Link from '@docusaurus/Link';
 import Admonition from '@theme/Admonition';
 import Heading from '@theme/Heading';
 
-import GeekDetails from '@site/src/components/partials/GeekDetails';
-
 import ConfigureManagedCluster from './ConfigureManagedCluster';
-import { prodname, prodnamedash, baseUrl, filesUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function InstallEKS(props) {
+  const { prodname, prodnamedash, baseUrl, filesUrl } = variables;
   return (
     <>
       <Heading
