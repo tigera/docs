@@ -5,9 +5,11 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { baseUrl, filesUrl, tmpScriptsURL } from '../../variables';
+import variables from '../../variables';
 
 export default function UpgradeOperatorSimple(props) {
+  const { baseUrl, filesUrl, tmpScriptsURL } = variables;
+  
   return (
     <>
       <ol>

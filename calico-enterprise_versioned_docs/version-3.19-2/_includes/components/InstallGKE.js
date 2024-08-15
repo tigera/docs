@@ -7,9 +7,11 @@ import Admonition from '@theme/Admonition';
 import Heading from '@theme/Heading';
 
 import ConfigureManagedCluster from './ConfigureManagedCluster';
-import { prodname, baseUrl, filesUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function InstallGKE(props) {
+  const { prodname, baseUrl, filesUrl } = variables;
+  
   return (
     <>
       <Heading

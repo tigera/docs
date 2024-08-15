@@ -3,11 +3,12 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 
-import { prodname, prodnamedash, prodnameWindows, registry, releases, tigeraOperator } from '../../variables';
+import variables from '../../variables';
 
 export default function PrivateRegistryImagePath() {
   const components = releases[0].components;
   const componentsWithImage = Object.values(components).filter(filters.withImage);
+  const { prodname, prodnamedash, prodnameWindows, registry, releases, tigeraOperator } = variables;
 
   return (
     <>

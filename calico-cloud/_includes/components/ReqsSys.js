@@ -4,8 +4,8 @@ import Admonition from '@theme/Admonition';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 
-import { orchestrators } from '@site/variables';
-import { prodname, baseUrl } from '../../variables';
+import globalVariables from '@site/variables';
+import variables from '../../variables';
 
 function NodeRequirementsEnt(props) {
   return (
@@ -24,10 +24,10 @@ function NodeRequirementsEnt(props) {
           <p>
             Linux kernel 3.10 or later with <Link href='#kernel-dependencies'>required dependencies</Link>. The
             following distributions have the required kernel, its dependencies, and are known to work well with{' '}
-            {prodname} and {props.orch}.
+            {variables.prodname} and {props.orch}.
           </p>
           <ul>
-            {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.HostProtection) && (
+            {(props.orch === globalVariables.orchestrators.Kubernetes || props.orch === globalVariables.orchestrators.HostProtection) && (
               <>
                 <li>CentOS 8</li>
                 <li>Ubuntu 18.04 and 20.04</li>
@@ -35,12 +35,12 @@ function NodeRequirementsEnt(props) {
                 <li>Debian 10</li>
               </>
             )}
-            {props.orch === orchestrators.OpenShift && (
+            {props.orch === globalVariables.orchestrators.OpenShift && (
               <>
                 <li>Red Hat Enterprise Linux CoreOS</li>
               </>
             )}
-            {props.orch === orchestrators.OpenStack && (
+            {props.orch === globalVariables.orchestrators.OpenStack && (
               <>
                 <li>Ubuntu 18.04 and 20.04</li>
                 <li>CentOS 8</li>
@@ -50,10 +50,10 @@ function NodeRequirementsEnt(props) {
         </li>
         <li>
           <p>
-            {prodname} must be able to manage <code>cali*</code>
+            {variables.prodname} must be able to manage <code>cali*</code>
             interfaces on the host. When IPIP is enabled (the default),
-            {prodname} also needs to be able to manage <code>tunl*</code>
-            interfaces. When VXLAN is enabled, {prodname} also needs to be able to manage the <code>vxlan.calico</code>{' '}
+            {variables.prodname} also needs to be able to manage <code>tunl*</code>
+            interfaces. When VXLAN is enabled, {variables.prodname} also needs to be able to manage the <code>vxlan.calico</code>{' '}
             interface.
           </p>
           {/*}
@@ -61,11 +61,11 @@ function NodeRequirementsEnt(props) {
             <p>
               Many Linux distributions, such as most of the above, include NetworkManager. By default, NetworkManager
               does not allow
-              {prodname} to manage interfaces. If your nodes have NetworkManager, complete the steps in{' '}
-              <Link href={`${baseUrl}/operations/troubleshoot/troubleshooting#configure-networkmanager`}>
-                Preventing NetworkManager from controlling {prodname} interfaces
+              {variables.prodname} to manage interfaces. If your nodes have NetworkManager, complete the steps in{' '}
+              <Link href={`${variables.baseUrl}/operations/troubleshoot/troubleshooting#configure-networkmanager`}>
+                Preventing NetworkManager from controlling {variables.prodname} interfaces
               </Link>{' '}
-              before installing {prodname}.
+              before installing {variables.prodname}.
             </p>
           </Admonition>
           */}
@@ -73,12 +73,12 @@ function NodeRequirementsEnt(props) {
         <li>
           <p>
             If your Linux distribution comes with installed Firewalld or another iptables manager it should be disabled.
-            These may interfere with rules added by {prodname} and result in unexpected behavior.
+            These may interfere with rules added by {variables.prodname} and result in unexpected behavior.
           </p>
           <Admonition type='note'>
             <p>
-              If a host firewall is needed, it can be configured by {prodname} HostEndpoint and GlobalNetworkPolicy.
-              More information about configuration at <Link href={`${baseUrl}/network-policy/hosts`}>Security for host</Link>.
+              If a host firewall is needed, it can be configured by {variables.prodname} HostEndpoint and GlobalNetworkPolicy.
+              More information about configuration at <Link href={`${variables.baseUrl}/network-policy/hosts`}>Security for host</Link>.
             </p>
           </Admonition>
         </li>
@@ -157,13 +157,13 @@ function KeyValueStore(props) {
         Datastore requirements
       </Heading>
       <p>
-        {prodname} requires a key/value store accessible by all {prodname} components.&nbsp;
+        {variables.prodname} requires a key/value store accessible by all {variables.prodname} components.&nbsp;
         {
           {
             OpenShift: <span>With OpenShift, the Kubernetes API datastore is used for the key/value store.</span>,
             Kubernetes: (
               <span>
-                On Kubernetes, you can configure {prodname} to access an etcdv3 cluster directly or to use the
+                On Kubernetes, you can configure {variables.prodname} to access an etcdv3 cluster directly or to use the
                 Kubernetes API datastore.
               </span>
             ),
@@ -211,7 +211,7 @@ function NetworkRequirementsEnt(props) {
         <tbody>
           <tr className='odd'>
             <td>
-              <strong>{prodname} networking options</strong>
+              <strong>{variables.prodname} networking options</strong>
             </td>
             <td>IP-in-IP (default)</td>
             <td>Protocol number 4</td>
@@ -240,10 +240,10 @@ function NetworkRequirementsEnt(props) {
             <td>
               <strong>Cluster scaling</strong>
             </td>
-            <td>Any {prodname} networking option above with Typha agents enabled</td>
+            <td>Any {variables.prodname} networking option above with Typha agents enabled</td>
             <td>TCP 5473 (default)</td>
           </tr>
-          {props.orch === orchestrators.Kubernetes && (
+          {props.orch === globalVariables.orchestrators.Kubernetes && (
             <>
               <tr className='odd'>
                 <td>
@@ -254,12 +254,12 @@ function NetworkRequirementsEnt(props) {
               </tr>
               <tr className='even'>
                 <td></td>
-                <td>{prodname} API server</td>
+                <td>{variables.prodname} API server</td>
                 <td>TCP 8080 and 5443 (default)</td>
               </tr>
             </>
           )}
-          {props.orch === orchestrators.OpenShift && (
+          {props.orch === globalVariables.orchestrators.OpenShift && (
             <>
               <tr className='odd'>
                 <td>
@@ -270,7 +270,7 @@ function NetworkRequirementsEnt(props) {
               </tr>
               <tr className='even'>
                 <td></td>
-                <td>{prodname} API server</td>
+                <td>{variables.prodname} API server</td>
                 <td>TCP 8080 and 5443 (default)</td>
               </tr>
             </>
@@ -335,21 +335,21 @@ function NetworkRequirementsEnt(props) {
           </tr>
           <tr className='odd'>
             <td></td>
-            <td>{prodname} Manager UI</td>
+            <td>{variables.prodname} Manager UI</td>
             <td>TCP 9443 (default)</td>
           </tr>
           <tr className='even'>
             <td>
               <strong>Intrusion Detection System (IDS)</strong>
             </td>
-            <td>{prodname} intrusion detection</td>
+            <td>{variables.prodname} intrusion detection</td>
             <td>TCP 5443 (default)</td>
           </tr>
           <tr className='odd'>
             <td>
               <strong>Compliance</strong>
             </td>
-            <td>{prodname} compliance</td>
+            <td>{variables.prodname} compliance</td>
             <td>TCP 5443 (default)</td>
           </tr>
           <tr className='even'>
@@ -363,12 +363,12 @@ function NetworkRequirementsEnt(props) {
             <td>
               <strong>Egress gateway</strong>
             </td>
-            <td>{prodname} egress gateway</td>
+            <td>{variables.prodname} egress gateway</td>
             <td>UDP 4790</td>
           </tr>
         </tbody>
       </table>
-      {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.OpenShift) && (
+      {(props.orch === globalVariables.orchestrators.Kubernetes || props.orch === globalVariables.orchestrators.OpenShift) && (
         <>
           <p>
             *{' '}
@@ -380,7 +380,7 @@ function NetworkRequirementsEnt(props) {
           </p>
         </>
       )}
-      {props.orch === orchestrators.OpenStack && (
+      {props.orch === globalVariables.orchestrators.OpenStack && (
         <p>
           *{' '}
           <em>
@@ -402,15 +402,15 @@ function Privileges(props) {
         Privilege requirements
       </Heading>
       <p>
-        Ensure that {prodname} has the <code>CAP_SYS_ADMIN</code> privilege.
+        Ensure that {variables.prodname} has the <code>CAP_SYS_ADMIN</code> privilege.
       </p>
       <p>
-        The simplest way to provide the necessary privilege is to run {prodname} as root or in a privileged container.
+        The simplest way to provide the necessary privilege is to run {variables.prodname} as root or in a privileged container.
       </p>
-      {props.orch === orchestrators.Kubernetes && (
+      {props.orch === globalVariables.orchestrators.Kubernetes && (
         <>
           <p>
-            When installed as a Kubernetes daemon set, {prodname} meets this requirement by running as a privileged
+            When installed as a Kubernetes daemon set, {variables.prodname} meets this requirement by running as a privileged
             container. This requires that the kubelet be allowed to run privileged containers. There are two ways this
             can be achieved.
           </p>

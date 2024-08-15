@@ -5,10 +5,12 @@ import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 import CodeBlock from '@theme/CodeBlock';
 
-import { orchestrators } from '@site/variables';
-import { prodname, baseUrl } from '../../variables';
+import globalVariables from '@site/variables';
+import variables from '../../variables';
 
 function NodeRequirementsEnt(props) {
+  const { prodname, baseUrl } = variables;
+
   return (
     <>
       <Heading
@@ -28,7 +30,7 @@ function NodeRequirementsEnt(props) {
             {prodname} and {props.orch}.
           </p>
           <ul>
-            {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.HostProtection) && (
+            {(props.orch === globalVariables.orchestrators.Kubernetes || props.orch === globalVariables.orchestrators.HostProtection) && (
               <>
                 <li>Ubuntu 20.04 and 22.04</li>
                 <li>RHEL 8 and 9</li>
@@ -36,12 +38,12 @@ function NodeRequirementsEnt(props) {
                 <li>Azure Linux Container Host</li>
               </>
             )}
-            {props.orch === orchestrators.OpenShift && (
+            {props.orch === globalVariables.orchestrators.OpenShift && (
               <>
                 <li>Red Hat Enterprise Linux CoreOS</li>
               </>
             )}
-            {props.orch === orchestrators.OpenStack && (
+            {props.orch === globalVariables.orchestrators.OpenStack && (
               <>
                 <li>Ubuntu 20.04 and 22.04</li>
                 <li>CentOS 8</li>
@@ -167,6 +169,8 @@ function NodeRequirementsEnt(props) {
 }
 
 function NetworkRequirementsEnt(props) {
+  const { prodname, baseUrl } = variables;
+
   return (
     <>
       <Heading
@@ -228,7 +232,7 @@ function NetworkRequirementsEnt(props) {
             <td>Any {prodname} networking option above with Typha agents enabled</td>
             <td>TCP 5473 (default)</td>
           </tr>
-          {props.orch === orchestrators.Kubernetes && (
+          {props.orch === globalVariables.orchestrators.Kubernetes && (
             <>
               <tr className='odd'>
                 <td>
@@ -244,7 +248,7 @@ function NetworkRequirementsEnt(props) {
               </tr>
             </>
           )}
-          {props.orch === orchestrators.OpenShift && (
+          {props.orch === globalVariables.orchestrators.OpenShift && (
             <>
               <tr className='odd'>
                 <td>
@@ -353,7 +357,7 @@ function NetworkRequirementsEnt(props) {
           </tr>
         </tbody>
       </table>
-      {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.OpenShift) && (
+      {(props.orch === globalVariables.orchestrators.Kubernetes || props.orch === globalVariables.orchestrators.OpenShift) && (
         <>
           <p>
             *{' '}
@@ -365,7 +369,7 @@ function NetworkRequirementsEnt(props) {
           </p>
         </>
       )}
-      {props.orch === orchestrators.OpenStack && (
+      {props.orch === globalVariables.orchestrators.OpenStack && (
         <p>
           *{' '}
           <em>
@@ -378,6 +382,8 @@ function NetworkRequirementsEnt(props) {
 }
 
 function Privileges(props) {
+  const { prodname } = variables;
+
   return (
     <>
       <Heading
@@ -392,7 +398,7 @@ function Privileges(props) {
       <p>
         The simplest way to provide the necessary privilege is to run {prodname} as root or in a privileged container.
       </p>
-      {props.orch === orchestrators.Kubernetes && (
+      {props.orch === globalVariables.orchestrators.Kubernetes && (
         <>
           <p>
             When installed as a Kubernetes daemon set, {prodname} meets this requirement by running as a privileged

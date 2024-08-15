@@ -11,9 +11,11 @@ import OpenShiftPullSecret from './OpenShiftPullSecret';
 import OpenShiftPrometheusOperator from './OpenShiftPrometheusOperator';
 import ConfigureManagedCluster from './ConfigureManagedCluster';
 
-import { prodname, prodnameWindows, prodnamedash, rootDirWindows, baseUrl, filesUrl, tempFilesURL } from '../../variables';
+import variables from '../../variables';
 
 export default function InstallOpenShift(props) {
+  const { prodname, prodnameWindows, prodnamedash, baseUrl, filesUrl }  = variables;
+
   return (
     <>
       <Heading
@@ -402,6 +404,8 @@ EOF`}
 
 // Contains extra OpenShift installation instructions for hybrid Linux+Windows clusters.
 function InstallOpenShiftWindows() {
+  const { prodnameWindows, rootDirWindows, baseUrl, tempFilesURL }  = variables;
+  
   return (
     <>
       <Heading
