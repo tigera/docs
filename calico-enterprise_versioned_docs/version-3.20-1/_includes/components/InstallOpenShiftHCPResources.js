@@ -2,14 +2,14 @@ import React from 'react';
 
 import CodeBlock from '@theme/CodeBlock';
 
-import { filesUrl } from '../../variables';
+import variables from '../../variables';
 import OpenShiftPrometheusOperator from './OpenShiftPrometheusOperator';
 
 export default function InstallOpenShiftHCPResources() {
   return (
     <>
       <p>Apply the custom resources for enterprise features.</p>
-      <CodeBlock language='bash'>oc create -f {filesUrl}/manifests/ocp/tigera-enterprise-resources.yaml</CodeBlock>
+      <CodeBlock language='bash'>oc create -f {variables.filesUrl}/manifests/ocp/tigera-enterprise-resources.yaml</CodeBlock>
 
       <OpenShiftPrometheusOperator operation='install' />
 
@@ -20,7 +20,7 @@ export default function InstallOpenShiftHCPResources() {
       </p>
 
       <p>(Optional) Apply the full CRDs including descriptions.</p>
-      <CodeBlock language='bash'>oc apply --server-side --force-conflicts -f {filesUrl}/manifests/operator-crds.yaml</CodeBlock>
+      <CodeBlock language='bash'>oc apply --server-side --force-conflicts -f {variables.filesUrl}/manifests/operator-crds.yaml</CodeBlock>
     </>
   );
 }

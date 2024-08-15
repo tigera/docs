@@ -7,8 +7,6 @@ import { toKebab } from '@site/src/components/utils/formatters';
 import variables from '../../variables';
 
 export default function ReleaseNotes() {
-  const { prodname, version, downloadsurl } = variables;
-
   const releases = variables.releases.map((release) => {
     let note = release.note;
     try {
@@ -39,7 +37,7 @@ export default function ReleaseNotes() {
           {release.title !== 'master' && (
             <p>
               <Link
-                href={`${downloadsurl}/ee/archives/release-${release.title}-${release['tigera-operator'].version}.tgz`}
+                href={`${variables.downloadsurl}/ee/archives/release-${release.title}-${release['tigera-operator'].version}.tgz`}
               >
                 Release archive
               </Link>{' '}
