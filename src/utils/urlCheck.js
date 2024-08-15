@@ -1,21 +1,20 @@
-const nodeUrl = require('node:url');
-const needle = require('needle');
-const { RateLimiter } = require('limiter');
-const defDelay = 1000;    // ms
+import nodeUrl from 'node:url';
+import needle from 'needle';
+import { RateLimiter } from 'limiter';
+
+const defDelay = 1000; // ms
 const defMaxRetry = 10;
 const needleOpts = {
-  compressed          : false,  // sets 'Accept-Encoding' to 'gzip, deflate, br'
-  follow_max          : 7,      // follow redirects
-  follow_keep_method  : true,   // on redirect, use original verb
-  parse_response      : false,  // don't parse the response
-  rejectUnauthorized  : true,   // verify SSL certificate
-  user_agent          : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  compressed: false, // sets 'Accept-Encoding' to 'gzip, deflate, br'
+  follow_max: 7, // follow redirects
+  follow_keep_method: true, // on redirect, use original verb
+  parse_response: false, // don't parse the response
+  rejectUnauthorized: true, // verify SSL certificate
+  user_agent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
 };
-const URL_CHECK_DEBUG = process.env.URL_CHECK_DEBUG
-  ? process.env.URL_CHECK_DEBUG.trim() : undefined;
+const URL_CHECK_DEBUG = process.env.URL_CHECK_DEBUG ? process.env.URL_CHECK_DEBUG.trim() : undefined;
 const defRateLimit = '10/second';
-const rateLimit = process.env.RATE_LIMIT
-  ? process.env.RATE_LIMIT.split('/') : defRateLimit.split('/');
+const rateLimit = process.env.RATE_LIMIT ? process.env.RATE_LIMIT.split('/') : defRateLimit.split('/');
 const limiter = new RateLimiter({
   tokensPerInterval: Number(rateLimit[0]),
   interval: rateLimit[1],
@@ -27,13 +26,12 @@ function parseRetryAfter(headers, defValue) {
   let hdrVal = '';
   try {
     if (!headers) return defValue;
-    hdrVal = headers.hasOwnProperty('retry-after')
-      ? headers['retry-after'].trim() : '';
+    hdrVal = headers.hasOwnProperty('retry-after') ? headers['retry-after'].trim() : '';
     if (hdrVal === '') return defValue;
     debugLog('/', `Header 'retry-after' has value: ${hdrVal}`);
     return parseFloat(hdrVal) * 1000;
   } catch (err) {
-    console.error(`Error parsing 'retry-after' header '${hdrVal}': ${err}`)
+    console.error(`Error parsing 'retry-after' header '${hdrVal}': ${err}`);
     return defValue;
   }
 }
@@ -53,15 +51,15 @@ function doGet(normUrl, callback, calls, delay, ctx) {
     ctx.status = code === 200 ? 'alive' : 'dead';
     delay = parseRetryAfter(headers, delay);
   });
-  get.on('data', chunk => {
+  get.on('data', (chunk) => {
     debugLog(normUrl, `IN get data EVENT: ${normUrl}`);
     get.request.abort();
     get.request.destroy();
   });
-  get.on('done', err => {
+  get.on('done', (err) => {
     debugLog(normUrl, `IN get done EVENT: ${normUrl}`);
     ctx.err = err;
-    ctx.status = (err) ? 'error' : ctx.status;
+    ctx.status = err ? 'error' : ctx.status;
     end();
   });
   get.on('close', () => {
@@ -73,12 +71,12 @@ function doGet(normUrl, callback, calls, delay, ctx) {
     if (endDone) return;
     endDone = true;
     if (!ctx.err && ctx.statusCode === 429 && calls < defMaxRetry) {
-      debugLog(normUrl, `IN get retry-after (${delay/1000} seconds): ${normUrl}`);
-      setTimeout(doGet, delay, normUrl, callback, 1+calls, delay, ctx);
+      debugLog(normUrl, `IN get retry-after (${delay / 1000} seconds): ${normUrl}`);
+      setTimeout(doGet, delay, normUrl, callback, 1 + calls, delay, ctx);
       return;
     }
     callback(null, ctx);
-  }
+  };
 }
 
 async function urlCheck(origin, url, callback, calls = undefined) {
@@ -95,8 +93,8 @@ async function urlCheck(origin, url, callback, calls = undefined) {
       ctx.status = ctx.statusCode === 200 ? 'alive' : 'dead';
       if (!err && resp && resp.statusCode === 429 && calls < defMaxRetry) {
         delay = parseRetryAfter(resp.headers, delay);
-        debugLog(normUrl, `IN head retry-after (${delay/1000} seconds): ${normUrl}`);
-        setTimeout(urlCheck, delay, origin, url, callback, 1+calls);
+        debugLog(normUrl, `IN head retry-after (${delay / 1000} seconds): ${normUrl}`);
+        setTimeout(urlCheck, delay, origin, url, callback, 1 + calls);
       } else if (!err && (ctx.statusCode === 200 || ctx.statusCode === 404)) {
         debugLog(normUrl, `IN head 200/404: ${normUrl}`);
         callback(err, ctx);
@@ -111,4 +109,4 @@ async function urlCheck(origin, url, callback, calls = undefined) {
   }
 }
 
-module.exports = urlCheck;
+export default urlCheck;

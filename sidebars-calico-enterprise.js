@@ -1,6 +1,6 @@
 // This is the navigation file for Calico Enterprise
 
-module.exports = {
+export default {
   calicoEnterpriseSidebar: [
     {
       type: 'category',
