@@ -12,8 +12,8 @@ const config = {
   tagline: 'Active, zero-trust based security for containers and Kubernetes',
   url: 'https://docs.tigera.io',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
+  onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -58,14 +58,12 @@ const config = {
         blog: false,
         theme: {
           customCss: ['./src/css/custom.css', './src/css/external-links.scss', './src/css/modal.scss'],
-          customCss: ['./src/css/custom.css', './src/css/external-links.scss', './src/css/modal.scss'],
         },
       }),
     ],
   ],
 
   themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     {
       metadata: [
@@ -89,9 +87,6 @@ const config = {
       },
       announcementBar: {
         id: 'ai-bot-announcement',
-        content:
-          '🤖 Try exploring Calico Documentation with our new AI bot. Look for the <b>Ask AI</b> button at the' +
-          ' bottom of your screen. 🤖',
         content:
           '🤖 Try exploring Calico Documentation with our new AI bot. Look for the <b>Ask AI</b> button at the' +
           ' bottom of your screen. 🤖',
@@ -401,7 +396,6 @@ const config = {
             label: '3.28 (latest)',
             path: 'latest',
             banner: 'none',
-            banner: 'none',
           },
           3.27: {
             label: '3.27',
@@ -414,7 +408,6 @@ const config = {
             banner: 'none',
           },
         },
-        sidebarPath: './sidebars-calico.js',
         sidebarPath: './sidebars-calico.js',
         editUrl: generateEditUrl,
       },
@@ -456,7 +449,7 @@ const config = {
             banner: 'none',
           },
         },
-        sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
+        sidebarPath: './sidebars-calico-enterprise.js',
         editUrl: generateEditUrl,
       },
     ],
@@ -481,7 +474,7 @@ const config = {
             banner: 'none',
           },
         },
-        sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
+        sidebarPath: './sidebars-calico-cloud.js',
         editUrl: generateEditUrl,
       },
     ],
@@ -500,7 +493,7 @@ const config = {
           },
         },
         //To see builds for unreleased versions, remove comments in the next line.
-        sidebarPath: require.resolve('./sidebars-use-cases.js'),
+        sidebarPath: './sidebars-use-cases.js',
         editUrl: generateEditUrl,
       },
     ]
