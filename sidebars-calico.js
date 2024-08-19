@@ -47,6 +47,7 @@ module.exports = {
             'getting-started/kubernetes/requirements',
             'getting-started/kubernetes/community-tested',
             'getting-started/kubernetes/quickstart',
+            'getting-started/kubernetes/nftables',
             {
               type: 'category',
               label: 'Managed public cloud',
