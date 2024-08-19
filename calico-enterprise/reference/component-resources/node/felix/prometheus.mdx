@@ -16,27 +16,42 @@ are tied to particular implementation choices inside Felix we can't make any har
 metrics will persist across releases. However, we aim not to make any spurious changes to
 existing metrics.
 
+#### Cluster-wide metrics
+
 | Name                                                                 | Description                                                                                                                                                         |
 |----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ** Cluster-wide metrics **                                           |                                                                                                                                                                     |
 | `felix_cluster_num_host_endpoints`                                   | Total number of host endpoints cluster-wide.                                                                                                                        |
 | `felix_cluster_num_hosts`                                            | Total number of {{prodname}} hosts in the cluster.                                                                                                                  |
 | `felix_cluster_num_policies`                                         | Total number of policies in the cluster.                                                                                                                            |
 | `felix_cluster_num_profiles`                                         | Total number of profiles in the cluster.                                                                                                                            |
 | `felix_cluster_num_tiers`                                            | Total number of {{prodname}} tiers in the cluster.                                                                                                                  |
 | `felix_cluster_num_workload_endpoints`                               | Total number of workload endpoints cluster-wide.                                                                                                                    |
-| ** General metrics **                                                |                                                                                                                                                                     |
+
+#### General metrics
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_active_local_endpoints`                                       | Number of active endpoints (workload+host) on this host.                                                                                                            |
 | `felix_active_local_policies`                                        | Number of active policies on this host.  Only "active" policies that match a local endpoint have a significant cost.                                                |
 | `felix_active_local_selectors`                                       | Number of active selectors on this host.  Only "active" rule src/dest selectors have significant cost.                                                              |
 | `felix_exec_time_micros`                                             | Summary of time taken to fork/exec child processes.                                                                                                                 |
 | `felix_log_errors`                                                   | Number of errors encountered while making normal "process" logs (for example to stdout).                                                                            |
 | `felix_logs_dropped`                                                 | Number of logs dropped because the output stream was blocked.                                                                                                       |
-| ** Calculation graph  **                                             |                                                                                                                                                                     |
+
+#### Calculation graph metrics
+
+The calculation graph processes updates from the datastore to calculate the active endpoints/policy/etc for this node.
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_calc_graph_output_events`                                     | Number of events emitted by the calculation graph.                                                                                                                  |
 | `felix_calc_graph_update_time_seconds`                               | Seconds to update calculation graph for each datastore OnUpdate call.                                                                                               |
 | `felix_calc_graph_updates_processed`                                 | Number of datastore updates processed by the calculation graph.                                                                                                     |
-| ** General dataplane **                                              | _Metrics shared by all of Felix's "internal" dataplanes.  (The VPP dataplane is "external", it runs outside the Felix process.)_                                    |
+
+#### Common dataplane metrics
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_resyncs_started`                                              | Number of times Felix has started resyncing with the datastore.  (Not meaningful in a Typha deployment.)                                                            |
 | `felix_resync_state`                                                 | Current datastore-dataplane synchronisation state, encoded as a number 1="waiting for datastore", 2="resync in progress", 3="in sync with datastore".               |
 | `felix_int_dataplane_addr_msg_batch_size`                            | Number of interface address messages processed in each batch. Higher values indicate we're doing more batching to try to keep up.                                   |
@@ -47,7 +62,11 @@ existing metrics.
 | `felix_int_dataplane_msg_batch_size`                                 | Number of messages processed in each batch. Higher values indicate we're doing more batching to try to keep up.                                                     |
 | `felix_route_table_list_seconds`                                     | Time taken to list all the interfaces during a resync.                                                                                                              |
 | `felix_route_table_per_iface_sync_seconds`                           | Time taken to sync each interface                                                                                                                                   |
-| ** iptables dataplane **                                             |                                                                                                                                                                     |
+
+#### iptables dataplane metrics
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_iptables_chains`                                              | Number of active iptables chains.                                                                                                                                   |
 | `felix_iptables_lines_executed`                                      | Number of iptables rule updates executed.                                                                                                                           |
 | `felix_iptables_lock_acquire_secs`                                   | Time taken to acquire the iptables lock.                                                                                                                            |
@@ -57,7 +76,11 @@ existing metrics.
 | `felix_iptables_rules`                                               | Number of active iptables rules.                                                                                                                                    |
 | `felix_iptables_save_calls`                                          | Number of iptables-save calls.                                                                                                                                      |
 | `felix_iptables_save_errors`                                         | Number of iptables-save errors.                                                                                                                                     |
-| ** BPF dataplane **                                                  |                                                                                                                                                                     |
+
+#### BPF dataplane metrics
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_bpf_dataplane_endpoints`                                      | Number of BPF endpoints managed in the dataplane.                                                                                                                   |
 | `felix_bpf_dirty_dataplane_endpoints`                                | Number of BPF endpoints managed in the dataplane that are left dirty after a failure.                                                                               |
 | `felix_bpf_happy_dataplane_endpoints`                                | Number of BPF endpoints that are successfully programmed.                                                                                                           |
@@ -72,14 +95,28 @@ existing metrics.
 | `felix_bpf_conntrack_used`                                           | Number of used entries visited during a conntrack table sweep.                                                                                                      |
 | `felix_bpf_conntrack_sweep_duration`                                 | Conntrack sweep execution time (ns).                                                                                                                                |
 | `felix_bpf_num_ip_sets`                                              | Number of BPF IP sets managed in the dataplane.                                                                                                                     |
-| ** BPF events listener **                                            |                                                                                                                                                                     |
+
+#### BPF events listener metrics
+
+Low level component that receives messages from the BPF programs when notable events occur (suach as policy decisions).
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_bpf_events`                                                   | Number of events generated by BPF dataplane split by type/category.                                                                                                 |
 | `felix_bpf_events_collector_blocks`                                  | Number of times the output channel of the event loop blocked (because the downstream reader didn't keep up).                                                        |
-| ** Egress gateway function **                                        |                                                                                                                                                                     |
+
+#### Egress gateway function metrics
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_egress_gateway_remote_polls{status="total"}`                  | Total number of remote egress gateway pods that Felix is polling for health/connectivity. Only egress gateways with a named "health" port will be polled.           |
 | `felix_egress_gateway_remote_polls{status="up"}`                     | Total number of remote egress gateway pods that have successful probes.                                                                                             |
 | `felix_egress_gateway_remote_polls{status="probe-failed"}`           | Total number of remote egress gateway pods that have failed probes.                                                                                                 |
-| ** IPsec function **                                                 |                                                                                                                                                                     |
+
+#### IPSec function metrics
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_ipsec_bindings_total`                                         | Total number of ipsec bindings.                                                                                                                                     |
 | `felix_ipsec_errors`                                                 | Number of ipsec command failures.                                                                                                                                   |
 | `felix_ipset_calls`                                                  | Number of ipset commands executed.                                                                                                                                  |
@@ -87,7 +124,13 @@ existing metrics.
 | `felix_ipset_lines_executed`                                         | Number of ipset operations executed.                                                                                                                                |
 | `felix_ipsets_calico`                                                | Number of active {{prodname}} IP sets.                                                                                                                              |
 | `felix_ipsets_total`                                                 | Total number of active IP sets.                                                                                                                                     |
-| ** NFLOG reader **                                                   | _Low level component that receives messages from the kernel when packets hit certain iptables rules.  Used to collect policy verdicts, and DNS packets._            |
+
+#### NFLOG reader metrics
+
+Low level component that receives messages from the kernel when packets hit certain iptables rules.  Used to collect policy verdicts, and DNS packets.
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_nflog_netlink_messages_received`                              | Total number of NFLOG "envelope" messages received from the kernel, broken down by NFLOG group.  Each envelope message holds one or more NFLOGs.                    |
 | `felix_nflog_logs_received`                                          | Total number of NFLOG logs received from the kernel, broken down by NFLOG group.  NFLOG messages are sent from the kernel for each policy verdict and for DNS logs. |
 | `felix_nflog_buffer_overruns`                                        | Total number of times the kernel had to drop NFLOG messages because the kernel-to-Felix buffer was full.                                                            |
@@ -95,7 +138,13 @@ existing metrics.
 | `felix_nflog_parse_errors`                                           | Total number of errors encountered when trying to parse NFLOG messages.                                                                                             |
 | `felix_nflog_aggregates_created`                                     | Total number of NFLOG "aggregates" created.  Aggregates combine NFLOG messages that share the same 5-tuple before passing to the "collector".                       |
 | `felix_nflog_aggregates_flushed`                                     | Total number of NFLOG "aggregates" flushed to the "collector".  The difference between this value and the "created" value shows how many aggregates are pending.    |
-| ** Flow logs collector **                                            | _Component that collates flow logs and flow metrics_                                                                                                                |
+
+#### Flow logs collector metrics
+
+Component that collects flow logs and metrics.
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_collector_allowed_flowlog_aggregator_store`                   | Total number of FlowEntries with a given action currently residing in the FlowStore cache used by the aggregator.                                                   |
 | `felix_collector_conntrack_processing_latency_seconds`               | Histogram for measuring the latency of Conntrack processing.                                                                                                        |
 | `felix_collector_dataplanestats_update_processing_errors_per_minute` | Number of errors encountered when processing merging the proto.DataplaneStatistics to the current data cache.                                                       |
@@ -107,12 +156,20 @@ existing metrics.
 | `felix_collector_lookupcache_services`                               | Number of Services tracked in the look-up cache, used to resolve IP addresses to identities.                                                                        |
 | `felix_collector_lookups_cache_policies`                             | Number of policies tracked in the look-up cache, used to resolve IP addresses to identities.                                                                        |
 | `felix_collector_packet_info_processing_latency_seconds`             | Histogram for measuring latency of processing "packet info" aggregates from the dataplane.                                                                          |
-| ** DNS policy/logging **                                             |                                                                                                                                                                     |
+
+#### DNS Policy/Logging metrics
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_dns_req_packets_in`                                           | Number of DNS request packets received.                                                                                                                             |
 | `felix_dns_invalid_packets_in`                                       | Number of invalid DNS packets received.                                                                                                                             |
 | `felix_dns_non_query_packets_in`                                     | Number of non-query DNS packets received (and ignored).                                                                                                             |
 | `felix_dns_resp_packets_in`                                          | Number of DNS responses received.                                                                                                                                   |
-| ** DNS DelayDeniedPacket mode **                                     |                                                                                                                                                                     |
+
+#### DNS `DelayDeniedPacket` mode metrics
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_dns_packet_nfqueue_monitor_hold_time`                         | Summary of the length of time the DNS response packets were held in userspace.                                                                                      |
 | `felix_dns_packet_nfqueue_monitor_num_unreleased_packets`            | Gauge of the number of DNS response packets to release currently in memory.                                                                                         |
 | `felix_dns_packet_nfqueue_monitor_packets_in`                        | Number of packets queued to Felix for delay.                                                                                                                        |
@@ -122,7 +179,11 @@ existing metrics.
 | `felix_dns_packet_nfqueue_monitor_queued_latency`                    | Summary of time packets spent delayed in the queue.                                                                                                                 |
 | `felix_dns_packet_nfqueue_monitor_shutdown_count`                    | Count of how many times nfqueue was shut down due to an error.                                                                                                      |
 | `felix_dns_packet_nfqueue_monitor_verdict_failed`                    | Count of the number of times setting the verdict on a packet failed.                                                                                                |
-| ** DNS DelayDNSResponse mode **                                      |                                                                                                                                                                     |
+
+#### DNS `DelayDNSResponse` mode metrics
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_dns_policy_nfqueue_monitor_nf_verdict_failed`                 | Count of how many times that the packet processor has failed to set the verdict on the packet.                                                                      |
 | `felix_dns_policy_nfqueue_monitor_packets_dnr_dropped`               | Count of the number of packets that have been dropped because the "do not recycle" mark was present.                                                                |
 | `felix_dns_policy_nfqueue_monitor_packets_in`                        | Count of the number of packets received on the queue.                                                                                                               |
@@ -131,7 +192,13 @@ existing metrics.
 | `felix_dns_policy_nfqueue_monitor_release_latency`                   | Summary of the latency for releasing packets.                                                                                                                       |
 | `felix_dns_policy_nfqueue_monitor_release_packets_batch_size`        | Gauge of the number of packets to release currently in memory                                                                                                       |
 | `felix_dns_policy_nfqueue_shutdown_count`                            | Count of how many times nfqueue was shut down due to an error.                                                                                                      |
-| ** Flow logs reporter **                                             |                                                                                                                                                                     |
+
+#### Flow logs reporter metrics
+
+Component that sends flow logs to syslog.   
+
+| Name                                                                 | Description                                                                                                                                                         |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `felix_reporter_log_errors`                                          | Number of errors encountered while logging (flow logs) to Syslog.                                                                                                   |
 | `felix_reporter_logs_dropped`                                        | Number of flow logs dropped because the output was blocked in the Syslog reporter.                                                                                  |
 
