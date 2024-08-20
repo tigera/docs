@@ -1,5 +1,5 @@
 ---
-description: Install Calico using the tech-preview nftables data plane.
+description: Install Calico using the nftables data plane.
 ---
 
 # Calico nftables data plane
@@ -10,7 +10,7 @@ This feature is tech preview. Tech preview features may be subject to significan
 :::
 ## Big picture
 
-Try the tech-preview {{prodname}} nftables data plane.
+Install {{prodname}} using the nftables data plane.
 
 ## Value
 
@@ -34,13 +34,6 @@ Installing {{prodname}} in nftables mode provides a networking and network polic
 
   If NetworkManager is present on the host, see [Configure NetworkManager](../../operations/troubleshoot/troubleshooting.mdx#configure-networkmanager).
 
-:::note
-
-{{prodname}} nftables dataplane is currently in technical preview and may not be suitable for production use. Please report any issues you experience
-while using this feature.
-
-:::
-
 ## How to
 
 ### Create a single-host Kubernetes cluster with the nftables kube-proxy enabled.
@@ -58,7 +51,7 @@ while using this feature.
 
 1. Create a kubeadm configuration file that enables the nftables kube-proxy mode.
 
-   ```
+   ```bash
    cat > config.yaml <<EOF
    apiVersion: kubeadm.k8s.io/v1beta4
    kind: InitConfiguration
@@ -76,7 +69,7 @@ while using this feature.
 
 1. Initialize the control plane using the following command.
 
-   ```
+   ```bash
    sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --config=config.yaml
    ```
 
@@ -89,7 +82,7 @@ while using this feature.
 
 1. Execute the following commands to configure kubectl (also returned by `kubeadm init`).
 
-   ```
+   ```bash
    mkdir -p $HOME/.kube
    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
    sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -99,7 +92,7 @@ while using this feature.
 
 1. Install the Tigera {{prodname}} operator and custom resource definitions.
 
-   ```
+   ```bash
    kubectl create -f {{manifestsUrl}}/manifests/tigera-operator.yaml
    ```
 
@@ -111,7 +104,7 @@ while using this feature.
 
 1. Install {{prodname}} by creating the necessary custom resource. For more information on configuration options available in this manifest, see [the installation reference](../../reference/installation/api.mdx).
 
-   ```
+   ```bash
    cat > custom-resources.yaml <<EOF
    apiVersion: operator.tigera.io/v1
    kind: Installation
@@ -130,7 +123,7 @@ while using this feature.
    EOF
    ```
 
-   ```
+   ```bash
    kubectl create -f custom-resources.yaml
    ```
 
@@ -143,7 +136,7 @@ while using this feature.
 
 1. Confirm that all of the pods are running with the following command.
 
-   ```
+   ```bash
    watch kubectl get pods -n calico-system
    ```
 
@@ -170,7 +163,7 @@ while using this feature.
 
 1. Confirm that you now have a node in your cluster with the following command.
 
-   ```
+   ```bash
    kubectl get nodes -o wide
    ```
 
