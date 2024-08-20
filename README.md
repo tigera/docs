@@ -14,7 +14,7 @@ Either
 
 Or
 
-* Node.js v18.18.2+ (v18.18.2 recommended). Use the outstanding [nvm tool](https://github.com/nvm-sh/nvm) to manage your node versions.
+* Node.js v20.16.0+ (v20.16.0 recommended). Use the outstanding [nvm tool](https://github.com/nvm-sh/nvm) to manage your node versions.
 * yarn `npm install -g yarn`
 * Fork and clone our docs repo <https://github.com/tigera/docs>
 
