@@ -122,20 +122,20 @@ const config = {
                 docsPluginId: 'calico',
                 className: 'navbar-product-link_calico',
               },
-              // {
-              //   label: 'Calico Cloud',
-              //   type: 'docSidebar',
-              //   sidebarId: 'calicoCloudSidebar',
-              //   docsPluginId: 'calico-cloud',
-              //   className: 'navbar-product-link_calico-cloud',
-              // },
-              // {
-              //   label: 'Calico Enterprise',
-              //   type: 'docSidebar',
-              //   sidebarId: 'calicoEnterpriseSidebar',
-              //   docsPluginId: 'calico-enterprise',
-              //   className: 'navbar-product-link_calico-enterprise',
-              // },
+              {
+                label: 'Calico Cloud',
+                type: 'docSidebar',
+                sidebarId: 'calicoCloudSidebar',
+                docsPluginId: 'calico-cloud',
+                className: 'navbar-product-link_calico-cloud',
+              },
+              {
+                label: 'Calico Enterprise',
+                type: 'docSidebar',
+                sidebarId: 'calicoEnterpriseSidebar',
+                docsPluginId: 'calico-enterprise',
+                className: 'navbar-product-link_calico-enterprise',
+              },
             ],
           },
           {
@@ -385,7 +385,7 @@ const config = {
         path: 'calico',
         routeBasePath: 'calico',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.28', '3.27', '3.26'],
+        onlyIncludeVersions: ['3.28','3.27','3.26'],
         lastVersion: '3.28',
         versions: {
           current: {
@@ -421,7 +421,7 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.20-1','3.19-2','3.18-2','3.17'],
+        onlyIncludeVersions: ['3.19-2','3.18-2'],
         //lastVersion: '3.19-2',
         versions: {
           current: {
