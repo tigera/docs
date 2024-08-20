@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'ReqsSys',
   'ReqsKernel',
   'HostEndpointsUpgrade',
   'InstallOpenshiftBeforeYouBegin',
@@ -124,10 +123,6 @@ function getCalicoVersionedComponent(version, componentName) {
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/PodCidrSed`).default;
     case 'ReqsKernel':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReqsKernel`).default;
-    case 'ReqsSys':
-      return require(`../../calico_versioned_docs/version-${version}/_includes/components/ReqsSys`).default;
-    default:
-      console.error(`Versioned ${componentName} component isn't registered for Calico`);
   }
 }
 
@@ -138,8 +133,6 @@ function getCalicoCloudVersionedComponent(version, componentName) {
         .default;
     case 'ReqsKernel':
       return require(`../../calico-cloud_versioned_docs/version-${version}/_includes/components/ReqsKernel`).default;
-    case 'ReqsSys':
-      return require(`../../calico-cloud_versioned_docs/version-${version}/_includes/components/ReqsSys`).default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Cloud`);
   }
@@ -192,8 +185,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
     case 'ReqsKernel':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReqsKernel`)
         .default;
-    case 'ReqsSys':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReqsSys`).default;
     case 'UpgradeOperatorSimple':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/UpgradeOperatorSimple`)
         .default;
