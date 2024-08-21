@@ -27,7 +27,6 @@ const partials = [
   'InstallEKS',
   'InstallGeneric',
   'InstallGKE',
-  'PrivateRegistryRegular',
   'UpgradeOperatorSimple',
   'InstallOpenShift',
   'InstallOpenShiftManifests',
@@ -177,9 +176,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'OpenShiftPullSecret':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/OpenShiftPullSecret`)
-        .default;
-    case 'PrivateRegistryRegular':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/PrivateRegistryRegular`)
         .default;
     case 'ReqsKernel':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReqsKernel`)
