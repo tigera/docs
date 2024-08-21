@@ -34,7 +34,6 @@ const partials = [
   'OpenShiftPullSecret',
   'OpenShiftPrometheusOperator',
   'CliConfigIntro',
-  'PrivateRegistryImagePath',
 ];
 
 const wrappedPartials = wrapPartials(partials);
@@ -187,9 +186,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'UpgradeOperatorSimple':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/UpgradeOperatorSimple`)
-        .default;
-    case 'PrivateRegistryImagePath':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/PrivateRegistryImagePath`)
         .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Enterprise`);
