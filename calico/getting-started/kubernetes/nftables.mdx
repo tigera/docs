@@ -60,25 +60,27 @@ Installing {{prodname}} in nftables mode provides a networking and network polic
    apiVersion: kubeadm.k8s.io/v1beta4
    kubernetesVersion: v1.31.0
    proxy: {}
+   networking:
+     podSubnet: "192.168.0.0/16"
    ---
    apiVersion: kubeproxy.config.k8s.io/v1alpha1
    kind: KubeProxyConfiguration
-   proxyMode: nftables
+   mode: nftables
    EOF
-   ```
-
-1. Initialize the control plane using the following command.
-
-   ```bash
-   sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --config=config.yaml
    ```
 
    :::note
 
    If 192.168.0.0/16 is already in use within your network you must select a different pod network
-   CIDR, replacing 192.168.0.0/16 in the above command.
+   CIDR, replacing 192.168.0.0/16 in the above configuration.
 
    :::
+
+1. Initialize the control plane using the following command.
+
+   ```bash
+   sudo kubeadm init --config=config.yaml
+   ```
 
 1. Execute the following commands to configure kubectl (also returned by `kubeadm init`).
 
@@ -120,6 +122,12 @@ Installing {{prodname}} in nftables mode provides a networking and network polic
          encapsulation: VXLANCrossSubnet
          natOutgoing: Enabled
          nodeSelector: all()
+   ---
+   apiVersion: operator.tigera.io/v1
+   kind: APIServer
+   metadata:
+     name: default
+   spec: {}
    EOF
    ```
 
