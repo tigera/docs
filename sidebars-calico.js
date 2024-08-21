@@ -180,6 +180,7 @@ module.exports = {
                 'getting-started/kubernetes/hardway/istio-integration',
               ],
             },
+            'getting-started/kubernetes/nftables',
             {
               type: 'category',
               label: 'VPP dataplane',
