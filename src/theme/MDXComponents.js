@@ -31,7 +31,6 @@ const partials = [
   'InstallOpenShift',
   'InstallOpenShiftManifests',
   'OpenShiftPullSecret',
-  'OpenShiftPrometheusOperator',
 ];
 
 const wrappedPartials = wrapPartials(partials);
@@ -166,9 +165,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'InstallOpenShiftManifests':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
-        .default;
-    case 'OpenShiftPrometheusOperator':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/OpenShiftPrometheusOperator`)
         .default;
     case 'OpenShiftPullSecret':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/OpenShiftPullSecret`)
