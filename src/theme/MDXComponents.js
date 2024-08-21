@@ -32,7 +32,6 @@ const partials = [
   'InstallOpenShiftManifests',
   'OpenShiftPullSecret',
   'OpenShiftPrometheusOperator',
-  'CliConfigIntro',
 ];
 
 const wrappedPartials = wrapPartials(partials);
@@ -140,9 +139,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
   switch (componentName) {
     case 'CalicoWindowsInstall':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/CalicoWindowsInstall`)
-        .default;
-    case 'CliConfigIntro':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/CliConfigIntro`)
         .default;
     case 'ConfigureManagedCluster':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ConfigureManagedCluster`)
