@@ -35,7 +35,6 @@ const partials = [
   'OpenShiftPrometheusOperator',
   'CliConfigIntro',
   'PrivateRegistryImagePath',
-  'GettingStartedInstallOnClustersKubernetesHelm',
 ];
 
 const wrappedPartials = wrapPartials(partials);
@@ -191,9 +190,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'PrivateRegistryImagePath':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/PrivateRegistryImagePath`)
-        .default;
-    case 'GettingStartedInstallOnClustersKubernetesHelm':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/GettingStartedInstallOnClustersKubernetesHelm`)
         .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Enterprise`);
