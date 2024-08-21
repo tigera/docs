@@ -30,7 +30,6 @@ const partials = [
   'UpgradeOperatorSimple',
   'InstallOpenShift',
   'InstallOpenShiftManifests',
-  'OpenShiftPullSecret',
 ];
 
 const wrappedPartials = wrapPartials(partials);
@@ -165,9 +164,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'InstallOpenShiftManifests':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
-        .default;
-    case 'OpenShiftPullSecret':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/OpenShiftPullSecret`)
         .default;
     case 'ReqsKernel':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReqsKernel`)
