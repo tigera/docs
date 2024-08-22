@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'PodCidrSed',
   'EnvironmentFile',
   'AutoHostendpointsMigrate',
   'ConfigureManagedCluster',
@@ -102,8 +101,6 @@ function getCalicoVersionedComponent(version, componentName) {
     case 'InstallOpenShiftManifests':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
         .default;
-    case 'PodCidrSed':
-      return require(`../../calico_versioned_docs/version-${version}/_includes/components/PodCidrSed`).default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico`);
   }
