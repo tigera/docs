@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'InstallOpenShift',
   'InstallOpenShiftManifests',
 ];
 
@@ -102,9 +101,6 @@ function getCalicoCloudVersionedComponent(version, componentName) {
 
 function getCalicoEnterpriseVersionedComponent(version, componentName) {
   switch (componentName) {
-    case 'InstallOpenShift':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenShift`)
-        .default;
     case 'InstallOpenShiftManifests':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
         .default;
