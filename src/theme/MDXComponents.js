@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'EnvironmentFile',
   'AutoHostendpointsMigrate',
   'ConfigureManagedCluster',
   'InstallAKS',
@@ -96,8 +95,6 @@ function getCalicoVersionedComponent(version, componentName) {
     case 'AutoHostendpointsMigrate':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/AutoHostendpointsMigrate`)
         .default;
-    case 'EnvironmentFile':
-      return require(`../../calico_versioned_docs/version-${version}/_includes/components/EnvironmentFile`).default;
     case 'InstallOpenShiftManifests':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
         .default;
@@ -108,9 +105,6 @@ function getCalicoVersionedComponent(version, componentName) {
 
 function getCalicoCloudVersionedComponent(version, componentName) {
   switch (componentName) {
-    case 'EnvironmentFile':
-      return require(`../../calico-cloud_versioned_docs/version-${version}/_includes/components/EnvironmentFile`)
-        .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Cloud`);
   }
@@ -120,9 +114,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
   switch (componentName) {
     case 'ConfigureManagedCluster':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ConfigureManagedCluster`)
-        .default;
-    case 'EnvironmentFile':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/EnvironmentFile`)
         .default;
     case 'InstallAKS':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallAKS`)
