@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'HostEndpointsUpgrade',
   'InstallOpenshiftBeforeYouBegin',
   'CalicoWindowsInstall',
   'PodCidrSed',
@@ -105,9 +104,6 @@ function getCalicoVersionedComponent(version, componentName) {
         .default;
     case 'EnvironmentFile':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/EnvironmentFile`).default;
-    case 'HostEndpointsUpgrade':
-      return require(`../../calico_versioned_docs/version-${version}/_includes/components/HostEndpointsUpgrade`)
-        .default;
     case 'InstallOpenShiftManifests':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
         .default;
