@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'AutoHostendpointsMigrate',
   'ConfigureManagedCluster',
   'InstallAKS',
   'InstallEKS',
@@ -92,9 +91,6 @@ function getComponentForVersion(prodnamedash, componentName, version) {
 
 function getCalicoVersionedComponent(version, componentName) {
   switch (componentName) {
-    case 'AutoHostendpointsMigrate':
-      return require(`../../calico_versioned_docs/version-${version}/_includes/components/AutoHostendpointsMigrate`)
-        .default;
     case 'InstallOpenShiftManifests':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
         .default;
