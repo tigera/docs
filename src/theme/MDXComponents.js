@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'InstallOpenShiftManifests',
 ];
 
 const wrappedPartials = wrapPartials(partials);
@@ -84,9 +83,6 @@ function getComponentForVersion(prodnamedash, componentName, version) {
 
 function getCalicoVersionedComponent(version, componentName) {
   switch (componentName) {
-    case 'InstallOpenShiftManifests':
-      return require(`../../calico_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
-        .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico`);
   }
@@ -101,9 +97,6 @@ function getCalicoCloudVersionedComponent(version, componentName) {
 
 function getCalicoEnterpriseVersionedComponent(version, componentName) {
   switch (componentName) {
-    case 'InstallOpenShiftManifests':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
-        .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Enterprise`);
   }
