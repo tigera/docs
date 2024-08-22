@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'InstallAKS',
   'InstallEKS',
   'InstallGeneric',
   'InstallGKE',
@@ -107,9 +106,6 @@ function getCalicoCloudVersionedComponent(version, componentName) {
 
 function getCalicoEnterpriseVersionedComponent(version, componentName) {
   switch (componentName) {
-    case 'InstallAKS':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallAKS`)
-        .default;
     case 'InstallEKS':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallEKS`)
         .default;
