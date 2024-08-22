@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'InstallOpenshiftBeforeYouBegin',
   'CalicoWindowsInstall',
   'PodCidrSed',
   'EnvironmentFile',
@@ -134,9 +133,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'EnvironmentFile':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/EnvironmentFile`)
-        .default;
-    case 'InstallOpenshiftBeforeYouBegin':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenshiftBeforeYouBegin`)
         .default;
     case 'InstallAKS':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallAKS`)
