@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'CalicoWindowsInstall',
   'PodCidrSed',
   'EnvironmentFile',
   'AutoHostendpointsMigrate',
@@ -98,9 +97,6 @@ function getCalicoVersionedComponent(version, componentName) {
     case 'AutoHostendpointsMigrate':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/AutoHostendpointsMigrate`)
         .default;
-    case 'CalicoWindowsInstall':
-      return require(`../../calico_versioned_docs/version-${version}/_includes/components/CalicoWindowsInstall`)
-        .default;
     case 'EnvironmentFile':
       return require(`../../calico_versioned_docs/version-${version}/_includes/components/EnvironmentFile`).default;
     case 'InstallOpenShiftManifests':
@@ -125,9 +121,6 @@ function getCalicoCloudVersionedComponent(version, componentName) {
 
 function getCalicoEnterpriseVersionedComponent(version, componentName) {
   switch (componentName) {
-    case 'CalicoWindowsInstall':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/CalicoWindowsInstall`)
-        .default;
     case 'ConfigureManagedCluster':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ConfigureManagedCluster`)
         .default;
