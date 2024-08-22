@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'UpgradeOperatorSimple',
   'InstallOpenShift',
   'InstallOpenShiftManifests',
 ];
@@ -108,9 +107,6 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'InstallOpenShiftManifests':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallOpenShiftManifests`)
-        .default;
-    case 'UpgradeOperatorSimple':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/UpgradeOperatorSimple`)
         .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Enterprise`);
