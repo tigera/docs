@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'InstallGeneric',
   'InstallGKE',
   'UpgradeOperatorSimple',
   'InstallOpenShift',
@@ -105,9 +104,6 @@ function getCalicoCloudVersionedComponent(version, componentName) {
 
 function getCalicoEnterpriseVersionedComponent(version, componentName) {
   switch (componentName) {
-    case 'InstallGeneric':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallGeneric`)
-        .default;
     case 'InstallGKE':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallGKE`)
         .default;
