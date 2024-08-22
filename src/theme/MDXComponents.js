@@ -15,7 +15,6 @@ import Callouts from '@site/src/components/Callouts';
 // get{product}VersionedComponent(), if the product uses this component.
 
 const partials = [
-  'ConfigureManagedCluster',
   'InstallAKS',
   'InstallEKS',
   'InstallGeneric',
@@ -108,9 +107,6 @@ function getCalicoCloudVersionedComponent(version, componentName) {
 
 function getCalicoEnterpriseVersionedComponent(version, componentName) {
   switch (componentName) {
-    case 'ConfigureManagedCluster':
-      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ConfigureManagedCluster`)
-        .default;
     case 'InstallAKS':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/InstallAKS`)
         .default;
