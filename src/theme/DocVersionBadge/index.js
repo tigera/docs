@@ -4,6 +4,7 @@ import Translate from '@docusaurus/Translate';
 import {ThemeClassNames} from '@docusaurus/theme-common';
 import {useDocsVersion} from '@docusaurus/theme-common/internal';
 import {useActivePlugin} from '@docusaurus/plugin-content-docs/client';
+import styles from './styles.module.css';
 
 export default function DocVersionBadge({className}) {
   const versionMetadata = useDocsVersion();
@@ -26,7 +27,7 @@ export default function DocVersionBadge({className}) {
       <span
         className={clsx(
           className,
-          ThemeClassNames.docs.docVersionBadge,
+          ThemeClassNames.docs.docVersionBadge, styles.hcu,
           'badge badge--secondary',
         )}>
         <Translate
