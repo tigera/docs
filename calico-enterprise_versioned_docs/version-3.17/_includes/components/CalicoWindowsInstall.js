@@ -136,7 +136,7 @@ kubernetes   172.16.101.157:6443   40m`}
           </li>
           <li>
             <code>KUBERNETES_SERVICE_HOST</code> and <code>KUBERNETES_SERVICE_PORT</code>: The Kubernetes API server
-            host and port (discovered in the previous step) used to create a kubeconfig file for {prodname} services. If
+            host and port (discovered in the previous step) used to create a kubeconfig file for {variables.prodname} services. If
             your node already has an existing kubeconfig file, leave these variables blank.
           </li>
           <li>
@@ -144,12 +144,12 @@ kubernetes   172.16.101.157:6443   40m`}
             match the service-cluster-ip-range used by kube-apiserver.
           </li>
           <li>
-            <code>CNI_BIN_DIR</code>: Path where {prodname} CNI binaries will be installed. This must match the CNI bin
+            <code>CNI_BIN_DIR</code>: Path where {variables.prodname} CNI binaries will be installed. This must match the CNI bin
             value in the ContainerD service configuration. If you used the provided Install-Containerd.ps1 script, you
             should use the CNI bin path value you provided to that script.
           </li>
           <li>
-            <code>CNI_CONF_DIR</code>: Path where {prodname} CNI configuration will be installed. This must match the
+            <code>CNI_CONF_DIR</code>: Path where {variables.prodname} CNI configuration will be installed. This must match the
             CNI conf value in the ContainerD service configuration. If you used the provided Install-Containerd.ps1
             script, you should use the CNI conf path value you provided to that script.
           </li>

@@ -8,8 +8,9 @@ import CodeBlock from '@theme/CodeBlock';
 import globalVariables from '@site/variables';
 import variables from '../../variables';
 
+const { prodname, baseUrl } = variables;
+
 function NodeRequirementsEnt(props) {
-  const { prodname, baseUrl } = variables;
   
   return (
     <>

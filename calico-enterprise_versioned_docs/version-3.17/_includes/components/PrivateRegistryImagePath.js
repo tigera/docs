@@ -6,9 +6,9 @@ import CodeBlock from '@theme/CodeBlock';
 import variables from '../../variables';
 
 export default function PrivateRegistryImagePath() {
+  const { prodname, prodnamedash, prodnameWindows, registry, releases, tigeraOperator } = variables;
   const components = releases[0].components;
   const componentsWithImage = Object.values(components).filter(filters.withImage);
-  const { prodname, prodnamedash, prodnameWindows, registry, releases, tigeraOperator } = variables;
 
   return (
     <>
