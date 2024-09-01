@@ -7,9 +7,9 @@ import Heading from '@theme/Heading';
 import variables from '../../variables';
 
 export default function PrivateRegistryRegular() {
+    const { tigeraOperator, prodname, prodnamedash, prodnameWindows, registry, releases } = variables;
     const components = releases[0].components;
     const componentsWithImage = Object.values(components).filter(filters.withImage);
-    const { tigeraOperator, prodname, prodnamedash, prodnameWindows, registry, releases } = variables;
 
     return (
         <>

@@ -7,8 +7,6 @@ import { toKebab } from '@site/src/components/utils/formatters';
 import variables from '../../variables';
 
 export default function ComponentVersions() {
-  const { downloadsurl } = variables;
-
   const releases = variables.releases.map((release) => {
     return release;
   }).filter(release => release);
@@ -31,7 +29,7 @@ export default function ComponentVersions() {
             {release.title !== 'master' && (
               <p>
                 <Link
-                  href={`${downloadsurl}/ee/archives/release-${release.title}-${release['tigera-operator'].version}.tgz`}
+                  href={`${variables.downloadsurl}/ee/archives/release-${release.title}-${release['tigera-operator'].version}.tgz`}
                 >
                   Release archive
                 </Link>{' '}

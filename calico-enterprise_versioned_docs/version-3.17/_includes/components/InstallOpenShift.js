@@ -404,7 +404,7 @@ EOF`}
 
 // Contains extra OpenShift installation instructions for hybrid Linux+Windows clusters.
 function InstallOpenShiftWindows() {
-  const { prodnameWindows, baseUrl } = variables;
+  const { prodnameWindows, baseUrl, tempFilesURL, rootDirWindows } = variables;
 
   return (
     <>

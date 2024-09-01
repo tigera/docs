@@ -72,11 +72,6 @@ const config = {
           content:
             'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp',
         },
-        {
-          name: 'keywords',
-          content:
-            'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp',
-        },
       ],
       algolia: {
         appId: 'Q4GSZWRKBA',
@@ -420,7 +415,7 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.19-2','3.18-2'],
+        onlyIncludeVersions: ['3.20-1', '3.19-2','3.18-2', '3.17'],
         //lastVersion: '3.19-2',
         versions: {
           current: {

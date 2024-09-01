@@ -38,6 +38,8 @@ const partials = [
   'PrivateRegistryImagePath',
   'GettingStartedInstallOnClustersKubernetesHelm',
   'MaintenanceClisCalicoqInstalling',
+  'ReleaseNotes',
+  'ReleaseArchiveTable',
 ];
 
 const wrappedPartials = wrapPartials(partials);
@@ -205,6 +207,9 @@ function getCalicoEnterpriseVersionedComponent(version, componentName) {
         .default;
     case 'MaintenanceClisCalicoqInstalling':
       return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/MaintenanceClisCalicoqInstalling`)
+        .default;
+    case 'ReleaseArchiveTable':
+      return require(`../../calico-enterprise_versioned_docs/version-${version}/_includes/components/ReleaseArchiveTable`)
         .default;
     default:
       console.error(`Versioned ${componentName} component isn't registered for Calico Enterprise`);
