@@ -6,7 +6,6 @@ const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
 
 const variablesPlugin = require('./src/remark/variablesPlugin');
-const componentImagePlugin = require('./src/remark/componentImagePlugin');
 const { useCaseSidebar } = require('./sidebars-use-cases');
 
 /** @type {import('@docusaurus/types').Config} */
@@ -407,7 +406,7 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        beforeDefaultRemarkPlugins: [variablesPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -449,7 +448,7 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        beforeDefaultRemarkPlugins: [variablesPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -475,7 +474,7 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        beforeDefaultRemarkPlugins: [variablesPlugin],
         editUrl: generateEditUrl,
       },
     ],
