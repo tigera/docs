@@ -1,4 +1,5 @@
 const releases = require('./releases.json');
+const componentImage = require('../src/components/utils/componentImage');
 
 const variables = {
   releaseTitle: 'master',
@@ -26,6 +27,9 @@ const variables = {
     node: 'tigera/cnx-node',
     kubeControllers: 'tigera/kube-controllers',
   },
+  componentImageCnxNode: componentImage('cnx-node', releases[0]),
+  componentImageCalicoctl: componentImage('calicoctl', releases[0]),
+  componentImageCalicoq: componentImage('calicoq', releases[0]),
 };
 
 module.exports = variables;
