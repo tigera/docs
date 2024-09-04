@@ -2,8 +2,8 @@
 description: Upgrade to a newer version of Calico Enterprise installed with OpenShift.
 ---
 
-import InstallOpenShiftManifestsTemp from '@site/calico-enterprise_versioned_docs/version-3.19-2/_includes/components-temp/InstallOpenShiftManifests-temp';
-import OpenShiftPrometheusOperatorTemp from '@site/calico-enterprise_versioned_docs/version-3.19-2/_includes/components-temp/OpenShiftPrometheusOperator-temp';
+import InstallOpenShiftManifests from '@site/calico-enterprise_versioned_docs/version-3.19-2/_includes/components/InstallOpenShiftManifests';
+import OpenShiftPrometheusOperator from '@site/calico-enterprise_versioned_docs/version-3.19-2/_includes/components/OpenShiftPrometheusOperator';
 
 # Upgrade Calico Enterprise installed with OpenShift
 
@@ -72,6 +72,21 @@ If your cluster has Windows nodes and uses custom TLS certificates for log stora
 
 For {{prodname}} v3.5 and v3.7, upgrading multi-cluster management setups must include updating all managed and management clusters.
 
+### Egress gateway
+
+If your cluster has egress gateway in a non-default namespace, ensure the namespace is privileged by adding the following to the namespace:
+
+##### Label
+```
+openshift.io/run-level: "0"
+pod-security.kubernetes.io/enforce: privileged
+pod-security.kubernetes.io/enforce-version: latest
+```
+##### Annotation
+```
+security.openshift.io/scc.podSecurityLabelSync: "false"
+```
+
 ## Download the new manifests
 
 Make a manifests directory.
@@ -80,7 +95,7 @@ Make a manifests directory.
 mkdir manifests
 ```
 
-<InstallOpenShiftManifestsTemp upgradeFrom='Enterprise' />
+<InstallOpenShiftManifests upgradeFrom='Enterprise' />
 
 # Upgrade from 3.0 or later
 
@@ -96,7 +111,7 @@ The steps differ based on your cluster type. If you are unsure of your cluster t
    oc apply --server-side --force-conflicts -f manifests/
    ```
 
-1. <OpenShiftPrometheusOperatorTemp operation='upgrade' />
+1. <OpenShiftPrometheusOperator operation='upgrade' />
 
 1. If your cluster is a management cluster, apply a [ManagementCluster](../../../reference/installation/api.mdx#operator.tigera.io/v1.ManagementCluster)
    CR to your cluster.

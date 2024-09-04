@@ -9,7 +9,7 @@ export default function LogoWrapper(props) {
       items={[
         {
           label: 'Tigera home',
-          to: 'https://tigera.io',
+          to: 'https://www.tigera.io/',
         },
         {
           label: 'Project Calico',
@@ -29,11 +29,11 @@ export default function LogoWrapper(props) {
         },
         {
           label: 'Events',
-          to: 'https://www.tigera.io/events',
+          to: 'https://www.tigera.io/events/',
         },
         {
           label: 'Contact us',
-          to: 'https://www.tigera.io/contact',
+          to: 'https://www.tigera.io/contact/',
         },
       ]}
       label={<Logo {...props} />}

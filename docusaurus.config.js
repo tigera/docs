@@ -6,7 +6,6 @@ const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
 
 const variablesPlugin = require('./src/remark/variablesPlugin');
-const componentImagePlugin = require('./src/remark/componentImagePlugin');
 const { useCaseSidebar } = require('./sidebars-use-cases');
 
 /** @type {import('@docusaurus/types').Config} */
@@ -42,6 +41,7 @@ const config = {
       "data-modal-border-radius": "6px",
       "data-button-box-shadow": "2px 2px 8px rgba(0, 0, 0, 0.2)",
       "data-modal-header-bg-color": "#FFFFFF",
+      "data-user-analytics-fingerprint-enabled": "true",
       async: true,
     },
   ],
@@ -406,7 +406,7 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        beforeDefaultRemarkPlugins: [variablesPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -418,12 +418,17 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.19-2','3.18-2','3.17'],
-        lastVersion: '3.19-2',
+        onlyIncludeVersions: ['3.20-1','3.19-2','3.18-2','3.17'],
+        //lastVersion: '3.19-2',
         versions: {
           current: {
             label: 'Next',
             path: 'next',
+            banner: 'unreleased',
+          },
+          '3.20-1': {
+            label: '3.20 (early preview)',
+            path: '3.20',
             banner: 'unreleased',
           },
           '3.19-2': {
@@ -431,17 +436,7 @@ const config = {
             path: 'latest',
             banner: 'none',
           },
-          '3.19-1': {
-            label: '3.19',
-            path: '3.19',
-            banner: 'none',
-          },
           '3.18-2': {
-            label: '3.18',
-            path: '3.18',
-            banner: 'none',
-          },
-          3.18: {
             label: '3.18',
             path: '3.18',
             banner: 'none',
@@ -453,7 +448,7 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        beforeDefaultRemarkPlugins: [variablesPlugin],
         editUrl: generateEditUrl,
       },
     ],
@@ -479,7 +474,7 @@ const config = {
           },
         },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin, componentImagePlugin],
+        beforeDefaultRemarkPlugins: [variablesPlugin],
         editUrl: generateEditUrl,
       },
     ],

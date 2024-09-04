@@ -98,6 +98,7 @@ module.exports = {
               items: [
                 'getting-started/kubernetes/openshift/requirements',
                 'getting-started/kubernetes/openshift/installation',
+                'getting-started/kubernetes/openshift/hostedcontrolplanes',
               ],
             },
             'getting-started/kubernetes/rancher',
@@ -179,6 +180,7 @@ module.exports = {
                 'getting-started/kubernetes/hardway/istio-integration',
               ],
             },
+            'getting-started/kubernetes/nftables',
             {
               type: 'category',
               label: 'VPP dataplane',

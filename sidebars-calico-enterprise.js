@@ -40,6 +40,7 @@ module.exports = {
               items: [
                 'getting-started/install-on-clusters/openshift/requirements',
                 'getting-started/install-on-clusters/openshift/installation',
+                'getting-started/install-on-clusters/openshift/hostedcontrolplanes',
               ],
             },
             'getting-started/install-on-clusters/aks',

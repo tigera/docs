@@ -40,6 +40,7 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
     - [AKS with Azure CNI and Calico network policy](../../getting-started/kubernetes/managed-public-cloud/aks.mdx#install-aks-with-calico-for-network-policy) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
     - [AKS with {{prodname}} networking](../../getting-started/kubernetes/managed-public-cloud/aks.mdx#install-aks-with-calico-networking) is in testing with the eBPF dataplane. This should be a better solution overall but, at time of writing, the testing was not complete.
   - RKE (RKE2 recommended because it supports disabling `kube-proxy`)
+  - MKE
 
 - Linux distribution/kernel:
 
@@ -145,6 +146,8 @@ The best way to do that varies by Kubernetes distribution:
   `api-int.<cluster_name>.<base_domain>` should point to the API server or to the load balancer in front of the
   API server. Use that (filling in the `<cluster_name>` and `<base_domain>` as appropriate for your cluster) for the
   `KUBERNETES_SERVICE_HOST` below. Openshift uses 6443 for the `KUBERNETES_SERVICE_PORT`.
+- MKE runs a reverse proxy in each node that can be used to reach the API server. You should use `proxy.local`
+  as the `KUBERNETES_SERVICE_HOST` and `6444` as the `KUBERNETES_SERVICE_PORT`.
 - For AKS and EKS clusters you should use the FQDN of the API server's load balancer. This can be found with
   ```
   kubectl cluster-info
@@ -285,6 +288,13 @@ To re-enable it:
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": true}}'
 ```
 
+#### MKE
+
+If you are running MKE, you can disable `kube-proxy` as follows:
+
+Follow the step procedure in [Modify an existing MKE configuration](https://docs.mirantis.com/mke/current/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration) to download, edit, and upload your MKE configuration. During the editing step, add the following configuration:
+`kube_proxy_mode=disabled` and `kube_default_drop_masq_bits=true`.
+ 
 :::note
 
 If you are running kube-proxy in IPVS mode, switch to IPTables mode before disabling.
@@ -382,6 +392,8 @@ To revert to standard Linux networking:
 
    ```
    kubectl patch ds -n kube-system kube-proxy --type merge -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": null}}}}}'
-   ```
+
+2. If you are running MKE, follow the step procedure in [Modify an existing MKE configuration](https://docs.mirantis.com/mke/current/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration) to download, edit, and upload your MKE configuration. During the editing step, add the following configuration:
+`kube_proxy_mode` to `iptables`.
 
 1. Since disabling eBPF mode is disruptive to existing connections, monitor existing workloads to make sure they re-establish any connections that were disrupted by the switch.

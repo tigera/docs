@@ -3,6 +3,8 @@ description: What's new, and why features provide value for upgrading.
 title: Release notes
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+
 # Calico Enterprise 3.19 release notes
 
 Learn about the new features, bug fixes, and other updates in this release of {{prodname}}.
@@ -108,6 +110,15 @@ This release expands our support to clusters with nodes running ARM64-based arch
 * Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim. Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.) Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned".
 * When a tier order is set to the maximum float value (1.7976931348623157e+308), this can cause policy re-ordering in the UI not to work properly. Since the `namespace-isolation` tier has this value by default, policy recommendation users are affected. To workaround this issue edit any tier that has this value for the order. For example: use `kubectl edit tier namespace-isolation` and set the order to `10000`.
 * Linseed deployment needs to be manually restarted after an upgrade. Without a restart, Linseed can't ingest data because it can't authenticate with Elastic.
+<li>Some application layer features are not working as expected for {{prodname}} installations with the following deployment types:
+  <ul><li>AKS clusters with Azure CNI for networking and {{prodname}} for network policy</li>
+  <li>RKE2 clusters installed with Rancher UI</li>
+    </ul>
+  During installation, for these deployment types, <code>kubeletVolumePluginPath</code> is set to <code>None</code> in the Installation CR, causing all application layer features to stop working.
+  The affected features include web application firewalls, application layer policies, and L7 logging.
+  As a workaround, you can restore the default value by running the following command on an affected cluster:
+<CodeBlock language='bash'>{`kubectl patch installation.tigera.io default --type=merge  -p '{"spec":{"kubeletVolumePluginPath":"/var/lib/kubelet"}}'`}</CodeBlock>
+</li>
 
 ## Release details
 
@@ -146,5 +157,40 @@ This release is supported for use in production.
 * Fixes Managed Cluster connection status not always being correctly reported
 * Verify CNI plugin installed correctly
 * Security updates
+
+To update an existing installation of Calico Enterprise 3.19, see [Install a patch release](../getting-started/manifest-archive.mdx).
+
+### Calico Enterprise 3.19.1 operator-only bug fix release
+
+July 24, 2024
+
+Calico Enterprise 3.19.1 is now available with an update to the Tigera Operator.
+The Tigera Operator version has been updated to version 1.34.2.
+No other components have been changed.
+
+#### Bug fixes
+
+* Previously, for AKS clusters running Kubernetes 1.29 or higher, migrating from Calico Open Source to Calico Enterprise resulted in failure.
+  AKS began applying an image set to clusters with Kubernetes 1.29, and this change conflicted with operations performed by the Tigera Operator during migration.
+  We fixed the issue by modifying how the Tigera Operator checks for image sets during migrations to Calico Enterprise.
+* Removed a mutual dependency between logstorage and other components that could result in a degraded TigeraStatus if certificates are missing required key usages.
+
+### Calico Enterprise 3.19.2 bug fix release
+
+September 4, 2024
+
+Calico Enterprise 3.19.2 is now available.
+This release includes bug fixes and improvements.
+
+#### Bug fixes
+
+* Fix that Felix would panic when trying to resync a temporary IP set.  Temporary IP sets are created in certain scenarios after previous failures.
+* Reduce lock contention between the process info cache and the flow logs collector.  Avoids slowing down the collector when the info cache is under update load.
+* Fix excessive CPU usage in the process name lookup cache if a PID was unknown.
+* Updates the default behaviour of list request without tier field selector or label selector on globalnetworkpolicy, stagedglobalnetworkpolicy, networkpolicy and staged network policy to return all policies available to user, instead of returning only the policies in the default tier. This change allows to manage policies with GitOps tools like ArgoCD.
+* Fix Felix panic when using non-default BPF map sizes. Size was not updated in all places resulting in failure to attach programs.
+* Fix dual ToR startup when using bgp-layout ConfigMap to assign AS numbers.
+* Added support for eBPF on MKE.
+* Security updates.
 
 To update an existing installation of Calico Enterprise 3.19, see [Install a patch release](../getting-started/manifest-archive.mdx).
