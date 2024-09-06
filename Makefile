@@ -141,7 +141,9 @@ build-operator-reference:
 				rm -rf builder && mkdir builder && cd builder && \
 				git clone --depth=1 -b $(API_GEN_BRANCH) https://github.com/$(API_GEN_REPO) api-gen && cd api-gen && \
 				go mod edit -replace github.com/tigera/operator=github.com/$(OPERATOR_REPO)@$$op_ver && \
+				go mod tidy && \
 				go mod download all && go build && \
+				go get github.com/$(OPERATOR_REPO)@$$op_ver && \
 				./gen-crd-api-reference-docs \
 					-api-dir github.com/tigera/operator/api \
 					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
@@ -163,8 +165,8 @@ build-ia-operator-reference:
 			--env SSH_AUTH_SOCK=/ssh-agent\
 			-w /go/src/$(PACKAGE_NAME) \
 			$(CALICO_BUILD) /bin/bash -c '$(GIT_CONFIG_SSH) rm -rf builder && mkdir builder && cd builder && \
-				git clone --depth=1 -b $(API_GEN_VERSION) git@github.com:ahmetb/gen-crd-api-reference-docs.git && cd gen-crd-api-reference-docs && go build && \
-				cd ../ && git clone --depth=1 -b $(IA_OPERATOR_VERSION) git@github.com:tigera/image-assurance.git && cd image-assurance && \
+				git -c advice.detachedHead=false clone --depth=1 -b $(API_GEN_VERSION) git@github.com:ahmetb/gen-crd-api-reference-docs.git && cd gen-crd-api-reference-docs && go build && \
+				cd ../ && git -c advice.detachedHead=false clone --depth=1 -b $(IA_OPERATOR_VERSION) git@github.com:tigera/image-assurance.git && cd image-assurance && \
 				../gen-crd-api-reference-docs/gen-crd-api-reference-docs  \
 					-template-dir /go/src/$(PACKAGE_NAME)/crd-gen-template -api-dir github.com/tigera/image-assurance/operator/api \
 					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
