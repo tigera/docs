@@ -19,7 +19,7 @@ module.exports = {
         'get-started/system-requirements',
         'get-started/install-cluster',
         'get-started/install-private-registry',
-        'get-started/install-helm',
+        'get-started/install-automated',
         'get-started/windows-limitations',
         'get-started/checklist',
         'get-started/operator-checklist',

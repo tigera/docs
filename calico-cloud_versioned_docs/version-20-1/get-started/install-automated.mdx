@@ -8,18 +8,19 @@ import IconUser from '/img/icons/user-icon.svg';
 
 # Install Calico Cloud as part of an automated workflow
 
-You can connect clusters to Calico Cloud as part of an automated workflow.
-To do this, you must generate a persistent set of client credentials to use while interacting with the Calico Cloud API.
-Using these credentials with standard kubectl and Helm installations lets you fully automate the cluster connection process.
+You can connect clusters to Calico Cloud as part of an automated workflow, using persistent client credentials and customized Helm charts.
 
 ## Prerequisites
 
 * You have an active Calico Cloud account. You can sign up for a 14-day free trial at [calicocloud.io](https://calicocloud.io).
 * You are signed in to the Calico Cloud Manager UI as a user with the **Owner** or **Admin**, role.
+* You have at least one cluster that meets our [system requirements](system-requirements.mdx).
+* You have kubectl access to the cluster.
+* You have installed Helm 3.0 or later on your workstation.
 
 ## Create client credentials
 
-You can create client credentials and generate a Kubernetes secret to use for automated installations.
+Create client credentials and generate a Kubernetes secret to use for automated Helm installations.
 
 1. Select the user icon <IconUser width="20"/>** > Settings**.
 1. Under the **Client Credentials** tab, click **Add Client Credential**
@@ -27,7 +28,7 @@ You can create client credentials and generate a Kubernetes secret to use for au
    Your new client credential will appear in the list on the **Manage Client Credentials** page.
 1. Locate the newly created client credential in the list and select **Action** > **Manage keys** > **Add Key**
 1. Enter a name, choose how long the key will be valid, and click **Create key**.
-1. Click **Download** to download the `<my-key-name>.yaml` secret file and store it in a secure location.
+1. Click **Download** to download the `<key-name>.yaml` secret file and store it in a secure location.
    You will not be able to retrieve this secret again.
 
 :::important
@@ -39,6 +40,113 @@ When the key is deleted, all API requests based on that key will be rejected.
 
 :::
 
+## About customizing your Helm installation
+
+You can customize your Calico Cloud installation for the following purposes:
+
+* to enable or disable certain features
+* to modify pod scheduling and resource management
+
+To do this, you can either edit the default `values.yaml` file or pass individual key-value pairs using the `--set` flag for the `helm upgrade` command.
+
+### Required parameters
+
+The following paramaters are required for all Calico Cloud installations.
+
+| Parameter | Value | Example | Description |
+| -- | -- | -- | -- |
+| `installer.clusterName` | string | `cluster-name` | The name given to your managed cluster in Calico Cloud. |
+| `installer.calicoCloudVersion` | string | `{{cloudUserVersion}}` | The version of Calico Cloud you're installing. |
+
+
+```yaml title="Example from values.yaml with clusterName and calicoCloudVersion"
+installer:
+  clusterName: example-cluster
+  calicoCloudVersion: {{cloudUserVersion}}
+```
+
+### Optional parameters for private registries
+
+If you're using a private registry, you must set the following parameters.
+
+| Parameter | Value | Example | Description |
+| -- | -- | -- | -- |
+| `installer.registry` | string | `registry-name` | The name given to your managed cluster in Calico Cloud. |
+| `installer.imagePath` | string | `image-path` | The version of Calico Cloud you're installing. |
+| `imagePullSecrets.name` | string | `secret-name` | The version of Calico Cloud you're installing. |
+
+### Optional parameters for features
+
+The following parameters enable certain features in Calico Cloud.
+These features can be enabled or diabled only by setting them in your `values.yaml` file at installation.
+
+| Feature name | Parameter | Values |
+|---------|-----|--------|
+| Image Assurance | `installer.components.imageAssurance.state` | `Enabled` (default), `Disabled` |
+| Container Threat Detection | `installer.components.runtimeSecurity.state` | `Enabled`, `Disabled` (default) |
+| Security Posture Dashboard | `installer.components.securityPosture.state` | `Enabled` (default), `Disabled` |
+| Packet Capture | `installer.components.packetCaptureAPI.state` |  `Enabled`, `Disabled` (default) |
+| Compliance Reports | `installer.components.compliance.enabled` | `true` (default), `false` |
+
+:::note
+
+If you're upgrading from Calico Cloud 19 or earlier, the Container Threat Detection and Packet Capture features will remain enabled unless you explicitly set them to `Disabled`.
+
+:::
+
+### Optional parameters for pod scheduling and resource management
+
+For many Calico Cloud components, you can specify node selectors, tolerations, and resource requests and limits.
+The full list of Calico Cloud components is available in the default `values.yaml` file.
+
+:::note
+Helm may overwrite previous customizations of custom resource fields available under the `installer.components` Helm parameter.
+For `installer.components`, you should define all your `values.yaml` customizations to be sure nothing is lost during Calico Cloud upgrades and reinstalls.
+:::
+
+## Prepare your values.yaml with customizations
+
+***Prerequisites***
+* You reviewed the information about available customizations in [About customizing your Helm installation](#about-customizing-your-helm-installation).
+* If you're installing from a private registry, you [added the Calico Cloud images to a private registry](setup-private-registry.mdx), and you have the following information about the registry:
+  * Registry secret name
+    :::note
+    If your private registry requires credentials, create a `calico-cloud` namespace on your cluster.
+    Then, create an image pull secret and use this name for the **Registry Secret Name**.
+    :::
+  * Image registry
+  * Image path
+
+1. Add the Calico Cloud Helm repository to your local client:
+
+   ```bash
+   helm repo add calico-cloud https://installer.calicocloud.io/charts --force-update
+   ```
+
+1. Save the default values definitions to your workstation so you can edit them locally:
+   ```bash
+   helm show values calico-cloud/calico-cloud > <custom-values>.yaml
+   ```
+   All editable values are provided in the default values definitions.
+
+1. Add values for the required parameters, `install.clusterName` and `install.calicoCloudVersion`.
+
+   ```yaml title="Example from values.yaml file with clusterName and calicoCloudVersion"
+   installer:
+     clusterName: example-cluster
+     calicoCloudVersion: {{cloudUserVersion}}
+   ```
+
+1. Add values for the optional parameters.
+   For each resource you want to edit, uncomment the object, add a value, and save.
+
+   ```yaml title="Example from values.yaml file with compliance reports disabled"
+   installer:
+     components:
+       compliance:
+         enabled: false
+   ```
+
 ## Install Calico Cloud as part of an automated workflow
 
 You can install Calico Cloud using repeatable kubectl or Helm commands together with valid client credentials.
@@ -47,69 +155,40 @@ These commands can be added to any automated workflow.
 ***Prerequisites***
 
 * You have generated a set of client credentials and you know the path to your secret.
-* You have at least one cluster that meets our [system requirements](system-requirements.mdx).
-* You have kubectl access to the cluster.
-* You have installed Helm 3.0 or later on your workstation.
+* You have a `values.yaml` file with your customizations.
 
-1. Apply the Calico Cloud installer manifests to your cluster.
-
-   <Tabs>
-   <TabItem value="kubectl" label="kubectl">
+1. Add the Calico Cloud Helm repository to your local client.
 
    ```bash
-   kubectl apply -f https://installer.calicocloud.io/manifests/cc-operator/latest/deploy.yaml
+   helm repo add calico-cloud https://installer.calicocloud.io/charts --force-update
    ```
 
-   </TabItem>
-   <TabItem value="helm" label="Helm">
+1. Add the Calico Cloud custom resource definitions:
 
    ```bash
-   helm repo add calico-cloud https://installer.calicocloud.io/charts --force-update && \
    helm upgrade --install calico-cloud-crds calico-cloud/calico-cloud-crds \
    --namespace calico-cloud \
    --create-namespace
    ```
 
-   </TabItem>
-   </Tabs>
-
 1. Apply the client credentials secret to your cluster.
-   Note that in this example we are applying the secret directly to the cluster, but we recommend using Secret Management System
 
    ```bash
-   kubectl apply -f <my-key-name.yaml>
+   kubectl apply -f <key-name.yaml>
    ```
 
-1. Configure and apply the Calico Cloud installer CR.
+   :::important
+   You should keep track of this with a secret management system.
+   :::
 
-  <Tabs>
-    <TabItem value="kubectl" label="kubectl">
+1. Apply the Calico Cloud installer custom resource with your customizations in the `values.yaml` file.
 
-    ```bash
-    kubectl apply -f - <<EOF
-    apiVersion: operator.calicocloud.io/v1
-    kind: Installer
-    metadata:
-    name: default
-    namespace: calico-cloud
-    spec:
-    # clusterName is the unique name this cluster will have in Calico Cloud
-    clusterName: my-cluster
-    # calicoCloudVersion is the version to install
-    calicoCloudVersion: {{cloudUserVersion}}
-    EOF
-    ```
-    </TabItem>
-    <TabItem value="helm" label="Helm">
+   ```bash
+   helm upgrade --install calico-cloud calico-cloud/calico-cloud \
+   --namespace calico-cloud \
+   -f <custom-values>.yaml
+   ```
 
-    ```bash
-    helm upgrade --install calico-cloud calico-cloud/calico-cloud \
-    --namespace calico-cloud \
-    # installer.clusterName is the unique name this cluster will have in Calico Cloud
-    --set installer.clusterName=my-cluster \
-    # installer.calicoCloudVersion is the version to install
-    --set installer.calicoCloudVersion={{cloudUserVersion}}
-    ```
+## Additional resources
 
-    </TabItem>
-  </Tabs>
+* [Calico Cloud installation reference](https://docs.tigera.io/calico-cloud/reference/installation/api)

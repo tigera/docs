@@ -1,62 +1,143 @@
 ---
 description: Review cluster requirements to connect to Calico Cloud.
-redirect_from:
-  - /install/system-requirements
-  - /get-started/connect/system-requirements
 ---
 
 # System requirements
 
-### Step 1: Verify cluster
+Before you connect your cluster to Calico Cloud, make sure your cluster meets the system requirements.
+Your cluster must already have a CNI installed before you can connect to Calico Cloud.
 
 <!--  This file is referenced in the manager UI and its location should not be changed with accounting for references from pendo/manager UI. A symlink so this file exists at install/system-requirements.  -->
 
-Verify that your cluster meets these requirements.
+## Kubernetes distributions and CNIs
 
-| Required                    | Supported                                                    |
-| --------------------------- | ------------------------------------------------------------ |
-| **Platforms**               | All of the Calico Open Source [Kubernetes deployments](https://docs.projectcalico.org/getting-started/kubernetes/), except: <br/><br/>- OpenShift<br />- IBM Cloud Kubernetes Service (IKS)<br/>- K3s <br />- Most clusters with Windows nodes. (We support Windows nodes on AKS.)<br />- RKE |
-| **Architecture**            | Only AMD64                                                   |
-| **Kubernetes version**      | - Minimum: v1.25<br/>- Maximum: v1.29<br /><br />If you have a later version than the maximum, contact [Support](https://support.tigera.io/). |
-| **CNIs**                    | - Calico CNI v3.20 to v3.27<br />- Amazon VPC CNI<br/>- Azure CNI<br/>- GKE CNI |
-| **Browsers for Manager UI** | {{prodname}} supports the latest version and "latest minus one" versions of the following browsers:<br/><br/>- Chrome<br/>- Safari<br/>- Firefox |
+Calico Cloud works with Kubernetes on self-provisioned infrastructure and on managed Kubernetes distributions.
+To use Calico Cloud for both networking and network policy, your cluster must have Calico Open Source installed before you connect to Calico Cloud.
+For most managed distributions, you can use the provider's CNI for networking and use Calico Cloud for network policy.
 
-### Step 2: Verify cluster is not managed by a Kubernetes reconciler
+| Distribution | Supported CNIs |
+| --- | --- |
+| Kubernetes on self-provisioned infrastructure | - Calico Open Source 3.20 or later |
+| Amazon Elastic Kubernetes Service | - Calico Open Source 3.20 or later<br/> - Amazon VPC CNI |
+| Azure Kubernetes Service | - Calico Open Source 3.20 or later<br/> - Azure CNI |
+| Google Kubernetes Engine | - Calico Open Source 3.20 or later<br/> - GKE CNI |
+| Rancher Kubernetes Engine 2 | - Calico Open Source 3.20 or later |
 
-{{prodname}} cannot be installed on clusters that are managed by any kind of Kubernetes reconciler (for example, Addon-manager). To verify, look for an annotation called `addonmanager.kubernetes.io/mode` on either of the following resources. (The resources may not exist).
+:::note
 
-- `tigera-operator` deployment in the `tigera-operator` namespace (Installation on AKS may still work if the mode is Reconcile, see [AKS](aks.mdx#verify-addonmanager-is-compatible) for an additional check.)
-- `calico-node` daemonset in the `kube-system` namespace
+The Kubernetes distributions listed above are those that Tigera currently tests and supports for Calico Cloud.
+You may be able to connect clusters on other distributions with Calico Open Source installed as the CNI.
+For more information about connecting other cluster types to Calico Cloud, [contact Support](https://tigeraio.my.site.com/community/s/login/).
 
-If the following command finds addonmanager on either of the resources, then Addon-manager is being used. Find a different cluster to use.
+:::
 
-```bash
-kubectl get <type> -n <namespace> <resource-name> -o yaml | grep ' addonmanager.kubernetes.io/mode:'
-```
+## Kubernetes versions
 
-### Step 3: Prepare your infrastructure to connect to {{prodname}}
+Your Kubernetes distribution must be based on one of the following Kubernetes versions:
+* Kubernetes 1.30
+* Kubernetes 1.29
+* Kubernetes 1.28
 
-Pods running in your Kubernetes cluster must allow outbound traffic to the following endpoints:
+## Architectures
 
-- `https://installer.calicocloud.io:443/*`
-- `https://www.calicocloud.io:443/api/*`
-- `https://client-auth.calicocloud.io:443/*`
-- TCP to `<management-cluster>.calicocloud.io:9000`
+Calico Cloud can be installed on nodes based on the following chip architectures:
+* x86-64
+* ARM64
 
-For each node, Docker must be able to pull images from the following endpoints:
+## Browser support for the Manager UI web console
 
-* `quay.io`
-* `cdn01.quay.io`
-* `cdn02.quay.io`
-* `us-docker.pkg.dev`
+To access the Manager UI web console, you can use latest two versions of the following web browsers:
+* Chrome
+* Safari
 
-These connections must be allowed by your Kubernetes cluster and also by the rest of your infrastructure.
-You won't be able to use {{prodname}} if other elements of your infrastructure, such as firewalls or security groups, restrict access to these endpoints.
+## Kubernetes reconcilers
 
-### Step 4: Verify platform-specific requirements
+* {{prodname}} cannot be usually be installed on clusters that are managed by any kind of Kubernetes reconciler (for example, Addon-manager). To verify, look for an annotation called `addonmanager.kubernetes.io/mode` on either of the following resources. (The resources may not exist).
 
-If you using one of the following platforms, review further requirements. Otherwise, you are ready to connect your cluster in Manager UI: go to Managed clusters, and click **Connect**.
+  * `tigera-operator` deployment in the `tigera-operator` namespace
+  * `calico-node` daemonset in the `kube-system` namespace
 
-- [AKS](aks.mdx)
-- [GKE](gke.mdx)
-- [RKE2](rke2.mdx)
+  If the following command finds addonmanager on either of the resources, then Addon-manager is being used. Find a different cluster to use.
+
+  ```bash
+  kubectl get <type> -n <namespace> <resource-name> -o yaml | grep ' addonmanager.kubernetes.io/mode:'
+  ```
+* Some AKS clusters with AddonManager are compatible with Calico Cloud.
+  If output from the following command includes "EnsureExists", then the install is compatible with {{prodname}}.
+
+  ```bash
+  kubectl get CustomResourceDefinition installations.operator.tigera.io -o yaml | grep ' addonmanager.kubernetes.io/mode:'
+  ```
+
+  :::note
+
+  If the command output does not include "EnsureExists" and you are on a recent version of AKS your cluster might still be compatible.
+  You can [contact Support](https://tigeraio.my.site.com/community/s/login/)  for more information.
+
+  :::
+
+  :::warning
+
+  If your cluster already has Calico installed by AKS and managed by AddonManager, the standard [uninstall](../operations/disconnect.mdx)
+  is not supported. You will need to reach out to support to create a plan to uninstall {{prodname}}.
+
+  :::
+
+## Distribution-specific requirements
+
+### Azure Kubernetes Service
+
+* Your cluster uses a supported combination of the `networkPlugin` and `networkPolicy` configurations:
+  - `"networkPlugin": "none"` and `"networkPolicy": null`
+  - `"networkPlugin": "azure"` and `"networkPolicy": null`
+  - `"networkPlugin": "azure"` and `"networkPolicy": "calico"`
+
+  You can check your configuration by running the following command:
+
+  ```bash
+  az aks show --query 'networkProfile'
+  ```
+
+* If your cluster uses the Azure CNI, your cluster's CNI is set to [transparent mode](https://docs.microsoft.com/en-us/azure/aks/faq#what-is-azure-cni-transparent-mode-vs-bridge-mode).
+
+  ```bash
+  az vmss run-command invoke -g <resource-group> -n <vmss-name> --scripts "cat /etc/cni/net.d/*" --command-id RunShellScript --instance-id 0 --query 'value[0].message'
+  ```
+
+  If the Azure CNI is enabled, the output should include `"mode": "transparent"`.
+
+### Google Kubernetes Service
+
+* Your cluster's network policy is disabled.
+  To verify, run the following command:
+
+  ```bash
+  gcloud container clusters describe <cluster-name> --flatten addonsConfig.networkPolicyConfig.disabled
+  ```
+
+* Your cluster's Dataplane V2 is set to `null`.
+  To verify, run the following command:
+
+  ```bash
+  gcloud container clusters describe <cluster-name> --flatten networkConfig.datapathProvider
+  ```
+
+### Rancher Kubernetes Engine 2
+
+* The Calico Open Source CNI must not be provisioned by the RKE2 installer.
+  You can connect an RKE2 cluster to Calico Cloud only if:
+  * the RKE2 cluster was installed without a CNI
+  * Calico Open Source was installed manually
+
+  To verify, run this command to see the configuration on your control-plane node:
+
+  ```bash
+  cat /etc/rancher/rke2/config.yaml
+  ```
+  You should see `cni: none`.
+
+  If you're creating a new RKE2 cluster, you can set this configuration as an environment variable (`RKE2_CNI=none`) when you run the installation script.
+
+## Next steps
+
+* [Prepare your cluster for Calico Cloud](prepare-cluster.mdx)
