@@ -3,12 +3,17 @@ export const linkStyles = { textDecoration: 'none' };
 const cardHover = {
   boxShadow: 'rgb(0, 0, 0, 0.2) 2px 2px 8px',
 };
+const shadowTransition = 'box-shadow 0.2s ease-in-out';
 
 export const cardStyles = {
   p: 4,
   h: 'full',
+};
+
+export const lightCardStyles = {
+  ...cardStyles,
   _hover: cardHover,
-  transition: 'box-shadow 0.2s ease-in-out',
+  transition: shadowTransition,
   boxShadow: 'none',
   borderWidth: '1px',
   borderStyle: 'solid',
@@ -23,10 +28,22 @@ export const cardHeaderStyles = {
 export const headingStyles = {
   fontSize: 'md',
   m: 0,
-  color: 'tigeraBlack',
   transition: 'color 0.2s ease-in-out',
+};
+
+export const lightHeadingStyles = {
+  ...headingStyles,
+  color: 'tigeraBlack',
   _hover: {
     color: 'tigeraBlueDark',
+  },
+};
+
+export const darkHeadingStyles = {
+  ...headingStyles,
+  color: 'tigeraGrey.100',
+  _hover: {
+    color: 'var(--tigera-dropdown-item-background-color-hover)',
   },
 };
 
@@ -45,6 +62,7 @@ export const gradientStyles = {
   borderRadius: '6px',
   p: '2px',
   _hover: cardHover,
+  transition: shadowTransition,
 };
 
 export const cardGradientStyles = {
