@@ -10,9 +10,5 @@ export default function ColorModeToggleWrapper(props: any) {
     colorMode.setColorMode(value);
   }, [value]);
 
-  return (
-    <>
-      <ColorModeToggle {...props} />
-    </>
-  );
+  return <ColorModeToggle {...props} />;
 }
