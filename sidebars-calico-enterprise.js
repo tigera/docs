@@ -452,7 +452,7 @@ module.exports = {
     {
       type: 'category',
       label: 'Compliance and security',
-      link: {type: 'doc', id: 'compliance/index'},
+      link: { type: 'doc', id: 'compliance/index' },
       items: [
         'compliance/enable-compliance',
         'compliance/overview',
@@ -725,6 +725,7 @@ module.exports = {
               ],
             },
             'reference/resources/deeppacketinspection',
+            'reference/resources/earlynetworkconfiguration',
             'reference/resources/egressgatewaypolicy',
             'reference/resources/externalnetwork',
             'reference/resources/felixconfig',
