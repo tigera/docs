@@ -24,14 +24,14 @@ access applications, restricted URLs, and scans for particular URLs.
 
 L7 logs capture application interactions from HTTP header data in requests. Data shows what is actually sent in communications between specific pods, providing more specificity than flow logs. (Flow logs capture data only from connections for workload interactions).
 
-{{prodname}} collects L7 logs by sending the selected traffic through an Envoy proxy.
+{{prodname}} collects L7 logs by sending the selected traffic through an Envoy proxy that can be running on the one copy per node or inside each application pod as a sidecar.
 
 L7 logs are visible in the Manager UI, service graph, in the HTTP tab.
 
 ## Before you begin
 
 **Not supported**
-- GKE
+- GKE (only applies to Envoy per node)
 
 **Limitations**
 
@@ -71,11 +71,13 @@ In this step, you will configure L7 logs, select logs for collection, and test t
 
 **Configure the ApplicationLayer resource for L7 logs**
 
+1. Decide which technology it will be used for the Envoy proxy, one Envoy per node or injected sidecar, the sidecar can run on more restricted scenarios, like GKE.
+
 1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) resource named, `tigera-secure` to include a logCollection section of the file, `_api.html` [here](../../../reference/installation/api.mdx).
 
-1. Ensure that the `collectLogs` field is set to `Enabled`.
+1. Ensure that the `collectLogs` field is set to `Enabled` for Envoy per node, or the `sidecarInjection` field is set to `Enabled` for sidecars.
 
-   Example:
+   Example using **sidecars**:
 
    ```yaml
    apiVersion: operator.tigera.io/v1
@@ -84,16 +86,19 @@ In this step, you will configure L7 logs, select logs for collection, and test t
      name: tigera-secure
    spec:
      logCollection:
-       collectLogs: Enabled
+       #collectLogs: Disabled
        logIntervalSeconds: 5
        logRequestsPerInterval: -1
+     sidecarInjection: Enabled
    ```
 
 1. Apply the resource. This creates `l7-log-collector` daemonset in `calico-system` namespace.
 
-1. Ensure that the daemonset progresses and `l7-collector` and `envoy-proxy` containers inside the daemonset are in a `Running` state.
+1. Ensure that the daemonset progresses and `l7-collector` daemonset is fully deployed.
 
 **Select traffic for L7 log collection**
+
+For **Envoy per node**:
 
 1. Annotate the services you wish to collect L7 logs as shown.
 
@@ -110,6 +115,22 @@ In this step, you will configure L7 logs, select logs for collection, and test t
 After annotating a service for L7 log collection, only newly-established connections through that service are proxied by Envoy. Connections established before the service is annotated are not proxied or interrupted, and no logs are generated.
 
 Conversely, when a service is deselected, any previous connections established through the annotated service continue to be proxied by Envoy until they are terminated, and logs are generated.
+
+For **sidecars**:
+
+This approach demands your pods to be recreated.
+
+1. Patch your application deployments you wish to collect L7 logs as shown.
+
+   ```bash
+   kubectl patch deployment <deployment-name> -n <deployment-namespace> -p '{"spec":{"template":{"metadata":{"labels":{"applicationlayer.projectcalico.org/sidecar":"true"},"annotations":{"applicationlayer.projectcalico.org/logging":"Enabled"}}}}}'
+   ```
+
+2. To disable the L7 log collection, remove the label and annotation.
+
+   ```bash
+   kubectl patch deployment <deployment-name> -n <deployment-namespace> --type='json' -p '[{"op":"remove","path":"/spec/template/metadata/labels/applicationlayer.projectcalico.org~1sidecar"},{"op":"remove","path":"/spec/template/metadata/annotations/applicationlayer.projectcalico.org~1logging"}]'
+   ```
 
 **Test your configuration**
 

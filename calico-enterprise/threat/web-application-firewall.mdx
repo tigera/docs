@@ -24,7 +24,7 @@ Historically, web application firewalls (WAFs) were deployed at the edge of your
 
 ### About {{prodname}} WAF
 
-WAF is deployed in your cluster along with Envoy DaemonSet. {{prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry-standard
+WAF is deployed in your cluster along with Envoy DaemonSet, or with Envoy injected sidecars. {{prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry-standard
 [ModSecurity](https://owasp.org/www-project-modsecurity-core-rule-set/) with OWASP Core Rule Set `v4.0.0-rc2` with some modifications for Kubernetes workloads.
 
 You simply enable WAF in Manager UI, and determine the services that you want to enable for WAF protection. By default WAF is set to `DetectionOnly` so no traffic will be denied until you are ready to turn on blocking mode.
@@ -40,7 +40,7 @@ This works by matching a single HTTP request against all the configured WAF rule
 ## Before you begin
 
 **Not supported**
-- GKE
+- GKE (for Envoy as DaemonSet)
 
 **Limitations**
 
@@ -49,7 +49,7 @@ WAF cannot be used with:
   - TLS traffic
   - [LoadBalancer services](https://Kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
   - Egress gateways
-  - WireGuard on AKS or EKS (unless you apply a specific kernel variable). Contact Support for help.
+  - WireGuard on AKS or EKS (unless you apply a specific kernel variable, or use Envoy as sidecars). Contact Support for help.
 
 :::note
 When selecting and deselecting traffic for WAF, active connections may be disrupted.
@@ -86,14 +86,6 @@ If you modify the rules, it is recommended to keep your rules in git or similar 
 
 ### Enable WAF
 
-#### (Optional) Deploy a sample application
-If you don’t have an application to test WAF with or don’t want to use it right away against your own application,
-we recommend that you install the [GoogleCloudPlatform/microservices-demo app](https://github.com/GoogleCloudPlatform/microservices-demo):
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/microservices-demo/main/release/kubernetes-manifests.yaml
-```
-
 #### Enable WAF using the CLI
 
 ##### Enable the Policy Sync API in Felix
@@ -105,6 +97,8 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 ```
 
 ##### Enable WAF using kubectl
+
+For **Envoy as DaemonSet**:
 
 In the ApplicationLayer custom resource, named `tigera-secure`, set the `webApplicationFirewall` field to `Enabled`.
 
@@ -119,28 +113,59 @@ spec:
 EOF
 ```
 
-On the Manager UI, click **Threat Defense**, **Web Application Firewall**, **Configure Web Application Firewall**.
+For **sidecar**:
+
+In the ApplicationLayer custom resource, named `tigera-secure`, set the `sidecarInjection` field to `Enabled`.
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: ApplicationLayer
+metadata:
+  name: tigera-secure
+spec:
+  sidecarInjection: Enabled
+EOF
+```
+
+Or, on the Manager UI, click **Threat Defense**, **Web Application Firewall**, **Configure Web Application Firewall**, this will enable the sidecar mode.
 
  <img src="/img/calico-enterprise/waf-config-first-step.png" alt="WAF services" width="600"/>
 
+#### (Optional) Deploy a sample application
+If you don’t have an application to test WAF with or don’t want to use it right away against your own application,
+we recommend that you install the [GoogleCloudPlatform/microservices-demo app](https://github.com/GoogleCloudPlatform/microservices-demo):
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/microservices-demo/main/release/kubernetes-manifests.yaml
+```
+
 ### Apply WAF to services
 
-Now that you have deployed WAF in your cluster, you can select the services you want to protect from application layer attacks.
+Now that you have deployed WAF in your cluster, you can select the services (for Envoy DaemonSet mode), or the deployments (for sidecar mode) you want to protect from application layer attacks.
 
 If you have deployed the sample application, you can apply WAF on a service associated with your app, as follows:
+
+For **Envoy as DaemonSet**:
 ```bash
 kubectl annotate svc frontend -n default --overwrite projectcalico.org/l7-logging=true
 ```
-Alternatively, you can use the Manager UI to apply WAF to the `frontend` service.
 
-In this example, we applied WAF to the `frontend` service. This means that every request that goes through the `frontend` service is inspected.
+For **sidecars**:
+```bash
+kubectl patch deployment frontend -n default -p '{"spec":{"template":{"metadata":{"labels":{"applicationlayer.projectcalico.org/sidecar":"true"},"annotations":{"applicationlayer.projectcalico.org/waf":"Enabled"}}}}}'
+```
+
+Alternatively, you can use the Manager UI to apply WAF to the `frontend` service if you opted for sidecars.
+
+In this example, we applied WAF to the `frontend` pods. This means that every request that goes through the `frontend` service is inspected.
 However, the traffic is not blocked because the WAF rule is set to `DetectionOnly` by default. You can adjust rules and start blocking traffic by [fine-tuning your WAF](#manage-your-waf).
 
 In the previous example, we applied WAF to the `frontend` service of the sample application. Here, we are
 applying WAF to a service of your own application.
 
 1. On the Manager UI, click **Threat Defense**, **Web Application Firewall**.
-2. Select the services you want WAF to inspect, and then click **Confirm Selections**.
+2. Select the deployments you want WAF to inspect, and then click **Confirm Selections**.
 
    <img
     src='/img/calico-enterprise/waf-select-services-3.17.png'
@@ -150,9 +175,9 @@ applying WAF to a service of your own application.
 
 3. On the **Web Application Firewall** page, you can verify that WAF is enabled for a service by locating the service and checking that the **Status** column says **Enabled**.
 
-4. To make further changes to a service, click **Actions**, and then **Enable** or **Disable**.
+4. To make further changes to a deployment, click **Actions**, and then **Enable** or **Disable**.
 
-You have now applied WAF rule sets to your own services, and note that the traffic that goes through the selected services will be alerted but not blocked by default.
+You have now applied WAF rule sets to your own deployments, and note that the traffic that goes through the selected services will be alerted but not blocked by default.
 
 #### Trigger a WAF event
 If you would like to trigger a WAF event for testing purposes, you can simulate an SQL injection attack inside your cluster by crafting a HTTP request with a query string that WAF will detect as an SQL injection attempt.
@@ -339,10 +364,16 @@ To view WAF events In Kibana, select the `tigera_secure_ee_waf*` index pattern.
 
 #### Disable WAF for a service
 
-To disable WAF on a service, use the Actions menu on the WAF board, or use the following command:
+To disable WAF on a service(for Envoy DaemonSet):
 
 ```bash
 kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging-
+```
+
+To disable WAF on a deployment(for sidecars), use the Actions menu on the WAF board, or use the following command:
+
+```bash
+   kubectl patch deployment <deployment-name> -n <deployment-namespace> --type='json' -p '[{"op":"remove","path":"/spec/template/metadata/labels/applicationlayer.projectcalico.org~1sidecar"},{"op":"remove","path":"/spec/template/metadata/annotations/applicationlayer.projectcalico.org~1waf"}]'
 ```
 
 ### Disable WAF feature from your cluster
@@ -376,6 +407,7 @@ metadata:
 spec:
   webApplicationFirewall: Disabled
   applicationLayerPolicy: Enabled
+  sidecarInjection: Disabled
 ```
 
 ###### Invalid YAML
@@ -389,4 +421,5 @@ metadata:
 spec:
   webApplicationFirewall: Disabled
   applicationLayerPolicy: Disabled
+  sidecarInjection: Disabled
 ```
