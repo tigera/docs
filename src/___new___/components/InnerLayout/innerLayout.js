@@ -5,13 +5,10 @@ import HomepageHeader from '../HomepageHeader';
 import ProductComparison from '../ProductComparison';
 import ProductInfo from '../ProductInfo';
 import FeatureTableComparison from '../FeatureTableComparison';
-import {useColorMode} from '@docusaurus/theme-common';
 
 import {theme} from '../../theme';
 
-import {Grid, GridItem} from '@chakra-ui/react';
-
-import {ChakraProvider} from '@chakra-ui/react';
+import {Grid, GridItem, useColorMode} from '@chakra-ui/react';
 
 export default function Home() {
     const {siteConfig} = useDocusaurusContext();
