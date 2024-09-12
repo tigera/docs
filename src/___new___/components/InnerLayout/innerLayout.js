@@ -15,8 +15,6 @@ export default function Home() {
     const {colorMode} = useColorMode();
     const isDarkMode = colorMode === 'dark';
 
-    console.log({isDarkMode})
-
   return (
     <main>
       <HomepageHeader
