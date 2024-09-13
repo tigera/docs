@@ -1,5 +1,5 @@
 import { useColorModeValue } from '@chakra-ui/react';
-import { useDocById } from '@docusaurus/theme-common/internal';
+import { useDocById } from '@docusaurus/plugin-content-docs/client';
 import React from 'react';
 import { useDocUrl } from '../../hooks';
 import CardLink from './cardLink';
