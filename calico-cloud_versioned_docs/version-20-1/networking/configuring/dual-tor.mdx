@@ -2,6 +2,9 @@
 description: Configure a dual plane cluster for redundant connectivity between workloads.
 ---
 
+import variables from '@site/calico-cloud_versioned_docs/version-20-1/variables';
+import CodeBlock from '@theme/CodeBlock';
+
 # Deploy a dual ToR cluster
 
 ## Big picture
@@ -481,11 +484,11 @@ resources after successful startup.
 for dual ToR setup it must also run as a container after each boot of a dual-homed node.
 For example:
 
-```
+<CodeBlock language=''>
 podman run --privileged --net=host \
     -v /calico-early:/calico-early -e CALICO_EARLY_NETWORKING=/calico-early/cfg.yaml \
-    {variables.registry}{variables.imageNames.node}:latest
-```
+    \{variables.registry}\{variables.imageNames.node}:latest
+</CodeBlock>
 
 The environment variable `CALICO_EARLY_NETWORKING` must point to the
 EarlyNetworkConfiguration prepared above, so that EarlyNetworkConfiguration YAML must be
@@ -498,7 +501,7 @@ your particular platform, but that illustrates the important points.
 
 Firstly, a "calico-early" service that runs the Calico early networking on each boot:
 
-```
+<CodeBlock language=''>
 [Unit]
 Wants=network-online.target
 After=network-online.target
@@ -508,10 +511,10 @@ ExecStartPre=/bin/sh -c "rm -f /etc/systemd/system/kubelet.service.d/20-nodenet.
 ExecStartPre=-/bin/podman rm -f calico-early
 ExecStartPre=/bin/mkdir -p /etc/calico-early
 ExecStartPre=/bin/sh -c "test -f /etc/calico-early/details.yaml || /bin/curl -o /etc/calico-early/details.yaml http://172.31.1.1:8080/calico-early/details.yaml"
-ExecStart=/bin/podman run --rm --privileged --net=host --name=calico-early -v /etc/calico-early:/etc/calico-early -e CALICO_EARLY_NETWORKING=/etc/calico-early/details.yaml {variables.registry}{variables.imageNames.node}:latest
+ExecStart=/bin/podman run --rm --privileged --net=host --name=calico-early -v /etc/calico-early:/etc/calico-early -e CALICO_EARLY_NETWORKING=/etc/calico-early/details.yaml \{variables.registry}\{variables.imageNames.node}:latest
 [Install]
 WantedBy=multi-user.target
-```
+</CodeBlock>
 
 :::note
 
