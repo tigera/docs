@@ -8,7 +8,7 @@ const {
   sleep,
 } = require('crawlee');
 import {decode} from 'html-entities';
-const linkChecker = require('../src/utils/linkChecker');
+import linkChecker from '../src/utils/linkChecker';
 import YAML from 'yaml';
 import needle from 'needle';
 

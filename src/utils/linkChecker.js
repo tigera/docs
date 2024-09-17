@@ -1,4 +1,4 @@
-const urlCheck = require('./urlCheck');
+import urlCheck from './urlCheck';
 const LC = 'LINK-CHECK',
   DEAD = 'dead',
   SKIPPED = 'skipped',
