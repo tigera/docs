@@ -499,7 +499,7 @@ const config = {
   },
 };
 
-module.exports = config;
+export default config
 
 function generateEditUrl(params) {
   const { versionDocsDirPath, docPath } = params;
