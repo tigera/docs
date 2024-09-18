@@ -125,12 +125,12 @@ it can tag-team the BGP role with Calico's regular BGP service running inside th
   stable IP address continues to be advertised to other nodes. The cycle can now repeat
   from the "Initially" state above.
 
-  :::note
+:::note
 
-  The default graceful restart period is 120s for traditional BGP GR and
-  3600s for LLGR.
+The default graceful restart period is 120s for traditional BGP GR and
+3600s for LLGR.
 
-  :::
+:::
 
 ### BGP configuration for rapid outage detection
 
@@ -256,214 +256,215 @@ longer matters if there is any other programming of the true default route on th
     the ToR routers in its rack. For example, if your rack 'A' has ToRs with IPs
     172.31.11.100 and 172.31.12.100 and the rack AS number is 65001:
 
-    ```yaml
-    apiVersion: projectcalico.org/v3
-    kind: BGPPeer
-    metadata:
-      name: ra1
-    spec:
-      nodeSelector: "rack == 'ra' || rack == 'ra_single'"
-      peerIP: 172.31.11.100
-      asNumber: 65001
-      sourceAddress: None
-    ---
-    apiVersion: projectcalico.org/v3
-    kind: BGPPeer
-    metadata:
-      name: ra2
-    spec:
-      nodeSelector: "rack == 'ra'"
-      peerIP: 172.31.12.100
-      asNumber: 65001
-      sourceAddress: None
-    ```
+```yaml
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: ra1
+spec:
+  nodeSelector: "rack == 'ra' || rack == 'ra_single'"
+  peerIP: 172.31.11.100
+  asNumber: 65001
+  sourceAddress: None
+---
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: ra2
+spec:
+  nodeSelector: "rack == 'ra'"
+  peerIP: 172.31.12.100
+  asNumber: 65001
+  sourceAddress: None
+```
 
-    :::note
+:::note
 
-    The effect of the `nodeSelector` fields here is that any node with label
-    `rack: ra` will peer with both these ToRs, while any node with label `rack: ra_single` will peer with only the first ToR. For optimal dual ToR function and
-    resilience, nodes in rack 'A' should be labelled `rack: ra`, but `rack: ra_single`
-    can be used instead on any nodes which cannot be dual-homed.
+The effect of the `nodeSelector` fields here is that any node with label
+`rack: ra` will peer with both these ToRs, while any node with label `rack: ra_single` will peer with only the first ToR. For optimal dual ToR function and
+resilience, nodes in rack 'A' should be labelled `rack: ra`, but `rack: ra_single`
+can be used instead on any nodes which cannot be dual-homed.
 
-    :::
+:::
 
-    Repeat for as many racks as there are in your cluster. Each rack needs a new pair of
-    BGPPeer resources with its own ToR addresses and AS number, and `nodeSelector` fields
-    matching the nodes that should peer with its ToR routers.
+Repeat for as many racks as there are in your cluster. Each rack needs a new pair of
+BGPPeer resources with its own ToR addresses and AS number, and `nodeSelector` fields
+matching the nodes that should peer with its ToR routers.
 
-    Depending on what your ToR supports, consider also setting these fields in each
-    BGPPeer:
+Depending on what your ToR supports, consider also setting these fields in each
+BGPPeer:
 
-    - `failureDetectionMode: BFDIfDirectlyConnected` to enable BFD, when possible, for
-      fast failure detection.
+- `failureDetectionMode: BFDIfDirectlyConnected` to enable BFD, when possible, for
+  fast failure detection.
 
-      :::note
+:::note
 
-      {{prodname}} only supports BFD on directly connected peerings, but
-      in practice nodes are normally directly connected to their ToRs.
+{{prodname}} only supports BFD on directly connected peerings, but
+in practice nodes are normally directly connected to their ToRs.
 
-      :::
+:::
 
-    - `restartMode: LongLivedGracefulRestart` to enable LLGR handling when the node needs
-      to be restarted, if your ToR routers support LLGR. If not, we recommend instead
-      `maxRestartTime: 10s`.
+- `restartMode: LongLivedGracefulRestart` to enable LLGR handling when the node needs
+  to be restarted, if your ToR routers support LLGR. If not, we recommend instead
+  `maxRestartTime: 10s`.
 
-    - `birdGatewayMode: DirectIfDirectlyConnected` to enable the "direct" next hop
-      algorithm, if that is helpful for optimal interworking with your ToR routers.
+- `birdGatewayMode: DirectIfDirectlyConnected` to enable the "direct" next hop
+  algorithm, if that is helpful for optimal interworking with your ToR routers.
 
-      :::note
+:::note
 
-      For directly connected BGP peerings, BIRD provides two gateway
-      computation modes, "direct" and "recursive".
+For directly connected BGP peerings, BIRD provides two gateway
+computation modes, "direct" and "recursive".
 
-      "recursive" is the default, but "direct" can give better results when the ToR
-      also acts as the route reflector (RR) for the rack.
-      Specifically, a combined ToR/RR should ideally keep the BGP next hop intact (aka
-      "next hop keep") when reflecting routes from other nodes in the same rack, but
-      add itself as the BGP next hop (aka "next hop self") when forwarding routes from
-      outside the rack. If your ToRs can be configured to do that, fine.
-      If they cannot, an effective workaround is to configure the ToRs to do "next hop
-      keep" for all routes, with "gateway direct" on the {{prodname}} nodes. In
-      effect the “gateway direct” applies a “next hop self” when needed, but otherwise
-      not.
+"recursive" is the default, but "direct" can give better results when the ToR
+also acts as the route reflector (RR) for the rack.
+Specifically, a combined ToR/RR should ideally keep the BGP next hop intact (aka
+"next hop keep") when reflecting routes from other nodes in the same rack, but
+add itself as the BGP next hop (aka "next hop self") when forwarding routes from
+outside the rack. If your ToRs can be configured to do that, fine.
+If they cannot, an effective workaround is to configure the ToRs to do "next hop
+keep" for all routes, with "gateway direct" on the {{prodname}} nodes. In
+effect the “gateway direct” applies a “next hop self” when needed, but otherwise
+not.
 
-      :::
+:::
 
-1.  Prepare this BGPConfiguration resource to [disable the full node-to-node     mesh](bgp.mdx#disable-the-default-bgp-node-to-node-mesh):
+2.  Prepare this BGPConfiguration resource to [disable the full node-to-node mesh](bgp.mdx#disable-the-default-bgp-node-to-node-mesh):
 
-    ```yaml
-    apiVersion: projectcalico.org/v3
-    kind: BGPConfiguration
-    metadata:
-      name: default
-    spec:
-      nodeToNodeMeshEnabled: false
-    ```
+```yaml
+apiVersion: projectcalico.org/v3
+kind: BGPConfiguration
+metadata:
+  name: default
+spec:
+  nodeToNodeMeshEnabled: false
+```
 
-1.  Prepare disabled IPPool resources for the CIDRs from which you will allocate stable
+3.  Prepare disabled IPPool resources for the CIDRs from which you will allocate stable
     addresses for dual-homed nodes. For example, if the nodes in rack 'A' will have
     stable addresses from 172.31.10.0/24:
 
-    ```yaml
-    apiVersion: projectcalico.org/v3
-    kind: IPPool
-    metadata:
-      name: ra-stable
-    spec:
-      cidr: 172.31.10.0/24
-      disabled: true
-      nodeSelector: all()
-    ```
+```yaml
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+  name: ra-stable
+spec:
+  cidr: 172.31.10.0/24
+  disabled: true
+  nodeSelector: all()
+```
 
-    If the next rack uses a different CIDR, define a similar IPPool for that rack, and so
-    on.
+If the next rack uses a different CIDR, define a similar IPPool for that rack, and so
+on.
 
-    :::note
+:::note
 
-    These IPPool definitions tell {{prodname}}'s BGP component to export
-    routes within the given CIDRs, which is essential for the core BGP infrastructure to
-    learn how to route to each stable address. `disabled: true` tells {{prodname}}
-    _not_ to use these CIDRs for pod IPs.
+These IPPool definitions tell {{prodname}}'s BGP component to export
+routes within the given CIDRs, which is essential for the core BGP infrastructure to
+learn how to route to each stable address. `disabled: true` tells {{prodname}}
+_not_ to use these CIDRs for pod IPs.
 
-    :::
+:::
 
-1.  Prepare an enabled IPPool resource for your default CIDR for pod IPs. For example:
+4.  Prepare an enabled IPPool resource for your default CIDR for pod IPs. For example:
 
-    ```yaml
-    apiVersion: projectcalico.org/v3
-    kind: IPPool
-    metadata:
-      name: default-ipv4
-    spec:
-      cidr: 10.244.0.0/16
-      nodeSelector: all()
-    ```
+```yaml
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+  name: default-ipv4
+spec:
+  cidr: 10.244.0.0/16
+  nodeSelector: all()
+```
 
-    :::note
+:::note
 
-    The CIDR must match what you specify elsewhere in the Kubernetes
-    installation. For example, `networking.clusterNetwork.cidr` in OpenShift's install
-    config, or `--pod-network-cidr` with kubeadm. You should not specify `ipipMode` or
-    `vxlanMode`, as these are incompatible with dual ToR operation. `natOutgoing` can
-    be omitted, as here, if your core infrastructure will perform an SNAT for traffic
-    from pods to the Internet.
+The CIDR must match what you specify elsewhere in the Kubernetes
+installation. For example, `networking.clusterNetwork.cidr` in OpenShift's install
+config, or `--pod-network-cidr` with kubeadm. You should not specify `ipipMode` or
+`vxlanMode`, as these are incompatible with dual ToR operation. `natOutgoing` can
+be omitted, as here, if your core infrastructure will perform an SNAT for traffic
+from pods to the Internet.
 
-    :::
+:::
 
-1.  Prepare an EarlyNetworkConfiguration resource to specify the additional information
+5.  Prepare an EarlyNetworkConfiguration resource to specify the additional information
     that is needed for each node in a multi-rack dual ToR cluster:
 
-    - The stable address for the node.
-    - Its BGP AS number.
-    - The IPs that the node should peer with, when {{nodecontainer}} runs
-      as a container for early networking setup after each node boot.
-    - Any labels that the node should have, so as to match the right BGPPeer definitions
-      for its rack, when {{nodecontainer}} runs as a Kubernetes pod.
+- The stable address for the node.
+- Its BGP AS number.
+- The IPs that the node should peer with, when {{nodecontainer}} runs
+  as a container for early networking setup after each node boot.
+- Any labels that the node should have, so as to match the right BGPPeer definitions
+  for its rack, when {{nodecontainer}} runs as a Kubernetes pod.
 
-    <br />
-    With OpenShift, also add a toplevel `platform: openshift` setting.
+<br />
 
-    :::note
+With OpenShift, also add a top level `platform: openshift` setting.
 
-    `platform: openshift` triggers additional per-node setup that is needed
-    during OpenShift's bootstrapping phase.
+:::note
 
-    :::
+`platform: openshift` triggers additional per-node setup that is needed
+during OpenShift's bootstrapping phase.
 
-    For example, with IP addresses and AS numbers similar as for other resources above:
+:::
 
-    ```yaml noValidation
+For example, with IP addresses and AS numbers similar as for other resources above:
+
+```yaml noValidation
+apiVersion: projectcalico.org/v3
+kind: EarlyNetworkConfiguration
+spec:
+  platform: openshift
+  nodes:
+     # worker1
+    - interfaceAddresses:
+        - 172.31.11.3
+        - 172.31.12.3
+      stableAddress:
+        address: 172.31.10.3
+      asNumber: 65001
+      peerings:
+        - peerIP: 172.31.11.100
+        - peerIP: 172.31.12.100
+      labels:
+        rack: ra
+     # worker2
+    - interfaceAddresses:
+        - 172.31.21.4
+        - 172.31.22.4
+      stableAddress:
+        address: 172.31.20.4
+      asNumber: 65002
+      peerings:
+        - peerIP: 172.31.21.100
+        - peerIP: 172.31.22.100
+      labels:
+        rack: rb
+    ...
+```
+
+6.  Prepare a ConfigMap resource named "bgp-layout", in namespace "tigera-operator", that
+    wraps the EarlyNetworkConfiguration like this:
+
+```yaml noValidation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bgp-layout
+  namespace: tigera-operator
+data:
+  earlyNetworkConfiguration: |
     apiVersion: projectcalico.org/v3
     kind: EarlyNetworkConfiguration
     spec:
-      platform: openshift
       nodes:
-         # worker1
+        # worker1
         - interfaceAddresses:
-            - 172.31.11.3
-            - 172.31.12.3
-          stableAddress:
-            address: 172.31.10.3
-          asNumber: 65001
-          peerings:
-            - peerIP: 172.31.11.100
-            - peerIP: 172.31.12.100
-          labels:
-            rack: ra
-         # worker2
-        - interfaceAddresses:
-            - 172.31.21.4
-            - 172.31.22.4
-          stableAddress:
-            address: 172.31.20.4
-          asNumber: 65002
-          peerings:
-            - peerIP: 172.31.21.100
-            - peerIP: 172.31.22.100
-          labels:
-            rack: rb
-        ...
-    ```
-
-1.  Prepare a ConfigMap resource named "bgp-layout", in namespace "tigera-operator", that
-    wraps the EarlyNetworkConfiguration like this:
-
-    ```yaml noValidation
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: bgp-layout
-      namespace: tigera-operator
-    data:
-      earlyNetworkConfiguration: |
-        apiVersion: projectcalico.org/v3
-        kind: EarlyNetworkConfiguration
-        spec:
-          nodes:
-            # worker1
-            - interfaceAddresses:
-        ...
-    ```
+    ...
+```
 
 :::note
 
