@@ -15,5 +15,8 @@ perl -0777 -pi -e 's/(<p[^>]*>)([\s\S]*?)(<\/p>)/$1\n$2\n$3/g' ${file}
 perl -0777 -pi -e 's/(<h3[^>]*>)([\s\S]*?)\n(<\/h3>)/$1$2$3/g' ${file}
 # Moves all <td> </td> tags to their own line.
 perl -0777 -pi -e 's/(<td>)([\s\S]*?)(<\/td>)/$1\n$2\n$3/g' ${file}
+# Simplifies anchors for headings
+perl -0777 -pi -e "s/(id=\")(operator\\.tigera\\.io\\/v1\\.)(.+?)(\")/\$1\$3\$4/g" ${file}
+perl -0777 -pi -e "s/(href=\"#)(operator\\.tigera\\.io\\/v1\\.)(.+?)(\")/\$1\$3\$4/g" ${file}
 
 exit
