@@ -707,6 +707,7 @@ module.exports = {
           link: { type: 'doc', id: 'reference/resources/index' },
           items: [
             'reference/resources/overview',
+            'reference/resources/bfdconfig',
             'reference/resources/bgpconfig',
             'reference/resources/bgppeer',
             'reference/resources/bgpfilter',
