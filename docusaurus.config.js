@@ -472,10 +472,6 @@ const config = {
             path: '/',
             banner: 'none',
           },
-          '19-2': {
-            path: '/',
-            banner: 'none',
-          },
         },
         sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
         beforeDefaultRemarkPlugins: [variablesPlugin],
