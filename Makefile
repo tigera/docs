@@ -178,7 +178,7 @@ update-cloud-image-list:
 	sed -i  '/^\$$INSTALLER_IMAGE/,/^)/{/^\$$/!{/^)/!d}}' $(PRODUCT)/get-started/setup-private-registry.mdx
 	dl=$$(cat $(PRODUCT)/variables.js | grep clouddownloadurl | sed -e "s/^[^']*'\([^']*\)'.*$$/\1/" ) && \
 	curl -O $$dl/image-list && \
-	sed -i -e "/^\$$INSTALLER_IMAGE/r image-list" $(PRODUCT)/get-started/connect/setup-private-registry.mdx
+	sed -i -e "/^\$$INSTALLER_IMAGE/r image-list" $(PRODUCT)/get-started/setup-private-registry.mdx
 	rm -f image-list
 
 # Add this back to the netlify target when the missing windows images are addressed in the image-list
