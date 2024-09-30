@@ -26,10 +26,6 @@ const stringifyChildren = (children: React.ReactNode | string) => {
           return child;
         }
 
-        if (!isString(child.type) && child.type.name === 'h1') {
-          return `\n \n# ${child.props.children}\n`;
-        }
-
         if (isString(child.props.children)) {
           return child.props.children;
         }
