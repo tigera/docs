@@ -1,0 +1,109 @@
+---
+description: API for this Calico Cloud resource 
+---
+
+# RuntimeSecurity Custom Resource
+
+The **RuntimeSecurity** custom resource (CR) is used to enable and configure Runtime Security monitoring in a Calico Cloud managed cluster.
+
+### Resource Definition
+
+```yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: runtimesecurities.operator.tigera.io
+spec:
+  detectorConfig:
+    - id: 190
+      disabled: false
+    - id: 330
+      disbaled: True
+  runtimeExceptionList:
+    - matching: regex
+      processInvocation: "/bin/ls*"
+      pod: "not-evil-pod"
+      namespace: "default"
+    - matching: exact
+      pod: "nginx"
+      namespace: default
+    - matching:
+      namespace: "company-operations"
+```
+
+## Runtime Security Definition 
+
+### Metadata
+
+| Field  | Description                                   | Accepted Values                           | Schema |
+| ------ | --------------------------------------------- | ----------------------------------------- | ------ |
+| name   | The name of the runtime security resource.    | Lower-case alphanumeric with optional `-` | string |
+| labels | A set of labels to apply to this resource.    |                                           | map    |
+
+
+### Spec
+
+| Field                    | Description                                                                                  | Accepted Values  | Schema                                                | Default |
+| ------------------------ | -------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------------- | ------- |
+| detectorConfig           | Configuration parameters for a detector in a Calico Cloud managed cluster.                   |                  | [DetectorConfig](#detectorconfig)                     |         |
+| runtimeExceptionList     | List of entries of suspicious processes that are allowed to run that wont generate an event  |                  | [runtimeExceptionList](#runtimeexceptionlist)         | Enabled |
+| runtimereporterdaemonset | Daemonset spec to override the default daemonset spec for runtime reporter                   |                  | [RuntimeReporterDaemonSet](#runtimereporterdaemonset) |         |          
+
+### DetectorConfig 
+
+The `DetectorCongfig` by default is not present but can hold a list of configurations entries for a detector in the Calico Cloud Managed cluster.
+One entry per detector 
+
+| Field    | Description                                                       | Accepted Values | Schema  |
+| -------- | ----------------------------------------------------------------- | --------------- | ------- |
+| id       | The ID of the detector this entry applies too                     |                 | string  |
+| disabled | Boolean represents weather the detector should be disabled or not | True, False     | boolean |
+
+
+### RuntimeExceptionList
+
+This `RuntimeExceptionList` holds a list of entries that contains a list of supported fields by which a user can use to negate the 
+generation of runtime reports.
+
+| Field             | Description                                                                                                            | Accepted Values | Schema  |
+| --------          | ---------------------------------------------------------------------------------------------------------------------- | --------------- | ------- |
+| matching          | Whether the entries are exact matches to fields or considered a regex expression                                       | Exact, Regex    | string  |
+| processInvocation | The exact name or regex expression of the process to which a user wants to negate the generation of runtime logs       |                 | string  |
+| pod               | The exact name or regex expression of the pod(s) to which a user wants to negate the generation of runtime logs        |                 | string  |
+| processInvocation | The exact name or regex expression of the namespace(s) to which a user wants to negate the generation of runtime logs  |                 | string  |
+
+### RuntimeReproterDaemonset
+
+| Field    | Description                                                  | Accepted Values | Schema                      |
+| -------- | ------------------------------------------------------------ |---------------- | --------------------------  |
+| spec     | Spec is the specification of the runtime reporter DaemonSet. |                 | [RuntimeReportDaemonSetSpec](#runtimereporterdaemonsetspec)  |
+
+### RuntimeReportDaemonSetSpec
+
+| Field        | Description                                                                  | Accepted Values | Schema                                   |
+| ------------ | ---------------------------------------------------------------------------- | --------------- | ---------------------------------------- |
+| template     | Template describes the runtime reporter DaemonSet pod that will be created.  |                 | [RuntimeReporterDaemonSetPodTemplateSpec](#runtimereporterdaemonsetpodtemplatespec)  |
+
+### RuntimeReporterDaemonSetPodTemplateSpec
+
+| Field    | Description                                        | Accepted Values | Schema                           |
+| -------- | -------------------------------------------------- | --------------- | -------------------------------- |
+| spec     | Spec is the runtime reporter DaemonSet's PodSpec.  |                 | [RuntimeReporterDaemonSetPodSpec](#runtimereporterdaemonsetpodspec)  |
+
+### RuntimeReporterDaemonSetPodSpec 
+
+If any of the fields below are specified, they will override the default runtime reporter DaemonSet values for these fields. Otherwise they will use the default values
+
+| Field        | Description                                                                               | Accepted Values | Schema                                                                                                         | Default |
+| --------     | ----------------------------------------------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------- | ------- |
+| Containers   | Containers is a list of runtime reporter DaemonSet containers.                            |                 | [RuntimeReporterDaemonSetContainer](#runtimereporterdaemonsetcontainer)                                                                              |         |
+| Affinity     | Affinity is a group of affinity scheduling rules for the runtime reporter DaemonSet pods. |                 | [corev1.Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#affinity-v1-core)       |         |
+| nodeSelector | NodeSelector is the runtime reporter pod's scheduling constraints.                        |                 | map[string]string                                                                                              |         |
+| tolerations  | Tolerations is the runtime reporter pod's tolerations.                                    |                 | [corev1.Tolerations](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#toleration-v1-core)  |         |
+
+### RuntimeReporterDaemonSetContainer
+
+| Field    | Description                                                                        | Accepted Values | Schema                      |
+| -------- | ---------------------------------------------------------------------------------- |---------------- | --------------------------  |
+| name     | Name of the runtime reporter daemonset container                                   |                 | [RuntimeReportDaemonSetSpec](#runtimereporterdaemonsetspec)  |
+| resource | Customization of limits and requests for compute resources such as cpu and memory. |                 | [corev1.ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#resourcerequirements-v1-core) |
