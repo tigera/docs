@@ -4,6 +4,7 @@ description: Install Calico with the VPP dataplane on a Kubernetes cluster.
 
 import variables from '@site/calico_versioned_docs/version-3.28/variables';
 import CodeBlock from '@theme/CodeBlock';
+import Link from '@docusaurus/Link';
 
 # Get started with VPP networking
 
@@ -139,7 +140,7 @@ Before you get started, make sure you have downloaded and configured the [necess
 
 ### Requirements
 
-DPDK provides better performance compared to the standard install but it requires some additional customisations (hugepages, for instance) in the EKS worker instances. We have a bash script, [init_eks.sh]({variables.vppFilesURL}/scripts/init_eks.sh), which takes care of applying the required customizations and we make use of the `preBootstrapCommands` property of `eksctl` [configuration file](https://eksctl.io/usage/schema) to execute the script during the worker node creation. These instructions require the latest version of `eksctl`.
+DPDK provides better performance compared to the standard install but it requires some additional customisations (hugepages, for instance) in the EKS worker instances. We have a bash script, <Link to={`${variables.vppFilesURL}/scripts/init_eks.sh`}>init_eks.sh</Link>, which takes care of applying the required customizations and we make use of the `preBootstrapCommands` property of `eksctl` [configuration file](https://eksctl.io/usage/schema) to execute the script during the worker node creation. These instructions require the latest version of `eksctl`.
 
 ### Provision the cluster
 
@@ -190,23 +191,23 @@ DPDK provides better performance compared to the standard install but it require
 
 4. Finally, time to add nodes to the cluster. Since we need to customize the nodes for DPDK, we will use an `eksctl` config file with the `preBootstrapCommands` property to create the worker nodes. The following command will create a managed nodegroup with 2 t3.large worker nodes in the cluster:
 
-   <CodeBlock language=''>
-   cat \<\<EOF | eksctl create nodegroup -f -
-   apiVersion: eksctl.io/v1alpha5
-   kind: ClusterConfig
-   metadata:
-     name: my-calico-cluster
-     region: us-east-2
-   managedNodeGroups:
-   - name: my-calico-cluster-ng
-     desiredCapacity: 2
-     instanceType: t3.large
-     labels: \{role: worker}
-     preBootstrapCommands:
-       - sudo curl -o /tmp/init_eks.sh "{variables.vppFilesURL}/scripts/init_eks.sh"
-       - sudo chmod +x /tmp/init_eks.sh
-       - sudo /tmp/init_eks.sh
-   EOF
+   <CodeBlock language='bash'>
+    {`cat \<\<EOF | eksctl create nodegroup -f -
+     apiVersion: eksctl.io/v1alpha5
+     kind: ClusterConfig
+     metadata:
+       name: my-calico-cluster
+       region: us-east-2
+     managedNodeGroups:
+     - name: my-calico-cluster-ng
+       desiredCapacity: 2
+       instanceType: t3.large
+       labels: \{role: worker}
+       preBootstrapCommands:
+         - sudo curl -o /tmp/init_eks.sh "${variables.vppFilesURL}/scripts/init_eks.sh"
+         - sudo chmod +x /tmp/init_eks.sh
+         - sudo /tmp/init_eks.sh
+   EOF`}
    </CodeBlock>
 
    Please edit the cluster name, region and other fields as appropriate for your cluster. In case you want to enable ssh access to the EKS worker instances, add the following to the above config file:
