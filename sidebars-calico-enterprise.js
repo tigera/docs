@@ -725,6 +725,7 @@ export default {
               ],
             },
             'reference/resources/deeppacketinspection',
+            'reference/resources/earlynetworkconfiguration',
             'reference/resources/egressgatewaypolicy',
             'reference/resources/externalnetwork',
             'reference/resources/felixconfig',
