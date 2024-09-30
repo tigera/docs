@@ -5,22 +5,47 @@ import styles from './styles.module.css';
 
 type Child = {
   props: {
-    children: string[];
+    children: (string | Child)[];
   };
+  type: string | { name: string };
 };
 
 const isString = (obj: any): obj is string => typeof obj === 'string';
 
-const stringifyChilden = (children: React.ReactNode | string) => {
+const stringifyChildren = (children: React.ReactNode | string) => {
   if (isString(children)) {
     return children;
   }
 
   const childrenArray = React.Children.toArray(children);
 
-  if (childrenArray.some((child) => isValidElement(child))) {
+  if (React.Children.toArray(children).some((child) => isValidElement(child))) {
     return (childrenArray as Child[])
-      .flatMap((child) => (isString(child) ? child : child.props.children))
+      .flatMap((child) => {
+        if (isString(child)) {
+          return child;
+        }
+
+        if (!isString(child.type) && child.type.name === 'h1') {
+          return `\n \n# ${child.props.children}\n`;
+        }
+
+        if (isString(child.props.children)) {
+          return child.props.children;
+        }
+
+        return child.props.children.flatMap((child) => {
+          if (isString(child)) {
+            return child;
+          }
+
+          if (child.type === 'br') {
+            return '\\';
+          }
+
+          return child.props.children;
+        });
+      })
       .join('')
       .replace('\n\n', '\n');
   }
@@ -39,7 +64,7 @@ export default function CodeBlockWrapper(props) {
       ) : (
         <CodeBlock
           {...props}
-          children={stringifyChilden(props.children)}
+          children={stringifyChildren(props.children)}
         />
       )}
     </div>
