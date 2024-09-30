@@ -12,13 +12,13 @@ The **RuntimeSecurity** custom resource (CR) is used to enable and configure Con
 apiVersion: operator.tigera.io/v1
 kind: RuntimeSecurity
 metadata:
-  name: defaultmy-runtimesecurity-config
+  name: default
 spec:
   detectorConfig:
-    - id: 190
-      disabled: false
-    - id: 330
-      disbaled: True
+    - id: execution-container_deployment_command
+      disabled: true
+    - id: discovery-enumeration_of_linux_capabilities
+      disabled: true
   runtimeExceptionList:
     - matching: regex
       processInvocation: "/bin/ls*"
@@ -27,7 +27,7 @@ spec:
     - matching: exact
       pod: "nginx"
       namespace: default
-    - matching:
+    - matching: regex
       namespace: "company-operations"
 ```
 
@@ -35,23 +35,23 @@ spec:
 
 ### Metadata
 
-| Field  | Description                                   | Accepted Values                           | Schema |
-| ------ | --------------------------------------------- | ----------------------------------------- | ------ |
-| name   | The name of the runtime security resource.    | Lower-case alphanumeric with optional `-` | string |
-| labels | A set of labels to apply to this resource.    |                                           | map    |
+| Field  | Description                                   | Accepted Values  | Schema |
+| ------ | --------------------------------------------- | ---------------- | ------ |
+| name   | The name of the runtime security resource.    | default          | string |
+| labels | A set of labels to apply to this resource.    |                  | map    |
 
 
 ### Spec
 
 | Field                    | Description                                                                                  | Accepted Values  | Schema                                                | Default |
 | ------------------------ | -------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------------- | ------- |
-| detectorConfig           | Configuration parameters for a detector in a Calico Cloud managed cluster.                   |                  | [DetectorConfig](#detectorconfig)                     |         |
-| runtimeExceptionList     | List of entries of suspicious processes that are allowed to run that wont generate an event  |                  | [runtimeExceptionList](#runtimeexceptionlist)         | Enabled |
+| detectorConfig           | Configuration that allows particular threat detectors to be disabled                         |                  | [DetectorConfig](#detectorconfig)                     |         |
+| runtimeExceptionList     | List of entries of processes that are allowed to run that won't generate an event            |                  | [runtimeExceptionList](#runtimeexceptionlist)         | Enabled |
 | runtimereporterdaemonset | Daemonset spec to override the default daemonset spec for runtime reporter                   |                  | [RuntimeReporterDaemonSet](#runtimereporterdaemonset) |         |          
 
 ### DetectorConfig 
 
-The `DetectorCongfig` by default is not present but can hold a list of configurations entries for a detector in the Calico Cloud Managed cluster.
+The `DetectorConfig` by default is not present but can be used to disable particular threat detectors in the Calico Cloud Managed cluster.
 One entry per detector 
 
 | Field    | Description                                                       | Accepted Values | Schema  |
@@ -62,15 +62,15 @@ One entry per detector
 
 ### RuntimeExceptionList
 
-This `RuntimeExceptionList` holds a list of entries that contains a list of supported fields by which a user can use to negate the 
+This `RuntimeExceptionList` holds a list of entries that contain a list of supported fields by which a user can negate the 
 generation of runtime reports.
 
 | Field             | Description                                                                                                            | Accepted Values | Schema  |
 | --------          | ---------------------------------------------------------------------------------------------------------------------- | --------------- | ------- |
-| matching          | Whether the entries are exact matches to fields or considered a regex expression                                       | Exact, Regex    | string  |
-| processInvocation | The exact name or regex expression of the process to which a user wants to negate the generation of runtime logs       |                 | string  |
-| pod               | The exact name or regex expression of the pod(s) to which a user wants to negate the generation of runtime logs        |                 | string  |
-| namespace         | The exact name or regex expression of the namespace(s) to which a user wants to negate the generation of runtime logs  |                 | string  |
+| matching          | Whether the entries are exact matches to fields or considered a regular expression                                     | Exact, Regex    | string  |
+| processInvocation | The exact name or regex of the process to which a user wants to negate the generation of runtime logs                  |                 | string  |
+| pod               | The exact name or regex of the pod(s) to which a user wants to negate the generation of runtime logs                   |                 | string  |
+| namespace         | The exact name or regex of the namespace(s) for which a user wants to negate the generation of runtime logs            |                 | string  |
 
 ### RuntimeReporterDaemonset
 
