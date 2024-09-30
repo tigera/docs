@@ -99,23 +99,6 @@ If a malicious or suspicious program is run within the cluster, it will be repor
 
 All detectors are enabled by default. You may want to disable detectors that have a large performance impact and/or produce excessive false positive alerts.
 
-:::note
-
-Both of the following, or removal of the entry are equivalent syntax to enable a detector:
-
-```
-detectorsConfig:
-- disabled: false
-  id: persistence-user_modification
-```
-
-```
-detectorsConfig:
-- id: persistence-user_modification
-```
-
-:::
-
 #### Disable detector via UI
 
 - In Manager UI, go to **Threat defense&nbsp;>&nbsp;Container Threat Detection**.
@@ -123,7 +106,7 @@ detectorsConfig:
 - Navigate to **Detector Settings** tab.
 
 - Find your desired detector in the list and toggle it to be disabled. To re-enable it use the same toggle.
-![Security Events Dashboard](/img/calico-cloud/container-threat-detection-detector-settings.png)
+![CTD Detector Settings](/img/calico-cloud/container-threat-detection-detector-settings.png)
 
 #### Disable detector via RuntimeSecurity Custom Resource
 - Get the ID of the desired detector by disabling in the UI as described above.
@@ -144,12 +127,6 @@ detectorsConfig:
         id: persistence-user_modification
     ```
 
-:::note
-
-If duplicate entries are present. The last entry will take precedence.
-
-:::
-
 - Edit the RuntimeSecurity CR:
 
     To patch entire config:
@@ -162,6 +139,30 @@ If duplicate entries are present. The last entry will take precedence.
     kubectl patch -n tigera-runtime-security runtimesecurities.operator.tigera.io default --type='json' -p='[{"op": "replace", "path": "/spec/detectorsConfig/0", "value":{"id": "persistence-user_modification", "disabled": false}}]'
     ```
 
+- (Optionally) Validate your changes by checking the detector settings page in the UI.
+
+:::note
+
+If duplicate detector IDs are present in the RS CR. The last entry will take precedence.
+
+:::
+
+:::note
+
+Both of the following, or removal of the entry are equivalent syntax to enable a detector:
+
+```
+detectorsConfig:
+- disabled: false
+  id: persistence-user_modification
+```
+
+```
+detectorsConfig:
+- id: persistence-user_modification
+```
+
+:::
 
 ## Container activity logs in Kibana
 
