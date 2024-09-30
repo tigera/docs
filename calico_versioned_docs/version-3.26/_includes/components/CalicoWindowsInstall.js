@@ -2,8 +2,7 @@ import React from 'react';
 
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
-
-import { prodname, prodnameWindows, manifestsUrl } from '../../variables';
+import variables from '@site/calico_versioned_docs/version-3.26/variables';
 
 function CalicoWindowsInstallFirstStep(props) {
   if (props.networkingType === 'vxlan') {
@@ -11,8 +10,8 @@ function CalicoWindowsInstallFirstStep(props) {
       <li>
         Ensure that BGP is disabled.
         <ul>
-          <li>If you installed {prodname} using the manifest, BGP is already disabled.</li>
-          <li>If you installed {prodname} using the operator, run this command:</li>
+          <li>If you installed {variables.prodname} using the manifest, BGP is already disabled.</li>
+          <li>If you installed {variables.prodname} using the operator, run this command:</li>
           <br />
           <CodeBlock language='bash'>
             {`kubectl patch installation default --type=merge -p '{"spec": {"calicoNetwork": {"bgp": "Disabled"}}}'`}
@@ -52,18 +51,18 @@ export default function CalicoWindowsInstall(props) {
     <ol>
       <CalicoWindowsInstallFirstStep {...props} />
       <li>
-        <p>Download the {prodnameWindows} installation manifest.</p>
+        <p>Download the {variables.prodnameWindows} installation manifest.</p>
         <CodeBlock language='bash'>
           {props.networkingType === 'vxlan'
-            ? `curl ${manifestsUrl}/manifests/calico-windows-vxlan.yaml -o calico-windows.yaml`
-            : `curl ${manifestsUrl}/manifests/calico-windows-bgp.yaml -o calico-windows.yaml`}
+            ? `curl ${variables.manifestsUrl}/manifests/calico-windows-vxlan.yaml -o calico-windows.yaml`
+            : `curl ${variables.manifestsUrl}/manifests/calico-windows-bgp.yaml -o calico-windows.yaml`}
         </CodeBlock>
       </li>
       <li>
         <p>
-          Get the cluster's Kubernetes API server host and port, which will be used to update the {prodnameWindows}{' '}
-          config map. The API server host and port is required so that the {prodnameWindows} installation script can
-          create a kubeconfig file for {prodname} services. If your Windows nodes already have {prodnameWindows}{' '}
+          Get the cluster's Kubernetes API server host and port, which will be used to update the {variables.prodnameWindows}{' '}
+          config map. The API server host and port is required so that the {variables.prodnameWindows} installation script can
+          create a kubeconfig file for {variables.prodname} services. If your Windows nodes already have {variables.prodnameWindows}{' '}
           installed manually, skip this step. The installation script will use the API server host and port from your
           node's existing kubeconfig file if the <code>KUBERNETES_SERVICE_HOST</code> and{' '}
           <code>KUBERNETES_SERVICE_PORT</code> variables are not provided in the <code>calico-windows-config</code>{' '}
@@ -137,7 +136,7 @@ kubernetes   172.16.101.157:6443   40m`}
           </li>
           <li>
             <code>KUBERNETES_SERVICE_HOST</code> and <code>KUBERNETES_SERVICE_PORT</code>: The Kubernetes API server
-            host and port (discovered in the previous step) used to create a kubeconfig file for {prodname} services. If
+            host and port (discovered in the previous step) used to create a kubeconfig file for {variables.prodname} services. If
             your node already has an existing kubeconfig file, leave these variables blank.
           </li>
           <li>
@@ -145,12 +144,12 @@ kubernetes   172.16.101.157:6443   40m`}
             match the service-cluster-ip-range used by kube-apiserver.
           </li>
           <li>
-            <code>CNI_BIN_DIR</code>: Path where {prodname} CNI binaries will be installed. This must match the CNI bin
+            <code>CNI_BIN_DIR</code>: Path where {variables.prodname} CNI binaries will be installed. This must match the CNI bin
             value in the ContainerD service configuration. If you used the provided Install-Containerd.ps1 script, you
             should use the CNI bin path value you provided to that script.
           </li>
           <li>
-            <code>CNI_CONF_DIR</code>: Path where {prodname} CNI configuration will be installed. This must match the
+            <code>CNI_CONF_DIR</code>: Path where {variables.prodname} CNI configuration will be installed. This must match the
             CNI conf value in the ContainerD service configuration. If you used the provided Install-Containerd.ps1
             script, you should use the CNI conf path value you provided to that script.
           </li>
@@ -163,7 +162,7 @@ kubernetes   172.16.101.157:6443   40m`}
         </ul>
       </li>
       <li>
-        <p>Apply the {prodnameWindows} installation manifest.</p>
+        <p>Apply the {variables.prodnameWindows} installation manifest.</p>
         <CodeBlock language='bash'>kubectl create -f calico-windows.yaml</CodeBlock>
       </li>
       <li>
@@ -173,7 +172,7 @@ kubernetes   172.16.101.157:6443   40m`}
         </CodeBlock>
         <p>
           After the log <code>Calico for Windows installed</code> appears, installation is complete. Next, the{' '}
-          {prodnameWindows} services are started in separate containers:
+          {variables.prodnameWindows} services are started in separate containers:
         </p>
         <CodeBlock language='bash'>
           kubectl logs -f -n calico-system -l k8s-app=calico-node-windows -c node{'\n'}
@@ -194,7 +193,7 @@ kubernetes   172.16.101.157:6443   40m`}
         <ul>
           <li>
             <p>Download the kube-proxy manifest:</p>
-            <CodeBlock language='bash'>curl {manifestsUrl}/manifests/windows-kube-proxy.yaml -o windows-kube-proxy.yaml</CodeBlock>
+            <CodeBlock language='bash'>curl {variables.manifestsUrl}/manifests/windows-kube-proxy.yaml -o windows-kube-proxy.yaml</CodeBlock>
           </li>
           <li>
             Edit the downloaded manifest

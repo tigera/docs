@@ -44,4 +44,4 @@ class StdIoErrReporter {
   }
 }
 
-module.exports = StdIoErrReporter;
+export default StdIoErrReporter;

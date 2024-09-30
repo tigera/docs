@@ -1,10 +1,10 @@
 // Temporary component for "calico\maintenance\image-options\alternate-registry.mdx"
 
 import React from 'react';
-
 import CodeBlock from '@theme/CodeBlock';
+import variables from '../../variables';
 
-import { imageNames, prodname, registry, releases, tigeraOperator } from '../../variables';
+const { imageNames, prodname, registry, releases, tigeraOperator } = variables;
 
 export default function MaintenanceImageOptionsAlternateRegistry() {
   const pullCmds = renderRetagCommands(

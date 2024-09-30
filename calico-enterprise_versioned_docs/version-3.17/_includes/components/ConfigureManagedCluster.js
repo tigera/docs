@@ -4,7 +4,7 @@ import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
 
-import { baseUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function ConfigureManagedCluster(props) {
   const kubectlCmd = props.kubectlCmd || 'kubectl';
@@ -75,7 +75,7 @@ export default function ConfigureManagedCluster(props) {
         <li>
           <p>
             Add a managed cluster and save the manifest containing a{' '}
-            <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.ManagementClusterConnection`}>
+            <Link href={`${variables.baseUrl}/reference/installation/api#operator.tigera.io/v1.ManagementClusterConnection`}>
               ManagementClusterConnection
             </Link>{' '}
             and a Secret.

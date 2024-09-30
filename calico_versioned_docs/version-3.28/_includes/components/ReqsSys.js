@@ -3,9 +3,9 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import Link from '@docusaurus/Link';
 import Heading from '@theme/Heading';
+import variables from '../../variables';
+import globalVariables from '@site/variables';
 
-import { orchestrators } from '@site/variables';
-import { prodname, baseUrl } from '../../variables';
 
 function NodeRequirementsOSS(props) {
   return (
@@ -22,9 +22,9 @@ function NodeRequirementsOSS(props) {
         </li>
         <li>
           <p>
-            {prodname} must be able to manage <code>cali*</code> interfaces on the host. When IPIP is enabled (the
-            default), {prodname} also needs to be able to manage <code>tunl*</code> interfaces. When VXLAN is enabled,{' '}
-            {prodname} also needs to be able to manage the
+            {variables.prodname} must be able to manage <code>cali*</code> interfaces on the host. When IPIP is enabled (the
+            default), {variables.prodname} also needs to be able to manage <code>tunl*</code> interfaces. When VXLAN is enabled,{' '}
+            {variables.prodname} also needs to be able to manage the
             <code>vxlan.calico</code> interface.
           </p>
         </li>
@@ -32,11 +32,11 @@ function NodeRequirementsOSS(props) {
           <p>
             Linux kernel 3.10 or later with <Link href='#kernel-dependencies'>required dependencies</Link>. The
             following distributions have the required kernel, its dependencies, and are known to work well with{' '}
-            {prodname} and {props.orch}.
+            {variables.prodname} and {props.orch}.
           </p>
           <ul>
             <li>RedHat Linux 7</li>
-            {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.HostProtection) && (
+            {(props.orch === globalVariables.orchestrators.Kubernetes || props.orch === globalVariables.orchestrators.HostProtection) && (
               <>
                 <li>CentOS 7</li>
                 <li>Flatcar Container Linux</li>
@@ -45,12 +45,12 @@ function NodeRequirementsOSS(props) {
                 <li>Debian 8</li>
               </>
             )}
-            {props.orch === orchestrators.OpenShift && (
+            {props.orch === globalVariables.orchestrators.OpenShift && (
               <>
                 <li>RedHat Container OS</li>
               </>
             )}
-            {props.orch === orchestrators.OpenStack && (
+            {props.orch === globalVariables.orchestrators.OpenStack && (
               <>
                 <li>Ubuntu 18.04</li>
                 <li>CentOS 8</li>
@@ -70,25 +70,25 @@ function NotesOSS() {
         <Admonition type='note'>
           <p>
             Many Linux distributions, such as most of the above, include NetworkManager. By default, NetworkManager does
-            not allow {prodname} to manage interfaces. If your nodes have NetworkManager, complete the steps in{' '}
-            <Link href={`${baseUrl}/operations/troubleshoot/troubleshooting#configure-networkmanager`}>
-              Preventing NetworkManager from controlling {prodname} interfaces
+            not allow {variables.prodname} to manage interfaces. If your nodes have NetworkManager, complete the steps in{' '}
+            <Link href={`${variables.baseUrl}/operations/troubleshoot/troubleshooting#configure-networkmanager`}>
+              Preventing NetworkManager from controlling {variables.prodname} interfaces
             </Link>{' '}
-            before installing {prodname}.
+            before installing {variables.prodname}.
           </p>
         </Admonition>
       </div>
       <ul>
         <li>
           If your Linux distribution comes with installed Firewalld or another iptables manager it should be disabled.
-          These may interfere with rules added by {prodname} and result in unexpected behavior.
+          These may interfere with rules added by {variables.prodname} and result in unexpected behavior.
         </li>
       </ul>
       <div className='note'>
         <Admonition type='note'>
           <p>
-            If a host firewall is needed, it can be configured by {prodname} HostEndpoint and GlobalNetworkPolicy. More
-            information about configuration at <Link href={`${baseUrl}/network-policy/hosts`}>Security for host</Link>.
+            If a host firewall is needed, it can be configured by {variables.prodname} HostEndpoint and GlobalNetworkPolicy. More
+            information about configuration at <Link href={`${variables.baseUrl}/network-policy/hosts`}>Security for host</Link>.
           </p>
         </Admonition>
       </div>
@@ -106,13 +106,13 @@ function KeyValueStore(props) {
         Key/value store
       </Heading>
       <p>
-        {prodname} requires a key/value store accessible by all {prodname} components.&nbsp;
+        {variables.prodname} requires a key/value store accessible by all {variables.prodname} components.&nbsp;
         {
           {
             OpenShift: <span>With OpenShift, the Kubernetes API datastore is used for the key/value store.</span>,
             Kubernetes: (
               <span>
-                On Kubernetes, you can configure {prodname} to access an etcdv3 cluster directly or to use the
+                On Kubernetes, you can configure {variables.prodname} to access an etcdv3 cluster directly or to use the
                 Kubernetes API datastore.
               </span>
             ),
@@ -158,23 +158,23 @@ function NetworkRequirementsOSS(props) {
         </thead>
         <tbody>
           <tr className='odd'>
-            <td>{prodname} networking (BGP)</td>
+            <td>{variables.prodname} networking (BGP)</td>
             <td>All</td>
             <td>Bidirectional</td>
             <td>TCP 179</td>
           </tr>
           <tr className='even'>
-            <td>{prodname} networking with IP-in-IP enabled (default)</td>
+            <td>{variables.prodname} networking with IP-in-IP enabled (default)</td>
             <td>All</td>
             <td>Bidirectional</td>
             <td>
               IP-in-IP, often represented by its protocol number <code>4</code>
             </td>
           </tr>
-          {props.orch === orchestrators.OpenShift && (
+          {props.orch === globalVariables.orchestrators.OpenShift && (
             <>
               <tr>
-                <td>{prodname} networking with VXLAN enabled</td>
+                <td>{variables.prodname} networking with VXLAN enabled</td>
                 <td>All</td>
                 <td>Bidirectional</td>
                 <td>UDP 4789</td>
@@ -193,28 +193,28 @@ function NetworkRequirementsOSS(props) {
               </tr>
             </>
           )}
-          {props.orch === orchestrators.Kubernetes && (
+          {props.orch === globalVariables.orchestrators.Kubernetes && (
             <>
               <tr>
-                <td>{prodname} networking with VXLAN enabled</td>
+                <td>{variables.prodname} networking with VXLAN enabled</td>
                 <td>All</td>
                 <td>Bidirectional</td>
                 <td>UDP 4789</td>
               </tr>
               <tr>
-                <td>{prodname} networking with Typha enabled</td>
+                <td>{variables.prodname} networking with Typha enabled</td>
                 <td>Typha agent hosts</td>
                 <td>Incoming</td>
                 <td>TCP 5473 (default)</td>
               </tr>
               <tr>
-                <td>{prodname} networking with IPv4 Wireguard enabled</td>
+                <td>{variables.prodname} networking with IPv4 Wireguard enabled</td>
                 <td>All</td>
                 <td>Bidirectional</td>
                 <td>UDP 51820 (default)</td>
               </tr>
               <tr>
-                <td>{prodname} networking with IPv6 Wireguard enabled</td>
+                <td>{variables.prodname} networking with IPv6 Wireguard enabled</td>
                 <td>All</td>
                 <td>Bidirectional</td>
                 <td>UDP 51821 (default)</td>
@@ -244,7 +244,7 @@ function NetworkRequirementsOSS(props) {
               </tr>
             </>
           )}
-          {props.orch !== orchestrators.Kubernetes && props.orch !== orchestrators.OpenShift && (
+          {props.orch !== globalVariables.orchestrators.Kubernetes && props.orch !== globalVariables.orchestrators.OpenShift && (
             <tr>
               <td>All</td>
               <td>etcd hosts</td>
@@ -259,7 +259,7 @@ function NetworkRequirementsOSS(props) {
           )}
         </tbody>
       </table>
-      {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.OpenShift) && (
+      {(props.orch === globalVariables.orchestrators.Kubernetes || props.orch === globalVariables.orchestrators.OpenShift) && (
         <p>
           *{' '}
           <em>
@@ -269,7 +269,7 @@ function NetworkRequirementsOSS(props) {
           </em>
         </p>
       )}
-      {props.orch === orchestrators.OpenStack && (
+      {props.orch === globalVariables.orchestrators.OpenStack && (
         <p>
           *{' '}
           <em>
@@ -291,15 +291,15 @@ function Privileges(props) {
         Privileges
       </Heading>
       <p>
-        Ensure that {prodname} has the <code>CAP_SYS_ADMIN</code> privilege.
+        Ensure that {variables.prodname} has the <code>CAP_SYS_ADMIN</code> privilege.
       </p>
       <p>
-        The simplest way to provide the necessary privilege is to run {prodname} as root or in a privileged container.
+        The simplest way to provide the necessary privilege is to run {variables.prodname} as root or in a privileged container.
       </p>
-      {props.orch === orchestrators.Kubernetes && (
+      {props.orch === globalVariables.orchestrators.Kubernetes && (
         <>
           <p>
-            When installed as a Kubernetes daemon set, {prodname} meets this requirement by running as a privileged
+            When installed as a Kubernetes daemon set, {variables.prodname} meets this requirement by running as a privileged
             container. This requires that the kubelet be allowed to run privileged containers. There are two ways this
             can be achieved.
           </p>

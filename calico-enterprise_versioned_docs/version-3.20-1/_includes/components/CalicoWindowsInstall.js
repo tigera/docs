@@ -4,9 +4,11 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { prodname, prodnameWindows } from '../../variables';
+import variables from '../../variables';
 
 function CalicoWindowsInstallFirstStep(props) {
+  const { prodname } = variables;
+
   if (props.networkingType === 'vxlan') {
     return (
       <li>
@@ -49,6 +51,8 @@ function CalicoWindowsInstallFirstStep(props) {
 }
 
 export default function CalicoWindowsInstall(props) {
+  const { prodname, prodnameWindows } = variables;
+  
   return (
     <ol>
       <CalicoWindowsInstallFirstStep {...props} />

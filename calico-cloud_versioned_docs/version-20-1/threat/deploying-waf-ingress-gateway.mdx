@@ -2,6 +2,9 @@
 description: Deploy WAF with ingress gateways
 ---
 
+import variables from '@site/calico-cloud_versioned_docs/version-20-1/variables';
+import CodeBlock from '@theme/CodeBlock';
+
 # Deploying WAF with an ingress gateway
 
 ## Introduction
@@ -43,8 +46,8 @@ This command will deploy the Istio operator named istio-operator in the `istio-o
 Create an IstioOperator custom resource to enable custom sidecar injection.
 Use the provided IstioOperator definition as a starting point:
 
-```bash
-kubectl apply -f - <<EOF
+<CodeBlock language='bash'>
+kubectl apply -f - \<\<EOF
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 metadata:
@@ -59,7 +62,7 @@ spec:
           spec:
             containers:
             - name: dikastes
-              image: quay.io/tigera/dikastes:{{dikastesVersion}}-amd64
+              image: quay.io/tigera/dikastes:{variables.dikastesVersion}-amd64
               args:
               - -waf-enabled
               - -waf-directive
@@ -77,7 +80,7 @@ spec:
             imagePullSecrets:                                                                                                                                                          
             - name: tigera-pull-secret
 EOF
-```
+</CodeBlock>
 
 If the user has another custom sidecar injection template, it should be added to the same IstioOperator CR, as the IstioOperator overrides the previously injected custom template. Therefore, it is recommended to define all custom sidecar injection templates in a single IstioOperator CR.
 
@@ -126,7 +129,7 @@ We configure Istio ingress gateway using an EnvoyFilter called ext_authz to dele
 To intercept traffic at the Istio ingress gateway or load balancer, use an EnvoyFilter named tigera.istio-system.gateway.ingressgateway.waf-ext-authz. This global EnvoyFilter applies to ingress gateway pods matching the specified workload selector labels.
 
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -f - \<\<EOF
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
@@ -173,7 +176,7 @@ Ensure Istio ingress gateway and HTTPBin tutorial is correctly installed and run
 Override the httpbin VirtualService config from the HTTPBin Tutorial with the following one to allow the /anything and /headers path.
 
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -f - \<\<EOF
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
@@ -243,7 +246,7 @@ To empower the user with the flexibility to customize the WAF core rulesets acco
 Users can utilize a configmap to configure WAF rules and behavior. For example:
 
 ```bash
-kubectl apply -f - <<EOF
+kubectl apply -f - \<\<EOF
 apiVersion: v1
 kind: ConfigMap
 metadata:

@@ -3,9 +3,11 @@ import React from 'react';
 import Link from '@docusaurus/Link';
 import GeekDetails from '@site/src/components/partials/GeekDetails';
 
-import { prodname, prodnameWindows, baseUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function InstallOpenshiftBeforeYouBegin(props) {
+  const { prodname, prodnameWindows, baseUrl } = variables;
+  
   return (
     <>
       <p>

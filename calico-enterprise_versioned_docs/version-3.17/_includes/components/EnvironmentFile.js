@@ -4,7 +4,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { baseUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function EnvironmentFile(props) {
   return (
@@ -15,9 +15,9 @@ export default function EnvironmentFile(props) {
           host. For more help, see the{' '}
         </span>
         {props.install === 'container' ? (
-          <Link href={`${baseUrl}/reference/component-resources/node/configuration`}>{props.nodecontainer} configuration reference</Link>
+          <Link href={`${variables.baseUrl}/reference/component-resources/node/configuration`}>{props.nodecontainer} configuration reference</Link>
         ) : (
-          <Link href={`${baseUrl}/reference/component-resources/node/felix/configuration`}>Felix configuration reference</Link>
+          <Link href={`${variables.baseUrl}/reference/component-resources/node/felix/configuration`}>Felix configuration reference</Link>
         )}
       </p>
       <p>For the Kubernetes datastore set the following:</p>

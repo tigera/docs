@@ -2,7 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 import Translate from '@docusaurus/Translate';
 import {ThemeClassNames} from '@docusaurus/theme-common';
-import {useDocsVersion} from '@docusaurus/theme-common/internal';
+import {useDocsVersion} from '@docusaurus/plugin-content-docs/client';
 import {useActivePlugin} from '@docusaurus/plugin-content-docs/client';
 import styles from './styles.module.css';
 

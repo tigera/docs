@@ -1,3 +1,6 @@
+import variables from '@site/calico-enterprise_versioned_docs/version-3.17/variables';
+import CodeBlock from '@theme/CodeBlock';
+
 import NonClusterReadOnlyStep from '@site/calico-enterprise_versioned_docs/version-3.17/_includes/content/_non-cluster-read-only-step.mdx';
 import EnvironmentFile from '@site/calico-enterprise_versioned_docs/version-3.17/_includes/components/EnvironmentFile';
 
@@ -10,30 +13,30 @@ import TabItem from '@theme/TabItem';
 
 This step requires Docker, but it can be run from any machine with Docker installed. It doesn't have to be the host you will run it on (i.e your laptop is fine).
 
-1. Use the following command to download the {{nodecontainer}} image.
+1. Use the following command to download the {variables.nodecontainer} image.
 
-   ```bash
-   docker pull {{registry}}{{componentImage.cnxNode}}
-   ```
+   <CodeBlock language='bash'>
+   docker pull {variables.registry}{variables.componentImage.cnxNode}
+   </CodeBlock>
 
 1. Confirm that the image has loaded by typing `docker images`.
 
-   ```
+   <CodeBlock language=''>
    REPOSITORY       TAG           IMAGE ID       CREATED         SIZE
-   {{registry}}{{ releases.0.components.cnx-node.image }}      {{ releases.0.components.cnx-node.version }}        e07d59b0eb8a   2 minutes ago   42MB
-   ```
+   {variables.registry}{variables.releases[0].components['cnx-node'].image}      {variables.releases[0].components['cnx-node'].version}        e07d59b0eb8a   2 minutes ago   42MB
+   </CodeBlock>
 
-1. Create a temporary {{nodecontainer}} container.
+1. Create a temporary {variables.nodecontainer} container.
 
-   ```bash
-   docker create --name container {{registry}}{{componentImage.cnxNode}}
-   ```
+   <CodeBlock language='bash'>
+   docker create --name container {variables.registry}{variables.componentImage.cnxNode}
+   </CodeBlock>
 
 1. Copy the calico-node binary from the container to the local file system.
 
-   ```bash
-   docker cp container:/bin/calico-node {{nodecontainer}}
-   ```
+   <CodeBlock language='bash'>
+   docker cp container:/bin/calico-node {variables.nodecontainer}
+   </CodeBlock>
 
 1. Delete the temporary container.
 
@@ -43,10 +46,10 @@ This step requires Docker, but it can be run from any machine with Docker instal
 
 1. Set the extracted binary file to be executable.
 
-   ```bash
-   chmod +x {{nodecontainer}}
-   chown root:root {{nodecontainer}}
-   ```
+   <CodeBlock language='bash'>
+   chmod +x {variables.nodecontainer}
+   chown root:root {variables.nodecontainer}
+   </CodeBlock>
 
 ### Step 3: Copy the `calico-node` binary
 
@@ -54,7 +57,7 @@ Copy the binary from Step 2 to the target machine, using any means (`scp`, `ftp`
 
 ### Step 4: Create environment file
 
-<EnvironmentFile nodecontainer='{{nodecontainer}}' />
+<EnvironmentFile nodecontainer={variables.nodecontainer} />
 
 ### Step 5: Start Felix
 
@@ -69,7 +72,7 @@ that behavior for certain configuration changes.
 
 If your distribution uses systemd, then you could use the following unit file:
 
-```bash
+<CodeBlock language='bash'>
 [Unit]
 Description=Calico Felix agent
 After=syslog.target network.target
@@ -78,20 +81,20 @@ After=syslog.target network.target
 User=root
 EnvironmentFile=/etc/calico/calico.env
 ExecStartPre=/usr/bin/mkdir -p /var/run/calico
-ExecStart=/usr/local/bin/{{nodecontainer}} -felix
+ExecStart=/usr/local/bin/{variables.nodecontainer} -felix
 KillMode=process
 Restart=on-failure
 LimitNOFILE=32000
 
 [Install]
 WantedBy=multi-user.target
-```
+</CodeBlock>
 
 Or, for upstart:
 
-```bash
+<CodeBlock language='bash'>
 description "Felix (Calico agent)"
-author "Project Calico Maintainers <maintainers@projectcalico.org>"
+author "Project Calico Maintainers \<maintainers\.org>"
 
 start on stopped rc RUNLEVEL=[2345]
 stop on runlevel [!2345]
@@ -108,8 +111,8 @@ pre-start script
    chown root:root /var/run/calico
 end script
 
-exec /usr/local/bin/{{nodecontainer}} -felix
-```
+exec /usr/local/bin/{variables.nodecontainer} -felix
+</CodeBlock>
 
 **Start Felix**
 

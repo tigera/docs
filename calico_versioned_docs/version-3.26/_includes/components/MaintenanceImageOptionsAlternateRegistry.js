@@ -1,10 +1,8 @@
 // Temporary component for "calico\maintenance\image-options\alternate-registry.mdx"
 
 import React from 'react';
-
 import CodeBlock from '@theme/CodeBlock';
-
-import { imageNames, prodname, registry, releases, tigeraOperator } from '../../variables';
+import variables from '../../variables';
 
 export default function MaintenanceImageOptionsAlternateRegistry() {
   const cmds1 = renderInstallCommands(
@@ -23,10 +21,10 @@ export default function MaintenanceImageOptionsAlternateRegistry() {
   return (
     <ol>
       <li>
-        <p>Use the following commands to pull the required {prodname} images.</p>
+        <p>Use the following commands to pull the required {variables.prodname} images.</p>
       </li>
       <CodeBlock language='bash'>
-        docker pull {tigeraOperator.registry}/{tigeraOperator.image}:{tigeraOperator.version}
+        docker pull {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version}
         {'\n'}
         {cmds1}
       </CodeBlock>
@@ -36,8 +34,8 @@ export default function MaintenanceImageOptionsAlternateRegistry() {
         </p>
       </li>
       <CodeBlock language='bash'>
-        docker tag {tigeraOperator.registry}/{tigeraOperator.image}:{tigeraOperator.version} $REGISTRY/
-        {tigeraOperator.image}:{tigeraOperator.version}
+        docker tag {variables.tigeraOperator.registry}/{variables.tigeraOperator.image}:{variables.tigeraOperator.version} $REGISTRY/
+        {variables.tigeraOperator.image}:{variables.tigeraOperator.version}
         {'\n'}
         {cmds2}
       </CodeBlock>
@@ -45,7 +43,7 @@ export default function MaintenanceImageOptionsAlternateRegistry() {
         <p>Push the images to your registry.</p>
       </li>
       <CodeBlock language='bash'>
-        docker push $REGISTRY/{tigeraOperator.image}:{tigeraOperator.version}
+        docker push $REGISTRY/{variables.tigeraOperator.image}:{variables.tigeraOperator.version}
         {'\n'}
         {cmds3}
       </CodeBlock>
@@ -54,15 +52,15 @@ export default function MaintenanceImageOptionsAlternateRegistry() {
 }
 
 function renderInstallCommands(renderCommand) {
-  const releaseComponents = releases[0].components;
+  const releaseComponents = variables.releases[0].components;
   const components = Object.keys(releaseComponents);
-  const filteredComponents = components.filter((c) => imageNames[c] && !c.includes('flannel'));
-  const componentNames = filteredComponents.map((c) => imageNames[c]);
+  const filteredComponents = components.filter((c) => variables.imageNames[c] && !c.includes('flannel'));
+  const componentNames = filteredComponents.map((c) => variables.imageNames[c]);
 
   const result = filteredComponents
     .map((c, i) => {
       const componentData = releaseComponents[c];
-      const reg = componentData.registry ? `${componentData.registry}/` : registry;
+      const reg = componentData.registry ? `${componentData.registry}/` : variables.registry;
 
       return renderCommand(componentData, reg, componentNames, i);
     })

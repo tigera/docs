@@ -5,8 +5,7 @@ import CodeBlock from '@theme/CodeBlock';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import Link from '@docusaurus/Link';
-
-import { prodname, baseUrl } from '../../variables';
+import variables from '@site/calico_versioned_docs/version-3.27/variables';
 
 export default function EnvironmentFile(props) {
   if (props.target === 'felix') {
@@ -31,9 +30,9 @@ export default function EnvironmentFile(props) {
           host. For more help, see the{' '}
         </span>
         {props.install === 'container' ? (
-          <Link href={`${baseUrl}/reference/configure-calico-node`}>{props.nodecontainer} configuration reference</Link>
+          <Link href={`${variables.baseUrl}/reference/configure-calico-node`}>{props.nodecontainer} configuration reference</Link>
         ) : (
-          <Link href={`${baseUrl}/reference/felix/configuration`}>Felix configuration reference</Link>
+          <Link href={`${variables.baseUrl}/reference/felix/configuration`}>Felix configuration reference</Link>
         )}
       </p>
       <Tabs>
@@ -139,9 +138,9 @@ export default function EnvironmentFile(props) {
               <tr>
                 <td>CALICO_IP or CALICO_IP6</td>
                 <td>
-                  If values are not specified for both, {prodname} uses the currently-configured values for the next hop
+                  If values are not specified for both, {variables.prodname} uses the currently-configured values for the next hop
                   IP addresses for this node—these can be configured through the Node resource. If no next hop addresses
-                  are configured, {prodname} automatically determines an IPv4 next hop address by querying the host
+                  are configured, {variables.prodname} automatically determines an IPv4 next hop address by querying the host
                   interfaces (and configures this value in the Node resource). You can set CALICO_IP to{' '}
                   <code>autodetect</code> for force auto-detection of IP address every time the node starts. If you set
                   IP addresses through these environment variables, it reconfigures any values currently set through the
@@ -151,7 +150,7 @@ export default function EnvironmentFile(props) {
               <tr>
                 <td>CALICO_AS</td>
                 <td>
-                  If not specified, {prodname} uses the currently configured value for the AS Number for the node BGP
+                  If not specified, {variables.prodname} uses the currently configured value for the AS Number for the node BGP
                   client—this can be configured through the Node resource. If the Node resource value is not set, Calico
                   inherits the AS Number from the global default value. If you set a value through this environment
                   variable, it reconfigures any value currently set through the Node resource.
@@ -160,7 +159,7 @@ export default function EnvironmentFile(props) {
               <tr>
                 <td>NO_DEFAULT_POOLS</td>
                 <td>
-                  Set to true to prevent {prodname} from creating a default pool if one does not exist. Pools are used
+                  Set to true to prevent {variables.prodname} from creating a default pool if one does not exist. Pools are used
                   for workload endpoints and not required for non-cluster hosts.
                 </td>
               </tr>

@@ -2,7 +2,7 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import Heading from '@theme/Heading';
 
-import { prodname } from '../../variables';
+import variables from '../../variables';
 
 export default function ReqsKernel() {
   return (
@@ -18,14 +18,14 @@ export default function ReqsKernel() {
       </Admonition>
       <p>
         Due to the large number of distributions and kernel version out there, it’s hard to be precise about the names
-        of the particular kernel modules that are required to run {prodname}. However, in general, you’ll need:
+        of the particular kernel modules that are required to run {variables.prodname}. However, in general, you’ll need:
       </p>
       <ul>
         <li>
           <p>
             The <code>iptables</code> modules (both the “legacy” and “nft” variants are supported). These are typically
             broken up into many small modules, one for each type of match criteria and one for each type of action.{' '}
-            {prodname} requires:
+            {variables.prodname} requires:
           </p>
           <ul>
             <li>The “base” modules (including the IPv6 versions if IPv6 is enabled in your cluster).</li>
@@ -55,7 +55,7 @@ export default function ReqsKernel() {
         </li>
         <li>
           <p>
-            IPIP, VXLAN, Wireguard support, if using {prodname}
+            IPIP, VXLAN, Wireguard support, if using {variables.prodname}
             networking in one of those modes.
           </p>
         </li>

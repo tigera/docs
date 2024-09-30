@@ -21,6 +21,7 @@ const variables = {
   releases,
   registry: '',
   vppbranch: 'master',
+  vppFilesURL: 'https://raw.githubusercontent.com/projectcalico/vpp-dataplane/master',
   tigeraOperator: releases[0]['tigera-operator'],
   tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {

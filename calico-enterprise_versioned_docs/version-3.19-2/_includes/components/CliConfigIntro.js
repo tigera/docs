@@ -4,9 +4,11 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
 
-import { prodname, baseUrl } from '../../variables';
+import variables from '../../variables';
 
 export default function CliConfigIntro(props) {
+  const { prodname, baseUrl }  = variables;
+  
   return (
     <>
       <p>

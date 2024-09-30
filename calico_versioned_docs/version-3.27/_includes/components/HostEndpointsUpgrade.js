@@ -2,8 +2,7 @@ import React from 'react';
 import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
-
-import { prodname, version } from '../../variables';
+import variables from '@site/calico_versioned_docs/version-3.27/variables';
 
 export default function HostEndpointsUpgrade(props) {
   return (
@@ -19,7 +18,7 @@ export default function HostEndpointsUpgrade(props) {
         upgrading. Failure to do so will result in an outage.
       </Admonition>
       <p>
-        In versions of {prodname} prior to v3.14, all-interfaces host endpoints (host endpoints with{' '}
+        In versions of {variables.prodname} prior to v3.14, all-interfaces host endpoints (host endpoints with{' '}
         <code>interfaceName: *</code>) only supported pre-DNAT policy. The default behavior of all-interfaces host
         endpoints, in the absence of any policy, was to allow all traffic.
       </p>
@@ -31,7 +30,7 @@ export default function HostEndpointsUpgrade(props) {
         endpoints drop traffic in the absence of policy.
       </p>
       <p>
-        Before upgrading to {version}, you must ensure that global network policies are in place that select existing
+        Before upgrading to {variables.version}, you must ensure that global network policies are in place that select existing
         all-interfaces host endpoints and explicitly allow existing traffic flows. As a starting point, you can create
         an allow-all policy that selects existing all-interfaces host endpoints. First, we&#39;ll add a label to the
         existing host endpoints. Get a list of the nodes that have an all-interfaces host endpoint:

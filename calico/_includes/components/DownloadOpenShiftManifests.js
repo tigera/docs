@@ -2,9 +2,11 @@ import React from 'react';
 
 import CodeBlock from '@theme/CodeBlock';
 
-import { prodname, releaseTitle, calicoReleasesURL } from '../../variables';
+import variables from '../../variables';
 
 export default function DownloadOpenShiftManifests() {
+  const { prodname, releaseTitle, calicoReleasesURL } = variables;
+  
   return (
     <>
       <p>Download the {prodname} manifests for OpenShift:</p>

@@ -4,9 +4,10 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
 
-import { tigeraOperator, prodname, prodnamedash, prodnameWindows, registry, releases } from '../../variables';
+import variables from '../../variables';
 
 export default function PrivateRegistryRegular() {
+    const { tigeraOperator, prodname, prodnamedash, prodnameWindows, registry, releases } = variables;
     const components = releases[0].components;
     const componentsWithImage = Object.values(components).filter(filters.withImage);
 

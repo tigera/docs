@@ -4,9 +4,10 @@ import React from 'react';
 
 import CodeBlock from '@theme/CodeBlock';
 
-import { downloadsurl, releaseTitle, filesUrl, version } from '../../variables';
+import variables from '../../variables';
 
 export default function MaintenanceClisCalicoqInstalling() {
+  const { downloadsurl, releaseTitle, filesUrl, version } = variables;
   const ver = version === 'master' ? version : releaseTitle;
   const code =
     ver === 'master'

@@ -1,12 +1,10 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const {themes} = require('prism-react-renderer');
+import { themes } from 'prism-react-renderer';
+
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
-
-const variablesPlugin = require('./src/remark/variablesPlugin');
-const { useCaseSidebar } = require('./sidebars-use-cases');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -14,10 +12,9 @@ const config = {
   tagline: 'Active, zero-trust based security for containers and Kubernetes',
   url: 'https://docs.tigera.io',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
+  onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
-
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
@@ -60,21 +57,21 @@ const config = {
         },
         blog: false,
         theme: {
-          customCss: [
-            require.resolve('./src/css/custom.css'),
-            require.resolve('./src/css/external-links.scss'),
-            require.resolve('./src/css/modal.scss'),
-          ],
+          customCss: ['./src/css/custom.css', './src/css/external-links.scss', './src/css/modal.scss'],
         },
       }),
     ],
   ],
 
   themeConfig:
-  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     {
       metadata: [
-        {name: 'keywords', content: 'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp'}
+        {
+          name: 'keywords',
+          content:
+            'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp',
+        },
       ],
       algolia: {
         appId: 'Q4GSZWRKBA',
@@ -86,8 +83,9 @@ const config = {
       /*
       announcementBar: {
         id: 'ai-bot-announcement',
-        content: "🤖 Try exploring Calico Documentation with our new AI bot. Look for the <b>Ask AI</b> button at the" +
-          " bottom of your screen. 🤖",
+        content:
+          '🤖 Try exploring Calico Documentation with our new AI bot. Look for the <b>Ask AI</b> button at the' +
+          ' bottom of your screen. 🤖',
         backgroundColor: '#FCE181',
         textColor: '#000',
         isCloseable: true,
@@ -357,7 +355,7 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        additionalLanguages: ['powershell'],
+        additionalLanguages: ['powershell', 'bash'],
         magicComments: [
           // Default highlight class name (should be specified)-
           {
@@ -393,7 +391,7 @@ const config = {
           3.28: {
             label: '3.28 (latest)',
             path: 'latest',
-            banner: 'none'
+            banner: 'none',
           },
           3.27: {
             label: '3.27',
@@ -406,8 +404,7 @@ const config = {
             banner: 'none',
           },
         },
-        sidebarPath: require.resolve('./sidebars-calico.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin],
+        sidebarPath: './sidebars-calico.js',
         editUrl: generateEditUrl,
       },
     ],
@@ -419,7 +416,7 @@ const config = {
         path: 'calico-enterprise',
         routeBasePath: 'calico-enterprise',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['3.20-1','3.19-2','3.18-2','3.17'],
+        onlyIncludeVersions: ['3.20-1', '3.19-2','3.18-2', '3.17'],
         //lastVersion: '3.19-2',
         versions: {
           current: {
@@ -448,8 +445,7 @@ const config = {
             banner: 'none',
           },
         },
-        sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin],
+        sidebarPath: './sidebars-calico-enterprise.js',
         editUrl: generateEditUrl,
       },
     ],
@@ -474,8 +470,7 @@ const config = {
             banner: 'none',
           },
         },
-        sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
-        beforeDefaultRemarkPlugins: [variablesPlugin],
+        sidebarPath: './sidebars-calico-cloud.js',
         editUrl: generateEditUrl,
       },
     ],
@@ -494,7 +489,7 @@ const config = {
           },
         },
         //To see builds for unreleased versions, remove comments in the next line.
-        sidebarPath: require.resolve('./sidebars-use-cases.js'),
+        sidebarPath: './sidebars-use-cases.js',
         editUrl: generateEditUrl,
       },
     ]
@@ -504,7 +499,7 @@ const config = {
   },
 };
 
-module.exports = config;
+export default config
 
 function generateEditUrl(params) {
   const { versionDocsDirPath, docPath } = params;

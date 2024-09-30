@@ -1,4 +1,4 @@
-const releases = require('./releases.json');
+import releases from './releases.json';
 
 const variables = {
   releaseTitle: 'v3.28.2',
@@ -21,6 +21,7 @@ const variables = {
   releases,
   registry: '',
   vppbranch: 'v3.28.0',
+  vppFilesURL: 'https://raw.githubusercontent.com/projectcalico/vpp-dataplane/v3.28.0',
   tigeraOperator: releases[0]['tigera-operator'],
   tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {
@@ -43,4 +44,4 @@ const variables = {
   },
 };
 
-module.exports = variables;
+export default variables;
