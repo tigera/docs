@@ -90,6 +90,32 @@ If a malicious or suspicious program is run within the cluster, it will be repor
 
 ![malware-alert-example](/img/calico-cloud/malware-alert-example.png)
 
+### Create an exception for suspicious programs
+
+If you have a program running within the cluster and want to negate the generation of any runtime logs for that process, thus negating an Security Events for that process, then you can add an entry into the RuntimeExceptionList of the Runtime Security resource through the kubectl: 
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: RuntimeSecurity
+metadata:
+  name: default
+spec: 
+  runtimeExceptionList:
+    - matching: exact
+      processInvocation: "runc init"
+      namespace: default
+    - matching: regex
+      processInvocation: "\b(shred|rm|mv).*((bash|ash|zsh|fish|fish_read)_history|history)\b" 
+EOF
+```
+
+The `matching` field can take one of two values, `exact` or `regex`. 
+Setting the `matching` field to `regex` lets you pass in a regular expression to capture more than 1 value for each field. Whereas `exact` would require each field to be an exact match.
+
+Supported fields are outlined in the Runtime Security resource
+
+
 ## Container activity logs in Kibana
 
 Lower-level reports for file and process activity are captured for your cluster in Kibana using the index pattern `tigera_secure_ee_runtime*`.
