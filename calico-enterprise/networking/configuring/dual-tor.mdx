@@ -486,9 +486,9 @@ for dual ToR setup it must also run as a container after each boot of a dual-hom
 For example:
 
 <CodeBlock language=''>
-podman run --privileged --net=host \
+{`podman run --privileged --net=host \
     -v /calico-early:/calico-early -e CALICO_EARLY_NETWORKING=/calico-early/cfg.yaml \
-    {variables.registry}{variables.imageNames.node}:latest
+    {variables.registry}{variables.imageNames.node}:latest`}
 </CodeBlock>
 
 The environment variable `CALICO_EARLY_NETWORKING` must point to the
@@ -503,7 +503,7 @@ your particular platform, but that illustrates the important points.
 Firstly, a "calico-early" service that runs the Calico early networking on each boot:
 
 <CodeBlock language=''>
-[Unit]
+{`[Unit]
 Wants=network-online.target
 After=network-online.target
 After=nodeip-configuration.service
@@ -514,7 +514,7 @@ ExecStartPre=/bin/mkdir -p /etc/calico-early
 ExecStartPre=/bin/sh -c "test -f /etc/calico-early/details.yaml || /bin/curl -o /etc/calico-early/details.yaml http://172.31.1.1:8080/calico-early/details.yaml"
 ExecStart=/bin/podman run --rm --privileged --net=host --name=calico-early -v /etc/calico-early:/etc/calico-early -e CALICO_EARLY_NETWORKING=/etc/calico-early/details.yaml {variables.registry}{variables.imageNames.node}:latest
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target`}
 </CodeBlock>
 
 :::note
