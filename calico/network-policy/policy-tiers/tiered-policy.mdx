@@ -18,24 +18,15 @@ description: Understand how tiered policy works and supports microsegmentation.
 
 All {{prodname}} and Kubernetes network policies reside in tiers. You can start "thinking in tiers" by grouping your teams and types of policies within each group. For example, we recommend these three tiers (platform, security, and application).
 
-![policy types](/img/calico-cloud/policy-types.svg)
+![policy-types](/img/calico-enterprise/policy-types.png)
 
 Next, you can determine the priority of policies in tiers (from top to bottom). In the following example, the platform and security tiers use {{prodname}} global network policies that apply to all pods, while developer teams can safely manage pods within namespaces using Kubernetes network policy for their applications and microservices.
 
-![policy tiers](/img/calico-cloud/policy-tiers.png)
+![policy-tiers](/img/calico-enterprise/policy-tiers.png)
 
-## Create a tier and policy
+## Create a tier
 
-To create a tier and policy in Manager UI:
-
-1. In the left navbar, click **Policies**.
-1. On the **Policies Board**, click **Add Tier**.
-1. Name the tier, select **Order, Add after** `tigera-security`, and save.
-1. To create a policy in the tier, click **+ Add policy**.
-
-You can export all policies or a single policy to a YAML file.
-
-Here is a sample YAML that creates a security tier and uses `kubectl` to apply it.
+The following is a sample YAML that creates a security tier and uses `kubectl` to apply it.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -54,13 +45,11 @@ kubectl apply -f security.yaml
 
 The default tier is created during installation and has the order of 1,000,000.
 
-![default tier](/img/calico-cloud/default-tier.png)
-
 The default tier is where:
 
 - You manage all Kubernetes network policies
-- Network and global network policies are placed when you upgrade from Project Calico to {{prodname}}
-- Recommended policies are placed when you use the **Recommend a policy** feature
+- All network and global network policies without an explicit tier are placed.
+- Network and global network policies are placed when you upgrade from Project Calico without tier support to {{prodname}} release with tier support.
 
 ## AdminNetworkPolicy tier:
 
@@ -70,35 +59,11 @@ The AdminNetworkPolicy tier is where:
 
 - You manage all Kubernetes admin network policies
 
-## System tiers
-
-System tiers are added during installation and are hidden by default. Always add your tiers after `allow-tigera` and `tigera-security` (in terms of order).
-
-- **allow-tigera** tier contains policies to secure {{prodname}} components and are controlled by the Tigera Operator. These policies should not be edited, and the tier should not be moved. Inadvertent changes are automatically reverted by the Operator to ensure your cluster is always protected.
-
-:::warning
-
-Although it is possible to change the behavior of the `allow-tigera` using adjacent tiers, it is not a trivial task. You can break critical cluster traffic and impact the operation of {{prodname}}. To prevent loss of cluster services, see [Change allow-tigera tier behavior](allow-tigera.mdx), and contact Support for help.
-
-:::
-
-- **tigera-security** - contains threat protection policies
-
-## Moving tiers
-
-You can move tiers by dragging and moving them in the graphical sequence, but all tiers must be visible first before you reorder tiers.
-
-To show all tiers, click **View** and select all of the tiers in the Show tiers list.
-
-![hidden-tiers](/img/calico-cloud/moving-tiers.png)
-
-Now you can reorder tiers by dragging and moving them.
-
 ## Tier order
 
 Tiers are ordered from left to right, starting with the highest priority (also called highest precedence) tiers.
 
-![tier order](/img/calico-cloud/tier-order.png)
+![tier-order](/img/calico-enterprise/tier-order.png)
 
 In the example above, tier priorities are as follows:
 
@@ -106,13 +71,11 @@ In the example above, tier priorities are as follows:
 - **platform tier** - is higher priority than default tier
 - **default tier** - is the lowest priority than the rest
 
-The tier you put as the highest priority (after system tiers), depends on your environment. In compliance-driven environments, the security tier may be the highest priority (as shown above). There is no one-size-fits-all order.
-
 ## Policy processing
 
 Policies are processed in sequential order from top to bottom.
 
-![policy processing](/img/calico-cloud/policy-processing.png)
+![policy-processing](/img/calico-enterprise/policy-processing.png)
 
 Two mechanisms drive how traffic is processed across tiered policies:
 
@@ -131,7 +94,7 @@ The following diagrams show the relationship between all of the elements that af
 - **Policy action rules** define how to process traffic in and across tiers, and policy labels and selectors specify how groups of pods are allowed to communicate with each other and other network endpoints
 - The **CNI**, **{{prodname}} components**, and underlying **dataplane** (iptables/eBPF) all make use of labels and selectors as part of routing traffic.
 
-![tier funnel](/img/calico-cloud/tier-funnel.svg)
+![tier-funnel](/img/calico-enterprise/tier-funnel.png)
 
 ### Policy action rules
 
@@ -146,8 +109,9 @@ The following diagrams show the relationship between all of the elements that af
 As shown in the following diagram, at the end of each tier is an implicit default deny. This is a safeguard that helps mitigate against unsecured policy.
 To override the implicit default deny, and to allow traffic evaluation to continue, you can change tier's default action to **Pass**.
 
-![implicit deny](/img/calico-cloud/implicit-deny.svg)
+![implicit-deny](/img/calico-enterprise/implicit-deny.svg)
 
+**Pass default action tier example**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -156,7 +120,7 @@ metadata:
   name: security
 spec:
   order: 300
-  defaultAction: Pass
+  defautlAction: Pass
 ```
 
 ### Policy endpoint matching across tiers
@@ -165,7 +129,7 @@ Whoever is responsible for tier creation, also needs to understand how policy se
 
 In the following example, **policy D** in the Security tier includes a Pass action rule because we want traffic evaluation to continue to the next tier in sequence. In the Platform tier, there are no selectors in policies that match endpoints so the tier is skipped, including the end of tier deny. Evaluation continues to the Application tier. **Policy J** is the first policy with a matching endpoint.
 
-![endpoint match](/img/calico-cloud/endpoint-match.svg)
+![endpoint-match](/img/calico-enterprise/endpoint-match.svg)
 
 ### Default endpoint behavior
 
@@ -194,7 +158,6 @@ We recommend:
 
   For example, you may need to update Pass action rules to policies before or after the new tier. Intervening tiers may require changes to policies before and after, depending on the endpoints.
 
-- Use the **policy preview** feature to see effects of policy in action before enforcing it, and use the **staged network policy** feature to test the entire tier workflow before pushing it to production
 
 ## Additional resources
 

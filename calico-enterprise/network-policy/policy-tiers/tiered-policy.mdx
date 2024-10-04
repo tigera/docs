@@ -50,9 +50,9 @@ spec:
 kubectl apply -f security.yaml
 ```
 
-## The default tier: always last
+## The default tier:
 
-The default tier is created during installation and is always the last tier.
+The default tier is created during installation and has the order of 1,000,000.
 
 ![default-tier](/img/calico-enterprise/default-tier.png)
 
@@ -61,6 +61,14 @@ The default tier is where:
 - You manage all Kubernetes network policies
 - Network and global network policies are placed when you upgrade from Project Calico to {{prodname}}
 - Recommended policies are placed when you use the **Recommend a policy** feature
+
+## AdminNetworkPolicy tier:
+
+The AdminNetworkPolicy tier is created during installation and has the order of 1,000.
+
+The AdminNetworkPolicy tier is where:
+
+- You manage all Kubernetes admin network policies
 
 ## System tiers
 
@@ -94,7 +102,7 @@ In the example above, tier priorities are as follows:
 
 - **security tier** - is higher priority than platform tier
 - **platform tier** - is higher priority than default tier
-- **default tier** - is always the last tier and cannot be reordered
+- **default tier** - is the lowest priority than the rest
 
 The tier you put as the highest priority (after system tiers), depends on your environment. In compliance-driven environments, the security tier may be the highest priority (as shown above). There is no one-size-fits-all order.
 
@@ -133,36 +141,20 @@ The following diagrams show the relationship between all of the elements that af
 
 ### Implicit default deny
 
-As shown in the following diagram, at the end of each tier is an implicit default deny. This is a safeguard that helps mitigate against unsecured policy. Because of this safeguard, you must explicitly apply the **Pass** action rule when you want traffic evaluation to continue. In the following example, the Pass action in a policy ensures that traffic evaluation continues, and overrides the implicit default deny.
+As shown in the following diagram, at the end of each tier is an implicit default deny. This is a safeguard that helps mitigate against unsecured policy.
+To override the implicit default deny, and to allow traffic evaluation to continue, you can change tier's default action to **Pass**.
 
 ![implicit-deny](/img/calico-enterprise/implicit-deny.svg)
 
-Let’s look at a Dev/Ops global network policy in a high precedence tier (Platform). The policy denies ingress and egress traffic to workloads that match selector, `env == "stage"`. To ensure that policies continue to evaluate traffic after this policy, the policy adds a Pass action for both ingress and egress.
-
-**Pass action rule example**
 
 ```yaml
 apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
+kind: Tier
 metadata:
-  name: devops.stage-env
+  name: security
 spec:
-  tier: devops
-  order: 255
-  selector: env == "stage"
-  ingress:
-    - action: Deny
-      source:
-        selector: env != "stage"
-    - action: Pass
-  egress:
-    - action: Deny
-      destination:
-        selector: env != "stage"
-    - action: Pass
-  types:
-    - Ingress
-    - Egress
+  order: 300
+  defaultAction: Pass
 ```
 
 ### Policy endpoint matching across tiers
