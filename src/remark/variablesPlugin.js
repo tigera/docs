@@ -1,8 +1,8 @@
-const visit = require('unist-util-visit');
+const visit = require('unist-util-visit').visit;
 const getVariableByFilePath = require('../utils/getVariableByFilePath');
 const isVarValue = require('../utils/isVarValue');
 
-const varRegex = RegExp(/\{\{[ \t]*([\w.\/-]+)[ \t]*}}/, 'g');
+const varRegex = RegExp(/\$\([ \t]*([\w.\/-]+)[ \t]*\)/, "g");
 
 // This is a remark plugin which runs before all the docusaurus plugins which
 // allows us to support variable substitution in all md/mdx files. We are
@@ -18,11 +18,10 @@ function variablesPlugin(_options) {
       (node) => {
         for (let prop in node) {
           if (!Object.prototype.hasOwnProperty.call(node, prop)) continue;
-          if (prop === 'type' || typeof node[prop] !== 'string') continue;
+          if (prop === 'type' || typeof node[prop] !== 'string') continue; 
 
           node[prop] = node[prop].replaceAll(varRegex, (match, varName) => {
             const varValue = getVariableByFilePath(file, varName);
-
             return isVarValue(varValue) ? varValue : match;
           });
         }
