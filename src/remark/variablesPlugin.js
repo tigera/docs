@@ -1,6 +1,6 @@
-const visit = require('unist-util-visit').visit;
-const getVariableByFilePath = require('../utils/getVariableByFilePath');
-const isVarValue = require('../utils/isVarValue');
+import { visit } from 'unist-util-visit';
+import getVariableByFilePath from '../utils/getVariableByFilePath';
+import isVarValue from '../utils/isVarValue';
 
 const varRegex = RegExp(/\$\([ \t]*([\w.\/-]+)[ \t]*\)/, "g");
 
@@ -32,4 +32,4 @@ function variablesPlugin(_options) {
   return transformer;
 }
 
-module.exports = variablesPlugin;
+export default variablesPlugin;
