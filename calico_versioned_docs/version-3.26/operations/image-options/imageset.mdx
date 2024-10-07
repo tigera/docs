@@ -14,7 +14,7 @@ Deploy images by container registry digest for operator installations.
 ## Value
 
 Some deployments have strict security requirements that require deploying images by immutable digest instead of tags.
-Once released, official {{prodname}} images and tags will not be modified. However using an immutable digest allows specific images to be reviewed
+Once released, official $(prodname) images and tags will not be modified. However using an immutable digest allows specific images to be reviewed
 and verified by security teams.
 
 ## Concepts
@@ -35,7 +35,7 @@ Container images, when added to a container registry, have a unique hash created
 
 **Required**
 
-- {{prodname}} managed by the operator
+- $(prodname) managed by the operator
 - Docker client is configured to pull images from the container registries where images are stored
 - Kubernetes permissions to apply an ImageSet manifest to your cluster
 
@@ -61,8 +61,8 @@ Before applying `tigera-operator.yaml`, modify the operator deployment to use th
 Use commands like the following to get the image digest (adjust the image in the commands if you are using a different operator image):
 
 ```bash
-docker pull {{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}}
-docker inspect {{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}} -f '{{range .RepoDigests}}{{printf "%s\n" .}}{{end}}'
+docker pull $(tigeraOperator.registry)/$(tigeraOperator.image):$(tigeraOperator.version)
+docker inspect $(tigeraOperator.registry)/$(tigeraOperator.image):$(tigeraOperator.version) -f '$(range .RepoDigests)$(printf "%s\n" .)$(end)'
 ```
 
 If multiple digests are returned, select the one matching the registry you are using.
@@ -81,7 +81,7 @@ Create an [ImageSet](../../reference/installation/api.mdx#operator.tigera.io/v1.
 apiVersion: operator.tigera.io/v1
 kind: ImageSet
 metadata:
-  name: calico-{{releaseTitle}}
+  name: calico-$(releaseTitle)
 spec:
   images:
     - image: 'calico/apiserver'
@@ -110,17 +110,17 @@ You can create an ImageSet manifest manually or by script.
 <TabItem label="Manual" value="Manual-0">
 
 1. Copy the above example into a file called `imageset.yaml` and edit that file in the steps below.
-1. Set the name for your ImageSet to `calico-<version>` (Example: `calico-{{releaseTitle}}`).
+1. Set the name for your ImageSet to `calico-<version>` (Example: `calico-$(releaseTitle)`).
    The version can be obtained by running:
    ```
-   docker run {{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}} --version
+   docker run $(tigeraOperator.registry)/$(tigeraOperator.image):$(tigeraOperator.version) --version
    ```
 1. Add the correct digest for each image. If you are using a private registry, ensure you pull the image from the private registry and use the digest associated with the private registry.
 
    1. If using the default images, get a list of them by running:
 
       ```
-      docker run {{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}} --print-images=list
+      docker run $(tigeraOperator.registry)/$(tigeraOperator.image):$(tigeraOperator.version) --print-images=list
       ```
 
       :::note
@@ -136,7 +136,7 @@ You can create an ImageSet manifest manually or by script.
 
    1. Get the needed digests by using the images returned from the above step in the following command:
       ```
-      docker pull <repo/image:tag> && docker inspect <repo/image:tag> -f '{{range .RepoDigests}}{{printf "%s\n" .}}{{end}}'
+      docker pull <repo/image:tag> && docker inspect <repo/image:tag> -f '$(range .RepoDigests)$(printf "%s\n" .)$(end)'
       ```
    1. Use the digest from the image that matches the repo/image you will use.
       If you are using a private registry or have specified an [imagePath](../../reference/installation/api.mdx#operator.tigera.io/v1.Installation)
@@ -163,7 +163,7 @@ This script will only work if using the default registries and image paths.
 
 images=(calico/apiserver calico/cni calico/kube-controllers calico/node calico/typha calico/pod2daemon-flexvol calico/windows-upgrade tigera/key-cert-provisioner tigera/operator)
 
-OPERATOR_IMAGE={{tigeraOperator.registry}}/{{tigeraOperator.image}}:{{tigeraOperator.version}}
+OPERATOR_IMAGE=$(tigeraOperator.registry)/$(tigeraOperator.image):$(tigeraOperator.version)
 echo "Pulling $OPERATOR_IMAGE"
 echo
 docker pull $OPERATOR_IMAGE -q >/dev/null
@@ -218,7 +218,7 @@ Apply the created `imageset.yaml` to your cluster.
    You should see output similar to:
 
    ```yaml
-   imageSet: calico-{{releaseTitle}}
+   imageSet: calico-$(releaseTitle)
    ```
 
 ## Other tasks

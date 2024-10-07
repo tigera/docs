@@ -363,85 +363,85 @@ const config = {
     },
   plugins: [
     'docusaurus-plugin-sass',
-    // [
-    //   '@docusaurus/plugin-content-docs',
-    //   /** @type {import('@docusaurus/plugin-content-docs').Options} */
-    //   {
-    //     id: 'calico',
-    //     path: 'calico',
-    //     routeBasePath: 'calico',
-    //     editCurrentVersion: true,
-    //     onlyIncludeVersions: ['3.28','3.27','3.26'],
-    //     lastVersion: '3.28',
-    //     versions: {
-    //       current: {
-    //         label: 'Next',
-    //         path: 'next',
-    //         banner: 'unreleased',
-    //       },
-    //       3.28: {
-    //         label: '3.28 (latest)',
-    //         path: 'latest',
-    //         banner: 'none'
-    //       },
-    //       3.27: {
-    //         label: '3.27',
-    //         path: '3.27',
-    //         banner: 'none',
-    //       },
-    //       3.26: {
-    //         label: '3.26',
-    //         path: '3.26',
-    //         banner: 'none',
-    //       },
-    //     },
-    //     sidebarPath: require.resolve('./sidebars-calico.js'),
-    //     beforeDefaultRemarkPlugins: [variablesPlugin],
-    //     editUrl: generateEditUrl,
-    //   },
-    // ],
-    // [
-    //   '@docusaurus/plugin-content-docs',
-    //   /** @type {import('@docusaurus/plugin-content-docs').Options} */
-    //   {
-    //     id: 'calico-enterprise',
-    //     path: 'calico-enterprise',
-    //     routeBasePath: 'calico-enterprise',
-    //     editCurrentVersion: true,
-    //     onlyIncludeVersions: ['3.20-1','3.19-2','3.18-2','3.17'],
-    //     //lastVersion: '3.19-2',
-    //     versions: {
-    //       current: {
-    //         label: 'Next',
-    //         path: 'next',
-    //         banner: 'unreleased',
-    //       },
-    //       '3.20-1': {
-    //         label: '3.20 (early preview)',
-    //         path: '3.20',
-    //         banner: 'unreleased',
-    //       },
-    //       '3.19-2': {
-    //         label: '3.19 (latest)',
-    //         path: 'latest',
-    //         banner: 'none',
-    //       },
-    //       '3.18-2': {
-    //         label: '3.18',
-    //         path: '3.18',
-    //         banner: 'none',
-    //       },
-    //       3.17: {
-    //         label: '3.17',
-    //         path: '3.17',
-    //         banner: 'none',
-    //       },
-    //     },
-    //     sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
-    //     beforeDefaultRemarkPlugins: [variablesPlugin],
-    //     editUrl: generateEditUrl,
-    //   },
-    // ],
+     [
+       '@docusaurus/plugin-content-docs',
+       /** @type {import('@docusaurus/plugin-content-docs').Options} */
+       {
+         id: 'calico',
+         path: 'calico',
+         routeBasePath: 'calico',
+         editCurrentVersion: true,
+         onlyIncludeVersions: ['3.28','3.27','3.26'],
+         lastVersion: '3.28',
+         versions: {
+           current: {
+             label: 'Next',
+             path: 'next',
+             banner: 'unreleased',
+           },
+           3.28: {
+             label: '3.28 (latest)',
+             path: 'latest',
+             banner: 'none'
+           },
+           3.27: {
+             label: '3.27',
+             path: '3.27',
+             banner: 'none',
+           },
+           3.26: {
+             label: '3.26',
+             path: '3.26',
+             banner: 'none',
+           },
+         },
+         sidebarPath: require.resolve('./sidebars-calico.js'),
+         beforeDefaultRemarkPlugins: [variablesPlugin],
+         editUrl: generateEditUrl,
+       },
+     ],
+    [
+       '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+       {
+         id: 'calico-enterprise',
+         path: 'calico-enterprise',
+         routeBasePath: 'calico-enterprise',
+         editCurrentVersion: true,
+         onlyIncludeVersions: ['3.20-1','3.19-2','3.18-2','3.17'],
+         //lastVersion: '3.19-2',
+         versions: {
+           current: {
+             label: 'Next',
+             path: 'next',
+             banner: 'unreleased',
+           },
+           '3.20-1': {
+             label: '3.20 (early preview)',
+             path: '3.20',
+             banner: 'unreleased',
+          },
+           '3.19-2': {
+             label: '3.19 (latest)',
+             path: 'latest',
+             banner: 'none',
+           },
+           '3.18-2': {
+             label: '3.18',
+             path: '3.18',
+             banner: 'none',
+           },
+           3.17: {
+             label: '3.17',
+             path: '3.17',
+             banner: 'none',
+           },
+         },
+         sidebarPath: require.resolve('./sidebars-calico-enterprise.js'),
+         beforeDefaultRemarkPlugins: [variablesPlugin],
+         editUrl: generateEditUrl,
+       },
+     ],
     [
       '@docusaurus/plugin-content-docs',
       /** @type {import('@docusaurus/plugin-content-docs').Options} */
@@ -468,6 +468,25 @@ const config = {
         editUrl: generateEditUrl,
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
+      {
+        id: 'use-cases',
+        path: 'use-cases',
+        routeBasePath: 'use-cases',
+        editCurrentVersion: true,
+        onlyIncludeVersions: ['current'],
+        versions: {
+          current:{
+            path: '/',
+          },
+        },
+        //To see builds for unreleased versions, remove comments in the next line.
+        sidebarPath: './sidebars-use-cases.js',
+        editUrl: generateEditUrl,
+      },
+    ]
   ],
   customFields: {
     isTesting: process.env.TESTING || false,
