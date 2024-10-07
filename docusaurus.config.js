@@ -1,12 +1,11 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const {themes} = require('prism-react-renderer');
+import { themes } from 'prism-react-renderer';
+import variablesPlugin from './src/remark/variablesPlugin';
+
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
-
-const variablesPlugin = require('./src/remark/variablesPlugin');
-const { useCaseSidebar } = require('./sidebars-use-cases');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -18,7 +17,6 @@ const config = {
   onBrokenMarkdownLinks: 'throw',
   favicon: 'img/favicon.png',
 
-
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".
@@ -28,20 +26,20 @@ const config = {
   },
   scripts: [
     {
-      src: "https://widget.kapa.ai/kapa-widget.bundle.js",
-      "data-website-id": "578b0d26-ff67-42e3-b465-5839865a7471",
-      "data-project-name": "Calico",
-      "data-project-color": "#F89C1D",
-      "data-project-logo":
-        "https://www.tigera.io/app/uploads/2021/06/Tigera-orange.png",
-      "data-modal-disclaimer": "The Calico Docs AI answers questions based on what it finds in our product documentation. As with all AI solutions, it's a good idea to verify answers in the source material. ",
+      src: 'https://widget.kapa.ai/kapa-widget.bundle.js',
+      'data-website-id': '578b0d26-ff67-42e3-b465-5839865a7471',
+      'data-project-name': 'Calico',
+      'data-project-color': '#F89C1D',
+      'data-project-logo': 'https://www.tigera.io/app/uploads/2021/06/Tigera-orange.png',
+      'data-modal-disclaimer':
+        "The Calico Docs AI answers questions based on what it finds in our product documentation. As with all AI solutions, it's a good idea to verify answers in the source material. ",
       //"data-modal-example-questions": "Docs Calico use eBPF?,Get started with egress gateways",
-      "data-modal-ask-ai-input-placeholder": "Ask me a question about Calico",
-      "data-font-family": "Poppins,Helvetica Neue,Helvetica,Arial,sans-serif",
-      "data-modal-border-radius": "6px",
-      "data-button-box-shadow": "2px 2px 8px rgba(0, 0, 0, 0.2)",
-      "data-modal-header-bg-color": "#FFFFFF",
-      "data-user-analytics-fingerprint-enabled": "true",
+      'data-modal-ask-ai-input-placeholder': 'Ask me a question about Calico',
+      'data-font-family': 'Poppins,Helvetica Neue,Helvetica,Arial,sans-serif',
+      'data-modal-border-radius': '6px',
+      'data-button-box-shadow': '2px 2px 8px rgba(0, 0, 0, 0.2)',
+      'data-modal-header-bg-color': '#FFFFFF',
+      'data-user-analytics-fingerprint-enabled': 'true',
       async: true,
     },
   ],
@@ -60,21 +58,21 @@ const config = {
         },
         blog: false,
         theme: {
-          customCss: [
-            require.resolve('./src/css/custom.css'),
-            require.resolve('./src/css/external-links.scss'),
-            require.resolve('./src/css/modal.scss'),
-          ],
+          customCss: ['./src/css/custom.css', './src/css/external-links.scss', './src/css/modal.scss'],
         },
       }),
     ],
   ],
 
   themeConfig:
-  /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     {
       metadata: [
-        {name: 'keywords', content: 'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp'}
+        {
+          name: 'keywords',
+          content:
+            'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp',
+        },
       ],
       algolia: {
         appId: 'Q4GSZWRKBA',
@@ -83,24 +81,15 @@ const config = {
         contextualSearch: true,
         searchPagePath: '/search',
       },
-      /*
-      announcementBar: {
-        id: 'ai-bot-announcement',
-        content: "🤖 Try exploring Calico Documentation with our new AI bot. Look for the <b>Ask AI</b> button at the" +
-          " bottom of your screen. 🤖",
-        backgroundColor: '#FCE181',
-        textColor: '#000',
-        isCloseable: true,
-      },
-      */
-      announcementBar: {
-        id: 'KubeCon24',
-        content: "🎉 Learn the latest trends in Kubernetes networking and security. Join us at CalicoCon 2024 on" +
-          " November 12. <a href='https://link.tigera.io/uhuRC'><strong>Register now!</strong></a> :🎉",
-        backgroundColor: '#FCE181',
-        textColor: '#000',
-        isCloseable: true,
-      },
+           "announcementBar": {
+             "id": "calico_ebpf",
+             "content": "Use Calico <img src=\"/img/brands/ebpf_logo.svg\" style=\"height:1.5rem; margin: 0 5px 0 5px;" +
+      " display: inline-flex;\" alt=\"eBPF\" /> dataplane to enhance your Kubernetes networking performance. Click <a
+      href=\"https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf/\">here </a> to learn more.",
+             "backgroundColor": "#FCE181",
+             "textColor": "#000",
+             "isCloseable": true,
+           },
       navbar: {
         logo: {
           src: 'img/tigera-logo-black.png',
@@ -479,7 +468,7 @@ const config = {
             banner: 'none',
           },
         },
-        sidebarPath: require.resolve('./sidebars-calico-cloud.js'),
+        sidebarPath: './sidebars-calico-cloud.js',
         beforeDefaultRemarkPlugins: [variablesPlugin],
         editUrl: generateEditUrl,
       },
@@ -502,14 +491,14 @@ const config = {
         sidebarPath: require.resolve('./sidebars-use-cases.js'),
         editUrl: generateEditUrl,
       },
-    ]
+    ],
   ],
   customFields: {
     isTesting: process.env.TESTING || false,
   },
 };
 
-module.exports = config;
+export default config;
 
 function generateEditUrl(params) {
   const { versionDocsDirPath, docPath } = params;
