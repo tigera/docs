@@ -109,6 +109,66 @@ Get the [status of DeepPacketInspection](../reference/resources/deeppacketinspec
 kubectl get <deep_packet_inspection_resource_name> -n <deep_packet_inspection_namespace>
 ```
 
+### Install custom Snort rules
+
+Installation of custom Snort rules for Calico deep packet inspection is a process that involves:
+1. Building a Docker image for the DPI init container with custom Snort rules.
+3. Configuration of the IntrusionDetection resource.
+
+#### Init container with custom Snort rules
+
+Assuming working in an empty directory:
+
+- copy your Snort rule files into `./snort-rules` directory
+- create a `Dockerfile` like this one:
+
+```yaml
+FROM alpine:3.14
+COPY snort-rules /snort-rules
+ENTRYPOINT [ "/bin/sh", "-c", "cp /snort-rules/* /usr/etc/snort/rules/" ]
+```
+
+- in the console issue the following commands:
+
+```bash
+docker build . -t your-image-name:image-tag
+docker push your-image-name:image-tag
+```
+
+After the image has been pushed to the registry you're ready to configure the `IntrusionDetection` resource.
+
+#### Configuration of the IntrusionDetection resource
+
+Patch the `IntrusionDetection` resource to contain the following data:
+
+```yaml
+spec:
+  deepPacketInspectionDaemonset:
+    spec:
+      template:
+        spec:
+          initContainers:
+          - name: snort-rules
+            image: your-image:tag
+```
+
+This can be done using the `kubectl` command as follows:
+
+```bash
+kubectl patch intrusiondetection tigera-secure --type merge -p '{"spec":{"deepPacketInspectionDaemonset":{"spec":{"template":{"spec":{"initContainers":[{"name":"snort-rules", "image":"your-image:tag"}]}}}}}}'
+```
+
+### Verify custom Snort rules installation
+
+First, verify that deep packet inspection is running. Then, assuming working in an empty directory please issue the following commands:
+
+```bash
+export POD=$(kubectl get pods -n tigera-dpi -o custom-columns=:metadata.name --no-headers | head -n 1)
+kubectl exec -n tigera-dpi $POD -- tar -cf - /usr/etc/snort/rules | tar --strip-components=4 -xf -
+```
+
+The directory will now contain Snort rules that are being used by the DPI.
+
 ## Additional resources
 
 - [Configure packet capture](../visibility/packetcapture.mdx)
