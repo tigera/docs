@@ -8,21 +8,19 @@ Application layer policies let you configure access controls based on L7 attribu
 
 ## Before you begin
 
-### Unsupported
-- {{prodname}} implements application layer policy using Envoy as a DaemonSet or sidecars. This means you cannot use application layer policy alongside a service mesh like Istio.
-- GKE (for DaemonSet mode)
-
 ### Limitations
-- Application layer policy supports restricting only ingress traffic
-- Support for L7 attributes are limited to HTTP method and URL exact/prefix path 
-- Supported protocols are limited to TCP-based protocols (for example, HTTP, HTTPS, or gRPC)
-- You can control application layer policies only at the cluster level (not per namespace) 
-- For sidecar mode, the pods needs to be created with the proper label `"applicationlayer.projectcalico.org/sidecar"="true"` for sidecar injection.
+
+* Our L7 features are currently not compatible with a service mesh such as Istio.
+* Application layer policy can restrict only ingress traffic.
+  It can not restrict egress traffic.
+* Support for L7 attributes are limited to HTTP method and URL exact/prefix path.
+* Supported protocols are limited to TCP-based protocols (for example, HTTP, HTTPS, or gRPC).
+* You can control application layer policies only at the cluster level (not per namespace).
 
 ## How to
-- [Enable application layer policies](#enable-application-layer-policies)
-- [Enforce application layer policies for ingress traffic](#enforce-application-layer-policies-for-ingress-traffic)
-- [Disable application layer policies](#disable-application-layer-policies)
+* [Enable application layer policies](#enable-application-layer-policies)
+* [Enforce application layer policies for ingress traffic](#enforce-application-layer-policies-for-ingress-traffic)
+* [Disable application layer policies](#disable-application-layer-policies)
 
 ### Enable application layer policies (ALP)
 In the ApplicationLayer custom resource, set the `applicationLayerPolicy` field to Enabled for Envoy as a DaemonSet, for using sidecars you will need to set the `sidecarInjection` field to Enabled and label and annotate the pods will have the packets analised.
@@ -83,8 +81,8 @@ spec:
 ### Disable application layer policies
 
 To disable the policies, do one of the following steps:
- - For sidecar mode, recreate your application pods without the sidecar label and annotations.
- - For Envoy as DaemonSet mode, set the `applicationLayerPolicy` field in the `ApplicationLayer` custom resource to `Disabled`.
- - Remove the `applicationLayerPolicy` field entirely.
- - Remove the `sidecarInjection` field entirely, if sidecar mode was being used only for ALP.
- - Delete the ApplicationLayer` custom resource if only ALP was enabled on it.
+* For sidecar mode, recreate your application pods without the sidecar label and annotations.
+* For Envoy as DaemonSet mode, set the `applicationLayerPolicy` field in the `ApplicationLayer` custom resource to `Disabled`.
+* Remove the `applicationLayerPolicy` field entirely.
+* Remove the `sidecarInjection` field entirely, if sidecar mode was being used only for ALP.
+* Delete the ApplicationLayer` custom resource if only ALP was enabled on it.
