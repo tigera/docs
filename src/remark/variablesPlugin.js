@@ -2,28 +2,91 @@ import { visit } from 'unist-util-visit';
 import getVariableByFilePath from '../utils/getVariableByFilePath';
 import isVarValue from '../utils/isVarValue';
 
-const varRegex = RegExp(/\$\([ \t]*([\w.\/-]+)[ \t]*\)/, "g");
+const varRegex = RegExp(/\$\([ \t]*([\w.\/-]+)[ \t]*\)/, 'g');
 
-// This is a remark plugin which runs before all the docusaurus plugins which
-// allows us to support variable substitution in all md/mdx files. We are
-// 'visit'ing each 'node' in the AST (abstract syntax tree) to do a replacement
-// on all text values where we see a pattern described in the regex above, such
-// as {{ i_am_a_context_variable }} or {{objectInGlobal.foobar}}
-// variables can be seen in @site/variables.js
+function replaceVariable(value, file) {
+  return value.replaceAll(varRegex, (match, varName) => {
+    const varValue = getVariableByFilePath(file, varName);
+
+    return isVarValue(varValue) ? varValue : match;
+  });
+}
+
+function isString(value) {
+  return typeof value === 'string';
+}
+
+function replaceJsExpressionVariable(item, property, file) {
+  if (item.expression[property]?.type === 'Literal') {
+    if (isString(item.expression[property].raw)) {
+      item.expression[property].raw = replaceVariable(item.expression.consequent.raw, file);
+    }
+  } else if (item.expression[property]?.type === 'TemplateLiteral') {
+    item.expression[property].quasis.forEach((templateLiteral) => {
+      if (isString(templateLiteral.value.raw)) {
+        templateLiteral.value.raw = replaceVariable(templateLiteral.value.raw, file);
+      }
+    });
+  }
+}
+
+function evaluateJsExpression(node, file) {
+  const body = node.data.estree.body;
+
+  for (const item of body) {
+    if (item.type === 'ExpressionStatement' && item.expression?.type === 'ConditionalExpression') {
+      const condition = item.expression.test?.left?.raw;
+      if (isString(condition)) {
+        item.expression.test.left.raw = replaceVariable(condition, file);
+      }
+
+      replaceJsExpressionVariable(item, 'consequent', file);
+
+      replaceJsExpressionVariable(item, 'alternate', file);
+    }
+  }
+}
+
+function replaceJsxElementProps(node, file) {
+  for (const attribute of node.attributes) {
+    if (isString(attribute.value)) {
+      attribute.value = replaceVariable(attribute.value, file);
+    }
+  }
+}
+
+/**
+ * This is a remark plugin which runs during the build. It visits all md/mdx files
+ * and replaces a token with a variable from the variables.js. For example in
+ * calico-cloud_versioned_docs, $(prodname) gets replaced with Calico Cloud,
+ * from calico-cloud_versioned_docs/version-*.variables.js.
+ */
 function variablesPlugin(_options) {
   async function transformer(tree, file) {
     visit(
       tree,
       () => true,
       (node) => {
-        for (let prop in node) {
-          if (!Object.prototype.hasOwnProperty.call(node, prop)) continue;
-          if (prop === 'type' || typeof node[prop] !== 'string') continue; 
+        if (node.type === 'mdxFlowExpression' && isString(node.value) && node.value.match(varRegex) !== null) {
+          evaluateJsExpression(node, file);
+          return;
+        }
 
-          node[prop] = node[prop].replaceAll(varRegex, (match, varName) => {
-            const varValue = getVariableByFilePath(file, varName);
-            return isVarValue(varValue) ? varValue : match;
-          });
+        if (node.type === 'mdxJsxFlowElement' && Array.isArray(node.attributes) && node.attributes.length > 0) {
+          replaceJsxElementProps(node, file);
+          return;
+        }
+
+        for (let prop in node) {
+          if (!Object.prototype.hasOwnProperty.call(node, prop)) {
+            continue;
+          }
+
+          if (prop === 'type' || !isString(node[prop])) {
+            continue;
+          }
+
+          node[prop] = replaceVariable(node[prop], file);
         }
       }
     );
