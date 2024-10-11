@@ -1,17 +1,7 @@
-import { Badge, Box, Card, CardBody, CardFooter, CardHeader, Heading, Text } from '@chakra-ui/react';
-import Link from '@docusaurus/Link';
+import { Badge, Box } from '@chakra-ui/react';
 import React from 'react';
-import {
-  badgeStyles,
-  cardBodyStyles,
-  cardGradientStyles,
-  cardHeaderStyles,
-  cardTextStyles,
-  footerStyles,
-  gradientStyles,
-  headingStyles,
-  linkStyles,
-} from './styles';
+import CardLink from './cardLink';
+import { badgeStyles, cardGradientStyles, gradientStyles } from './styles';
 
 enum PaidProductName {
   cloud = 'cloud',
@@ -51,36 +41,23 @@ export const PaidProductDocCardLink: React.FC<PaidDocCardLinkProps> = ({
   const href = url.startsWith('/') ? url : `/${url}`;
 
   return (
-    <Link
-      href={href}
-      style={linkStyles}
-    >
-      <Gradient>
-        <Card sx={cardGradientStyles}>
-          <CardHeader sx={cardHeaderStyles}>
-            <Heading
-              sx={headingStyles}
-              as='h5'
-            >
-              {title}
-            </Heading>
-          </CardHeader>
-          <CardBody sx={cardBodyStyles}>
-            <Text sx={cardTextStyles}>{description}</Text>
-          </CardBody>
-
-          <CardFooter sx={footerStyles}>
-            <Badge
-              sx={badgeStyles}
-              layerStyle={'docsGradientBlueGreen'}
-              fontWeight='semibold'
-            >
-              {paidProductLabel}
-            </Badge>
-          </CardFooter>
-        </Card>
-      </Gradient>
-    </Link>
+    <Gradient>
+      <CardLink
+        href={href}
+        title={title}
+        description={description}
+        cardSx={cardGradientStyles}
+        Footer={
+          <Badge
+            sx={badgeStyles}
+            layerStyle={'docsGradientBlueGreen'}
+            fontWeight='semibold'
+          >
+            {paidProductLabel}
+          </Badge>
+        }
+      />
+    </Gradient>
   );
 };
 

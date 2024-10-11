@@ -7,13 +7,6 @@ title: Release notes
 
 Learn about the new features, bug fixes, and other updates in this release of {{prodname}}.
 
-:::info
-
-{{prodname}} 3.28 contains breaking changes for installations that use the Calico API server.
-See [Important upgrade notes](#important-upgrade-notes) for more information.
-
-:::
-
 ## New features and enhancements
 
 ### Configure multiple IP pools during installation
@@ -135,6 +128,23 @@ These improvements apply only when Calico is running in iptables mode.
 
 <!--## Known issues-->
 
+## Updating
+
+:::important
+
+{{prodname}} 3.28 contains breaking changes for installations that use the Calico API server.
+
+:::
+
+* ***Breaking change***: Upgrading {{prodname}} will alter the UID of all `projectcalico.org/v3` resources.
+  If you're using the Calico API server, you must restart any controllers, including `kube-controller-manager`, that manage these resources after the upgrade.
+  This change addresses an issue where duplicate UIDs on different API resources could disrupt Kubernetes garbage collection.
+  [calico #8586](https://github.com/projectcalico/calico/pull/8586) (@caseydavenport)
+* This release re-enables VXLAN checksum offload for kernels > 5.7 (this takes effect when nodes are restarted).
+  The offload was disabled in the past due to kernel bugs but has substantial performance impact.
+  We've been unable to find an environment where this needs to be disabled, so are re-enabling the offload with the intent of proving it works or finding a setup where it doesn't.
+  If you encounter problems after upgrading and restarting nodes, please let us know and set `ChecksumOffloadBroken=true` in the FelixConfiguration's `featureDetectOverride` field to restore the previous behavior.
+  [calico #8774](https://github.com/projectcalico/calico/pull/8774) (@tomastigera)
 
 ## Release details
 
@@ -147,17 +157,6 @@ Calico Open Source release 3.28.0 is now generally available.
 #### Updating
 
 To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx).
-
-##### Important upgrade notes
-
-- **Breaking change:** On upgrade, the UID of projectcalico.org/v3 resources will change. If you are using the Calico API server, it is recommended that you restart any controllers that manage projectcalico.org/v3 API resources after upgrading Calico, including the kube-controller-manager.
-  This change was necessary in order to fix an issue where duplicate UIDs could be seen on different API resources, confusing Kubernetes garbage collection.
-  [calico #8586](https://github.com/projectcalico/calico/pull/8586) (@caseydavenport)
-* This release re-enables VXLAN checksum offload for kernels > 5.7 (this takes effect when nodes are restarted).
-  The offload was disabled in the past due to kernel bugs but has substantial performance impact.
-  We've been unable to find an environment where this needs to be disabled, so are re-enabling the offload with the intent of proving it works or finding a setup where it doesn't.
-  If you encounter problems after upgrading and restarting nodes, please let us know and set `ChecksumOffloadBroken=true` in the FelixConfiguration's `featureDetectOverride` field to restore the previous behavior.
-  [calico #8774](https://github.com/projectcalico/calico/pull/8774) (@tomastigera)
 
 ### Calico Open Source 3.28.1 bug fix update
 
@@ -189,5 +188,25 @@ July 30, 2024
 * Fix errors when running on a kernel that doesn't support the XFRM netlink family. #8871 (@fasaxc)
 
 #### How to update
+
+To update an existing installation of Calico Open Source 3.28, see [the upgrade guides](../operations/upgrading/index.mdx).
+
+### Calico Open Source 3.28.2 bug fix update
+
+September 19, 2024
+
+#### Bug fixes
+
+ - Don't run pprof on prometheus metrics port [calico #9224](https://github.com/projectcalico/calico/pull/9224) (@coutinhop)
+ - ebpf: Fix for Istio ambient mode - traffic that arrives from host should go back through host and not skip iptables [calico #9199](https://github.com/projectcalico/calico/pull/9199) (@tomastigera)
+ - [etcd mode] Fix issue where Calico nodes failed to decommission if calico-kube-controllers was running on the terminated node. [calico #9197](https://github.com/projectcalico/calico/pull/9197) (@caseydavenport)
+ - ebpf: Attach XDP to bond slave devices. [calico #9143](https://github.com/projectcalico/calico/pull/9143) (@sridhartigera)
+ - BGP: Prevent the advertisement of local kernel routes learned from eBPF interfaces (bpf*.cali) to peers. [calico #9127](https://github.com/projectcalico/calico/pull/9127) (@mazdakn)
+ - Fix Felix panic when using non-default BPF map sizes.  Size was not updated in all places resulting in failure to attach programs. [calico #9118](https://github.com/projectcalico/calico/pull/9118) (@sridhartigera)
+ - Fix interaction between kube-proxy and Calico's SNAT rules that could cause corrupted VXLAN packets when checksum offload was enabled.  Move Calico's rules after kube-proxy's to make sure kube-proxy's mark bit is cleared if both would have done SNAT. [calico #9102](https://github.com/projectcalico/calico/pull/9102) (@tomastigera)
+ - Fix missing resources in calioctl command help text [calico #9095](https://github.com/projectcalico/calico/pull/9095) (@caseydavenport)
+ - ebpf: Fix parsing host IP update and re-attach program on all interfaces when there is a host IP update; fix frequently attaching BPF programs when pods annotations/labels change and eventually failing due ro running out of tc priority. [calico #9094](https://github.com/projectcalico/calico/pull/9094) (@sridhartigera)
+ - Fix Felix panicing when trying to resync a temporary IP set. Temporary IP sets are created in certain scenarios after previous failures. [calico #9078](https://github.com/projectcalico/calico/pull/9078) (@fasaxc)
+ - Helm: Fix error parsing kubernetesServiceEndpoint.host and kubernetesServiceEndpoint.port as an integer [calico #9068](https://github.com/projectcalico/calico/pull/9068) (@MichalFupso)
 
 To update an existing installation of Calico Open Source 3.28, see [the upgrade guides](../operations/upgrading/index.mdx).

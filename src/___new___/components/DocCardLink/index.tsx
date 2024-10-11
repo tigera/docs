@@ -1,10 +1,10 @@
-import { Card, CardBody, CardHeader, Heading, Text } from '@chakra-ui/react';
-import React from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 import { useDocById } from '@docusaurus/theme-common/internal';
-import Link from '@docusaurus/Link';
-import { cardBodyStyles, cardHeaderStyles, cardStyles, cardTextStyles, headingStyles, linkStyles } from './styles';
+import React from 'react';
 import { useDocUrl } from '../../hooks';
+import CardLink from './cardLink';
 import PaidProductDocCardLink from './paidDocCardLink';
+import { cardStyles, lightCardStyles } from './styles';
 
 type DocCardLinkProps = {
   docId: string;
@@ -12,32 +12,21 @@ type DocCardLinkProps = {
   description?: string;
 };
 
-const CardLink: React.FC<DocCardLinkProps> = ({ docId, title, description }) => {
+const DocCardLink: React.FC<DocCardLinkProps> = ({ docId, title, description }) => {
   const doc = useDocById(docId);
   const href = useDocUrl(docId);
+  const cardSx = useColorModeValue(lightCardStyles, cardStyles);
 
   return (
-    <Link
+    <CardLink
       href={href}
-      style={linkStyles}
-    >
-      <Card sx={cardStyles}>
-        <CardHeader sx={cardHeaderStyles}>
-          <Heading
-            sx={headingStyles}
-            as='h5'
-          >
-            {title ?? doc.title}
-          </Heading>
-        </CardHeader>
-        <CardBody sx={cardBodyStyles}>
-          <Text sx={cardTextStyles}>{description ?? doc.description}</Text>
-        </CardBody>
-      </Card>
-    </Link>
+      title={title ?? doc.title}
+      description={description ?? doc.description}
+      cardSx={cardSx}
+    />
   );
 };
 
 export { PaidProductDocCardLink };
 
-export default CardLink;
+export default DocCardLink;

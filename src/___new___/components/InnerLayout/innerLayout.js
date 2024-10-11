@@ -5,66 +5,63 @@ import HomepageHeader from '../HomepageHeader';
 import ProductComparison from '../ProductComparison';
 import ProductInfo from '../ProductInfo';
 import FeatureTableComparison from '../FeatureTableComparison';
-import {useColorMode} from '@docusaurus/theme-common';
 
 import {theme} from '../../theme';
 
-import {Grid, GridItem} from '@chakra-ui/react';
-
-import {ChakraProvider} from '@chakra-ui/react';
+import {Grid, GridItem, useColorMode} from '@chakra-ui/react';
 
 export default function Home() {
     const {siteConfig} = useDocusaurusContext();
     const {colorMode} = useColorMode();
     const isDarkMode = colorMode === 'dark';
 
-    return (
-        <main>
-            <ChakraProvider theme={theme}>
-                <HomepageHeader
-                    siteConfig={siteConfig}
-                    isDarkMode={isDarkMode}
-                />
+  return (
+    <main>
+      <HomepageHeader
+        siteConfig={siteConfig}
+        isDarkMode={isDarkMode}
+      />
 
-                <Grid
-                    gap={0}
-                    templateAreas={
-                        '"selectdocs"  "productinfo" "productcomparison" "featuretablecomparison" '
-                    }
-                    templateColumns={'1fr'}
-                    // note: just loose heights for now, not based on wireframes, please change!
-                    //minmax(720px, max-content) for explore
-                    templateRows={
-                        'minmax(200px, max-content)  minmax(500px, max-content) minmax(400px, max-content) minmax(200px, max-content)'
-                    }
-                    >
-                    <GridItem
-                        gridArea='selectdocs'
-                        as='section'
-                        data-testid='selectdocs-section'>
-                        <SelectDocs isDarkMode={isDarkMode} />
-                    </GridItem>
-                   
-                    <GridItem
-                        gridArea='productinfo'
-                        as='section'
-                        data-testid='productinfo-section'>
-                        <ProductInfo isDarkMode={isDarkMode} />
-                    </GridItem>
-                    <GridItem
-                        gridArea='productcomparison'
-                        as='section'
-                        data-testid='productcomparison-section'>
-                        <ProductComparison isDarkMode={isDarkMode} />
-                    </GridItem>
-                    <GridItem
-                        gridArea='featuretablecomparison'
-                        as='section'
-                        data-testid='featuretablecomparison-section'>
-                        <FeatureTableComparison isDarkMode={isDarkMode} />
-                    </GridItem>
-                </Grid>
-            </ChakraProvider>
-        </main>
-    );
+      <Grid
+        gap={0}
+        templateAreas={'"selectdocs"  "productinfo" "productcomparison" "featuretablecomparison" '}
+        templateColumns={'1fr'}
+        // note: just loose heights for now, not based on wireframes, please change!
+        //minmax(720px, max-content) for explore
+        templateRows={
+          'minmax(200px, max-content)  minmax(500px, max-content) minmax(400px, max-content) minmax(200px, max-content)'
+        }
+      >
+        <GridItem
+          gridArea='selectdocs'
+          as='section'
+          data-testid='selectdocs-section'
+        >
+          <SelectDocs isDarkMode={isDarkMode} />
+        </GridItem>
+
+        <GridItem
+          gridArea='productinfo'
+          as='section'
+          data-testid='productinfo-section'
+        >
+          <ProductInfo isDarkMode={isDarkMode} />
+        </GridItem>
+        <GridItem
+          gridArea='productcomparison'
+          as='section'
+          data-testid='productcomparison-section'
+        >
+          <ProductComparison isDarkMode={isDarkMode} />
+        </GridItem>
+        <GridItem
+          gridArea='featuretablecomparison'
+          as='section'
+          data-testid='featuretablecomparison-section'
+        >
+          <FeatureTableComparison isDarkMode={isDarkMode} />
+        </GridItem>
+      </Grid>
+    </main>
+  );
 }

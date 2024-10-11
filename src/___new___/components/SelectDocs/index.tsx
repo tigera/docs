@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Flex, Text, SystemStyleObject, Stack, Heading, Image, Link } from '@chakra-ui/react';
+import { Box, Flex, Text, SystemStyleObject, Stack, Heading, Image } from '@chakra-ui/react';
 import { heading2Styles } from '../styles';
 import selectDocsInfo from '../../data/selectDocsInfo';
 
@@ -12,6 +12,7 @@ import {
   subHeaderTextStyle,
   headerTextStyle,
 } from './styles';
+import Link from '@docusaurus/Link';
 
 interface SelectDocsProps {
   sx?: SystemStyleObject;
