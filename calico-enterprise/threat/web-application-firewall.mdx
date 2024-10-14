@@ -24,7 +24,7 @@ Historically, web application firewalls (WAFs) were deployed at the edge of your
 
 ### About {{prodname}} WAF
 
-WAF is deployed in your cluster with Envoy as a sidecar container on your pods. {{prodname}} proxies selected service traffic through Envoy, checking HTTP requests using the industry-standard
+WAF is deployed in your cluster with Envoy as a sidecar container on your pods. {{prodname}} proxies traffic through Envoy, checking HTTP requests using the industry-standard
 [ModSecurity](https://owasp.org/www-project-modsecurity-core-rule-set/) with OWASP Core Rule Set `v4.0.0-rc2` with some modifications for Kubernetes workloads.
 
 You simply enable WAF in Manager UI, and determine the services that you want to enable for WAF protection. By default WAF is set to `DetectionOnly` so no traffic will be denied until you are ready to turn on blocking mode.
@@ -46,10 +46,11 @@ WAF cannot be used with:
 * Host-networked client pods
 * TLS traffic
 * [LoadBalancer services](https://Kubernetes.io/docs/concepts/services-networking/service/#loadbalancer)
-* Egress gateways
 
 :::note
+
 When selecting and deselecting traffic for WAF, active connections may be disrupted.
+
 :::
 
 :::caution
@@ -91,14 +92,12 @@ kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySync
 In the ApplicationLayer custom resource, named `tigera-secure`, set the `sidecarInjection` field to `Enabled`.
 
 ```bash
-kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: ApplicationLayer
 metadata:
   name: tigera-secure
 spec:
   sidecarInjection: Enabled
-EOF
 ```
 
 Or, in Manager UI, click **Threat Defense > Web Application Firewall > Configure Web Application Firewall**.
@@ -114,7 +113,7 @@ we recommend that you install the [GoogleCloudPlatform/microservices-demo app](h
 kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/microservices-demo/main/release/kubernetes-manifests.yaml
 ```
 
-## Apply WAF to services
+## Apply WAF to deloyments 
 
 Now that you have deployed WAF in your cluster, you can select the deployments you want to protect from application layer attacks.
 
@@ -336,7 +335,7 @@ To view WAF events In Kibana, select the `tigera_secure_ee_waf*` index pattern.
 To disable WAF on a deployment, use the Actions menu on the WAF board, or use the following command:
 
 ```bash
-   kubectl patch deployment <deployment-name> -n <deployment-namespace> --type='json' -p '[{"op":"remove","path":"/spec/template/metadata/labels/applicationlayer.projectcalico.org~1sidecar"},{"op":"remove","path":"/spec/template/metadata/annotations/applicationlayer.projectcalico.org~1waf"}]'
+kubectl patch deployment <deployment-name> -n <deployment-namespace> --type='json' -p '[{"op":"remove","path":"/spec/template/metadata/labels/applicationlayer.projectcalico.org~1sidecar"},{"op":"remove","path":"/spec/template/metadata/annotations/applicationlayer.projectcalico.org~1waf"}]'
 ```
 
 ## Disable WAF feature from your cluster
