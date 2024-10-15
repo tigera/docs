@@ -30,15 +30,17 @@ L7 logs are visible in the Manager UI, service graph, in the HTTP tab.
 
 ## Before you begin
 
-**Not supported**
-- GKE
+### Limitations
 
-**Limitations**
+* L7 log collection is not compatible with a service mesh such as Istio.
+* L7 log collection is not supported for host-networked client pods.
 
-- L7 log collection is not supported for host-networked client pods.
-- When selecting and deselecting traffic for L7 log collection, active connections may be disrupted.
+:::important
 
-**Log storage requirements**
+When you enable L7 log collection for a deployment, all of that deployment's pods will restart.
+Selecting and deselecting traffic for L7 log collection may result in disruptions for active connections.
+
+:::
 
 :::note
 
@@ -46,12 +48,7 @@ L7 logs require a minimum of 1 additional GB of log storage per node, per one-da
 
 :::
 
-## How to
-- [Configure Felix for log data collection](#configure-felix-for-log-data-collection)
-- [Configure L7 logs](#configure-l7-logs)
-- [View L7 logs in Manager UI](#view-l7-logs-in-manager-ui)
-
-### Configure Felix for log data collection
+## Configure Felix for log data collection
 
 1. Enable the Policy Sync API in Felix.
 
@@ -65,17 +62,15 @@ L7 logs require a minimum of 1 additional GB of log storage per node, per one-da
 
    For help, see [Felix Configuration documentation](../../../reference/component-resources/node/felix/configuration.mdx#calico-enterprise-specific-configuration).
 
-### Configure L7 logs
+## Configure L7 logs
 
 In this step, you will configure L7 logs, select logs for collection, and test the configuration.
 
-**Configure the ApplicationLayer resource for L7 logs**
+### Configure the ApplicationLayer resource for L7 logs
 
 1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) resource named, `tigera-secure` to include a logCollection section of the file, `_api.html` [here](../../../reference/installation/api.mdx).
 
-1. Ensure that the `collectLogs` field is set to `Enabled`.
-
-   Example:
+1. Ensure that the `sidecarInjection` field is set to `Enabled`.
 
    ```yaml
    apiVersion: operator.tigera.io/v1
@@ -84,40 +79,36 @@ In this step, you will configure L7 logs, select logs for collection, and test t
      name: tigera-secure
    spec:
      logCollection:
-       collectLogs: Enabled
        logIntervalSeconds: 5
        logRequestsPerInterval: -1
+     sidecarInjection: Enabled
    ```
 
 1. Apply the resource. This creates `l7-log-collector` daemonset in `calico-system` namespace.
 
-1. Ensure that the daemonset progresses and `l7-collector` and `envoy-proxy` containers inside the daemonset are in a `Running` state.
+1. Ensure that the daemonset progresses and is fully deployed.
 
-**Select traffic for L7 log collection**
+### Select traffic for L7 log collection
 
-1. Annotate the services you wish to collect L7 logs as shown.
-
-   ```bash
-   kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging=true
-   ```
-
-2. To disable the L7 log collection, remove the annotation.
+1. Patch your application deployments you wish to collect L7 logs as shown.
 
    ```bash
-   kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging-
+   kubectl patch deployment <deployment-name> -n <deployment-namespace> -p '{"spec":{"template":{"metadata":{"labels":{"applicationlayer.projectcalico.org/sidecar":"true"},"annotations":{"applicationlayer.projectcalico.org/logging":"Enabled"}}}}}'
    ```
 
-After annotating a service for L7 log collection, only newly-established connections through that service are proxied by Envoy. Connections established before the service is annotated are not proxied or interrupted, and no logs are generated.
+2. To disable L7 log collection, remove the label and annotation.
 
-Conversely, when a service is deselected, any previous connections established through the annotated service continue to be proxied by Envoy until they are terminated, and logs are generated.
+   ```bash
+   kubectl patch deployment <deployment-name> -n <deployment-namespace> --type='json' -p '[{"op":"remove","path":"/spec/template/metadata/labels/applicationlayer.projectcalico.org~1sidecar"},{"op":"remove","path":"/spec/template/metadata/annotations/applicationlayer.projectcalico.org~1logging"}]'
+   ```
 
-**Test your configuration**
+### Test your configuration
 
 1. Identify the path to access your cluster. Where `<path>` can be:
 
-   - Public address of your cluster/service
+   * Public address of your cluster/service
      or
-   - Cluster IP of your application's service (if testing within the cluster)
+   * Cluster IP of your application's service (if testing within the cluster)
 
 1. `curl` your service with a command similar to the following. You will see `Server` header as `envoy`.
 
@@ -125,9 +116,9 @@ Conversely, when a service is deselected, any previous connections established t
    curl --head <path to access service>:<optional port>/<path>
    ```
 
-### View L7 logs in Manager UI
+## View L7 logs in Manager UI
 
-**Service Graph**
+### Service Graph
 
 To view L7 logs in Service Graph:
 
@@ -136,7 +127,7 @@ To view L7 logs in Service Graph:
 
    ![l7-logs](/img/calico-enterprise/l7-logs.png)
 
-**Kibana**
+### Kibana
 
 To view L7 logs by index pattern in Kibana:
 
