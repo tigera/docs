@@ -6,17 +6,22 @@ description: Monitor live traffic for malicious activities.
 
 ## Big picture
 
-Configure Deep Packet Inspection (DPI) in clusters to get alerts on compromised resources.
+Configure deep packet inspection (DPI) in clusters to get alerts on compromised resources.
 
 ## Value
 
-Security teams need to run DPI quickly in response to unusual network traffic in clusters so they can identify potential threats. Also, it is critical to run DPI on select workloads (not all) to efficiently make use of cluster resources and minimize the impact of false positives. {{prodname}} provides an easy way to perform DPI using [Snort community rules](https://www.snort.org/downloads/#rule-downloads). You can disable DPI at any time, selectively configure for namespaces and endpoints, and alerts are generated in the Security Events dashboard in Manager UI.
+Security teams need to run DPI quickly in response to unusual network traffic in clusters so they can identify potential threats.
+Also, it is critical to run DPI on select workloads (not all) to efficiently make use of cluster resources and minimize the impact of false positives.
+{{prodname}} provides an easy way to perform DPI using [Snort community rules](https://www.snort.org/downloads/#rule-downloads).
+You can disable DPI at any time, selectively configure for namespaces and endpoints, and alerts are generated in the Security Events dashboard in Manager UI.
 
 ## Concepts
 
-For each deep packet inspection resource (DeepPacketInspection), {{prodname}} creates a live network monitor that inspects the header and payload information of packets that match the Snort community rules. Whenever malicious activities are suspected, an alert is automatically added to the Security Events page in the {{prodname}} Manager.
+For each deep packet inspection resource (DeepPacketInspection), {{prodname}} creates a live network monitor that inspects the header and payload information of packets that match the Snort community rules.
+Whenever malicious activities are suspected, an alert is automatically added to the Security Events page in the {{prodname}} Manager.
 
-{{prodname}} DPI uses AF_PACKET, a Linux socket that allows an application to receive and send raw packets. It is commonly used for troubleshooting (like tcpdump and Wireshark), but also for network intrusion detection. For details, see [AF_Packet](https://man7.org/linux/man-pages/man7/packet.7.html).
+{{prodname}} DPI uses AF_PACKET, a Linux socket that allows an application to receive and send raw packets.
+It is commonly used for troubleshooting (like tcpdump and Wireshark), but also for network intrusion detection. For details, see [AF_Packet](https://man7.org/linux/man-pages/man7/packet.7.html).
 
 ## Before you begin
 
@@ -108,6 +113,68 @@ Get the [status of DeepPacketInspection](../reference/resources/deeppacketinspec
 ```bash
 kubectl get <deep_packet_inspection_resource_name> -n <deep_packet_inspection_namespace>
 ```
+
+### Install custom Snort rules
+
+If you don't want to use the [Snort community rules](https://www.snort.org/downloads/#rule-downloads), you can install a custom set of Snort rules to perform deep packet inspections.
+You may want to install your own rules if:
+* you use a paid subscription to a Snort ruleset
+* you have written your own Snort rules.
+
+:::important
+If you install custom Snort rules, {{prodname}} will stop updating the community rules with each minor release.
+You will be responsible for making sure your rules are up to date.
+:::
+
+1. Create a container with your custom Snort rules.
+
+   1. Copy your Snort rule files into a new `./snort-rules/` directory.
+   1. Create a `Dockerfile` like this one:
+
+      ```yaml
+      FROM alpine:3.14
+      COPY snort-rules /snort-rules
+      ENTRYPOINT [ "/bin/sh", "-c", "cp /snort-rules/* /usr/etc/snort/rules/" ]
+      ```
+   1. In the console, run the following commands:
+
+      ```bash
+      docker build . -t <your-image-name>:<your-image-tag>
+      docker push <your-image-name>:<your-image-tag>
+      ```
+
+      After the image has been pushed to the registry, you're ready to configure the `IntrusionDetection` resource.
+
+1. Update the `IntrusionDetection` resource with the custom Snort rules image.
+
+   ```yaml
+   spec:
+     deepPacketInspectionDaemonset:
+       spec:
+         template:
+           spec:
+             initContainers:
+             - name: snort-rules
+               image: <your-image-name>:<your-image-tag>
+   ```
+
+  This can also be done by running the following command:
+
+  ```bash
+  kubectl patch intrusiondetection tigera-secure --type merge -p '{"spec":{"deepPacketInspectionDaemonset":{"spec":{"template":{"spec":{"initContainers":[{"name":"snort-rules", "image":"<your-image-name>:<your-image-tag>"}]}}}}}}'
+  ```
+
+1. Verify that your custom rules have been installed correctly:
+
+   1. If it's not running already, [apply the DeepPacketInspection resource(#configure-deep-packet-inspection) to your cluster.
+   1. Extract the list of Snort rules that are currently being used by running the following commands:
+
+      ```bash
+      export POD=$(kubectl get pods -n tigera-dpi -o custom-columns=:metadata.name --no-headers | head -n 1) \
+      kubectl exec -n tigera-dpi $POD -- tar -cf - /usr/etc/snort/rules | tar --strip-components=4 -xf -
+      ```
+
+   1. If these rules match those in your custom set, then the installation was successful.
 
 ## Additional resources
 
