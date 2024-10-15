@@ -27,7 +27,7 @@ Historically, web application firewalls (WAFs) were deployed at the edge of your
 WAF is deployed in your cluster with Envoy as a sidecar container on your pods. {{prodname}} proxies traffic through Envoy, checking HTTP requests using the industry-standard
 [ModSecurity](https://owasp.org/www-project-modsecurity-core-rule-set/) with OWASP Core Rule Set `v4.0.0-rc2` with some modifications for Kubernetes workloads.
 
-You simply enable WAF in Manager UI, and determine the services that you want to enable for WAF protection. By default WAF is set to `DetectionOnly` so no traffic will be denied until you are ready to turn on blocking mode.
+You simply enable WAF in Manager UI, and determine the deployments that you want to enable for WAF protection. By default WAF is set to `DetectionOnly` so no traffic will be denied until you are ready to turn on blocking mode.
 
 Every request that WAF finds an issue with, will result in a Security Event being created for [you to review in the UI](#view-waf-events), regardless of whether the traffic was allowed or denied. This can greatly help in tuning later.
 
@@ -55,22 +55,8 @@ When selecting and deselecting traffic for WAF, active connections may be disrup
 
 :::caution
 
-Enabling WAF for certain system services may result in an undesired cluster state.
-* Do not enable WAF for system service with the following prefixes:
-
-  * `tigera-*`
-  * `calico-*`
-  * `kube-system`
-  * `openshift-*`
-
-* Do not enable WAF for system services with the following combination of name and namespaces:
-  * name: `Kubernetes`, namespace: `default`
-  * name: `openshift`, namespace: `default`
-  * name: `gatekeeper-webhook-service`, namespace: `gatekeeper-system`
-
-The rules are not overridden during upgrade, you will have to manage deploying updates to the OWASP Core Rule Set to the cluster over time.
-
-If you modify the rules, it is recommended to keep your rules in git or similar source control systems.
+You should enable WAF only for your application pods.
+If you enable WAF for deployments that are part of the Kubernetes system itself, you may create an undesirable cluster state.
 
 :::
 
@@ -113,23 +99,23 @@ we recommend that you install the [GoogleCloudPlatform/microservices-demo app](h
 kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/microservices-demo/main/release/kubernetes-manifests.yaml
 ```
 
-## Apply WAF to deloyments 
+## Apply WAF to deployments
 
 Now that you have deployed WAF in your cluster, you can select the deployments you want to protect from application layer attacks.
 
-If you have deployed the sample application, you can apply WAF on a service associated with your app, as follows:
+If you have deployed the sample application, you can apply WAF on a deployment associated with your app, as follows:
 
 ```bash
 kubectl patch deployment frontend -n default -p '{"spec":{"template":{"metadata":{"labels":{"applicationlayer.projectcalico.org/sidecar":"true"},"annotations":{"applicationlayer.projectcalico.org/waf":"Enabled"}}}}}'
 ```
 
-Alternatively, you can use the Manager UI to apply WAF to the `frontend` service if you opted for sidecars.
+Alternatively, you can use the Manager UI to apply WAF to the `frontend` deployment if you opted for sidecars.
 
-In this example, we applied WAF to the `frontend` pods. This means that every request that goes through the `frontend` service is inspected.
+In this example, we applied WAF to the `frontend` pods. This means that every request that goes through the `frontend` deployment is inspected.
 However, the traffic is not blocked because the WAF rule is set to `DetectionOnly` by default. You can adjust rules and start blocking traffic by [fine-tuning your WAF](#manage-your-waf).
 
-In the previous example, we applied WAF to the `frontend` service of the sample application. Here, we are
-applying WAF to a service of your own application.
+In the previous example, we applied WAF to the `frontend` deployment of the sample application. Here, we are
+applying WAF to a deployment of your own application.
 
 1. On the Manager UI, click **Threat Defense**, **Web Application Firewall**.
 2. Select the deployments you want WAF to inspect, and then click **Confirm Selections**.
@@ -140,18 +126,18 @@ applying WAF to a service of your own application.
     width='600'
    />
 
-3. On the **Web Application Firewall** page, you can verify that WAF is enabled for a service by locating the service and checking that the **Status** column says **Enabled**.
+3. On the **Web Application Firewall** page, you can verify that WAF is enabled for a deployment by locating the deployment and checking that the **Status** column says **Enabled**.
 
 4. To make further changes to a deployment, click **Actions**, and then **Enable** or **Disable**.
 
-You have now applied WAF rule sets to your own deployments, and note that the traffic that goes through the selected services will be alerted but not blocked by default.
+You have now applied WAF rule sets to your own deployments, and note that the traffic that goes through the selected deployments will be alerted but not blocked by default.
 
 ### Trigger a WAF event
 
 If you would like to trigger a WAF event for testing purposes, you can simulate an SQL injection attack inside your cluster by crafting a HTTP request with a query string that WAF will detect as an SQL injection attempt.
 The query string in this example has some SQL syntax embedded in the text. This is harmless and for demo purposes, but WAF will detect this pattern and create an event for this HTTP request.
 
-Run a simple curl command from any pod inside your cluster targeting a service you have selected for WAF protection e.g. from the demo app above we could attempt to send a simple HTTP request to the cartservice.
+Run a simple curl command from any pod inside your cluster targeting a deployment you have selected for WAF protection e.g. from the demo app above we could attempt to send a simple HTTP request to the cartservice.
 ```
   curl http://cartservice/cart?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
 ```
