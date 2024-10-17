@@ -347,6 +347,15 @@ module.exports = {
         },
         {
           type: 'category',
+          label: 'Tiered policy',
+          link: { type: 'doc', id: 'network-policy/policy-tiers/index'},
+          items: [
+            'network-policy/policy-tiers/tiered-policy',
+            'network-policy/policy-tiers/rbac-tiered-policies',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Policy rules',
           link: { type: 'doc', id: 'network-policy/policy-rules/index' },
           items: [
@@ -356,7 +365,6 @@ module.exports = {
             'network-policy/policy-rules/service-accounts',
             'network-policy/policy-rules/external-ips-policy',
             'network-policy/policy-rules/icmp-ping',
-
           ],
         },
         {
