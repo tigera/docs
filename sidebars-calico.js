@@ -588,6 +588,7 @@ module.exports = {
             'reference/resources/blockaffinity',
             'reference/resources/caliconodestatus',
             'reference/resources/felixconfig',
+            'reference/resources/felixconfig-new',
             'reference/resources/globalnetworkpolicy',
             'reference/resources/globalnetworkset',
             'reference/resources/hostendpoint',
@@ -623,6 +624,7 @@ module.exports = {
           link: { type: 'doc', id: 'reference/felix/index' },
           items: [
             'reference/felix/configuration',
+            'reference/felix/configuration-new',
             'reference/felix/prometheus',
           ],
         },
