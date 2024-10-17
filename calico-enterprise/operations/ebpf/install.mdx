@@ -52,10 +52,7 @@ eBPF supports AKS with Calico CNI and {{prodname}} network policy. However, with
 :::
 
 **Unsupported features**
-- Using NodeLocal DNSCache in your cluster
 - Clusters with some eBPF nodes and some standard dataplane and/or Windows nodes
-- IPv6
-- Host endpoint `doNotTrack` policy (other policy types are supported)
 - Floating IPs
 - SCTP (either for policy or services)
 - `Log` action in policy rules
@@ -104,7 +101,7 @@ The basic requirement for eBPF mode is to have a recent-enough kernel (see [supp
 
 Select the appropriate tab below for distribution-specific instructions:
 
-<Tabs>
+<Tabs groupId="k8s-distro">
 <TabItem label="Generic or kubeadm" value="Generic or kubeadm-0">
 
 `kubeadm` supports a number of base OSes; as long as the base OS chosen (such as Ubuntu 20.04) meets the kernel
@@ -181,8 +178,8 @@ The tabs below explain how to find the "real" address of the API server for a ra
 scaled up/down. If you have multiple API servers, with DNS or other load balancing in front it's important to use
 the address of the load balancer. This prevents {{prodname}} from being disconnected if the API servers IP changes.
 
-<Tabs>
-<TabItem label="Generic or kubeadm" value="Generic or kubeadm-6">
+<Tabs groupId="k8s-distro">
+<TabItem label="Generic or kubeadm" value="Generic or kubeadm-0">
 
 If you created a cluster manually (for example by using `kubeadm`) then the right address to use depends on whether you
 opted for a high-availability cluster with multiple API servers or a simple one-node API server.
@@ -196,13 +193,13 @@ opted for a high-availability cluster with multiple API servers or a simple one-
   causing {{prodname}} to lose connectivity to the API server.
 
 </TabItem>
-<TabItem label="kOps" value="kOps-7">
+<TabItem label="kOps" value="kOps-1">
 
 When using `kops`, `kops` typically sets up a load balancer of some sort in front of the API server. You should use
 the FQDN and port of the API load balancer: `api.internal.<clustername>`.
 
 </TabItem>
-<TabItem label="OpenShift" value="OpenShift-8">
+<TabItem label="OpenShift" value="OpenShift-2">
 
 OpenShift requires various DNS records to be created for the cluster; one of these is exactly what we need:
 `api.<cluster_name>.<base_domain>` should point to the API server or to the load balancer in front of the
@@ -210,7 +207,7 @@ API server. Use that (filling in the `<cluster_name>` and `<base_domain>` as app
 `KUBERNETES_SERVICE_HOST` below. Openshift uses 6443 for the `KUBERNETES_SERVICE_PORT`.
 
 </TabItem>
-<TabItem label="AKS" value="AKS-9">
+<TabItem label="AKS" value="AKS-3">
 
 For AKS clusters, you should use the FQDN of your API server. This can be found by running the following command:
 
@@ -228,7 +225,7 @@ In this example, you would use `mycalicocl-calicodemorg-03a087-36558dbb.hcp.cana
 `KUBERNETES_SERVICE_HOST` and `443` for `KUBERNETES_SERVICE_PORT` when creating the config map.
 
 </TabItem>
-<TabItem label="EKS" value="EKS-10">
+<TabItem label="EKS" value="EKS-4">
 
 For an EKS cluster, it's important to use the domain name of the EKS-provided load balancer that is in front of the API
 server. This can be found by running the following command:
@@ -248,7 +245,7 @@ In this example, you would use `60F939227672BC3D5A1B3EC9744B2B21.gr7.us-west-2.e
 `KUBERNETES_SERVICE_HOST` and `443` for `KUBERNETES_SERVICE_PORT` when creating the config map.
 
 </TabItem>
-<TabItem label="MKE" value="MKE-11">
+<TabItem label="MKE" value="MKE-5">
 
 MKE runs a reverse proxy in each node which can be used to reach the api-server. `KUBERNETES_SERVICE_HOST` must be set to
 `proxy.local` and `KUBERNETES_SERVICE_PORT` must be set to `6444`.
@@ -351,8 +348,8 @@ In eBPF mode, to avoid conflicts with `kube-proxy` it's necessary to either disa
 {{prodname}} not to clean up `kube-proxy`'s iptables rules. If you didn't disable `kube-proxy` when starting
 your cluster then follow the steps below to avoid conflicts:
 
-<Tabs>
-<TabItem label="Generic or kubeadm" value="Generic or kubeadm-10">
+<Tabs groupId="k8s-distro">
+<TabItem label="Generic or kubeadm" value="Generic or kubeadm-0">
 
 For a cluster that runs `kube-proxy` in a `DaemonSet` (such as a `kubeadm`-created cluster), you can disable
 `kube-proxy`, reversibly, by adding a node selector to `kube-proxy`'s `DaemonSet` that matches no nodes, for example:
@@ -364,7 +361,7 @@ kubectl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nod
 Then, should you want to start `kube-proxy` again, you can simply remove the node selector.
 
 </TabItem>
-<TabItem label="kOps" value="kOps-12">
+<TabItem label="kOps" value="kOps-1">
 
 `kops` allows `kube-proxy` to be disabled by setting
 
@@ -376,7 +373,7 @@ kubeProxy:
 in its configuration. You will need to do `kops update cluster` to roll out the change.
 
 </TabItem>
-<TabItem label="OpenShift" value="OpenShift-13">
+<TabItem label="OpenShift" value="OpenShift-2">
 
 In OpenShift, you can disable `kube-proxy` as follows:
 
@@ -391,7 +388,7 @@ kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"
 ```
 
 </TabItem>
-<TabItem label="AKS" value="AKS-14">
+<TabItem label="AKS" value="AKS-3">
 
 AKS with Azure CNI does not allow `kube-proxy` to be disabled, `kube-proxy` is deployed by the add-on manager, which will reconcile
 away any manual changes made to its configuration. To ensure `kube-proxy` and {{prodname}} don't fight, set
@@ -403,7 +400,7 @@ kubectl patch felixconfiguration default --type merge --patch='{"spec": {"bpfKub
 ```
 
 </TabItem>
-<TabItem label="EKS" value="EKS-15">
+<TabItem label="EKS" value="EKS-4">
 
 In EKS, you can disable `kube-proxy`, reversibly, by adding a node selector that doesn't match and nodes to
 `kube-proxy`'s `DaemonSet`, for example:
@@ -416,6 +413,12 @@ Then, should you want to start `kube-proxy` again, you can simply remove the nod
 
 </TabItem>
 </Tabs>
+
+:::note
+
+If you are running kube-proxy in IPVS mode, switch to iptables mode before disabling.
+
+:::
 
 ## Next steps
 

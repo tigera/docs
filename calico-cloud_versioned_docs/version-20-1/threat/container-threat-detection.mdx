@@ -6,15 +6,7 @@ redirect_from:
 
 # Container threat detection
 
-:::note
-
-This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
-
-:::
-
-## Big picture
-
-Get alerts when security threats, such as malware and other suspicious processes, are detected in your cluster.
+Protect your cluster with our eBPF runtime threat detection engine, which detects malware and suspicious process activity in your containers.  
 
 ## Value
 
@@ -23,15 +15,17 @@ Get alerts when security threats, such as malware and other suspicious processes
 As part of these threat detection capabilities, {{prodname}} maintains a database of malware file
 hashes. This database consists of SHA256, SHA1, and MD5 hashes of executable file contents that are
 known to be malicious. Whenever a program is launched in a {{prodname}} cluster, malware
-detection generates an alert in the Security Events dashboard if the program's hash matches one that is known
+detection generates an alert in the **Security Events Dashboard** if the program's hash matches one that is known
 to be malicious.
 
 Our threat detection engine also monitors activity within the containers running in your clusters to detect suspicious behavior and generate corresponding alerts. The threat detection engine monitors the following types of suspicious activity within containers:
 
 - Access to sensitive system files and directories
+- Command and control
 - Defense evasion
 - Discovery
 - Execution
+- Impact
 - Persistence
 - Privilege escalation
 
@@ -64,12 +58,15 @@ so we can bundle the BTF data to precisely match the version of the kernel runni
 
 - [Enable Container threat detection in the managed cluster](#enable-container-threat-detection)
 - [Monitor the Security Events page for malicious programs](#monitor-alerts-page-for-malicious-programs)
+- [Exclude a process from Security Events alerts](#exclude-a-process-from-Security-Events-alerts)
+- [Update detectors settings](#update-detectors-settings)
+  - [Configure detectors via RuntimeSecurity Custom Resource](#configure-detectors-via-runtimesecurity-custom-resource)
 
 ### Enable Container Threat Detection
 
 Container threat detection is disabled by default.
 
-To enable Container threat detection on your managed cluster, go to the **Threat Defence** section in the {{prodname}} UI, and select **Enable Container Threat Detection**.
+To enable Container threat detection on your managed cluster, go to the **Threat Defense** section in the {{prodname}} UI, and select **Enable Container Threat Detection**.
 This will result in Container threat detection running on all nodes in the managed cluster to detect malware and suspicious processes.
 
 Alternatively, Container threat detection can be enabled using kubectl:
@@ -85,10 +82,61 @@ EOF
 
 ### Monitor the Security Events page for malicious programs
 
-If a malicious or suspicious program is run within the cluster, it will be reported on the Security Events page of the
+If a malicious or suspicious program is run within the cluster, it will be reported on the **Security Events** page of the
 {{prodname}} UI.
 
 ![malware-alert-example](/img/calico-cloud/malware-alert-example.png)
+
+### Exclude a process from Security Events alerts {#exclude-process}
+
+You can turn off Security Events alerts for processes in your cluster that you know to be safe.
+
+To create an exception, add the process to the Runtime Security resource with kubectl:
+
+```bash title="Example RuntimeSecurity CR with exceptions"
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: RuntimeSecurity
+metadata:
+  name: default
+spec:
+  runtimeExceptionList:
+    - matching: Exact
+      processInvocation: "runc init"
+      namespace: default
+    - matching: Regex
+      processInvocation: "\b(shred|rm|mv).*((bash|ash|zsh|fish|fish_read)_history|history)\b"
+EOF
+```
+
+The `matching` field can take one of two values: `Exact` or `Regex`.
+Setting the `matching` field to `Regex` allows you to pass a regular expression to capture more than one value for each field. Whereas `Exact` would require each field to be an exact match.
+
+### Update detectors settings
+
+Threat detection capabilities are provided by detectors that protect against specific [MITRE techniques](https://attack.mitre.org/techniques/enterprise/).
+Detectors are grouped by the [MITRE tactics](https://attack.mitre.org/tactics/enterprise/) they protect against.
+Additional information for each detector can be found by clicking on a detector.
+All detectors are enabled by default, with the option of disabling specific detectors if needed.
+
+![CTD Detector Settings](/img/calico-cloud/container-threat-detection-detector-settings.png)
+
+#### Configure detectors via RuntimeSecurity Custom Resource
+
+Detector settings configured through the UI are stored in the cluster's RuntimeSecurity custom resource.
+When configuring multiple clusters, the same configuration can be applied to all clusters.
+
+Get the reference `detectorsConfig`:
+
+```
+detectorConfig="$(kubectl get runtimesecurities.operator.tigera.io default -o jsonpath="{.spec.detectorsConfig}")"
+```
+
+Container Threat Detection can be enabled with the desired configuration in a single command:
+
+```
+kubectl patch -n tigera-runtime-security runtimesecurities.operator.tigera.io default --type='merge' -p="{\"spec\":{\"detectorsConfig\": $detectorsConfig}}"
+```
 
 ## Container activity logs in Kibana
 
