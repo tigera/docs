@@ -50,9 +50,9 @@ spec:
 kubectl apply -f security.yaml
 ```
 
-## The default tier: always last
+## The default tier:
 
-The default tier is created during installation and is always the last tier.
+The default tier is created during installation and has the order of 1,000,000. This value is fixed, and cannot be changed. The desire is to evaluate policies in the default tier as last.
 
 ![default-tier](/img/calico-enterprise/default-tier.png)
 
@@ -61,6 +61,10 @@ The default tier is where:
 - You manage all Kubernetes network policies
 - Network and global network policies are placed when you upgrade from Project Calico to {{prodname}}
 - Recommended policies are placed when you use the **Recommend a policy** feature
+
+## AdminNetworkPolicy tier:
+
+The AdminNetworkPolicy tier is where all [Kubernetes admin network policies](https://network-policy-api.sigs.k8s.io/reference/examples/) reside. It is automatically created during installation and has the order of 1,000. This value is fixed, and cannot be changed.
 
 ## System tiers
 
@@ -86,7 +90,7 @@ Now you can reorder tiers by dragging and moving them.
 
 ## Tier order
 
-Tiers are ordered from left to right, starting with the highest priority (also called highest precedence) tiers.
+Tiers are sorted by their orders (from left to right), starting from the lowest order (the highest priority) tiers.
 
 ![tier-order](/img/calico-enterprise/tier-order.png)
 
@@ -94,13 +98,13 @@ In the example above, tier priorities are as follows:
 
 - **security tier** - is higher priority than platform tier
 - **platform tier** - is higher priority than default tier
-- **default tier** - is always the last tier and cannot be reordered
+- **default tier** - is the lowest priority
 
 The tier you put as the highest priority (after system tiers), depends on your environment. In compliance-driven environments, the security tier may be the highest priority (as shown above). There is no one-size-fits-all order.
 
 ## Policy processing
 
-Policies are processed in sequential order from top to bottom.
+Policies are processed in sequential order from lowest order (highest priority) to highest order (lowest priority), which is from top to bottom in the following diagram.
 
 ![policy-processing](/img/calico-enterprise/policy-processing.png)
 
@@ -133,7 +137,9 @@ The following diagrams show the relationship between all of the elements that af
 
 ### Implicit default deny
 
-As shown in the following diagram, at the end of each tier is an implicit default deny. This is a safeguard that helps mitigate against unsecured policy. Because of this safeguard, you must explicitly apply the **Pass** action rule when you want traffic evaluation to continue. In the following example, the Pass action in a policy ensures that traffic evaluation continues, and overrides the implicit default deny.
+As shown in the following diagram, at the end of each tier is an implicit default deny. This is a safeguard that helps mitigate against unsecured policy.
+Because of this safeguard, you must either explicitly update tier's default action to **Pass** or apply a Pass action rule when you want traffic evaluation to continue.
+In the following example, the Pass action in a policy ensures that traffic evaluation continues, and overrides the implicit default deny.
 
 ![implicit-deny](/img/calico-enterprise/implicit-deny.svg)
 
@@ -163,6 +169,20 @@ spec:
   types:
     - Ingress
     - Egress
+```
+
+The other option, is to update tier's default action to **Pass** to override the implicit default deny.
+
+**Pass default action tier example**
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: Tier
+metadata:
+  name: devops
+spec:
+  order: 300
+  defautlAction: Pass
 ```
 
 ### Policy endpoint matching across tiers
