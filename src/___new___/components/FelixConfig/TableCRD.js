@@ -1,7 +1,6 @@
 import React from 'react';
 import DOMPurify from 'isomorphic-dompurify';
 import styles from './styles.module.css';
-import styles from './styles.module.css';
 
 const getSanitizedData = ({ fieldData }) => ({
   sanitizedNAMEYAML: { __html: DOMPurify.sanitize(fieldData.NameYAML) },
