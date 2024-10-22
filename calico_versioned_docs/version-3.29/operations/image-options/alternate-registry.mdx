@@ -1,0 +1,87 @@
+---
+description: Configure Calico to pull images from a public or private registry.
+---
+
+# Configure use of your image registry
+
+import MaintenanceImageOptionsAlternateRegistry from '../../_includes/components/MaintenanceImageOptionsAlternateRegistry';
+
+## Big picture
+
+Configure {{prodname}} to pull images from a registry (public or private).
+
+## Value
+
+In many deployments, installing {{prodname}} in clusters from third-party private repos is not an option. {{prodname}} offers these public and private registry options, which can be used in any combination:
+
+- **Install from a registry** for use cases like air-gapped clusters, or clusters with bandwidth or security constraints
+- **Install from an image path in a registry** if you have pulled {{prodname}} images to a sub path in your registry
+- [Install images by registry digest](imageset.mdx)
+
+## Concepts
+
+A **container image registry** (often known as a **registry**), is a service where you can push, pull, and store container images. In Kubernetes, a registry is considered _private_ if it is not publicly available.
+
+A **private registry** requires an **image pull secret**. An **image pull secret** provides authentication for an image registry; this allows you to control access to certain images or give access to higher pull rate limits (like with DockerHub).
+
+An **image path** is a directory in a registry that contains images required to install {{prodname}}.
+
+## Before you begin
+
+**Required**
+
+- {{prodname}} is managed by the operator
+- Configure pull access to your registry
+- If you are using a private registry that requires user authentication, ensure that an image pull secret is configured for your registry in the tigera-operator namespace. Set the environment variable, `REGISTRY_PULL_SECRET` to the secret name. For help, see `imagePullSecrets` and `registry` fields, in [Installation resource reference](../../reference/installation/api.mdx).
+- Use the [Crane command](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) to manage the {{prodnameWindows}} images, as using `docker pull` commands for these images may not work depending on the operating system and version in which the commands are run.
+
+## How to
+
+The following examples show the path format for public and private registry, `$REGISTRY/`. If you are using an image path, substitute the format: `$REGISTRY/$IMAGE_PATH/`.
+
+### Push {{prodname}} images to your registry
+
+To install images from your registry, you must first pull the images from Tigera's registry, retag them with your own registry, and then push the newly-tagged images to your own registry. Use the `crane cp` command instead of pulling+retagging+pushing on the {{prodnameWindows}} images (`node-windows` and `cni-windows`).
+
+<MaintenanceImageOptionsAlternateRegistry />
+
+### Run the operator using images from your registry
+
+Before applying `tigera-operator.yaml`, modify registry references to use your custom registry:
+
+**For OpenShift**
+
+Download all manifests first, then modify the following:
+
+```bash
+sed -ie "s?quay.io?$REGISTRY?g" manifests/02-tigera-operator.yaml
+```
+
+**For all other platforms**
+
+```bash
+sed -ie "s?quay.io?$REGISTRY?g" tigera-operator.yaml
+```
+
+Next, if you are implementing user authentication to access a private registry, add the image pull secret for your `registry` to the secret `tigera-pull-secret`.
+
+```bash
+sed -ie "/serviceAccountName: tigera-operator/a \      imagePullSecrets:\n\      - name: $REGISTRY_PULL_SECRET"  tigera-operator.yaml
+```
+
+### Configure the operator to use images
+
+Set the `spec.registry` field of your Installation resource to the name of your custom registry. For example:
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  variant: Calico
+  imagePullSecrets:
+    - name: tigera-pull-secret
+  // highlight-next-line
+  registry: myregistry.com
+```

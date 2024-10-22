@@ -1,0 +1,51 @@
+---
+description: Upgrade to a newer version of Calico for OpenShift.
+---
+
+import AutoHostendpointsMigrate from '@site/calico/_includes/components/AutoHostendpointsMigrate';
+import InstallOpenShiftManifests from '@site/calico/_includes/components/InstallOpenShiftManifests';
+
+# Upgrade Calico on OpenShift 4
+
+## About upgrading {{prodname}}
+
+This page describes how to upgrade to {{version}} for OpenShift 4 from an existing {{prodname}} cluster.
+
+## Upgrade OwnerReferences
+
+If you do not use OwnerReferences on resources in the projectcalico.org/v3 API group, you can skip this section.
+
+Starting in Calico v3.28, a change in the way UIDs are generated for projectcalico.org/v3 resources requires that you update any OwnerReferences
+that refer to projectcalico.org/v3 resources as an owner. After upgrade, the UID for all projectcalico.org/v3 resources will be changed, resulting in any
+owned resources being garbage collected by Kubernetes.
+
+1. Remove any OwnerReferences from resources in your cluster that have `apiGroup: projectcalico.org/v3`.
+1. Perform the upgrade normally.
+1. Add new OwnerReferences to your resources referencing the new UID.
+
+## Upgrading Calico on OpenShift 4
+
+Make a manifests directory.
+
+```bash
+mkdir manifests
+```
+
+<InstallOpenShiftManifests install_type='upgrade' />
+
+Apply the updated manifests.
+
+```bash
+oc apply -f manifests/
+```
+
+You can now monitor the upgrade progress with the following command:
+
+```bash
+watch oc get tigerastatus
+```
+
+If you were upgrading from a version of Calico prior to v3.14 and followed the pre-upgrade steps for host endpoints above, review traffic logs from the temporary policy,
+add any global network policies needed to allow traffic, and delete the temporary network policy **allow-all-upgrade**.
+
+<AutoHostendpointsMigrate orch='OpenShift' />

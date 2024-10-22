@@ -1,0 +1,158 @@
+---
+description: Enable Calico on a single/multi-node minikube cluster for testing or development in under 1 minute.
+---
+
+# Quickstart for Calico on minikube
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Big picture
+
+This quickstart gets you a single-node minikube cluster with {{prodname}}
+in approximately 1 minute. You can use this cluster for testing and
+development.
+
+## Value
+
+Use this quickstart to quickly and easily try {{prodname}} features.
+
+## Before you begin
+
+- Install, but do not start, minikube. [How to install minikube](https://minikube.sigs.k8s.io/docs/start/#what-youll-need)
+- Install kubectl.[How to install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- Install a minikube driver. For example Docker. A full List of available drivers can be [found here.](https://minikube.sigs.k8s.io/docs/drivers/)
+
+## How to
+
+### Create a single-node minikube cluster
+
+<Tabs>
+<TabItem label="Built-in {{prodname}}" value="Built-in {{prodname}}-0">
+
+Minikube offers a built-in {{prodname}} implementation, this is a quick way to checkout {{prodname}} features.
+
+:::note
+
+Enabling preinstalled {{prodname}} might be the quickest way for testing. However, if you like to checkout a more recent version or features of {{prodname}} you should consider using Manifest or Operator approach.
+
+:::
+
+```bash
+minikube start --network-plugin=cni --cni=calico
+```
+
+</TabItem>
+<TabItem label="Operator" value="Operator-1">
+
+1. Start your minikube cluster with one control plane node using the following command.
+
+:::note
+
+If `192.168.0.0/16` is already in use within your network you must select a different pod network CIDR, by replacing `192.168.0.0/16` in the following command.
+
+:::
+
+```bash
+minikube start --cni=false --network-plugin=cni --extra-config=kubeadm.pod-network-cidr=192.168.0.0/16 --subnet=172.16.0.0/24
+```
+
+2. Install the Tigera {{prodname}} operator and custom resource definitions.
+
+```bash
+kubectl create -f {{manifestsUrl}}/manifests/tigera-operator.yaml
+```
+
+:::note
+
+Due to the large size of the CRD bundle, `kubectl apply` might exceed request limits. Instead, use `kubectl create` or `kubectl replace`.
+
+:::
+
+3. Install {{prodname}} by creating the necessary custom resource. For more information on configuration options available in this manifest, see [the installation reference](../../reference/installation/api.mdx).
+
+:::note
+
+Before creating this manifest, read its contents and make sure its settings are correct for your environment. For example,
+if you have replaced `pod-network-cidr` you must change it in this file as well.
+
+:::
+
+```bash
+kubectl create -f {{manifestsUrl}}/manifests/custom-resources.yaml
+```
+
+</TabItem>
+<TabItem label="Manifest" value="Manifest-2">
+
+Start your minikube cluster with one control plane node using the following command:
+
+```bash
+minikube start --network-plugin=cni
+```
+
+Install {{prodname}}.
+
+```bash
+kubectl apply -f {{manifestsUrl}}/manifests/calico.yaml
+```
+
+</TabItem>
+</Tabs>
+
+### Verify {{prodname}} installation
+
+Verify {{prodname}} installation in your cluster using the following command:
+
+```bash
+watch kubectl get pods -l k8s-app=calico-node -A
+```
+
+You should see a result similar to the below. Note that the namespace might be different, depending on the method you followed.
+
+```
+NAMESPACE     NAME                READY   STATUS    RESTARTS   AGE
+kube-system   calico-node-mlqvs   1/1     Running   0          5m18s
+```
+
+Use `ctrl+c` to break out of watch.
+
+Congratulations you now have a minikube cluster equipped with {{prodname}}
+
+### Add an additional worker node
+
+:::note
+
+This as an optional step, you can safely skip this step if you do not require an additional worker node.
+
+:::
+
+```bash
+minikube node add
+```
+
+Verify nodes using the following command:
+
+```bash
+kubectl get nodes
+```
+
+### Clean up
+
+Delete the cluster using the following command:
+
+```bash
+minikube delete
+```
+
+## Next steps
+
+**Required**
+
+- [Install and configure calicoctl](../../operations/calicoctl/install.mdx)
+
+**Recommended tutorials**
+
+- [Secure a simple application using the Kubernetes NetworkPolicy API](../../network-policy/get-started/kubernetes-policy/kubernetes-policy-basic.mdx)
+- [Control ingress and egress traffic using the Kubernetes NetworkPolicy API](../../network-policy/get-started/kubernetes-policy/kubernetes-policy-advanced.mdx)
+- [Run a tutorial that shows blocked and allowed connections in real time](../../network-policy/get-started/kubernetes-policy/kubernetes-demo.mdx)
