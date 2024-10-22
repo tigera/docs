@@ -390,6 +390,11 @@ const config = {
             path: 'next',
             banner: 'unreleased',
           },
+          3.29: {
+            label: '3.29 (latest)',
+            path: '3.29',
+            banner: 'none',
+          },
           3.28: {
             label: '3.28 (latest)',
             path: 'latest',
