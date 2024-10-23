@@ -1,0 +1,138 @@
+---
+description: Configure and aggregate L7 logs.
+---
+
+# Configure L7 logs
+
+## Big picture
+
+Deploy Envoy and use {{prodname}} L7 logs to monitor application activity.
+
+## Value
+
+Just like L3/4 {{prodname}} logs, platform operators and
+development teams want visibility into L7 logs to see how applications are interacting with each
+other. {{prodname}} flow logs only display which workloads are communicating
+with each other, not the specific request details. {{prodname}} provides visibility into L7 traffic without the need for a service mesh.
+
+L7 logs are also key for detecting anomalous behaviors like attempts to
+access applications, restricted URLs, and scans for particular URLs.
+
+## Concepts
+
+### About L7 logs
+
+L7 logs capture application interactions from HTTP header data in requests. Data shows what is actually sent in communications between specific pods, providing more specificity than flow logs. (Flow logs capture data only from connections for workload interactions).
+
+{{prodname}} collects L7 logs by sending the selected traffic through an Envoy proxy.
+
+L7 logs are visible in the Manager UI, service graph, in the HTTP tab.
+
+## Before you begin
+
+### Limitations
+
+* L7 log collection is not compatible with a service mesh such as Istio.
+* L7 log collection is not supported for host-networked client pods.
+
+:::important
+
+When you enable L7 log collection for a deployment, all of that deployment's pods will restart.
+Selecting and deselecting traffic for L7 log collection may result in disruptions for active connections.
+
+:::
+
+:::note
+
+L7 logs require a minimum of 1 additional GB of log storage per node, per one-day retention period. Adjust your [Log Storage](../../../operations/logstorage/adjust-log-storage-size.mdx) before you start tasks in the next section.
+
+:::
+
+## Configure Felix for log data collection
+
+1. Enable the Policy Sync API in Felix.
+
+   For cluster-wide enablement, modify the `default` FelixConfiguration and set the field `policySyncPathPrefix` to `/var/run/nodeagent`.
+
+   ```bash
+   kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
+   ```
+
+1. Configure L7 log aggregation, retention, and reporting.
+
+   For help, see [Felix Configuration documentation](../../../reference/component-resources/node/felix/configuration.mdx#calico-enterprise-specific-configuration).
+
+## Configure L7 logs
+
+In this step, you will configure L7 logs, select logs for collection, and test the configuration.
+
+### Configure the ApplicationLayer resource for L7 logs
+
+1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) resource named, `tigera-secure` to include a logCollection section of the file, `_api.html` [here](../../../reference/installation/api.mdx).
+
+1. Ensure that the `sidecarInjection` field is set to `Enabled`.
+
+   ```yaml
+   apiVersion: operator.tigera.io/v1
+   kind: ApplicationLayer
+   metadata:
+     name: tigera-secure
+   spec:
+     logCollection:
+       logIntervalSeconds: 5
+       logRequestsPerInterval: -1
+     sidecarInjection: Enabled
+   ```
+
+1. Apply the resource. This creates `l7-log-collector` daemonset in `calico-system` namespace.
+
+1. Ensure that the daemonset progresses and is fully deployed.
+
+### Select traffic for L7 log collection
+
+1. Patch your application deployments you wish to collect L7 logs as shown.
+
+   ```bash
+   kubectl patch deployment <deployment-name> -n <deployment-namespace> -p '{"spec":{"template":{"metadata":{"labels":{"applicationlayer.projectcalico.org/sidecar":"true"},"annotations":{"applicationlayer.projectcalico.org/logging":"Enabled"}}}}}'
+   ```
+
+2. To disable L7 log collection, remove the label and annotation.
+
+   ```bash
+   kubectl patch deployment <deployment-name> -n <deployment-namespace> --type='json' -p '[{"op":"remove","path":"/spec/template/metadata/labels/applicationlayer.projectcalico.org~1sidecar"},{"op":"remove","path":"/spec/template/metadata/annotations/applicationlayer.projectcalico.org~1logging"}]'
+   ```
+
+### Test your configuration
+
+1. Identify the path to access your cluster. Where `<path>` can be:
+
+   * Public address of your cluster/service
+     or
+   * Cluster IP of your application's service (if testing within the cluster)
+
+1. `curl` your service with a command similar to the following. You will see `Server` header as `envoy`.
+
+   ```bash
+   curl --head <path to access service>:<optional port>/<path>
+   ```
+
+## View L7 logs in Manager UI
+
+### Service Graph
+
+To view L7 logs in Service Graph:
+
+1. In the Manager UI left navbar, click **Service Graph**.
+1. In the bottom pane you will see L7 logs in the HTTP tab.
+
+   ![l7-logs](/img/calico-enterprise/l7-logs.png)
+
+### Kibana
+
+To view L7 logs by index pattern in Kibana:
+
+1. In the Manager UI left navbar, click **Kibana**.
+
+1. In the new Kibana browser, click the hamburger icon in the top left corner, and select **Analytics**, **Discover**.
+
+1. Select the index pattern, `tigera_secure_ee_l7`.

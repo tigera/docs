@@ -1,0 +1,128 @@
+---
+description: Install Calico Enterprise on RKE.
+---
+
+# Rancher Kubernetes Engine (RKE)
+
+## Big picture
+
+Install {{prodname}} on RKE.
+
+## Before you begin
+
+**CNI support**
+
+Calico CNI for networking with {{prodname}} network policy:
+
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='{{prodname}}'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+**Required**
+
+- A [compatible RKE cluster](../compatibility.mdx#rke)
+
+  For help, see [Rancher Kubernetes Engine cluster](https://rancher.com/docs/rke/latest/en/). Note that RKE2 is a different Kubernetes distribution and [documented separately](rke2.mdx).
+
+- Configure your cluster for {{prodname}} CNI
+
+  - Create a [Cluster Config File](https://rancher.com/docs/rancher/v2.x/en/cluster-provisioning/rke-clusters/options/#cluster-config-file). In the config file under `network`, set the [network plugin](https://rancher.com/docs/rke/latest/en/config-options/add-ons/network-plugins/) to `plugin: none`.
+
+  :::note
+
+  You cannot use the Rancher UI to set the RKE CNI set to "none".
+
+  :::
+
+- Cluster meets [system requirements](requirements.mdx)
+
+- A [Tigera license key and credentials](calico-enterprise.mdx).
+
+- A `kubectl` environment with access to your cluster
+  - Use [Rancher kubectl Shell](https://rancher.com/docs/rancher/v2.x/en/cluster-admin/cluster-access/kubectl/) for access
+  - Ensure you have the [Kubeconfig file that was generated when you created the cluster](https://rancher.com/docs/rke/latest/en/installation/#save-your-files).
+- If using a Kubeconfig file locally, [install and set up the Kubectl CLI tool](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
+
+## How to
+
+- [Install {{prodname}}](#install-calico-enterprise)
+- [Install the {{prodname}} license](#install-the-calico-enterprise-license)
+
+### Install {{prodname}}
+
+1. [Configure a storage class for {{prodname}}.](../../operations/logstorage/create-storage.mdx).
+
+1. Install the Tigera operator and custom resource definitions.
+
+   ```bash
+   kubectl create -f {{filesUrl}}/manifests/tigera-operator.yaml
+   ```
+
+1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator is used to deploy Prometheus server and Alertmanager to monitor {{prodname}} metrics.
+
+   :::note
+
+   If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with {{prodname}}, your Prometheus operator must be v0.40.0 or higher.
+
+   :::
+
+   ```bash
+   kubectl create -f {{filesUrl}}/manifests/tigera-prometheus-operator.yaml
+   ```
+
+1. Install your pull secret.
+
+   If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
+
+   ```bash
+   kubectl create secret generic tigera-pull-secret \
+       --type=kubernetes.io/dockerconfigjson -n tigera-operator \
+       --from-file=.dockerconfigjson=<path/to/pull/secret>
+   ```
+
+1. Install any extra [{{prodname}} resources](../../reference/resources/index.mdx) needed at cluster start using [calicoctl](../../reference/clis/calicoctl/overview.mdx).
+
+1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference](../../reference/installation/api.mdx).
+
+   ```bash
+   kubectl create -f {{filesUrl}}/manifests/custom-resources.yaml
+   ```
+
+   Monitor progress with the following command:
+
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+
+   Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+
+### Install the {{prodname}} license
+
+```bash
+kubectl create -f </path/to/license.yaml>
+```
+
+Monitor progress with the following command:
+
+```bash
+watch kubectl get tigerastatus
+```
+
+## Next steps
+
+**Recommended**
+
+- [Configure access to {{prodname}} Manager UI](../../operations/cnx/access-the-manager.mdx)
+- [Authentication quickstart](../../operations/cnx/authentication-quickstart.mdx)
+- [Configure your own identity provider](../../operations/cnx/configure-identity-provider.mdx)
+
+**Recommended - Networking**
+
+- The default networking uses IP in IP encapsulation with BGP routing. For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).
+
+**Recommended - Security**
+
+- [Get started with {{prodname}} tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)
