@@ -1,0 +1,74 @@
+---
+description: Adjust the log storage size during or after installation.
+---
+
+# Adjust log storage size
+
+## Big picture
+
+Adjust the size of the {{prodname}} log storage during or after installation.
+
+## Value
+
+By default, {{prodname}} creates the log storage with a single node. This makes it easy to get started using {{prodname}}.
+Generally, a single node for logs is fine for test or development purposes. Before going to production, you should scale
+the number of nodes, replicas, CPU, and memory to reflect a production environment.
+
+## Concepts
+
+### Log storage terms
+
+| Term    | Description                                                                                                                                         |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| node    | A running instance of the log storage.                                                                                                              |
+| cluster | A collection of nodes. Multiple nodes protect the cluster from any single node failing, and lets you scale resources (CPU, memory, storage space) . |
+| replica | A copy of data. Replicas protect against data loss if a node fails. The number of replicas must be less than the number of nodes.                   |
+
+## Before you begin...
+
+**Review log storage recommendations**
+
+Review [Log storage recommendations](log-storage-recommendations.mdx) for guidance on the number of nodes and resources to configure for your environment.
+
+## How to
+
+- [Adjusting LogStorage](#adjusting-logstorage)
+
+:::caution
+
+If you are not using a dynamic provisioner, make sure there is an available persistent volume before updating the resource requirements (cpu, memory, storage) in this section. To check that a persistent volume has the status of `Available`, run this command: `kubectl get pv | grep tigera-elasticsearch`
+
+:::
+
+### Adjusting LogStorage
+
+In the following example, {{prodname}} is configured to install 3 nodes that have 200Gi of storage each with 1 replica. Whenever the storage size is modified, resourceRequirements must be revisited respectively to support these changes.
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: LogStorage
+metadata:
+  name: tigera-secure
+spec:
+  indices:
+    replicas: 1
+  nodes:
+    count: 3
+      # This section sets the resource requirements for each individual Elasticsearch node.
+    resourceRequirements:
+      limits:
+        cpu: 1000m
+        memory: 16Gi
+      requests:
+        cpu: 1000m
+        memory: 16Gi
+        storage: 200Gi
+  componentResources:
+    - componentName: ECKOperator
+        # This section sets the resource requirements for the operator that bootstraps the Elasticsearch cluster.
+      resourceRequirements:
+        limits:
+          memory: 512Mi
+        requests:
+          memory: 512Mi
+```

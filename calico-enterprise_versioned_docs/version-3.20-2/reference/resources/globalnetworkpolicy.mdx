@@ -1,0 +1,214 @@
+---
+description: API for this Calico Enterprise resource.
+---
+
+# Global network policy
+
+import Servicematch from '@site/calico-enterprise_versioned_docs/version-3.20-2/_includes/content/_servicematch.mdx';
+
+import Serviceaccountmatch from '@site/calico-enterprise_versioned_docs/version-3.20-2/_includes/content/_serviceaccountmatch.mdx';
+
+import Ports from '@site/calico-enterprise_versioned_docs/version-3.20-2/_includes/content/_ports.mdx';
+
+import SelectorScopes from '@site/calico-enterprise_versioned_docs/version-3.20-2/_includes/content/_selector-scopes.mdx';
+
+import Selectors from '@site/calico-enterprise_versioned_docs/version-3.20-2/_includes/content/_selectors.mdx';
+
+import Entityrule from '@site/calico-enterprise_versioned_docs/version-3.20-2/_includes/content/_entityrule.mdx';
+
+import Icmp from '@site/calico-enterprise_versioned_docs/version-3.20-2/_includes/content/_icmp.mdx';
+
+import Rule from '@site/calico-enterprise_versioned_docs/version-3.20-2/_includes/content/_rule.mdx';
+
+import Httpmatch from '@site/calico-enterprise_versioned_docs/version-3.20-2/_includes/content/_httpmatch.mdx';
+
+A global network policy resource (`GlobalNetworkPolicy`) represents an ordered set of rules which are applied
+to a collection of endpoints that match a [label selector](#selector).
+
+`GlobalNetworkPolicy` is not a namespaced resource. `GlobalNetworkPolicy` applies to [workload endpoint resources](workloadendpoint.mdx) in all namespaces, and to [host endpoint resources](hostendpoint.mdx).
+Select a namespace in a `GlobalNetworkPolicy` in the standard selector by using
+`projectcalico.org/namespace` as the label name and a `namespace` name as the
+value to compare against, e.g., `projectcalico.org/namespace == "default"`.
+See [network policy resource](networkpolicy.mdx) for namespaced network policy.
+
+`GlobalNetworkPolicy` resources can be used to define network connectivity rules between groups of {{prodname}} endpoints and host endpoints, and
+take precedence over [Profile resources](profile.mdx) if any are defined.
+
+GlobalNetworkPolicies are organized into [tiers](tier.mdx), which provide an additional layer of ordering—in particular, note that the `Pass` action skips to the
+next [tier](tier.mdx), to enable hierarchical security policy.
+
+For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
+may be used to specify the resource type on the CLI:
+`globalnetworkpolicy.projectcalico.org`, `globalnetworkpolicies.projectcalico.org` and abbreviations such as
+`globalnetworkpolicy.p` and `globalnetworkpolicies.p`.
+
+## Sample YAML
+
+This sample policy allows TCP traffic from `frontend` endpoints to port 6379 on
+`database` endpoints.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: internal-access.allow-tcp-6379
+spec:
+  tier: internal-access
+  selector: role == 'database'
+  types:
+    - Ingress
+    - Egress
+  ingress:
+    - action: Allow
+      metadata:
+        annotations:
+          from: frontend
+          to: database
+      protocol: TCP
+      source:
+        selector: role == 'frontend'
+      destination:
+        ports:
+          - 6379
+  egress:
+    - action: Allow
+```
+
+## Definition
+
+### Metadata
+
+| Field | Description                               | Accepted Values                                     | Schema | Default |
+| ----- | ----------------------------------------- | --------------------------------------------------- | ------ | ------- |
+| name  | The name of the network policy. Required. | Alphanumeric string with optional `.`, `_`, or `-`. | string |         |
+
+### Spec
+
+| Field                  | Description                                                                                                                                                                                                                          | Accepted Values           | Schema                | Default                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | --------------------- | --------------------------------------------- |
+| order                  | Controls the order of precedence. {{prodname}} applies the policy with the lowest value first.                                                                                                                                       |                           | float                 |                                               |
+| tier                   | Name of the [tier](tier.mdx) this policy belongs to.                                                                                                                                                                                 |                           | string                | `default`                                     |
+| selector               | Selects the endpoints to which this policy applies.                                                                                                                                                                                  |                           | [selector](#selector) | all()                                         |
+| serviceAccountSelector | Selects the service account(s) to which this policy applies. Select all service accounts in the cluster with a specific name using the `projectcalico.org/name` label.                                                               |                           | [selector](#selector) | all()                                         |
+| namespaceSelector      | Selects the namespace(s) to which this policy applies. Select a specific namespace by name using the `projectcalico.org/name` label.                                                                                                 |                           | [selector](#selector) | all()                                         |
+| types                  | Applies the policy based on the direction of the traffic. To apply the policy to inbound traffic, set to `Ingress`. To apply the policy to outbound traffic, set to `Egress`. To apply the policy to both, set to `Ingress, Egress`. | `Ingress`, `Egress`       | List of strings       | Depends on presence of ingress/egress rules\* |
+| ingress                | Ordered list of ingress rules applied by policy.                                                                                                                                                                                     |                           | List of [Rule](#rule) |                                               |
+| egress                 | Ordered list of egress rules applied by this policy.                                                                                                                                                                                 |                           | List of [Rule](#rule) |                                               |
+| doNotTrack\*\*         | Indicates to apply the rules in this policy before any data plane connection tracking, and that packets allowed by these rules should not be tracked.                                                                                | true, false               | boolean               | false                                         |
+| preDNAT\*\*            | Indicates to apply the rules in this policy before any DNAT.                                                                                                                                                                         | true, false               | boolean               | false                                         |
+| applyOnForward\*\*     | Indicates to apply the rules in this policy on forwarded traffic as well as to locally terminated traffic.                                                                                                                           | true, false               | boolean               | false                                         |
+| performanceHints       | Contains a list of hints to Calico's policy engine to help process the policy more efficiently.  Hints never change the enforcement behaviour of the policy.  The available hints are described [below](#performance-hints).                                                                         | `AssumeNeededOnEveryNode` | List of strings       |                                               |
+
+\* If `types` has no value, {{prodname}} defaults as follows.
+
+> | Ingress Rules Present | Egress Rules Present | `Types` value     |
+> | --------------------- | -------------------- | ----------------- |
+> | No                    | No                   | `Ingress`         |
+> | Yes                   | No                   | `Ingress`         |
+> | No                    | Yes                  | `Egress`          |
+> | Yes                   | Yes                  | `Ingress, Egress` |
+
+\*\* The `doNotTrack` and `preDNAT` and `applyOnForward` fields are meaningful
+only when applying policy to a [host endpoint](hostendpoint.mdx).
+
+Only one of `doNotTrack` and `preDNAT` may be set to `true` (in a given policy). If they are both `false`, or when applying the policy to a
+[workload endpoint](workloadendpoint.mdx),
+the policy is enforced after connection tracking and any DNAT.
+
+`applyOnForward` must be set to `true` if either `doNotTrack` or `preDNAT` is
+`true` because for a given policy, any untracked rules or rules before DNAT will
+in practice apply to forwarded traffic.
+
+See [Policy for hosts](../../network-policy/hosts/index.mdx)
+for how `doNotTrack` and `preDNAT` and `applyOnForward` can be useful for host endpoints.
+
+### Rule
+
+<Rule />
+
+### ICMP
+
+<Icmp />
+
+### EntityRule
+
+<Entityrule global='true' />
+
+### Selector
+
+<Selectors />
+<SelectorScopes />
+
+### Ports
+
+<Ports />
+
+### ServiceAccountMatch
+
+<Serviceaccountmatch />
+
+### ServiceMatch
+
+<Servicematch />
+
+### Performance Hints
+
+Performance hints provide a way to tell {{prodname}} about the intended use of the policy so that it may
+process it more efficiently.  Currently only one hint is defined:
+
+* `AssumeNeededOnEveryNode`: normally, {{prodname}} only calculates a policy's rules and selectors on nodes where
+  the policy is actually in use (i.e. its selector matches a local endpoint).  This saves work in most cases.
+  The `AssumeNeededOnEveryNode` hint tells {{prodname}} to treat the policy as "in use" on *every* node.  This is
+  useful for large policy sets that are known to apply to all (or nearly all) endpoints.  It effectively "preloads"
+  the policy on every node so that there is less work to do when the first endpoint matching the policy shows up.
+  It also prevents work from being done to tear down the policy when the last endpoint is drained.
+
+## Application layer policy
+
+Application layer policy is an optional feature of {{prodname}} and
+[must be enabled](../../network-policy/application-layer-policies/alp.mdx)
+to use the following match criteria.
+
+:::note
+
+Application layer policy match criteria are supported with the following restrictions.
+
+- Only ingress policy is supported. Egress policy must not contain any application layer policy match clauses.
+- Rules must have the action `Allow` if they contain application layer policy match clauses.
+
+:::
+
+### HTTPMatch
+
+<Httpmatch />
+
+## Supported operations
+
+| Datastore type           | Create/Delete | Update | Get/List | Notes |
+| ------------------------ | ------------- | ------ | -------- | ----- |
+| Kubernetes API datastore | Yes           | Yes    | Yes      |
+
+#### List filtering on tiers
+
+List and watch operations may specify label selectors or field selectors to filter `GlobalNetworkPolicy` resources on tiers returned by the API server.
+When no selector is specified, the API server returns all `GlobalNetworkPolicy` resources from all tiers that the user has access to.
+
+##### Field selector
+
+When using the field selector, supported operators are `=` and `==`
+
+The following example shows how to retrieve all `GlobalNetworkPolicy` resources in the default tier:
+
+```bash
+kubectl get globalnetworkpolicy --field-selector spec.tier=default
+```
+
+##### Label selector
+
+When using the label selector, supported operators are `=`, `==` and `IN`.
+
+The following example shows how to retrieve all `GlobalNetworkPolicy` resources in the `default` and `net-sec` tiers:
+
+```bash
+kubectl get globalnetworkpolicy -l 'projectcalico.org/tier in (default, net-sec)'
+```

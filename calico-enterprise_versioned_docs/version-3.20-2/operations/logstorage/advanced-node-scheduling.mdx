@@ -1,0 +1,104 @@
+---
+description: Control where Elasticsearch pods and replicas are scheduled.
+---
+
+# Advanced Node Scheduling
+
+## Big picture
+
+{{prodname}} can leverage advanced Kubernetes node scheduling options and advanced Elasticsearch shard scheduling
+options to allow you to customize the distribution of the Elasticsearch pods and replicas across Kubernetes nodes with
+specific attributes.
+
+## Value
+
+In some scenarios you may want to control where the Elasticsearch pods and replicas are scheduled. DataNodeSelectors and
+SelectionAttributes have been designed to add this flexibility.
+
+To make sure that all the Elasticsearch pods are scheduled on Kubernetes nodes with specific attributes, use dataNodeSelectors
+and specify the labels a Kubernetes node must have in order for it to be eligible for an Elasticsearch pod to be scheduled on it.
+
+To protect the Elasticsearch cluster from failing if certain Kubernetes nodes fail, use SelectionAttributes. Elasticsearch
+pods and replicas will be distributed across nodes with different node labels, ensuring that in the event of Kubernetes
+node failure all the Elasticsearch data will still be available.
+
+## How to
+
+### Schedule LogStorage using dataNodeSelectors
+
+The {{prodname}} [LogStorageSpec](../../reference/installation/api.mdx) has the field `dataNodeSelector`,
+which is a map where the keys are label names and values are label values. The Elasticsearch pods used by {{prodname}}
+will only be scheduled on Kubernetes nodes that match **all** labels.
+
+1.  Add the labels to your `LogStorage`.
+    `batch kubectl apply -f - <<EOF apiVersion: operator.tigera.io/v1 kind: LogStorage metadata: name: tigera-secure spec: nodes: count: 1 dataNodeSelector: label1: value1 label2: value2 EOF `
+    A new Elasticsearch pod will now be created in namespace `tigera-elasticsearch`, but will remain `PENDING` until there is
+    a Kubernetes node that matches the labels.
+
+1.  Label one of your Kubernetes Nodes
+    ```bash
+    kubectl label nodes <your-node-name> label1=value1
+    kubectl label nodes <your-node-name> label2=value2
+    ```
+1.  Monitor the progress.
+    ```bash
+    kubectl get pod -o wide -n tigera-elasticsearch -w
+    ```
+
+### Make LogStorage zone-aware using selectionAttributes
+
+If you are in a situation where your cluster has nodes across three regions, you can make sure your Elasticsearch pods
+and replicas are spread evenly among the three regions to ensure the Elasticsearch cluster is intact during zone failure.
+Consider these Kubernetes nodes:
+
+- Nodes in zone A have label `failure-domain.beta.kubernetes.io/zone: zone-a`.
+- Nodes in zone B have label `failure-domain.beta.kubernetes.io/zone: zone-b`.
+- Nodes in zone C have label `failure-domain.beta.kubernetes.io/zone: zone-c`.
+
+We can now use a LogStorage with three node sets that will all form one cluster. For each node set add `selectionAttributes` object,
+such that:
+
+- **NodeLabel** represents a label that should be found on a Kubernetes node for it to be scheduled on.
+- **Value** represents the value for `nodeLabel`.
+- **Name** represents a unique label for this selection attribute.
+
+It is important to have at least one replica of each shard to make sure that no data can get lost.
+
+1.  Apply the following `LogStorage` manifest.
+    ```bash
+    kubectl apply -f - <<EOF
+    apiVersion: operator.tigera.io/v1
+    kind: LogStorage
+    metadata:
+      name: tigera-secure
+    spec:
+      indices:
+        replicas: 1
+      nodes:
+        count: 6
+        nodeSets:
+        - selectionAttributes:
+          - name: zone
+            nodeLabel: failure-domain.beta.kubernetes.io/zone
+            value: zone-a
+        - selectionAttributes:
+          - name: zone
+            nodeLabel: failure-domain.beta.kubernetes.io/zone
+            value: zone-b
+        - selectionAttributes:
+          - name: zone
+            nodeLabel: failure-domain.beta.kubernetes.io/zone
+            value: zone-c
+    EOF
+    ```
+1.  Verify that the nodes are evenly distributed over the three zones, with the sum of the nodes equal to `count: 6`.
+    ```bash
+    kubectl get pod -o wide
+    NAME                                    READY   STATUS    RESTARTS   AGE     IP               NODE                                           NOMINATED NODE   READINESS GATES
+    tigera-secure-es-dee415120001c937-0-0   1/1     Running   0          15m     192.168.3.193    ip-192-168-26-221.zone-a.compute.internal   <none>           <none>
+    tigera-secure-es-dee415120001c937-0-1   1/1     Running   0          15m     192.168.8.196    ip-192-168-26-221.zone-a.compute.internal   <none>           <none>
+    tigera-secure-es-dee415120001c937-1-0   1/1     Running   0          15m     192.168.43.28    ip-192-168-36-19.zone-b.compute.internal    <none>           <none>
+    tigera-secure-es-dee415120001c937-1-1   1/1     Running   0          14m     192.168.50.138   ip-192-168-36-19.zone-b.compute.internal    <none>           <none>
+    tigera-secure-es-dee415120001c937-2-0   1/1     Running   0          15m     192.168.52.226   ip-192-168-43-89.zone-c.compute.internal    <none>           <none>
+    tigera-secure-es-dee415120001c937-2-1   1/1     Running   0          14m     192.168.36.225   ip-192-168-43-89.zone-c.compute.internal    <none>           <none>
+    ```

@@ -1,0 +1,183 @@
+---
+description: Enable continuous policy recommendations to secure unprotected namespaces or workloads.
+---
+
+# Enable policy recommendations
+
+## Big picture
+
+Use policy recommendations to automatically isolate namespaces with network policy.
+
+## Value
+
+One of the best practices for improving the security posture of your Kubernetes cluster is to implement namespace isolation with network policy. Namespace isolation helps to implement a zero-trust and least-privileged security model, where only required communication between namespaces is authorized and everything else is blocked. This helps mitigate the risk of lateral movement within a cluster in the event of an attack.
+
+{{prodname}} makes it easy for platform operators to implement namespace isolation without experience in authoring network policy or detailed knowledge of how application workloads are communicating. {{prodname}} analyzes the flow logs that are generated from workloads, and automatically recommends and stages policies for each namespace that can be used for isolation.
+
+## Before you begin
+
+**Unsupported**
+- Windows nodes
+
+**Required RBAC**
+
+To enable/disable and use policy recommendations, you must have the **tigera-network-admin** role or permissions to **update**, **patch**, **get**, **list**, **watch** `projectcalico.org` resources:
+* tiers
+* policyrecommendationscopes
+* stagednetworkpolicies
+* tier.stagednetworkpolicies
+* networkpolicies
+* tier.networkpolicies
+* globalnetworksets
+
+Specifically, you will need access to the `namespace-isolation` tier and to staged and network policies in the `namespace-isolation` tier.
+
+**Recommended**
+
+Basic knowledge of policies in Manager UI and tiers:
+- [Get started with tiered network policy](../../network-policy/policy-tiers/tiered-policy)
+- [Network policy tutorial](../../network-policy/policy-tiers/policy-tutorial-ui)
+
+**Limitations**
+
+Creating and managing policy recommendations is available only in Manager UI.
+
+## How to
+
+- [Enable policy recommendations](#enable-policy-recommendations)
+- [Activate and review policy recommendations](#activate-and-review-policy-recommendations)
+- [Review global settings for workloads](#review-global-settings-for-workloads)
+- [Update policy recommendations](#update-policy-recommendations)
+- [Private network recommendations](#private-network-recommendations)
+- [Troubleshoot policy recommendations](#troubleshoot-policy-recommendations)
+- [Disable the policy recommendations feature](#disable-the-policy-recommendations-feature)
+
+### Enable policy recommendations
+
+1. In the left navbar in Manager UI, click **Policies**, **Recommendations**.
+1. On the opt-in page, click **Enable Policy Recommendations**.
+
+The **Policy Recommendations** board is automatically displayed.
+
+![Policy-recommendations-board](/img/calico-enterprise/policy-recommendations-board.png)
+
+**Notes**:
+
+- A policy recommendation is generated for every namespace in your cluster (unless namespaces are filtered out by an Admin using the [selector](../../reference/resources/policyrecommendations.mdx#namespaceSpec#selector) in the PolicyRecommendationScope resource).
+- Flow logs are continuously monitored for policy recommendations.
+- Recommended policies are continuously updated until you **Add to policy board** or **Dismiss policy** using the Actions menu.  
+- Policy recommendations are created as **staged network policies** so you can safely observe the traffic before enforcing them.
+- Traffic originating from the recommended policy's namespace is used to generate egress rules, and traffic destined for the namespace is used to define ingress rules.
+- To stop policy recommendations from being processed and updated for a namespace, click the **Action** menu, **Dismiss policy**. 
+
+### Activate and review policy recommendations
+
+Policy recommendations are not enabled until you activate them and move them to the **Active** board. 
+
+From the Policy Recommendation board, select a policy recommendation (or bulk select) and select, **Add to policy board**. Click on the **Active tab**.
+
+You can now view the activated policies in the **Policies Board**. In the left navbar, click **Policies**.
+
+Policy recommendations are added to the **namespace-isolation** tier. Note the following:
+
+- Staged network policy recommendations work like any other staged network policy.
+- You cannot move recommended staged policies in the `namespace-isolation` tier.
+- The name of the `namespace-isolation` tier is fixed and cannot be changed
+
+You are now ready to observe traffic flows in Policies board to verify that the policy is authorizing traffic as expected. When a policy works as expected, you can safely enforce it. See [Stage, preview impacts, and enforce policy](network-policy/staged-network-policies.mdx) for help.
+
+### Review global settings for workloads
+
+The default global settings for capturing flows for policy recommendations are based on application workloads with *frequent communication with other namespaces in your cluster*.
+
+Global settings are found on the Policy Recommendations board, **Action** menu.
+
+![Global-settings-dialog](/img/calico-enterprise/global-settings.png)
+
+- **Stabilization Period** is the learning time to capture flow logs so that a recommendation accurately reflects the cluster's traffic patterns.
+
+- **Processing Interval** is the frequency to process new flow logs and refine recommendations.
+
+:::tip
+For application workloads with less frequent communication, the stabilization period setting may not be long enough to get accurate traffic flows, so you’ll want to increase the time. We recommend that you review your workloads immediately after you enable policy recommendations and adjust the settings accordingly.
+:::
+
+Changes to all other policy recommendations parameters require Admin permissions and can be changed using the [Policy recommendations resource](../../reference/resources/policyrecommendations.mdx).
+
+### Update policy recommendations
+
+This section describes common changes you may want to make to policy recommendations.
+
+#### Relearn activated recommendations
+
+As new namespace and components are added to a cluster, your activated policy recommendation may need to be updated to reflect those changes. If a policy recommendation has not been enforced, you’ll need to update it to allow traffic.
+
+1. On the **Policies Recommendations** board, click the **Active tab**, which lists the active staged network policies. 
+1. Select the Actions menu associated with the policy in question, and click **Dismiss policy**.
+1. Click the **Dismissed tab**, select the Actions menu, and **Reactivate** the policy.
+
+#### Rerun policy recommendations for an enforced policy
+
+To generate a new recommendation for an enforced policy, delete the network policy on the **Policy** board.
+
+#### Stop policy recommendation updates for a namespace
+
+1. On the Policy Recommendations board, click the **Recommendations** tab, which lists the recommendations.
+1. Select the recommendation, click the **Actions** menu, and click **Dismiss policy**.
+
+To reactivate a policy recommendation for a namespace, select the dismissed staged policy, and from the Actions menu, select **Reactivate**.
+
+### Private network recommendations
+
+If any flow to a private network in your cluster is found, a private rule is automatically created that contains RFC 1918 subnets, which will allow traffic to/from those endpoints. If you need to apply a more restrictive approach, create a [GlobalNetworkSet](../../reference/resources/globalnetworkset.mdx) and update it with the desired CIDR blocks. The recommendation engine will identify flows to your private IPs and generate the appropriate NetworkSet Rule.
+
+**Notes**:
+Exclude any CIDR ranges used by the cluster for nodes and pods.
+
+### Troubleshoot policy recommendations
+
+To view policy-recommendation logs:
+
+```batch
+kubectl logs -n tigera-policy-recommendation -l k8s-app=tigera-policy-recommendation
+```
+
+**Notes**:
+This option is not available on managed clusters if you have implemented the multi-cluster-management feature.
+
+**Problem**: I’m not seeing policy recommendations on the Policy Recommendations board.
+
+**Solution/workaround**: Policy recommendations are based on historical flow logs that match a request, and are generated only for flows that have not been addressed by any other policy. As such, there are times when policy recommendations will not be generated:
+
+- Not enough traffic history 
+
+   If you recently installed {{prodname}}, you may not have enough traffic history. Workloads must run for some time (around 5 days) to get “typical network traffic” for applications.
+
+- Traffic is covered by existing policy
+
+   Even if your cluster has been running for a long time with traffic, the flows may already be covered by existing policies. 
+
+To verify why there may not be any recommendations, follow these steps:
+
+1. Go to **Service Graph**, **Default**.
+1. Filter flow logs for your namespace.
+1. Investigate the content within the `policies` field for the flow logs in question.
+1. Validate that no other enforced policy already addresses the flow.
+
+**Problem**: Why are egress-to-domain rules being generated for a Kubernetes service?
+
+**Solution/workaround**: The policy recommendation controller can only read the cluster domain of the cluster it runs in. If you have managed clusters with a non-default domain (`cluster.local`), the controller will treat egress traffic as though it is to a domain.
+
+### Disable the policy recommendations feature
+
+To disable the policy recommendations feature, set the **RecStatus** parameter to `Disabled` in the [Policy recommendations resource](../../reference/resources/policyrecommendations.mdx).
+
+```bash
+kubectl patch PolicyRecommendationScope default --type='json' -p='[{"op": "replace", "path": "/spec/namespaceSpec/recStatus", "value": "Disabled"}]'
+```
+
+Note that unactivated policy recommendations in the Policies Recommendations board are no longer updated. Existing activated and enforced staged network policies are not affected by disabling policy recommendations. 
+
+## Additional resources
+
+- [Policy best practices](../../network-policy/policy-best-practices.mdx)
