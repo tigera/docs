@@ -81,15 +81,15 @@ const config = {
         contextualSearch: true,
         searchPagePath: '/search',
       },
-           "announcementBar": {
-             "id": "calico_ebpf",
-             "content": "Use Calico <img src=\"/img/brands/ebpf_logo.svg\" style=\"height:1.5rem; margin: 0 5px 0 5px;" +
-      " display: inline-flex;\" alt=\"eBPF\" /> dataplane to enhance your Kubernetes networking performance. Click <a
-      href=\"https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf/\">here </a> to learn more.",
-             "backgroundColor": "#FCE181",
-             "textColor": "#000",
-             "isCloseable": true,
-           },
+      announcementBar: {
+        id: 'KubeCon24',
+        content:
+          '🎉 Learn the latest trends in Kubernetes networking and security. Join us at CalicoCon 2024 on' +
+          " November 12. <a href='https://link.tigera.io/uhuRC'><strong>Register now!</strong></a> :🎉",
+        backgroundColor: '#FCE181',
+        textColor: '#000',
+        isCloseable: true,
+      },
       navbar: {
         logo: {
           src: 'img/tigera-logo-black.png',
