@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 ## Big picture
 
-Install the eBPF dataplane during the initial installation of {{prodname}}.
+Install the eBPF dataplane during the initial installation of $[prodname].
 
 ## Value
 
@@ -23,7 +23,7 @@ Install the eBPF dataplane during the initial installation of {{prodname}}.
 
 eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mini programs to be attached to various
 low-level hooks in the Linux kernel. eBPF has a wide variety of uses, including networking, security, and tracing.
-You’ll see a lot of non-networking projects leveraging eBPF, but for {{prodname}} our focus is on networking,
+You’ll see a lot of non-networking projects leveraging eBPF, but for $[prodname] our focus is on networking,
 and in particular, pushing the networking capabilities of the latest Linux kernels to the limit.
 
 ## Before you begin
@@ -48,7 +48,7 @@ and in particular, pushing the networking capabilities of the latest Linux kerne
 
 :::note
 
-eBPF supports AKS with Calico CNI and {{prodname}} network policy. However, with [AKS with Azure CNI and {{prodname}} network policy](../../getting-started/install-on-clusters/aks.mdx#install-with-azure-cni-networking), kube-proxy cannot be disabled so the performance benefits of eBPF are lost. However, there are other reasons to use eBPF other than performance gains, as described in [eBPF use cases](use-cases-ebpf.mdx).
+eBPF supports AKS with Calico CNI and $[prodname] network policy. However, with [AKS with Azure CNI and $[prodname] network policy](../../getting-started/install-on-clusters/aks.mdx#install-with-azure-cni-networking), kube-proxy cannot be disabled so the performance benefits of eBPF are lost. However, there are other reasons to use eBPF other than performance gains, as described in [eBPF use cases](use-cases-ebpf.mdx).
 
 :::
 
@@ -64,7 +64,7 @@ eBPF supports AKS with Calico CNI and {{prodname}} network policy. However, with
 
 **Recommendations for performance**
 
-For best pod-to-pod performance, we recommend using an underlying network that doesn't require {{prodname}} to use an overlay. For example:
+For best pod-to-pod performance, we recommend using an underlying network that doesn't require $[prodname] to use an overlay. For example:
 
 - A cluster within a single AWS subnet
 - A cluster using a compatible cloud provider's CNI (such as the AWS VPC CNI plugin)
@@ -74,19 +74,19 @@ If you must use an overlay, we recommend that you use VXLAN, not IPIP. VXLAN has
 
 ## How to
 
-Installing {{prodname}} normally consists of the following steps, which are covered by the main installation
+Installing $[prodname] normally consists of the following steps, which are covered by the main installation
 guide:
 
-- Create a cluster suitable to run {{prodname}}
+- Create a cluster suitable to run $[prodname]
 - Install the Tigera Operator, and the associated Custom Resource Definitions
 - Apply a set of Custom Resources to tell the operator what to install
 - Wait for the operator to provision all the associated resources and report back via its status resource
 
 To install directly in eBPF is very similar; this guide explains the differences:
 
-- [Create a cluster](#create-a-suitable-cluster) suitable to run {{prodname}} **with the added requirement that the nodes must use a recent
+- [Create a cluster](#create-a-suitable-cluster) suitable to run $[prodname] **with the added requirement that the nodes must use a recent
   enough kernel**.
-- [**Create a config map with the "real" address of the API server.**](#create-kubernetes-service-endpoint-config-map) This allows the operator to install {{prodname}}
+- [**Create a config map with the "real" address of the API server.**](#create-kubernetes-service-endpoint-config-map) This allows the operator to install $[prodname]
   with a direct connection to the API server so that it can take over from `kube-proxy`.
 - [Install the Tigera Operator](#install-the-tigera-operator) (possibly via a Helm chart), and the associated Custom Resource Definitions.
 - **[Download and tweak the installation Custom Resource](#tweak-and-apply-installation-custom-resources) to tell the operator to use eBPF mode.**
@@ -133,7 +133,7 @@ kubeProxy:
 <TabItem label="OpenShift" value="OpenShift-2">
 
 OpenShift supports a number of base OSes; as long as the base OS chosen has a recent enough kernel, OpenShift clusters are
-fully supported. Since Red Hat have backported the eBPF features required by {{prodname}} the Red Hat kernel
+fully supported. Since Red Hat have backported the eBPF features required by $[prodname] the Red Hat kernel
 version required is lower than the mainline: v4.18.0-193 or above.
 
 </TabItem>
@@ -142,7 +142,7 @@ version required is lower than the mainline: v4.18.0-193 or above.
 Azure Kubernetes Service (AKS) supports a number of base OSes. The most recent Ubuntu 18.04 image has a recent enough
 kernel to use with eBPF mode.
 
-AKS does not support disabling `kube-proxy` so it's necessary to tell {{prodname}} not to try to clean up
+AKS does not support disabling `kube-proxy` so it's necessary to tell $[prodname] not to try to clean up
 `kube-proxy`'s iptables rules at a later stage.
 
 </TabItem>
@@ -168,8 +168,8 @@ More details can be found in [the MKE documentation](https://docs.mirantis.com/m
 
 ### Create kubernetes-service-endpoint config map
 
-In eBPF mode, {{prodname}} takes over from `kube-proxy`. This means that, like `kube-proxy`, it needs to be able
-to reach the API server _directly_ rather than by using the API server's `ClusterIP`. To tell {{prodname}} how
+In eBPF mode, $[prodname] takes over from `kube-proxy`. This means that, like `kube-proxy`, it needs to be able
+to reach the API server _directly_ rather than by using the API server's `ClusterIP`. To tell $[prodname] how
 to reach the API server we create a `ConfigMap` with the API server's "real" address. In this guide we do that before
 installing the Tigera Operator. That means that the operator itself can also use the direct connection and hence
 it doesn't require `kube-proxy` to be running.
@@ -177,7 +177,7 @@ it doesn't require `kube-proxy` to be running.
 The tabs below explain how to find the "real" address of the API server for a range of distributions.
 **Note:** In all cases it's important that the address used is stable even if your API server is restarted or
 scaled up/down. If you have multiple API servers, with DNS or other load balancing in front it's important to use
-the address of the load balancer. This prevents {{prodname}} from being disconnected if the API servers IP changes.
+the address of the load balancer. This prevents $[prodname] from being disconnected if the API servers IP changes.
 
 <Tabs>
 <TabItem label="Generic or kubeadm" value="Generic or kubeadm-6">
@@ -191,7 +191,7 @@ opted for a high-availability cluster with multiple API servers or a simple one-
 - If you opted for a single control plane node then you can use the address of the control plane node itself. However,
   it's important that you use a _stable_ address for that node such as a dedicated DNS record, or a static IP address.
   If you use a dynamic IP address (such as an EC2 private IP) then the address may change when the node is restarted
-  causing {{prodname}} to lose connectivity to the API server.
+  causing $[prodname] to lose connectivity to the API server.
 
 </TabItem>
 <TabItem label="kOps" value="kOps-7">
@@ -288,7 +288,7 @@ When the main install guide tells you to apply the `custom-resources.yaml`, typi
 the URL of the file directly, you should instead download the file, so that you can edit it:
 
 ```bash
-  curl -o custom-resources.yaml {{filesUrl}}/manifests/custom-resources.yaml
+  curl -o custom-resources.yaml $[filesUrl]/manifests/custom-resources.yaml
 ```
 
 Edit the file in your editor of choice and find the `Installation` resource, which should be at the top of the file.
@@ -346,7 +346,7 @@ watch kubectl get tigerastatus
 ### Disable `kube-proxy` (or avoid conflicts)
 
 In eBPF mode, to avoid conflicts with `kube-proxy` it's necessary to either disable `kube-proxy` or to configure
-{{prodname}} not to clean up `kube-proxy`'s iptables rules. If you didn't disable `kube-proxy` when starting
+$[prodname] not to clean up `kube-proxy`'s iptables rules. If you didn't disable `kube-proxy` when starting
 your cluster then follow the steps below to avoid conflicts:
 
 <Tabs>
@@ -392,7 +392,7 @@ kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"
 <TabItem label="AKS" value="AKS-14">
 
 AKS with Azure CNI does not allow `kube-proxy` to be disabled, `kube-proxy` is deployed by the add-on manager, which will reconcile
-away any manual changes made to its configuration. To ensure `kube-proxy` and {{prodname}} don't fight, set
+away any manual changes made to its configuration. To ensure `kube-proxy` and $[prodname] don't fight, set
 the Felix configuration parameter `bpfKubeProxyIptablesCleanupEnabled` to false. This can be done with
 `kubectl` as follows:
 
@@ -429,4 +429,4 @@ If you are running kube-proxy in IPVS mode, switch to iptables mode before disab
 
 **Recommended - Security**
 
-- [Get started with {{prodname}} tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)
+- [Get started with $[prodname] tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)

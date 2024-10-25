@@ -1,31 +1,31 @@
 import NonClusterReadOnlyStep from '@site/calico-enterprise_versioned_docs/version-3.18-2/_includes/content/_non-cluster-read-only-step.mdx';
 import EnvironmentFile from '@site/calico-enterprise_versioned_docs/version-3.18-2/_includes/components/EnvironmentFile';
 
-This section describes how to run `{{nodecontainer}}` as a Docker container.
+This section describes how to run `$[nodecontainer]` as a Docker container.
 
 <NonClusterReadOnlyStep />
 
 ### Step 2: Create environment file
 
-<EnvironmentFile nodecontainer='{{nodecontainer}}' />
+<EnvironmentFile nodecontainer='$[nodecontainer]' />
 
 ### Step 3: Configure the init system
 
-Use an init daemon (like systemd or upstart) to start the {{nodecontainer}} image as a service using the EnvironmentFile values.
+Use an init daemon (like systemd or upstart) to start the $[nodecontainer] image as a service using the EnvironmentFile values.
 
-Sample systemd service file: `{{noderunning}}.service`
+Sample systemd service file: `$[noderunning].service`
 
 ```shell
 [Unit]
-Description={{noderunning}}
+Description=$[noderunning]
 After=docker.service
 Requires=docker.service
 
 [Service]
 EnvironmentFile=/etc/calico/calico.env
-ExecStartPre=-/usr/bin/docker rm -f {{noderunning}}
+ExecStartPre=-/usr/bin/docker rm -f $[noderunning]
 ExecStart=/usr/bin/docker run --net=host --privileged \
- --name={{noderunning}} \
+ --name=$[noderunning] \
  -e NODENAME=${CALICO_NODENAME} \
  -e IP=${CALICO_IP} \
  -e IP6=${CALICO_IP6} \
@@ -40,9 +40,9 @@ ExecStart=/usr/bin/docker run --net=host --privileged \
  -v /run/docker/plugins:/run/docker/plugins \
  -v /lib/modules:/lib/modules \
  -v /etc/pki:/pki \
- {{registry}}{{componentImage.cnxNode}} /bin/calico-node -felix
+ $[registry]$[componentImage.cnxNode] /bin/calico-node -felix
 
-ExecStop=-/usr/bin/docker stop {{noderunning}}
+ExecStop=-/usr/bin/docker stop $[noderunning]
 
 Restart=on-failure
 StartLimitBurst=3
@@ -56,10 +56,10 @@ Upon start, the systemd service:
 
 - Confirms Docker is installed under the `[Unit]` section
 - Gets environment variables from the environment file above
-- Removes existing `{{nodecontainer}}` container (if it exists)
-- Starts `{{nodecontainer}}`
+- Removes existing `$[nodecontainer]` container (if it exists)
+- Starts `$[nodecontainer]`
 
-The script also stops the `{{nodecontainer}}` container when the service is stopped.
+The script also stops the `$[nodecontainer]` container when the service is stopped.
 
 :::note
 

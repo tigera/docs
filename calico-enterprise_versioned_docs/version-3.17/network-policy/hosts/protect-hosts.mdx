@@ -6,49 +6,49 @@ description: Create Calico Enterprise network policies to restrict traffic to/fr
 
 ## Big picture
 
-Use {{prodname}} network policy to restrict traffic to/from hosts.
+Use $[prodname] network policy to restrict traffic to/from hosts.
 
 ## Value
 
-Restricting traffic between hosts and the outside world is not unique to {{prodname}}; many solutions provide this capability. However, the advantage of using {{prodname}} to protect the host is you can use the same {{prodname}} policy configuration as workloads. You only need to learn one tool. Write a cluster-wide policy, and it is immediately applied to every host.
+Restricting traffic between hosts and the outside world is not unique to $[prodname]; many solutions provide this capability. However, the advantage of using $[prodname] to protect the host is you can use the same $[prodname] policy configuration as workloads. You only need to learn one tool. Write a cluster-wide policy, and it is immediately applied to every host.
 
 ## Concepts
 
 ### Hosts and workloads
 
-In the context of {{prodname}} configuration, a **workload** is a virtualized compute instance, like a VM or container. A **host** is the computer that runs the hypervisor (for VMs), or container runtime (for containers). We say it “hosts” the workloads as guests.
+In the context of $[prodname] configuration, a **workload** is a virtualized compute instance, like a VM or container. A **host** is the computer that runs the hypervisor (for VMs), or container runtime (for containers). We say it “hosts” the workloads as guests.
 
 ### Host endpoints
 
-Each host has one or more network interfaces that it uses to communicate externally. You can use {{prodname}} network policy to secure these interfaces (called host endpoints). {{prodname}} host endpoints can have labels, and they work the same as labels on workload endpoints. The network policy rules can apply to both workload and host endpoints using label selectors.
+Each host has one or more network interfaces that it uses to communicate externally. You can use $[prodname] network policy to secure these interfaces (called host endpoints). $[prodname] host endpoints can have labels, and they work the same as labels on workload endpoints. The network policy rules can apply to both workload and host endpoints using label selectors.
 
 ### Failsafe rules
 
-It is easy to inadvertently cut all host connectivity because of nonexistent or misconfigured network policy. To avoid this, {{prodname}} provides failsafe rules with default/configurable ports that are open on all host endpoints.
+It is easy to inadvertently cut all host connectivity because of nonexistent or misconfigured network policy. To avoid this, $[prodname] provides failsafe rules with default/configurable ports that are open on all host endpoints.
 
 ### Default behavior of workload to host traffic
 
-By default, {{prodname}} blocks all connections from a workload to its local host. You can control whether connections from a workload endpoint to its local host are dropped, returned, or accepted using a simple parameter.
+By default, $[prodname] blocks all connections from a workload to its local host. You can control whether connections from a workload endpoint to its local host are dropped, returned, or accepted using a simple parameter.
 
-{{prodname}} allows all connections from processes running on the host to guest workloads on the host. This allows host processes to run health checks and debug guest workloads.
+$[prodname] allows all connections from processes running on the host to guest workloads on the host. This allows host processes to run health checks and debug guest workloads.
 
 ### Default behavior of external traffic to/from host
 
-If a host endpoint is added and network policy is not in place, the {{prodname}} default is to deny traffic to/from that endpoint (except for traffic allowed by failsafe rules). For host endpoints, {{prodname}} blocks traffic only to/from interfaces that it’s been explicitly told about in network policy. Traffic to/from other interfaces is ignored.
+If a host endpoint is added and network policy is not in place, the $[prodname] default is to deny traffic to/from that endpoint (except for traffic allowed by failsafe rules). For host endpoints, $[prodname] blocks traffic only to/from interfaces that it’s been explicitly told about in network policy. Traffic to/from other interfaces is ignored.
 
 ### Other host protection
 
-In terms of design consistency in {{prodname}}, you may wonder about the following use cases.
+In terms of design consistency in $[prodname], you may wonder about the following use cases.
 
-**Does {{prodname}} protect a local host from workloads?**<br/>
+**Does $[prodname] protect a local host from workloads?**<br/>
 Yes. DefaultEndpointToHostAction controls whether or not workloads can access their local host.<br/>
 
-**Does {{prodname}} protect a workload from the host it is running on?**<br/>
-No. {{prodname}} allows connections the host makes to the workloads running on that host. Some orchestrators like Kubernetes depend on this connectivity for health checking the workload. Moreover, processes running on the local host are often privileged enough to override local {{prodname}} policy. Be very cautious with the processes that you allow to run in the host's root network namespace.
+**Does $[prodname] protect a workload from the host it is running on?**<br/>
+No. $[prodname] allows connections the host makes to the workloads running on that host. Some orchestrators like Kubernetes depend on this connectivity for health checking the workload. Moreover, processes running on the local host are often privileged enough to override local $[prodname] policy. Be very cautious with the processes that you allow to run in the host's root network namespace.
 
 ## Before you begin...
 
-If you are already running {{prodname}} for Kubernetes, you are good to go. If you want to install {{prodname}} on a non-cluster machine for host protection only, see [Non-cluster hosts](../../getting-started/bare-metal/index.mdx).
+If you are already running $[prodname] for Kubernetes, you are good to go. If you want to install $[prodname] on a non-cluster machine for host protection only, see [Non-cluster hosts](../../getting-started/bare-metal/index.mdx).
 
 ## How to
 
@@ -58,7 +58,7 @@ If you are already running {{prodname}} for Kubernetes, you are good to go. If y
 
 ### Avoid accidentally cutting all host connectivity
 
-To avoid inadvertently cutting all host connectivity because of nonexistent or misconfigured network policy, {{prodname}} uses failsafe rules that open specific ports and CIDRs on all host endpoints.
+To avoid inadvertently cutting all host connectivity because of nonexistent or misconfigured network policy, $[prodname] uses failsafe rules that open specific ports and CIDRs on all host endpoints.
 
 Review the following table to determine if the defaults work for your implementation. If not, change the default ports using the parameters, **FailsafeInboundHostPorts** and **FailsafeOutboundHostPorts** in [Configuring Felix](../../reference/component-resources/node/felix/configuration.mdx#environment-variables).
 
@@ -68,7 +68,7 @@ Review the following table to determine if the defaults work for your implementa
 | 53   | UDP      | 0.0.0.0/0 | Outbound           | DNS queries                          |
 | 67   | UDP      | 0.0.0.0/0 | Outbound           | DHCP access                          |
 | 68   | UDP      | 0.0.0.0/0 | Inbound            | DHCP access                          |
-| 179  | TCP      | 0.0.0.0/0 | Inbound & Outbound | BGP access ({{prodname}} networking) |
+| 179  | TCP      | 0.0.0.0/0 | Inbound & Outbound | BGP access ($[prodname] networking) |
 | 2379 | TCP      | 0.0.0.0/0 | Inbound & Outbound | etcd access                          |
 | 2380 | TCP      | 0.0.0.0/0 | Inbound & Outbound | etcd access                          |
 | 6443 | TCP      | 0.0.0.0/0 | Inbound & Outbound | Kubernetes API server access         |
@@ -122,9 +122,9 @@ spec:
 
 #### Step 2: Create host endpoints
 
-For each host point that you want to secure with policy, you must create a **HostEndpoint** object. To do that, you need the name of the {{prodname}} node on the host that owns the interface; in most cases, it is the same as the hostname of the host.
+For each host point that you want to secure with policy, you must create a **HostEndpoint** object. To do that, you need the name of the $[prodname] node on the host that owns the interface; in most cases, it is the same as the hostname of the host.
 
-In the following example, we create a HostEndpoint for the host named **my-host** with the interface named **eth0**, with **IP 10.0.0.1**. Note that the value for **node:** must match the hostname used on the {{prodname}} node object.
+In the following example, we create a HostEndpoint for the host named **my-host** with the interface named **eth0**, with **IP 10.0.0.1**. Note that the value for **node:** must match the hostname used on the $[prodname] node object.
 
 When the HostEndpoint is created, traffic to or from the interface is dropped unless policy is in place.
 
@@ -144,7 +144,7 @@ spec:
 
 ### Control default behavior of workload endpoint to host traffic
 
-The default {{prodname}} behavior blocks all connections from workloads to their local host (after traffic passes any egress policy applied to the workload). You can change this behavior using the **DefaultEndpointToHostAction** parameter in Felix configuration.
+The default $[prodname] behavior blocks all connections from workloads to their local host (after traffic passes any egress policy applied to the workload). You can change this behavior using the **DefaultEndpointToHostAction** parameter in Felix configuration.
 
 This parameter works at the IP table level, where you can specify packet behavior to **Drop** (default), **Accept**, or **Return**.
 
@@ -178,7 +178,7 @@ To change this parameter for all hosts, edit the **FelixConfiguration** object n
 ## Additional resources
 
 - [Apply policy to Kubernetes node ports](../beginners/services/kubernetes-node-ports.mdx)
-- [Protect Kubernetes nodes with host endpoints managed by {{prodname}}](kubernetes-nodes.mdx)
+- [Protect Kubernetes nodes with host endpoints managed by $[prodname]](kubernetes-nodes.mdx)
 - [Defend against DoS attacks](../extreme-traffic/defend-dos-attack.mdx)
 - [Global network policy](../../reference/resources/globalnetworkpolicy.mdx)
 - [Host endpoint](../../reference/resources/hostendpoint.mdx)

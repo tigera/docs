@@ -16,13 +16,13 @@ through egress gateways. Use native VPC subnet IP addresses for the egress gatew
 
 Controlling the source IP seen when traffic leaves the cluster allows groups of pods to be identified
 by external firewalls, appliances and services (even as the groups are scaled up/down or pods restarted).
-{{prodname}} controls the source IP by directing traffic through one or more "egress gateway" pods, which
+$[prodname] controls the source IP by directing traffic through one or more "egress gateway" pods, which
 change the source IP of the traffic to their own IP. The egress gateways used can be chosen at the pod or namespace
 scope allowing for flexibility in how the cluster is seen from outside.
 
 In AWS, egress gateway source IP addresses are chosen from an IP pool backed by a [VPC subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html)
-using {{prodname}} IPAM. {{prodname}} IPAM allows the IP addresses to be precisely controlled, this allows
-for static configuration of external appliances. Using an IP pool backed by a VPC subnet allows {{prodname}} to
+using $[prodname] IPAM. $[prodname] IPAM allows the IP addresses to be precisely controlled, this allows
+for static configuration of external appliances. Using an IP pool backed by a VPC subnet allows $[prodname] to
 configure the AWS fabric to route traffic to and from the egress gateway using its own IP address.
 
 ## Concepts
@@ -37,7 +37,7 @@ This article assumes that you are familiar with network masks and CIDR notation.
 
 ### AWS-backed IP pools
 
-{{prodname}} supports IP pools that are backed by the AWS fabric. Workloads that use an IP address from an
+$[prodname] supports IP pools that are backed by the AWS fabric. Workloads that use an IP address from an
 AWS-backed pool can communicate on the AWS network using their own IP address and AWS will route their traffic
 to/from their host without changing the IP address.
 
@@ -55,12 +55,12 @@ In overview, the AWS-backed IP Pools feature works as follows:
   :::caution
 
   You must ensure that the CIDR(s) used for AWS-backed IP pool(s) are reserved in the AWS fabric.
-  For example, by creating a dedicated VPC subnet for {{prodname}}. If the CIDR is not reserved; both
-  {{prodname}} and AWS may try to assign the same IP address, resulting in a conflict.
+  For example, by creating a dedicated VPC subnet for $[prodname]. If the CIDR is not reserved; both
+  $[prodname] and AWS may try to assign the same IP address, resulting in a conflict.
 
   :::
 
-- Since they are a limited resource, {{prodname}} IPAM does not use AWS-backed pools by default. To request an
+- Since they are a limited resource, $[prodname] IPAM does not use AWS-backed pools by default. To request an
   AWS-backed IP address, a pod must have a resource request:
 
   ```yaml noValidation
@@ -74,14 +74,14 @@ In overview, the AWS-backed IP Pools feature works as follows:
           projectcalico.org/aws-secondary-ipv4: 1
   ```
 
-  {{prodname}} manages the `projectcalico.org/aws-secondary-ipv4` capacity on the Kubernetes Node resource,
+  $[prodname] manages the `projectcalico.org/aws-secondary-ipv4` capacity on the Kubernetes Node resource,
   ensuring that Kubernetes will not try to schedule too many AWS-backed workloads to the same node. Only AWS-backed
   pods are limited in this way; there is no limit on the number of non-AWS-backed pods.
 
 - When the CNI plugin spots such a resource request, it will choose an IP address from an AWS-backed pool. Only
   pools with VPC subnets in the availability zone of the host are considered.
 
-- When Felix, {{prodname}}'s per-host agent spots a local workload with an AWS-backed address it tries to ensure
+- When Felix, $[prodname]'s per-host agent spots a local workload with an AWS-backed address it tries to ensure
   that the IP address of the workload is assigned to the host in the AWS fabric. If need be, it will create a
   new [secondary ENI](#secondary-elastic-network-interfaces-enis) device and attach it to the host to house the IP address.
   Felix supports two modes for assigning secondary ENIs: **ENI-per-workload** mode (added in v3.13) and
@@ -144,8 +144,8 @@ ENI has a primary IP address from the VPC subnet that it belongs to, and it may 
 addresses, chosen for the same subnet. While the primary IP address is fixed and cannot be changed, the secondary
 IP addresses can be added and removed at runtime.
 
-To arrange for AWS to route traffic to and from egress gateways, {{prodname}} adds _secondary_ Elastic
-Network Interfaces (ENIs) to the host. {{prodname}} supports two modes for provisioning the
+To arrange for AWS to route traffic to and from egress gateways, $[prodname] adds _secondary_ Elastic
+Network Interfaces (ENIs) to the host. $[prodname] supports two modes for provisioning the
 secondary ENIs. The table below describes the trade-offs between **ENI-per-workload** and **Secondary-IP-per-workload**
 modes:
 
@@ -179,7 +179,7 @@ an instance (for example when scaling up the cluster).
 
 - Amazon VPC CNI
 
-  {{prodname}} CNI and IPAM is required. The ability to control the egress gateway’s IP is a feature of {{prodname}} CNI and IPAM. AWS VPC CNI does not support that feature, so it is incompatible with egress gateways.
+  $[prodname] CNI and IPAM is required. The ability to control the egress gateway’s IP is a feature of $[prodname] CNI and IPAM. AWS VPC CNI does not support that feature, so it is incompatible with egress gateways.
 
 ## How to
 
@@ -202,15 +202,15 @@ an instance (for example when scaling up the cluster).
 
 ### Configure IP autodetection
 
-Since this feature adds additional network interfaces to nodes, it is important to configure {{prodname}} to
-autodetect the correct primary interface to use for normal pod-to-pod traffic. Otherwise, {{prodname}} may
+Since this feature adds additional network interfaces to nodes, it is important to configure $[prodname] to
+autodetect the correct primary interface to use for normal pod-to-pod traffic. Otherwise, $[prodname] may
 autodetect a newly-added secondary ENI as the main interface, causing an outage.
 
 For EKS clusters, the default IP autodetection method is `can-reach=8.8.8.8`, which will choose the interface
 with a route to `8.8.8.8`; this is typically the interface with a default route, which will be the correct (primary) ENI.
-({{prodname}} ensures that the secondary ENIs do not have default routes in the main routing table.)
+($[prodname] ensures that the secondary ENIs do not have default routes in the main routing table.)
 
-For other AWS clusters, {{prodname}} may default to `firstFound`, which is **not** suitable.
+For other AWS clusters, $[prodname] may default to `firstFound`, which is **not** suitable.
 
 To examine the autodetection method, check the operator's installation resource:
 
@@ -241,9 +241,9 @@ CIDRs from which your primary ENI IPs are chosen (do not include the dedicated V
 For egress gateways to be useful in AWS, we want to assign them IP addresses from a VPC subnet that is in the same AZ
 as their host.
 
-To avoid clashes between AWS IP allocations and {{prodname}} IP allocations, it is important that the range of
-IP addresses assigned to {{prodname}} IP pools is not used by AWS for automatic allocations. In this guide we
-assume that you have created a dedicated VPC subnet per Availability Zone (AZ) that is reserved for {{prodname}}
+To avoid clashes between AWS IP allocations and $[prodname] IP allocations, it is important that the range of
+IP addresses assigned to $[prodname] IP pools is not used by AWS for automatic allocations. In this guide we
+assume that you have created a dedicated VPC subnet per Availability Zone (AZ) that is reserved for $[prodname]
 and configured not to be used as the default subnet for the AZ.
 
 If you are creating your cluster and VPC from scratch, plan to subdivide the VPC CIDR into (at least) two VPC subnets
@@ -257,16 +257,16 @@ CIDR range to a VPC, see [this guide](https://docs.aws.amazon.com/vpc/latest/use
 
 ### Create dedicated VPC subnets
 
-{{prodname}} requires a dedicated VPC subnet in each AWS availability zone that you wish to deploy egress
-gateways. The subnet must be dedicated to {{prodname}} so that AWS will not
+$[prodname] requires a dedicated VPC subnet in each AWS availability zone that you wish to deploy egress
+gateways. The subnet must be dedicated to $[prodname] so that AWS will not
 use IP addresses from the subnet for other purposes (as this could clash with an egress gateway's IP). When creating the
 subnet you should configure it not to be used for instances.
 
-Some IP addresses from the dedicated subnet are reserved for AWS and {{prodname}} internal use:
+Some IP addresses from the dedicated subnet are reserved for AWS and $[prodname] internal use:
 
 - The first four IP addresses in the subnet cannot be used. These are [reserved by AWS for internal use](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html#vpc-sizing-ipv4).
 - Similarly, the last IP in the subnet (the broadcast address) cannot be used.
-- _In **Secondary-IP-per-workload** mode_, {{prodname}} requires one IP address from the subnet per secondary ENI
+- _In **Secondary-IP-per-workload** mode_, $[prodname] requires one IP address from the subnet per secondary ENI
   that it provisions (for use as the primary IP address of the ENI). In **ENI-per-workload** mode, this is not required.
 
 <Tabs>
@@ -299,7 +299,7 @@ Example for **Secondary-IP-per-workload** mode:
 - Since VPC subnets are allocated by CIDR, a `/22` subnet containing 1024 IP addresses would comfortably fit the 65
   reserved IPs as well as the 660 possible gateways.
 
-{{prodname}} allocates ENIs on-demand so each instance will only claim one of those reserved IP addresses when the
+$[prodname] allocates ENIs on-demand so each instance will only claim one of those reserved IP addresses when the
 first egress gateway is assigned to that node. It will only claim its second IP when that ENI becomes full and then an
 extra egress gateway is provisioned.
 
@@ -308,7 +308,7 @@ extra egress gateway is provisioned.
 
 ### Configure AWS IAM roles
 
-To provision the required AWS resources, each {{noderunning}} pod in your cluster requires the
+To provision the required AWS resources, each $[noderunning] pod in your cluster requires the
 following IAM permissions to be granted. The permissions can be granted to the node IAM Role itself, or by using
 the AWS [IAM roles for service accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) feature to grant the permissions to the
 `calico-node` service account.
@@ -328,7 +328,7 @@ the AWS [IAM roles for service accounts](https://docs.aws.amazon.com/eks/latest/
 - ModifyNetworkInterfaceAttribute
 
 The above permissions are similar to those used by the AWS VPC CNI (since both CNIs need to provision the same kinds
-of resources). In addition, to support elastic IPs, each {{noderunning}} also requires the following permissions:
+of resources). In addition, to support elastic IPs, each $[noderunning] also requires the following permissions:
 
 - DescribeAddresses
 - AssociateAddress
@@ -342,7 +342,7 @@ group need to be updated. A rule to allow all packets from within the security g
 ### Configure IP reservations for each VPC subnet
 
 Since the first four IP addresses and the last IP address in a VPC subnet cannot be used, it is important to
-prevent {{prodname}} from _trying_ to use them. For each VPC subnet that you plan to use,
+prevent $[prodname] from _trying_ to use them. For each VPC subnet that you plan to use,
 ensure that you have an entry in an [IP reservation](../../reference/resources/ipreservation.mdx) for its first
 four IP addresses and its final IP address.
 
@@ -444,14 +444,14 @@ In **ENI-per-workload** mode, IP pools are (only) used to subdivide the VPC subn
 particular groups of egress gateways. These IP Pools must have:
 
 - `awsSubnetID` set to the ID of the relevant VPC subnet. This activates the AWS-backed IP feature for these pools.
-- `allowedUse` set to `["Workload"]` to tell {{prodname}} IPAM to use those pools for the egress gateway workloads.
+- `allowedUse` set to `["Workload"]` to tell $[prodname] IPAM to use those pools for the egress gateway workloads.
 - `vxlanMode` and `ipipMode` set to `Never` to disable encapsulation for the egress gateway pods. (`Never` is the default if these fields are not specified.)
-- `blockSize` set to 32. This aligns {{prodname}} IPAM with the behaviour of the AWS fabric.
+- `blockSize` set to 32. This aligns $[prodname] IPAM with the behaviour of the AWS fabric.
 - `disableBGPExport` set to `true`. This prevents routing conflicts if your cluster is using IPIP or BGP networking.
 
 It's also recommended to:
 
-- Set `nodeSelector` to `"!all()"`. This prevents {{prodname}} IPAM from using the pool automatically. It will
+- Set `nodeSelector` to `"!all()"`. This prevents $[prodname] IPAM from using the pool automatically. It will
   only be used for workloads that explicitly name it in the `cni.projectcalico.org/ipv4pools` annotation.
 
 Continuing the example above, with VPC subnets
@@ -537,26 +537,26 @@ spec:
 
 In **Secondary-IP-per-workload** mode, IP pools are used to subdivide the VPC subnets as follows:
 
-- One medium-sized IP pool per-Subnet reserved for {{prodname}} to use for the _primary_ IP addresses of its _secondary_ ENIs.
+- One medium-sized IP pool per-Subnet reserved for $[prodname] to use for the _primary_ IP addresses of its _secondary_ ENIs.
   These pools must have:
 
   - `awsSubnetID` set to the ID of the relevant VPC subnet. This activates the AWS-backed IP feature for these pools.
   - `allowedUse` set to `["HostSecondaryInterface"]` to reserve them for this purpose.
-  - `blockSize` set to 32. This aligns {{prodname}} IPAM with the behaviour of the AWS fabric.
+  - `blockSize` set to 32. This aligns $[prodname] IPAM with the behaviour of the AWS fabric.
   - `vxlanMode` and `ipipMode` set to `Never`. (`Never` is the default if these fields are not specified.)
   - `disableBGPExport` set to `true`. This prevents routing conflicts if your cluster is using IPIP or BGP networking.
 
 - Small pools used for particular groups of egress gateways. These must have:
 
   - `awsSubnetID` set to the ID of the relevant VPC subnet. This activates the AWS-backed IP feature for these pools.
-  - `allowedUse` set to `["Workload"]` to tell {{prodname}} IPAM to use those pools for the egress gateway workloads.
+  - `allowedUse` set to `["Workload"]` to tell $[prodname] IPAM to use those pools for the egress gateway workloads.
   - `vxlanMode` and `ipipMode` set to `Never` to disable encapsulation for the egress gateway pods. (`Never` is the default if these fields are not specified.)
-  - `blockSize` set to 32. This aligns {{prodname}} IPAM with the behaviour of the AWS fabric.
+  - `blockSize` set to 32. This aligns $[prodname] IPAM with the behaviour of the AWS fabric.
   - `disableBGPExport` set to `true`. This prevents routing conflicts if your cluster is using IPIP or BGP networking.
 
   It's also recommended to:
 
-  - Set `nodeSelector` to `"!all()"`. This prevents {{prodname}} IPAM from using the pool automatically. It will
+  - Set `nodeSelector` to `"!all()"`. This prevents $[prodname] IPAM from using the pool automatically. It will
     only be used for workloads that explicitly name it in the `cni.projectcalico.org/ipv4pools` annotation.
 
 Continuing the example above, with VPC subnets
@@ -681,7 +681,7 @@ spec:
 
 Use an egress gateway custom resource to deploy a group of egress gateways.
 
-Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and {{prodname}}
+Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and $[prodname]
 in tandem to get a cluster of egress gateways that spans both availability zones and uses AWS-backed IP addresses:
 
 ```bash
@@ -733,14 +733,14 @@ EOF
 ```
 
 - `replicas: 2` tells Kubernetes to schedule two egress gateways in the "red" cluster.
-- ipPools tells {{prodname}} IPAM to use one of the "red" IP pools:
+- ipPools tells $[prodname] IPAM to use one of the "red" IP pools:
 
   ```yaml
   ipPools:
   - name: "egress-red-west-1"
   - name: "egress-red-west-2"
   ```
-  Depending on which AZ the pod is scheduled in, {{prodname}} IPAM will automatically ignore IP pools that
+  Depending on which AZ the pod is scheduled in, $[prodname] IPAM will automatically ignore IP pools that
   are backed by AWS subnets that are not in the local AZ.
 
   External services and appliances can recognise "red" traffic because it will all come from the CIDRs of the "red"
@@ -815,8 +815,8 @@ EOF
 - The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
   probes).
 - Remote pods to check if the egress gateway is "ready". Only "ready" egress
-  gateways will be used for remote client traffic. This traffic is automatically allowed by {{prodname}} and
-  no policy is required to allow it. {{prodname}} only sends probes to egress gateway pods that have a named
+  gateways will be used for remote client traffic. This traffic is automatically allowed by $[prodname] and
+  no policy is required to allow it. $[prodname] only sends probes to egress gateway pods that have a named
   "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
 
 :::
@@ -836,7 +836,7 @@ Using an egress gateway policy is more complicated, but it allows advanced use c
 
 #### Configure a namespace or pod to use an egress gateway (annotation method)
 
-In a {{prodname}} deployment, the Kubernetes namespace and pod resources honor annotations that
+In a $[prodname] deployment, the Kubernetes namespace and pod resources honor annotations that
 tell that namespace or pod to use particular egress gateways. These annotations are selectors, and
 their meaning is "the set of pods, anywhere in the cluster, that match those selectors".
 
@@ -855,7 +855,7 @@ kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="proj
 ```
 
 Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
-{{prodname}} [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
+$[prodname] [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
 
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
 creating the pod. For example:
@@ -925,7 +925,7 @@ spec:
 
 1. The `maxNextHops` field specifies the maximum number of egress gateway replicas from the selected deployment that a pod depends on. For more information, see [Optimize egress networking for workloads with long-lived TCP connections](egress-gateway-maintenance.mdx#reduce-the-impact-of-gateway-downtime).
 
-1. `gatewayPreference` specifies hints to the gateway selection process. The default `None`, selects the default selection process. If set to `PreferNodeLocal`, then egress gateways local to the client's node are used if available. If there are no local egress gateways, {{prodname}} uses other egress gateways. In this example, for the default route, egress gateways local to the client's node are used if present. If not, all egress gateways matching the selector are used.
+1. `gatewayPreference` specifies hints to the gateway selection process. The default `None`, selects the default selection process. If set to `PreferNodeLocal`, then egress gateways local to the client's node are used if available. If there are no local egress gateways, $[prodname] uses other egress gateways. In this example, for the default route, egress gateways local to the client's node are used if present. If not, all egress gateways matching the selector are used.
 
 :::note
 
@@ -933,7 +933,7 @@ CIDRs specified in rules in an egress gateway policy are matched in Longest Pref
 
 :::
 
-{{prodname}} rejects egress gateway policies that do any of the following:
+$[prodname] rejects egress gateway policies that do any of the following:
 * The policy has no rule that specifies a gateway or a destination
 * The policy has a rule with empty `selector` or `namespaceSelector` fields.
 * The policy has two or more rules with the same destination.
@@ -965,7 +965,7 @@ EOF
 :::caution
 
 You must create the egress gateway policy before you apply it to a namespace or pod.
-If you attempt to apply an egress gateway policy that has not been created, {{prodname}} will block all traffic from the namespace or pod.
+If you attempt to apply an egress gateway policy that has not been created, $[prodname] will block all traffic from the namespace or pod.
 
 :::
 
@@ -998,7 +998,7 @@ To add AWS Elastic IPs to the egress gateway pods, follow these steps:
 
   ```
 
-Once the update has rolled out, {{prodname}} will try to add one of the requested Elastic IPs to each pod in
+Once the update has rolled out, $[prodname] will try to add one of the requested Elastic IPs to each pod in
 the deployment.
 
 ### Optionally enable ECMP load balancing
@@ -1094,10 +1094,10 @@ the following.
     decide whether that usage is acceptable.
 
 1.  Impose the cluster's own bespoke scheme for a Namespace or Pod to identify the egress gateways
-    that it wants to use, less general than {{prodname}}'s egress annotations. Then the
+    that it wants to use, less general than $[prodname]'s egress annotations. Then the
     admission controller would police those bespoke annotations (that that cluster's users could
     place on Namespace or Pod resources) and either reject the operation in hand, or allow it
-    through after adding the corresponding {{prodname}} egress annotations.
+    through after adding the corresponding $[prodname] egress annotations.
 
 ### Policy enforcement for flows via an egress gateway
 
@@ -1113,7 +1113,7 @@ The path of the traffic through policy is as follows:
 5. The packet leaves the egress gateway pod through its egress policy.
 
 To ensure correct operation, (as of v3.15) the encapsulated traffic between host and egress gateway is auto-allowed by
-{{prodname}} and other ingress traffic is blocked. That means that there are effectively two places where
+$[prodname] and other ingress traffic is blocked. That means that there are effectively two places where
 policy can be applied:
 
 1.  on egress from the client pod
@@ -1142,7 +1142,7 @@ utility since the IP will always be the egress gateway and the port of translate
 
 :::note
 
-Since v3.15.0, {{prodname}} also sends health probes to the egress gateway pods from the nodes where
+Since v3.15.0, $[prodname] also sends health probes to the egress gateway pods from the nodes where
 their clients are located. In iptables mode, this traffic is auto-allowed at egress from the host and ingress
 to the egress gateway. In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic is allowed; this should be fixed in an upcoming
 patch release.
@@ -1158,7 +1158,7 @@ From v3.16, egress gateway deployments are managed by the Tigera Operator.
   the operator will then take over management of the old Deployment resource, replacing it with the upgraded version.
 
 - Use `kubectl apply` to create the egress gateway resource. Tigera Operator will read the newly created resource and wait
-  for the other {{prodname}} components to be upgraded. Once the other {{prodname}} components are upgraded, Tigera Operator
+  for the other $[prodname] components to be upgraded. Once the other $[prodname] components are upgraded, Tigera Operator
   will upgrade the existing egress gateway deployment with the new image.
 
 By default, upgrading egress gateways will sever any connections that are flowing through them. To minimise impact,

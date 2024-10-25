@@ -6,21 +6,21 @@ description: Understand how tiered policy works and supports microsegmentation.
 
 ## Seamless network policy integration
 
-**Network policy** is the primary tool for securing a Kubernetes network. It lets you restrict network traffic in your cluster so only the traffic that you want to flow is allowed. {{prodname}} provides more robust policy than Kubernetes, but you can use them together -- seamlessly. {{prodname}} supports:
+**Network policy** is the primary tool for securing a Kubernetes network. It lets you restrict network traffic in your cluster so only the traffic that you want to flow is allowed. $[prodname] provides more robust policy than Kubernetes, but you can use them together -- seamlessly. $[prodname] supports:
 
-- {{prodname}} network policy, (namespaced)
-- {{prodname}} global network policy (non-namespaced, global)
+- $[prodname] network policy, (namespaced)
+- $[prodname] global network policy (non-namespaced, global)
 - Kubernetes network policy
 
 ## Tiers: what and why?
 
 **Tiers** are a hierarchical construct used to group policies and enforce higher precedence policies that cannot be circumvented by other teams. As you will learn in this tutorial, tiers have built-in features that support workload microsegmentation.
 
-All {{prodname}} and Kubernetes network policies reside in tiers. You can start "thinking in tiers" by grouping your teams and types of policies within each group. For example, we recommend these three tiers (platform, security, and application).
+All $[prodname] and Kubernetes network policies reside in tiers. You can start "thinking in tiers" by grouping your teams and types of policies within each group. For example, we recommend these three tiers (platform, security, and application).
 
 ![policy-types](/img/calico-enterprise/policy-types.png)
 
-Next, you can determine the priority of policies in tiers (from top to bottom). In the following example, the platform and security tiers use {{prodname}} global network policies that apply to all pods, while developer teams can safely manage pods within namespaces using Kubernetes network policy for their applications and microservices.
+Next, you can determine the priority of policies in tiers (from top to bottom). In the following example, the platform and security tiers use $[prodname] global network policies that apply to all pods, while developer teams can safely manage pods within namespaces using Kubernetes network policy for their applications and microservices.
 
 ![policy-tiers](/img/calico-enterprise/policy-tiers.png)
 
@@ -59,7 +59,7 @@ The default tier is created during installation and has the order of 1,000,000. 
 The default tier is where:
 
 - You manage all Kubernetes network policies
-- Network and global network policies are placed when you upgrade from Project Calico to {{prodname}}
+- Network and global network policies are placed when you upgrade from Project Calico to $[prodname]
 - Recommended policies are placed when you use the **Recommend a policy** feature
 
 ## AdminNetworkPolicy tier:
@@ -70,11 +70,11 @@ The AdminNetworkPolicy tier is where all [Kubernetes admin network policies](htt
 
 System tiers are added during installation and are hidden by default.
 
-- **allow-tigera** tier contains policies to secure {{prodname}} components and are controlled by the Tigera Operator. These policies should not be edited, and the tier should not be moved. Inadvertent changes are automatically reverted by the Operator to ensure your cluster is always protected.
+- **allow-tigera** tier contains policies to secure $[prodname] components and are controlled by the Tigera Operator. These policies should not be edited, and the tier should not be moved. Inadvertent changes are automatically reverted by the Operator to ensure your cluster is always protected.
 
 :::warning
 
-Although it is possible to change the behavior of the `allow-tigera` using adjacent tiers, it is not a trivial task. You can break critical cluster traffic and impact the operation of {{prodname}}. To prevent loss of cluster services, see [Change allow-tigera tier behavior](allow-tigera.mdx), and contact Support for help.
+Although it is possible to change the behavior of the `allow-tigera` using adjacent tiers, it is not a trivial task. You can break critical cluster traffic and impact the operation of $[prodname]. To prevent loss of cluster services, see [Change allow-tigera tier behavior](allow-tigera.mdx), and contact Support for help.
 
 :::
 
@@ -117,19 +117,19 @@ It is important to understand the roles they play.
 
 ### Labels and selectors
 
-Instead of IP addresses and IP ranges, network policies in Kubernetes depend on labels and selectors to determine which workloads can talk to each other. Workload identity is the same for Kubernetes and {{prodname}} network policies: as pods dynamically come and go, network policy is enforced based on the labels and selectors that you define.
+Instead of IP addresses and IP ranges, network policies in Kubernetes depend on labels and selectors to determine which workloads can talk to each other. Workload identity is the same for Kubernetes and $[prodname] network policies: as pods dynamically come and go, network policy is enforced based on the labels and selectors that you define.
 
 The following diagrams show the relationship between all of the elements that affect traffic flow:
 
 - **Tiers** group and order policies
 - **Policy action rules** define how to process traffic in and across tiers, and policy labels and selectors specify how groups of pods are allowed to communicate with each other and other network endpoints
-- The **CNI**, **{{prodname}} components**, and underlying **dataplane** (iptables/eBPF) all make use of labels and selectors as part of routing traffic.
+- The **CNI**, **$[prodname] components**, and underlying **dataplane** (iptables/eBPF) all make use of labels and selectors as part of routing traffic.
 
 ![tier-funnel](/img/calico-enterprise/tier-funnel.png)
 
 ### Policy action rules
 
-{{prodname}} network policy uses action rules to specify how to process traffic/packets:
+$[prodname] network policy uses action rules to specify how to process traffic/packets:
 
 - **Allow or Deny** - traffic is allowed or denied and the packet is handled accordingly. No further rules are processed.
 - **Pass** - skips to the next tier that contains a policy that applies to the endpoint, and processes the packet. If the tier applies to the endpoint but no action is taken on the packet, the packet is dropped.
@@ -197,18 +197,18 @@ In the following example, **policy D** in the Security tier includes a Pass acti
 
 Also, tier managers need to understand the default behavior for endpoints based on whether the endpoint is known or unknown, and the endpoint type. As shown in the following table:
 
-- **Known endpoints** - {{prodname}} resources that are managed by Felix
+- **Known endpoints** - $[prodname] resources that are managed by Felix
 - **Unknown endpoints** - interfaces/resources not recognizable as part of our data model
 
 | Endpoint type          | Default behavior for known endpoints                                    | Default behavior for unknown endpoints (outside of our data model) |
 | ---------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Workload, {{prodname}} | Deny                                                                    | Deny                                                               |
+| Workload, $[prodname] | Deny                                                                    | Deny                                                               |
 | Workload, Kubernetes   | Allow ingress from same Kubernetes namespace; allow all egress          | Deny                                                               |
 | Host                   | Deny. With exception of auto host endpoints, which get `default-allow`. | Fall through and use iptables rules                                 |
 
 ## Best practices for tiered policy
 
-To control and authorize access to {{prodname}} tiers, policies, and Kubernetes network policies, you use Kubernetes RBAC. Security teams can prevent unauthorized viewing or modification of higher precedence (lower order) tiers, while still allowing developers or service owners to manage the detailed policies related to their workloads.
+To control and authorize access to $[prodname] tiers, policies, and Kubernetes network policies, you use Kubernetes RBAC. Security teams can prevent unauthorized viewing or modification of higher precedence (lower order) tiers, while still allowing developers or service owners to manage the detailed policies related to their workloads.
 
 We recommend:
 

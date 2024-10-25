@@ -6,13 +6,13 @@ description: Learn the power of network sets and why you should create them.
 
 ## Visualize traffic to/from your cluster
 
-Modern applications often integrate with third-party APIs and SaaS services that live outside Kubernetes clusters. To securely enable access to those integrations, you must be able to limit IP ranges for egress and ingress traffic to workloads. Limiting IP lists or ranges is also used to deny-list bad actors or embargoed countries. To limit IP ranges, you need to use the {{prodname}} resource called **network sets**.
+Modern applications often integrate with third-party APIs and SaaS services that live outside Kubernetes clusters. To securely enable access to those integrations, you must be able to limit IP ranges for egress and ingress traffic to workloads. Limiting IP lists or ranges is also used to deny-list bad actors or embargoed countries. To limit IP ranges, you need to use the $[prodname] resource called **network sets**.
 
 ## What are network sets?
 
-**Network sets** are a grouping mechanism that allows you to create an arbitrary set of IP subnetworks/CIDRs or domains that can be matched by standard label selectors in Kubernetes or {{prodname}} network policy. Like IP pools for pods, they allow you to reuse/scale sets of IP addresses in policies.
+**Network sets** are a grouping mechanism that allows you to create an arbitrary set of IP subnetworks/CIDRs or domains that can be matched by standard label selectors in Kubernetes or $[prodname] network policy. Like IP pools for pods, they allow you to reuse/scale sets of IP addresses in policies.
 
-A **network set** is a namespaced resource that you can use with Kubernetes or {{prodname}} network policies; a **global network set** is a cluster-wide resource that you can use with {{prodname}} network policies.
+A **network set** is a namespaced resource that you can use with Kubernetes or $[prodname] network policies; a **global network set** is a cluster-wide resource that you can use with $[prodname] network policies.
 
 Like network policy, you manage user access to network sets using standard Kubernetes RBAC.
 
@@ -20,7 +20,7 @@ Like network policy, you manage user access to network sets using standard Kuber
 
 If you are familiar with Service Graph in Manager UI, you know the value of seeing pod-to-pod traffic within your cluster. But what about traffic external to your cluster?
 
-{{prodname}} automatically detects IPs for pods and nodes that fall into the standard IETF “public network” and “private network” designations, and displays those as icons in Service Graph. So you get some visibility into external traffic without using any network sets.
+$[prodname] automatically detects IPs for pods and nodes that fall into the standard IETF “public network” and “private network” designations, and displays those as icons in Service Graph. So you get some visibility into external traffic without using any network sets.
 
 ![public-private-networks](/img/calico-enterprise/public-private-networks.png)
 
@@ -165,8 +165,8 @@ spec:
 
 ### Advanced policy rules with network sets
 
-When you combine {{prodname}} policy rules with network sets, you have powerful ways to fine-tune. The following example combines network sets with specific rules in a global network policy to deny access more quickly.
-We start by creating a {{prodname}} GlobalNetworkSet that specifies a list of CIDR ranges we want to deny: 192.0.2.55/32 and 203.0.113.0/24.
+When you combine $[prodname] policy rules with network sets, you have powerful ways to fine-tune. The following example combines network sets with specific rules in a global network policy to deny access more quickly.
+We start by creating a $[prodname] GlobalNetworkSet that specifies a list of CIDR ranges we want to deny: 192.0.2.55/32 and 203.0.113.0/24.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -181,7 +181,7 @@ spec:
     - 203.0.113.0/24
 ```
 
-Next, we create two {{prodname}} GlobalNetworkPolicy resources. The first is a high "order" policy that allows traffic as a default for things that don’t match our second policy, which is low "order" and uses the GlobalNetworkSet label as a selector to deny ingress traffic (IP-deny-list in the previous step). In the label selector, we also include the term, `!has(projectcalico.org/namespace)`, which prevents this policy from matching pods or NetworkSets that also have this label. To more quickly enforce the denial of forwarded traffic to the host at the packet level, use the `doNotTrack` and `applyOnForward` options.
+Next, we create two $[prodname] GlobalNetworkPolicy resources. The first is a high "order" policy that allows traffic as a default for things that don’t match our second policy, which is low "order" and uses the GlobalNetworkSet label as a selector to deny ingress traffic (IP-deny-list in the previous step). In the label selector, we also include the term, `!has(projectcalico.org/namespace)`, which prevents this policy from matching pods or NetworkSets that also have this label. To more quickly enforce the denial of forwarded traffic to the host at the packet level, use the `doNotTrack` and `applyOnForward` options.
 
 ```yaml
 apiVersion: projectcalico.org/v3
