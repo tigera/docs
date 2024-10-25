@@ -18,13 +18,13 @@ firewall around the cluster, whose purpose includes policing external accesses f
 specifically that particular external destinations can only be accessed from authorised workloads
 within the cluster.
 
-{{prodname}}'s own policy (including [DNS policy](../../network-policy/domain-based-policy.mdx)) and
+$[prodname]'s own policy (including [DNS policy](../../network-policy/domain-based-policy.mdx)) and
 per-node firewalls can ensure this, but deployments may like to deepen their defense by adding an
 external firewall as well. If the external firewall is configured to allow outbound connections
 only from particular source IPs, and the intended cluster workloads can be configured so that their
 outbound traffic will have one of those source IPs, then the defense in depth objective is achieved.
 
-{{prodname}} allows specifying an [IP pool](../../reference/resources/ippool.mdx) for each pod or namespace, and
+$[prodname] allows specifying an [IP pool](../../reference/resources/ippool.mdx) for each pod or namespace, and
 even a [specific IP](../ipam/use-specific-ip.mdx) for a new pod, but this requires predicting how many pods
 there will be representing a particular application, so that the IP pool can be correctly sized.
 When IPs are a precious resource, over-sizing the pool is wasteful; but under-sizing is also
@@ -97,10 +97,10 @@ the following.
     decide whether that usage is acceptable.
 
 1.  Impose the cluster's own bespoke scheme for a Namespace or Pod to identify the egress gateways
-    that it wants to use, less general than {{prodname}}'s egress annotations. Then the
+    that it wants to use, less general than $[prodname]'s egress annotations. Then the
     admission controller would police those bespoke annotations (that that cluster's users could
     place on Namespace or Pod resources) and either reject the operation in hand, or allow it
-    through after adding the corresponding {{prodname}} egress annotations.
+    through after adding the corresponding $[prodname] egress annotations.
 
 ### Policy enforcement for flows via an egress gateway
 
@@ -116,7 +116,7 @@ The path of the traffic through policy is as follows:
 5. The packet leaves the egress gateway pod through its egress policy.
 
 To ensure correct operation, (as of v3.15) the encapsulated traffic between host and egress gateway is auto-allowed by
-{{prodname}} and other ingress traffic is blocked. That means that there are effectively two places where
+$[prodname] and other ingress traffic is blocked. That means that there are effectively two places where
 policy can be applied:
 
 1.  on egress from the client pod
@@ -145,7 +145,7 @@ utility since the IP will always be the egress gateway and the port of translate
 
 :::note
 
-Since v3.15.0, {{prodname}} also sends health probes to the egress gateway pods from the nodes where
+Since v3.15.0, $[prodname] also sends health probes to the egress gateway pods from the nodes where
 their clients are located. In iptables mode, this traffic is auto-allowed at egress from the host and ingress
 to the egress gateway. In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic allowed; this should be fixed in an upcoming
 patch release.
@@ -330,8 +330,8 @@ The health port `8080` is used by:
 - The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
   probes).
 - Remote pods to check if the egress gateway is "ready". Only "ready" egress
-  gateways will be used for remote client traffic. This traffic is automatically allowed by {{prodname}} and
-  no policy is required to allow it. {{prodname}} only sends probes to egress gateway pods that have a named
+  gateways will be used for remote client traffic. This traffic is automatically allowed by $[prodname] and
+  no policy is required to allow it. $[prodname] only sends probes to egress gateway pods that have a named
   "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
 
 ### Deploy on a RKE2 CIS-hardened cluster
@@ -345,10 +345,10 @@ To modify the iptables backend for egress gateways, you must change the `iptable
 
 ### Configure IP autodetection for dual-ToR clusters.
 
-If you plan to use Egress Gateways in a [dual-ToR cluster](../configuring/dual-tor.mdx), you must also adjust the {{nodecontainer}} IP
+If you plan to use Egress Gateways in a [dual-ToR cluster](../configuring/dual-tor.mdx), you must also adjust the $[nodecontainer] IP
 auto-detection method to pick up the stable IP, for example using the `interface: lo` setting
 (The default first-found setting skips over the lo interface). This can be configured via the
-{{prodname}} [Installation resource](../../reference/installation/api.mdx#operator.tigera.io/v1.NodeAddressAutodetection).
+$[prodname] [Installation resource](../../reference/installation/api.mdx#operator.tigera.io/v1.NodeAddressAutodetection).
 
 ### Configure namespaces and pods to use egress gateways
 
@@ -360,7 +360,7 @@ Using an egress gateway policy is more complicated, but it allows advanced use c
 
 #### Configure a namespace or pod to use an egress gateway (annotation method)
 
-In a {{prodname}} deployment, the Kubernetes namespace and pod resources honor annotations that
+In a $[prodname] deployment, the Kubernetes namespace and pod resources honor annotations that
 tell that namespace or pod to use particular egress gateways. These annotations are selectors, and
 their meaning is "the set of pods, anywhere in the cluster, that match those selectors".
 
@@ -379,7 +379,7 @@ kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="proj
 ```
 
 Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
-{{prodname}} [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
+$[prodname] [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
 
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
 creating the pod. For example:
@@ -449,7 +449,7 @@ spec:
 
 1. The `maxNextHops` field specifies the maximum number of egress gateway replicas from the selected deployment that a pod depends on. For more information, see [Optimize egress networking for workloads with long-lived TCP connections](egress-gateway-maintenance.mdx#reduce-the-impact-of-gateway-downtime).
 
-1. `gatewayPreference` specifies hints to the gateway selection process. The default `None`, selects the default selection process. If set to `PreferNodeLocal`, then egress gateways local to the client's node are used if available. If there are no local egress gateways, {{prodname}} uses other egress gateways. In this example, for the default route, egress gateways local to the client's node are used if present. If not, all egress gateways matching the selector are used.
+1. `gatewayPreference` specifies hints to the gateway selection process. The default `None`, selects the default selection process. If set to `PreferNodeLocal`, then egress gateways local to the client's node are used if available. If there are no local egress gateways, $[prodname] uses other egress gateways. In this example, for the default route, egress gateways local to the client's node are used if present. If not, all egress gateways matching the selector are used.
 
 :::note
 
@@ -457,7 +457,7 @@ CIDRs specified in rules in an egress gateway policy are matched in Longest Pref
 
 :::
 
-{{prodname}} rejects egress gateway policies that do any of the following:
+$[prodname] rejects egress gateway policies that do any of the following:
 * The policy has no rule that specifies a gateway or a destination
 * The policy has a rule with empty `selector` or `namespaceSelector` fields.
 * The policy has two or more rules with the same destination.
@@ -489,7 +489,7 @@ EOF
 :::caution
 
 You must create the egress gateway policy before you apply it to a namespace or pod.
-If you attempt to apply an egress gateway policy that has not been created, {{prodname}} will block all traffic from the namespace or pod.
+If you attempt to apply an egress gateway policy that has not been created, $[prodname] will block all traffic from the namespace or pod.
 
 :::
 
@@ -572,7 +572,7 @@ From v3.16, egress gateway deployments are managed by the Tigera Operator.
   the operator will then take over management of the old Deployment resource, replacing it with the upgraded version.
 
 - Use `kubectl apply` to create the egress gateway resource. Tigera Operator will read the newly created resource and wait
-  for the other {{prodname}} components to be upgraded. Once the other {{prodname}} components are upgraded, Tigera Operator
+  for the other $[prodname] components to be upgraded. Once the other $[prodname] components are upgraded, Tigera Operator
   will upgrade the existing egress gateway deployment with the new image.
 
 By default, upgrading egress gateways will sever any connections that are flowing through them. To minimise impact,

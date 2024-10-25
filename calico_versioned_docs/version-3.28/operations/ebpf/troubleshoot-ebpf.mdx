@@ -12,12 +12,12 @@ To understand basic concepts, we recommend the following video by Tigera Enginee
 
 If pods or hosts within your cluster have trouble accessing services, check the following:
 
-- Either {{prodname}}'s eBPF mode or `kube-proxy` must be active on a host for services to function. If you
-  disabled `kube-proxy` when enabling eBPF mode, verify that eBPF mode is actually functioning. If {{prodname}}
+- Either $[prodname]'s eBPF mode or `kube-proxy` must be active on a host for services to function. If you
+  disabled `kube-proxy` when enabling eBPF mode, verify that eBPF mode is actually functioning. If $[prodname]
   detects that the kernel is not supported, it will fall back to standard dataplane mode (which does not support
   services).
 
-  To verify that eBPF mode is correctly enabled, examine the log for a `{{noderunning}}` container; if
+  To verify that eBPF mode is correctly enabled, examine the log for a `$[noderunning]` container; if
   eBPF mode is not supported it will log an `ERROR` log that says
 
   ```bash
@@ -33,7 +33,7 @@ If pods or hosts within your cluster have trouble accessing services, check the 
 - In eBPF mode, external client access to services (typically NodePorts) is implemented using VXLAN encapsulation.
   If NodePorts time out when the backing pod is on another node, check your underlying network fabric allows
   VXLAN traffic between the nodes. VXLAN is a UDP protocol; by default it uses port 4789.
-- In DSR mode, {{prodname}} requires that the underlying network fabric allows one node to respond on behalf of
+- In DSR mode, $[prodname] requires that the underlying network fabric allows one node to respond on behalf of
   another.
 
   - In AWS, to allow this, the Source/Dest check must be disabled on the node's NIC. However, note that DSR only
@@ -45,10 +45,10 @@ If pods or hosts within your cluster have trouble accessing services, check the 
 
 # The `calico-bpf` tool
 
-Since BPF maps contain binary data, the {{prodname}} team wrote a tool to examine {{prodname}}'s BPF maps.
-The tool is embedded in the {{nodecontainer}} container image. To run the tool:
+Since BPF maps contain binary data, the $[prodname] team wrote a tool to examine $[prodname]'s BPF maps.
+The tool is embedded in the $[nodecontainer] container image. To run the tool:
 
-- Find the name of the {{nodecontainer}} Pod on the host of interest using
+- Find the name of the $[nodecontainer] Pod on the host of interest using
 
   ```bash
   kubectl get pod -o wide -n calico-system
@@ -148,7 +148,7 @@ qdisc clsact 0: dev eth0 root refcnt 2
 
 ## Debug high CPU usage
 
-If you notice `{{noderunning}}` using high CPU:
+If you notice `$[noderunning]` using high CPU:
 
 - Check if `kube-proxy` is still running. If `kube-proxy` is still running, you must either disable `kube-proxy` or
   ensure that the Felix configuration setting `bpfKubeProxyIptablesCleanupEnabled` is set to `false`. If the setting
@@ -157,13 +157,13 @@ If you notice `{{noderunning}}` using high CPU:
 - If your cluster is very large, or your workload involves significant service churn, you can increase the interval
   at which Felix updates the services dataplane by increasing the `bpfKubeProxyMinSyncPeriod` setting. The default is
   1 second. Increasing the value has the trade-off that service updates will happen more slowly.
-- {{prodname}} supports endpoint slices, similarly to `kube-proxy`. If your Kubernetes cluster supports endpoint
-  slices and they are enabled, then you can enable endpoint slice support in {{prodname}} with the
+- $[prodname] supports endpoint slices, similarly to `kube-proxy`. If your Kubernetes cluster supports endpoint
+  slices and they are enabled, then you can enable endpoint slice support in $[prodname] with the
   `bpfKubeProxyEndpointSlicesEnabled` configuration flag.
 
 ## eBPF program debug logs
 
-{{prodname}}'s eBPF programs contain optional detailed debug logging. Although th logs can be very verbose (because
+$[prodname]'s eBPF programs contain optional detailed debug logging. Although th logs can be very verbose (because
 the programs will log every packet), they can be invaluable to diagnose eBPF program issues. To enable the log, set the
 `bpfLogLevel` Felix configuration setting to `Debug`.
 
@@ -193,7 +193,7 @@ The parts of the log are explained below:
   trigger the processing.
 - `6851.690474` is the log timestamp.
 
-- `ens192---E` is the {{prodname}} log tag. For programs attached to interfaces, the first part contains the
+- `ens192---E` is the $[prodname] log tag. For programs attached to interfaces, the first part contains the
   first few characters of the interface name. The suffix is either `-I` or `-E` indicating "Ingress" or "Egress".
   "Ingress" and "Egress" have the same meaning as for policy:
 
@@ -210,7 +210,7 @@ The parts of the log are explained below:
 A number of problems can reduce the performance of the eBPF dataplane.
 
 - Verify that you are using the best networking mode for your cluster. If possible, avoid using an overlay network;
-  a routed network with no overlay is considerably faster. If you must use one of {{prodname}}'s overlay modes,
+  a routed network with no overlay is considerably faster. If you must use one of $[prodname]'s overlay modes,
   use VXLAN, not IPIP. IPIP performs poorly in eBPF mode due to kernel limitations.
 - If you are not using an overlay, verify that the [Felix configuration parameters](../../reference/felix/configuration.mdx)
   `ipInIpEnabled` and `vxlanEnabled` are set to `false`. Those parameters control whether Felix configured itself to

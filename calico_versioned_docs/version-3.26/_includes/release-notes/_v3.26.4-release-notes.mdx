@@ -1,0 +1,14 @@
+16 November 2023
+
+#### Bug fixes
+
+ - ebpf: fixed host access to self and a service that redirects to self without CTLB. [calico #8198](https://github.com/projectcalico/calico/pull/8198) (@tomastigera)
+ - Fix incorrect conversion to 16-bit offset in the BPF assembler.Fail if the value would wrap. [calico #8178](https://github.com/projectcalico/calico/pull/8178) (@fasaxc)
+
+#### Known issues
+
+- Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim.
+
+   Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.)
+
+   Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned". Note that this issue applies to all previous versions of $[prodname].

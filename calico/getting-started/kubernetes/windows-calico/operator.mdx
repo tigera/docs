@@ -10,26 +10,26 @@ import CalicoWindowsInstall from '@site/calico/_includes/components/CalicoWindow
 
 ## Big picture
 
-Install {{prodnameWindows}} on your Kubernetes cluster using the Tigera Operator.
+Install $[prodnameWindows] on your Kubernetes cluster using the Tigera Operator.
 
 ## Concepts
 
-{{prodnameWindows}} is a hybrid implementation that requires a Linux cluster for {{prodname}} components and Linux workloads, and Windows nodes for Windows workloads.
+$[prodnameWindows] is a hybrid implementation that requires a Linux cluster for $[prodname] components and Linux workloads, and Windows nodes for Windows workloads.
 
 ## Before you begin
 
-Review the [Linux requirements](../requirements.mdx) and the [{{prodnameWindows}} requirements](requirements.mdx).
+Review the [Linux requirements](../requirements.mdx) and the [$[prodnameWindows] requirements](requirements.mdx).
 
-Before beginning, setup a {{prodname}} cluster on Linux nodes and provision Windows machines.
+Before beginning, setup a $[prodname] cluster on Linux nodes and provision Windows machines.
 
 ## How to
 
-- [Configure strict affinity for clusters using {{prodname}} networking](#configure-strict-affinity-for-clusters-using-calico-networking)
-- [Install {{prodnameWindows}} using the operator](#install-calico-for-windows-using-the-operator)
+- [Configure strict affinity for clusters using $[prodname] networking](#configure-strict-affinity-for-clusters-using-calico-networking)
+- [Install $[prodnameWindows] using the operator](#install-calico-for-windows-using-the-operator)
 
-### Configure strict affinity for clusters using {{prodname}} networking
+### Configure strict affinity for clusters using $[prodname] networking
 
-For Linux control nodes using {{prodname}} networking, strict affinity must be set to `true`.
+For Linux control nodes using $[prodname] networking, strict affinity must be set to `true`.
 This is required to prevent Linux nodes from borrowing IP addresses from Windows nodes:
 
 ```bash
@@ -42,16 +42,16 @@ If the above command failed to find ipamconfigurations resource, you need to ins
 
 :::
 
-### Install {{prodnameWindows}} using the operator
+### Install $[prodnameWindows] using the operator
 
 With Kubernetes v1.22, there is a new Windows container type called **HostProcess containers (HPC)** that can run directly on the host with access to the host network namespace,
-storage, and devices. With this feature, {{prodnameWindows}} can now be installed and managed using Kubernetes resources such as Daemonsets and ConfigMaps,
-instead of needing to configure and install {{prodnameWindows}} manually on each node. Using this installation method, the {{prodnameWindows}}
+storage, and devices. With this feature, $[prodnameWindows] can now be installed and managed using Kubernetes resources such as Daemonsets and ConfigMaps,
+instead of needing to configure and install $[prodnameWindows] manually on each node. Using this installation method, the $[prodnameWindows]
 services are no longer registered on the host. Instead, the services are run directly within HostProcess containers.
 
 #### HPC requirements
 
-In addition to the [{{prodnameWindows}} requirements](requirements.mdx),
+In addition to the [$[prodnameWindows] requirements](requirements.mdx),
 this installation method has [additional requirements](https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/):
 
 - Kubernetes v1.22+
@@ -62,18 +62,18 @@ this installation method has [additional requirements](https://kubernetes.io/doc
 To install containerd on the Windows node and configure the containerd service:
 
 ```powershell
-Invoke-WebRequest {{windowsScriptsURL}}/Install-Containerd.ps1 -OutFile c:\Install-Containerd.ps1
+Invoke-WebRequest $[windowsScriptsURL]/Install-Containerd.ps1 -OutFile c:\Install-Containerd.ps1
 c:\Install-Containerd.ps1 -ContainerDVersion 1.6.22 -skipHypervisorSupportCheck -CNIConfigPath "c:/etc/cni/net.d" -CNIBinPath "c:/opt/cni/bin"
 ```
 
-If you have an existing {{prodnameWindows}} installation using the manual method, your Windows nodes may have already joined the cluster.
+If you have an existing $[prodnameWindows] installation using the manual method, your Windows nodes may have already joined the cluster.
 
 To join a Windows node to a cluster provisioned with kubeadm:
 
 - Install kubeadm and kubelet binaries and install the kubelet service
 
 ```powershell
-Invoke-WebRequest {{windowsScriptsURL}}/PrepareNode.ps1 -OutFile c:\PrepareNode.ps1
+Invoke-WebRequest $[windowsScriptsURL]/PrepareNode.ps1 -OutFile c:\PrepareNode.ps1
 c:\PrepareNode.ps1 -KubernetesVersion v1.26.6
 ```
 
@@ -94,13 +94,13 @@ c:\k\kubeadm.exe join 172.16.101.139:6443 --token v8w2jt.jmc45acn85dbll1e --disc
 - Run the join command on the Windows node. Shortly after it completes successfully, the Windows node will appear in `kubectl get nodes`.
   The new node's status will be NotReady since the Calico CNI has not yet been installed.
 
-#### Migrate from {{prodnameWindows}} manual installation to operator installation
+#### Migrate from $[prodnameWindows] manual installation to operator installation
 
-The HPC installation in this guide is operator-based and will automatically migrate your Windows nodes that have {{prodnameWindows}} installed using the manual installation method. This installation process will uninstall any existing {{prodnameWindows}} services and overwrite the {{prodnameWindows}} installation files with those included in the `calico/cni-windows` and `calico/node-windows` images. If `kubelet` was installed using `{{rootDirWindows}}\kubernetes\install-kube-services.ps1`, this service will remain installed. If the `kube-proxy` service was also installed using `{{rootDirWindows}}\kubernetes\install-kube-services.ps1`, it will be stopped and uninstalled by the `calico-node-windows` HPC initContainers. It is recommended to run `kube-proxy-windows` as hostprocess container images using the [manifest provided in the kubernetes-sigs sig-windows-tools repository](https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/calico/kube-proxy/kube-proxy.yml).
+The HPC installation in this guide is operator-based and will automatically migrate your Windows nodes that have $[prodnameWindows] installed using the manual installation method. This installation process will uninstall any existing $[prodnameWindows] services and overwrite the $[prodnameWindows] installation files with those included in the `calico/cni-windows` and `calico/node-windows` images. If `kubelet` was installed using `$[rootDirWindows]\kubernetes\install-kube-services.ps1`, this service will remain installed. If the `kube-proxy` service was also installed using `$[rootDirWindows]\kubernetes\install-kube-services.ps1`, it will be stopped and uninstalled by the `calico-node-windows` HPC initContainers. It is recommended to run `kube-proxy-windows` as hostprocess container images using the [manifest provided in the kubernetes-sigs sig-windows-tools repository](https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/calico/kube-proxy/kube-proxy.yml).
 
 :::note
 
-Before proceeding, take note of the configuration parameters in `{{rootDirWindows}}\config.ps1`. These configuration parameters will be needed during the install.
+Before proceeding, take note of the configuration parameters in `$[rootDirWindows]\config.ps1`. These configuration parameters will be needed during the install.
 
 :::
 
@@ -119,8 +119,8 @@ Before proceeding, take note of the configuration parameters in `{{rootDirWindow
 </TabItem>
 </Tabs>
 
-Congratulations! You now have a Kubernetes cluster with {{prodnameWindows}} and a Linux control node.
+Congratulations! You now have a Kubernetes cluster with $[prodnameWindows] and a Linux control node.
 
 ## Next steps
 
-You can now use the {{prodname}} Linux-based docs site for your documentation. Before you continue, review the [Limitations and known issues](limitations.mdx) to understand the features (and sections of documentation) that do not apply to Windows.
+You can now use the $[prodname] Linux-based docs site for your documentation. Before you continue, review the [Limitations and known issues](limitations.mdx) to understand the features (and sections of documentation) that do not apply to Windows.

@@ -4,14 +4,14 @@ description: Limit access to Calico Cloud metric endpoints using network policy.
 
 # Secure Calico Cloud Prometheus endpoints
 
-## About securing access to {{prodname}}'s metrics endpoints
+## About securing access to $[prodname]'s metrics endpoints
 
-When using {{prodname}} with Prometheus metrics enabled, we recommend using network policy
-to limit access to {{prodname}}'s metrics endpoints.
+When using $[prodname] with Prometheus metrics enabled, we recommend using network policy
+to limit access to $[prodname]'s metrics endpoints.
 
 ## Prerequisites
 
-- {{prodname}} is installed with Prometheus metrics reporting enabled.
+- $[prodname] is installed with Prometheus metrics reporting enabled.
 
 <!--TODO-XREFS-CC
 - `calicoctl` is [installed in your PATH and configured to access the data store](/operations/clis/calicoctl/install).
@@ -19,12 +19,12 @@ to limit access to {{prodname}}'s metrics endpoints.
 ## Choosing an approach
 
 This guide provides two example workflows for creating network policies to limit access
-to {{prodname}}'s Prometheus metrics. Choosing an approach depends on your requirements.
+to $[prodname]'s Prometheus metrics. Choosing an approach depends on your requirements.
 
 - [Using a deny-list approach](#using-a-deny-list-approach)
 
   This approach allows all traffic to your hosts by default, but lets you limit access to specific ports using
-  {{prodname}} policy. This approach allows you to restrict access to specific ports, while leaving other
+  $[prodname] policy. This approach allows you to restrict access to specific ports, while leaving other
   host traffic unaffected.
 
 - [Using an allow-list approach](#using-an-allow-list-approach)
@@ -41,12 +41,12 @@ The basic process is as follows:
 
 1. Create a default network policy that allows traffic to and from your hosts.
 1. Create host endpoints for each node that you'd like to secure.
-1. Create a network policy that denies unwanted traffic to the {{prodname}} metrics endpoints.
+1. Create a network policy that denies unwanted traffic to the $[prodname] metrics endpoints.
 1. Apply labels to allow access to the Prometheus metrics.
 
-### Example for {{nodecontainer}}
+### Example for $[nodecontainer]
 
-This example shows how to limit access to the {{nodecontainer}} Prometheus metrics endpoints.
+This example shows how to limit access to the $[nodecontainer] Prometheus metrics endpoints.
 
 1. Create a default network policy to allow host traffic
 
@@ -61,7 +61,7 @@ This example shows how to limit access to the {{nodecontainer}} Prometheus metri
    metadata:
      name: default-host
    spec:
-     # Select all {{prodname}} nodes.
+     # Select all $[prodname] nodes.
      selector: running-calico == "true"
      order: 5000
      ingress:
@@ -76,7 +76,7 @@ This example shows how to limit access to the {{nodecontainer}} Prometheus metri
    kubectl apply -f default-host-policy.yaml
    ```
 
-1. List the nodes on which {{prodname}} is running with the following command.
+1. List the nodes on which $[prodname] is running with the following command.
 
    ```bash
    calicoctl get nodes
@@ -90,7 +90,7 @@ This example shows how to limit access to the {{nodecontainer}} Prometheus metri
    kubeadm-node-0
    ```
 
-1. Create host endpoints for each {{prodname}} node.
+1. Create host endpoints for each $[prodname] node.
 
    Create a file named `host-endpoints.yaml` containing a host endpoint for each node listed
    above. In this example, the contents would look like this.
@@ -124,7 +124,7 @@ This example shows how to limit access to the {{nodecontainer}} Prometheus metri
    In this file, replace `eth0` with the desired interface name on each node, and populate the
    `expectedIPs` section with the IP addresses on that interface.
 
-   Note the use of a label to indicate that this host endpoint is running {{prodname}}. The
+   Note the use of a label to indicate that this host endpoint is running $[prodname]. The
    label matches the selector of the network policy created in step 1.
 
    Then, use `kubectl` to apply the host endpoints with the following command.
@@ -133,7 +133,7 @@ This example shows how to limit access to the {{nodecontainer}} Prometheus metri
    kubectl apply -f host-endpoints.yaml
    ```
 
-1. Create a network policy that restricts access to the {{nodecontainer}} Prometheus metrics port.
+1. Create a network policy that restricts access to the $[nodecontainer] Prometheus metrics port.
 
    Now let's create a network policy that limits access to the Prometheus metrics port such that
    only endpoints with the label `calico-prometheus-access: true` can access the metrics.
@@ -148,7 +148,7 @@ This example shows how to limit access to the {{nodecontainer}} Prometheus metri
    metadata:
      name: restrict-calico-node-prometheus
    spec:
-     # Select all {{prodname}} nodes.
+     # Select all $[prodname] nodes.
      selector: running-calico == "true"
      order: 500
      types:
@@ -167,8 +167,8 @@ This example shows how to limit access to the {{nodecontainer}} Prometheus metri
 
    This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule.
    The ingress rule denies traffic to port 9091 unless the source of traffic has the label `calico-prometheus-access: true`, meaning
-   all {{prodname}} workload endpoints, host endpoints, and global network sets that do not have the label, as well as any
-   other network endpoints unknown to {{prodname}}.
+   all $[prodname] workload endpoints, host endpoints, and global network sets that do not have the label, as well as any
+   other network endpoints unknown to $[prodname].
 
    Then, use `kubectl` to apply this policy.
 
@@ -179,7 +179,7 @@ This example shows how to limit access to the {{nodecontainer}} Prometheus metri
 1. Apply labels to any endpoints that should have access to the metrics.
 
    At this point, only endpoints that have the label `calico-prometheus-access: true` can reach
-   {{prodname}}'s Prometheus metrics endpoints on each node. To grant access, simply add this label to the
+   $[prodname]'s Prometheus metrics endpoints on each node. To grant access, simply add this label to the
    desired endpoints.
 
    For example, to allow access to a Kubernetes pod you can run the following command.
@@ -208,7 +208,7 @@ This example shows how to limit access to the {{nodecontainer}} Prometheus metri
 
 ### Additional steps for Typha deployments
 
-If your {{prodname}} installation uses the Kubernetes API datastore and has greater than 50 nodes, it is likely
+If your $[prodname] installation uses the Kubernetes API datastore and has greater than 50 nodes, it is likely
 that you have installed Typha. This section shows how to use an additional network policy to secure the Typha
 Prometheus endpoints.
 
@@ -222,7 +222,7 @@ kind: GlobalNetworkPolicy
 metadata:
   name: restrict-calico-node-prometheus
 spec:
-  # Select all {{prodname}} nodes.
+  # Select all $[prodname] nodes.
   selector: running-calico == "true"
   order: 500
   types:
@@ -241,8 +241,8 @@ spec:
 
 This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule.
 The ingress rule denies traffic to port 9093 unless the source of traffic has the label `calico-prometheus-access: true`, meaning
-all {{prodname}} workload endpoints, host endpoints, and global network sets that do not have the label, as well as any
-other network endpoints unknown to {{prodname}}.
+all $[prodname] workload endpoints, host endpoints, and global network sets that do not have the label, as well as any
+other network endpoints unknown to $[prodname].
 
 Then, use `kubectl` to apply this policy.
 
@@ -252,7 +252,7 @@ kubectl apply -f typha-prometheus-policy.yaml
 
 ### Example for kube-controllers
 
-If your {{prodname}} installation exposes metrics from kube-controllers, you can limit access to those metrics
+If your $[prodname] installation exposes metrics from kube-controllers, you can limit access to those metrics
 with the following network policy.
 
 Create a file named `kube-controllers-prometheus-policy.yaml` with the following contents.
@@ -283,7 +283,7 @@ spec:
 
 :::note
 
-The above policy is installed in the calico-system namespace. If your cluster has {{prodname}} installed
+The above policy is installed in the calico-system namespace. If your cluster has $[prodname] installed
 in the kube-system namespace, you will need to create the policy in that namespace instead.
 
 :::
@@ -301,12 +301,12 @@ kubectl apply -f kube-controllers-prometheus-policy.yaml
 The basic process is as follows:
 
 1. Create host endpoints for each node that you'd like to secure.
-1. Create a network policy that allows desired traffic to the {{prodname}} metrics endpoints.
+1. Create a network policy that allows desired traffic to the $[prodname] metrics endpoints.
 1. Apply labels to allow access to the Prometheus metrics.
 
-### Example for {{nodecontainer}}
+### Example for $[nodecontainer]
 
-1. List the nodes on which {{prodname}} is running with the following command.
+1. List the nodes on which $[prodname] is running with the following command.
 
    ```bash
    calicoctl get nodes
@@ -320,7 +320,7 @@ The basic process is as follows:
    kubeadm-node-0
    ```
 
-1. Create host endpoints for each {{prodname}} node.
+1. Create host endpoints for each $[prodname] node.
 
    Create a file named `host-endpoints.yaml` containing a host endpoint for each node listed
    above. In this example, the contents would look like this.
@@ -354,7 +354,7 @@ The basic process is as follows:
    In this file, replace `eth0` with the desired interface name on each node, and populate the
    `expectedIPs` section with the IP addresses on that interface.
 
-   Note the use of a label to indicate that this host endpoint is running {{prodname}}. The
+   Note the use of a label to indicate that this host endpoint is running $[prodname]. The
    label matches the selector of the network policy created in step 1.
 
    Then, use `kubectl` to apply the host endpoints with the following command. This will prevent all
@@ -366,13 +366,13 @@ The basic process is as follows:
 
    :::note
 
-   {{prodname}} allows some traffic as a failsafe even after applying this policy. This can
+   $[prodname] allows some traffic as a failsafe even after applying this policy. This can
    be adjusted using the `failsafeInboundHostPorts` and `failsafeOutboundHostPorts` options
    on the [FelixConfiguration resource](../../reference/resources/felixconfig.mdx).
 
    :::
 
-1. Create a network policy that allows access to the {{nodecontainer}} Prometheus metrics port.
+1. Create a network policy that allows access to the $[nodecontainer] Prometheus metrics port.
 
    Now let's create a network policy that allows access to the Prometheus metrics port such that
    only endpoints with the label `calico-prometheus-access: true` can access the metrics.
@@ -385,7 +385,7 @@ The basic process is as follows:
    metadata:
      name: restrict-calico-node-prometheus
    spec:
-     # Select all {{prodname}} nodes.
+     # Select all $[prodname] nodes.
      selector: running-calico == "true"
      order: 500
      types:
@@ -403,7 +403,7 @@ The basic process is as follows:
 
    This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule.
    The ingress rule allows traffic to port 9091 from any source with the label `calico-prometheus-access: true`, meaning
-   all {{prodname}} workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
+   all $[prodname] workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
 
    Then, use `kubectl` to apply this policy.
 
@@ -414,7 +414,7 @@ The basic process is as follows:
 1. Apply labels to any endpoints that should have access to the metrics.
 
    At this point, only endpoints that have the label `calico-prometheus-access: true` can reach
-   {{prodname}}'s Prometheus metrics endpoints on each node. To grant access, simply add this label to the
+   $[prodname]'s Prometheus metrics endpoints on each node. To grant access, simply add this label to the
    desired endpoints.
 
    For example, to allow access to a Kubernetes pod you can run the following command.
@@ -442,7 +442,7 @@ The basic process is as follows:
 
 ### Additional steps for Typha deployments
 
-If your {{prodname}} installation uses the Kubernetes API datastore and has greater than 50 nodes, it is likely
+If your $[prodname] installation uses the Kubernetes API datastore and has greater than 50 nodes, it is likely
 that you have installed Typha. This section shows how to use an additional network policy to secure the Typha
 Prometheus endpoints.
 
@@ -454,7 +454,7 @@ kind: GlobalNetworkPolicy
 metadata:
   name: restrict-typha-prometheus
 spec:
-  # Select all {{prodname}} nodes.
+  # Select all $[prodname] nodes.
   selector: running-calico == "true"
   order: 500
   types:
@@ -471,7 +471,7 @@ spec:
 
 This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule.
 The ingress rule allows traffic to port 9093 from any source with the label `calico-prometheus-access: true`, meaning
-all {{prodname}} workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
+all $[prodname] workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
 
 Then, use `kubectl` to apply this policy.
 
@@ -481,7 +481,7 @@ kubectl apply -f typha-prometheus-policy.yaml
 
 ### Example for kube-controllers
 
-If your {{prodname}} installation exposes metrics from kube-controllers, you can limit access to those metrics
+If your $[prodname] installation exposes metrics from kube-controllers, you can limit access to those metrics
 with the following network policy.
 
 Create a file named `kube-controllers-prometheus-policy.yaml` with the following contents.
