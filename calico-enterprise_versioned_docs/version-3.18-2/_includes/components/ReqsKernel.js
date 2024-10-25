@@ -30,14 +30,14 @@ export default function ReqsKernel() {
           <ul>
             <li>The “base” modules (including the IPv6 versions if IPv6 is enabled in your cluster).</li>
             <li>
-              At least the following match criteria: <code>set</code>,<code>rpfilter</code>, <code>addrtype</code>,{' '}
-              <code>comment</code>,<code>conntrack</code>, <code>icmp</code>, <code>tcp</code>,<code>udp</code>,{' '}
+              At least the following match criteria: <code>set</code>, <code>rpfilter</code>, <code>addrtype</code>,{' '}
+              <code>comment</code>, <code>conntrack</code>, <code>icmp</code>, <code>tcp</code>, <code>udp</code>,{' '}
               <code>ipvs</code>, <code>icmpv6</code> (if IPv6 is enabled in your kernel), <code>mark</code>,{' '}
-              <code>multiport</code>,<code>rpfilter</code>, <code>sctp</code>, <code>ipvs</code> (if using
+              <code>multiport</code>, <code>rpfilter</code>, <code>sctp</code>, <code>ipvs</code> (if using
               <code>kube-proxy</code> in IPVS mode).
             </li>
             <li>
-              At least the following actions: <code>REJECT</code>,<code>ACCEPT</code>, <code>DROP</code>,{' '}
+              At least the following actions: <code>REJECT</code>, <code>ACCEPT</code>, <code>DROP</code>,{' '}
               <code>LOG</code>.
             </li>
           </ul>
@@ -55,8 +55,7 @@ export default function ReqsKernel() {
         </li>
         <li>
           <p>
-            IPIP, VXLAN, Wireguard support, if using {prodname}
-            networking in one of those modes.
+            IPIP, VXLAN, Wireguard support, if using {prodname} networking in one of those modes.
           </p>
         </li>
         <li>

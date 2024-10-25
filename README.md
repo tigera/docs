@@ -1,4 +1,5 @@
 [![Netlify Status](https://api.netlify.com/api/v1/badges/58c3464e-f1ba-4a32-8c6e-0e41fe8e0f45/deploy-status)](https://app.netlify.com/sites/tigera/deploys)
+
 # Calico & Tigera Docs
 
 This is the full set of product docs for Calico & Tigera. It includes our Open Source (Project Calico) docs
@@ -8,7 +9,7 @@ This website is built using [Docusaurus 2](https://docusaurus.io/), a modern sta
 
 ## Prerequisites
 
-Either 
+Either
 
 * docker (to run the containerised version of the build)
 
@@ -23,6 +24,7 @@ Or
 ```bash
 make start 
 ```
+
 or
 
 ```bash
@@ -38,7 +40,9 @@ having to restart the server. This build is faster, but does not produce all the
 make build
 make serve
 ```
+
 or
+
 ```bash
 make build CONTAINERIZED=true
 make serve CONTAINERIZED=true
@@ -67,18 +71,18 @@ make serve
 Each pull request against the `main` branch generates two preview builds.
 You can find links to these preview builds as comments from Netlify.
 
-* Deploy preview. A full build with our production configuration. 
-* Deploy preview for _calico-docs-preview-next_. This builds the site based on the current state of our unversioned development directories: 
+* Deploy preview. A full build with our production configuration.
+* Deploy preview for _calico-docs-preview-next_. This builds the site based on the current state of our unversioned development directories:
   * `calico/`
   * `calico-enteprise/`
   * `calico-cloud/`
 
-If you're making changes to an upcoming version of any of the products, review your changes in _calico-docs-preview-next_. 
+If you're making changes to an upcoming version of any of the products, review your changes in _calico-docs-preview-next_.
 
 ### Viewing your changes locally for unreleased documentation
 
 If you prefer to view changes to unreleased documentation locally, you must modify the `docusaurus.config.js` file.
-Add 'current' to the list for `onlyIncludeVersions` for the product docs you want to build. 
+Add 'current' to the list for `onlyIncludeVersions` for the product docs you want to build.
 
 ```js
       {
@@ -107,7 +111,6 @@ Add 'current' to the list for `onlyIncludeVersions` for the product docs you wan
 ```
 
 With this configuration, run `yarn start` or `yarn build && yarn serve` to see your changes.
-
 
 ## Updating the Operator API docs
 
