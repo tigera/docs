@@ -10,29 +10,29 @@ import TabItem from '@theme/TabItem';
 
 This step requires Docker, but it can be run from any machine with Docker installed. It doesn't have to be the host you will run it on (i.e your laptop is fine).
 
-1. Use the following command to download the {{nodecontainer}} image.
+1. Use the following command to download the $[nodecontainer] image.
 
    ```bash
-   docker pull {{registry}}{{componentImage.cnxNode}}
+   docker pull $[registry]$[componentImage.cnxNode]
    ```
 
 1. Confirm that the image has loaded by typing `docker images`.
 
    ```
    REPOSITORY       TAG           IMAGE ID       CREATED         SIZE
-   {{registry}}{{ releases.0.components.cnx-node.image }}      {{ releases.0.components.cnx-node.version }}        e07d59b0eb8a   2 minutes ago   42MB
+   $[registry]{{ releases.0.components.cnx-node.image }}      {{ releases.0.components.cnx-node.version }}        e07d59b0eb8a   2 minutes ago   42MB
    ```
 
-1. Create a temporary {{nodecontainer}} container.
+1. Create a temporary $[nodecontainer] container.
 
    ```bash
-   docker create --name container {{registry}}{{componentImage.cnxNode}}
+   docker create --name container $[registry]$[componentImage.cnxNode]
    ```
 
 1. Copy the calico-node binary from the container to the local file system.
 
    ```bash
-   docker cp container:/bin/calico-node {{nodecontainer}}
+   docker cp container:/bin/calico-node $[nodecontainer]
    ```
 
 1. Delete the temporary container.
@@ -44,8 +44,8 @@ This step requires Docker, but it can be run from any machine with Docker instal
 1. Set the extracted binary file to be executable.
 
    ```bash
-   chmod +x {{nodecontainer}}
-   chown root:root {{nodecontainer}}
+   chmod +x $[nodecontainer]
+   chown root:root $[nodecontainer]
    ```
 
 ### Step 3: Copy the `calico-node` binary
@@ -54,7 +54,7 @@ Copy the binary from Step 2 to the target machine, using any means (`scp`, `ftp`
 
 ### Step 4: Create environment file
 
-<EnvironmentFile nodecontainer='{{nodecontainer}}' />
+<EnvironmentFile nodecontainer='$[nodecontainer]' />
 
 ### Step 5: Start Felix
 
@@ -78,7 +78,7 @@ After=syslog.target network.target
 User=root
 EnvironmentFile=/etc/calico/calico.env
 ExecStartPre=/usr/bin/mkdir -p /var/run/calico
-ExecStart=/usr/local/bin/{{nodecontainer}} -felix
+ExecStart=/usr/local/bin/$[nodecontainer] -felix
 KillMode=process
 Restart=on-failure
 LimitNOFILE=32000
@@ -108,7 +108,7 @@ pre-start script
    chown root:root /var/run/calico
 end script
 
-exec /usr/local/bin/{{nodecontainer}} -felix
+exec /usr/local/bin/$[nodecontainer] -felix
 ```
 
 **Start Felix**

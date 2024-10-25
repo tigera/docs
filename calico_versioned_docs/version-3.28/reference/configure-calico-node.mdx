@@ -7,15 +7,15 @@ description: Customize calico/node using environment variables.
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-The `{{nodecontainer}}` container is deployed to every node (on Kubernetes, by a DaemonSet), and runs three internal daemons:
+The `$[nodecontainer]` container is deployed to every node (on Kubernetes, by a DaemonSet), and runs three internal daemons:
 
 - Felix, the Calico daemon that runs on every node and provides endpoints.
 - BIRD, the BGP daemon that distributes routing information to other nodes.
 - confd, a daemon that watches the Calico datastore for config changes and updates BIRD’s config files.
 
-For manifest-based installations, `{{nodecontainer}}` is primarily configured through environment
+For manifest-based installations, `$[nodecontainer]` is primarily configured through environment
 variables, typically set in the deployment manifest. Individual nodes may also be updated through the Node
-custom resource. `{{nodecontainer}}` can also be configured through the Calico Operator.
+custom resource. `$[nodecontainer]` can also be configured through the Calico Operator.
 
 The rest of this page lists the available configuration options, and is followed by specific considerations for
 various settings.
@@ -23,7 +23,7 @@ various settings.
 <Tabs>
 <TabItem label="Operator" value="Operator-0">
 
-`{{nodecontainer}}` does not need to be configured directly when installed by the operator. For a complete operator
+`$[nodecontainer]` does not need to be configured directly when installed by the operator. For a complete operator
 configuration reference, see [the installation API reference documentation][installation].
 
 </TabItem>
@@ -36,7 +36,7 @@ configuration reference, see [the installation API reference documentation][inst
 Calico uses IP pools to configure how addresses are allocated to pods, and how networking works for certain
 sets of addresses. You can see the full schema for IP pools here.
 
-`{{nodecontainer}}` can be configured to create a default IP pool for you, but only if none already
+`$[nodecontainer]` can be configured to create a default IP pool for you, but only if none already
 exist in the cluster. The following options control the parameters on the created pool.
 
 | Environment                        | Description                                                                                                                                                                                                 | Schema                                                                       |
@@ -54,12 +54,12 @@ exist in the cluster. The following options control the parameters on the create
 | CALICO_IPV6POOL_NODE_SELECTOR      | Controls the NodeSelector for the IPv6 Pool created at start up. [Default: `all()`]                                                                                                                         | [selector](resources/ippool.mdx#node-selector)                               |
 | CALICO_IPV4POOL_DISABLE_BGP_EXPORT | Disable exporting routes over BGP for the IPv4 Pool created at start up. [Default: `false`]                                                                                                                 | boolean                                                                      |
 | CALICO_IPV6POOL_DISABLE_BGP_EXPORT | Disable exporting routes over BGP for the IPv6 Pool created at start up. [Default: `false`]                                                                                                                 | boolean                                                                      |
-| NO_DEFAULT_POOLS                   | Prevents {{prodname}} from creating a default pool if one does not exist. [Default: `false`]                                                                                                                | boolean                                                                      |
+| NO_DEFAULT_POOLS                   | Prevents $[prodname] from creating a default pool if one does not exist. [Default: `false`]                                                                                                                | boolean                                                                      |
 
 ### Configuring BGP Networking
 
 BGP configuration for Calico nodes is normally configured through the [Node](resources/node.mdx), [BGPConfiguration](resources/bgpconfig.mdx), and [BGPPeer](resources/bgppeer.mdx) resources.
-`{{nodecontainer}}` also exposes some options to allow setting certain fields on these objects, as described
+`$[nodecontainer]` also exposes some options to allow setting certain fields on these objects, as described
 below.
 
 | Environment              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Schema           |
@@ -91,7 +91,7 @@ below.
 
 :::note
 
-When {{prodname}} is configured to use the Kubernetes API as the datastore, the environments
+When $[prodname] is configured to use the Kubernetes API as the datastore, the environments
 used for BGP configuration are ignored—this includes selection of the node AS number (AS)
 and all of the IP selection options (IP, IP6, IP_AUTODETECTION_METHOD, IP6_AUTODETECTION_METHOD).
 
@@ -103,20 +103,20 @@ and all of the IP selection options (IP, IP6, IP_AUTODETECTION_METHOD, IP6_AUTOD
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | ETCD_ENDPOINTS     | A comma separated list of etcd endpoints [Example: `http://127.0.0.1:2379,http://127.0.0.2:2379`] (required)                                                                                                                                                                                                                                             | string |
 | ETCD_DISCOVERY_SRV | Domain name to discover etcd endpoints via SRV records. Mutually exclusive with `ETCD_ENDPOINTS`. [Example: `example.com`] (optional)                                                                                                                                                                                                                    | string |
-| ETCD_KEY_FILE      | Path to the file containing the private key matching the `{{nodecontainer}}` client certificate. Enables `{{nodecontainer}}` to participate in mutual TLS authentication and identify itself to the etcd server. Example: `/etc/node/key.pem` (optional)                                                                                                 | string |
-| ETCD_CERT_FILE     | Path to the file containing the client certificate issued to `{{nodecontainer}}`. Enables `{{nodecontainer}}` to participate in mutual TLS authentication and identify itself to the etcd server. Example: `/etc/node/cert.pem` (optional)                                                                                                               | string |
-| ETCD_CA_CERT_FILE  | Path to the file containing the root certificate of the certificate authority (CA) that issued the etcd server certificate. Configures `{{nodecontainer}}` to trust the CA that signed the root certificate. The file may contain multiple root certificates, causing `{{nodecontainer}}` to trust each of the CAs included. Example: `/etc/node/ca.pem` | string |
+| ETCD_KEY_FILE      | Path to the file containing the private key matching the `$[nodecontainer]` client certificate. Enables `$[nodecontainer]` to participate in mutual TLS authentication and identify itself to the etcd server. Example: `/etc/node/key.pem` (optional)                                                                                                 | string |
+| ETCD_CERT_FILE     | Path to the file containing the client certificate issued to `$[nodecontainer]`. Enables `$[nodecontainer]` to participate in mutual TLS authentication and identify itself to the etcd server. Example: `/etc/node/cert.pem` (optional)                                                                                                               | string |
+| ETCD_CA_CERT_FILE  | Path to the file containing the root certificate of the certificate authority (CA) that issued the etcd server certificate. Configures `$[nodecontainer]` to trust the CA that signed the root certificate. The file may contain multiple root certificates, causing `$[nodecontainer]` to trust each of the CAs included. Example: `/etc/node/ca.pem` | string |
 
 ### Configuring Logging
 
 | Environment                 | Description                                                                                              | Schema                                                            |
 | --------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | CALICO_DISABLE_FILE_LOGGING | Disables logging to file. [Default: "false"]                                                             | string                                                            |
-| CALICO_STARTUP_LOGLEVEL     | The log severity above which startup `{{nodecontainer}}` logs are sent to the stdout. [Default: `ERROR`] | DEBUG, INFO, WARNING, ERROR, CRITICAL, or NONE (case-insensitive) |
+| CALICO_STARTUP_LOGLEVEL     | The log severity above which startup `$[nodecontainer]` logs are sent to the stdout. [Default: `ERROR`] | DEBUG, INFO, WARNING, ERROR, CRITICAL, or NONE (case-insensitive) |
 
 ### Configuring CNI Plugin
 
-`{{nodecontainer}}` has a few options that are configurable based on the CNI plugin and CNI plugin
+`$[nodecontainer]` has a few options that are configurable based on the CNI plugin and CNI plugin
 configuration used on the cluster.
 
 | Environment       | Description                                                                                                                                                                                                       | Schema  |
@@ -137,11 +137,11 @@ configuration used on the cluster.
 
 ### Node name determination
 
-The `{{nodecontainer}}` must know the name of the node on which it is running. The node name is used to
+The `$[nodecontainer]` must know the name of the node on which it is running. The node name is used to
 retrieve the [Node resource](resources/node.mdx) configured for this node if it exists, or to create a new node resource representing the node if it does not. It is
 also used to associate the node with per-node [BGP configuration](resources/bgpconfig.mdx), [felix configuration](resources/felixconfig.mdx), and endpoints.
 
-When launched, the `{{nodecontainer}}` container sets the node name according to the following order of precedence:
+When launched, the `$[nodecontainer]` container sets the node name according to the following order of precedence:
 
 1. The value specified in the `NODENAME` environment variable, if set.
 1. The value specified in `/var/lib/calico/nodename`, if it exists.
@@ -157,7 +157,7 @@ For example, if given the following conditions:
 - `HOSTNAME="host-A"`
 - The operating system returns "host-A.internal.myorg.com" for the hostname
 
-{{nodecontainer}} will use "host-a" for its name and will write the value in `/var/lib/calico/nodename`. If {{nodecontainer}}
+$[nodecontainer] will use "host-a" for its name and will write the value in `/var/lib/calico/nodename`. If $[nodecontainer]
 is then restarted, it will use the cached value of "host-a" read from the file on disk.
 
 ### IP setting
@@ -189,9 +189,9 @@ There are several special case values that can be set in the IP(6) environment v
 
 ### IP autodetection methods
 
-When {{prodname}} is used for routing, each node must be configured with an IPv4
+When $[prodname] is used for routing, each node must be configured with an IPv4
 address and/or an IPv6 address that will be used to route between
-nodes. To eliminate node specific IP address configuration, the `{{nodecontainer}}`
+nodes. To eliminate node specific IP address configuration, the `$[nodecontainer]`
 container can be configured to autodetect these IP addresses. In many systems,
 there might be multiple physical interfaces on a host, or possibly multiple IP
 addresses configured on a physical interface. In these cases, there are

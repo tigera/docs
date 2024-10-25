@@ -16,12 +16,12 @@ through egress gateways. Use native VNet subnet IP addresses for the egress gate
 
 Controlling the source IP seen when traffic leaves the cluster allows groups of pods to be identified
 by external firewalls, appliances and services (even as the groups are scaled up/down or pods restarted).
-{{prodname}} controls the source IP by directing traffic through one or more "egress gateway" pods, which
+$[prodname] controls the source IP by directing traffic through one or more "egress gateway" pods, which
 change the source IP of the traffic to their own IP. The egress gateways used can be chosen at the pod or namespace
 scope allowing for flexibility in how the cluster is seen from outside.
 
 In Azure, egress gateway source IP addresses are chosen from an arbitrary user-defined IP pool
-using {{prodname}} IPAM. egress gateway pods use dedicated IPPools to use as source IP addresses, which enables static configuration
+using $[prodname] IPAM. egress gateway pods use dedicated IPPools to use as source IP addresses, which enables static configuration
 of external appliances.
 
 ## Concepts
@@ -73,8 +73,8 @@ communicate without NAT within the same VPC, with peered VPCs, and, with peered 
 ### Azure Route Server
 
 Azure [Route Server](https://learn.microsoft.com/en-us/azure/route-server/) is a managed networking service that allows
-a network virtual appliance, like {{prodname}}, to dynamically configure Azure fabric by exchanging routing information
-using Border Gateway Protocol (BGP). {{prodname}} can establish BGP sessions with an Azure Route Server in a VNet
+a network virtual appliance, like $[prodname], to dynamically configure Azure fabric by exchanging routing information
+using Border Gateway Protocol (BGP). $[prodname] can establish BGP sessions with an Azure Route Server in a VNet
 to advertise the IPs of egress gateways to that VNet. The learned routes are then propagated to the rest of VNets through
 VNet peering, or to external datacenters through ExpressRoute, allowing communication with egress gateway.
 
@@ -89,7 +89,7 @@ VNet peering, or to external datacenters through ExpressRoute, allowing communic
 
 - Azure VNet CNI
 
-{{prodname}} CNI and IPAM are required. The ability to control the egress gateway’s IP is a feature of {{prodname}} CNI and IPAM. Azure VNet CNI does not support that feature, so it is incompatible with egress gateways.
+$[prodname] CNI and IPAM are required. The ability to control the egress gateway’s IP is a feature of $[prodname] CNI and IPAM. Azure VNet CNI does not support that feature, so it is incompatible with egress gateways.
 
 ## How to
 
@@ -111,7 +111,7 @@ VNet peering, or to external datacenters through ExpressRoute, allowing communic
 
 ### Choose route reflectors
 
-It is possible to establish BGP connections between all {{prodname}} nodes and Azure Route Servers, but
+It is possible to establish BGP connections between all $[prodname] nodes and Azure Route Servers, but
 to avoid hitting Azure Route Server peers [limit](https://learn.microsoft.com/en-us/azure/route-server/overview#route-server-limits),
 it is better to select some nodes as route reflectors and set up BGP connections between those and Azure Route Server.
 The number of route reflectors depends on the cluster size, but it is recommended to have at least 3 at all times,
@@ -136,7 +136,7 @@ The nodes in system node pools are perfect Route Reflector candidates.
 
 ### Disable the default BGP node-to-node mesh
 
-The default {{prodname}} **node-to-node BGP mesh** may be turned off to enable other BGP topologies.
+The default $[prodname] **node-to-node BGP mesh** may be turned off to enable other BGP topologies.
 To do this, modify the default **BGP configuration** resource.
 
 Run the following command to disable the BGP full-mesh:
@@ -161,15 +161,15 @@ You may configure the BGPPeer resources before disabling the node-to-node mesh t
 
 ### Enable BGP
 
-Usually, in the default installation of {{prodname}} in a public cloud, BGP is disabled as it is not used.
-However, running egress gateways in Azure relies on BGP connections between {{prodname}} and Azure
+Usually, in the default installation of $[prodname] in a public cloud, BGP is disabled as it is not used.
+However, running egress gateways in Azure relies on BGP connections between $[prodname] and Azure
 Route Servers. To enable BGP routing protocol, set `bgp` field to `Enabled` in the default installation:
 
 ```bash
 kubectl patch installation default --type='merge' -p '{"spec": {"calicoNetwork": {"bgp": "Enabled"}}}'
 ```
 
-and then restart the {{prodname}} daemonSet:
+and then restart the $[prodname] daemonSet:
 
 ```bash
 kubectl rollout restart ds calico-node -n calico-system
@@ -203,7 +203,7 @@ Where:
 
 ### (Optional) Limit number of route advertisements
 
-It is only necessary to advertise the egress IP pool, created in the previous section, to Azure Route Servers. By default {{prodname}}
+It is only necessary to advertise the egress IP pool, created in the previous section, to Azure Route Servers. By default $[prodname]
 advertise all other IP pools, which does not affect any functionality. However, Azure Route Servers have a
 [limit](https://learn.microsoft.com/en-us/azure/route-server/overview#route-server-limits) of 1000 advertisements per peer.
 This limit should not be an issue in a small or medium size cluster, but could be for large size cluster. To prevent hitting the limit,
@@ -224,12 +224,12 @@ spec:
 EOF
 ```
 
-Even with the BGP filter, {{prodname}} still advertises pod IP blocks. To prevent {{prodname}} advertising pod IP blocks, it is possible to set
+Even with the BGP filter, $[prodname] still advertises pod IP blocks. To prevent $[prodname] advertising pod IP blocks, it is possible to set
 `disableBGPExport` to `true` in the default IP pools.
 
 ### Configure route reflectors
 
-{{prodname}} nodes can be configured to act as route reflectors. To do this, each node that you want to act as a route reflector
+$[prodname] nodes can be configured to act as route reflectors. To do this, each node that you want to act as a route reflector
 must have a cluster ID - typically an unused IPv4 address.
 
 To configure a node to be a route reflector with cluster ID 244.0.0.1, run the following command:
@@ -256,7 +256,7 @@ spec:
   peerSelector: route-reflector == 'true'
 ```
 
-Finally, Add the IP addresses of Azure Route Servers, usually there are two, as peers to route reflectors. For example, if the {{prodname}}
+Finally, Add the IP addresses of Azure Route Servers, usually there are two, as peers to route reflectors. For example, if the $[prodname]
 cluster is in a subnet with 10.224.0.0 as network address, the 10.224.0.1 is, [by definition](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-faq#are-there-any-restrictions-on-using-ip-addresses-within-these-subnets), the gateway and Azure Route Servers are deployed with
 ASN 65515 and IP addresses of 10.225.0.4 and 10.225.0.5, create two **BGPPeer** resources:
 
@@ -298,7 +298,7 @@ itself cause a disruption as workloads are drained).
 - It is important to set `keepOriginalNextHop: true` since route reflectors advertise routes on behalf of other nodes.
 Advertised routes to Azure Route Servers should have the original next hop otherwise the return packets will be sent to
 route reflectors, and get dropped.
-- It is mandatory to set `reachableBy` field set to the gateway of the subnet {{prodname}} cluster is running in for
+- It is mandatory to set `reachableBy` field set to the gateway of the subnet $[prodname] cluster is running in for
 peering with Azure Route Servers to prevent BGP connection flapping. See [BGP peer](../../reference/resources/bgppeer.mdx) for more information.
 - Including `filters` to apply the BGP filter configured in the previous section, is optional.
 :::
@@ -332,7 +332,7 @@ kubectl patch felixconfiguration default --type='merge' -p \
 
 Use a Kubernetes Deployment to deploy a group of egress gateways.
 
-Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and {{prodname}}
+Using the example of the "red" egress gateway cluster, we use several features of Kubernetes and $[prodname]
 in tandem to get a cluster of egress gateways that uses the user defined IP addresses:
 
 ```bash
@@ -382,7 +382,7 @@ EOF
 
 * `replicas: 2` tells Kubernetes to schedule two egress gateways in the "red" cluster.
 
-* This annotation tells {{prodname}} IPAM to use one of the "egress-ip-red-pool" IP pool.
+* This annotation tells $[prodname] IPAM to use one of the "egress-ip-red-pool" IP pool.
 
 External services and appliances can recognise "red" traffic because it will all come from the CIDRs of the "red"
 IP pool.
@@ -452,8 +452,8 @@ The health port `8080` is used by:
 * The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP probes).
 
 * Remote pods to check if the egress gateway is "ready". Only "ready" egress
-gateways will be used for remote client traffic. This traffic is automatically allowed by {{prodname}} and
-no policy is required to allow it. {{prodname}} only sends probes to egress gateway pods that have a named
+gateways will be used for remote client traffic. This traffic is automatically allowed by $[prodname] and
+no policy is required to allow it. $[prodname] only sends probes to egress gateway pods that have a named
 "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
 :::
 
@@ -472,7 +472,7 @@ Using an egress gateway policy is more complicated, but it allows advanced use c
 
 #### Configure a namespace or pod to use an egress gateway (annotation method)
 
-In a {{prodname}} deployment, the Kubernetes namespace and pod resources honor annotations that
+In a $[prodname] deployment, the Kubernetes namespace and pod resources honor annotations that
 tell that namespace or pod to use particular egress gateways. These annotations are selectors, and
 their meaning is "the set of pods, anywhere in the cluster, that match those selectors".
 
@@ -491,7 +491,7 @@ kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="proj
 ```
 
 Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
-{{prodname}} [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
+$[prodname] [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
 
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
 creating the pod. For example:
@@ -565,7 +565,7 @@ CIDRs specified in rules in an egress gateway policy are matched in Longest Pref
 
 :::
 
-{{prodname}} rejects egress gateway policies that do any of the following:
+$[prodname] rejects egress gateway policies that do any of the following:
 * The policy has no rule that specifies a gateway or a destination
 * The policy has a rule with empty `selector` or `namespaceSelector` fields.
 * The policy has two or more rules with the same destination.
@@ -597,7 +597,7 @@ EOF
 :::caution
 
 You must create the egress gateway policy before you apply it to a namespace or pod.
-If you attempt to apply an egress gateway policy that has not been created, {{prodname}} will block all traffic from the namespace or pod.
+If you attempt to apply an egress gateway policy that has not been created, $[prodname] will block all traffic from the namespace or pod.
 
 :::
 
@@ -692,10 +692,10 @@ other details of the Namespace or Pod definition.
 decide whether that usage is acceptable.
 
 1.  Impose the cluster's own bespoke scheme for a Namespace or Pod to identify the egress gateways
-that it wants to use, less general than {{prodname}}'s egress annotations. Then the
+that it wants to use, less general than $[prodname]'s egress annotations. Then the
 admission controller would police those bespoke annotations (that that cluster's users could
 place on Namespace or Pod resources) and either reject the operation in hand, or allow it
-through after adding the corresponding {{prodname}} egress annotations.
+through after adding the corresponding $[prodname] egress annotations.
 
 #### Policy enforcement for flows via an egress gateway
 
@@ -711,7 +711,7 @@ The path of the traffic through policy is as follows:
 5. The packet leaves the egress gateway pod through its egress policy.
 
 To ensure correct operation, (as of v3.15) the encapsulated traffic between host and egress gateway is auto-allowed by
-{{prodname}} and other ingress traffic is blocked. That means that there are effectively two places where
+$[prodname] and other ingress traffic is blocked. That means that there are effectively two places where
 policy can be applied:
 
 1.  on egress from the client pod
@@ -740,7 +740,7 @@ utility since the IP will always be the egress gateway and the port of translate
 
 :::note
 
-Since v3.15.0, {{prodname}} also sends health probes to the egress gateway pods from the nodes where their clients are located.
+Since v3.15.0, $[prodname] also sends health probes to the egress gateway pods from the nodes where their clients are located.
 In iptables mode, this traffic is auto-allowed at egress from the host and ingress to the egress gateway.
 In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic is allowed.
 

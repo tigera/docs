@@ -9,7 +9,7 @@ description: Learn about eBPF!
 :::note
 
 This guide provides optional background education, including
-education that is not specific to {{prodname}}.
+education that is not specific to $[prodname].
 
 :::
 
@@ -20,7 +20,7 @@ In this guide you will learn:
 
 - General background on eBPF.
 - Various uses of eBPF.
-- How {{prodname}} uses eBPF in the eBPF dataplane.
+- How $[prodname] uses eBPF in the eBPF dataplane.
 
 ## What is eBPF?
 
@@ -49,26 +49,26 @@ eBPF program depend hugely on the hook to which it is attached:
 - **Tracing** programs can be attached to a significant proportion of the functions in the kernel. Tracing
   programs are useful for collecting statistics and deep-dive debugging of the kernel. _Most_ tracing hooks only allow
   read-only access to the data that the function is processing but there are some that allow data to be modified.
-  The {{prodname}} team use tracing programs to help debug {{prodname}} during development; for example,
+  The $[prodname] team use tracing programs to help debug $[prodname] during development; for example,
   to figure out why the kernel unexpectedly dropped a packet.
 
 - **Traffic Control** (`tc`) programs can be attached at ingress and egress to a given network device. The kernel
   executes the programs once for each packet. Since the hooks are for packet processing, the kernel allows
   the programs to modify or extend the packet, drop the packet, mark it for queueing, or redirect the packet to
-  another interface. {{prodname}}'s eBPF dataplane is based on this type of hook; we use tc programs to load
+  another interface. $[prodname]'s eBPF dataplane is based on this type of hook; we use tc programs to load
   balance Kubernetes services, to implement network policy, and, to create a fast-path for traffic of established
   connections.
 
 - **XDP**, or "eXpress Data Path", is actually the name of an eBPF hook. Each network device has an XDP ingress hook
   that is triggered once for each incoming packet before the kernel allocates a socket buffer for the packet. XDP
-  can give outstanding performance for use cases such as DoS protection (as supported in {{prodname}}'s standard Linux
+  can give outstanding performance for use cases such as DoS protection (as supported in $[prodname]'s standard Linux
   dataplane) and ingress load balancing (as used in facebook's Katran). The downside of XDP is that it requires
   network device driver support to get good performance. XDP isn't sufficient on its own to implement all of the logic
   needed for Kubernetes pod networking, but a combination of XDP and Traffic Control hooks works well.
 
 - Several types of **socket** programs hook into various operations on sockets, allowing the eBPF program to, for
   example, change the destination IP of a newly-created socket, or force a socket to bind to the "correct" source
-  IP address. {{prodname}} uses such programs to do connect-time load balancing of Kubernetes Services; this
+  IP address. $[prodname] uses such programs to do connect-time load balancing of Kubernetes Services; this
   reduces overhead because there is no [DNAT](about-networking.mdx#NAT) on the packet processing path.
 
 - There are various security-related hooks that allow for program behaviour to be policed in various ways. For
@@ -91,15 +91,15 @@ Programs attached to eBPF hooks are able to access BPF "maps". BPF maps have two
   by userspace and vice versa.
 
 There are many types of BPF maps, including some special types that allow jumping between programs, and, some that act
-as queues and stacks rather than strictly as key/value maps. {{prodname}} uses maps to keep track of active
+as queues and stacks rather than strictly as key/value maps. $[prodname] uses maps to keep track of active
 connections, and, to configure the BPF programs with policy and service NAT information. Since map accesses can be
-relatively expensive, {{prodname}} aims to do a single map lookup only for each packet on an established flow.
+relatively expensive, $[prodname] aims to do a single map lookup only for each packet on an established flow.
 
 The contents of bpf maps can be inspected using the command-line tool, `bpftool`, which is provided with the kernel.
 
-## {{prodname}}'s eBPF dataplane
+## $[prodname]'s eBPF dataplane
 
-{{prodname}}'s eBPF dataplane is an alternative to our standard Linux dataplane (which is iptables based).
+$[prodname]'s eBPF dataplane is an alternative to our standard Linux dataplane (which is iptables based).
 While the standard dataplane focuses on compatibility by inter-working with kube-proxy, and your own iptables rules,
 the eBPF dataplane focuses on performance, latency and improving user experience with features that aren't possible
 in the standard dataplane. As part of that, the eBPF dataplane replaces kube-proxy with an eBPF implementation.
@@ -135,8 +135,8 @@ While the eBPF dataplane has some features that the standard Linux dataplane lac
 
 ### Architecture overview
 
-{{prodname}}'s eBPF dataplane attaches eBPF programs to the `tc` hooks on each {{prodname}} interface as
-well as your data and tunnel interfaces. This allows {{prodname}} to spot workload packets early and handle them
+$[prodname]'s eBPF dataplane attaches eBPF programs to the `tc` hooks on each $[prodname] interface as
+well as your data and tunnel interfaces. This allows $[prodname] to spot workload packets early and handle them
 through a fast-path that bypasses iptables and other packet processing that the kernel would normally do.
 
 ![Diagram showing the packet path for pod-to-pod networking; a BPF program is attached to the client pod's veth interface; it does a conntrack lookup in a BPF map, and forwards the packet to the second pod directly, bypassing iptables](/img/calico/bpf-pod-to-pod.svg 'Pod-to-pod packet path with eBPF enabled')
@@ -145,13 +145,13 @@ The logic to implement load balancing and packet parsing is pre-compiled ahead o
 maps to store the NAT frontend and backend information. One map stores the metadata of the service, allowing
 for `externalTrafficPolicy` and "sticky" services to be honoured. A second map stores the IPs of the backing pods.
 
-In eBPF mode, {{prodname}} converts your policy into optimised eBPF bytecode, using BPF maps to store the IP sets
+In eBPF mode, $[prodname] converts your policy into optimised eBPF bytecode, using BPF maps to store the IP sets
 matched by policy selectors.
 
 ![Detail of BPF program showing that packets are sent to a separate (generated) policy program,](/img/calico/bpf-policy.svg 'Expanded view of tc program showing policy.')
 
-To improve performance for services, {{prodname}} also does connect-time load balancing by hooking into the
-socket BPF hooks. When a program tries to connect to a Kubernetes service, {{prodname}} intercepts the connection
+To improve performance for services, $[prodname] also does connect-time load balancing by hooking into the
+socket BPF hooks. When a program tries to connect to a Kubernetes service, $[prodname] intercepts the connection
 attempt and configures the socket to connect directly to the backend pod's IP instead. This removes _all_
 NAT overhead from service connections.
 

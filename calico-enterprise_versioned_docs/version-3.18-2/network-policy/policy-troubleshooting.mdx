@@ -10,11 +10,11 @@ I created ​​my first egress policy with default deny behavior, but now I’v
 
 ### Solution
 
-In Kubernetes, when there are no egress policies that apply to an endpoint, all egress traffic is allowed. However, as soon as you add the first egress policy to an endpoint, {{prodname}} switches to default deny and blocks everything else; this is part of our zero trust network policy model. For new users of {{prodname}}, this is unexpected behavior (but it’s required by both Kubernetes and {{prodname}} policy specs.)
+In Kubernetes, when there are no egress policies that apply to an endpoint, all egress traffic is allowed. However, as soon as you add the first egress policy to an endpoint, $[prodname] switches to default deny and blocks everything else; this is part of our zero trust network policy model. For new users of $[prodname], this is unexpected behavior (but it’s required by both Kubernetes and $[prodname] policy specs.)
 
 For egress policy in particular, you may not be used to worrying about “system-level” egress traffic that is now suddenly blocked. For example, most workloads rely on DNS, but you may not have thought of this when writing your policy. So you end up with this problem loop: you allow HTTP traffic, but then your DNS traffic gets blocked, but then HTTP traffic stops working because it relies on DNS to function.
 
-A natural response to this issue is to add an egress rule to allow DNS(!). For example, you add an egress rule “allow UDP to port 53 to namespace kube-system”. In some systems (OpenShift), the DNS pod actually listens on port 5353, not port 53. However, the DNS Service DNATs the traffic from port 53 to port 5353, hiding that detail from the DNS client. {{prodname}} then blocks the traffic because it sees the traffic after the DNAT. So {{prodname}} sees port 5353, not the expected port 53.
+A natural response to this issue is to add an egress rule to allow DNS(!). For example, you add an egress rule “allow UDP to port 53 to namespace kube-system”. In some systems (OpenShift), the DNS pod actually listens on port 5353, not port 53. However, the DNS Service DNATs the traffic from port 53 to port 5353, hiding that detail from the DNS client. $[prodname] then blocks the traffic because it sees the traffic after the DNAT. So $[prodname] sees port 5353, not the expected port 53.
 
 The solution is to define policy for workload services, not for ports used by workloads. For help, see [Policy for services](beginners/services/index.mdx).
 
