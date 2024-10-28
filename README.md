@@ -77,8 +77,8 @@ If you're making changes to an upcoming version of any of the products, review y
 
 ### Viewing your changes locally for unreleased documentation
 
-If you prefer to view changes to unreleased documentation locally, you must modify the `docusuarus.config.js` file.
-Add 'next' to the list for `onlyIncludeVersions` for the product docs you want to build. 
+If you prefer to view changes to unreleased documentation locally, you must modify the `docusaurus.config.js` file.
+Add 'current' to the list for `onlyIncludeVersions` for the product docs you want to build. 
 
 ```js
       {
@@ -86,7 +86,7 @@ Add 'next' to the list for `onlyIncludeVersions` for the product docs you want t
         path: 'calico',
         routeBasePath: 'calico',
         editCurrentVersion: true,
-        onlyIncludeVersions: ['next','3.27','3.26','3.25'], // 'next' is added to build the in-development docs  
+        onlyIncludeVersions: ['current','3.27','3.26','3.25'], // 'current' is added to build the in-development docs  
         versions: {
           current: {
             label: 'Next',
