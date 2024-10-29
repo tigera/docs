@@ -35,7 +35,17 @@ const TableConfig = ({ fieldData }) => {
         </tr>
         <tr>
           <td>Default</td>
-          <td>{fieldData.YAMLDefault === '' ? 'none' : <code>{fieldData.YAMLDefault}</code>}</td>
+          <td>
+            {fieldData.StringDefault === '' ? (
+              'none'
+            ) : fieldData.GoType === '*v1.Duration' ? (
+              <>
+                <code>{fieldData.StringDefault}</code> ({fieldData.ParsedDefault})
+              </>
+            ) : (
+              <code>{fieldData.StringDefault}</code>
+            )}
+          </td>
         </tr>
       </tbody>
     </table>
