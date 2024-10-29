@@ -54,6 +54,7 @@ enables encrypting IPv4 traffic over an IPv4 underlay network and `wireguardEnab
 - [Install WireGuard](#install-wireguard)
 - [Enable WireGuard for a cluster](#enable-wireguard-for-a-cluster)
 - [Verify encryption is enabled](#verify-encryption-is-enabled)
+- [Enable WireGuard Threaded NAPI for a cluster](#enable-wireguard-threaded-napi-for-a-cluster)
 - [Disable WireGuard for an individual node](#disable-wireguard-for-an-individual-node)
 - [Disable WireGuard for a cluster](#disable-wireguard-for-a-cluster)
 
@@ -198,6 +199,28 @@ Since v3.11.1, WireGuard statistics are now automatically enabled with the enabl
 To view WireGuard statistics in Manager UI, you must enable them. From the left navbar, click **Dashboard**, and the Layout Settings icon.
 
 ![Wireguard Dashboard Toggle](/img/calico-enterprise/wireguard/stats-toggle.png)
+
+### Enable WireGuard Threaded NAPI for a cluster
+
+:::warning
+
+There is a [known issue](https://lore.kernel.org/netdev/CALrw=nEoT2emQ0OAYCjM1d_6Xe_kNLSZ6dhjb5FxrLFYh4kozA@mail.gmail.com/T/) with WireGuard threaded NAPI that may cause NAPI to get stuck holding the global `rtnl_mutex` when a peer is removed (most likely during a node reboot when peers are removed).
+Kernels which include [this patch](https://lore.kernel.org/netdev/20240228121000.526645-2-bigeasy@linutronix.de/) are able to recover after a node drain.
+This feature should only be considered if you have high packets per second workloads that are causing dropping packets due to a saturated `softirq` CPU core.
+
+:::
+
+WireGuard Threaded NAPI increases the maximum packets per second that a WireGuard interface can process by enabling [Threaded NAPI](https://docs.kernel.org/networking/napi.html#threaded-napi) on the WireGuard interfaces.
+
+You can read more about its performance improvements [here](https://netdevconf.info/0x18/docs/netdev-0x18-paper23-talk-paper.pdf).
+
+Enable Threaded NAPI WireGuard across all the nodes using the following command.
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardThreadingEnabled":true}}'
+```
+
+The above command enables Threaded NAPI for both the IPv4 and IPv6 WireGuard interfaces.
 
 ### Disable WireGuard for an individual node
 
