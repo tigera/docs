@@ -1,5 +1,5 @@
 const releases = require('./releases.json');
-const componentImage = require('../src/components/utils/componentImage');
+const componentImage = require('../../src/components/utils/componentImage');
 
 const variables = {
   releaseTitle: 'master',
