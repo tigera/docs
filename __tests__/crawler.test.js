@@ -182,6 +182,7 @@ test("Crawl the docs and execute tests", async () => {
     'https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource',
     'https://prometheus.io/docs/prometheus/latest/disabled_features/', // ==>Origin: https://downloads.tigera.io/ee/v3.17.4/manifests/tigera-prometheus-operator.yaml
     'https://prometheus.io/docs/prometheus/latest/feature_flags/', // ==>Origin: https://downloads.tigera.io/ee/v3.20.0-1.0/manifests/tigera-prometheus-operator.yaml
+    'https://docs.fluentd.org/filter/grep',
   ];
 
   const lc = linkChecker();
