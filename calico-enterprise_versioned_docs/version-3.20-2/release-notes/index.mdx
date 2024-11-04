@@ -3,11 +3,13 @@ description: What's new, and why features provide value for upgrading.
 title: Release notes
 ---
 
-# Calico Enterprise 3.19 release notes
+import CodeBlock from '@theme/CodeBlock';
+
+# Calico Enterprise 3.20 release notes
 
 :::info early preview release
 
-Calico Enterprise 3.19 can be used for previewing and testing purposes only.
+Calico Enterprise 3.20 can be used for previewing and testing purposes only.
 It is not supported for use in production.
 
 :::
@@ -16,47 +18,36 @@ Learn about the new features, bug fixes, and other updates in this release of {{
 
 ## New features and enhancements
 
-### Improved flow log filtering for destination domains
+### Support for OpenShift hosted control planes
 
-We’ve updated the Felix parameter (`dest_domains`) for DNS policy to make it easy to find only domain names that the deployment actually connected to (not all the domain names that got translated to the same IP address).
-For more information, see [Flow log data types](../visibility/elastic/flow/datatypes.mdx).
+You can now install Calico Enterprise on OpenShift clusters that use hosted control planes.
 
-### New flow logs panel on Endpoints page
+For more information, see [Installing Calico Enterprise on an OpenShift HCP cluster](../getting-started/install-on-clusters/openshift/hostedcontrolplanes.mdx)
 
-We've updated the Endpoints page in Manager UI with a new flow logs panel so you can view and filter Endpoints associated with denied traffic. Flow log metadata includes the source, destination, ports, protocols, and other key forms. We've also updated the Policy Board to highlight policies with denied traffic.
+### Packet capture and compliance reports are disabled by default
 
-### Improvements to security events dashboard
+We've changed the default behavior for packet capturing and compliance reporting.
+These features are now disabled by default.
 
-We've added the following improvements to the [Security events dashboard](../threat/security-event-management.mdx):
+:::note Update note
+Updating to Calico Enterprise 3.20 will disable the packet capture and compliance reporting features.
+To continue using these features, you must re-enable them during or after the update.
+* **Multi-cluster management** You must enable compliance reports first in the management cluster, followed by the managed clusters.
+* **PacketCapture CR** To maintain packet capture during an upgrade, you must create a PacketCaptureAPI custom resource.
+* **Helm** Include the `packetcaptureAPI` and `compliance` flags in your `values.yaml` file to keep these features enabled during an update.
+:::
 
-- Jira and Slack webhook integration for security event alerts
+For more information, see [Packet capture](../visibility/packetcapture.mdx), [Enable compliance reports](../compliance/enable-compliance.mdx), and [Upgrade Calico Enterprise installed with Helm](../getting-started/upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/helm#upgrade-from-313-or-later).
 
-   By [configuring webhooks](../threat/configuring-webhooks.mdx), you can now push alerts from the Security Overview dashboard in Manager UI to Jira and Slack so incident response and security teams can use native tools to respond to security event alerts.
+## Deprecated and removed features
 
-- Added threat feed alerts
+* The honeypods feature has been removed from this release.
 
-   If you have implemented global threat feeds for suspicious activity (domains or suspicious IPs), alerts are now visible in the Security Overview dashboard. For more information on threatfeeds, see  [Trace and block suspicious IPs](../threat/suspicious-ips).
+## Bug fixes
 
-### Deprecated and removed features
+* WAF events now include source information such as IP and namespace from where the event originated from.
+* Fix that Felix would panic when trying to resync a temporary IP set. Temporary IP sets are created in certain scenarios after previous failures.
 
-* The anomaly detection feature was removed in v3.18.1 If anomaly detection is enabled and you upgrade to {{prodname}} 3.18, you will stop receiving anomaly detection alerts.
-* [Manual install for Windows](../getting-started/install-on-clusters/windows-calico/manual-install/) will be deprecated in a future release. Starting in v3.18.1, the [standard installation is operator-based](../getting-started/install-on-clusters/windows-calico/operator).
-
-## Technology Preview features
-
-- [Web application firewall](../threat/web-application-firewall)
-
-   Protect cloud-native applications from application layer attacks.
-
-- [Security events management](../threat/security-event-management)
-
-   Get alerts on security events that may indicate a threat is present in your Kubernetes cluster.
-
-- [DNS policy for Windows](../getting-started/install-on-clusters/windows-calico/limitations#dns-policy-limitations)
-
-   Use domain names in policies to identify services outside the cluster, which is often operationally simpler and more robust than using IP addresses.
-
-<!-- ## Bug fixes -->
 
 <!-- Follow this template: Problem-Cause-Fix-Result -->
 
@@ -75,21 +66,50 @@ We've added the following improvements to the [Security events dashboard](../thr
 * Flow logs for the Windows workloads currently do not display entries with a Deny action.
 * Before upgrading a {{prodname}} cluster on MKE v3.6 to the latest {{prodname}} version: 1) upgrade MKE from 3.6 to 3.7, then 2) upgrade {{prodname}}.
 * L7 logs with source name `pvt` is not visible in Service Graph.
-* *Multi-cluster management users only*. If the `manager-tls` and `internal-manager-tls` secrets have overlapping DNS names, components such as `es-calico-kube-controllers` will log certificate errors. If you have previously installed a version older than v3.13.0 and never changed your manager-tls secret from the tigera-operator namespace, you must delete both of these secrets. This applies to you if the following command prints a certificate: `$ kubectl get secret manager-tls -n tigera-operator -o "jsonpath={.data['cert']}"`.
-* Upgrading to {{prodname}} 3.18.0 on Rancher/RKE from {{prodname}} 3.13.0 currently requires manually terminating the calico-node container for an upgrade to proceed.
 * Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim. Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.) Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned".
-* Linseed deployment needs to be manually restarted after an upgrade. Without a restart, Linseed can't ingest data because it can't authenticate with Elastic.
+<li>Some application layer features are not working as expected for {{prodname}} installations with the following deployment types:
+  <ul><li>AKS clusters with Azure CNI for networking and {{prodname}} for network policy</li>
+    <li>RKE2 clusters installed with Rancher UI</li>
+  </ul>
+  During installation, for these deployment types, <code>kubeletVolumePluginPath</code> is set to <code>None</code> in the Installation CR, causing all application layer features to stop working.
+  The affected features include web application firewalls, application layer policies, and L7 logging.
+  As a workaround, you can restore the default value by running the following command on an affected cluster:
+  <CodeBlock language='bash'>{`kubectl patch installation.tigera.io default --type=merge  -p '{"spec":{"kubeletVolumePluginPath":"/var/lib/kubelet"}}'`}</CodeBlock>
+</li>
+
+## Updating
+
+:::important
+
+{{prodname}} 3.20 contains breaking changes for installations that use the Calico API server.
+
+:::
+
+* ***Breaking change***: Upgrading from Calico Enterprise 3.18 or earlier {{prodname}} will alter the UID of all `projectcalico.org/v3` resources.
+  If you're using the Calico API server, you must restart any controllers, including `kube-controller-manager`, that manage these resources after the upgrade.
+  This change addresses an issue where duplicate UIDs on different API resources could disrupt Kubernetes garbage collection.
 
 ## Release details
 
-### Calico Enterprise 3.19.0 (early preview)
+### Calico Enterprise 3.20.0-1.0 (early preview)
 
-January xx, 2024
+August 2, 2024
 
-Calico Enterprise 3.19.0 is now available as an early preview release.
+Calico Enterprise 3.20.0-1.0 is now available as an early preview release.
 This release is for previewing and testing purposes only.
 It is not supported for use in production.
 
 <!--
 To update an existing installation of Calico Enterprise 3.18, see [Install a patch release](../getting-started/manifest-archive.mdx).
 -->
+
+### Calico Enterprise 3.20.0-2.0 (early preview)
+
+November DD, 2024
+
+Calico Enterprise 3.20.0-2.0 is now available as an early preview release.
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+
+To update an existing installation of Calico Enterprise 3.20, see [Install a patch release](../getting-started/manifest-archive.mdx).
+
