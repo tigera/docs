@@ -42,6 +42,7 @@ const config = {
       "data-button-box-shadow": "2px 2px 8px rgba(0, 0, 0, 0.2)",
       "data-modal-header-bg-color": "#FFFFFF",
       "data-user-analytics-fingerprint-enabled": "true",
+      "data-user-analytics-store-ip": "true",
       async: true,
     },
   ],
