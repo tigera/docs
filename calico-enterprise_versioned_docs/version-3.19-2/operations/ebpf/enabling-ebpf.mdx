@@ -185,6 +185,17 @@ kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyIptable
 
 If both `kube-proxy` and `BPFKubeProxyIptablesCleanupEnabled` is enabled then `kube-proxy` will write its iptables rules and Felix will try to clean them up resulting in iptables flapping between the two.
 
+### Verify node interface naming pattern
+
+When Calico dataplane is configured in BPF mode, Calico configures `ebpf` programs for the host interfaces that match the regex pattern defined by the `bpfDataIfacePattern` setting in [FelixConfiguration](../../reference/resources/felixconfig.mdx). If your nodes use custom interface naming or have multiple interfaces on the hosts, adjust the regex pattern command to only include interfaces that Kubernetes nodes use for pod communications.
+
+:::note
+
+A common example is when a cluster is configured in an on-prem environment and control-plane nodes are virtualized whith only one network interface, but the worker nodes are bare-metal nodes with multiple interfaces that can be bonded or VLAN devices with sub-interfaces and custom naming patterns. In such cases, the `bpfDataIfacePattern` setting may need to be adjusted to include the interface from the control-plane node and only necessary interface from the worker node.
+For example, it's common that sub-interface from a VLAN main device is used for Kubernetes networking. In such a case, only that sub-interface from the worker node should be matched by the regex command but not other interfaces on the node including its parent interface.
+
+:::
+
 ### Enable eBPF mode
 
 To enable eBPF mode, change the `spec.calicoNetwork.linuxDataplane` parameter in the operator's `Installation`
