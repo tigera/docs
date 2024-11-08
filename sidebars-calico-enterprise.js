@@ -96,7 +96,7 @@ module.exports = {
           type: 'category',
           label: 'Install on non-cluster hosts',
           link: { type: 'doc', id: 'getting-started/bare-metal/index' },
-          items: ['getting-started/bare-metal/about', 'getting-started/bare-metal/requirements'],
+          items: ['getting-started/bare-metal/about'],
         },
         {
           type: 'category',
