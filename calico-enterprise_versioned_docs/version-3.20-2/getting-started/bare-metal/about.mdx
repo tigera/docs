@@ -99,13 +99,13 @@ To learn how to restrict traffic to/from hosts using Calico network policy see, 
    - If your non-cluster host or VM has RHEL 8 installed, then run the following command:
 
      ```bash
-     sudo curl https://downloads.tigera.io/ee/rpms/v3.20/calico_rhel8.repo -o /etc/yum.repos.d/calico_rhel8.repo
+     curl https://downloads.tigera.io/ee/rpms/v3.20/calico_rhel8.repo -o /etc/yum.repos.d/calico_rhel8.repo
      ```
 
    - If your non-cluster host or VM has RHEL 9 installed, then run the following command:
 
      ```bash
-     sudo curl https://downloads.tigera.io/ee/rpms/v3.20/calico_rhel9.repo -o /etc/yum.repos.d/calico_rhel9.repo
+     curl https://downloads.tigera.io/ee/rpms/v3.20/calico_rhel9.repo -o /etc/yum.repos.d/calico_rhel9.repo
      ```
 
      Only Red Hat Enterprise Linux 8 and 9 x86-64 operating systems are supported in this version of {{prodname}}.
@@ -115,41 +115,16 @@ To learn how to restrict traffic to/from hosts using Calico network policy see, 
     - Use `dnf` to install the `calico-node` and `calico-fluent-bit` packages:
 
     ```bash
-    sudo dnf install calico-node calico-fluent-bit
+    dnf install calico-node calico-fluent-bit
     ```
-
-    :::note
-
-    To install a specific version of `calico-node`, you can use `dnf list` to see available versions, and then `dnf install` to install one. For example:
-
-    ```bash
-    [root@d5e75aaebc90 /]# dnf list calico-node --showduplicates
-    Last metadata expiration check: 0:00:39 ago on Thu Nov  7 19:20:25 2024.
-    Available Packages
-    calico-node.src       3.20.0~pre2.0-1.el9   calico_9
-    calico-node.x86_64    3.20.0~pre2.0-1.el9   calico_9
-    ```
-
-    ```bash
-    dnf install calico-node-3.20.0~pre2.0-1.el9
-    ```
-
-    To pin a specific version of `calico-node` so that it won't be automatically upgraded, you can use the [versionlock plugin for dnf](https://dnf-plugins-core.readthedocs.io/en/latest/versionlock.html). Note that this won't install `calico-node` if it isn't installed already.
-
-    ```bash
-    dnf versionlock add calico-node-3.20.0~pre2.0-1.el9
-    ```
-
-    :::
-
 
 1. Copy the kubeconfig created in cluster setup step 3 to host folder `/etc/calico/kubeconfig` and change ownership to `calico:calico`.
 
 1. Start Calico node and log forwarder.
 
    ```bash
-   systemctl start calico-node.service
-   systemctl start calico-fluent-bit.service
+   systemctl enable --now calico-node.service
+   systemctl enable --now calico-fluent-bit.service
    ```
 
    You can configure the Calico node by tuning the environment variables defined in the `/etc/calico/calico-node/calico-node.env` file. For more information, see the [Felix configuration reference](../../reference/resources/felixconfig.mdx).
