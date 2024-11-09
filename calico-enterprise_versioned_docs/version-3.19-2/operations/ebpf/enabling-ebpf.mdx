@@ -187,12 +187,11 @@ If both `kube-proxy` and `BPFKubeProxyIptablesCleanupEnabled` is enabled then `k
 
 ### Verify node interface naming pattern
 
-When Calico dataplane is configured in BPF mode, Calico configures `ebpf` programs for the host interfaces that match the regex pattern defined by the `bpfDataIfacePattern` setting in [FelixConfiguration](../../reference/resources/felixconfig.mdx). If your nodes use custom interface naming or have multiple interfaces on the hosts, adjust the regex pattern command to only include interfaces that Kubernetes nodes use for pod communications.
+When Calico dataplane is configured in BPF mode, Calico configures `ebpf` programs for the host interfaces that match the regex pattern defined by the `bpfDataIfacePattern` setting in [FelixConfiguration](../../reference/resources/felixconfig.mdx). The default regex value tries to match commonly used interface names, but interface names can vary depending on a virtualization solution, a flavor of the operating system, company-specific configuration standards, such as VLAN device naming pattern, etc. The regex command should at least match interfaces that participate in intra-cluster and external (e.g. NodePorts) communications. In scenarios when a node has additional interfaces, you may want to leverage Calico policies to secure some of them or even all of them or speed up forwarding to/from pods that use them. In such cases, the regex command should match all interfaces that you want to be managed by Calico.
 
 :::note
 
-A common example is when a cluster is configured in an on-prem environment and control-plane nodes are virtualized whith only one network interface, but the worker nodes are bare-metal nodes with multiple interfaces that can be bonded or VLAN devices with sub-interfaces and custom naming patterns. In such cases, the `bpfDataIfacePattern` setting may need to be adjusted to include the interface from the control-plane node and only necessary interface from the worker node.
-For example, it's common that sub-interface from a VLAN main device is used for Kubernetes networking. In such a case, only that sub-interface from the worker node should be matched by the regex command but not other interfaces on the node including its parent interface.
+A common example is when a cluster is configured in an on-prem environment and control-plane nodes are virtualized with only one network interface, but the worker nodes are bare-metal nodes with additional interfaces that could be VLAN devices with sub-interfaces and specific naming patterns. In such cases, the `bpfDataIfacePattern` setting may need to be adjusted to include the interface from the control-plane nodes as well as necessary interface from the worker nodes.
 
 :::
 
