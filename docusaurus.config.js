@@ -10,12 +10,13 @@ const darkCodeTheme = themes.dracula;
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   future: {
-    experimental_faster: true,
+    experimental_faster: false,
   },
   title: 'Calico Documentation',
   tagline: 'Active, zero-trust based security for containers and Kubernetes',
   url: 'https://docs.tigera.io',
   baseUrl: '/',
+  onBrokenAnchors: 'ignore',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
   favicon: 'img/favicon.png',
@@ -84,15 +85,6 @@ const config = {
         indexName: 'calico',
         contextualSearch: true,
         searchPagePath: '/search',
-      },
-      announcementBar: {
-        id: 'KubeCon24',
-        content:
-          '🎉 Learn the latest trends in Kubernetes networking and security. Join us at CalicoCon 2024 on' +
-          " November 12. <a href='https://link.tigera.io/uhuRC'><strong>Register now!</strong></a> :🎉",
-        backgroundColor: '#FCE181',
-        textColor: '#000',
-        isCloseable: true,
       },
       navbar: {
         logo: {
