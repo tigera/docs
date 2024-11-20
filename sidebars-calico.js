@@ -607,6 +607,7 @@ module.exports = {
             'reference/resources/networkset',
             'reference/resources/node',
             'reference/resources/profile',
+            'reference/resources/tier',
             'reference/resources/workloadendpoint',
           ],
         },
