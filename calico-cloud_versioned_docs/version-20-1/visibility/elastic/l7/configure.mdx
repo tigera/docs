@@ -68,27 +68,36 @@ In this step, you will configure L7 logs, select logs for collection, and test t
 
 **Configure the ApplicationLayer resource for L7 logs**
 
-1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) resource named, `tigera-secure` to include a logCollection section of the file, `_api.html` [here](../../../reference/installation/api.mdx).
-
-1. Ensure that the `collectLogs` field is set to `Enabled`.
+1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) resource named `tigera-secure`.
 
    Example:
 
-   ```yaml
+   ```bash
+   kubectl apply -f - <<EOF
    apiVersion: operator.tigera.io/v1
    kind: ApplicationLayer
    metadata:
      name: tigera-secure
    spec:
+     # log collection is implemented via sidecar
+     sidecarInjection: true
+     # the following configures the log collection and aggregation behaviour
      logCollection:
        collectLogs: Enabled
        logIntervalSeconds: 5
        logRequestsPerInterval: -1
+   EOF
    ```
 
-1. Apply the resource. This creates `l7-log-collector` daemonset in `calico-system` namespace.
+   Read more about the log collection specification [here](../../../reference/installation/api.mdx#operator.tigera.io/v1.LogCollector).
+   
+   Applying this resource creates an `l7-log-collector` daemonset in `calico-system` namespace.
 
-1. Ensure that the daemonset progresses and `l7-collector` and `envoy-proxy` containers inside the daemonset are in a `Running` state.
+1. Wait for the Log collection daemonset to progress to ready
+
+   ```bash
+   kubectl rollout status -n calico-system ds/l7-log-collector
+   ```
 
 **Select traffic for L7 log collection**
 
