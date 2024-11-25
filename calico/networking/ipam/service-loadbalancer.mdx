@@ -1,0 +1,209 @@
+---
+description: Create LoadBalancer
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# LoadBalancer IP address management
+
+## Understanding $[prodname] LoadBalancer IP address management
+
+You might want to utilize Service LoadBalancer in your cluster to provide stable long-lasting IP address to access your deployed application.
+$[prodname] can help you with providing and managing IP addresses to your Service LoadBalancers in your cluster. $[prodname] comes with LoadBalancer IPAM deployed as part of $[prodname] Kube-controllers.
+
+## Configure $[prodname] IP address management for Service LoadBalancer
+
+### Before you begin...
+
+Ensure that you have a cluster with $[prodname] installed, enabled bgp, external node configured as bgp peer and $[prodname] kube-controllers configured.
+
+For this example we will use LoadBalancer kube-controller assignIPs set to AllServices. To verify your LoadBalancer kube-controller settings you can check the output of the following command.
+
+```bash
+kubectl get kubecontrollersconfiguration default -o "jsonpath={.spec.controllers.loadBalancer}"
+```
+
+If the output is not ```{"assignIPs":"AllServices"}``` you can patch your LoadBalancer kube-controller configuration by running the following command.
+
+```bash
+kubectl patch kubecontrollersconfiguration default --patch '{"spec": {"controllers":{"loadBalancer":{"AssignIPs": "AllService"}}}}'
+```
+
+In this example we will use nginx deployment to connect our Service LoadBalancer to. If you wish to follow along you can create the deployment with the following configuration.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 4
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+```
+
+### Adding IP Pool for Service LoadBalancer
+
+For $[prodname] to be able to manage Service LoadBalancer IP addresses we need to create an IP Pool specifically to be used by LoadBalancer kube-controller. $[prodname] will then use that IP Pool to assign addresses from.
+
+Bellow is example IP Pool
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+ name: loadbalancerIPPool
+spec:
+ cidr: 192.210.0.0/20
+ blockSize: 24
+ natOutgoing: true
+ disabled: false
+ assignmentMode: Automatic
+ allowedUses:
+  - LoadBalancer
+```
+
+:::note
+
+You can create multiple IP Pools with allowedUses LoadBalancer as long as there are no CIDR conflicts. By setting assignmentMode to Manual you can reserve the IP Pool for manual assignments only. Explore more about [manual assignment](#loadbalancer-ip-address-assignment)
+
+:::
+
+### Creating Service LoadBalancer
+
+We will create a Service LoadBalancer that connects to our nginx deployment. Calico IPAM will automatically detect that a new Service LoadBalancer has been created and assign an IP address from available IP Pool.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-loadbalancer
+spec:
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      name: default
+  type: LoadBalancer
+```
+
+After creating the Service LoadBalancer you can verify that IP address has been assigned. To do this you can run
+
+```bash
+kubectl describe service nginx-loadbalancer
+```
+
+In the output you can see that LoadBalancer Ingress IP address has been assigned, take a note of this IP address.
+
+```bash
+Name:                     nginx-loadbalancer
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=nginx
+Type:                     LoadBalancer
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.99.228.103
+IPs:                      10.99.228.103
+LoadBalancer Ingress:     192.210.10.1 (VIP)
+Port:                     default  80/TCP
+TargetPort:               80/TCP
+NodePort:                 default  32002/TCP
+Endpoints:                192.168.165.134:80,192.168.21.198:80,192.168.238.133:80 + 1 more...
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+```
+
+### Advertise Service LoadBalancer IP address
+
+In order to be able to reach our application via the Service LoadBalancer Ingress IP address we have to advertise the LoadBalancer CIDR. You can find out more information at [Advertising Kubernetes service IP addresses](../../networking/configuring/advertise-service-ips.mdx)
+
+You can patch the bgp configuration to advertise the IP Pool CIDR
+
+```bash
+calicoctl patch bgpconfig default --patch '{"spec": {"serviceLoadBalancerIPs": [{"cidr": "192.210.0.0/20"}]}}'
+```
+
+We should now be able to access our application behind the Service LoadBalancer by the IP address assigned by $[prodname] from our external bgp peer.
+
+Run the following command to check that our nginx deployment is reachable:
+
+```bash
+curl 192.210.10.1
+```
+
+If your output contains the following, you have successfully set up Service LoadBalancer with $[prodname]
+
+```
+Welcome to nginx!
+If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.
+```
+
+## LoadBalancer IP address assignment
+
+There are cases where you would like to be more specific about what IP address $[prodname] assigns to your LoadBalancer. With annotations, you can specify how IP address should be assigned to that Service. The annotations can be added and removed as needed during the lifetime of the Service. When you remove an annotation $[prodname] will check if the assigned IP is still valid and potentially assign a new one.
+
+### Specify IP Pool
+
+#### IPv4 Pool
+
+Annotate the Service with projectcalico.org/ipv4pools to assign IP address from the selected IP Pools. You can specify multiple IP Pools in this annotation, $[prodname] will pick an available IP address to assign.
+
+```
+"projectcalico.org/ipv4pools": '["loadBalancerIPv4Pool"]'
+```
+
+#### IPv6 Pool
+
+Annotate the Service with projectcalico.org/ipv6pools to assign IP address from the selected IP Pools. You can specify multiple IP Pools in this annotation, $[prodname] will pick an available IP address to assign.
+
+```
+"projectcalico.org/ipv6pools": '["loadBalancerIPv6Pool"]'
+```
+
+:::note
+
+In dual-stack environment you don't have to specify both annotations. If IP Pool was not specified for IP family, $[prodname] will automatically assign available IP address from available IP Pool
+
+:::
+
+### Specifying IP address
+
+Annotate the Service with projectcalico.org/loadBalancerIPs to assign specific IP address. The address must be available otherwise $[prodname] will not be able to assign the address. Currently you can only specify one IPv4 and one IPv6 address at the same time.
+
+```
+"projectcalico.org/loadBalancerIPs": '["x.x.x.x"]'
+```
+
+:::note
+
+If Service contains "projectcalico.org/loadBalancerIPs" annotation and either "projectcalico.org/ipv6pools" or "projectcalico.org/ipv4pools" are present, $[prodname] will favour projectcalico.org/loadBalancerIPs annotation and try to assign that IP address. There is no fall back to an IP Pool if the specified address is not available.
+
+:::
+
+### Manage LoadBalancer kube-controller assignment mode
+
+In certain cases you might not wish for $[prodname] to automatically assign IP addresses to your Service LoadBalancers. This can be useful in case you have multiple Service IPAM solutions in your cluster.
+LoadBalancer kube-controller is able to operate in two distinct modes ```Automatic``` in which $[prodname] assigns IP address to each Service LoadBalancer in your cluster and ```RequestedServicesOnly``` in which $[prodname] only assigns IP addresses to Service LoadBalancer with annotations mentioned above.
+You can change the mode at any point, but note that when switching to ```RequestedServicesOnly``` will unassign any addresses from Services that do not contain the above annotations.
+
+```bash
+kubectl patch kubecontrollersconfiguration default --patch '{"spec": {"controllers":{"loadBalancer":{"AssignIPs": "RequestedServicesOnly"}}}}'
+```
