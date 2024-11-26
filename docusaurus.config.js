@@ -22,7 +22,7 @@ export default async function createAsyncConfig() {
     url: 'https://docs.tigera.io',
     baseUrl: '/',
     onBrokenAnchors: 'ignore',
-    onBrokenLinks: 'warn',
+    onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'throw',
     favicon: 'img/favicon.png',
 
