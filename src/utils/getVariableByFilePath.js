@@ -29,11 +29,11 @@ async function getContextVariables(file) {
   if (pathToVersionedDocsRoot) {
     return import(path.resolve(`${pathToVersionedDocsRoot[0]}variables.js`));
   } else if (posixFriendlyPath.includes(`${rootDir}/calico/`)) {
-    return import(require(path.resolve('calico/variables.js')));
+    return import(path.resolve(`${rootDir}/calico/variables.js`));
   } else if (posixFriendlyPath.includes(`${rootDir}/calico-cloud/`)) {
-    return import(require(path.resolve('calico-cloud/variables.js')));
+    return import(path.resolve(`${rootDir}/calico-cloud/variables.js`));
   } else if (posixFriendlyPath.includes(`${rootDir}/calico-enterprise/`)) {
-    return import(require(path.resolve('calico-enterprise/variables.js')));
+    return import(path.resolve(`${rootDir}/calico-enterprise/variables.js`));
   }
 }
 

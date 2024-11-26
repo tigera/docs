@@ -6,6 +6,9 @@ import { themes } from 'prism-react-renderer';
 const lightCodeTheme = themes.github;
 const darkCodeTheme = themes.dracula;
 
+// when true current version will be built
+const nextVersion = process.env.BUILD_NEXT === 'true' ? ['current'] : [];
+
 export default async function createAsyncConfig() {
   const variablesPlugin = await import('./src/remark/variablesPlugin');
 
@@ -369,7 +372,7 @@ export default async function createAsyncConfig() {
           path: 'calico',
           routeBasePath: 'calico',
           editCurrentVersion: true,
-          onlyIncludeVersions: ['3.29', '3.28', '3.27'],
+          onlyIncludeVersions: [...nextVersion, '3.29', '3.28', '3.27'],
           lastVersion: '3.29',
           versions: {
             current: {
@@ -406,7 +409,7 @@ export default async function createAsyncConfig() {
           path: 'calico-enterprise',
           routeBasePath: 'calico-enterprise',
           editCurrentVersion: true,
-          onlyIncludeVersions: ['3.20-2', '3.19-2', '3.18-2', '3.17'],
+          onlyIncludeVersions: [...nextVersion, '3.20-2', '3.19-2', '3.18-2', '3.17'],
           //lastVersion: '3.19-2',
           versions: {
             current: {
@@ -454,7 +457,7 @@ export default async function createAsyncConfig() {
           routeBasePath: 'calico-cloud',
           editCurrentVersion: true,
           //To see builds for unreleased versions, remove comments in the next line.
-          onlyIncludeVersions: ['20-1'],
+          onlyIncludeVersions: [...nextVersion, '20-1'],
           versions: {
             current: {
               label: 'Next',
