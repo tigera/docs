@@ -1,0 +1,132 @@
+---
+description: Learn the basics of using Service Graph.
+---
+
+# Service Graph tutorial
+
+import ReactPlayer from 'react-player';
+
+:::note
+
+This tutorial references the labs cluster setup that is part of the $[prodname] Trial environment.
+
+:::
+
+## What you will learn
+
+- The basics of Service Graph
+- To visualize workload communication in the labs cluster using Service Graph
+- Features of Service Graph that help you manage the scale of clusters with a large number of namespaces
+
+## The what and why of Service Graph
+
+One thing we consistently hear from DevOps engineers, SREs, and platform operators is that they struggle with getting basic visibility within their Kubernetes cluster. As more apps and microservices are deployed, and workloads are changing continuously, it becomes hard to understand how everything is working together in such a complex multi-tenant environment. Service Graph provides a "weather map" view of everything in a cluster, helping new team members ramp up quickly on how everything is communicating with each other, and an easy way to engage the right stakeholders when issues come up. Service Graph delivers a point-to-point, topographical view of how namespaces, services, and deployments are communicating with each other.
+
+## Quick demo
+
+**12-minute video**
+
+<ReactPlayer
+  className='wistia_embed wistia_async_46g9yglrpt'
+  url='https://fast.wistia.com/embed/medias/46g9yglrpt'
+  controls
+  config={{
+    wistia: {
+      videoFoam: true,
+    },
+  }}
+/>
+
+## Exploring Service Graph with the labs cluster
+
+> Select the **tigera-labs cluster** in the upper right corner of the Manager UI.
+> In the left navigation menu, select **Service Graph**, **Default**.
+
+The default view in Service Graph provides a representation of how namespaces within the cluster are communicating with each other. Each namespace is represented with the standard Kubernetes icon for namespaces. There are some demo namespaces - **hipstershop**, **storefront**, and **acme** - and other Tigera namespaces that are used for $[prodname]. Egress traffic leaving the cluster is represented with globe icons. Under the hood, each of these globe icons is a custom resource called a **NetworkSet**.
+
+### Network sets
+
+By default, $[prodname] provides two system-defined network sets - one for public IPs called **public network** and another for private IPs called **private network**. You can also define your own network sets with a list of IPs or CIDRs and they will appear on this graph, enabling you to get more granular visibility into the egress traffic that is specific to your environment. The **public-ip-range** is an example of such a network set that has been already created in the labs cluster.
+
+For more examples of using network sets, see [Secure egress access from workloads to destinations outside the cluster](../applications/egress-controls.mdx), and [Understanding network sets](networksets.mdx).
+
+### Selecting graph edges and graph nodes
+
+> Click the `<<` tab in the upper right to open the details panel.
+
+The details panel provides additional information on a selected graph node or edge. The log panel below the graph also automatically updates and/or filters data (if available) for the selection.
+
+> Click on the edge between the **hipstershop** namespace, and the network set **public network**. The flow logs are automatically filtered below in the Flows tab, and you can expand any of the rows in that tab to view some of the detailed metadata that $[prodname] provides around workload communication.
+
+### Double-clicking on a namespace
+
+You can also double-click on a namespace to see services and deployments within a namespace, and how they are communicating externally, and with the rest of the cluster.
+
+> Double-click **hipstershop** or **storefront**. All of the resources in purple are part of the selected namespace (which is also listed in the breadcrumb in the upper left), and anything external to the namespace is represented in blue. These views are useful when troubleshooting a specific application or microservice running in your cluster.
+
+> To return the default view, click the **Namespaces** breadcrumb in the upper left.
+
+### Right-click actions to manage scale
+
+Right-clicking a namespace, service, or deployment brings up another set of actions that are designed to help you manage the scale of your Kubernetes cluster. Although the labs cluster has only a dozen or so namespaces, your Kubernetes clusters could likely have over one hundred namespaces.
+
+> Right-click **hipstershop**, and select **Hide unrelated**.
+
+Hide unrelated allows you to quickly filter and trim the Service Graph to show just the selected entity and anything it is communicating with. This is helpful in troubleshooting issues for a specific namespace or application, and for application teams to quickly understand their upstream and downstream dependencies.
+
+> To reset the view after this action, select the **Reset icon** (vertical column of icons), and click, **Reset view & filters**.
+
+## Using layers and views
+
+Another unique feature of Service Graph is the concept of **layers**, which allows you to create meaningful groupings of resources so you can easily hide and show them on the graph. It is another tool to help you manage the overall scale of visualizing workloads within your cluster. You can create layers for different types of platform infrastructure you might have in your cluster - networking, storage, logging.
+
+> Click the `>>` tab in the upper left (next to Namespaces) to open the panel. Expand the Tigera components layer to view its namespaces.
+
+The layer called **Tigera components** contains namespaces related to $[prodname]. Click the ellipsis/spillover menu on the right, and select **Hide layer**.
+
+This hides the entire layer on the graph, making it easy to hide/show a group of related namespaces.
+
+> Reset the view by selecting, **Restore layer**.
+
+### Views
+
+**Views** allow you to save the state of the graph on the canvas.
+
+> Click the **Views** (panel above Layers).
+
+Let's create a view that shows only items related to the hipstershop product catalog.
+
+> Double-click **hipstershop**, select the _productcatalogservice_, right-click and select **Hide unrelated to service group**. In the View tab, click **Save Current** and save the view as "Product Catalog”.
+
+> Click the **Namespaces** breadcrumb to reset the views and filters. In the Views tab, you can see your saved view, "Product Catalog" -- so you can quickly revisit this view at any time.
+
+## Logs and details panel
+
+As you are working with Service Graph, the bottom panel and the details panel (right of the main canvas) will display additional information for selections you make on the graph. The exact information displayed will vary depending on the following:
+
+- Whether you select a graph node or edge
+- Type of graph node selected (namespace, network set, service, etc.)
+- Whether or not you have deployed Envoy for Layer 7 visibility
+
+### Details panel
+
+> Double-click the **hipstershop** namespace to see a detailed view of service-to-service communication. Select the **checkoutservice** on the graph.
+
+You can see the **Inbound** and **Outbound** connections for this service. Expanding any of those connections (hovering over the line and clicking the arrow) shows you volumetric data for each of those flows. In the **Insights** section, you can click on items like DNS stats in use for the service.
+
+> In the line, `checkoutservice >> shippingservice`, click the green arrows to display protocols and policies.
+
+The **Process Info** section shows you specific processes associated with the traffic flows for the `checkoutservice`. This can be helpful in troubleshooting scenarios where identifying the specific binaries that are involved in service communication may be required to track down a bug.
+
+### Logs panel
+
+In the bottom panel are several tabs: Flows, DNS, HTTP, Alerts, and Capture Jobs.
+
+With the `checkoutservice` still selected, filters are automatically applied on the Flows tab with detailed logs for Layer 4 traffic. Similar filters are automatically applied to the DNS and HTTP flows. Note that HTTP flows require the deployment of Envoy to see Layer 7 traffic in any cluster connected to $[prodname].
+
+The Alerts tab will show alerts if they are generated, and Capture Jobs will show any packet capture jobs that have been defined for this namespace.
+
+Now that you understand the basics for Service Graph, we recommend:
+
+- [Understanding policy tiers](../../network-policy/policy-tiers/tiered-policy.mdx)
+- [Understanding network sets](networksets.mdx)

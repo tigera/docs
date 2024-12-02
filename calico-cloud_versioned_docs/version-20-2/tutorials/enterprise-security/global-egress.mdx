@@ -1,0 +1,90 @@
+---
+description: Implement global egress access controls.
+---
+
+# Global egress access controls
+
+In this article you will learn how to implement egress access controls cluster-wide for all applications and microservices.
+
+In this example, we will implement global egress access controls for **dev1 team**:
+
+- Egress access control for all applications managed by dev1: applications (**app1**) and microservices (**app2**)
+- dev1 pods can egress access to a repo named, `repo.acme.corp` at port 443
+- dev1 pods can egress access to a trusted partner (in this example, another business unit in the organization) at `10.10.10.10` on port 1010.
+
+![global-egress](/img/calico-cloud/global-egress.png)
+
+## Create global network sets
+
+First, we need to create a GlobalNetworkSet for the trusted repo, `repo.acme.corp`. Because we already have a label taxonomy following the best practices, it is easy. Just use the `allowedEgressDomains` to specify the trusted repo, `repo.acme.corp`.
+
+```yaml
+kind: GlobalNetworkSet
+apiVersion: projectcalico.org/v3
+metadata:
+  name: trusted-repo
+  labels:
+    trusted-ep: dev1-repo
+spec:
+  allowedEgressDomains:
+    - repo.acme.corp
+```
+
+Next, we create a separate global network set for our trusted business unit within the organization. We use the `dev1-partners` label, and specify the IP address, `10.10.10.10/32`.
+
+```yaml
+kind: GlobalNetworkSet
+apiVersion: projectcalico.org/v3
+metadata:
+  name: trusted-partners
+  labels:
+    trusted-ep: dev1-partners
+spec:
+  nets:
+    - 10.10.10.10/32
+```
+
+## Create global network policy
+
+Before we create our GlobalNetworkPolicy, let's review our labels and set up.
+
+- We assume that app1 and app2 and all other dev1 team apps’ pods have a label that identifies dev1 (tenant: dev1) to enforce the declared controls.
+
+- For selected pods (all dev1 pods), all egress traffic that is not explicitly allowed is denied, as part of the best practices for policy tiers.
+
+- The policy below, which is allowing egress communication of dev1 pods with all other pods in the cluster, is done by selecting all namespaces as the destination. This means we are applying granular controls to pods for traffic destined to external endpoints, and we are allowing egress traffic destined to other pods in the cluster. This is recommended unless you have specific control requirements that dictate otherwise. This simplifies policy creation since we have already defined granular ingress controls for intra-cluster pod-to-pod communication. The alternative would be to define granular ingress and egress controls to all pods, which adds complexity in policy development.
+
+Here is our GlobalNetworkPolicy. The dev1 team is allowed egress access to the trusted repo, `dev-repo` via port 443, and also to the trusted business unit, `dev-partners` via port 1010.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: security.egress-dev1
+spec:
+  tier: security
+  selector: tenant == "dev1"
+  egress:
+    - action: Allow
+      protocol: TCP
+      source: {}
+      destination:
+        selector: trusted-ep == "dev1-repo"
+        ports:
+          - '443'
+    - action: Allow
+      protocol: TCP
+      source: {}
+      destination:
+        selector: trusted-ep == "dev1-partners"
+        ports:
+          - '1010'
+    - action: Allow
+      source: {}
+      destination:
+        namespaceSelector: all()
+  types:
+    - Egress
+```
+
+As you can see, once you have your labels in place, creating policy to secure teams is straightforward.

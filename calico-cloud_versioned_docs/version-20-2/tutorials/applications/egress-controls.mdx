@@ -1,0 +1,206 @@
+---
+description: Learn egress access controls using domains and IP addresses.
+---
+
+# Secure egress access from workloads to destinations outside the cluster
+
+In this article we'll show you how to restrict egress access for your application or microservice pods to external endpoints outside of the cluster.
+
+- [Use a network set with a network policy](#use-a-network-set-with-a-network-policy)
+- [Use wildcards in domain names](#use-wildcards-in-domain-names)
+- [Use a global network set with a global network policy](#use-a-global-network-set-with-a-global-network-policy)
+
+## What are networks sets?
+
+$[prodname] NetworkSet and GlobalNetworkSet resources are used to define endpoints external to the Kubernetes cluster. The scope of a NetworkSet is the **namespace where they are defined**; the scope of a GlobalNetworkSet is **cluster-wide**.
+
+NetworkSet/GlobalNetworkSet come in two types:
+
+- **Network-based** - defines IP address-based external endpoints
+- **Domain-based** - defines URL-based external endpoints. Using domains in policy is often called, DNS policy.
+
+## Use a network set with a network policy
+
+In this example, we have a microservice that requires egress access to two external endpoints: a repo and a partner.
+
+![egress-example](/img/calico-cloud/egress-example.png)
+
+`svc3` pods needs egress access to:
+
+- A repo named, `app2-repo` at domain `app2-repo.example.com`, port 443
+- A partner named, `app2-partners` at endpoint `10.10.10.10/32`, port 1010 and 53
+
+First, we define a domain-based NetworkSet. Using `allowedEgressDomains` we can specify the trusted repo by its URL, `app2-repo.example.com`.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkSet
+metadata:
+  name: app2-repo
+  namespace: app2-ns
+  labels:
+    trusted-ep: 'app2-repo'
+spec:
+  allowedEgressDomains:
+    - 'app2-repo.example.com'
+```
+
+Next, we create a network-based NetworkSet that specifies the IP address of the trusted partner, `10.10.10.10/32`.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkSet
+metadata:
+  name: app2-partners
+  namespace: app2-ns
+  labels:
+    trusted-ep: 'app2-partners'
+spec:
+  nets:
+    - 10.10.10.10/32
+```
+
+Now we can reference these NetworkSets by their labels in NetworkPolicy. We use a selector to specify the service, `app == "app2"&&svc == "svc3"`, and then selectors to allow egress to our two trusted endpoints, `selector: trusted-ep == "app2-repo"` at port 443, and `selector: trusted-ep == "app2-partners"` at ports 1010 and 53.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: application.app2-svc3-egress
+  namespace: app2-ns
+spec:
+  tier: application
+  selector: (app == "app2" && svc == "svc3")
+  egress:
+    - action: Allow
+      source: {}
+      destination:
+        selector: trusted-ep == "app2-repo"
+        ports:
+          - '443'
+      protocol: TCP
+    - action: Allow
+      source: {}
+      destination:
+        selector: trusted-ep == "app2-partners"
+        ports:
+          - '1010'
+      protocol: TCP
+    - action: Allow
+      protocol: UDP
+      source: {}
+      destination:
+        ports:
+          - '53'
+  types:
+    - Egress
+```
+
+## Use wildcards in domain names
+
+In this example, we create another namespaced NetworkPolicy with egress rules with `action: Allow` and a `destination.domains` field specifying the domain names to which egress traffic is allowed.
+
+The first egress rule allows DNS traffic using UDP over port 53, and the second rule allows connections outside the cluster to domains `api.alice.com` and `*.example.com` (which means `<anything>.example.com`, such as `bob.example.com`).
+
+Note that our namespaced NetworkPolicy can only grant egress access to specified domains, and to workload endpoints in the `rollout-test` namespace.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-to-domains
+  namespace: rollout-test
+spec:
+  order: 1
+  selector: my-pod-label == 'my-value'
+  types:
+    - Egress
+  egress:
+    - action: Allow
+      protocol: UDP
+      destination:
+        ports:
+          - 53
+          - dns
+    - action: Allow
+      destination:
+        domains:
+          - api.alice.com
+          - '*.example.com'
+```
+
+## Use a global network set with a global network policy
+
+We recommend using a GlobalNetworkSet when the same set of domains needs to be referenced in multiple policies, or when you want the allowed destinations to be a mix of domains and IPs from global network sets, or IPs from workload endpoints and host endpoints. By using a single destination selector in a global network set, you can potentially match all of these resources.
+
+In the following example, the allowed egress domains (`api.alice.com` and `*.example.com`) are specified in the GlobalNetworkSet.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkSet
+metadata:
+  name: allowed-domains-1
+  labels:
+    color: red
+spec:
+  allowedEgressDomains:
+    - api.alice.com
+    - '*.example.com'
+```
+
+Then, we reference the global network set in a GlobalNetworkPolicy using a destination label selector.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: allow-egress-to-domain
+spec:
+  order: 1
+  selector: my-pod-label == 'my-value'
+  types:
+    - Egress
+  egress:
+    - action: Allow
+      destination:
+        selector: color == 'red'
+```
+
+## For reference...
+
+### Allowed egress domains
+
+Using domain names in policy rules is limited to only egress allow rules. $[prodname] allows connections only to IP addresses returned from DNS lookups to trusted DNS servers. The supported DNS types are: A, AAAA, and CNAME records. The domain name must be an exact match; for example, **google.com** is treated as distinct from **www.google.com**.
+
+**Note:** Kubernetes labels provide a similar convenience for services within the cluster. $[prodname] does not support using domain names for services within the cluster. Use Kubernetes labels for services within the cluster.
+
+### Domain name matching
+
+When a configured domain name has no wildcard (`*`), it matches exactly that domain name. For example:
+
+- `microsoft.com`
+- `tigera.io`
+
+With a single asterisk in any part of the domain name, it matches 1 or more path components at that position. For example:
+
+- `*.google.com` matches `www.google.com` and `www.ipv6.google.com`, but not `google.com`
+- `www.*.com` matches `www.sun.com` and `www.apple.com`, but not `www.com`
+- `update.*.mycompany.com` matches `update.tools.mycompany.com`, `update.secure.suite.mycompany.com`, and so on
+
+**Not** supported are:
+
+- Multiple wildcards in the same domain, for example: `*.*.mycompany.com`
+- Asterisks that are not the entire component, for example: `www.g*.com`
+- More general wildcards, such as regular expressions
+
+### Workload and host endpoints
+
+Policy with domain names can be enforced on workload or host endpoints. When a policy with domain names applies to a workload endpoint, it allows that workload to connect out to the specified domains. When policy with domain names applies to a host endpoint, it allows clients directly on the relevant host (including any host-networked workloads) to connect out to the specified domains.
+
+### Trusted DNS servers
+
+$[prodname] trusts DNS information only from its list of DNS trusted servers. Using trusted DNS servers to back domain names in policy, prevents a malicious workload from using IPs returned by a fake DNS server to hijack domain names in policy rules.
+
+By default, $[prodname] trusts the Kubernetes cluster’s DNS service (kube-dns or CoreDNS). For workload endpoints, these out-of-the-box defaults work with standard Kubernetes installs, so normally you won’t change them. For host endpoints you will need to add the IP addresses that the cluster nodes use for DNS resolution.
+
+To change the default DNS trusted servers, use the DNSTrustedServers parameter in Felix.

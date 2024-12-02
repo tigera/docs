@@ -1,0 +1,122 @@
+---
+description: Detect vulnerabilities in a Kubernetes cluster.
+---
+
+# Scan images in a Kubernetes cluster
+
+Scan all images in a Kubernetes cluster for vulnerabilities to achieve a continuous clean bill of health and defense in depth.
+
+Common use cases for scanning in a Kubernetes cluster are:
+
+- Images may pass scanning during the build phase, but they could contain vulnerabilities days or weeks later
+- Third-party images that are pulled from public registries are often not scanned in build pipelines and can contain Critical or High vulnerabilities
+- Application teams may build one-off images outside of their pipeline to make an emergency patch and fix a critical bug.
+
+## About Image Assurance scanner
+
+The Image Assurance scanner that runs in a Kubernetes cluster is out-of-the-box ready to use without configuration. It runs as a daemonset in a managed cluster where images are located, and is installed on all nodes in the cluster.
+
+Vulnerability detection consists of these steps:
+
+- **Image Assurance scanner** - generates a dependency list Software Bill of Materials (SBOM) using Syft
+- **Vulnerability lookup** - $[prodname] uploads the SBOM where packages are matched with known CVEs in the vulnerability databases based on dependencies using Grype
+
+![vulnerability-detection](/img/calico-cloud/vulnerability-detection.png)
+
+$[prodname] checks running images for new vulnerabilities every 24 hours and reports scan results to the Image dashboard in Manager UI.
+
+## Before you begin
+
+**Unsupported**
+- OpenShift
+- GCP-Kubeadm
+- AWS-Kubeadm
+- GKE
+
+**Cluster requirements**
+- Containerd is the container runtime
+- AKS clusters: if you are using Kubernetes v1.19 or higher, containerd should be your default runtime
+- Containerd must be using overlays or native file system snapshotter
+
+## How to
+- [Get latest version of Image Assurance](#get-latest-version-of-image-assurance)
+- [Enable scanner](#enable-scanner)
+- [Customize scanner settings](#customize-scanner-settings)
+- [Disable scanner](#disable-scanner)
+
+### Get latest version of Image Assurance
+
+1. On the **Managed Clusters** page, select the cluster from the list, and click **Reinstall**.
+1. Copy the updated installation script command and run it against your cluster.
+
+### Enable scanner
+
+Complete the following steps for each managed cluster you want enabled with the cluster scanner:
+
+1. Modify the [Image Assurance](../../reference/installation/ia-api.mdx#image-assurance.operator.tigera.io/v1.ImageAssuranceSpec) installation resource.
+
+   ```bash
+   kubectl edit imageassurance default
+   ```
+
+2. Set the `clusterScanner` field to `Enabled` and save the file.
+
+The cluster scanner is deployed as a container inside the `tigera-image-assurance-crawdad` daemonset.
+
+3. Verify that a new container with name, `cluster-scanner` is created inside the daemonset.
+
+That’s it. The cluster scanner will start scanning images on running pods in the cluster. For help viewing image events in Manager UI, see [View scanned and running images](../understanding-scan-results).
+
+### Customize scanner settings
+
+To change default settings, modify the [Image Assurance](../../reference/installation/ia-api.mdx#image-assurance.operator.tigera.io/v1.ImageAssuranceSpec) installation resource.
+
+- Container runtime socket path
+
+    Set the `criSocketPath` field to the path of the container runtime socket. Default: `/run/containerd/containerd.sock`
+
+- Containerd file system root path
+
+    Set the `containerdVolumeMountPath`. Default: `/var/lib/containerd/`.
+
+### Configure exclusions for image scanning
+
+To specify which namespaces should be excluded from future scans, follow the following steps.
+
+- Modify your [Image Assurance](../../reference/installation/ia-api.mdx#image-assurance.operator.tigera.io/v1.ImageAssuranceSpec) installation resource to include the `exclusions.namespaces` field. List each namespace you want to exclude.
+
+
+```yaml
+apiVersion: image-assurance.operator.tigera.io/v1
+kind: ImageAssurance
+metadata:
+  name: default
+spec:
+  clusterScanner: Enabled
+  exclusions:
+    namespaces:
+      - "kube-system"
+      - "dev-qa"
+```
+
+In this example, the workloads in the `kube-system` and `dev-qa` namespaces are excluded from future image scans. 
+
+:::note
+
+Applying or updating namespace exclusions affects only future scans. Results from scans conducted prior to these exclusions will remain unchanged. The exclusions configured will apply to both cluster scanner and runtime view (**Running Images** tab).
+
+:::
+
+### Disable scanner
+
+1. Modify the `imageassurance` installation resource.
+
+```bash
+ kubectl edit imageassurance default
+   ```
+
+2. Set the `clusterScanner` field to `Disabled` and save the file. This deletes the cluster scanner container from the daemonset from your cluster.
+
+## Next step
+
+[Set up alerts on vulnerabilities ](../set-up-alerts)

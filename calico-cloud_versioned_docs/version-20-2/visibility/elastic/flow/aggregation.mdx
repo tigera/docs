@@ -1,0 +1,110 @@
+---
+description: Configure flow log aggregation to reduce log volume and costs.
+---
+
+# Configure flow log aggregation
+
+## Big picture
+
+Configure flow log aggregation level to reduce log volume and costs.
+
+## Value
+
+Beyond using filtering to suppress flow logs, $[prodname] provides controls to aggregate flow logs. Although aggressive aggregation levels reduce
+flow volume and costs, it can also reduce visibility into specific metadata of allowed and denied traffic. Review this article to see which level of
+aggregation is suitable for your implementation.
+
+## Concepts
+
+### Volume and cost versus visibility
+
+$[prodname] enables flow log aggregation for pod/workload endpoints by default, and uses an aggressive aggregation level to reduce log volume. The
+level assumes that most users do not need to see pod IP information (due to the ephemeral nature of pod IP address allocation). However, it all
+depends on your deployment; we recommend reviewing aggregation levels to understand what information gets grouped (and thus suppressed from view).
+
+### Aggregation types and levels
+
+For allowed flows, the default aggregation level is 2, `AnyConnectionFromSamePodPrefix` and for denied flows the default aggregation level is 1,
+`AnyConnectionFromSameSourcePod`.
+
+The following table summarizes the aggregation levels by flow log traffic:
+
+| **Level** | **Name**                            | **Description**                                                   |
+|-----------|-------------------------------------|-------------------------------------------------------------------|
+| 0         |                                     | No aggregation                                                    |
+| 1         | AnyConnectionFromSameSourcePod      | Identity fields below source pod level are masked out. It means that flows, to the same destination, from processes or controllers in the same source pod, are aggregated together. |
+| 2         | AnyConnectionFromSamePodPrefix      | In addition to the above, source pod names are aggregated based on their shared prefixes. This means that flows, to the same destination, from pods within the same pod controller (Deployment/ReplicaSet) are aggregated together. |
+| 3         | AnyConnectionBetweenSamePodPrefixes | This level of aggregation builds on the previous two levels and also groups destination pod names based on their shared prefixes. |
+
+### Understanding aggregation level differences
+
+Here are examples of pod-to-pod flows, highlighting the differences between flow logs at various aggregation levels.
+
+The source port is usually ephemeral and does not convey useful information. By suppressing the source port, `AnyConnectionFromSameSourcePod` aggregation
+type minimizes the flow logs generated for traffic coming from different containers within the same pod and going to the same destination endpoint
+and port. The two flows originating from `client-a` without aggregation are combined into one. 
+
+In Kubernetes, pod controllers (Deployments, DaemonSets, ReplicaSets etc.) can automatically create names for pods. For example, the pods `nginx-1` 
+and `nginx-2` are created by the ReplicaSet `nginx`. The controller's name is considered a pod-prefix and is used to aggregate flow log entries 
+(indicated with an asterisk * at the end of the name). Flow logs originating from pods with the same prefix will be aggregated as long as the traffic 
+is on the same protocol, and destined towards the same IP, and destination port. The three flow logs without aggregation originating from `client-a` 
+and `client-b` are combined into a single flow log. This aggregation level is called `AnyConnectionFromSameSourcePodPrefix`.
+
+Finally, with `AnyConnectionBetweenSamePodPrefixes` we combine source and destination pods that are part of the same pod controller. With level 3, the flow logs
+are aggregated by the destination port and protocol, as long as they originate from pods with the same pod-prefix and destined for pods of the same 
+pod-prefix. Previously distinct logs are aggregated into a single flow log (see the last row).
+
+|                          |           | **Src Traffic**  | |          | **Dst Traffic**  | |          | **Packet counts**      | |
+|--------------------------|-----------|----------|---------|----------|----------|---------|----------|------------|-------------|
+| **Aggr lvl**             | **Flows** | **Name** | **IP**  | **Port** | **Name** | **IP**  | **Port** | **Pkt in** | **Pkt out** |
+| 0 (no aggr)              | 4         | client-a | 1.1.1.1 | 45556    | nginx-1  | 2.2.2.2 | 80       | 1          | 2           |
+|                          |           | client-b | 1.1.2.2 | 45666    | nginx-2  | 2.2.3.3 | 80       | 2          | 2           |
+|                          |           | client-a | 1.1.1.1 | 65533    | nginx-1  | 2.2.2.2 | 80       | 1          | 3           |
+|                          |           | client-c | 1.1.1.2 | 65534    | nginx-2  | 2.2.3.3 | 80       | 3          | 4           |
+| 1 (src port)             | 3         | client-a | 1.1.1.1 | -        | nginx-1  | 2.2.2.2 | 80       | 2          | 5           |
+|                          |           | client-b | 1.1.2.2 | -        | nginx-1  | 2.2.2.2 | 80       | 2          | 2           |
+|                          |           | client-c | 1.1.3.3 | -        | nginx-2  | 2.2.3.3 | 80       | 3          | 4           |
+| 2 (src pod-prefix)       | 2         | client-* | -       | -        | nginx-1  | 2.2.2.2 | 80       | 4          | 7           |
+|                          |           | client-* | -       | -        | nginx-2  | 2.2.3.3 | 80       | 3          | 4           |
+| 3 (src/dest pod-prefix)  | 1         | client-* | -       | -        | nginx-*  | -       | 80       | 7          | 11          |
+
+## How to
+
+- [Verify existing aggregation level](#verify-existing-aggregation-level)
+- [Change default aggregation level](#change-default-aggregation-level)
+- [Troubleshoot logs with aggregation levels](#troubleshoot-logs-with-aggregation-levels)
+
+### Verify existing aggregation level
+
+Use the following command:
+
+```bash
+kubectl get felixconfiguration -o yaml
+```
+
+### Change default aggregation level
+
+Before [changing the default aggregation level](../../../reference/resources/felixconfig.mdx#aggregationkind), note the following:
+
+- Although any change in aggregation level affects flow log volume, lowering the aggregation number (especially to `0` for no aggregation) will cause significant impacts to log storage. If you allow more flow logs, ensure that you provision more log storage.
+- Verify that the parameters that you want to see in your aggregation level are not already [filtered](filtering.mdx).
+
+### Troubleshoot logs with aggregation levels
+
+When you use flow log aggregation, sometimes you may see two Alerts,
+
+![two-alerts](/img/calico-enterprise/two-alerts.png)
+
+along with two flow log entries. Note that the entries are identical except for the slight timestamp difference.
+
+![two-logs](/img/calico-enterprise/two-logs.png)
+
+The reason you may see two entries is because of the interaction between the aggregation interval, and the time interval to export logs (`flowLogsFlushInterval`).
+
+In each aggregation interval, connections/connection attempts can be started or completed. However, flow logs do not start/stop when a connection starts/stops. Let’s assume the default export logs “flush” time of 10 seconds. If a connection is started in one flush interval, but terminates in the next, it is recorded across two entries. To get visibility into flow logs to differentiate the entries, go to Service Graph, flow logs tab, and look at these fields: `num_flows`, `num_flows_started`, and `num_flows_completed`.
+
+The underlying reason for this overlap is a dependency on Linux conntrack, which provides the lifetime of stats that $[prodname] tracks across different protocols (TCP, ICMP, UDP). For example, for UDP and ICMP, $[prodname] waits for a conntrack entry to timeout before it considers a “connection” closed, and this is usually greater than 10 seconds.
+
+## Additional resources
+
+- [Archive logs to storage](../archive-storage.mdx)
