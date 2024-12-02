@@ -1,0 +1,77 @@
+30 November 2022 (Chart Release 1)
+
+See Chart Release 0 for "What's New".
+
+## Bug Fixes
+
+- Fixed a bug that caused servers not to trust the certificate of Dex, preventing users to login using an external identity provider.
+- Fixed a bug where Intrusion Detection Controller failed to create Syslog events due to constraints in its security context.
+- Fixed a bug where Anomaly Detection API failed to write to disk when persistent storage is configured due to constraints in its security context.
+
+## Known issues
+
+- When using persistent storage for Anomaly Detection, currently only `tigera-anomaly-detection` can be used as a value for `StorageClassName`.
+- L7 log collection fails to deploy on CIS hardened clusters. As a result, some cards in the manager UI dashboard will not display any metrics.
+- Enabling L7 related Anomaly Detection jobs require L7 to be enabled on the cluster. Anomaly Detection jobs crash-loop if L7 is not enabled.
+- Upgrading $[prodname] v3.15.0 on Rancher/RKE from $[prodname] v3.13.0 currently requires manually terminating the calico-node container for upgrade to proceed.
+- Mirantis MKE has provisional support due to upgrade issues on that platform. Please contact our support team for upgrades or deployments on Mirantis MKE.
+
+---
+
+[Release archive]($[downloadsurl]/ee/archives/release-v3.15.0-v1.28.6.tgz) with Kubernetes manifests. Based on Calico v3.24.
+
+22 November 2022 (Chart Release 0)
+
+## What's new
+
+### Egress Gateway failure detection
+
+$[prodname] has improved the probes to check readiness and outbound connectivity of Egress Gateways. [Link to documentation](../../networking/egress/troubleshoot.mdx)
+
+### Egress Gateway pods are now non-privileged
+
+$[prodname] has rearchitected Egress Gateway pods to improve security and make use of a temporary init container to set up packet forwarding. [Link to documentation](../../networking/egress/egress-gateway-on-prem.mdx)
+
+### UI for Global Threat Feeds
+
+$[prodname] includes a new UI that can be used to manage and configure Global Threat Feeds. [Link to documentation](../../reference/resources/globalthreatfeed.mdx)
+
+### FIPS encryption mode
+
+$[prodname] has added a new FIPS 140-2 install mode that leverages FIPS-approved cryptographic algorithms and NIST-validated cryptographic modules.
+[Link to documentation](../../operations/fips.mdx)
+
+### Prometheus metrics for federation
+
+$[prodname] includes new Prometheus metrics to monitor the health of federation across clusters. [Link to documentation](../../reference/component-resources/kube-controllers/prometheus.mdx)
+
+### Namespace-based policy recommendations
+
+$[prodname] has improved its policy recommendation engine to add namespace-based recommendations. This enables operators to easily implement microsegmentation for namespaces. [Link to documentation](../../network-policy/generate-policy-recommendation.mdx#policy-recommendations-when-and-why)
+
+### New and improved Dashboards
+
+$[prodname] includes new and improved Dashboards that enable operators to define cluster- and namespace-scoped dashboards with new modules for policy usage, application layer and DNS metrics, and much more. [Link to documentation](/visibility/get-started-cem)
+
+### Included updates from Calico OSS
+
+$[prodname] also includes new features and fixes from Calico OSS. For more details on these changes please see the [release notes here.](https://projectcalico.docs.tigera.io/archive/v3.24/release-notes)
+
+### Security update: allow-tigera tier
+
+The Tigera Operator is now responsible for maintaining the allow-tigera tier (responsible for enabling and securing traffic flows for $[prodname] components). This means that tigera-operator will create the allow-tigera tier and its policies based on your cluster type (if not already present), and continuously monitor them to ensure they match the expected state defined by Tigera.
+Any edits or deletions to the allow-tigera tier and its policies will be automatically reverted by the Operator, protecting you from potential inadvertent changes that disrupt Tigera component operations.
+During $[prodname] upgrades, as new Tigera components are added and existing components evolve, the Operator will update the tier and its policies accordingly to ensure the traffic required for these changes is allowed.
+
+### Action item: Customers who have modified the allow-tigera tier in previous releases
+
+As of this release, the allow-tigera tier will be managed and maintained by Tigera, and edits to this tier are no longer supported. If you have made edits to the tier and its policies, and you wish to retain your changes prior to upgrade, you must take action. See [Change allow-tigera behaviour](../../network-policy/policy-tiers/allow-tigera.mdx) for details on how you can retain your changes by representing them as policies in an adjacent tier. You will need to determine what edits you have made and translate them to adjacent policies accordingly. Reach out to Support if you require assistance on this migration.
+
+## Known issues
+
+- Intrusion Detection Controller fails to create Syslog events due to constraints in its security context. A patch for this issue will be included in v3.15.1.
+- Anomaly Detection API fails to write to disk when persistent storage is configured due to constraints in its security context. A patch for this issue is included in v3.15.1.
+- L7 log collection fails to deploy on CIS hardened clusters. As a result, some cards in the manager UI dashboard will not display any metrics.
+- Enabling L7 related Anomaly Detection jobs require L7 to be enabled on the cluster. Anomaly Detection jobs crash-loop if L7 is not enabled.
+- Upgrading $[prodname] v3.15.0 on Rancher/RKE from $[prodname] v3.13.0 currently requires manually terminating the calico-node container for upgrade to proceed.
+- Mirantis MKE has provisional support due to upgrade issues on that platform. Please contact our support team for upgrades or deployments on Mirantis MKE.

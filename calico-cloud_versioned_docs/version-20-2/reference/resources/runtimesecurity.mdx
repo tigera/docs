@@ -1,0 +1,72 @@
+---
+description: API for this Calico Cloud resource 
+---
+
+# RuntimeSecurity
+
+The **RuntimeSecurity** custom resource (CR) is used to enable and configure Container Threat Detection in a Calico Cloud managed cluster.
+
+### Resource Definition
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: RuntimeSecurity
+metadata:
+  name: default
+spec:
+  detectorConfig:
+    - id: execution-container_deployment_command
+      disabled: true
+    - id: discovery-enumeration_of_linux_capabilities
+      disabled: true
+  runtimeExceptionList:
+    - matching: regex
+      processInvocation: "/bin/ls*"
+      pod: "not-evil-pod"
+      namespace: "default"
+    - matching: exact
+      pod: "nginx"
+      namespace: default
+    - matching: regex
+      namespace: "company-operations"
+```
+
+## Runtime Security Definition 
+
+### Metadata
+
+| Field  | Description                                   | Accepted Values  | Schema |
+| ------ | --------------------------------------------- | ---------------- | ------ |
+| name   | The name of the runtime security resource.    | default          | string |
+| labels | A set of labels to apply to this resource.    |                  | map    |
+
+
+### Spec
+
+| Field                    | Description                                                                                  | Accepted Values  | Schema                                                | Default |
+| ------------------------ | -------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------------- | ------- |
+| detectorConfig           | Configuration that allows particular threat detectors to be disabled                         |                  | [DetectorConfig](#detectorconfig)                     |         |
+| runtimeExceptionList     | List of entries of processes that are allowed to run that won't generate an event            |                  | [runtimeExceptionList](#runtimeexceptionlist)         | Enabled |        
+
+### DetectorConfig 
+
+The `DetectorConfig` by default is not present but can be used to disable particular threat detectors in the Calico Cloud Managed cluster.
+One entry per detector 
+
+| Field    | Description                                                       | Accepted Values | Schema  |
+| -------- | ----------------------------------------------------------------- | --------------- | ------- |
+| id       | The ID of the detector this entry applies too                     |                 | string  |
+| disabled | Boolean represents weather the detector should be disabled or not | True, False     | boolean |
+
+
+### RuntimeExceptionList
+
+This `RuntimeExceptionList` holds a list of entries that contain a list of supported fields by which a user can negate the 
+generation of runtime reports.
+
+| Field             | Description                                                                                                            | Accepted Values | Schema  |
+| --------          | ---------------------------------------------------------------------------------------------------------------------- | --------------- | ------- |
+| matching          | Whether the entries are exact matches to fields or considered a regular expression                                     | Exact, Regex    | string  |
+| processInvocation | The exact name or regex of the process to which a user wants to negate the generation of runtime logs                  |                 | string  |
+| pod               | The exact name or regex of the pod(s) to which a user wants to negate the generation of runtime logs                   |                 | string  |
+| namespace         | The exact name or regex of the namespace(s) for which a user wants to negate the generation of runtime logs            |                 | string  |

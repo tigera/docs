@@ -1,0 +1,153 @@
+---
+description: Configure and aggregate L7 logs.
+---
+
+# Configure L7 logs
+
+## Big picture
+
+Deploy Envoy and use $[prodname] L7 logs to monitor application activity.
+
+## Value
+
+Just like L3/4 $[prodname] logs, platform operators and
+development teams want visibility into L7 logs to see how applications are interacting with each
+other. $[prodname] flow logs only display which workloads are communicating
+with each other, not the specific request details. $[prodname] provides visibility into L7 traffic without the need for a service mesh.
+
+L7 logs are also key for detecting anomalous behaviors like attempts to
+access applications, restricted URLs, and scans for particular URLs.
+
+## Concepts
+
+### About L7 logs
+
+L7 logs capture application interactions from HTTP header data in requests. Data shows what is actually sent in communications between specific pods, providing more specificity than flow logs. (Flow logs capture data only from connections for workload interactions).
+
+$[prodname] collects L7 logs by sending the selected traffic through an Envoy proxy.
+
+L7 logs are visible in the Manager UI, service graph, in the HTTP tab.
+
+## Before you begin
+
+**Not supported**
+- GKE
+
+**Limitations**
+
+- L7 log collection is not supported for host-networked client pods.
+- When selecting and deselecting traffic for L7 log collection, active connections may be disrupted.
+
+<!--TODO-XREFS-CC
+Note removed for CC
+-->
+
+## How to
+
+- [Configure Felix for log data collection](#configure-felix-for-log-data-collection)
+- [Configure L7 logs](#configure-l7-logs)
+- [View L7 logs in Manager UI](#view-l7-logs-in-manager-ui)
+
+### Configure Felix for log data collection
+
+1. Enable the Policy Sync API in Felix.
+
+   For cluster-wide enablement, modify the `default` FelixConfiguration and set the field `policySyncPathPrefix` to `/var/run/nodeagent`.
+
+   ```bash
+   kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
+   ```
+
+1. Configure L7 log aggregation, retention, and reporting.
+
+   For help, see [Felix Configuration documentation](../../../reference/component-resources/node/felix/configuration.mdx#calico-enterprise-specific-configuration).
+
+### Configure L7 logs
+
+In this step, you will configure L7 logs, select logs for collection, and test the configuration.
+
+**Configure the ApplicationLayer resource for L7 logs**
+
+1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) resource named, `tigera-secure`.
+
+   Example:
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: ApplicationLayer
+   metadata:
+     name: tigera-secure
+   spec:
+     # log collection is implemented via sidecar
+     sidecarInjection: Enabled
+     # the following configures the log collection and aggregation behaviour
+     logCollection:
+       collectLogs: Enabled
+       logIntervalSeconds: 5
+       logRequestsPerInterval: -1
+   EOF
+   ```
+
+   Read more about the log collection specification [here](../../../reference/installation/api.mdx#operator.tigera.io/v1.LogCollector).
+   
+   Applying this resource creates an `l7-log-collector` daemonset in `calico-system` namespace.
+
+1. Wait for the Log collection daemonset to progress to ready.
+
+   ```bash
+   kubectl rollout status -n calico-system ds/l7-log-collector
+   ```
+
+**Select traffic for L7 log collection**
+
+1. Annotate the services you wish to collect L7 logs as shown.
+
+   ```bash
+   kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging=true
+   ```
+
+2. To disable the L7 log collection, remove the annotation.
+
+   ```bash
+   kubectl annotate svc <service-name> -n <service-namespace> projectcalico.org/l7-logging-
+   ```
+
+After annotating a service for L7 log collection, only newly-established connections through that service are proxied by Envoy. Connections established before the service is annotated are not proxied or interrupted, and no logs are generated.
+
+Conversely, when a service is deselected, any previous connections established through the annotated service continue to be proxied by Envoy until they are terminated, and logs are generated.
+
+**Test your configuration**
+
+1. Identify the path to access your cluster. Where `<path>` can be:
+
+   - Public address of your cluster/service
+     or
+   - Cluster IP of your application's service (if testing within the cluster)
+
+1. `curl` your service with a command similar to the following. You will see `Server` header as `envoy`.
+
+   ```bash
+   curl --head <path to access service>:<optional port>/<path>
+   ```
+
+### View L7 logs in Manager UI
+
+**Service Graph**
+
+To view L7 logs in Service Graph:
+
+1. In the Manager UI left navbar, click **Service Graph**.
+1. In the bottom pane you will see L7 logs in the HTTP tab.
+
+   ![l7-logs](/img/calico-enterprise/l7-logs.png)
+
+**Kibana**
+
+To view L7 logs by index pattern in Kibana:
+
+1. In the Manager UI left navbar, click **Kibana**.
+
+1. In the new Kibana browser, click the hamburger icon in the top left corner, and select **Analytics**, **Discover**.
+
+1. Select the index pattern, `tigera_secure_ee_l7`.

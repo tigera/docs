@@ -1,0 +1,679 @@
+---
+description: Additional troubleshooting for the Tigera operator.
+---
+
+# Tigera operator troubleshooting checklist
+
+If you have issues getting your cluster up and running, use this checklist.
+
+- [Check installation start errors](#check-installation-start-errors)
+- [Check Calico Cloud installation](#check-calico-cloud-installation)
+- [Check logs for fatal errors](#check-logs-for-fatal-errors)
+- [Check custom resources](#check-custom-resources)
+- [Check pod capacity](#check-pod-capacity)
+- [Check Manager UI dashboard for traffic](#check-manager-ui-dashboard-for-traffic)
+
+## Check installation start errors
+
+Are you seeing any of these issues at the start of installation?
+
+### [ERROR] Detected plugin ls: No such file or directory, it is currently not supported
+
+The cluster you are using to install $[prodname] does not have a CNI plugin installed, the CNI is incompatible. If your cluster has functional pod networking and you see this message, it is likely that kubelet has been configured to use kubenet networking, which is not compatible with $[prodname]. You can use a different cluster, or re-create your cluster with [compatible networking](system-requirements.mdx).
+
+### $[prodname] cannot be connected to a cluster with FIPS mode enabled
+
+At this time, FIPS mode is not supported in $[prodname]. Disable FIPS mode in the cluster and install again.
+
+### Install script is taking a long time
+
+If you are migrating a large cluster from a previous manifest-based Calico install, the script can take some time; this is normal.
+
+But, it could also mean that your cluster has an incompatibility. Go to the next step [Check Calico Cloud installation](#check-calico-cloud-installation).
+
+## Check Calico Cloud installation
+
+Installing $[prodname] on your Kubernetes cluster is managed by the Tigera operator. The Tigera operator is deployed as a ReplicaSet in the `tigera-operator` namespace, and records status in a custom resource named, `tigerastatus`. The operator get its configuration from several Custom Resources (CRs); the central one is the Installation CR.
+
+Check `tigerastatus` using the following command.
+
+```bash
+kubectl get tigerastatus
+```
+
+**Sample output**
+
+```
+NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
+apiserver                       True        False         False      10m
+calico                          True        False         False      11m
+cloud-core                      True        False         False      11m
+compliance                      True        False         False      9m39s
+intrusion-detection             True        False         False      9m49s
+log-collector                   True        False         False      9m29s
+management-cluster-connection   True        False         False      9m54s
+monitor                         True        False         False      10m
+runtime-security                True        False         False      10m
+```
+
+If all components show a status of "Available" = TRUE, $[prodname] is properly installed.
+
+:::note
+
+The `runtime-security` component is available only if [the container threat detection feature is enabled](../threat/container-threat-detection.mdx#enable-container-threat-detection).
+
+:::
+
+**Issue: $[prodname] is not installed**
+
+If $[prodname] is not installed, you'll get the following error. Install $[prodname] on the node using the `curl` command that you got from Support.
+
+```bash
+kubectl get tigerastatus
+error: the server doesn't have a resource type "tigerastatus"
+```
+
+**Issue: $[prodname] components are missing or are degraded**
+
+If some of the $[prodname] components are Available = FALSE or DEGRADED = TRUE, run the following command and contact Support with the following output.
+
+```bash
+kubectl get tigerastatus -o yaml
+```
+
+:::note
+
+If you are using the **AWS or Azure CNI plugin**, a degraded state is likely because you do not have enough pod capacity on your nodes. To fix this, see [Check pod capacity](#check-pod-capacity).
+
+:::
+
+**Sample output**
+
+In the following example, the typha component has an issue because it is showing `AVAILABLE: FALSE`, and `DEGRADED: TRUE`. To understand details of $[prodname] components, see [Deep dive into custom resources](#deep-dive-into-custom-resources).
+
+```yaml
+apiVersion: v1
+items:
+  - apiVersion: operator.tigera.io/v1
+    kind: TigeraStatus
+    metadata:
+      creationTimestamp: '2020-12-30T17:13:30Z'
+      generation: 1
+      managedFields:
+        - apiVersion: operator.tigera.io/v1
+          fieldsType: FieldsV1
+          fieldsV1:
+            f:spec: {}
+            f:status:
+              .: {}
+              f:conditions: {}
+          manager: operator
+          operation: Update
+          time: '2020-12-30T17:16:20Z'
+      name: calico
+      resourceVersion: '8166'
+      selfLink: /apis/operator.tigera.io/v1/tigerastatuses/calico
+      uid: 39a8a2d0-2074-418c-b52d-0baa0a48f4a1
+    spec: {}
+    status:
+      conditions:
+        - lastTransitionTime: '2020-12-30T17:13:30Z'
+          status: 'False'
+          type: Available
+        - lastTransitionTime: '2020-12-30T17:13:30Z'
+          message: DaemonSet "calico-system/calico-node" is not yet scheduled on any nodes
+          reason: Not all pods are ready
+          status: 'True'
+          type: Progressing
+        - lastTransitionTime: '2020-12-30T17:13:30Z'
+          message: 'failed to wait for operator typha deployment to be ready: waiting
+            for typha to have 4 replicas, currently at 3'
+          reason: error migrating resources to calico-system
+          status: 'True'
+          type: Degraded
+kind: List
+metadata:
+  resourceVersion: ''
+  selfLink: ''
+```
+
+## Check logs for fatal errors
+
+Check that the Tigera operator is running and that logs do not have any fatal errors.
+
+```bash
+kubectl get pods -n tigera-operator
+```
+
+```
+NAME                               READY   STATUS    RESTARTS   AGE
+tigera-operator-8687585b66-68gmr   1/1     Running   0          139m
+```
+
+```bash
+kubectl logs -n tigera-operator tigera-operator-8687585b66-68gmr
+```
+
+```
+2020/12/30 17:38:54 [INFO] Version: 90975f4
+2020/12/30 17:38:54 [INFO] Go Version: go1.14.4
+2020/12/30 17:38:54 [INFO] Go OS/Arch: linux/amd64
+{"level":"info","ts":1609349935.2848425,"logger":"setup","msg":"Checking type of cluster","provider":""}
+{"level":"info","ts":1609349935.2868738,"logger":"setup","msg":"Checking if TSEE controllers are required","required":true}
+<...>
+```
+
+## Check custom resources
+
+Verify that you have the **installation custom resource**, and that the values are appropriate for your environment.
+
+```bash
+kubectl get installation.operator.tigera.io default -o yaml
+```
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"operator.tigera.io/v1","kind":"Installation","metadata":{"annotations":{},"name":"default"},"spec":{"imagePullSecrets":[{"name":"tigera-pull-secret"}],"variant":"TigeraSecureEnterprise"}}
+  creationTimestamp: '2021-01-20T19:50:23Z'
+  generation: 2
+  managedFields:
+    - apiVersion: operator.tigera.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+        f:spec:
+          .: {}
+          f:imagePullSecrets: {}
+          f:variant: {}
+      manager: kubectl
+      operation: Update
+      time: '2021-01-20T19:50:23Z'
+    - apiVersion: operator.tigera.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          f:calicoNetwork:
+            .: {}
+            f:bgp: {}
+            f:hostPorts: {}
+            f:ipPools: {}
+            f:mtu: {}
+            f:multiInterfaceMode: {}
+            f:nodeAddressAutodetectionV4:
+              .: {}
+              f:firstFound: {}
+          f:cni:
+            .: {}
+            f:ipam:
+              .: {}
+              f:type: {}
+            f:type: {}
+          f:componentResources: {}
+          f:flexVolumePath: {}
+          f:nodeUpdateStrategy:
+            .: {}
+            f:rollingUpdate:
+              .: {}
+              f:maxUnavailable: {}
+            f:type: {}
+        f:status:
+          .: {}
+          f:variant: {}
+      manager: operator
+      operation: Update
+      time: '2021-01-20T19:55:10Z'
+  name: default
+  resourceVersion: '5195'
+  selfLink: /apis/operator.tigera.io/v1/installations/default
+  uid: 016c3f0b-39f0-48a0-9da8-a59a81ed9128
+spec:
+  calicoNetwork:
+    bgp: Enabled
+    hostPorts: Enabled
+    ipPools:
+      - blockSize: 26
+        cidr: 10.42.0.0/16
+        encapsulation: IPIP
+        natOutgoing: Enabled
+        nodeSelector: all()
+    mtu: 0
+    multiInterfaceMode: None
+    nodeAddressAutodetectionV4:
+      firstFound: true
+  cni:
+    ipam:
+      type: Calico
+    type: Calico
+  componentResources:
+    - componentName: Node
+      resourceRequirements:
+        requests:
+          cpu: 250m
+  flexVolumePath: /usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds
+  imagePullSecrets:
+    - name: tigera-pull-secret
+  nodeUpdateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+  variant: TigeraSecureEnterprise
+status:
+  variant: TigeraSecureEnterprise
+```
+
+Verify that you have the following custom resources. In the default installation, there is no configuration information.
+
+**Check API server**
+
+```bash
+kubectl get apiserver.operator.tigera.io tigera-secure
+```
+
+```
+NAME            AGE
+tigera-secure   85m
+```
+
+**Check cloud core**
+
+```bash
+kubectl get cloudcore.operator.tigera.io tigera-secure
+```
+
+```
+NAME            AGE
+tigera-secure   88m
+```
+
+**Check compliance**
+
+```bash
+kubectl get compliance.operator.tigera.io tigera-secure
+```
+
+```
+NAME            AGE
+tigera-secure   90m
+```
+
+**Check intrusion detection**
+
+```bash
+kubectl get intrusiondetection.operator.tigera.io tigera-secure
+```
+
+```
+NAME            AGE
+tigera-secure   93m
+```
+
+**Check log collector**
+
+```bash
+kubectl get logcollector.operator.tigera.io tigera-secure
+```
+
+```
+NAME            AGE
+tigera-secure   96m
+```
+
+**Check management cluster**
+
+```bash
+kubectl get ManagementClusterConnection.operator.tigera.io tigera-secure -o yaml
+```
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: ManagementClusterConnection
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"operator.tigera.io/v1","kind":"ManagementClusterConnection","metadata":{"annotations":{},"name":"tigera-secure"},"spec":{"managementClusterAddr":"<Your cluster prefix>.tigera.io:9000"}}
+  creationTimestamp: '2021-01-20T19:55:40Z'
+  generation: 1
+  managedFields:
+    - apiVersion: operator.tigera.io/v1
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+        f:spec:
+          .: {}
+          f:managementClusterAddr: {}
+      manager: kubectl
+      operation: Update
+      time: '2021-01-20T19:55:40Z'
+  name: tigera-secure
+  resourceVersion: '5425'
+  selfLink: /apis/operator.tigera.io/v1/managementclusterconnections/tigera-secure
+  uid: b7a2093e-a4b6-4e76-b291-15f45bfa11cf
+spec:
+  managementClusterAddr: <Your cluster prefix>.tigera.io:9000
+```
+
+**Check monitor**
+
+```bash
+kubectl get monitor.operator.tigera.io tigera-secure
+```
+
+```
+NAME            AGE
+tigera-secure   98m
+```
+
+**Check runtime security **
+
+```bash
+kubectl get runtimesecurity.operator.tigera.io default
+```
+
+```
+NAME            AGE
+default         99m
+```
+
+:::note
+The `runtime-security` custom resource will only be available if the container threat detection feature is enabled.
+:::
+
+For more information on operator custom resources see the [Installation API reference](../reference/installation/api.mdx).
+
+### Deep dive into custom resources
+
+Run the following command to see if you have required custom resources:
+
+```bash
+kubectl get tigerastatus
+```
+
+|     | NAME                          | AVAILABLE | PROGRESSING | DEGRADED | SINCE |
+| --- | ----------------------------- | --------- | ----------- | -------- | ----- |
+| 1   | apiserver                     | TRUE      | FALSE       | FALSE    | 10m   |
+| 2   | calico                        | TRUE      | FALSE       | FALSE    | 11m   |
+| 3   | cloud-core                    | TRUE      | FALSE       | FALSE    | 11m   |
+| 4   | compliance                    | TRUE      | FALSE       | FALSE    | 9m39s |
+| 5   | intrusion-detection           | TRUE      | FALSE       | FALSE    | 9m49s |
+| 6   | log-collector                 | TRUE      | FALSE       | FALSE    | 9m29s |
+| 7   | management-cluster-connection | TRUE      | FALSE       | FALSE    | 9m54s |
+| 8   | monitor                       | TRUE      | FALSE       | FALSE    | 11m   |
+| 9   | runtime-security              | TRUE      | FALSE       | FALSE    | 10m   |
+
+**1 - api server**
+
+`apiserver` is a required component that is an aggregated api-server. It is required for things like applying the tigera license. If `tigerastatus` reports it as unavailable or degraded, check the pods and logs in the `tigera-system`namespace. For example,
+
+```bash
+kubectl get pods -n tigera-system
+```
+
+```
+NAME                                READY   STATUS    RESTARTS   AGE
+tigera-apiserver-5c75bc8d4b-sbn6g   2/2     Running   0          45m
+```
+
+**2 - calico**
+
+`calico` is the core component for networking. If it is not available or degraded, check the pods and their logs in the `calico-system` namespace. There should be a calico-node pod running on each of your nodes. You should have at least one `calico-typha` pod and the number will scale with the number of nodes in your cluster. You should have a `calico-kube-controllers` pod running. For example,
+
+```bash
+kubectl get pods -n calico-system
+```
+
+```
+NAME                                       READY   STATUS    RESTARTS   AGE
+calico-kube-controllers-5c77d4d559-hfl5d   1/1     Running   0          44m
+calico-node-6s2c9                          1/1     Running   0          40m
+calico-node-8nf28                          1/1     Running   0          41m
+calico-node-djlrg                          1/1     Running   0          40m
+calico-node-ms8nv                          1/1     Running   0          40m
+calico-node-t7pck                          1/1     Running   0          40m
+calico-typha-bdb494458-76gcx               1/1     Running   0          41m
+calico-typha-bdb494458-847tr               1/1     Running   0          41m
+calico-typha-bdb494458-k8lhj               1/1     Running   0          40m
+calico-typha-bdb494458-vjbjz               1/1     Running   0          40m
+```
+
+**3 - cloud-core**
+
+`cloud-core` is responsible for predefined and custom roles for users. Check the pods and logs in the `calico-cloud` namespace with the label selector `k8s-app=cc-core-operator`.
+
+```bash
+$ kubectl get pods -n calico-cloud -l k8s-app=cc-core-operator
+```
+
+```
+NAME                                          READY   STATUS    RESTARTS   AGE
+cc-core-operator-126dcd494a-9kj7g             1/1     Running   0          80m
+```
+
+**4 - compliance**
+
+`compliance` is responsible for the compliance features. Check the pods and logs in the `tigera-compliance` namespace.
+
+```bash
+$ kubectl get pods -n tigera-compliance
+```
+
+```
+NAME                                     READY   STATUS    RESTARTS   AGE
+compliance-benchmarker-bqvps             1/1     Running   0          65m
+compliance-benchmarker-h58hr             1/1     Running   0          65m
+compliance-benchmarker-kdtwp             1/1     Running   0          65m
+compliance-benchmarker-mzm2z             1/1     Running   0          65m
+compliance-benchmarker-s5mmf             1/1     Running   0          65m
+compliance-controller-77785646df-ws2cj   1/1     Running   0          65m
+compliance-snapshotter-6bcbdc65b-66k9v   1/1     Running   0          65m
+```
+
+**5 - intrusion-detection**
+
+`intrusion-detection` is responsible for the intrusion detection features. Check the pods and logs in the `tigera-intrusion-detection` namespace.
+
+```bash
+$ kubectl get pods -n tigera-intrusion-detection
+```
+
+```
+NAME                                              READY   STATUS    RESTARTS   AGE
+intrusion-detection-controller-669bf45c75-grvz9   1/1     Running   0          66m
+intrusion-detection-es-job-installer-xm22v        1/1     Running   0          66m
+```
+
+**6 - log-collector**
+
+`log-collector` collects flow and other logs and forwards them to $[prodname]. Check the pods and logs in the `tigera-fluentd` namespace. You should have one pod running on each of your nodes.
+
+```bash
+kubectl get pods -n tigera-fluentd
+```
+
+```
+NAME                 READY   STATUS    RESTARTS   AGE
+fluentd-node-5mzh6   1/1     Running   0          70m
+fluentd-node-7vmxw   1/1     Running   0          70m
+fluentd-node-bbc4p   1/1     Running   0          70m
+fluentd-node-chfz4   1/1     Running   0          70m
+fluentd-node-d6f56   1/1     Running   0          70m
+```
+
+**7 - management-cluster-connection**
+
+The `management-cluster-connection` is required for your managed clusters to connect to the $[prodname] backend. If it is not available or degraded, check the pods and logs in the `tigera-guardian` namespace.
+
+```bash
+kubectl get pods -n tigera-guardian
+```
+
+```
+NAME                               READY   STATUS    RESTARTS   AGE
+tigera-guardian-7d5d94d5cc-49rg8   1/1     Running   0          48m
+```
+
+To verify that the guardian component has network connectivity to the management cluster:
+
+Find the URL to the management cluster:
+
+```bash
+kubectl get managementclusterconnection tigera-secure -o=jsonpath='{.spec.managementClusterAddr}'
+<your prefix>.tigera.io:9000
+```
+
+then, from a worker node, verify network connectivity to the management cluster:
+
+```bash
+openssl s_client -connect <your prefix>.tigera.io:9000
+```
+
+```
+CONNECTED(00000003)
+depth=0 CN = tigera-voltron
+verify error:num=18:self signed certificate
+verify return:1
+depth=0 CN = tigera-voltron
+verify return:1
+---
+Certificate chain
+ 0 s:CN = tigera-voltron
+   i:CN = tigera-voltron
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIC5DCCAcygAwIBAgIBATANBgkqhkiG9w0BAQsFADAZMRcwFQYDVQQDEw50aWdl
+cmEtdm9sdHJvbjAeFw0yMDEyMjExOTA1MzhaFw0yNTEyMjAxOTA1MzhaMBkxFzAV
+<...>
+```
+
+**8 - monitor**
+
+`monitor` is responsible for configuring prometheus and associated custom resources. Check the pods and logs in the `tigera-prometheus` namespace.
+
+```bash
+$ kubectl get pods -n tigera-prometheus
+```
+
+```
+NAME                                          READY   STATUS    RESTARTS   AGE
+alertmanager-calico-node-alertmanager-0       2/2     Running   0          125m
+alertmanager-calico-node-alertmanager-1       2/2     Running   0          125m
+alertmanager-calico-node-alertmanager-2       2/2     Running   0          125m
+calico-prometheus-operator-77bf897c9b-7f88x   1/1     Running   0          125m
+prometheus-calico-node-prometheus-0           3/3     Running   1          125m
+```
+
+**9 - runtime-security**
+
+`runtime-security` is responsible for the container threat detection feature. Check the pods and logs in the `calico-cloud` namespace with the label selector `k8s-app=tigera-runtime-security-operator`.
+
+```bash
+$ kubectl get pods -n calico-cloud -l k8s-app=tigera-runtime-security-operator
+```
+
+```
+NAME                                                          READY   STATUS    RESTARTS   AGE
+tigera-runtime-security-operator-127b606afc-ap25k             1/1     Running   0          80m
+```
+
+### Check additional custom resources
+
+Check for the presence of other custom resources created by the Tigera operator: FelixConfiguration, IPPool, Tigera License, and Prometheus for component metrics.
+
+`FelixConfiguration` contains configuration that are not configured as environment variables to the`calico-node` container.
+
+```bash
+kubectl get Felixconfiguration default
+```
+
+```
+NAME      CREATED AT
+default   2021-01-20T19:49:35Z
+```
+
+The operator creates a default `IPPool` for your pod networking if it does not already exist; in this case, the CIDR is taken from the Installation CR.
+
+```bash
+kubectl get IPPool
+```
+
+```
+NAME                  CREATED AT
+default-ipv4-ippool   2021-01-20T19:49:35Z
+```
+
+A Tigera license is applied by the installation script.
+
+```bash
+kubectl get LicenseKeys.crd.projectcalico.org
+```
+
+```
+NAME      AGE
+default   120m
+```
+
+The installation script deploys a Prometheus operator and associated custom resources. If you already have a Prometheus operator running in your cluster, contact Tigera support.
+
+```bash
+kubectl get pods -n tigera-prometheus
+```
+
+```
+NAME                                          READY   STATUS    RESTARTS   AGE
+alertmanager-calico-node-alertmanager-0       2/2     Running   0          125m
+alertmanager-calico-node-alertmanager-1       2/2     Running   0          125m
+alertmanager-calico-node-alertmanager-2       2/2     Running   0          125m
+calico-prometheus-operator-77bf897c9b-7f88x   1/1     Running   0          125m
+prometheus-calico-node-prometheus-0           3/3     Running   1          125m
+```
+
+## Check pod capacity
+
+If cluster does not have enough capacity, it will not be able to deploy pods. There is no specific error associated with this condition.
+
+The high-level components $[prodname] needs to run are:
+
+- Per node: 1 fluentd, 1 compliance benchmarker
+- On top of per node: 3 alertmanager (from statefulset), 1 prometheus, 1 prometheus operator, 1 kube-controllers, 2 compliance snapshotter and controller, 1 guardian, 1 ids controller, 1 apiserver
+
+Some clusters have limited pod-networked pod capacity.
+
+- For the AWS CNI plugin, the [number of pods that can be networked is based on the size of the instance](https://docs.aws.amazon.com/eks/latest/userguide/pod-networking.html).
+- For AKS with the Azure CNI, the [number of pods that can be networked is set at cluster deployment time or when new node pools are created (default of 30)](https://docs.microsoft.com/en-us/azure/aks/configure-azure-cni#maximum-pods-per-node).
+- For GKE, there is a [hard limit of 110 pods per node](https://cloud.google.com/kubernetes-engine/docs/best-practices/scalability#dimension_limits).
+- For Calico CNI, the pod limit is based on the available IPs in the IPPool, and there is no specific per node limit.
+
+Verify you have the following pod-networked pod capacity.
+
+- Verify on each node in your cluster that there is capacity for at least 2 pods.
+- Verify there is capacity for at least 11 pods in the cluster in addition to the per node capacity.
+
+To check the capacity of individual nodes on AWS or AKS, query the node status and look at `Capacity.Pods` (which is the total capacity for the node). To get the number of pod-networked pods for a node, count the pods on the node that are pod-networked (non-hostNetworked pods).
+
+## Check pod security policy violation
+
+If your cluster is using Kubernetes version 1.24 or earlier, a pod security policy (PSP) violation may be blocking pods on the cluster.
+
+Search for the term `PodSecurityPolicy` in the status message of failed cluster deployments. If a PSP is present, install open source Calico in the cluster before you connect to $[prodname].
+
+## Check Manager UI dashboard for traffic
+
+### Manager UI main dashboard is missing traffic graphs
+
+When you log in to Manager UI, the first item in the left nav is the main Dashboard. This dashboard is a birds-eye view of your managed cluster activity for policy and networking. For the graphs to display traffic, you must have the Prometheus operator. If it is missing, the following message is displayed during installation:
+
+`Prometheus Operator detected in the cluster. Skipping Tigera Prometheus Operator`
+
+To install an appropriate Prometheus operator, contact Support below.
+
+

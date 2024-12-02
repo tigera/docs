@@ -1,0 +1,226 @@
+---
+description: Review metrics for the Felix component if you are using Prometheus.
+---
+
+# Prometheus metrics
+
+Felix can be configured to report a number of metrics through Prometheus. See the
+[configuration reference](configuration.mdx) for how to enable metrics reporting.
+
+## Metric reference
+
+### Felix specific
+
+Felix exports a number of Prometheus metrics. The current set is as follows. Since some metrics
+are tied to particular implementation choices inside Felix we can't make any hard guarantees that
+metrics will persist across releases. However, we aim not to make any spurious changes to
+existing metrics.
+
+| Name                                                       | Description                                                                                                                                               |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `felix_active_local_endpoints`                             | Number of active endpoints on this host.                                                                                                                  |
+| `felix_active_local_policies`                              | Number of active policies on this host.                                                                                                                   |
+| `felix_active_local_selectors`                             | Number of active selectors on this host.                                                                                                                  |
+| `felix_active_local_tags`                                  | Number of active tags on this host.                                                                                                                       |
+| `felix_bpf_conntrack_cleaned`                              | Number of entries cleaned during a conntrack table sweep.                                                                                                 |
+| `felix_bpf_conntrack_cleaned_total`                        | Total number of entries cleaned during conntrack table sweeps, incremented for each clean individually.                                                   |
+| `felix_bpf_conntrack_expired`                              | Number of entries cleaned during a conntrack table sweep due to expiration.                                                                               |
+| `felix_bpf_conntrack_expired_total`                        | Total number of entries cleaned during conntrack table sweep due to expiration - by reason.                                                               |
+| `felix_bpf_conntrack_inforeader_blocks`                    | Conntrack InfoReader would-blocks.                                                                                                                        |
+| `felix_bpf_conntrack_stale_nat`                            | Number of entries cleaned during a conntrack table sweep due to stale NAT.                                                                                |
+| `felix_bpf_conntrack_stale_nat_total`                      | Total number of entries cleaned during conntrack table sweeps due to stale NAT.                                                                           |
+| `felix_bpf_conntrack_sweeps`                               | Number of conntrack table sweeps made so far.                                                                                                             |
+| `felix_bpf_conntrack_used`                                 | Number of used entries visited during a conntrack table sweep.                                                                                            |
+| `felix_bpf_conntrack_sweep_duration`                       | Conntrack sweep execution time (ns).                                                                                                                      |
+| `felix_bpf_num_ip_sets`                                    | Number of BPF IP sets managed in the dataplane.                                                                                                           |
+| `felix_calc_graph_output_events`                           | Number of events emitted by the calculation graph.                                                                                                        |
+| `felix_calc_graph_update_time_seconds`                     | Seconds to update calculation graph for each datastore OnUpdate call.                                                                                     |
+| `felix_calc_graph_updates_processed`                       | Number of datastore updates processed by the calculation graph.                                                                                           |
+| `felix_cluster_num_host_endpoints`                         | Total number of host endpoints cluster-wide.                                                                                                              |
+| `felix_cluster_num_hosts`                                  | Total number of $[prodname] hosts in the cluster.                                                                                                        |
+| `felix_cluster_num_policies`                               | Total number of policies in the cluster.                                                                                                                  |
+| `felix_cluster_num_profiles`                               | Total number of profiles in the cluster.                                                                                                                  |
+| `felix_cluster_num_tiers`                                  | Total number of $[prodname] tiers in the cluster.                                                                                                        |
+| `felix_cluster_num_workload_endpoints`                     | Total number of workload endpoints cluster-wide.                                                                                                          |
+| `felix_egress_gateway_remote_polls{status="total"}`        | Total number of remote egress gateway pods that Felix is polling for health/connectivity. Only egress gateways with a named "health" port will be polled. |
+| `felix_egress_gateway_remote_polls{status="up"}`           | Total number of remote egress gateway pods that have successful probes.                                                                                   |
+| `felix_egress_gateway_remote_polls{status="probe-failed"}` | Total number of remote egress gateway pods that have failed probes.                                                                                       |
+| `felix_exec_time_micros`                                   | Summary of time taken to fork/exec child processes                                                                                                        |
+| `felix_int_dataplane_addr_msg_batch_size`                  | Number of interface address messages processed in each batch. Higher values indicate we're doing more batching to try to keep up.                         |
+| `felix_int_dataplane_apply_time_seconds`                   | Time in seconds that it took to apply a dataplane update.                                                                                                 |
+| `felix_int_dataplane_failures`                             | Number of times dataplane updates failed and will be retried.                                                                                             |
+| `felix_int_dataplane_iface_msg_batch_size`                 | Number of interface state messages processed in each batch. Higher values indicate we're doing more batching to try to keep up.                           |
+| `felix_int_dataplane_messages`                             | Number dataplane messages by type.                                                                                                                        |
+| `felix_int_dataplane_msg_batch_size`                       | Number of messages processed in each batch. Higher values indicate we're doing more batching to try to keep up.                                           |
+| `felix_ipsec_bindings_total`                               | Total number of ipsec bindings.                                                                                                                           |
+| `felix_ipsec_errors`                                       | Number of ipsec command failures.                                                                                                                         |
+| `felix_ipset_calls`                                        | Number of ipset commands executed.                                                                                                                        |
+| `felix_ipset_errors`                                       | Number of ipset command failures.                                                                                                                         |
+| `felix_ipset_lines_executed`                               | Number of ipset operations executed.                                                                                                                      |
+| `felix_ipsets_calico`                                      | Number of active $[prodname] IP sets.                                                                                                                    |
+| `felix_ipsets_total`                                       | Total number of active IP sets.                                                                                                                           |
+| `felix_iptables_chains`                                    | Number of active iptables chains.                                                                                                                         |
+| `felix_iptables_lines_executed`                            | Number of iptables rule updates executed.                                                                                                                 |
+| `felix_iptables_lock_acquire_secs`                         | Time taken to acquire the iptables lock.                                                                                                                  |
+| `felix_iptables_lock_retries`                              | Number of times the iptables lock was already held and felix had to retry to acquire it.                                                                  |
+| `felix_iptables_restore_calls`                             | Number of iptables-restore calls.                                                                                                                         |
+| `felix_iptables_restore_errors`                            | Number of iptables-restore errors.                                                                                                                        |
+| `felix_iptables_rules`                                     | Number of active iptables rules.                                                                                                                          |
+| `felix_iptables_save_calls`                                | Number of iptables-save calls.                                                                                                                            |
+| `felix_iptables_save_errors`                               | Number of iptables-save errors.                                                                                                                           |
+| `felix_log_errors`                                         | Number of errors encountered while logging.                                                                                                               |
+| `felix_logs_dropped`                                       | Number of logs dropped because the output stream was blocked.                                                                                             |
+| `felix_reporter_log_errors`                                | Number of errors encountered while logging in the Syslog.                                                                                                 |
+| `felix_reporter_logs_dropped`                              | Number of logs dropped because the output was blocked in the Syslog reporter.                                                                         |
+| `felix_resync_state`                                       | Current datastore state.                                                                                                                                  |
+| `felix_resyncs_started`                                    | Number of times Felix has started resyncing with the datastore.                                                                                           |
+| `felix_route_table_list_seconds`                           | Time taken to list all the interfaces during a resync.                                                                                                    |
+| `felix_route_table_per_iface_sync_seconds`                 | Time taken to sync each interface                                                                                                                         |
+
+Prometheus metrics are self-documenting, with metrics turned on, `curl` can be used to list the
+metrics along with their help text and type information.
+
+```bash
+curl -s http://localhost:9091/metrics | head
+```
+
+Example response:
+
+```
+# HELP felix_active_local_endpoints Number of active endpoints on this host.
+# TYPE felix_active_local_endpoints gauge
+felix_active_local_endpoints 91
+# HELP felix_active_local_policies Number of active policies on this host.
+# TYPE felix_active_local_policies gauge
+felix_active_local_policies 0
+# HELP felix_active_local_selectors Number of active selectors on this host.
+# TYPE felix_active_local_selectors gauge
+felix_active_local_selectors 82
+...
+```
+
+### Label indexing metrics
+
+The label index is a subcomponent of Felix that is responsible for calculating the set of endpoints and network sets
+that match each selector that is in an active policy rule.  Policy rules are active on a particular node if the policy
+they belong to selects a workload or host endpoint on that node with its top-level selector (in `spec.selector`).
+Inactive policies have minimal CPU cost because their selectors do not get indexed.
+
+Since the label index must match the active selectors against _all_ endpoints and network sets in the cluster, its
+performance is critical and it supports various optimizations to minimize CPU usage.  Its metrics can be used to
+check that the optimizations are active for your policy set.
+
+#### `felix_label_index_num_endpoints`
+
+Reports the total number of endpoints (and similar objects such as network sets) being tracked by the index.
+This should match the number of endpoints and network sets in your cluster.
+
+#### `felix_label_index_num_active_selectors{optimized="true|false"}`
+
+Reports the total number of active selectors, broken into `optimized="true"` and `optimized="false"` sub-totals.
+
+The `optimized="true"` total tracks the number of selectors that the label index was able to optimize.  Those
+selectors should be calculated efficiently even in clusters with hundreds of thousands of endpoints.  In general the
+CPU used to calculate them should be proportional to the number of endpoints that match them and the churn rate of
+_those_ endpoints.
+
+The `optimized="false"` total tracks the number of selectors that could not be optimized.  Unoptimized selectors are
+much more costly to calculate; the CPU used to calculate them is proportional to the number of endpoints
+in the cluster and their churn rate.  It is generally OK to have a handful of unoptimized selectors,
+but if many selectors are unoptimized the CPU usage can be substantial at high scale.
+
+For more information on writing selectors that can be optimized, see the [this](../../../resources/networkpolicy.mdx#selector-performance-in-entityrules)
+section of the `NetworkPolicy` reference.
+
+#### `felix_label_index_selector_evals{result="true|false"}`
+
+Counts the total number of times that a selector was evaluated vs an endpoint to determine if it matches, broken
+down by match (`true`) or no-match (`false`).  The ratio of match to no-match shows how effective the selector
+indexing optimizations are for your policy set.  The more effectively the label index can optimize the selectors,
+the fewer "no-match" results it will report relative to "match".
+
+If you have more than a handful of active selectors and `felix_label_index_selector_evals{result="false"}` is many
+times `felix_label_index_selector_evals{result="true"}` then it is likely that some selectors in the policy set are
+not being optimized effectively.
+
+#### `felix_label_index_strategy_evals{strategy="..."}`
+
+This is a technical statistic that shows how many times the label index has employed each optimization
+strategy that it has available.  The strategies will likely evolve over time but, at time of writing, they are
+as follows:
+
+- `endpoint-full-scan`: the least efficient fall back strategy for unoptimized selectors. The index
+  scanned _all_ endpoints to find the matches for a selector.
+
+- `endpoint|parent-no-match`: the most efficient strategy; the index was able to prove that nothing matched the
+  selector so it was able to skip the scan entirely.
+
+- `endpoint|parent-single-value`: the label index was able to limit the scan to only those endpoints/parents that
+  have a particular label and value combination.  For example, selector `label == "value"` would only scan items that
+  had exactly that label set to "value".
+
+- `endpoint|parent-multi-value`: the label index was able to limit the scan to only those endpoints/parents that
+  have a particular label and one of a few values.  For example, selector `label in {"a", "b")` would only scan items
+  that had exactly that label with one of the given values.
+
+- `endpoint|parent-label-name`: the label index was able to limit the scan to only those endpoints/parents that
+  hava a particular label (but was unable to limit it to a particular subset of values).  For example, `has(label)`
+  would result in that kind of scan.
+
+Terminology: here "endpoint" means "endpoint or NetworkSet" and "parent" is Felix's internal name for resources like
+Kubernetes Namespaces.  A "parent" scan means that the label index scanned all endpoints that have a parent
+matching the strategy.
+
+### CPU / memory metrics
+
+Felix also exports the default set of metrics that Prometheus makes available. Currently, those
+include:
+
+| Name                               | Description                                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| `go_gc_duration_seconds`           | A summary of the GC invocation durations.                                                   |
+| `go_goroutines`                    | Number of goroutines that currently exist.                                                  |
+| `go_info`                          | Go version.                                                                                 |
+| `go_memstats_alloc_bytes`          | Number of bytes allocated and still in use.                                                 |
+| `go_memstats_alloc_bytes_total`    | Total number of bytes allocated, even if freed.                                             |
+| `go_memstats_buck_hash_sys_bytes`  | Number of bytes used by the profiling bucket hash table.                                    |
+| `go_memstats_frees_total`          | Total number of frees.                                                                      |
+| `go_memstats_gc_cpu_fraction`      | The fraction of this program’s available CPU time used by the GC since the program started. |
+| `go_memstats_gc_sys_bytes`         | Number of bytes used for garbage collection system metadata.                                |
+| `go_memstats_heap_alloc_bytes`     | Number of heap bytes allocated and still in use.                                            |
+| `go_memstats_heap_idle_bytes`      | Number of heap bytes waiting to be used.                                                    |
+| `go_memstats_heap_inuse_bytes`     | Number of heap bytes that are in use.                                                       |
+| `go_memstats_heap_objects`         | Number of allocated objects.                                                                |
+| `go_memstats_heap_released_bytes`  | Number of heap bytes released to OS.                                                        |
+| `go_memstats_heap_sys_bytes`       | Number of heap bytes obtained from system.                                                  |
+| `go_memstats_last_gc_time_seconds` | Number of seconds since 1970 of last garbage collection.                                    |
+| `go_memstats_lookups_total`        | Total number of pointer lookups.                                                            |
+| `go_memstats_mallocs_total`        | Total number of mallocs.                                                                    |
+| `go_memstats_mcache_inuse_bytes`   | Number of bytes in use by mcache structures.                                                |
+| `go_memstats_mcache_sys_bytes`     | Number of bytes used for mcache structures obtained from system.                            |
+| `go_memstats_mspan_inuse_bytes`    | Number of bytes in use by mspan structures.                                                 |
+| `go_memstats_mspan_sys_bytes`      | Number of bytes used for mspan structures obtained from system.                             |
+| `go_memstats_next_gc_bytes`        | Number of heap bytes when next garbage collection will take place.                          |
+| `go_memstats_other_sys_bytes`      | Number of bytes used for other system allocations.                                          |
+| `go_memstats_stack_inuse_bytes`    | Number of bytes in use by the stack allocator.                                              |
+| `go_memstats_stack_sys_bytes`      | Number of bytes obtained from system for stack allocator.                                   |
+| `go_memstats_sys_bytes`            | Number of bytes obtained by system. Sum of all system allocations.                          |
+| `go_threads`                       | Number of OS threads created.                                                               |
+| `process_cpu_seconds_total`        | Total user and system CPU time spent in seconds.                                            |
+| `process_max_fds`                  | Maximum number of open file descriptors.                                                    |
+| `process_open_fds`                 | Number of open file descriptors.                                                            |
+| `process_resident_memory_bytes`    | Resident memory size in bytes.                                                              |
+| `process_start_time_seconds`       | Start time of the process since unix epoch in seconds.                                      |
+| `process_virtual_memory_bytes`     | Virtual memory size in bytes.                                                               |
+| `process_virtual_memory_max_bytes` | Maximum amount of virtual memory available in bytes.                                        |
+
+### Wireguard Metrics
+
+Felix also exports wireguard device stats if found/detected. Can be disabled via Felix configuration.
+
+| Name                                 | Description                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `wireguard_meta`                     | Gauge. Device / interface information for a felix/calico node, values are in this metric's labels |
+| `wireguard_bytes_rcvd`               | Counter. Current bytes received from a peer identified by a peer public key and endpoint          |
+| `wireguard_bytes_sent`               | Counter. Current bytes sent to a peer identified by a peer public key and endpoint                |
+| `wireguard_latest_handshake_seconds` | Gauge. Last handshake with a peer, unix timestamp in seconds.                                     |
