@@ -1,39 +1,32 @@
 const { test, expect } = require('@playwright/test');
-const {
-  CheerioCrawler,
-  downloadListOfUrls,
-  extractUrls,
-  EnqueueStrategy,
-  Configuration,
-  sleep,
-} = require('crawlee');
-import {decode} from 'html-entities';
+const { CheerioCrawler, downloadListOfUrls, extractUrls, EnqueueStrategy, Configuration, sleep } = require('crawlee');
+import { decode } from 'html-entities';
 const linkChecker = require('../src/utils/linkChecker');
 import YAML from 'yaml';
 import needle from 'needle';
 
-test("Crawl the docs and execute tests", async () => {
-  const PASS = 'pass', FAIL = 'fail', WIP = 'wip', DONE = 'done';
-  const PROD = 'https://docs.tigera.io'
+test('Crawl the docs and execute tests', async () => {
+  const PASS = 'pass',
+    FAIL = 'fail',
+    WIP = 'wip',
+    DONE = 'done';
+  const PROD = 'https://docs.tigera.io';
   const PROD_REGEX = /^https:\/\/docs\.tigera\.io/;
-  const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim()
-      .toLowerCase().replace(/\/$/, '');
+  const DOCS = (process.env.DOCS_HOST ? process.env.DOCS_HOST : PROD).trim().toLowerCase().replace(/\/$/, '');
   const isLocalHost = /^http:\/\/localhost(:\d+)?$/i.test(DOCS);
   const validityTest = process.env.VALIDITY_TEST ? process.env.VALIDITY_TEST.split(',') : [];
   const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES.split(',') : [];
-  const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL==='true' : false;
+  const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL === 'true' : false;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
   const varRegex = /\{\{[ \t]*[-\w\[\]]+[ \t]*}}/g;
-  const varSkipList = [
-    '{{end}}',
-  ];
+  const varSkipList = ['{{end}}'];
   const liquidRegex = /\{%.*?%}/gs;
   const liquidSkipList = [];
   const SITEMAP = 'sitemap.xml';
   const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
   const USE_LC = [
-    { regex: inspectFilesRegExp(), processContent: true},
-    { regex: fileRegex, processContent: false},
+    { regex: inspectFilesRegExp(), processContent: true },
+    { regex: fileRegex, processContent: false },
     { regex: /\/reference\/legal\/[\w-]+$/i, processContent: true },
     { regex: /\/calico-cloud\/get-help\/support$/i, processContent: true },
     { regex: /\/calico-cloud\/get-started\/connect\/connect-cluster$/i, processContent: true },
@@ -107,7 +100,7 @@ test("Crawl the docs and execute tests", async () => {
     //temp
     /^https:\/\/v1-21\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.21\//,
     'https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm',
-    'https://www.iana.org/assignments/service-names',//==>Origin: https://downloads.tigera.io/ee/v3.15.2/manifests/tigera-operator.yaml'
+    'https://www.iana.org/assignments/service-names', //==>Origin: https://downloads.tigera.io/ee/v3.15.2/manifests/tigera-operator.yaml'
     'https://stedolan.github.io/jq/',
     `http://kubernetes.io/docs/user-guide/secrets/`,
     `https://github.com/coreos/flannel/blob/master/Documentation/kube-flannel-rbac.yml`,
@@ -184,6 +177,10 @@ test("Crawl the docs and execute tests", async () => {
     'https://prometheus.io/docs/prometheus/latest/feature_flags/', // ==>Origin: https://downloads.tigera.io/ee/v3.20.0-1.0/manifests/tigera-prometheus-operator.yaml
     'https://docs.fluentd.org/filter/grep',
     'https://techcommunity.microsoft.com/t5/networking-blog/direct-server-return-dsr-in-a-nutshell/ba-p/693710',
+    'https://www.f5.com/glossary/cookie-poisoning', //TEMPORARY
+    'https://www.f5.com/glossary/cross-site-scripting', //TEMPORARY
+    'https://www.f5.com/glossary/sql-injection', //TEMPORARY
+    'https://www.f5.com/labs/articles/threat-intelligence/application-protection-report-2019--episode-2--2018-breach-trend', //TEMPORARY
   ];
 
   const lc = linkChecker();
@@ -205,12 +202,11 @@ test("Crawl the docs and execute tests", async () => {
       'downloads.tigera.io',
       'raw.githubusercontent.com/projectcalico',
       'docs.tigera.io',
-    ]
+    ];
     if (isLocalHost) {
       domains.push(DOCS.replace(/^http:\/\//, ''));
     }
-    const red = `(https?://${domains.join(`|https?://`)})`
-      .replace('.', '\\.');
+    const red = `(https?://${domains.join(`|https?://`)})`.replace('.', '\\.');
     const res = `${red}/[-a-zA-Z0-9()@:%._+~#?&/=]+?\\.${ext}`;
     return new RegExp(res, 'gi');
   }
@@ -220,7 +216,7 @@ test("Crawl the docs and execute tests", async () => {
       async requestHandler({ request, $, enqueueLinks, log }) {
         if (request.skipNavigation) return;
         const allText = decode($.html());
-        const urls = extractUrls({string: allText, urlRegExp: lc.getLinkRegex()[0]});
+        const urls = extractUrls({ string: allText, urlRegExp: lc.getLinkRegex()[0] });
         for (let url of urls) {
           if (isLocalHost) {
             const testUrl = url.replace(PROD_REGEX, DOCS);
@@ -238,7 +234,7 @@ test("Crawl the docs and execute tests", async () => {
         await enqueueLinks({
           strategy: EnqueueStrategy.All,
           transformRequestFunction: transformRequest,
-          userData: {origin: request.url},
+          userData: { origin: request.url },
         });
       },
     });
@@ -272,7 +268,7 @@ test("Crawl the docs and execute tests", async () => {
 
   function testCodeBlocks($, origin) {
     if (validityTest.length === 0) return;
-    validityTest.forEach(type => {
+    validityTest.forEach((type) => {
       testCodeBlocksByType($, origin, type);
     });
   }
@@ -281,7 +277,7 @@ test("Crawl the docs and execute tests", async () => {
     const ctx = validityTestResults.get(url);
     if (!ctx && status === DONE) return;
     const results = ctx ? ctx.results : [];
-    validityTestResults.set(url, {status, results});
+    validityTestResults.set(url, { status, results });
   }
 
   function testCodeBlocksByType($, origin, type) {
@@ -320,16 +316,20 @@ test("Crawl the docs and execute tests", async () => {
 
   function processCodeBlockEOF($, codeBlock, origin) {
     const codeLines = [];
-    let type = 'yaml', eofStart = false, eofEnd = false;
+    let type = 'yaml',
+      eofStart = false,
+      eofEnd = false;
     const lines = $(codeBlock).find('span.token-line');
     for (let idxLine = 0; idxLine < lines.length; idxLine++) {
       const line = $(lines[idxLine]).text();
       const trimLine = line.trim();
       if (!eofStart && /<<\s*(EOF|'EOF'|"EOF")/i.test(trimLine)) {
-        eofStart = true; eofEnd = false;
+        eofStart = true;
+        eofEnd = false;
         codeLines.length = 0;
       } else if (eofStart && !eofEnd && /^EOF$/i.test(trimLine)) {
-        eofEnd = true; eofStart = false;
+        eofEnd = true;
+        eofStart = false;
         if (codeLines.length > 0) {
           validityTestResultSetStatus(origin, WIP);
           testValidity(type, origin, codeLines.join('\n'));
@@ -379,7 +379,7 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function testValidity(type, origin, code) {
-    const yamlParseOptions = {strict: true, uniqueKeys: false};
+    const yamlParseOptions = { strict: true, uniqueKeys: false };
     try {
       switch (type) {
         case 'yaml':
@@ -387,7 +387,9 @@ test("Crawl the docs and execute tests", async () => {
           const errs = [];
           const docs = YAML.parseAllDocuments(code, yamlParseOptions);
           for (const doc of docs) {
-            doc.errors.forEach(e => { errs.push(e.message) });
+            doc.errors.forEach((e) => {
+              errs.push(e.message);
+            });
           }
           if (errs.length > 0) {
             const err = new Error(errs.join('\nNext Error:\n'));
@@ -417,8 +419,8 @@ test("Crawl the docs and execute tests", async () => {
   }
 
   function addValidityTestResult(origin, type, result) {
-    const {status, results} = validityTestResults.get(origin);
-    validityTestResults.set(origin, {status, results: [...results, {type, result}]});
+    const { status, results } = validityTestResults.get(origin);
+    validityTestResults.set(origin, { status, results: [...results, { type, result }] });
   }
 
   function getCrawler() {
@@ -439,7 +441,7 @@ test("Crawl the docs and execute tests", async () => {
       }
       if (p) postProcessUrls.set(u, null);
       return true;
-    }
+    };
 
     // if it matches any in the regex list, use linkChecker
     for (const o of USE_LC) {
@@ -495,7 +497,7 @@ test("Crawl the docs and execute tests", async () => {
 
   function doValidityTestRequest(vt, url) {
     validityTestResultSetStatus(url, WIP);
-    const opts = {follow_max: 5, follow_keep_method: true}
+    const opts = { follow_max: 5, follow_keep_method: true };
     needle.request('get', url, null, opts, (err, resp) => {
       if (!err && resp.statusCode === 200) {
         testValidity(vt, url, resp.body.toString());
@@ -511,16 +513,15 @@ test("Crawl the docs and execute tests", async () => {
   function doValidityTestOnFiles(url) {
     if (lc.isInvalidOrSkipped(url) || lc.isIgnored(url)) return;
     if (validityTestResults.has(url)) return;
-    validityTestFiles.forEach(vt => {
-      if ((vt === 'yaml' && /\.ya?ml$/.test(url)) ||
-          (vt === 'json' && /\.json$/.test(url))) {
+    validityTestFiles.forEach((vt) => {
+      if ((vt === 'yaml' && /\.ya?ml$/.test(url)) || (vt === 'json' && /\.json$/.test(url))) {
         doValidityTestRequest(vt, url);
       }
     });
   }
 
   async function doPostProcessing() {
-    const opts = { url: '', urlRegExp: lc.getLinkRegex()[0]};
+    const opts = { url: '', urlRegExp: lc.getLinkRegex()[0] };
     for (const url of postProcessUrls.keys()) {
       if (!inOriginSkipList(url)) {
         opts.url = url;
@@ -535,13 +536,16 @@ test("Crawl the docs and execute tests", async () => {
 
   async function reportValidityTestResults() {
     if (validityTestResults.size === 0) return 0;
-    let passCount = 0, failCount = 0, totalCount = 0, urlCount = 0;
+    let passCount = 0,
+      failCount = 0,
+      totalCount = 0,
+      urlCount = 0;
 
     while (true) {
       let wipCount = 0;
       validityTestResults.forEach((v, k) => {
         if (v.status === WIP) wipCount++;
-      })
+      });
       if (wipCount === 0) break;
       console.log(`\nWaiting on validity tests to complete: ${wipCount} remaining`);
       await sleep(1000);
@@ -560,14 +564,16 @@ test("Crawl the docs and execute tests", async () => {
       }
     }
 
-    console.log(`\nValidity testing results: url total: ${urlCount}, test total: ${totalCount}, pass: ${passCount}, fail: ${failCount}`);
+    console.log(
+      `\nValidity testing results: url total: ${urlCount}, test total: ${totalCount}, pass: ${passCount}, fail: ${failCount}`
+    );
 
     return failCount;
   }
 
   const crawler = getCrawler();
   await processSiteMap(SITEMAP_URL);
-  const urls = [...urlCache.keys()].filter(url => !url.endsWith(SITEMAP));
+  const urls = [...urlCache.keys()].filter((url) => !url.endsWith(SITEMAP));
   await crawler.addRequests([DOCS]);
   await crawler.addRequests(urls);
 
