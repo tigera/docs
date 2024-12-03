@@ -20,6 +20,7 @@ module.exports = {
         'get-started/install-cluster',
         'get-started/install-private-registry',
         'get-started/install-automated',
+        'get-started/setup-private-registry',
         'get-started/windows-limitations',
         'get-started/checklist',
         'get-started/operator-checklist',
