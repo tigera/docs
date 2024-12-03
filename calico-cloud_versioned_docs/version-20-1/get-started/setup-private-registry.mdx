@@ -6,6 +6,7 @@ description: Add images to a private registry for installing Calico Cloud on a c
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import VersionedCloudImageList from '@site/src/___new___/components/VersionedCloudImageList';
 
 ## Big picture
 
@@ -31,7 +32,7 @@ An **image path** is a directory in a registry that contains images required to 
 - Use the [Crane command](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) to follow steps in this guide. (Other tools can be used, but commands be adjusted accordingly.)
 - Image registry
   - Must be private (accessible only on a private network or using log in credentials)
-  - Images copied to the registry must not be made publicly  available
+  - Images copied to the registry must not be made publicly available
   - Push access to your registry
 
 ## How to
@@ -46,57 +47,7 @@ Add the required $[prodname] images to a private registry.
 
 ### Create the list of required images
 
-```bash
-helm repo add calico-cloud $[clouddownloadbase]/charts
-INSTALLER_IMAGE="$[cloudoperatorimage]:$(helm show chart calico-cloud/calico-cloud | grep version: | sed -e 's/version: *//' -e 's/+/-g/')"
-IMAGES=(
-$INSTALLER_IMAGE
-quay.io/tigera/operator:v1.35.2
-quay.io/tigera/cnx-apiserver:v3.20.0-1.0
-quay.io/tigera/compliance-benchmarker:v3.20.0-1.0
-quay.io/tigera/compliance-controller:v3.20.0-1.0
-quay.io/tigera/compliance-reporter:v3.20.0-1.0
-quay.io/tigera/compliance-snapshotter:v3.20.0-1.0
-quay.io/tigera/key-cert-provisioner:v3.20.0-1.0
-quay.io/tigera/deep-packet-inspection:v3.20.0-1.0
-quay.io/tigera/fluentd:v3.20.0-1.0
-quay.io/tigera/fluentd-windows:v3.20.0-1.0
-quay.io/tigera/guardian:v3.20.0-1.5
-quay.io/tigera/intrusion-detection-controller:v3.20.0-1.0
-quay.io/tigera/webhooks-processor:v3.20.0-1.6
-quay.io/tigera/packetcapture:v3.20.0-1.0
-quay.io/tigera/policy-recommendation:v3.20.0-1.0
-quay.io/tigera/egress-gateway:v3.20.0-1.0
-quay.io/tigera/l7-collector:v3.20.0-1.0
-quay.io/tigera/envoy:v3.20.0-1.0
-quay.io/tigera/prometheus:v3.20.0-1.0
-quay.io/tigera/prometheus-service:v3.20.0-1.0
-quay.io/tigera/alertmanager:v3.20.0-1.0
-quay.io/tigera/cnx-queryserver:v3.20.0-1.0
-quay.io/tigera/kube-controllers:v3.20.0-1.0
-quay.io/tigera/cnx-node:v3.20.0-1.0
-quay.io/tigera/cnx-node-windows:v3.20.0-1.0
-quay.io/tigera/typha:v3.20.0-1.0
-quay.io/tigera/cni:v3.20.0-1.0
-quay.io/tigera/cni-windows:v3.20.0-1.0
-quay.io/tigera/es-gateway:v3.20.0-1.0
-quay.io/tigera/linseed:v3.20.0-1.0
-quay.io/tigera/dikastes:v3.20.0-1.0
-quay.io/tigera/pod2daemon-flexvol:v3.20.0-1.0
-quay.io/tigera/csi:v3.20.0-1.0
-quay.io/tigera/node-driver-registrar:v3.20.0-1.0
-quay.io/tigera/image-assurance-admission-controller:v1.21.0
-quay.io/tigera/image-assurance-operator:v1.21.0
-quay.io/tigera/image-assurance-container-runtime-adaptor:v1.21.0
-quay.io/tigera/image-assurance-cluster-scanner:v1.21.0
-quay.io/tigera/runtime-security-operator:v1.22.0
-quay.io/tigera/skimble:v1.22.0
-quay.io/tigera/cc-core:v0.2.9
-quay.io/tigera/prometheus-operator:v3.20.0-1.0
-quay.io/tigera/prometheus-config-reloader:v3.20.0-1.0
-quay.io/tigera/cc-cni-config-scanner:v0.3
-)
-```
+<VersionedCloudImageList />
 
 ### Set up the private registry
 
@@ -112,12 +63,12 @@ IMAGEPATH=""
 
 #### Image examples
 
-| Original image                                                            | Image Registry | Image Path    | Private registry image                               |
-| ------------------------------------------------------------------------- | -------------- | ------------- | ---------------------------------------------------- |
-| `quay.io/tigera/typha:v1.2.3`                                             | `my.registry/` |               | `my.registry/tigera/typha:v1.2.3`                    |
-| `quay.io/tigera/typha:v1.2.3`                                             | `my.registry/` | `custom-path` | `my.registry/custom-path/typha:v1.2.3`               |
-| `quay.io/tigera/cc-operator:v4.5.6`                                       | `my.registry/` |               | `my.registry/tigera/cc-operator:v4.5.6`              |
-| `quay.io/tigera/cc-operator:v4.5.6`                                       | `my.registry/` | `custom-path` | `my.registry/custom-path/cc-operator:v4.5.6`         |
+| Original image                      | Image Registry | Image Path    | Private registry image                       |
+| ----------------------------------- | -------------- | ------------- | -------------------------------------------- |
+| `quay.io/tigera/typha:v1.2.3`       | `my.registry/` |               | `my.registry/tigera/typha:v1.2.3`            |
+| `quay.io/tigera/typha:v1.2.3`       | `my.registry/` | `custom-path` | `my.registry/custom-path/typha:v1.2.3`       |
+| `quay.io/tigera/cc-operator:v4.5.6` | `my.registry/` |               | `my.registry/tigera/cc-operator:v4.5.6`      |
+| `quay.io/tigera/cc-operator:v4.5.6` | `my.registry/` | `custom-path` | `my.registry/custom-path/cc-operator:v4.5.6` |
 
 ### Copy images to your registry
 
