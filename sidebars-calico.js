@@ -365,6 +365,7 @@ module.exports = {
             'network-policy/policy-rules/service-accounts',
             'network-policy/policy-rules/external-ips-policy',
             'network-policy/policy-rules/icmp-ping',
+            'network-policy/policy-rules/log-rules'
           ],
         },
         {
