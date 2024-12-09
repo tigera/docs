@@ -301,7 +301,7 @@ module.exports = {
         },
         {
           type: 'category',
-          label: 'Policy for hosts',
+          label: 'Policy for hosts and VMs',
           link: { type: 'doc', id: 'network-policy/hosts/index' },
           items: [
             'network-policy/hosts/protect-hosts',
