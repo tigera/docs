@@ -1,0 +1,325 @@
+---
+description: Enable support for the Kubernetes Gateway API.
+---
+
+# Gateway API
+
+## Big picture
+
+Enable support for the Kubernetes Gateway API.
+
+## Value
+
+{{prodname}} includes support for the Kubernetes Gateway API, which allows advanced routing to services in a cluster, including weighted or blue-green load balancing.
+
+## Concepts
+
+### Gateway API
+
+The Gateway API is an official Kubernetes API for advanced routing to services in a cluster.  To read about its use cases, structure and design, please see [the official docs](https://gateway-api.sigs.k8s.io/).
+
+### Envoy Gateway
+
+Several implementations of the Gateway API are available, one of which is the [Envoy Gateway](https://gateway.envoyproxy.io/).  {{prodname}} integrates the Envoy Gateway implementation in order to provide support for the Gateway API.
+
+### Access into a cluster from outside
+
+The Gateway API only provides access into a cluster from outside when the cluster is _also_ provisioned to support Kubernetes Services with `type: LoadBalancer`.  When a Gateway is configured, {{prodname}} creates a Deployment that does the actual work of routing and load balancing, etc., and a Service with `type: LoadBalancer` that fronts that Deployment.  If the cluster has a `type: LoadBalancer` provider, it will then allocate an IP outside the cluster and arrange for requests to that IP to be forwarded to the Gateway Service.
+
+Managed Kubernetes services like AKS, EKS and GKE include a `type: LoadBalancer` provider that automatically integrates with Azure, AWS and GCP respectively.  On-prem clusters and non-managed clusters in the cloud need to set up their own `type: LoadBalancer` support.
+
+## Before you begin
+
+**Unsupported**
+
+- Windows
+
+## How to
+
+- [Enable Gateway API support](#enable-gateway-api-support)
+- [Use the Gateway API](#use-the-gateway-api)
+- [Disable Gateway API support](#disable-gateway-api-support)
+
+### Enable Gateway API support
+
+To enable Gateway API support, create a `GatewayAPI` resource with name `tigera-secure`:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: tigera-secure
+EOF
+```
+
+Shortly after this you will see that Gateway API resources are now available:
+
+```bash
+kubectl api-resources | grep gateway.networking.k8s.io
+```
+
+And also that there is a GatewayClass resource corresponding to the Envoy Gateway implementation included in {{prodname}}:
+
+```bash
+kubectl get gatewayclass -o yaml
+```
+
+### Use the Gateway API
+
+Now you can use the Gateway API in any way that the API supports.  When configuring a Gateway resource, be sure to specify `gatewayClassName: tigera-gateway-class`.
+
+By way of a simple example:
+
+- Create echo servers in namespaces `ns1` and `ns2`:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver
+  namespace: ns1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echoserver
+  template:
+    metadata:
+      labels:
+        app: echoserver
+    spec:
+      containers:
+      - image: ealen/echo-server:latest
+        imagePullPolicy: IfNotPresent
+        name: echoserver
+        ports:
+        - containerPort: 80
+        env:
+        - name: PORT
+          value: "80"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver
+  namespace: ns1
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  type: ClusterIP
+  selector:
+    app: echoserver
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver
+  namespace: ns2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echoserver
+  template:
+    metadata:
+      labels:
+        app: echoserver
+    spec:
+      containers:
+      - image: ealen/echo-server:latest
+        imagePullPolicy: IfNotPresent
+        name: echoserver
+        ports:
+        - containerPort: 80
+        env:
+        - name: PORT
+          value: "80"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver
+  namespace: ns2
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  type: ClusterIP
+  selector:
+    app: echoserver
+EOF
+```
+
+- Create a client pod that we can test from:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-client
+spec:
+  containers:
+  - args:
+    - "3600"
+    command:
+    - /bin/sleep
+    image: ubuntu
+    imagePullPolicy: Always
+    name: c1
+  terminationGracePeriodSeconds: 0
+EOF
+```
+
+- Once that pod is running, install `curl` in it:
+
+```bash
+kubectl exec -it test-client -- apt-get -y update
+kubectl exec -it test-client -- apt-get -y install curl
+```
+
+- Configure a Gateway:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: eg
+spec:
+  gatewayClassName: tigera-gateway-class
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+EOF
+```
+
+- Configure routes to the two echo servers:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ns1-2-echo
+spec:
+  parentRefs:
+    - name: eg
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: echoserver
+          namespace: ns1
+          port: 80
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /ns1
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: echoserver
+          namespace: ns2
+          port: 80
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /ns2
+EOF
+```
+
+- Configure the ReferenceGrants that are needed to allow the Gateway to reference services in other namespaces:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: echo
+  namespace: ns1
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: default
+  to:
+  - group: ""
+    kind: Service
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: echo
+  namespace: ns2
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: default
+  to:
+  - group: ""
+    kind: Service
+EOF
+```
+
+- Find the cluster IP of the Gateway Service:
+
+```bash
+kubectl get services -n tigera-gateway-system -o wide
+```
+
+- Curl from the test client pod to a URL that should be handled by the echo server in namespace `ns1`, via the Gateway:
+
+```bash
+curl http://<cluster IP>/ns1/subpath?query=demo | jq
+```
+
+- The output confirms that the request was handled by the echo server in namespace `ns1`:
+
+```
+```
+
+- Curl from the test client pod to a URL that should be handled by the echo server in namespace `ns2`, via the Gateway:
+
+```bash
+curl http://<cluster IP>/ns2/subpath?query=demo | jq
+```
+
+- The output confirms that the request was handled by the echo server in namespace `ns2`:
+
+```
+```
+
+### Disable Gateway API support
+
+To disable Gateway API support, delete the `GatewayAPI` resource with name `tigera-secure`:
+
+```bash
+kubectl delete -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: tigera-secure
+EOF
+```
+
+Please note that the Gateway API CRDs will be left in place.  This is to allow for the possibility of using other Gateway API implementations in addition to the one provided by {{prodname}}.
