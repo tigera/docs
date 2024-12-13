@@ -1,29 +1,25 @@
-export default {
-    baseStyle: {
-        dialogContainer: {
-            borderRadius: 0,
-        },
-        dialog: {
-            borderRadius: 0,
-            bg: 'tigeraGrey.100',
-        },
-        header: {
-            pt: 6,
-            pb: 0,
-            fontWeight: 'bold',
-            fontSize: 'sm',
-            lineHeight: 6,
-        },
-        closeButton: {},
-        body: {
-            pt: 2,
-            pb: 6,
-            fontWeight: 'medium',
-            fontSize: 'xs',
-            lineHeight: 5,
-        },
-        footer: {
-            pb: 6,
-        },
+import { mode } from '@chakra-ui/theme-tools';
+import { modalAnatomy as parts } from '@chakra-ui/anatomy';
+import { createMultiStyleConfigHelpers } from '@chakra-ui/styled-system';
+
+const { defineMultiStyleConfig } = createMultiStyleConfigHelpers(parts.keys);
+
+const modalTheme = defineMultiStyleConfig({
+  baseStyle: (props) => ({
+    dialog: {
+      backgroundColor: mode('white', 'gray.800')(props),
     },
-};
+    closeButton: {
+      border: 'none',
+      _hover: {
+        cursor: 'pointer',
+        bg: mode('blackAlpha.100', 'whiteAlpha.100')(props),
+      },
+    },
+    body: {
+      fontSize: 'md',
+    },
+  }),
+});
+
+export default modalTheme;
