@@ -72,10 +72,34 @@ Shortly after this you will see that Gateway API resources are now available:
 kubectl api-resources | grep gateway.networking.k8s.io
 ```
 
+Which gives:
+```
+backendlbpolicies                   blbpolicy                                       gateway.networking.k8s.io/v1alpha2          true         BackendLBPolicy
+backendtlspolicies                  btlspolicy                                      gateway.networking.k8s.io/v1alpha3          true         BackendTLSPolicy
+gatewayclasses                      gc                                              gateway.networking.k8s.io/v1                false        GatewayClass
+gateways                            gtw                                             gateway.networking.k8s.io/v1                true         Gateway
+grpcroutes                                                                          gateway.networking.k8s.io/v1                true         GRPCRoute
+httproutes                                                                          gateway.networking.k8s.io/v1                true         HTTPRoute
+referencegrants                     refgrant                                        gateway.networking.k8s.io/v1beta1           true         ReferenceGrant
+tcproutes                                                                           gateway.networking.k8s.io/v1alpha2          true         TCPRoute
+tlsroutes                                                                           gateway.networking.k8s.io/v1alpha2          true         TLSRoute
+udproutes                                                                           gateway.networking.k8s.io/v1alpha2          true         UDPRoute
+```
+
 And also that there is a GatewayClass resource corresponding to the Envoy Gateway implementation included in {{prodname}}:
 
 ```bash
-kubectl get gatewayclass -o yaml
+kubectl get gatewayclass -o yaml | yq r - 'items[0].spec'
+```
+
+Which gives:
+```
+controllerName: gateway.envoyproxy.io/gatewayclass-controller
+parametersRef:
+  group: gateway.envoyproxy.io
+  kind: EnvoyProxy
+  name: envoy-proxy-config
+  namespace: tigera-gateway
 ```
 
 ### Use the Gateway API
