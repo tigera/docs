@@ -205,6 +205,7 @@ module.exports = {
       link: { type: 'doc', id: 'visibility/index' },
       items: [
         'visibility/alerts',
+        'visibility/dashboards',
         'visibility/kibana',
         'visibility/packetcapture',
         'visibility/visualize-traffic',
