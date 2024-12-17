@@ -1,10 +1,10 @@
 import React from 'react';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
 import styles from './styles.module.css';
 
 const getSanitizedData = ({ fieldData }) => ({
-  sanitizedDescription: { __html: DOMPurify.sanitize(fieldData.DescriptionHTML) },
-  sanitizedSchema: { __html: DOMPurify.sanitize(fieldData.StringSchemaHTML) },
+  sanitizedDescription: { __html: sanitizeHtml(fieldData.DescriptionHTML) },
+  sanitizedSchema: { __html: sanitizeHtml(fieldData.StringSchemaHTML) },
 });
 
 const TableEnv = ({ fieldData }) => {
