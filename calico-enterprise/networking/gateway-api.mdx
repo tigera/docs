@@ -114,213 +114,199 @@ By way of a simple example:
 
 - Create echo servers in namespaces `ns1` and `ns2`:
 
-```bash
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ns1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: echoserver
-  namespace: ns1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
+  ```bash
+  kubectl apply -f - <<EOF
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: ns1
+  ---
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: echoserver-ns1
+    namespace: ns1
+    labels:
       app: echoserver
-  template:
-    metadata:
-      labels:
-        app: echoserver
-    spec:
-      containers:
-      - image: ealen/echo-server:latest
-        imagePullPolicy: IfNotPresent
-        name: echoserver
-        ports:
-        - containerPort: 80
-        env:
-        - name: PORT
-          value: "80"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: echoserver
-  namespace: ns1
-spec:
-  ports:
-    - port: 80
-      targetPort: 80
-      protocol: TCP
-  type: ClusterIP
-  selector:
-    app: echoserver
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ns2
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: echoserver
-  namespace: ns2
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
+  spec:
+    containers:
+    - image: ealen/echo-server:latest
+      imagePullPolicy: IfNotPresent
+      name: echoserver
+      ports:
+      - containerPort: 80
+      env:
+      - name: PORT
+        value: "80"
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: echoserver
+    namespace: ns1
+  spec:
+    ports:
+      - port: 80
+        targetPort: 80
+        protocol: TCP
+    type: ClusterIP
+    selector:
       app: echoserver
-  template:
-    metadata:
-      labels:
-        app: echoserver
-    spec:
-      containers:
-      - image: ealen/echo-server:latest
-        imagePullPolicy: IfNotPresent
-        name: echoserver
-        ports:
-        - containerPort: 80
-        env:
-        - name: PORT
-          value: "80"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: echoserver
-  namespace: ns2
-spec:
-  ports:
-    - port: 80
-      targetPort: 80
-      protocol: TCP
-  type: ClusterIP
-  selector:
-    app: echoserver
-EOF
-```
+  ---
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: ns2
+  ---
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: echoserver-ns2
+    namespace: ns2
+    labels:
+      app: echoserver
+  spec:
+    containers:
+    - image: ealen/echo-server:latest
+      imagePullPolicy: IfNotPresent
+      name: echoserver
+      ports:
+      - containerPort: 80
+      env:
+      - name: PORT
+        value: "80"
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: echoserver
+    namespace: ns2
+  spec:
+    ports:
+      - port: 80
+        targetPort: 80
+        protocol: TCP
+    type: ClusterIP
+    selector:
+      app: echoserver
+  EOF
+  ```
 
 - Create a client pod that we can test from:
 
-```bash
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-client
-spec:
-  containers:
-  - args:
-    - "3600"
-    command:
-    - /bin/sleep
-    image: ubuntu
-    imagePullPolicy: Always
-    name: c1
-  terminationGracePeriodSeconds: 0
-EOF
-```
+  ```bash
+  kubectl apply -f - <<EOF
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: test-client
+  spec:
+    containers:
+    - args:
+      - "3600"
+      command:
+      - /bin/sleep
+      image: ubuntu
+      imagePullPolicy: Always
+      name: c1
+    terminationGracePeriodSeconds: 0
+  EOF
+  ```
 
 - Once that pod is running, install `curl` in it:
 
-```bash
-kubectl exec -it test-client -- apt-get -y update
-kubectl exec -it test-client -- apt-get -y install curl
-```
+  ```bash
+  kubectl exec -it test-client -- apt-get -y update
+  kubectl exec -it test-client -- apt-get -y install curl
+  ```
 
 - Configure a Gateway:
 
-```bash
-kubectl apply -f - <<EOF
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: eg
-spec:
-  gatewayClassName: tigera-gateway-class
-  listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
-EOF
-```
+  ```bash
+  kubectl apply -f - <<EOF
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: Gateway
+  metadata:
+    name: eg
+  spec:
+    gatewayClassName: tigera-gateway-class
+    listeners:
+      - name: http
+        protocol: HTTP
+        port: 80
+  EOF
+  ```
 
 - Configure routes to the two echo servers:
 
-```bash
-kubectl apply -f - <<EOF
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: ns1-2-echo
-spec:
-  parentRefs:
-    - name: eg
-  rules:
-    - backendRefs:
-        - group: ""
-          kind: Service
-          name: echoserver
-          namespace: ns1
-          port: 80
-          weight: 1
-      matches:
-        - path:
-            type: PathPrefix
-            value: /ns1
-    - backendRefs:
-        - group: ""
-          kind: Service
-          name: echoserver
-          namespace: ns2
-          port: 80
-          weight: 1
-      matches:
-        - path:
-            type: PathPrefix
-            value: /ns2
-EOF
-```
+  ```bash
+  kubectl apply -f - <<EOF
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: HTTPRoute
+  metadata:
+    name: ns1-2-echo
+  spec:
+    parentRefs:
+      - name: eg
+    rules:
+      - backendRefs:
+          - group: ""
+            kind: Service
+            name: echoserver
+            namespace: ns1
+            port: 80
+            weight: 1
+        matches:
+          - path:
+              type: PathPrefix
+              value: /ns1
+      - backendRefs:
+          - group: ""
+            kind: Service
+            name: echoserver
+            namespace: ns2
+            port: 80
+            weight: 1
+        matches:
+          - path:
+              type: PathPrefix
+              value: /ns2
+  EOF
+  ```
 
 - Configure the ReferenceGrants that are needed to allow the Gateway to reference services in other namespaces:
 
-```bash
-kubectl apply -f - <<EOF
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: echo
-  namespace: ns1
-spec:
-  from:
-  - group: gateway.networking.k8s.io
-    kind: HTTPRoute
-    namespace: default
-  to:
-  - group: ""
-    kind: Service
----
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: echo
-  namespace: ns2
-spec:
-  from:
-  - group: gateway.networking.k8s.io
-    kind: HTTPRoute
-    namespace: default
-  to:
-  - group: ""
-    kind: Service
-EOF
-```
+  ```bash
+  kubectl apply -f - <<EOF
+  apiVersion: gateway.networking.k8s.io/v1beta1
+  kind: ReferenceGrant
+  metadata:
+    name: echo
+    namespace: ns1
+  spec:
+    from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: default
+    to:
+    - group: ""
+      kind: Service
+  ---
+  apiVersion: gateway.networking.k8s.io/v1beta1
+  kind: ReferenceGrant
+  metadata:
+    name: echo
+    namespace: ns2
+  spec:
+    from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: default
+    to:
+    - group: ""
+      kind: Service
+  EOF
+  ```
 
 - Find the cluster IP of the Gateway Service:
 
