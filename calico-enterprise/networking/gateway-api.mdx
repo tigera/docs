@@ -328,7 +328,7 @@ By way of a simple example:
   kubectl exec -it test-client -- curl http://10.0.20.19/ns1/subpath?query=demo | jq
   ```
 
-- The output confirms that the request was handled by the echo server in namespace `ns1`:
+- The output confirms - see the `"HOSTNAME"` line - that the request was handled by the echo server in namespace `ns1`:
 
   ```
   {
@@ -359,30 +359,30 @@ By way of a simple example:
         "x-forwarded-for": "10.224.0.18",
         "x-forwarded-proto": "http",
         "x-envoy-internal": "true",
-        "x-request-id": "f648ec0a-650c-4f10-b8ce-218f4940f2e2"
+        "x-request-id": "375a5b78-60fc-4a87-89b0-b4c6501115ca"
       }
     },
     "environment": {
       "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-      "HOSTNAME": "echoserver-79974b75cd-9s6zl",
+      "HOSTNAME": "echoserver-ns1",
       "NODE_VERSION": "20.11.0",
       "YARN_VERSION": "1.22.19",
       "PORT": "80",
-      "KUBERNETES_PORT_443_TCP": "tcp://10.0.0.1:443",
-      "KUBERNETES_SERVICE_PORT_HTTPS": "443",
-      "KUBERNETES_PORT_443_TCP_ADDR": "10.0.0.1",
-      "ECHOSERVER_SERVICE_PORT": "80",
-      "KUBERNETES_SERVICE_HOST": "10.0.0.1",
-      "KUBERNETES_PORT": "tcp://10.0.0.1:443",
-      "KUBERNETES_PORT_443_TCP_PROTO": "tcp",
-      "KUBERNETES_PORT_443_TCP_PORT": "443",
-      "ECHOSERVER_PORT_80_TCP": "tcp://10.0.111.210:80",
-      "ECHOSERVER_PORT_80_TCP_PROTO": "tcp",
-      "KUBERNETES_SERVICE_PORT": "443",
       "ECHOSERVER_SERVICE_HOST": "10.0.111.210",
       "ECHOSERVER_PORT": "tcp://10.0.111.210:80",
-      "ECHOSERVER_PORT_80_TCP_PORT": "80",
+      "ECHOSERVER_PORT_80_TCP": "tcp://10.0.111.210:80",
+      "KUBERNETES_SERVICE_HOST": "10.0.0.1",
+      "KUBERNETES_SERVICE_PORT": "443",
+      "KUBERNETES_SERVICE_PORT_HTTPS": "443",
       "ECHOSERVER_PORT_80_TCP_ADDR": "10.0.111.210",
+      "KUBERNETES_PORT": "tcp://10.0.0.1:443",
+      "ECHOSERVER_SERVICE_PORT": "80",
+      "ECHOSERVER_PORT_80_TCP_PORT": "80",
+      "KUBERNETES_PORT_443_TCP_PORT": "443",
+      "ECHOSERVER_PORT_80_TCP_PROTO": "tcp",
+      "KUBERNETES_PORT_443_TCP": "tcp://10.0.0.1:443",
+      "KUBERNETES_PORT_443_TCP_PROTO": "tcp",
+      "KUBERNETES_PORT_443_TCP_ADDR": "10.0.0.1",
       "HOME": "/root"
     }
   }
@@ -391,72 +391,20 @@ By way of a simple example:
 - Curl from the test client pod to a URL that should be handled by the echo server in namespace `ns2`, via the Gateway:
 
   ```bash
-  curl http://<cluster IP>/ns2/subpath?query=demo | jq
+  kubectl exec -it test-client -- curl http://10.0.20.19/ns2/subpath?query=demo | jq
   ```
 
 - The output confirms that the request was handled by the echo server in namespace `ns2`:
 
   ```
-  {
-    "host": {
-      "hostname": "10.0.20.19",
-      "ip": "::ffff:10.224.0.10",
-      "ips": []
-    },
-    "http": {
-      "method": "GET",
-      "baseUrl": "",
-      "originalUrl": "/ns1/subpath?query=demo",
-      "protocol": "http"
-    },
-    "request": {
-      "params": {
-        "0": "/ns1/subpath"
-      },
-      "query": {
-        "query": "demo"
-      },
-      "cookies": {},
-      "body": {},
-      "headers": {
-        "host": "10.0.20.19",
-        "user-agent": "curl/8.5.0",
-        "accept": "*/*",
-        "x-forwarded-for": "10.224.0.18",
-        "x-forwarded-proto": "http",
-        "x-envoy-internal": "true",
-        "x-request-id": "f648ec0a-650c-4f10-b8ce-218f4940f2e2"
-      }
-    },
-    "environment": {
-      "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-      "HOSTNAME": "echoserver-79974b75cd-9s6zl",
-      "NODE_VERSION": "20.11.0",
-      "YARN_VERSION": "1.22.19",
-      "PORT": "80",
-      "KUBERNETES_PORT_443_TCP": "tcp://10.0.0.1:443",
-      "KUBERNETES_SERVICE_PORT_HTTPS": "443",
-      "KUBERNETES_PORT_443_TCP_ADDR": "10.0.0.1",
-      "ECHOSERVER_SERVICE_PORT": "80",
-      "KUBERNETES_SERVICE_HOST": "10.0.0.1",
-      "KUBERNETES_PORT": "tcp://10.0.0.1:443",
-      "KUBERNETES_PORT_443_TCP_PROTO": "tcp",
-      "KUBERNETES_PORT_443_TCP_PORT": "443",
-      "ECHOSERVER_PORT_80_TCP": "tcp://10.0.111.210:80",
-      "ECHOSERVER_PORT_80_TCP_PROTO": "tcp",
-      "KUBERNETES_SERVICE_PORT": "443",
-      "ECHOSERVER_SERVICE_HOST": "10.0.111.210",
-      "ECHOSERVER_PORT": "tcp://10.0.111.210:80",
-      "ECHOSERVER_PORT_80_TCP_PORT": "80",
-      "ECHOSERVER_PORT_80_TCP_ADDR": "10.0.111.210",
-      "HOME": "/root"
-    }
-  }
+  ...
+      "HOSTNAME": "echoserver-ns2",
+  ...
   ```
 
 ### Disable Gateway API support
 
-To disable Gateway API support, delete the `GatewayAPI` resource with name `tigera-secure`:
+To disable Gateway API support, first delete all the Gateway API resources that you have configured yourself.  In the example above, that would be the ReferenceGrants, the HTTPRoutes and the Gateway.  Then delete the `GatewayAPI` resource with name `tigera-secure`:
 
 ```bash
 kubectl delete -f - <<EOF
