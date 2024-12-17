@@ -324,31 +324,149 @@ EOF
 
 - Find the cluster IP of the Gateway Service:
 
-```bash
-kubectl get services -n tigera-gateway-system -o wide
-```
+  ```bash
+  kubectl get services -n tigera-gateway
+  ```
+
+  ```
+  NAME                        TYPE           CLUSTER-IP   EXTERNAL-IP     PORT(S)                                   AGE
+  envoy-default-eg-e41e7b31   LoadBalancer   10.0.20.19   135.232.51.10   80:32636/TCP                              9m3s
+  envoy-gateway               ClusterIP      10.0.24.12   <none>          18000/TCP,18001/TCP,18002/TCP,19001/TCP   36m
+  ```
+
+  The Service for the Gateway is the one beginning with `envoy-default-`, followed by the name of the Gateway resource.  So the correct cluster IP in this case is 10.0.20.19.  (The `envoy-gateway` Service represents the gateway controller, which is the component that monitors for Gateway API resources and creates corresponding components to implement those.)
 
 - Curl from the test client pod to a URL that should be handled by the echo server in namespace `ns1`, via the Gateway:
 
-```bash
-curl http://<cluster IP>/ns1/subpath?query=demo | jq
-```
+  ```bash
+  kubectl exec -it test-client -- curl http://10.0.20.19/ns1/subpath?query=demo | jq
+  ```
 
 - The output confirms that the request was handled by the echo server in namespace `ns1`:
 
-```
-```
+  ```
+  {
+    "host": {
+      "hostname": "10.0.20.19",
+      "ip": "::ffff:10.224.0.10",
+      "ips": []
+    },
+    "http": {
+      "method": "GET",
+      "baseUrl": "",
+      "originalUrl": "/ns1/subpath?query=demo",
+      "protocol": "http"
+    },
+    "request": {
+      "params": {
+        "0": "/ns1/subpath"
+      },
+      "query": {
+        "query": "demo"
+      },
+      "cookies": {},
+      "body": {},
+      "headers": {
+        "host": "10.0.20.19",
+        "user-agent": "curl/8.5.0",
+        "accept": "*/*",
+        "x-forwarded-for": "10.224.0.18",
+        "x-forwarded-proto": "http",
+        "x-envoy-internal": "true",
+        "x-request-id": "f648ec0a-650c-4f10-b8ce-218f4940f2e2"
+      }
+    },
+    "environment": {
+      "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "HOSTNAME": "echoserver-79974b75cd-9s6zl",
+      "NODE_VERSION": "20.11.0",
+      "YARN_VERSION": "1.22.19",
+      "PORT": "80",
+      "KUBERNETES_PORT_443_TCP": "tcp://10.0.0.1:443",
+      "KUBERNETES_SERVICE_PORT_HTTPS": "443",
+      "KUBERNETES_PORT_443_TCP_ADDR": "10.0.0.1",
+      "ECHOSERVER_SERVICE_PORT": "80",
+      "KUBERNETES_SERVICE_HOST": "10.0.0.1",
+      "KUBERNETES_PORT": "tcp://10.0.0.1:443",
+      "KUBERNETES_PORT_443_TCP_PROTO": "tcp",
+      "KUBERNETES_PORT_443_TCP_PORT": "443",
+      "ECHOSERVER_PORT_80_TCP": "tcp://10.0.111.210:80",
+      "ECHOSERVER_PORT_80_TCP_PROTO": "tcp",
+      "KUBERNETES_SERVICE_PORT": "443",
+      "ECHOSERVER_SERVICE_HOST": "10.0.111.210",
+      "ECHOSERVER_PORT": "tcp://10.0.111.210:80",
+      "ECHOSERVER_PORT_80_TCP_PORT": "80",
+      "ECHOSERVER_PORT_80_TCP_ADDR": "10.0.111.210",
+      "HOME": "/root"
+    }
+  }
+  ```
 
 - Curl from the test client pod to a URL that should be handled by the echo server in namespace `ns2`, via the Gateway:
 
-```bash
-curl http://<cluster IP>/ns2/subpath?query=demo | jq
-```
+  ```bash
+  curl http://<cluster IP>/ns2/subpath?query=demo | jq
+  ```
 
 - The output confirms that the request was handled by the echo server in namespace `ns2`:
 
-```
-```
+  ```
+  {
+    "host": {
+      "hostname": "10.0.20.19",
+      "ip": "::ffff:10.224.0.10",
+      "ips": []
+    },
+    "http": {
+      "method": "GET",
+      "baseUrl": "",
+      "originalUrl": "/ns1/subpath?query=demo",
+      "protocol": "http"
+    },
+    "request": {
+      "params": {
+        "0": "/ns1/subpath"
+      },
+      "query": {
+        "query": "demo"
+      },
+      "cookies": {},
+      "body": {},
+      "headers": {
+        "host": "10.0.20.19",
+        "user-agent": "curl/8.5.0",
+        "accept": "*/*",
+        "x-forwarded-for": "10.224.0.18",
+        "x-forwarded-proto": "http",
+        "x-envoy-internal": "true",
+        "x-request-id": "f648ec0a-650c-4f10-b8ce-218f4940f2e2"
+      }
+    },
+    "environment": {
+      "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "HOSTNAME": "echoserver-79974b75cd-9s6zl",
+      "NODE_VERSION": "20.11.0",
+      "YARN_VERSION": "1.22.19",
+      "PORT": "80",
+      "KUBERNETES_PORT_443_TCP": "tcp://10.0.0.1:443",
+      "KUBERNETES_SERVICE_PORT_HTTPS": "443",
+      "KUBERNETES_PORT_443_TCP_ADDR": "10.0.0.1",
+      "ECHOSERVER_SERVICE_PORT": "80",
+      "KUBERNETES_SERVICE_HOST": "10.0.0.1",
+      "KUBERNETES_PORT": "tcp://10.0.0.1:443",
+      "KUBERNETES_PORT_443_TCP_PROTO": "tcp",
+      "KUBERNETES_PORT_443_TCP_PORT": "443",
+      "ECHOSERVER_PORT_80_TCP": "tcp://10.0.111.210:80",
+      "ECHOSERVER_PORT_80_TCP_PROTO": "tcp",
+      "KUBERNETES_SERVICE_PORT": "443",
+      "ECHOSERVER_SERVICE_HOST": "10.0.111.210",
+      "ECHOSERVER_PORT": "tcp://10.0.111.210:80",
+      "ECHOSERVER_PORT_80_TCP_PORT": "80",
+      "ECHOSERVER_PORT_80_TCP_ADDR": "10.0.111.210",
+      "HOME": "/root"
+    }
+  }
+  ```
 
 ### Disable Gateway API support
 
