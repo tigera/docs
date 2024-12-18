@@ -1,5 +1,5 @@
 ---
-description: Enable IPsec for faster encryption between nodes when using the VPP dataplane.
+description: Enable IPsec for faster encryption between nodes when using the VPP data plane.
 ---
 
 # IPsec configuration with VPP
@@ -16,13 +16,13 @@ IPsec is the fastest option to encrypt the traffic between nodes. It enables bla
 
 To enable IPsec encryption, you will need a Kubernetes cluster with:
 
-- the [VPP dataplane](getting-started.mdx) configured
+- the [VPP data plane](getting-started.mdx) configured
 - [IP-in-IP encapsulation](../../../networking/configuring/vxlan-ipip.mdx) configured between the nodes
 
 ## How to
 
 - [Create the IKEv2 PSK](#create-the-ikev2-psk)
-- [Configure the VPP dataplane](#configure-the-vpp-dataplane)
+- [Configure the VPP data plane](#configure-the-vpp-dataplane)
 
 ### Create the IKEv2 PSK
 
@@ -33,7 +33,7 @@ kubectl -n calico-vpp-dataplane create secret generic calicovpp-ipsec-secret \
    --from-literal=psk="$(dd if=/dev/urandom bs=1 count=36 2>/dev/null | base64)"
 ```
 
-### Configure the VPP dataplane
+### Configure the VPP data plane
 
 To enable IPsec, you first need to enable the ipsec feature in the `calico-vpp-config` ConfigMap.
 
@@ -49,6 +49,7 @@ kubectl -n calico-vpp-dataplane patch configmap calico-vpp-config --patch "data:
 ```
 
 You then need to configure the calico-vpp agent to pass it the key we previously created.
+
 ```bash
 kubectl -n calico-vpp-dataplane patch daemonset calico-vpp-node --patch "spec:
   template:
@@ -63,6 +64,7 @@ kubectl -n calico-vpp-dataplane patch daemonset calico-vpp-node --patch "spec:
                   key: psk
 "
 ```
+
 Once IPsec is enabled, all the traffic that uses IP-in-IP encapsulation in the cluster will be automatically encrypted.
 
 ## Next steps
@@ -82,6 +84,7 @@ Then at the `vpp#` prompt, you can run the following commands:
 - `show ikev2 profile` will list the configured IKEv2 profiles, there should be one per other node in your cluster
 
 As an example on a three-node cluster
+
 ```
 vpp# show ikev2 profile
 profile pr_172_19_0_5_to_172_19_0_3
@@ -110,7 +113,8 @@ profile pr_172_19_0_5_to_172_19_0_4
   lifetime 0 jitter 0 handover 0 maxdata 0
 ```
 
-- `show ipip tunnel` will list the interfaces configured in VPP. 
+- `show ipip tunnel` will list the interfaces configured in VPP.
+
 ```
 vpp# show ipip tunnel
 [0] instance 0 src 172.19.0.5 dst 172.19.0.3 table-ID 0 sw-if-idx 9 flags [none] dscp CS0
@@ -133,6 +137,7 @@ ipip2                             11     up          9000/0/0/0
 ```
 
 - `show ipsec protect` shows the SAs being configured on each ipip tunnel. There should be two SAs by ipip tunnel.
+
 ```
 vpp# show ipsec protect
 ipip0 flags:[none]
@@ -153,6 +158,7 @@ ipip1 flags:[none]
 ```
 
 - You can see the full list of Security Associations (SAs) with `show ipsec sa`.
+
 ```
 vpp# show ipsec sa
 [0] sa 2147483648 (0x80000000) spi 2056367583 (0x7a91addf) protocol:esp flags:[esn anti-replay aead ctr ]

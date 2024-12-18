@@ -53,9 +53,9 @@ Now Felix can perform these calculations quickly while reducing CPU usage by ord
 
 For more information, see [Selector performance in EntityRules](../reference/resources/globalnetworkpolicy.mdx#selector-performance-in-entityrules).
 
-### Improved scalability for large number of policies when using the eBPF dataplane
+### Improved scalability for large number of policies when using the eBPF data plane
 
-We've made several improvements that allow you to enforce a larger number of $[prodname] network policies when using the eBPF dataplane.
+We've made several improvements that allow you to enforce a larger number of $[prodname] network policies when using the eBPF data plane.
 
 ### New performance optimizations for egress gateways
 
@@ -84,50 +84,52 @@ For more information, see [Helm installation reference](../reference/installatio
 
 ## Deprecated and removed features
 
-* The anomaly detection feature is removed in this release.
+- The anomaly detection feature is removed in this release.
   If anomaly detection is enabled and you upgrade to $[prodname] 3.18, you will stop receiving anomaly detection alerts.
-* The [manual installation method for Windows](../getting-started/install-on-clusters/windows-calico/manual-install/) is deprecated and will be removed in a future release.
+- The [manual installation method for Windows](../getting-started/install-on-clusters/windows-calico/manual-install/) is deprecated and will be removed in a future release.
   The recommended installation method is now [operator-based](../getting-started/install-on-clusters/windows-calico/operator).
-* The [FIPS mode](../operations/fips.mdx) feature is deprecated in this release.
+- The [FIPS mode](../operations/fips.mdx) feature is deprecated in this release.
   It will be removed in Calico Enterprise 3.19.
-* The [AWS security groups integration](../network-policy/policy-firewalls/aws-integration/index.mdx) is deprecated in this release.
+- The [AWS security groups integration](../network-policy/policy-firewalls/aws-integration/index.mdx) is deprecated in this release.
   It will be removed in Calico Enterprise 3.19.
-* The ingress log collection feature is deprecated in this release.
+- The ingress log collection feature is deprecated in this release.
   It will be removed in Calico Enterprise 3.19.
 
 ## Technology Preview features
 
 - [Web application firewall](../threat/web-application-firewall)
 
-   Protect cloud-native applications from application layer attacks.
+  Protect cloud-native applications from application layer attacks.
 
 - [Security events management](../threat/security-event-management)
 
-   Get alerts on security events that may indicate a threat is present in your Kubernetes cluster.
+  Get alerts on security events that may indicate a threat is present in your Kubernetes cluster.
 
 - [DNS policy for Windows](../getting-started/install-on-clusters/windows-calico/limitations#dns-policy-limitations)
 
-   Use domain names in policies to identify services outside the cluster, which is often operationally simpler and more robust than using IP addresses.
+  Use domain names in policies to identify services outside the cluster, which is often operationally simpler and more robust than using IP addresses.
 
 ## Known issues
 
-* Flow logs for the Windows workloads currently do not display entries with a Deny action.
-* Before upgrading a $[prodname] cluster on MKE v3.6 to the latest $[prodname] version: 1) upgrade MKE from 3.6 to 3.7, then 2) upgrade $[prodname].
-* L7 logs with source name `pvt` is not visible in Service Graph.
-* *Multi-cluster management users only*. If the `manager-tls` and `internal-manager-tls` secrets have overlapping DNS names, components such as `es-calico-kube-controllers` will log certificate errors. If you have previously installed a version older than v3.13.0 and never changed your manager-tls secret from the tigera-operator namespace, you must delete both of these secrets. This applies to you if the following command prints a certificate: `$ kubectl get secret manager-tls -n tigera-operator -o "jsonpath={.data['cert']}"`.
-* Upgrading to $[prodname] 3.18.0 on Rancher/RKE from $[prodname] 3.13.0 currently requires manually terminating the calico-node container for an upgrade to proceed.
-* Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim. Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.) Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned".
-<li>
-  Some application layer features are not working as expected for $[prodname] installations with the following deployment types:
-  <ul>
-  <li>AKS clusters with Azure CNI for networking and $[prodname] for network policy</li>
-    <li>RKE2 clusters installed with Rancher UI</li>
-  </ul>
-  During installation, for these deployment types, <code>kubeletVolumePluginPath</code> is set to <code>None</code> in the Installation CR, causing all application layer features to stop working.
-  The affected features include web application firewalls, application layer policies, and L7 logging.
-  As a workaround, you can restore the default value by running the following command on an affected cluster:
-  <CodeBlock language='bash'>{`kubectl patch installation.tigera.io default --type=merge  -p '{"spec":{"kubeletVolumePluginPath":"/var/lib/kubelet"}}'`}</CodeBlock>
-</li>
+- Flow logs for the Windows workloads currently do not display entries with a Deny action.
+- Before upgrading a $[prodname] cluster on MKE v3.6 to the latest $[prodname] version: 1) upgrade MKE from 3.6 to 3.7, then 2) upgrade $[prodname].
+- L7 logs with source name `pvt` is not visible in Service Graph.
+- _Multi-cluster management users only_. If the `manager-tls` and `internal-manager-tls` secrets have overlapping DNS names, components such as `es-calico-kube-controllers` will log certificate errors. If you have previously installed a version older than v3.13.0 and never changed your manager-tls secret from the tigera-operator namespace, you must delete both of these secrets. This applies to you if the following command prints a certificate: `$ kubectl get secret manager-tls -n tigera-operator -o "jsonpath={.data['cert']}"`.
+- Upgrading to $[prodname] 3.18.0 on Rancher/RKE from $[prodname] 3.13.0 currently requires manually terminating the calico-node container for an upgrade to proceed.
+- Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim. Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.) Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned".
+  <li>
+    Some application layer features are not working as expected for $[prodname] installations with the following
+    deployment types:
+    <ul>
+      <li>AKS clusters with Azure CNI for networking and $[prodname] for network policy</li>
+      <li>RKE2 clusters installed with Rancher UI</li>
+    </ul>
+    During installation, for these deployment types, <code>kubeletVolumePluginPath</code> is set to <code>None</code> in
+    the Installation CR, causing all application layer features to stop working. The affected features include web
+    application firewalls, application layer policies, and L7 logging. As a workaround, you can restore the default
+    value by running the following command on an affected cluster:
+    <CodeBlock language='bash'>{`kubectl patch installation.tigera.io default --type=merge  -p '{"spec":{"kubeletVolumePluginPath":"/var/lib/kubelet"}}'`}</CodeBlock>
+  </li>
 
 ## Release details
 
@@ -179,21 +181,21 @@ Calico Enterprise 3.18.2 is now available. This release includes bug fixes and i
 
 #### Improvements
 
-* Reduced the validity of JSON Web Tokens issued by dex to 15 minutes (down from 24 hours).
-* Added a configurable option for `priorityClassName` to the egress gateway CRD.
-* Policy recommendation excludes OpenShift namespaces by default.
+- Reduced the validity of JSON Web Tokens issued by dex to 15 minutes (down from 24 hours).
+- Added a configurable option for `priorityClassName` to the egress gateway CRD.
+- Policy recommendation excludes OpenShift namespaces by default.
 
 #### Bug fixes
 
-* Drastically increased Voltron's Kubernetes client QPS and Burst to prevent it from rate limiting itself in MCM setups.
-* Fixed a bug that prevented Linseed from creating tokens for Intrusion Detection and DPI components in managed clusters if compliance is not enabled.
-* Fixes an issue in the operator that caused it to accumulate more memory resources over time.
-* If kube-controllers metric port is set to 0, no ingress rule will be created.
-* Security updates.
+- Drastically increased Voltron's Kubernetes client QPS and Burst to prevent it from rate limiting itself in MCM setups.
+- Fixed a bug that prevented Linseed from creating tokens for Intrusion Detection and DPI components in managed clusters if compliance is not enabled.
+- Fixes an issue in the operator that caused it to accumulate more memory resources over time.
+- If kube-controllers metric port is set to 0, no ingress rule will be created.
+- Security updates.
 
 #### Other
 
-* FIPS mode is no longer supported.
+- FIPS mode is no longer supported.
 
 #### Updating
 
@@ -207,14 +209,13 @@ Calico Enterprise 3.18.3 is now available. This release includes bug fixes and i
 
 #### Bug fixes
 
-* Fixed an issue where the token login page stopped working when an identity provider was configured.
-* Fixed a bug that caused workload egress traffic to be incorrectly handled as host-sourced traffic if DNS policy and IPVS kube-proxy were used together.
-* Security updates.
+- Fixed an issue where the token login page stopped working when an identity provider was configured.
+- Fixed a bug that caused workload egress traffic to be incorrectly handled as host-sourced traffic if DNS policy and IPVS kube-proxy were used together.
+- Security updates.
 
 #### Updating
 
 To update an existing installation of $[prodname] 3.18, see [Install a patch release](../getting-started/manifest-archive.mdx).
-
 
 ### Calico Enterprise 3.18.4 bug fix release
 
@@ -224,10 +225,10 @@ Calico Enterprise 3.18.4 is now available. This release includes bug fixes and i
 
 #### Bug fixes
 
-* Fixes a bug in Egress gateways where IP rules were not updated when a pod's IP address changes.
-* Fixes an issue where the curator job crash-loops due to a missing module.
-* Fixes an issue where SecurityContextConstraints for components were incorrect or missing.
-* Security updates.
+- Fixes a bug in Egress gateways where IP rules were not updated when a pod's IP address changes.
+- Fixes an issue where the curator job crash-loops due to a missing module.
+- Fixes an issue where SecurityContextConstraints for components were incorrect or missing.
+- Security updates.
 
 ### Calico Enterprise 3.18.4 operator-only bug fix release
 
@@ -239,7 +240,7 @@ No other components have been changed.
 
 #### Bug fixes
 
-*  Removed a mutual dependency between logstorage and other components that could result in a degraded TigeraStatus if certificates are missing required key usages.
+- Removed a mutual dependency between logstorage and other components that could result in a degraded TigeraStatus if certificates are missing required key usages.
 
 #### Updating
 
@@ -253,11 +254,11 @@ Calico Enterprise 3.18.5 is now available. This release includes bug fixes and i
 
 #### Bug fixes
 
-* Fix that Felix would panic when trying to resync a temporary IP set. Temporary IP sets are created in certain scenarios after previous failures.
-* Fix excessive CPU usage in the process name lookup cache if a PID was unknown.
-* Updates the default behaviour of list request without tier field selector or label selector on globalnetworkpolicy, stagedglobalnetworkpolicy, networkpolicy and staged network policy to return all policies available to user, instead of returning only the policies in the default tier. This change allows to manage policies with GitOps tools like ArgoCD.
-* Fix Felix panic when using non-default BPF map sizes.  Size was not updated in all places resulting in failure to attach programs.
-* Security updates.
+- Fix that Felix would panic when trying to resync a temporary IP set. Temporary IP sets are created in certain scenarios after previous failures.
+- Fix excessive CPU usage in the process name lookup cache if a PID was unknown.
+- Updates the default behaviour of list request without tier field selector or label selector on globalnetworkpolicy, stagedglobalnetworkpolicy, networkpolicy and staged network policy to return all policies available to user, instead of returning only the policies in the default tier. This change allows to manage policies with GitOps tools like ArgoCD.
+- Fix Felix panic when using non-default BPF map sizes. Size was not updated in all places resulting in failure to attach programs.
+- Security updates.
 
 #### Updating
 
