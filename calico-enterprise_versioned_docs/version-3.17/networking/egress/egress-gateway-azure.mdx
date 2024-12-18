@@ -38,23 +38,23 @@ When an outbound application flow leaves the cluster, its IP packets will have a
 This begins as the pod IP of the pod that originated the flow, then:
 
 - _If no egress gateway is configured_ and the pod IP came from an [IP pool](../../reference/resources/ippool.mdx)
-with `natOutgoing: true`, the node hosting the pod will change the source IP to its own as the
-traffic leaves the host. This allows the pod to communicate with external service even though the
-external network is unaware of the pod's IP.
+  with `natOutgoing: true`, the node hosting the pod will change the source IP to its own as the
+  traffic leaves the host. This allows the pod to communicate with external service even though the
+  external network is unaware of the pod's IP.
 
 - _If the pod is configured with an egress gateway_, the traffic is first forwarded to the egress gateway, which
-changes the source IP to its own and then sends the traffic on. To function correctly, egress gateways
-should have IPs from an IP pool with `natOutgoing: false`, meaning their host forwards the packet onto
-the network without changing the source IP again. Since the egress gateway's IP is visible to
-the underlying network fabric, the fabric must be configured to know about the egress gateway's
-IP and to send response traffic back to the same host.
+  changes the source IP to its own and then sends the traffic on. To function correctly, egress gateways
+  should have IPs from an IP pool with `natOutgoing: false`, meaning their host forwards the packet onto
+  the network without changing the source IP again. Since the egress gateway's IP is visible to
+  the underlying network fabric, the fabric must be configured to know about the egress gateway's
+  IP and to send response traffic back to the same host.
 
 ### Azure VNets and subnets
 
 An Azure VNet is a virtual network that is, by default, logically isolated from other VNets. Each VNet has one or more
 (often large) CIDR blocks associated with it (for example `10.0.0.0/16`). In general, VNet CIDRs may overlap, but only
 if the VNets remain isolated. Azure allows VNets to be peered with each other through VNet Peerings. VNets can only be
-peered if *none* of their associated CIDRs overlap.
+peered if _none_ of their associated CIDRs overlap.
 
 Each VNet has one or more VNet subnets associated with it, each subnet owns a non-overlapping part of one of the
 VNet's CIDR blocks. VNet subnets span all availability zones in a region, so it is possible to distribute egress gateway
@@ -120,17 +120,17 @@ and Azure Route Servers supports up to 8 peers in a VNet.
 ### Create Azure Route Server
 
 Deploy Azure [Route Server](https://learn.microsoft.com/en-us/azure/route-server/) in the VNet (hub or spoke VNet) that routes
-egress addresses. Then, add the selected route reflectors as peers to the Azure Route Server. 
+egress addresses. Then, add the selected route reflectors as peers to the Azure Route Server.
 
 :::note
 
 - The BGP connections between Calico route reflectors and Azure Route Servers are critical for the functionality
-of egress gateways. It is important to maintain route reflectors with care, and to make sure there are always
-enough healthy route reflectors.
+  of egress gateways. It is important to maintain route reflectors with care, and to make sure there are always
+  enough healthy route reflectors.
 - If possible, assign a static address to the route reflectors so after reboots the same address is kept.
 - In AKS, it is [recommended](https://learn.microsoft.com/en-us/azure/aks/use-system-pools?tabs=azure-cli#system-and-user-node-pools)
-to run applications in user node pools and leave system node pools for running critical system pods.
-The nodes in system node pools are perfect Route Reflector candidates.
+  to run applications in user node pools and leave system node pools for running critical system pods.
+  The nodes in system node pools are perfect Route Reflector candidates.
 
 :::
 
@@ -195,6 +195,7 @@ EOF
 ```
 
 Where:
+
 - `blockSize` must be specified when the prefix length of the whole `cidr` is more than the default `blockSize` of 26.
 
 - `nodeSelector: "!all()"` is recommended so that this egress IP pool is not accidentally used for cluster pods in general. Specifying this `nodeSelector` means that the IP pool is only used for pods that explicitly identify it in their `cni.projectcalico.org/ipv4pools` annotation.
@@ -291,17 +292,17 @@ spec:
 :::note
 
 - Adding `routeReflectorClusterID` to a node spec will remove it from the node-to-node mesh immediately, tearing down the
-existing BGP sessions. Adding the BGP peering will bring up new BGP sessions. This will cause a short (about 2 seconds)
-disruption to dataplane traffic of workloads running in the nodes where this happens. To avoid this, make sure no
-workloads are running on the nodes, by provisioning new nodes or by running `kubectl drain` on the node (which may
-itself cause a disruption as workloads are drained).
+  existing BGP sessions. Adding the BGP peering will bring up new BGP sessions. This will cause a short (about 2 seconds)
+  disruption to data plane traffic of workloads running in the nodes where this happens. To avoid this, make sure no
+  workloads are running on the nodes, by provisioning new nodes or by running `kubectl drain` on the node (which may
+  itself cause a disruption as workloads are drained).
 - It is important to set `keepOriginalNextHop: true` since route reflectors advertise routes on behalf of other nodes.
-Advertised routes to Azure Route Servers should have the original next hop otherwise the return packets will be sent to
-route reflectors, and get dropped.
+  Advertised routes to Azure Route Servers should have the original next hop otherwise the return packets will be sent to
+  route reflectors, and get dropped.
 - It is mandatory to set `reachableBy` field set to the gateway of the subnet $[prodname] cluster is running in for
-peering with Azure Route Servers to prevent BGP connection flapping. See [BGP peer](../../reference/resources/bgppeer.mdx) for more information.
+  peering with Azure Route Servers to prevent BGP connection flapping. See [BGP peer](../../reference/resources/bgppeer.mdx) for more information.
 - Including `filters` to apply the BGP filter configured in the previous section, is optional.
-:::
+  :::
 
 ### Enable egress gateway support
 
@@ -380,82 +381,83 @@ spec:
 EOF
 ```
 
-* `replicas: 2` tells Kubernetes to schedule two egress gateways in the "red" cluster.
+- `replicas: 2` tells Kubernetes to schedule two egress gateways in the "red" cluster.
 
-* This annotation tells $[prodname] IPAM to use one of the "egress-ip-red-pool" IP pool.
+- This annotation tells $[prodname] IPAM to use one of the "egress-ip-red-pool" IP pool.
 
 External services and appliances can recognise "red" traffic because it will all come from the CIDRs of the "red"
 IP pool.
 
-* The following [topology spread constraint](https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/)
-ensures that Kubernetes spreads the Egress gateways evenly between AZs (assuming that your nodes are labeled with
-the expected [well-known label](https://kubernetes.io/docs/reference/labels-annotations-taints/#topologykubernetesiozone)
-`topology.kubernetes.io/zone`):
+- The following [topology spread constraint](https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/)
+  ensures that Kubernetes spreads the Egress gateways evenly between AZs (assuming that your nodes are labeled with
+  the expected [well-known label](https://kubernetes.io/docs/reference/labels-annotations-taints/#topologykubernetesiozone)
+  `topology.kubernetes.io/zone`):
 
 ```yaml
 topologySpreadConstraints:
-- maxSkew: 1
-  topologyKey: topology.kubernetes.io/zone
-  whenUnsatisfiable: DoNotSchedule
-  labelSelector:
-    matchLabels:
-      egress-code: red
-  ```
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        egress-code: red
+```
 
-* The labels are arbitrary. You can choose whatever names and values are convenient for your cluster's Namespaces and Pods to refer to in their egress selectors.
-If labels are not specified, a default label `projectcalico.org/egw`:`name` will be added by the Tigera Operator.
+- The labels are arbitrary. You can choose whatever names and values are convenient for your cluster's Namespaces and Pods to refer to in their egress selectors.
+  If labels are not specified, a default label `projectcalico.org/egw`:`name` will be added by the Tigera Operator.
 
-* icmpProbe may be used to specify the Probe IPs, ICMP interval and timeout in seconds. `ips` if set, the
-egress gateway pod will probe each IP periodically using an ICMP ping. If all pings fail then the egress
-gateway will report non-ready via its health port. `intervalSeconds` controls the interval between probes.
-`timeoutSeconds` controls the timeout before reporting non-ready if no probes succeed.
+- icmpProbe may be used to specify the Probe IPs, ICMP interval and timeout in seconds. `ips` if set, the
+  egress gateway pod will probe each IP periodically using an ICMP ping. If all pings fail then the egress
+  gateway will report non-ready via its health port. `intervalSeconds` controls the interval between probes.
+  `timeoutSeconds` controls the timeout before reporting non-ready if no probes succeed.
 
 ```yaml
 icmpProbe:
   ips:
-  - <IP to probe>
-  - <IP to probe>
+    - <IP to probe>
+    - <IP to probe>
   timeoutSeconds: 20
   intervalSeconds: 10
-  ```
+```
 
-* httpProbe may be used to specify the Probe URLs, HTTP interval and timeout in seconds. `urls` if set, the
-egress gateway pod will probe each external service periodically. If all probes fail then the egress
-gateway will report non-ready via its health port. `intervalSeconds` controls the interval between probes.
-`timeoutSeconds` controls the timeout before reporting non-ready if all probes are failing.
+- httpProbe may be used to specify the Probe URLs, HTTP interval and timeout in seconds. `urls` if set, the
+  egress gateway pod will probe each external service periodically. If all probes fail then the egress
+  gateway will report non-ready via its health port. `intervalSeconds` controls the interval between probes.
+  `timeoutSeconds` controls the timeout before reporting non-ready if all probes are failing.
 
 ```yaml
 httpProbe:
   urls:
-  - <URL to probe>
-  - <URL to probe>
+    - <URL to probe>
+    - <URL to probe>
   timeoutSeconds: 30
   intervalSeconds: 10
-  ```
+```
+
 - Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the egress gateway resource type.
 
 :::note
 
-*  It is advisable to have more than one egress gateway per group, so that the egress IP function
-continues if one of the gateways crashes or needs to be restarted.  When there are multiple
-gateways in a group, outbound traffic from the applications using that group is load-balanced
-across the available gateways.  The number of `replicas` specified must be less than or equal
-to the number of free IP addresses in the IP Pool.
+- It is advisable to have more than one egress gateway per group, so that the egress IP function
+  continues if one of the gateways crashes or needs to be restarted. When there are multiple
+  gateways in a group, outbound traffic from the applications using that group is load-balanced
+  across the available gateways. The number of `replicas` specified must be less than or equal
+  to the number of free IP addresses in the IP Pool.
 
-*  IPPool can be specified either by its name (e.g. `-name: egress-ip-red-pool`) or by its CIDR (e.g. `-cidr: 10.10.10.0/30`).
+- IPPool can be specified either by its name (e.g. `-name: egress-ip-red-pool`) or by its CIDR (e.g. `-cidr: 10.10.10.0/30`).
 
-*  The labels are arbitrary. You can choose whatever names and values are convenient for
-your cluster's Namespaces and Pods to refer to in their egress selectors.
+- The labels are arbitrary. You can choose whatever names and values are convenient for
+  your cluster's Namespaces and Pods to refer to in their egress selectors.
 
 The health port `8080` is used by:
 
-* The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP probes).
+- The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP probes).
 
-* Remote pods to check if the egress gateway is "ready". Only "ready" egress
-gateways will be used for remote client traffic. This traffic is automatically allowed by $[prodname] and
-no policy is required to allow it. $[prodname] only sends probes to egress gateway pods that have a named
-"health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
-:::
+- Remote pods to check if the egress gateway is "ready". Only "ready" egress
+  gateways will be used for remote client traffic. This traffic is automatically allowed by $[prodname] and
+  no policy is required to allow it. $[prodname] only sends probes to egress gateway pods that have a named
+  "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
+  :::
 
 ### Configure iptables backend for egress gateways
 
@@ -465,8 +467,9 @@ To modify the iptables backend for egress gateways, you must change the `iptable
 ### Configure namespaces and pods to use egress gateways
 
 You can configure namespaces and pods to use an egress gateway by:
-* annotating the namespace or pod
-* applying an egress gateway policy to the namespace or pod.
+
+- annotating the namespace or pod
+- applying an egress gateway policy to the namespace or pod.
 
 Using an egress gateway policy is more complicated, but it allows advanced use cases.
 
@@ -515,8 +518,9 @@ EOF
 
 Creating an egress gateway policy allows gives you more control over how your egress gateways work.
 For example, you can:
-  - Send egress gateway traffic to multiple egress gateways, depending on the destination.
-  - Skip egress gateways for traffic that is bound for local endpoints that aren't in the cluster.
+
+- Send egress gateway traffic to multiple egress gateways, depending on the destination.
+- Skip egress gateways for traffic that is bound for local endpoints that aren't in the cluster.
 
 The following is an example of Egress Gateway Policy:
 
@@ -561,14 +565,15 @@ spec:
 
 :::note
 
-CIDRs specified in rules in an egress gateway policy are matched in Longest Prefix Match(LPM) fashion. 
+CIDRs specified in rules in an egress gateway policy are matched in Longest Prefix Match(LPM) fashion.
 
 :::
 
 $[prodname] rejects egress gateway policies that do any of the following:
-* The policy has no rule that specifies a gateway or a destination
-* The policy has a rule with empty `selector` or `namespaceSelector` fields.
-* The policy has two or more rules with the same destination.
+
+- The policy has no rule that specifies a gateway or a destination
+- The policy has a rule with empty `selector` or `namespaceSelector` fields.
+- The policy has two or more rules with the same destination.
 
 To configure all the pods in a namespace to use an egress gateway policy named `egw-policy1`, you could annotate the namespace like this:
 
@@ -681,21 +686,21 @@ any egress gateway usage.
 
 Otherwise -- if namespace provisioning is open to users in general, or if it's desirable for egress
 gateway function to be enabled both per-namespace and per-pod -- a [Kubernetes admission controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
- will be
+will be
 needed. This is a task for each deployment to implement for itself, but possible approaches include
 the following.
 
 1.  Decide whether a given Namespace or Pod is permitted to use egress annotations at all, based on
-other details of the Namespace or Pod definition.
+    other details of the Namespace or Pod definition.
 
 1.  Evaluate egress annotation selectors to determine the egress gateways that they map to, and
-decide whether that usage is acceptable.
+    decide whether that usage is acceptable.
 
 1.  Impose the cluster's own bespoke scheme for a Namespace or Pod to identify the egress gateways
-that it wants to use, less general than $[prodname]'s egress annotations. Then the
-admission controller would police those bespoke annotations (that that cluster's users could
-place on Namespace or Pod resources) and either reject the operation in hand, or allow it
-through after adding the corresponding $[prodname] egress annotations.
+    that it wants to use, less general than $[prodname]'s egress annotations. Then the
+    admission controller would police those bespoke annotations (that that cluster's users could
+    place on Namespace or Pod resources) and either reject the operation in hand, or allow it
+    through after adding the corresponding $[prodname] egress annotations.
 
 #### Policy enforcement for flows via an egress gateway
 
@@ -727,12 +732,12 @@ Alternatively, for maximum "defense in depth" applying policy at both (1) and (2
 the policy at (1) be disabled or bypassed by an attacker. Policy at (2) has the following limitations:
 
 - [Domain-based policy](../../network-policy/domain-based-policy.mdx) is not supported at egress from egress
-gateways. It will either fail to match the expected traffic, or it will work intermittently if the egress gateway
-happens to be scheduled to the same node as its clients. This is because any DNS lookup happens at the client pod.
-By the time the policy reaches (2) the DNS information is lost and only the IP addresses of the traffic are available.
+  gateways. It will either fail to match the expected traffic, or it will work intermittently if the egress gateway
+  happens to be scheduled to the same node as its clients. This is because any DNS lookup happens at the client pod.
+  By the time the policy reaches (2) the DNS information is lost and only the IP addresses of the traffic are available.
 
 - The traffic source will appear to be the egress gateway pod, the source information is lost in the address
-translation that occurs inside the egress gateway pod.
+  translation that occurs inside the egress gateway pod.
 
 That means that policies at (2) will usually take the form of rules that match only on destination port and IP address,
 either directly in the rule (via a CIDR match) or via a (non-domain based) NetworkSet. Matching on source has little

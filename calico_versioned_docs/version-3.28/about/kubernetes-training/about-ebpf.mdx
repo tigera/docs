@@ -55,7 +55,7 @@ eBPF program depend hugely on the hook to which it is attached:
 - **Traffic Control** (`tc`) programs can be attached at ingress and egress to a given network device. The kernel
   executes the programs once for each packet. Since the hooks are for packet processing, the kernel allows
   the programs to modify or extend the packet, drop the packet, mark it for queueing, or redirect the packet to
-  another interface. $[prodname]'s eBPF dataplane is based on this type of hook; we use tc programs to load
+  another interface. $[prodname]'s eBPF data plane is based on this type of hook; we use tc programs to load
   balance Kubernetes services, to implement network policy, and, to create a fast-path for traffic of established
   connections.
 
@@ -99,18 +99,18 @@ The contents of bpf maps can be inspected using the command-line tool, `bpftool`
 
 ## $[prodname]'s eBPF dataplane
 
-$[prodname]'s eBPF dataplane is an alternative to our standard Linux dataplane (which is iptables based).
-While the standard dataplane focuses on compatibility by inter-working with kube-proxy, and your own iptables rules,
-the eBPF dataplane focuses on performance, latency and improving user experience with features that aren't possible
-in the standard dataplane. As part of that, the eBPF dataplane replaces kube-proxy with an eBPF implementation.
+$[prodname]'s eBPF data plane is an alternative to our standard Linux data plane (which is iptables based).
+While the standard data plane focuses on compatibility by inter-working with kube-proxy, and your own iptables rules,
+the eBPF data plane focuses on performance, latency and improving user experience with features that aren't possible
+in the standard dataplane. As part of that, the eBPF data plane replaces kube-proxy with an eBPF implementation.
 The main "user experience" feature is to preserve the source IP of traffic from outside the cluster when traffic hits a
 NodePort; this makes your server-side logs and network policy much more useful on that path.
 
 ### Feature comparison
 
-While the eBPF dataplane has some features that the standard Linux dataplane lacks, the reverse is also true:
+While the eBPF data plane has some features that the standard Linux data plane lacks, the reverse is also true:
 
-| Factor                               | Standard Linux Dataplane                              | eBPF dataplane                                                 |
+| Factor                               | Standard Linux Dataplane                              | eBPF data plane                                                |
 | ------------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------- |
 | Throughput                           | Designed for 10GBit+                                  | Designed for 40GBit+                                           |
 | First packet latency                 | Low (kube-proxy service latency is bigger factor)     | Lower                                                          |
@@ -135,7 +135,7 @@ While the eBPF dataplane has some features that the standard Linux dataplane lac
 
 ### Architecture overview
 
-$[prodname]'s eBPF dataplane attaches eBPF programs to the `tc` hooks on each $[prodname] interface as
+$[prodname]'s eBPF data plane attaches eBPF programs to the `tc` hooks on each $[prodname] interface as
 well as your data and tunnel interfaces. This allows $[prodname] to spot workload packets early and handle them
 through a fast-path that bypasses iptables and other packet processing that the kernel would normally do.
 

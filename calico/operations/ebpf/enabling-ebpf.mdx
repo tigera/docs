@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 ## Big picture
 
-Enable the eBPF dataplane on an existing cluster.
+Enable the eBPF data plane on an existing cluster.
 
 ## Value
 
@@ -56,7 +56,7 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
 
 Limitations:
 
-  - IPIP is not supported ($[prodname] iptables does not support it either). VXLAN is the recommended overlay for eBPF mode.
+- IPIP is not supported ($[prodname] iptables does not support it either). VXLAN is the recommended overlay for eBPF mode.
 
 To enable IPv6 in eBPF mode, see [Configure dual stack or IPv6 only](../../networking/ipam/ipv6.mdx). You may be able to run with non-Calico IPAM. eks-cni is known to work.
 
@@ -64,13 +64,13 @@ To enable IPv6 in eBPF mode, see [Configure dual stack or IPv6 only](../../netwo
 
 - Other processor architectures.
 
-- etcd datastore driver.  The etcd datastore driver doesn't support watching Kubernetes services, which is required for some features in eBPF mode.
+- etcd datastore driver. The etcd datastore driver doesn't support watching Kubernetes services, which is required for some features in eBPF mode.
 
 - Distributions:
 
   - GKE. This is because of an incompatibility with the GKE CNI plugin.
 
-- Clusters with some eBPF nodes and some standard dataplane and/or Windows nodes.
+- Clusters with some eBPF nodes and some standard data plane and/or Windows nodes.
 - Floating IPs.
 - SCTP (either for policy or services). This is due to lack of kernel support for the SCTP checksum in BPF.
 - `Log` action in policy rules. This is because the `Log` action maps to the iptables `LOG` action and BPF programs cannot access that log.
@@ -163,7 +163,6 @@ The best way to do that varies by Kubernetes distribution:
   ```
   In this example, you would use `60F939227672BC3D5A1B3EC9744B2B21.gr7.us-west-2.eks.amazonaws.com` for
   `KUBERNETES_SERVICE_HOST` and `443` for `KUBERNETES_SERVICE_PORT` when creating the config map.
-
 
 **The next step depends on whether you installed $[prodname] using the operator, or a manifest:**
 
@@ -298,7 +297,7 @@ If you are running MKE, you can disable `kube-proxy` as follows:
 
 Follow the step procedure in [Modify an existing MKE configuration](https://docs.mirantis.com/mke/current/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration) to download, edit, and upload your MKE configuration. During the editing step, add the following configuration:
 `kube_proxy_mode=disabled` and `kube_default_drop_masq_bits=true`.
- 
+
 :::note
 
 If you are running kube-proxy in IPVS mode, switch to iptables mode before disabling.
@@ -323,7 +322,7 @@ If both `kube-proxy` and `BPFKubeProxyIptablesCleanupEnabled` is enabled then `k
 <TabItem label="Operator" value="Operator-2">
 
 To enable eBPF mode, change the `spec.calicoNetwork.linuxDataplane` parameter in the operator's `Installation`
-  resource to `"BPF".
+resource to `"BPF".
 
 ```bash
   kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF"}}}'
@@ -375,29 +374,31 @@ To revert to standard Linux networking:
 
 1. (Depending on whether you installed Calico with the operator or with a manifest) reverse the changes to the operator's `Installation` or the `FelixConfiguration` resource:
 
-    <Tabs>
-    <TabItem label="Operator" value="Operator-4">
+   <Tabs>
+<TabItem label="Operator" value="Operator-4">
 
-    ```bash
-    kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"Iptables"}}}'
-    ```
+   ```bash
+   kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"Iptables"}}}'
+   ```
 
-    </TabItem>
-    <TabItem label="Manifest" value="Manifest-5">
+   </TabItem>
+<TabItem label="Manifest" value="Manifest-5">
 
-    ```
-    calicoctl patch felixconfiguration default --patch='{"spec": {"bpfEnabled": false}}'
-    ```
+   ```
+   calicoctl patch felixconfiguration default --patch='{"spec": {"bpfEnabled": false}}'
+   ```
 
-    </TabItem>
-    </Tabs>
+   </TabItem>
+</Tabs>
 
 1. If you disabled `kube-proxy`, re-enable it (for example, by removing the node selector added above).
 
    ```
    kubectl patch ds -n kube-system kube-proxy --type merge -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": null}}}}}'
 
-2. If you are running MKE, follow the step procedure in [Modify an existing MKE configuration](https://docs.mirantis.com/mke/current/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration) to download, edit, and upload your MKE configuration. During the editing step, add the following configuration:
-`kube_proxy_mode` to `iptables`.
+   ```
+
+1. If you are running MKE, follow the step procedure in [Modify an existing MKE configuration](https://docs.mirantis.com/mke/current/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration) to download, edit, and upload your MKE configuration. During the editing step, add the following configuration:
+   `kube_proxy_mode` to `iptables`.
 
 1. Since disabling eBPF mode is disruptive to existing connections, monitor existing workloads to make sure they re-establish any connections that were disrupted by the switch.

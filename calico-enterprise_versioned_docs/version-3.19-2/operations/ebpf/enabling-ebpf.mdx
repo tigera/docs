@@ -1,5 +1,5 @@
 ---
-description: Steps to enable the eBPF dataplane on an existing cluster.
+description: Steps to enable the eBPF data plane on an existing cluster.
 ---
 
 # Enable eBPF on an existing cluster
@@ -8,7 +8,7 @@ import EbpfValue from '@site/calico-enterprise_versioned_docs/version-3.19-2/_in
 
 ## Big picture
 
-Enable the eBPF dataplane on an existing cluster.
+Enable the eBPF data plane on an existing cluster.
 
 ## Value
 
@@ -187,7 +187,7 @@ If both `kube-proxy` and `BPFKubeProxyIptablesCleanupEnabled` is enabled then `k
 
 ### Verify node interface naming pattern
 
-When Calico dataplane is configured in BPF mode, Calico configures `ebpf` programs for the host interfaces that match the regex pattern defined by the `bpfDataIfacePattern` setting in [FelixConfiguration](../../reference/resources/felixconfig.mdx). The default regex value tries to match commonly used interface names, but interface names can vary depending on a virtualization solution, a flavor of the operating system, company-specific configuration standards, such as VLAN device naming pattern, etc. The regex command should at least match interfaces that participate in intra-cluster and external (e.g. NodePorts) communications. In scenarios when a node has additional interfaces, you may want to leverage Calico policies to secure some of them or even all of them or speed up forwarding to/from pods that use them. In such cases, the regex command should match all interfaces that you want to be managed by Calico.
+When Calico data plane is configured in BPF mode, Calico configures `ebpf` programs for the host interfaces that match the regex pattern defined by the `bpfDataIfacePattern` setting in [FelixConfiguration](../../reference/resources/felixconfig.mdx). The default regex value tries to match commonly used interface names, but interface names can vary depending on a virtualization solution, a flavor of the operating system, company-specific configuration standards, such as VLAN device naming pattern, etc. The regex command should at least match interfaces that participate in intra-cluster and external (e.g. NodePorts) communications. In scenarios when a node has additional interfaces, you may want to leverage Calico policies to secure some of them or even all of them or speed up forwarding to/from pods that use them. In such cases, the regex command should match all interfaces that you want to be managed by Calico.
 
 :::note
 
@@ -246,7 +246,8 @@ To revert to standard Linux networking:
    ```bash
    kubectl patch ds -n kube-system kube-proxy --type merge -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": null}}}}}'
    ```
-2. If you are running MKE, follow the step procedure in [Modify an existing MKE configuration](https://docs.mirantis.com/mke/current/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration) to download, edit, and upload your MKE configuration. During the editing step, add the following configuration:
-`kube_proxy_mode` to `iptables`.
+
+1. If you are running MKE, follow the step procedure in [Modify an existing MKE configuration](https://docs.mirantis.com/mke/current/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration) to download, edit, and upload your MKE configuration. During the editing step, add the following configuration:
+   `kube_proxy_mode` to `iptables`.
 
 1. Since disabling eBPF mode is disruptive to existing connections, monitor existing workloads to make sure they re-establish any connections that were disrupted by the switch.

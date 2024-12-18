@@ -2,7 +2,7 @@
 description: Specific troubleshooting steps for the VPP dataplane.
 ---
 
-# VPP dataplane troubleshooting
+# VPP data plane troubleshooting
 
 ## Big picture
 
@@ -12,7 +12,7 @@ If you're encountering issues with the VPP dataplane, feel free to reach out to 
 
 ## Installing calivppctl
 
-`calivppctl` is a helper bash script shipped alongside vpp container images. It can be installed to your host with the following methods, and helps collecting logs and debugging a running cluster with the VPP dataplane installed.
+`calivppctl` is a helper bash script shipped alongside vpp container images. It can be installed to your host with the following methods, and helps collecting logs and debugging a running cluster with the VPP data plane installed.
 
 - With curl
 
@@ -87,7 +87,7 @@ if the port is already taken, or missing configuration pieces). If this doesn't
 show any errors, you should be able to `nslookup kubernetes.default` from pods.
 
 ```bash
-# Print the logs for the $[prodname] VPP dataplane agent, programming serviceIPs, BGP, ...
+# Print the logs for the $[prodname] VPP data plane agent, programming serviceIPs, BGP, ...
 calivppctl log -agent myk8node1
 ```
 
@@ -145,6 +145,7 @@ Container interfaces are named `tun[0-9]+`. You can find which one belong to whi
   calivppctl vppctl NODENAME
   ```
 - List interfaces
+
   ```
   vpp# show interface
                 Name               Idx    State  MTU (L3/IP4/IP6/MPLS)     Counter          Count
@@ -161,6 +162,7 @@ Container interfaces are named `tun[0-9]+`. You can find which one belong to whi
   ```
 
 - Show the route for address 11.0.166.132
+
   ```
   vpp# show ip fib 11.0.166.132
   ipv4-VRF:0, fib_index:0, flow hash:[src dst sport dport symmetric ] epoch:0 flags:none locks:[adjacency:1, default-route:1, ]
@@ -175,6 +177,7 @@ Container interfaces are named `tun[0-9]+`. You can find which one belong to whi
   ```
 
 - This one is behind `tun3`. If you want more info about this interface (name in Linux, queues, descriptors, ...)
+
   ```
   vpp# show tun tun3
   Interface: tun3 (ifindex 5)
@@ -271,7 +274,7 @@ Packet 2
 
 #### Traffic from the phy
 
-If you want to capture traffic coming from the physical NIC, you should use `trace add` but with a different source node a.k.a `dpdk-input` or  `af-packet-input` or  `af_xdp-input` or `avf-input` instead of `virtio-input`.
+If you want to capture traffic coming from the physical NIC, you should use `trace add` but with a different source node a.k.a `dpdk-input` or `af-packet-input` or `af_xdp-input` or `avf-input` instead of `virtio-input`.
 
 `show run` should give you a hint of the `X-input` node you want to trace from.
 
@@ -334,6 +337,7 @@ Provided that you have `tcpdump` installed on the host, you can use `nsenter` to
 This works on docker as follows:
 
 - Find the container ID you want to inspect
+
   ```bash
   docker ps
   CONTAINER ID        IMAGE                        COMMAND                CREATED              STATUS              PORTS               NAMES
@@ -341,6 +345,7 @@ This works on docker as follows:
   ```
 
 - Get the container PID out of it
+
   ```
   docker inspect --format '{{ .State.Pid }}' 4c01db0b339c
   12345
@@ -397,6 +402,7 @@ To explore the corefile run:
 ```bash
 docker run -it --entrypoint=bash -v /var/lib/vpp/vppcore.vpp_main.12345:/root/vppcore calicovpp/vpp:VERSION
 ```
+
 You should now have a shell inside the vpp container.
 
 ```bash
