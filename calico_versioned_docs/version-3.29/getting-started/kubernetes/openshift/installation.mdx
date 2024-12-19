@@ -68,6 +68,38 @@ Now generate the Kubernetes manifests using your configuration file:
 openshift-install create manifests
 ```
 
+:::note
+
+If you are using OpenShift **v4.16 or newer** on **AWS**, at this point you need to edit the OpenShift cluster-api manifests
+that configure AWS security groups to allow BGP, typha and IP-in-IP encapsulation traffic in your cluster.
+
+Edit `spec.network.cni.cniIngressRules` in the `cluster-api/02_infra-cluster.yaml` file to add the following rules:
+
+```
+      cniIngressRules:
+      (...)
+      - description: BGP (calico)
+        fromPort: 179
+        protocol: tcp
+        toPort: 179
+      - description: IP-in-IP (calico)
+        fromPort: -1
+        protocol: "4"
+        toPort: -1
+      - description: Typha (calico)
+        fromPort: 5473
+        protocol: tcp
+        toPort: 5473
+```
+
+Alternatively, you can use the [yq tool](https://github.com/kislyuk/yq) to patch the file with a single command:
+
+```
+yq -y -i '.spec.network.cni.cniIngressRules += [{ "description": "BGP (calico)", "fromPort": 179, "protocol": "tcp", "toPort": 179 }, { "description": "IP-in-IP (calico)", "fromPort": -1, "protocol": "4", "toPort": -1 }, { "description": "Typha (calico)", "fromPort": 5473, "protocol": "tcp", "toPort": 5473 }]' cluster-api/02_infra-cluster.yaml
+```
+
+:::
+
 <InstallOpenShiftManifests />
 
 ### Optionally provide additional configuration
