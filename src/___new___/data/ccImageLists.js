@@ -1,6 +1,6 @@
 const ccImageLists = {
-  // curl -0 https://installer.calicocloud.io/manifests/v3.20.0-2.0-9/image-list
-  'v20.3.0 (latest)': `quay.io/tigera/cnx-apiserver:v3.20.0-2.0
+  // curl -0 https://installer.calicocloud.io/manifests/v3.20.0-2.0-10/image-list
+  'v20.3.1 (latest)': `quay.io/tigera/cnx-apiserver:v3.20.0-2.0
 quay.io/tigera/compliance-benchmarker:v3.20.0-2.0
 quay.io/tigera/compliance-controller:v3.20.0-2.0
 quay.io/tigera/compliance-reporter:v3.20.0-2.0
@@ -9,7 +9,7 @@ quay.io/tigera/key-cert-provisioner:v3.20.0-2.0
 quay.io/tigera/deep-packet-inspection:v3.20.0-2.0
 quay.io/tigera/fluentd:v3.20.0-2.0
 quay.io/tigera/fluentd-windows:v3.20.0-2.0
-quay.io/tigera/guardian:v3.20.0-2.0
+quay.io/tigera/guardian:v3.20.0-2.3
 quay.io/tigera/intrusion-detection-controller:v3.20.0-2.0
 quay.io/tigera/webhooks-processor:v3.20.0-2.0
 quay.io/tigera/packetcapture:v3.20.0-2.0
@@ -34,7 +34,7 @@ quay.io/tigera/l7-admission-controller:v3.20.0-2.0
 quay.io/tigera/pod2daemon-flexvol:v3.20.0-2.0
 quay.io/tigera/csi:v3.20.0-2.0
 quay.io/tigera/node-driver-registrar:v3.20.0-2.0
-quay.io/tigera/operator:v1.36.1
+quay.io/tigera/operator:v1.36.1.1
 quay.io/tigera/image-assurance-admission-controller:v1.22.1
 quay.io/tigera/image-assurance-operator:v1.22.1
 quay.io/tigera/image-assurance-container-runtime-adaptor:v1.22.1
