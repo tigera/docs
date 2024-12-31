@@ -1,78 +1,85 @@
 ---
 description: Debug your policies with Log rules.
 ---
-# Use Log action to debug policies
 
-## Big picture
-$[prodname] Log rules are powerful resources to log the matching traffic and allowing you to determine how your policies are behaving.
+# Use log rules to test network policy
 
-## Value
-$[prodname] has a unique `Log` action that provides traffic observability and logging which is missing in the standard Kubernetes Network Policy. This unique action can be used by security teams and admins to troubleshoot their policies and make sure that their cluster security posture is doing what its expected to do.
+You can create network policies that log all network traffic that matches the policy.
+With log rules, you can monitor all traffic in your cluster, test new policies before you enforce them, and troubleshoot policies that aren't behaving as expected.
 
+## About log rules
 
-## Requirements
+A $[prodname] network policy with the action `Log` serves as a diagnostic tool that captures network traffic information based on the rules and criteria specified in the policy.
+This helps cluster administrators see how traffic is evaluated by their policies.
+Logs tell you where the traffic came from, where it was going, and whether that traffic was allowed or denied by the policy.
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+Log rules are used mainly in the following situations:
 
-<Tabs groupId='log-rules'>
-<TabItem label="eBPF" value="eBPF">
-    - $[prodname] 3.29 and above
-    - Linux Kernel 5.16 and above
+* To capture all traffic in a cluster.
+  Before setting up a default deny policy, you can see what traffic your cluster currently has.
+  This helps you when you create explit allow rules for expected traffic.
+* To test new network policy.
+  Before you enforce a new policy, you can set that policy to log real traffic to see if it does what you expect it to do.
+* To troubleshoot existing policies.
+  If something isn't working as expected, you can use log rules to help debug your existing network policies.
 
-     eBPF policy logs depend on eBPF printing capabilities introduced in Linux Kernel 5.16 although they may have been backported to your distros kernel. If you encounter a scenario where logs only display the traffic verdict (e.g., ALLOWED or DENIED) without detailed information about IP packets, it indicates that your system is running on an older kernel version lacking the necessary capabilities.
+To effectively utilize Log actions, place them at the bottom of your policy tiers to capture any traffic not explicitly matched by lower-priority policies.
+This approach helps identify unhandled traffic and reveals gaps in your policy configuration.
+By analyzing the logged traffic, you can gain insights into its characteristics, such as source, destination, and protocol.
+Use this information to create targeted policies that address the specific traffic patterns.
+Once implemented, verify the changes by checking if the corresponding traffic no longer appears in the logs, indicating that your new policies are successfully handling it and remove your Log policies/rules since they can put a huge overhead on your cluster.
 
-</TabItem>
+To make the most of log actions, follow these guidelines:
 
-<TabItem label="iptables/ipvs" value="iptables">
+    1. **Order Matters:** Assign log actions a high `order` value to ensure they are evaluated after all lower-priority policies.
+    1. **Explicit Allow Rule:** Always pair a log action with an explicit `Allow` rule immediately after it. Otherwise, traffic may be denied due to the tier's implicit default action.
+    1. **Comprehensive Protection:** Ensure both namespaced and non-namespaced resources are covered by enabling `hostEndpoint` for protecting your host in addition to Pods and workloads.
 
-    :::note
-    
-    In a containerized Kubernetes environment, such as Kind, sending `syslog` messages to the Kernel is not permitted. This limitation is by the design to prevent a noisy neighbor scenario since both containers and the host share the same Kernel.
+By strategically placing log actions at the bottom of your policy tiers, you can capture unhandled traffic and identify gaps in your policy configuration.
+Analyze the logged traffic to gather insights about source, destination, and protocol, and use this data to create targeted policies.
+Once implemented, validate by checking if the corresponding traffic is no longer logged, indicating the new policies are effective.
 
-    :::
+### Understanding log output
 
-    The $[prodname] Log action creates a LOG rule in iptables. Any logs matching this rule are recorded by the kernel's logging service, usually through syslog.
+Calico's log output varies depending on which data plane you're using.
 
-    The following suffix, is an example of iptables LOG ruled programmed by $[prodname]:
-    ```bash
-    -j LOG --log-prefix "calico-packet: " --log-level 5
-    ```
+#### Log output for iptables
 
-</TabItem>
-</Tabs>
+In the standard Linux dataplane where `iptables` like backends are used to implement cluster security, the `Log` action logs the traffic at the first point of evaluation, before any subsequent actions (such as allowing or denying traffic) are applied.
+This provides granular visibility into the matching traffic for specific rules or policies.
 
-## Concepts
-A $[prodname] policy with the action `Log` serves as a diagnostic tool that captures and logs network traffic information based on the rules and criteria specified. By leveraging the `Log` action, administrators gain insight into how traffic is evaluated by their policies, enabling them to debug, refine, and validate their network security posture.
+Logs can be found in different locations, depending on your system.
+You can often find Calico policy logs by:
+* using the `journalctl` utility.
+* searching in `/var/log/syslog`.
+* searching in `/var/log/kern.log`.
 
+Example of iptables logs:
 
-:::caution
+```bash
+2024-11-19T12:15:03.023805-08:00 c1-control kernel: calico-packet: IN=cali527b0801ecb OUT=eth0 MAC=ee:ee:ee:ee:ee:ee:1e:0a:36:33:f5:09:08:00 SRC=172.16.193.134 DST=69.147.80.15 LEN=60 TOS=0x00 PREC=0x00 TTL=63 ID=58406 DF PROTO=TCP SPT=45588 DPT=80 WINDOW=64860 RES=0x00 SYN URGP=0
 
-## Key Behavior Differences: eBPF vs. iptables log actions
+2024-11-19T12:15:28.648818-08:00 c1-control kernel: calico-packet: IN=cali527b0801ecb OUT=eth0 MAC=ee:ee:ee:ee:ee:ee:1e:0a:36:33:f5:09:08:00 SRC=172.16.193.134 DST=8.8.8.8 LEN=84 TOS=0x00 PREC=0x00 TTL=63 ID=48210 DF PROTO=ICMP TYPE=8 CODE=0 ID=1 SEQ=1
 
-Please note that Log action behavior in different dataplanes behaves differently based on the the available features.
+2024-11-19T12:15:02.990083-08:00 c1-control kernel: calico-packet: IN=cali527b0801ecb OUT=calid3446e883f0 MAC=ee:ee:ee:ee:ee:ee:1e:0a:36:33:f5:09:08:00 SRC=172.16.193.134 DST=172.16.193.133 LEN=96 TOS=0x00 PREC=0x00 TTL=63 ID=19241 DF PROTO=UDP SPT=42896 DPT=53 LEN=76
+```
 
-### eBPF 
+#### Log output for eBPF
 
-BPF dataplane logs the final verdict applied to the packet once it matched ANY log rule. This means that the log entry reflects the ultimate decision—whether the traffic is allowed or denied—after evaluating the full set of applicable rules and policies.
-
-### Iptables
-
-In the standard Linux dataplane where `iptables` like backends are used to implement cluster security, the Log action logs the traffic at the point of evaluation, before any subsequent actions (such as allowing or denying traffic) are applied. This provides granular visibility into the matching traffic for specific rules or policies.
-:::
-
-
-<Tabs groupId='log-rules'>
-<TabItem label="eBPF" value="eBPF">
+BPF dataplane logs the final verdict applied to the packet once it matched ANY log rule.
+This means that the log entry reflects the ultimate decision (whether the traffic is allowed or denied) after evaluating the full set of applicable rules and policies.
 
 eBPF policy logs are sent to the trace pipe and can be viewed by using the following command:
+
 ```bash
 kubectl exec -n calico-system -it ds/calico-node -- bpftool prog tracelog
 ```
 
-The precise format of the eBPF trace logs depends on your kernel and sysctl settings.  However, a typical log format includes information about the active process, a timestamp and then the IP header.
+The precise format of the eBPF trace logs depends on your kernel and sysctl settings.
+However, a typical log format includes information about the active process, a timestamp and then the IP header.
 
 Example of eBPF logs:
+
 ```bash
 curl-5288    [000] ..s2.  3055.982021: bpf_trace_printk: cali527b0801ecb-E: policy ALLOWED proto 6 src 172.16.193.131:56042 dest 69.147.80.12:80
 
@@ -81,77 +88,67 @@ curl-5288    [000] ..s2.  3055.982021: bpf_trace_printk: cali527b0801ecb-E: poli
 <...>-5288    [000] ..s2.  3055.954466: bpf_trace_printk: cali527b0801ecb-E: policy ALLOWED proto 17 src 172.16.193.131:36325 dest 10.43.0.10:53
 ```
 
-## Log format
-
-$[prodname] BPF log uses a custom format to output the information, here is the break down of this format:
+$[prodname] eBPF logs use a custom format to output the information, here is the breakdown of this format:
 
 ![curl](/img/calico/curl-bpf-log.svg)
 
-1. Process Name and ID, Be aware that the process name might not directly correspond to the responsible process for the traffic.
-2. CPU Number, Kernel flags, timestamp, bpf print function used to log this message. 
-3. Interface name
-4. Traffic type, in this example Egress. (E= Egress, X= XDP, I= Ingress)
-5. Policy verdict (ALLOWED, DENIED)
-6. IP protocol number, in this example 6 is for TCP. (1 ICMP, 17 UDP)
-7. Source IP and Source port
-8. Destination IP and Destination port 
+1. Process name and ID.
+   Be aware that the process name might not directly correspond to the responsible process for the traffic.
+2. CPU number, Kernel flags, timestamp, BPF print function used to log this message.
+3. Interface name.
+4. Traffic type.
+   In this example, egress (`E`= egress, `X`= XDP, `I`= ingress).
+5. Policy verdict (`ALLOWED`, `DENIED`).
+6. IP protocol number.
+   In this example, 6 is for TCP (1 ICMP, 17 UDP).
+7. Source IP and source port.
+8. Destination IP and destination port.
 
-</TabItem>
-<TabItem label="iptables/ipvs" value="iptables">
-By default, $[prodname] prefixes these log entries with `calico-packet`, making it easier to filter them. The location and method for accessing these logs can vary depending on your Linux distribution.
+## Prerequisites
 
-The following command and paths are some of the usual places that you can search for the policy log outputs:
-```bash
-journalctl
-/var/log/syslog
-/var/log/kern.log
-```
+* Your cluster is not a containerized Kubernetes environment such as Kind.
+* If you're running $[prodname] with the eBPF dataplane, your cluster node or VM host is running on a Linux distribution based on the Linux kernel 5.16 or later.
 
-Example of iptable logs:
-```bash
-2024-11-19T12:15:03.023805-08:00 c1-control kernel: calico-packet: IN=cali527b0801ecb OUT=eth0 MAC=ee:ee:ee:ee:ee:ee:1e:0a:36:33:f5:09:08:00 SRC=172.16.193.134 DST=69.147.80.15 LEN=60 TOS=0x00 PREC=0x00 TTL=63 ID=58406 DF PROTO=TCP SPT=45588 DPT=80 WINDOW=64860 RES=0x00 SYN URGP=0
+## Log all traffic for a cluster
 
-2024-11-19T12:15:28.648818-08:00 c1-control kernel: calico-packet: IN=cali527b0801ecb OUT=eth0 MAC=ee:ee:ee:ee:ee:ee:1e:0a:36:33:f5:09:08:00 SRC=172.16.193.134 DST=8.8.8.8 LEN=84 TOS=0x00 PREC=0x00 TTL=63 ID=48210 DF PROTO=ICMP TYPE=8 CODE=0 ID=1 SEQ=1
+Log rules can help you write network policy by showing you your cluster's current traffic.
+When you know what traffic you want to allow, you can write policies to allow that traffic and restrict all other traffic.
 
-2024-11-19T12:15:02.990083-08:00 c1-control kernel: calico-packet: IN=cali527b0801ecb OUT=calid3446e883f0 MAC=ee:ee:ee:ee:ee:ee:1e:0a:36:33:f5:09:08:00 SRC=172.16.193.134 DST=172.16.193.133 LEN=96 TOS=0x00 PREC=0x00 TTL=63 ID=19241 DF PROTO=UDP SPT=42896 DPT=53 LEN=76
-```
-</TabItem>
-</Tabs>
+* To log all traffic across the entire cluster, create a `GlobalNetworkPolicy` resource with log actions for ingress and egress:
 
+  ```yaml
+  apiVersion: projectcalico.org/v3
+  kind: GlobalNetworkPolicy
+  metadata:
+      name: <log-everything-in-cluster>
+  spec:
+      order: 100000
+      tier: default
+      types:
+      - Ingress
+      - Egress
+      egress:
+      - action: Log
+      ingress:
+      - action: Log
+  ```
 
-## How to
+## Log traffic for a namespace
 
-:::caution
-For a complete and efficient observability solution, consider exploring the use of [Flow Logs](/calico-enterprise/latest/visibility/visualize-traffic) available in Calico Enterprise and Calico Cloud.
+To monitor or troubleshoot traffic within a namespace, use a `NetworkPolicy` resource.
+Apply the policy with the highest priority to capture traffic not handled by existing policies.
+This provides visibility into unhandled traffic patterns specific to that namespace.
 
-Using log rules is not be the most effective way to achieve comprehensive observability. While network observability can be achieved by utilizing log actions, this approach may introduce significant performance overhead.
-::: 
+* To log all traffic within a specific namespace, create a NetworkPolicy like this:
 
-To effectively utilize Log actions, place them at the bottom of your policy tiers to capture any traffic not explicitly matched by lower-priority policies. This approach helps identify unhandled traffic and reveals gaps in your policy configuration. By analyzing the logged traffic, you can gain insights into its characteristics, such as source, destination, and protocol. Use this information to create targeted policies that address the specific traffic patterns. Once implemented, verify the changes by checking if the corresponding traffic no longer appears in the logs, indicating that your new policies are successfully handling it and remove your Log policies/rules since they can put a huge overhead on your cluster.
-
-
-To make the most of log actions, follow these guidelines:  
-
-    1. **Order Matters:** Assign log actions a high `order` value to ensure they are evaluated after all lower-priority policies.  
-    1. **Explicit Allow Rule:** Always pair a log action with an explicit `Allow` rule immediately after it. Otherwise, traffic may be denied due to the tier's implicit default action.  
-    1. **Comprehensive Protection:** Ensure both namespaced and non-namespaced resources are covered by enabling `hostEndpoint` for protecting your host in addition to Pods and workloads.  
-
-By strategically placing log actions at the bottom of your policy tiers, you can capture unhandled traffic and identify gaps in your policy configuration. Analyze the logged traffic to gather insights about source, destination, and protocol, and use this data to create targeted policies. Once implemented, validate by checking if the corresponding traffic is no longer logged, indicating the new policies are effective.  
-
-
-### Logging an unprotected cluster 
-
-Kubernetes' default behavior permits all traffic, making early security implementation essential. $[prodname]'s `GlobalNetworkPolicy` with the `Log` action is a powerful tool for monitoring cluster traffic. It allows you to observe, analyze, and secure traffic flows. A single `GlobalNetworkPolicy` can be used to log all traffic across the cluster, providing comprehensive insights for your security strategy.  
-
-
-To log all traffic across the entire cluster, define a GlobalNetworkPolicy:
-```yaml
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
-metadata:
-    name: log-everything-in-cluster
-spec:
-    order: 100000
+  ```yaml
+  apiVersion: projectcalico.org/v3
+  kind: NetworkPolicy
+  metadata:
+    name: log-everything-in-ns
+    namespace: <namespace>
+  spec:
+    order: 100001
     tier: default
     types:
     - Ingress
@@ -160,43 +157,29 @@ spec:
     - action: Log
     ingress:
     - action: Log
-```
+  ```
 
-### Logging in a namespace
+## Log traffic for non-namespaced resources, hosts, and VMs
 
-To monitor or troubleshoot traffic within a namespace, use a NetworkPolicy. Apply the policy with the highest priority to capture traffic not handled by existing policies. This provides visibility into unhandled traffic patterns specific to that namespace.
+By default, $[prodname] policies apply only to namespaced resources (for example, Pods, ServiceAccounts).
+To use log rules for non-namespaced resources, hosts, and VMs, you can create [host endpoints](../../reference/host-endpoints/overview.mdx) for them.
 
-To log all traffic within a specific namespace, create a NetworkPolicy like this:
-```yaml
-apiVersion: projectcalico.org/v3
-kind: NetworkPolicy
-metadata:
-  name: log-everything-in-ns
-  namespace: <YOUR-NAMESPACE>
-spec:
-  order: 100001
-  tier: default
-  types:
-  - Ingress
-  - Egress
-  egress:
-  - action: Log
-  ingress:
-  - action: Log
-```
+1. Create a `GlobalNetworkPolicy` resource to [log all traffic in your cluster](#log-all-traffic-for-a-cluster).
 
-### Logging all traffic in a cluster
+1. Configure $[prodname] to automatically create host endpoints by running the following command:
 
-By default, $[prodname] policies apply only to namespaced resources (e.g., Pods, ServiceAccounts). To achieve total protection, enable hostEndpoint support to include non-namespaced resources and host nodes.
+   ```bash
+   kubectl patch kubecontrollersconfiguration default --type=merge --patch='{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled"}}}}}'
+   ```
 
-To log all traffic involving host endpoints, enable auto-creation of host endpoints:
-```bash
-kubectl patch kubecontrollersconfiguration default --type=merge --patch='{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled"}}}}}'
-```
+   When the host endpoints are created, all traffic will be logged.
 
-Please ensure you disable policy logging by removing the Log policies once you have finalized your environment security, as it can impact cluster performance.
+1. When you have completed testing, remove the log policies.
+   Leaving them in place can significantly affect cluster performance.
 
 ## Additional resources
+
+For a complete and efficient observability solution, consider exploring the use of [Flow Logs](/calico-enterprise/latest/visibility/visualize-traffic) available in Calico Enterprise and Calico Cloud.
 
 For more on the match criteria and policy actions, see:
 
