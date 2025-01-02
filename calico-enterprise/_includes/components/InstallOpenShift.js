@@ -80,6 +80,27 @@ export default function InstallOpenShift(props) {
       </Heading>
       <p>Now generate the Kubernetes manifests using your configuration file:</p>
       <CodeBlock language='bash'>openshift-install create manifests</CodeBlock>
+        <Admonition type={'note'}>
+            <p>For OpenShift <b>v4.16 or newer</b> on <b>AWS</b>, configure AWS security groups to allow BGP, typha and IP-in-IP encapsulation traffic by editing the OpenShift cluster-api manifests.</p>
+            <p>Edit <code>spec.network.cni.cniIngressRules</code> in the <code>cluster-api/02_infra-cluster.yaml</code> file to add </p>
+            <CodeBlock language='bash'>
+        {`cniIngressRules:
+(...)
+- description: BGP (calico enterprise)
+  fromPort: 179
+  protocol: tcp
+  toPort: 179
+- description: IP-in-IP (calico enterprise)
+  fromPort: -1
+  protocol: "4"
+  toPort: -1
+- description: Typha (calico enterprise)
+  fromPort: 5473
+  protocol: tcp
+  toPort: 5473
+`}
+            </CodeBlock>
+        </Admonition>
 
       <InstallOpenShiftManifests />
 
