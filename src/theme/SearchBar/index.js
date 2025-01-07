@@ -42,7 +42,7 @@ function ResultsFooter({ state, onClose, productId }) {
     //TODO: figure this out
     //current search is disabled for calico-cloud
     // see docusaurus.config.js
-    version = '3.16'
+    version = '20-2'
   }
 
   const to = `/search?q=${encodeURIComponent(state.query)}&p=${productId || ''}&v=${version}`;

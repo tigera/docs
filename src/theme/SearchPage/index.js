@@ -220,7 +220,7 @@ function SearchPageContent() {
       //current search is disabled for calico-cloud
       // see docusaurus.config.js
       if(productId === 'calico-cloud'){
-        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-3.16`); 
+        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-20-2`);
       }else{
         algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${productId}-${version}`);
       }
@@ -233,7 +233,7 @@ function SearchPageContent() {
       //TODO: figure this out
       //current search is disabled for calico-cloud
       // see docusaurus.config.js
-      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-3.16`);
+      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-20-2`);
 
     }
     algoliaHelper.setQuery(searchQuery).setPage(page).search();
