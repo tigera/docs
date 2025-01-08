@@ -15,7 +15,7 @@ export default async function createAsyncConfig() {
   /** @type {import('@docusaurus/types').Config} */
   const config = {
     future: {
-      experimental_faster: false,
+      experimental_faster: true,
     },
     title: 'Calico Documentation',
     tagline: 'Active, zero-trust based security for containers and Kubernetes',
