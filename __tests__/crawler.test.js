@@ -87,6 +87,7 @@ test('Crawl the docs and execute tests', async () => {
     //`https://installer.calicocloud.io/manifests/v3.17.1-4/manifests`,
     `https://d881b853ae312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com`,
     `https://www.googletagmanager.com`,
+    'https://www.googletagmanager.com/gtm.js?id= ',
     'https://twitter.com/tigeraio',
     'https://twitter.com/projectcalico',
     'https://csrc.nist.gov/publications/detail/fips/140/2/final',
