@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/no-autofocus */
 import React, { useEffect, useState, useReducer, useRef } from 'react';
 import clsx from 'clsx';
-import algoliaSearch from 'algoliasearch/lite';
+import { liteClient } from 'algoliasearch/lite';
 import algoliaSearchHelper from 'algoliasearch-helper';
 import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
@@ -140,7 +140,7 @@ function SearchPageContent() {
         return prevState;
     }
   }, initialSearchResultState);
-  const algoliaClient = algoliaSearch(appId, apiKey);
+  const algoliaClient = liteClient(appId, apiKey);
   const algoliaHelper = algoliaSearchHelper(algoliaClient, indexName, {
     hitsPerPage: 15,
     advancedSyntax: true,
