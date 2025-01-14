@@ -89,6 +89,78 @@ secret must be in the same namespace as the $[nodecontainer] pod.
 | name  | The name of the secret    | string |
 | key   | The key within the secret | string |
 
+:::warning
+
+Calico must be able to read the referenced secret!
+
+This means that the `calico-node` ServiceAccount must have permissions to `list, get, watch` the secret referenced in the KeyRef.
+
+In practice, this can be done by creating a Role (which allows to `list, get, watch` the secret) and a RoleBinding (which grants the Role's permission to the `calico-node` ServiceAccount).
+
+Example:
+
+```yaml
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: bgp-passwords-reader
+  namespace: kube-system
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["bgp-passwords"]
+    verbs: ["list", "watch", "get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: calico-read-bgp-passwords
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: bgp-passwords-reader
+subjects:
+  - kind: ServiceAccount
+    name: calico-node
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "bgp-passwords"
+  namespace: kube-system
+data:
+  peer_a_pw: "base64-encoded Password for Peer A"
+  peer_b_pw: "base64-encoded Password for Peer B"
+
+---
+apiVersion: crd.projectcalico.org/v1
+kind: BGPPeer
+metadata:
+  name: "peer-a"
+spec:
+  password:
+    secretKeyRef:
+      name: "bgp-passwords"
+      key: "peer_a_pw"
+
+---
+apiVersion: crd.projectcalico.org/v1
+kind: BGPPeer
+metadata:
+  name: "peer-b"
+spec:
+  password:
+    secretKeyRef:
+      name: "bgp-passwords"
+      key: "peer_b_pw"
+```
+
+:::
+
 ## Peer scopes
 
 BGP Peers can exist at either global or node-specific scope. A peer's scope
