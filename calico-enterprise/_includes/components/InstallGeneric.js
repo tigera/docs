@@ -26,6 +26,7 @@ export default function InstallGeneric(props) {
       <ol>
         <li>
           <p>Install the Tigera operator and custom resource definitions.</p>
+          <CodeBlock>kubectl create -f {filesUrl}/manifests/operator-crds.yaml</CodeBlock>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
         </li>
         <li>
@@ -59,7 +60,9 @@ export default function InstallGeneric(props) {
         </li>
         <li>
           <p>
-            (Optional) Compliance and packet capture features are optional. To enable these features during installation, download and review the custom-resources.yaml file. Uncomment the necessary CRs and use this custom-resources.yaml for installation.
+            (Optional) Compliance and packet capture features are optional. To enable these features during
+            installation, download and review the custom-resources.yaml file. Uncomment the necessary CRs and use this
+            custom-resources.yaml for installation.
           </p>
           <p>
             <CodeBlock language='bash'>curl -O -L {filesUrl}/manifests/custom-resources.yaml</CodeBlock>
