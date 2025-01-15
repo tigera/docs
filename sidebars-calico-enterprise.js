@@ -459,6 +459,7 @@ module.exports = {
         'compliance/overview',
         'compliance/compliance-reports-cis',
         'compliance/encrypt-cluster-pod-traffic',
+        'compliance/configure-http-proxy',
       ],
     },
     {
