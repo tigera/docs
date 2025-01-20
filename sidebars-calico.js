@@ -96,7 +96,7 @@ module.exports = {
         'getting-started/kubernetes/rancher',
         {
           type: 'category',
-          label: 'Installing as Flannel',
+          label: 'Installing with flannel',
           link: {
             type: 'doc',
             id: 'getting-started/kubernetes/flannel/index',
