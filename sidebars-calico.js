@@ -1,8 +1,7 @@
 // This is the navigation file for Calico Open Source
 
 module.exports = {
-  calicoSidebar: [
-    {
+  calicoSidebar: [{
       type: 'category',
       label: 'About',
       link: {
@@ -12,192 +11,220 @@ module.exports = {
       items: [
         'about/product-comparison',
         'about/training-resources',
-      {
-       type: 'category',
-       label: 'Kubernetes training',
-       link: {
-         type: 'doc',
-         id: 'about/kubernetes-training/index',
-       },
-         items: [
-           'about/kubernetes-training/about-k8s-networking',
-           'about/kubernetes-training/about-networking',
-           'about/kubernetes-training/about-network-policy',
-           'about/kubernetes-training/about-kubernetes-ingress',
-           'about/kubernetes-training/about-kubernetes-egress',
-           'about/kubernetes-training/about-kubernetes-services',
-           'about/kubernetes-training/about-ebpf',
-        ],
-       },
+        {
+          type: 'category',
+          label: 'Kubernetes training',
+          link: {
+            type: 'doc',
+            id: 'about/kubernetes-training/index',
+          },
+          items: [
+            'about/kubernetes-training/about-k8s-networking',
+            'about/kubernetes-training/about-networking',
+            'about/kubernetes-training/about-network-policy',
+            'about/kubernetes-training/about-kubernetes-ingress',
+            'about/kubernetes-training/about-kubernetes-egress',
+            'about/kubernetes-training/about-kubernetes-services',
+            'about/kubernetes-training/about-ebpf',
+          ],
+        },
       ],
     },
     {
       type: 'category',
-      label: 'Install Calico',
+      label: 'Installing and upgrading',
       link: {
         type: 'doc',
         id: 'getting-started/index',
       },
       items: [
+
+        'getting-started/kubernetes/requirements',
+        'getting-started/kubernetes/community-tested',
+        'getting-started/kubernetes/quickstart',
+        'getting-started/kubernetes/managed-public-cloud/eks',
+        'getting-started/kubernetes/managed-public-cloud/gke',
+        'getting-started/kubernetes/managed-public-cloud/iks',
+        'getting-started/kubernetes/managed-public-cloud/aks',
+        'getting-started/kubernetes/self-managed-public-cloud/aws',
+        'getting-started/kubernetes/self-managed-public-cloud/gce',
+        'getting-started/kubernetes/self-managed-public-cloud/azure',
+        'getting-started/kubernetes/self-managed-public-cloud/do',
+        'getting-started/kubernetes/self-managed-onprem/onpremises',
+        'getting-started/kubernetes/self-managed-onprem/config-options',
         {
           type: 'category',
-          label: 'Kubernetes',
-          link: { type: 'doc', id: 'getting-started/kubernetes/index' },
+          label: 'Installing for network policy on hosts and VMs',
+          link: {
+            type: 'doc',
+            id: 'getting-started/bare-metal/index'
+          },
           items: [
-            'getting-started/kubernetes/requirements',
-            'getting-started/kubernetes/community-tested',
-            'getting-started/kubernetes/quickstart',
+            'getting-started/bare-metal/about',
+            'getting-started/bare-metal/requirements',
             {
               type: 'category',
-              label: 'Managed public cloud',
+              label: 'Installation',
               link: {
                 type: 'doc',
-                id: 'getting-started/kubernetes/managed-public-cloud/index',
+                id: 'getting-started/bare-metal/installation/index',
               },
               items: [
-                'getting-started/kubernetes/managed-public-cloud/eks',
-                'getting-started/kubernetes/managed-public-cloud/gke',
-                'getting-started/kubernetes/managed-public-cloud/iks',
-                'getting-started/kubernetes/managed-public-cloud/aks',
+                'getting-started/bare-metal/installation/container',
+                'getting-started/bare-metal/installation/binary-mgr',
+                'getting-started/bare-metal/installation/binary',
               ],
             },
-            {
-              type: 'category',
-              label: 'Self-managed public cloud',
-              link: {
-                type: 'doc',
-                id: 'getting-started/kubernetes/self-managed-public-cloud/index',
-              },
-              items: [
-                'getting-started/kubernetes/self-managed-public-cloud/aws',
-                'getting-started/kubernetes/self-managed-public-cloud/gce',
-                'getting-started/kubernetes/self-managed-public-cloud/azure',
-                'getting-started/kubernetes/self-managed-public-cloud/do',
-              ],
-            },
-            {
-              type: 'category',
-              label: 'Self-managed on-premises',
-              link: {
-                type: 'doc',
-                id: 'getting-started/kubernetes/self-managed-onprem/index',
-              },
-              items: [
-                'getting-started/kubernetes/self-managed-onprem/onpremises',
-                'getting-started/kubernetes/self-managed-onprem/config-options',
 
-              ],
-            },
-            {
-              type: 'category',
-              label: 'OpenShift',
-              link: {
-                type: 'doc',
-                id: 'getting-started/kubernetes/openshift/index',
-              },
-              items: [
-                'getting-started/kubernetes/openshift/requirements',
-                'getting-started/kubernetes/openshift/installation',
-                'getting-started/kubernetes/openshift/hostedcontrolplanes',
-              ],
-            },
-            'getting-started/kubernetes/rancher',
-            {
-              type: 'category',
-              label: 'Flannel',
-              link: {
-                type: 'doc',
-                id: 'getting-started/kubernetes/flannel/index',
-              },
-              items: [
-                'getting-started/kubernetes/flannel/install-for-flannel',
-                'getting-started/kubernetes/flannel/migration-from-flannel',
-              ],
-            },
-            {
-              type: 'category',
-              label: 'Calico for Windows',
-              link: {
-                type: 'doc',
-                id: 'getting-started/kubernetes/windows-calico/index',
-              },
-              items: [
-                'getting-started/kubernetes/windows-calico/limitations',
-                'getting-started/kubernetes/windows-calico/requirements',
-                'getting-started/kubernetes/windows-calico/operator',
-                {
-                  type: 'category',
-                  label: 'Manual Install',
-                  link: {
-                    type: 'doc',
-                    id: 'getting-started/kubernetes/windows-calico/manual-install/index',
-                  },
-                  items: [
-                    'getting-started/kubernetes/windows-calico/manual-install/quickstart',
-                    'getting-started/kubernetes/windows-calico/manual-install/standard',
-                    'getting-started/kubernetes/windows-calico/manual-install/kubeconfig',
-                    'getting-started/kubernetes/windows-calico/manual-install/maintain',
-                    'getting-started/kubernetes/windows-calico/manual-install/openshift-installation',
-                  ],
-                },
-                'getting-started/kubernetes/windows-calico/rancher',
-                'getting-started/kubernetes/windows-calico/demo',
-                'getting-started/kubernetes/windows-calico/troubleshoot',
-              ],
-            },
-            {
-              type: 'category',
-              label: 'K3s',
-              link: { type: 'doc', id: 'getting-started/kubernetes/k3s/index' },
-              items: [
-                'getting-started/kubernetes/k3s/quickstart',
-                'getting-started/kubernetes/k3s/multi-node-install',
-              ],
-            },
-            'getting-started/kubernetes/helm',
-            'getting-started/kubernetes/microk8s',
-            'getting-started/kubernetes/minikube',
-            'getting-started/kubernetes/kind',
-            {
-              type: 'category',
-              label: 'Calico the hard way',
-              link: {
-                type: 'doc',
-                id: 'getting-started/kubernetes/hardway/index',
-              },
-              items: [
-                'getting-started/kubernetes/hardway/overview',
-                'getting-started/kubernetes/hardway/standing-up-kubernetes',
-                'getting-started/kubernetes/hardway/the-calico-datastore',
-                'getting-started/kubernetes/hardway/configure-ip-pools',
-                'getting-started/kubernetes/hardway/install-cni-plugin',
-                'getting-started/kubernetes/hardway/install-typha',
-                'getting-started/kubernetes/hardway/install-node',
-                'getting-started/kubernetes/hardway/configure-bgp-peering',
-                'getting-started/kubernetes/hardway/test-networking',
-                'getting-started/kubernetes/hardway/test-network-policy',
-                'getting-started/kubernetes/hardway/end-user-rbac',
-                'getting-started/kubernetes/hardway/istio-integration',
-              ],
-            },
-            'getting-started/kubernetes/nftables',
-            {
-              type: 'category',
-              label: 'VPP dataplane',
-              link: { type: 'doc', id: 'getting-started/kubernetes/vpp/index' },
-              items: [
-                'getting-started/kubernetes/vpp/getting-started',
-                'getting-started/kubernetes/vpp/ipsec',
-                'getting-started/kubernetes/vpp/specifics',
-                'getting-started/kubernetes/vpp/openshift'
-              ],
-            },
           ],
         },
         {
           type: 'category',
-          label: 'OpenStack',
-          link: { type: 'doc', id: 'getting-started/openstack/index' },
+          label: 'Installing on OpenShift',
+          link: {
+            type: 'doc',
+            id: 'getting-started/kubernetes/openshift/index',
+          },
+          items: [
+            'getting-started/kubernetes/openshift/requirements',
+            'getting-started/kubernetes/openshift/installation',
+            'getting-started/kubernetes/openshift/hostedcontrolplanes',
+          ],
+        },
+
+
+        'getting-started/kubernetes/rancher',
+        {
+          type: 'category',
+          label: 'Installing as Flannel',
+          link: {
+            type: 'doc',
+            id: 'getting-started/kubernetes/flannel/index',
+          },
+          items: [
+            'getting-started/kubernetes/flannel/install-for-flannel',
+            'getting-started/kubernetes/flannel/migration-from-flannel',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Installing on Windows',
+          link: {
+            type: 'doc',
+            id: 'getting-started/kubernetes/windows-calico/index',
+          },
+          items: [
+            'getting-started/kubernetes/windows-calico/limitations',
+            'getting-started/kubernetes/windows-calico/requirements',
+            'getting-started/kubernetes/windows-calico/operator',
+            {
+              type: 'category',
+              label: 'Manual Install',
+              link: {
+                type: 'doc',
+                id: 'getting-started/kubernetes/windows-calico/manual-install/index',
+              },
+              items: [
+                'getting-started/kubernetes/windows-calico/manual-install/quickstart',
+                'getting-started/kubernetes/windows-calico/manual-install/standard',
+                'getting-started/kubernetes/windows-calico/manual-install/kubeconfig',
+                'getting-started/kubernetes/windows-calico/manual-install/maintain',
+                'getting-started/kubernetes/windows-calico/manual-install/openshift-installation',
+              ],
+            },
+            'getting-started/kubernetes/windows-calico/rancher',
+            'getting-started/kubernetes/windows-calico/demo',
+            'getting-started/kubernetes/windows-calico/troubleshoot',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Installing on K3s',
+          link: {
+            type: 'doc',
+            id: 'getting-started/kubernetes/k3s/index'
+          },
+          items: [
+            'getting-started/kubernetes/k3s/quickstart',
+            'getting-started/kubernetes/k3s/multi-node-install',
+          ],
+        },
+        'getting-started/kubernetes/helm',
+        'getting-started/kubernetes/microk8s',
+        'getting-started/kubernetes/minikube',
+        'getting-started/kubernetes/kind',
+        {
+          type: 'category',
+          label: 'Tutorial: Calico the hard way',
+          link: {
+            type: 'doc',
+            id: 'getting-started/kubernetes/hardway/index',
+          },
+          items: [
+            'getting-started/kubernetes/hardway/overview',
+            'getting-started/kubernetes/hardway/standing-up-kubernetes',
+            'getting-started/kubernetes/hardway/the-calico-datastore',
+            'getting-started/kubernetes/hardway/configure-ip-pools',
+            'getting-started/kubernetes/hardway/install-cni-plugin',
+            'getting-started/kubernetes/hardway/install-typha',
+            'getting-started/kubernetes/hardway/install-node',
+            'getting-started/kubernetes/hardway/configure-bgp-peering',
+            'getting-started/kubernetes/hardway/test-networking',
+            'getting-started/kubernetes/hardway/test-network-policy',
+            'getting-started/kubernetes/hardway/end-user-rbac',
+            'getting-started/kubernetes/hardway/istio-integration',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Upgrading',
+          link: {
+            type: 'doc',
+            id: 'operations/upgrading/index'
+          },
+          items: [
+            'operations/upgrading/kubernetes-upgrade',
+            'operations/upgrading/openshift-upgrade',
+            'operations/upgrading/openstack-upgrade',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Dataplane guide: eBPF',
+          link: {
+            type: 'doc',
+            id: 'operations/ebpf/index'
+          },
+          items: [
+            'operations/ebpf/use-cases-ebpf',
+            'operations/ebpf/enabling-ebpf',
+            'operations/ebpf/install',
+            'operations/ebpf/troubleshoot-ebpf',
+          ],
+        },
+        'getting-started/kubernetes/nftables',
+        {
+          type: 'category',
+          label: 'Dataplane guide: VPP',
+          link: {
+            type: 'doc',
+            id: 'getting-started/kubernetes/vpp/index'
+          },
+          items: [
+            'getting-started/kubernetes/vpp/getting-started',
+            'getting-started/kubernetes/vpp/ipsec',
+            'getting-started/kubernetes/vpp/specifics',
+            'getting-started/kubernetes/vpp/openshift'
+          ],
+        },
+
+        {
+          type: 'category',
+          label: 'Installing on OpenStack',
+          link: {
+            type: 'doc',
+            id: 'getting-started/openstack/index'
+          },
           items: [
             'getting-started/openstack/overview',
             'getting-started/openstack/requirements',
@@ -218,40 +245,26 @@ module.exports = {
             },
           ],
         },
-        {
-          type: 'category',
-          label: 'Non-cluster hosts',
-          link: { type: 'doc', id: 'getting-started/bare-metal/index' },
-          items: [
-            'getting-started/bare-metal/about',
-            'getting-started/bare-metal/requirements',
-            {
-              type: 'category',
-              label: 'Installation',
-              link: {
-                type: 'doc',
-                id: 'getting-started/bare-metal/installation/index',
-              },
-              items: [
-                'getting-started/bare-metal/installation/container',
-                'getting-started/bare-metal/installation/binary-mgr',
-                'getting-started/bare-metal/installation/binary',
-              ],
-            },
-          ],
-        },
+
       ],
+
     },
     {
       type: 'category',
       label: 'Networking',
-      link: { type: 'doc', id: 'networking/index' },
+      link: {
+        type: 'doc',
+        id: 'networking/index'
+      },
       items: [
         'networking/determine-best-networking',
         {
           type: 'category',
           label: 'Configure networking',
-          link: { type: 'doc', id: 'networking/configuring/index' },
+          link: {
+            type: 'doc',
+            id: 'networking/configuring/index'
+          },
           items: [
             'networking/configuring/bgp',
             'networking/configuring/vxlan-ipip',
@@ -266,7 +279,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Customize IP address management',
-          link: { type: 'doc', id: 'networking/ipam/index' },
+          link: {
+            type: 'doc',
+            id: 'networking/ipam/index'
+          },
           items: [
             'networking/ipam/get-started-ip-addresses',
             'networking/ipam/ippools',
@@ -284,7 +300,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Calico networking for OpenStack',
-          link: { type: 'doc', id: 'networking/openstack/index' },
+          link: {
+            type: 'doc',
+            id: 'networking/openstack/index'
+          },
           items: [
             'networking/openstack/dev-machine-setup',
             'networking/openstack/ipv6',
@@ -305,16 +324,21 @@ module.exports = {
     {
       type: 'category',
       label: 'Network policy',
-      link: { type: 'doc', id: 'network-policy/index' },
+      link: {
+        type: 'doc',
+        id: 'network-policy/index'
+      },
       items: [
         'network-policy/adopt-zero-trust',
         'network-policy/non-privileged',
         {
           type: 'category',
           label: 'Get started with policy',
-          link: { type: 'doc', id: 'network-policy/get-started/index' },
-          items: [
-            {
+          link: {
+            type: 'doc',
+            id: 'network-policy/get-started/index'
+          },
+          items: [{
               type: 'category',
               label: 'Calico policy',
               link: {
@@ -348,7 +372,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Tiered policy',
-          link: { type: 'doc', id: 'network-policy/policy-tiers/index'},
+          link: {
+            type: 'doc',
+            id: 'network-policy/policy-tiers/index'
+          },
           items: [
             'network-policy/policy-tiers/tiered-policy',
             'network-policy/policy-tiers/rbac-tiered-policies',
@@ -357,7 +384,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy rules',
-          link: { type: 'doc', id: 'network-policy/policy-rules/index' },
+          link: {
+            type: 'doc',
+            id: 'network-policy/policy-rules/index'
+          },
           items: [
             'network-policy/policy-rules/policy-rules-overview',
             'network-policy/policy-rules/namespace-policy',
@@ -371,7 +401,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for hosts and VMs',
-          link: { type: 'doc', id: 'network-policy/hosts/index' },
+          link: {
+            type: 'doc',
+            id: 'network-policy/hosts/index'
+          },
           items: [
             'network-policy/hosts/protect-hosts',
             'network-policy/hosts/kubernetes-nodes',
@@ -382,7 +415,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for services',
-          link: { type: 'doc', id: 'network-policy/services/index' },
+          link: {
+            type: 'doc',
+            id: 'network-policy/services/index'
+          },
           items: [
             'network-policy/services/kubernetes-node-ports',
             'network-policy/services/services-cluster-ips',
@@ -391,7 +427,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for Istio',
-          link: { type: 'doc', id: 'network-policy/istio/index' },
+          link: {
+            type: 'doc',
+            id: 'network-policy/istio/index'
+          },
           items: [
             'network-policy/istio/app-layer-policy',
             'network-policy/istio/http-methods',
@@ -401,7 +440,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Policy for extreme traffic',
-          link: { type: 'doc', id: 'network-policy/extreme-traffic/index' },
+          link: {
+            type: 'doc',
+            id: 'network-policy/extreme-traffic/index'
+          },
           items: [
             'network-policy/extreme-traffic/high-connection-workloads',
             'network-policy/extreme-traffic/defend-dos-attack',
@@ -411,7 +453,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Secure Calico component communications',
-          link: { type: 'doc', id: 'network-policy/comms/index' },
+          link: {
+            type: 'doc',
+            id: 'network-policy/comms/index'
+          },
           items: [
             'network-policy/comms/crypto-auth',
             'network-policy/comms/reduce-nodes',
@@ -425,22 +470,18 @@ module.exports = {
     {
       type: 'category',
       label: 'Operations',
-      link: { type: 'doc', id: 'operations/index' },
+      link: {
+        type: 'doc',
+        id: 'operations/index'
+      },
       items: [
         {
           type: 'category',
-          label: 'Upgrade',
-          link: { type: 'doc', id: 'operations/upgrading/index' },
-          items: [
-            'operations/upgrading/kubernetes-upgrade',
-            'operations/upgrading/openshift-upgrade',
-            'operations/upgrading/openstack-upgrade',
-          ],
-        },
-        {
-          type: 'category',
           label: 'calicoctl',
-          link: { type: 'doc', id: 'operations/calicoctl/index' },
+          link: {
+            type: 'doc',
+            id: 'operations/calicoctl/index'
+          },
           items: [
             'operations/calicoctl/install',
             {
@@ -461,7 +502,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Deploy image options',
-          link: { type: 'doc', id: 'operations/image-options/index' },
+          link: {
+            type: 'doc',
+            id: 'operations/image-options/index'
+          },
           items: [
             'operations/image-options/imageset',
             'operations/image-options/alternate-registry',
@@ -472,19 +516,11 @@ module.exports = {
         'operations/install-apiserver',
         {
           type: 'category',
-          label: 'eBPF',
-          link: { type: 'doc', id: 'operations/ebpf/index' },
-          items: [
-            'operations/ebpf/use-cases-ebpf',
-            'operations/ebpf/enabling-ebpf',
-            'operations/ebpf/install',
-            'operations/ebpf/troubleshoot-ebpf',
-          ],
-        },
-        {
-          type: 'category',
           label: 'Monitor',
-          link: { type: 'doc', id: 'operations/monitor/index' },
+          link: {
+            type: 'doc',
+            id: 'operations/monitor/index'
+          },
           items: [
             'operations/monitor/monitor-component-metrics',
             'operations/monitor/monitor-component-visual',
@@ -495,7 +531,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Troubleshoot',
-          link: { type: 'doc', id: 'operations/troubleshoot/index' },
+          link: {
+            type: 'doc',
+            id: 'operations/troubleshoot/index'
+          },
           items: [
             'operations/troubleshoot/troubleshooting',
             'operations/troubleshoot/commands',
@@ -510,7 +549,10 @@ module.exports = {
     {
       type: 'category',
       label: 'Reference',
-      link: { type: 'doc', id: 'reference/index' },
+      link: {
+        type: 'doc',
+        id: 'reference/index'
+      },
       items: [
         'reference/api',
         {
@@ -523,7 +565,10 @@ module.exports = {
         {
           type: 'category',
           label: 'calicoctl',
-          link: { type: 'doc', id: 'reference/calicoctl/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/calicoctl/index'
+          },
           items: [
             'reference/calicoctl/overview',
             'reference/calicoctl/create',
@@ -537,7 +582,10 @@ module.exports = {
             {
               type: 'category',
               label: 'ipam',
-              link: { type: 'doc', id: 'reference/calicoctl/ipam/index' },
+              link: {
+                type: 'doc',
+                id: 'reference/calicoctl/ipam/index'
+              },
               items: [
                 'reference/calicoctl/ipam/overview',
                 'reference/calicoctl/ipam/check',
@@ -550,7 +598,10 @@ module.exports = {
             {
               type: 'category',
               label: 'node',
-              link: { type: 'doc', id: 'reference/calicoctl/node/index' },
+              link: {
+                type: 'doc',
+                id: 'reference/calicoctl/node/index'
+              },
               items: [
                 'reference/calicoctl/node/overview',
                 'reference/calicoctl/node/run',
@@ -562,7 +613,10 @@ module.exports = {
             {
               type: 'category',
               label: 'datastore',
-              link: { type: 'doc', id: 'reference/calicoctl/datastore/index' },
+              link: {
+                type: 'doc',
+                id: 'reference/calicoctl/datastore/index'
+              },
               items: [
                 'reference/calicoctl/datastore/overview',
                 {
@@ -588,7 +642,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Resource definitions',
-          link: { type: 'doc', id: 'reference/resources/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/resources/index'
+          },
           items: [
             'reference/resources/overview',
             'reference/resources/bgpconfig',
@@ -615,7 +672,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Configuring etcd RBAC',
-          link: { type: 'doc', id: 'reference/etcd-rbac/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/etcd-rbac/index'
+          },
           items: [
             'reference/etcd-rbac/overview',
             'reference/etcd-rbac/certificate-generation',
@@ -630,7 +690,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Felix',
-          link: { type: 'doc', id: 'reference/felix/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/felix/index'
+          },
           items: [
             'reference/felix/configuration',
             'reference/felix/prometheus',
@@ -639,7 +702,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Typha',
-          link: { type: 'doc', id: 'reference/typha/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/typha/index'
+          },
           items: [
             'reference/typha/overview',
             'reference/typha/configuration',
@@ -650,7 +716,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Calico Kubernetes controllers',
-          link: { type: 'doc', id: 'reference/kube-controllers/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/kube-controllers/index'
+          },
           items: [
             'reference/kube-controllers/configuration',
             'reference/kube-controllers/prometheus',
@@ -659,7 +728,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Configuration on public clouds',
-          link: { type: 'doc', id: 'reference/public-cloud/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/public-cloud/index'
+          },
           items: [
             'reference/public-cloud/aws',
             'reference/public-cloud/azure',
@@ -670,7 +742,10 @@ module.exports = {
         {
           type: 'category',
           label: 'Host endpoints',
-          link: { type: 'doc', id: 'reference/host-endpoints/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/host-endpoints/index'
+          },
           items: [
             'reference/host-endpoints/overview',
             'reference/host-endpoints/connectivity',
@@ -686,14 +761,20 @@ module.exports = {
         {
           type: 'category',
           label: 'Architecture',
-          link: { type: 'doc', id: 'reference/architecture/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/architecture/index'
+          },
           items: [
             'reference/architecture/overview',
             'reference/architecture/data-path',
             {
               type: 'category',
               label: 'Network design',
-              link: { type: 'doc', id: 'reference/architecture/design/index' },
+              link: {
+                type: 'doc',
+                id: 'reference/architecture/design/index'
+              },
               items: [
                 'reference/architecture/design/l2-interconnect-fabric',
                 'reference/architecture/design/l3-interconnect-fabric',
@@ -704,7 +785,10 @@ module.exports = {
         {
           type: 'category',
           label: 'VPP dataplane',
-          link: { type: 'doc', id: 'reference/vpp/index' },
+          link: {
+            type: 'doc',
+            id: 'reference/vpp/index'
+          },
           items: [
             'reference/vpp/uplink-configuration',
             'reference/vpp/technical-details',
