@@ -221,28 +221,30 @@ The following steps will configure $[prodname] to advertise Service `status.Load
 
    For help, see [BGP configuration resource](../../reference/resources/bgpconfig.mdx).
 
-Service LoadBalancer address allocation is outside the current scope of $[prodname], but can be implemented with an external controller.
-You can build your own, or use a third-party implementation like the MetalLB project.
+$[prodname] IPAM can manage address allocation for Service of type LoadBalancer with LoadBalancerController. To enable $[prodname] IPAM to start managing addresses for Services set up an IPPool for LoadBalancer.
 
-To install the MetalLB controller for allocating addresses, perform the following steps.
+```bash
+kubectl apply -f - <<EOF
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+ name: loadBalancerIPPool
+spec:
+ cidr: 192.210.0.0/20
+ blockSize: 24
+ natOutgoing: true
+ disabled: false
+ assignmentMode: Automatic
+ allowedUses:
+  - LoadBalancer
+EOF
+```
 
-1. Follow [the MetalLB documentation](https://metallb.universe.tf/installation/#installation-by-manifest) to install the `metallb-system/controller` resources.
+For more information see, [LoadBalancer IP address management](../ipam/service-loadbalancer.mdx)
 
-   However, do not install the `metallb-system/speaker` component. The speaker component also attempts to establish BGP sessions on the node, and will conflict with Calico.
-
-1. Configure MetalLB to provision addresses by creating the following IPAddressPool, replacing `x.x.x.x/16` with the CIDR given to $[prodname] in the steps above. Please note IPAddressPool requires Metallb `0.13+`.
-
-   ```bash
-   kubectl create -f - <<EOF
-   kind: IPAddressPool
-   metadata:
-     name: default
-     namespace: metallb-system
-   spec:
-     addresses:
-     - x.x.x.x/16
-   EOF
-   ```
+:::note
+If you have previously used alternative IPAM solution for Service of type LoadBalancer address management and wish to continue using it, do not create Calico IPPool for LoadBalancer.
+:::
 
 ### Exclude certain nodes from advertisement
 
