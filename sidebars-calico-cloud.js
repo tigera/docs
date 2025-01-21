@@ -20,6 +20,7 @@ module.exports = {
         'get-started/install-cluster',
         'get-started/install-private-registry',
         'get-started/install-automated',
+        'get-started/setup-private-registry',
         'get-started/windows-limitations',
         'get-started/checklist',
         'get-started/operator-checklist',
@@ -204,6 +205,7 @@ module.exports = {
       link: { type: 'doc', id: 'visibility/index' },
       items: [
         'visibility/alerts',
+        'visibility/dashboards',
         'visibility/kibana',
         'visibility/packetcapture',
         'visibility/visualize-traffic',
@@ -296,6 +298,7 @@ module.exports = {
         'compliance/overview',
         'compliance/compliance-reports-cis',
         'compliance/encrypt-cluster-pod-traffic',
+        'compliance/configure-http-proxy',
       ],
     },
     {

@@ -1,7 +1,15 @@
 import React from 'react';
-
-import Modal from '../utils/Modal';
 import { toKebab } from '../utils/formatters';
+import {
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Button,
+} from '@chakra-ui/react';
 
 export default function GeekDetails(props) {
   const [selectedDetail, setSelectedDetail] = React.useState(null);
@@ -77,12 +85,28 @@ export default function GeekDetails(props) {
       >
         ?
       </button>
+
       <Modal
         isOpen={isOpen}
-        content={renderContent(selectedDetail)}
-        title={renderTitle(selectedDetail)}
         onClose={() => setIsOpen(false)}
-      />
+        size='lg'
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{renderTitle(selectedDetail)}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>{renderContent(selectedDetail)}</ModalBody>
+          <ModalFooter>
+            <Button
+              size='sm'
+              variant='solidBlack'
+              onClick={() => setIsOpen(false)}
+            >
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

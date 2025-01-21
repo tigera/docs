@@ -18,7 +18,7 @@ Learn about the new features, bug fixes, and other updates in this release of $[
 
 ## New features and enhancements
 
-<!-- 3.20-2 -->
+{/* 3.20-2 */}
 
 ### Tech preview: network security for hosts and VMs
 
@@ -56,7 +56,7 @@ For more information see [Deploy a dual ToR cluster](../networking/configuring/d
 * Guardian will respect HTTP proxy environment variables when set on the deployment by mutating webhook configurations.
 * Enhanced filtering options in the endpoints page of the Manager UI.
 
-<!-- 3.20-1-->
+{/* 3.20-1*/}
 
 ### Support for OpenShift hosted control planes
 
@@ -94,17 +94,17 @@ For more information, see [Packet capture](../visibility/packetcapture.mdx), [En
 * Security updates.
 
 
-<!-- Follow this template: Problem-Cause-Fix-Result -->
+{/* Follow this template: Problem-Cause-Fix-Result */}
 
-<!--
+{/*
 * Bug 1.
 * Bug 2.
--->
-<!--
+*/}
+{/*
 ## Security fixes
 
 * Security fix.
--->
+*/}
 
 ## Known issues
 
@@ -115,18 +115,17 @@ For more information, see [Packet capture](../visibility/packetcapture.mdx), [En
 * *Multi-cluster management users only*. If the `manager-tls` and `internal-manager-tls` secrets have overlapping DNS names, components such as `es-calico-kube-controllers` will log certificate errors. If you have previously installed a version older than v3.13.0 and never changed your manager-tls secret from the tigera-operator namespace, you must delete both of these secrets. This applies to you if the following command prints a certificate: `$ kubectl get secret manager-tls -n tigera-operator -o "jsonpath={.data['cert']}"`.
 * Upgrading to $[prodname] 3.18.0 on Rancher/RKE from $[prodname] 3.13.0 currently requires manually terminating the calico-node container for an upgrade to proceed.
 * Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim. Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.) Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned".
-<li>
+  <li>
   Some application layer features are not working as expected for $[prodname] installations with the following deployment types:
   <ul>
-    <li>AKS clusters with Azure CNI for networking and $[prodname] for network policy</li>
-    <li>RKE2 clusters installed with Rancher UI</li>
+  <li>AKS clusters with Azure CNI for networking and $[prodname] for network policy</li>
+  <li>RKE2 clusters installed with Rancher UI</li>
   </ul>
   During installation, for these deployment types, <code>kubeletVolumePluginPath</code> is set to <code>None</code> in the Installation CR, causing all application layer features to stop working.
   The affected features include web application firewalls, application layer policies, and L7 logging.
   As a workaround, you can restore the default value by running the following command on an affected cluster:
   <CodeBlock language='bash'>{`kubectl patch installation.tigera.io default --type=merge  -p '{"spec":{"kubeletVolumePluginPath":"/var/lib/kubelet"}}'`}</CodeBlock>
-</li>
-
+  </li>
 * When using eBPF mode with kernels older than 5.17 you may need to set `bpfDNSPolicyMode` to `NoDelay` in the `FelixConfiguration` to avoid a  possible crash loop. Some distributions using kernel version < 5.17 may work depending on which backports are present in that kernel. For instance Ubuntu kernels 5.15+ and RH kernels 5.14+ have the necessary capabilities.
 
 ## Updating
@@ -141,6 +140,9 @@ $[prodname] 3.20 contains breaking changes for installations that use the Calico
   If you're using the Calico API server, you must restart any controllers, including `kube-controller-manager`, that manage these resources after the upgrade.
   This change addresses an issue where duplicate UIDs on different API resources could disrupt Kubernetes garbage collection.
 
+* ***Breaking change:*** Previously, the default tier had no order and was always evaluated last. Starting with Calico Enterprise 3.20.0-2.0,
+    the default tier now has an order of 1,000,000. When upgrading, you must ensure that existing tiers have a lower order or else policy decisions may be affected.
+
 ## Release details
 
 ### Calico Enterprise 3.20.0-1.0 (early preview)
@@ -151,9 +153,9 @@ Calico Enterprise 3.20.0-1.0 is now available as an early preview release.
 This release is for previewing and testing purposes only.
 It is not supported for use in production.
 
-<!--
+{/*
 To update an existing installation of Calico Enterprise 3.18, see [Install a patch release](../getting-started/manifest-archive.mdx).
--->
+*/}
 
 ### Calico Enterprise 3.20.0-2.0 (early preview)
 
@@ -168,3 +170,20 @@ For more information, see [Calico Open Source 3.29 release notes](https://docs.t
 
 To update an existing installation of Calico Enterprise 3.20, see [Install a patch release](../getting-started/manifest-archive.mdx).
 
+### Calico Enterprise 3.20-2.2 bug fix release (early preview)
+
+November 27, 2024
+
+Calico Enterprise 3.20.0-2.2 is now available as an early preview release.
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+This release includes bug fixes and improvements.
+
+#### Bug fixes
+
+* Fix a bug where pods with flexvol/nodeagent volumes would get stuck in the Terminating phase, if, during termination, their node rebooted.
+* Fixes an issue where requests made to the queryserver, for example when opening the Endpoints page cannot be authenticated when OIDC is enabled.
+* The eBPF dataplane will fall back to non-CO-RE if CO-RE does not load. This will affect older kernel versions, including AKS and EKS.
+* Security updates.
+
+To update an existing installation of Calico Enterprise 3.20, see [Install a patch release](../getting-started/manifest-archive.mdx).

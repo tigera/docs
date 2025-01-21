@@ -154,6 +154,7 @@ module.exports = {
       link: { type: 'doc', id: 'networking/index' },
       items: [
         'networking/determine-best-networking',
+        'networking/gateway-api',
         {
           type: 'category',
           label: 'Networking basics',
@@ -301,7 +302,7 @@ module.exports = {
         },
         {
           type: 'category',
-          label: 'Policy for hosts',
+          label: 'Policy for hosts and VMs',
           link: { type: 'doc', id: 'network-policy/hosts/index' },
           items: [
             'network-policy/hosts/protect-hosts',
@@ -458,6 +459,7 @@ module.exports = {
         'compliance/overview',
         'compliance/compliance-reports-cis',
         'compliance/encrypt-cluster-pod-traffic',
+        'compliance/configure-http-proxy',
       ],
     },
     {

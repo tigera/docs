@@ -16,6 +16,7 @@ import Modal from './components/Modal';
 import Checkbox from './components/Checkbox';
 import Radio from './components/Checkbox';
 import Tabs from './components/Tabs';
+import Button from './components/Button';
 
 const config: ThemeConfig = {
   initialColorMode: 'system',
@@ -48,6 +49,7 @@ const theme = extendTheme({
     Modal,
     Progress,
     Textarea,
+    Button,
   },
   fontSizes: {
     xxs: '0.625rem',
