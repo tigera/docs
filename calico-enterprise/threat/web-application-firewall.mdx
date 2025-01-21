@@ -64,26 +64,19 @@ If you enable WAF for deployments that are part of the Kubernetes system itself,
 
 ### Enable WAF using the CLI
 
-#### Enable the Policy Sync API in Felix
+#### Using kubectl
 
-To enable WAF using the CLI, you must enable the Policy Sync API in Felix. To do this cluster-wide,
-modify the `default` FelixConfiguration to set the field `policySyncPathPrefix` to `/var/run/nodeagent`:
-
-```bash
-kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
-```
-
-#### Enable WAF using kubectl
-
-In the ApplicationLayer custom resource, named `tigera-secure`, set the `sidecarInjection` field to `Enabled`.
+Create an (or edit an existing) ApplicationLayer resource named `tigera-secure`, set the `sidecarInjection` field to `Enabled`.
 
 ```bash
+kubectl apply -f - <<EOF
 apiVersion: operator.tigera.io/v1
 kind: ApplicationLayer
 metadata:
   name: tigera-secure
 spec:
   sidecarInjection: Enabled
+EOF
 ```
 
 Or, in Manager UI, click **Threat Defense > Web Application Firewall > Configure Web Application Firewall**.
@@ -197,7 +190,7 @@ By default WAF will not block a request even if it has matching rule violations.
 
 #### Other basic customizations
 
-For basic customizations, it's best to add it after all the includes in `tigera.conf`. In fact, this is the reason why the `SecRuleEngine` directive and the rest of [our customizations](https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/embed/coreruleset/tigera.conf#L8-L17) are situated there.
+For basic customizations, it's best to add it after all the includes in `tigera.conf`. In fact, this is the reason why the `SecRuleEngine` directive and the rest of [our customizations](https://github.com/tigera/operator/blob/master/pkg/render/applicationlayer/ruleset/coreruleset/tigera.conf#L8-L17) are situated there.
 
 An example is adding a sampling mode. For that, the `tigera.conf` will look like this:
 

@@ -110,17 +110,17 @@ $[prodname] now provides the ability to set resource requests and limits for the
 * Calico panics if kube-proxy or other components are using native `nftables` rules instead of the `iptables-nft` compatibility shim. Until Calico supports native nftables mode, we recommend that you continue to use the iptables-nft compatibility layer for all components. (The compatibility layer was the only option before Kubernetes v1.29 added alpha-level `nftables` support.) Do not run Calico in "legacy" iptables mode on a system that is also using `nftables`. Although this combination does not panic or fail (at least on kernels that support both), the interaction between `iptables` "legacy" mode and `nftables` is confusing: both `iptables` and `nftables` rules can be executed on the same packet, leading to policy verdicts being "overturned".
 * When a tier order is set to the maximum float value (1.7976931348623157e+308), this can cause policy re-ordering in the UI not to work properly. Since the `namespace-isolation` tier has this value by default, policy recommendation users are affected. To workaround this issue edit any tier that has this value for the order. For example: use `kubectl edit tier namespace-isolation` and set the order to `10000`.
 * Linseed deployment needs to be manually restarted after an upgrade. Without a restart, Linseed can't ingest data because it can't authenticate with Elastic.
-<li>
+  <li>
   Some application layer features are not working as expected for $[prodname] installations with the following deployment types:
   <ul>
   <li>AKS clusters with Azure CNI for networking and $[prodname] for network policy</li>
   <li>RKE2 clusters installed with Rancher UI</li>
-    </ul>
+  </ul>
   During installation, for these deployment types, <code>kubeletVolumePluginPath</code> is set to <code>None</code> in the Installation CR, causing all application layer features to stop working.
   The affected features include web application firewalls, application layer policies, and L7 logging.
   As a workaround, you can restore the default value by running the following command on an affected cluster:
-<CodeBlock language='bash'>{`kubectl patch installation.tigera.io default --type=merge  -p '{"spec":{"kubeletVolumePluginPath":"/var/lib/kubelet"}}'`}</CodeBlock>
-</li>
+  <CodeBlock language='bash'>{`kubectl patch installation.tigera.io default --type=merge  -p '{"spec":{"kubeletVolumePluginPath":"/var/lib/kubelet"}}'`}</CodeBlock>
+  </li>
 
 ## Updating
 
@@ -130,7 +130,7 @@ $[prodname] 3.19 contains breaking changes for installations that use the Calico
 
 :::
 
-* ***Breaking change***: Upgrading from Calico Enterprise 3.18 or earlier $[prodname] will alter the UID of all `projectcalico.org/v3` resources.
+* ***Breaking change:*** Upgrading from Calico Enterprise 3.18 or earlier $[prodname] will alter the UID of all `projectcalico.org/v3` resources.
   If you're using the Calico API server, you must restart any controllers, including `kube-controller-manager`, that manage these resources after the upgrade.
   This change addresses an issue where duplicate UIDs on different API resources could disrupt Kubernetes garbage collection.
 
@@ -163,6 +163,8 @@ This release is supported for use in production.
 #### Updates
 
 * License usage data is now collected and stored locally in the cluster
+* Curator was removed from Calico Enterprise due to its limited reliability. To ensure that your Elasticsearch does not
+run out of space, please consult our documentation on [Data retention](../visibility/elastic/retention.mdx) and [Prometheus alerts for Elasticsearch](../operations/monitor/metrics/elasticsearch-and-fluentd-metrics#create-prometheus-alerts-for-elasticsearch.mdx).
 
 #### Bug fixes
 

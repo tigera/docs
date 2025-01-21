@@ -51,14 +51,6 @@ L7 logs require a minimum of 1 additional GB of log storage per node, per one-da
 
 ## Configure Felix for log data collection
 
-1. Enable the Policy Sync API in Felix.
-
-   For cluster-wide enablement, modify the `default` FelixConfiguration and set the field `policySyncPathPrefix` to `/var/run/nodeagent`.
-
-   ```bash
-   kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
-   ```
-
 1. Configure L7 log aggregation, retention, and reporting.
 
    For help, see [Felix Configuration documentation](../../../reference/component-resources/node/felix/configuration.mdx#calico-enterprise-specific-configuration).
@@ -69,25 +61,36 @@ In this step, you will configure L7 logs, select logs for collection, and test t
 
 ### Configure the ApplicationLayer resource for L7 logs
 
-1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) resource named, `tigera-secure` to include a logCollection section of the file, `_api.html` [here](../../../reference/installation/api.mdx).
+1. Create or update the [ApplicationLayer](../../../reference/installation/api.mdx#operator.tigera.io/v1.ApplicationLayer) resource named, `tigera-secure`.
 
-1. Ensure that the `sidecarInjection` field is set to `Enabled`.
+   Example:
 
-   ```yaml
+   ```bash
+   kubectl apply -f - <<EOF
    apiVersion: operator.tigera.io/v1
    kind: ApplicationLayer
    metadata:
      name: tigera-secure
    spec:
+     # log collection is implemented via sidecar
+     sidecarInjection: Enabled
+     # the following configures the log collection and aggregation behaviour
      logCollection:
+       collectLogs: Enabled
        logIntervalSeconds: 5
        logRequestsPerInterval: -1
-     sidecarInjection: Enabled
+   EOF
    ```
 
-1. Apply the resource. This creates `l7-log-collector` daemonset in `calico-system` namespace.
+   Read more about the log collection specification [here](../../../reference/installation/api.mdx#operator.tigera.io/v1.LogCollector).
+   
+   Applying this resource creates an `l7-log-collector` daemonset in `calico-system` namespace.
 
-1. Ensure that the daemonset progresses and is fully deployed.
+1. Wait for the Log collection daemonset to progress to ready
+
+   ```bash
+   kubectl rollout status -n calico-system ds/l7-log-collector
+   ```
 
 ### Select traffic for L7 log collection
 

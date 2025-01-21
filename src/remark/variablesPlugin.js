@@ -1,43 +1,46 @@
-const visit = require('unist-util-visit').visit;
-const getVariableByFilePath = require('../utils/getVariableByFilePath');
-const isVarValue = require('../utils/isVarValue');
+import { visit } from 'unist-util-visit';
+import getVariableByFilePath from '../utils/getVariableByFilePath';
+import isVarValue from '../utils/isVarValue';
 
 const varRegex = RegExp(/\$\[[ \t]*([\w.\/-]+)[ \t]*\]/, 'g');
 
-function replaceVariable(value, file) {
-  return value.replaceAll(varRegex, (match, varName) => {
-    const varValue = getVariableByFilePath(file, varName);
+async function replaceTokensWithVariables(value, file) {
+  const variables = {};
+  const matches = Array.from(value.matchAll(varRegex));
 
-    return isVarValue(varValue) ? varValue : match;
-  });
+  for (const [token, varName] of matches) {
+    variables[token] = await getVariableByFilePath(file, varName);
+  }
+
+  return value.replaceAll(varRegex, (match) => (isVarValue(variables[match]) ? variables[match] : match));
 }
 
 function isString(value) {
   return typeof value === 'string';
 }
 
-function replaceJsExpressionVariable(item, property, file) {
+async function replaceJsExpressionVariable(item, property, file) {
   if (item.expression[property]?.type === 'Literal') {
     if (isString(item.expression[property].raw)) {
-      item.expression[property].raw = replaceVariable(item.expression.consequent.raw, file);
+      item.expression[property].raw = await replaceTokensWithVariables(item.expression.consequent.raw, file);
     }
   } else if (item.expression[property]?.type === 'TemplateLiteral') {
-    item.expression[property].quasis.forEach((templateLiteral) => {
+    item.expression[property].quasis.forEach(async (templateLiteral) => {
       if (isString(templateLiteral.value.raw)) {
-        templateLiteral.value.raw = replaceVariable(templateLiteral.value.raw, file);
+        templateLiteral.value.raw = await replaceTokensWithVariables(templateLiteral.value.raw, file);
       }
     });
   }
 }
 
-function evaluateJsExpression(node, file) {
+async function evaluateJsExpression(node, file) {
   const body = node.data.estree.body;
 
   for (const item of body) {
     if (item.type === 'ExpressionStatement' && item.expression?.type === 'ConditionalExpression') {
       const condition = item.expression.test?.left?.raw;
       if (isString(condition)) {
-        item.expression.test.left.raw = replaceVariable(condition, file);
+        item.expression.test.left.raw = await replaceTokensWithVariables(condition, file);
       }
 
       replaceJsExpressionVariable(item, 'consequent', file);
@@ -47,10 +50,10 @@ function evaluateJsExpression(node, file) {
   }
 }
 
-function replaceJsxElementProps(node, file) {
+async function replaceJsxElementProps(node, file) {
   for (const attribute of node.attributes) {
     if (isString(attribute.value)) {
-      attribute.value = replaceVariable(attribute.value, file);
+      attribute.value = await replaceTokensWithVariables(attribute.value, file);
     }
   }
 }
@@ -58,15 +61,15 @@ function replaceJsxElementProps(node, file) {
 /**
  * This is a remark plugin which runs during the build. It visits all md/mdx files
  * and replaces a token with a variable from the variables.js. For example in
- * calico-cloud_versioned_docs, $(prodname) gets replaced with Calico Cloud,
+ * calico-cloud_versioned_docs, $[prodname] gets replaced with Calico Cloud,
  * from calico-cloud_versioned_docs/version-*.variables.js.
  */
-function variablesPlugin(_options) {
-  async function transformer(tree, file) {
+export default function variablesPlugin(_options) {
+  return function transformer(tree, file) {
     visit(
       tree,
       () => true,
-      (node) => {
+      async (node) => {
         if (node.type === 'mdxFlowExpression' && isString(node.value) && node.value.match(varRegex) !== null) {
           evaluateJsExpression(node, file);
           return;
@@ -86,13 +89,9 @@ function variablesPlugin(_options) {
             continue;
           }
 
-          node[prop] = replaceVariable(node[prop], file);
+          node[prop] = await replaceTokensWithVariables(node[prop], file);
         }
       }
     );
-  }
-
-  return transformer;
+  };
 }
-
-module.exports = variablesPlugin;
