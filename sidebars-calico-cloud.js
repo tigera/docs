@@ -285,7 +285,6 @@ module.exports = {
         'image-assurance/understanding-scan-results',
         'image-assurance/exclude-vulnerabilities-from-scan-results',
         'image-assurance/set-up-alerts',
-        'image-assurance/install-the-admission-controller',
         'image-assurance/creating-jira-issues-for-scan-results',
       ],
     },
