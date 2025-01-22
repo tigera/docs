@@ -25,6 +25,7 @@ spec:
   allowedUses:
     - Workload
     - Tunnel
+  assignmentMode: Automatic
 ```
 
 ## IP pool definition
@@ -43,11 +44,12 @@ spec:
 | blockSize                          | The CIDR size of allocation blocks used by this pool. Blocks are allocated on demand to hosts and are used to aggregate routes. The value can only be set when the pool is created. | 20 to 32 (inclusive) for IPv4 and 116 to 128 (inclusive) for IPv6                                                                                                                                                      | int                        | `26` for IPv4 pools and `122` for IPv6 pools. |
 | ipipMode                           | The mode defining when IPIP will be used. Cannot be set at the same time as `vxlanMode`.                                                                                            | Always, CrossSubnet, Never                                                                                                                                                                                             | string                     | `Never`                                       |
 | vxlanMode                          | The mode defining when VXLAN will be used. Cannot be set at the same time as `ipipMode`.                                                                                            | Always, CrossSubnet, Never                                                                                                                                                                                             | string                     | `Never`                                       |
-| natOutgoing                        | When enabled, packets sent from $[prodname] networked containers in this pool to destinations outside of any Calico IP pools will be masqueraded.                                  | true, false                                                                                                                                                                                                            | boolean                    | `false`                                       |
-| disabled                           | When set to true, $[prodname] IPAM will not assign addresses from this pool.                                                                                                       | true, false                                                                                                                                                                                                            | boolean                    | `false`                                       |
+| natOutgoing                        | When enabled, packets sent from $[prodname] networked containers in this pool to destinations outside of any Calico IP pools will be masqueraded.                                   | true, false                                                                                                                                                                                                            | boolean                    | `false`                                       |
+| disabled                           | When set to true, $[prodname] IPAM will not assign addresses from this pool.                                                                                                        | true, false                                                                                                                                                                                                            | boolean                    | `false`                                       |
 | disableBGPExport _(since v3.21.0)_ | Disable exporting routes from this IP Pool’s CIDR over BGP.                                                                                                                         | true, false                                                                                                                                                                                                            | boolean                    | `false`                                       |
-| nodeSelector                       | Selects the nodes that $[prodname] IPAM should assign addresses from this pool to.                                                                                                 |                                                                                                                                                                                                                        | [selector](#node-selector) | all()                                         |
-| allowedUses _(since v3.21.0)_      | Controls whether the pool will be used for automatic assignments of certain types. See [below](#allowed-uses).                                                                      | Workload, Tunnel                                                                                                                                                                                                       | list of strings            | `["Workload", "Tunnel"]`                      |
+| nodeSelector                       | Selects the nodes that $[prodname] IPAM should assign addresses from this pool to.                                                                                                  |                                                                                                                                                                                                                        | [selector](#node-selector)            | all()                                         |
+| allowedUses _(since v3.21.0)_      | Controls whether the pool will be used for automatic assignments of certain types. See [below](#allowed-uses).                                                                                | Workload, Tunnel, LoadBalancer                                                                                                                                                                                         | list of strings            | `["Workload", "Tunnel"]`                      |
+| assignmentMode                     | Controls whether the pool will be used for automatic assignments or only if requested manually                                                                                      | Automatic, Manual                                                                                                                                                                                                      | strings                    | `Automatic`                                   |
 
 :::note
 
@@ -61,6 +63,12 @@ IP pool by creating blocks of incorrect size.
 
 When automatically assigning IP addresses to workloads, only pools with "Workload" in their `allowedUses` field are
 consulted. Similarly, when assigning IPs for tunnel devices, only "Tunnel" pools are eligible.
+
+Combining options for the `allowedUses` field is limited. You can specify only the following options and option combinations:
+    * `allowedUses: ["Tunnel","Workload"]` (default)
+    * `allowedUses: ["Tunnel"]`
+    * `allowedUses: ["Workload"]`
+    * `allowedUses: ["LoadBalancer"]`
 
 If the `allowedUses` field is not specified, it defaults to `["Workload", "Tunnel"]` for compatibility with older
 versions of Calico. It is not possible to specify a pool with no allowed uses.
@@ -115,19 +123,14 @@ Increasing the block size from the default (e.g., using `24` for IPv4 to give 25
 
 Reducing the block size from the default (e.g., using `28` for IPv4 to give 16 addresses per block) means more blocks per host and therefore potentially more routes. This can be beneficial if it allows the blocks to be more fairly distributed amongst the hosts.
 
+### Assignment Mode
+
+Determines if the IP pool should be used by Calico IPAM for automatic IP assignments. With `Automatic` assignmentMode, Calico IPAM automatically assigns IP addresses from this pool. If you set `assignmentMode` to `Manual`, Calico IPAM does not assign IP addresses from this pool unless the user specifies this pool.
+
 ### Node Selector
 
 For details on configuring IP pool node selectors, please read the
 [Assign IP addresses based on topology guide.](../../networking/ipam/assign-ip-addresses-topology.mdx).
-
-:::tip
-
-To prevent an IP pool from being used automatically by $[prodname] IPAM, while still allowing
-it to be used manually for static assignments, set the `IPPool`'s `nodeSelector` to `!all()`. Since the selector
-matches no nodes, the IPPool will not be used automatically and, unlike setting `disabled: true`, it can still be
-used for manual assignments.
-
-:::
 
 #### Selector reference
 

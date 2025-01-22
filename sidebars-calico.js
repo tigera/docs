@@ -295,6 +295,7 @@ module.exports = {
             'networking/ipam/migrate-pools',
             'networking/ipam/change-block-size',
             'networking/ipam/legacy-firewalls',
+            'networking/ipam/service-loadbalancer'
           ],
         },
         {
