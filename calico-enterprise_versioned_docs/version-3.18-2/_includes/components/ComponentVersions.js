@@ -17,9 +17,6 @@ export default function ComponentVersions() {
     <>
       {releases.map((release) => (
         <div key={release.title}>
-          <p>
-            This page lists the specific component versions that go into {variables.prodname} patch releases.
-          </p>
           <Heading
             as='h2'
             id={`component-versions-${toKebab(release.title)}`}
