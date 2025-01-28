@@ -1,0 +1,158 @@
+---
+description: Prepare you Kubernetes cluster before installing Calico.
+title: Prepare your cluster
+---
+
+# Prepare you cluster before installing Calico
+
+## Prerequisites
+
+* Your system meets the [system requirements](../getting-started/kubernetes/requirements.mdx).
+
+## WIP 1
+
+* Calico must be able to manage `cali*` interfaces on the host.
+  When IPIP is enabled (the default), Calico also needs to be able to manage `tunl*` interfaces.
+  When VXLAN is enabled, Calico also needs to be able to manage the `vxlan.calico` interface.
+
+
+## WIP 2
+
+:::note
+
+Many Linux distributions, such as most of the above, include NetworkManager.
+By default, NetworkManager does not allow Calico to manage interfaces.
+If your nodes have NetworkManager, complete the steps in [Preventing NetworkManager from controlling Calico interfaces](../operations/troubleshoot/troubleshooting.mdx#configure-networkmanager) before installing Calico.
+
+:::
+
+## WIP 3
+
+* If your Linux distribution comes with installed Firewalld or another iptables manager it should be disabled.
+  These may interfere with rules added by Calico and result in unexpected behavior.
+
+## WIP 4
+
+:::note
+
+If a host firewall is needed, it can be configured by Calico HostEndpoint and GlobalNetworkPolicy.
+More information about configuration at [Policy for hosts and VMs](../network-policy/hosts/index.mdx).
+
+:::
+
+## WIP 5
+
+```
+## Network requirements
+
+Ensure that your hosts and firewalls allow the necessary traffic based on your configuration.
+
+<table >
+  <thead>
+    <tr className='header'>
+      <th>Configuration</th>
+      <th>Host(s)</th>
+      <th>Connection type</th>
+      <th>Port/protocol</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr className='odd'>
+      <td>$[prodname] networking (BGP)</td>
+      <td>All</td>
+      <td>Bidirectional</td>
+      <td>TCP 179</td>
+    </tr>
+    <tr className='even'>
+      <td>$[prodname] networking with IP-in-IP enabled (default)</td>
+      <td>All</td>
+      <td>Bidirectional</td>
+      <td>
+        IP-in-IP, often represented by its protocol number <code>4</code>
+      </td>
+    </tr>
+    <If condition={!(props.platform === 'openstack' || props.platform === 'host')}>
+    <tr>
+      <td>$[prodname] networking with VXLAN enabled</td>
+      <td>All</td>
+      <td>Bidirectional</td>
+      <td>UDP 4789</td>
+    </tr>
+    <tr>
+      <td>$[prodname] networking with Typha enabled</td>
+      <td>Typha agent hosts</td>
+      <td>Incoming</td>
+      <td>TCP 5473 (default)</td>
+    </tr>
+    </If>
+    <If condition={!(props.platform === 'openstack' || props.platform === 'openshift' || props.platform === 'host')}>
+    <tr>
+      <td>$[prodname] networking with IPv4 Wireguard enabled</td>
+      <td>All</td>
+      <td>Bidirectional</td>
+      <td>UDP 51820 (default)</td>
+    </tr>
+    <tr>
+      <td>$[prodname] networking with IPv6 Wireguard enabled</td>
+      <td>All</td>
+      <td>Bidirectional</td>
+      <td>UDP 51821 (default)</td>
+    </tr>
+    <tr>
+      <td>flannel networking (VXLAN)</td>
+      <td>All</td>
+      <td>Bidirectional</td>
+      <td>UDP 4789</td>
+    </tr>
+    </If>
+    <If condition={props.platform === 'kubernetes' || props.platform === 'openshift'}>
+    <tr>
+      <td>All</td>
+      <td>kube-apiserver host</td>
+      <td>Incoming</td>
+      <td>Often TCP 443 or 6443*</td>
+    </tr>
+    </If>
+    <If condition={props.platform !== 'openshift'}>
+    <tr>
+      <td><If condition={props.platform === 'kubernetes'}>etcd datastore</If><If condition={props.platform !== 'kubernetes'}>All</If></td>
+      <td>etcd hosts</td>
+      <td>Incoming</td>
+      <td>
+        <Link href='http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt'>
+          Officially
+        </Link>{' '}
+        TCP 2379 but can vary
+      </td>
+    </tr>
+    </If>
+  </tbody>
+</table>
+
+<If condition={props.platform === 'kubernetes' || props.platform === 'openshift'}>
+\* *The value passed to kube-apiserver using the `--secure-port` flag.
+If you cannot locate this, check the `targetPort` value returned by `kubectl get svc kubernetes -o yaml`.*
+</If>
+<If condition={props.platform === 'openstack'}>
+\* *If your compute hosts connect directly and don’t use IP-in-IP, you don’t need to allow IP-in-IP traffic.*
+</If>
+```
+
+## WIP 5
+
+```
+## Privileges
+
+Ensure that Calico has the `CAP_SYS_ADMIN` privilege.
+
+The simplest way to provide the necessary privilege is to run Calico as root or in a privileged container.
+
+<If condition={props.platform === 'kubernetes'}>
+When installed as a Kubernetes daemon set, Calico meets this requirement by running as a privileged container.
+This requires that the kubelet be allowed to run privileged containers.
+There are two ways this can be achieved.
+
+* Specify `--allow-privileged` on the kubelet (deprecated).
+* Use a [pod security policy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/).
+</If>
+```
