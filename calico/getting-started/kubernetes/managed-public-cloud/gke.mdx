@@ -3,20 +3,12 @@ description: Enable Calico network policy in GKE.
 title: Installing on GKE
 ---
 
-# Google Kubernetes Engine (GKE)
+# Install Calico network policy on a Google Kubernetes Engine cluster
 
-## Big picture
+Google Kubernetes Engine (GKE) has built-in support for $[prodname], providing a robust implementation of the full Kubernetes Network Policy API.
+GKE users wanting to go beyond Kubernetes network policy capabilities can make full use of the $[prodname] Network Policy API.
 
-Enable $[prodname] in GKE managed Kubernetes service.
-
-## Value
-
-GKE has built-in support for $[prodname], providing a robust implementation of the full Kubernetes Network Policy API. GKE users wanting to go beyond Kubernetes network policy capabilities can make full use of the $[prodname] Network Policy API.
-
-## How to
-
-To enable $[prodname] network policy enforcement, follow these step-by-step instructions:
-[Enabling network policy enforcement](https://cloud.google.com/kubernetes-engine/docs/how-to/network-policy).
+You can install Calico network policy by enabling it as you create a new GKE cluster.
 
 The geeky details of what you get:
 
@@ -24,6 +16,53 @@ The geeky details of what you get:
   prodname='$[prodname]'
   details='Policy:Calico,IPAM:Host Local,CNI:Calico,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
 />
+
+## Prerequisites
+
+* You have a Google Cloud account, an active project, and permissions for creating clusters.
+* You installed and configured the gcloud and kubectl CLIs on your workstation.
+
+## Create a GKE cluster with Calico enabled for network policy
+
+1. Create a new GKE cluster with network policy by running the following command:
+
+   ```bash
+   gcloud container clusters create <cluster-name> --enable-network-policy
+   ```
+
+   This may take several minutes to complete.
+
+1. Verify that the Calico pods are running in your cluster by entering the following command:
+
+   ```bash
+   kubectl get pods -n kube-system
+   ```
+   Example output:
+   ```bash
+   NAME                                                           READY   STATUS    RESTARTS   AGE
+   calico-node-hjnt5                                              1/1     Running   0          13m
+   calico-node-phcjw                                              1/1     Running   0          13m
+   calico-node-pmrkm                                              1/1     Running   0          12m
+   calico-node-vertical-autoscaler-8c79c8dc-q7z7c                 1/1     Running   0          15m
+   calico-typha-547bf5ddbd-8jlnt                                  1/1     Running   0          13m
+   calico-typha-547bf5ddbd-d2qjd                                  1/1     Running   0          13m
+   calico-typha-horizontal-autoscaler-7d99b54d8b-f9fq6            1/1     Running   0          15m
+   calico-typha-vertical-autoscaler-bbdb9bc58-wsd6v               1/1     Running   0          15m
+   event-exporter-gke-545bc64577-rmgkn                            2/2     Running   0          15m
+   fluentbit-gke-8p8tc                                            3/3     Running   0          14m
+   ...
+   ```
+
+## Additional resources
+
+For complete GKE requirements, limitations, and other installation methods, see [Enable network policy enforcement](https://cloud.google.com/kubernetes-engine/docs/how-to/network-policy#enabling_network_policy_enforcement).
+
+:::note
+
+GKE documentation does not always refer to Calico by name.
+For clusters using Dataplane V1, references to "network policy" often describe integrated Calico network policy.
+
+:::
 
 ## Next steps
 
