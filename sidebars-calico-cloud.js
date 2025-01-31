@@ -17,6 +17,7 @@ module.exports = {
         'get-started/cc-arch-diagram',
         'get-started/connect-cluster',
         'get-started/system-requirements',
+        'get-started/prepare-cluster',
         'get-started/install-cluster',
         'get-started/install-private-registry',
         'get-started/install-automated',
