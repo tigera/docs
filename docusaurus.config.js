@@ -410,7 +410,7 @@ export default async function createAsyncConfig() {
           routeBasePath: 'calico-enterprise',
           editCurrentVersion: true,
           onlyIncludeVersions: [...nextVersion, '3.20-2', '3.19-2', '3.18-2', '3.17'],
-          lastVersion: '3.19-2',
+          lastVersion: '3.20-2',
           versions: {
             current: {
               label: 'Next',
@@ -418,18 +418,13 @@ export default async function createAsyncConfig() {
               banner: 'unreleased',
             },
             '3.20-2': {
-              label: '3.20 (early preview)',
-              path: '3.20',
-              banner: 'unreleased',
-            },
-            '3.20-1': {
-              label: '3.20 (early preview)',
-              path: '3.20',
-              banner: 'unreleased',
+              label: '3.20 (latest)',
+              path: 'latest',
+              banner: 'none',
             },
             '3.19-2': {
-              label: '3.19 (latest)',
-              path: 'latest',
+              label: '3.19',
+              path: '3.19',
               banner: 'none',
             },
             '3.18-2': {
