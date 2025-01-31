@@ -1,12 +1,12 @@
 ---
-description: Technical details on the VPP dataplane integration.
+description: Technical details on the VPP data plane integration.
 ---
 
-# VPP dataplane implementation details
+# VPP data plane implementation details
 
 ## Software architecture
 
-The VPP dataplane integration is split in two components, `vpp-manager` which handles the VPP startup configuration and lifecycle; and `calico-vpp-agent` which is responsible for all the runtime configuration of VPP for $[prodname]. Both processes run in separate containers in the `calico-vpp-node` pod, which runs in the host's root network namespace.
+The VPP data plane integration is split in two components, `vpp-manager` which handles the VPP startup configuration and lifecycle; and `calico-vpp-agent` which is responsible for all the runtime configuration of VPP for $[prodname]. Both processes run in separate containers in the `calico-vpp-node` pod, which runs in the host's root network namespace.
 
 ![Implementation architecture](/img/calico/vpp-soft-arch.svg)
 
@@ -38,7 +38,7 @@ When routes are added or removed in BGP, the routing manager reflects the change
 
 **CNI server**
 
-This component implements a server that receives gRPC request from the $[prodname] CNI (configured with a gRPC dataplane) through a Unix socket mounted on the host.
+This component implements a server that receives gRPC request from the $[prodname] CNI (configured with a gRPC data plane) through a Unix socket mounted on the host.
 
 When it receives an ADD request, the CNI server creates a tap interface in the container's namespace, and configures it with the IP address and routes chosen by $[prodname]. The routes' next hop is an otherwise unused link-local address, both in IPv4 and in IPv6. A /32 or /128 route is added in VPP as well for the container address through the tap. When it receives a DEL request, the CNI servers cleans up the tap from VPP and from the container's namespace.
 
@@ -48,7 +48,7 @@ This component is the equivalent of kube-proxy for VPP, i.e. it configures NAT l
 
 **Policies manager**
 
-This component implements $[prodname] policies in VPP. Felix ($[prodname]'s policy agent) is configured to use a lightweight proxy as its dataplane. This proxy relays all the configuration messages sent by Felix to the `calico-vpp-agent`, and status updates the other way. The VPP agent then uses a custom plugin in VPP to implement policies.
+This component implements $[prodname] policies in VPP. Felix ($[prodname]'s policy agent) is configured to use a lightweight proxy as its data plane. This proxy relays all the configuration messages sent by Felix to the `calico-vpp-agent`, and status updates the other way. The VPP agent then uses a custom plugin in VPP to implement policies.
 
 ## Network architecture
 

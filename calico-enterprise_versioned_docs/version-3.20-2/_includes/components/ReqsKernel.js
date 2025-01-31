@@ -60,7 +60,7 @@ export default function ReqsKernel() {
         </li>
         <li>
           <p>
-            eBPF (including the <code>tc</code> hook support) and XDP (if you want to use the eBPF dataplane).
+            eBPF (including the <code>tc</code> hook support) and XDP (if you want to use the eBPF data plane).
           </p>
         </li>
       </ul>

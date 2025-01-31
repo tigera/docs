@@ -124,7 +124,7 @@ If you follow a few simple guidelines, you’ll be well on your way to writing e
 
   Using a global network policy as a way to combine diverse, namespaced endpoints with different connectivity requirements. Although creating such a policy can work, appears efficient and is easier to view than several separate network policies, it is inefficient and should be avoided.
 
-  Why? Putting a lot of anything in policy (rules, CIDRs, ports) that are manipulated by selectors is inefficient. iptables/eBPF rules depend on minimizing executions and updates. When a selector is encountered in a policy rule, it is converted into one iptables rule that matches on an IP set. Then, different code keeps the IP sets up to date; this is more efficient than updating iptables rules. Also, because iptables rules execute sequentially in order, having many rules results in longer network latencies for the first packet in a flow (approximately 0.25-0.5us per rule). Finally, having more rules slows down programming of the dataplane, making policy updates take longer.
+  Why? Putting a lot of anything in policy (rules, CIDRs, ports) that are manipulated by selectors is inefficient. iptables/eBPF rules depend on minimizing executions and updates. When a selector is encountered in a policy rule, it is converted into one iptables rule that matches on an IP set. Then, different code keeps the IP sets up to date; this is more efficient than updating iptables rules. Also, because iptables rules execute sequentially in order, having many rules results in longer network latencies for the first packet in a flow (approximately 0.25-0.5us per rule). Finally, having more rules slows down programming of the data plane, making policy updates take longer.
 
 **Example: Inefficient global network policy**
 
@@ -295,7 +295,7 @@ As discussed previously, it is better to create separate policies for different 
 
 Label selectors abstract network policy from the network. Misuse of selectors can slow things down. As discussed previously, the more selectors you create, the harder $[prodname] works to find matches.
 
-The following policy shows an inefficient use of selectors. Using `selector: all()` renders the policy on all nodes for all workloads. If there are 10,000 workloads, but only 10 match label==foo, that is very inefficient at the dataplane level.
+The following policy shows an inefficient use of selectors. Using `selector: all()` renders the policy on all nodes for all workloads. If there are 10,000 workloads, but only 10 match label==foo, that is very inefficient at the data plane level.
 
 ```yaml
 selector: all()
@@ -315,7 +315,7 @@ ingress:
     selector: label == 'bar'
 ```
 
-Another common mistake is using `selector: all()` when you don’t need to. `all()` means _all workloads_ so that will be a large IP set. Whenever there's a source/destination selector in a rule, it is rendered as an IP set in the dataplane.
+Another common mistake is using `selector: all()` when you don’t need to. `all()` means _all workloads_ so that will be a large IP set. Whenever there's a source/destination selector in a rule, it is rendered as an IP set in the data plane.
 
 ```yaml
 source:

@@ -190,7 +190,7 @@ module.exports = {
         },
         {
           type: 'category',
-          label: 'Dataplane guide: eBPF',
+          label: 'Data plane guide: eBPF',
           link: {
             type: 'doc',
             id: 'operations/ebpf/index'
@@ -205,7 +205,7 @@ module.exports = {
         'getting-started/kubernetes/nftables',
         {
           type: 'category',
-          label: 'Dataplane guide: VPP',
+          label: 'Data plane guide: VPP',
           link: {
             type: 'doc',
             id: 'getting-started/kubernetes/vpp/index'
