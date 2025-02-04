@@ -1,19 +1,19 @@
 ---
-description: Configure access to the Calico Enterprise Manager user interface.
+description: Configure access to the web console.
 ---
 
-# Configure access to Calico Enterprise Manager UI
+# Configure access to the web console
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 ## Big picture
 
-Configure access to the $[prodname] Manager user interface.
+Configure access to the $[prodname] web console user interface.
 
 ## Value
 
-For security, the $[prodname] Manager UI is not exposed outside of the cluster by default. You can configure access to $[prodname] Manager UI using ingress, a load balancer service, or port forwarding.
+For security, the $[prodname] web console is not exposed outside of the cluster by default. You can configure access to the $[prodname] web console using ingress, a load balancer service, or port forwarding.
 
 ## Before you begin
 
@@ -24,14 +24,14 @@ For security, the $[prodname] Manager UI is not exposed outside of the cluster b
 
 | Option             | Description                                                                                                                                                                                                                                                                            | Requirement                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Kubernetes ingress | Configure your cluster with an ingress controller to implement the `Ingress` resource using [Kubernetes ingress](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer).                                                                                       | Ensure the $[prodname] Manager receives a HTTPS (TLS) connection (not unencrypted HTTP). If you require TLS termination at your ingress, you must use a proxy that supports transparent HTTP/2 proxying, (for example, Envoy), or re-originate a TLS connection from your proxy to the $[prodname] Manager. If you do not require TLS termination, configure your proxy to “pass thru” the TLS to $[prodname] Manager. |
-| Load balancer      | Configure your cluster with a service load balancer controller to implement the external load balancer. See [Kubernetes loadbalancer](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/)                                                      | Ensure the $[prodname] Manager receives a HTTPS (TLS) connection (not unencrypted HTTP). If you require TLS termination at your load balancer, you must use a load balancer that supports transparent HTTP/2 proxying, or re-originate a TLS connection from your load balancer to the $[prodname] Manager. If you do not require TLS termination, configure your proxy to “pass thru” the TLS to $[prodname] Manager. |
-| Port forwarding    | Forward traffic from a local port to the Kubernetes API server, where it is proxied to the Manager UI. This approach is **not recommended for production**, but is useful if you do not have a load balancer or ingress infrastructure configured, or you need to get started quickly. | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Kubernetes ingress | Configure your cluster with an ingress controller to implement the `Ingress` resource using [Kubernetes ingress](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer).                                                                                       | Ensure the $[prodname] web console receives a HTTPS (TLS) connection (not unencrypted HTTP). If you require TLS termination at your ingress, you must use a proxy that supports transparent HTTP/2 proxying, (for example, Envoy), or re-originate a TLS connection from your proxy to the $[prodname] web console. If you do not require TLS termination, configure your proxy to “pass thru” the TLS to the $[prodname] web console. |
+| Load balancer      | Configure your cluster with a service load balancer controller to implement the external load balancer. See [Kubernetes loadbalancer](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/)                                                      | Ensure the $[prodname] web console receives a HTTPS (TLS) connection (not unencrypted HTTP). If you require TLS termination at your load balancer, you must use a load balancer that supports transparent HTTP/2 proxying, or re-originate a TLS connection from your load balancer to the $[prodname] web console. If you do not require TLS termination, configure your proxy to “pass thru” the TLS to the $[prodname] web console. |
+| Port forwarding    | Forward traffic from a local port to the Kubernetes API server, where it is proxied to the web console. This approach is **not recommended for production**, but is useful if you do not have a load balancer or ingress infrastructure configured, or you need to get started quickly. | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | OpenShift routes   | Use OpenShift routes to expose a service by giving it an externally-reachable hostname (for example, `www.example.com`) .                                                                                                                                                              | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 ## How to
 
-### Configure access to $[prodname] Manager UI
+### Configure access to the $[prodname] web console
 
 <Tabs>
 <TabItem label="Ingress" value="Ingress-0">
@@ -82,9 +82,9 @@ spec:
                   number: 9443
 ```
 
-### Log in to $[prodname] Manager UI
+### Log in to the $[prodname] web console
 
-Access the $[prodname] Manager UI in your browser at: `https://localhost:9443`
+Access the $[prodname] web console in your browser at: `https://localhost:9443`
 
 </TabItem>
 <TabItem label="Load balancer service" value="Load balancer service-1">
@@ -110,9 +110,9 @@ spec:
 
 After creating the service, it may take a few minutes for the load balancer to be created. Once complete, the load balancer IP address appears as an `ExternalIP` in `kubectl get services -n tigera-manager tigera-manager-external`.
 
-### Log in to $[prodname] Manager UI
+### Log in to the $[prodname] web console
 
-Access the $[prodname] Manager UI in your browser at: `https://localhost:9443`
+Access the $[prodname] web console in your browser at: `https://localhost:9443`
 
 </TabItem>
 <TabItem label="Port forwarding" value="Port forwarding-2">
@@ -123,14 +123,14 @@ To forward traffic locally, use the following command:
 kubectl port-forward -n tigera-manager service/tigera-manager 9443:9443
 ```
 
-### Log in to $[prodname] Manager UI
+### Log in to the $[prodname] web console
 
-Access the $[prodname] Manager UI in your browser at: `https://localhost:9443`
+Access the $[prodname] web console in your browser at: `https://localhost:9443`
 
 </TabItem>
 <TabItem label="OpenShift routes" value="OpenShift routes-3">
 
-To expose Manager UI using OpenShift routes, create the following route with these required parameters:
+To expose the web console using OpenShift routes, create the following route with these required parameters:
 
 - host: `<clustername>.<URL>`
 - name: `tigera-manager`
@@ -158,9 +158,9 @@ spec:
   wildcardPolicy: None
 ```
 
-### Log in to $[prodname] Manager UI
+### Log in to the $[prodname] web console
 
-Access the $[prodname] Manager UI in your browser using the URL with clustername. For example: `https://manager.apps.demo-ocp.tigera-solutions.io:9443`
+Access the $[prodname] web console in your browser using the URL with clustername. For example: `https://manager.apps.demo-ocp.tigera-solutions.io:9443`
 
 </TabItem>
 
