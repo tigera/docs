@@ -1,0 +1,163 @@
+---
+description: Configure persistent storage for flow logs, DNS logs, audit logs, and compliance reports.
+---
+
+# Configure storage for logs and reports
+
+import PersistentStorageTerms from '@site/calico-enterprise_versioned_docs/version-3.21-1/_includes/content/_persistent-storage-terms.mdx';
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Big picture
+
+Before installing $[prodname], you must configure persistent storage for flow logs, DNS logs, audit logs, and compliance reports.
+
+## Concepts
+
+Before configuring a storage class for $[prodname], the following terms will help you understand storage interactions.
+
+<PersistentStorageTerms />
+
+## Before you begin...
+
+**Review log storage recommendations**
+
+Review [Log storage recommendations](log-storage-recommendations.mdx) for guidance on the number of nodes and resources to configure for your environment.
+
+**Determine storage support**
+
+Determine the storage types that are available on your cluster. If you are using dynamic provisioning, verify it is supported.
+If you are using local disks, you may find the [sig-storage local static provisioner](https://github.com/kubernetes-sigs/sig-storage-local-static-provisioner) useful. It creates and manages PersistentVolumes by watching for disks mounted in a configured directory.
+
+:::caution
+
+Do not use the host path storage provisioner. This provisioner is not suitable for production and results in scalability issues, instability, and data loss.
+
+:::
+
+:::caution
+
+Do not use shared network file systems, such as AWS' EFS or Azure's azure-file. These file systems may result in decreases of performance and data loss.
+
+:::
+
+## How to
+
+### Create a storage class
+
+Before installing $[prodname], create a storage class named, `tigera-elasticsearch`.
+
+**Examples**
+
+#### Pre-provisioned local disks
+
+In the following example, we create a **StorageClass** to use when explicitly adding **PersistentVolumes** for local disks. This can be performed manually, or using the [sig-storage local static provisioner](https://github.com/kubernetes-sigs/sig-storage-local-static-provisioner).
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: tigera-elasticsearch
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+```
+
+:::note
+
+If local persistent volumes are provisioned on an SELinux-enabled host, you can use the `/mnt/tigera` host path created by the $[prodname] policy package.
+
+:::
+
+#### AWS EBS disks
+
+In the following example for an AWS cloud provider integration, the **StorageClass** is based on [how your EBS disks are provisioned](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html):
+
+<Tabs>
+<TabItem label="Amazon EBS CSI" value="Amazon EBS CSI-0">
+
+Make sure the CSI plugin is enabled in your cluster and apply the following manifest.
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: tigera-elasticsearch
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+```
+
+</TabItem>
+<TabItem label="Legacy Kubernetes EBS driver" value="Legacy Kubernetes EBS driver-1">
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: tigera-elasticsearch
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+  fsType: ext4
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+```
+
+</TabItem>
+</Tabs>
+
+#### AKS Azure Files storage
+
+In the following example for an AKS cloud provider integration, the **StorageClass** tells $[prodname] to use LRS disks for log storage.
+:::note
+
+Premium Storage is recommended for databases greater than 100GiB and for production installations.
+
+:::
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: tigera-elasticsearch
+provisioner: kubernetes.io/azure-disk
+parameters:
+  cachingmode: ReadOnly
+  kind: Managed
+  storageaccounttype: StandardSSD_LRS
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+```
+
+#### GCP Persistent Disks
+
+In the following example for a GKE cloud provider integration, the **StorageClass** tells $[prodname] to use the GCE Persistent Disks for log storage.
+
+:::note
+
+There are currently two types available `pd-standard` and `pd-ssd`. For production deployments, we recommend using the `pd-ssd` storage type.
+
+:::
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: tigera-elasticsearch
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-ssd
+  replication-type: none
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+```
+
+## Additional resources
+
+- [Adjust size of Elasticsearch cluster](adjust-log-storage-size.mdx)

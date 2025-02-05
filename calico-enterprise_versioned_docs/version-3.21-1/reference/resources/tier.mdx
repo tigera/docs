@@ -1,0 +1,62 @@
+---
+description: API for this Calico Enterprise resource.
+---
+
+# Tier
+
+A tier resource (`Tier`) represents an ordered collection of [NetworkPolicies](networkpolicy.mdx)
+and/or [GlobalNetworkPolicies](globalnetworkpolicy.mdx).
+Tiers are used to divide these policies into groups of different priorities. These policies
+are ordered within a Tier: the additional hierarchy of Tiers provides more flexibility
+because the `Pass` `action` in a Rule jumps to the next Tier. Some example use cases for this are.
+
+- Allowing privileged users to define security policy that takes precedence over other users.
+- Translating hierarchies of physical firewalls directly into $[prodname] policy.
+
+For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
+may be used to specify the resource type on the CLI:
+`tier.projectcalico.org`, `tiers.projectcalico.org` and abbreviations such as
+`tier.p` and `tiers.p`.
+
+## How Policy Is Evaluated
+
+When a new connection is processed by $[prodname], each tier that contains a policy that applies to the endpoint processes the packet.
+Tiers are sorted by their `order` - smallest number first.
+
+Policies in each Tier are then processed in order.
+
+- If a [NetworkPolicy](networkpolicy.mdx) or [GlobalNetworkPolicy](globalnetworkpolicy.mdx) in the Tier `Allow`s or `Deny`s the packet, then evaluation is done: the packet is handled accordingly.
+- If a [NetworkPolicy](networkpolicy.mdx) or [GlobalNetworkPolicy](globalnetworkpolicy.mdx) in the Tier `Pass`es the packet, the next Tier containing a Policy that applies to the endpoint processes the packet.
+
+If the Tier applies to the endpoint, but takes no action on the packet the packet is dropped. This behaviour can be changed by setting the `defaultAction` of a tier to `Pass`.
+
+If the last Tier applying to the endpoint `Pass`es the packet, that endpoint's [Profiles](profile.mdx) are evaluated.
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: Tier
+metadata:
+  name: internal-access
+spec:
+  order: 100
+  defaultAction: Deny
+```
+
+## Definition
+
+### Metadata
+
+| Field | Description           | Accepted Values | Schema |
+| ----- | --------------------- | --------------- | ------ |
+| name  | The name of the tier. |                 | string |
+
+### Spec
+
+| Field         | Description                                                                                                                          | Accepted Values | Schema | Default               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ------ | --------------------- |
+| order         | (Optional) Indicates priority of this Tier, with lower order taking precedence. No value indicates highest order (lowest precedence) |                 | float  | `nil` (highest order) |
+| defaultAction | (Optional) Indicates the default action, when this Tier applies to an endpoint, but takes not action on the packet                   | `Deny`, `Pass`  | string | `Deny`                |
+
+All Policies created by $[prodname] orchestrator integrations are created in the default (last) Tier.

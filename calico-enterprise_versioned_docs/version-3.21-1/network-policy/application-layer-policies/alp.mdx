@@ -1,0 +1,81 @@
+---
+description: Enforce application layer policies in your cluster to configure access controls based on L7 attributes.
+---
+
+# Enable and enforce application layer policies
+
+Application layer policies let you configure access controls based on L7 attributes. 
+
+## Before you begin
+
+### Limitations
+
+* Application layer policy is not compatible with a service mesh such as Istio.
+* Application layer policy can restrict only _ingress_ traffic.
+  It can not restrict egress traffic.
+* Support for L7 attributes is limited to HTTP method and URL exact/prefix path.
+* Supported protocols are limited to TCP-based protocols (for example, HTTP, HTTPS, or gRPC).
+* Application layer policies apply to the entire cluster.
+  They can not be namespaced.
+* Application layer policy is supported only on Kubernetes 1.29 and later.
+
+:::important
+
+When you enable application layer policy for a deployment, all of that deployment's pods will restart
+Active connections may be disrupted.
+
+:::
+
+### Enable application layer policy (ALP)
+
+Create an (or edit an existing ApplicationLayer) resource with the `sidecarInjection` field to `Enabled`:
+
+```yaml
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: ApplicationLayer
+metadata:
+  name: tigera-secure
+spec:
+  sidecarInjection: Enabled
+EOF
+```
+
+Patch your deployments by running the following command:
+
+```bash
+kubectl patch deployment <deployment-name> -n <deployment-namespace> -p '{"spec":{"template":{"metadata":{"labels":{"applicationlayer.projectcalico.org/sidecar":"true"},"annotations":{"applicationlayer.projectcalico.org/policy":"Enabled"}}}}}'
+```
+
+### Enforce application layer policies for ingress traffic
+
+You can restrict ingress traffic using HTTP match criteria using Global network policy. 
+For a list of all HTTP match parameters, see [Global network policy](/reference/resources/globalnetworkpolicy.mdx).
+
+In the following example, the trading app is allowed ingress traffic only for HTTP GET requests that match the exact path /projects/calico, or that begins with the prefix, /users.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: customer
+spec:
+  selector: app == 'tradingapp'
+  ingress:
+   - action: Allow
+     http:
+       methods: ["GET"]
+       paths:
+         - exact: "/projects/calico"
+         - prefix: "/users"
+  egress:
+    - action: Allow
+```
+
+### Disable application layer policies
+
+To disable the policies, do one of the following steps:
+* Recreate your application pods without the sidecar label and annotations.
+* Remove the `applicationLayerPolicy` field entirely.
+* Remove the `sidecarInjection` field entirely, if sidecar mode was being used only for ALP.
+* Delete the ApplicationLayer` custom resource if only ALP was enabled on it.

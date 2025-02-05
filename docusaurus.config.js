@@ -417,6 +417,11 @@ export default async function createAsyncConfig() {
               path: 'next',
               banner: 'unreleased',
             },
+            '3.21-1': {
+              label: '3.21 (early preview)',
+              path: '3.21',
+              banner: 'unreleased',
+            },
             '3.20-2': {
               label: '3.20 (latest)',
               path: 'latest',
