@@ -28,9 +28,10 @@ description: Links to all versions of product documentation for Calico, Calico E
 
 ## Calico Enterprise
 
+* [Calico Enterprise 3.20](https://docs.tigera.io/calico-enterprise/3.20/about)
 * [Calico Enterprise 3.19](https://docs.tigera.io/calico-enterprise/3.19/about)
 * [Calico Enterprise 3.18](https://docs.tigera.io/calico-enterprise/3.18/about)
-* [Calico Enterprise 3.17](https://docs.tigera.io/calico-enterprise/3.17/about)
+* [Calico Enterprise 3.17](https://archive-ce-3-17.netlify.app/calico-enterprise/3.17/about)
 * [Calico Enterprise 3.16](https://archive-ce-3-16.netlify.app/calico-enterprise/3.16/about-calico-enterprise)
 * [Calico Enterprise 3.15](https://archive-ce-3-15.netlify.app/calico-enterprise/3.15/about-calico-enterprise)
 * [Calico Enterprise 3.14](https://archive-ce-3-14.netlify.app/calico-enterprise/3.14/about-calico-enterprise)
