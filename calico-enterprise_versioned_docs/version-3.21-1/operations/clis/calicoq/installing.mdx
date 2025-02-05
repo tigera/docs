@@ -1,0 +1,111 @@
+---
+description: Install the CLI for Calico Enterprise.
+---
+
+import MaintenanceClisCalicoqInstalling from '@site/calico-enterprise_versioned_docs/version-3.21-1/_includes/components/MaintenanceClisCalicoqInstalling';
+
+
+# Install calicoq
+
+## About installing calicoq
+
+You can run `calicoq` on any host with network access to the
+$[prodname] datastore as either a binary or a container.
+
+:::note
+
+Ensure that you install the binary on a Linux machine. The binary does not work on other machines.
+
+:::
+
+For step-by-step instructions, refer to the section that
+corresponds to your desired deployment.
+
+- [As a binary on a single host](#install-calicoq-as-a-binary-on-a-single-host)
+- [As a container on a single host](#install-calicoq-as-a-container-on-a-single-host)
+
+<!--- Change download URL to latest release if user browsing master branch.  --->
+
+## Install calicoq as a binary on a single host
+
+1. Log into the host, open a terminal prompt, and navigate to the location where
+   you want to install the binary.
+
+   :::tip
+
+   Consider navigating to a location that's in your `PATH`. For example,
+   `/usr/local/bin/`.
+
+   :::
+
+1. Use the following command to download the `calicoq` binary.
+
+   <MaintenanceClisCalicoqInstalling />
+
+1. Set the file to be executable.
+
+   ```
+   chmod +x calicoq
+   ```
+
+   :::note
+
+   If the location of `calicoq` is not already in your `PATH`, move the file
+   to one that is or add its location to your `PATH`. This will allow you to invoke it
+   without having to prepend its location.
+
+   :::
+
+**Next step**:
+
+[Configure `calicoq` to connect to your datastore](configure/index.mdx).
+
+## Install calicoq as a container on a single host
+
+1. Ensure that you have the [`config.json` file with the private Tigera registry credentials](../../../getting-started/install-on-clusters/calico-enterprise.mdx#get-private-registry-credentials-and-license-key).
+
+1. From a terminal prompt, use the following command to either create or open the `~/.docker/config.json` file.
+
+   ```bash
+   vi ~/.docker/config.json
+   ```
+
+1. Depending on the existing contents of the file, edit it in one of the following ways.
+
+   - **New file**: Paste in the entire contents of the `config.json` file from Tigera.
+
+   - **Existing file without quay.io object**: Add the following lines from the `config.json` inside the `"auth"` object.
+
+     ```json
+     "quay.io": {
+       "auth": "<ROBOT-TOKEN-VALUE>",
+       "email": ""
+     }
+     ```
+
+   - **Existing file with quay.io object**: Add the following lines from the `config.json` inside the `"quay.io"` object.
+
+     ```json
+     "auth": "<ROBOT-TOKEN-VALUE>",
+     "email": ""
+     ```
+
+1. Save and close the file.
+
+1. Use the following commands to pull the `calicoq` image from the Tigera
+   registry.
+
+   ```bash
+   docker pull $[registry]$[componentImage.calicoq]
+   ```
+
+1. Confirm that the image has loaded by typing `docker images`.
+
+   ```bash
+   REPOSITORY                TAG               IMAGE ID       CREATED         SIZE
+   $[releases.0.components.calicoq.image]    $[releases.0.components.calicoq.version]            e07d59b0eb8a   2 minutes ago   42MB
+   ```
+
+**Next step**:
+
+[Configure `calicoq` to connect to your datastore](configure/index.mdx).

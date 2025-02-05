@@ -1,0 +1,111 @@
+---
+description: API for this Calico Enterprise resource.
+---
+
+# Early Network Configuration
+
+Early network configuration supplies labels and AS numbers to apply to each
+$[prodname] node, as well as peering and other network configuration to use during node
+startup prior to receiving BGPPeer and BGPConfiguration resources from the datastore.
+Early network configuration will be superseded by any BGPPeer or BGPConfiguration
+resources after successful startup.
+
+Early network configurations are intended for use only when $[prodname] is being run in "early networking" mode, i.e. when operating a "dual ToR" networking configuration. If you are not running a dual-plane cluster, this is probably not what you are looking for!
+For configuring BGP networking under normal circumstances (when $[prodname] is running), see [BGPConfiguration](bgpconfig.mdx), [BGPPeer](bgppeer.mdx), and [BGPFilter](bgpfilter.mdx).
+
+For a detailed guide on how to set up dual ToR, see [Deploy a dual ToR cluster](../../networking/configuring/dual-tor.mdx).
+
+
+## Sample YAML
+EarlyNetworkConfiguration differs from other $[prodname] resources, in that it is not directly applied with `kubectl` / `calicoctl`.
+
+Instead, an EarlyNetworkConfiguration should be wrapped in a config-map named "bgp-layout" and placed in the "tigera-operator" namespace. It should also be copied to the filesystem of each node,
+so that $[prodname], running in early networking mode, may read it, prior to any Kubernetes services being available.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: EarlyNetworkConfiguration
+spec:
+  platform: openshift
+  nodes:
+      # worker1
+    - interfaceAddresses:
+        - 172.31.11.3
+        - 172.31.12.3
+      stableAddress:
+        address: 172.31.10.3
+      asNumber: 65001
+      peerings:
+        - peerIP: 172.31.11.100
+        - peerIP: 172.31.12.100
+      labels:
+        rack: ra
+      # worker2
+    - interfaceAddresses:
+        - 172.31.21.4
+        - 172.31.22.4
+      stableAddress:
+        address: 172.31.20.4
+      asNumber: 65002
+      peerings:
+        - peerIP: 172.31.21.100
+        - peerIP: 172.31.22.100
+      labels:
+        rack: rb
+  legacy:
+  nodeAddressIPDetection: false
+  unconditionalDefaultRouteProgramming: false
+```
+
+## Sample ConfigMap
+
+```yaml noValidation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bgp-layout
+  namespace: tigera-operator
+data:
+  earlyNetworkConfiguration: |
+  apiVersion: projectcalico.org/v3
+  kind: EarlyNetworkConfiguration
+  spec:
+    nodes:
+    # worker1
+    - interfaceAddresses:
+    ...
+```
+
+## Early Network Configuration Definition
+### Spec
+| Field    | Description                                                                                                                  | Accepted Values                      | Schema Default |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------------- |
+| platform | The platform the cluster runs on. Unless running on OpenShift, can be left empty.                                            | "", "openshift"                      | ""             |
+| nodes    | List of [ConfigNode](#confignode) objects; provides the information necessary for each node to bootstrap dual ToR networking | [ConfigNode](#confignode) list       | Empty          |
+| legacy   | [LegacyConfig](#legacyconfig) object, for toggling legacy behavior                                                           | [LegacyConfig](#legacyconfig) object | Empty          |
+
+### ConfigNode
+| Field              | Description                                                                                                                                                                            | Accepted Values                                                 | Schema Default |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------- |
+| interfaceAddresses | List of IP addresses assigned to interfaces on this node                                                                                                                               | list of IP addresses                                            | Empty          |
+| asNumber           | The AS number of this node's BIRD.                                                                                                                                                     | integer                                                         | 0              |
+| stablesAddress     | The [ConfigStableAddress](#configstableaddress) that $[prodname] should assign to this node, describing the IP address that normal traffic should use for communicating with the node | [ConfigStableAddress](#configstableaddress) object              | Empty          |
+| peerings           | List of [ConfigPeering](#configpeering) objects. Provides information about a node's ToRs, so that $[prodname] early-networking can establish a BGP session with them                 | [ConfigPeering](#configpeering) list                            | Empty          |
+| labels             | Any labels that the node should have, so as to match the right BGPPeer definitions for its rack, when $[nodecontainer] runs as a Kubernetes pod.                                      | labels map                                                      | Empty          |
+
+### LegacyConfig
+| Field                                 | Description                                                                                                                                                              | Accepted Values | Schema Default |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | -------------- |
+| nodeIPFromDefaultRoute                | Toggles legacy behavior, where $[prodname] early networking would use the src IP of a default route to identify which ConfigNode to use.                                | true, false     | false          |
+| unconditionalDefaultRouteProgramming  | Toggles legacy behavior, where $[prodname] early networking would unconditionally program a default route to a ToR, regardless of whether one existed prior to startup. | true, false     | false          |
+
+### ConfigStableAddress
+| Field                                 | Description                                                     | Accepted Values   | Schema Default |
+| ------------------------------------- | --------------------------------------------------------------- | ----------------- | -------------- |
+| address | IP address which $[prodname] should provision during early networking as the "stable" address | IP Address string | ""             |
+
+### ConfigPeering
+| Field        | Description                                                                                               | Accepted Values   | Schema Default |
+| ------------ | --------------------------------------------------------------------------------------------------------- | ----------------- | -------------- |
+| peerIP       | The IP address of the ToR                                                                                 | IP Address string | ""             |
+| peerASNumber | The AS number of the ToR. When left as 0, $[prodname] early networking will use its own node's AS number | integer           | 0              |

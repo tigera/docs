@@ -1,0 +1,132 @@
+---
+description: Install Calico Enterprise on an MKE cluster.
+---
+
+# Mirantis Kubernetes Engine (MKE)
+
+## Big picture
+
+Install $[prodname] on a Mirantis Kubernetes Engine (MKE) cluster (formerly Docker Enterprise).
+
+## Before you begin
+
+**CNI support**
+
+Calico CNI for networking with $[prodname] network policy:
+
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='$[prodname]'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+**Required**
+
+- A [compatible MKE cluster](../compatibility.mdx#mke) with:
+
+  - A minimum of three nodes for non-production deployments
+  - CNI flag set to unmanaged, `--unmanaged-cni` so UCP does not install the default $[prodname] networking plugin
+
+  For help, see [Docker Enterprise](https://docs.docker.com/), and [Docker EE Best Practices and Design Considerations](https://docs.mirantis.com/docker-enterprise/v3.0/dockeree-ref-arch/deploy-manage/best-practices-design.html)
+
+- Install UCP control plane to access the cluster using [Docker Universal Control Plane CLI-Based Access](https://dockerlabs.collabnix.com/advanced/Docker-UCP-overview.html). After installing the control plane, enable the option "Allow all authenticated users, including service accounts, to schedule on all nodes, including UCP managers and DTR nodes."
+
+- Cluster meets [system requirements](requirements.mdx)
+
+- A [Tigera license key and credentials](calico-enterprise.mdx)
+
+- Install [Install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+
+## How to
+
+- [Install $[prodname]](#install-calico-enterprise)
+- [Install the $[prodname] license](#install-the-calico-enterprise-license)
+
+### Install $[prodname]
+
+1. [Configure a storage class for $[prodname]](../../operations/logstorage/create-storage.mdx).
+
+1. Configure Tigera operator and Calico CNI plugin role bindings for Docker EE.
+
+   ```bash
+   kubectl create clusterrolebinding tigera-operator-cluster-admin -n tigera-operator \
+    --clusterrole cluster-admin --serviceaccount tigera-operator:tigera-operator
+   kubectl create clusterrolebinding calico-cni-plugin-cluster-admin -n calico-system \
+    --clusterrole cluster-admin --serviceaccount calico-system:calico-cni-plugin
+   ```
+
+1. Install the Tigera operator and custom resource definitions.
+
+   ```bash
+   kubectl create -f $[filesUrl]/manifests/operator-crds.yaml
+   kubectl create -f $[filesUrl]/manifests/tigera-operator.yaml
+   ```
+
+1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator will be used to deploy Prometheus server and Alertmanager to monitor $[prodname] metrics.
+
+   :::note
+
+   If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with $[prodname], your Prometheus operator must be v0.40.0 or higher.
+
+   :::
+
+   ```bash
+   kubectl create -f $[filesUrl]/manifests/tigera-prometheus-operator.yaml
+   ```
+
+1. Install your pull secret.
+
+   If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
+
+   ```bash
+   kubectl create secret generic tigera-pull-secret \
+       --type=kubernetes.io/dockerconfigjson -n tigera-operator \
+       --from-file=.dockerconfigjson=<path/to/pull/secret>
+   ```
+
+1. Install any extra [$[prodname] resources](../../reference/resources/index.mdx) needed at cluster start using [calicoctl](../../reference/clis/calicoctl/overview.mdx).
+
+1. Install the Tigera custom resources. For more information on configuration options available in this manifest, see [the installation reference](../../reference/installation/api.mdx).
+
+   ```bash
+   kubectl create -f $[filesUrl]/manifests/custom-resources.yaml
+   ```
+
+   Monitor progress with the following command:
+
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+
+   Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+
+### Install the $[prodname] license
+
+To use $[prodname], you must install the license provided to you by Tigera.
+
+```bash
+kubectl create -f </path/to/license.yaml>
+```
+
+Monitor progress with the following command:
+
+```bash
+watch kubectl get tigerastatus
+```
+
+## Next steps
+
+**Recommended**
+
+- [Configure access to the $[prodname] web console](../../operations/cnx/access-the-manager.mdx)
+- [Authentication quickstart](../../operations/cnx/authentication-quickstart.mdx)
+- [Configure an external identity provider](../../operations/cnx/configure-identity-provider.mdx)
+
+**Recommended - Networking**
+
+- The default networking uses IP-in-IP with BGP routing. For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).
+
+**Recommended - Security**
+
+- [Get started with $[prodname] tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)

@@ -1,0 +1,56 @@
+---
+description: Configure an HTTP proxy to use for connections that leave the cluster
+---
+
+# Configure an outbound HTTP proxy
+
+$[prodname] supports the use of HTTP proxies for connections that leave the cluster and originate from $[prodname] containers.
+
+`HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment variables can be set on $[prodname] containers by using a mutating admission webhook, or by configuration through the Installation CR if preferred. In the latter case, the Tigera operator will be responsible for setting proxy environment variables on $[prodname] containers that egress out of the cluster.
+
+With either environment variable configuration method, the Tigera operator will detect the proxy environment variables that are set on $[prodname] containers that egress out of the cluster and ensure that network policy in the allow-tigera tier allows these connections.
+
+This page will outline how to configure an HTTP proxy using the Installation CR.
+
+:::caution
+
+$[prodname] assumes that you have exempted in-cluster destinations (including the Kubernetes API server) from proxying via the `NO_PROXY` variable.
+
+:::
+
+## Configuration via Helm
+
+If you wish to manually configure $[prodname] via Helm to set proxy environment variables on $[prodname] containers (rather than using a mutating admission webhook), you must [customize the values.yaml](../getting-started/install-on-clusters/kubernetes/helm#prepare-the-installation-configuration) of the $[prodname] helm chart.
+
+You’ll need to set the proxy configuration in the values.yaml using the `installation.proxy` path, e.g.:
+
+```yaml
+installation:
+  enabled: true
+  proxy:
+    httpProxy:  <HTTP proxy value>
+    httpsProxy: <HTTPS proxy value>
+    noProxy:    <No proxy value>
+```
+
+## Configuration via Manifest
+If you wish to manually configure $[prodname] via manifests to set proxy environment variables on $[prodname] containers (rather than using a mutating admission webhook), you’ll need to edit the installation manifests provided by Tigera.
+
+Specifically, if you are installing $[prodname], you’ll need to edit the custom-resources.yaml. The Installation CR should be updated to set the `spec.proxy` field, e.g.
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  variant: TigeraSecureEnterprise
+  imagePullSecrets:
+    - name: tigera-pull-secret
+  proxy:
+    httpProxy:  <HTTP proxy value>
+    httpsProxy: <HTTPS proxy value>
+    noProxy:    <No proxy value>
+```
+
+If you have already installed $[prodname], then you can patch your previously applied Installation CR for the new proxy settings.

@@ -1,0 +1,275 @@
+---
+description: Configure Calico to advertise Kubernetes service cluster IPs and external IPs outside the cluster using BGP.
+---
+
+# Advertise Kubernetes service IP addresses
+
+## Big picture
+
+Enable $[prodname] to advertise Kubernetes service IPs outside a cluster. $[prodname] supports advertising a service’s cluster IPs and external IPs.
+
+## Value
+
+Typically, Kubernetes service cluster IPs are accessible only within the cluster, so external access to the service requires a dedicated load balancer or ingress controller. In cases where a service’s cluster IP is not routable, the service can be accessed using its external IP.
+
+Just as $[prodname] supports advertising **pod IPs** over BGP, it also supports advertising Kubernetes **service IPs** outside a cluster over BGP. This avoids the need for a dedicated load balancer. This feature also supports equal cost multi-path (ECMP) load balancing across nodes in the cluster, as well as source IP address preservation for local services when you need more control.
+
+## Concepts
+
+### BGP makes it easy
+
+In Kubernetes, all requests for a service are redirected to an appropriate endpoint (pod) backing that service. Because $[prodname] uses BGP, external traffic can be routed directly to Kubernetes services by advertising Kubernetes service IPs into the BGP network.
+
+If your deployment is configured to peer with BGP routers outside the cluster, those routers (plus any other upstream places the routers propagate to) can send traffic to a Kubernetes service IP for routing to one of the available endpoints for that service.
+
+### Advertising service IPs: quick glance
+
+$[prodname] implements the Kubernetes **externalTrafficPolicy** using kube-proxy to direct incoming traffic to a correct pod. Advertisement is handled differently based on the service type that you configure for your service.
+
+| **Service mode**  | **Cluster IP advertisement**                                                                           | **Traffic is...**                                                                                                                                                                                                              | Source IP address is... |
+| ----------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| Cluster (default) | All nodes in the cluster statically advertise a route to the service CIDR.                             | Load balanced across nodes in the cluster using ECMP, then forwarded to appropriate pod in the service using SNAT. May incur second hop to another node, but good overall load balancing.                                      | Obscured by SNAT        |
+| Local             | The nodes with a pod backing the service advertise a specific route (/32 or /128) to the service's IP. | Load balanced across nodes with endpoints for the service. Avoids second hop for LoadBalancer and NodePort type services, traffic may be unevenly load balanced. (Other traffic is load balanced across nodes in the cluster.) | Preserved               |
+
+If your $[prodname] deployment is configured to peer with BGP routers outside the cluster, those routers - plus any further upstream places that those routers propagate to - will be able to send traffic to a Kubernetes service cluster IP, and that traffic is routed to one of the available endpoints for that service.
+
+### Tips for success
+
+- Generally, we recommend using “Local” for the following reasons:
+  - If any of your network policy uses rules to match by specific source IP addresses, using Local is the obvious choice because the source IP address is not altered, and the policy will still work.
+  - Return traffic is routed directly to the source IP because “Local” services do not require undoing the source NAT (unlike “Cluster” services).
+- Cluster IP advertisement works best with a ToR that supports ECMP. Otherwise, all traffic for a given route is directed to a single node.
+
+## Before you begin...
+
+**Required**
+
+- Calico CNI
+- [Configure BGP peering](bgp.mdx) between $[prodname] and your network infrastructure
+- For ECMP load balancing to services, the upstream routers must be configured to use BGP multipath.
+- You need at least one external node outside the cluster that acts as a router, route reflector, or ToR that is peered with calico nodes inside the cluster.
+- Services must be configured with the correct service mode (“Cluster” or “Local”) for your implementation. For `externalTrafficPolicy: Local`, the service must be type `LoadBalancer` or `NodePort`.
+
+**Limitations**
+
+- Supported in EKS and AWS, but only if you are using Calico CNI
+- OpenShift, versions 4.5 and 4.6  
+   There is a [bug](https://github.com/kubernetes/kubernetes/issues/91374) where the source IP is not preserved by NodePort services or traffic via a Service ExternalIP with externalTrafficPolicy:Local.
+
+  OpenShift users on v4.5 or v4.6 can use this [workaround to avoid SNAT with ExternalIP](https://docs.openshift.com/container-platform/4.7/nodes/clusters/nodes-cluster-enabling-features.html):
+
+  ```
+    oc edit featuregates.config.openshift.io cluster
+     spec:
+       customNoUpgrade:
+         enabled:
+         - ExternalPolicyForExternalIP
+  ```
+
+  Kubernetes users on version v1.18 or v1.19 can enable source IP preservation for NodePort services using the ExternalPolicyForExternalIP feature gate.
+
+  Source IP preservation for NodePort and services and ExternalIPs is enabled by default in OpenShift v4.7+, and Kubernetes v1.20+.
+
+## How to
+
+- [Advertise service cluster IP addresses](#advertise-service-cluster-ip-addresses)
+- [Advertise service external IP addresses](#advertise-service-external-ip-addresses)
+- [Advertise service load balancer IP addresses](#advertise-service-load-balancer-ip-addresses)
+- [Exclude certain nodes from advertisement](#exclude-certain-nodes-from-advertisement)
+
+### Advertise service cluster IP addresses
+
+1. Determine the service cluster IP range. (Or ranges, if your cluster is [dual stack](../ipam/ipv6.mdx).)
+
+   The range(s) for your cluster can be inferred from the `--service-cluster-ip-range` option passed to the Kubernetes API server. For help, see the [Kubernetes API server reference guide](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/).
+
+1. Check to see if you have a default BGPConfiguration.
+
+   ```bash
+   kubectl get bgpconfiguration.projectcalico.org default
+   ```
+
+1. Based on above results, update or create a BGPConfiguration.
+
+   **Update default BGPConfiguration**.
+
+   Patch the BGPConfiguration using the following command, using your own service cluster IP CIDR in place of "10.0.0.0/24":
+
+   ```bash
+   kubectl patch bgpconfiguration.projectcalico.org default -p '{"spec":{"serviceClusterIPs": [{"cidr": "10.0.0.0/24"}]}}'
+   ```
+
+   **Create default BGPConfiguration**.
+
+   Use the following sample command to create a default BGPConfiguration. Add your CIDR blocks, covering the cluster IPs to be advertised, in the `serviceClusterIPs` field, for example:
+
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: projectcalico.org/v3
+   kind: BGPConfiguration
+   metadata:
+     name: default
+   spec:
+     serviceClusterIPs:
+     - cidr: 10.96.0.0/16
+     - cidr: fd00:1234::/112
+    EOF
+   ```
+
+   For help, see [BGP configuration resource](../../reference/resources/bgpconfig.mdx).
+
+:::note
+
+In earlier versions of $[prodname], and for IPv4 only, service cluster IP advertisement was configured via the environment variable CALICO_ADVERTISE_CLUSTER_IPS.
+That environment variable takes precedence over any serviceClusterIPs configured in the default BGPConfiguration. We recommend replacing the
+deprecated CALICO_ADVERTISE_CLUSTER_IPS with BGPConfiguration.
+
+:::
+
+#### Advertise an exact route for a particular service
+
+Service cluster IP advertisement of /32 routes, by default, is enabled only for `NodePort` and `LoadBalancer` type services.
+In some routing infrastructures, you may want to advertise /32 routes of `ClusterIP` services as well. This is enabled on a
+per-service basis by adding the annotation `projectcalico.org/AdvertiseClusterIP: true` to the service. For example:
+
+```bash
+kubectl annotate service your-service "projectcalico.org/AdvertiseClusterIP=true"
+```
+
+:::note
+
+You will still need to enable service cluster IP advertisement via BGP configuration as shown above.
+
+:::
+
+### Advertise service external IP addresses
+
+1. Identify the external IP ranges of all services that you want to advertise outside of the $[prodname] cluster.
+
+1. Check to see if you have a default BGPConfiguration.
+
+   ```bash
+   kubectl get bgpconfiguration.projectcalico.org default
+   ```
+
+1. Based on above results, update or create a BGPConfiguration.
+
+   **Update default BGPConfiguration**
+
+   Patch the BGPConfiguration using the following command, adding your own service external IP CIDRs:
+
+   ```bash
+   kubectl patch bgpconfiguration.projectcalico.org default -p '{"spec":{"serviceExternalIPs": [{"cidr": "x.x.x.x"}, {"cidr": "y.y.y.y"}]}}'
+   ```
+
+   **Create default BGPConfiguration**
+
+   Use the following sample command to create a default BGPConfiguration. Add your CIDR blocks for external IPs to be advertised in the `serviceExternalIPs` field.
+
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: projectcalico.org/v3
+   kind: BGPConfiguration
+   metadata:
+     name: default
+   spec:
+     serviceExternalIPs:
+     - cidr: x.x.x.x/16
+     - cidr: y.y.y.y/32
+   EOF
+   ```
+
+   For help, see [BGP configuration resource](../../reference/resources/bgpconfig.mdx).
+
+1. When configuring a Kubernetes service that you want to be reachable via an external IP, specify that external IP in the service's `externalIPs` field.
+
+### Advertise service load balancer IP addresses
+
+The following steps will configure $[prodname] to advertise Service `status.LoadBalancer.Ingress.IP` addresses.
+
+1. Identify the IP ranges to be used for Service LoadBalancer address allocation.
+
+1. Check to see if you have a default BGPConfiguration.
+
+   ```bash
+   kubectl get bgpconfiguration default
+   ```
+
+1. Based on above results, update or create a BGPConfiguration.
+
+   **Update default BGPConfiguration**
+   Patch the BGPConfiguration using the following command, adding your own service load balancer IP CIDRs:
+
+   ```bash
+   kubectl patch bgpconfiguration default --patch '{"spec": {"serviceLoadBalancerIPs": [{"cidr": "x.x.x.x/16"}]}}'
+   ```
+
+   **Create default BGPConfiguration**
+   Use the following sample command to create a default BGPConfiguration. Add your CIDR blocks for load balancer IPs to be advertised in the `serviceLoadBalancerIPs` field.
+
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: projectcalico.org/v3
+   kind: BGPConfiguration
+   metadata:
+     name: default
+   spec:
+     serviceLoadBalancerIPs:
+     - cidr: x.x.x.x/16
+   EOF
+   ```
+
+   For help, see [BGP configuration resource](../../reference/resources/bgpconfig.mdx).
+
+$[prodname] IPAM can manage address allocation for Service of type LoadBalancer with LoadBalancerController. To enable $[prodname] IPAM to start managing addresses for Services set up an IPPool for LoadBalancer.
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+ name: loadBalancerIPPool
+spec:
+ cidr: 192.210.0.0/20
+ blockSize: 24
+ natOutgoing: true
+ disabled: false
+ assignmentMode: Automatic
+ allowedUses:
+  - LoadBalancer
+EOF
+```
+
+For more information see, [LoadBalancer IP address management](../ipam/service-loadbalancer.mdx)
+
+:::note
+If you have previously used alternative IPAM solution for Service of type LoadBalancer address management and wish to continue using it, do not create Calico IPPool for LoadBalancer.
+:::
+
+### Exclude certain nodes from advertisement
+
+In some cases, you may want to exclude certain nodes from advertising service addresses. For example, control plane nodes that do not host any services themselves.
+
+To remove a node from service advertisement, apply the label `node.kubernetes.io/exclude-from-external-load-balancers=true`.
+
+For example, to exclude the node `control-plane-01` from service advertisement, you can run the following command:
+
+```
+kubectl label node control-plane-01 node.kubernetes.io/exclude-from-external-load-balancers=true
+```
+
+### Fine-grained IP range advertisement
+
+The [BGPFilter](../../reference/resources/bgpfilter.mdx) resource in conjunction with BGPPeer resource can be used for fine-grained control over which routes
+and IP ranges are exported or imported to or from the specified peers respectively.
+
+## Tutorial
+
+For a tutorial on how service advertisement works with $[prodname], see the blog [Kubernetes Service IP Route Advertisement](https://www.projectcalico.org/kubernetes-service-ip-route-advertisement/).
+
+## Additional resources
+
+Other topics on creating network policy for Kubernetes services:
+
+- [Apply policy to services exposed externally as cluster IPs](../../network-policy/beginners/services/services-cluster-ips.mdx)
+- [Apply policy to Kubernetes node ports](../../network-policy/beginners/services/kubernetes-node-ports.mdx)
