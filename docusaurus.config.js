@@ -409,7 +409,7 @@ export default async function createAsyncConfig() {
           path: 'calico-enterprise',
           routeBasePath: 'calico-enterprise',
           editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.20-2', '3.19-2', '3.18-2'],
+          onlyIncludeVersions: [...nextVersion, '3.21-1', '3.20-2', '3.19-2', '3.18-2'],
           lastVersion: '3.20-2',
           versions: {
             current: {
