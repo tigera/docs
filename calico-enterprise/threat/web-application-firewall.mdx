@@ -140,25 +140,25 @@ Run a simple curl command from any pod inside your cluster targeting a deploymen
 Reviewing the default rule set config:
 
 ```bash
-Include @coraza.conf-recommended
-Include @crs-setup.conf.example
-Include @owasp_crs/*.conf
+Include coraza.conf
+Include crs-setup.conf
+Include coreruleset/*.conf
 
 SecRuleEngine DetectionOnly
 ```
 
 The configuration file starts with importing the appropriate rule set config. We use Coraza WAF's recommended [Core Rule Set setup](https://coraza.io/docs/tutorials/coreruleset/) files:
 
-1. Coraza recommended [configuration](https://github.com/corazawaf/coraza/blob/main/coraza.conf-recommended)
-1. The rest of the [coreruleset](https://github.com/coreruleset/coreruleset) files, currently [v4.0.0-rc2](https://github.com/coreruleset/coreruleset/tree/v4.0.0-rc2)
+1. Coraza recommended configuration with [coraza.conf](https://github.com/corazawaf/coraza-coreruleset/blob/main/rules/%40coraza.conf-recommended) and [crs-setup.conf](https://github.com/corazawaf/coraza-coreruleset/blob/main/rules/%40crs-setup.conf.example) (kept in the same ConfigMap)
+1. The rest of the [coreruleset](https://github.com/corazawaf/coraza-coreruleset/tree/main/rules/%40owasp_crs) files, currently [v4.7.0](https://github.com/corazawaf/coraza-coreruleset/tree/v4.7.0/rules/%40owasp_crs)
 
 These files can be customized if desired. Add all your customizations directly under `tigera.conf`:
 
 ```bash
-kubectl edit cm -n tigera-operator modsecurity-ruleset
+kubectl edit cm -n tigera-operator tigera-waf-config
 ``` 
 
-After editing this ConfigMap successfully, the `modsecurity-ruleset` ConfigMap will be replaced in the `tigera-operator` namespace,
+After editing this ConfigMap successfully, the `tigera-waf-config` ConfigMap will be replaced in the `tigera-operator` namespace,
 which then triggers a rolling restart of your L7 pods. This means that the HTTP connections going through L7 pods at the time of pod termination will be (RST) reset.
 
 :::note
@@ -177,7 +177,7 @@ By default WAF will not block a request even if it has matching rule violations.
 
 1. Edit the configmap:
    ```bash
-   kubectl edit cm -n tigera-operator modsecurity-ruleset
+   kubectl edit cm -n tigera-operator tigera-waf-config
    ```
 2. Look for `SecRuleEngine DetectionOnly` and change it to `SecRuleEngine On`.
 3. Save your changes. This triggers a rolling update of the L7 pods.
@@ -195,10 +195,10 @@ For basic customizations, it's best to add it after all the includes in `tigera.
 An example is adding a sampling mode. For that, the `tigera.conf` will look like this:
 
 ```bash
-# Core Rule Set activation
-Include @coraza.conf-recommended
-Include @crs-setup.conf.example
-Include @owasp_crs/*.conf
+# CoreRuleset activation
+Include coraza.conf
+Include crs-setup.conf
+Include coreruleset/*.conf
 
 SecRuleEngine DetectionOnly
 
@@ -261,6 +261,8 @@ To include these files properly, structure your work directory like so:
 
 ```
 tigera.conf
+coraza.conf
+crs-setup.conf
 wordpress-rule-exclusions-before.conf
 wordpress-rule-exclusions-config.conf
 ```
@@ -268,17 +270,17 @@ wordpress-rule-exclusions-config.conf
 and then `tigera.conf` contents should be:
 
 ```bash
-Include @coraza.conf-recommended
+Include coraza.conf
 
-Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-config.conf
-Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-before.conf
+Include wordpress-rule-exclusions-config.conf
+Include wordpress-rule-exclusions-before.conf
 
-Include @crs-setup.conf.example
-Include @owasp_crs/*.conf
+Include crs-setup.conf
+Include coreruleset/*.conf
 
 # if your plugin has an -after.conf, include them here
 # but wordpress rule exclusions doesn't so we're adding a comment placeholder
-# Include /etc/modsecurity-ruleset/wordpress-rule-exclusions-after.conf
+# Include wordpress-rule-exclusions-after.conf
 
 SecRuleEngine DetectionOnly
 ```
@@ -289,12 +291,14 @@ Then create and apply the configmap:
 ## create the configuration map itself
 kubectl create cm --dry-run=client \
   --from-file=tigera.conf \
+  --from-file=coraza.conf \
+  --from-file=crs-setup.conf \
   --from-file=wordpress-rule-exclusions-config.conf \
   --from-file=wordpress-rule-exclusions-before.conf \
-  -n tigera-operator modsecurity-ruleset -o yaml  > rule set.configmap.yaml
+  -n tigera-operator tigera-waf-config -o yaml  > ruleset.configmap.yaml
 
 ## replace active configmap
-kubectl replace -f rule set.configmap.yaml
+kubectl replace -f ruleset.configmap.yaml
 ```
 
 Read more about the order of execution for plugins here: https://coreruleset.org/docs/4-about-plugins/4-1-plugins/
