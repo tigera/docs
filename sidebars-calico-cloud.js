@@ -255,7 +255,6 @@ module.exports = {
       label: 'Threat defense',
       link: { type: 'doc', id: 'threat/index' },
       items: [
-        'threat/security-posture-overview',
         'threat/configuring-webhooks',
         'threat/security-event-management',
         'threat/suspicious-ips',
