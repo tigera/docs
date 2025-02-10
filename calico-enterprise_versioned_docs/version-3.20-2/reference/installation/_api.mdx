@@ -1853,6 +1853,26 @@ Kubernetes Service CIDRs. Specifying this is required when using Calico for Wind
 
 </td>
 </tr>
+<tr>
+<td>
+
+<code>azure</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.Azure">
+Azure
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+Azure is used to configure azure provider specific options.
+</p>
+
+</td>
+</tr>
 </table>
 </td>
 </tr>
@@ -2547,6 +2567,25 @@ ElasticsearchMetricsDeployment
 
 <p>
 ElasticsearchMetricsDeployment configures the tigera-elasticsearch-metric Deployment.
+</p>
+
+</td>
+</tr>
+<tr>
+<td>
+
+<code>esGatewayDeployment</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.ESGatewayDeployment">
+ESGatewayDeployment
+</a>
+</em>
+
+</td>
+<td>
+
+<p>
+ESGatewayDeployment configures the es-gateway Deployment.
 </p>
 
 </td>
@@ -5145,6 +5184,25 @@ State provides user-readable status.
 <tr>
 <td>
 
+<code>sidecarWebhook</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.SidecarWebhookStateType">
+SidecarWebhookStateType
+</a>
+</em>
+
+</td>
+<td>
+
+<p>
+SidecarWebhook provides the state of sidecar injection mutatinwebhookconfiguration
+</p>
+
+</td>
+</tr>
+<tr>
+<td>
+
 <code>conditions</code><br/>
 <em>
 <a href="https://v1-21.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#condition-v1-meta">
@@ -5702,6 +5760,46 @@ State provides user-readable status.
 <p>
 Conditions represents the latest observed set of conditions for the component. A component may be one or more of
 Ready, Progressing, Degraded or other customer types.
+</p>
+
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operator.tigera.io/v1.Azure">Azure</h3>
+<p>
+
+(<em>Appears on:</em>
+<a href="#operator.tigera.io/v1.InstallationSpec">InstallationSpec</a>)
+
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<code>policyMode</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.PolicyMode">
+PolicyMode
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+PolicyMode determines whether the &ldquo;control-plane&rdquo; label is applied to namespaces. It offers two options: Default and Manual.
+The Default option adds the &ldquo;control-plane&rdquo; label to the required namespaces.
+The Manual option does not apply the &ldquo;control-plane&rdquo; label to any namespace.
+Default: Default
 </p>
 
 </td>
@@ -6671,8 +6769,8 @@ LinuxDataplaneOption
 
 <em>(Optional)</em>
 <p>
-LinuxDataplane is used to select the data plane used for Linux nodes. In particular, it
-causes the operator to add required mounts and environment variables for the particular data plane.
+LinuxDataplane is used to select the dataplane used for Linux nodes. In particular, it
+causes the operator to add required mounts and environment variables for the particular dataplane.
 If not specified, iptables mode is used.
 Default: Iptables
 </p>
@@ -6694,8 +6792,8 @@ WindowsDataplaneOption
 
 <em>(Optional)</em>
 <p>
-WindowsDataplane is used to select the data plane used for Windows nodes. In particular, it
-causes the operator to add required mounts and environment variables for the particular data plane.
+WindowsDataplane is used to select the dataplane used for Windows nodes. In particular, it
+causes the operator to add required mounts and environment variables for the particular dataplane.
 If not specified, it is disabled and the operator will not render the Calico Windows nodes daemonset.
 Default: Disabled
 </p>
@@ -6737,8 +6835,10 @@ BGP configures whether or not to enable Calico&rsquo;s BGP capabilities.
 
 <em>(Optional)</em>
 <p>
-IPPools contains a list of IP pools to create if none exist. At most one IP pool of each
-address family may be specified. If omitted, a single pool will be configured if needed.
+IPPools contains a list of IP pools to manage. If nil, a single IP pool
+will be defaulted. If an empty list is provided, the operator will not create any IP pools and will instead
+wait for IP pools to be created out-of-band.
+IP pools in this list will be reconciled by the operator and should not be modified out-of-band.
 </p>
 
 </td>
@@ -6902,7 +7002,7 @@ int32
 <em>(Optional)</em>
 <p>
 LinuxPolicySetupTimeoutSeconds delays new pods from running containers
-until their policy has been programmed in the data plane.
+until their policy has been programmed in the dataplane.
 The specified delay defines the maximum amount of time
 that the Calico CNI plugin will wait for policy to be programmed.
 </p>
@@ -11645,6 +11745,318 @@ Template describes the EKSLogForwarder Deployment pod that will be created.
 </tr>
 </tbody>
 </table>
+<h3 id="operator.tigera.io/v1.ESGatewayDeployment">ESGatewayDeployment</h3>
+<p>
+
+(<em>Appears on:</em>
+<a href="#operator.tigera.io/v1.LogStorageSpec">LogStorageSpec</a>)
+
+</p>
+<p>
+ESGatewayDeployment is the configuration for the es-gateway Deployment.
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<code>spec</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.ESGatewayDeploymentSpec">
+ESGatewayDeploymentSpec
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+Spec is the specification of the es-gateway Deployment.
+</p>
+<br/>
+<br/>
+<table>
+</table>
+
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operator.tigera.io/v1.ESGatewayDeploymentContainer">ESGatewayDeploymentContainer</h3>
+<p>
+
+(<em>Appears on:</em>
+<a href="#operator.tigera.io/v1.ESGatewayDeploymentPodSpec">ESGatewayDeploymentPodSpec</a>)
+
+</p>
+<p>
+ESGatewayDeploymentContainer is a es-gateway Deployment container.
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<code>name</code><br/>
+<em>
+string
+</em>
+
+</td>
+<td>
+
+<p>
+Name is an enum which identifies the es-gateway Deployment container by name.
+Supported values are: tigera-secure-es-gateway
+</p>
+
+</td>
+</tr>
+<tr>
+<td>
+
+<code>resources</code><br/>
+<em>
+<a href="https://v1-21.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#resourcerequirements-v1-core">
+Kubernetes core/v1.ResourceRequirements
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+Resources allows customization of limits and requests for compute resources such as cpu and memory.
+If specified, this overrides the named es-gateway Deployment container&rsquo;s resources.
+If omitted, the es-gateway Deployment will use its default value for this container&rsquo;s resources.
+</p>
+
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operator.tigera.io/v1.ESGatewayDeploymentInitContainer">ESGatewayDeploymentInitContainer</h3>
+<p>
+
+(<em>Appears on:</em>
+<a href="#operator.tigera.io/v1.ESGatewayDeploymentPodSpec">ESGatewayDeploymentPodSpec</a>)
+
+</p>
+<p>
+ESGatewayDeploymentInitContainer is a es-gateway Deployment init container.
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<code>name</code><br/>
+<em>
+string
+</em>
+
+</td>
+<td>
+
+<p>
+Name is an enum which identifies the es-gateway Deployment init container by name.
+Supported values are: tigera-secure-elasticsearch-cert-key-cert-provisioner
+</p>
+
+</td>
+</tr>
+<tr>
+<td>
+
+<code>resources</code><br/>
+<em>
+<a href="https://v1-21.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#resourcerequirements-v1-core">
+Kubernetes core/v1.ResourceRequirements
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+Resources allows customization of limits and requests for compute resources such as cpu and memory.
+If specified, this overrides the named es-gateway Deployment init container&rsquo;s resources.
+If omitted, the es-gateway Deployment will use its default value for this init container&rsquo;s resources.
+</p>
+
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operator.tigera.io/v1.ESGatewayDeploymentPodSpec">ESGatewayDeploymentPodSpec</h3>
+<p>
+
+(<em>Appears on:</em>
+<a href="#operator.tigera.io/v1.ESGatewayDeploymentPodTemplateSpec">ESGatewayDeploymentPodTemplateSpec</a>)
+
+</p>
+<p>
+ESGatewayDeploymentPodSpec is the es-gateway Deployment&rsquo;s PodSpec.
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<code>initContainers</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.ESGatewayDeploymentInitContainer">
+[]ESGatewayDeploymentInitContainer
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+InitContainers is a list of es-gateway init containers.
+If specified, this overrides the specified es-gateway Deployment init containers.
+If omitted, the es-gateway Deployment will use its default values for its init containers.
+</p>
+
+</td>
+</tr>
+<tr>
+<td>
+
+<code>containers</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.ESGatewayDeploymentContainer">
+[]ESGatewayDeploymentContainer
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+Containers is a list of es-gateway containers.
+If specified, this overrides the specified es-gateway Deployment containers.
+If omitted, the es-gateway Deployment will use its default values for its containers.
+</p>
+
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operator.tigera.io/v1.ESGatewayDeploymentPodTemplateSpec">ESGatewayDeploymentPodTemplateSpec</h3>
+<p>
+
+(<em>Appears on:</em>
+<a href="#operator.tigera.io/v1.ESGatewayDeploymentSpec">ESGatewayDeploymentSpec</a>)
+
+</p>
+<p>
+ESGatewayDeploymentPodTemplateSpec is the es-gateway Deployment&rsquo;s PodTemplateSpec
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<code>spec</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.ESGatewayDeploymentPodSpec">
+ESGatewayDeploymentPodSpec
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+Spec is the es-gateway Deployment&rsquo;s PodSpec.
+</p>
+<br/>
+<br/>
+<table>
+</table>
+
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operator.tigera.io/v1.ESGatewayDeploymentSpec">ESGatewayDeploymentSpec</h3>
+<p>
+
+(<em>Appears on:</em>
+<a href="#operator.tigera.io/v1.ESGatewayDeployment">ESGatewayDeployment</a>)
+
+</p>
+<p>
+ESGatewayDeploymentSpec defines configuration for the es-gateway Deployment.
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+<code>template</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.ESGatewayDeploymentPodTemplateSpec">
+ESGatewayDeploymentPodTemplateSpec
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+Template describes the es-gateway Deployment pod that will be created.
+</p>
+
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="operator.tigera.io/v1.EgressGatewayDeploymentPodSpec">EgressGatewayDeploymentPodSpec</h3>
 <p>
 
@@ -15025,6 +15437,26 @@ Kubernetes Service CIDRs. Specifying this is required when using Calico for Wind
 
 </td>
 </tr>
+<tr>
+<td>
+
+<code>azure</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.Azure">
+Azure
+</a>
+</em>
+
+</td>
+<td>
+
+<em>(Optional)</em>
+<p>
+Azure is used to configure azure provider specific options.
+</p>
+
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="operator.tigera.io/v1.InstallationStatus">InstallationStatus</h3>
@@ -16657,7 +17089,7 @@ Template describes the linseed Deployment pod that will be created.
 
 </p>
 <p>
-LinuxDataplaneOption controls which data plane is to be used on Linux nodes.
+LinuxDataplaneOption controls which dataplane is to be used on Linux nodes.
 </p>
 <p>
 One of: Iptables, BPF, VPP, Nftables
@@ -17240,6 +17672,25 @@ ElasticsearchMetricsDeployment
 
 <p>
 ElasticsearchMetricsDeployment configures the tigera-elasticsearch-metric Deployment.
+</p>
+
+</td>
+</tr>
+<tr>
+<td>
+
+<code>esGatewayDeployment</code><br/>
+<em>
+<a href="#operator.tigera.io/v1.ESGatewayDeployment">
+ESGatewayDeployment
+</a>
+</em>
+
+</td>
+<td>
+
+<p>
+ESGatewayDeployment configures the es-gateway Deployment.
 </p>
 
 </td>
@@ -19199,6 +19650,14 @@ PathReplace if not nil will be used to replace PathRegexp matches.
 </tr>
 </tbody>
 </table>
+<h3 id="operator.tigera.io/v1.PolicyMode">PolicyMode
+(<code>string</code> alias)</h3>
+<p>
+
+(<em>Appears on:</em>
+<a href="#operator.tigera.io/v1.Azure">Azure</a>)
+
+</p>
 <h3 id="operator.tigera.io/v1.PolicyRecommendationDeployment">PolicyRecommendationDeployment</h3>
 <p>
 
@@ -20080,6 +20539,14 @@ related to connecting to our Prometheus server are automatically set by the oper
 <a href="#operator.tigera.io/v1.ApplicationLayerSpec">ApplicationLayerSpec</a>)
 
 </p>
+<h3 id="operator.tigera.io/v1.SidecarWebhookStateType">SidecarWebhookStateType
+(<code>string</code> alias)</h3>
+<p>
+
+(<em>Appears on:</em>
+<a href="#operator.tigera.io/v1.ApplicationLayerStatus">ApplicationLayerStatus</a>)
+
+</p>
 <h3 id="operator.tigera.io/v1.SplunkStoreSpec">SplunkStoreSpec</h3>
 <p>
 
@@ -20321,7 +20788,7 @@ SecretName indicates the name of the secret in the tigera-operator namespace tha
 When set to tigera-management-cluster-connection voltron will use the same cert bundle which Guardian client certs are signed with.
 </p>
 <p>
-When set to manager-tls, voltron will use the same cert bundle that the web console is served with.
+When set to manager-tls, voltron will use the same cert bundle which Manager UI is served with.
 This cert bundle must be a publicly signed cert created by the user.
 Note that Tigera Operator will generate a self-signed manager-tls cert if one does not exist,
 and use of that cert will result in Guardian being unable to verify Voltron&rsquo;s identity.
