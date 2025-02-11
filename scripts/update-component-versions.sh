@@ -38,8 +38,8 @@ get_product_branch_ref() {
 get_product_version_info() {
   local version=$1
   product_branch_ref=$(get_product_branch_ref $version)
-  api_url="https://${GITHUB_TOKEN}:@api.github.com/repos/${product_repo_dict[$PRODUCT]}/contents/calico/_data/versions.yml${product_branch_ref}"
-  versions_yml=$(curl -H 'Accept: application/vnd.github.v3.raw' "${api_url}")
+  api_url="https://api.github.com/repos/${product_repo_dict[$PRODUCT]}/contents/calico/_data/versions.yml${product_branch_ref}"
+  versions_yml=$(curl -H 'Accept: application/vnd.github.v3.raw' -H "Authorization: token ${GITHUB_TOKEN}" "${api_url}")
   yq "
   ... comments=\"\" | .[] |
   select(.title == \"v${VERSION}\" or .title == \"${VERSION}\")
@@ -77,6 +77,7 @@ update_calico_enterprise_version() {
   fi
   cat <<EOF >${docs_folder_path}/variables.js
 const releases = require('./releases.json');
+const componentImage = require('../../src/components/utils/componentImage');
 
 const variables = {
   releaseTitle: '${release_title}',
@@ -87,6 +88,7 @@ const variables = {
   filesUrl: 'https://downloads.tigera.io/ee/${release_title}',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/${release_stream}',
+  windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
   prodnameWindows: 'Calico Enterprise for Windows',
   downloadsurl: 'https://downloads.tigera.io',
   nodecontainer: 'cnx-node',
@@ -95,10 +97,16 @@ const variables = {
   registry: 'quay.io/',
   chart_version_name: 'v${VERSION}${helm_version}',
   tigeraOperator: releases[0]['tigera-operator'],
+  dikastesVersion: releases[0].components.dikastes.version,
   releases,
   imageNames: {
     node: 'tigera/cnx-node',
     kubeControllers: 'tigera/kube-controllers',
+  },
+  componentImage: {
+    cnxNode: componentImage('cnx-node', releases[0]),
+    calicoctl: componentImage('calicoctl', releases[0]),
+    calicoq: componentImage('calicoq', releases[0]),
   },
 };
 
@@ -131,12 +139,12 @@ if [ -z "$product_version_info" -a "$product_version_info" != " " ]; then
   exit 1
 else
   case $PRODUCT in
-    calico-enterprise)
-      update_calico_enterprise_version
-      ;;
-    *)
-      echo "error: Invalid product specified: \"$PRODUCT\""
-      exit 1
-      ;;
+  calico-enterprise)
+    update_calico_enterprise_version
+    ;;
+  *)
+    echo "error: Invalid product specified: \"$PRODUCT\""
+    exit 1
+    ;;
   esac
 fi
