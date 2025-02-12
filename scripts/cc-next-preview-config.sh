@@ -4,7 +4,6 @@
 # These changes make Docusaurus publish only version Next for each product doc set.
 
 sed -i "s/onBrokenLinks: 'throw'/onBrokenLinks: 'warn'/" docusaurus.config.js
-sed -i "s/onBrokenMarkdownLinks: 'throw'/onBrokenMarkdownLinks: 'warn'/" docusaurus.config.js
 sed -i "s/onlyIncludeVersions: \[.*\]/onlyIncludeVersions: \['current'\]/" docusaurus.config.js
 sed -i "/lastVersion/d" docusaurus.config.js
 
