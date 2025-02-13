@@ -274,6 +274,7 @@ module.exports = {
             'networking/configuring/use-ipvs',
             'networking/configuring/sidecar-acceleration',
             'networking/configuring/pod-mac-address',
+            'networking/configuring/node-local-dns-cache',
           ],
         },
         {
