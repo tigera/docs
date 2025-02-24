@@ -63,6 +63,9 @@ export default async function createAsyncConfig() {
             path: 'default',
             sidebarPath: false,
           },
+          sitemap: {
+            ignorePatterns: ['/calico/[0-9]*.[0-9]*/**', '/calico-enterprise/[0-9]*.[0-9]*/**'],
+          },
           googleTagManager: {
             containerId: 'GTM-KCHDXB2',
           },
