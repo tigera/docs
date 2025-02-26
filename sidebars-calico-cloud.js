@@ -11,6 +11,12 @@ module.exports = {
     },
     {
       type: 'category',
+      label: 'Calico Cloud Free',
+      link: { type: 'doc', id: 'free/index' },
+      items: ['free/connect-cluster-free'],
+    },
+    {
+      type: 'category',
       label: 'Install and upgrade',
       link: { type: 'doc', id: 'get-started/index' },
       items: [
