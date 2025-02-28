@@ -94,6 +94,13 @@ export default async function createAsyncConfig() {
           contextualSearch: true,
           searchPagePath: '/search',
         },
+        announcementBar: {
+          id: "calico_ebpf",
+          content: "Help shape the future! 🚀 We're collecting feedback to improve Calico opensource, and your insights are key. Click <a href=\"https://forms.gle/HbRP4BoZQrVsrhHV8\">here </a> to learn more.",
+          backgroundColor: "#FCE181",
+          textColor: "#000",
+          isCloseable: true
+        },
         navbar: {
           logo: {
             src: 'img/tigera-logo-black.png',
