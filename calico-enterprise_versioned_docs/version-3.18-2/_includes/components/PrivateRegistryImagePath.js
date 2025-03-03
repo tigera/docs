@@ -141,10 +141,10 @@ spec:
   variant: TigeraSecureEnterprise
   imagePullSecrets:
     - name: tigera-pull-secret
-    // highlight-next-line
-      registry: myregistry.com
-    // highlight-next-line
-      imagePath: my-image-path`}
+  // highlight-next-line
+  registry: myregistry.com
+  // highlight-next-linedd
+  imagePath: my-image-path`}
             </CodeBlock>
         </>
     );

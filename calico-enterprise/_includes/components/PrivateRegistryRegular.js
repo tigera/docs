@@ -125,8 +125,8 @@ spec:
   variant: TigeraSecureEnterprise
   imagePullSecrets:
     - name: tigera-pull-secret
-    // highlight-next-line
-      registry: myregistry.com`}</CodeBlock>
+  // highlight-next-line
+  registry: myregistry.com`}</CodeBlock>
         </>
     );
 
