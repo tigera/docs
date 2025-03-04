@@ -207,6 +207,7 @@ module.exports = {
       items: [
         'observability/alerts',
         'observability/dashboards',
+        'observability/create-custom-dashboard',
         'observability/kibana',
         'observability/packetcapture',
         'observability/visualize-traffic',
