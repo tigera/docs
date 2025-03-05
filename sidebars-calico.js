@@ -258,6 +258,7 @@ module.exports = {
       },
       items: [
         'networking/determine-best-networking',
+        'networking/gateway-api',
         {
           type: 'category',
           label: 'Configure networking',
