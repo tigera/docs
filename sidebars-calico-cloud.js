@@ -307,6 +307,7 @@ module.exports = {
       label: 'Networking',
       link: { type: 'doc', id: 'networking/index' },
       items: [
+        'networking/gateway-api',
         {
           type: 'category',
           label: 'Networking basics',
