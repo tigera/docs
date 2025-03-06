@@ -462,7 +462,7 @@ export default async function createAsyncConfig() {
           routeBasePath: 'calico-cloud',
           editCurrentVersion: true,
           //To see builds for unreleased versions, remove comments in the next line.
-          onlyIncludeVersions: [...nextVersion, '20-2'],
+          onlyIncludeVersions: [...nextVersion, '21-1'],
           versions: {
             current: {
               label: 'Next',
@@ -471,11 +471,7 @@ export default async function createAsyncConfig() {
             },
             '21-1': {
               path: '/',
-              banner: 'unreleased'
-            },
-            '20-2': {
-              path: '/',
-              banner: 'none',
+              banner: 'none'
             },
           },
           sidebarPath: './sidebars-calico-cloud.js',
