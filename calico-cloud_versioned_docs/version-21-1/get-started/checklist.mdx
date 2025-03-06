@@ -1,0 +1,82 @@
+---
+description: Review this checklist before opening a Support ticket.
+---
+
+# Troubleshooting checklist
+
+## Check $[prodname] installation
+
+Installing $[prodname] on your Kubernetes cluster is managed by the $[prodname] operator. The $[prodname] operator is deployed as a Deployment in the `calico-cloud` namespace, and records status in a custom resource named `installer`.
+
+Check the `installer` status using the following command.
+
+```bash
+kubectl get installer default --namespace calico-cloud -o jsonpath --template '{.status}'
+```
+
+**Sample output**
+
+```
+{"clusterName":"my-new-cluster","state":"installing"}
+```
+
+After `state` is `complete`, $[prodname] is properly installed.
+
+## Check logs for fatal errors
+
+Check that the $[prodname] operator is running and that logs do not have any fatal errors.
+
+```bash
+kubectl logs -n calico-cloud deployment/calico-cloud-controller-manager
+2022-04-04T14:34:32.472Z        INFO    controller-runtime.metrics      metrics server is starting to listen    {"addr": "127.0.0.1:8080"}
+2022-04-04T14:34:32.472Z        INFO    setup   starting manager
+2022-04-04T14:34:32.472Z        INFO    setup   config  {"ccBaseURL": "https://www.dev.calicocloud.io/api", "debug": false, "leader-elect": true}
+I0404 14:34:32.472586       1 leaderelection.go:243] attempting to acquire leader lease calico-cloud/c2ad41ce.calicocloud.io...
+2022-04-04T14:34:32.472Z        INFO    controller-runtime.manager      starting metrics server {"path": "/metrics"}
+I0404 14:34:32.480870       1 leaderelection.go:253] successfully acquired lease calico-cloud/c2ad41ce.calicocloud.io
+<...>
+```
+
+## Check custom resources
+
+Verify that you have the **installer custom resource**, and that the values are appropriate for your environment.
+
+```bash
+kubectl get installers.operator.calicocloud.io --namespace calico-cloud -o yaml
+```
+
+```yaml
+apiVersion: v1
+items:
+  - apiVersion: operator.calicocloud.io/v1
+    kind: Installer
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/last-applied-configuration: |
+          {"apiVersion":"operator.calicocloud.io/v1","kind":"Installer","metadata":{"annotations":{},"name":"my-new-cluster","namespace":"calico-cloud"}}
+      creationTimestamp: '2022-04-04T14:34:29Z'
+      generation: 1
+      name: my-new-cluster
+      namespace: calico-cloud
+      resourceVersion: '1102'
+      uid: eb1d1cd0-f01f-47b2-81fe-8eee46dbe712
+    status:
+      clusterName: my-new-cluster
+      message: ''
+      resourceVersion: ''
+      state: installing
+kind: List
+metadata:
+  resourceVersion: ''
+  selfLink: ''
+```
+
+## Send failed installation diagnostics to Calico Cloud support
+
+To upload diagnostics about a failed installation to $[prodname] support, run the following command:
+
+```bash
+kubectl patch installer -n calico-cloud default --type merge -p='{"spec":{"uploadDiags":true}}'
+```
+
+
