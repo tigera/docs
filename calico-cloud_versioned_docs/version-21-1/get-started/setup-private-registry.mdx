@@ -1,0 +1,102 @@
+---
+description: Add images to a private registry for installing Calico Cloud on a cluster.
+---
+
+# Set up a private registry
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import VersionedCloudImageList from '@site/src/___new___/components/VersionedCloudImageList';
+
+## Big picture
+
+Add $[prodname] images to a private registry to install new clusters or update existing ones.
+
+## Value
+
+In some deployments, installing $[prodname] in clusters from third-party repos is not an option. Before you can install $[prodname] from a private registry, you must first add $[prodname] images to the registry.
+
+## Concepts
+
+A **container image registry** (often known as a **registry**), is a service where you can push, pull, and store container images. In Kubernetes, a registry is considered _private_ if it is not publicly available.
+
+A **private registry** is not publicly available. It must be accessible on a private network or with an **image pull secret** for authenticated access.
+
+An **image path** is a directory in a registry that contains images required to install $[prodname].
+
+## Before you begin
+
+**Required**
+
+- [Helm CLI](https://helm.sh/docs/intro/install/) command
+- Use the [Crane command](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) to follow steps in this guide. (Other tools can be used, but commands be adjusted accordingly.)
+- Image registry
+  - Must be private (accessible only on a private network or using log in credentials)
+  - Images copied to the registry must not be made publicly available
+  - Push access to your registry
+
+## How to
+
+Add the required $[prodname] images to a private registry.
+
+### Set up registry credentials
+
+1. Log into $[prodname] and navigate to "Managed Clusters".
+1. Get the "Registry Credentials" by clicking on the icon. ![registry credentials](/img/calico-cloud/private-registry-icon.png)
+1. Apply the credentials so the $[prodname] images can be accessed.
+
+### Create the list of required images
+
+<VersionedCloudImageList />
+
+### Set up the private registry
+
+```bash
+REGISTRY=<replace with your registry and include a trailing slash>
+```
+
+If you want all images to come from the same path in your registry, set this image path value. Otherwise unset this environment variable or set it to the empty string.
+
+```bash
+IMAGEPATH=""
+```
+
+#### Image examples
+
+| Original image                      | Image Registry | Image Path    | Private registry image                       |
+| ----------------------------------- | -------------- | ------------- | -------------------------------------------- |
+| `quay.io/tigera/typha:v1.2.3`       | `my.registry/` |               | `my.registry/tigera/typha:v1.2.3`            |
+| `quay.io/tigera/typha:v1.2.3`       | `my.registry/` | `custom-path` | `my.registry/custom-path/typha:v1.2.3`       |
+| `quay.io/tigera/cc-operator:v4.5.6` | `my.registry/` |               | `my.registry/tigera/cc-operator:v4.5.6`      |
+| `quay.io/tigera/cc-operator:v4.5.6` | `my.registry/` | `custom-path` | `my.registry/custom-path/cc-operator:v4.5.6` |
+
+### Copy images to your registry
+
+For $[prodname] to install images from your registry, copy the images from the standard registries into your own registry.
+
+<Tabs>
+<TabItem label="Registry only" value="Registry only-0">
+
+```bash
+for image in ${IMAGES[@]}; do
+  img_base=$(echo ${image} | sed "s#^.*/\([^/]*/[^/]*$\)#\1#")
+  crane cp ${image} ${REGISTRY}${img_base} || break
+done
+```
+
+</TabItem>
+<TabItem label="Registry and ImagePath" value="Registry and ImagePath-1">
+
+```bash
+for image in ${IMAGES[@]}; do
+  img_base=$(echo ${image} | sed "s#^.*/##")
+  crane cp ${image} ${REGISTRY}${IMAGEPATH}/${img_base} || break
+done
+```
+
+</TabItem>
+</Tabs>
+
+## Install using the private registry
+
+Follow the directions [to connect a cluster to Calico Cloud](install-cluster.mdx).

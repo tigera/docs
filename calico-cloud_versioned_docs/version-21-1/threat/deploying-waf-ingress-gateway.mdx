@@ -1,0 +1,319 @@
+---
+description: Deploy WAF with ingress gateways
+---
+
+# Deploying WAF with an ingress gateway
+
+## Introduction
+
+In addition to automatically deploying and managing our WAF inside the cluster to protect each workload, we also offer the option to manually deploy our WAF to integrate with Envoy-based Gateways.
+
+Deploying WAF in this way has the following characteristics and caveats:
+
+* Comes with OWASP CoreRuleSet 4.0 built-in, which can be overridden with custom rules
+* Uses Coraza as the WAF engine
+* Integrates with Envoy using ext_authz filter
+* Logs to stdout, allowing the user to decide where to send the WAF logs
+* Manually deployed and configured by the user
+
+## Deployment guide
+
+This documentation outlines the process of deploying our Web Application Firewall (WAF) with an Istio Ingress gateway. By deploying the WAF alongside Istio ingress gateway, incoming requests to the cluster will be inspected, secured and filtered before they reach the underlying services within the cluster.
+
+There are three steps to deploying WAF with Istio ingress gateway
+
+* Add WAF as a sidecar injected in Istio ingress gateway pods
+* Update Istio ingress gateway to use WAF with Envoy’s ext_authz filter
+* Validate the configuration works by testing WAF
+
+## Step 1: Enable Istio ingress gateway for custom sidecar injection
+
+### 1. Initialize Istio operator
+
+If your Istio installation was done using the Istio operator, there's no need to reinstall the Istio operator. However, if Istio was installed by means other than the Istio operator, then you should install the Istio operator using the following command to ensure that you can leverage custom sidecar injection capabilities.
+
+```bash
+istioctl operator init
+```
+
+This command will deploy the Istio operator named istio-operator in the `istio-operator` namespace.
+
+### 2. Deploy IstioOperator custom resource for custom sidecar injection
+
+Create an IstioOperator custom resource to enable custom sidecar injection.
+Use the provided IstioOperator definition as a starting point:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: tigera-custom-sidecar-injection
+  namespace: istio-system
+spec:
+  values:
+    sidecarInjectorWebhook:
+      # rewriteAppHTTPProbe: false
+      templates:
+        dikastes: |
+          spec:
+            containers:
+            - name: dikastes
+              image: quay.io/tigera/dikastes:v3.20.0-1.0
+              args:
+              - -waf-enabled
+              - -waf-directive
+              - Include @coraza.conf-recommended
+              - -waf-directive
+              - Include @crs-setup.conf.example
+              - -waf-directive 
+              - Include @owasp_crs/*.conf
+              - -waf-directive
+              - SecRuleEngine On
+              - -listen=:55555
+              - -listen-network=tcp
+              ports:
+              - containerPort: 55555
+            imagePullSecrets:                                                                                                                                                          
+            - name: tigera-pull-secret
+EOF
+```
+
+If the user has another custom sidecar injection template, it should be added to the same IstioOperator CR, as the IstioOperator overrides the previously injected custom template. Therefore, it is recommended to define all custom sidecar injection templates in a single IstioOperator CR.
+
+### 3. Add the tigera-pull-secret to the istio-system namespace
+
+Add the tigera-pull-secret within the istio-system namespace, typically where the Istio ingress gateway resides so that Tigera’s WAF can be downloaded from the private registry. You can simply copy the tigera-pull-secret from any existing namespace owned by Tigera in the cluster. This ensures that Dikastes deployment does not encounter Image Pull Errors during sidecar container creation.
+	
+### 4. Annotate istio-ingressgateway for custom WAF sidecar injection
+
+Edit the istio-ingressgateway deployment and add the necessary annotations and labels:
+
+```bash
+kubectl edit deployment istio-ingressgateway -n istio-system                                   
+```
+
+Add the following annotations to enable custom sidecar injection:
+
+```yaml
+annotations:
+  inject.istio.io/templates: "gateway,dikastes"
+```
+
+Label the istio-ingressgateway deployment to trigger sidecar injection:
+
+```yaml
+labels:
+  sidecar.istio.io/inject: "true"
+```
+
+Ensure that the istio-ingressgateway pods in your namespace have the custom WAF sidecar injected:
+
+```bash
+kubectl get pods -l app=istio-ingressgateway -o jsonpath='{.items[*].spec.containers[*].name}' -n istio-system | tr ' ' '\n'
+```
+
+Look for the presence of an additional container in the istio-ingressgateway pods corresponding to custom WAF.
+
+To enable the injection of a custom WAF as a sidecar into the istio-ingressgateway deployment, you can use annotations and labels.
+
+## Step 2: Configure Istio ingress gateways 
+
+We configure Istio ingress gateway using an EnvoyFilter called ext_authz to delegate allow / deny decisions on a request to WAF. 
+
+### Global EnvoyFilter configuration
+
+To intercept traffic at the Istio ingress gateway or load balancer, use an EnvoyFilter named tigera.istio-system.gateway.ingressgateway.waf-ext-authz. This global EnvoyFilter applies to ingress gateway pods matching the specified workload selector labels.
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: tigera.istio-system.gateway.ingressgateway.waf-ext-authz
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      istio: ingressgateway
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: "envoy.filters.http.ext_authz"
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+          with_request_body:
+            max_request_bytes: 9000
+            allow_partial_message: true
+          grpc_service:
+            google_grpc:
+              target_uri: dns:localhost:55555
+              stat_prefix: exauth1
+            timeout: 0.5s
+          transport_api_version: V3
+          failure_mode_allow: false
+EOF
+```
+
+This EnvoyFilter configuration instructs the Istio ingress gateway to establish a connection with the injected WAF sidecar as an external authorization (ext_authz) source. 
+
+
+
+## Step 3: Validate
+
+### Verify WAF is working
+
+A suggested way to verify WAF is deployed correctly using Istio ingress gateway (IGW) installed and configured using the HTTPBin tutorial.
+Prerequisites
+Ensure Istio ingress gateway and HTTPBin tutorial is correctly installed and running. 
+Override the httpbin VirtualService config from the HTTPBin Tutorial with the following one to allow the /anything and /headers path.
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: httpbin-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: httpbin
+spec:
+  hosts:
+  - "httpbin.example.com"
+  gateways:
+  - httpbin-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 8000
+        host: httpbin
+EOF
+```
+
+#### Test scenario 1: scalinguccessful request
+
+Execute the following curl commands to test a successful request:
+
+```bash
+curl -s -I -HHost:httpbin.example.com "http://$INGRESS_HOST:$INGRESS_PORT/anything"
+```
+
+```bash
+curl -s -I -HHost:httpbin.example.com "http://$INGRESS_HOST:$INGRESS_PORT/headers"
+```
+
+These requests are expected to succeed, demonstrating a valid interaction with the Istio ingress gateway.
+
+#### Test scenario 2: SQL injection denied by WAF
+
+Execute the following curl command to test a request that should be denied by the WAF:
+
+```bash
+curl -s -v -HHost:httpbin.example.com "http://$INGRESS_HOST:$INGRESS_PORT/anything?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user"
+```
+
+This request is intentionally designed to trigger WAF rules and should result in a denial by the Web Application Firewall.
+
+## Customize the WAF Core RuleSets	
+
+To empower the user with the flexibility to customize the WAF core rulesets according to their specific requirements, this can be achieved by creating a Kubernetes ConfigMap with customized core rulesets. These custom rulesets can be applied by volume mounting the configMap to the Dikastes container.
+
+### 1. Custom Core Rulesets Configmap
+
+Users can utilize a configmap to configure WAF rules and behavior. For example:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-waf-rules-configmap
+  namespace: istio-system
+data:
+  tigera.conf: |
+    # setup coreruleset
+    Include @coraza.conf-recommended
+    Include @crs-setup.conf.example
+    Include @owasp_crs/*.conf
+
+    SecRuleEngine On
+
+    # customize audit log path
+    SecAuditEngine On
+    SecAuditLogFormat json
+    SecAuditLogType serial
+    SecAuditLogParts ABCDEFGHIJKZ
+    SecAuditLog "/var/log/calico/waf/audit.log"
+EOF
+```
+
+And then this can be used with a Dikastes Custom Sidecar Injection Template
+
+### 2. Dikastes custom sidecar injection template
+
+To apply the custom rulesets for the Web Application Firewall (WAF) in the Istio Ingress gateway, users need to restart the gateway. This can be done using the kubectl rollout restart command, which gracefully  restarts all pods associated with a specific deployment. In case of the Istio ingress gateway, assuming the standard deployment in the istio-system namespace and the deployment name as istio-ingressgateway, the command to execute is 
+
+```bash
+kubectl rollout restart deployment istio-ingressgateway -n istio-system
+```
+
+## Custom sidecar injection limitations
+
+### Installation approaches
+
+It's important to be aware that custom sidecar injection may not work seamlessly with certain Istio installation approaches. Specifically, the following considerations apply:
+
+#### Installation using istioctl install Command:
+
+Using the command `istioctl install --set profile=<profile-name> -y` for Istio installation does not automatically enable custom sidecar injection. This is because it won't update the istio-sidecar-injector ConfigMap with the configured sidecar injection template.
+
+This limitation can be overcome by installing the IstioOperator and deploying the IstioOperator CR to enable the custom sidecar injection template. By doing so, you can ensure that the custom sidecar injection templates are properly applied and managed within your Istio service mesh. This approach provides a more flexible and customizable way to manage sidecar injections, allowing for configurations that meet specific requirements of your applications and services.
+
+#### Manual updates to istio-sidecar-injector ConfigMap:
+
+While pods are generally injected based on the sidecar injection template configured in the istio-sidecar-injector ConfigMap, manually updating, patching or adding the sidecar injection template into the ConfigMap does not guarantee the injection of custom sidecars into annotated and labeled pods.
+
+### Considerations
+
+* Istio's default installation commands may not automatically integrate custom sidecar injection configurations.
+* Manual modifications to the istio-sidecar-injector ConfigMap may not trigger the injection of custom sidecars into pods as expected.
+
+## Custom injection support across cloud providers
+
+The ability to use custom injection mechanisms in Istio may vary across different Kubernetes clusters on various cloud providers. Below is a detailed section outlining the specific scenarios for AWS EKS, AWS Kubeadm, and Google GKE.
+
+### AWS EKS (Elastic Kubernetes Service)
+
+Custom injection mechanisms, especially those involving Istio sidecars or other custom configurations, may encounter challenges on AWS EKS. This limitation is due to the managed nature of EKS, where certain components and configurations are controlled by AWS.
+
+### AWS Kubeadm
+
+Custom injection is generally well-supported on Kubernetes clusters created using kubeadm on AWS. In this self-managed setup, you have more control over the cluster components, making it suitable for custom configurations, including injection of Istio sidecars or other custom components.
+
+### Google Kubernetes Engine (GKE)
+
+GKE, being a managed Kubernetes service by Google Cloud, supports custom injection mechanisms. Google provides a flexible environment where you can apply custom configurations to the cluster, making it compatible with Istio sidecar injection and similar customization approaches.
+
+### Azure AKS (Azure Kubernetes Service)
+
+Azure AKS generally supports custom injection mechanisms. While it's a managed Kubernetes service, AKS provides flexibility for certain customizations, making it compatible with Istio sidecar injection and similar customization approaches.

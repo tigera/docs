@@ -1,0 +1,87 @@
+---
+description: Configure Calico Cloud to use Calico Cloud IPAM or host-local IPAM, and when to use one or the other.
+---
+
+# Get started with IP address management
+
+## Big picture
+
+Understand how IP address management (IPAM) functions in a Kubernetes cluster using $[prodname].
+
+## Value
+
+Different IPAM techniques provide different feature sets. $[prodname]’s IPAM provides additional IP allocation efficiency and flexibility compared to other address management approaches.
+
+## Concepts
+
+### IPAM in Kubernetes
+
+Kubernetes uses IPAM plugins to allocate and manage IP addresses assigned to pods. Different IPAM plugins provide different feature sets. $[prodname] provides its own IPAM plugin called **calico-ipam** which is designed to work well with $[prodname] and includes a number of features.
+
+### $[prodname] IPAM
+
+The **calico-ipam** plugin uses $[prodname]’s IP pool resource to control how IP addresses are allocated to pods within the cluster. This is the default plugin used by most $[prodname] installations.
+
+By default, $[prodname] uses a single IP pool for the entire Kubernetes pod CIDR, but you can divide the pod CIDR into several pools. You can assign separate IP pools to particular selections of **nodes**, or to teams, users, or applications within a cluster using **namespaces**.
+
+You can control which pools $[prodname] uses for each pod using
+
+- node selectors
+- an annotation on the pod’s namespace, or
+- an annotation on the pod
+
+$[prodname] also supports the **host-local** IPAM plugin. However, when using the host-local IPAM plugin some $[prodname] features are not available.
+
+### $[prodname] IPAM blocks
+
+In $[prodname] IPAM, IP pools are subdivided into blocks -- smaller chunks that are associated with a particular node in the cluster. Each node in the cluster can have one or more blocks associated with it. $[prodname] will automatically create and destroy blocks as needed as the number of nodes and pods in the cluster grows or shrinks.
+
+Blocks allow $[prodname] to efficiently aggregate addresses assigned to pods on the same node, reducing the size of the routing table. By default $[prodname] will try to allocate IP addresses from within an associated block, creating a new block if necessary. $[prodname] can also assign addresses to pods on a node that are not within a block associated with that node. This allows for IP allocations independent of the node on which a pod is launched.
+
+By default, $[prodname] creates blocks with room for 64 addresses (a /26), but you can control block sizes for each IP pool.
+
+### Host-local IPAM
+
+The host-local plugin is a simple IP address management plugin. It uses predetermined CIDRs statically allocated to each node to choose addresses for pods. Once set, the CIDR for a node cannot be modified. Pods can be assigned addresses only from within the CIDR allocated to the node.
+
+$[prodname] can use the host-local IPAM plugin, using the **Node.Spec.PodCIDR** field in the Kubernetes API to determine the CIDR to use for each node. However, per-node, per-pod, and per-namespace IP allocation features are not available using the host-local plugin.
+
+The host-local IPAM plugin is primarily used by other methods of routing pod traffic from one host to another. For example, it is used when installing $[prodname] for policy enforcement with flannel networking, as well as when using $[prodname] in Google Kubernetes Engine (GKE).
+
+## Before you begin
+
+**Limitations**
+
+- Works for platforms that use the Calico CNI
+
+## How to
+
+### Install $[prodname] with calico-ipam
+
+Follow one of the getting started guides to install $[prodname].
+<!-- TODO-XREFS-CC -->
+
+### Install $[prodname] with host-local IPAM
+
+Follow one of the getting started guides to install $[prodname].
+<!-- TODO-XREFS-CC -->
+
+Or, see the [reference documentation on host-local IPAM](../../reference/component-resources/configuration.mdx#using-host-local-ipam).
+
+## Tutorial
+
+For a blog/tutorial on IP pools, see [Calico Enterprise IPAM: Explained and Enhanced](https://www.tigera.io/blog/calico-ipam-explained-and-enhanced/).
+
+## Additional resources
+
+- [IP Pool](../../reference/resources/ippool.mdx)
+
+There are several other ways to leverage $[prodname] IPAM including:
+
+- [Assign addresses based on topology](assign-ip-addresses-topology.mdx)
+- [Use a specific address for a pod](use-specific-ip.mdx)
+- [Migrate from one IP pool to another](migrate-pools.mdx)
+- [Restrict a pod to use an IP address in a specific range](legacy-firewalls.mdx)
+- [Change IP address block size](../../reference/resources/ippool.mdx)
+
+<!--TODO-XREFS-CC - [View IP address utilization](/reference/clis/calicoctl/ipam/show/)-->

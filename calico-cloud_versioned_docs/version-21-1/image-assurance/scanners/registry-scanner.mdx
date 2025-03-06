@@ -1,0 +1,161 @@
+---
+description: Scan images in container registries.
+---
+
+# Scan images in container registries
+
+Scan images in container registries at any time, on any infrastructure, including Kubernetes.
+
+## Value
+
+Add a layer of defense for images that don’t go through a pipeline (for example, third-party images), but are published to a registry. If CVEs are missed in your build pipeline, you can catch them before they are deployed.
+
+## Concepts
+
+You can run the registry scanner wherever there is a container runtime. And it doesn’t have to be for Kubernetes.
+
+To use registry scanner, all you need to do is:
+- Specify the registry paths to the images you want to scan
+- Provide permissions for the scanner to access your registries
+- Get a token for access to the Image Assurance API
+
+Based on the paths you specify, the scanner recursively scans all images in the registry once, and sends results to the Image Assurance dashboard in the web console.
+
+To deploy the registry scanner as a pod in Kubernetes cluster, we recommend that you define a Kubernetes job or cronjob.
+
+## Before you begin
+
+**Required**
+
+- Registry scanner is running where there is a container runtime
+- Valid registry credentials
+
+**Supported registry platforms**
+
+- Amazon Elastic Container Registry (ECR)
+- Azure Container Registry (ACR)
+- Google Container Registry (GCR)
+
+**Limitations**
+
+- The registry scanner is available as an image (not using Tigera operator installation)
+- You can scan images from only one of the supported registry platforms/account per instance
+- If you use the registry scanner with Docker, only tagged images are scanned. However, if you use the scanner with Amazon or Azure, all images (tagged and untagged) are scanned.
+
+## How to
+
+- [Download the registry scanner](#download-the-registry-scanner)
+- [Set up authentication to registry scanner](#set-up-authentication-to-registry-scanner)
+- [Set up registry scanner](#set-up-registry-scanner)
+- [Scan images and send results to Calico Cloud](#scan-images-and-send-results-to-calico-cloud)
+- [Troubleshoot](#troubleshoot)
+- [Get previous registry scanner versions](#get-previous-registry-scanner-versions)
+
+### Download the registry scanner
+
+The registry scanner comes in a Docker image. To get the image, run this command: `docker pull quay.io/tigera/image-assurance-registry-scanner:$[imageassuranceversion]`.
+
+### Set up authentication to registry scanner
+
+The registry scanner requires authentication to access a registry. Set up credentials for one of the following registry platforms:
+
+- **Docker/Google** - scans only tagged images; untagged images residing in your image registry are not pulled and scanned.
+- **Azure or AWS** - scans tagged and untagged images (all)
+
+#### Docker/GCR required credentials
+
+- `DOCKER_USERNAME`
+- `DOCKER_PASSWORD`
+
+If you have a valid /.docker/config.json, you can also mount this config file on the container while running the registry scanner.
+
+```bash
+docker run -e ... -v ~/.docker/config.json:/.docker/config.json quay.io/tigera/image-assurance-registry-scanner:$[imageassuranceversion]
+```
+#### Azure required credentials
+
+Registry instances are scanned one at a time. If Docker credentials are found, they are ignored.
+
+- `AZURE_CLIENT_ID`
+- `AZURE_CLIENT_SECRET` or `AZURE_FEDERATED_TOKEN`
+- `AZURE_TENANT_ID`
+
+#### AWS required credentials
+
+Registry instances are scanned one at a time. If Docker credentials are found, they are ignored.
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+
+### Set up registry scanner
+
+**Required**
+
+- `REGISTRY` - the registry you want to scan. For example, gcr.io.
+- `IMAGE_ASSURANCE_API_URL` - Get the URL in the web console
+- `IMAGE_ASSURANCE_API_TOKEN` - Get the token in the web console
+- Registry credentials: Docker/gcr, acr, or ecr
+
+**Optional**
+
+`REGISTRY_FILTER` - limits scanning time when you have thousands of repositories and images. Supports a comma-separated list.
+
+Example: gcr registry
+
+```bash
+gcr.io/prod-env/api
+gcr.io/staging-env/api
+gcr.io/dev/api
+```
+To filter out images in the dev "sub" registry:
+
+`-e REGISTRY_FILTER=prod-env,staging-env`
+
+### Scan images and send results to $[prodname]
+
+Example: gcr registry with Docker credentials
+
+```bash
+docker run -e REGISTRY=gcr.io -e IMAGE_ASSURANCE_API_URL=https://<clustId>-management.dev.calicocloud.io/bast -e IMAGE_ASSURANCE_API_TOKEN=$TOKEN -e DOCKER_USERNAME=<username> -e DOCKER_PASSWORD=<password> quay.io/tigera/image-assurance-registry-scanner:$[imageassuranceversion]
+```
+
+Example: acr registry with Azure credentials
+
+```bash
+docker run -e REGISTRY=your-org.azurecr.io -e IMAGE_ASSURANCE_API_URL=https://<clustId>-management.dev.calicocloud.io/bast -e IMAGE_ASSURANCE_API_TOKEN=$TOKEN -e AZURE_CLIENT_ID=<azure-client-id> -e AZURE_CLIENT_SECRET=<azure-client-secret> -e AZURE_TENANT_ID=<azure-tenant-id> quay.io/tigera/image-assurance-registry-scanner:$[imageassuranceversion]
+```
+
+Example: ecr registry with AWS credentials
+
+```bash
+docker run -e REGISTRY=gcr.io -e IMAGE_ASSURANCE_API_URL=https://<clustId>-management.dev.calicocloud.io/bast -e IMAGE_ASSURANCE_API_TOKEN=$TOKEN -e AWS_ACCESS_KEY_ID=<aws-access-key> -e AWS_SECRET_ACCESS_KEY=<aws-secret-access-key> -e AWS_REGION=<aws-region>  quay.io/tigera/image-assurance-registry-scanner:$[imageassuranceversion]
+```
+
+Example: run when mounting the dockerfile
+
+```bash
+docker run -e REGISTRY=gcr.io -e IMAGE_ASSURANCE_API_URL=https://<clustId>-management.dev.calicocloud.io/bast -e IMAGE_ASSURANCE_API_TOKEN=$TOKEN -v ~/.docker/config.json/:/.docker/config.json quay.io/tigera/image-assurance-registry-scanner:$[imageassuranceversion]
+```
+
+### Troubleshoot
+
+**Issues authenticating with registry scanner**
+
+Verify that the registry credentials are correct.
+
+**Scan results are not uploading to $[prodname]**
+
+Image scan results that are uploaded to $[prodname] through the registry scanner require additional processing before appearing in the Image Assurance dashboard. This may result in a time delay before CVE results appear for those images in the UI. You can also verify that the API token and URL are correct.
+
+**Scanned images do not match what I expect**
+
+Verify that the credentials on the registry side have the correct permission level.
+
+### Get previous registry scanner versions
+
+For previous versions of registry scanner, see [quay repository](https://quay.io/organization/tigera).
+
+## Next step
+
+- [Understand scan results in the web console](../understanding-scan-results)
