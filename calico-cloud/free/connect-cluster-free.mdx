@@ -4,4 +4,73 @@ description: Placeholder description.
 
 # Connect a cluster to Calico Cloud Free
 
-Lorem ipsum.
+CONCEPT: Connecting your cluster to the Calico Cloud free tier (What’s happening under the hood, what changes in your cluster, what happens to data, what do you get, etc.)
+
+## System requirements
+
+* You have an active Calico Cloud Free account.
+  To sign up, go to [HERE](#).
+* You are signed in to the web console.
+* You have kubectl access to a Kubernetes cluster.
+* You installed Calico Open Source 3.30 or later on your cluster. (CNI? Network policy only?)
+* Make sure you allow TCP to \<domain>.calicocloud.io:443.
+
+PROCEDURE: Prepare your cluster 
+
+Nil
+
+PROCEDURE: Connect your cluster
+
+1. From the web console, click **Connect a cluster**.
+1. On the **Name your cluster** dialog, enter a name and click **Continue**.
+1. On the **You're ready to connect!** dialog, copy the kubectl command.
+   <details>
+   <summary>Example kubectl command</summary>
+   ```bash
+   kubectl apply -f - <<EOF
+   # Once applied to your managed cluster, a deployment is created to establish a secure tcp connection
+   # with the management cluster.
+
+   apiVersion: operator.tigera.io/v1
+   kind: ManagementClusterConnection
+   metadata:
+   name: tigera-secure
+   spec:
+   # ManagementClusterAddr should be the externally reachable address to which your managed cluster
+   # will connect. Valid examples are: "0.0.0.0:31000", "example.com:32000", "[::1]:32500"
+   managementClusterAddr: "oss-ui-01-management.dev.calicocloud.io:443"
+
+   ---
+
+   apiVersion: v1
+   kind: Secret
+   metadata:
+   name: tigera-managed-cluster-connection
+   namespace: tigera-operator
+   type: Opaque
+   data:
+   # This is the certificate of the management cluster side of the tunnel.
+   management-cluster.crt: ...
+   # The certificate and private key that are created and signed by the CA in the management cluster.
+   managed-cluster.crt: ...
+   managed-cluster.key: ...
+
+   ---
+   apiVersion: v1
+   kind: Secret
+   metadata:
+   name: tigera-voltron-linseed-certs-public
+   namespace: tigera-operator
+   type: Opaque
+   data:
+   tls.crt: ...
+
+   EOF
+   ```
+   </details>
+
+1. From the terminal, paste and run the kubectl command.
+
+PROCEDURE: Verify your connection
+
+[?] PROCEDURE: Disconnect your cluster
