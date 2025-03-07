@@ -13,7 +13,10 @@ module.exports = {
       type: 'category',
       label: 'Calico Cloud Free',
       link: { type: 'doc', id: 'free/index' },
-      items: ['free/connect-cluster-free'],
+      items: [
+        'free/connect-cluster-free',
+        'free/disconnect-cluster-free',
+      ],
     },
     {
       type: 'category',
