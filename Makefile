@@ -20,12 +20,12 @@
 ##         - Outputs all of the branch-related targets that you can
 ##           use to update a specific branch's operator docs.
 
-GO_BUILD_VER?=v0.91
+GO_BUILD_VER?=v0.95
 CALICO_BUILD?=calico/go-build:$(GO_BUILD_VER)
 LOCAL_USER_ID?=$(shell id -u $$USER)
 PACKAGE_NAME?=github.com/projectcalico/calico/calico
-API_GEN_REPO?=tmjd/gen-crd-api-reference-docs
-API_GEN_BRANCH?=kb_v2
+API_GEN_REPO?=tigera/gen-crd-api-reference-docs
+API_GEN_BRANCH?=operator
 API_GEN_VERSION=v0.3.0
 OPERATOR_REPO?=tigera/operator
 PRODUCT?=calico
