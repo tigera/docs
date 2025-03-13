@@ -11,6 +11,10 @@ file=$1
 
 # Moves all <p> and </p> tags to their own line.
 perl -0777 -pi -e 's/(<p[^>]*>)([\s\S]*?)(<\/p>)/$1\n$2\n$3/g' ${file}
+# Moves all <h2> </h2> tag to the same line.
+perl -0777 -pi -e 's/(<h2[^>]*)/$1 class="anchor anchorWithStickyNavbar"/g' ${file}
+# Moves all <h3> </h3> tag to the same line.
+perl -0777 -pi -e 's/(<h3[^>]*)/$1 class="anchor anchorWithStickyNavbar"/g' ${file}
 # Moves all <h3> </h3> tag to the same line.
 perl -0777 -pi -e 's/(<h3[^>]*>)([\s\S]*?)\n(<\/h3>)/$1$2$3/g' ${file}
 # Moves all <td> </td> tags to their own line.
