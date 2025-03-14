@@ -1,10 +1,6 @@
 {{ define "type" }}
 
-<h3 id="{{ anchorIDForType . }}" class="anchor anchorWithStickyNavbar">
-    {{- .Name.Name }}
-    {{ if eq .Kind "Alias" }}(<code>{{.Underlying}}</code> alias){{ end -}}
-    <a href="#{{ anchorIDForType . }}" class="hash-link" aria-label="Direct link to {{.Name.Name}}" title="Direct link to {{.Name.Name}}">&ZeroWidthSpace;</a>
-</h3>
+<h3 id="{{ anchorIDForType . }}" class="anchor anchorWithStickyNavbar">{{- .Name.Name }}{{ if eq .Kind "Alias" }}(<code>{{.Underlying}}</code> alias){{ end -}}<a href="#{{ anchorIDForType . }}" class="hash-link" aria-label="Direct link to {{.Name.Name}}" title="Direct link to {{.Name.Name}}"></a></h3>
 {{ with (typeReferences .) }}
     <p>
         (<em>Appears on:</em>

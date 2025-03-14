@@ -12,10 +12,7 @@
 {{ end}}
 
 {{ range .packages }}
-    <h2 id="{{- packageAnchorID . -}}" class="anchor anchorWithStickyNavbar">
-        {{- packageDisplayName . -}}
-        <a href="#{{- packageAnchorID . -}}" class="hash-link" aria-label="Direct link to {{packageDisplayName .}}" title="Direct link to {{packageDisplayName .}}">&ZeroWidthSpace;</a>
-    </h2>
+    <h2 id="{{- packageAnchorID . -}}" class="anchor anchorWithStickyNavbar">{{- packageDisplayName . -}}<a href="#{{- packageAnchorID . -}}" class="hash-link" aria-label="Direct link to {{packageDisplayName .}}" title="Direct link to {{packageDisplayName .}}"></a></h2>
 
     {{ with (index .GoPackages 0 )}}
         {{ with .DocComments }}
