@@ -12,8 +12,9 @@
 {{ end}}
 
 {{ range .packages }}
-    <h2 id="{{- packageAnchorID . -}}">
+    <h2 id="{{- packageAnchorID . -}}" class="anchor anchorWithStickyNavbar">
         {{- packageDisplayName . -}}
+        <a href="#{{- packageAnchorID . -}}" class="hash-link" aria-label="Direct link to {{packageDisplayName .}}" title="Direct link to {{packageDisplayName .}}">&ZeroWidthSpace;</a>
     </h2>
 
     {{ with (index .GoPackages 0 )}}
@@ -40,5 +41,10 @@
     {{ end }}
     <hr/>
 {{ end }}
+
+<p><em>
+    Generated with <code>gen-crd-api-reference-docs</code>
+    {{ with .gitCommit }} on git commit <code>{{ . }}</code>{{end}}.
+</em></p>
 
 {{ end }}

@@ -1,8 +1,9 @@
 {{ define "type" }}
 
-<h3 id="{{ anchorIDForType . }}">
+<h3 id="{{ anchorIDForType . }}" class="anchor anchorWithStickyNavbar">
     {{- .Name.Name }}
     {{ if eq .Kind "Alias" }}(<code>{{.Underlying}}</code> alias){{ end -}}
+    <a href="#{{ anchorIDForType . }}" class="hash-link" aria-label="Direct link to {{.Name.Name}}" title="Direct link to {{.Name.Name}}">&ZeroWidthSpace;</a>
 </h3>
 {{ with (typeReferences .) }}
     <p>
@@ -10,15 +11,40 @@
         {{- $prev := "" -}}
         {{- range . -}}
             {{- if $prev -}}, {{ end -}}
-            {{ $prev = . }}
+            {{- $prev = . -}}
             <a href="{{ linkForType . }}">{{ typeDisplayName . }}</a>
         {{- end -}}
         )
     </p>
 {{ end }}
 
-
+<div>
     {{ safe (renderComments .CommentLines) }}
+</div>
+
+{{ with (constantsOfType .) }}
+<table>
+    <thead>
+        <tr>
+            <th>Value</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+      {{- range . -}}
+      <tr>
+        {{- /*
+            renderComments implicitly creates a <p> element, so we
+            add one to the display name as well to make the contents
+            of the two cells align evenly.
+        */ -}}
+        <td><p>{{ typeDisplayName . }}</p></td>
+        <td>{{ safe (renderComments .CommentLines) }}</td>
+      </tr>
+      {{- end -}}
+    </tbody>
+</table>
+{{ end }}
 
 {{ if .Members }}
 <table>
