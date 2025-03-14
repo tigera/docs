@@ -145,6 +145,7 @@ build-operator-reference:
 				go mod download all && go build && \
 				go get github.com/$(OPERATOR_REPO)@$$op_ver && \
 				./gen-crd-api-reference-docs \
+					-template-dir /go/src/$(PACKAGE_NAME)/crd-gen-template/operator \
 					-api-dir github.com/tigera/operator/api \
 					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
 					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx && \
@@ -168,7 +169,7 @@ build-ia-operator-reference:
 				git -c advice.detachedHead=false clone --depth=1 -b $(API_GEN_VERSION) git@github.com:ahmetb/gen-crd-api-reference-docs.git && cd gen-crd-api-reference-docs && go build && \
 				cd ../ && git -c advice.detachedHead=false clone --depth=1 -b $(IA_OPERATOR_VERSION) git@github.com:tigera/image-assurance.git && cd image-assurance && \
 				../gen-crd-api-reference-docs/gen-crd-api-reference-docs  \
-					-template-dir /go/src/$(PACKAGE_NAME)/crd-gen-template -api-dir github.com/tigera/image-assurance/operator/api \
+					-template-dir /go/src/$(PACKAGE_NAME)/crd-gen-template/ia-operator -api-dir github.com/tigera/image-assurance/operator/api \
 					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
 					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx && \
                     /go/src/$(PACKAGE_NAME)/scripts/api-jsx.sh /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx'
