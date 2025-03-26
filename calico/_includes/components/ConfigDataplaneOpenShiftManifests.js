@@ -8,7 +8,7 @@ export default function ConfigDataplaneOpenShiftManifests(props) {
   return (
     <>
       <p>
-        Set the <code>KUBERNETES_SERVICE_HOST</code> attribute in <code>01-configmap-kubernetes-services-endpoint.yaml</code> file:
+        Set the <code>KUBERNETES_SERVICE_HOST</code> attribute in <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file:
       </p>    
       <If condition={!props.hostedControlPlane}>
         <Then>
@@ -28,7 +28,7 @@ sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kuberne
       </If>
       <p>
         Include <code>spec.template.spec.dnsConfig.nameservers</code> value to resolve the apiserver DNS in{' '}
-        <code>02-tigera-operator.yaml</code> file. For clusters in AWS, the DNS server address is 169.254.169.253.
+        <code>{props.folderName}/02-tigera-operator.yaml</code> file. For clusters in AWS, the DNS server address is 169.254.169.253.
       </p>
       <CodeBlock language='yaml'>
       {`spec:
