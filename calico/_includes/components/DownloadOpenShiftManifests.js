@@ -1,6 +1,7 @@
 import React from 'react';
 
 import CodeBlock from '@theme/CodeBlock';
+import ConfigDataplaneOpenShiftManifests from './ConfigDataplaneOpenShiftManifests';
 
 import { prodname, releaseTitle, calicoReleasesURL } from '../../variables';
 
@@ -12,6 +13,8 @@ export default function DownloadOpenShiftManifests() {
         {`mkdir calico
 wget -qO- ${calicoReleasesURL}/${releaseTitle}/ocp.tgz | tar xvz --strip-components=1 -C calico`}
       </CodeBlock>
+
+      <ConfigDataplaneOpenShiftManifests folderName="calico" />
     </>
   );
 }
