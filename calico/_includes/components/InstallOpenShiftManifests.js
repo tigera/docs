@@ -1,4 +1,5 @@
 import React from 'react';
+import { When } from 'react-if';
 
 import CodeBlock from '@theme/CodeBlock';
 import ConfigDataplaneOpenShiftManifests from './ConfigDataplaneOpenShiftManifests';
