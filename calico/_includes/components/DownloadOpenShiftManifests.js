@@ -14,7 +14,7 @@ export default function DownloadOpenShiftManifests() {
 wget -qO- ${calicoReleasesURL}/${releaseTitle}/ocp.tgz | tar xvz --strip-components=1 -C calico`}
       </CodeBlock>
 
-      <ConfigDataplaneOpenShiftManifests folderName="calico" />
+      <ConfigDataplaneOpenShiftManifests folderName="calico" hostedControlPlane />
     </>
   );
 }
