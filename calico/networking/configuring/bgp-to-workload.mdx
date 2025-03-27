@@ -30,7 +30,7 @@ The guide makes use of several $[prodname] resources, including:
 - [BGPConfiguration](../../reference/resources/bgpconfig.mdx) - Configures global
   BGP settings for the cluster.
 
-The [BGP Guide](./bgp.mdx) provides a general overview of these concepts.
+See [Configure BGP peering](./bgp.mdx) for a general overview of these concepts.
 
 ## Supported BGP topologies
 
@@ -62,7 +62,7 @@ peering from parent cluster to the workload is done using the "pod IP" of the
 workload.  This must agree with the IP that the workload itself uses to
 source traffic.
 
-## Before you begin...
+## Before you begin
 
 Ensure you can access `projectcalico.org/v3` resources, either by installing the
 $[prodname] [API server](../../operations/install-apiserver.mdx) (which makes
@@ -85,24 +85,24 @@ to peer with this virtual IP rather than needing to know the specific IP of thei
 parent node.
 
 To avoid conflicts with your network, the addresses are configurable through
-the `BGPConfiguration` resource and there are no defaults. They must be
+the `BGPConfiguration` resource, and there are no defaults. They must be
 configured to enable the feature:
 
 - For IPv4, we recommend using a link-local IP address that is not otherwise
   in use on the parent cluster's network. Note that $[prodname] uses
-  `169.254.0.1` and `169.254.0.2` internally so these must not be used. You may also
+  169.254.0.1 and 169.254.0.2 internally so these must not be used. You may also
   wish to avoid cloud provider metadata addresses, such as `169.254.169.254`
   (as used by AWS). In this guide we'll use `169.254.0.179`; you can use the same
   address unless it conflicts with some other use on your nodes.
 
 - If using the IPv6 address, you _must not_ use a link local address (because
   IPv6 requires link-local addresses to be qualified with a scope tag, and $[prodname]
-  currently ahs no way to provision the correct scopes). Instead, we recommend
+  currently has no way to provision the correct scopes). Instead, we recommend
   using a ULA address that is not otherwise in use in your network. In this
   guide we'll use `fdc9:9723:09bc::1`(which was chosen randomly according to
   RFC 4193 for this guide, so it may be suitable for your use as well).
 
-Once you have chosen the IP address(es), configure the BGPConfiguration resource.
+Once you have chosen the IP address(es), configure the `BGPConfiguration` resource.
 (You can omit the IPv6 address if not using IPv6.)
 
 ```yaml
@@ -116,14 +116,14 @@ spec:
   localWorkloadPeeringIPV6: "fdc9:9723:09bc::1"
 ```
 
-### Create BGPFilter resources
+### Create `BGPFilter` resources
 
-Before creating the BGPPeer to peer with the workloads, we create
+Before creating the `BGPPeer` resource to peer with the workloads, we create
 `BGPFilter` resources to control which routes are imported and exported.
 
 - Because the workloads are running on the $[prodname] cluster, we can assume that
   they already have a valid default route via their host node. Hence, we don't
-  need to export any routes to the workloads. Create the following `BGPFilter`,
+  need to export any routes to the workloads. Create the following `BGPFilter` resource,
   which can be used to block export of any routes.
 
   ```yaml
