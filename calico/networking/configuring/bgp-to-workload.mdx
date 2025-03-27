@@ -39,7 +39,8 @@ networking.
 
 eBGP must be used both for peering between parent cluster and top-of-rack
 router and for peering between parent cluster and nested workload cluster.
-Each of the ToR, parent cluster, and nested cluster must have a unique AS number.
+This means that the AS numbers of the parent cluster, the nested cluster, and
+the top-of-rack router must all be different.
 
 iBGP peerings to workloads or ToR routers are not supported:
 
@@ -88,19 +89,19 @@ To avoid conflicts with your network, the addresses are configurable through
 the `BGPConfiguration` resource, and there are no defaults. They must be
 configured to enable the feature:
 
-- For IPv4, we recommend using a link-local IP address that is not otherwise
-  in use on the parent cluster's network. Note that $[prodname] uses
-  169.254.0.1 and 169.254.0.2 internally so these must not be used. You may also
-  wish to avoid cloud provider metadata addresses, such as `169.254.169.254`
-  (as used by AWS). In this guide we'll use `169.254.0.179`; you can use the same
-  address unless it conflicts with some other use on your nodes.
+For IPv4, we recommend using a link-local IP address that is not otherwise
+in use on the parent cluster's network. Note that $[prodname] uses
+169.254.0.1 and 169.254.0.2 internally so these must not be used. You may also
+wish to avoid cloud provider metadata addresses, such as 169.254.169.254
+(as used by AWS). In this guide we'll use 169.254.0.179; you can use the same
+address unless it conflicts with some other use on your nodes.
 
-- If using the IPv6 address, you _must not_ use a link local address (because
-  IPv6 requires link-local addresses to be qualified with a scope tag, and $[prodname]
-  currently has no way to provision the correct scopes). Instead, we recommend
-  using a ULA address that is not otherwise in use in your network. In this
-  guide we'll use `fdc9:9723:09bc::1`(which was chosen randomly according to
-  RFC 4193 for this guide, so it may be suitable for your use as well).
+If using the IPv6 address, you _must not_ use a link local address (because
+IPv6 requires link-local addresses to be qualified with a scope tag, and $[prodname]
+currently has no way to provision the correct scopes). Instead, we recommend
+using a ULA address that is not otherwise in use in your network. In this
+guide we'll use fdc9:9723:09bc::1 (which was chosen randomly according to
+RFC 4193 for this guide, so it may be suitable for your use as well).
 
 Once you have chosen the IP address(es), configure the `BGPConfiguration` resource.
 (You can omit the IPv6 address if not using IPv6.)
@@ -139,7 +140,7 @@ Before creating the `BGPPeer` resource to peer with the workloads, we create
   ```
 
 - For added security, it is also wise to limit what routes we'll accept from
-  the workloads. Create a `BGPFilter` that only accepts routes that are within
+  the workloads. Create a `BGPFilter` resource that only accepts routes that are within
   the IP pool of the nested cluster. For example, if the nested cluster's IP pools
   are 10.123.0.0/16 and ca11:c0::/48:
 
@@ -159,8 +160,8 @@ Before creating the `BGPPeer` resource to peer with the workloads, we create
         cidr: ca11:c0::/48  # IP pool CIDR of nested cluster
   ```
 
-In addition we need to create a BGPFilter to tell $[prodname] to re-advertise
-routes learned from the workloads to the ToR. Create the following `BGPFilter`,
+In addition we need to create a `BGPFilter` to tell $[prodname] to re-advertise
+routes learned from the workloads to the ToR. Create the following `BGPFilter` resource,
 adjusting the CIDRs as appropriate for your nested cluster:
 
 ```yaml
@@ -187,7 +188,7 @@ Configure the parent cluster to use BGP networking and to peer with its
 top-of-rack router(s) over eBGP. For example, by using the
 [downward default model](../../reference/architecture/design/l3-interconnect-fabric.mdx#the-downward-default-model).
 
-Include the BGPFilter defined above in the `BGPPeer` used to peer with the ToR:
+Include the `BGPFilter` resource defined above in the `BGPPeer` resource used to peer with the ToR:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -208,7 +209,7 @@ In the parent cluster, create a `BGPPeer` resource to peer with the workloads.
 - The `localWorkloadSelector` field is used to select which workloads to peer with.
   In this example, we select workloads with the label `color=red`.
 
-- Include the `BGPFilter` resources defined above in the `BGPPeer` to control
+- Include the `BGPFilter` resources defined above in the `BGPPeer` resource to control
   which routes are imported and exported.
 
 ```yaml
@@ -235,7 +236,7 @@ Both per-node and global `BGPPeer` resources are supported. To limit the peering
 
 In the child cluster,
 
-- Ensure that the node-to-node mesh is disabled in the `BGPConfiguration` and
+- Ensure that the node-to-node mesh is disabled in the `BGPConfiguration` resource and
   that the workload cluster's AS number is set:
 
   ```yaml
@@ -248,7 +249,8 @@ In the child cluster,
    asNumber: <workload cluster's AS number>
   ```
 
-- Create a `BGPPeer`(s) that peer with the parent clusters' virtual IP(s):
+- Create a `BGPPeer` resource (per desired IP version) that peers with the
+  parent clusters' virtual IP:
 
   ```yaml
   apiVersion: projectcalico.org/v3
@@ -273,10 +275,10 @@ In the child cluster,
 You can configure more than one nested cluster by:
 
 - Choosing a unique non-overlapping IP pool for each nested cluster.
-- In the parent cluster: creating a new import `BGPFilter` for each cluster to import its routes.
-- In the parent cluster: creating a new, uniquely-named `BGPPeer` for each cluster to peer with the
-  parent cluster. You can re-use the shared "no-export" BGPFilter with every nested cluster peering.
-- In the parent cluster: updating the `export-to-tor` `BGPFilter` to include the new cluster's CIDRs.
+- In the parent cluster: creating a new import `BGPFilter` resource for each cluster to import its routes.
+- In the parent cluster: creating a new, uniquely-named `BGPPeer` resource for each cluster to peer with the
+  parent cluster. You can re-use the shared "no-export" `BGPFilter` resource with every nested cluster peering.
+- In the parent cluster: updating the `export-to-tor` `BGPFilter` resource to include the new cluster's CIDRs.
 - In the nested cluster: adding a copy of the `peer-to-parent-cluster` `BGPPeer`(s). These should
   be the same in all nested clusters since a parent cluster always uses the same virtual IP for all
   nested clusters.
