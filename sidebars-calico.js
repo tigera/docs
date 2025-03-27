@@ -268,6 +268,7 @@ module.exports = {
           },
           items: [
             'networking/configuring/bgp',
+            'networking/configuring/bgp-to-workload',
             'networking/configuring/vxlan-ipip',
             'networking/configuring/advertise-service-ips',
             'networking/configuring/mtu',
