@@ -13,6 +13,7 @@ export default function InstallOpenShiftManifests(props) {
       <CodeBlock id='data-install-openshift-manifests' language='bash'>
         {`mkdir calico
 wget -qO- ${calicoReleasesURL}/${releaseTitle}/ocp.tgz | tar xvz --strip-components=1 -C calico
+cd calico && rm -f ${props.filesToExclude} && cd ..
 cp calico/* manifests/`}
       </CodeBlock>
 
