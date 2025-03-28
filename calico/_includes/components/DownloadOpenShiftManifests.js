@@ -11,7 +11,8 @@ export default function DownloadOpenShiftManifests() {
       <p>Download the {prodname} manifests for OpenShift:</p>
       <CodeBlock id='data-download-openshift-manifests' language='bash'>
         {`mkdir calico
-wget -qO- ${calicoReleasesURL}/${releaseTitle}/ocp.tgz | tar xvz --strip-components=1 -C calico`}
+wget -qO- ${calicoReleasesURL}/${releaseTitle}/ocp.tgz | \\
+tar xvz --strip-components=1 -C calico`}
       </CodeBlock>
 
       <ConfigDataplaneOpenShiftManifests folderName="calico" hostedControlPlane />
