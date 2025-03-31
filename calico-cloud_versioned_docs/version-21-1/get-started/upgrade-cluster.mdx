@@ -6,10 +6,28 @@ description: Steps to upgrade to the latest version of Calico Cloud.
 
 To upgrade managed clusters to the latest version of $[prodname]:
 
-1. In the web console, go to **Managed Clusters**.
+1. From the web console, go to **Managed Clusters**.
 1. For the cluster you want to upgrade, select **Actions** > **Reinstall**.
-1. Select the version of $[prodname] you want to install, you can select the currently installed version, or any newer supported version
-1. Click **Next**, copy the command, and apply it to appropriate cluster.
+1. In the **Reinstall Cluster** dialog, select a newer version of $[prodname] from the list, click **Reinstall**, and copy the generated kubectl command.
+   <details>
+     <summary>Use alternate manifest for legacy features</summary>
 
-![reinstall](/img/calico-cloud/managed-clusters-reinstall.png)
-![reinstall-step1](/img/calico-cloud/managed-clusters-reinstall-step1.png)
+     The Image Assurance, Container Threat Detection, and Compliance Reports features were removed for new users in Calico Cloud 21.1.0.
+     Legacy users of those features can continue to use a deprecated version until the features are completely removed in a future release.
+
+     To continue using these features, modify the generated command by replacing `deploy.yaml` with `deploy-with-container-security.yaml`.
+     This change gives you a manifest with all three legacy features enabled.
+     You cannot enable or disable these features individually.
+
+     ```bash title="Example of generated kubectl command with alternate manifest"
+     kubectl apply -f https://installer.calicocloud.io/manifests/cc-operator/latest/deploy-with-container-security.yaml && curl -H "Authorization: Bearer ..." "https://www.calicocloud.io/api/managed-cluster/deploy.yaml?version=$[cloudUserVersion]" | kubectl apply -f -
+     ```
+   </details>
+
+1. From a terminal, paste and run the command.
+   The cluster's status under **Connection Status** changes to **Disconnected: Installing**.
+   When the upgrade is complete, the status changes to **Connected**.
+
+
+
+
