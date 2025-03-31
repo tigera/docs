@@ -1,6 +1,56 @@
 const ccImageLists = {
+  // curl -0 https://installer.calicocloud.io/manifests/v3.21.0-1.0-5/image-list
+  'v21.1.0 (latest)': `quay.io/tigera/cnx-apiserver:v3.21.0-1.0
+quay.io/tigera/compliance-benchmarker:v3.21.0-1.0
+quay.io/tigera/compliance-controller:v3.21.0-1.0
+quay.io/tigera/compliance-reporter:v3.21.0-1.0
+quay.io/tigera/compliance-snapshotter:v3.21.0-1.0
+quay.io/tigera/key-cert-provisioner:v3.21.0-1.0
+quay.io/tigera/deep-packet-inspection:v3.21.0-1.0
+quay.io/tigera/ui-apis:v3.21.0-1.0
+quay.io/tigera/fluentd:v3.21.0-1.0
+quay.io/tigera/fluentd-windows:v3.21.0-1.0
+quay.io/tigera/guardian:v3.21.0-1.0
+quay.io/tigera/intrusion-detection-controller:v3.21.0-1.0
+quay.io/tigera/webhooks-processor:v3.21.0-1.0
+quay.io/tigera/packetcapture:v3.21.0-1.0
+quay.io/tigera/policy-recommendation:v3.21.0-1.0
+quay.io/tigera/egress-gateway:v3.21.0-1.0
+quay.io/tigera/l7-collector:v3.21.0-1.0
+quay.io/tigera/envoy:v3.21.0-1.0
+quay.io/tigera/prometheus:v3.21.0-1.0
+quay.io/tigera/prometheus-service:v3.21.0-1.0
+quay.io/tigera/alertmanager:v3.21.0-1.0
+quay.io/tigera/cnx-queryserver:v3.21.0-1.0
+quay.io/tigera/kube-controllers:v3.21.0-1.0
+quay.io/tigera/cnx-node:v3.21.0-1.0
+quay.io/tigera/cnx-node-windows:v3.21.0-1.0
+quay.io/tigera/typha:v3.21.0-1.0
+quay.io/tigera/cni:v3.21.0-1.0
+quay.io/tigera/cni-windows:v3.21.0-1.0
+quay.io/tigera/es-gateway:v3.21.0-1.0
+quay.io/tigera/linseed:v3.21.0-1.0
+quay.io/tigera/dikastes:v3.21.0-1.0
+quay.io/tigera/l7-admission-controller:v3.21.0-1.0
+quay.io/tigera/pod2daemon-flexvol:v3.21.0-1.0
+quay.io/tigera/csi:v3.21.0-1.0
+quay.io/tigera/node-driver-registrar:v3.21.0-1.0
+quay.io/tigera/envoy-gateway:v3.21.0-1.0
+quay.io/tigera/envoy-proxy:v3.21.0-1.0
+quay.io/tigera/envoy-ratelimit:v3.21.0-1.0
+quay.io/tigera/operator:v1.37.1
+quay.io/tigera/image-assurance-admission-controller:v1.22.6
+quay.io/tigera/image-assurance-operator:v1.22.6
+quay.io/tigera/image-assurance-container-runtime-adaptor:v1.22.6
+quay.io/tigera/image-assurance-cluster-scanner:v1.22.6
+quay.io/tigera/runtime-security-operator:v1.23.0
+quay.io/tigera/skimble:v1.23.0
+quay.io/tigera/cc-core:v0.2.18
+quay.io/tigera/prometheus-operator:v3.21.0-1.0
+quay.io/tigera/prometheus-config-reloader:v3.21.0-1.0
+quay.io/tigera/cc-cni-config-scanner:v0.4`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.21.0-1.0-4/image-list
-  'v21.0.0 (latest)': `quay.io/tigera/cnx-apiserver:v3.21.0-1.0
+  'v21.0.0': `quay.io/tigera/cnx-apiserver:v3.21.0-1.0
 quay.io/tigera/compliance-benchmarker:v3.21.0-1.0
 quay.io/tigera/compliance-controller:v3.21.0-1.0
 quay.io/tigera/compliance-reporter:v3.21.0-1.0
