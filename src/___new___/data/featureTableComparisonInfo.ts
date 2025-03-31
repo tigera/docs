@@ -208,23 +208,6 @@ export default {
       ],
     },
     {
-      title: 'Images',
-      content: [
-        {
-          rowHeader: 'Scan images for vulnerabilities',
-          CalicoOpenSource: '',
-          CalicoEnterprise: '',
-          CalicoCloud: 'Y',
-        },
-        {
-          rowHeader: 'Create policy to block vulnerable images from your clusters',
-          CalicoOpenSource: '',
-          CalicoEnterprise: '',
-          CalicoCloud: 'Y',
-        },
-      ],
-    },
-    {
       title: 'Observability and troubleshooting',
       content: [
         {
@@ -280,12 +263,6 @@ export default {
       title: 'Threat defense',
       content: [
         {
-          rowHeader: 'Container threat detection',
-          CalicoOpenSource: '',
-          CalicoEnterprise: '',
-          CalicoCloud: 'Y',
-        },
-        {
           rowHeader: 'Workload-centric Web Application Firewall (WAF)',
           CalicoOpenSource: '',
           CalicoEnterprise: 'Y',
@@ -302,12 +279,6 @@ export default {
     {
       title: 'Reports',
       content: [
-        {
-          rowHeader: 'Compliance reports',
-          CalicoOpenSource: '',
-          CalicoEnterprise: 'Y',
-          CalicoCloud: 'Y',
-        },
         {
           rowHeader: 'CIS benchmark reports',
           CalicoOpenSource: '',
