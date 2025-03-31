@@ -70,6 +70,33 @@ ip-172-16-101-9.us-west-2.compute.internal-auto-hep     ip-172-16-101-9.us-west-
 ip-172-16-102-63.us-west-2.compute.internal-auto-hep    ip-172-16-102-63.us-west-2.compute.internal    *           172.16.102.63,192.168.108.192    projectcalico-default-allow
 ```
 
+### Enable template host endpoints
+
+To enable template host endpoints, edit the default KubeControllersConfiguration instance, and update `spec.controllers.node.hostEndpoint.templates` with your custom templates spec.
+
+```bash
+calicoctl patch kubecontrollersconfiguration default --patch='{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled", "templates": [{"generateName": "custom-host-endpoint", "interfaceCIDRs": ["192.168.0.0/16"], "nodeSelector": "!has(node-role.kubernetes.io/control-plane)", "labels": {"custom-label": "template-host-endpoint"}}]}}}}}'
+```
+
+If successful, host endpoints are created for nodes matching your node selector:
+
+```bash
+calicoctl get heps -owide
+```
+
+The output may look similar to this:
+
+```
+NAME                                                            NODE                              INTERFACE   IPS               PROFILES
+192.168.83.64.compute.internal-custom-host-endpoint-auto-hep    192.168.83.64.compute.internal                192.168.83.64     projectcalico-default-allow
+192.168.0.128.compute.internal-custom-host-endpoint-auto-hep    192.168.0.128.compute.internal                192.168.0.128     projectcalico-default-allow
+192.168.157.128.compute.internal-custom-host-endpoint-auto-hep  192.168.157.128.compute.internal              192.168.157.128   projectcalico-default-allow
+```
+
+:::note
+You can disable creation of default host endpoints and only use template host endpoints by updating `spec.controllers.node.hostEndpoint.createDefaultHostEndpoint` to Disabled
+:::
+
 ### Apply network policy to automatic host endpoints
 
 To apply policy that targets all Kubernetes nodes, first add a label to the nodes.
