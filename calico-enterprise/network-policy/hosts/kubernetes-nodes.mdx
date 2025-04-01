@@ -77,13 +77,28 @@ ip-172-16-102-63.us-west-2.compute.internal-auto-hep    2021-05-12T22:16:47Z
 To enable template host endpoints, edit the default KubeControllersConfiguration instance, and update `spec.controllers.node.hostEndpoint.templates` with your custom templates spec
 
 ```bash
-calicoctl patch kubecontrollersconfiguration default --patch='{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled", "templates": [{"generateName": "custom-host-endpoint", "interfaceCIDRs": ["192.168.0.0/16"], "nodeSelector": "!has(node-role.kubernetes.io/control-plane)", "labels": {"custom-label": "template-host-endpoint"}}]}}}}}'
+cat << 'EOF' > hostEndpointTemplate.yaml
+spec:
+  controllers:
+    node:
+      hostEndpoint:
+        autoCreate: Enabled
+        templates:
+          - generateName: custom-host-endpoint
+            interfaceCIDRs:
+              - 192.168.0.0/16
+            nodeSelector: "!has(node-role.kubernetes.io/control-plane)"
+            labels:
+              custom-label: template-host-endpoint
+EOF
+
+kubectl patch kubecontrollersconfiguration default --patch-file hostEndpointTemplate.yaml --type merge
 ```
 
 If successful, host endpoints are created for nodes matching your node selector:
 
 ```bash
-calicoctl get heps -owide
+kubectl get heps -o=custom-columns='NAME:.metadata.name,NODE:.spec.node,INTERFACES:.spec.interfaceName,IPS:.spec.expectedIPs,PROFILES:.spec.profiles'
 ```
 
 The output may look similar to this:
