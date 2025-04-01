@@ -182,6 +182,7 @@ test('Crawl the docs and execute tests', async () => {
     'https://www.f5.com/glossary/cross-site-scripting', //TEMPORARY
     'https://www.f5.com/glossary/sql-injection', //TEMPORARY
     'https://www.f5.com/labs/articles/threat-intelligence/application-protection-report-2019--episode-2--2018-breach-trend', //TEMPORARY
+    'https://installer.calicocloud.io/manifests/cc-operator/latest/deploy-with-container-security.yaml', //TEMPORARY
   ];
 
   const lc = linkChecker();
