@@ -13,7 +13,7 @@ const variables = {
   rootDirWindows: 'C:\\TigeraCalico',
   nodecontainer: 'cnx-node',
   noderunning: 'calico-node',
-  cloudversion: 'v3.21.0-1.0-4',
+  cloudversion: 'v3.21.0-1.0-5',
   clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.21.0-1.0-5',
   clouddownloadbase: 'https://installer.calicocloud.io',
   cloudoperatorimage: 'quay.io/tigera/cc-operator',
