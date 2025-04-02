@@ -72,10 +72,14 @@ ip-172-16-101-9.us-west-2.compute.internal-auto-hep     2021-05-12T22:16:47Z
 ip-172-16-102-63.us-west-2.compute.internal-auto-hep    2021-05-12T22:16:47Z
 ```
 
-### Enable template host endpoints
+### Use custom templates for host endpoints
 
-To enable template host endpoints, edit the default KubeControllersConfiguration instance, and update `spec.controllers.node.hostEndpoint.templates` with your custom templates spec
+Template host endpoints are similar to automatic host endpoints, but with greater degree of customization. They are created automatically by the calico kube-controllers according to the `spec.controllers.node.hostEndpoint.templates`.
+You might want to consider using template host endpoints if you want automatic host endpoints to be created for certain Nodes only, or only for certain Node interfaces.
 
+To enable template host endpoints and disable default host endpoints, edit the default KubeControllersConfiguration instance, and update `spec.controllers.node.hostEndpoint.templates` with your custom templates spec.
+
+1. Create a custom templates spec
 ```bash
 cat << 'EOF' > hostEndpointTemplate.yaml
 spec:
@@ -83,6 +87,7 @@ spec:
     node:
       hostEndpoint:
         autoCreate: Enabled
+        createDefaultHostEndpoint: Disabled
         templates:
           - generateName: custom-host-endpoint
             interfaceCIDRs:
@@ -91,11 +96,42 @@ spec:
             labels:
               custom-label: template-host-endpoint
 EOF
+```
 
+2. Merge the templates spec with kubecontrollersconfiguration
+
+```bash
 kubectl patch kubecontrollersconfiguration default --patch-file hostEndpointTemplate.yaml --type merge
 ```
 
-If successful, host endpoints are created for nodes matching your node selector:
+3. Verify that your kubecontrollersconfiguration is updated
+
+```bash
+kubectl get kubecontrollersconfiguration default -o yaml
+```
+
+The output should look similar to this:
+
+```
+apiVersion: crd.projectcalico.org/v1
+kind: KubeControllersConfiguration
+metadata:
+  name: default
+spec:
+  controllers:
+    node:
+      hostEndpoint:
+        autoCreate: Enabled
+        createDefaultHostEndpoint: Enabled
+        templates:
+        - generateName: custom-host-endpoint
+          interfaceCIDRs:
+          - 192.168.0.0/16
+          labels:
+            custom-label: template-host-endpoint
+```
+
+4. If successful, host endpoints are created for nodes matching your node selector:
 
 ```bash
 kubectl get heps -o=custom-columns='NAME:.metadata.name,NODE:.spec.node,INTERFACES:.spec.interfaceName,IPS:.spec.expectedIPs,PROFILES:.spec.profiles'
@@ -109,9 +145,6 @@ NAME                                                            NODE            
 192.168.0.128.compute.internal-custom-host-endpoint-auto-hep    192.168.0.128.compute.internal                192.168.0.128     projectcalico-default-allow
 192.168.157.128.compute.internal-custom-host-endpoint-auto-hep  192.168.157.128.compute.internal              192.168.157.128   projectcalico-default-allow
 ```
-:::note
-You can disable creation of default host endpoints and only use template host endpoints by updating `spec.controllers.node.hostEndpoint.createDefaultHostEndpoint` to Disabled
-:::
 
 ### Apply network policy to automatic host endpoints
 
