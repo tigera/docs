@@ -274,7 +274,7 @@ export default async function createAsyncConfig() {
                 },
                 {
                   label: 'Stack Overflow',
-                  to: 'https://stackoverflow.com/questions/tagged/project-calico',
+                  to: 'https://stackoverflow.com/questions/tagged/calico',
                 },
                 {
                   label: 'Slack',
