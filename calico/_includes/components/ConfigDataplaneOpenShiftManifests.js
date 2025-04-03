@@ -9,60 +9,84 @@ import TabItem from '@theme/TabItem';
 export default function ConfigDataplaneOpenShiftManifests(props) {
   return (
     <>
-    <Heading
-      as='h3'
-      id='choose-dataplane'
-    >
-      Configure the Data plane
-    </Heading>    
-    <Tabs>
-      <TabItem label="eBPF" value="eBPF">
-          <p>
-            Calico uses eBPF data plane by default. To configure it you need to set the <code>KUBERNETES_SERVICE_HOST</code> attribute in <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file:
-          </p>    
+      <Heading
+        as='h3'
+        id='choose-dataplane'
+      >
+        Select and configure a data plane
+      </Heading>
+      <p>
+        For this installation, Calico supports two data plane options for OpenShift: <strong>eBPF</strong> and <strong>iptables</strong>. You need to choose one and configure it.
+      </p>
+      <Heading
+        as='h4'
+        id='bpf-dataplane'
+      >
+        Option1: eBPF data plane (recommended)
+      </Heading>      
+      <p>
+        To configure the eBPF data plane, you need to:
+      </p>    
+      <ol>
+        <li>
+          Set the <code>KUBERNETES_SERVICE_HOST</code> attribute in the <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file.
           <If condition={!props.hostedControlPlane}>
             <Then>
+              The following command extracts the <code>apiServerURL</code> from the <code>manifests/cluster-infrastructure-02-config.yml</code> file and set it.
               <CodeBlock language='bash'>
-                {`CLUSTER_NAME=\`grep -o '"ClusterName": "[^"]*' .openshift_install_state.json | sed 's/"ClusterName": "//'\` && \\
-BASE_DOMAIN=\`grep -o '"BaseDomain": "[^"]*' .openshift_install_state.json | sed 's/"BaseDomain": "//'\` && \\
-sed -i "s|<cluster_name>|$CLUSTER_NAME|g" ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml && \\
-sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
+                {`API_SERVER_URL=$(cat manifests/cluster-infrastructure-02-config.yml | sed -n 's/.*apiServerURL: https:\\/\\/\\(api\\.[^:]*\\).*/\\1/p') && \\
+sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" manifests/01-configmap-kubernetes-services-endpoint.yaml`}
               </CodeBlock>
             </Then>
             <Else>
+              The following command sets it, assuming that the <code>$HOSTED_CLUSTER_NAME</code> and <code>$BASE_DOMAIN</code> variables were already set in the previous <string>Create a hosted cluster</string> step.
               <CodeBlock language='bash'>
                 {`sed -i "s|<cluster_name>|$HOSTED_CLUSTER_NAME|g" ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml && \\
 sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
               </CodeBlock>
             </Else>        
           </If>
-          <p>
-            And also, to include <code>spec.template.spec.dnsConfig.nameservers</code> value to resolve the apiserver DNS in{' '}
-            <code>{props.folderName}/02-tigera-operator.yaml</code> file. For clusters in AWS, the DNS server address is 169.254.169.253.
-          </p>
+        </li>
+        <li>
+            Include the following <code>spec.template.spec.dnsConfig.nameservers</code> block to resolve the apiserver DNS in the <code>{props.folderName}/02-tigera-operator.yaml</code> file. For clusters in AWS, the DNS server address is 169.254.169.253.
           <CodeBlock language='yaml'>
           {`spec:
-  template:
-    spec:
-      (...)    
-      dnsConfig:
-        nameservers:
-        - 169.254.169.253 # AWS DNS server`}
+template:
+spec:
+  (...)    
+  dnsConfig:
+    nameservers:
+    - 169.254.169.253 # AWS DNS server`}
           </CodeBlock>
-        </TabItem>
-          <TabItem label="Iptables" value="Iptables">
-          <p>
-            As of <b>v3.30</b>, Calico uses the eBPF data plane by default on OpenShift. If you prefer to install Calico with Iptables, you can configure it by running the following command:
-          </p>
-          <CodeBlock language='bash'>
-            {`sed -i 's/^\\(\\s*linuxDataplane:\\s*\\)BPF/\\1Iptables/' ${props.folderName}/01-cr-installation.yaml && \\
+        </li>
+      </ol>
+      <Heading
+        as='h4'
+        id='iptables-dataplane'
+      >
+        Option2: Iptables data plane
+      </Heading>           
+      <p>
+        To install Calico with Iptables, you need to:
+        <ol>
+          <li>
+            Set <code>linuxDataplane</code> to <code>Iptables</code> in the <code>{props.folderName}/01-cr-installation.yaml</code> file.
+          </li>
+          <li>
+            Set <code>deployKubeProxy</code> to <code>true</code> in the <code>{props.folderName}/cluster-network-operator.yaml</code> file.
+          </li>
+          <li>
+            Comment out the <code>KUBERNETES_SERVICE_HOST</code> and <code>KUBERNETES_SERVICE_PORT</code> attributes in the <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file.
+          </li>
+        </ol>
+        You can do it by running the following command:
+      </p>
+      <CodeBlock language='bash'>
+        {`sed -i 's/^\\(\\s*linuxDataplane:\\s*\\)BPF/\\1Iptables/' ${props.folderName}/01-cr-installation.yaml && \\
 sed -i 's/^\\(\\s*deployKubeProxy:\\s*\\)false/\\1true/' ${props.folderName}/cluster-network-operator.yaml && \\
 sed -i '/^\\s*KUBERNETES_SERVICE_HOST:/s/^\\(\\s*\\)/#\\1/' ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml && \\
 sed -i '/^\\s*KUBERNETES_SERVICE_PORT:/s/^\\(\\s*\\)/#\\1/' ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
-          </CodeBlock>  
-        </TabItem>      
-      </Tabs>
-  
+      </CodeBlock>  
     </>
   );
 }
