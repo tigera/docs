@@ -51,12 +51,12 @@ sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kuberne
             Include the following <code>spec.template.spec.dnsConfig.nameservers</code> block to resolve the apiserver DNS in the <code>{props.folderName}/02-tigera-operator.yaml</code> file. For clusters in AWS, the DNS server address is 169.254.169.253.
           <CodeBlock language='yaml'>
           {`spec:
-template:
-spec:
-  (...)    
-  dnsConfig:
-    nameservers:
-    - 169.254.169.253 # AWS DNS server`}
+  template:
+    spec:
+      (...)    
+      dnsConfig:
+        nameservers:
+        - 169.254.169.253 # AWS DNS server`}
           </CodeBlock>
         </li>
       </ol>
