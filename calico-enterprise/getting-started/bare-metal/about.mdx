@@ -40,57 +40,71 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
 ## How to
 
-### Set up your Kubernetes cluster to work with a non-cluster host or VM
+### Set up your Kubernetes cluster to work with Accepted Valuesa non-cluster host or VM
 
-1. Apply the `NonClusterHost` custom resource. The `endpoint` field is required. It defines the remote endpoint for the non-cluster host log forwarder.
+1. Apply the `NonClusterHost` custom resource. This resource enables the cluster-side ingestion endpoint to receive logs from non-cluster hosts. Additionally, it provides a dedicated Typha deployment for managing communication between the non-cluster host agent and Typha.
 
-   ```bash
-   kubectl create -f - <<EOF
-   apiVersion: operator.tigera.io/v1
-   kind: NonClusterHost
-   metadata:
-     name: tigera-secure
-   spec:
-     endpoint: <endpoint for non-cluster host log forwarder>
-   EOF
-   ```
+    To ensure a secure connection, non-cluster host agents will establish an mTLS connection via the `typhaEndpoint` endpoint. As a result, the external ingress or load balancer must be configured to pass through TCP Layer 4 traffic.
 
-   Wait until the manager shows a status of Available, then proceed to the next step.
+    :::note
 
-1. Obtain the token for `tigera-noncluster-host` service account.
+    Starting from Calico Enterprise version v3.21.0 Early Preview 2, the `typhaEndpoint` field is required for non-cluster host agents to function correctly. Ensure this filed is properly configured to maintain seamless connectivity.
 
-   ```bash
-   kubectl get secret -n calico-system tigera-noncluster-host -o jsonpath='{.data.token}' | base64 --decode
-   ```
+    :::
 
-1. Use a text editor to create a kubeconfig file for non-cluster host or VM.
+    | Field         | Description                                                          | Accepted Values                                                          | Schema |
+    | ------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ |
+    | endpoint      | Location of the log ingestion point for non-cluster hosts. Required. | Any HTTPS URL with a domain name and a port number                       | string |
+    | typhaEndpoint | Location of the Typha endpoint for non-cluster host agent and Typha communication. Required. | Any IP address or domain name with a port number | string |
 
-   ```yaml
-   apiVersion: v1
-   kind: Config
-   current-context: noncluster-hosts
-   preferences: {}
-   clusters:
-   - cluster:
-       certificate-authority-data: <your cluster certificate>
-       server: <your cluster server>
-     name: noncluster-hosts
-   contexts:
-   - context:
-       cluster: noncluster-hosts
-       user: tigera-noncluster-host
-     name: noncluster-hosts
-   users:
-   - name: tigera-noncluster-host
-     user:
-       token: <token from previous step>
-   ```
+    ```bash
+    kubectl create -f - <<EOF
+    apiVersion: operator.tigera.io/v1
+    kind: NonClusterHost
+    metadata:
+      name: tigera-secure
+    spec:
+      endpoint: https://ingress-or-load-balancer.example.com:443
+      typhaEndpoint: 5.6.7.8:5473
+    EOF
+    ```
 
-   Take the cluster information from an already existing kubeconfig.
+    Wait until the Tigera Manager and non-cluster Typha deployments reach the Available status before proceeding to the next step.
 
-1. Create a [`HostEndpoint` resource](../../reference/host-endpoints/overview.mdx) for each non-cluster host or VM. The `node` and `expectedIPs` fields are required to match the hostname and the expected interface IP addresses.
+2. Obtain the token for `tigera-noncluster-host` service account.
 
-1. Follow [Configure access to the $[prodname] web console](../../operations/cnx/access-the-manager.mdx) page to configure the $[prodname] web console access.
+    ```bash
+    kubectl get secret -n calico-system tigera-noncluster-host -o jsonpath='{.data.token}' | base64 --decode
+    ```
+
+3. Use a text editor to create a kubeconfig file for non-cluster host or VM.
+
+    ```yaml
+    apiVersion: v1
+    kind: Config
+    current-context: noncluster-hosts
+    preferences: {}
+    clusters:
+    - cluster:
+        certificate-authority-data: <your cluster certificate>
+        server: <your cluster server>
+      name: noncluster-hosts
+    contexts:
+    - context:
+        cluster: noncluster-hosts
+        user: tigera-noncluster-host
+      name: noncluster-hosts
+    users:
+    - name: tigera-noncluster-host
+      user:
+        token: <token from previous step>
+    ```
+
+    Take the cluster information from the administrator kubeconfig.
+
+4. Create a [`HostEndpoint` resource](../../reference/host-endpoints/overview.mdx) for each non-cluster host or VM. The `node` and `expectedIPs` fields are required to match the hostname and the expected interface IP addresses.
+
+5. Follow [Configure access to the $[prodname] web console](../../operations/cnx/access-the-manager.mdx) page to configure the $[prodname] web console access.
 
 ### Set up your non-cluster host or VM
 
@@ -98,15 +112,15 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
    - If your non-cluster host or VM has RHEL 8 installed, then run the following command:
 
-     ```bash
-     curl https://downloads.tigera.io/ee/rpms/v3.20/calico_rhel8.repo -o /etc/yum.repos.d/calico_rhel8.repo
-     ```
+      ```bash
+      curl https://downloads.tigera.io/ee/rpms/v3.21/calico_rhel8.repo -o /etc/yum.repos.d/calico_rhel8.repo
+      ```
 
    - If your non-cluster host or VM has RHEL 9 installed, then run the following command:
 
-     ```bash
-     curl https://downloads.tigera.io/ee/rpms/v3.20/calico_rhel9.repo -o /etc/yum.repos.d/calico_rhel9.repo
-     ```
+      ```bash
+      curl https://downloads.tigera.io/ee/rpms/v3.21/calico_rhel9.repo -o /etc/yum.repos.d/calico_rhel9.repo
+      ```
 
      Only Red Hat Enterprise Linux 8 and 9 x86-64 operating systems are supported in this version of $[prodname].
 
@@ -114,20 +128,20 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
     - Use `dnf` to install the `calico-node` and `calico-fluent-bit` packages:
 
-    ```bash
-    dnf install calico-node calico-fluent-bit
-    ```
+      ```bash
+      dnf install calico-node calico-fluent-bit
+      ```
 
 1. Copy the kubeconfig created in cluster setup step 3 to host folder `/etc/calico/kubeconfig` and change ownership to `calico:calico`.
 
 1. Start Calico node and log forwarder.
 
-   ```bash
-   systemctl enable --now calico-node.service
-   systemctl enable --now calico-fluent-bit.service
-   ```
+    ```bash
+    systemctl enable --now calico-node.service
+    systemctl enable --now calico-fluent-bit.service
+    ```
 
-   You can configure the Calico node by tuning the environment variables defined in the `/etc/calico/calico-node/calico-node.env` file. For more information, see the [Felix configuration reference](../../reference/resources/felixconfig.mdx).
+    You can configure the Calico node by tuning the environment variables defined in the `/etc/calico/calico-node/calico-node.env` file. For more information, see the [Felix configuration reference](../../reference/resources/felixconfig.mdx).
 
 ### Configure hosts to communicate with your Kubernetes cluster
 
