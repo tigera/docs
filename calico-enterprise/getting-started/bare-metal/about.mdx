@@ -40,22 +40,16 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
 ## How to
 
-### Set up your Kubernetes cluster to work with Accepted Valuesa non-cluster host or VM
+### Set up your Kubernetes cluster to work with Accepted Values non-cluster host or VM
 
-1. Apply the `NonClusterHost` custom resource. This resource enables the cluster-side ingestion endpoint to receive logs from non-cluster hosts. Additionally, it provides a dedicated Typha deployment for managing communication between the non-cluster host agent and Typha.
+1. Create a `NonClusterHost` custom resource.
 
-    To ensure a secure connection, non-cluster host agents will establish an mTLS connection via the `typhaEndpoint` endpoint. As a result, the external ingress or load balancer must be configured to pass through TCP Layer 4 traffic.
-
-    :::note
-
-    Starting from Calico Enterprise version v3.21.0 Early Preview 2, the `typhaEndpoint` field is required for non-cluster host agents to function correctly. Ensure this filed is properly configured to maintain seamless connectivity.
-
-    :::
+    This resource enables the cluster-side ingestion endpoint to receive logs from non-cluster hosts. Additionally, it provides a dedicated Typha deployment for managing communication between the non-cluster host agent and Typha.
 
     | Field         | Description                                                          | Accepted Values                                                          | Schema |
     | ------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ |
-    | endpoint      | Location of the log ingestion point for non-cluster hosts. Required. | Any HTTPS URL with a domain name and a port number                       | string |
-    | typhaEndpoint | Location of the Typha endpoint for non-cluster host agent and Typha communication. Required. | Any IP address or domain name with a port number | string |
+    | endpoint      | Required. Location of the log ingestion point for non-cluster hosts. | Any HTTPS URL with a domain name and a port number                       | string |
+    | typhaEndpoint | Required. Location of the Typha endpoint for non-cluster host agent and Typha communication. | Any IP address or domain name with a port number | string |
 
     ```bash
     kubectl create -f - <<EOF
@@ -64,8 +58,8 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
     metadata:
       name: tigera-secure
     spec:
-      endpoint: https://ingress-or-load-balancer.example.com:443
-      typhaEndpoint: 5.6.7.8:5473
+      endpoint: <https://domain-or-ip-address:port>
+      typhaEndpoint: <domain-or-ip-address:port>
     EOF
     ```
 
@@ -77,7 +71,13 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
     kubectl get secret -n calico-system tigera-noncluster-host -o jsonpath='{.data.token}' | base64 --decode
     ```
 
-3. Use a text editor to create a kubeconfig file for non-cluster host or VM.
+3. Create a `kubeconfig` file for your non-cluster host or VM similar to the following:
+
+    - Cluster:
+      - `server`: The URL of the Kubernetes API server.
+      - `certificate-authority-data`: Base64 encoded CA certificate to verify the Kubernetes API server's certificate.
+    - User:
+      - `token`: A bearer token associated with the `tigera-noncluster-host` service account obtained in the previous step.
 
     ```yaml
     apiVersion: v1
@@ -86,8 +86,8 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
     preferences: {}
     clusters:
     - cluster:
-        certificate-authority-data: <your cluster certificate>
-        server: <your cluster server>
+        certificate-authority-data: <ca-cert-to-verify-Kubernetes-api-server>
+        server: <URL-of-the-Kubernetes-api-server>
       name: noncluster-hosts
     contexts:
     - context:
@@ -97,14 +97,10 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
     users:
     - name: tigera-noncluster-host
       user:
-        token: <token from previous step>
+        token: <token-for-tigera-noncluster-host>
     ```
 
-    Take the cluster information from the administrator kubeconfig.
-
 4. Create a [`HostEndpoint` resource](../../reference/host-endpoints/overview.mdx) for each non-cluster host or VM. The `node` and `expectedIPs` fields are required to match the hostname and the expected interface IP addresses.
-
-5. Follow [Configure access to the $[prodname] web console](../../operations/cnx/access-the-manager.mdx) page to configure the $[prodname] web console access.
 
 ### Set up your non-cluster host or VM
 
@@ -145,18 +141,20 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
 ### Configure hosts to communicate with your Kubernetes cluster
 
-Using $[prodname] network policy-only mode (i.e. with other CNIs), you must ensure that the non-cluster host or VM can directly communicate with your Kubernetes cluster. Here are some vendor tips:
+You must ensure that the non-cluster hosts or VMs can communicate with your Kubernetes cluster. If you are using an ingress controller or an external load balancer, ensure it is configured to allow TCP Layer 4 passthrough. This is required for non-cluster host agent to establish a mutual TLS (mTLS) connection to the cluster via the `typhaEndpoint` endpoint.
+
+Below are some vendor-specific considerations:
 
 #### AWS
 
-- For hosts to communicate with your Kubernetes cluster, the node must be in the same VPC as nodes in your Kubernetes cluster, and must use the AWS VPC CNI plugin (used by default in EKS).
-- The Kubernetes cluster security group needs to allow traffic from your host endpoint. Make sure that an inbound rule is set so that traffic from your host endpoint node is allowed.
-- For a non-cluster host to communicate with an EKS cluster, the correct IAM roles must be configured.
-- You also need to provide authentication to your Kubernetes cluster using [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html) and the [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
+- The node must reside in the same VPC as the nodes in your Kubernetes cluster, and utilize the AWS VPC CNI plugin (the default for Amazon EKS).
+- Ensure that the Kubernetes cluster's security group permits inbound traffic from the host. You may need to add a rule allowing traffic from the hosts or VMs.
+- For successful communication with an EKS cluster, the appropriate IAM roles must be configured.
+- The host or VM must also be authenticated to access the cluster using tools such as [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html) and the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 
 #### GKE
 
-For hosts to communicate with your Kubernetes cluster directly, you must make the host directly reachable/routable; this is not set up by default with the VPC native network routing.
+- To enable communication with your Kubernetes cluster from a non-cluster host, the host must be directly reachable or routable. This configuration is not enabled by default when using GKE’s VPC-native network routing.
 
 ## Additional resources
 
