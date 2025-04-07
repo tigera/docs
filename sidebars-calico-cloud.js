@@ -320,6 +320,7 @@ module.exports = {
           link: { type: 'doc', id: 'networking/configuring/index' },
           items: [
             'networking/configuring/bgp',
+            'networking/configuring/bgp-to-workload',
             'networking/configuring/dual-tor',
             'networking/configuring/multiple-networks',
             'networking/configuring/vxlan-ipip',
