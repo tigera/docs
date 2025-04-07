@@ -16,7 +16,7 @@ export default function ConfigDataplaneOpenShiftManifests(props) {
         Select and configure a data plane
       </Heading>
       <p>
-        For this installation, Calico supports two data plane options for OpenShift: <strong>eBPF</strong> and <strong>iptables</strong>. You need to choose one and configure it.
+        Calico supports two data plane options for installations on OpenShift: <strong>eBPF</strong> and <strong>iptables</strong>. You need to choose one and configure it.
       </p>
       <Heading
         as='h4'
@@ -29,17 +29,22 @@ export default function ConfigDataplaneOpenShiftManifests(props) {
       </p>    
       <ol>
         <li>
-          Set the <code>KUBERNETES_SERVICE_HOST</code> attribute in the <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file.
           <If condition={!props.hostedControlPlane}>
             <Then>
-              The following command extracts the <code>apiServerURL</code> from the <code>manifests/cluster-infrastructure-02-config.yml</code> file and set it.
+              <p>
+                Set the <code>KUBERNETES_SERVICE_HOST</code> attribute in the <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file.
+                The following command extracts the <code>apiServerURL</code> from the <code>manifests/cluster-infrastructure-02-config.yml</code> file and sets it.
+              </p>              
               <CodeBlock language='bash'>
                 {`API_SERVER_URL=$(cat manifests/cluster-infrastructure-02-config.yml | sed -n 's/.*apiServerURL: https:\\/\\/\\(api\\.[^:]*\\).*/\\1/p') && \\
 sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" manifests/01-configmap-kubernetes-services-endpoint.yaml`}
               </CodeBlock>
             </Then>
             <Else>
-              The following command sets it, assuming that the <code>$HOSTED_CLUSTER_NAME</code> and <code>$BASE_DOMAIN</code> variables were already set in the previous <string>Create a hosted cluster</string> step.
+              <p>
+                Set the <code>KUBERNETES_SERVICE_HOST</code> attribute in the <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file.
+                The following command sets it, assuming that the <code>$HOSTED_CLUSTER_NAME</code> and <code>$BASE_DOMAIN</code> variables were already set in the previous <strong>Create a hosted cluster</strong> step.
+              </p>
               <CodeBlock language='bash'>
                 {`sed -i "s|<cluster_name>|$HOSTED_CLUSTER_NAME|g" ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml && \\
 sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
@@ -48,7 +53,9 @@ sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kuberne
           </If>
         </li>
         <li>
+          <p>
             Include the following <code>spec.template.spec.dnsConfig.nameservers</code> block to resolve the apiserver DNS in the <code>{props.folderName}/02-tigera-operator.yaml</code> file. For clusters in AWS, the DNS server address is 169.254.169.253.
+          </p>
           <CodeBlock language='yaml'>
           {`spec:
   template:
@@ -67,18 +74,26 @@ sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kuberne
         Option2: Iptables data plane
       </Heading>           
       <p>
-        To install Calico with Iptables, you need to:
-        <ol>
-          <li>
+        To install Calico with iptables, you need to:
+      </p>
+      <ol>
+        <li>
+          <p>
             Set <code>linuxDataplane</code> to <code>Iptables</code> in the <code>{props.folderName}/01-cr-installation.yaml</code> file.
-          </li>
-          <li>
+          </p>
+        </li>
+        <li>
+          <p>
             Set <code>deployKubeProxy</code> to <code>true</code> in the <code>{props.folderName}/cluster-network-operator.yaml</code> file.
-          </li>
-          <li>
+          </p>
+        </li>
+        <li>
+          <p>
             Comment out the <code>KUBERNETES_SERVICE_HOST</code> and <code>KUBERNETES_SERVICE_PORT</code> attributes in the <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file.
-          </li>
-        </ol>
+          </p>
+        </li>
+      </ol>
+      <p>
         You can do it by running the following command:
       </p>
       <CodeBlock language='bash'>
