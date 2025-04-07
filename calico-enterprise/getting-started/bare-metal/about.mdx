@@ -40,7 +40,7 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
 ## How to
 
-### Set up your Kubernetes cluster to work with Accepted Values non-cluster host or VM
+### Set up your Kubernetes cluster to work with a non-cluster host or VM
 
 1. Create a `NonClusterHost` custom resource.
 
@@ -73,12 +73,6 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
 3. Create a `kubeconfig` file for your non-cluster host or VM similar to the following:
 
-    - Cluster:
-      - `server`: The URL of the Kubernetes API server.
-      - `certificate-authority-data`: Base64 encoded CA certificate to verify the Kubernetes API server's certificate.
-    - User:
-      - `token`: A bearer token associated with the `tigera-noncluster-host` service account obtained in the previous step.
-
     ```yaml
     apiVersion: v1
     kind: Config
@@ -86,8 +80,8 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
     preferences: {}
     clusters:
     - cluster:
-        certificate-authority-data: <ca-cert-to-verify-Kubernetes-api-server>
-        server: <URL-of-the-Kubernetes-api-server>
+        certificate-authority-data: <certificate-authority-data>
+        server: <server>
       name: noncluster-hosts
     contexts:
     - context:
@@ -97,8 +91,15 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
     users:
     - name: tigera-noncluster-host
       user:
-        token: <token-for-tigera-noncluster-host>
+        token: <token>
     ```
+
+    Replace the following:
+    - Cluster:
+      - `<server>`: The URL of the Kubernetes API server.
+      - `<certificate-authority-data>`: Base64 encoded CA certificate to verify the Kubernetes API server's certificate.
+    - User:
+      - `<token>`: A bearer token associated with the `tigera-noncluster-host` service account obtained in the previous step.
 
 4. Create a [`HostEndpoint` resource](../../reference/host-endpoints/overview.mdx) for each non-cluster host or VM. The `node` and `expectedIPs` fields are required to match the hostname and the expected interface IP addresses.
 
