@@ -98,9 +98,8 @@ sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kuberne
       </p>
       <CodeBlock language='bash'>
         {`sed -i 's/^\\(\\s*linuxDataplane:\\s*\\)BPF/\\1Iptables/' ${props.folderName}/01-cr-installation.yaml && \\
-sed -i 's/^\\(\\s*deployKubeProxy:\\s*\\)false/\\1true/' ${props.folderName}/cluster-network-operator.yaml && \\
-sed -i '/^\\s*KUBERNETES_SERVICE_HOST:/s/^\\(\\s*\\)/#\\1/' ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml && \\
-sed -i '/^\\s*KUBERNETES_SERVICE_PORT:/s/^\\(\\s*\\)/#\\1/' ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
+rm -f ${props.folderName}/cluster-network-operator.yaml && \\
+rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
       </CodeBlock>  
     </>
   );
