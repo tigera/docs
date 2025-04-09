@@ -40,7 +40,7 @@ The following table details the key/value pairs in the JSON blob, including thei
 | `packets_in`                      | long              | Number of incoming packets since the last export.                                                                                                                                                                                                                                                                                                    |
 | `packets_out`                     | long              | Number of outgoing packets since the last export.                                                                                                                                                                                                                                                                                                    |
 | `proto`                           | keyword           | Protocol.                                                                                                                                                                                                                                                                                                                                            |
-| `policies`                        | array of keywords | List of policies that interacted with this flow. See [Format of the policies field](#format-of-the-policies-field).                                                                                                                                                                                                                                                |
+| `policies`                        | array of arrays   | List of policies that interacted with this flow. See [Format of the policies field](#format-of-the-policies-field).                                                                                                                                                                                                                                                |
 | `process_name`                    | keyword           | The name of the process that initiated or received the connection or connection request. This field will have the executable path if flowLogsCollectProcessPath is enabled. A "-" indicates that the process name is not logged. A "\*" indicates that the per flow process limit has exceeded and the process names are now aggregated.             |
 | `process_id`                      | keyword           | The process ID of the corresponding process (indicated by the `process_name` field) that initiated or received the connection or connection request. A "-" indicates that the process ID is not logged. A "\*" indicates that there are more than one unique process IDs for the corresponding process name.                                         |
 | `process_args`                    | array of strings  | The arguments with which the executable was invoked. The size of the list depends on the per flow process args limit.                                                                                                                                                                                                                                |
@@ -67,8 +67,15 @@ The following table details the key/value pairs in the JSON blob, including thei
 
 ### Format of the policies field
 
-The `policies` field contains a comma-delimited list of policy rules that matched the flow.  Each entry in the
-list has the following format:
+The `policies` field contains three sub-fields, `all_policies`, `enforced_policies`, and `pending_policies`.
+
+| Name                              | Datatype          | Description                                                                                                                                              |
+| --------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `all_policies`                    | array of keywords | A comma-delimited list of all enforced and staged network policies that applied an action to the flow up until the first enforced policy to apply a verdict.               |
+| `enforced_policies`               | array of keywords | A comma-delimited list of all enforced network policies that applied an action to the flow up until the first enforced policy to apply a verdict.                          |
+| `pending_policies`                | array of keywords | A comma-delimited list of all enforced and staged network policies that applied an action to the flow up until the first enforced or staged policy that applied a verdict. |
+
+Each entry in the list has the following format:
 
 ```
 <index>|<tier name>|<policy name>|<action>|<rule index>
@@ -139,7 +146,17 @@ A flow log with aggregation level 0, `no aggregation`, might look like:
     "reporter": "dst",
     "policies": {
       "all_policies": [
-        "0|default|policy-demo/default.access-nginx|allow"
+        "0|tier1|ns1/tier1.policy1|pass|3",
+        "1|tier2|ns2/staged:tier1.policy1|deny|1",
+        "2|default|policy-demo/default.access-nginx|allow|2"
+      ],
+      "enforced_policies": [
+        "0|tier1|ns1/tier1.policy1|pass|3",
+        "1|default|policy-demo/default.access-nginx|allow|2"
+      ],
+      "pending_policies": [
+        "0|tier1|ns1/tier1.policy1|pass|3",
+        "1|tier2|ns2/staged:tier1.policy1|deny|1",       
       ]
     },
     "bytes_in": 388,
