@@ -3,8 +3,6 @@ import { If, Then, Else } from 'react-if';
 
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 export default function ConfigDataplaneOpenShiftManifests(props) {
   return (
@@ -84,12 +82,7 @@ sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kuberne
         </li>
         <li>
           <p>
-            Set <code>deployKubeProxy</code> to <code>true</code> in the <code>{props.folderName}/cluster-network-operator.yaml</code> file.
-          </p>
-        </li>
-        <li>
-          <p>
-            Comment out the <code>KUBERNETES_SERVICE_HOST</code> and <code>KUBERNETES_SERVICE_PORT</code> attributes in the <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file.
+            Remove the <code>{props.folderName}/cluster-network-operator.yaml</code> and <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> files.
           </p>
         </li>
       </ol>
