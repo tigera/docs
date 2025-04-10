@@ -277,6 +277,7 @@ module.exports = {
             'networking/configuring/sidecar-acceleration',
             'networking/configuring/pod-mac-address',
             'networking/configuring/node-local-dns-cache',
+            'networking/configuring/qos-controls',
           ],
         },
         {
