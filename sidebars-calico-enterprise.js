@@ -69,7 +69,6 @@ module.exports = {
                     'getting-started/install-on-clusters/windows-calico/manual-install/standard',
                     'getting-started/install-on-clusters/windows-calico/manual-install/kubeconfig',
                     'getting-started/install-on-clusters/windows-calico/manual-install/maintain',
-                    'getting-started/install-on-clusters/windows-calico/manual-install/openshift-installation',
                   ],
                 },
                 'getting-started/install-on-clusters/windows-calico/rancher',
