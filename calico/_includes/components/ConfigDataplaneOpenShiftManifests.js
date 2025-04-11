@@ -89,6 +89,7 @@ rm -f ${props.folderName}/cluster-network-operator.yaml && \\
 rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
         </CodeBlock>  
       </TabItem>
+{/*
       <TabItem label="Nftables" value="nftables">
         <p>
           To install Calico with nftables, you need to:
@@ -113,7 +114,8 @@ rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
 rm -f ${props.folderName}/cluster-network-operator.yaml && \\
 rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
         </CodeBlock>  
-      </TabItem>      
+      </TabItem>
+*/}
       </Tabs>
     </>
   );
