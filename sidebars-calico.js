@@ -129,7 +129,6 @@ module.exports = {
                 'getting-started/kubernetes/windows-calico/manual-install/standard',
                 'getting-started/kubernetes/windows-calico/manual-install/kubeconfig',
                 'getting-started/kubernetes/windows-calico/manual-install/maintain',
-                'getting-started/kubernetes/windows-calico/manual-install/openshift-installation',
               ],
             },
             'getting-started/kubernetes/windows-calico/rancher',
