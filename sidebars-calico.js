@@ -590,6 +590,18 @@ module.exports = {
             'reference/calicoctl/get',
             'reference/calicoctl/patch',
             'reference/calicoctl/label',
+            {
+              type: 'category',
+              label: 'cluster',
+              link: {
+                type: 'doc',
+                id: 'reference/calicoctl/cluster/index'
+              },
+              items: [
+                'reference/calicoctl/cluster/overview',
+                'reference/calicoctl/cluster/diags',
+              ],
+            },
             'reference/calicoctl/convert',
             {
               type: 'category',
