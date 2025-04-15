@@ -8,6 +8,7 @@ const variables = {
   version: 'master',
   baseUrl: '/calico-enterprise/next',
   filesUrl: 'https://downloads.tigera.io/ee/master',
+  rpmsUrl: 'https://downloads.tigera.io/ee/rpms/v3.21',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/next',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
