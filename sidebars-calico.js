@@ -476,7 +476,10 @@ module.exports = {
       //  type: 'doc',
       //  id: 'observability/index',
       //},
-      items: ['observability/index']
+      items: [
+        'observability/index',
+        'observability/enable-whisker',
+      ]
     },
     {
       type: 'category',
