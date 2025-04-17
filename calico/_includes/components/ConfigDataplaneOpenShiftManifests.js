@@ -19,10 +19,10 @@ export default function ConfigDataplaneOpenShiftManifests(props) {
       Calico manifests for OpenShift are ready to configure and install the <strong>eBPF</strong> data plane. The steps in the <strong>eBPF (recommended)</strong> tab below will guide you through the process. You can also select a different tab to follow the steps for configuring another data plane.
       </p>
       <Tabs>
-      <TabItem label="eBPF (recommended)" value="eBPF">     
+      <TabItem label="eBPF (recommended)" value="eBPF">
         <p>
           To configure the eBPF data plane, you need to:
-        </p>    
+        </p>
         <ol>
           <li>
             <If condition={!props.hostedControlPlane}>
@@ -30,7 +30,7 @@ export default function ConfigDataplaneOpenShiftManifests(props) {
                 <p>
                   Set the <code>KUBERNETES_SERVICE_HOST</code> attribute in the <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file.
                   The following command extracts the <code>apiServerURL</code> from the <code>manifests/cluster-infrastructure-02-config.yml</code> file and sets it.
-                </p>              
+                </p>
                 <CodeBlock language='bash'>
                 {`API_SERVER_URL=$(cat manifests/cluster-infrastructure-02-config.yml | sed -n 's/.*apiServerURL: https:\\/\\/\\(api\\.[^:]*\\).*/\\1/p') && \\
 sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" manifests/01-configmap-kubernetes-services-endpoint.yaml`}
@@ -39,13 +39,14 @@ sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" 
               <Else>
                 <p>
                   Set the <code>KUBERNETES_SERVICE_HOST</code> attribute in the <code>{props.folderName}/01-configmap-kubernetes-services-endpoint.yaml</code> file.
-                  The following command sets it, assuming that the <code>$HOSTED_CLUSTER_NAME</code> and <code>$BASE_DOMAIN</code> variables were already set in the previous <strong>Create a hosted cluster</strong> step.
+                  You can use the <code>oc config view</code> command to look at the <code>server</code> attribute for the cluster.
+                  The following extracts the URL from the <code>oc config view</code> command and sets it.
                 </p>
                 <CodeBlock language='bash'>
-                {`sed -i "s|<cluster_name>|$HOSTED_CLUSTER_NAME|g" ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml && \\
-sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
+                {`API_SERVER_URL=$(oc config view | sed -n 's/.*server: https:\\/\\/\\([^:]*\\).*/\\1/p') && \\
+sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" calico/01-configmap-kubernetes-services-endpoint.yaml`}
                 </CodeBlock>
-              </Else>        
+              </Else>
             </If>
           </li>
           <li>
@@ -56,12 +57,22 @@ sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kuberne
           {`spec:
   template:
     spec:
-      (...)    
+      (...)
       dnsConfig:
         nameservers:
         - 169.254.169.253 # AWS DNS server`}
             </CodeBlock>
           </li>
+            <If condition={props.hostedControlPlane}>
+              <li>
+                <p>
+                  Disable kube-proxy in the OpenShift Cluster Network Operator:
+                </p>
+                <CodeBlock language='bash'>
+                {`oc patch network.operator.openshift.io cluster --type merge --patch '{"spec":{"deployKubeProxy":false}}'`}
+                </CodeBlock>
+              </li>
+            </If>
         </ol>
       </TabItem>
       <TabItem label="Iptables" value="iptables">
@@ -87,7 +98,7 @@ sed -i "s|<base_domain>|$BASE_DOMAIN|g" ${props.folderName}/01-configmap-kuberne
           {`sed -i 's/^\\(\\s*linuxDataplane:\\s*\\)BPF/\\1Iptables/' ${props.folderName}/01-cr-installation.yaml && \\
 rm -f ${props.folderName}/cluster-network-operator.yaml && \\
 rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
-        </CodeBlock>  
+        </CodeBlock>
       </TabItem>
 {/*
       <TabItem label="Nftables" value="nftables">
@@ -113,7 +124,7 @@ rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
           {`sed -i 's/^\\(\\s*linuxDataplane:\\s*\\)BPF/\\1Nftables/' ${props.folderName}/01-cr-installation.yaml && \\
 rm -f ${props.folderName}/cluster-network-operator.yaml && \\
 rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
-        </CodeBlock>  
+        </CodeBlock>
       </TabItem>
 */}
       </Tabs>
