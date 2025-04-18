@@ -38,10 +38,9 @@ module.exports = {
         id: 'getting-started/index',
       },
       items: [
-
+        'getting-started/kubernetes/quickstart',
         'getting-started/kubernetes/requirements',
         'getting-started/kubernetes/community-tested',
-        'getting-started/kubernetes/quickstart',
         'getting-started/kubernetes/managed-public-cloud/eks',
         'getting-started/kubernetes/managed-public-cloud/gke',
         'getting-started/kubernetes/managed-public-cloud/iks',
@@ -149,6 +148,7 @@ module.exports = {
           ],
         },
         'getting-started/kubernetes/helm',
+        'getting-started/kubernetes/k8s-single-node',
         'getting-started/kubernetes/microk8s',
         'getting-started/kubernetes/minikube',
         'getting-started/kubernetes/kind',
