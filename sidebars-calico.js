@@ -472,12 +472,11 @@ module.exports = {
     {
       type: 'category',
       label: 'Observability',
-      //link: {
-      //  type: 'doc',
-      //  id: 'observability/index',
-      //},
+      link: {
+        type: 'doc',
+        id: 'observability/index',
+      },
       items: [
-        'observability/index',
         'observability/enable-whisker',
       ]
     },
