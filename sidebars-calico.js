@@ -89,6 +89,7 @@ module.exports = {
             'getting-started/kubernetes/openshift/requirements',
             'getting-started/kubernetes/openshift/installation',
             'getting-started/kubernetes/openshift/hostedcontrolplanes',
+            "getting-started/kubernetes/openshift/ovn-to-calico",
           ],
         },
 
