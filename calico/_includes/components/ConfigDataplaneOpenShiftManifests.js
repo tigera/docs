@@ -82,7 +82,7 @@ sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" 
         <ol>
           <li>
             <p>
-              Set <code>linuxDataplane</code> to <code>Iptables</code> in the <code>{props.folderName}/01-cr-installation.yaml</code> file.
+              Set <code>linuxDataplane</code> to <code>Iptables</code> in the <code>{props.folderName}/03-cr-installation.yaml</code> file.
             </p>
           </li>
           <li>
@@ -95,7 +95,7 @@ sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" 
           You can do it by running the following command:
         </p>
         <CodeBlock language='bash'>
-          {`sed -i 's/^\\(\\s*linuxDataplane:\\s*\\)BPF/\\1Iptables/' ${props.folderName}/01-cr-installation.yaml && \\
+          {`sed -i 's/^\\(\\s*linuxDataplane:\\s*\\)BPF/\\1Iptables/' ${props.folderName}/03-cr-installation.yaml && \\
 rm -f ${props.folderName}/cluster-network-operator.yaml && \\
 rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
         </CodeBlock>
@@ -108,7 +108,7 @@ rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
         <ol>
           <li>
             <p>
-              Set <code>linuxDataplane</code> to <code>Nftables</code> in the <code>{props.folderName}/01-cr-installation.yaml</code> file.
+              Set <code>linuxDataplane</code> to <code>Nftables</code> in the <code>{props.folderName}/03-cr-installation.yaml</code> file.
             </p>
           </li>
           <li>
@@ -121,7 +121,7 @@ rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
           You can do it by running the following command:
         </p>
         <CodeBlock language='bash'>
-          {`sed -i 's/^\\(\\s*linuxDataplane:\\s*\\)BPF/\\1Nftables/' ${props.folderName}/01-cr-installation.yaml && \\
+          {`sed -i 's/^\\(\\s*linuxDataplane:\\s*\\)BPF/\\1Nftables/' ${props.folderName}/03-cr-installation.yaml && \\
 rm -f ${props.folderName}/cluster-network-operator.yaml && \\
 rm -f ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
         </CodeBlock>
