@@ -38,10 +38,9 @@ module.exports = {
         id: 'getting-started/index',
       },
       items: [
-
+        'getting-started/kubernetes/quickstart',
         'getting-started/kubernetes/requirements',
         'getting-started/kubernetes/community-tested',
-        'getting-started/kubernetes/quickstart',
         'getting-started/kubernetes/managed-public-cloud/eks',
         'getting-started/kubernetes/managed-public-cloud/gke',
         'getting-started/kubernetes/managed-public-cloud/iks',
@@ -129,7 +128,6 @@ module.exports = {
                 'getting-started/kubernetes/windows-calico/manual-install/standard',
                 'getting-started/kubernetes/windows-calico/manual-install/kubeconfig',
                 'getting-started/kubernetes/windows-calico/manual-install/maintain',
-                'getting-started/kubernetes/windows-calico/manual-install/openshift-installation',
               ],
             },
             'getting-started/kubernetes/windows-calico/rancher',
@@ -150,6 +148,7 @@ module.exports = {
           ],
         },
         'getting-started/kubernetes/helm',
+        'getting-started/kubernetes/k8s-single-node',
         'getting-started/kubernetes/microk8s',
         'getting-started/kubernetes/minikube',
         'getting-started/kubernetes/kind',
@@ -473,11 +472,13 @@ module.exports = {
     {
       type: 'category',
       label: 'Observability',
-      //link: {
-      //  type: 'doc',
-      //  id: 'observability/index',
-      //},
-      items: ['observability/index']
+      link: {
+        type: 'doc',
+        id: 'observability/index',
+      },
+      items: [
+        'observability/enable-whisker',
+      ]
     },
     {
       type: 'category',
