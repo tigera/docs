@@ -14,6 +14,8 @@ module.exports = {
       label: 'Calico Cloud Free',
       link: { type: 'doc', id: 'free/index' },
       items: [
+        'free/overview',
+        'free/quickstart',
         'free/connect-cluster-free',
         'free/disconnect-cluster-free',
       ],
