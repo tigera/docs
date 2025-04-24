@@ -59,7 +59,6 @@ Managed Kubernetes services like AKS, EKS and GKE include a `type: LoadBalancer`
 - [Use the Gateway API](#use-the-gateway-api)
 - [Disable Gateway API support](#disable-gateway-api-support)
 - [Customize Gateway deployment and features](#customize-gateway-deployment-and-features)
-- [Configure additional GatewayClasses](#configure-additional-gatewayclasses)
 
 ### Enable Gateway API support
 
@@ -430,54 +429,3 @@ The `GatewayAPI` resource has fields that allow some aspects of Gateway deployme
 For full details please see [the `GatewayAPI` reference documentation](../reference/installation/api.mdx#operator.tigera.io/v1.GatewayAPI).
 
 To make use of these customization fields, use `kubectl edit gatewayapi tigera-secure` to edit the YAML for the `GatewayAPI` resource, and add or modify the customization fields that you require.
-
-### Configure additional GatewayClasses
-
-You may have a need for a tweak or customization that our `GatewayAPI` resource does not yet support.  For example, you may want to create a Gateway with EnvoyProxy config different from that which the Tigera operator provisions, and where the change that you need is not supported by an existing customization field in the `GatewayAPI` resource.
-
-:::warning
-
-For a supported solution, in this situation, please work with your Tigera contact to raise an RFE for the customization that you need.  The following approach is offered as an interim escape valve, but please note that Tigera will not be able to support GatewayClasses that you configure yourself.
-
-:::
-
-To do this:
-- Extract the YAML for the EnvoyProxy and GatewayClass objects that the Tigera operator provisions.
-- Change the EnvoyProxy YAML according to your needs, and create that modified EnvoyProxy object with a different name (than `envoy-proxy-config`).
-- Change the GatewayClass YAML to reference the name of the modified EnvoyProxy object, and create that modified GatewayClass with a different name (than `tigera-gateway-class`).
-
-Now you can configure Gateways using the new GatewayClass name, or update existing Gateways to use that new GatewayClass instead of `tigera-gateway-class`.
-
-In more detail:
-
-1. Extract the YAML for the EnvoyProxy and GatewayClass objects that the Tigera operator provisions:
-
-   ```bash
-   kubectl get envoyproxy envoy-proxy-config -n tigera-gateway -o yaml > envoy-proxy.yml
-   kubectl get gatewayclass tigera-gateway-class -o yaml > gateway-class.yml
-   ```
-
-2. Edit `envoy-proxy.yml` to:
-   - change the `metadata.name` field to some name other than `envoy-proxy-config`
-   - delete all other `metadata` fields, except for `namespace`
-   - make whatever changes or additions you need in the `spec` section.
-
-3. Create the modified EnvoyProxy object:
-
-   ```bash
-   kubectl apply -f envoy-proxy.yml
-   ```
-
-4. Edit `gateway-class.yml` to:
-   - change the `metadata.name` field to some name other than `tigera-gateway-class`
-   - delete all other `metadata` fields
-   - delete the `status` section
-   - change `spec.parametersRef.name` to the name of the modified EnvoyProxy object.
-
-5. Create the modified GatewayClass:
-
-   ```bash
-   kubectl apply -f gateway-class.yml
-   ```
-
-6. Use the modified GatewayClass name, instead of `tigera-gateway-class`, for the Gateways that need this (as determined by your own requirements).
