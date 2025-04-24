@@ -44,7 +44,7 @@ sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" 
                 </p>
                 <CodeBlock language='bash'>
                 {`API_SERVER_URL=$(oc config view | sed -n 's/.*server: https:\\/\\/\\([^:]*\\).*/\\1/p') && \\
-sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" calico/01-configmap-kubernetes-services-endpoint.yaml`}
+sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" ${props.folderName}/01-configmap-kubernetes-services-endpoint.yaml`}
                 </CodeBlock>
               </Else>
             </If>
