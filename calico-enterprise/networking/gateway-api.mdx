@@ -58,6 +58,7 @@ Managed Kubernetes services like AKS, EKS and GKE include a `type: LoadBalancer`
 - [Enable Gateway API support](#enable-gateway-api-support)
 - [Use the Gateway API](#use-the-gateway-api)
 - [Disable Gateway API support](#disable-gateway-api-support)
+- [Customize Gateway deployment and features](#customize-gateway-deployment-and-features)
 
 ### Enable Gateway API support
 
@@ -416,3 +417,15 @@ EOF
 ```
 
 Please note that the Gateway API CRDs will be left in place.  This is to allow for the possibility of using other Gateway API implementations in addition to the one provided by $[prodname].
+
+### Customize Gateway deployment and features
+
+The `GatewayAPI` resource has fields that allow some aspects of Gateway deployments to be customized.  For example:
+- `spec.gatewayDeployment.spec.template.metadata` allows arbitrary labels or annotations to be added to the pod that is created to implement each configured Gateway
+- `spec.gatewayDeployment.spec.template.spec.nodeSelector` allows control over where Gateway implementation pods are scheduled
+- `spec.gatewayDeployment.spec.template.spec.containers` allows control over the memory and CPU that Gateway implementation pods can use
+- `spec.gatewayControllerDeployment.spec.template.spec.nodeSelector` allows control over where the gateway controller is scheduled.
+
+For full details please see [the `GatewayAPI` reference documentation](../reference/installation/api.mdx#operator.tigera.io/v1.GatewayAPI).
+
+To make use of these customization fields, use `kubectl edit gatewayapi tigera-secure` to edit the YAML for the `GatewayAPI` resource, and add or modify the customization fields that you require.
