@@ -6,7 +6,7 @@ import { prodname, filesUrl } from '../../variables';
 
 export default function InstallOpenShiftManifests(props) {
   const uf = props.upgradeFrom;
-  const exclude1 = ' --exclude=01-cr-*';
+  const exclude1 = ' --exclude=03-cr-*';
   const exclude2 = ' --exclude=02-pull-secret.yaml';
   const flag1 = uf ? exclude1 : '';
   const flag2 = uf === 'Enterprise' ? exclude2 : '';

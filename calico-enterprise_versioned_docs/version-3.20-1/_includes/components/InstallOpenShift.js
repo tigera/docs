@@ -108,7 +108,7 @@ export default function InstallOpenShift(props) {
       <When condition={props.clusterOS === 'hybrid'}>
         <>
           <p>
-            Edit the Installation custom resource manifest <code>manifests/01-cr-installation.yaml</code> so that it
+            Edit the Installation custom resource manifest <code>manifests/03-cr-installation.yaml</code> so that it
             enables VXLAN and disables BGP. This is required for {prodnameWindows}:
           </p>
           <CodeBlock language='yaml'>

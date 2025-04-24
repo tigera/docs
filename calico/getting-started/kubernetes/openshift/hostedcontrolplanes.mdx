@@ -85,9 +85,10 @@ oc patch -n ${CLUSTER_NS} hostedcluster ${HOSTED_CLUSTER_NAME} --type='json' -p 
 ```
 :::
 
-Once the hosted cluster is up, use the `hypershift` CLI tool to generate the `kubeconfig` file:
+Once the hosted cluster is up, use the `hypershift` CLI tool to generate the `kubeconfig` file. We strongly recommend you create a separate directory for the hosted cluster, it is very important to not mix up configuration and manifests from the hosting and hosted clusters:
 
 ```
+mkdir my_hosted_cluster && cd my_hosted_cluster
 hypershift create kubeconfig > hosted_kubeconfig && export KUBECONFIG=$(pwd)/hosted_kubeconfig
 ```
 
@@ -155,6 +156,10 @@ Then wait until the Tigera operator creates the necessary CustomResourceDefiniti
 timeout --foreground 600 bash -c "while ! kubectl get crd installations.operator.tigera.io; do sleep 5; done" # wait until CRDs are created by the operator
 ls 03* | xargs -n1 oc apply -f
 ```
+
+:::note
+You can safely ignore any `ls: cannot access '0X*': No such file or directory` errors if there's no yaml files with that prefix to be applied.
+:::
 
 Once the above commands are complete, you can verify $[prodname] is installed by verifying the components are available with the following command.
 
