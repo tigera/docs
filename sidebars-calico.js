@@ -25,9 +25,9 @@ module.exports = {
             'about/kubernetes-training/about-kubernetes-ingress',
             'about/kubernetes-training/about-kubernetes-egress',
             'about/kubernetes-training/about-kubernetes-services',
-            'about/kubernetes-training/about-ebpf',
           ],
         },
+        'about/kubernetes-training/about-ebpf',
       ],
     },
     {
@@ -384,6 +384,7 @@ module.exports = {
             'network-policy/policy-tiers/rbac-tiered-policies',
           ],
         },
+        'network-policy/staged-network-policies',
         {
           type: 'category',
           label: 'Policy rules',
@@ -477,7 +478,9 @@ module.exports = {
         id: 'observability/index',
       },
       items: [
+        'observability/view-flow-logs',
         'observability/enable-whisker',
+        'observability/flow-logs-api',
       ]
     },
     {
