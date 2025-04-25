@@ -2,12 +2,12 @@ const releases = require('./releases.json');
 const componentImage = require('../../src/components/utils/componentImage');
 
 const variables = {
-  releaseTitle: 'v3.19.5',
+  releaseTitle: 'v3.19.6',
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'v3.19',
   baseUrl: '/calico-enterprise/3.19',
-  filesUrl: 'https://downloads.tigera.io/ee/v3.19.5',
+  filesUrl: 'https://downloads.tigera.io/ee/v3.19.6',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/3.19',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
