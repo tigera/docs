@@ -3,4 +3,99 @@ description: View flow logs in the Calico Whisker web console.
 title: View flow logs
 ---
 
+import Screenshot from '../../src/___new___/components/Screenshot';
+
 # View flow logs in the Calico Whisker web console
+
+You can observe network traffic in your cluster by viewing flow logs in the Calico Whisker web console.
+
+## About flow logs in Calico Open Source
+
+Tracking network activity in your cluster is essential for understanding how your applications communicate.
+Calico helps you see your network activity by processing your network connections and recording them in a digestible format called a flow log.
+
+A flow log is an aggregation of connection data that matches the same set of criteria (i.e., source, destination, policies) across your cluster over a period of time.
+Flow logs don't record every single network connection that takes place in your cluster.
+Rather, they represent a type of network flow that occurs in your cluster.
+Imagine, for example, that your cluster has 1000 individual network connections that take place within 1 minute.
+It would be difficult to sort through those 1000 connections, and more difficult to understand what they mean.
+But the corresponding flow logs for that minute might turn those 1000 entries into 15 flow logs, each representing a distinct type of connection (pod A to pod B, public internet to pod C), but without the duplicate flow type entries.
+This way, you can understand the overall network activity without being overwhelmed by the sheer volume of data.
+
+### Using flow logs
+
+Flow logs are useful for a variety of purposes, including:
+* **Network visibility.**
+  Understanding traffic patterns within the cluster, between namespaces, and to or from external services.
+* **Troubleshooting connectivity issues.**
+  If pods aren't communicating, flow logs can show if traffic is being denied by policy or if it's actually reaching the destination.
+* **Security.**
+  Detecting policy violations (unexpected deny logs), identifying anomalous traffic patterns (e.g., unusually high data transfer), and investigating potential security incidents.
+* **Policy validation.**
+  Confirming that network policies are working as intended (allowing expected traffic, denying forbidden traffic).
+  This is especially useful for testing out [staged network policies](../network-policy/staged-network-policies.mdx) before moving them to production.
+
+### Calico Whisker
+
+The Calico Whisker web console is a browser-based interface that shows you a stream of flow logs from your cluster in real time.
+While the console is open, it receives live data from a dedicated flow logs API (Goldmane).
+You can filter the stream to see only the logs for a particular policy, namespace, pod, or other criteria.
+
+<Screenshot src="/img/calico/whisker-flows.png" alt="A view of the Calico Whisker web console" />
+*Figure 1. A view of the Calico Whisker web console showing flow logs in a Kubernetes cluster.*
+
+### Flow log data types
+
+The following table describes the flow log data types used by Calico Whisker.
+
+| Name                              | Datatype          | Description                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start_time`                      | date              | Start time of log collection in UNIX timestamp format.                                                                                                                                                                                                                                                                                               |
+| `end_time`                        | date              | End time of log collection in UNIX timestamp format.                                                                                                                                                                                                                                                                                                 |
+| `action`                          | keyword           | - `allow`: Calico accepted the flow.<br />- `deny`: Calico denied the flow.                                                                                                                                                                                                                                                              |
+| `bytes_in`                        | long              | Number of incoming bytes within the timeframe.                                                                                                                                                                                                                                                                                                      |
+| `bytes_out`                       | long              | Number of outgoing bytes within the timeframe.                                                                                                                                                                                                                                                                                                      |
+| `dest_name`                       | keyword           | Contains one of the following values:<br />- Name of the destination pod.<br />- Name of the pod that was aggregated or the endpoint is not a pod.                                                                                        |
+| `dest_namespace`                  | keyword           | Namespace of the destination endpoint. A `-` means the endpoint is not namespaced.                                                                                                                                                                                                                                                                   |
+| `dest_port`                       | long              | Destination port. Not applicable for ICMP packets.                                                                                                                                                                                                                                                                                                   |
+| `dest_labels`                     | array of keywords | Labels applied to the destination pod.                                                                                                                                                                                                                                                                        |
+| `reporter`                        | keyword           | - `src`: flow came from the source that initiated the connection.<br />- `dst`: flow came from the destination that received the initial connection.                                                                                                                                                                                                            |
+| `packets_in`                      | long              | Number of incoming packets within the timeframe.                                                                                                                                                                                                                                                                                                    |
+| `packets_out`                     | long              | Number of outgoing packets within the timeframe.                                                                                                                                                                                                                                                                                                    |
+| `protocol`                        | keyword           | Protocol.                                                                                                                                                                                                                                                                                                                                            |
+| `policies`                        | array of arrays   | List of policies that interacted with this flow.                                                                                                                                                                                                                                              |
+| `source_name`                     | keyword           | Contains one of the following values: <br />- Name of the source pod.<br />- Name of the pod that was aggregated or the endpoint is not a pod. Check <code>source_name_aggr</code> for more information, such as the name of the pod if it was aggregated.                                                                                           |
+| `source_namespace`                | keyword           | Namespace of the source endpoint. A `-` means the endpoint is not namespaced.                                                                                                                                                                                                                                                                        |
+| `source_labels`                   | array of keywords | Labels applied to the source pod. A hyphen indicates aggregation.                                                                                                                                                                                                                                                                                    |
+
+## View flow logs in the web console
+
+You can quickly view flow logs by port forwarding the Calico Whisker web console to your workstation.
+By default, Whisker does not automatically expose an endpoint.
+
+***Prerequisites***
+
+* You have `kubectl` access to a Kubernetes cluster with Calico installed.
+* Calico Whisker and the flow logs API are enabled on your cluster.
+  For new installations, they're both enabled by default.
+  If you upgraded from Calico Open Source 3.29 or earlier, [you need to enable them manually](enable-whisker.mdx).
+
+***Procedure***
+
+1. Port forward the Calico Whisker web console to your workstation:
+
+   ```bash
+   kubectl port-forward -n calico-system service/whisker 8081:8081
+   ```
+
+   ```bash title="Expected output"
+   Forwarding from 127.0.0.1:8081 -> 8081
+   Forwarding from [::1]:8081 -> 8081
+   ```
+1. To open Calico Whisker, open your browser and go to `localhost:8081`.
+   You may not see any flows at the beginning.
+   But in a few moments, as the console receives data, you'll begin to see a list of flow logs.
+
+## Additional resources
+
+* TBD
