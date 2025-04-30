@@ -1,0 +1,169 @@
+---
+description: Configure Felix, the daemon that runs on every machine that provides endpoints.
+---
+
+# Configuring Felix
+
+import FelixConfig from '/src/___new___/components/FelixConfig';
+
+:::tip
+
+The following tables detail the configuration file and
+environment variable parameters. For `FelixConfiguration` resource settings,
+refer to [Felix Configuration Resource](../resources/felixconfig.mdx).
+
+:::
+
+Configuration for Felix is read from one of four possible locations, in order, as follows.
+
+1.  Environment variables.
+2.  The Felix configuration file.
+3.  Host-specific `FelixConfiguration` resources (`node.<nodename>`).
+4.  The global `FelixConfiguration` resource (`default`).
+
+The value of any configuration parameter is the value read from the
+_first_ location containing a value. For example, if an environment variable
+contains a value, it takes top precedence.
+
+If not set in any of these locations, most configuration parameters have
+defaults, and it should be rare to have to explicitly set them.
+
+The full list of parameters which can be set is as follows.
+
+## Spec
+
+### Datastore connection
+
+<FelixConfig configType='configenv' name="Datastore connection" />
+
+### Process: Feature detection/overrides
+
+<FelixConfig configType='configenv' name="Process: Feature detection/overrides" />
+
+### Process: Go runtime
+
+<FelixConfig configType='configenv' name="Process: Go runtime" />
+
+### Process: Health port and timeouts
+
+<FelixConfig configType='configenv' name="Process: Health port and timeouts" />
+
+### Process: Logging
+
+<FelixConfig configType='configenv' name="Process: Logging" />
+
+### Process: Prometheus metrics
+
+<FelixConfig configType='configenv' name="Process: Prometheus metrics" />
+
+### Data plane: Common
+
+<FelixConfig configType='configenv' name="Dataplane: Common" />
+
+### Data plane: iptables
+
+<FelixConfig configType='configenv' name="Dataplane: iptables" />
+
+### Data plane: nftables
+
+<FelixConfig configType='configenv' name="Dataplane: nftables" />
+
+### Data plane: eBPF
+
+<FelixConfig configType='configenv' name="Dataplane: eBPF" />
+
+### Data plane: Windows
+
+<FelixConfig configType='configenv' name="Dataplane: Windows" />
+
+### Data plane: OpenStack support
+
+<FelixConfig configType='configenv' name="Dataplane: OpenStack support" />
+
+### Data plane: XDP acceleration for iptables data plane
+
+<FelixConfig configType='configenv' name="Dataplane: XDP acceleration for iptables dataplane" />
+
+### Overlay: VXLAN overlay
+
+<FelixConfig configType='configenv' name="Overlay: VXLAN overlay" />
+
+### Overlay: IP-in-IP
+
+<FelixConfig configType='configenv' name="Overlay: IP-in-IP" />
+
+### Overlay: Wireguard
+
+<FelixConfig configType='configenv' name="Overlay: Wireguard" />
+
+### AWS integration
+
+<FelixConfig configType='configenv' name="AWS integration" />
+
+### Debug/test-only (generally unsupported)
+
+<FelixConfig configType='configenv' name="Debug/test-only (generally unsupported)" />
+
+### Usage reporting
+
+<FelixConfig configType='configenv' name="Usage reporting" />
+
+## Environment variables
+
+The highest priority of configuration is that read from environment
+variables. To set a configuration parameter via an environment variable,
+set the environment variable formed by taking `FELIX_` and appending the
+uppercase form of the variable name. For example, to set the etcd
+address, set the environment variable `FELIX_ETCDADDR`. Other examples
+include `FELIX_ETCDSCHEME`, `FELIX_ETCDKEYFILE`, `FELIX_ETCDCERTFILE`,
+`FELIX_ETCDCAFILE`, `FELIX_FELIXHOSTNAME`, `FELIX_LOGFILEPATH` and
+`FELIX_METADATAADDR`.
+
+## Configuration file
+
+On startup, Felix reads an ini-style configuration file. The path to
+this file defaults to `/etc/calico/felix.cfg` but can be overridden
+using the `-c` or `--config-file` options on the command line. If the
+file exists, then it is read (ignoring section names) and all parameters
+are set from it.
+
+In OpenStack, we recommend putting all configuration into configuration
+files, since the etcd database is transient (and may be recreated by the
+OpenStack plugin in certain error cases). However, in a Docker
+environment the use of environment variables or etcd is often more
+convenient.
+
+## Datastore
+
+Felix also reads configuration parameters from the datastore. It supports
+a global setting and a per-host override.
+
+1. Get the current felixconfig settings.
+
+   ```bash
+   calicoctl get felixconfig default -o yaml --export > felix.yaml
+   ```
+
+1. Modify logFilePath to your intended path, e.g. "/tmp/felix.log"
+
+   ```bash
+   vim felix.yaml
+   ```
+
+   :::tip
+
+   For a global change set name to "default".
+   For a node-specific change: set name to `node.<nodename>`, e.g. "node.$[prodname]-node-1"
+
+   :::
+
+1. Replace the current felixconfig settings
+
+   ```bash
+   calicoctl replace -f felix.yaml
+   ```
+
+For more information, see [Felix Configuration Resource](../resources/felixconfig.mdx).
+
+
+
