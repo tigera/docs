@@ -1,0 +1,202 @@
+---
+description: Enforce network policy for Istio service mesh including matching on HTTP methods and paths.
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Enforce network policy for Istio
+
+## Big picture
+
+$[prodname] integrates seamlessly with Istio to enforce network policy within the Istio service mesh.
+
+## Value
+
+$[prodname] network policy for Istio lets you enforce application layer attributes like HTTP methods or paths, and cryptographically secure identities for Istio-enabled apps.
+
+## Concepts
+
+### Benefits of the Istio integration
+
+The $[prodname] support for Istio service mesh has the following benefits:
+
+- **Pod traffic controls**
+
+  Lets you restrict ingress traffic inside and outside pods and mitigate common threats to Istio-enabled apps.
+
+- **Supports security goals**
+
+  Enables adoption of a zero trust network model for security, including traffic encryption, multiple enforcement points, and multiple identity criteria for authentication.
+
+- **Familiar policy language**
+
+  Kubernetes network policies and $[prodname] network policies work as is; users do not need to learn another network policy model to adopt Istio.
+
+See [Enforce network policy using Istio tutorial](enforce-policy-istio.mdx) to learn how application layer policy provides second-factor authentication for the mythical Yao Bank.
+
+## Before you begin
+
+**Required**
+
+- [$[prodname] is installed](../../getting-started/index.mdx)
+- [calicoctl is installed and configured](../../operations/calicoctl/install.mdx)
+- [MutatingAdmissionWebhook](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook) enabled
+
+**Istio support**
+
+Following Istio versions have been verified to work with application layer policies:
+
+- Istio v1.15.2
+- Istio v1.10.2
+
+Istio v1.9.x and lower are **not** supported.
+
+Although we expect future minor versions to work with the corresponding manifest below (for example, v1.10.2 or v1.15.2), manifest compatibility depends entirely on the upstream changes in the respective Istio release.
+
+## How to
+
+1. [Enable application layer policy](#enable-application-layer-policy)
+2. [Install Calico CSI Driver](#install-calico-csi-driver)
+3. [Install Istio](#install-istio)
+4. [Update Istio sidecar injector](#update-istio-sidecar-injector)
+5. [Add Calico authorization services to the mesh](#add-calico-authorization-services-to-the-mesh)
+6. [Add namespace labels](#add-namespace-labels)
+
+### Enable application layer policy
+
+To enable the application layer policy, you must enable the **Policy Sync API** on Felix cluster-wide.
+
+In the default **FelixConfiguration**, set the field, `policySyncPathPrefix` to `/var/run/nodeagent`:
+
+<Tabs>
+<TabItem label="calicoctl" value="calicoctl-0">
+
+```bash
+calicoctl patch FelixConfiguration default --patch \
+   '{"spec": {"policySyncPathPrefix": "/var/run/nodeagent"}}'
+```
+
+</TabItem>
+<TabItem label="kubectl" value="kubectl-1">
+
+```bash
+kubectl patch FelixConfiguration default --type=merge --patch \
+   '{"spec": {"policySyncPathPrefix": "/var/run/nodeagent"}}'
+```
+
+</TabItem>
+</Tabs>
+
+Additionally, if you have installed Calico via the operator, you can optionally disable flexvolumes.
+Flexvolumes were used in earlier implementations and have since been deprecated.
+
+```bash
+kubectl patch installation default --type=merge -p '{"spec": {"flexVolumePath": "None"}}'
+```
+
+### Install Calico CSI Driver
+
+$[prodname] utilizes a Container Storage Interface (CSI) driver to help set up the policy sync API on every node.
+Apply the following to install the Calico CSI driver
+
+```bash
+kubectl apply -f $[manifestsUrl]/manifests/csi-driver.yaml
+```
+
+### Install Istio
+
+1. Verify [application layer policy requirements](../../getting-started/kubernetes/requirements.mdx#application-layer-policy-requirements).
+2. Install Istio using [installation guide in the project documentation](https://istio.io/v1.15/docs/setup/install/).
+
+```bash
+curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.15.2 sh -
+cd $(ls -d istio-* --color=never)
+./bin/istioctl install
+```
+
+Next, create the following [PeerAuthentication](https://istio.io/v1.15/docs/reference/config/security/peer_authentication/) policy.
+
+Replace `namespace` below by `rootNamespace` value, if it's customized in your environment.
+
+```bash
+kubectl create -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default-strict-mode
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT
+EOF
+```
+
+### Update Istio sidecar injector
+
+The sidecar injector automatically modifies pods as they are created to work with Istio. This step modifies the injector configuration to add Dikastes (a $[prodname] component), as sidecar containers.
+
+1. Follow the [Automatic sidecar injection instructions](https://archive.istio.io/v1.15/docs/setup/additional-setup/sidecar-injection/#automatic-sidecar-injection) to install the sidecar injector and enable it in your chosen namespace(s).
+2. Patch the istio-sidecar-injector `ConfigMap` to enable injection of Dikastes alongside Envoy.
+
+<Tabs>
+<TabItem label="Istio v1.15.x" value="Istio v1.15.x-2">
+
+```bash
+curl $[manifestsUrl]/manifests/alp/istio-inject-configmap-1.15.yaml -o istio-inject-configmap.yaml
+kubectl patch configmap -n istio-system istio-sidecar-injector --patch "$(cat istio-inject-configmap.yaml)"
+```
+
+[View sample manifest]($[manifestsUrl]/manifests/alp/istio-inject-configmap-1.15.yaml)
+
+</TabItem>
+<TabItem label="Istio v1.10.x" value="Istio v1.10.x-3">
+
+```bash
+curl $[manifestsUrl]/manifests/alp/istio-inject-configmap-1.10.yaml -o istio-inject-configmap.yaml
+kubectl patch configmap -n istio-system istio-sidecar-injector --patch "$(cat istio-inject-configmap.yaml)"
+```
+
+[View sample manifest]($[manifestsUrl]/manifests/alp/istio-inject-configmap-1.10.yaml)
+
+</TabItem>
+</Tabs>
+
+### Add Calico authorization services to the mesh
+
+Apply the following manifest to configure Istio to query $[prodname] for application layer policy authorization decisions.
+
+This applies to Istio v1.15.x and v1.10.x:
+
+```bash
+kubectl apply -f $[manifestsUrl]/manifests/alp/istio-app-layer-policy-envoy-v3.yaml
+```
+
+[View sample manifest]($[manifestsUrl]/manifests/alp/istio-app-layer-policy-envoy-v3.yaml)
+
+### Add namespace labels
+
+You can control enforcement of application layer policy on a per-namespace basis. However, this only works on pods that are started with the Envoy and $[prodname] Dikastes sidecars (as noted in the step, Update Istio sidecar injector). Pods that do not have the $[prodname] sidecars, enforce only standard $[prodname] network policy.
+
+To enable Istio and application layer policy in a namespace, add the label `istio-injection=enabled`.
+
+```bash
+kubectl label namespace <your namespace name> istio-injection=enabled
+```
+
+If the namespace already has pods in it, you must recreate them for this to take effect.
+
+:::note
+
+Envoy must be able to communicate with the `istio-pilot.istio-system service`. If you apply any egress policies to your pods, you _must_ enable access.
+
+```bash
+kubectl apply -f $[tutorialFilesURL]/allow-istio-pilot.yaml
+```
+
+:::
+
+## Additional resources
+
+- [Enforce network policy using Istio tutorial](enforce-policy-istio.mdx)
+- [Use HTTP methods and paths in policy rules](http-methods.mdx)
+- [Hands-on workshop: Learn how to deploy access control, encryption & auth at the application level](https://www.tigera.io/tutorials/?_sf_s=Deploy%20Service%20Mesh)

@@ -1,0 +1,166 @@
+---
+description: Enable IPsec for faster encryption between nodes when using the VPP data plane.
+---
+
+# IPsec configuration with VPP
+
+## Big picture
+
+Enable IPsec encryption for the traffic flowing between the nodes.
+
+## Value
+
+IPsec is the fastest option to encrypt the traffic between nodes. It enables blanket application traffic encryption with very little performance impact.
+
+## Before you begin...
+
+To enable IPsec encryption, you will need a Kubernetes cluster with:
+
+- the [VPP data plane](getting-started.mdx) configured
+- [IP-in-IP encapsulation](../../../networking/configuring/vxlan-ipip.mdx) configured between the nodes
+
+## How to
+
+- [Create the IKEv2 PSK](#create-the-ikev2-psk)
+- [Configure the VPP data plane](#configure-the-vpp-dataplane)
+
+### Create the IKEv2 PSK
+
+Create a Kubernetes secret that contains the PSK used for the IKEv2 exchange between the nodes. You can use the following command to create a random PSK. It will generate a unique random key. You may also replace the part after `psk=` with a key of your choice.
+
+```bash
+kubectl -n calico-vpp-dataplane create secret generic calicovpp-ipsec-secret \
+   --from-literal=psk="$(dd if=/dev/urandom bs=1 count=36 2>/dev/null | base64)"
+```
+
+### Configure the VPP data plane
+
+To enable IPsec, you first need to enable the ipsec feature in the `calico-vpp-config` ConfigMap.
+
+You can do so with the following kubectl command:
+
+```bash
+kubectl -n calico-vpp-dataplane patch configmap calico-vpp-config --patch "data:
+  CALICOVPP_FEATURE_GATES: |-
+    {
+      \"ipsecEnabled\": true
+    }
+"
+```
+
+You then need to configure the calico-vpp agent to pass it the key we previously created.
+```bash
+kubectl -n calico-vpp-dataplane patch daemonset calico-vpp-node --patch "spec:
+  template:
+    spec:
+      containers:
+        - name: agent
+          env:
+            - name: CALICOVPP_IPSEC_IKEV2_PSK
+              valueFrom:
+                secretKeyRef:
+                  name: calicovpp-ipsec-secret
+                  key: psk
+"
+```
+Once IPsec is enabled, all the traffic that uses IP-in-IP encapsulation in the cluster will be automatically encrypted.
+
+## Next steps
+
+### Verify encryption
+
+To verify that the traffic is encrypted, open a VPP debug CLI session to check the configuration with [calivppctl](../../../operations/troubleshoot/vpp.mdx)
+
+```bash
+calivppctl vppctl my-k8s-node-1
+# Alternatively this translates to the following CLI
+kubectl -n calico-vpp-dataplane exec calico-vpp-node-XXXX  -c vpp -- vppctl
+```
+
+Then at the `vpp#` prompt, you can run the following commands:
+
+- `show ikev2 profile` will list the configured IKEv2 profiles, there should be one per other node in your cluster
+
+As an example on a three-node cluster
+```
+vpp# show ikev2 profile
+profile pr_172_19_0_5_to_172_19_0_3
+  auth-method shared-key-mic auth data somekeysomekeysomekeysomekey
+  local id-type ip4-addr data 172.19.0.5
+  remote id-type ip4-addr data 172.19.0.3
+  protected tunnel ipip0
+  responder host-eth0 172.19.0.3
+  ike-crypto-alg aes-cbc 256 ike-integ-alg sha1-96 ike-dh modp-2048
+  esp-crypto-alg aes-gcm-16 256 esp-integ-alg none
+  lifetime 0 jitter 0 handover 0 maxdata 0
+profile pr_172_19_0_5_to_172_19_0_6
+  auth-method shared-key-mic auth data somekeysomekeysomekeysomekey
+  local id-type ip4-addr data 172.19.0.5
+  remote id-type ip4-addr data 172.19.0.6
+  protected tunnel ipip1
+  lifetime 0 jitter 0 handover 0 maxdata 0
+profile pr_172_19_0_5_to_172_19_0_4
+  auth-method shared-key-mic auth data somekeysomekeysomekeysomekey
+  local id-type ip4-addr data 172.19.0.5
+  remote id-type ip4-addr data 172.19.0.4
+  protected tunnel ipip2
+  responder host-eth0 172.19.0.4
+  ike-crypto-alg aes-cbc 256 ike-integ-alg sha1-96 ike-dh modp-2048
+  esp-crypto-alg aes-gcm-16 256 esp-integ-alg none
+  lifetime 0 jitter 0 handover 0 maxdata 0
+```
+
+- `show ipip tunnel` will list the interfaces configured in VPP. 
+```
+vpp# show ipip tunnel
+[0] instance 0 src 172.19.0.5 dst 172.19.0.3 table-ID 0 sw-if-idx 9 flags [none] dscp CS0
+[1] instance 1 src 172.19.0.5 dst 172.19.0.6 table-ID 0 sw-if-idx 10 flags [none] dscp CS0
+[2] instance 2 src 172.19.0.5 dst 172.19.0.4 table-ID 0 sw-if-idx 11 flags [none] dscp CS0
+```
+
+- `show interface` will show all the interfaces present in VPP with their corresponding states. This includes the ipip interfaces (which correspond to the IPsec tunnels) which should be up.
+
+```
+vpp# show interface
+...
+ipip0                             9      up          9000/0/0/0
+ipip1                             10     up          9000/0/0/0     rx packets                  1496
+                                                                    rx bytes                  387772
+                                                                    tx packets                  1687
+                                                                    tx bytes                  662236
+                                                                    ip4                         1496
+ipip2                             11     up          9000/0/0/0
+```
+
+- `show ipsec protect` shows the SAs being configured on each ipip tunnel. There should be two SAs by ipip tunnel.
+```
+vpp# show ipsec protect
+ipip0 flags:[none]
+ output-sa:
+  [0] sa 2147483648 (0x80000000) spi 2056367583 (0x7a91addf) protocol:esp flags:[esn anti-replay aead ctr ]
+ input-sa:
+  [1] sa 3221225472 (0xc0000000) spi 1916941699 (0x72423583) protocol:esp flags:[esn anti-replay inbound aead ctr ]
+ipip2 flags:[none]
+ output-sa:
+  [2] sa 2147487744 (0x80001000) spi 1305186871 (0x4dcb9237) protocol:esp flags:[esn anti-replay aead ctr ]
+ input-sa:
+  [3] sa 3221229568 (0xc0001000) spi 1107274174 (0x41ffa9be) protocol:esp flags:[esn anti-replay inbound aead ctr ]
+ipip1 flags:[none]
+ output-sa:
+  [4] sa 2147491840 (0x80002000) spi 3581762498 (0xd57d5bc2) protocol:esp flags:[esn anti-replay aead ctr ]
+ input-sa:
+  [5] sa 3221233664 (0xc0002000) spi 3002607689 (0xb2f82849) protocol:esp flags:[esn anti-replay inbound aead ctr ]
+```
+
+- You can see the full list of Security Associations (SAs) with `show ipsec sa`.
+```
+vpp# show ipsec sa
+[0] sa 2147483648 (0x80000000) spi 2056367583 (0x7a91addf) protocol:esp flags:[esn anti-replay aead ctr ]
+[1] sa 3221225472 (0xc0000000) spi 1916941699 (0x72423583) protocol:esp flags:[esn anti-replay inbound aead ctr ]
+[2] sa 2147487744 (0x80001000) spi 1305186871 (0x4dcb9237) protocol:esp flags:[esn anti-replay aead ctr ]
+[3] sa 3221229568 (0xc0001000) spi 1107274174 (0x41ffa9be) protocol:esp flags:[esn anti-replay inbound aead ctr ]
+[4] sa 2147491840 (0x80002000) spi 3581762498 (0xd57d5bc2) protocol:esp flags:[esn anti-replay aead ctr ]
+[5] sa 3221233664 (0xc0002000) spi 3002607689 (0xb2f82849) protocol:esp flags:[esn anti-replay inbound aead ctr ]
+```
+
+You can also [capture the traffic](../../../operations/troubleshoot/vpp.mdx#tracing-packets) flowing between the nodes to verify that it is encrypted.

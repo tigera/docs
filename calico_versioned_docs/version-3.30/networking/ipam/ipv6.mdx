@@ -1,0 +1,233 @@
+---
+description: Configure dual stack or IPv6 only for workloads.
+---
+
+# Configure dual stack or IPv6 only
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Big picture
+
+Configure $[prodname] IP address allocation to use dual stack or IPv6 only for workload communications.
+
+## Value
+
+Workload communication over IPv6 is increasingly desirable, as well as or instead of IPv4. $[prodname] supports:
+
+- **IPv4 only** (default)
+
+  Each workload gets an IPv4 address, and can communicate over IPv4.
+
+- **Dual stack**
+
+  Each workload gets an IPv4 and an IPv6 address, and can communicate over IPv4 or IPv6.
+
+- **IPv6 only**
+
+  Each workload gets an IPv6 address, and can communicate over IPv6.
+
+## Before you begin
+
+**$[prodname] requirements**
+
+- $[prodname] IPAM
+
+**Kubernetes version requirements**
+
+- For dual stack, 1.16 and later
+- For one IP stack at a time (IPv4 or IPv6), any Kubernetes version
+
+**Kubernetes IPv6 host requirements**
+
+- An IPv6 address that is reachable from the other hosts
+- The sysctl setting, `net.ipv6.conf.all.forwarding`, is set to `1`.
+  This ensures both Kubernetes service traffic and $[prodname] traffic is forwarded appropriately.
+- A default IPv6 route
+
+**Kubernetes IPv4 host requirements**
+
+- An IPv4 address that is reachable from the other hosts
+- The sysctl setting, `net.ipv4.conf.all.forwarding`, is set to `1`.
+  This ensures both Kubernetes service traffic and $[prodname] traffic is forwarded appropriately.
+- A default IPv4 route
+
+## How to
+
+:::note
+
+The following tasks are only for new clusters.
+
+:::
+
+- [Enable IPv6 only](#enable-ipv6-only)
+- [Enable dual stack](#enable-dual-stack)
+
+### Enable IPv6 only
+
+<Tabs>
+<TabItem label="Operator" value="Operator-0">
+
+To configure an IPv6-only cluster using the operator, edit your default Installation at install time to include a single IPv6 pool, and no IPv4 pools. For example:
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  calicoNetwork:
+     # Note: The ipPools section cannot be modified post-install.
+    ipPools:
+      - blockSize: 122
+        cidr: 2001::00/64
+        encapsulation: None
+        natOutgoing: Enabled
+        nodeSelector: all()
+```
+
+</TabItem>
+<TabItem label="Manifest" value="Manifest-1">
+
+1. Set up a new Kubernetes cluster with an IPv6 pod CIDR and service IP range.
+
+1. Using the [$[prodname] Kubernetes install guide](../../getting-started/kubernetes/self-managed-onprem/onpremises.mdx), download the correct $[prodname] manifest for the cluster and datastore type.
+
+1. Edit the CNI config (calico-config ConfigMap in the manifest) to disable IPv4 assignments and enable IPv6 assignments.
+
+   ```json
+       "ipam": {
+           "type": "calico-ipam",
+           "assign_ipv4": "false",
+           "assign_ipv6": "true"
+       },
+   ```
+
+1. Configure IPv6 support by adding the following variable settings to the environment for the `calico-node` container:
+
+   | Variable name       | Value        |
+   | ------------------- | ------------ |
+   | `IP6`               | `autodetect` |
+   | `FELIX_IPV6SUPPORT` | `true`       |
+
+   :::note
+
+   If your IPv6 IP pools include private IP addresses, pods that are assigned private IP addresses cannot perform outbound NAT by default. 
+
+   To enable outbound NAT for these pods, add `CALICO_IPV6POOL_NAT_OUTGOING: true` to the environment of the `calico-node` container.
+
+   :::
+
+1. For clusters **not** provisioned with kubeadm (see note below), configure the default IPv6 IP pool by adding the following variable setting to the environment for the `calico-node` container:
+
+   | Variable name          | Value                                                                                                   |
+   | ---------------------- | ------------------------------------------------------------------------------------------------------- |
+   | `CALICO_IPV6POOL_CIDR` | the same as the IPv6 range you configured as the cluster CIDR to kube-controller-manager and kube-proxy |
+
+   :::note
+
+   For clusters provisioned with kubeadm, $[prodname] autodetects the IPv4 and IPv6 pod CIDRs and does not require configuration.
+
+   :::
+
+1. Apply the edited manifest with `kubectl apply -f`.
+
+   New pods will get IPv6 addresses, and can communicate with each other and the outside world over IPv6.
+
+**(Optional) Update host to not look for IPv4 addresses**
+
+If you want your workloads to have IPv6 addresses only, because you do not have IPv4 addresses or connectivity
+between your nodes, complete these additional steps to tell $[prodname] not to look for any IPv4 addresses.
+
+1. Disable [IP autodetection of IPv4](ip-autodetection.mdx) by setting `IP` to `none`.
+1. Calculate the $[prodname] BGP router ID for IPv6 using either of the following methods.
+   - Set the environment variable `CALICO_ROUTER_ID=hash` on $[nodecontainer].
+     This configures $[prodname] to calculate the router ID based on the hostname.
+   - Pass a unique value for `CALICO_ROUTER_ID` to each node individually.
+
+</TabItem>
+</Tabs>
+
+### Enable dual stack
+
+1. Set up a new cluster following the Kubernetes [prerequisites](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#prerequisites) and [enablement steps](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#enable-ipv4-ipv6-dual-stack).
+
+<Tabs>
+<TabItem label="Operator" value="Operator-2">
+
+To configure dual-stack cluster using the operator, edit your default Installation at install time to include both an IPv4 and IPv6 pool. For example:
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+   # Configures Calico networking.
+  calicoNetwork:
+     # Note: The ipPools section cannot be modified post-install.
+    ipPools:
+      - blockSize: 26
+        cidr: 10.48.0.0/21
+        encapsulation: IPIP
+        natOutgoing: Enabled
+        nodeSelector: all()
+      - blockSize: 122
+        cidr: 2001::00/64
+        encapsulation: None
+        natOutgoing: Enabled
+        nodeSelector: all()
+```
+
+</TabItem>
+<TabItem label="Manifest" value="Manifest-3">
+
+1. Using the [$[prodname] Kubernetes install guide](../../getting-started/kubernetes/self-managed-onprem/onpremises.mdx), download the correct $[prodname] manifest for the cluster and datastore type.
+
+1. Edit the CNI config (`calico-config` ConfigMap in the manifest), and enable IPv4 and IPv6 address allocation by setting both fields to true.
+
+   ```json
+       "ipam": {
+           "type": "calico-ipam",
+           "assign_ipv4": "true",
+           "assign_ipv6": "true"
+       },
+   ```
+
+1. Configure IPv6 support by adding the following variable settings to the environment for the `calico-node` container:
+
+   | Variable name       | Value        |
+   | ------------------- | ------------ |
+   | `IP6`               | `autodetect` |
+   | `FELIX_IPV6SUPPORT` | `true`       |
+
+   :::note
+
+   If your IPv6 IP pools include private IP addresses, pods that are assigned private IP addresses cannot perform outbound NAT by default. 
+
+   To enable outbound NAT for these pods, add `CALICO_IPV6POOL_NAT_OUTGOING: true` to the environment of the `calico-node` container.
+
+   :::
+
+1. For clusters **not** provisioned with kubeadm (see note below), configure the default IPv6 IP pool by adding the following variable setting to the environment for the `calico-node` container:
+
+   | Variable name          | Value                                                                                                        |
+   | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+   | `CALICO_IPV6POOL_CIDR` | the same as the IPv6 range you configured as the IPv6 cluster CIDR to kube-controller-manager and kube-proxy |
+
+   :::note
+
+   For clusters provisioned with kubeadm, $[prodname] autodetects the IPv4 and IPv6 pod CIDRs and does not require configuration.
+
+   :::
+
+1. Apply the edited manifest with `kubectl apply -f`.
+
+   New pods will get both IPv4 and IPv6 addresses, and can communicate with each other and the outside world over IPv4 or IPv6.
+
+</TabItem>
+</Tabs>
+
+## Additional resources
+
+- [Configure Kubernetes control plane to operate over IPv6](ipv6-control-plane.mdx)
