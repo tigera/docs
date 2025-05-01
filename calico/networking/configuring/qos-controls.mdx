@@ -1,0 +1,120 @@
+---
+description: Configure QoS (Quality of Service) Controls to limit ingress and/or egress bandwidth, packet rate and number of connections of Calico workloads.
+---
+
+# Configure QoS Controls
+
+## Big picture
+
+Configure QoS (Quality of Service) Controls to limit ingress and/or egress bandwidth, packet rate and number of connections used by Calico workloads in order to prevent them from overusing or overloading network resources.
+
+## Value
+
+With QoS controls, $[prodname] enforces network resource limits (bandwidth, packet rate, connections) for Kubernetes pods and OpenStack VMs, ensuring fair resource allocation and preventing performance degradation for other workloads.
+
+## Limitations
+
+- This feature is currently supported on the **iptables** and **nftables** modes only, **eBPF** mode does not support it at the moment.
+
+## Concepts
+
+### Quality of Service Controls
+
+**Quality of Service** (**QoS**), in the field of computer networking, refers to traffic prioritization and resource reservation control mechanisms. It may either mean guaranteeing minimum levels of networking resources, or limiting the maximum levels of usage of networking resources in order to prevent a small number of users from excessive resource consumption, stopping others from using their fair share. For practical purposes, the latter will be considered as $[prodname] implements QoS Controls by limiting maximum levels of network resources usage.
+
+$[prodname] implements three types of QoS Controls, which can be configured using annotations on the Kubernetes pods for either ingress (traffic coming into the pod), egress (traffic going out of the pod), or both:
+1. Bandwidth: limiting the bit rate of traffic into/out of the pod
+2. Packet rate: limiting the number of packets per second that can be sent or received by the pod
+3. Number of established connections: limiting the absolute number of connections that the pod may initiate or accept
+
+### Annotations
+
+On Kubernetes, $[prodname] uses [annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/) on pods for the configuration of QoS controls.
+
+The values of the QoS controls annotations may contain suffixes, such as `k`, `M`, `G`, `T`, `P`, or `E` to represent large numbers. Binary suffixes are also supported, for example `1Ki` represents "1024".
+
+For example, to limit egress bandwidth to 100Mbps, with a maximum burst of 200Mb:
+
+```yaml noValidation
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+  labels:
+    app: my-app
+spec:
+  replicas: 3
+  template:
+    metadata:
+      annotations:
+        qos.projectcalico.org/egressBandwidth: "100M"
+        qos.projectcalico.org/egressBurst: "200M"
+    spec:
+        (...)
+```
+
+## How to
+
+- [Configure bandwidth limits](#configure-bandwidth-limits)
+- [Configure packet rate limits](#configure-packet-rate-limits)
+- [Configure established connection limits](#configure-established-connection-limits)
+- [See all available annotations](#all-available-annotations)
+
+### Configure bandwidth limits
+
+Use the annotations below to configure bandwidth and burst limits for traffic going into or coming out of the pod. Limiting the bandwidth enforces that, on average, that will be the maximum bit rate used. Limiting the burst enforces that at any given instant, the maximum burst traffic will not go over the burst limit. Burst configuration is optional, if burst is not explicitly configured with an annotation, a default value of `4Gib` is used.
+
+| Annotation                                    | Description                                                                                                                                                                                               |
+|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `qos.projectcalico.org/ingressBandwidth`      | Specifies the ingress bandwidth limit (in bits per second).<br/>Min value: `1k`<br/>Max value: `1P`.                                                                                                      |
+| `qos.projectcalico.org/egressBandwidth`       | Specifies the egress bandwidth limit (in bits per second).<br/>Min value: `1k`<br/>Max value: `1P`.                                                                                                       |
+| `qos.projectcalico.org/ingressBurst`          | Specifies the ingress burst limit (in bits).<br/>Optional, defaults to `4Gi`.<br/>Min value: 2 * value of `ingressBandwidth`<br/>Max value: `4Gi`                                                         |
+| `qos.projectcalico.org/egressBurst`           | Specifies the egress burst limit (in bits).<br/>Optional, defaults to `4Gi`.<br/>Min value: 2 * value of `egressBandwidth`<br/>Max value: `4Gi`                                                           |
+
+If the [Kubernetes bandwidth plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/) annotations `kubernetes.io/ingress-bandwidth` or `kubernetes.io/egress-bandwidth` are configured and the `qos.projectcalico.org` annotations are not, they are honored and $[prodname] will configure bandwidth limits based on them . The $[prodname] specific annotations take precedence, so if both are configured, the Kubernetes annotation will be ignored. This makes upgrading from a $[prodname] version that uses the bandwidth plugin to a version with native bandwith limiting seamless, as the behavior will remain consistent across versions (with $[prodname] replacing the functionality previously provided by the Kubernetes bandwidth plugin).
+
+One essential difference between the bandwidth plugin and $[prodname]'s implementations is that with $[prodname], the bandwidth limits take effect immediately, whereas with the bandwidth plugin the pods need to be recreated for the limits to take effect.
+
+| Annotation                                    | Description                                                                                                                                                                                               |
+|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `kubernetes.io/ingress-bandwidth`             | Kubernetes bandwidth plugin annotation for the ingress bandwidth limit (in bits per second).<br/>Ignored if `qos.projectcalico.org/ingressBandwidth` is present.<br/>Min value: `1k`<br/>Max value: `1P`  |
+| `kubernetes.io/egress-bandwidth`              | Kubernetes bandwidth plugin annotation for the egress bandwidth limit (in bits per second).<br/>Ignored if `qos.projectcalico.org/egressBandwidth` is present.<br/>Min value: `1k`<br/>Max value: `1P`    |
+
+### Configure packet rate limits
+
+Use the annotations below to configure packet rate limits for traffic going into or coming out of the pod. Limiting the packet rate enforces that, on average, that will be the maximum rate that packets will be sent and/or received by the pod.
+
+| Annotation                                    | Description                                                                                                                                                                                               |
+|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `qos.projectcalico.org/ingressPacketRate`     | Specifies the maximum rate of ingress packets (in packets per second).<br/>Min value: `10`<br/>Max value: `1T`                                                                                            |
+| `qos.projectcalico.org/egressPacketRate`      | Specifies the maximum rate of egress packets (in packets per second).<br/>Min value: `10`<br/>Max value: `1T`                                                                                             |
+
+### Configure established connection limits
+
+Use the annotations below to configure limits for the number of established connections into or out of a pod. Limiting the number of connections enforces that the pod cannot accept or initiate more connections that the specified limits.
+
+| Annotation                                    | Description                                                                                                                                                                                               |
+|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `qos.projectcalico.org/ingressMaxConnections` | Specifies the maximum number of ingress connections.<br/>Min value: `1`<br/>Max value: `100G`                                                                                                             |
+| `qos.projectcalico.org/egressMaxConnections`  | Specifies the maximum number of egress connections.<br/>Min value: `1`<br/>Max value: `100G`                                                                                                              |
+
+### All available annotations
+
+Below is a table listing all available QoS controls annotations.
+
+| Annotation                                    | Description                                                                                                                                                                                               |
+|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `qos.projectcalico.org/ingressBandwidth`      | Specifies the ingress bandwidth limit (in bits per second).<br/>Min value: `1k`<br/>Max value: `1P`.                                                                                                      |
+| `qos.projectcalico.org/egressBandwidth`       | Specifies the egress bandwidth limit (in bits per second).<br/>Min value: `1k`<br/>Max value: `1P`.                                                                                                       |
+| `qos.projectcalico.org/ingressBurst`          | Specifies the ingress burst limit (in bits).<br/>Optional, defaults to `4Gi`.<br/>Min value: 2 * value of `ingressBandwidth`<br/>Max value: `4Gi`                                                         |
+| `qos.projectcalico.org/egressBurst`           | Specifies the egress burst limit (in bits).<br/>Optional, defaults to `4Gi`.<br/>Min value: 2 * value of `egressBandwidth`<br/>Max value: `4Gi`                                                           |
+| `qos.projectcalico.org/ingressPacketRate`     | Specifies the maximum rate of ingress packets (in packets per second).<br/>Min value: `10`<br/>Max value: `1T`                                                                                            |
+| `qos.projectcalico.org/egressPacketRate`      | Specifies the maximum rate of egress packets (in packets per second).<br/>Min value: `10`<br/>Max value: `1T`                                                                                             |
+| `qos.projectcalico.org/ingressMaxConnections` | Specifies the maximum number of ingress connections.<br/>Min value: `1`<br/>Max value: `100G`                                                                                                             |
+| `qos.projectcalico.org/egressMaxConnections`  | Specifies the maximum number of egress connections.<br/>Min value: `1`<br/>Max value: `100G`                                                                                                              |
+| `kubernetes.io/ingress-bandwidth`             | Kubernetes bandwidth plugin annotation for the ingress bandwidth limit (in bits per second).<br/>Ignored if `qos.projectcalico.org/ingressBandwidth` is present.<br/>Min value: `1k`<br/>Max value: `1P`  |
+| `kubernetes.io/egress-bandwidth`              | Kubernetes bandwidth plugin annotation for the egress bandwidth limit (in bits per second).<br/>Ignored if `qos.projectcalico.org/egressBandwidth` is present.<br/>Min value: `1k`<br/>Max value: `1P`    |
+
+## Additional resources
+
+- [QoS controls on Openstack](../openstack/neutron-api.mdx#qos)
