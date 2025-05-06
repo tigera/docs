@@ -7,6 +7,7 @@ const variables = {
   prodnamedash: 'calico-cloud',
   baseUrl: '/calico-cloud',
   filesUrl: 'https://docs.calicocloud.io',
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.30.0',
   filesUrl_CE: 'https://downloads.tigera.io/ee/v3.21.0-1.0',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   prodnameWindows: 'Calico Enterprise for Windows',
