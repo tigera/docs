@@ -40,6 +40,13 @@ const variables = {
     flexvol: 'calico/pod2daemon-flexvol',
     'csi-driver': 'calico/csi',
     'csi-node-driver-registrar': 'calico/node-driver-registrar',
+    'calico/envoy-gateway': 'calico/envoy-gateway',
+    'calico/envoy-proxy': 'calico/envoy-proxy',
+    'calico/envoy-ratelimit': 'calico/envoy-ratelimit',
+    'calico/key-cert-provisioner': 'calico/key-cert-provisioner',
+    'calico/goldmane': 'calico/goldmane',
+    'calico/whisker': 'calico/whisker',
+    'calico/whisker-backend': 'calico/whisker-backend'
   },
 };
 
