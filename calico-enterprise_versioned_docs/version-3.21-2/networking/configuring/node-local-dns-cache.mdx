@@ -1,0 +1,69 @@
+---
+description: Install NodeLocal DNSCache
+---
+
+# Use NodeLocal DNSCache in your cluster
+
+## Big picture
+
+Set up NodeLocal DNSCache to improve DNS lookup latency.
+
+## Before you begin
+
+### Required
+
+Follow these [steps](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/) to enable NodeLocal DNSCache connectivity.
+
+### Unsupported
+
+- OpenShift 
+  
+NodeLocal DNSCache does not support OpenShift. Openshift has its own DNS caching mechanism which deploys CoreDNS pods as DaemonSets.
+For more information, see [Openshift DNS setup](https://docs.openshift.com/container-platform/4.10/networking/dns-operator.html).
+
+## Create a policy to allow traffic from NodeLocal DNSCache
+
+The following is a sample network policy that allows all incoming TCP traffic (including incoming traffic from
+`node-local-dns` pods) on port 53 on `kube-dns`.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: default.local-dns-to-core-dns
+  namespace: kube-system
+spec:
+  tier: default
+  selector: k8s-app == "kube-dns"
+  ingress:
+    - action: Allow
+      protocol: TCP
+      destination:
+        selector: k8s-app == "kube-dns"
+        ports:
+          - '53'
+  types:
+    - Ingress
+```
+
+To refine the sources permitted by this policy, take into account that NodeLocal DNSCache pods are host networked, 
+and make sure to allow traffic from the addresses of your hosts.
+If you're using encapsulation, you will need to allow connectivity from the tunnel IPs.
+
+The Tigera operator creates policy to allow Tigera components to connect to NodeLocal DNSCache when detected.
+Felix accounts for the NodeLocal DNSCache in creating DNS Logs and enforcing DNS Policy.
+
+## Enable NodeLocal DNSCache on $[prodname] using the eBPF data plane
+
+If your $[prodname] installation uses the eBPF data plane, then you need to annotate the `kube-dns` service.
+Without this, the `kube-proxy` replacement will improperly resolve traffic going to a specific service IP.
+
+Annotate the `kube-dns` service by running the following command:
+
+```bash
+kubectl annotate service kube-dns -n kube-system projectcalico.org/natExcludeService=true
+```
+
+## Additional resources
+
+- [Blog: Optimizing Kubernetes DNS with NodeLocal DNSCache and Calico eBPF: A Practitioner’s Guide](https://www.tigera.io/blog/optimizing-kubernetes-dns-with-nodelocal-dnscache-and-calico-ebpf-a-practitioners-guide/)
