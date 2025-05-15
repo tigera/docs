@@ -1,0 +1,158 @@
+---
+description: Monitor Elasticsearch and Fluentd metrics, and get alerts on log storage or collection issues.
+---
+
+# Elasticsearch and Fluentd metrics
+
+## Big picture
+
+Use the Prometheus monitoring and alerting tool for Fluentd and Elasticsearch metrics to ensure continuous network visibility.
+
+## Value
+
+Platform engineering teams rely on logs, such as flow logs and DNS logs, for visibility into their networks. If collecting or storing logs are disrupted, this can impact network visibility. Prometheus can monitor log collection and storage metrics so platform engineering teams are alerted about problems before they occur.
+
+## Concepts
+
+| Component     | Description                                                                                                                                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Prometheus    | Monitoring tool that scrapes metrics from instrumented jobs and displays time series data in a visualizer (such as Grafana). For $[prodname], the “jobs” that Prometheus can harvest metrics from are the Elasticsearch and Fluentd components. |
+| Elasticsearch | Stores $[prodname] logs.                                                                                                                                                                                                                        |
+| Fluentd       | Sends $[prodname] logs to Elasticsearch for storage.                                                                                                                                                                                            |
+
+**Multi-cluster management users**: Elasticsearch metrics are collected only from the management cluster. Because managed clusters do not have Elasticsearch clusters, do not monitor Elasticsearch for managed clusters. However, managed clusters do feed Fluentd logs to Elasticsearch, so you should monitor fluentd for managed clusters.
+
+## How to
+
+- [Create Prometheus alerts for Elasticsearch](#create-prometheus-alerts-for-elasticsearch)
+- [Create Prometheus alerts for Fluentd](#create-prometheus-alerts-for-elasticsearch)
+
+### Create Prometheus alerts for Elasticsearch
+
+The following example creates Prometheus rules to monitor some important Elasticsearch metrics, and alert when they have
+crossed certain thresholds:
+
+:::note
+
+The Elasticsearch Prometheus rules are only applicable to standalone and management cluster types, not the
+managed cluster type.
+
+:::
+
+:::note
+
+The ElasticsearchHighMemoryUsage alert is an absolute value. This must be configured before applying the
+rules.
+
+:::
+
+```yaml noValidation
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tigera-prometheus-log-storage-monitoring
+  namespace: tigera-prometheus
+  labels:
+    role: tigera-prometheus-rules
+    prometheus: calico-node-prometheus
+spec:
+  groups:
+  - name: tigera-elasticsearch.rules
+    rules:
+    - alert: ElasticsearchClusterStatusRed
+      expr: elasticsearch_cluster_health_status{color="red"} == 1
+      labels:
+        severity: Critical
+      annotations:
+        summary: "Elasticsearch cluster {{$labels.cluster}}'s status is red"
+        description: "The Elasticsearch cluster {{$labels.cluster}} is very unhealthy and immediate action must be
+taken. Check the pod logs for the {{$labels.cluster}} Elasticsearch cluster to start the investigation."
+    - alert: ElasticsearchClusterStatusYellow
+      expr: elasticsearch_cluster_health_status{color="yellow"} == 1
+      labels:
+        severity: Warning
+      annotations:
+        summary: "Elasticsearch cluster {{$labels.cluster}} status is yellow"
+        description: "The Elasticsearch cluster {{$labels.cluster}} may be unhealthy and could become very unhealthy if
+the issue isn't resolved. Check the pod logs for the {{$labels.cluster}} Elasticsearch cluster to start the
+investigation."
+    - alert: ElasticsearchPodCriticallyLowDiskSpace
+      expr: elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes < 0.10
+      labels:
+        severity: Critical
+      annotations:
+        summary: "Elasticsearch pod {{$labels.name}}'s disk space is critically low."
+        description: "Elasticsearch pod {{$labels.name}} in Elasticsearch cluster {{$labels.name}} has less than 10% of
+free disk space left. To avoid service disruption review the LogStorage resource limits and curation settings."
+    - alert: ElasticsearchPodLowDiskSpace
+      expr: elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes < 0.25
+      labels:
+        severity: Warning
+      annotations:
+        summary: "Elasticsearch pod {{$labels.name}}'s disk space is getting low."
+        description: "Elasticsearch pod {{$labels.name}} in Elasticsearch cluster {{$labels.name}} has less than 25% of
+free disk space left. To avoid service disruption review the LogStorage resource limits and curation settings."
+    - alert: ElasticsearchConsistentlyHighCPUUsage
+      expr: avg_over_time(elasticsearch_os_cpu_percent[10m]) > 90
+      labels:
+        severity: Warning
+      annotations:
+        summary: "Elasticsearch pod {{$labels.name}}'s CPU usage is consistently high."
+        description: "Elasticsearch pod {{$labels.name}} in Elasticsearch cluster {{$labels.cluster}} has been using
+above 90% of it's available CPU for the last 10 minutes. To avoid service disruption review the LogStorage resource
+limits."
+    - alert: ElasticsearchHighMemoryUsage
+      expr: avg_over_time(elasticsearch_jvm_memory_pool_used_bytes[10m]) > 1000000000
+      labels:
+        severity: Warning
+      annotations:
+        summary: "Elasticsearch pod {{$labels.name}}'s memory usage is consistently high."
+        description: "Elasticsearch pod {{$labels.name}} in Elasticsearch cluster {{$labels.cluster}} has been using
+an average of {{$labels.value}} bytes of memory over the past 10 minutes. To avoid service disruption review the
+LogStorage resource limits."
+```
+
+#### The alerts created in the example are described in the following table:
+
+| Alert                                       | Severity              | Requires                                                              | Issue/reason                                                                                                                                                                                |
+| ------------------------------------------- | --------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ElasticsearchClusterStatusRed               | Critical              | Immediate action to avoid service disruption and restore the service. | Elasticsearch cluster is unhealthy.                                                                                                                                                         |
+| ElasticsearchPodCriticallyLowDiskSpace      | Critical              |                                                                       | Disk space for pod is less than 10% of total available space. The LogStorage resource settings for disk space are not high enough or logs are not being correctly curated.                  |
+| ElasticsearchClusterStatusYellow            | Non-critical, warning | Immediate investigation to rule out critical issue.                   | Early warning of cluster problem.                                                                                                                                                           |
+| ElasticsearchPodLowDiskSpace                | Non-critical, warning |                                                                       | Disk space for an Elasticsearch pod is less than 25% of total available space. The LogStorage resource settings for disk space are not high enough or logs are not being correctly curated. |
+| ElasticsearchPodConsistentlyHighCPUUsage    | Non-critical, warning |                                                                       | An Elasticsearch pod is averaging above 90% of its CPU over the last 10 minutes.                                                                                                            |
+| ElasticsearchPodConsistentlyHighMemoryUsage | Non-critical, warning |                                                                       | An Elasticsearch pod is averaging above the set memory threshold over the last 10 minutes.                                                                                                  |
+
+### Create Prometheus alerts for Fluentd
+
+The following example creates a Prometheus a rule to monitor some important Fluentd metrics, and alert when they
+have crossed certain thresholds:
+
+```yaml noValidation
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tigera-prometheus-log-collection-monitoring
+  namespace: tigera-prometheus
+  labels:
+    role: tigera-prometheus-rules
+    prometheus: calico-node-prometheus
+spec:
+  groups:
+  - name: tigera-log-collection.rules
+    rules:
+    - alert: FluentdPodConsistentlyLowBufferSpace
+      expr: avg_over_time(fluentd_output_status_buffer_available_space_ratio[5m]) < 75
+      labels:
+        severity: Warning
+      annotations:
+        summary: "Fluentd pod {{$labels.pod}}'s buffer space is consistently below 75 percent capacity."
+        description: "Fluentd pod {{$labels.pod}} has very low buffer space. There may be connection issues between Elasticsearch
+and Fluentd or there are too many logs to write out, check the logs for the Fluentd pod."
+```
+
+#### The alerts created in the example are described as follows:
+
+| Alert                                    | Severity              | Requires                                                             | Issue/reason                                                                                                                                                                                                                                                                  |
+| ---------------------------------------- | --------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **FluentdPodConsistentlyLowBufferSpace** | Non-critical, warning | Immediate investigation to ensure logs are being gathered correctly. | A Fluentd pod’s available buffer size has averaged less than 75% over the last 5 minutes.<br /><br />This could mean Fluentd is having trouble communicating with the Elasticsearch cluster, the Elasticsearch cluster is down, or there are simply too many logs to process. |
