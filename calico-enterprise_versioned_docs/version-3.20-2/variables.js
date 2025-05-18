@@ -2,12 +2,12 @@ const releases = require('./releases.json');
 const componentImage = require('../../src/components/utils/componentImage');
 
 const variables = {
-  releaseTitle: 'v3.20.3',
+  releaseTitle: 'v3.20.4',
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'v3.20',
   baseUrl: '/calico-enterprise/latest',
-  filesUrl: 'https://downloads.tigera.io/ee/v3.20.3',
+  filesUrl: 'https://downloads.tigera.io/ee/v3.20.4',
   rpmsUrl: 'https://downloads.tigera.io/ee/rpms/v3.20',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/3.20',
