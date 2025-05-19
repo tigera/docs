@@ -51,45 +51,6 @@ of the chart into the `tigera-operator` namespace.
 When upgrading from a version of $[prodname] v3.22 or lower to a version of $[prodname] v3.23 or greater, you must complete the following steps to migrate
 ownership of the helm resources to the new chart location.
 
-### Upgrade from Calico versions prior to v3.23.0
-
-1. Patch existing resources so that the new chart can assume ownership.
-
-   ```
-   kubectl patch installation default --type=merge -p '{"metadata": {"annotations": {"meta.helm.sh/release-namespace": "tigera-operator"}}}'
-   kubectl patch apiserver default --type=merge -p '{"metadata": {"annotations": {"meta.helm.sh/release-namespace": "tigera-operator"}}}'
-   kubectl patch podsecuritypolicy tigera-operator --type=merge -p '{"metadata": {"annotations": {"meta.helm.sh/release-namespace": "tigera-operator"}}}'
-   kubectl patch -n tigera-operator deployment tigera-operator --type=merge -p '{"metadata": {"annotations": {"meta.helm.sh/release-namespace": "tigera-operator"}}}'
-   kubectl patch -n tigera-operator serviceaccount tigera-operator --type=merge -p '{"metadata": {"annotations": {"meta.helm.sh/release-namespace": "tigera-operator"}}}'
-   kubectl patch clusterrole tigera-operator --type=merge -p '{"metadata": {"annotations": {"meta.helm.sh/release-namespace": "tigera-operator"}}}'
-   kubectl patch clusterrolebinding tigera-operator tigera-operator --type=merge -p '{"metadata": {"annotations": {"meta.helm.sh/release-namespace": "tigera-operator"}}}'
-   ```
-
-1. Apply the $[version] CRDs:
-
-   ```bash
-   kubectl apply --server-side --force-conflicts -f $[manifestsUrl]/manifests/operator-crds.yaml
-   ```
-
-1. Install the helm chart in the `tigera-operator` namespace.
-
-   ```
-   helm install $[prodnamedash] projectcalico/tigera-operator --version $[releaseTitle] --namespace tigera-operator
-   ```
-
-1. Once the install has succeeded, you can delete any old releases in the `default` namespace.
-
-   ```
-   kubectl delete secret -n default -l name=calico,owner=helm --dry-run
-   ```
-
-:::note
-
-The above command uses --dry-run to avoid making changes to your cluster. We recommend reviewing
-the output and then re-running the command without --dry-run to commit to the changes.
-
-:::
-
 ### All other upgrades
 
 1. Apply the $[version] CRDs:
