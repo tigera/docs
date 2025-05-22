@@ -9,10 +9,9 @@ routes imported by and exported to BGP peers specified using a
 BGP peer resource (`BGPPeer`).
 
 The BGPFilter rules are applied sequentially: the `action` for
-the **first** rule that matches an address to its `cidr` +
-`matchOperator` is executed immediately. If an address does not
-match any explicit BGP filter rule, the default action is
-`accept`.
+the **first** rule that matches is executed immediately.
+If an address does not match any explicit BGP filter rule,
+the default action is `Accept`.
 
 In order for a BGPFilter to be used in a BGP peering, its `name`
 must be added to `filters` of the corresponding BGPPeer resource.
@@ -32,50 +31,28 @@ spec:
     - action: Accept
       matchOperator: In
       cidr: 77.0.0.0/16
+      source: RemotePeers
     - action: Reject
-      matchOperator: NotIn
-      cidr: 88.0.0.0/16
+      interface: '*.calico'
   importV4:
-    - action: Reject
-      matchOperator: NotIn
-      cidr: 44.0.0.0/16
-  exportV6:
-    - action: Reject
-      matchOperator: NotEqual
-      cidr: 9000::0/64
-  importV6:
-    - action: Accept
-      matchOperator: Equal
-      cidr: 5000::0/64
-    - action: Reject
-      matchOperator: NotIn
-      cidr: 5000::0/64
-```
-
-## BGP filter definition
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: BGPFilter
-metadata:
-  name: my-filter
-spec:
-  exportV4:
     - action: Accept
       matchOperator: In
-      cidr: 77.0.0.0/16
-  importV4:
-    - action: Accept
+      cidr: 55.0.0.0/16
+      prefixLength:
+        min: 30
+    - action: Reject
       matchOperator: NotIn
       cidr: 44.0.0.0/16
   exportV6:
-    - action: Accept
-      matchOperator: Equal
-      cidr: 9000::0/64
+    - action: Reject
+      source: RemotePeers
+    - action: Reject
+      interface: '*.calico'
   importV6:
     - action: Accept
-      matchOperator: NotEqual
+      matchOperator: Equal
       cidr: 5000::0/64
+    - action: Reject
 ```
 
 ## BGP filter definition
@@ -88,8 +65,8 @@ spec:
 
 ### Spec
 
-| Field    | Description                                        | Accepted Values | Schema                                    | Default |
-| -------- | -------------------------------------------------- | --------------- | ----------------------------------------- | ------- |
+| Field    | Description                        | Accepted Values | Schema                                    | Default |
+| -------- | ---------------------------------- | --------------- | ----------------------------------------- | ------- |
 | exportV4 | List of v4 CIDRs and export action |                 | [BGP Filter Rule v4](#bgp-filter-rule-v4) |         |
 | importV4 | List of v4 CIDRs and import action |                 | [BGP Filter Rule v4](#bgp-filter-rule-v4) |         |
 | exportV6 | List of v6 CIDRs and export action |                 | [BGP Filter Rule v6](#bgp-filter-rule-v6) |         |
@@ -97,19 +74,26 @@ spec:
 
 ### BGP Filter Rule v4
 
-| Field         | Description                               | Accepted Values                    | Schema | Default |
-| ------------- | ----------------------------------------- | ---------------------------------- | ------ | ------- |
-| cidr          | IPv4 range                                | A valid IPv4 CIDR                  | string |         |
-| matchOperator | Method by which to match candidate routes | `In`, `NotIn`, `Equal`, `NotEqual` | string |         |
-| action        | Action to be taken for this CIDR          | `Accept` or `Reject`               | string |         |
+| Field         | Description                                | Accepted Values                                                     | Schema | Default |
+| ------------- | ------------------------------------------ | ------------------------------------------------------------------- | ------ | ------- |
+| cidr          | IPv6 range                                 | A valid IPv6 CIDR                                                   | string |         |
+| prefixLength  | [PrefixLength](#bgp-filter-prefix-length)  | Valid integers between 0 and ipv4/6 max (32, 128)                   |        |         |
+| matchOperator | Method by which to match candidate routes  | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string |         |
+| source        | Indicator of the source of route           | `RemotePeers` means any route learned from other BGP peers          | string |         |
+| interface     | String to match interface names            | A valid pattern to match interfaces. "*" can be used as a wildcard. | string |         |
+| action        | Action to be taken for this rule           | `Accept` or `Reject`                                                | string |         |
 
 ### BGP Filter Rule v6
 
-| Field         | Description                               | Accepted Values                    | Schema | Default |
-| ------------- | ----------------------------------------- | ---------------------------------- | ------ | ------- |
-| cidr          | IPv6 range                                | A valid IPv6 CIDR                  | string |         |
-| matchOperator | Method by which to match candidate routes | `In`, `NotIn`, `Equal`, `NotEqual` | string |         |
-| action        | Action to be taken for this CIDR          | `Accept` or `Reject`               | string |         |
+| Field         | Description                                | Accepted Values                                                     | Schema | Default |
+| ------------- | ------------------------------------------ | ------------------------------------------------------------------- | ------ | ------- |
+| cidr          | IPv6 range                                 | A valid IPv6 CIDR                                                   | string |         |
+| prefixLength  | [PrefixLength](#bgp-filter-prefix-length)  | Valid integers between 0 and ipv4/6 max (32, 128)                   |        |         |
+| matchOperator | Method by which to match candidate routes  | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string |         |
+| source        | Indicator of the source of route           | `RemotePeers` means any route learned from other BGP peers          | string |         |
+| interface     | String to match interface names            | A valid pattern to match interfaces. "*" can be used as a wildcard. | string |         |
+| action        | Action to be taken for this rule           | `Accept` or `Reject`                                                | string |         |
+
 
 ## Supported operations
 
