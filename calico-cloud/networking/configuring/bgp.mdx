@@ -265,33 +265,33 @@ must be added to `filters` of the corresponding BGPPeer resource.
 The following example creates a BGPFilter
 
 ```yaml
-kind: BGPFilter
 apiVersion: projectcalico.org/v3
+kind: BGPFilter
 metadata:
-  name: my-first-bgp-filter
+  name: my-filter
 spec:
   exportV4:
     - action: Accept
       matchOperator: In
       cidr: 77.0.0.0/16
     - action: Reject
-      matchOperator: NotIn
-      cidr: 88.0.0.0/16
+      source: RemotePeers
+    - action: Reject
+      interface: '*.calico'
   importV4:
     - action: Reject
       matchOperator: NotIn
       cidr: 44.0.0.0/16
   exportV6:
     - action: Reject
-      matchOperator: NotEqual
-      cidr: 9000::0/64
+      source: RemotePeers
+    - action: Reject
+      interface: '*.calico'
   importV6:
     - action: Accept
       matchOperator: Equal
       cidr: 5000::0/64
     - action: Reject
-      matchOperator: NotIn
-      cidr: 5000::0/64
 ```
 
 ### Configure a BGP peer with a BGP filter
@@ -315,23 +315,17 @@ spec:
     - action: Accept
       matchOperator: In
       cidr: 77.0.0.0/16
-    - action: Reject
-      matchOperator: NotIn
-      cidr: 88.0.0.0/16
+      source: RemotePeers
   importV4:
     - action: Reject
       matchOperator: NotIn
       cidr: 44.0.0.0/16
   exportV6:
     - action: Reject
-      matchOperator: NotEqual
-      cidr: 9000::0/64
+      interface: '*.calico'
   importV6:
     - action: Accept
       matchOperator: Equal
-      cidr: 5000::0/64
-    - action: Reject
-      matchOperator: NotIn
       cidr: 5000::0/64
 ---
 kind: BGPFilter
@@ -340,33 +334,19 @@ metadata:
   name: second-bgp-filter
 spec:
   exportV4:
-    - action: Reject
+    - action: Accept
       matchOperator: In
-      cidr: 99.0.0.0/16
-    - action: Reject
-      matchOperator: In
-      cidr: .0.0.0/16
+      cidr: 77.0.0.0/16
+      interface: '*.calico'
   importV4:
-    - action: Accept
-      matchOperator: NotIn
-      cidr: 55.0.0.0/16
     - action: Reject
-      matchOperator: In
-      cidr: 66.0.0.0/16
+      matchOperator: NotIn
+      cidr: 44.0.0.0/16
   exportV6:
-    - action: Accept
-      matchOperator: Equal
-      cidr: 7000::0/64
-    - action: Accept
-      matchOperator: Equal
-      cidr: 8000::0/64
     - action: Reject
-      matchOperator: NotIn
-      cidr: 7000::0/64
+      source: RemotePeers
   importV6:
     - action: Reject
-      matchOperator: NotEqual
-      cidr: 4000::0/64
 ---
 kind: BGPPeer
 apiVersion: projectcalico.org/v3
