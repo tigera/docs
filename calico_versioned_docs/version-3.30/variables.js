@@ -16,7 +16,7 @@ const variables = {
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\CalicoWindows',
-  ppa_repo_name: 'calico-3.29',
+  ppa_repo_name: 'calico-3.30',
   manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.30.0',
   releases,
   registry: '',
