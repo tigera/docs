@@ -1,4 +1,4 @@
-import { screenshot } from './styles.ts';
+import { screenshot } from './styles';
 import { Image } from '@chakra-ui/react';
 
 type ScreenshotProps = {
