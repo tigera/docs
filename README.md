@@ -160,3 +160,24 @@ Calico cloud branch targets:
 ❯ make calico-enterprise_versioned_docs/version-3.18__operator_reference
 ...build output here...
 ```
+
+## Testing
+
+### Screenshot tests
+
+Screenshot tests are useful for checking for visual regressions after upgrading dependencies.
+The best strategy is to run the tests on a clean branch <u>**before**</u> making changes to gather screenshots of the app in its current state. Then upgrade your dependencies and run the tests again.
+
+#### Running screenshot tests locally
+
+- Run `yarn build`
+- Run `yarn test:screenshots`
+- All tests will fail on the first pass since there is no existing screenshots
+- Run `yarn test:screenshots` again. All tests should pass.
+- Make your changes (Deps upgrade etc)
+- Run `yarn test:screenshots` to check for visual regressions
+- Run `yarn test:show-report` to view failures
+
+#### Troubleshooting
+
+If the tests keep timing out on a clean branch, try running `yarn start`. Cancel once the dev build is complete.
