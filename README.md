@@ -180,4 +180,4 @@ The best strategy is to run the tests on a clean branch <u>**before**</u> making
 
 #### Troubleshooting
 
-If the tests keep timing out on a clean branch, try running `yarn start`. Cancel once the dev build is complete.
+If the tests keep timing out on a clean branch, try running `yarn start`. Cancel once the dev build has completed.
