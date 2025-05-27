@@ -2,17 +2,18 @@
 description: Quickstart for Calico.
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import {RadioGroup, RadioGroupButtons, RadioGroupSelection} from '/src/___new___/components/RadioGroup';
 import Screenshot from '/src/___new___/components/Screenshot';
 export let figCount = 1;
 
 # Calico quickstart guide
 
-This quickstart guide shows you how to install Calico, secure a cluster with network policy, and monitor network traffic with Calico Whisker.
+This quickstart guide shows you how to install Calico Open Source, secure a cluster with network policy, and monitor network traffic with Calico Whisker.
 
 ## Before you begin
 
 You'll need to install a few tools to complete this tutorial:
-
 * `kind`.
   This is what you'll use to create a cluster on your workstation.
   For installation instructions, see the [`kind` documentation](https://kind.sigs.k8s.io/docs/user/quick-start/).
@@ -23,6 +24,22 @@ You'll need to install a few tools to complete this tutorial:
   This is the tool you'll use to interact with your cluster.
   For installation instructions, see the [Kubernetes documentation](https://kubernetes.io/docs/tasks/tools/#kubectl)
 
+If you want try out Calico with eBPF, select eBPF as your data plane:
+
+<RadioGroup defaultValue='iptables' urlParam='operating-system'>
+
+  <RadioGroupButtons labels={['iptables', 'eBPF']} />
+
+  <RadioGroupSelection value='iptables'>
+    {/* iptables instructions here */}
+    These are the instructions for iptables.
+  </RadioGroupSelection>
+
+  <RadioGroupSelection value='eBPF'>
+    {/* eBPF instructions here} */}
+
+    These are ebpf specific instructions.
+  </RadioGroupSelection>
 
 ## Step 1: Create a cluster
 
@@ -32,6 +49,7 @@ In this step, you will:
 
 1. Create a file called `config.yaml` and give it the following content:
 
+   <RadioGroupSelection value='iptables'>
    ```bash
    kind: Cluster
    apiVersion: kind.x-k8s.io/v1alpha4
@@ -43,10 +61,27 @@ In this step, you will:
      disableDefaultCNI: true
      podSubnet: 192.168.0.0/16
    ```
+   </RadioGroupSelection>
+   <RadioGroupSelection value='eBPF'>
+   ```bash
+   kind: Cluster
+   apiVersion: kind.x-k8s.io/v1alpha4
+   nodes:
+     - role: control-plane
+     - role: worker
+     - role: worker
+   networking:
+     disableDefaultCNI: true
+     podSubnet: 192.168.0.0/16
+     serviceSubnet: 192.168.0.0/16
+     apiServerPort: 6443
+     ```
+   </RadioGroupSelection>
 
    This configuration file tells `kind` to create a cluster with one control-plane node and two worker nodes.
    It instructs `kind` to create the cluster without a CNI.
    The `podSubnet` range defines the IP addresses that Kubernetes will use for pods.
+  <RadioGroupSelection value='eBPF'>Setting `kubeProxyMode` to `none` instructs kind to start the cluster without kube-proxy, which is recommended for eBPF data plane mode.</RadioGroupSelection>
 
 2. Start your Kubernetes cluster with the configuration file by running the following command:
 
@@ -58,18 +93,18 @@ In this step, you will:
 
    ```bash title='Expected output'
    Creating cluster "calico-cluster" ...
-   ✓ Ensuring node image (kindest/node:v1.29.2) 🖼
-   ✓ Preparing nodes 📦 📦 📦
-   ✓ Writing configuration 📜
-   ✓ Starting control-plane 🕹️
-   ✓ Installing StorageClass 💾
-   ✓ Joining worker nodes 🚜
+    ✓ Ensuring node image (kindest/node:v1.32.2) 🖼
+    ✓ Preparing nodes 📦 📦 📦
+    ✓ Writing configuration 📜
+    ✓ Starting control-plane 🕹️
+    ✓ Installing StorageClass 💾
+    ✓ Joining worker nodes 🚜
    Set kubectl context to "kind-calico-cluster"
    You can now use your cluster with:
 
    kubectl cluster-info --context kind-calico-cluster
 
-   Thanks for using kind! 😊
+   Have a nice day! 👋😊
    ```
 
 3. To verify that your cluster is working, run the following command:
@@ -81,10 +116,10 @@ In this step, you will:
    You should see three nodes with the name you gave the cluster.
 
    ```bash title="Expected output"
-   NAME                           STATUS     ROLES           AGE     VERSION
-   calico-cluster-control-plane   NotReady   control-plane   5m46s   v1.29.2
-   calico-cluster-worker          NotReady   <none>          5m23s   v1.29.2
-   calico-cluster-worker2         NotReady   <none>          5m22s   v1.29.2
+   NAME                           STATUS     ROLES           AGE    VERSION
+   calico-cluster-control-plane   NotReady   control-plane   113s   v1.32.2
+   calico-cluster-worker          NotReady   <none>          99s    v1.32.2
+   calico-cluster-worker2         NotReady   <none>          99s    v1.32.2
    ```
 
    Don't wait for the nodes to get a `Ready` status.
@@ -94,51 +129,170 @@ In this step, you will:
 
 In this step, you will install Calico in your cluster.
 
-1. Install the Tigera operator and custom resource definitions.
+<ol>
+  <li>
+    Install the Tigera operator and custom resource definitions.
+
+    ```bash
+    kubectl create -f $[manifestsUrl]/manifests/operator-crds.yaml
+    kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+    ```
+
+    ```bash title="Expected output"
+    customresourcedefinition.apiextensions.k8s.io/apiservers.operator.tigera.io created
+    customresourcedefinition.apiextensions.k8s.io/gatewayapis.operator.tigera.io created
+    customresourcedefinition.apiextensions.k8s.io/goldmanes.operator.tigera.io created
+    customresourcedefinition.apiextensions.k8s.io/imagesets.operator.tigera.io created
+    customresourcedefinition.apiextensions.k8s.io/installations.operator.tigera.io created
+    customresourcedefinition.apiextensions.k8s.io/managementclusterconnections.operator.tigera.io created
+    customresourcedefinition.apiextensions.k8s.io/tigerastatuses.operator.tigera.io created
+    customresourcedefinition.apiextensions.k8s.io/whiskers.operator.tigera.io created
+    customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/bgpfilters.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/caliconodestatuses.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/ipreservations.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/kubecontrollersconfigurations.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/stagedglobalnetworkpolicies.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/stagedkubernetesnetworkpolicies.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/stagednetworkpolicies.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/tiers.crd.projectcalico.org created
+    customresourcedefinition.apiextensions.k8s.io/adminnetworkpolicies.policy.networking.k8s.io created
+    customresourcedefinition.apiextensions.k8s.io/baselineadminnetworkpolicies.policy.networking.k8s.io created
+    namespace/tigera-operator created
+    serviceaccount/tigera-operator created
+    clusterrole.rbac.authorization.k8s.io/tigera-operator-secrets created
+    clusterrole.rbac.authorization.k8s.io/tigera-operator created
+    clusterrolebinding.rbac.authorization.k8s.io/tigera-operator created
+    rolebinding.rbac.authorization.k8s.io/tigera-operator-secrets created
+    deployment.apps/tigera-operator created
+    ```
+  </li>
+ <RadioGroupSelection value ='eBPF'>
+   <li>
+   Download the custom resources so you can make modifications before you apply them to your cluster.
 
    ```bash
-   kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+   curl -o custom-resources.yaml $[manifestsUrl]/manifests/custom-resources.yaml
    ```
+   </li>
+   <li>
+     Open the `custom-resources.yaml` file and add `linuxDataplane: BPF` to the `.spec.calicoNetwork` section of the `Installation` resource.
+     This enables the eBPF data plane when you install Calico.
 
-   ```bash title="Expected output"
-   namespace/tigera-operator created
-   serviceaccount/tigera-operator created
-   clusterrole.rbac.authorization.k8s.io/tigera-operator-secrets created
-   clusterrole.rbac.authorization.k8s.io/tigera-operator created
-   clusterrolebinding.rbac.authorization.k8s.io/tigera-operator created
-   rolebinding.rbac.authorization.k8s.io/tigera-operator-secrets created
-   deployment.apps/tigera-operator created
-   ```
+     ```yaml title="Modified custom-resources.yaml file"
+     # This section includes base Calico installation configuration.
+     # For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io/v1.Installation
+     apiVersion: operator.tigera.io/v1
+     kind: Installation
+     metadata:
+       name: default
+     spec:
+       # Configures Calico networking.
+       calicoNetwork:
+         // highlight-next-line
+         linuxDataplane: BPF # Enables the eBPF data plane.
+         ipPools:
+         - name: default-ipv4-ippool
+           blockSize: 26
+           cidr: 192.168.0.0/16
+           encapsulation: VXLANCrossSubnet
+           natOutgoing: Enabled
+           nodeSelector: all()
 
-2. Install $[prodname] by creating the necessary custom resources.
+     ---
 
-   ```bash
-   kubectl create -f $[manifestsUrl]/manifests/custom-resources.yaml
-   ```
+     # This section configures the Calico API server.
+     # For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io/v1.APIServer
+     apiVersion: operator.tigera.io/v1
+     kind: APIServer
+     metadata:
+       name: default
+     spec: {}
 
-   ```bash title="Expected output"
-   installation.operator.tigera.io/default created
-   apiserver.operator.tigera.io/default created
-   goldmane.operator.tigera.io/default created
-   whisker.operator.tigera.io/default created
-   ```
+     ---
 
-3. Monitor the deployment by running the following command:
+     # Configures the Calico Goldmane flow aggregator.
+     apiVersion: operator.tigera.io/v1
+     kind: Goldmane
+     metadata:
+       name: default
 
-   ```bash
-   watch kubectl get tigerastatus
-   ```
+     ---
 
-   After a few minutes, all the Calico components display `True` in the `AVAILABLE` column.
+     # Configures the Calico Whisker observability UI.
+     apiVersion: operator.tigera.io/v1
+     kind: Whisker
+     metadata:
+       name: default
+     ```
+   </li>
+   <li>
+      Install $[prodname] by applying the modified custom resources.
 
-   ```bash title="Expected output"
-   NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
-   apiserver                       True        False         False      4m9s
-   calico                          True        False         False      3m29s
-   goldmane                        True        False         False      3m39s
-   ippools                         True        False         False      6m4s
-   whisker                         True        False         False      3m19s
-   ```
+      ```bash
+      kubectl apply -f custom-resources.yaml
+      ```
+
+      ```bash title="Expected output"
+      installation.operator.tigera.io/default created
+      apiserver.operator.tigera.io/default created
+      goldmane.operator.tigera.io/default created
+      whisker.operator.tigera.io/default created
+      ```
+
+
+   </li>
+ </RadioGroupSelection>
+<RadioGroupSelection value='iptables'>
+  <li>
+    Install $[prodname] by creating the necessary custom resources.
+
+    ```bash
+    kubectl create -f $[manifestsUrl]/manifests/custom-resources.yaml
+    ```
+
+    ```bash title="Expected output"
+    installation.operator.tigera.io/default created
+    apiserver.operator.tigera.io/default created
+    goldmane.operator.tigera.io/default created
+    whisker.operator.tigera.io/default created
+    ```
+  </li>
+</RadioGroupSelection>
+  <li>
+    Monitor the deployment by running the following command:
+
+    ```bash
+    watch kubectl get tigerastatus
+    ```
+
+    After a few minutes, all the Calico components display `True` in the `AVAILABLE` column.
+
+    ```bash title="Expected output"
+    NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
+    apiserver                       True        False         False      4m9s
+    calico                          True        False         False      3m29s
+    goldmane                        True        False         False      3m39s
+    ippools                         True        False         False      6m4s
+    whisker                         True        False         False      3m19s
+    ```
+   </li>
+</ol>
+
+
 
 ## Step 3. Monitor network traffic in Calico Whisker
 
@@ -479,4 +633,4 @@ You have now successfully implemented a default deny policy and then created tar
 ## Additional resources
 
 * Want to dive deeper? [Explore this free](https://www.tigera.io/tutorials/?_sf_s=Calico%20Basics), interactive workshop to learn Calico basics, Kubernetes observability with Whisker, and more—right in your browser.
-
+</RadioGroup>
