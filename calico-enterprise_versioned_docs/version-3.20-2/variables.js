@@ -18,7 +18,7 @@ const variables = {
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\TigeraCalico',
   registry: 'quay.io/',
-  chart_version_name: 'v3.20.3-0',
+  chart_version_name: 'v3.20.4-0',
   tigeraOperator: releases[0]['tigera-operator'],
   dikastesVersion: releases[0].components.dikastes.version,
   releases,
