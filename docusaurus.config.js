@@ -428,7 +428,7 @@ export default async function createAsyncConfig() {
               banner: 'unreleased',
             },
             '3.21-2': {
-              label: '3.21 (early preview',
+              label: '3.21 (early preview)',
               path: '3.21',
               banner: 'unreleased',
             },
