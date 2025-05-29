@@ -8,12 +8,17 @@ http:
   paths:
     - exact: '/projects/calico'
     - prefix: '/users'
+  headers:
+    - header: 'x-forwarded-for'
+      operator: 'HasPrefix'
+      values: ['192.168.0.1', '192.168.0.254']
 ```
 
-| Field   | Description                                                                                                                      | Schema                                  |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| methods | Match HTTP methods. Case sensitive. [Standard HTTP method descriptions.](https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html) | list of strings                         |
-| paths   | Match HTTP paths. Case sensitive.                                                                                                | list of [HTTPPathMatch](#httppathmatch) |
+| Field   | Description                                                                                                                      | Schema                                      |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| methods | Match HTTP methods. Case sensitive. [Standard HTTP method descriptions.](https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html) | list of strings                             |
+| paths   | Match HTTP paths. Case sensitive.                                                                                                | list of [HTTPPathMatch](#httppathmatch)     |
+| headers | Match HTTP headers.                                                                                                              | list of [HTTPHeaderMatch](#httpheadermatch) |
 
 ### HTTPPathMatch
 
@@ -21,3 +26,20 @@ http:
 | ------ | ------------------- | ------------------------------------------------------------------------------- |
 | exact  | `exact: "/foo/bar"` | Matches the exact path as written, not including the query string or fragments. |
 | prefix | `prefix: "/keys"`   | Matches any path that begins with the given prefix.                             |
+
+### HTTPHeaderMatch
+
+| Syntax   | Example                            | Description                                                                                |
+| -------- | ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| header   | `x-forwarded-for`                  | Name of a HTTP header. Header names are case insensitive, please use lowercase characters. |
+| operator | `In`                               | Operator name to apply to the HTTP header value. Case sensitive.                           |
+| values   | `['192.168.0.1', '192.168.0.254']` | Values that the operator will test the HTTP header value against. Case sensitive.          |
+
+The following operators are allowed:
+- `Exists`: matches the HTTP request header if the specified header exists. `values` are ignored.
+- `DoesNotExist`: matches the HTTP request header if the specified header does not exist. `values` are ignored.
+- `HasPrefix`: matches the HTTP request header if the specified header has a prefix from any the values provided.
+- `HasSuffix`: matches the HTTP request header if the specified header has a suffix from any the values provided.
+- `In`: matches the HTTP request header if its value is in the set of values provided.
+- `NotIn`: matches the HTTP request header if its value is not in the set of values provided.
+- `MatchesRegex`: matches the HTTP request header if its value matches any of the regular expressions in values field.
