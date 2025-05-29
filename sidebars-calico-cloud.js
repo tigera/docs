@@ -178,26 +178,6 @@ module.exports = {
             'network-policy/application-layer-policies/alp-tutorial',
           ],
         },
-        {
-          type: 'category',
-          label: 'Policy for firewalls',
-          link: { type: 'doc', id: 'network-policy/policy-firewalls/index' },
-          items: [
-            {
-              type: 'category',
-              label: 'Fortinet firewall integrations',
-              link: {
-                type: 'doc',
-                id: 'network-policy/policy-firewalls/fortinet-integration/index',
-              },
-              items: [
-                'network-policy/policy-firewalls/fortinet-integration/overview',
-                'network-policy/policy-firewalls/fortinet-integration/firewall-integration',
-                'network-policy/policy-firewalls/fortinet-integration/fortimgr-integration',
-              ],
-            },
-          ],
-        },
         'network-policy/hosts/kubernetes-nodes',
         'network-policy/hosts/host-forwarded-traffic',
         {
