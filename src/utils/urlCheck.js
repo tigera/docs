@@ -50,7 +50,7 @@ function doGet(normUrl, callback, calls, delay, ctx) {
   get.on('header', (code, headers) => {
     debugLog(normUrl, `IN get header EVENT: ${normUrl}`);
     ctx.statusCode = code;
-    ctx.status = code === 200 ? 'alive' : 'dead';
+    ctx.status = (code === 200 || code === 302) ? 'alive' : 'dead';
     delay = parseRetryAfter(headers, delay);
   });
   get.on('data', chunk => {
