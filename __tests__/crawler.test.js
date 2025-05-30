@@ -186,6 +186,7 @@ test('Crawl the docs and execute tests', async () => {
     'https://stackoverflow.com/questions/tagged/calico',
     /^https?:\/\/github\.com\//,
     /^https?:\/\/(git|examples)\.k8s\.io\//,
+    'https://console.developers.google.com/apis/library/admin.googleapis.com/',
   ];
 
   const lc = linkChecker();
