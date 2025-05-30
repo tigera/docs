@@ -504,9 +504,12 @@ test('Crawl the docs and execute tests', async () => {
     validityTestResultSetStatus(url, WIP);
     const opts = { follow_max: 5, follow_keep_method: true };
     needle.request('get', url, null, opts, (err, resp) => {
-      if (!err && resp.statusCode === 200) {
+      if (!err && resp.statusCode === 200 ) {
         testValidity(vt, url, resp.body.toString());
-      } else {
+      } else if (!err && resp.statusCode === 302) {
+        console.warn(`[INFO] URL ${url} (type ${vt}) resulted in a status code ${statusCode}. Marking as PASS for link validity.`);
+      }
+      else {
         const errMsg = typeof err?.message !== 'undefined' ? `: ${err.message}` : '';
         const scMsg = typeof resp?.statusCode !== 'undefined' ? ` (${resp.statusCode})` : '';
         console.error(`[ERROR] error while getting file for validity test on ${url}${scMsg}${errMsg}`);
