@@ -246,16 +246,44 @@ For more information, see [Enable flow logs](../observability/enable-whisker.mdx
 
 To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx)
 
-### Calico Open Source 3.28.1 bux fix update
+### Calico Open Source 3.30.1 bux fix update
 
-May 28, 2025
+May 30, 2025
+
+:::warning[change in behavior for default-tier policies]
+
+#### Tiered policy naming changes
+
+The addition of tiered policies in version 3.29.0 changed the naming of policies in the default tier, which caused confusion with tooling that didn't expect it.
+In version 3.30.1, we made the following updates to how policies are handled in the default tier:
+
+* **Policies created in the default tier with Calico Open Source 3.29.0 to 3.29.3:**
+  For these default-tier policies, updating to version 3.30.1 will change the name from `default.<policy-name>` to `<policy-name>`.
+  This change happens to these policies regardless of whether you are now upgrading from version 3.29.[0-3] or 3.30.0.
+* **Policies created with Calico Open Source 3.28 or earlier:**
+  For these default-tier policies, updating to version 3.30.1 will result in no name change.
+  Whatever name they were created with will still be the name they have after the upgrade.
+* **Policies created in the default tier with Calico Open Source
+* Policies in the default tier can be created with or without the `default.` prefix.
+  To manage the policy, you must use the same name that was used to create it.
+  It’s not possible to interchange the prefixed and non-prefixed name.
+* Calico always returns the same policy name that you used to create the policy.
+:::
 
 #### Enhancements
 
+- Introduces a shorthand for StagedNetworkPolicy -> snp, StagedGlobalNetworkPolicy -> sgnp and StagedKubernetesNetworkPolicy -> sknp [calico 10424](https://github.com/projectcalico/calico/pull/10424) (@MichalFupso)
+- Update Operator Helm values to support custom DNS settings [calico 10406](https://github.com/projectcalico/calico/pull/10406) (@caseydavenport)
+
 #### Bug fixes
 
-* bug 1
-* bug 2
+- ebpf: Fixed attaching bpf programs by atomically replacing the old program rather than attaching new and detaching old. [calico 10454](https://github.com/projectcalico/calico/pull/10454) (@sridhartigera)
+- Disable WatchList in Calico API server, fixing issue with stuck Namespace termination. [calico 10440](https://github.com/projectcalico/calico/pull/10440) (@tmjd)
+- Policies created prior to v3.28.0 have their name retained across upgrade. Policies created in the default tier with version v3.29.[0-3] will have their names changed from `default.name` to `name`. [calico 10418](https://github.com/projectcalico/calico/pull/10418) (@MichalFupso)
+- eBPF - Fix forwarding of packets to kubevirt pods when in bridge mode. [calico 10415](https://github.com/projectcalico/calico/pull/10415) (@sridhartigera)
+- Add missing tiers permissions for flannel migration controller [calico 10385](https://github.com/projectcalico/calico/pull/10385) (@caseydavenport)
+- Fix flannel migration use of deprecated flag "delete-local-data" [calico 10379](https://github.com/projectcalico/calico/pull/10379) (@caseydavenport)
+
 #### Updating
 
 To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx)
