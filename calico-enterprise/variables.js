@@ -6,6 +6,7 @@ const variables = {
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'master',
+  openSourceVersion: releases[0].calico.minor_version.slice(1),
   baseUrl: '/calico-enterprise/next',
   filesUrl: 'https://downloads.tigera.io/ee/master',
   rpmsUrl: 'https://downloads.tigera.io/ee/rpms/v3.21',

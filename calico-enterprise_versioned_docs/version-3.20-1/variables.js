@@ -6,6 +6,7 @@ const variables = {
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'v3.20',
+  openSourceVersion: releases[0].calico.minor_version.slice(1),
   baseUrl: '/calico-enterprise/3.20',
   filesUrl: 'https://downloads.tigera.io/ee/v3.20.0-1.0',
   tutorialFilesURL: 'https://docs.tigera.io/files',
