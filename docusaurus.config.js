@@ -96,8 +96,8 @@ export default async function createAsyncConfig() {
         },
         announcementBar: {
           id: "calico_ebpf",
-          content: "Help shape the future! 🚀 We're collecting feedback to improve Calico Open Source, and your insights are key. Click <a href=\"https://forms.gle/HbRP4BoZQrVsrhHV8\">here </a> to learn more.",
-          backgroundColor: "#FCE181",
+          content: 'Calico 3.30 users: <a href="https://calicocloud.io">Sign up for Calico Cloud Free today!</a>',
+          backgroundColor: "#FCE181",          backgroundColor: "#FCE181",
           textColor: "#000",
           isCloseable: true
         },
