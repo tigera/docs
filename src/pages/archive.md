@@ -4,7 +4,12 @@ description: Links to all versions of product documentation for Calico, Calico E
 ---
 
 # Documentation archive
+{/* vale off */}
 
+This text will be ignored.
+hjgjhf jhghjgfhft ebpf
+{/* vale on */}
+ebpf
 ## Calico Open Source
 
 * [Calico Open Source 3.30](https://docs.tigera.io/calico/latest/about)
