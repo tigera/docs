@@ -341,7 +341,7 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'observability and troubleshooting',
+      label: 'Observability',
       link: { type: 'doc', id: 'observability/index' },
       items: [
         'observability/get-started-cem',
