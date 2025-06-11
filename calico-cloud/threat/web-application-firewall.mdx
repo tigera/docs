@@ -83,6 +83,13 @@ Or, in the web console, click **Threat Defense > Web Application Firewall > Conf
 
  <img src="/img/calico-enterprise/waf-config-first-step.png" alt="WAF services" width="600"/>
 
+Then, wait for the Tigera APIServer deployment and Log collection daemonset to progress to ready.
+
+```bash
+kubectl rollout status -n tigera-system deployment/tigera-apiserver --timeout=120s
+kubectl rollout status -n calico-system ds/l7-log-collector --timeout=120s
+```
+
 ### (Optional) Deploy a sample application
 
 If you don’t have an application to test WAF with or don’t want to use it right away against your own application,
@@ -131,9 +138,20 @@ If you would like to trigger a WAF event for testing purposes, you can simulate 
 The query string in this example has some SQL syntax embedded in the text. This is harmless and for demo purposes, but WAF will detect this pattern and create an event for this HTTP request.
 
 Run a simple curl command from any pod inside your cluster targeting a deployment you have selected for WAF protection e.g. from the demo app above we could attempt to send a simple HTTP request to the cartservice.
+
 ```
 curl http://frontend/cart?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
 ```
+
+## View default rule set details from the web console
+
+You can view the default rules from the Core Rule Set (OWASP Top 10) by using the web console.
+Viewing the rules gives you an overview of the rule set, and it can be used when customizing your WAF configuration.
+This method always shows you the default configuration, even if you have added customizations.
+
+1. From the web console, go to **Threat > Web Application Firewall**, and then click the **Rulesets** tab.
+1. Click the rule set card.
+1. To view details about specific rules, click any item in the list.
 
 ## Manage WAF configuration
 
@@ -156,7 +174,7 @@ These files can be customized if desired. Add all your customizations directly u
 
 ```bash
 kubectl edit cm -n tigera-operator tigera-waf-config
-``` 
+```
 
 After editing this ConfigMap successfully, the `tigera-waf-config` ConfigMap will be replaced in the `tigera-operator` namespace,
 which then triggers a rolling restart of your L7 pods. This means that the HTTP connections going through L7 pods at the time of pod termination will be (RST) reset.
@@ -335,7 +353,7 @@ kubectl delete applicationlayer tigera-secure
 
 To disable WAF but keep some ApplicationLayer features enabled, you must update the [ApplicationLayer](../reference/installation/api#operator.tigera.io/v1.ApplicationLayer) custom resource.
 
-Note that the [ApplicationLayer Specification](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerSpec) can specify configuration for [Application Logging](../reference/installation/api#operator.tigera.io/v1.LogCollectionSpec) and [Application Layer Policy](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerPolicyStatusType) also. 
+Note that the [ApplicationLayer Specification](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerSpec) can specify configuration for [Application Logging](../reference/installation/api#operator.tigera.io/v1.LogCollectionSpec) and [Application Layer Policy](../reference/installation/api#operator.tigera.io/v1.ApplicationLayerPolicyStatusType) also.
 
 For the ApplicationLayer custom resource to be valid, at least one of these features have to be enabled, for example:
 
