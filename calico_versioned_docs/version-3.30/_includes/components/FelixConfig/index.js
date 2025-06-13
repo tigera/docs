@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import jsonData from './file.json';
+import jsonData from './config-params-oss-3.30.json';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import TableResource from './TableResource';
