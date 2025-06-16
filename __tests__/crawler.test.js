@@ -187,7 +187,6 @@ test('Crawl the docs and execute tests', async () => {
     /^https?:\/\/github\.com\//,
     /^https?:\/\/(git|examples)\.k8s\.io\//,
     'https://console.developers.google.com/apis/library/admin.googleapis.com/',
-    'https://tigera.force.com/community/s/login/',
   ];
 
   const lc = linkChecker();
