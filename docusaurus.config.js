@@ -245,7 +245,7 @@ export default async function createAsyncConfig() {
                 },
                 {
                   label: 'Support portal',
-                  to: 'https://tigera.force.com/community/s/login/',
+                  to: 'https://support.tigera.io/s/login/',
                 },
                 {
                   label: 'Security bulletins',
