@@ -97,7 +97,7 @@ export default async function createAsyncConfig() {
         announcementBar: {
           id: "calico_ebpf",
           content: 'Calico 3.30 users: <a href="https://calicocloud.io">Sign up for Calico Cloud Free today!</a>',
-          backgroundColor: "#FCE181",          backgroundColor: "#FCE181",
+          backgroundColor: "#FCE181",
           textColor: "#000",
           isCloseable: true
         },
