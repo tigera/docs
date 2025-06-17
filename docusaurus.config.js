@@ -97,7 +97,7 @@ export default async function createAsyncConfig() {
         announcementBar: {
           id: "calico_ebpf",
           content: 'Calico 3.30 users: <a href="https://calicocloud.io">Sign up for Calico Cloud Free today!</a>',
-          backgroundColor: "#FCE181",          backgroundColor: "#FCE181",
+          backgroundColor: "#FCE181",
           textColor: "#000",
           isCloseable: true
         },
@@ -245,7 +245,7 @@ export default async function createAsyncConfig() {
                 },
                 {
                   label: 'Support portal',
-                  to: 'https://tigera.force.com/community/s/login/',
+                  to: 'https://support.tigera.io/s/login/',
                 },
                 {
                   label: 'Security bulletins',
@@ -468,6 +468,10 @@ export default async function createAsyncConfig() {
               label: 'Next',
               path: 'next',
               banner: 'unreleased',
+            },
+            '21-2': {
+              path: '/',
+              banner: 'none',
             },
             '21-1': {
               path: '/',

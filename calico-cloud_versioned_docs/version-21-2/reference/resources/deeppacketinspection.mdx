@@ -1,0 +1,74 @@
+---
+description: API for this Calico Cloud resource.
+---
+
+# Deep packet inspection
+
+import Selectors from '@site/calico-cloud_versioned_docs/version-21-2/_includes/content/_selectors.mdx';
+
+A deep packet inspection resource (`DeepPacketInspection`) represents live network traffic monitor for malicious activities
+by analyzing header and payload of the packet using specific rules. Malicious activities are added to the “Alerts” page in
+the $[prodname] web console.
+
+For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases can be used to specify the resource type on the CLI:
+`deeppacketinspection`,`deeppacketinspections`, `deeppacketinspection.projectcalico.org`, `deeppacketinspections.projectcalico.org` as well as
+abbreviations such as `deeppacketinspection.p` and `deeppacketinspections.p`.
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: DeepPacketInspection
+metadata:
+  name: sample-dpi
+  namespace: sample-namespace
+spec:
+  selector: k8s-app == "sample-app"
+```
+
+## DeepPacketInspection definition
+
+### Metadata
+
+| Field     | Description                                                        | Accepted Values                                     | Schema | Default   |
+| --------- | ------------------------------------------------------------------ | --------------------------------------------------- | ------ | --------- |
+| name      | The name of the deep packet inspection. Required.                  | Alphanumeric string with optional `.`, `_`, or `-`. | string |           |
+| namespace | Namespace provides an additional qualification to a resource name. |                                                     | string | "default" |
+
+### Spec
+
+| Field    | Description                                                         | Accepted Values | Schema                | Default |
+| -------- | ------------------------------------------------------------------- | --------------- | --------------------- | ------- |
+| selector | Selects the endpoints to which this deep packet inspection applies. |                 | [selector](#selector) |         |
+
+### Status
+
+| Field | Description              |
+| ----- | ------------------------ |
+| nodes | List of [Nodes](#nodes). |
+
+### Nodes
+
+| Field           | Description                                  |
+| --------------- | -------------------------------------------- |
+| node            | Name of the node that generated this status. |
+| active          | [Active](#active) status.                    |
+| errorConditions | List of [errors](#error-conditions).         |
+
+### Active
+
+| Field       | Description                                                  |
+| ----------- | ------------------------------------------------------------ |
+| success     | Whether the deep packet inspection is active on the backend. |
+| lastUpdated | Time when the [active](#active) field was updated.           |
+
+### Error Conditions
+
+| Field       | Description                                                         |
+| ----------- | ------------------------------------------------------------------- |
+| message     | Errors preventing deep packet inspection from running successfully. |
+| lastUpdated | Time when the [error](#error-conditions) was updated.               |
+
+### Selector
+
+<Selectors />

@@ -5,17 +5,17 @@ export default {
     {
       title: 'Calico Open Source',
       link: '/calico/latest/about/',
-      image: 'img/calico-logo.webp',
+      image: 'img/calico-logo-badge.svg',
     },
     {
       title: 'Calico Enterprise',
       link: '/calico-enterprise/latest/about/',
-      image: '/img/calico-enterprise-logo.webp',
+      image: '/img/calico-enterprise-logo-badge.svg',
     },
     {
       title: 'Calico Cloud',
       link: 'calico-cloud/about',
-      image: '/img/calico-cloud-logo.webp',
+      image: '/img/calico-cloud-logo-badge.svg',
     },
   ],
 };
