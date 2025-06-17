@@ -1,0 +1,90 @@
+---
+description: Reduce noise in your Image Assurance scan results by excluding vulnerabilities.
+---
+
+import UploadIcon from '/img/icons/upload-icon.svg';
+
+# Exclude vulnerabilities from scan results
+
+:::warning[deprecation and removal notice]
+
+This feature was deprecated in Calico Cloud version 21.1.0 and will be removed in a future release. Availability depends on when you started using Calico Cloud.
+
+- For users who started using Calico Cloud in April 2025 or later, this feature is not available.
+- Legacy users, who started using Calico Cloud before April 2025, can continue to use this feature until it is removed in a future release.
+
+:::
+
+This guide shows you how to exclude vulnerabilities from your image scan results.
+By excluding vulnerabilities that don't require action, such as false positives, you can reduce the volume of reported vulnerabilities that you need to deal with.
+You can set the exclusion for a particular vulnerability to apply to a particular image version, all images in a repository, or all images in the system.
+
+:::caution
+Excluding vulnerabilities from image results can significantly change how Image Assurance determines image health.
+You may need to take corrective action to stabilize your workflow.
+- **Maximum CVSS score:** An image’s maximum CVSS score may be reduced to a lower score.
+An exception could eliminate the vulnerability with the highest CVSS score for an image.
+- **Scan assessment:** The assessment value (Pass, Warn, or Fail) could change because it is based on the maximum CVSS score.
+For example, Fail could change to Warn, and Warn could change to Pass.
+- **Vulnerability global alerts:** Alerts may no longer be triggered.
+Alerts are triggered based on scan results or maximum CVSS score values of images.
+- **Admission controller policies:** Pods could be created where they were previously blocked.
+Admission controller policies are based on vulnerability information (scan result or maximum CVSS score).
+
+:::
+
+## Exclude a vulnerability from your scan results
+
+You can exclude a vulnerability from your scan results page.
+
+1. From the web console, go to **Image Assurance > All Scan Results**.
+1. Select an image from the list.
+1. On the scan results panel that appears, expand a package, and then click **Actions > Add Exception**.
+1. On the **Add exception** dialog, select a scope, enter an explanation for why you're creating an exception, and then click **Save**.
+
+## Exclude multiple vulnerabilities at the same time
+
+To exclude large numbers of vulnerabilities, you can organize the required information as a CSV file and import it directly to Calico Cloud.
+
+1. Optional: You can start with a preformatted list of all vulnerabilities in your cluster, and then edit the list to include only those vulnerabilities you want to exclude.
+1. From the web console, go to **Image Assurance > All Scan Results**.
+1. On the **All Scan Results** page, click the **Export** button, and then click **Export data**.
+1. On the **Export** dialog that appears, select the **CSV** data type and the **Export a row for each image and CVE IDs** option for the table style.
+Click **Export** to download the CSV file.
+1. Edit the CSV file
+
+1. Prepare the CSV file with information about the vulnerabilities you want to exclude.
+The file must contain the following information:
+
+| Column header | Description | Example |
+   | -- | -- | -- |
+| `CVE` | The CVE identifier. Required by the `any`, `repo`, and `image` scopes. | `CVE-2024-1234` |
+| `Registry`| The URL path to the container registry. Required by the `repo` and `image` scopes. | `mycontainerregistry.io/my-org` |
+| `Repository`| The container image name. Required by the `repo` and `image` scopes.| `my-application` |
+| `Tags`| A JSON list of image tags. Required by the `image` scope. | `"[""v1.2.3"",""v2.3.4""]"` |
+| `Justification` | Your explanation for why you're excluding this vulnerability. Required by the `any`, `image`, and `image` scopes.| `This one is a false positive.` |
+| `Scope` | Determines whether the vulnerability exception applies only to specific tagged images, to any image in a specific repository, or to any image where the vulnerability is found. One of the following values is required:<br/>&bull; `any`: The exception applies to all images.<br/>&bull; `repo`: The exception applies to all versions of an image in a repository.<br/>&bull; `image`: The exception applies to a specific, tagged version of an image. | `image` |
+
+:::tip
+An exported vulnerability list (see step 1) includes many more columns than what is required to import vulnerability exceptions in bulk.
+You do not need to remove or reorganize the extraneous information, but you do need to add two new columns for `Justification` and `Scope`.
+:::
+
+Example: a CSV list of vulnerability exclusion definitions
+
+``` title="example-vulnerability-exclusions.csv"
+CVE,Registry,Repository,Tags,Justification,Scope
+CVE-2024-1234,mycontainerregistry.io/my-org,my-application,"[""v3.4.5""]",justification,image
+CVE-2024-2345,mycontainerregistry.io/my-org,my-application,"[""v1.2.3"",""v2.3.4""]",justification,image
+CVE-2024-3456,mycontainerregistry.io/my-org,my-application,,justification,repo
+CVE-2024-4567,,,,justification,any
+   ```
+
+1. In the web console, go to **Image Assurance > Vulnerability Exceptions**, and then click <UploadIcon width="20" height="20"/>&nbsp;**Upload&nbsp;exceptions**.
+1. Select the CSV file you created, and then click **Upload file**.
+After the data is validated, you'll see a summary of the exceptions.
+If there are errors, modify your CSV file and repeats steps 1 and 2.
+1. Review the processed exceptions on the summary page click **Create exceptions**.
+The new exceptions are listed on the **Vulnerability Exceptions** page.
+
+

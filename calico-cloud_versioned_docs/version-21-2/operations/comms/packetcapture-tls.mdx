@@ -1,0 +1,35 @@
+---
+description: Add TLS certificate to secure access to PacketCapture APIs.
+---
+
+# Provide TLS certificates for PacketCapture APIs
+
+## Big picture
+
+Provide TLS certificates to secure access to $[prodname] to the PacketCapture components.
+
+## Value
+
+Providing TLS certificates for $[prodname] PacketCapture components is recommended as part of a zero trust network model for security.
+
+## Before you begin...
+
+By default, $[prodname] uses self-signed certificates for its PacketCapture APIs components. To provide TLS certificates,
+get the certificate and key pair for the $[prodname] PacketCapture using any X.509-compatible tool or from your organization's
+Certificate Authority. The certificate must have Common Name or a Subject Alternate Name of `tigera-packetcapture.tigera-packetcapture.svc`.
+
+## How to
+
+### Add TLS certificates for PacketCapture
+
+To provide TLS certificates for use by $[prodname] PacketCapture components during deployment, you must create a secret before applying the 'custom-resource.yaml' or before creating the APIServer resource. Use the following command to create a secret:
+
+```bash
+kubectl create secret generic tigera-packetcapture-server-tls -n tigera-operator --from-file=tls.crt=</path/to/certificate-file> --from-file=tls.key=</path/to/key-file>
+```
+
+To update existing certificates, run the following command:
+
+```bash
+kubectl create secret generic tigera-packetcapture-server-tls -n tigera-operator --from-file=tls.crt=</path/to/certificate-file> --from-file=tls.key=</path/to/key-file> --dry-run -o yaml --save-config | kubectl replace -f -
+```

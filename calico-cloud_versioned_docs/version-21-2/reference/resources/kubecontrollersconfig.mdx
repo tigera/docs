@@ -1,0 +1,122 @@
+---
+description: API for KubeControllersConfiguration resource.
+---
+
+import Selectors from '@site/calico-cloud_versioned_docs/version-21-2/_includes/content/_selectors.mdx';
+
+# Kubernetes controllers configuration
+
+A $[prodname] [Kubernetes controllers](../component-resources/kube-controllers/configuration.mdx) configuration resource (`KubeControllersConfiguration`) represents configuration options for the $[prodname] Kubernetes controllers.
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: KubeControllersConfiguration
+metadata:
+  name: default
+spec:
+  logSeverityScreen: Info
+  healthChecks: Enabled
+  prometheusMetricsPort: 9094
+  controllers:
+    node:
+      reconcilerPeriod: 5m
+      leakGracePeriod: 15m
+      syncLabels: Enabled
+      hostEndpoint:
+        autoCreate: Disabled
+        createDefaultHostEndpoint: Enabled
+        templates:
+          - generateName: custom-host-endpoint
+            interfaceCIDRs:
+              - 1.2.3.0/24
+            nodeSelector: "has(my-label)"
+            labels:
+              key: value
+    loadbalancer:
+      assignIPs: AllServices
+```
+
+## Kubernetes controllers configuration definition
+
+### Metadata
+
+| Field | Description                                               | Accepted Values   | Schema |
+| ----- | --------------------------------------------------------- | ----------------- | ------ |
+| name  | Unique name to describe this resource instance. Required. | Must be `default` | string |
+
+- $[prodname] automatically creates a resource named `default` containing the configuration settings, only the name `default` is used and only one object of this type is allowed.
+{/*TODO-XREF-CC You can use [calicoctl](/reference/clis/calicoctl/overview/) to view and edit these settings.*/}
+
+### Spec
+
+| Field                 | Description                                               | Accepted Values                     | Schema                      | Default |
+| --------------------- | --------------------------------------------------------- | ----------------------------------- | --------------------------- | ------- |
+| logSeverityScreen     | The log severity above which logs are sent to the stdout. | Debug, Info, Warning, Error, Fatal  | string                      | Info    |
+| healthChecks          | Enable support for health checks                          | Enabled, Disabled                   | string                      | Enabled |
+| prometheusMetricsPort | Port on which to serve prometheus metrics.                | Set to 0 to disable, > 0 to enable. | TCP port                    | 9094    |
+| controllers           | Enabled controllers and their settings                    |                                     | [Controllers](#controllers) |         |
+
+### Controllers
+
+| Field             | Description                                            | Schema                                                                          |
+| ----------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| node              | Enable and configure the node controller               | omit to disable, or [NodeController](#nodecontroller)                           |
+| federatedservices | Enable and configure the federated services controller | omit to disable, or [FederatedServicesController](#federatedservicescontroller) |
+
+### NodeController
+
+The node controller automatically cleans up configuration for nodes that no longer exist. Optionally, it can create host endpoints for all Kubernetes nodes.
+
+| Field            | Description                                                                      | Accepted Values   | Schema                            | Default |
+| ---------------- | -------------------------------------------------------------------------------- | ----------------- | --------------------------------- | ------- |
+| reconcilerPeriod | Period to perform reconciliation with the $[prodname] datastore                  |                   | [Duration string][parse-duration] | 5m      |
+| syncLabels       | When enabled, Kubernetes node labels will be copied to $[prodname] node objects. | Enabled, Disabled | string                            | Enabled |
+| hostEndpoint     | Configures the host endpoint controller                                          |                   | [HostEndpoint](#hostendpoint)     |         |
+| leakGracePeriod  | Grace period to use when garbage collecting suspected leaked IP addresses.       |                   | [Duration string][parse-duration] | 15m     |
+
+### HostEndpoint
+
+| Field                     | Description                                                      | Accepted Values   | Schema                | Default  |
+| ------------------------- | ---------------------------------------------------------------- | ----------------- | --------------------- | -------- |
+| autoCreate                | When enabled, automatically create host endpoints                | Enabled, Disabled | string                | Disabled |
+| createDefaultHostEndpoint | When enabled, default host endpoint will be created              | Enabled, Disabled | string                | Enabled  |
+| templates                 | Controls creation of custom host endpoints                       |                   | [Template](#template) |          |
+
+### Template
+
+| Field                     | Description                                                                                                                         | Accepted Values     | Schema                              | Default  |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------------------------------- | -------- |
+| generateName              | Unique name used as suffix for host endpoints created based on this template                                                        | Alphanumeric string | string                              |          |
+| nodeSelector              | Selects the nodes for which this template should create host endpoints                                                              |                     | [Selector](#selectors)              | all()    |
+| interfaceCIDRs            | This configuration defines which IP addresses from a node's specification (including standard, tunnel, and WireGuard IPs) are eligible for inclusion in the generated HostEndpoint. IP addresses must fall within the provided CIDR ranges to be considered. If no address on the node matches the specified CIDRs, the HostEndpoint creation is skipped. | List of valid CIDRs | List string                         |          |
+| labels                    | Labels to be added to generated host endpoints matching this template                                                               |                     | map of string key to string values  |          |
+
+### Selectors
+
+<Selectors />
+
+### FederatedServicesController
+
+The federated services controller syncs Kubernetes services from remote clusters defined through [RemoteClusterConfigurations](remoteclusterconfiguration.mdx).
+
+| Field            | Description                                                      | Schema                            | Default |
+| ---------------- | ---------------------------------------------------------------- | --------------------------------- | ------- |
+| reconcilerPeriod | Period to perform reconciliation with the $[prodname] datastore | [Duration string][parse-duration] | 5m       |
+
+### LoadBalancerController
+
+The load balancer controller manages IPAM for Services of type LoadBalancer.
+
+| Field            | Description                                                      | Accepted Values                          | Schema | Default     |
+| ---------------- | ---------------------------------------------------------------- | ---------------------------------------- | ------ | ----------- |
+| assignIPs        | Mode in which LoadBalancer controller operates                   | AllServices, RequestedServicesOnly       | String | AllServices |
+
+## Supported operations
+
+| Datastore type        | Create | Delete (Global `default`) | Update | Get/List | Notes |
+| --------------------- | ------ | ------------------------- | ------ | -------- | ----- |
+| Kubernetes API server | Yes    | Yes                       | Yes    | Yes      |
+
+[parse-duration]: https://golang.org/pkg/time/#ParseDuration
