@@ -1,0 +1,71 @@
+---
+description: API for this Calico Cloud resource.
+---
+
+# Network set
+
+import DomainNames from '@site/calico-cloud_versioned_docs/version-21-2/_includes/content/_domain-names.mdx';
+
+A network set resource (NetworkSet) represents an arbitrary set of IP subnetworks/CIDRs,
+allowing it to be matched by $[prodname] policy. Network sets are useful for applying policy to traffic
+coming from (or going to) external, non-$[prodname], networks.
+
+`NetworkSet` is a namespaced resource. `NetworkSets` in a specific namespace
+only applies to [network policies](networkpolicy.mdx)
+in that namespace. Two resources are in the same namespace if the `namespace`
+value is set the same on both. (See [GlobalNetworkSet](globalnetworkset.mdx) for non-namespaced network sets.)
+
+The metadata for each network set includes a set of labels. When $[prodname] is calculating the set of
+IPs that should match a source/destination selector within a
+[network policy](networkpolicy.mdx) rule, it includes
+the CIDRs from any network sets that match the selector.
+
+:::note
+
+Since $[prodname] matches packets based on their source/destination IP addresses,
+$[prodname] rules may not behave as expected if there is NAT between the $[prodname]-enabled node and the
+networks listed in a network set. For example, in Kubernetes, incoming traffic via a service IP is
+typically SNATed by the kube-proxy before reaching the destination host so $[prodname]'s workload
+policy will see the kube-proxy's host's IP as the source instead of the real source.
+
+:::
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkSet
+metadata:
+  name: external-database
+  namespace: staging
+  labels:
+    role: db
+spec:
+  nets:
+    - 198.51.100.0/28
+    - 203.0.113.0/24
+  allowedEgressDomains:
+    - db.com
+    - '*.db.com'
+```
+
+## Network set definition
+
+### Metadata
+
+| Field     | Description                                                        | Accepted Values                                   | Schema | Default   |
+| --------- | ------------------------------------------------------------------ | ------------------------------------------------- | ------ | --------- |
+| name      | The name of this network set. Required.                            | Lower-case alphanumeric with optional `_` or `-`. | string |           |
+| namespace | Namespace provides an additional qualification to a resource name. |                                                   | string | "default" |
+| labels    | A set of labels to apply to this endpoint.                         |                                                   | map    |           |
+
+### Spec
+
+| Field                | Description                                                                                                                                                                                                                                                                                                                                            | Accepted Values                                                            | Schema | Default |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ------ | ------- |
+| nets                 | The IP networks/CIDRs to include in the set.                                                                                                                                                                                                                                                                                                           | Valid IPv4 or IPv6 CIDRs, for example "192.0.2.128/25"                     | list   |         |
+| allowedEgressDomains | The list of domain names that belong to this set and are honored in egress allow rules only. Domain names specified here only work to allow egress traffic from the cluster to external destinations. They don't work to _deny_ traffic to destinations specified by domain name, or to allow ingress traffic from _sources_ specified by domain name. | List of [exact or wildcard domain names](#exact-and-wildcard-domain-names) | list   |         |
+
+### Exact and wildcard domain names
+
+<DomainNames />

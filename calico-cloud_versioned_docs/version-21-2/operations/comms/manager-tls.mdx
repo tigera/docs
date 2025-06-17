@@ -1,0 +1,41 @@
+---
+description: Add TLS certificates to secure access to the web console user interface.
+---
+
+# Provide TLS certificates for the web console
+
+## Big picture
+
+Provide TLS certificates that secure access to the $[prodname] web console user interface.
+
+## Value
+
+By default, the $[prodname] web console uses self-signed TLS certificates on connections. This article describes how to provide TLS certificates that users' browsers will trust.
+
+## Before you begin...
+
+- **Get the certificate and key pair for the $[prodname] web console**
+  Generate the certificate using any X.509-compatible tool or from your organization's Certificate Authority.
+
+{/*TODO-XREFS-CC
+The certificate must have Common Name or Subject Alternate Names that match the IPs or DNS names that will be used to [access the web console](/operations/cnx/access-the-manager/).
+*/}
+## How to
+
+To provide certificates for use during deployment you must create a secret before applying the 'custom-resource.yaml' or before creating the Installation resource. To specify certificates for use in the manager, create a secret using the following command:
+
+```bash
+kubectl create secret generic manager-tls -n tigera-operator --from-file=cert=</path/to/certificate-file> --from-file=key=</path/to/key-file>
+```
+
+To update existing certificates, run the following command:
+
+```bash
+kubectl create secret generic manager-tls -n tigera-operator --from-file=cert=</path/to/certificate-file> --from-file=key=</path/to/key-file> --dry-run -o yaml --save-config | kubectl replace -f -
+```
+
+If the $[prodname] web console is already running then updating the secret should cause it to restart and pickup the new certificate and key. This will result in a short period of unavailability of the $[prodname] web console.
+
+## Additional resources
+
+Additional documentation is available for securing [the $[prodname] web console connections](crypto-auth.mdx#calico-enterprise-manager-connections).
