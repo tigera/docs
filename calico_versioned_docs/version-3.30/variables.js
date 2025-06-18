@@ -1,7 +1,7 @@
 const releases = require('./releases.json');
 
 const variables = {
-  releaseTitle: 'v3.30.1',
+  releaseTitle: 'v3.30.2',
   prodname: 'Calico',
   prodnamedash: 'calico',
   version: 'v3.30',
@@ -17,7 +17,7 @@ const variables = {
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\CalicoWindows',
   ppa_repo_name: 'calico-3.30',
-  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.30.1',
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.30.2',
   releases,
   registry: '',
   vppbranch: 'v3.29.0',
