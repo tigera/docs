@@ -41,14 +41,14 @@ export default {
       title: 'Calico Open Source',
       costSupport: ['Free, self-managed'],
       target: 'Users',
-      image: 'img/calico-logo.webp',
+      image: 'img/calico-logo-badge.svg',
 
       bestFit: [' - Who want best-in-class networking and network policy capabilities.'],
     },
     {
       title: 'Calico Enterprise',
       costSupport: ['Paid, self-managed'],
-      image: '/img/calico-cloud-logo.webp',
+      image: '/img/calico-cloud-logo-badge.svg',
 
       target: 'Enterprise teams',
 
@@ -62,7 +62,7 @@ export default {
     {
       title: 'Calico Cloud',
       costSupport: ['Pay-as-you-go, SaaS'],
-      image: '/img/calico-enterprise-logo.webp',
+      image: '/img/calico-enterprise-logo-badge.svg',
 
       target: 'Small teams',
       bestFit: [' - Who need to manage the full spectrum of compliance in a web-based console for novice users:'],
