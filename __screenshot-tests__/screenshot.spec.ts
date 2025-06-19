@@ -20,7 +20,7 @@ const screenshotPathname = (pathname: string) => {
     await page.addStyleTag({ content: stylesheet });
     await expect(page).toHaveScreenshot({
       fullPage: true,
-      maxDiffPixelRatio: 0.02,
+      maxDiffPixels: 10
     });
   });
 };
