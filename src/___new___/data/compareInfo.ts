@@ -48,7 +48,7 @@ export default {
     {
       title: 'Calico Enterprise',
       costSupport: ['Paid, self-managed'],
-      image: '/img/calico-cloud-logo-badge.svg',
+      image: '/img/calico-enterprise-logo-badge.svg',
 
       target: 'Enterprise teams',
 
@@ -62,7 +62,7 @@ export default {
     {
       title: 'Calico Cloud',
       costSupport: ['Pay-as-you-go, SaaS'],
-      image: '/img/calico-enterprise-logo-badge.svg',
+      image: '/img/calico-cloud-logo-badge.svg',
 
       target: 'Small teams',
       bestFit: [' - Who need to manage the full spectrum of compliance in a web-based console for novice users:'],
