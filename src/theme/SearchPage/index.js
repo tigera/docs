@@ -1,26 +1,18 @@
 /* eslint-disable jsx-a11y/no-autofocus */
-import React, { useEffect, useReducer, useRef, useState } from 'react';
+import React, { useEffect, useState, useReducer, useRef } from 'react';
 import clsx from 'clsx';
 import { liteClient } from 'algoliasearch/lite';
 import algoliaSearchHelper from 'algoliasearch-helper';
 import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
 import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
-import {
-  HtmlClassNameProvider,
-  PageMetadata,
-  useEvent,
-  usePluralForm,
-  useSearchQueryString,
-} from '@docusaurus/theme-common';
+import { HtmlClassNameProvider, usePluralForm, isRegexpStringMatch, useEvent } from '@docusaurus/theme-common';
+import { useTitleFormatter } from '@docusaurus/theme-common/internal';
+import { useSearchQueryString } from '@docusaurus/theme-common';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useAllDocsData } from '@docusaurus/plugin-content-docs/client';
 import Translate, { translate } from '@docusaurus/Translate';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import {
-  useAlgoliaThemeConfig,
-} from '@docusaurus/theme-search-algolia/client';
 import Layout from '@theme/Layout';
-import Heading from '@theme/Heading';
 import styles from './styles.module.css';
 import { getProductNameById } from '../../utils/getProductNameById';
 // Very simple pluralization: probably good enough for now
@@ -92,36 +84,17 @@ function SearchVersionSelectList({ docsSearchVersionsHelpers }) {
     </div>
   );
 }
-
-const getSearchPageTitle = (searchQuery) =>
-    searchQuery
-      ? translate(
-          {
-            id: 'theme.SearchPage.existingResultsTitle',
-            message: 'Search results for "{query}"',
-            description: 'The search page title for non-empty query',
-          },
-          {
-            query: searchQuery,
-          }
-        )
-      : translate({
-          id: 'theme.SearchPage.emptyResultsTitle',
-          message: 'Search the documentation',
-          description: 'The search page title for empty query',
-        });
-
 function SearchPageContent() {
   const {
+    siteConfig: { themeConfig },
     i18n: { currentLocale },
   } = useDocusaurusContext();
   const {
     algolia: { appId, apiKey, indexName, externalUrlRegex },
-  } = useAlgoliaThemeConfig();
+  } = themeConfig;
   const documentsFoundPlural = useDocumentsFoundPlural();
   const docsSearchVersionsHelpers = useDocsSearchVersionsHelpers();
-  const [searchQuery, setSearchQuery] = useSearchQueryString();
-  const pageTitle = getSearchPageTitle(searchQuery);
+  const [ searchQuery, setSearchQuery ] = useSearchQueryString();
   const [productId, setProductId] = useState();
   const [version, setVersion] = useState();
   useEffect(() => {
@@ -222,6 +195,23 @@ function SearchPageContent() {
         { threshold: 1 }
       )
   );
+  const getTitle = () =>
+    searchQuery
+      ? translate(
+          {
+            id: 'theme.SearchPage.existingResultsTitle',
+            message: 'Search results for "{query}"',
+            description: 'The search page title for non-empty query',
+          },
+          {
+            query: searchQuery,
+          }
+        )
+      : translate({
+          id: 'theme.SearchPage.emptyResultsTitle',
+          message: 'Search the documentation',
+          description: 'The search page title for empty query',
+        });
   const makeSearch = useEvent((page = 0) => {
     algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', 'default');
     algoliaHelper.addDisjunctiveFacetRefinement('language', currentLocale);
@@ -276,9 +266,8 @@ function SearchPageContent() {
   }, [makeSearch, searchResultState.lastPage]);
   return (
     <Layout>
-      <PageMetadata title={pageTitle} />
-
       <Head>
+        <title>{useTitleFormatter(getTitle())}</title>
         {/*
          We should not index search pages
           See https://github.com/facebook/docusaurus/pull/3233
@@ -289,8 +278,8 @@ function SearchPageContent() {
         />
       </Head>
 
-      <div className="container margin-vert--lg">
-        <Heading as="h1">{pageTitle}</Heading>
+      <div className='container margin-vert--lg'>
+        <h1>{getTitle()}</h1>
 
         <form
           className='row'
@@ -333,15 +322,11 @@ function SearchPageContent() {
             {!!searchResultState.totalResults && documentsFoundPlural(searchResultState.totalResults)}
           </div>
 
-          <div
-            className={clsx(
-              'col',
-              'col--4',
-              'text--right',
-              styles.searchLogoColumn,
-            )}>
-            <Link
-              to="https://www.algolia.com/"
+          <div className={clsx('col', 'col--4', 'text--right', styles.searchLogoColumn)}>
+            <a
+              target='_blank'
+              rel='noopener noreferrer'
+              href='https://www.algolia.com/'
               aria-label={translate({
                 id: 'theme.SearchPage.algoliaLabel',
                 message: 'Search by Algolia',
@@ -367,7 +352,7 @@ function SearchPageContent() {
                   />
                 </g>
               </svg>
-            </Link>
+            </a>
           </div>
         </div>
 
@@ -378,9 +363,12 @@ function SearchPageContent() {
                 key={i}
                 className={styles.searchResultItem}
               >
-                <Heading as="h2" className={styles.searchResultItemHeading}>
-                  <Link to={url} dangerouslySetInnerHTML={{ __html: title }} />
-                </Heading>
+                <h2 className={styles.searchResultItemHeading}>
+                  <Link
+                    to={url}
+                    dangerouslySetInnerHTML={{ __html: title }}
+                  />
+                </h2>
 
                 {breadcrumbs.length > 0 && (
                   <nav aria-label='breadcrumbs'>

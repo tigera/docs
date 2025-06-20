@@ -15,13 +15,7 @@ export default async function createAsyncConfig() {
   /** @type {import('@docusaurus/types').Config} */
   const config = {
     future: {
-      experimental_faster: {
-        swcJsLoader: true,
-        swcJsMinimizer: true,
-        lightningCssMinimizer: true,
-        rspackBundler: true,
-        mdxCrossCompilerCache: true,
-      },
+      experimental_faster: true,
     },
     title: 'Calico Documentation',
     tagline: 'Active, zero-trust based security for containers and Kubernetes',
