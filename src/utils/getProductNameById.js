@@ -8,6 +8,5 @@ export function getProductNameById(productId) {
       return 'Calico Enterprise';
     case 'use-cases':
       return 'All products';
-      o;
   }
 }

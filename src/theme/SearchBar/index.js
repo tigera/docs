@@ -13,6 +13,21 @@ import translations from '@theme/SearchTranslations';
 import { useProductId } from '../../utils/useProductId';
 import { getProductNameById } from '../../utils/getProductNameById';
 
+const getUrlParams = ({query, productId, preferredVersion}) => {
+  const params = new URLSearchParams();
+  params.set('q', encodeURIComponent(query))
+
+  if (productId) {
+    params.set('p', productId || '')
+  }
+
+  if (preferredVersion) {
+    params.set('v', preferredVersion)
+  }
+
+  return params;
+}
+
 let DocSearchModal = null;
 function Hit({ hit, children }) {
   const text = hit.content || hit.hierarchy[hit.type];
@@ -34,18 +49,9 @@ function Hit({ hit, children }) {
   );
 }
 function ResultsFooter({ state, onClose, productId }) {
-  let version = '';
-  if (productId) {
-    version = localStorage.getItem(`docs-preferred-version-${productId}`) || 'current';
-  }
-  if(productId === 'calico-cloud'){
-    //TODO: figure this out
-    //current search is disabled for calico-cloud
-    // see docusaurus.config.js
-    version = '20-2'
-  }
-
-  const to = `/search?q=${encodeURIComponent(state.query)}&p=${productId || ''}&v=${version}`;
+  const preferredVersion = localStorage.getItem(`docs-preferred-version-${productId}`);
+  const params = getUrlParams({query: state.query, productId, preferredVersion});
+  const to = `/search?${params}`;
 
   return (
     <Link

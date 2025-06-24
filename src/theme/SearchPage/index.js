@@ -1,11 +1,12 @@
 /* eslint-disable jsx-a11y/no-autofocus */
-import React, { useEffect, useReducer, useRef, useState } from 'react';
+import React, {useEffect, useReducer, useRef, useState} from 'react';
 import clsx from 'clsx';
-import { liteClient } from 'algoliasearch/lite';
 import algoliaSearchHelper from 'algoliasearch-helper';
+import {liteClient} from 'algoliasearch/lite';
+import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
 import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
-import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
+import {useAllDocsData} from '@docusaurus/plugin-content-docs/client';
 import {
   HtmlClassNameProvider,
   PageMetadata,
@@ -13,16 +14,17 @@ import {
   usePluralForm,
   useSearchQueryString,
 } from '@docusaurus/theme-common';
-import { useAllDocsData } from '@docusaurus/plugin-content-docs/client';
-import Translate, { translate } from '@docusaurus/Translate';
+import Translate, {translate} from '@docusaurus/Translate';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import {
   useAlgoliaThemeConfig,
+  useSearchResultUrlProcessor,
 } from '@docusaurus/theme-search-algolia/client';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
 import { getProductNameById } from '../../utils/getProductNameById';
+
 // Very simple pluralization: probably good enough for now
 function useDocumentsFoundPlural() {
   const { selectMessage } = usePluralForm();
@@ -48,7 +50,7 @@ function useDocsSearchVersionsHelpers() {
     Object.entries(allDocsData).reduce(
       (acc, [pluginId, pluginData]) => ({
         ...acc,
-        [pluginId]: pluginData.versions[0].name,
+        [pluginId]: (pluginData.versions.find(version => version.isLast) ?? pluginData.versions[0]).name,
       }),
       {}
     )
@@ -92,43 +94,45 @@ function SearchVersionSelectList({ docsSearchVersionsHelpers }) {
     </div>
   );
 }
-
-const getSearchPageTitle = (searchQuery) =>
-    searchQuery
-      ? translate(
-          {
-            id: 'theme.SearchPage.existingResultsTitle',
-            message: 'Search results for "{query}"',
-            description: 'The search page title for non-empty query',
-          },
-          {
-            query: searchQuery,
-          }
-        )
-      : translate({
-          id: 'theme.SearchPage.emptyResultsTitle',
-          message: 'Search the documentation',
-          description: 'The search page title for empty query',
-        });
-
+function getSearchPageTitle(searchQuery) {
+  return searchQuery
+    ? translate(
+        {
+          id: 'theme.SearchPage.existingResultsTitle',
+          message: 'Search results for "{query}"',
+          description: 'The search page title for non-empty query',
+        },
+        {
+          query: searchQuery,
+        },
+      )
+    : translate({
+        id: 'theme.SearchPage.emptyResultsTitle',
+        message: 'Search the documentation',
+        description: 'The search page title for empty query',
+      });
+}
 function SearchPageContent() {
   const {
-    i18n: { currentLocale },
+    i18n: {currentLocale},
   } = useDocusaurusContext();
   const {
-    algolia: { appId, apiKey, indexName, externalUrlRegex },
+    algolia: {appId, apiKey, indexName, contextualSearch},
   } = useAlgoliaThemeConfig();
+  const processSearchResultUrl = useSearchResultUrlProcessor();
   const documentsFoundPlural = useDocumentsFoundPlural();
   const docsSearchVersionsHelpers = useDocsSearchVersionsHelpers();
-  const [searchQuery, setSearchQuery] = useSearchQueryString();
+  const [ searchQuery, setSearchQuery ] = useSearchQueryString();
   const pageTitle = getSearchPageTitle(searchQuery);
   const [productId, setProductId] = useState();
   const [version, setVersion] = useState();
+
   useEffect(() => {
     const params = new URL(location.href).searchParams;
     setProductId(params.get('p'));
     setVersion(params.get('v'));
   }, []);
+
   const initialSearchResultState = {
     items: [],
     query: null,
@@ -167,11 +171,15 @@ function SearchPageContent() {
         return prevState;
     }
   }, initialSearchResultState);
+
+    const disjunctiveFacets = contextualSearch
+    ? ['language', 'docusaurus_tag']
+    : [];
   const algoliaClient = liteClient(appId, apiKey);
   const algoliaHelper = algoliaSearchHelper(algoliaClient, indexName, {
     hitsPerPage: 15,
     advancedSyntax: true,
-    disjunctiveFacets: ['language', 'docusaurus_tag'],
+    disjunctiveFacets,
   });
   algoliaHelper.on('result', ({ results: { query, hits, page, nbHits, nbPages } }) => {
     if (query === '' || !Array.isArray(hits)) {
@@ -180,13 +188,10 @@ function SearchPageContent() {
     }
     const sanitizeValue = (value) => value.replace(/algolia-docsearch-suggestion--highlight/g, 'search-result-match');
     const items = hits.map(({ url, _highlightResult: { hierarchy }, _snippetResult: snippet = {} }) => {
-      const parsedURL = new URL(url);
       const titles = Object.keys(hierarchy).map((key) => sanitizeValue(hierarchy[key].value));
       return {
         title: titles.pop(),
-        url: isRegexpStringMatch(externalUrlRegex, parsedURL.href)
-          ? parsedURL.href
-          : parsedURL.pathname + parsedURL.hash,
+        url: processSearchResultUrl(url),
         summary: snippet.content ? `${sanitizeValue(snippet.content.value)}...` : '',
         breadcrumbs: titles,
       };
@@ -223,28 +228,19 @@ function SearchPageContent() {
       )
   );
   const makeSearch = useEvent((page = 0) => {
-    algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', 'default');
-    algoliaHelper.addDisjunctiveFacetRefinement('language', currentLocale);
-    if (productId) {
-      //TODO: figure this out
-      //current search is disabled for calico-cloud
-      // see docusaurus.config.js
-      if(productId === 'calico-cloud'){
-        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-21-1`);
-      }else{
-        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${productId}-${version}`);
-      }
-    } else {
-      Object.entries(docsSearchVersionsHelpers.searchVersions).forEach(([pluginId]) => {
-        const searchVersion = localStorage.getItem(`docs-preferred-version-${pluginId}`) || 'current';
-        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${pluginId}-${searchVersion}`);
-      });
-     
-      //TODO: figure this out
-      //current search is disabled for calico-cloud
-      // see docusaurus.config.js
-      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-calico-cloud-21-1`);
+    if (contextualSearch) {
+      algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', 'default');
+      algoliaHelper.addDisjunctiveFacetRefinement('language', currentLocale);
 
+    if (productId) {
+        const productVersion = version ?? docsSearchVersionsHelpers.searchVersions[productId];
+        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${productId}-${productVersion}`);
+    } else {
+      Object.entries(docsSearchVersionsHelpers.searchVersions).forEach(([pluginId, searchVersion]) => {
+        const productVersion = localStorage.getItem(`docs-preferred-version-${pluginId}`) ?? searchVersion;
+        algoliaHelper.addDisjunctiveFacetRefinement('docusaurus_tag', `docs-${pluginId}-${productVersion}`);
+      });
+    }
     }
     algoliaHelper.setQuery(searchQuery).setPage(page).search();
   });
@@ -289,8 +285,8 @@ function SearchPageContent() {
         />
       </Head>
 
-      <div className="container margin-vert--lg">
-        <Heading as="h1">{pageTitle}</Heading>
+      <div className='container margin-vert--lg'>
+        <Heading as='h1'>{pageTitle}</Heading>
 
         <form
           className='row'
@@ -323,7 +319,7 @@ function SearchPageContent() {
             />
           </div>
 
-          {docsSearchVersionsHelpers.versioningEnabled && (
+          {contextualSearch && docsSearchVersionsHelpers.versioningEnabled && (
             <SearchVersionSelectList docsSearchVersionsHelpers={docsSearchVersionsHelpers} />
           )}
         </form>
@@ -333,15 +329,11 @@ function SearchPageContent() {
             {!!searchResultState.totalResults && documentsFoundPlural(searchResultState.totalResults)}
           </div>
 
-          <div
-            className={clsx(
-              'col',
-              'col--4',
-              'text--right',
-              styles.searchLogoColumn,
-            )}>
+          <div className={clsx('col', 'col--4', 'text--right', styles.searchLogoColumn)}>
             <Link
-              to="https://www.algolia.com/"
+              target='_blank'
+              rel='noopener noreferrer'
+              to='https://www.algolia.com/'
               aria-label={translate({
                 id: 'theme.SearchPage.algoliaLabel',
                 message: 'Search by Algolia',
@@ -378,8 +370,8 @@ function SearchPageContent() {
                 key={i}
                 className={styles.searchResultItem}
               >
-                <Heading as="h2" className={styles.searchResultItemHeading}>
-                  <Link to={url} dangerouslySetInnerHTML={{ __html: title }} />
+                <Heading as='h2' className={styles.searchResultItemHeading}>
+                  <Link to={url} dangerouslySetInnerHTML={{__html: title}} className={styles.searchResultItemHeadingLink}/>
                 </Heading>
 
                 {breadcrumbs.length > 0 && (
