@@ -10,7 +10,6 @@ to {
 }
 `;
 
-
 export const containerStyles = {
     position: 'relative',
     overflow: 'hidden',
