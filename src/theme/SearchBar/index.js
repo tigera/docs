@@ -14,6 +14,7 @@ import { useProductId } from '../../utils/useProductId';
 import { getProductNameById } from '../../utils/getProductNameById';
 import { Flex, Button, Center, Box } from '@chakra-ui/react';
 import { SearchModalAskAI } from '../../___new___/components';
+import useIsBrowser from '@docusaurus/useIsBrowser';
 
 const getUrlParams = ({query, productId, preferredVersion}) => {
   const params = new URLSearchParams();
@@ -109,7 +110,6 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
       ...props.searchParameters,
       facetFilters: productId ? filterFacetFiltersByProduct(facetFilters, productId) : facetFilters,
     });
-    console.log('searchParameters',searchParameters)
   }, [productId]);
   const [footer, setFooter] = useState();
   const { withBaseUrl } = useBaseUrlUtils();
@@ -208,7 +208,12 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
     searchButtonRef,
   });
 
-  const searchBar = document.querySelector('.DocSearch-SearchBar');
+  const isBrowser = useIsBrowser();
+  let searchBar;
+
+  if (isBrowser) {
+    searchBar = document.querySelector('.DocSearch-SearchBar')
+  }
 
   return (
     <>

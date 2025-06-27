@@ -19,7 +19,7 @@ const SearchModalAskAI = ({ onClose }: SearchModalAskAIProps) => {
         setQuery(event.target.value);
 
         if (!inputClearButtonRef.current) {
-            inputClearButtonRef.current = document.querySelector('.DocSearch-Reset');
+            inputClearButtonRef.current = document?.querySelector('.DocSearch-Reset');
             inputClearButtonRef.current?.addEventListener('click', handleClearSearch)
         }
     }, []);
@@ -32,7 +32,7 @@ const SearchModalAskAI = ({ onClose }: SearchModalAskAIProps) => {
     }, [])
 
     if (!inputSearchRef.current) {
-        inputSearchRef.current = document.querySelector('#docsearch-input');
+        inputSearchRef.current = document?.querySelector('#docsearch-input');
         inputSearchRef.current?.addEventListener('input', handleSearchInput as any)
     }
 
