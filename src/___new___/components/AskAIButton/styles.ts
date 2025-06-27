@@ -20,10 +20,10 @@ export const containerStyles = {
         content: '""',
         display: 'block',
         background: 'linear-gradient(90deg, var(--chakra-colors-tigeraLilac) 0%, var(--chakra-colors-tigeraRose) 100%)',
-        height: '750px',
-        width: '750px',
+        height: '600px',
+        width: '600px',
         position: 'absolute',
-        animation: `${animation} 4s linear infinite`,
+        animation: `${animation} 5s linear infinite`,
         zIndex: 0,
     }
 }
