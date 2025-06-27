@@ -3,7 +3,6 @@ import { useKapa } from '../../hooks';
 import { SparkleIcon } from '../../icons';
 import { buttonStyles, containerStyles, textWrapStyles } from './styles';
 
-
 type AskAIButtonProps = {
   query: string | null;
   onClick: () => void;
