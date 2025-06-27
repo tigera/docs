@@ -12,6 +12,8 @@ import Translate from '@docusaurus/Translate';
 import translations from '@theme/SearchTranslations';
 import { useProductId } from '../../utils/useProductId';
 import { getProductNameById } from '../../utils/getProductNameById';
+import { Flex, Button, Center, Box } from '@chakra-ui/react';
+import { SearchModalAskAI } from '../../___new___/components';
 
 const getUrlParams = ({query, productId, preferredVersion}) => {
   const params = new URLSearchParams();
@@ -206,7 +208,7 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
     searchButtonRef,
   });
 
-
+  const searchBar = document.querySelector('.DocSearch-SearchBar');
 
   return (
     <>
@@ -273,6 +275,11 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
             />
           </div>,
           searchContainer.current
+        )}
+
+        {searchBar && isOpen && createPortal(
+          <SearchModalAskAI onClose={() => setIsOpen(false)} />,
+          searchBar
         )}
     </>
   );
