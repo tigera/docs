@@ -14,3 +14,9 @@ export const useDocUrl = (docId: string) => {
 
   return `/${[productId, version, docId].filter(Boolean).join('/')}`;
 };
+
+export const useKapa = () => {
+  const openModal = (query: string) => (window as any)?.Kapa?.open({ query, submit: true });
+
+  return { openModal }
+}
