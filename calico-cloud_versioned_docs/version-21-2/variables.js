@@ -4,6 +4,7 @@ const variables = {
   releaseTitle: 'v3.21.0-2.0',
   cloudUserVersion: 'v21.3.0',
   prodname: 'Calico Cloud',
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.30.2',
   prodnamedash: 'calico-cloud',
   baseUrl: '/calico-cloud',
   filesUrl: 'https://docs.calicocloud.io',
