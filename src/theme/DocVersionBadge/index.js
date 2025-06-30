@@ -30,8 +30,8 @@ export default function DocVersionBadge({className}) {
   if (pluginId === 'calico-cloud') {
     const isFreeTier = currentPath.includes('/calico-cloud/free/');
     badgeText = isFreeTier
-      ? 'Calico Cloud Free documentation'
-      : 'Calico Cloud Pro documentation';
+      ? 'Calico Cloud Free Tier documentation'
+      : 'Calico Cloud documentation';
   }
 
   else {

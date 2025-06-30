@@ -18,7 +18,7 @@ const products: CalicoProduct[] = [
         alt: 'Calico Open Source icon',
     },
     {
-        title: 'Calico Cloud Free',
+        title: 'Calico Cloud Free Tier',
         description: 'Observability & policy management for a single cluster',
         imageSrc: '/img/calico-cloud-free-logo-badge.svg',
         alt: 'Calico Cloud Free Tier icon',
