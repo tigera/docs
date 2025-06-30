@@ -11,7 +11,7 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Calico Cloud Free',
+      label: 'Calico Cloud Free Tier',
       link: { type: 'doc', id: 'free/index' },
       items: [
         'free/overview',
