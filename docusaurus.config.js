@@ -86,6 +86,7 @@ export default async function createAsyncConfig() {
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       {
+        image: 'img/favicon.png',
         metadata: [
           {
             name: 'keywords',
