@@ -56,6 +56,21 @@ From the **Web Application Firewall** page, click the **Rulesets** tab to open a
 
 This release adds support for Kubernetes 1.32 and 1.33.
 
+### Known issues
+
+* If your managed cluster includes nodes running Bottlerocket OS, you may encounter installation errors and network connectivity issues when updating to $[prodname] 21.3.0.
+
+  To prevent or resolve these issues, modify the Felix configuration resource by setting the `dnsPolicyMode` parameter to `DelayDeniedPacket`. Apply this patch either before or after updating to $[prodname] 21.3.0:
+
+  ```bash
+  kubectl patch --type json felixconfigurations.crd.projectcalico.org default -p '[{"op":"add","path":"/spec/dnsPolicyMode","value":"DelayDeniedPacket"}]'
+  ```
+
+  This issue is caused by a new default value for the `dnsPolicyMode` parameter in the Felix configuration.
+  In version 21.3.0, if not explicitly set, `dnsPolicyMode` defaults to `Inline`, which is incompatible with Bottlerocket OS and leads to the described problems.
+
+  This issue will be addressed in an upcoming release.
+
 ## May 5, 2025 (web console update)
 
 ### New features and enhancements
