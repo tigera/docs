@@ -54,16 +54,15 @@ The geeky details of what you get:
 
 1. Create an Azure AKS cluster with no Kubernetes CNI pre-installed. Please refer to [Bring your own CNI with AKS](https://docs.microsoft.com/en-us/azure/aks/use-byo-cni?tabs=azure-cli) for details.
 
-   ```
-    # Create a resource group
-    az group create --name my-calico-rg --location westcentralus
-
-    az aks create --resource-group my-calico-rg --name my-calico-cluster --location westcentralus --pod-cidr 192.168.0.0/16 --network-plugin none
+   ```bash
+   # Create a resource group
+   az group create --name my-calico-rg --location westcentralus
+   az aks create --resource-group my-calico-rg --name my-calico-cluster --location westcentralus --pod-cidr 192.168.0.0/16 --network-plugin none
    ```
 
 1. Get credentials to allow you to access the cluster with `kubectl`:
 
-   ```
+   ```bash
    az aks get-credentials --resource-group my-calico-rg --name my-calico-cluster
    ```
 
@@ -71,14 +70,14 @@ The geeky details of what you get:
 
 1. Install the Tigera operator and custom resource definitions.
 
-   ```
+   ```bash
    kubectl create -f $[manifestsUrl]/manifests/operator-crds.yaml
    kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
    ```
 
 1. Configure the $[prodname] installation.
 
-   ```
+   ```bash
    kubectl create -f - <<EOF
    kind: Installation
    apiVersion: operator.tigera.io/v1
@@ -94,17 +93,36 @@ The geeky details of what you get:
         - cidr: 192.168.0.0/16
           encapsulation: VXLAN
    ---
+
+   # This section configures the Calico API server.
+   # For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io/v1.APIServer
    apiVersion: operator.tigera.io/v1
    kind: APIServer
    metadata:
       name: default
    spec: {}
+
+   ---
+
+   # Configures the Calico Goldmane flow aggregator.
+   apiVersion: operator.tigera.io/v1
+   kind: Goldmane
+   metadata:
+     name: default
+
+   ---
+
+   # Configures the Calico Whisker observability UI.
+   apiVersion: operator.tigera.io/v1
+   kind: Whisker
+   metadata:
+     name: default
    EOF
    ```
 
-1. Confirm that all of the pods are running with the following command.
+1. Confirm that all the pods are running with the following command.
 
-   ```
+   ```bash
    watch kubectl get pods -n calico-system
    ```
 
