@@ -9,7 +9,7 @@ module.exports = {
         id: 'about/index',
       },
       items: [
-        'about/product-comparison',
+        'about/calico-product-editions',
         'about/training-resources',
         {
           type: 'category',
