@@ -293,7 +293,7 @@ export default async function createAsyncConfig() {
               title: 'Company',
               items: [
                 {
-                  label: 'About',
+                  label: 'About Calico',
                   to: 'https://www.tigera.io/about',
                 },
                 {

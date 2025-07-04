@@ -3,7 +3,7 @@
 module.exports = {
   calicoSidebar: [{
       type: 'category',
-      label: 'About',
+      label: 'About Calico',
       link: {
         type: 'doc',
         id: 'about/index',
