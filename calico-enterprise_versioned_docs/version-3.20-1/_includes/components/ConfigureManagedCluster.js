@@ -67,7 +67,7 @@ export default function ConfigureManagedCluster(props) {
         </li>
         <li>
           <p>
-            Get the namespace in which the Tigera operator is running in your managed cluster (in most cases this will
+            Get the namespace in which the Tigera Operator is running in your managed cluster (in most cases this will
             be <code>tigera-operator</code>):
           </p>
           <CodeBlock language='bash'>export MANAGED_CLUSTER_OPERATOR_NS=tigera-operator</CodeBlock>

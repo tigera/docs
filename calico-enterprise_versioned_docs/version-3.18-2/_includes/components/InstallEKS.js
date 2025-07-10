@@ -21,7 +21,7 @@ export default function InstallEKS(props) {
       </Heading>
       <ol>
         <li>
-          <p>Install the Tigera operator and custom resource definitions.</p>
+          <p>Install the Tigera Operator and custom resource definitions.</p>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
         </li>
         <li>
@@ -191,7 +191,7 @@ spec:
           </p>
         </li>
         <li>
-          <p>Install the Tigera operator and custom resource definitions.</p>
+          <p>Install the Tigera Operator and custom resource definitions.</p>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
         </li>
         <li>

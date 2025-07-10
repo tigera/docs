@@ -12,6 +12,24 @@ import Translate from '@docusaurus/Translate';
 import translations from '@theme/SearchTranslations';
 import { useProductId } from '../../utils/useProductId';
 import { getProductNameById } from '../../utils/getProductNameById';
+import { Flex, Button, Center, Box } from '@chakra-ui/react';
+import { SearchModalAskAI } from '../../___new___/components';
+import useIsBrowser from '@docusaurus/useIsBrowser';
+
+const getUrlParams = ({query, productId, preferredVersion}) => {
+  const params = new URLSearchParams();
+  params.set('q', encodeURIComponent(query))
+
+  if (productId) {
+    params.set('p', productId || '')
+  }
+
+  if (preferredVersion) {
+    params.set('v', preferredVersion)
+  }
+
+  return params;
+}
 
 let DocSearchModal = null;
 function Hit({ hit, children }) {
@@ -34,18 +52,9 @@ function Hit({ hit, children }) {
   );
 }
 function ResultsFooter({ state, onClose, productId }) {
-  let version = '';
-  if (productId) {
-    version = localStorage.getItem(`docs-preferred-version-${productId}`) || 'current';
-  }
-  if(productId === 'calico-cloud'){
-    //TODO: figure this out
-    //current search is disabled for calico-cloud
-    // see docusaurus.config.js
-    version = '20-2'
-  }
-
-  const to = `/search?q=${encodeURIComponent(state.query)}&p=${productId || ''}&v=${version}`;
+  const preferredVersion = localStorage.getItem(`docs-preferred-version-${productId}`);
+  const params = getUrlParams({query: state.query, productId, preferredVersion});
+  const to = `/search?${params}`;
 
   return (
     <Link
@@ -101,7 +110,6 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
       ...props.searchParameters,
       facetFilters: productId ? filterFacetFiltersByProduct(facetFilters, productId) : facetFilters,
     });
-    console.log('searchParameters',searchParameters)
   }, [productId]);
   const [footer, setFooter] = useState();
   const { withBaseUrl } = useBaseUrlUtils();
@@ -200,7 +208,12 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
     searchButtonRef,
   });
 
+  const isBrowser = useIsBrowser();
+  let searchBar;
 
+  if (isBrowser) {
+    searchBar = document.querySelector('.DocSearch-SearchBar')
+  }
 
   return (
     <>
@@ -267,6 +280,11 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
             />
           </div>,
           searchContainer.current
+        )}
+
+        {searchBar && isOpen && createPortal(
+          <SearchModalAskAI onClose={() => setIsOpen(false)} />,
+          searchBar
         )}
     </>
   );

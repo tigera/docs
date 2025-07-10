@@ -1,6 +1,5 @@
 name: reviewdog
 on: [pull_request]
-
 jobs:
   vale:
     name: runner / vale
@@ -8,8 +7,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Setup Node.js with Yarn
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: yarn
+      - name: Install dependencies
+        run: yarn global add mdx2vast
+      - name: Swap stuff
+        run: |
+          sudo apt-get install ripgrep
+          rg -l0 '\$\[[^\]]*\]' -g '*.mdx' -g '*.md' . | xargs -0 perl -i -pe 's/\$\[[^\]]*\]/PICKLEVAR/g'
       - name: Run Vale with Reviewdog
         uses: errata-ai/vale-action@reviewdog
         with:
-         fail_on_error: false
-
+          fail_on_error: false

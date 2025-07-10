@@ -3,13 +3,13 @@
 module.exports = {
   calicoSidebar: [{
       type: 'category',
-      label: 'About',
+      label: 'About Calico',
       link: {
         type: 'doc',
         id: 'about/index',
       },
       items: [
-        'about/product-comparison',
+        'about/calico-product-editions',
         'about/training-resources',
         {
           type: 'category',
@@ -88,6 +88,7 @@ module.exports = {
             'getting-started/kubernetes/openshift/requirements',
             'getting-started/kubernetes/openshift/installation',
             'getting-started/kubernetes/openshift/hostedcontrolplanes',
+            'getting-started/kubernetes/openshift/ovn-to-calico',
           ],
         },
 

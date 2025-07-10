@@ -2,106 +2,26 @@
 description: Learn about eBPF!
 ---
 
-# About eBPF
-
-{/* Do not change the canonical_url above *or the title*. Content is shared with Marketing and is used for SEO purposes. If you change the title, it will mess up Marketing metrics. */}
-
-:::note
-
-This guide provides optional background education, including
-education that is not specific to $[prodname].
-
-:::
-
-eBPF is a Linux kernel feature that allows fast yet safe mini-programs to be loaded into the kernel to
-customise its operation.
-
-In this guide you will learn:
-
-- General background on eBPF.
-- Various uses of eBPF.
-- How $[prodname] uses eBPF in the eBPF data plane.
+# About Calico eBPF
 
 ## What is eBPF?
 
-eBPF is a virtual machine embedded within the Linux kernel. It allows small programs to be loaded into the kernel,
-and attached to hooks, which are triggered when some event occurs. This allows the behaviour of the kernel to be
-(sometimes heavily) customised. While the eBPF virtual machine is the same for each type of hook, the capabilities
-of the hooks vary considerably. Since loading programs into the kernel could be dangerous; the kernel runs all
-programs through a very strict static verifier; the verifier sandboxes the program, ensuring it can only access
-allowed parts of memory and ensuring that it must terminate quickly.
+The Linux kernel, while powerful for building networking, observability, and security functionalities, has historically posed challenges for developers.
+Tasks like adding kernel modules or altering the kernel's source code often involve navigating complex abstractions and intricate systems, making debugging difficult.
+Extended Berkeley Packet Filter (eBPF) offers a solution to these pain points.
 
-## Why is it called eBPF?
+eBPF, a kernel technology fully integrated since Linux kernel version 4.4, enables the execution of programs without the need for external kernel modules or modifications to the kernel's source code.
+Think of it as a lightweight, sandboxed virtual machine operating directly within the Linux kernel.
+This allows developers to run bytecode that can leverage specific kernel resources.
 
-eBPF stands for "extended Berkeley Packet Filter". The Berkeley Packet Filter was an earlier, more specialised
-virtual machine that was tailored for filtering packets. Tools such as `tcpdump` use this "classic" BPF VM to select
-packets that should be sent to userspace for analysis. eBPF is a considerably extended version of BPF that
-is suitable for general purpose use inside the kernel. While the name has stuck, eBPF can be used for a lot more
-than just packet filtering.
-
-## What can eBPF do?
-
-### Types of eBPF program
-
-There are several classes of hooks to which eBPF programs can be attached within the kernel. The capabilities of an
-eBPF program depend hugely on the hook to which it is attached:
-
-- **Tracing** programs can be attached to a significant proportion of the functions in the kernel. Tracing
-  programs are useful for collecting statistics and deep-dive debugging of the kernel. _Most_ tracing hooks only allow
-  read-only access to the data that the function is processing but there are some that allow data to be modified.
-  The $[prodname] team use tracing programs to help debug $[prodname] during development; for example,
-  to figure out why the kernel unexpectedly dropped a packet.
-
-- **Traffic Control** (`tc`) programs can be attached at ingress and egress to a given network device. The kernel
-  executes the programs once for each packet. Since the hooks are for packet processing, the kernel allows
-  the programs to modify or extend the packet, drop the packet, mark it for queueing, or redirect the packet to
-  another interface. $[prodname]'s eBPF data plane is based on this type of hook; we use tc programs to load
-  balance Kubernetes services, to implement network policy, and, to create a fast-path for traffic of established
-  connections.
-
-- **XDP**, or "eXpress Data Path", is actually the name of an eBPF hook. Each network device has an XDP ingress hook
-  that is triggered once for each incoming packet before the kernel allocates a socket buffer for the packet. XDP
-  can give outstanding performance for use cases such as DoS protection (as supported in $[prodname]'s standard Linux
-  data plane) and ingress load balancing (as used in facebook's Katran). The downside of XDP is that it requires
-  network device driver support to get good performance. XDP isn't sufficient on its own to implement all of the logic
-  needed for Kubernetes pod networking, but a combination of XDP and Traffic Control hooks works well.
-
-- Several types of **socket** programs hook into various operations on sockets, allowing the eBPF program to, for
-  example, change the destination IP of a newly-created socket, or force a socket to bind to the "correct" source
-  IP address. $[prodname] uses such programs to do connect-time load balancing of Kubernetes Services; this
-  reduces overhead because there is no [DNAT](about-networking.mdx#NAT) on the packet processing path.
-
-- There are various security-related hooks that allow for program behaviour to be policed in various ways. For
-  example, the **seccomp** hooks allow for syscalls to be policed in fine-grained ways.
-
-- And... probably a few more hooks by the time you read this; eBPF is under heavy development in the kernel.
-
-The kernel exposes the capabilities of each hook via "helper functions". For example, the `tc` hook has a helper
-function to resize the packet, but that helper would not be available in a tracing hook. One of the challenges of
-working with eBPF is that different kernel versions support different helpers and lack of a helper can make it
-impossible to implement a particular feature.
-
-### BPF maps
-
-Programs attached to eBPF hooks are able to access BPF "maps". BPF maps have two main uses:
-
-- They allow BPF programs to store and retrieve long-lived data.
-
-- They allow communication between BPF programs and user-space programs. BPF programs can read data that was written
-  by userspace and vice versa.
-
-There are many types of BPF maps, including some special types that allow jumping between programs, and, some that act
-as queues and stacks rather than strictly as key/value maps. $[prodname] uses maps to keep track of active
-connections, and, to configure the BPF programs with policy and service NAT information. Since map accesses can be
-relatively expensive, $[prodname] aims to do a single map lookup only for each packet on an established flow.
-
-The contents of bpf maps can be inspected using the command-line tool, `bpftool`, which is provided with the kernel.
+By using eBPF, the requirement to change kernel source code is eliminated, and the ability of software to utilize existing kernel layers is enhanced.
+As a result, this technology has the potential to fundamentally reshape the delivery of critical services like observability, security, and networking.
 
 ## $[prodname]'s eBPF data plane
 
 $[prodname]'s eBPF data plane is an alternative to our standard Linux data plane (which is iptables based).
 While the standard data plane focuses on compatibility by inter-working with kube-proxy, and your own iptables rules,
-the eBPF data plane focuses on performance, latency and improving user experience with features that aren't possible
+the eBPF data plane focuses on performance, latency, and improving user experience with features that aren't possible
 in the standard data plane. As part of that, the eBPF data plane replaces kube-proxy with an eBPF implementation.
 The main "user experience" feature is to preserve the source IP of traffic from outside the cluster when traffic hits a
 NodePort; this makes your server-side logs and network policy much more useful on that path.
@@ -118,20 +38,20 @@ While the eBPF data plane has some features that the standard Linux data plane l
 | Preserves source IP within cluster   | Yes                                                   | Yes                                                            |
 | Preserves external source IP         | Only with `externalTrafficPolicy: Local`              | Yes                                                            |
 | Direct Server Return                 | Not supported                                         | Supported (requires compatible underlying network)             |
-| Connection tracking                  | Linux kernel's conntrack table (size can be adjusted) | BPF map (fixed size)                                           |
+| Connection tracking                  | Linux kernel's conntrack table (size can be adjusted) | BPF map (size can be adjustted or auto-adjusted)                                           |
 | Policy rules                         | Mapped to iptables rules                              | Mapped to BPF instructions                                     |
 | Policy selectors                     | Mapped to IP sets                                     | Mapped to BPF maps                                             |
-| Kubernetes services                  | kube-proxy iptables or IPVS mode                      | BPF program and maps                                           |
-| IPIP                                 | Supported                                             | Supported (no performance advantage due to kernel limitations) |
+| Kubernetes services                  | kube-proxy iptables or IPVS mode                      | BPF program and maps. The kube-proxy replacement is tightly coupled to the data plane for higher performance        |
+| IPIP                                 | Supported                                             | Supported |
 | VXLAN                                | Supported                                             | Supported                                                      |
-| Wireguard                            | Supported (IPv4 and IPv6)                             | Supported (IPv4)                                               |
+| Wireguard                            | Supported (IPv4 and IPv6)                             | Supported (IPv4 and IPv6)                                               |
 | Other routing                        | Supported                                             | Supported                                                      |
 | Supports third party CNI plugins     | Yes (compatible plugins only)                         | Yes (compatible plugins only)                                  |
 | Compatible with other iptables rules | Yes (can write rules above or below other rules)      | Partial; iptables bypassed for workload traffic                |
 | Host endpoint policy                 | Supported                                             | Supported                                                      |
 | Enterprise version                   | Available                                             | Available                                                      |
 | XDP DoS Protection                   | Supported                                             | Supported                                                      |
-| IPv6                                 | Supported                                             | Not supported (yet)                                            |
+| IPv6                                 | Supported                                             | Supported                                           |
 
 ### Architecture overview
 
@@ -159,5 +79,9 @@ NAT overhead from service connections.
 
 ## Additional resources
 
-- For more information and performance metrics for the eBPF data plane, see the [announcement blog post](https://www.projectcalico.org/introducing-the-calico-ebpf-dataplane/).
-- If you'd like to try eBPF mode in your Kubernetes cluster, follow the [Enable the eBPF data plane](/operations/ebpf/enabling-ebpf.mdx) guide.
+* [Enable eBPF data plane](../../operations/ebpf/enabling-ebpf.mdx)
+* [eBPF Explained: Use Cases, Concepts, and Architecture](https://www.tigera.io/learn/guides/ebpf)
+* Blog posts:
+  * [eBPF: When (and when not) to use it](https://www.tigera.io/blog/ebpf-when-and-when-not-to-use-it/)
+  * [High-Performance Kubernetes Networking with Calico eBPF](https://www.tigera.io/blog/high-performance-kubernetes-networking-with-calico-ebpf/)
+  * [Complete list of blog posts about eBPF](https://www.tigera.io/blog/?_sft_post_tag=ebpf)

@@ -1,0 +1,194 @@
+---
+description: Migrate from OVN Kubernetes CNI to Calico
+---
+
+# Migrate from OVN-Kubernetes CNI to Calico
+
+In scenarios where creating an OpenShift cluster from scratch isn't feasible, this tutorial guides you through the live migration of your Container Network Interface (CNI) from OVN-Kubernetes to $[prodname]. This migration unlocks advanced networking and security capabilities crucial for modern cloud-native environments.
+
+## Why should I use $[prodname]
+$[prodname] offers significant advantages over OVN-Kubernetes, particularly when it comes to advanced networking and security features:
+
+- **eBPF Networking:** $[prodname]'s support for eBPF (Extended Berkeley Packet Filter) allows for highly efficient and programmable in-kernel network data path manipulation. This translates to significant performance improvements in areas like network policy enforcement, load balancing, and service mesh integration, as the processing happens directly within the kernel, reducing context switching and overhead.
+- **Support for Virtual Machines:** $[prodname] integrates seamlessly with virtual machine workloads managed by technologies like KubeVirt. It can provide consistent networking and security policies across both containers and VMs within the OpenShift cluster. This unified approach simplifies network management and policy enforcement in hybrid environments.
+- **Advanced Network Policy:** $[prodname]'s network policy engine is highly flexible and scalable, allowing for fine-grained control over pod-to-pod, pod-to-external, and host-to-pod communication.
+- **Scalability and Performance:** For large and high-throughput environments, $[prodname]'s architecture, particularly when leveraging eBPF or its data plane offers better scalability and performance.
+- **VMware Migration Ready:** $[prodname] allows you to have capabilities such as tier-0 routing, VM tenant isolation, and microsegemntation to help your VMware migration journey to Kubernetes.
+- **Network Observability:** Understanding your cluster's network traffic is crucial for security. $[prodname] Whisker offers a simple GUI to observe and interact with your network logs, making it easier than ever to identify anomalies and create targeted security policies that truly protect your environment.
+
+## Prerequisites
+
+:::note
+Before diving into this tutorial with your own setup, consider leveraging [crc](https://mirror.openshift.com/pub/openshift-v4/clients/crc/latest/).
+It offers a convenient way to spin up a development OpenShift environment for experimentation.
+
+Red Hat CodeReady Containers (CRC) provides a minimal, preconfigured OpenShift 4 cluster on a laptop or desktop machine for development and testing purposes. CRC is delivered as a platform inside of the VM. 
+:::
+
+- Verify that your OpenShift cluster is in a healthy state with all nodes and control plane components functioning correctly.
+- Implement a robust backup strategy for your etcd data and critical cluster configurations.
+- Ensure your nodes have sufficient resources (CPU, memory) to accommodate the $[prodname] agents and any potential increase in resource usage due to the new CNI.
+
+While this tutorial aims for a smooth transition, unforeseen issues can occur. It is recommended that for any environment more than 50 nodes you consult with us via our [slack group](http://slack.projectcalico.org/).
+
+:::note
+Be aware that the migration process will cause network disruption as the underlying networking fabric is replaced. Plan for downtime and communicate this to stakeholders.
+:::
+
+## Disable Machine Config Pool Updates
+
+OpenShift's Machine Config Operator (MCO) manages the operating system configuration of your nodes.
+During a CNI migration, changes to the network configuration are significant.
+To prevent the MCO from applying potentially conflicting configuration updates during this critical phase, we pause the Machine Config Pools (MCPs).
+```bash
+oc patch MachineConfigPool master --type='merge' --patch '{ "spec": { "paused": true } }'
+oc patch MachineConfigPool worker --type='merge' --patch '{ "spec":{ "paused": true } }'
+```
+
+This ensures that no unintended configuration changes are rolled out to your master and worker nodes while the CNI migration is in progress.
+This prevents potential instability or conflicts arising from simultaneous network and OS configuration updates.
+
+## Preparing your cluster for Migration
+
+Start by checking if any other migrations are currently in progress:
+```bash
+oc get Network.operator.openshift.io cluster -o jsonpath='{.spec.migration}'
+```
+
+If no migration is currently in progress then, clear the migration status:
+```bash
+oc patch Network.operator.openshift.io cluster --type='merge' --patch '{ "spec": { "migration": null } }'
+```
+
+Next, enable migration to $[prodname]. 
+```bash
+oc patch Network.operator.openshift.io cluster --type='merge' --patch '{ "spec": { "migration": { "networkType": "Calico" } } }'
+```
+
+This crucial command signals the OpenShift network operator to initiate CNI migration to $[prodname].
+Setting `spec.migration.networkType` to `$[prodname]` enables and configures cluster network migration, for network changes that cannot be made instantly.
+
+## Install $[prodname]
+
+Download the $[prodname] manifests for OpenShift.
+```bash
+mkdir calico
+wget -qO- $[calicoReleasesURL]/$[releaseTitle]/ocp.tgz | tar xvz --strip-components=1 -C calico
+cd calico
+```
+
+use `oc create -f` to install all manifests other than the ones that have `-cr-` in their name.
+If you are using Linux try the following command:
+```bash
+for file in $(ls *.yaml | grep -Ev 'cr-(.*?)\.yaml'); do
+  echo "Applying $file"
+  oc create -f "$file"
+done
+```
+
+Wait for Tigera-operator to successfully rollout.
+```bash
+oc rollout status -w --timeout=2m -n tigera-operator deployment/tigera-operator
+```
+
+Currently there is a problem with the way OpenShift and Operator try to gain access to admin network policy CRD.
+As a workaround disable adminnetworkpolicy CRD creation. Click [here](https://github.com/tigera/operator/issues/3893)  if you like to know more about the issue.
+```bash
+oc patch crd adminnetworkpolicies.policy.networking.k8s.io --type=merge -p='{"metadata":{"annotations":{"unsupported.operator.tigera.io/ignore": "true"}}}'
+```
+
+:::note
+Enhancement for eBPF: If you intend to leverage $[prodname]'s eBPF data plane for enhanced performance and features,
+you do not need to set `deployKubeProxy` to `true`. Since $[prodname] eBPF data plane completely replaces the kube-proxy functionality.
+:::
+
+Enable kube-proxy or use [eBPF](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
+```bash
+oc patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": true}}'
+```
+
+Create installation manifest to instruct Tigera Operator to install $[prodname].
+```bash
+oc create -f *cr*.yaml
+```
+
+Wait until $[prodname] components are ready.
+```bash
+oc wait --for=condition=Available tigerastatus --all
+```
+
+By setting `spec.networkType` to `$[prodname]`, you inform the OpenShift network management system that $[prodname] is now the active CNI.
+This triggers the final steps in the migration process, such as configuring node networking to use $[prodname].
+```bash
+oc patch Network.config.openshift.io cluster --type='merge' --patch '{ "spec": { "networkType": "Calico" } }'
+```
+
+## Restart Multus
+OpenShift Container Platform uses the Multus CNI plugin to allow chaining of CNI plugins.
+During cluster installation, you configure your default pod network. Multus acts as a meta-CNI, allowing pods to have multiple network interfaces.
+
+Restart Multus using the following command:
+```bash
+oc -n openshift-multus rollout restart daemonset/multus
+```
+
+Wait for Multus to report back:
+```bash
+oc -n openshift-multus -w --timeout=2m rollout status daemonset/multus
+```
+
+At this point, you can finalize the migration, allowing the network operator to apply all the changes:
+```bash
+oc patch Network.operator.openshift.io cluster --type='merge' --patch '{ "spec": { "migration": null } }'
+```
+
+## Clean up
+
+After migration, you can completely remove OVN-Kubernetes CNI. These commands remove any remaining OVN-Kubernetes parts from your cluster.
+This ensures a clean transition and prevents potential conflicts with the new $[prodname] CNI.
+
+Remove OVN-Kubernetes specific configurations:
+```bash
+oc patch Network.operator.openshift.io cluster --type='merge'  --patch '{ "spec": { "defaultNetwork": { "openshiftSDNConfig":null } } }'
+```
+
+Remove SDN-Kubernetes specific configurations:
+```bash
+oc patch Network.operator.openshift.io cluster --type='merge'  --patch '{ "spec": { "defaultNetwork": { "ovnKubernetesConfig":null } } }'
+```
+
+Remove openshift OVN by deleting its namespace.
+```bash
+oc delete namespace openshift-ovn-kubernetes
+```
+
+At this stage, anticipate a period of service disruption.
+The duration and impact will vary depending on the size and complexity of your OpenShift environment.
+You might observe some nodes temporarily becoming unresponsive as the underlying OVN network interfaces are removed and workloads transition to utilizing the newly established $[prodname] interfaces.
+This transition involves re-establishing network connectivity for all pods and services, which can take some time.
+
+## Return your nodes to their original state
+
+MachineConfigPools are paused, preventing the Machine Config Operator to push out updates in OpenShift 4.
+
+Re-enable Machine Config Pool updates:
+```bash
+oc patch MachineConfigPool master --type='merge' --patch '{ "spec": { "paused": false } }'
+oc patch MachineConfigPool worker --type='merge' --patch '{ "spec":{ "paused": false } }'
+```
+
+
+## Next steps
+
+**Recommended - Networking**
+
+- If you are using the default BGP networking with full-mesh node-to-node peering with no encapsulation, go to [Configure BGP peering](../../../networking/configuring/bgp.mdx) to get traffic flowing between pods.
+- If you are unsure about networking options, or want to implement encapsulation (overlay networking), see [Determine best networking option](../../../networking/determine-best-networking.mdx).
+
+**Recommended - Security**
+
+- [Enable network observability](../../../observability/index.mdx)
+- [Secure Calico component communications](../../../network-policy/comms/crypto-auth.mdx)
+- [Secure hosts by installing Calico on hosts](../../bare-metal/about.mdx)
+- [Secure pods with Calico network policy](../../../network-policy/get-started/calico-policy/calico-network-policy.mdx)
+- If you are using $[prodname] with Istio service mesh, get started here: [Enable application layer policy](../../../network-policy/istio/app-layer-policy.mdx)

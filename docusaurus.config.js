@@ -15,7 +15,13 @@ export default async function createAsyncConfig() {
   /** @type {import('@docusaurus/types').Config} */
   const config = {
     future: {
-      experimental_faster: true,
+      experimental_faster: {
+        swcJsLoader: true,
+        swcJsMinimizer: true,
+        lightningCssMinimizer: true,
+        rspackBundler: true,
+        mdxCrossCompilerCache: true,
+      },
     },
     title: 'Calico Documentation',
     tagline: 'Active, zero-trust based security for containers and Kubernetes',
@@ -80,6 +86,7 @@ export default async function createAsyncConfig() {
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       {
+        image: 'img/favicon.png',
         metadata: [
           {
             name: 'keywords',
@@ -286,7 +293,7 @@ export default async function createAsyncConfig() {
               title: 'Company',
               items: [
                 {
-                  label: 'About',
+                  label: 'About Calico',
                   to: 'https://www.tigera.io/about',
                 },
                 {
@@ -462,7 +469,7 @@ export default async function createAsyncConfig() {
           routeBasePath: 'calico-cloud',
           editCurrentVersion: true,
           //To see builds for unreleased versions, remove comments in the next line.
-          onlyIncludeVersions: [...nextVersion, '21-1'],
+          onlyIncludeVersions: [...nextVersion, '21-2'],
           versions: {
             current: {
               label: 'Next',
@@ -472,10 +479,6 @@ export default async function createAsyncConfig() {
             '21-2': {
               path: '/',
               banner: 'none',
-            },
-            '21-1': {
-              path: '/',
-              banner: 'none'
             },
           },
           sidebarPath: './sidebars-calico-cloud.js',
