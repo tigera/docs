@@ -26,7 +26,7 @@ export default function UpgradeOperatorSimple(props) {
           </li>
         </When>
         <li>
-          <p>Download the new manifests for Tigera operator.</p>
+          <p>Download the new manifests for Tigera Operator.</p>
           <CodeBlock language='bash'>
             {props.provider === 'AKS'
               ? `curl -L -o tigera-operator.yaml ${filesUrl}/manifests/aks/tigera-operator-upgrade.yaml`
@@ -66,7 +66,7 @@ export default function UpgradeOperatorSimple(props) {
         </li>
 
         <li>
-          <p>Apply the manifest for Tigera operator.</p>
+          <p>Apply the manifest for Tigera Operator.</p>
           <CodeBlock language='bash'>kubectl apply --server-side --force-conflicts -f tigera-operator.yaml</CodeBlock>
           <When condition={props.upgradeFrom !== 'OpenSource'}>
             <Admonition type='note'>

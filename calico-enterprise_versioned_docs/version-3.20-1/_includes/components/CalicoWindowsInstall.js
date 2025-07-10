@@ -136,7 +136,7 @@ EOF`}
       </li>
       <li>
         <p>
-          Add the Kubernetes service CIDR (discovered in the previous step) enable {prodnameWindows} on the Tigera operator installation resource.
+          Add the Kubernetes service CIDR (discovered in the previous step) enable {prodnameWindows} on the Tigera Operator installation resource.
         </p>
         <p>
           For example, with a Kubernetes service clusterIP range of 10.96.0.0/12:
