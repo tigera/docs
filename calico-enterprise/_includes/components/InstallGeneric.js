@@ -25,7 +25,7 @@ export default function InstallGeneric(props) {
       </When>
       <ol>
         <li>
-          <p>Install the Tigera operator and custom resource definitions.</p>
+          <p>Install the Tigera Operator and custom resource definitions.</p>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/operator-crds.yaml</CodeBlock>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
         </li>
