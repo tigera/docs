@@ -100,8 +100,8 @@ spec:
   selector: network == 'maintenance'
   applyOnForward: true
   types:
-  - Egress
-  egress:
+  - Ingress
+  ingress:
   # Allow SSH
   - action: Allow
     protocol: TCP
@@ -131,7 +131,7 @@ spec:
   interfaceName: eth1
   node: myhost
   expectedIPs:
-    - 192.168.0.45
+  - 192.168.0.45
 ```
 
 Replace myhost with the node name $[prodname] uses, and the expected IPs with the actual interface IP address(es). Save this file as hep.yaml.
@@ -143,6 +143,147 @@ kubectl create -f hep.yaml
 ```
 
 For completeness, you could also create a HostEndpoint for eth0, but because we have not written any policies for the application network yet, you can omit this step.
+
+## Viewing flow logs for host forwarded traffic
+
+When using `applyOnForward` and `preDNAT` policies with host endpoints, you can monitor and troubleshoot policy enforcement by examining flow logs. $[prodname] captures detailed information about how policies are applied to forwarded traffic.
+
+### Configure policy information in flow logs
+
+To see policy information in flow logs, you must enable flow logs for forwarding decisions in the FelixConfiguration resource:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: FelixConfiguration
+metadata:
+  name: default
+spec:
+  flowLogsPolicyScope: AllPolicies
+```
+
+This configuration enables tracking the flows transiting through the node interfaces within `policies` field in flow logs. The `policies` field contains detailed information about which policies acted on the traffic.
+
+### Understanding the `transit_policies` field in flow logs
+
+The `policies` field in flow logs contains sub-fields that show different policy evaluation results:
+
+- **`transit_policies`**: All host endpoint policies with `applyOnForward: true` that applied an action to the flow while in transit through the node (for forwarded traffic between network interfaces). Note that policies with `preDNAT: true` will also appear here when they apply to ingress traffic before DNAT processing.
+
+Each policy entry in these fields follows this format:
+```
+<index>|<tier_name>|<tier_name>.<global_policy_name>|<action>|<rule_index>
+```
+
+### Example flow log for applyOnForward policy
+
+Using the tutorial example from this document (SSH traffic to maintenance network), here's what a flow log entry might look like:
+
+```json
+{
+  "source_ip": "10.0.0.1",
+  "source_name": "client-pods-gkh45",
+  "source_name_aggr": "client-pods-*",
+  "source_namespace": "client-pods-namespace",
+  "dest_ip": "192.168.1.10",
+  "dest_name": "maintenance-server-gkh45",
+  "dest_name_aggr": "maintenance-server-*",
+  "dest_namespace": "maintenance-server-namespace", 
+  "dest_port": 22,
+  "dest_type": "wep",
+  "proto": "tcp",
+  "action": "allow",
+  "reporter": "dst, fwd",
+  "policies": {
+    "all_policies": [
+      "0|__PROFILE__|__PROFILE__.kns.maintenance-server|allow|0"
+    ],
+    "enforced_policies": [
+      "0|__PROFILE__|__PROFILE__.kns.maintenance-server|allow|0"
+    ],
+    "pending_policies": [
+      "0|__PROFILE__|__PROFILE__.kns.maintenance-server|allow|0"
+    ],
+    "transit_policies": [
+      "0|default|default.allow-ssh-maintenance|allow|0"
+    ]
+  },
+  "bytes_in": 1234,
+  "bytes_out": 5678,
+  "packets_in": 10,
+  "packets_out": 8,
+  "host": "my-host"
+}
+```
+
+**Key points about this flow log:**
+- `reporter` is `dst, fwd`, indicating this flow was reported by both the destination workload endpoint and the forwarding node. The `enforced_policies` shows policies that applied to the destination workload's ingress traffic, while `transit_policies` shows the host endpoint policy that applied as the traffic was forwarded through the node.
+- The `policies.transit_policies` field shows that the `allow-ssh-maintenance` GlobalNetworkPolicy allowed the traffic
+- The rule index `0` indicates the first rule in the policy matched (the SSH allow rule)
+
+### Example flow log for preDNAT policy
+
+Here's an example of a GlobalNetworkPolicy with `preDNAT: true` that allows HTTP traffic incoming to the cluster from external sources:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: allow-external-http
+spec:
+  selector: network = 'maintenance'
+  applyOnForward: true
+  preDNAT: true
+  types:
+  - Ingress
+  ingress:
+  # Allow HTTP from external sources to NodePort services
+  - action: Allow
+    protocol: TCP
+    source:
+      nets:
+      - 34.0.113.0/24  # External network
+    destination:
+      ports:
+      - 30080  # NodePort
+```
+
+For preDNAT policies, flow logs display the original destination IP and port before DNAT is performed. When traffic originates from outside the cluster (for example, an external client accesses a NodePort service), the flow log captures the pre-DNAT source and destination details. Here's an example:
+
+```json
+{
+  "source_ip": "34.0.113.100",
+  "source_name": "-",
+  "source_name_aggr": "pub",
+  "source_namespace": "-",
+  "source_type": "net",
+  "dest_ip": "66.11.155.1",
+  "dest_name": "-",
+  "dest_name_aggr": "pub",
+  "dest_namespace": "-",
+  "dest_type": "net",
+  "dest_port": 30080,
+  "proto": "tcp",
+  "action": "allow",
+  "reporter": "fwd",
+  "policies": {
+    "transit_policies": [
+      "0|default|default.allow-external-http|allow|0"
+    ]
+  },
+  "bytes_in": 2048,
+  "bytes_out": 4096,
+  "packets_in": 15,
+  "packets_out": 12,
+  "host": "my-host"
+}
+```
+
+**Key points about this preDNAT flow log:**
+- `source_name_aggr` is `pub`, indicating external traffic from outside the cluster
+- `dest_name_aggr` is `pub`, indicating the NodePort's external facing IP
+- `dest_port` shows the original NodePort (30080) before DNAT translation to the service port
+- The `reporter` is `fwd`, indicating this policy acted on forwarded ingress traffic at the host endpoint
+- The `policies.transit_policies` field shows the preDNAT policy that allowed the traffic before DNAT processing
 
 ## Additional resources
 
