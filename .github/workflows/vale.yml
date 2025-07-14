@@ -16,24 +16,64 @@ jobs:
           cache: yarn
       - name: Install dependencies
         run: yarn install --immutable
-      - name: Setup Yarn Global Package
+      # - name: Setup Yarn Global Package
+      #   run: |
+      #    mkdir -p ~/.yarn-global
+      #    cd ~/.yarn-global
+      #    yarn init -y
+      # - name: Add mdx2vast
+      #   run: |
+      #    cd ~/.yarn-global
+      #    yarn add mdx2vast
+      # - name: Export path
+      #   run: echo "$HOME/.yarn-global/node_modules/.bin" >> $GITHUB_PATH
+      - name: Setup Yarn Global and Determine Package Executable Path
         run: |
-         mkdir -p ~/.yarn-global
-         cd ~/.yarn-global
-         yarn init -y
-      - name: Add mdx2vast
+          mkdir -p ~/.yarn-global
+          cd ~/.yarn-global
+          yarn init -y
+
+          echo "Installing mdx2vast globally..."
+          yarn add mdx2vast
+
+          # --- DEBUGGING STEP 1: Find the actual path of the executable ---
+          # Yarn often puts global executables in ~/.yarn-global/node_modules/.bin
+          # Let's verify this and find the exact path for mdx2vast
+          GLOBAL_BIN_PATH=$(yarn global bin)
+          echo "Yarn global bin directory: $GLOBAL_BIN_PATH"
+          echo "Looking for mdx2vast executable in: $GLOBAL_BIN_PATH/mdx2vast"
+
+          # Verify if the executable exists
+          if [ -f "$GLOBAL_BIN_PATH/mdx2vast" ]; then
+            echo "mdx2vast executable found at: $GLOBAL_BIN_PATH/mdx2vast"
+            # --- SOLUTION: Add this specific directory to GITHUB_PATH ---
+            echo "$GLOBAL_BIN_PATH" >> $GITHUB_PATH
+            echo "Added '$GLOBAL_BIN_PATH' to GITHUB_PATH."
+          else
+            echo "ERROR: mdx2vast executable NOT found at $GLOBAL_BIN_PATH/mdx2vast"
+            echo "Please check where 'yarn add mdx2vast' installs the executable."
+            exit 1 # Fail the workflow if the executable isn't found
+          fi
+
+      - name: Verify PATH and Run Global Package
         run: |
-         cd ~/.yarn-global
-         yarn add mdx2vast
-      - name: Export path
-        run: echo "$HOME/.yarn-global/node_modules/.bin" >> $GITHUB_PATH
-      - name: Validate path
-        run: echo $GITHUB_PATH
-      - name: Swap stuff
-        run: |
-          sudo apt-get install ripgrep
-          rg -l0 '\$\[[^\]]*\]' -g '*.mdx' -g '*.md' . | xargs -0 perl -i -pe 's/\$\[[^\]]*\]/PICKLEVAR/g'
-      - name: Run Vale with Reviewdog
-        uses: errata-ai/vale-action@reviewdog
-        with:
-          fail_on_error: false
+          echo "--- VERIFYING PATH IN THIS STEP ---"
+          echo "Current PATH:"
+          echo $PATH | tr ':' '\n' # Print each PATH entry on a new line for readability
+
+          echo "Attempting to find 'mdx2vast' using 'which' command..."
+          which mdx2vast || echo "mdx2vast not found by 'which' command."
+
+          echo "--- ATTEMPTING TO RUN mdx2vast ---"
+          mdx2vast --version # Or whatever command you want to run
+          echo "mdx2vast command completed."
+      # - name: Validate path
+      #   run: echo $GITHUB_PATH
+      # - name: Swap stuff
+      #   run: |
+      #     sudo apt-get install ripgrep
+      #     rg -l0 '\$\[[^\]]*\]' -g '*.mdx' -g '*.md' . | xargs -0 perl -i -pe 's/\$\[[^\]]*\]/PICKLEVAR/g'
+      # - name: Run Vale with Reviewdog
+      #   uses: errata-ai/vale-action@reviewdog
+      #   with:
+      #     fail_on_error: false
