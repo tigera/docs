@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Button, Card, CardBody, Heading, Text, VStack, HStack, useToast } from '@chakra-ui/react';
+import { Box, Button, Card, CardBody, Heading, Text, VStack, HStack, useToast, Image, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { wizardStyles, buttonStyles, cardStyles } from './styles';
 
-export type DataplaneType = 'ebpf' | 'iptables';
+export type DataplaneType = 'ebpf' | 'iptables' | 'nftables';
 export type DeploymentType = 'onprem' | 'cloud' | 'hybrid';
 export type CalicoMode = 'cni' | 'policy';
 
@@ -34,10 +34,28 @@ const dataplaneStep: WizardStep = {
             icon: '🐝'
         },
         {
+            id: 'nftables',
+            title: 'Nftables dataplane',
+            description: 'Nftables-based dataplane for modern Linux kernels',
+            icon: '🔥'
+        }
+        ,{
             id: 'iptables',
             title: 'iptables dataplane',
             description: 'Traditional dataplane with broad compatibility',
             icon: '🐧'
+        },
+        {
+            id: 'hns',
+            title: 'Windows HNS dataplane',
+            description: 'Windows Host Network Service (HNS) for Windows nodes',
+            icon: '/img/brands/Microsoft_logo.svg'
+        },
+        {
+            id: 'policy',
+            title: 'Just policy',
+            description: 'I already have a CNI and just want Calico for network policy',
+            icon: '🛡️',
         }
     ]
 };
@@ -68,29 +86,10 @@ const deploymentStep: WizardStep = {
     ]
 };
 
-const calicoModeStep: WizardStep = {
-    id: 'calico-mode',
-    title: 'Choose Calico mode',
-    description: 'Select how you want to use Calico in your cluster',
-    options: [
-        {
-            id: 'cni',
-            title: 'Calico as CNI',
-            description: 'Use Calico for both networking and network policy',
-            docId: 'getting-started/kubernetes/quickstart'
-        },
-        {
-            id: 'policy',
-            title: 'Calico as Policy Engine',
-            description: 'Use Calico for network policy with existing CNI',
-            docId: 'getting-started/kubernetes/flannel/install-for-flannel'
-        }
-    ]
-};
 
-const getInstallationPaths = (dataplane: DataplaneType, deployment: DeploymentType, mode: CalicoMode) => {
+const getInstallationPaths = (dataplane: DataplaneType, deployment: DeploymentType) => {
     const paths: { [key: string]: { title: string; description: string; docId: string }[] } = {
-        'ebpf-onprem-cni': [
+        'ebpf-onprem': [
             {
                 title: 'Self-managed on-premises (eBPF)',
                 description: 'Install Calico with eBPF dataplane on your own infrastructure',
@@ -107,14 +106,7 @@ const getInstallationPaths = (dataplane: DataplaneType, deployment: DeploymentTy
                 docId: 'getting-started/kubernetes/rancher'
             }
         ],
-        'ebpf-onprem-policy': [
-            {
-                title: 'Flannel with Calico eBPF policy',
-                description: 'Use Flannel for networking and Calico eBPF for policy',
-                docId: 'getting-started/kubernetes/flannel/install-for-flannel'
-            }
-        ],
-        'ebpf-cloud-cni': [
+        'ebpf-cloud': [
             {
                 title: 'Amazon EKS with eBPF',
                 description: 'Install Calico with eBPF dataplane on Amazon EKS',
@@ -131,28 +123,14 @@ const getInstallationPaths = (dataplane: DataplaneType, deployment: DeploymentTy
                 docId: 'getting-started/kubernetes/managed-public-cloud/aks'
             }
         ],
-        'ebpf-cloud-policy': [
-            {
-                title: 'Cloud with eBPF policy',
-                description: 'Use Calico eBPF policy with cloud provider CNI',
-                docId: 'getting-started/kubernetes/flannel/install-for-flannel'
-            }
-        ],
-        'ebpf-hybrid-cni': [
+        'ebpf-hybrid': [
             {
                 title: 'Hybrid deployment with eBPF',
                 description: 'Install Calico with eBPF dataplane across on-premises and cloud',
                 docId: 'getting-started/kubernetes/self-managed-public-cloud/aws'
             }
         ],
-        'ebpf-hybrid-policy': [
-            {
-                title: 'Hybrid with eBPF policy',
-                description: 'Use Calico eBPF policy in hybrid environment',
-                docId: 'getting-started/kubernetes/flannel/install-for-flannel'
-            }
-        ],
-        'iptables-onprem-cni': [
+        'iptables-onprem': [
             {
                 title: 'Self-managed on-premises (iptables)',
                 description: 'Install Calico with iptables dataplane on your own infrastructure',
@@ -169,14 +147,7 @@ const getInstallationPaths = (dataplane: DataplaneType, deployment: DeploymentTy
                 docId: 'getting-started/kubernetes/rancher'
             }
         ],
-        'iptables-onprem-policy': [
-            {
-                title: 'Flannel with Calico iptables policy',
-                description: 'Use Flannel for networking and Calico iptables for policy',
-                docId: 'getting-started/kubernetes/flannel/install-for-flannel'
-            }
-        ],
-        'iptables-cloud-cni': [
+        'iptables-cloud': [
             {
                 title: 'Amazon EKS with iptables',
                 description: 'Install Calico with iptables dataplane on Amazon EKS',
@@ -198,42 +169,29 @@ const getInstallationPaths = (dataplane: DataplaneType, deployment: DeploymentTy
                 docId: 'getting-started/kubernetes/managed-public-cloud/iks'
             }
         ],
-        'iptables-cloud-policy': [
-            {
-                title: 'Cloud with iptables policy',
-                description: 'Use Calico iptables policy with cloud provider CNI',
-                docId: 'getting-started/kubernetes/flannel/install-for-flannel'
-            }
-        ],
-        'iptables-hybrid-cni': [
+        'iptables-hybrid': [
             {
                 title: 'Hybrid deployment with iptables',
                 description: 'Install Calico with iptables dataplane across on-premises and cloud',
                 docId: 'getting-started/kubernetes/self-managed-public-cloud/aws'
             }
-        ],
-        'iptables-hybrid-policy': [
-            {
-                title: 'Hybrid with iptables policy',
-                description: 'Use Calico iptables policy in hybrid environment',
-                docId: 'getting-started/kubernetes/flannel/install-for-flannel'
-            }
         ]
     };
     
-    return paths[`${dataplane}-${deployment}-${mode}`] || [];
+    return paths[`${dataplane}-${deployment}`] || [];
 };
 
 const InstallationWizard: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(0);
     const [selectedDataplane, setSelectedDataplane] = useState<DataplaneType | null>(null);
     const [selectedDeployment, setSelectedDeployment] = useState<DeploymentType | null>(null);
-    const [selectedMode, setSelectedMode] = useState<CalicoMode | null>(null);
     const [selectedPath, setSelectedPath] = useState<string | null>(null);
+    const [pendingPolicySelection, setPendingPolicySelection] = useState<string | null>(null);
     const toast = useToast();
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
-    const installationPaths = selectedDataplane && selectedDeployment && selectedMode 
-        ? getInstallationPaths(selectedDataplane, selectedDeployment, selectedMode)
+    const installationPaths = selectedDataplane && selectedDeployment 
+        ? getInstallationPaths(selectedDataplane, selectedDeployment)
         : [];
 
     const installationStep: WizardStep = {
@@ -248,15 +206,19 @@ const InstallationWizard: React.FC = () => {
         }))
     };
 
-    const steps = [dataplaneStep, deploymentStep, calicoModeStep, installationStep];
+    const steps = [dataplaneStep, deploymentStep, installationStep];
 
     const handleOptionSelect = (stepId: string, optionId: string) => {
         if (stepId === 'dataplane') {
-            setSelectedDataplane(optionId as DataplaneType);
+            // Show warning dialog for "Just policy" option
+            if (optionId === 'policy') {
+                setPendingPolicySelection(optionId);
+                onOpen();
+            } else {
+                setSelectedDataplane(optionId as DataplaneType);
+            }
         } else if (stepId === 'deployment') {
             setSelectedDeployment(optionId as DeploymentType);
-        } else if (stepId === 'calico-mode') {
-            setSelectedMode(optionId as CalicoMode);
         } else if (stepId === 'installation') {
             setSelectedPath(optionId);
         }
@@ -301,8 +263,6 @@ const InstallationWizard: React.FC = () => {
             return selectedDataplane !== null;
         } else if (currentStepData.id === 'deployment') {
             return selectedDeployment !== null;
-        } else if (currentStepData.id === 'calico-mode') {
-            return selectedMode !== null;
         } else if (currentStepData.id === 'installation') {
             return selectedPath !== null;
         }
@@ -315,8 +275,6 @@ const InstallationWizard: React.FC = () => {
             return selectedDataplane;
         } else if (currentStepData.id === 'deployment') {
             return selectedDeployment;
-        } else if (currentStepData.id === 'calico-mode') {
-            return selectedMode;
         } else if (currentStepData.id === 'installation') {
             return selectedPath;
         }
@@ -324,6 +282,19 @@ const InstallationWizard: React.FC = () => {
     };
 
     const currentStepData = steps[currentStep];
+
+    const handlePolicyConfirm = () => {
+        if (pendingPolicySelection) {
+            setSelectedDataplane(pendingPolicySelection as DataplaneType);
+            setPendingPolicySelection(null);
+            onClose();
+        }
+    };
+
+    const handlePolicyCancel = () => {
+        setPendingPolicySelection(null);
+        onClose();
+    };
 
     if (showResults) {
         return (
@@ -335,7 +306,7 @@ const InstallationWizard: React.FC = () => {
                             Installation Paths Available
                         </Heading>
                         <Text color="gray.600">
-                            Based on your selections: {selectedDataplane} dataplane, {selectedDeployment} deployment, {selectedMode} mode
+                            Based on your selections: {selectedDataplane} dataplane, {selectedDeployment} deployment
                         </Text>
                     </Box>
 
@@ -387,7 +358,6 @@ const InstallationWizard: React.FC = () => {
                                 setCurrentStep(0);
                                 setSelectedDataplane(null);
                                 setSelectedDeployment(null);
-                                setSelectedMode(null);
                                 setSelectedPath(null);
                             }}
                         >
@@ -400,96 +370,130 @@ const InstallationWizard: React.FC = () => {
     }
 
     return (
-        <Box sx={wizardStyles}>
-            <VStack spacing={6} align="stretch">
-                {/* Progress indicator */}
-                <Box>
-                    <Text fontSize="sm" color="gray.600" mb={2}>
-                        Step {currentStep + 1} of {steps.length}
-                    </Text>
-                    <Box display="flex" gap={2}>
-                        {steps.map((step, index) => (
-                            <Box
-                                key={step.id}
-                                flex={1}
-                                height="4px"
-                                bg={index <= currentStep ? 'blue.500' : 'gray.200'}
-                                borderRadius="2px"
-                            />
-                        ))}
+        <>
+            <Box sx={wizardStyles}>
+                <VStack spacing={6} align="stretch">
+                    {/* Progress indicator */}
+                    <Box>
+                        <Text fontSize="sm" color="gray.600" mb={2}>
+                            Step {currentStep + 1} of {steps.length}
+                        </Text>
+                        <Box display="flex" gap={2}>
+                            {steps.map((step, index) => (
+                                <Box
+                                    key={step.id}
+                                    flex={1}
+                                    height="4px"
+                                    bg={index <= currentStep ? 'blue.500' : 'gray.200'}
+                                    borderRadius="2px"
+                                />
+                            ))}
+                        </Box>
                     </Box>
-                </Box>
 
-                {/* Step content */}
-                <Box>
-                    <Heading as="h2" size="lg" mb={2}>
-                        {currentStepData.title}
-                    </Heading>
-                    <Text color="gray.600" mb={6}>
-                        {currentStepData.description}
-                    </Text>
+                    {/* Step content */}
+                    <Box>
+                        <Heading as="h2" size="lg" mb={2}>
+                            {currentStepData.title}
+                        </Heading>
+                        <Text color="gray.600" mb={6}>
+                            {currentStepData.description}
+                        </Text>
 
-                    <VStack spacing={4} align="stretch">
-                        {currentStepData.options.map((option) => (
-                            <Card
-                                key={option.id}
-                                sx={{
-                                    ...cardStyles,
-                                    borderColor: getSelectedOption() === option.id ? 'blue.500' : 'gray.200',
-                                    borderWidth: getSelectedOption() === option.id ? '2px' : '1px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    _hover: {
-                                        borderColor: 'blue.300',
-                                        transform: 'translateY(-1px)',
-                                        boxShadow: 'lg'
-                                    }
-                                }}
-                                onClick={() => handleOptionSelect(currentStepData.id, option.id)}
-                            >
-                                <CardBody>
-                                    <HStack spacing={4}>
-                                        {option.icon && (
-                                            <Text fontSize="2xl">{option.icon}</Text>
+                        <VStack spacing={4} align="stretch">
+                            {currentStepData.options.map((option) => (
+                                <Card
+                                    key={option.id}
+                                    sx={{
+                                        ...cardStyles,
+                                        borderColor: getSelectedOption() === option.id ? 'blue.500' : 'gray.200',
+                                        borderWidth: getSelectedOption() === option.id ? '2px' : '1px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        _hover: {
+                                            borderColor: 'blue.300',
+                                            transform: 'translateY(-1px)',
+                                            boxShadow: 'lg'
+                                        }
+                                    }}
+                                    onClick={() => handleOptionSelect(currentStepData.id, option.id)}
+                                >
+                                    <CardBody>
+                                        <HStack spacing={4}>
+                                                                                    {option.icon && (
+                                            option.icon.startsWith('http') || option.icon.startsWith('/') ? (
+                                                <Image 
+                                                    src={option.icon} 
+                                                    alt={option.title}
+                                                    w="32px"
+                                                    h="32px"
+                                                    objectFit="contain"
+                                                />
+                                            ) : (
+                                                <Text fontSize="2xl">{option.icon}</Text>
+                                            )
                                         )}
-                                        <Box flex={1}>
-                                            <Heading as="h3" size="md" mb={2}>
-                                                {option.title}
-                                            </Heading>
-                                            <Text color="gray.600">
-                                                {option.description}
-                                            </Text>
-                                        </Box>
-                                    </HStack>
-                                </CardBody>
-                            </Card>
-                        ))}
-                    </VStack>
-                </Box>
+                                            <Box flex={1}>
+                                                <Heading as="h3" size="md" mb={2}>
+                                                    {option.title}
+                                                </Heading>
+                                                <Text color="gray.600">
+                                                    {option.description}
+                                                </Text>
+                                            </Box>
+                                        </HStack>
+                                    </CardBody>
+                                </Card>
+                            ))}
+                        </VStack>
+                    </Box>
 
-                {/* Navigation buttons */}
-                <HStack justify="space-between" pt={4}>
-                    <Button
-                        leftIcon={<ChevronLeftIcon />}
-                        onClick={handleBack}
-                        isDisabled={currentStep === 0}
-                        variant="outline"
-                    >
-                        Back
-                    </Button>
-                    
-                    <Button
-                        rightIcon={currentStep === steps.length - 1 ? undefined : <ChevronRightIcon />}
-                        onClick={handleNext}
-                        isDisabled={!canProceed()}
-                        colorScheme="blue"
-                        sx={buttonStyles}
-                    >
-                        {currentStep === steps.length - 1 ? 'Complete' : 'Next'}
-                    </Button>
-                </HStack>
-            </VStack>
-        </Box>
+                    {/* Navigation buttons */}
+                    <HStack justify="space-between" pt={4}>
+                        <Button
+                            leftIcon={<ChevronLeftIcon />}
+                            onClick={handleBack}
+                            isDisabled={currentStep === 0}
+                            variant="outline"
+                        >
+                            Back
+                        </Button>
+                        
+                        <Button
+                            rightIcon={currentStep === steps.length - 1 ? undefined : <ChevronRightIcon />}
+                            onClick={handleNext}
+                            isDisabled={!canProceed()}
+                            colorScheme="blue"
+                            sx={buttonStyles}
+                        >
+                            {currentStep === steps.length - 1 ? 'Complete' : 'Next'}
+                        </Button>
+                    </HStack>
+                </VStack>
+            </Box>
+
+            {/* Warning Modal for Policy Selection */}
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>⚠️ Warning</ModalHeader>
+                    <ModalBody>
+                        <Text>
+                            Calico CNI has a lot of advanced features that other CNIs do not provide. 
+                            Are you sure you want to proceed with just the policy option?
+                        </Text>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="outline" mr={3} onClick={handlePolicyCancel}>
+                            Cancel
+                        </Button>
+                        <Button colorScheme="blue" onClick={handlePolicyConfirm}>
+                            Continue
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+        </>
     );
 };
 
