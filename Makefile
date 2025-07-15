@@ -38,7 +38,7 @@ NODE_VER=20
 YARN=yarn
 YARN_ACTION_SUFFIX=
 ifeq ($(CONTAINERIZED),true)
-YARN=docker run -i --rm -v "$(shell pwd):/docs" -p 127.0.0.1:3000:3000 -w /docs node:$(NODE_VER) yarn
+YARN=docker run -i --rm -v "$(shell pwd):/docs" -p 127.0.0.1:3000:3000 -w /docs node:$(NODE_VER) corepack enable && yarn
 YARN_ACTION_SUFFIX=-container
 endif
 
