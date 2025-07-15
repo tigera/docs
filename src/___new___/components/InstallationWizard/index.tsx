@@ -30,7 +30,7 @@ const dataplaneStep: WizardStep = {
         {
             id: 'ebpf',
             title: 'eBPF dataplane',
-            description: 'High performance with DSR, PSR, GSR support',
+            description: 'High performance, kube-proxy replacement and DSR support',
             icon: '🐝'
         },
         {
@@ -42,19 +42,19 @@ const dataplaneStep: WizardStep = {
         ,{
             id: 'iptables',
             title: 'iptables dataplane',
-            description: 'Traditional dataplane with broad compatibility',
+            description: 'Standard Linux dataplane with broad compatibility',
             icon: '🐧'
         },
         {
             id: 'hns',
             title: 'Windows HNS dataplane',
-            description: 'Windows Host Network Service (HNS) for Windows nodes',
+            description: 'Windows Host Network Service (HNS) for clusters with Windows nodes',
             icon: '/img/brands/Microsoft_logo.svg'
         },
         {
             id: 'policy',
             title: 'Just policy',
-            description: 'I already have a CNI and just want Calico for network policy',
+            description: 'I want to use Calico for network policy only',
             icon: '🛡️',
         }
     ]
