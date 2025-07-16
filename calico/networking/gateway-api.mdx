@@ -59,7 +59,6 @@ Managed Kubernetes services like AKS, EKS and GKE include a `type: LoadBalancer`
 - [Use the Gateway API](#use-the-gateway-api)
 - [Disable Gateway API support](#disable-gateway-api-support)
 - [Customize Gateway deployment and features](#customize-gateway-deployment-and-features)
-- [Configure additional GatewayClasses](#configure-additional-gatewayclasses)
 
 ### Enable Gateway API support
 
@@ -105,7 +104,7 @@ kubectl get gatewayclass -o=jsonpath='{.items[0].spec}' | jq'
   "parametersRef": {
     "group": "gateway.envoyproxy.io",
     "kind": "EnvoyProxy",
-    "name": "envoy-proxy-config",
+    "name": "tigera-gateway-class",
     "namespace": "tigera-gateway"
   }
 }
@@ -424,60 +423,91 @@ Please note that the Gateway API CRDs will be left in place.  This is to allow f
 
 ### Customize Gateway deployment and features
 
-The `GatewayAPI` resource has fields that allow some aspects of Gateway deployments to be customized.  For example:
+All gateway customization is done through the single `GatewayAPI` resource.  This resource has fields that allow some aspects of Gateway deployments to be customized.  For example:
 - `spec.gatewayDeployment.spec.template.metadata` allows arbitrary labels or annotations to be added to the pod that is created to implement each configured Gateway
 - `spec.gatewayDeployment.spec.template.spec.nodeSelector` allows control over where Gateway implementation pods are scheduled
 - `spec.gatewayDeployment.spec.template.spec.containers` allows control over the memory and CPU that Gateway implementation pods can use
 - `spec.gatewayControllerDeployment.spec.template.spec.nodeSelector` allows control over where the gateway controller is scheduled.
+- `spec.gatewayDeployment.service.metadata.annotations` allows control over annotations to place on the Service that is provisioned for each Gateway; these can be used, for example, to configure the cloud-specific type and properties of the associated external load balancer.
+- `spec.gatewayDeployment.service.spec.*loadbalancer*` allows control over the corresponding `*loadbalancer*` fields in the Service that is provisioned for each Gateway; in some clouds these can also be used to configure the type and properties of the associated external load balancer.
+- `spec.gatewayClasses` allows the provisioning of multiple GatewayClasses, each with its own set of customizations, instead of the single GatewayClass that the Tigera operator provisions by default.
 
 For full details please see [the `GatewayAPI` reference documentation](../reference/installation/api.mdx#operator.tigera.io/v1.GatewayAPI).
 
-To make use of these customization fields, use `kubectl edit gatewayapi default` to edit the YAML for the `GatewayAPI` resource, and add or modify the customization fields that you require.
+To make use of these customization fields, use `kubectl edit gatewayapi default` to edit the YAML for the `GatewayAPI` resource, and add or modify the customization fields that you require.  Following are a few examples of possible customizations.
 
-### Configure additional GatewayClasses
+#### Handle high traffic with multiple gateway pods and adequate memory per-pod
 
-You may have a need for a tweak or customization that our `GatewayAPI` resource does not yet support.  For example, you may want to create a Gateway with EnvoyProxy config different from that which the Tigera Operator provisions, and where the change that you need is not supported by an existing customization field in the `GatewayAPI` resource.
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: default
+spec:
+  gatewayClasses:
+    - name: high-traffic-class
+      gatewayDeployment:
+        spec:
+	  replicas: 3
+	  template:
+	    spec:
+	      containers:
+	        - name: envoy
+		  resources:
+		    requests:
+		      memory: "5GiB"
+EOF
+```
 
-To do this:
-- Extract the YAML for the EnvoyProxy and GatewayClass objects that the Tigera Operator provisions.
-- Change the EnvoyProxy YAML according to your needs, and create that modified EnvoyProxy object with a different name (than `envoy-proxy-config`).
-- Change the GatewayClass YAML to reference the name of the modified EnvoyProxy object, and create that modified GatewayClass with a different name (than `tigera-gateway-class`).
+#### Set up external load balancers with cloud-specific features
 
-Now you can configure Gateways using the new GatewayClass name, or update existing Gateways to use that new GatewayClass instead of `tigera-gateway-class`.
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: default
+spec:
+  gatewayClasses:
+    - name: class-with-aws-load-balancer
+      gatewayService:
+        metadata:
+	  annotations:
+	    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+EOF
+```
 
-In more detail:
+#### Configure multiple gateway classes
 
-1. Extract the YAML for the EnvoyProxy and GatewayClass objects that the Tigera Operator provisions:
+For example, to provision both of the previous custom classes at the same time:
 
-   ```bash
-   kubectl get envoyproxy envoy-proxy-config -n tigera-gateway -o yaml > envoy-proxy.yml
-   kubectl get gatewayclass tigera-gateway-class -o yaml > gateway-class.yml
-   ```
-
-2. Edit `envoy-proxy.yml` to:
-   - change the `metadata.name` field to some name other than `envoy-proxy-config`
-   - delete all other `metadata` fields, except for `namespace`
-   - make whatever changes or additions you need in the `spec` section.
-
-3. Create the modified EnvoyProxy object:
-
-   ```bash
-   kubectl apply -f envoy-proxy.yml
-   ```
-
-4. Edit `gateway-class.yml` to:
-   - change the `metadata.name` field to some name other than `tigera-gateway-class`
-   - delete all other `metadata` fields
-   - delete the `status` section
-   - change `spec.parametersRef.name` to the name of the modified EnvoyProxy object.
-
-5. Create the modified GatewayClass:
-
-   ```bash
-   kubectl apply -f gateway-class.yml
-   ```
-
-6. Use the modified GatewayClass name, instead of `tigera-gateway-class`, for the Gateways that need this (as determined by your own requirements).
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: default
+spec:
+  gatewayClasses:
+    - name: high-traffic-class
+      gatewayDeployment:
+        spec:
+	  replicas: 3
+	  template:
+	    spec:
+	      containers:
+	        - name: envoy
+		  resources:
+		    requests:
+		      memory: "5GiB"
+    - name: class-with-aws-load-balancer
+      gatewayService:
+        metadata:
+	  annotations:
+	    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+EOF
+```
 
 ## Additional resources
 
