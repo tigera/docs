@@ -3,9 +3,8 @@ import { Box, Button, Card, CardBody, Heading, Text, VStack, HStack, useToast, I
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { wizardStyles, buttonStyles, cardStyles } from './styles';
 
-export type DataplaneType = 'ebpf' | 'iptables' | 'nftables';
+export type DataplaneType = 'ebpf' | 'iptables' | 'nftables' | 'vpp' | 'hns' | 'policy';
 export type DeploymentType = 'onprem' | 'cloud' | 'hybrid';
-export type CalicoMode = 'cni' | 'policy';
 
 export type WizardStep = {
     id: string;
@@ -22,6 +21,64 @@ export type WizardOption = {
     docId?: string;
 };
 
+export type PredefinedConfig = {
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    dataplane: DataplaneType;
+    deployment: DeploymentType;
+    color: string;
+};
+
+const predefinedConfigs: PredefinedConfig[] = [
+    {
+        id: 'performance',
+        title: 'Performance',
+        description: 'High-performance networking with eBPF dataplane',
+        icon: '⚡',
+        dataplane: 'ebpf',
+        deployment: 'onprem',
+        color: 'orange'
+    },
+    {
+        id: 'security',
+        title: 'Security',
+        description: 'Enhanced security with policy enforcement',
+        icon: '🛡️',
+        dataplane: 'policy',
+        deployment: 'onprem',
+        color: 'red'
+    },
+    {
+        id: 'cloud-native',
+        title: 'Cloud Native',
+        description: 'Optimized for managed Kubernetes services',
+        icon: '☁️',
+        dataplane: 'iptables',
+        deployment: 'cloud',
+        color: 'blue'
+    },
+    {
+        id: 'hybrid',
+        title: 'Hybrid',
+        description: 'Mixed on-premises and cloud infrastructure',
+        icon: '🔗',
+        dataplane: 'iptables',
+        deployment: 'hybrid',
+        color: 'purple'
+    },
+    {
+        id: 'enterprise',
+        title: 'Enterprise',
+        description: 'Enterprise-grade with comprehensive features',
+        icon: '🏢',
+        dataplane: 'ebpf',
+        deployment: 'onprem',
+        color: 'green'
+    }
+];
+
 const dataplaneStep: WizardStep = {
     id: 'dataplane',
     title: 'Choose your Dataplane type',
@@ -31,7 +88,7 @@ const dataplaneStep: WizardStep = {
             id: 'ebpf',
             title: 'eBPF dataplane',
             description: 'High performance, kube-proxy replacement and DSR support',
-            icon: '🐝'
+            icon: '/img/brands/ebpf_logo.svg'
         },
         {
             id: 'nftables',
@@ -52,9 +109,15 @@ const dataplaneStep: WizardStep = {
             icon: '/img/brands/Microsoft_logo.svg'
         },
         {
+            id: 'vpp',
+            title: 'VPP dataplane',
+            description: 'VPP-based dataplane for high-performance networking',
+            icon: '/img/brands/fdio.svg'
+        },
+        {
             id: 'policy',
             title: 'Just policy',
-            description: 'I want to use Calico for network policy only',
+            description: 'I want to use Calico for policy enforcement only',
             icon: '🛡️',
         }
     ]
@@ -182,11 +245,11 @@ const getInstallationPaths = (dataplane: DataplaneType, deployment: DeploymentTy
 };
 
 const InstallationWizard: React.FC = () => {
-    const [currentStep, setCurrentStep] = useState(0);
     const [selectedDataplane, setSelectedDataplane] = useState<DataplaneType | null>(null);
     const [selectedDeployment, setSelectedDeployment] = useState<DeploymentType | null>(null);
     const [selectedPath, setSelectedPath] = useState<string | null>(null);
     const [pendingPolicySelection, setPendingPolicySelection] = useState<string | null>(null);
+    const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
     const toast = useToast();
     const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -208,7 +271,27 @@ const InstallationWizard: React.FC = () => {
 
     const steps = [dataplaneStep, deploymentStep, installationStep];
 
+    const handlePresetSelect = (preset: PredefinedConfig) => {
+        setSelectedPreset(preset.id);
+        setSelectedDataplane(preset.dataplane);
+        setSelectedDeployment(preset.deployment);
+        setSelectedPath(null); // Clear installation path when preset changes
+        
+        toast({
+            title: `${preset.title} configuration selected`,
+            description: `Dataplane: ${preset.dataplane}, Deployment: ${preset.deployment}`,
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+        });
+    };
+
     const handleOptionSelect = (stepId: string, optionId: string) => {
+        // Clear preset selection when user manually selects options
+        if (selectedPreset) {
+            setSelectedPreset(null);
+        }
+
         if (stepId === 'dataplane') {
             // Show warning dialog for "Just policy" option
             if (optionId === 'policy') {
@@ -216,30 +299,21 @@ const InstallationWizard: React.FC = () => {
                 onOpen();
             } else {
                 setSelectedDataplane(optionId as DataplaneType);
+                // Clear deployment selection if it becomes incompatible
+                if (selectedDeployment && (optionId === 'vpp' && (selectedDeployment === 'cloud' || selectedDeployment === 'hybrid'))) {
+                    setSelectedDeployment(null);
+                }
             }
         } else if (stepId === 'deployment') {
+            // Check if the option should be disabled for vpp
+            if (selectedDataplane === 'vpp' && (optionId === 'cloud' || optionId === 'hybrid')) {
+                return; // Don't allow selection of disabled options
+            }
             setSelectedDeployment(optionId as DeploymentType);
         } else if (stepId === 'installation') {
             setSelectedPath(optionId);
         }
     };
-
-    const handleNext = () => {
-        if (currentStep < steps.length - 1) {
-            setCurrentStep(currentStep + 1);
-        } else {
-            // Wizard completed - show results
-            handleComplete();
-        }
-    };
-
-    const handleBack = () => {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-        }
-    };
-
-    const [showResults, setShowResults] = useState(false);
 
     const handleComplete = () => {
         setShowResults(true);
@@ -258,30 +332,27 @@ const InstallationWizard: React.FC = () => {
     };
 
     const canProceed = () => {
-        const currentStepData = steps[currentStep];
-        if (currentStepData.id === 'dataplane') {
-            return selectedDataplane !== null;
-        } else if (currentStepData.id === 'deployment') {
-            return selectedDeployment !== null;
-        } else if (currentStepData.id === 'installation') {
-            return selectedPath !== null;
-        }
-        return false;
+        return selectedDataplane !== null && selectedDeployment !== null && selectedPath !== null;
     };
 
-    const getSelectedOption = () => {
-        const currentStepData = steps[currentStep];
-        if (currentStepData.id === 'dataplane') {
+    const getSelectedOption = (stepId: string) => {
+        if (stepId === 'dataplane') {
             return selectedDataplane;
-        } else if (currentStepData.id === 'deployment') {
+        } else if (stepId === 'deployment') {
             return selectedDeployment;
-        } else if (currentStepData.id === 'installation') {
+        } else if (stepId === 'installation') {
             return selectedPath;
         }
         return null;
     };
 
-    const currentStepData = steps[currentStep];
+    // Helper function to check if an option should be disabled
+    const isOptionDisabled = (stepId: string, optionId: string) => {
+        if (stepId === 'deployment') {
+            return selectedDataplane === 'vpp' && (optionId === 'cloud' || optionId === 'hybrid');
+        }
+        return false;
+    };
 
     const handlePolicyConfirm = () => {
         if (pendingPolicySelection) {
@@ -295,6 +366,8 @@ const InstallationWizard: React.FC = () => {
         setPendingPolicySelection(null);
         onClose();
     };
+
+    const [showResults, setShowResults] = useState(false);
 
     if (showResults) {
         return (
@@ -355,7 +428,6 @@ const InstallationWizard: React.FC = () => {
                             variant="outline"
                             onClick={() => {
                                 setShowResults(false);
-                                setCurrentStep(0);
                                 setSelectedDataplane(null);
                                 setSelectedDeployment(null);
                                 setSelectedPath(null);
@@ -372,103 +444,158 @@ const InstallationWizard: React.FC = () => {
     return (
         <>
             <Box sx={wizardStyles}>
-                <VStack spacing={6} align="stretch">
-                    {/* Progress indicator */}
-                    <Box>
-                        <Text fontSize="sm" color="gray.600" mb={2}>
-                            Step {currentStep + 1} of {steps.length}
+                <VStack spacing={8} align="stretch">
+                    {/* Header */}
+                    <Box textAlign="center">
+                        <Heading as="h2" size="lg" mb={2}>
+                            Installation Wizard
+                        </Heading>
+                        <Text color="gray.600">
+                            Configure your Calico installation by selecting options for each step
                         </Text>
-                        <Box display="flex" gap={2}>
-                            {steps.map((step, index) => (
-                                <Box
-                                    key={step.id}
-                                    flex={1}
-                                    height="4px"
-                                    bg={index <= currentStep ? 'blue.500' : 'gray.200'}
-                                    borderRadius="2px"
-                                />
-                            ))}
+                    </Box>
+
+                    {/* Predefined Configurations */}
+                    <Box>
+                        <Heading as="h3" size="md" mb={4}>
+                            Quick Start Configurations
+                        </Heading>
+                        <Text color="gray.600" mb={4}>
+                            Choose a predefined configuration or customize your own
+                        </Text>
+                        <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={4}>
+                            {predefinedConfigs.map((preset) => {
+                                const isSelected = selectedPreset === preset.id;
+                                const isActive = selectedDataplane === preset.dataplane && selectedDeployment === preset.deployment;
+                                
+                                return (
+                                    <Card
+                                        key={preset.id}
+                                        sx={{
+                                            ...cardStyles,
+                                            borderColor: isSelected || isActive ? `${preset.color}.500` : 'gray.200',
+                                            borderWidth: isSelected || isActive ? '2px' : '1px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            _hover: {
+                                                borderColor: `${preset.color}.300`,
+                                                transform: 'translateY(-2px)',
+                                                boxShadow: 'lg'
+                                            }
+                                        }}
+                                        onClick={() => handlePresetSelect(preset)}
+                                    >
+                                        <CardBody>
+                                            <VStack spacing={3} align="center" textAlign="center">
+                                                <Text fontSize="3xl">{preset.icon}</Text>
+                                                <Heading as="h4" size="sm">
+                                                    {preset.title}
+                                                </Heading>
+                                                <Text color="gray.600" fontSize="sm">
+                                                    {preset.description}
+                                                </Text>
+                                                {(isSelected || isActive) && (
+                                                    <Text fontSize="xs" color={`${preset.color}.600`} fontWeight="medium">
+                                                        ✓ Selected
+                                                    </Text>
+                                                )}
+                                            </VStack>
+                                        </CardBody>
+                                    </Card>
+                                );
+                            })}
                         </Box>
                     </Box>
 
-                    {/* Step content */}
-                    <Box>
-                        <Heading as="h2" size="lg" mb={2}>
-                            {currentStepData.title}
-                        </Heading>
-                        <Text color="gray.600" mb={6}>
-                            {currentStepData.description}
-                        </Text>
+                    {/* All Steps */}
+                    {steps.map((step, stepIndex) => (
+                        <Box key={step.id}>
+                            <Box mb={4}>
+                                <Heading as="h3" size="md" mb={2}>
+                                    Step {stepIndex + 1}: {step.title}
+                                </Heading>
+                                <Text color="gray.600" mb={4}>
+                                    {step.description}
+                                </Text>
+                            </Box>
 
-                        <VStack spacing={4} align="stretch">
-                            {currentStepData.options.map((option) => (
-                                <Card
-                                    key={option.id}
-                                    sx={{
-                                        ...cardStyles,
-                                        borderColor: getSelectedOption() === option.id ? 'blue.500' : 'gray.200',
-                                        borderWidth: getSelectedOption() === option.id ? '2px' : '1px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        _hover: {
-                                            borderColor: 'blue.300',
-                                            transform: 'translateY(-1px)',
-                                            boxShadow: 'lg'
-                                        }
-                                    }}
-                                    onClick={() => handleOptionSelect(currentStepData.id, option.id)}
-                                >
-                                    <CardBody>
-                                        <HStack spacing={4}>
-                                                                                    {option.icon && (
-                                            option.icon.startsWith('http') || option.icon.startsWith('/') ? (
-                                                <Image 
-                                                    src={option.icon} 
-                                                    alt={option.title}
-                                                    w="32px"
-                                                    h="32px"
-                                                    objectFit="contain"
-                                                />
-                                            ) : (
-                                                <Text fontSize="2xl">{option.icon}</Text>
-                                            )
-                                        )}
-                                            <Box flex={1}>
-                                                <Heading as="h3" size="md" mb={2}>
-                                                    {option.title}
-                                                </Heading>
-                                                <Text color="gray.600">
-                                                    {option.description}
-                                                </Text>
-                                            </Box>
-                                        </HStack>
-                                    </CardBody>
-                                </Card>
-                            ))}
-                        </VStack>
-                    </Box>
+                            <VStack spacing={4} align="stretch">
+                                {step.options.map((option) => {
+                                    const isDisabled = isOptionDisabled(step.id, option.id);
+                                    const isSelected = getSelectedOption(step.id) === option.id;
+                                    
+                                    return (
+                                        <Card
+                                            key={option.id}
+                                            sx={{
+                                                ...cardStyles,
+                                                borderColor: isSelected ? 'blue.500' : 'gray.200',
+                                                borderWidth: isSelected ? '2px' : '1px',
+                                                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                                opacity: isDisabled ? 0.5 : 1,
+                                                transition: 'all 0.2s',
+                                                _hover: isDisabled ? {} : {
+                                                    borderColor: 'blue.300',
+                                                    transform: 'translateY(-1px)',
+                                                    boxShadow: 'lg'
+                                                }
+                                            }}
+                                            onClick={() => !isDisabled && handleOptionSelect(step.id, option.id)}
+                                        >
+                                            <CardBody>
+                                                <HStack spacing={4}>
+                                                    {option.icon && (
+                                                        option.icon.startsWith('http') || option.icon.startsWith('/') ? (
+                                                            <Image 
+                                                                src={option.icon} 
+                                                                alt={option.title}
+                                                                w="32px"
+                                                                h="32px"
+                                                                objectFit="contain"
+                                                            />
+                                                        ) : (
+                                                            <Text fontSize="2xl">{option.icon}</Text>
+                                                        )
+                                                    )}
+                                                    <Box flex={1}>
+                                                        <Heading as="h4" size="sm" mb={2}>
+                                                            {option.title}
+                                                            {isDisabled && (
+                                                                <Text as="span" fontSize="sm" color="gray.500" ml={2}>
+                                                                    (Not available with {selectedDataplane} dataplane)
+                                                                </Text>
+                                                            )}
+                                                        </Heading>
+                                                        <Text color="gray.600" fontSize="sm">
+                                                            {option.description}
+                                                        </Text>
+                                                    </Box>
+                                                    {isSelected && (
+                                                        <Box>
+                                                            <Text fontSize="lg" color="blue.500">✓</Text>
+                                                        </Box>
+                                                    )}
+                                                </HStack>
+                                            </CardBody>
+                                        </Card>
+                                    );
+                                })}
+                            </VStack>
+                        </Box>
+                    ))}
 
-                    {/* Navigation buttons */}
-                    <HStack justify="space-between" pt={4}>
+                    {/* Complete Button */}
+                    <Box textAlign="center" pt={6}>
                         <Button
-                            leftIcon={<ChevronLeftIcon />}
-                            onClick={handleBack}
-                            isDisabled={currentStep === 0}
-                            variant="outline"
-                        >
-                            Back
-                        </Button>
-                        
-                        <Button
-                            rightIcon={currentStep === steps.length - 1 ? undefined : <ChevronRightIcon />}
-                            onClick={handleNext}
+                            onClick={handleComplete}
                             isDisabled={!canProceed()}
                             colorScheme="blue"
+                            size="lg"
                             sx={buttonStyles}
                         >
-                            {currentStep === steps.length - 1 ? 'Complete' : 'Next'}
+                            View Installation Paths
                         </Button>
-                    </HStack>
+                    </Box>
                 </VStack>
             </Box>
 
