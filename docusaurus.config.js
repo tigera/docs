@@ -18,8 +18,10 @@ export default async function createAsyncConfig() {
       experimental_faster: {
         swcJsLoader: true,
         swcJsMinimizer: true,
+        swcHtmlMinimizer: true,
         lightningCssMinimizer: true,
         rspackBundler: true,
+        rspackPersistentCache: true,
         mdxCrossCompilerCache: true,
       },
     },
