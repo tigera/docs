@@ -30,8 +30,8 @@ export default async function createAsyncConfig() {
     url: 'https://docs.tigera.io',
     baseUrl: '/',
     onBrokenAnchors: 'ignore',
-    onBrokenLinks: 'throw',
-    onBrokenMarkdownLinks: 'throw',
+    onBrokenLinks: 'warn',
+    onBrokenMarkdownLinks: 'warn',
     favicon: 'img/favicon.png',
 
     // Even if you don't use internalization, you can use this field to set useful
@@ -104,11 +104,11 @@ export default async function createAsyncConfig() {
           searchPagePath: '/search',
         },
         announcementBar: {
-          id: "calico_ebpf",
-          content: 'Calico 3.30 users: <a href="https://calicocloud.io">Sign up for Calico Cloud Free today!</a>',
+          id: "archive",
+          content: 'Documentation archive for Calico Enterprise 3.18. This version is no longer maintained. For the latest documentation, go to <a href="https://docs.tigera.io">https://docs.tigera.io</a>.',
           backgroundColor: "#FCE181",
           textColor: "#000",
-          isCloseable: true
+          isCloseable: false,
         },
         navbar: {
           logo: {
@@ -121,20 +121,6 @@ export default async function createAsyncConfig() {
               label: 'Documentation',
               className: 'documentation-dropdown',
               items: [
-                {
-                  label: 'Calico Open Source',
-                  type: 'docSidebar',
-                  sidebarId: 'calicoSidebar',
-                  docsPluginId: 'calico',
-                  className: 'navbar-product-link_calico',
-                },
-                {
-                  label: 'Calico Cloud',
-                  type: 'docSidebar',
-                  sidebarId: 'calicoCloudSidebar',
-                  docsPluginId: 'calico-cloud',
-                  className: 'navbar-product-link_calico-cloud',
-                },
                 {
                   label: 'Calico Enterprise',
                   type: 'docSidebar',
@@ -428,8 +414,7 @@ export default async function createAsyncConfig() {
           path: 'calico-enterprise',
           routeBasePath: 'calico-enterprise',
           editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.21-2', '3.20-2', '3.19-2', '3.18-2'],
-          lastVersion: '3.21-2',
+          onlyIncludeVersions: ['3.18-2'],
           versions: {
             current: {
               label: 'Next',
@@ -454,7 +439,7 @@ export default async function createAsyncConfig() {
             '3.18-2': {
               label: '3.18',
               path: '3.18',
-              banner: 'none',
+              banner: 'unmaintained',
             },
           },
           sidebarPath: './sidebars-calico-enterprise.js',
