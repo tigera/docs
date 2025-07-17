@@ -442,7 +442,7 @@ export default async function createAsyncConfig() {
               banner: 'none',
             },
             '3.20-2': {
-              label: '3.20 (latest)',
+              label: '3.20',
               path: '3.20',
               banner: 'none',
             },
