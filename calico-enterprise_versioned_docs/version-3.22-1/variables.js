@@ -1,29 +1,27 @@
 const releases = require('./releases.json');
-const componentImage = require('../src/components/utils/componentImage');
+const componentImage = require('../../src/components/utils/componentImage');
 
 const variables = {
-  releaseTitle: 'master',
+  releaseTitle: 'v3.22.0-1.0',
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
-  version: 'master',
+  version: 'v3.22',
   openSourceVersion: releases[0].calico.minor_version.slice(1),
-  baseUrl: '/calico-enterprise/next',
-  filesUrl: 'https://downloads.tigera.io/ee/master',
+  baseUrl: '/calico-enterprise/3.22',
+  filesUrl: 'https://downloads.tigera.io/ee/v3.22.0-1.0',
   rpmsUrl: 'https://downloads.tigera.io/ee/rpms/v3.21',
   tutorialFilesURL: 'https://docs.tigera.io/files',
-  tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/next',
+  tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/3.21',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
   prodnameWindows: 'Calico Enterprise for Windows',
-  prodnamedashWindows: 'calico-enterprise-for-windows',
   downloadsurl: 'https://downloads.tigera.io',
   nodecontainer: 'cnx-node',
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\TigeraCalico',
-  registry: 'gcr.io/unique-caldron-775/cnx/', // Change to 'quay.io/' for new release
-  chart_version_name: 'master',
+  registry: 'quay.io/',
+  chart_version_name: 'v3.22.0-1.0-0',
   tigeraOperator: releases[0]['tigera-operator'],
   dikastesVersion: releases[0].components.dikastes.version,
-  manifestsUrl: 'https://docs.tigera.io/master',
   releases,
   imageNames: {
     node: 'tigera/cnx-node',
@@ -31,7 +29,7 @@ const variables = {
   },
   componentImage: {
     cnxNode: componentImage('cnx-node', releases[0]),
-    calicoctl:componentImage('calicoctl', releases[0]), 
+    calicoctl: componentImage('calicoctl', releases[0]),
     calicoq: componentImage('calicoq', releases[0]),
   },
 };
