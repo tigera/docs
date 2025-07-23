@@ -1,0 +1,136 @@
+---
+description: Deploy WAF with ingress gateways
+---
+
+# Deploy a web application firewall with Calico Ingress Gateway
+
+This guide shows you how to deploy and configure a web application firewall (WAF) with the Calico Ingress Gateway.
+By deploying the WAF in this way, you can protect publicly exposed services from a variety of application-layer attacks.
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## Prerequisites
+
+* [Calico Ingress Gateway](../networking/gateway-api.mdx) is set up for your cluster.
+* You have the value of `metadata.name`  for the `Gateway` resource you want to use with WAF.
+
+## Deploy WAF on Calico Ingress Gateway
+
+Calico Ingress Gateway uses Envoy's implementation of the Kubernetes Gateway API.
+To direct ingress gateway traffic through the WAF, you need to configure Envoy to use the WAF HTTP filter.
+
+To enable WAF on a Calico Ingress Gateway:
+
+1. Create a `Backend` resource to allow Envoy to find the WAF HTTP filter:
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: gateway.envoyproxy.io/v1alpha1
+   kind: Backend
+   metadata:
+     name: tigera-waf-backend
+   spec:
+     endpoints:
+     - unix:
+         path: "/var/run/waf-http-filter/extproc.sock"
+   EOF
+   ```
+
+1. Create an `EnvoyExtensionPolicy` resource to direct Envoy to use the `tigera-waf-backend` backend for the WAF HTTP filter:
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: gateway.envoyproxy.io/v1alpha1
+   kind: EnvoyExtensionPolicy
+   metadata:
+     name: tigera-waf-envoy-extension-policy
+   spec:
+     extProc:
+     - backendRefs:
+       - name: tigera-waf-backend
+         kind: Backend
+       processingMode:
+         request:
+           body: Streamed
+     targetRef:
+       group: gateway.networking.k8s.io
+       kind: Gateway
+       name: <gateway-name>
+   EOF
+   ```
+
+   Replace `<gateway-name>` with the value of `metadata.name` in your `Gateway` resource.
+
+   The WAF now processes all HTTP requests that pass through the specified `Gateway` resource.
+
+   To deploy a WAF on multiple gateways, you must create a separate `EnvoyExtensionPolicy` resource for each `Gateway` resource.
+   Each `EnvoyExtensionPolicy` must reference the same `tigera-waf-backend` backend.
+
+1. To verify that the WAF is enabled for your gateway, you can simulate an SQL injection attack through your gateway and see whether it triggers a security event.
+
+   :::note
+   The query string in this example has some SQL syntax embedded in the text. This is harmless and for demo purposes, but WAF will detect this pattern and create an WAF log for this HTTP request.
+   :::
+
+   1. Get the service IP of your gateway:
+
+      ```bash
+      export GATEWAY_HOST=$(kubectl get gateway/<gateway-name> -o jsonpath='{.status.addresses[0].value}')
+      ```
+   1. Trigger a security event by simulating an SQL injection attack on that service IP:
+
+      ```bash
+      curl --verbose --header "Host: www.example.com" http://$GATEWAY_HOST/?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
+      ```
+   1. From the web console, go to **Threat > Security Events** and check for a security event with corresponds with this simulated SQL injection attack.
+
+## Customizing your WAF configuration for an ingress gateway
+
+The default WAF configuration uses the OWASP Core Rule Set v4.7.0 in detection-only mode with early blocking enabled.
+To customize a WAF configuration for an ingress gateway, you can include custom directives in an `EnvoyPatchPolicy` resource.
+
+For information on how to create custom directives, see [WAF customization options](web-application-firewall.mdx#customization-options).
+
+For example, to enable the OWASP Core Rule Set in blocking mode, you can apply an `EnvoyPatchPolicy` resource like this:
+
+```yaml
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyPatchPolicy
+metadata:
+  name: tigera-waf-http-filter-metadata
+  namespace: <gateway-namespace>
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: <gateway-name>
+  type: JSONPatch
+  jsonPatches:
+    - type: "type.googleapis.com/envoy.config.listener.v3.Listener"
+      name: <gateway-namespace>/<gateway-name>/http
+      operation:
+        op: add
+        jsonPath: "default_filter_chain.filters[0].typed_config.http_filters[?match(@.name, '.*tigera-waf-http-filter/.*')]"
+        path: typed_config/grpc_service/initial_metadata
+        value:
+          - key: directivesJson
+            value: "[\"SecRuleEngine On\"]"
+```
+
+You can add additional directives to the `directivesJson` array to further customize the WAF behavior.
+Make sure that combine the directives as an inlined JSON list with proper escaping.
+The array in the following snippet is an example of how to set the WAF to detection-only mode, remove a specific rule, and set a sampling percentage:
+
+```yaml
+          - key: directivesJson
+            value: "[\"SecRuleEngine DetectionOnly\", \"SecRuleRemoveById 920420\", \"SecAction \\\""id:900400,phase:1,pass,nolog,setvar:tx.sampling_percentage=50\\\"\]"
+```
+
+## Additional resources
+
+* [OWASP ModSecurity](https://modsecurity.org/)
+* [OWASP Core Rule Set documentation](https://coreruleset.org/)

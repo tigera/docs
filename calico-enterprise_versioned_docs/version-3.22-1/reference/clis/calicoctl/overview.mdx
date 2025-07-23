@@ -1,0 +1,149 @@
+---
+description: The command line interface tool (CLI) to manage Calico Enterprise network and security policy.
+---
+
+# calicoctl user reference
+
+The command line tool, `calicoctl`, makes it easy to manage $[prodname]
+network and security policy, as well as other $[prodname] configurations.
+
+The full list of resources that can be managed, including a description of each,
+is described in the [Resource definitions](../../resources/overview.mdx)
+section.
+
+:::note
+
+This section provides full reference information for `calicoctl`. To learn
+how to install and configure `calicoctl`, refer to
+[Installing calicoctl](../../../operations/clis/calicoctl/install.mdx).
+
+:::
+
+The calicoctl command line interface provides a number of resource management
+commands to allow you to create, modify, delete, and view the different
+$[prodname] resources. This section is a command line reference for
+`calicoctl`, organized based on the command hierarchy.
+
+## Top level help
+
+Run `calicoctl --help` to display the following help menu for the top level
+calicoctl commands.
+
+````
+Usage:
+  calicoctl [options] <command> [<args>...]
+
+    create                   Create a resource by file, directory or stdin.
+    replace                  Replace a resource by file, directory or stdin.
+    apply                    Apply a resource by file, directory or stdin.  This creates a resource
+                             if it does not exist, and replaces a resource if it does exists.
+    patch                    Patch a pre-existing resource in place.
+    delete                   Delete a resource identified by file, directory, stdin or resource type and
+                             name.
+    get                      Get a resource identified by file, directory, stdin or resource type and
+                             name.
+    label                    Add or update labels of resources.
+    convert                  Convert config files between different API versions.
+    ipam                     IP address management.
+    cluster                  Access cluster information.
+    bgp                      Access BGP related information.
+    node                     Calico node management.
+    captured-packets         Capture packet file command
+    version                  Display the version of calicoctl.
+
+Options:
+  -h --help               Show this screen.
+  -l --log-level=<level>  Set the log level (one of panic, fatal, error,
+                          warn, info, debug) [default: panic]
+  --context=<context>	    The name of the kubeconfig context to use.
+  --allow-version-mismatch  Allow client and cluster versions mismatch.
+
+Description:
+  The calicoctl command line tool is used to manage Calico network and security
+  policy, to view and manage endpoint configuration, and to manage a Calico
+  node instance.
+
+  See 'calicoctl <command> --help' to read about a specific subcommand.
+```-  [calicoctl version](version.mdx)
+
+:::note
+
+In a multi cluster environment if you have a [kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) file with multiple cluster contexts it is possible to directly change the context using calicoctl `--context` argument.
+
+:::
+
+:::note
+
+The versions for Calico and calicoctl should be the same and calls to calicoctl will fail if the versions do not match. If needed, this can be overridden by using the `--allow-version-mismatch` argument.
+
+:::
+
+## Top level command line options
+
+Details on the `calicoctl` commands are described in the documents linked below
+organized by top level command.
+
+-  [calicoctl create](create.mdx)
+-  [calicoctl captured-packets](captured-packets.mdx)
+-  [calicoctl replace](replace.mdx)
+-  [calicoctl apply](apply.mdx)
+-  [calicoctl patch](patch.mdx)
+-  [calicoctl delete](delete.mdx)
+-  [calicoctl get](get.mdx)
+-  [calicoctl label](label.mdx)
+-  [calicoctl convert](convert.mdx)
+-  [calicoctl ipam](ipam/overview.mdx)
+-  [calicoctl node](node/index.mdx)
+-  [calicoctl version](version.mdx)
+
+## Multiple networks support
+
+If multiple networks is enabled, the environment variable `MULTI_INTERFACE_MODE=multus` must be set to view details of these additional networks,
+such as their workload endpoints.
+
+For more information, see the [multiple-networks how-to guide](../../../networking/configuring/multiple-networks.mdx).
+
+## Modifying low-level component configurations
+
+To update low-level Felix or BGP settings (`FelixConfiguration` and `BGPConfiguration` resource types):
+1. Get the appropriate resource and store the yaml output in a file using `calicoctl get <resource type> <resource name> -o yaml --export > config.yaml`.
+1. Modify the saved resource file.
+1. Update the resource using `apply` or `replace` command: `calicoctl replace -f config.yaml`.
+
+See [Configuring Felix](../../component-resources/node/felix/configuration.mdx) for more details.
+
+## Supported resource definition aliases
+
+The following table lists supported aliases for $[prodname] resources when using `calicoctl`. Note that all aliases
+are **case-insensitive**.
+
+| Resource definition                  | Supported calicoctl aliases                                  |
+| :----------------------------------- | :----------------------------------------------------------- |
+| BGP configuration                    | `bgpconfig`, `bgpconfigurations`, `bgpconfigs`               |
+| Deep packet inspection               | `deeppacketinspection`, `deeppacketinspections`
+| BGP peer                             | `bgppeer`, `bgppeers`, `bgpp`, `bgpps`, `bp`, `bps`          |
+| Felix configuration                  | `felixconfiguration`, `felixconfig`, `felixconfigurations`, `felixconfigs` |
+| Global alert                         | `globalalert`, `globalalerts`
+| Global network policy                | `globalnetworkpolicy`, `globalnetworkpolicies`, `gnp`, `gnps` |
+| Global network set                   | `globalnetworkset`, `globalnetworksets`                      |
+| Global report                        | not supported                                                |
+| Global threatfeed                    | `globalthreatfeed`, `globalthreatfeeds`                      |
+| Host endpoint                        | `hostendpoint`, `hostendpoints`, `hep`, `heps`               |
+| IP pool                              | `ippool`, `ippools`, `ipp`, `ipps`, `pool`, `pools`          |
+| IP reservation                       | `ipreservation`, `ipreservations`, `reservation`, `reservations` |
+| Kubernetes controllers configuration | `kubecontrollersconfiguration`, `kubecontrollersconfig`      |
+| License key                          | not supported                                                |
+| Managed cluster                      | not supported                                                |
+| Network policy                       | `networkpolicy`, `networkpolicies`, `policy`, `np`, `policies`, `pol`, `pols` |
+| Network set                          | `networkset`, `networksets`, `netsets`
+| Node                                 | `node`, `nodes`, `no`, `nos`                                 |
+| Packet capture                       | `packetcapture`, `packetcaptures`                            |
+| Profiles                             | `profile`, `profiles`, `pro`, `pros`                         |
+| Remote cluster configuration.        | `remoteclusterconfiguration`, `remoteclusterconfigurations`, `remoteclusterconfig`, `remoteclusterconfigs`, `rcc` |
+| Staged global network policy         | `stagedglobalnetworkpolicy`, `stagedglobalnetworkpolicies`, `sgnp`, `sgnps` |
+| Staged Kubernetes network policy.    | `stagedkubernetesnetworkpolicy`, `stagedkubernetesnetworkpolicies`, `stagedkubernetespolicy`, `sknp`, `stagedkubernetespolicies`, `skpol`, `skpols` |
+| Staged network policy.               | `stagednetworkpolicy`, `stagednetworkpolicies`, `stagedpolicy`, `snp`, `stagedpolicies`, `spol`, `spols` |
+| Tier                                 | `tier`, `tiers`                                              |
+| Workload endpoint                    | `workloadendpoint`, `workloadendpoints`, `wep`, `weps`       |
+
+````
