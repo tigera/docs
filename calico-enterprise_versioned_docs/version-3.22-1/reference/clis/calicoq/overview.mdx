@@ -1,0 +1,116 @@
+---
+description: CLI to verify that your security policies are configured as intended.
+---
+
+# calicoq
+
+`calicoq` is the $[prodname] policy query utility. It is a command line tool that
+makes it easy to check your $[prodname] security policies.
+See [Installing calicoq](../../../operations/clis/calicoq/index.mdx) for
+how to download and install `calicoq`.
+
+## Datastore configuration
+
+`calicoq` works by querying the $[prodname] datastore. For this configuration calicoq uses exactly the same
+setup as `calicoctl`, which means that:
+
+- You can create a YAML or JSON config file, and specify that with `calicoq`'s
+  `-c` option. This is the best option if you have already created that file
+  for use with `calicoctl`.
+
+- Or you can set environment variables to specify the datastore type and
+  location: `DATASTORE_TYPE` and so on.
+
+For more detail, see
+[Configuring calicoq](../../../operations/clis/calicoq/configure/index.mdx).
+
+## Commands
+
+The `calicoq` command line interface provides a number of policy inspection
+commands to allow you to confirm that your security policies are configured
+as intended.
+
+- The [endpoint](endpoint.mdx)
+  command shows you the $[prodname] policies and profiles that relate to specified
+  endpoints.
+- The [eval](eval.mdx) command
+  displays the endpoints that a selector selects.
+- The [host](host.mdx) command
+  displays the policies and profiles that are relevant to all endpoints on a
+  given host.
+- The [policy](policy.mdx)
+  command shows the endpoints that are relevant to a given policy.
+- The [version](version.mdx)
+  command displays the version of the tool.
+
+## Overview of usage and options
+
+To access the help:
+
+```
+calicoq -h
+```
+
+The help output follows.
+
+```
+Calico query tool.
+
+Usage:
+  calicoq [--debug] [--config=<config>] eval <selector>
+  calicoq [--debug] [--config=<config>] policy <policy-name> [--hide-selectors|-s] [--hide-rule-matches|-r]
+  calicoq [--debug] [--config=<config>] endpoint <substring> [--hide-selectors|-s] [--hide-rule-matches|-r]
+  calicoq [--debug] [--config=<config>] host <hostname> [--hide-selectors|-s] [--hide-rule-matches|-r]
+  calicoq [--debug] version
+
+Description:
+  The calicoq command line tool is used to check Calico security policies.
+
+  calicoq eval <selector> is used to display the endpoints that are matched by <selector>.
+
+  calicoq policy <policy-name> shows the endpoints that are relevant to the named policy,
+  comprising:
+  - the endpoints that the policy applies to (for which ingress or egress traffic is policed
+    according to the rules in that policy)
+  - the endpoints that match the policy's rule selectors (that are allowed or disallowed as data
+    sources or destinations).
+
+  calicoq endpoint <substring> shows you the Calico policies and profiles that relate to endpoints
+  whose full ID includes <substring>.
+
+  calicoq host <hostname> shows you the endpoints that are hosted on <hostname> and all the Calico
+  policies and profiles that relate to those endpoints.
+
+Notes:
+  When specifying a namespaced NetworkPolicy name, the namespace should also be included by
+  specifying the <policy-name> in the format "<namespace>/<policy-name>". If the namespace is
+  omitted it is assumed the name refers to a GlobalNetworkPolicy.
+
+  When a Calico policy is mapped from a Kubernetes resource, the name will be prefixed with
+  "knp.default". For example to query the Kubernetes NetworkPolicy "test-policy" in the Namespace
+  "demo-ns" use the following command:
+      calicoq policy demo-ns/knp.default.test-policy
+
+  For an endpoint, the full Calico ID is "<host>/<orchestrator>/<workload-name>/<endpoint-name>".
+  In the Kubernetes case "<orchestrator>" is always "k8s", "<workload-name>" is "<pod
+  namespace>.<pod name>", and "<endpoint-name>" is always "eth0".
+
+Options:
+  -c <config> --config=<config>  Path to the file containing connection
+                                 configuration in YAML or JSON format.
+                                 [default: /etc/calico/calicoctl.cfg]
+
+  -r --hide-rule-matches         Don't show the list of policies and profiles whose
+                                 rule selectors match the specified endpoint (or an
+                                 endpoint on the specified host) as an allowed or
+                                 disallowed source/destination.
+
+  -s --hide-selectors            Don't show the detailed selector expressions involved
+                                 (that cause each displayed policy or profile to apply to or match
+                                 various endpoints).
+
+  -d --debug                     Log debugging information to stderr.
+
+  -o <output> --output=<output>  Output format. Either yaml, json, or ps.
+                                 [default: ps]
+```
