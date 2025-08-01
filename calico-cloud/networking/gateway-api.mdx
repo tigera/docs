@@ -8,12 +8,6 @@ description: Enable support for the Kubernetes Gateway API.
 
 Enable support for the Kubernetes Gateway API.
 
-:::note
-
-This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
-
-:::
-
 ## Value
 
 $[prodname] includes support for the Kubernetes Gateway API, which allows advanced routing to services in a cluster, including weighted or blue-green load balancing.
@@ -58,6 +52,7 @@ Managed Kubernetes services like AKS, EKS and GKE include a `type: LoadBalancer`
 - [Enable Gateway API support](#enable-gateway-api-support)
 - [Use the Gateway API](#use-the-gateway-api)
 - [Disable Gateway API support](#disable-gateway-api-support)
+- [Customize Gateway deployment and features](#customize-gateway-deployment-and-features)
 
 ### Enable Gateway API support
 
@@ -103,7 +98,7 @@ kubectl get gatewayclass -o=jsonpath='{.items[0].spec}' | jq'
   "parametersRef": {
     "group": "gateway.envoyproxy.io",
     "kind": "EnvoyProxy",
-    "name": "envoy-proxy-config",
+    "name": "tigera-gateway-class",
     "namespace": "tigera-gateway"
   }
 }
@@ -419,3 +414,91 @@ EOF
 ```
 
 Please note that the Gateway API CRDs will be left in place.  This is to allow for the possibility of using other Gateway API implementations in addition to the one provided by $[prodname].
+
+### Customize Gateway deployment and features
+
+All gateway customization is done through the single `GatewayAPI` resource.  This resource has fields that allow some aspects of Gateway deployments to be customized.  For example:
+- `spec.gatewayDeployment.spec.template.metadata` allows arbitrary labels or annotations to be added to the pod that is created to implement each configured Gateway
+- `spec.gatewayDeployment.spec.template.spec.nodeSelector` allows control over where Gateway implementation pods are scheduled
+- `spec.gatewayDeployment.spec.template.spec.containers` allows control over the memory and CPU that Gateway implementation pods can use
+- `spec.gatewayControllerDeployment.spec.template.spec.nodeSelector` allows control over where the gateway controller is scheduled.
+- `spec.gatewayDeployment.service.metadata.annotations` allows control over annotations to place on the Service that is provisioned for each Gateway; these can be used, for example, to configure the cloud-specific type and properties of the associated external load balancer.
+- `spec.gatewayDeployment.service.spec.*loadbalancer*` allows control over the corresponding `*loadbalancer*` fields in the Service that is provisioned for each Gateway; in some clouds these can also be used to configure the type and properties of the associated external load balancer.
+- `spec.gatewayClasses` allows the provisioning of multiple GatewayClasses, each with its own set of customizations, instead of the single GatewayClass that the Tigera operator provisions by default.
+
+For full details please see [the `GatewayAPI` reference documentation](../reference/installation/api.mdx#operator.tigera.io/v1.GatewayAPI).
+
+To make use of these customization fields, use `kubectl edit gatewayapi tigera-secure` to edit the YAML for the `GatewayAPI` resource, and add or modify the customization fields that you require.  Following are a few examples of possible customizations.
+
+#### Handle high traffic with multiple gateway pods and adequate memory per-pod
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: tigera-secure
+spec:
+  gatewayClasses:
+    - name: high-traffic-class
+      gatewayDeployment:
+        spec:
+	  replicas: 3
+	  template:
+	    spec:
+	      containers:
+	        - name: envoy
+		  resources:
+		    requests:
+		      memory: "5GiB"
+EOF
+```
+
+#### Set up external load balancers with cloud-specific features
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: tigera-secure
+spec:
+  gatewayClasses:
+    - name: class-with-aws-load-balancer
+      gatewayService:
+        metadata:
+	  annotations:
+	    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+EOF
+```
+
+#### Configure multiple gateway classes
+
+For example, to provision both of the previous custom classes at the same time:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: tigera-secure
+spec:
+  gatewayClasses:
+    - name: high-traffic-class
+      gatewayDeployment:
+        spec:
+	  replicas: 3
+	  template:
+	    spec:
+	      containers:
+	        - name: envoy
+		  resources:
+		    requests:
+		      memory: "5GiB"
+    - name: class-with-aws-load-balancer
+      gatewayService:
+        metadata:
+	  annotations:
+	    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+EOF
+```

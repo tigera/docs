@@ -1,0 +1,199 @@
+---
+description: Upgrade to a newer version of Calico Enterprise installed with OpenShift.
+---
+
+import InstallOpenShiftManifests from '@site/calico-enterprise_versioned_docs/version-3.22-1/_includes/components/InstallOpenShiftManifests';
+import OpenShiftPrometheusOperator from '@site/calico-enterprise_versioned_docs/version-3.22-1/_includes/components/OpenShiftPrometheusOperator';
+
+# Upgrade Calico Enterprise installed with OpenShift
+
+:::note
+
+All upgrades in $[prodname] are free with a valid license.
+
+:::
+
+## Upgrades paths
+
+You can upgrade your cluster to a maximum of **two releases** from your existing version. For example, if you are on version 3.16, you can upgrade to 3.17, or you can upgrade directly to 3.18. However, you cannot upgrade beyond **two releases**; upgrading from 3.16 to 3.19 (three releases) is not supported.
+
+If you are several versions behind where you want to be, you must go through each group of two releases to get there. For example, if you are on version 3.16, and you want to get to 3.20, you can upgrade to 3.18, then upgrade from 3.18 directly to 3.20.
+
+:::note
+
+Always check the [Release Notes](../../../release-notes/index.mdx) for exceptions; limitations can override the above pattern.
+
+:::
+
+## Prerequisites
+
+Ensure that your $[prodname] OpenShift cluster is running a supported version of [OpenShift Container Platform](../../compatibility.mdx#openshift), and the $[prodname] operator version is v1.2.4 or greater.
+
+:::note
+
+You can check if you are running the operator by checking for the existence of the operator namespace
+with `oc get ns tigera-operator` or issuing `oc get tigerastatus`; a successful return means your installation is
+using the operator.
+
+:::
+
+## Prepare your cluster for the upgrade
+
+During upgrade, the $[prodname] LogStorage CR is temporarily removed so Elasticsearch can be upgraded. Features
+that depend on LogStorage are temporarily unavailable, including dashboards in the web console. Data ingestion is paused
+temporarily, but resumes when the LogStorage is up and running again.
+
+To retain data from your current installation (optional), ensure that the currently mounted persistent volumes
+have their reclaim policy set to [retain data](https://kubernetes.io/docs/tasks/administer-cluster/change-pv-reclaim-policy/).
+Data retention is recommended only for users that have a valid Elasticsearch license. (Trial licenses can be invalidated
+during upgrade).
+
+### Upgrade OwnerReferences
+
+If you do not use OwnerReferences on resources in the projectcalico.org/v3 API group, you can skip this section.
+
+Starting in $[prodname] v3.19, a change in the way UIDs are generated for projectcalico.org/v3 resources requires that you update any OwnerReferences
+that refer to projectcalico.org/v3 resources as an owner. After upgrade, the UID for all projectcalico.org/v3 resources will be changed, resulting in any
+owned resources being garbage collected by Kubernetes.
+
+1. Remove any OwnerReferences from resources in your cluster that have `apiGroup: projectcalico.org/v3`.
+1. Perform the upgrade normally.
+1. Add new OwnerReferences to your resources referencing the new UID.
+
+### Default Deny
+
+$[prodname] creates a default-deny for the calico-system namespace. If you deploy workloads into the calico-system namespace, you must create policy that allows the required traffic for your workloads prior to upgrade.
+
+### Windows
+
+If your cluster has Windows nodes and uses custom TLS certificates for log storage, prior to upgrade, prepare and apply new certificates for [log storage](../../../operations/comms/log-storage-tls.mdx) that include the required service DNS names.
+
+### Multi-cluster management
+
+For $[prodname] v3.5 and v3.7, upgrading multi-cluster management setups must include updating all managed and management clusters.
+
+### Egress gateway
+
+If your cluster has egress gateway in a non-default namespace, ensure the namespace is privileged by adding the following to the namespace:
+
+##### Label
+```
+openshift.io/run-level: "0"
+pod-security.kubernetes.io/enforce: privileged
+pod-security.kubernetes.io/enforce-version: latest
+```
+##### Annotation
+```
+security.openshift.io/scc.podSecurityLabelSync: "false"
+```
+
+## Download the new manifests
+
+Make a manifests directory.
+
+```bash
+mkdir manifests
+```
+
+<InstallOpenShiftManifests upgradeFrom='Enterprise' />
+
+# Upgrade from 3.0 or later
+
+:::note
+
+The steps differ based on your cluster type. If you are unsure of your cluster type, look at the field `clusterManagementType` when you run `oc get installation -o yaml` before you proceed.
+
+:::
+
+1. Apply the updated manifests.
+
+   ```bash
+   oc apply --server-side --force-conflicts -f manifests/
+   ```
+
+1. <OpenShiftPrometheusOperator operation='upgrade' />
+
+1. If your cluster is a management cluster, apply a [ManagementCluster](../../../reference/installation/api.mdx#operator.tigera.io/v1.ManagementCluster)
+   CR to your cluster.
+
+   ```bash
+   oc apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: ManagementCluster
+   metadata:
+     name: tigera-secure
+   EOF
+   ```
+
+1. If your cluster is v3.7 or older, apply a new [Monitor](../../../reference/installation/api.mdx#operator.tigera.io/v1.Monitor)
+   CR to your cluster.
+
+   ```bash
+   oc apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: Monitor
+   metadata:
+     name: tigera-secure
+   EOF
+   ```
+
+1. If your cluster is v3.16 or older, apply a new [PolicyRecommendation](../../../reference/installation/api.mdx#operator.tigera.io/v1.PolicyRecommendation)
+   CR to your cluster.
+
+   ```bash
+   oc apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: PolicyRecommendation
+   metadata:
+     name: tigera-secure
+   EOF
+   ```
+
+1. If your cluster was at one time v3.18 or older, remove deprecated fields from the [Manager](../../../reference/installation/api.mdx#operator.tigera.io/v1.Manager).
+
+   ```bash
+   oc apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: Manager
+   metadata:
+     name: tigera-secure
+   EOF
+   ```
+
+1. If your cluster is v3.19 or older, apply a new [PacketCaptureAPI](../../../reference/installation/api.mdx#operator.tigera.io/v1.PacketCaptureAPI)
+    CR to your cluster.
+
+   ```bash
+   oc apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: PacketCaptureAPI
+   metadata:
+     name: tigera-secure
+   EOF
+   ```
+
+1. You can now monitor the upgrade progress with the following command:
+
+   ```bash
+   watch oc get tigerastatus
+   ```
+
+   :::note
+
+   If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
+
+   :::
+
+1. Remove unused policies in your cluster.
+
+   If your cluster is a **managed** cluster, run this command:
+
+   ```bash
+   kubectl delete -f $[filesUrl]/manifests/default-tier-policies-managed.yaml
+   ```
+
+   For other clusters, run this command:
+
+   ```bash
+   kubectl delete -f $[filesUrl]/manifests/default-tier-policies.yaml
+   ```
