@@ -1,6 +1,4 @@
-// import { render } from '../../../tests/helper';
 import { render } from '@testing-library/react';
-
 import Explore from '../index';
 
 describe('<Explore/>', () => {
