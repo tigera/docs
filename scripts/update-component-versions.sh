@@ -31,6 +31,10 @@ get_product_branch_ref() {
   local version=$1
   if [ $version != "master" ]; then
     : ${GIT_VERSION_REF:=$(echo "$version" | cut -d. -f1,2)}
+    : ${GIT_VERSION_SUFFIX:=$(echo "${version}" | cut -d- -f2 | cut -d. -f1)}
+    if [[ "${GIT_VERSION_SUFFIX}" == "1" ]]; then
+      GIT_VERSION_REF="${GIT_VERSION_REF}-${GIT_VERSION_SUFFIX}"
+    fi
     echo "?ref=${product_branch_prefix_dict[$PRODUCT]}-v${GIT_VERSION_REF#v}"
   fi
 }
