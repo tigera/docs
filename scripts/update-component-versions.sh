@@ -43,11 +43,11 @@ get_product_version_info() {
   local version=$1
   product_branch_ref=$(get_product_branch_ref $version)
   api_url="https://api.github.com/repos/${product_repo_dict[$PRODUCT]}/contents/calico/_data/versions.yml${product_branch_ref}"
-  versions_yml=$(curl -H 'Accept: application/vnd.github.v3.raw' -H "Authorization: token ${GITHUB_TOKEN}" "${api_url}")
+  versions_yml=$(curl -fsSL -H 'Accept: application/vnd.github.v3.raw' -H "Authorization: token ${GITHUB_TOKEN}" "${api_url}")
   yq "
   ... comments=\"\" | .[] |
-  select(.title == \"v${VERSION}\" or .title == \"${VERSION}\")
-  " <(echo "$versions_yml")
+  select(.title == \"v${VERSION}\" or .title == \"${VERSION}\") 
+  " <(echo "$versions_yml") | scripts/versions/format-versions
 }
 
 get_docs_folder_path() {
@@ -76,9 +76,11 @@ update_calico_enterprise_version() {
   local release_title=v${VERSION}
   local release_stream=$(echo ${VERSION} | cut -d. -f1,2)
   local docs_base_url="/calico-enterprise/${release_stream}"
+
   if [ "${IS_LATEST}" == "true" ]; then
     docs_base_url="/calico-enterprise/latest"
   fi
+
   cat <<EOF >${docs_folder_path}/variables.js
 const releases = require('./releases.json');
 const componentImage = require('../../src/components/utils/componentImage');
@@ -88,8 +90,10 @@ const variables = {
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'v${release_stream}',
+  openSourceVersion: releases[0].calico.minor_version.slice(1),
   baseUrl: '${docs_base_url}',
   filesUrl: 'https://downloads.tigera.io/ee/${release_title}',
+  rpmsUrl: 'https://downloads.tigera.io/ee/rpms/v${release_stream}',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/${release_stream}',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',

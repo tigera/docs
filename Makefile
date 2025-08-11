@@ -126,6 +126,18 @@ show_current_branches:
 	$(foreach CAL_BRANCH,$(CALICO_CLOUD_BRANCHES),$(info * $(CAL_BRANCH)))
 	@true
 
+scripts/versions/format-versions: scripts/versions/go.* scripts/versions/main.go
+ifdef LOCAL_BUILD
+	make -C scripts/versions
+else
+	docker run --rm --net=host \
+	-e LOCAL_USER_ID=$(LOCAL_USER_ID) \
+	-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
+	-v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
+	-w /go/src/$(PACKAGE_NAME) \
+	$(CALICO_BUILD) make -C scripts/versions
+endif
+
 .PHONY: build-operator-reference
 build-operator-reference:
 	@mkdir -p .go-pkg-cache && \
@@ -199,7 +211,7 @@ run-update-cloud-image-list:
 # 	e.g. for new versions of v3.18.0-2, DOCS_VERSION_STREAM=3.18-2
 # If the version to updates is the latest version for the product, specify IS_LATEST=true
 # 	e.g. if 3,18,1 is the latest version, IS_LATEST=true
-version/autogen:
+version/autogen: scripts/versions/format-versions
 	$(if $(GITHUB_TOKEN),,$(error GITHUB_TOKEN is not set or empty, but is required))
 	$(if $(PRODUCT),,$(error PRODUCT is not set or empty, but is required))
 	$(if $(VERSION),,$(error VERSION is not set or empty, but is required))
