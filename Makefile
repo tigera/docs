@@ -38,7 +38,7 @@ NODE_VER=22
 YARN=yarn
 YARN_ACTION_SUFFIX=
 ifeq ($(CONTAINERIZED),true)
-YARN=docker run -i --rm -v "$(shell pwd):/docs" -p 127.0.0.1:3000:3000 -w /docs node:$(NODE_VER) corepack enable && yarn
+	YARN=docker run --name docs-node -u node -it --rm -v "$(shell pwd):/docs" -v "$(shell pwd)/container.yarnrc.yml:/docs/.yarnrc.yml" -p 127.0.0.1:3000:3000 -w /docs node_with_corepack:$(NODE_VER) yarn
 YARN_ACTION_SUFFIX=-container
 endif
 
@@ -70,8 +70,28 @@ test: init
 clear clean:
 	$(YARN) clear
 
+# manual-clean is for when switching between local yarn commands and containerized
+# This is because the new yarn type might not be functional to run the regular clear/clean
+# but we need the environment clean to attempt the new yarn type.
+.PHONY: manual-clean
+manual-clean:
+	rm -rf node_modules .yarn .docusaurus build
+
 .PHONY: init
 init:
+ifeq ($(CONTAINERIZED),true)
+	# Create a modified yarnrc for use in the container environment
+	cp .yarnrc.yml container.yarnrc.yml
+	echo "globalFolder: /docs/.yarn" >> container.yarnrc.yml
+	# Build our custom node image that has corepack enabled
+	# repeated calls to this will be quick as the layers will be cached
+	docker buildx build --build-arg "NODE_VER=$(NODE_VER)" --build-arg "UID=$(shell id -u)" -t node_with_corepack:$(NODE_VER) --load -f Dockerfile.node .
+	if [ -f .yarn_type ] && [ "$$(cat .yarn_type)" != "containerized" ]; then $(MAKE) manual-clean; fi
+	echo containerized > .yarn_type
+else
+	if [ -f .yarn_type ] && [ "$$(cat .yarn_type)" != "local" ]; then $(MAKE) manual-clean; fi
+	echo local > .yarn_type
+endif
 	$(YARN) install
 
 .PHONY: serve
