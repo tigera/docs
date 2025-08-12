@@ -6,11 +6,13 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
+// Components where the component's key in the map is different from the docker image name
 var imageNameMaps = map[string]string{
 	"cnx-kube-controllers":        "kube-controllers",
 	"csi-node-driver-registrar":   "node-driver-registrar",
@@ -25,12 +27,19 @@ var imageNameMaps = map[string]string{
 	"tigera-prometheus-service":   "prometheus-service",
 }
 
+// Components that we want to remove from the components list entirely
 var componentsToPrune = []string{
 	"calico-private",
 }
 
+// Components where the key in the upstream yaml file is different from what's present in docs
 var componentsToRename = map[string]string{
 	"upstream-fluentd": "coreos-fluentd",
+}
+
+// Components that we leave as-is without updating
+var componentsToIgnore = []string{
+	"upstream-dex",
 }
 
 // TigeraOperator represents the tigera-operator configuration
@@ -68,6 +77,11 @@ func (c Components) revalidate() {
 
 	// Filter the remaining components to ensure their versions and image names are correct
 	for componentName, component := range c {
+		// Skip over ignored components
+		if slices.Contains(componentsToIgnore, componentName) {
+			continue
+		}
+
 		// We specify coreos and ECK components, even though they don't have images
 		// for those components. The actual images are listed under separate components.
 		if strings.HasPrefix(componentName, "coreos-") || strings.HasPrefix(componentName, "eck-") {
