@@ -1,0 +1,16 @@
+# This Dockerfile is for use with the containerized versions of the docs Make commands
+# To avoid needing to call `corepack enable` as part of all our commands, the Dockerfile
+# runs the corepack enable command so the running of the command is cached in the docker
+# image we use.
+
+ARG NODE_VER=latest
+FROM node:${NODE_VER}
+
+# Make sure we're not prompted when corepack is going to download packages.
+# This is needed because we're running docker with a pseudo-TTY so that we can kill yarn
+# with a Ctrl+c
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
+
+ARG UID=1000
+RUN usermod -u $UID node
