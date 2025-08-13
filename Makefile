@@ -132,6 +132,8 @@ ifdef LOCAL_BUILD
 else
 	docker run --rm --net=host \
 	-e LOCAL_USER_ID=$(LOCAL_USER_ID) \
+	-e GOOS=$(shell go env GOOS) \
+	-e GOARCH=$(shell go env GOARCH) \
 	-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
 	-v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
 	-w /go/src/$(PACKAGE_NAME) \
