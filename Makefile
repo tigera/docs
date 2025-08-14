@@ -213,11 +213,23 @@ run-update-cloud-image-list:
 # 	e.g. for new versions of v3.18.0-2, DOCS_VERSION_STREAM=3.18-2
 # If the version to updates is the latest version for the product, specify IS_LATEST=true
 # 	e.g. if 3,18,1 is the latest version, IS_LATEST=true
+
+VERSION_ALL_VERSIONS=$(foreach version,$(wildcard calico-enterprise_versioned_docs/*),version/autogen/$(version:calico-enterprise_versioned_docs/version-%=%))
+
+version/autogenall: $(VERSION_ALL_VERSIONS)
+
+version/autogen/%:
+	$(info Building $@)
+	@$(MAKE) --no-print-directory version/autogen \
+		PRODUCT=calico-enterprise \
+		DOCS_VERSION_STREAM=$* \
+		VERSION=$(shell jq -r '.[0].title' calico-enterprise_versioned_docs/version-$*/releases.json)
+
 version/autogen: scripts/versions/format-versions
 	$(if $(GITHUB_TOKEN),,$(error GITHUB_TOKEN is not set or empty, but is required))
 	$(if $(PRODUCT),,$(error PRODUCT is not set or empty, but is required))
 	$(if $(VERSION),,$(error VERSION is not set or empty, but is required))
-	./scripts/update-component-versions.sh
+	@./scripts/update-component-versions.sh
 
 # Call the github API. $(1) is the http method type for the https request, $(2) is the repo slug, and is $(3) is for json
 # data (if omitted then no data is set for the request). If GITHUB_API_EXIT_ON_FAILURE is set then the macro exits with 1

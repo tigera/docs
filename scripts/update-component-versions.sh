@@ -75,10 +75,44 @@ update_calico_enterprise_version() {
   fi
   local release_title=v${VERSION}
   local release_stream=$(echo ${VERSION} | cut -d. -f1,2)
+  local release_stream_minor=${release_stream#3.}
   local docs_base_url="/calico-enterprise/${release_stream}"
+
+  latest_count=$(grep -F "/calico-enterprise/latest" calico-enterprise_versioned_docs/version-*/variables.js | wc -l)
+
+  # None of the current versions are set as latest, so we should make sure the user sets one
+  if [ ${latest_count} -eq 0 ] && [ "${IS_LATEST}" != "true" ]; then
+    echo >&2 "No versions are set as latest; please run one of the version/autogen targets with IS_LATEST=true"
+    exit 1
+  fi
+
+  # There's more than one 'latest', this is one of them, and we've *not* specified
+  # this one should be latest, so we're fixing the problem.
+  if [ ${latest_count} -gt 1 ] && \
+    grep -F -q "/calico-enterprise/latest" "${docs_folder_path}/variables.js" && \
+    [ "${IS_LATEST}" != "true" ]; then
+    echo >&2 "[warn] More than one version is set as latest, including this one, but we're unsetting this one"
+
+  # Otherwise, bail out and force the user to fix the invalid one(s) first.
+  elif [ ${latest_count} -gt 1 ]; then
+    echo >&2 "Currently ${latest_count} versions are set as latest. Please regenerate any which are incorrect first:"
+    grep -F --files-with-matches "/calico-enterprise/latest" calico-enterprise_versioned_docs/version-*/variables.js | sed 's/^/    /'
+    exit 1
+  fi
+
+  if [ ${latest_count} -eq 1 ] && grep -F -q "/calico-enterprise/latest" "${docs_folder_path}/variables.js"; then
+    echo "[info] Release ${release_stream} is set as latest in docs, keeping it as latest for now"
+    IS_LATEST=true
+  fi
 
   if [ "${IS_LATEST}" == "true" ]; then
     docs_base_url="/calico-enterprise/latest"
+  fi
+
+  if [ ${release_stream_minor} -ge 20 ]; then
+    rpmsUrl="rpmsUrl: 'https://downloads.tigera.io/ee/rpms/v${release_stream}',"
+  else
+    rpmsUrl="// No rpmsUrl for this release"
   fi
 
   cat <<EOF >${docs_folder_path}/variables.js
@@ -93,7 +127,7 @@ const variables = {
   openSourceVersion: releases[0].calico.minor_version.slice(1),
   baseUrl: '${docs_base_url}',
   filesUrl: 'https://downloads.tigera.io/ee/${release_title}',
-  rpmsUrl: 'https://downloads.tigera.io/ee/rpms/v${release_stream}',
+  ${rpmsUrl}
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/${release_stream}',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
