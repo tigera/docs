@@ -126,6 +126,20 @@ show_current_branches:
 	$(foreach CAL_BRANCH,$(CALICO_CLOUD_BRANCHES),$(info * $(CAL_BRANCH)))
 	@true
 
+scripts/versions/format-versions: scripts/versions/go.* scripts/versions/main.go
+ifdef LOCAL_BUILD
+	make -C scripts/versions
+else
+	docker run --rm --net=host \
+	-e LOCAL_USER_ID=$(LOCAL_USER_ID) \
+	-e GOOS=$(shell go env GOOS) \
+	-e GOARCH=$(shell go env GOARCH) \
+	-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
+	-v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
+	-w /go/src/$(PACKAGE_NAME) \
+	$(CALICO_BUILD) make -C scripts/versions
+endif
+
 .PHONY: build-operator-reference
 build-operator-reference:
 	@mkdir -p .go-pkg-cache && \
@@ -199,11 +213,26 @@ run-update-cloud-image-list:
 # 	e.g. for new versions of v3.18.0-2, DOCS_VERSION_STREAM=3.18-2
 # If the version to updates is the latest version for the product, specify IS_LATEST=true
 # 	e.g. if 3,18,1 is the latest version, IS_LATEST=true
-version/autogen:
+
+VERSION_ALL_VERSIONS=$(foreach version,$(wildcard calico-enterprise_versioned_docs/*),version/autogen/$(version:calico-enterprise_versioned_docs/version-%=%))
+
+# This target updates *the current versions* based on what is present in calico-private. It will
+# not (to my knowledge) add a new version which has not yet been added to the docs.
+version/updateall: $(VERSION_ALL_VERSIONS)
+	$(info [info] All current versions have been updated, but please check `git diff` to ensure the values are correct!)
+
+version/autogen/%:
+	$(info Building $@)
+	@$(MAKE) --no-print-directory version/autogen \
+		PRODUCT=calico-enterprise \
+		DOCS_VERSION_STREAM=$* \
+		VERSION=$(shell jq -r '.[0].title' calico-enterprise_versioned_docs/version-$*/releases.json)
+
+version/autogen: scripts/versions/format-versions
 	$(if $(GITHUB_TOKEN),,$(error GITHUB_TOKEN is not set or empty, but is required))
 	$(if $(PRODUCT),,$(error PRODUCT is not set or empty, but is required))
 	$(if $(VERSION),,$(error VERSION is not set or empty, but is required))
-	./scripts/update-component-versions.sh
+	@./scripts/update-component-versions.sh
 
 # Call the github API. $(1) is the http method type for the https request, $(2) is the repo slug, and is $(3) is for json
 # data (if omitted then no data is set for the request). If GITHUB_API_EXIT_ON_FAILURE is set then the macro exits with 1
