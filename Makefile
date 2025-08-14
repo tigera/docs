@@ -216,7 +216,10 @@ run-update-cloud-image-list:
 
 VERSION_ALL_VERSIONS=$(foreach version,$(wildcard calico-enterprise_versioned_docs/*),version/autogen/$(version:calico-enterprise_versioned_docs/version-%=%))
 
-version/autogenall: $(VERSION_ALL_VERSIONS)
+# This target updates *the current versions* based on what is present in calico-private. It will
+# not (to my knowledge) add a new version which has not yet been added to the docs.
+version/updateall: $(VERSION_ALL_VERSIONS)
+	$(info [info] All current versions have been updated, but please check `git diff` to ensure the values are correct!)
 
 version/autogen/%:
 	$(info Building $@)
