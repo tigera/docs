@@ -98,6 +98,10 @@ endif
 serve: build
 	$(YARN) serve$(YARN_ACTION_SUFFIX)
 
+.PHONY: serve-next
+serve-next: build-next
+	$(YARN) serve$(YARN_ACTION_SUFFIX)
+
 .PHONY: full
 full: clean build
 
