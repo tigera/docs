@@ -303,3 +303,13 @@ endif
 release-prep/create-pr:
 	$(call github_pr_create,$(GIT_REPO_SLUG),[$(GIT_PR_BRANCH_BASE)] $(if $(SEMAPHORE), Semaphore,) Auto Release Update for $(PRODUCT) $(VERSION),$(GIT_PR_BRANCH_HEAD),$(GIT_PR_BRANCH_BASE))
 	echo 'Created release update pull request for $(VERSION): $(PR_NUMBER)'
+
+.PHONY: vale
+# Run vale against the specified PRODUCT. There will probably be lots of failures
+# because there needs to be a general review and update to resolve all the existing issues.
+# Vale is currently used to test new changes.
+vale:
+	docker run --rm \
+		-v $(CURDIR)/.github/styles:/styles \
+		-v $(CURDIR):/docs \
+		-w /docs/$(PRODUCT) jdkato/vale .
