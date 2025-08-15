@@ -199,18 +199,8 @@ module.exports = {
             'operations/ebpf/use-cases-ebpf',
             'operations/ebpf/enabling-ebpf',
             'operations/ebpf/install',
-            {
-              type: 'category',
-              label: 'Install in eBPF mode',
-              link: {
-                type: 'doc',
-                id: 'operations/ebpf/install-opt2'
-              },
-              items: [
-                'operations/ebpf/install-opt2-auto',
-                'operations/ebpf/install-opt2-manual',
-              ],
-            },            
+            'operations/ebpf/install-opt2',
+            'operations/ebpf/install-opt3',
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },

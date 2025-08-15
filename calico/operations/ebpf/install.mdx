@@ -3,7 +3,7 @@ description: Install Calico in eBPF mode.
 ---
 import InstallBPFGuide from '@site/calico/_includes/components/InstallBPFGuide';
 
-# Install in eBPF mode
+# Install in eBPF mode - Opt1: tabs
 
 import EbpfValue from '@site/calico/_includes/content/_ebpf-value.mdx';
 
@@ -13,6 +13,10 @@ import TabItem from '@theme/TabItem';
 ## Big picture
 
 Install the eBPF data plane during the initial installation of $[prodname].
+
+## Before you begin
+<details>
+  <summary>Learn more about eBPF: Concepts, Supported platforms, Performance, etc.</summary>
 
 ## Value
 
@@ -27,9 +31,7 @@ low-level hooks in the Linux kernel. eBPF has a wide variety of uses, including 
 You’ll see a lot of non-networking projects leveraging eBPF, but for $[prodname] our focus is on networking,
 and in particular, pushing the networking capabilities of the latest Linux kernels to the limit.
 
-## Before you begin
-
-### Supported
+## Supported
 
 - x86-64
 - arm64 (little-endian)
@@ -61,7 +63,7 @@ Limitations:
 
 To enable IPv6 in eBPF mode, see [Configure dual stack or IPv6 only](../../networking/ipam/ipv6.mdx). You may be able to run with non-Calico IPAM. eks-cni is known to work.
 
-### Not supported
+## Not supported
 
 - Other processor architectures.
 
@@ -80,7 +82,7 @@ To enable IPv6 in eBPF mode, see [Configure dual stack or IPv6 only](../../netwo
 - SCTP (either for policy or services).
 - Tagged VLAN devices.
 
-### Performance
+## Performance
 
 For best pod-to-pod performance, we recommend using an underlying network that doesn't require Calico to use an overlay. For example:
 
@@ -90,6 +92,8 @@ For best pod-to-pod performance, we recommend using an underlying network that d
 
 If you must use an overlay, we recommend that you use VXLAN, not IPIP. VXLAN has better performance than IPIP in
 eBPF mode due to various kernel optimisations.
+
+</details>
 
 ## How to
 
@@ -102,19 +106,64 @@ main installation guides:
 - Apply a set of Custom Resources to tell the operator what to install.
 - Wait for the operator to provision all the associated resources and report back via its status resource.
 
-There are two ways to install in eBPF mode with Operator: Auto and Manual configuration.
+To install directly in eBPF is very similar; this guide explains the differences:
 
-### Auto config
-<details>
-  <summary>How configure Operator to auto enable eBPF</summary>
-    <InstallBPFGuide installMode="auto"/>
-</details>
+<Tabs>
+<TabItem id="test" label="Auto config" value="Auto-0">
 
-### Manual config
-<details>
-  <summary>How to manually enable eBPF</summary>
-    <InstallBPFGuide installMode="manual"/>
-</details>
+You can follow the default [Operator installation](../../getting-started/kubernetes/quickstart) if your cluster meet the following requisites:
+ - Installation with Operator.
+ - Your cluster has `kube-proxy` running in the `kube-system` namespace.
+ - `kube-proxy` is not managed by an automated tool, such as Helm or ArgoCD.
+ - Operator can access `kubernetes` service and endpoints.
+
+To do this, instead of applying `custom-resources.yaml` directly using kubectl create on **Step 2**, download the file first so you can edit it:
+
+```bash
+ curl -o custom-resources.yaml $[manifestsUrl]/manifests/custom-resources.yaml
+```
+
+Edit the file and find the `Installation` resource, (usually at the top).
+To enable eBPF mode, add a `calicoNetwork` section inside the `spec` with the `bpfInstallMode` and `linuxDataplane` fields. 
+For EKS Bottlerocket, also include the `flexVolumePath` field.
+
+For example:
+
+```yaml
+# This section includes base $[prodname] installation configuration.
+
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+   # Added calicoNetwork section with linuxDataplane field
+  calicoNetwork:
+    linuxDataplane: BPF
+    bpfInstallMode: Auto
+
+   # EKS with Bottlerocket as node image only:
+   # flexVolumePath: /var/lib/kubelet/plugins
+
+   # Install Calico Open Source
+   variant: Calico
+
+```
+
+Then apply the edited file:
+
+```bash
+kubectl create -f custom-resources.yaml
+```
+</TabItem>
+
+<TabItem label="Manual config" value="<Manual-1">
+
+<InstallBPFGuide installMode="manual"/>
+
+</TabItem>
+
+</Tabs>
 
 ## Next steps
 

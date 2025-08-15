@@ -21,7 +21,7 @@ export default function InstallBPFGuide(props) {
           <li>Installation with Operator.</li>
           <li>Your cluster has <code>kube-proxy</code> running in the <code>kube-system</code> namespace.</li>
           <li><code>kube-proxy</code> is <strong>not</strong> managed by an automated tool, such as Helm or ArgoCD.</li>
-          <li>Operator can access <code>kube-proxy</code> service and endpoints.</li>
+          <li>Operator can access <code>kubernetes</code> service and endpoints.</li>
         </ul>
       </When>
 
@@ -302,7 +302,7 @@ metadata:
 spec:
   # Added calicoNetwork section with linuxDataplane field
   calicoNetwork:
-${props.installMode === "auto" ? '    bpfInstallMode: "Auto"\n' : ''}    linuxDataplane: BPF
+${props.installMode === "auto" ? '    bpfInstallMode: Auto\n' : ''}    linuxDataplane: BPF
 
   # EKS with Bottlerocket as node image only:
   # flexVolumePath: /var/lib/kubelet/plugins
