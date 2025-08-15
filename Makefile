@@ -35,6 +35,14 @@ IA_OPERATOR_VERSION?=v1.17.7
 
 NODE_VER=22
 
+ifeq ($(OS),Windows_NT)
+BUILDARCH = x86_64
+BUILDOS = Windows
+else
+BUILDOS ?= $(shell uname -s)
+BUILDARCH ?= $(shell uname -m)
+endif
+
 YARN=yarn
 YARN_ACTION_SUFFIX=
 ifeq ($(CONTAINERIZED),true)
@@ -211,6 +219,27 @@ build-ia-operator-reference:
 					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
 					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx && \
                     /go/src/$(PACKAGE_NAME)/scripts/api-jsx.sh /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx'
+
+#Note this should not have the `v` prefix
+CRD_REF_DOCS_VER=0.2.0
+CRD_DOC_GENERATOR=.bin/crd-ref-docs.$(CRD_REF_DOCS_VER)
+$(CRD_DOC_GENERATOR):
+	@mkdir -p .bin
+	@curl -fsSL --retry 5 -o .bin/crd-ref-docs.$(CRD_REF_DOCS_VER).tar.gz https://github.com/elastic/crd-ref-docs/releases/download/v$(CRD_REF_DOCS_VER)/crd-ref-docs_$(CRD_REF_DOCS_VER)_$(BUILDOS)_$(BUILDARCH).tar.gz
+	@cd .bin && tar -xv --get crd-ref-docs -f crd-ref-docs.$(CRD_REF_DOCS_VER).tar.gz
+	@mv .bin/crd-ref-docs $@
+
+build-crd-reference-docs: $(CRD_DOC_GENERATOR)
+	@rm -rf builder && mkdir builder
+	@op_ver=$$(jq ".[0].\"tigera-operator\".version" -r $(PRODUCT)/releases.json) && \
+		echo "Checking out operator $$op_ver" && \
+		git clone -c advice.detachedHead=false -q --depth=1 -b $$op_ver https://github.com/tigera/operator builder/operator
+	$(CRD_DOC_GENERATOR) --source-path=builder/operator/api/v1 \
+		--config=$(PRODUCT)/reference/installation/_crd-ref-docs/config.yaml \
+		--renderer=markdown --max-depth=20 \
+		--templates-dir=$(PRODUCT)/reference/installation/_crd-ref-docs/templates \
+		--output-path=builder
+	@cp builder/out.md $(PRODUCT)/reference/installation/_api.md
 
 update-cloud-image-list:
 	@if [ -z "${RUN_UPDATE_CLOUD_IMAGE_LIST}" ]; then echo "Use 'make run-update-cloud-image-list' instead"; false; fi
