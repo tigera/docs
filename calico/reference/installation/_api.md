@@ -1,0 +1,2517 @@
+Packages
+- [operator.tigera.io/v1](#operatortigeraiov1)
+
+
+{/* value off */}
+
+## operator.tigera.io/v1
+
+API Schema definitions for configuring the installation of Calico and Calico Enterprise
+
+Package v1 contains API Schema definitions for the operator v1 API group
+
+Resource Types
+- [APIServer](#apiserver)
+- [GatewayAPI](#gatewayapi)
+- [Goldmane](#goldmane)
+- [ImageSet](#imageset)
+- [Installation](#installation)
+- [TigeraStatus](#tigerastatus)
+- [Whisker](#whisker)
+
+
+
+### APIServer
+
+
+
+APIServer installs the Tigera API server and related resources. At most one instance
+of this resource is supported. It must be named "default" or "tigera-secure".
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `operator.tigera.io/v1` |
+| `kind` _string_ | `APIServer` |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[APIServerSpec](#apiserverspec)_ | Specification of the desired state for the Tigera API server. |
+| `status` _[APIServerStatus](#apiserverstatus)_ | Most recently observed status for the Tigera API server. |
+
+
+### APIServerDeployment
+
+
+
+APIServerDeployment is the configuration for the API server Deployment.
+
+_Appears in:_
+- [APIServerSpec](#apiserverspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[APIServerDeploymentSpec](#apiserverdeploymentspec)_ | (Optional) Spec is the specification of the API server Deployment. |
+
+
+### APIServerDeploymentContainer
+
+
+
+APIServerDeploymentContainer is an API server Deployment container.
+
+_Appears in:_
+- [APIServerDeploymentPodSpec](#apiserverdeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the API server Deployment container by name.<br />Supported values are: calico-apiserver, tigera-queryserver, calico-l7-admission-controller |
+| `ports` _[APIServerDeploymentContainerPort](#apiserverdeploymentcontainerport) array_ | (Optional) Ports allows customization of container's ports.<br />If specified, this overrides the named APIServer Deployment container's ports.<br />If omitted, the API server Deployment will use its default value for this container's port. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named API server Deployment container's resources.<br />If omitted, the API server Deployment will use its default value for this container's resources.<br />If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+
+
+### APIServerDeploymentContainerPort
+
+
+
+
+
+_Appears in:_
+- [APIServerDeploymentContainer](#apiserverdeploymentcontainer)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the API server Deployment Container port by name.<br />Supported values are: apiserver, queryserver, l7admctrl |
+| `containerPort` _integer_ | Number of port to expose on the pod's IP address.<br />This must be a valid port number, 0 < x < 65536. |
+
+
+### APIServerDeploymentInitContainer
+
+
+
+APIServerDeploymentInitContainer is an API server Deployment init container.
+
+_Appears in:_
+- [APIServerDeploymentPodSpec](#apiserverdeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the API server Deployment init container by name.<br />Supported values are: calico-apiserver-certs-key-cert-provisioner |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named API server Deployment init container's resources.<br />If omitted, the API server Deployment will use its default value for this init container's resources. |
+
+
+### APIServerDeploymentPodSpec
+
+
+
+APIServerDeploymentDeploymentPodSpec is the API server Deployment's PodSpec.
+
+_Appears in:_
+- [APIServerDeploymentPodTemplateSpec](#apiserverdeploymentpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `initContainers` _[APIServerDeploymentInitContainer](#apiserverdeploymentinitcontainer) array_ | (Optional) InitContainers is a list of API server init containers.<br />If specified, this overrides the specified API server Deployment init containers.<br />If omitted, the API server Deployment will use its default values for its init containers. |
+| `containers` _[APIServerDeploymentContainer](#apiserverdeploymentcontainer) array_ | (Optional) Containers is a list of API server containers.<br />If specified, this overrides the specified API server Deployment containers.<br />If omitted, the API server Deployment will use its default values for its containers. |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the API server pods.<br />If specified, this overrides any affinity that may be set on the API server Deployment.<br />If omitted, the API server Deployment will use its default value for affinity.<br />WARNING: Please note that this field will override the default API server Deployment affinity. |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is the API server pod's scheduling constraints.<br />If specified, each of the key/value pairs are added to the API server Deployment nodeSelector provided<br />the key does not already exist in the object's nodeSelector.<br />If used in conjunction with ControlPlaneNodeSelector, that nodeSelector is set on the API server Deployment<br />and each of this field's key/value pairs are added to the API server Deployment nodeSelector provided<br />the key does not already exist in the object's nodeSelector.<br />If omitted, the API server Deployment will use its default value for nodeSelector.<br />WARNING: Please note that this field will modify the default API server Deployment nodeSelector. |
+| `topologySpreadConstraints` _[TopologySpreadConstraint](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#topologyspreadconstraint-v1-core) array_ | (Optional) TopologySpreadConstraints describes how a group of pods ought to spread across topology<br />domains. Scheduler will schedule pods in a way which abides by the constraints.<br />All topologySpreadConstraints are ANDed. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the API server pod's tolerations.<br />If specified, this overrides any tolerations that may be set on the API server Deployment.<br />If omitted, the API server Deployment will use its default value for tolerations.<br />WARNING: Please note that this field will override the default API server Deployment tolerations. |
+| `priorityClassName` _string_ | (Optional) PriorityClassName allows to specify a PriorityClass resource to be used. |
+
+
+### APIServerDeploymentPodTemplateSpec
+
+
+
+APIServerDeploymentPodTemplateSpec is the API server Deployment's PodTemplateSpec
+
+_Appears in:_
+- [APIServerDeploymentSpec](#apiserverdeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[APIServerDeploymentPodSpec](#apiserverdeploymentpodspec)_ | (Optional) Spec is the API server Deployment's PodSpec. |
+
+
+### APIServerDeploymentSpec
+
+
+
+APIServerDeploymentSpec defines configuration for the API server Deployment.
+
+_Appears in:_
+- [APIServerDeployment](#apiserverdeployment)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created Deployment pod should<br />be ready without any of its container crashing, for it to be considered available.<br />If specified, this overrides any minReadySeconds value that may be set on the API server Deployment.<br />If omitted, the API server Deployment will use its default value for minReadySeconds. |
+| `template` _[APIServerDeploymentPodTemplateSpec](#apiserverdeploymentpodtemplatespec)_ | (Optional) Template describes the API server Deployment pod that will be created. |
+
+
+### APIServerLogging
+
+
+
+
+
+_Appears in:_
+- [APIServerPodLogging](#apiserverpodlogging)
+
+| Field | Description |
+| --- | --- |
+| `logSeverity` _[LogSeverity](#logseverity)_ | (Optional) LogSeverity defines log level for APIServer container. |
+
+
+### APIServerPodLogging
+
+
+
+
+
+_Appears in:_
+- [APIServerSpec](#apiserverspec)
+
+| Field | Description |
+| --- | --- |
+| `apiServer` _[APIServerLogging](#apiserverlogging)_ | (Optional)  |
+| `queryServer` _[QueryServerLogging](#queryserverlogging)_ | (Optional)  |
+
+
+### APIServerSpec
+
+
+
+APIServerSpec defines the desired state of Tigera API server.
+
+_Appears in:_
+- [APIServer](#apiserver)
+
+| Field | Description |
+| --- | --- |
+| `logging` _[APIServerPodLogging](#apiserverpodlogging)_ | (Optional)  |
+| `apiServerDeployment` _[APIServerDeployment](#apiserverdeployment)_ | APIServerDeployment configures the calico-apiserver Deployment. If<br />used in conjunction with ControlPlaneNodeSelector or ControlPlaneTolerations, then these overrides<br />take precedence. |
+
+
+### APIServerStatus
+
+
+
+APIServerStatus defines the observed state of Tigera API server.
+
+_Appears in:_
+- [APIServer](#apiserver)
+
+| Field | Description |
+| --- | --- |
+| `state` _string_ | State provides user-readable status. |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of<br />Ready, Progressing, Degraded or other customer types. |
+
+
+
+
+### AssignmentMode
+
+_Underlying type:_ _string_
+
+
+
+_Appears in:_
+- [IPPool](#ippool)
+
+| Field | Description |
+| --- | --- |
+| `Automatic` |  |
+| `Manual` |  |
+
+
+### Azure
+
+
+
+
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `policyMode` _[PolicyMode](#policymode)_ | (Optional) PolicyMode determines whether the "control-plane" label is applied to namespaces. It offers two options: Default and Manual.<br />The Default option adds the "control-plane" label to the required namespaces.<br />The Manual option does not apply the "control-plane" label to any namespace.<br />Default: Default |
+
+
+### BGPOption
+
+_Underlying type:_ _string_
+
+BGPOption describes the mode of BGP to use.
+
+One of: Enabled, Disabled
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Field | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
+
+
+
+
+### CNILogging
+
+
+
+
+
+_Appears in:_
+- [Logging](#logging)
+
+| Field | Description |
+| --- | --- |
+| `logSeverity` _[LogLevel](#loglevel)_ | (Optional) Default: Info |
+| `logFileMaxSize` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#quantity-resource-api)_ | (Optional) Default: 100Mi |
+| `logFileMaxAgeDays` _integer_ | (Optional) Default: 30 (days) |
+| `logFileMaxCount` _integer_ | (Optional) Default: 10 |
+
+
+### CNIPluginType
+
+_Underlying type:_ _string_
+
+CNIPluginType describes the type of CNI plugin used.
+
+One of: Calico, GKE, AmazonVPC, AzureVNET
+
+_Appears in:_
+- [CNISpec](#cnispec)
+
+| Field | Description |
+| --- | --- |
+| `Calico` |  |
+| `GKE` |  |
+| `AmazonVPC` |  |
+| `AzureVNET` |  |
+
+
+### CNISpec
+
+
+
+CNISpec contains configuration for the CNI plugin.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `type` _[CNIPluginType](#cniplugintype)_ | Specifies the CNI plugin that will be used in the Calico or Calico Enterprise installation.<br />* For KubernetesProvider GKE, this field defaults to GKE.<br />* For KubernetesProvider AKS, this field defaults to AzureVNET.<br />* For KubernetesProvider EKS, this field defaults to AmazonVPC.<br />* If aws-node daemonset exists in kube-system when the Installation resource is created, this field defaults to AmazonVPC.<br />* For all other cases this field defaults to Calico.<br />For the value Calico, the CNI plugin binaries and CNI config will be installed as part of deployment,<br />for all other values the CNI plugin binaries and CNI config is a dependency that is expected<br />to be installed separately.<br />Default: Calico |
+| `ipam` _[IPAMSpec](#ipamspec)_ | (Optional) IPAM specifies the pod IP address management that will be used in the Calico or<br />Calico Enterprise installation. |
+| `binDir` _string_ | (Optional) BinDir is the path to the CNI binaries directory.<br />If you have changed the installation directory for CNI binaries in the container runtime configuration,<br />please ensure that this field points to the same directory as specified in the container runtime settings.<br />Default directory depends on the KubernetesProvider.<br />* For KubernetesProvider GKE, this field defaults to "/home/kubernetes/bin".<br />* For KubernetesProvider OpenShift, this field defaults to "/var/lib/cni/bin".<br />* Otherwise, this field defaults to "/opt/cni/bin". |
+| `confDir` _string_ | (Optional) ConfDir is the path to the CNI config directory.<br />If you have changed the installation directory for CNI configuration in the container runtime configuration,<br />please ensure that this field points to the same directory as specified in the container runtime settings.<br />Default directory depends on the KubernetesProvider.<br />* For KubernetesProvider GKE, this field defaults to "/etc/cni/net.d".<br />* For KubernetesProvider OpenShift, this field defaults to "/var/run/multus/cni/net.d".<br />* Otherwise, this field defaults to "/etc/cni/net.d". |
+
+
+### CRDManagement
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Enum: [Reconcile PreferExisting]
+
+
+_Appears in:_
+- [GatewayAPISpec](#gatewayapispec)
+
+| Field | Description |
+| --- | --- |
+| `Reconcile` |  |
+| `PreferExisting` |  |
+
+
+### CSINodeDriverDaemonSet
+
+
+
+CSINodeDriverDaemonSet is the configuration for the csi-node-driver DaemonSet.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CSINodeDriverDaemonSetSpec](#csinodedriverdaemonsetspec)_ | (Optional) Spec is the specification of the csi-node-driver DaemonSet. |
+
+
+### CSINodeDriverDaemonSetContainer
+
+
+
+CSINodeDriverDaemonSetContainer is a csi-node-driver DaemonSet container.
+
+_Appears in:_
+- [CSINodeDriverDaemonSetPodSpec](#csinodedriverdaemonsetpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the csi-node-driver DaemonSet container by name.<br />Supported values are: calico-csi, csi-node-driver-registrar. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named csi-node-driver DaemonSet container's resources.<br />If omitted, the csi-node-driver DaemonSet will use its default value for this container's resources. |
+
+
+### CSINodeDriverDaemonSetPodSpec
+
+
+
+CSINodeDriverDaemonSetPodSpec is the csi-node-driver DaemonSet's PodSpec.
+
+_Appears in:_
+- [CSINodeDriverDaemonSetPodTemplateSpec](#csinodedriverdaemonsetpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `containers` _[CSINodeDriverDaemonSetContainer](#csinodedriverdaemonsetcontainer) array_ | (Optional) Containers is a list of csi-node-driver containers.<br />If specified, this overrides the specified csi-node-driver DaemonSet containers.<br />If omitted, the csi-node-driver DaemonSet will use its default values for its containers. |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the csi-node-driver pods.<br />If specified, this overrides any affinity that may be set on the csi-node-driver DaemonSet.<br />If omitted, the csi-node-driver DaemonSet will use its default value for affinity.<br />WARNING: Please note that this field will override the default csi-node-driver DaemonSet affinity. |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) NodeSelector is the csi-node-driver pod's scheduling constraints.<br />If specified, each of the key/value pairs are added to the csi-node-driver DaemonSet nodeSelector provided<br />the key does not already exist in the object's nodeSelector.<br />If omitted, the csi-node-driver DaemonSet will use its default value for nodeSelector.<br />WARNING: Please note that this field will modify the default csi-node-driver DaemonSet nodeSelector. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the csi-node-driver pod's tolerations.<br />If specified, this overrides any tolerations that may be set on the csi-node-driver DaemonSet.<br />If omitted, the csi-node-driver DaemonSet will use its default value for tolerations.<br />WARNING: Please note that this field will override the default csi-node-driver DaemonSet tolerations. |
+
+
+### CSINodeDriverDaemonSetPodTemplateSpec
+
+
+
+CSINodeDriverDaemonSetPodTemplateSpec is the csi-node-driver DaemonSet's PodTemplateSpec
+
+_Appears in:_
+- [CSINodeDriverDaemonSetSpec](#csinodedriverdaemonsetspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CSINodeDriverDaemonSetPodSpec](#csinodedriverdaemonsetpodspec)_ | (Optional) Spec is the csi-node-driver DaemonSet's PodSpec. |
+
+
+### CSINodeDriverDaemonSetSpec
+
+
+
+CSINodeDriverDaemonSetSpec defines configuration for the csi-node-driver DaemonSet.
+
+_Appears in:_
+- [CSINodeDriverDaemonSet](#csinodedriverdaemonset)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created DaemonSet pod should<br />be ready without any of its container crashing, for it to be considered available.<br />If specified, this overrides any minReadySeconds value that may be set on the csi-node-driver DaemonSet.<br />If omitted, the csi-node-driver DaemonSet will use its default value for minReadySeconds. |
+| `template` _[CSINodeDriverDaemonSetPodTemplateSpec](#csinodedriverdaemonsetpodtemplatespec)_ | (Optional) Template describes the csi-node-driver DaemonSet pod that will be created. |
+
+
+### CalicoKubeControllersDeployment
+
+
+
+CalicoKubeControllersDeployment is the configuration for the calico-kube-controllers Deployment.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoKubeControllersDeploymentSpec](#calicokubecontrollersdeploymentspec)_ | (Optional) Spec is the specification of the calico-kube-controllers Deployment. |
+
+
+### CalicoKubeControllersDeploymentContainer
+
+
+
+CalicoKubeControllersDeploymentContainer is a calico-kube-controllers Deployment container.
+
+_Appears in:_
+- [CalicoKubeControllersDeploymentPodSpec](#calicokubecontrollersdeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-kube-controllers Deployment container by name.<br />Supported values are: calico-kube-controllers, es-calico-kube-controllers |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named calico-kube-controllers Deployment container's resources.<br />If omitted, the calico-kube-controllers Deployment will use its default value for this container's resources.<br />If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+
+
+### CalicoKubeControllersDeploymentPodSpec
+
+
+
+CalicoKubeControllersDeploymentPodSpec is the calico-kube-controller Deployment's PodSpec.
+
+_Appears in:_
+- [CalicoKubeControllersDeploymentPodTemplateSpec](#calicokubecontrollersdeploymentpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `containers` _[CalicoKubeControllersDeploymentContainer](#calicokubecontrollersdeploymentcontainer) array_ | (Optional) Containers is a list of calico-kube-controllers containers.<br />If specified, this overrides the specified calico-kube-controllers Deployment containers.<br />If omitted, the calico-kube-controllers Deployment will use its default values for its containers. |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the calico-kube-controllers pods.<br />If specified, this overrides any affinity that may be set on the calico-kube-controllers Deployment.<br />If omitted, the calico-kube-controllers Deployment will use its default value for affinity.<br />WARNING: Please note that this field will override the default calico-kube-controllers Deployment affinity. |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is the calico-kube-controllers pod's scheduling constraints.<br />If specified, each of the key/value pairs are added to the calico-kube-controllers Deployment nodeSelector provided<br />the key does not already exist in the object's nodeSelector.<br />If used in conjunction with ControlPlaneNodeSelector, that nodeSelector is set on the calico-kube-controllers Deployment<br />and each of this field's key/value pairs are added to the calico-kube-controllers Deployment nodeSelector provided<br />the key does not already exist in the object's nodeSelector.<br />If omitted, the calico-kube-controllers Deployment will use its default value for nodeSelector.<br />WARNING: Please note that this field will modify the default calico-kube-controllers Deployment nodeSelector. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the calico-kube-controllers pod's tolerations.<br />If specified, this overrides any tolerations that may be set on the calico-kube-controllers Deployment.<br />If omitted, the calico-kube-controllers Deployment will use its default value for tolerations.<br />WARNING: Please note that this field will override the default calico-kube-controllers Deployment tolerations. |
+
+
+### CalicoKubeControllersDeploymentPodTemplateSpec
+
+
+
+CalicoKubeControllersDeploymentPodTemplateSpec is the calico-kube-controllers Deployment's PodTemplateSpec
+
+_Appears in:_
+- [CalicoKubeControllersDeploymentSpec](#calicokubecontrollersdeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoKubeControllersDeploymentPodSpec](#calicokubecontrollersdeploymentpodspec)_ | (Optional) Spec is the calico-kube-controllers Deployment's PodSpec. |
+
+
+### CalicoKubeControllersDeploymentSpec
+
+
+
+CalicoKubeControllersDeploymentSpec defines configuration for the calico-kube-controllers Deployment.
+
+_Appears in:_
+- [CalicoKubeControllersDeployment](#calicokubecontrollersdeployment)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created Deployment pod should<br />be ready without any of its container crashing, for it to be considered available.<br />If specified, this overrides any minReadySeconds value that may be set on the calico-kube-controllers Deployment.<br />If omitted, the calico-kube-controllers Deployment will use its default value for minReadySeconds. |
+| `template` _[CalicoKubeControllersDeploymentPodTemplateSpec](#calicokubecontrollersdeploymentpodtemplatespec)_ | (Optional) Template describes the calico-kube-controllers Deployment pod that will be created. |
+
+
+### CalicoNetworkSpec
+
+
+
+CalicoNetworkSpec specifies configuration options for Calico provided pod networking.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `linuxDataplane` _[LinuxDataplaneOption](#linuxdataplaneoption)_ | (Optional) LinuxDataplane is used to select the dataplane used for Linux nodes. In particular, it<br />causes the operator to add required mounts and environment variables for the particular dataplane.<br />If not specified, iptables mode is used.<br />Default: Iptables |
+| `windowsDataplane` _[WindowsDataplaneOption](#windowsdataplaneoption)_ | (Optional) WindowsDataplane is used to select the dataplane used for Windows nodes. In particular, it<br />causes the operator to add required mounts and environment variables for the particular dataplane.<br />If not specified, it is disabled and the operator will not render the Calico Windows nodes daemonset.<br />Default: Disabled |
+| `bgp` _[BGPOption](#bgpoption)_ | (Optional) BGP configures whether or not to enable Calico's BGP capabilities. |
+| `ipPools` _[IPPool](#ippool) array_ | (Optional) IPPools contains a list of IP pools to manage. If nil, a single IPv4 IP pool<br />will be created by the operator. If an empty list is provided, the operator will not create any IP pools and will instead<br />wait for IP pools to be created out-of-band.<br />IP pools in this list will be reconciled by the operator and should not be modified out-of-band. |
+| `mtu` _integer_ | (Optional) MTU specifies the maximum transmission unit to use on the pod network.<br />If not specified, Calico will perform MTU auto-detection based on the cluster network. |
+| `nodeAddressAutodetectionV4` _[NodeAddressAutodetection](#nodeaddressautodetection)_ | (Optional) NodeAddressAutodetectionV4 specifies an approach to automatically detect node IPv4 addresses. If not specified,<br />will use default auto-detection settings to acquire an IPv4 address for each node. |
+| `nodeAddressAutodetectionV6` _[NodeAddressAutodetection](#nodeaddressautodetection)_ | (Optional) NodeAddressAutodetectionV6 specifies an approach to automatically detect node IPv6 addresses. If not specified,<br />IPv6 addresses will not be auto-detected. |
+| `hostPorts` _[HostPortsType](#hostportstype)_ | (Optional) HostPorts configures whether or not Calico will support Kubernetes HostPorts. Valid only when using the Calico CNI plugin.<br />Default: Enabled |
+| `multiInterfaceMode` _[MultiInterfaceMode](#multiinterfacemode)_ | (Optional) MultiInterfaceMode configures what will configure multiple interface per pod. Only valid for Calico Enterprise installations<br />using the Calico CNI plugin.<br />Default: None |
+| `containerIPForwarding` _[ContainerIPForwardingType](#containeripforwardingtype)_ | (Optional) ContainerIPForwarding configures whether ip forwarding will be enabled for containers in the CNI configuration.<br />Default: Disabled |
+| `sysctl` _[Sysctl](#sysctl) array_ | (Optional) Sysctl configures sysctl parameters for tuning plugin |
+| `linuxPolicySetupTimeoutSeconds` _integer_ | (Optional) LinuxPolicySetupTimeoutSeconds delays new pods from running containers<br />until their policy has been programmed in the dataplane.<br />The specified delay defines the maximum amount of time<br />that the Calico CNI plugin will wait for policy to be programmed.<br />Only applies to pods created on Linux nodes.<br />* A value of 0 disables pod startup delays.<br />Default: 0 |
+
+
+### CalicoNodeDaemonSet
+
+
+
+CalicoNodeDaemonSet is the configuration for the calico-node DaemonSet.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoNodeDaemonSetSpec](#caliconodedaemonsetspec)_ | (Optional) Spec is the specification of the calico-node DaemonSet. |
+
+
+### CalicoNodeDaemonSetContainer
+
+
+
+CalicoNodeDaemonSetContainer is a calico-node DaemonSet container.
+
+_Appears in:_
+- [CalicoNodeDaemonSetPodSpec](#caliconodedaemonsetpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-node DaemonSet container by name.<br />Supported values are: calico-node |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named calico-node DaemonSet container's resources.<br />If omitted, the calico-node DaemonSet will use its default value for this container's resources.<br />If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+
+
+### CalicoNodeDaemonSetInitContainer
+
+
+
+CalicoNodeDaemonSetInitContainer is a calico-node DaemonSet init container.
+
+_Appears in:_
+- [CalicoNodeDaemonSetPodSpec](#caliconodedaemonsetpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-node DaemonSet init container by name.<br />Supported values are: install-cni, hostpath-init, flexvol-driver, ebpf-bootstrap, node-certs-key-cert-provisioner, calico-node-prometheus-server-tls-key-cert-provisioner, mount-bpffs (deprecated, replaced by ebpf-bootstrap) |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named calico-node DaemonSet init container's resources.<br />If omitted, the calico-node DaemonSet will use its default value for this container's resources.<br />If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+
+
+### CalicoNodeDaemonSetPodSpec
+
+
+
+CalicoNodeDaemonSetPodSpec is the calico-node DaemonSet's PodSpec.
+
+_Appears in:_
+- [CalicoNodeDaemonSetPodTemplateSpec](#caliconodedaemonsetpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `initContainers` _[CalicoNodeDaemonSetInitContainer](#caliconodedaemonsetinitcontainer) array_ | (Optional) InitContainers is a list of calico-node init containers.<br />If specified, this overrides the specified calico-node DaemonSet init containers.<br />If omitted, the calico-node DaemonSet will use its default values for its init containers. |
+| `containers` _[CalicoNodeDaemonSetContainer](#caliconodedaemonsetcontainer) array_ | (Optional) Containers is a list of calico-node containers.<br />If specified, this overrides the specified calico-node DaemonSet containers.<br />If omitted, the calico-node DaemonSet will use its default values for its containers. |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the calico-node pods.<br />If specified, this overrides any affinity that may be set on the calico-node DaemonSet.<br />If omitted, the calico-node DaemonSet will use its default value for affinity.<br />WARNING: Please note that this field will override the default calico-node DaemonSet affinity. |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) NodeSelector is the calico-node pod's scheduling constraints.<br />If specified, each of the key/value pairs are added to the calico-node DaemonSet nodeSelector provided<br />the key does not already exist in the object's nodeSelector.<br />If omitted, the calico-node DaemonSet will use its default value for nodeSelector.<br />WARNING: Please note that this field will modify the default calico-node DaemonSet nodeSelector. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the calico-node pod's tolerations.<br />If specified, this overrides any tolerations that may be set on the calico-node DaemonSet.<br />If omitted, the calico-node DaemonSet will use its default value for tolerations.<br />WARNING: Please note that this field will override the default calico-node DaemonSet tolerations. |
+
+
+### CalicoNodeDaemonSetPodTemplateSpec
+
+
+
+CalicoNodeDaemonSetPodTemplateSpec is the calico-node DaemonSet's PodTemplateSpec
+
+_Appears in:_
+- [CalicoNodeDaemonSetSpec](#caliconodedaemonsetspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoNodeDaemonSetPodSpec](#caliconodedaemonsetpodspec)_ | (Optional) Spec is the calico-node DaemonSet's PodSpec. |
+
+
+### CalicoNodeDaemonSetSpec
+
+
+
+CalicoNodeDaemonSetSpec defines configuration for the calico-node DaemonSet.
+
+_Appears in:_
+- [CalicoNodeDaemonSet](#caliconodedaemonset)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created DaemonSet pod should<br />be ready without any of its container crashing, for it to be considered available.<br />If specified, this overrides any minReadySeconds value that may be set on the calico-node DaemonSet.<br />If omitted, the calico-node DaemonSet will use its default value for minReadySeconds. |
+| `template` _[CalicoNodeDaemonSetPodTemplateSpec](#caliconodedaemonsetpodtemplatespec)_ | (Optional) Template describes the calico-node DaemonSet pod that will be created. |
+
+
+### CalicoNodeWindowsDaemonSet
+
+
+
+CalicoNodeWindowsDaemonSet is the configuration for the calico-node-windows DaemonSet.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoNodeWindowsDaemonSetSpec](#caliconodewindowsdaemonsetspec)_ | (Optional) Spec is the specification of the calico-node-windows DaemonSet. |
+
+
+### CalicoNodeWindowsDaemonSetContainer
+
+
+
+CalicoNodeWindowsDaemonSetContainer is a calico-node-windows DaemonSet container.
+
+_Appears in:_
+- [CalicoNodeWindowsDaemonSetPodSpec](#caliconodewindowsdaemonsetpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-node-windows DaemonSet container by name.<br />Supported values are: calico-node-windows |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named calico-node-windows DaemonSet container's resources.<br />If omitted, the calico-node-windows DaemonSet will use its default value for this container's resources.<br />If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+
+
+### CalicoNodeWindowsDaemonSetInitContainer
+
+
+
+CalicoNodeWindowsDaemonSetInitContainer is a calico-node-windows DaemonSet init container.
+
+_Appears in:_
+- [CalicoNodeWindowsDaemonSetPodSpec](#caliconodewindowsdaemonsetpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-node-windows DaemonSet init container by name.<br />Supported values are: install-cni;hostpath-init, flexvol-driver, node-certs-key-cert-provisioner, calico-node-windows-prometheus-server-tls-key-cert-provisioner |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named calico-node-windows DaemonSet init container's resources.<br />If omitted, the calico-node-windows DaemonSet will use its default value for this container's resources.<br />If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+
+
+### CalicoNodeWindowsDaemonSetPodSpec
+
+
+
+CalicoNodeWindowsDaemonSetPodSpec is the calico-node-windows DaemonSet's PodSpec.
+
+_Appears in:_
+- [CalicoNodeWindowsDaemonSetPodTemplateSpec](#caliconodewindowsdaemonsetpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `initContainers` _[CalicoNodeWindowsDaemonSetInitContainer](#caliconodewindowsdaemonsetinitcontainer) array_ | (Optional) InitContainers is a list of calico-node-windows init containers.<br />If specified, this overrides the specified calico-node-windows DaemonSet init containers.<br />If omitted, the calico-node-windows DaemonSet will use its default values for its init containers. |
+| `containers` _[CalicoNodeWindowsDaemonSetContainer](#caliconodewindowsdaemonsetcontainer) array_ | (Optional) Containers is a list of calico-node-windows containers.<br />If specified, this overrides the specified calico-node-windows DaemonSet containers.<br />If omitted, the calico-node-windows DaemonSet will use its default values for its containers. |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the calico-node-windows pods.<br />If specified, this overrides any affinity that may be set on the calico-node-windows DaemonSet.<br />If omitted, the calico-node-windows DaemonSet will use its default value for affinity.<br />WARNING: Please note that this field will override the default calico-node-windows DaemonSet affinity. |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) NodeSelector is the calico-node-windows pod's scheduling constraints.<br />If specified, each of the key/value pairs are added to the calico-node-windows DaemonSet nodeSelector provided<br />the key does not already exist in the object's nodeSelector.<br />If omitted, the calico-node-windows DaemonSet will use its default value for nodeSelector.<br />WARNING: Please note that this field will modify the default calico-node-windows DaemonSet nodeSelector. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the calico-node-windows pod's tolerations.<br />If specified, this overrides any tolerations that may be set on the calico-node-windows DaemonSet.<br />If omitted, the calico-node-windows DaemonSet will use its default value for tolerations.<br />WARNING: Please note that this field will override the default calico-node-windows DaemonSet tolerations. |
+
+
+### CalicoNodeWindowsDaemonSetPodTemplateSpec
+
+
+
+CalicoNodeWindowsDaemonSetPodTemplateSpec is the calico-node-windows DaemonSet's PodTemplateSpec
+
+_Appears in:_
+- [CalicoNodeWindowsDaemonSetSpec](#caliconodewindowsdaemonsetspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoNodeWindowsDaemonSetPodSpec](#caliconodewindowsdaemonsetpodspec)_ | (Optional) Spec is the calico-node-windows DaemonSet's PodSpec. |
+
+
+### CalicoNodeWindowsDaemonSetSpec
+
+
+
+CalicoNodeWindowsDaemonSetSpec defines configuration for the calico-node-windows DaemonSet.
+
+_Appears in:_
+- [CalicoNodeWindowsDaemonSet](#caliconodewindowsdaemonset)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created DaemonSet pod should<br />be ready without any of its container crashing, for it to be considered available.<br />If specified, this overrides any minReadySeconds value that may be set on the calico-node-windows DaemonSet.<br />If omitted, the calico-node-windows DaemonSet will use its default value for minReadySeconds. |
+| `template` _[CalicoNodeWindowsDaemonSetPodTemplateSpec](#caliconodewindowsdaemonsetpodtemplatespec)_ | (Optional) Template describes the calico-node-windows DaemonSet pod that will be created. |
+
+
+### CalicoWindowsUpgradeDaemonSet
+
+
+
+Deprecated. The CalicoWindowsUpgradeDaemonSet is deprecated and will be removed from the API in the future.
+CalicoWindowsUpgradeDaemonSet is the configuration for the calico-windows-upgrade DaemonSet.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoWindowsUpgradeDaemonSetSpec](#calicowindowsupgradedaemonsetspec)_ | (Optional) Spec is the specification of the calico-windows-upgrade DaemonSet. |
+
+
+### CalicoWindowsUpgradeDaemonSetContainer
+
+
+
+CalicoWindowsUpgradeDaemonSetContainer is a calico-windows-upgrade DaemonSet container.
+
+_Appears in:_
+- [CalicoWindowsUpgradeDaemonSetPodSpec](#calicowindowsupgradedaemonsetpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-windows-upgrade DaemonSet container by name. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named calico-windows-upgrade DaemonSet container's resources.<br />If omitted, the calico-windows-upgrade DaemonSet will use its default value for this container's resources. |
+
+
+### CalicoWindowsUpgradeDaemonSetPodSpec
+
+
+
+CalicoWindowsUpgradeDaemonSetPodSpec is the calico-windows-upgrade DaemonSet's PodSpec.
+
+_Appears in:_
+- [CalicoWindowsUpgradeDaemonSetPodTemplateSpec](#calicowindowsupgradedaemonsetpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `containers` _[CalicoWindowsUpgradeDaemonSetContainer](#calicowindowsupgradedaemonsetcontainer) array_ | (Optional) Containers is a list of calico-windows-upgrade containers.<br />If specified, this overrides the specified calico-windows-upgrade DaemonSet containers.<br />If omitted, the calico-windows-upgrade DaemonSet will use its default values for its containers. |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the calico-windows-upgrade pods.<br />If specified, this overrides any affinity that may be set on the calico-windows-upgrade DaemonSet.<br />If omitted, the calico-windows-upgrade DaemonSet will use its default value for affinity.<br />WARNING: Please note that this field will override the default calico-windows-upgrade DaemonSet affinity. |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) NodeSelector is the calico-windows-upgrade pod's scheduling constraints.<br />If specified, each of the key/value pairs are added to the calico-windows-upgrade DaemonSet nodeSelector provided<br />the key does not already exist in the object's nodeSelector.<br />If omitted, the calico-windows-upgrade DaemonSet will use its default value for nodeSelector.<br />WARNING: Please note that this field will modify the default calico-windows-upgrade DaemonSet nodeSelector. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the calico-windows-upgrade pod's tolerations.<br />If specified, this overrides any tolerations that may be set on the calico-windows-upgrade DaemonSet.<br />If omitted, the calico-windows-upgrade DaemonSet will use its default value for tolerations.<br />WARNING: Please note that this field will override the default calico-windows-upgrade DaemonSet tolerations. |
+
+
+### CalicoWindowsUpgradeDaemonSetPodTemplateSpec
+
+
+
+CalicoWindowsUpgradeDaemonSetPodTemplateSpec is the calico-windows-upgrade DaemonSet's PodTemplateSpec
+
+_Appears in:_
+- [CalicoWindowsUpgradeDaemonSetSpec](#calicowindowsupgradedaemonsetspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoWindowsUpgradeDaemonSetPodSpec](#calicowindowsupgradedaemonsetpodspec)_ | (Optional) Spec is the calico-windows-upgrade DaemonSet's PodSpec. |
+
+
+### CalicoWindowsUpgradeDaemonSetSpec
+
+
+
+CalicoWindowsUpgradeDaemonSetSpec defines configuration for the calico-windows-upgrade DaemonSet.
+
+_Appears in:_
+- [CalicoWindowsUpgradeDaemonSet](#calicowindowsupgradedaemonset)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created Deployment pod should<br />be ready without any of its container crashing, for it to be considered available.<br />If specified, this overrides any minReadySeconds value that may be set on the calico-windows-upgrade DaemonSet.<br />If omitted, the calico-windows-upgrade DaemonSet will use its default value for minReadySeconds. |
+| `template` _[CalicoWindowsUpgradeDaemonSetPodTemplateSpec](#calicowindowsupgradedaemonsetpodtemplatespec)_ | (Optional) Template describes the calico-windows-upgrade DaemonSet pod that will be created. |
+
+
+### CertificateManagement
+
+
+
+CertificateManagement configures pods to submit a CertificateSigningRequest to the certificates.k8s.io/v1beta1 API in order
+to obtain TLS certificates. This feature requires that you bring your own CSR signing and approval process, otherwise
+pods will be stuck during initialization.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `caCert` _integer array_ | Certificate of the authority that signs the CertificateSigningRequests in PEM format. |
+| `signerName` _string_ | When a CSR is issued to the certificates.k8s.io API, the signerName is added to the request in order to accommodate for clusters<br />with multiple signers.<br />Must be formatted as: `<my-domain>/<my-signername>`. |
+| `keyAlgorithm` _string_ | (Optional) Specify the algorithm used by pods to generate a key pair that is associated with the X.509 certificate request.<br />Default: RSAWithSize2048 |
+| `signatureAlgorithm` _string_ | (Optional) Specify the algorithm used for the signature of the X.509 certificate request.<br />Default: SHA256WithRSA |
+
+
+
+
+### ComponentName
+
+_Underlying type:_ _string_
+
+ComponentName represents a single component.
+
+One of: Node, Typha, KubeControllers
+
+_Appears in:_
+- [ComponentResource](#componentresource)
+
+| Field | Description |
+| --- | --- |
+| `Node` |  |
+| `NodeWindows` |  |
+| `FelixWindows` |  |
+| `ConfdWindows` |  |
+| `Typha` |  |
+| `KubeControllers` |  |
+
+
+### ComponentResource
+
+
+
+Deprecated. Please use component resource config fields in Installation.Spec instead.
+The ComponentResource struct associates a ResourceRequirements with a component by name
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `componentName` _[ComponentName](#componentname)_ | ComponentName is an enum which identifies the component |
+| `resourceRequirements` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | ResourceRequirements allows customization of limits and requests for compute resources such as cpu and memory. |
+
+
+### ConditionStatus
+
+_Underlying type:_ _string_
+
+ConditionStatus represents the status of a particular condition. A condition may be one of: True, False, Unknown.
+
+_Appears in:_
+- [TigeraStatusCondition](#tigerastatuscondition)
+
+| Field | Description |
+| --- | --- |
+| `True` |  |
+| `False` |  |
+| `Unknown` |  |
+
+
+### ContainerIPForwardingType
+
+_Underlying type:_ _string_
+
+ContainerIPForwardingType specifies whether the CNI config for container ip forwarding is enabled.
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Field | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
+
+
+
+
+
+
+
+
+### EncapsulationType
+
+_Underlying type:_ _string_
+
+EncapsulationType is the type of encapsulation to use on an IP pool.
+
+One of: IPIP, VXLAN, IPIPCrossSubnet, VXLANCrossSubnet, None
+
+_Appears in:_
+- [IPPool](#ippool)
+
+| Field | Description |
+| --- | --- |
+| `IPIPCrossSubnet` |  |
+| `IPIP` |  |
+| `VXLAN` |  |
+| `VXLANCrossSubnet` |  |
+| `None` |  |
+
+
+
+
+
+
+
+
+### FIPSMode
+
+_Underlying type:_ _string_
+
+
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
+
+
+### GatewayAPI
+
+
+
+
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `operator.tigera.io/v1` |
+| `kind` _string_ | `GatewayAPI` |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GatewayAPISpec](#gatewayapispec)_ |  |
+
+
+### GatewayAPISpec
+
+
+
+GatewayAPISpec has fields that can be used to customize our GatewayAPI support.
+
+_Appears in:_
+- [GatewayAPI](#gatewayapi)
+
+| Field | Description |
+| --- | --- |
+| `envoyGatewayConfigRef` _[NamespacedName](#namespacedname)_ | (Optional) Reference to a custom EnvoyGateway YAML to use as the base EnvoyGateway configuration for<br />the gateway controller.  When specified, must identify a ConfigMap resource with an<br />"envoy-gateway.yaml" key whose value is the desired EnvoyGateway YAML (i.e. following the<br />same pattern as the default `envoy-gateway-config` ConfigMap).<br />When not specified, the Tigera operator uses the `envoy-gateway-config` from the Envoy<br />Gateway helm chart as its base.<br />Starting from that base, the Tigera operator copies and modifies the EnvoyGateway<br />resource as follows:<br />1. If not already specified, it sets the ControllerName to<br />"gateway.envoyproxy.io/gatewayclass-controller".<br />2. It configures the `tigera/envoy-gateway` and `tigera/envoy-ratelimit` images that will<br />be used (according to the current Calico version, private registry and image set<br />settings) and any pull secrets that are needed to pull those images.<br />3. It enables use of the Backend API.<br />The resulting EnvoyGateway is provisioned as the `envoy-gateway-config` ConfigMap (which<br />the gateway controller then uses as its config). |
+| `gatewayClasses` _[GatewayClassSpec](#gatewayclassspec) array_ | (Optional) Configures the GatewayClasses that will be available; please see GatewayClassSpec for<br />more detail.  If GatewayClasses is nil, the Tigera operator defaults to provisioning a<br />single GatewayClass named "tigera-gateway-class", without any of the detailed<br />customizations that are allowed within GatewayClassSpec. |
+| `gatewayControllerDeployment` _[GatewayControllerDeployment](#gatewaycontrollerdeployment)_ | (Optional) Allows customization of the gateway controller deployment. |
+| `gatewayCertgenJob` _[GatewayCertgenJob](#gatewaycertgenjob)_ | (Optional) Allows customization of the gateway certgen job. |
+| `crdManagement` _[CRDManagement](#crdmanagement)_ | (Optional) Configures how to manage and update Gateway API CRDs.  The default behaviour - which is<br />used when this field is not set, or is set to "PreferExisting" - is that the Tigera<br />operator will create the Gateway API CRDs if they do not already exist, but will not<br />overwrite any existing Gateway API CRDs.  This setting may be preferable if the customer<br />is using other implementations of the Gateway API concurrently with the Gateway API<br />support in Calico Enterprise.  It is then the customer's responsibility to ensure that<br />CRDs are installed that meet the needs of all the Gateway API implementations in their<br />cluster.<br />Alternatively, if this field is set to "Reconcile", the Tigera operator will keep the<br />cluster's Gateway API CRDs aligned with those that it would install on a cluster that<br />does not yet have any version of those CRDs. |
+
+
+### GatewayCertgenJob
+
+
+
+GatewayCertgenJob allows customization of the gateway certgen job.
+
+_Appears in:_
+- [GatewayAPISpec](#gatewayapispec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GatewayCertgenJobSpec](#gatewaycertgenjobspec)_ | (Optional)  |
+
+
+### GatewayCertgenJobContainer
+
+
+
+GatewayCertgenJobContainer allows customization of the gateway certgen job's resource
+requirements.
+
+_Appears in:_
+- [GatewayCertgenJobPodSpec](#gatewaycertgenjobpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) If non-nil, Resources sets the ResourceRequirements of the job's "envoy-gateway-certgen"<br />container. |
+
+
+### GatewayCertgenJobPodSpec
+
+
+
+GatewayCertgenJobPodSpec allows customization of the gateway certgen job's pod spec.
+
+_Appears in:_
+- [GatewayCertgenJobPodTemplate](#gatewaycertgenjobpodtemplate)
+
+| Field | Description |
+| --- | --- |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) If non-nil, Affinity sets the affinity field of the job's pod template. |
+| `containers` _[GatewayCertgenJobContainer](#gatewaycertgenjobcontainer) array_ | (Optional)  |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) If non-nil, NodeSelector sets the node selector for where job pods may be scheduled. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) If non-nil, Tolerations sets the tolerations field of the job's pod template. |
+
+
+### GatewayCertgenJobPodTemplate
+
+
+
+GatewayCertgenJobPodTemplate allows customization of the gateway certgen job's pod template.
+
+_Appears in:_
+- [GatewayCertgenJobSpec](#gatewaycertgenjobspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GatewayCertgenJobPodSpec](#gatewaycertgenjobpodspec)_ | (Optional)  |
+
+
+### GatewayCertgenJobSpec
+
+
+
+GatewayCertgenJobSpec allows customization of the gateway certgen job spec.
+
+_Appears in:_
+- [GatewayCertgenJob](#gatewaycertgenjob)
+
+| Field | Description |
+| --- | --- |
+| `template` _[GatewayCertgenJobPodTemplate](#gatewaycertgenjobpodtemplate)_ | (Optional)  |
+
+
+### GatewayClassSpec
+
+
+
+
+
+_Appears in:_
+- [GatewayAPISpec](#gatewayapispec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | The name of this GatewayClass. |
+| `envoyProxyRef` _[NamespacedName](#namespacedname)_ | (Optional) Reference to a custom EnvoyProxy resource to use as the base EnvoyProxy configuration for<br />this GatewayClass.  When specified, must identify an EnvoyProxy resource.<br />When not specified, the Tigera operator uses an empty EnvoyProxy resource as its base.<br />Starting from that base, the Tigera operator copies and modifies the EnvoyProxy resource<br />as follows, in the order described:<br />1. It configures the `tigera/envoy-proxy` image that will be used (according to the<br />current Calico version, private registry and image set settings) and any pull secrets<br />that are needed to pull that image.<br />2. It applies customizations as specified by the following `GatewayKind`,<br />`GatewayDeployment`, `GatewayDaemonSet` and `GatewayService` fields.<br />The resulting EnvoyProxy is provisioned in the `tigera-gateway` namespace, together with<br />a GatewayClass that references it.<br />If a custom EnvoyProxy resource is specified and uses `EnvoyDaemonSet` instead of the<br />default `EnvoyDeployment`, deployment-related customizations will be applied within<br />`EnvoyDaemonSet` instead of within `EnvoyDeployment`. |
+| `gatewayKind` _[GatewayKind](#gatewaykind)_ | (Optional) Specifies whether Gateways in this class are deployed as Deployments (default) or as<br />DaemonSets.  It is an error for GatewayKind to specify a choice that is incompatible with<br />the custom EnvoyProxy, when EnvoyProxyRef is also specified. |
+| `gatewayDeployment` _[GatewayDeployment](#gatewaydeployment)_ | (Optional) Allows customization of Gateways when deployed as Kubernetes Deployments, for Gateways in<br />this GatewayClass. |
+| `gatewayDaemonSet` _[GatewayDaemonSet](#gatewaydaemonset)_ | (Optional) Allows customization of Gateways when deployed as Kubernetes DaemonSets, for Gateways in<br />this GatewayClass. |
+| `gatewayService` _[GatewayService](#gatewayservice)_ | (Optional) Allows customization of gateway services, for Gateways in this GatewayClass. |
+
+
+### GatewayControllerDeployment
+
+
+
+GatewayControllerDeployment allows customization of the gateway controller deployment.
+
+_Appears in:_
+- [GatewayAPISpec](#gatewayapispec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GatewayControllerDeploymentSpec](#gatewaycontrollerdeploymentspec)_ | (Optional)  |
+
+
+### GatewayControllerDeploymentContainer
+
+
+
+GatewayControllerDeploymentContainer allows customization of the gateway controller's resource
+requirements.
+
+_Appears in:_
+- [GatewayControllerDeploymentPodSpec](#gatewaycontrollerdeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) If non-nil, Resources sets the ResourceRequirements of the controller's "envoy-gateway"<br />container. |
+
+
+### GatewayControllerDeploymentPodSpec
+
+
+
+GatewayControllerDeploymentPodSpec allows customization of the gateway controller deployment pod
+spec.
+
+_Appears in:_
+- [GatewayControllerDeploymentPodTemplate](#gatewaycontrollerdeploymentpodtemplate)
+
+| Field | Description |
+| --- | --- |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) If non-nil, Affinity sets the affinity field of the deployment's pod template. |
+| `containers` _[GatewayControllerDeploymentContainer](#gatewaycontrollerdeploymentcontainer) array_ | (Optional)  |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) If non-nil, NodeSelector sets the node selector for where deployment pods may be<br />scheduled. |
+| `topologySpreadConstraints` _[TopologySpreadConstraint](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#topologyspreadconstraint-v1-core) array_ | (Optional) If non-nil, TopologySpreadConstraints sets the topology spread constraints of the<br />deployment's pod template.  TopologySpreadConstraints describes how a group of pods ought<br />to spread across topology domains. Scheduler will schedule pods in a way which abides by<br />the constraints.  All topologySpreadConstraints are ANDed. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) If non-nil, Tolerations sets the tolerations field of the deployment's pod template. |
+
+
+### GatewayControllerDeploymentPodTemplate
+
+
+
+GatewayControllerDeploymentPodTemplate allows customization of the gateway controller deployment
+pod template.
+
+_Appears in:_
+- [GatewayControllerDeploymentSpec](#gatewaycontrollerdeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GatewayControllerDeploymentPodSpec](#gatewaycontrollerdeploymentpodspec)_ | (Optional)  |
+
+
+### GatewayControllerDeploymentSpec
+
+
+
+GatewayControllerDeploymentSpec allows customization of the gateway controller deployment spec.
+
+_Appears in:_
+- [GatewayControllerDeployment](#gatewaycontrollerdeployment)
+
+| Field | Description |
+| --- | --- |
+| `replicas` _integer_ | (Optional) If non-nil, Replicas sets the number of replicas for the deployment. |
+| `minReadySeconds` _integer_ | (Optional) If non-nil, MinReadySeconds sets the minReadySeconds field for the deployment. |
+| `template` _[GatewayControllerDeploymentPodTemplate](#gatewaycontrollerdeploymentpodtemplate)_ | (Optional)  |
+
+
+### GatewayDaemonSet
+
+
+
+GatewayDeployment allows customization of Gateways when deployed as Kubernetes DaemonSets.
+
+_Appears in:_
+- [GatewayClassSpec](#gatewayclassspec)
+
+| Field | Description |
+| --- | --- |
+| `spec` _[GatewayDaemonSetSpec](#gatewaydaemonsetspec)_ | (Optional)  |
+
+
+### GatewayDaemonSetContainer
+
+
+
+GatewayDaemonSetContainer allows customization of the resource requirements of gateway
+daemonsets.
+
+_Appears in:_
+- [GatewayDaemonSetPodSpec](#gatewaydaemonsetpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) If non-nil, Resources sets the ResourceRequirements of the daemonset's "envoy"<br />container. |
+
+
+### GatewayDaemonSetPodSpec
+
+
+
+GatewayDaemonSetPodSpec allows customization of the pod spec of gateway daemonsets.
+
+_Appears in:_
+- [GatewayDaemonSetPodTemplate](#gatewaydaemonsetpodtemplate)
+
+| Field | Description |
+| --- | --- |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) If non-nil, Affinity sets the affinity field of the daemonset's pod template. |
+| `containers` _[GatewayDaemonSetContainer](#gatewaydaemonsetcontainer) array_ | (Optional)  |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) If non-nil, NodeSelector sets the node selector for where daemonset pods may be<br />scheduled. |
+| `topologySpreadConstraints` _[TopologySpreadConstraint](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#topologyspreadconstraint-v1-core) array_ | (Optional) If non-nil, TopologySpreadConstraints sets the topology spread constraints of the<br />daemonset's pod template.  TopologySpreadConstraints describes how a group of pods ought<br />to spread across topology domains. Scheduler will schedule pods in a way which abides by<br />the constraints.  All topologySpreadConstraints are ANDed. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) If non-nil, Tolerations sets the tolerations field of the daemonset's pod template. |
+
+
+### GatewayDaemonSetPodTemplate
+
+
+
+GatewayDeploymentPodTemplate allows customization of the pod template of gateway daemonsets.
+
+_Appears in:_
+- [GatewayDaemonSetSpec](#gatewaydaemonsetspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GatewayDaemonSetPodSpec](#gatewaydaemonsetpodspec)_ | (Optional)  |
+
+
+### GatewayDaemonSetSpec
+
+
+
+GatewayDeploymentSpec allows customization of the spec of gateway daemonsets.
+
+_Appears in:_
+- [GatewayDaemonSet](#gatewaydaemonset)
+
+| Field | Description |
+| --- | --- |
+| `template` _[GatewayDaemonSetPodTemplate](#gatewaydaemonsetpodtemplate)_ | (Optional)  |
+
+
+### GatewayDeployment
+
+
+
+GatewayDeployment allows customization of Gateways when deployed as Kubernetes Deployments.
+
+_Appears in:_
+- [GatewayClassSpec](#gatewayclassspec)
+
+| Field | Description |
+| --- | --- |
+| `spec` _[GatewayDeploymentSpec](#gatewaydeploymentspec)_ | (Optional)  |
+
+
+### GatewayDeploymentContainer
+
+
+
+GatewayDeploymentContainer allows customization of the resource requirements of gateway
+deployments.
+
+_Appears in:_
+- [GatewayDeploymentPodSpec](#gatewaydeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) If non-nil, Resources sets the ResourceRequirements of the deployment's "envoy"<br />container. |
+
+
+### GatewayDeploymentPodSpec
+
+
+
+GatewayDeploymentPodSpec allows customization of the pod spec of gateway deployments.
+
+_Appears in:_
+- [GatewayDeploymentPodTemplate](#gatewaydeploymentpodtemplate)
+
+| Field | Description |
+| --- | --- |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) If non-nil, Affinity sets the affinity field of the deployment's pod template. |
+| `containers` _[GatewayDeploymentContainer](#gatewaydeploymentcontainer) array_ | (Optional)  |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) If non-nil, NodeSelector sets the node selector for where deployment pods may be<br />scheduled. |
+| `topologySpreadConstraints` _[TopologySpreadConstraint](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#topologyspreadconstraint-v1-core) array_ | (Optional) If non-nil, TopologySpreadConstraints sets the topology spread constraints of the<br />deployment's pod template.  TopologySpreadConstraints describes how a group of pods ought<br />to spread across topology domains. Scheduler will schedule pods in a way which abides by<br />the constraints.  All topologySpreadConstraints are ANDed. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) If non-nil, Tolerations sets the tolerations field of the deployment's pod template. |
+
+
+### GatewayDeploymentPodTemplate
+
+
+
+GatewayDeploymentPodTemplate allows customization of the pod template of gateway deployments.
+
+_Appears in:_
+- [GatewayDeploymentSpec](#gatewaydeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GatewayDeploymentPodSpec](#gatewaydeploymentpodspec)_ | (Optional)  |
+
+
+### GatewayDeploymentSpec
+
+
+
+GatewayDeploymentSpec allows customization of the spec of gateway deployments.
+
+_Appears in:_
+- [GatewayDeployment](#gatewaydeployment)
+
+| Field | Description |
+| --- | --- |
+| `replicas` _integer_ | (Optional) If non-nil, Replicas sets the number of replicas for the deployment. |
+| `template` _[GatewayDeploymentPodTemplate](#gatewaydeploymentpodtemplate)_ | (Optional)  |
+| `strategy` _[GatewayDeploymentStrategy](#gatewaydeploymentstrategy)_ | (Optional) The deployment strategy to use to replace existing pods with new ones. |
+
+
+### GatewayDeploymentStrategy
+
+
+
+GatewayDeploymentStrategy allows customization of the deployment strategy for gateway
+deployments.
+
+If GatewayDeployment.Spec.Strategy is non-nil, gateway deployments are set to use a rolling
+update strategy, with the parameters specified in GatewayDeployment.Spec.Strategy.
+
+Only RollingUpdate is supported at this time so the Type field is not exposed.
+
+_Appears in:_
+- [GatewayDeploymentSpec](#gatewaydeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `rollingUpdate` _[RollingUpdateDeployment](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#rollingupdatedeployment-v1-apps)_ | (Optional)  |
+
+
+### GatewayKind
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Enum: [Deployment DaemonSet]
+
+
+_Appears in:_
+- [GatewayClassSpec](#gatewayclassspec)
+
+| Field | Description |
+| --- | --- |
+| `Deployment` |  |
+| `DaemonSet` |  |
+
+
+### GatewayService
+
+
+
+GatewayService allows customization of the Services that front Gateways.
+
+_Appears in:_
+- [GatewayClassSpec](#gatewayclassspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GatewayServiceSpec](#gatewayservicespec)_ | (Optional)  |
+
+
+### GatewayServiceSpec
+
+
+
+GatewayServiceSpec allows customization of the services that front gateway deployments.
+
+The LoadBalancer fields allow customization of the corresponding fields in the Kubernetes
+ServiceSpec.  These can be used for some cloud-independent control of the external load balancer
+that is provisioned for each Gateway.  For finer-grained cloud-specific control please use
+the Metadata.Annotations field in GatewayService.
+
+_Appears in:_
+- [GatewayService](#gatewayservice)
+
+| Field | Description |
+| --- | --- |
+| `loadBalancerClass` _string_ | (Optional)  |
+| `allocateLoadBalancerNodePorts` _boolean_ | (Optional)  |
+| `loadBalancerSourceRanges` _string array_ | (Optional)  |
+| `loadBalancerIP` _string_ | (Optional)  |
+
+
+### Goldmane
+
+
+
+
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `operator.tigera.io/v1` |
+| `kind` _string_ | `Goldmane` |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GoldmaneSpec](#goldmanespec)_ |  |
+| `status` _[GoldmaneStatus](#goldmanestatus)_ |  |
+
+
+### GoldmaneDeployment
+
+
+
+GoldmaneDeployment is the configuration for the goldmane Deployment.
+
+_Appears in:_
+- [GoldmaneSpec](#goldmanespec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GoldmaneDeploymentSpec](#goldmanedeploymentspec)_ | (Optional) Spec is the specification of the goldmane Deployment. |
+
+
+### GoldmaneDeploymentContainer
+
+
+
+
+
+_Appears in:_
+- [GoldmaneDeploymentPodSpec](#goldmanedeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional)  |
+
+
+### GoldmaneDeploymentPodSpec
+
+
+
+GoldmaneDeploymentPodSpec is the goldmane Deployment's PodSpec.
+
+_Appears in:_
+- [GoldmaneDeploymentPodTemplateSpec](#goldmanedeploymentpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the goldmane pods. |
+| `containers` _[GoldmaneDeploymentContainer](#goldmanedeploymentcontainer) array_ | (Optional) Containers is a list of goldmane containers.<br />If specified, this overrides the specified EGW Deployment containers.<br />If omitted, the goldmane Deployment will use its default values for its containers. |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) NodeSelector gives more control over the nodes where the goldmane pods will run on. |
+| `terminationGracePeriodSeconds` _integer_ | (Optional) TerminationGracePeriodSeconds defines the termination grace period of the goldmane pods in seconds. |
+| `topologySpreadConstraints` _[TopologySpreadConstraint](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#topologyspreadconstraint-v1-core) array_ | (Optional) TopologySpreadConstraints describes how a group of pods ought to spread across topology<br />domains. Scheduler will schedule pods in a way which abides by the constraints.<br />All topologySpreadConstraints are ANDed. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the goldmane pod's tolerations.<br />If specified, this overrides any tolerations that may be set on the goldmane Deployment.<br />If omitted, the goldmane Deployment will use its default value for tolerations. |
+| `priorityClassName` _string_ | (Optional) PriorityClassName allows to specify a PriorityClass resource to be used. |
+
+
+### GoldmaneDeploymentPodTemplateSpec
+
+
+
+GoldmaneDeploymentPodTemplateSpec is the goldmane Deployment's PodTemplateSpec
+
+_Appears in:_
+- [GoldmaneDeploymentSpec](#goldmanedeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[GoldmaneDeploymentPodSpec](#goldmanedeploymentpodspec)_ | (Optional) Spec is the goldmane Deployment's PodSpec. |
+
+
+### GoldmaneDeploymentSpec
+
+
+
+GoldmaneDeploymentSpec defines configuration for the goldmane Deployment.
+
+_Appears in:_
+- [GoldmaneDeployment](#goldmanedeployment)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created Deployment pod should<br />be ready without any of its container crashing, for it to be considered available.<br />If specified, this overrides any minReadySeconds value that may be set on the goldmane Deployment.<br />If omitted, the goldmane Deployment will use its default value for minReadySeconds. |
+| `template` _[GoldmaneDeploymentPodTemplateSpec](#goldmanedeploymentpodtemplatespec)_ | (Optional) Template describes the goldmane Deployment pod that will be created. |
+| `strategy` _[GoldmaneDeploymentStrategy](#goldmanedeploymentstrategy)_ | (Optional) The deployment strategy to use to replace existing pods with new ones. |
+
+
+### GoldmaneDeploymentStrategy
+
+
+
+
+
+_Appears in:_
+- [GoldmaneDeploymentSpec](#goldmanedeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `rollingUpdate` _[RollingUpdateDeployment](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#rollingupdatedeployment-v1-apps)_ | (Optional) Rolling update config params. Present only if DeploymentStrategyType =<br />RollingUpdate.<br />to be. |
+
+
+### GoldmaneSpec
+
+
+
+
+
+_Appears in:_
+- [Goldmane](#goldmane)
+
+| Field | Description |
+| --- | --- |
+| `goldmaneDeployment` _[GoldmaneDeployment](#goldmanedeployment)_ |  |
+
+
+### GoldmaneStatus
+
+
+
+GoldmaneStatus defines the observed state of Goldmane
+
+_Appears in:_
+- [Goldmane](#goldmane)
+
+| Field | Description |
+| --- | --- |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of<br />Ready, Progressing, Degraded or other customer types. |
+
+
+
+
+### HostPortsType
+
+_Underlying type:_ _string_
+
+HostPortsType specifies host port support.
+
+One of: Enabled, Disabled
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Field | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
+
+
+
+
+
+
+### IPAMPluginType
+
+_Underlying type:_ _string_
+
+
+
+_Appears in:_
+- [IPAMSpec](#ipamspec)
+
+| Field | Description |
+| --- | --- |
+| `Calico` |  |
+| `HostLocal` |  |
+| `AmazonVPC` |  |
+| `AzureVNET` |  |
+
+
+### IPAMSpec
+
+
+
+IPAMSpec contains configuration for pod IP address management.
+
+_Appears in:_
+- [CNISpec](#cnispec)
+
+| Field | Description |
+| --- | --- |
+| `type` _[IPAMPluginType](#ipamplugintype)_ | Specifies the IPAM plugin that will be used in the Calico or Calico Enterprise installation.<br />* For CNI Plugin Calico, this field defaults to Calico.<br />* For CNI Plugin GKE, this field defaults to HostLocal.<br />* For CNI Plugin AzureVNET, this field defaults to AzureVNET.<br />* For CNI Plugin AmazonVPC, this field defaults to AmazonVPC.<br />The IPAM plugin is installed and configured only if the CNI plugin is set to Calico,<br />for all other values of the CNI plugin the plugin binaries and CNI config is a dependency<br />that is expected to be installed separately.<br />Default: Calico |
+
+
+### IPPool
+
+
+
+
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is the name of the IP pool. If omitted, this will be generated. |
+| `cidr` _string_ | CIDR contains the address range for the IP Pool in classless inter-domain routing format. |
+| `encapsulation` _[EncapsulationType](#encapsulationtype)_ | (Optional) Encapsulation specifies the encapsulation type that will be used with<br />the IP Pool.<br />Default: IPIP |
+| `natOutgoing` _[NATOutgoingType](#natoutgoingtype)_ | (Optional) NATOutgoing specifies if NAT will be enabled or disabled for outgoing traffic.<br />Default: Enabled |
+| `nodeSelector` _string_ | (Optional) NodeSelector specifies the node selector that will be set for the IP Pool.<br />Default: 'all()' |
+| `blockSize` _integer_ | (Optional) BlockSize specifies the CIDR prefex length to use when allocating per-node IP blocks from<br />the main IP pool CIDR.<br />Default: 26 (IPv4), 122 (IPv6) |
+| `disableBGPExport` _boolean_ | (Optional) DisableBGPExport specifies whether routes from this IP pool's CIDR are exported over BGP.<br />Default: false |
+| `disableNewAllocations` _boolean_ | DisableNewAllocations specifies whether or not new IP allocations are allowed from this pool.<br />This is useful when you want to prevent new pods from receiving IP addresses from this pool, without<br />impacting any existing pods that have already been assigned addresses from this pool. |
+| `allowedUses` _[IPPoolAllowedUse](#ippoolalloweduse) array_ | AllowedUse controls what the IP pool will be used for.  If not specified or empty, defaults to<br />["Tunnel", "Workload"] for back-compatibility |
+| `assignmentMode` _[AssignmentMode](#assignmentmode)_ | AssignmentMode determines if IP addresses from this pool should be  assigned automatically or on request only |
+
+
+### IPPoolAllowedUse
+
+_Underlying type:_ _string_
+
+
+
+_Appears in:_
+- [IPPool](#ippool)
+
+| Field | Description |
+| --- | --- |
+| `Workload` |  |
+| `Tunnel` |  |
+| `LoadBalancer` |  |
+
+
+### Image
+
+
+
+
+
+_Appears in:_
+- [ImageSetSpec](#imagesetspec)
+
+| Field | Description |
+| --- | --- |
+| `image` _string_ | Image is an image that the operator deploys and instead of using the built in tag<br />the operator will use the Digest for the image identifier.<br />The value should be the *original* image name without registry or tag or digest.<br />For the image `docker.io/calico/node:v3.17.1` it should be represented as `calico/node`<br />The "Installation" spec allows defining custom image registries, paths or prefixes.<br />Even for custom images such as example.com/custompath/customprefix-calico-node:v3.17.1,<br />this value should still be `calico/node`. |
+| `digest` _string_ | Digest is the image identifier that will be used for the Image.<br />The field should not include a leading `@` and must be prefixed with `sha256:`. |
+
+
+### ImageSet
+
+
+
+ImageSet is used to specify image digests for the images that the operator deploys.
+The name of the ImageSet is expected to be in the format `<variant>-<release>`.
+The `variant` used is `enterprise` if the InstallationSpec Variant is
+`TigeraSecureEnterprise` otherwise it is `calico`.
+The `release` must match the version of the variant that the operator is built to deploy,
+this version can be obtained by passing the `--version` flag to the operator binary.
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `operator.tigera.io/v1` |
+| `kind` _string_ | `ImageSet` |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[ImageSetSpec](#imagesetspec)_ |  |
+
+
+### ImageSetSpec
+
+
+
+ImageSetSpec defines the desired state of ImageSet.
+
+_Appears in:_
+- [ImageSet](#imageset)
+
+| Field | Description |
+| --- | --- |
+| `images` _[Image](#image) array_ | Images is the list of images to use digests. All images that the operator will deploy<br />must be specified. |
+
+
+### Installation
+
+
+
+Installation configures an installation of Calico or Calico Enterprise. At most one instance
+of this resource is supported. It must be named "default". The Installation API installs core networking
+and network policy components, and provides general install-time configuration.
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `operator.tigera.io/v1` |
+| `kind` _string_ | `Installation` |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[InstallationSpec](#installationspec)_ | Specification of the desired state for the Calico or Calico Enterprise installation. |
+| `status` _[InstallationStatus](#installationstatus)_ | Most recently observed state for the Calico or Calico Enterprise installation. |
+
+
+### InstallationSpec
+
+
+
+InstallationSpec defines configuration for a Calico or Calico Enterprise installation.
+
+_Appears in:_
+- [Installation](#installation)
+- [InstallationStatus](#installationstatus)
+
+| Field | Description |
+| --- | --- |
+| `variant` _[ProductVariant](#productvariant)_ | (Optional) Variant is the product to install - one of Calico or TigeraSecureEnterprise<br />Default: Calico |
+| `registry` _string_ | (Optional) Registry is the default Docker registry used for component Docker images.<br />If specified then the given value must end with a slash character (`/`) and all images will be pulled from this registry.<br />If not specified then the default registries will be used. A special case value, UseDefault, is<br />supported to explicitly specify the default registries will be used.<br />Image format:<br />   `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>`<br />This option allows configuring the `<registry>` portion of the above format. |
+| `imagePath` _string_ | (Optional) ImagePath allows for the path part of an image to be specified. If specified<br />then the specified value will be used as the image path for each image. If not specified<br />or empty, the default for each image will be used.<br />A special case value, UseDefault, is supported to explicitly specify the default<br />image path will be used for each image.<br />Image format:<br />   `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>`<br />This option allows configuring the `<imagePath>` portion of the above format. |
+| `imagePrefix` _string_ | (Optional) ImagePrefix allows for the prefix part of an image to be specified. If specified<br />then the given value will be used as a prefix on each image. If not specified<br />or empty, no prefix will be used.<br />A special case value, UseDefault, is supported to explicitly specify the default<br />image prefix will be used for each image.<br />Image format:<br />   `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>`<br />This option allows configuring the `<imagePrefix>` portion of the above format. |
+| `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) array_ | (Optional) ImagePullSecrets is an array of references to container registry pull secrets to use. These are<br />applied to all images to be pulled. |
+| `kubernetesProvider` _[Provider](#provider)_ | (Optional) KubernetesProvider specifies a particular provider of the Kubernetes platform and enables provider-specific configuration.<br />If the specified value is empty, the Operator will attempt to automatically determine the current provider.<br />If the specified value is not empty, the Operator will still attempt auto-detection, but<br />will additionally compare the auto-detected value to the specified value to confirm they match. |
+| `cni` _[CNISpec](#cnispec)_ | (Optional) CNI specifies the CNI that will be used by this installation. |
+| `calicoNetwork` _[CalicoNetworkSpec](#caliconetworkspec)_ | (Optional) CalicoNetwork specifies networking configuration options for Calico. |
+| `typhaAffinity` _[TyphaAffinity](#typhaaffinity)_ | (Optional) Deprecated. Please use Installation.Spec.TyphaDeployment instead.<br />TyphaAffinity allows configuration of node affinity characteristics for Typha pods. |
+| `controlPlaneNodeSelector` _object (keys:string, values:string)_ | (Optional) ControlPlaneNodeSelector is used to select control plane nodes on which to run Calico<br />components. This is globally applied to all resources created by the operator excluding daemonsets. |
+| `controlPlaneTolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) ControlPlaneTolerations specify tolerations which are then globally applied to all resources<br />created by the operator. |
+| `controlPlaneReplicas` _integer_ | (Optional) ControlPlaneReplicas defines how many replicas of the control plane core components will be deployed.<br />This field applies to all control plane components that support High Availability. Defaults to 2. |
+| `nodeMetricsPort` _integer_ | (Optional) NodeMetricsPort specifies which port calico/node serves prometheus metrics on. By default, metrics are not enabled.<br />If specified, this overrides any FelixConfiguration resources which may exist. If omitted, then<br />prometheus metrics may still be configured through FelixConfiguration. |
+| `typhaMetricsPort` _integer_ | (Optional) TyphaMetricsPort specifies which port calico/typha serves prometheus metrics on. By default, metrics are not enabled. |
+| `flexVolumePath` _string_ | (Optional) FlexVolumePath optionally specifies a custom path for FlexVolume. If not specified, FlexVolume will be<br />enabled by default. If set to 'None', FlexVolume will be disabled. The default is based on the<br />kubernetesProvider. |
+| `kubeletVolumePluginPath` _string_ | (Optional) KubeletVolumePluginPath optionally specifies enablement of Calico CSI plugin. If not specified,<br />CSI will be enabled by default. If set to 'None', CSI will be disabled.<br />Default: /var/lib/kubelet |
+| `nodeUpdateStrategy` _[DaemonSetUpdateStrategy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#daemonsetupdatestrategy-v1-apps)_ | (Optional) NodeUpdateStrategy can be used to customize the desired update strategy, such as the MaxUnavailable<br />field. |
+| `componentResources` _[ComponentResource](#componentresource) array_ | (Optional) Deprecated. Please use CalicoNodeDaemonSet, TyphaDeployment, and KubeControllersDeployment.<br />ComponentResources can be used to customize the resource requirements for each component.<br />Node, Typha, and KubeControllers are supported for installations. |
+| `certificateManagement` _[CertificateManagement](#certificatemanagement)_ | (Optional) CertificateManagement configures pods to submit a CertificateSigningRequest to the certificates.k8s.io/v1 API in order<br />to obtain TLS certificates. This feature requires that you bring your own CSR signing and approval process, otherwise<br />pods will be stuck during initialization. |
+| `tlsCipherSuites` _[TLSCipherSuites](#tlsciphersuites)_ | (Optional) TLSCipherSuites defines the cipher suite list that the TLS protocol should use during secure communication. |
+| `nonPrivileged` _[NonPrivilegedType](#nonprivilegedtype)_ | (Optional) NonPrivileged configures Calico to be run in non-privileged containers as non-root users where possible. |
+| `calicoNodeDaemonSet` _[CalicoNodeDaemonSet](#caliconodedaemonset)_ | CalicoNodeDaemonSet configures the calico-node DaemonSet. If used in<br />conjunction with the deprecated ComponentResources, then these overrides take precedence. |
+| `csiNodeDriverDaemonSet` _[CSINodeDriverDaemonSet](#csinodedriverdaemonset)_ | CSINodeDriverDaemonSet configures the csi-node-driver DaemonSet. |
+| `calicoKubeControllersDeployment` _[CalicoKubeControllersDeployment](#calicokubecontrollersdeployment)_ | CalicoKubeControllersDeployment configures the calico-kube-controllers Deployment. If used in<br />conjunction with the deprecated ComponentResources, then these overrides take precedence. |
+| `typhaDeployment` _[TyphaDeployment](#typhadeployment)_ | TyphaDeployment configures the typha Deployment. If used in conjunction with the deprecated<br />ComponentResources or TyphaAffinity, then these overrides take precedence. |
+| `calicoWindowsUpgradeDaemonSet` _[CalicoWindowsUpgradeDaemonSet](#calicowindowsupgradedaemonset)_ | Deprecated. The CalicoWindowsUpgradeDaemonSet is deprecated and will be removed from the API in the future.<br />CalicoWindowsUpgradeDaemonSet configures the calico-windows-upgrade DaemonSet. |
+| `calicoNodeWindowsDaemonSet` _[CalicoNodeWindowsDaemonSet](#caliconodewindowsdaemonset)_ | CalicoNodeWindowsDaemonSet configures the calico-node-windows DaemonSet. |
+| `fipsMode` _[FIPSMode](#fipsmode)_ | (Optional) FIPSMode uses images and features only that are using FIPS 140-2 validated cryptographic modules and standards.<br />Only supported for Variant=Calico.<br />Default: Disabled |
+| `logging` _[Logging](#logging)_ | (Optional) Logging Configuration for Components |
+| `windowsNodes` _[WindowsNodeSpec](#windowsnodespec)_ | (Optional) Windows Configuration |
+| `serviceCIDRs` _string array_ | (Optional) Kubernetes Service CIDRs. Specifying this is required when using Calico for Windows. |
+| `azure` _[Azure](#azure)_ | (Optional) Azure is used to configure azure provider specific options. |
+| `proxy` _[Proxy](#proxy)_ | (Optional) Proxy is used to configure the HTTP(S) proxy settings that will be applied to Tigera containers that connect<br />to destinations outside the cluster. It is expected that NO_PROXY is configured such that destinations within<br />the cluster (including the API server) are exempt from proxying. |
+
+
+### InstallationStatus
+
+
+
+InstallationStatus defines the observed state of the Calico or Calico Enterprise installation.
+
+_Appears in:_
+- [Installation](#installation)
+
+| Field | Description |
+| --- | --- |
+| `variant` _[ProductVariant](#productvariant)_ | Variant is the most recently observed installed variant - one of Calico or TigeraSecureEnterprise |
+| `mtu` _integer_ | MTU is the most recently observed value for pod network MTU. This may be an explicitly<br />configured value, or based on Calico's native auto-detetion. |
+| `imageSet` _string_ | (Optional) ImageSet is the name of the ImageSet being used, if there is an ImageSet<br />that is being used. If an ImageSet is not being used then this will not be set. |
+| `computed` _[InstallationSpec](#installationspec)_ | (Optional) Computed is the final installation including overlaid resources. |
+| `calicoVersion` _string_ | CalicoVersion shows the current running version of calico.<br />CalicoVersion along with Variant is needed to know the exact<br />version deployed. |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of<br />Ready, Progressing, Degraded or other customer types. |
+
+
+### KubernetesAutodetectionMethod
+
+_Underlying type:_ _string_
+
+KubernetesAutodetectionMethod is a method of detecting an IP address based on the Kubernetes API.
+
+One of: NodeInternalIP
+
+_Appears in:_
+- [NodeAddressAutodetection](#nodeaddressautodetection)
+
+| Field | Description |
+| --- | --- |
+| `NodeInternalIP` | NodeInternalIP detects a node IP using the first status.Addresses entry of the relevant IP family<br />with type NodeInternalIP on the Kubernetes nodes API.<br /> |
+
+
+### LinuxDataplaneOption
+
+_Underlying type:_ _string_
+
+LinuxDataplaneOption controls which dataplane is to be used on Linux nodes.
+
+One of: Iptables, BPF, VPP, Nftables
+
+_Validation:_
+- Enum: [Iptables BPF VPP Nftables]
+
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Field | Description |
+| --- | --- |
+| `Iptables` |  |
+| `BPF` |  |
+| `VPP` |  |
+| `Nftables` |  |
+
+
+### LogLevel
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Enum: [Error Warning Info Debug]
+
+
+_Appears in:_
+- [CNILogging](#cnilogging)
+
+| Field | Description |
+| --- | --- |
+| `Error` |  |
+| `Warn` |  |
+| `Info` |  |
+| `Debug` |  |
+
+
+### LogSeverity
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Enum: [Fatal Error Warn Info Debug Trace]
+
+
+_Appears in:_
+- [APIServerLogging](#apiserverlogging)
+- [QueryServerLogging](#queryserverlogging)
+
+| Field | Description |
+| --- | --- |
+| `Fatal` |  |
+| `Error` |  |
+| `Warn` |  |
+| `Info` |  |
+| `Debug` |  |
+| `Trace` |  |
+
+
+### Logging
+
+
+
+
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `cni` _[CNILogging](#cnilogging)_ | (Optional) Customized logging specification for calico-cni plugin |
+
+
+### Metadata
+
+
+
+Metadata contains the standard Kubernetes labels and annotations fields.
+
+_Appears in:_
+- [APIServerDeployment](#apiserverdeployment)
+- [APIServerDeploymentPodTemplateSpec](#apiserverdeploymentpodtemplatespec)
+- [CSINodeDriverDaemonSet](#csinodedriverdaemonset)
+- [CSINodeDriverDaemonSetPodTemplateSpec](#csinodedriverdaemonsetpodtemplatespec)
+- [CalicoKubeControllersDeployment](#calicokubecontrollersdeployment)
+- [CalicoKubeControllersDeploymentPodTemplateSpec](#calicokubecontrollersdeploymentpodtemplatespec)
+- [CalicoNodeDaemonSet](#caliconodedaemonset)
+- [CalicoNodeDaemonSetPodTemplateSpec](#caliconodedaemonsetpodtemplatespec)
+- [CalicoNodeWindowsDaemonSet](#caliconodewindowsdaemonset)
+- [CalicoNodeWindowsDaemonSetPodTemplateSpec](#caliconodewindowsdaemonsetpodtemplatespec)
+- [CalicoWindowsUpgradeDaemonSet](#calicowindowsupgradedaemonset)
+- [CalicoWindowsUpgradeDaemonSetPodTemplateSpec](#calicowindowsupgradedaemonsetpodtemplatespec)
+- [GatewayCertgenJob](#gatewaycertgenjob)
+- [GatewayCertgenJobPodTemplate](#gatewaycertgenjobpodtemplate)
+- [GatewayControllerDeployment](#gatewaycontrollerdeployment)
+- [GatewayControllerDeploymentPodTemplate](#gatewaycontrollerdeploymentpodtemplate)
+- [GatewayDaemonSetPodTemplate](#gatewaydaemonsetpodtemplate)
+- [GatewayDeploymentPodTemplate](#gatewaydeploymentpodtemplate)
+- [GatewayService](#gatewayservice)
+- [GoldmaneDeployment](#goldmanedeployment)
+- [GoldmaneDeploymentPodTemplateSpec](#goldmanedeploymentpodtemplatespec)
+- [TyphaDeployment](#typhadeployment)
+- [TyphaDeploymentPodTemplateSpec](#typhadeploymentpodtemplatespec)
+- [WhiskerDeployment](#whiskerdeployment)
+- [WhiskerDeploymentPodTemplateSpec](#whiskerdeploymentpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `labels` _object (keys:string, values:string)_ | (Optional) Labels is a map of string keys and values that may match replicaset and<br />service selectors. Each of these key/value pairs are added to the<br />object's labels provided the key does not already exist in the object's labels. |
+| `annotations` _object (keys:string, values:string)_ | (Optional) Annotations is a map of arbitrary non-identifying metadata. Each of these<br />key/value pairs are added to the object's annotations provided the key does not<br />already exist in the object's annotations. |
+
+
+
+
+
+
+### MultiInterfaceMode
+
+_Underlying type:_ _string_
+
+MultiInterfaceMode describes the method of providing multiple pod interfaces.
+
+One of: None, Multus
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Field | Description |
+| --- | --- |
+| `None` |  |
+| `Multus` |  |
+
+
+### NATOutgoingType
+
+_Underlying type:_ _string_
+
+NATOutgoingType describe the type of outgoing NAT to use.
+
+One of: Enabled, Disabled
+
+_Appears in:_
+- [IPPool](#ippool)
+
+| Field | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
+
+
+### NamespacedName
+
+
+
+NamespacedName references an object of a known type in any namespace.
+
+_Appears in:_
+- [GatewayAPISpec](#gatewayapispec)
+- [GatewayClassSpec](#gatewayclassspec)
+
+| Field | Description |
+| --- | --- |
+| `namespace` _string_ |  |
+| `name` _string_ |  |
+
+
+
+
+### NodeAddressAutodetection
+
+
+
+NodeAddressAutodetection provides configuration options for auto-detecting node addresses. At most one option
+can be used. If no detection option is specified, then IP auto detection will be disabled for this address family and IPs
+must be specified directly on the Node resource.
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Field | Description |
+| --- | --- |
+| `firstFound` _boolean_ | (Optional) FirstFound uses default interface matching parameters to select an interface, performing best-effort<br />filtering based on well-known interface names. |
+| `kubernetes` _[KubernetesAutodetectionMethod](#kubernetesautodetectionmethod)_ | (Optional) Kubernetes configures Calico to detect node addresses based on the Kubernetes API. |
+| `interface` _string_ | (Optional) Interface enables IP auto-detection based on interfaces that match the given regex. |
+| `skipInterface` _string_ | (Optional) SkipInterface enables IP auto-detection based on interfaces that do not match<br />the given regex. |
+| `canReach` _string_ | (Optional) CanReach enables IP auto-detection based on which source address on the node is used to reach the<br />specified IP or domain. |
+| `cidrs` _string array_ | CIDRS enables IP auto-detection based on which addresses on the nodes are within<br />one of the provided CIDRs. |
+
+
+### NodeAffinity
+
+
+
+NodeAffinity is similar to *v1.NodeAffinity, but allows us to limit available schedulers.
+
+_Appears in:_
+- [TyphaAffinity](#typhaaffinity)
+
+| Field | Description |
+| --- | --- |
+| `preferredDuringSchedulingIgnoredDuringExecution` _[PreferredSchedulingTerm](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#preferredschedulingterm-v1-core) array_ | (Optional) The scheduler will prefer to schedule pods to nodes that satisfy<br />the affinity expressions specified by this field, but it may choose<br />a node that violates one or more of the expressions. |
+| `requiredDuringSchedulingIgnoredDuringExecution` _[NodeSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#nodeselector-v1-core)_ | (Optional) WARNING: Please note that if the affinity requirements specified by this field are not met at<br />scheduling time, the pod will NOT be scheduled onto the node.<br />There is no fallback to another affinity rules with this setting.<br />This may cause networking disruption or even catastrophic failure!<br />PreferredDuringSchedulingIgnoredDuringExecution should be used for affinity<br />unless there is a specific well understood reason to use RequiredDuringSchedulingIgnoredDuringExecution and<br />you can guarantee that the RequiredDuringSchedulingIgnoredDuringExecution will always have sufficient nodes to satisfy the requirement.<br />NOTE: RequiredDuringSchedulingIgnoredDuringExecution is set by default for AKS nodes,<br />to avoid scheduling Typhas on virtual-nodes.<br />If the affinity requirements specified by this field cease to be met<br />at some point during pod execution (e.g. due to an update), the system<br />may or may not try to eventually evict the pod from its node. |
+
+
+### NonPrivilegedType
+
+_Underlying type:_ _string_
+
+NonPrivilegedType specifies whether Calico runs as permissioned or not
+
+One of: Enabled, Disabled
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
+
+
+### NotificationMode
+
+_Underlying type:_ _string_
+
+
+
+_Appears in:_
+- [WhiskerSpec](#whiskerspec)
+
+| Field | Description |
+| --- | --- |
+| `Disabled` |  |
+| `Enabled` |  |
+
+
+
+
+
+
+### PolicyMode
+
+_Underlying type:_ _string_
+
+
+
+_Appears in:_
+- [Azure](#azure)
+
+| Field | Description |
+| --- | --- |
+| `Default` |  |
+| `Manual` |  |
+
+
+### ProductVariant
+
+_Underlying type:_ _string_
+
+ProductVariant represents the variant of the product.
+
+One of: Calico, TigeraSecureEnterprise
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+- [InstallationStatus](#installationstatus)
+
+
+
+
+
+### Provider
+
+_Underlying type:_ _string_
+
+Provider represents a particular provider or flavor of Kubernetes. Valid options
+are: EKS, GKE, AKS, RKE2, OpenShift, DockerEnterprise, TKG.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+
+
+### Proxy
+
+
+
+
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `httpProxy` _string_ | (Optional) HTTPProxy defines the value of the HTTP_PROXY environment variable that will be set on Tigera containers that connect to<br />destinations outside the cluster. |
+| `httpsProxy` _string_ | (Optional) HTTPSProxy defines the value of the HTTPS_PROXY environment variable that will be set on Tigera containers that connect to<br />destinations outside the cluster. |
+| `noProxy` _string_ | (Optional) NoProxy defines the value of the NO_PROXY environment variable that will be set on Tigera containers that connect to<br />destinations outside the cluster. This value must be set such that destinations within the scope of the cluster, including<br />the Kubernetes API server, are exempt from being proxied. |
+
+
+### QueryServerLogging
+
+
+
+
+
+_Appears in:_
+- [APIServerPodLogging](#apiserverpodlogging)
+
+| Field | Description |
+| --- | --- |
+| `logSeverity` _[LogSeverity](#logseverity)_ | (Optional) LogSeverity defines log level for QueryServer container. |
+
+
+
+
+
+
+
+
+### StatusConditionType
+
+_Underlying type:_ _string_
+
+StatusConditionType is a type of condition that may apply to a particular component.
+
+_Appears in:_
+- [TigeraStatusCondition](#tigerastatuscondition)
+
+| Field | Description |
+| --- | --- |
+| `Available` | Available indicates that the component is healthy.<br /> |
+| `Progressing` | Progressing means that the component is in the process of being installed or upgraded.<br /> |
+| `Degraded` | Degraded means the component is not operating as desired and user action is required.<br /> |
+| `Ready` | Ready indicates that the component is healthy and ready.it is identical to Available and used in Status conditions for CRs.<br /> |
+
+
+### Sysctl
+
+
+
+
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Field | Description |
+| --- | --- |
+| `key` _string_ |  |
+| `value` _string_ |  |
+
+
+
+
+### TLSCipher
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Enum: [TLS_AES_256_GCM_SHA384 TLS_CHACHA20_POLY1305_SHA256 TLS_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_RSA_WITH_AES_256_GCM_SHA384 TLS_RSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA]
+
+
+_Appears in:_
+- [TLSCipherSuite](#tlsciphersuite)
+
+| Field | Description |
+| --- | --- |
+| `TLS_AES_256_GCM_SHA384` | TLS 1.3<br /> |
+| `TLS_CHACHA20_POLY1305_SHA256` |  |
+| `TLS_AES_128_GCM_SHA256` |  |
+| `TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384` | TLS 1.2<br /> |
+| `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384` |  |
+| `TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256` |  |
+| `TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256` |  |
+| `TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256` |  |
+| `TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256` |  |
+| `TLS_RSA_WITH_AES_256_GCM_SHA384` |  |
+| `TLS_RSA_WITH_AES_128_GCM_SHA256` |  |
+| `TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA` |  |
+| `TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA` |  |
+| `TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA` |  |
+
+
+### TLSCipherSuite
+
+
+
+
+
+_Appears in:_
+- [TLSCipherSuites](#tlsciphersuites)
+
+| Field | Description |
+| --- | --- |
+| `name` _[TLSCipher](#tlscipher)_ | (Optional) This should be a valid TLS cipher suite name. |
+
+
+### TLSCipherSuites
+
+_Underlying type:_ _[TLSCipherSuite](#tlsciphersuite)_
+
+
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _[TLSCipher](#tlscipher)_ | (Optional) This should be a valid TLS cipher suite name. |
+
+
+
+
+### TigeraStatus
+
+
+
+TigeraStatus represents the most recently observed status for Calico or a Calico Enterprise functional area.
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `operator.tigera.io/v1` |
+| `kind` _string_ | `TigeraStatus` |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[TigeraStatusSpec](#tigerastatusspec)_ |  |
+| `status` _[TigeraStatusStatus](#tigerastatusstatus)_ |  |
+
+
+### TigeraStatusCondition
+
+
+
+TigeraStatusCondition represents a condition attached to a particular component.
+
+_Appears in:_
+- [TigeraStatusStatus](#tigerastatusstatus)
+
+| Field | Description |
+| --- | --- |
+| `type` _[StatusConditionType](#statusconditiontype)_ | The type of condition. May be Available, Progressing, or Degraded. |
+| `status` _[ConditionStatus](#conditionstatus)_ | The status of the condition. May be True, False, or Unknown. |
+| `lastTransitionTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#time-v1-meta)_ | The timestamp representing the start time for the current status. |
+| `reason` _string_ | A brief reason explaining the condition. |
+| `message` _string_ | Optionally, a detailed message providing additional context. |
+| `observedGeneration` _integer_ | (Optional) observedGeneration represents the generation that the condition was set based upon.<br />For instance, if generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date<br />with respect to the current state of the instance. |
+
+
+
+
+### TigeraStatusSpec
+
+
+
+TigeraStatusSpec defines the desired state of TigeraStatus
+
+_Appears in:_
+- [TigeraStatus](#tigerastatus)
+
+
+
+### TigeraStatusStatus
+
+
+
+TigeraStatusStatus defines the observed state of TigeraStatus
+
+_Appears in:_
+- [TigeraStatus](#tigerastatus)
+
+| Field | Description |
+| --- | --- |
+| `conditions` _[TigeraStatusCondition](#tigerastatuscondition) array_ | Conditions represents the latest observed set of conditions for this component. A component may be one or more of<br />Available, Progressing, or Degraded. |
+
+
+### TyphaAffinity
+
+
+
+Deprecated. Please use TyphaDeployment instead.
+TyphaAffinity allows configuration of node affinity characteristics for Typha pods.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `nodeAffinity` _[NodeAffinity](#nodeaffinity)_ | (Optional) NodeAffinity describes node affinity scheduling rules for typha. |
+
+
+### TyphaDeployment
+
+
+
+TyphaDeployment is the configuration for the typha Deployment.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[TyphaDeploymentSpec](#typhadeploymentspec)_ | (Optional) Spec is the specification of the typha Deployment. |
+
+
+### TyphaDeploymentContainer
+
+
+
+TyphaDeploymentContainer is a typha Deployment container.
+
+_Appears in:_
+- [TyphaDeploymentPodSpec](#typhadeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the typha Deployment container by name.<br />Supported values are: calico-typha |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named typha Deployment container's resources.<br />If omitted, the typha Deployment will use its default value for this container's resources.<br />If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+
+
+### TyphaDeploymentInitContainer
+
+
+
+TyphaDeploymentInitContainer is a typha Deployment init container.
+
+_Appears in:_
+- [TyphaDeploymentPodSpec](#typhadeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the typha Deployment init container by name.<br />Supported values are: typha-certs-key-cert-provisioner |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory.<br />If specified, this overrides the named typha Deployment init container's resources.<br />If omitted, the typha Deployment will use its default value for this init container's resources.<br />If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+
+
+### TyphaDeploymentPodSpec
+
+
+
+TyphaDeploymentPodSpec is the typha Deployment's PodSpec.
+
+_Appears in:_
+- [TyphaDeploymentPodTemplateSpec](#typhadeploymentpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `initContainers` _[TyphaDeploymentInitContainer](#typhadeploymentinitcontainer) array_ | (Optional) InitContainers is a list of typha init containers.<br />If specified, this overrides the specified typha Deployment init containers.<br />If omitted, the typha Deployment will use its default values for its init containers. |
+| `containers` _[TyphaDeploymentContainer](#typhadeploymentcontainer) array_ | (Optional) Containers is a list of typha containers.<br />If specified, this overrides the specified typha Deployment containers.<br />If omitted, the typha Deployment will use its default values for its containers. |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the typha pods.<br />If specified, this overrides any affinity that may be set on the typha Deployment.<br />If omitted, the typha Deployment will use its default value for affinity.<br />If used in conjunction with the deprecated TyphaAffinity, then this value takes precedence.<br />WARNING: Please note that this field will override the default calico-typha Deployment affinity. |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is the calico-typha pod's scheduling constraints.<br />If specified, each of the key/value pairs are added to the calico-typha Deployment nodeSelector provided<br />the key does not already exist in the object's nodeSelector.<br />If omitted, the calico-typha Deployment will use its default value for nodeSelector.<br />WARNING: Please note that this field will modify the default calico-typha Deployment nodeSelector. |
+| `terminationGracePeriodSeconds` _integer_ | (Optional) Optional duration in seconds the pod needs to terminate gracefully. May be decreased in delete request.<br />Value must be non-negative integer. The value zero indicates stop immediately via<br />the kill signal (no opportunity to shut down).<br />If this value is nil, the default grace period will be used instead.<br />The grace period is the duration in seconds after the processes running in the pod are sent<br />a termination signal and the time when the processes are forcibly halted with a kill signal.<br />Set this value longer than the expected cleanup time for your process.<br />Defaults to 30 seconds. |
+| `topologySpreadConstraints` _[TopologySpreadConstraint](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#topologyspreadconstraint-v1-core) array_ | (Optional) TopologySpreadConstraints describes how a group of pods ought to spread across topology<br />domains. Scheduler will schedule pods in a way which abides by the constraints.<br />All topologySpreadConstraints are ANDed. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the typha pod's tolerations.<br />If specified, this overrides any tolerations that may be set on the typha Deployment.<br />If omitted, the typha Deployment will use its default value for tolerations.<br />WARNING: Please note that this field will override the default calico-typha Deployment tolerations. |
+
+
+### TyphaDeploymentPodTemplateSpec
+
+
+
+TyphaDeploymentPodTemplateSpec is the typha Deployment's PodTemplateSpec
+
+_Appears in:_
+- [TyphaDeploymentSpec](#typhadeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[TyphaDeploymentPodSpec](#typhadeploymentpodspec)_ | (Optional) Spec is the typha Deployment's PodSpec. |
+
+
+### TyphaDeploymentSpec
+
+
+
+TyphaDeploymentSpec defines configuration for the typha Deployment.
+
+_Appears in:_
+- [TyphaDeployment](#typhadeployment)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created Deployment pod should<br />be ready without any of its container crashing, for it to be considered available.<br />If specified, this overrides any minReadySeconds value that may be set on the typha Deployment.<br />If omitted, the typha Deployment will use its default value for minReadySeconds. |
+| `template` _[TyphaDeploymentPodTemplateSpec](#typhadeploymentpodtemplatespec)_ | (Optional) Template describes the typha Deployment pod that will be created. |
+| `strategy` _[TyphaDeploymentStrategy](#typhadeploymentstrategy)_ | (Optional) The deployment strategy to use to replace existing pods with new ones. |
+
+
+### TyphaDeploymentStrategy
+
+
+
+TyphaDeploymentStrategy describes how to replace existing pods with new ones.  Only RollingUpdate is supported
+at this time so the Type field is not exposed.
+
+_Appears in:_
+- [TyphaDeploymentSpec](#typhadeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `rollingUpdate` _[RollingUpdateDeployment](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#rollingupdatedeployment-v1-apps)_ | (Optional) Rolling update config params. Present only if DeploymentStrategyType =<br />RollingUpdate.<br />to be. |
+
+
+
+
+### Whisker
+
+
+
+
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` _string_ | `operator.tigera.io/v1` |
+| `kind` _string_ | `Whisker` |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[WhiskerSpec](#whiskerspec)_ |  |
+| `status` _[WhiskerStatus](#whiskerstatus)_ |  |
+
+
+### WhiskerDeployment
+
+
+
+WhiskerDeployment is the configuration for the whisker Deployment.
+
+_Appears in:_
+- [WhiskerSpec](#whiskerspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[WhiskerDeploymentSpec](#whiskerdeploymentspec)_ | (Optional) Spec is the specification of the whisker Deployment. |
+
+
+### WhiskerDeploymentContainer
+
+
+
+
+
+_Appears in:_
+- [WhiskerDeploymentPodSpec](#whiskerdeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional)  |
+
+
+### WhiskerDeploymentPodSpec
+
+
+
+WhiskerDeploymentPodSpec is the whisker Deployment's PodSpec.
+
+_Appears in:_
+- [WhiskerDeploymentPodTemplateSpec](#whiskerdeploymentpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the whisker pods. |
+| `containers` _[WhiskerDeploymentContainer](#whiskerdeploymentcontainer) array_ | (Optional) Containers is a list of whisker containers.<br />If specified, this overrides the specified EGW Deployment containers.<br />If omitted, the whisker Deployment will use its default values for its containers. |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) NodeSelector gives more control over the nodes where the whisker pods will run on. |
+| `terminationGracePeriodSeconds` _integer_ | (Optional) TerminationGracePeriodSeconds defines the termination grace period of the whisker pods in seconds. |
+| `topologySpreadConstraints` _[TopologySpreadConstraint](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#topologyspreadconstraint-v1-core) array_ | (Optional) TopologySpreadConstraints describes how a group of pods ought to spread across topology<br />domains. Scheduler will schedule pods in a way which abides by the constraints.<br />All topologySpreadConstraints are ANDed. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the whisker pod's tolerations.<br />If specified, this overrides any tolerations that may be set on the whisker Deployment.<br />If omitted, the whisker Deployment will use its default value for tolerations. |
+| `priorityClassName` _string_ | (Optional) PriorityClassName allows to specify a PriorityClass resource to be used. |
+
+
+### WhiskerDeploymentPodTemplateSpec
+
+
+
+WhiskerDeploymentPodTemplateSpec is the whisker Deployment's PodTemplateSpec
+
+_Appears in:_
+- [WhiskerDeploymentSpec](#whiskerdeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[WhiskerDeploymentPodSpec](#whiskerdeploymentpodspec)_ | (Optional) Spec is the whisker Deployment's PodSpec. |
+
+
+### WhiskerDeploymentSpec
+
+
+
+WhiskerDeploymentSpec defines configuration for the whisker Deployment.
+
+_Appears in:_
+- [WhiskerDeployment](#whiskerdeployment)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created Deployment pod should<br />be ready without any of its container crashing, for it to be considered available.<br />If specified, this overrides any minReadySeconds value that may be set on the whisker Deployment.<br />If omitted, the whisker Deployment will use its default value for minReadySeconds. |
+| `template` _[WhiskerDeploymentPodTemplateSpec](#whiskerdeploymentpodtemplatespec)_ | (Optional) Template describes the whisker Deployment pod that will be created. |
+| `strategy` _[WhiskerDeploymentStrategy](#whiskerdeploymentstrategy)_ | (Optional) The deployment strategy to use to replace existing pods with new ones. |
+
+
+### WhiskerDeploymentStrategy
+
+
+
+
+
+_Appears in:_
+- [WhiskerDeploymentSpec](#whiskerdeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `rollingUpdate` _[RollingUpdateDeployment](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#rollingupdatedeployment-v1-apps)_ | (Optional) Rolling update config params. Present only if DeploymentStrategyType =<br />RollingUpdate.<br />to be. |
+
+
+### WhiskerSpec
+
+
+
+
+
+_Appears in:_
+- [Whisker](#whisker)
+
+| Field | Description |
+| --- | --- |
+| `whiskerDeployment` _[WhiskerDeployment](#whiskerdeployment)_ |  |
+| `notifications` _[NotificationMode](#notificationmode)_ | (Optional) Default: Enabled<br />This setting enables calls to an external API to retrieve notification banner text in the Whisker UI.<br />Allowed values are Enabled or Disabled. Defaults to Enabled. |
+
+
+### WhiskerStatus
+
+
+
+WhiskerStatus defines the observed state of Whisker
+
+_Appears in:_
+- [Whisker](#whisker)
+
+| Field | Description |
+| --- | --- |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of<br />Ready, Progressing, Degraded or other customer types. |
+
+
+### WindowsDataplaneOption
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Enum: [HNS Disabled]
+
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Field | Description |
+| --- | --- |
+| `Disabled` |  |
+| `HNS` |  |
+
+
+### WindowsNodeSpec
+
+
+
+
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `cniBinDir` _string_ | (Optional) CNIBinDir is the path to the CNI binaries directory on Windows, it must match what is used as 'bin_dir' under<br />[plugins]<br />  [plugins."io.containerd.grpc.v1.cri"]<br />    [plugins."io.containerd.grpc.v1.cri".cni]<br />on the containerd 'config.toml' file on the Windows nodes. |
+| `cniConfigDir` _string_ | (Optional) CNIConfigDir is the path to the CNI configuration directory on Windows, it must match what is used as 'conf_dir' under<br />[plugins]<br />  [plugins."io.containerd.grpc.v1.cri"]<br />    [plugins."io.containerd.grpc.v1.cri".cni]<br />on the containerd 'config.toml' file on the Windows nodes. |
+| `cniLogDir` _string_ | (Optional) CNILogDir is the path to the Calico CNI logs directory on Windows. |
+| `vxlanMACPrefix` _string_ | (Optional) VXLANMACPrefix is the prefix used when generating MAC addresses for virtual NICs |
+| `vxlanAdapter` _string_ | (Optional) VXLANAdapter is the Network Adapter used for VXLAN, leave blank for primary NIC |
+
