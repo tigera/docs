@@ -302,7 +302,7 @@ metadata:
 spec:
   # Added calicoNetwork section with linuxDataplane field
   calicoNetwork:
-${props.installMode === "auto" ? '    bpfInstallMode: Auto\n' : ''}    linuxDataplane: BPF
+    linuxDataplane: BPF${props.installMode === "auto" ? '\n    bpfInstallMode: Auto' : ''}
 
   # EKS with Bottlerocket as node image only:
   # flexVolumePath: /var/lib/kubelet/plugins
@@ -326,7 +326,7 @@ spec: {}`}
         <p>
           If you already created the custom resources, you can switch your cluster over to eBPF mode by updating the installation resource. The operator will automatically roll out the change.
         </p>
-        <CodeBlock language="bash">{`kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{${props.installMode === "auto" ? '"bpfInstallMode":"Auto", ' : ''}"linuxDataplane":"BPF", "hostPorts":null}}}'`}</CodeBlock>
+        <CodeBlock language="bash">{`kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF", ${props.installMode === "auto" ? '"bpfInstallMode":"Auto", ' : ''}"hostPorts":null}}}'`}</CodeBlock>
       </Admonition>
 
       <Heading
