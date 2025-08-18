@@ -1,11 +1,11 @@
 # Tigera/Calico Documentation Repository - Copilot Instructions
 
-This repository contains the documentation sites for Calico (Open Source), Calico Enterprise, and Calico Cloud products. It's built using Docusaurus 2 and contains extensive multi-product, multi-version documentation.
+This repository contains the documentation sites for Calico (Open Source), Calico Enterprise, and Calico Cloud products. It's built using Docusaurus 3 and contains extensive multi-product, multi-version documentation.
 
 ## Repository Overview
 
 - **Purpose**: Documentation website for three Calico products with versioned documentation
-- **Technology Stack**: Docusaurus 2, React 19, TypeScript, Node.js, Yarn 4
+- **Technology Stack**: Docusaurus 3, React 19, TypeScript, Node.js, Yarn 4
 - **Size**: Large repository (~50+ directories, 1000+ files)
 - **Build System**: Combination of Makefile targets and Yarn scripts
 - **Deployment**: Netlify with preview builds for PRs
@@ -90,9 +90,10 @@ Examples:
 - **Setup**: Use nvm if available: `nvm install 22.17.0 && nvm use 22.17.0`
 
 ### Package Manager Setup (CRITICAL)
-1. **Enable Corepack first**: `corepack enable` (required before any yarn commands)
+1. **Enable Corepack**: `corepack enable` (required for containerized builds, recommended for local development)
 2. **Yarn Version**: 4.9.2 (managed via `packageManager` field in package.json)
 3. **Installation**: `yarn install` (expect warnings about React version mismatches - these are non-blocking)
+4. **Note**: Corepack ensures consistent yarn versions across environments. While not strictly required for local development on some systems, it's mandatory for containerized builds and highly recommended for consistency.
 
 ### Docker Alternative
 - All commands support `CONTAINERIZED=true` flag for Docker-based builds
@@ -103,7 +104,7 @@ Examples:
 
 ### Standard Workflow
 ```bash
-# Required setup (ALWAYS run corepack enable first)
+# Required setup (run corepack enable first - required for containerized, recommended for local)
 corepack enable
 yarn install                  # Expect warnings about React versions (non-blocking)
 
@@ -311,4 +312,8 @@ The build process is complex but reliable when following the documented sequence
 ### Testing Requirements
 - All React components should have Jest tests in `__test__/` subdirectories
 - Test coverage thresholds: 85% branches/functions, 90% lines/statements  
-- Snapshot testing used for component regression detection
+- Snapshot testing used for component regression detectionctories
+- Test coverage thresholds: 85% branches/functions, 90% lines/statements  
+- Snapshot testing used for component regression detectionAll React components should have Jest tests in `__test__/` subdirectories
+- Test coverage thresholds: 85% branches/functions, 90% lines/statements  
+- Snapshot testing used for component regression detectionesting used for component regression detection
