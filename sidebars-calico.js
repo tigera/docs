@@ -596,6 +596,8 @@ module.exports = {
             'reference/calicoctl/get',
             'reference/calicoctl/patch',
             'reference/calicoctl/label',
+            'reference/calicoctl/convert',
+            'reference/calicoctl/validate',
             {
               type: 'category',
               label: 'cluster',
@@ -608,7 +610,6 @@ module.exports = {
                 'reference/calicoctl/cluster/diags',
               ],
             },
-            'reference/calicoctl/convert',
             {
               type: 'category',
               label: 'ipam',
