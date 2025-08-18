@@ -10,6 +10,78 @@ This repository contains the documentation sites for Calico (Open Source), Calic
 - **Build System**: Combination of Makefile targets and Yarn scripts
 - **Deployment**: Netlify with preview builds for PRs
 
+## Product Flavors and Documentation Workflow
+
+### Three Calico Product Flavors
+This repository documents three distinct flavors of Project Calico:
+
+1. **Calico Open Source** (`calico/` directory)
+   - The upstream open source project
+   - Base functionality for container and Kubernetes networking and security
+
+2. **Calico Enterprise** (`calico-enterprise/` directory) 
+   - Commercial offering with additional enterprise features
+   - Builds upon Calico Open Source functionality
+
+3. **Calico Cloud** (`calico-cloud/` directory)
+   - SaaS derivative of Calico Enterprise
+   - Managed service offering hosted by Tigera
+
+### Feature Flow and Relationships
+- **Feature Flow**: New features typically flow from Open Source → Enterprise → Cloud
+- **Exception**: The `calicoctl` command-line tool is **not used** with Calico Cloud
+- **Documentation Impact**: When documenting new OSS features, they should also be added to `calico-enterprise/` and `calico-cloud/` directories (unless specifically excluded like calicoctl)
+
+### Versioned vs Unversioned Documentation Structure
+The repository contains both versioned and unversioned documentation **on the same `main` branch**:
+
+#### Unversioned Directories (Current Development)
+- `calico/` - Current development version of Calico OSS
+- `calico-enterprise/` - Current development version of Calico Enterprise  
+- `calico-cloud/` - Current development version of Calico Cloud
+
+#### Versioned Directories (Released Versions)
+- `calico_versioned_docs/` - Previous released versions of Calico OSS
+- `calico-enterprise_versioned_docs/` - Previous released versions of Calico Enterprise
+- `calico-cloud_versioned_docs/` - Previous released versions of Calico Cloud
+
+### Documentation Workflow Guidelines
+
+#### New Features
+- **Target**: Add to **unversioned directories** (`calico/`, `calico-enterprise/`, `calico-cloud/`)
+- **Multi-product**: New OSS features should typically be added to all three product directories
+- **Rationale**: These become the next release version
+
+#### Backports and Bug Fixes
+- **Target**: Add to **versioned directories** (`*_versioned_docs/version-*`)
+- **Scope**: Only for fixes that need to be applied to already-released versions
+- **Rationale**: Updates existing released documentation
+
+#### Release Process
+- At release time, unversioned docs are copied and converted into new versioned directories
+- The unversioned directories continue to represent the next development version
+
+### "Next" Build System
+The build system uses "**next**" terminology to refer to unversioned documentation:
+
+#### Next Build Targets
+```bash
+make build-next              # Build unversioned "next" documentation
+make start-next              # Start development server with next docs
+make serve-next              # Build and serve next docs
+```
+
+#### Next Documentation URLs
+When running the development server with next docs, access via:
+```
+http://localhost:3000/<product-flavor>/next/<path-to-specific-doc>
+```
+
+Examples:
+- `http://localhost:3000/calico/next/getting-started/kubernetes/`
+- `http://localhost:3000/calico-enterprise/next/network-policy/`
+- `http://localhost:3000/calico-cloud/next/get-started/`
+
 ## Critical Setup Requirements
 
 ### Node.js Version (CRITICAL)
@@ -56,12 +128,15 @@ make build CONTAINERIZED=true
 make serve CONTAINERIZED=true
 ```
 
-### Special Development Modes
+### Next Version Development (Unversioned Docs)
 ```bash
-# Build with unreleased documentation versions
-make serve-next               # Quick start with next versions
+# Development with unreleased "next" documentation versions
+make start-next               # Start dev server with next versions
+make serve-next               # Quick build and serve next versions
 make build-next && make serve # Full build with next versions
 ```
+
+These commands build the unversioned documentation (from `calico/`, `calico-enterprise/`, `calico-cloud/` directories) rather than the versioned releases. Use these when working on new features or documentation for the next release.
 
 ## Testing Infrastructure
 
