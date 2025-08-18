@@ -673,6 +673,7 @@ module.exports = {
                   ],
                 },
                 'reference/clis/calicoctl/label',
+                'reference/clis/calicoctl/validate',
                 {
                   type: 'category',
                   label: 'node',
