@@ -1,10 +1,10 @@
 # Tigera/Calico Documentation Repository - Copilot Instructions
 
-This repository contains the documentation sites for Calico (Open Source), Calico Enterprise, and Calico Cloud products. It's built using Docusaurus 3 and contains extensive multi-product, multi-version documentation.
+This repository contains the documentation sites for Calico (Open Source), Calico Enterprise, Calico Cloud, and Calico Cloud Free Tier products. It's built using Docusaurus 3 and contains extensive multi-product, multi-version documentation.
 
 ## Repository Overview
 
-- **Purpose**: Documentation website for three Calico products with versioned documentation
+- **Purpose**: Documentation website for four Calico products with versioned documentation
 - **Technology Stack**: Docusaurus 3, React 19, TypeScript, Node.js, Yarn 4
 - **Size**: Large repository (~50+ directories, 1000+ files)
 - **Build System**: Combination of Makefile targets and Yarn scripts
@@ -12,8 +12,8 @@ This repository contains the documentation sites for Calico (Open Source), Calic
 
 ## Product Flavors and Documentation Workflow
 
-### Three Calico Product Flavors
-This repository documents three distinct flavors of Project Calico:
+### Four Calico Product Flavors
+This repository documents four distinct flavors of Project Calico:
 
 1. **Calico Open Source** (`calico/` directory)
    - The upstream open source project
@@ -27,9 +27,15 @@ This repository documents three distinct flavors of Project Calico:
    - SaaS derivative of Calico Enterprise
    - Managed service offering hosted by Tigera
 
+4. **Calico Cloud Free Tier** (`calico-cloud/` directory)
+   - Free tier of Calico Cloud with limited features
+   - 24-hour data retention
+   - Single cluster and single user
+   - Community-driven support
+
 ### Feature Flow and Relationships
-- **Feature Flow**: New features typically flow from Open Source → Enterprise → Cloud
-- **Exception**: The `calicoctl` command-line tool is **not used** with Calico Cloud
+- **Feature Flow**: New features typically flow from Open Source → Enterprise → Cloud (including Free Tier)
+- **Exception**: The `calicoctl` command-line tool is **not used** with Calico Cloud or Calico Cloud Free Tier
 - **Documentation Impact**: When documenting new OSS features, they should also be added to `calico-enterprise/` and `calico-cloud/` directories (unless specifically excluded like calicoctl)
 
 ### Versioned vs Unversioned Documentation Structure
@@ -49,7 +55,7 @@ The repository contains both versioned and unversioned documentation **on the sa
 
 #### New Features
 - **Target**: Add to **unversioned directories** (`calico/`, `calico-enterprise/`, `calico-cloud/`)
-- **Multi-product**: New OSS features should typically be added to all three product directories
+- **Multi-product**: New OSS features should typically be added to all three product directories (note: Free Tier shares `calico-cloud/` directory)
 - **Rationale**: These become the next release version
 
 #### Backports and Bug Fixes
