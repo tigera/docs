@@ -244,6 +244,9 @@ yarn test:screenshots             # Visual regression tests (optional)
 - Build must complete successfully
 - Tests must pass
 - Deploy preview must be inspected
+- **PR descriptions must include Netlify deploy preview links** for any pages being altered:
+  - For unversioned docs (calico/, calico-enterprise/, calico-cloud/): `https://calico-docs-preview-next.netlify.app/<product>/next/<path-to-page>`
+  - For versioned docs: `https://deploy-preview-<pr-number>--tigera-docs.netlify.app/<product>/<version>/<path-to-page>`
 
 ## Common Pitfalls and Solutions
 
@@ -318,8 +321,5 @@ The build process is complex but reliable when following the documented sequence
 ### Testing Requirements
 - All React components should have Jest tests in `__test__/` subdirectories
 - Test coverage thresholds: 85% branches/functions, 90% lines/statements  
-- Snapshot testing used for component regression detectionctories
-- Test coverage thresholds: 85% branches/functions, 90% lines/statements  
-- Snapshot testing used for component regression detectionAll React components should have Jest tests in `__test__/` subdirectories
-- Test coverage thresholds: 85% branches/functions, 90% lines/statements  
+- Snapshot testing used for component regression detection
 - Snapshot testing used for component regression detectionesting used for component regression detection
