@@ -596,6 +596,7 @@ module.exports = {
             'reference/calicoctl/get',
             'reference/calicoctl/patch',
             'reference/calicoctl/label',
+            'reference/calicoctl/validate',
             {
               type: 'category',
               label: 'cluster',

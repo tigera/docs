@@ -38,7 +38,7 @@ NODE_VER=22
 YARN=yarn
 YARN_ACTION_SUFFIX=
 ifeq ($(CONTAINERIZED),true)
-YARN=docker run -i --rm -v "$(shell pwd):/docs" -p 127.0.0.1:3000:3000 -w /docs node:$(NODE_VER) corepack enable && yarn
+	YARN=docker run --name docs-node -u node -it --rm -v "$(shell pwd):/docs" -v "$(shell pwd)/container.yarnrc.yml:/docs/.yarnrc.yml" -p 127.0.0.1:3000:3000 -w /docs node_with_corepack:$(NODE_VER) yarn
 YARN_ACTION_SUFFIX=-container
 endif
 
@@ -70,12 +70,36 @@ test: init
 clear clean:
 	$(YARN) clear
 
+# manual-clean is for when switching between local yarn commands and containerized
+# This is because the new yarn type might not be functional to run the regular clear/clean
+# but we need the environment clean to attempt the new yarn type.
+.PHONY: manual-clean
+manual-clean:
+	rm -rf node_modules .yarn .docusaurus build
+
 .PHONY: init
 init:
+ifeq ($(CONTAINERIZED),true)
+	# Create a modified yarnrc for use in the container environment
+	cp .yarnrc.yml container.yarnrc.yml
+	echo "globalFolder: /docs/.yarn" >> container.yarnrc.yml
+	# Build our custom node image that has corepack enabled
+	# repeated calls to this will be quick as the layers will be cached
+	docker buildx build --build-arg "NODE_VER=$(NODE_VER)" --build-arg "UID=$(shell id -u)" -t node_with_corepack:$(NODE_VER) --load -f Dockerfile.node .
+	if [ -f .yarn_type ] && [ "$$(cat .yarn_type)" != "containerized" ]; then $(MAKE) manual-clean; fi
+	echo containerized > .yarn_type
+else
+	if [ -f .yarn_type ] && [ "$$(cat .yarn_type)" != "local" ]; then $(MAKE) manual-clean; fi
+	echo local > .yarn_type
+endif
 	$(YARN) install
 
 .PHONY: serve
 serve: build
+	$(YARN) serve$(YARN_ACTION_SUFFIX)
+
+.PHONY: serve-next
+serve-next: build-next
 	$(YARN) serve$(YARN_ACTION_SUFFIX)
 
 .PHONY: full
@@ -125,6 +149,20 @@ show_current_branches:
 	$(info Calico cloud branch targets:)
 	$(foreach CAL_BRANCH,$(CALICO_CLOUD_BRANCHES),$(info * $(CAL_BRANCH)))
 	@true
+
+scripts/versions/format-versions: scripts/versions/go.* scripts/versions/main.go
+ifdef LOCAL_BUILD
+	make -C scripts/versions
+else
+	docker run --rm --net=host \
+	-e LOCAL_USER_ID=$(LOCAL_USER_ID) \
+	-e GOOS=$(shell go env GOOS) \
+	-e GOARCH=$(shell go env GOARCH) \
+	-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
+	-v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
+	-w /go/src/$(PACKAGE_NAME) \
+	$(CALICO_BUILD) make -C scripts/versions
+endif
 
 .PHONY: build-operator-reference
 build-operator-reference:
@@ -199,11 +237,26 @@ run-update-cloud-image-list:
 # 	e.g. for new versions of v3.18.0-2, DOCS_VERSION_STREAM=3.18-2
 # If the version to updates is the latest version for the product, specify IS_LATEST=true
 # 	e.g. if 3,18,1 is the latest version, IS_LATEST=true
-version/autogen:
+
+VERSION_ALL_VERSIONS=$(foreach version,$(wildcard calico-enterprise_versioned_docs/*),version/autogen/$(version:calico-enterprise_versioned_docs/version-%=%))
+
+# This target updates *the current versions* based on what is present in calico-private. It will
+# not (to my knowledge) add a new version which has not yet been added to the docs.
+version/updateall: $(VERSION_ALL_VERSIONS)
+	$(info [info] All current versions have been updated, but please check `git diff` to ensure the values are correct!)
+
+version/autogen/%:
+	$(info Building $@)
+	@$(MAKE) --no-print-directory version/autogen \
+		PRODUCT=calico-enterprise \
+		DOCS_VERSION_STREAM=$* \
+		VERSION=$(shell jq -r '.[0].title' calico-enterprise_versioned_docs/version-$*/releases.json)
+
+version/autogen: scripts/versions/format-versions
 	$(if $(GITHUB_TOKEN),,$(error GITHUB_TOKEN is not set or empty, but is required))
 	$(if $(PRODUCT),,$(error PRODUCT is not set or empty, but is required))
 	$(if $(VERSION),,$(error VERSION is not set or empty, but is required))
-	./scripts/update-component-versions.sh
+	@./scripts/update-component-versions.sh
 
 # Call the github API. $(1) is the http method type for the https request, $(2) is the repo slug, and is $(3) is for json
 # data (if omitted then no data is set for the request). If GITHUB_API_EXIT_ON_FAILURE is set then the macro exits with 1
