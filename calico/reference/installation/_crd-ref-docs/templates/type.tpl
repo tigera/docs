@@ -39,7 +39,7 @@ _Appears in:_
 {{ end -}}
 
 {{ if $type.EnumValues -}} 
-| Field | Description |
+| Value | Description |
 | --- | --- |
 {{ range $type.EnumValues -}}
 | `{{ .Name }}` | {{ markdownRenderFieldDoc .Doc }} |
