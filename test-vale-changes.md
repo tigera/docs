@@ -20,9 +20,9 @@ This is a test file to demonstrate that Vale now runs only on changed files in t
 
 8. There may be grammer issues in this sentance too. <!-- grammer -> grammar, sentance -> sentence -->
 
-## Valid Content
+## Valid Content with $[prodname] Variable
 
-This section has correct spelling and follows the style guide properly:
+This section has correct spelling and follows the style guide properly. We're using $[prodname] to demonstrate variable substitution.
 
 - Kubernetes is properly capitalized
 - Data plane is correctly written as two words  
