@@ -29,7 +29,7 @@ export const advocacyMessages: AdvocacyMessage[] = [
     imageUrl: "https://www.tigera.io/app/uploads/2025/05/tutorial-Kubernetes-with-Whisker-532x200-1.png",
     imageAlt: "Data analytics and monitoring dashboard",
     overlayBadge: "📊 Live Monitoring",
-    link: "https://www.tigera.io/tigera-products/calico-enterprise/observability/",
+    link: "https://www.tigera.io/tutorials/?_sf_s=Kubernetes%20Observability%20with%20Calico%20Whisker",
   },
   {
     id: "vmware-migration",
