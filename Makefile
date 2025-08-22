@@ -241,6 +241,10 @@ build-crd-reference-docs: $(CRD_DOC_GENERATOR)
 		--output-path=builder
 	@cp builder/out.md $(PRODUCT)/reference/installation/_api.mdx && \
 		sed -i '' 's/<br \/>/ /g' $(PRODUCT)/reference/installation/_api.mdx
+		sed -i '' 's/ \(WARNING:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
+		sed -i '' 's/ \(Default:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
+		sed -i '' 's/ \(Supported values are:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
+
 
 
 update-cloud-image-list:
