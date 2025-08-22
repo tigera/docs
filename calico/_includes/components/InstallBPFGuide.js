@@ -286,7 +286,7 @@ EOF`}
 
       <p>
         Edit the file in your editor of choice and find the <code>Installation</code> resource, which should be at the top of the file. To enable eBPF mode, we need to add a new <code>calicoNetwork</code> section inside the <code>spec</code> of the Installation resource, including the 
-        {props.installMode=="auto" && <span><code>bpfInstallMode</code> and the <code>linuxDataplane</code> fields. </span>}
+        {props.installMode=="auto" && <span><code>bpfNetworkBootstrap</code>, <code>kubeProxyManagement</code> and the <code>linuxDataplane</code> fields. </span>}
         {props.installMode=="manual" &&<span> <code>linuxDataplane</code> field. </span>}
         For EKS Bottlerocket OS only, you should also add the <code>flexVolumePath</code> setting as shown below.
       </p>
@@ -302,7 +302,7 @@ metadata:
 spec:
   # Added calicoNetwork section with linuxDataplane field
   calicoNetwork:
-    linuxDataplane: BPF${props.installMode === "auto" ? '\n    bpfInstallMode: Auto' : ''}
+    linuxDataplane: BPF${props.installMode === "auto" ? '\n    bpfNetworkBootstrap: Enabled\n    kubeProxyManagement: Enabled' : ''}
 
   # EKS with Bottlerocket as node image only:
   # flexVolumePath: /var/lib/kubelet/plugins
@@ -326,7 +326,7 @@ spec: {}`}
         <p>
           If you already created the custom resources, you can switch your cluster over to eBPF mode by updating the installation resource. The operator will automatically roll out the change.
         </p>
-        <CodeBlock language="bash">{`kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF", ${props.installMode === "auto" ? '"bpfInstallMode":"Auto", ' : ''}"hostPorts":null}}}'`}</CodeBlock>
+        <CodeBlock language="bash">{`kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF", ${props.installMode === "auto" ? '"bpfNetworkBootstrap":"Enabled", "kubeProxyManagement":"Enabled", ' : ''}"hostPorts":null}}}'`}</CodeBlock>
       </Admonition>
 
       <Heading
