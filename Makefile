@@ -239,7 +239,9 @@ build-crd-reference-docs: $(CRD_DOC_GENERATOR)
 		--renderer=markdown --max-depth=20 \
 		--templates-dir=$(PRODUCT)/reference/installation/_crd-ref-docs/templates \
 		--output-path=builder
-	@cp builder/out.md $(PRODUCT)/reference/installation/_api.mdx
+	@cp builder/out.md $(PRODUCT)/reference/installation/_api.mdx && \
+		sed -i '' 's/<br \/>/ /g' $(PRODUCT)/reference/installation/_api.mdx
+
 
 update-cloud-image-list:
 	@if [ -z "${RUN_UPDATE_CLOUD_IMAGE_LIST}" ]; then echo "Use 'make run-update-cloud-image-list' instead"; false; fi
