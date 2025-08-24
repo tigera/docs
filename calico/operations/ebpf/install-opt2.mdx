@@ -1,9 +1,8 @@
 ---
 description: Install Calico in eBPF mode.
 ---
-import InstallBPFGuide from '@site/calico/_includes/components/InstallBPFGuide';
 
-# Install in eBPF mode - Opt1: tabs
+# Install in eBPF mode - Opt2: different pages
 
 import EbpfValue from '@site/calico/_includes/content/_ebpf-value.mdx';
 
@@ -106,65 +105,24 @@ main installation guides:
 - Apply a set of Custom Resources to tell the operator what to install.
 - Wait for the operator to provision all the associated resources and report back via its status resource.
 
-To install directly in eBPF is very similar; this guide explains the differences:
+There are two ways to install in eBPF mode with Operator: Auto and Manual configuration.
 
-<Tabs>
-<TabItem id="test" label="Auto config" value="Auto-0">
+import DocCardList from '@theme/DocCardList';
 
-You can follow the default [Operator installation](../../getting-started/kubernetes/quickstart) if your cluster meets the following requisites:
- - Installation with Operator.
- - Your cluster has `kube-proxy` running in the `kube-system` namespace.
- - `kube-proxy` is not managed by an automated tool, such as Helm or ArgoCD.
- - Operator can access `kubernetes` service and endpoints.
-
-To do this, instead of applying `custom-resources.yaml` directly using kubectl create on **Step 2**, download the file first so you can edit it:
-
-```bash
- curl -o custom-resources.yaml $[manifestsUrl]/manifests/custom-resources.yaml
-```
-
-Edit the file and find the `Installation` resource, (usually at the top).
-To enable eBPF mode, add a `calicoNetwork` section inside the `spec` with the `bpfNetworkBootstrap`, `kubeProxyManagement`, and `linuxDataplane` fields. 
-For EKS Bottlerocket, also include the `flexVolumePath` field.
-
-For example:
-
-```yaml
-# This section includes base $[prodname] installation configuration.
-
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-   # Added calicoNetwork section with linuxDataplane field
-  calicoNetwork:
-    linuxDataplane: BPF
-    bpfNetworkBootstrap: Enabled
-    kubeProxyManagement: Enabled
-
-   # EKS with Bottlerocket as node image only:
-   # flexVolumePath: /var/lib/kubelet/plugins
-
-   # Install Calico Open Source
-   variant: Calico
-
-```
-
-Then apply the edited file:
-
-```bash
-kubectl create -f custom-resources.yaml
-```
-</TabItem>
-
-<TabItem label="Manual config" value="<Manual-1">
-
-<InstallBPFGuide installMode="manual"/>
-
-</TabItem>
-
-</Tabs>
+<DocCardList items={[
+    {
+      type: 'link',
+      href: 'install-opt2-auto',
+      label: 'Auto Configuration',
+      description: 'Install Calico in eBPF mode with auto configuration.',
+    },
+    {
+      type: 'link',
+      href: 'install-opt2-manual',
+      label: 'Manual Configuration',
+      description: 'Install Calico in eBPF mode.',
+    },    
+]} />
 
 ## Next steps
 

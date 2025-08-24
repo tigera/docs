@@ -199,6 +199,8 @@ module.exports = {
             'operations/ebpf/use-cases-ebpf',
             'operations/ebpf/enabling-ebpf',
             'operations/ebpf/install',
+            'operations/ebpf/install-opt2',
+            'operations/ebpf/install-opt3',
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
