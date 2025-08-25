@@ -1,7 +1,7 @@
 {{- define "gvDetails" -}}
 {{- $gv := . -}}
 
-{/* value off */}
+{/* vale off */}
 
 ## {{ $gv.GroupVersionString }}
 
