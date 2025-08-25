@@ -13,11 +13,11 @@ export default function InstallCharmedK8s(props) {
     <>
       <Heading
         as='h4'
-        id='install-with-calico-cni-networking'
+        id='install-calico-enterprise'
       >
-        Install with Calico CNI networking
+        Install {prodname}
       </Heading>
-      <p>Use this method if your Charmed Kubernetes cluster is configured with Calico as the CNI.</p>
+      <p>Charmed Kubernetes uses Calico CNI by default for networking.</p>
       <ol>
         <li>
           <p>Install the Tigera Operator and custom resource definitions.</p>
@@ -98,156 +98,6 @@ spec:
               Install the Tigera custom resources. For more information on configuration options available in this
               manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
             </p>
-            <CodeBlock>kubectl create -f {filesUrl}/manifests/custom-resources.yaml</CodeBlock>
-            <p>You can now monitor progress with the following command:</p>
-            <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
-          </li>
-        )}
-      </ol>
-      {props.clusterType !== 'managed' ? (
-        <p>
-          Wait until the <code>apiserver</code> shows a status of <code>Available</code>, then proceed to{' '}
-          <Link href={`#install-the-${prodnamedash}-license`}>install the {prodname} license</Link>.
-        </p>
-      ) : (
-        <p>
-          Wait until the <code>apiserver</code> shows a status of <code>Available</code>, then proceed to the next
-          section.
-        </p>
-      )}
-
-      <Heading
-        as='h4'
-        id='install-with-flannel-cni-networking'
-      >
-        Install with Flannel CNI networking
-      </Heading>
-      <p>Use this method if your Charmed Kubernetes cluster is configured with Flannel as the CNI.</p>
-      <ol>
-        <li>
-          <p>
-            <Link href={`${baseUrl}/operations/logstorage/create-storage`}>
-              Configure a storage class for {prodname}
-            </Link>
-            .
-          </p>
-        </li>
-        <li>
-          <p>Install the Tigera Operator and custom resource definitions.</p>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/operator-crds.yaml</CodeBlock>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
-        </li>
-        <li>
-          <p>
-            Install the Prometheus operator and related custom resource definitions. The Prometheus operator will be
-            used to deploy Prometheus server and Alertmanager to monitor {prodname} metrics.
-          </p>
-          <Admonition type='note'>
-            If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work
-            with {prodname}, your Prometheus operator must be v0.40.0 or higher.
-          </Admonition>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-prometheus-operator.yaml</CodeBlock>
-        </li>
-        <li>
-          <p>Install your pull secret.</p>
-          <p>
-            If pulling images directly from <code>quay.io/tigera</code>, you will likely want to use the credentials
-            provided to you by your Tigera support representative. If using a private registry, use your private
-            registry credentials instead.
-          </p>
-          <CodeBlock>
-            {`kubectl create secret generic tigera-pull-secret \\
-    --type=kubernetes.io/dockerconfigjson -n tigera-operator \\
-    --from-file=.dockerconfigjson=<path/to/pull/secret>`}
-          </CodeBlock>
-        </li>
-        <li>
-          <p>
-            Install any extra <Link href={`${baseUrl}/reference/resources`}>{prodname} resources</Link> needed at
-            cluster start using <Link href={`${baseUrl}/reference/clis/calicoctl/overview`}>calicoctl</Link>.
-          </p>
-        </li>
-        {props.clusterType === 'managed' ? (
-          <li>
-            <p>
-              Download the Tigera custom resources. For more information on configuration options available in this
-              manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
-            </p>
-            <CodeBlock language='bash'>curl -O -L {filesUrl}/manifests/custom-resources.yaml</CodeBlock>
-            <p>Edit the Installation resource to disable Calico networking.</p>
-            <CodeBlock language='yaml'>
-              {`apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  # Configures Calico networking.
-  calicoNetwork:
-    # Note: The ipPools section cannot be modified post-install.
-    ipPools:
-    - blockSize: 26
-      cidr: 10.48.0.0/24
-      encapsulation: None
-      natOutgoing: Enabled
-      nodeSelector: all()
-  cni:
-    type: None`}
-            </CodeBlock>
-            <p>
-              Remove the <code>Manager</code> custom resource from the manifest file.
-            </p>
-            <CodeBlock language='yaml'>
-              {`apiVersion: operator.tigera.io/v1
-kind: Manager
-metadata:
-  name: tigera-secure
-spec:
-  # Authentication configuration for accessing the Tigera manager.
-  # Default is to use token-based authentication.
-  auth:
-    type: Token`}
-            </CodeBlock>
-            <p>
-              Remove the <code>LogStorage</code> custom resource from the manifest file.
-            </p>
-            <CodeBlock language='yaml'>
-              {`apiVersion: operator.tigera.io/v1
-kind: LogStorage
-metadata:
-  name: tigera-secure
-spec:
-  nodes:
-    count: 1`}
-            </CodeBlock>
-            <p>Now apply the modified manifest.</p>
-            <CodeBlock language='bash'>kubectl create -f ./custom-resources.yaml</CodeBlock>
-            <p>You can now monitor progress with the following command:</p>
-            <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
-          </li>
-        ) : (
-          <li>
-            <p>Create a custom Installation resource for Flannel networking.</p>
-            <CodeBlock language='bash'>
-              {`kubectl apply -f - <<EOF
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  # Configures Calico networking.
-  calicoNetwork:
-    # Note: The ipPools section cannot be modified post-install.
-    ipPools:
-    - blockSize: 26
-      cidr: 10.48.0.0/24
-      encapsulation: None
-      natOutgoing: Enabled
-      nodeSelector: all()
-  cni:
-    type: None
-EOF`}
-            </CodeBlock>
-            <p>Install the remaining Tigera custom resources.</p>
             <CodeBlock>kubectl create -f {filesUrl}/manifests/custom-resources.yaml</CodeBlock>
             <p>You can now monitor progress with the following command:</p>
             <CodeBlock>watch kubectl get tigerastatus</CodeBlock>
