@@ -22,7 +22,7 @@ export default function InstallCharmedK8s(props) {
         <li>
           <Link href={`${baseUrl}/operations/logstorage/create-storage`}>Configure storage for {prodname}</Link>.
           <Admonition type='caution'>
-            For Canonical Juju Charmed Kubernetes clusters, you cannot use AWS EBS storage classes. You must configure an alternative storage solution such as local storage or another compatible storage provider.
+            For Charmed Kubernetes clusters, you cannot use AWS EBS storage classes. You must configure an alternative storage solution such as local storage or another compatible storage provider.
           </Admonition>
         </li>
       </When>
