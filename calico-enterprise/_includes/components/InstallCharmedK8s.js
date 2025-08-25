@@ -1,4 +1,5 @@
 import React from 'react';
+import { When } from 'react-if';
 
 import CodeBlock from '@theme/CodeBlock';
 import Link from '@docusaurus/Link';
@@ -17,7 +18,14 @@ export default function InstallCharmedK8s(props) {
       >
         Install {prodname}
       </Heading>
-      <p>Charmed Kubernetes uses Calico CNI by default for networking.</p>
+      <When condition={props.clusterType !== 'managed'}>
+        <li>
+          <Link href={`${baseUrl}/operations/logstorage/create-storage`}>Configure storage for {prodname}</Link>.
+          <Admonition type='caution'>
+            For Canonical Juju Charmed Kubernetes clusters, you cannot use AWS EBS storage classes. You must configure an alternative storage solution such as local storage or another compatible storage provider.
+          </Admonition>
+        </li>
+      </When>
       <ol>
         <li>
           <p>Install the Tigera Operator and custom resource definitions.</p>
