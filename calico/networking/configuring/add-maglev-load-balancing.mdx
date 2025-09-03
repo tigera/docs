@@ -1,0 +1,41 @@
+---
+description: Add Maglev load balancing to a Kubernetes service.
+---
+
+# Add Maglev load balancing to a service
+
+This guide shows you how to enable Maglev-style load balancing to a service.
+Maglev's consistent-hashing load balancing algorithm minimizes the amount of dropped packets and improves performance.
+This is especially useful for maintaining sessions during a load balancer failover.
+
+## Prerequisites
+
+* Your cluster uses the eBPF data plane with [direct server return mode](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf#try-out-direct-server-return-mode).
+* All your nodes are running on Linux.
+* You have the name and namespace of the service you want to use Maglev-style load balancing.
+
+## Enable consistent-hash load balancing for a service
+
+To enable consistent-hash load balancing for a service, annotate the service by running the following command:
+
+```bash
+kubectl -n <namespace> annotate service <service> 'lb.projectcalico.org/external-traffic-strategy: "maglev"'
+```
+
+Replace the following:
+* `<namespace>`: The namespace of the service.
+* `<service>`: The name of the service.
+
+To verify the configuration, check the logs for any `calico-node` pod for the string `Wrote Maglev` in reference to your service.
+
+```bash title='Example log query'
+kubectl -n calico-system logs calico-node-7kltn | grep --ignore-case 'Wrote Maglev'
+```
+
+```bash title='Example output'
+2025-10-28 15:30:53.091 [INFO][75] felix/syncer.go 893: Wrote Maglev service backends to NGINX service=default/svc:maglev-port
+```
+
+## Additional resources
+
+* [Enable the eBPF data plane](../../operations/ebpf/enabling-ebpf.mdx)
