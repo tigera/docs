@@ -1,101 +1,9 @@
----
-description: Install Calico in eBPF mode.
----
-import InstallBPFGuide from '@site/calico/_includes/components/InstallBPFGuide';
-
-# Install in eBPF mode - Opt1: tabs
-
-import EbpfValue from '@site/calico/_includes/content/_ebpf-value.mdx';
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
-## Big picture
-
-Install the eBPF data plane during the initial installation of $[prodname].
+# Install in eBPF mode
 
 ## Before you begin
-<details>
-  <summary>Learn more about eBPF: Concepts, Supported platforms, Performance, etc.</summary>
+- Learn more [about eBPF](../ebpf/overview.mdx): Concepts, Supported platforms, Performance, etc.
 
-## Value
-
-<EbpfValue />
-
-## Concepts
-
-### eBPF
-
-eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mini programs to be attached to various
-low-level hooks in the Linux kernel. eBPF has a wide variety of uses, including networking, security, and tracing.
-You’ll see a lot of non-networking projects leveraging eBPF, but for $[prodname] our focus is on networking,
-and in particular, pushing the networking capabilities of the latest Linux kernels to the limit.
-
-## Supported
-
-- x86-64
-- arm64 (little-endian)
-
-- Kubernetes datastore driver.
-
-- Distributions:
-
-  - Generic or kubeadm
-  - kOps
-  - OpenShift
-  - EKS
-  - AKS
-  - MKE
-
-- Linux distribution/kernel:
-
-  - Ubuntu 20.04.
-  - Red Hat v8.2 with Linux kernel v4.18.0-193 or above (Red Hat have backported the required features to that build).
-  - Another [supported distribution](../../getting-started/kubernetes/requirements.mdx) with Linux kernel v5.3 or above.
-
-- An underlying network fabric that allows VXLAN traffic between hosts. In eBPF mode, VXLAN is used to forward Kubernetes NodePort traffic.
-
-- IPv6
-
-Limitations:
-  
-  - IPIP is not supported ($[prodname] iptables does not support it either). VXLAN is the recommended overlay for eBPF mode.
-
-To enable IPv6 in eBPF mode, see [Configure dual stack or IPv6 only](../../networking/ipam/ipv6.mdx). You may be able to run with non-Calico IPAM. eks-cni is known to work.
-
-## Not supported
-
-- Other processor architectures.
-
-- etcd datastore driver.  The etcd datastore driver doesn't support watching Kubernetes services, which is required for some features in eBPF mode.
-
-- Distributions:
-
-  - GKE. This is because of an incompatibility with the GKE CNI plugin.
-
-  - RKE: eBPF mode cannot be enabled at install time because RKE doesn't provide
-    a stable address for the API server. However, by following [these instructions](enabling-ebpf.mdx),
-    it can be enabled as a post-install step.
-
-- Clusters with some eBPF nodes and some standard data plane and/or Windows nodes.
-- Floating IPs.
-- SCTP (either for policy or services).
-- Tagged VLAN devices.
-
-## Performance
-
-For best pod-to-pod performance, we recommend using an underlying network that doesn't require Calico to use an overlay. For example:
-
-- A cluster within a single AWS subnet.
-- A cluster using a compatible cloud provider's CNI (such as the AWS VPC CNI plugin).
-- An on-prem cluster with BGP peering configured.
-
-If you must use an overlay, we recommend that you use VXLAN, not IPIP. VXLAN has better performance than IPIP in
-eBPF mode due to various kernel optimisations.
-
-</details>
-
-## How to
+## How to install
 
 To install in eBPF mode, we recommend using the Tigera Operator to install $[prodname] so these instructions
 use the operator. Installing $[prodname] normally consists of the following stages, which are covered by the
@@ -106,65 +14,38 @@ main installation guides:
 - Apply a set of Custom Resources to tell the operator what to install.
 - Wait for the operator to provision all the associated resources and report back via its status resource.
 
-To install directly in eBPF is very similar; this guide explains the differences:
 
-<Tabs>
-<TabItem id="test" label="Auto config" value="Auto-0">
+import DocCardList from '@theme/DocCardList';
 
-You can follow the default [Operator installation](../../getting-started/kubernetes/quickstart) if your cluster meets the following requisites:
- - Installation with Operator.
- - Your cluster has `kube-proxy` running in the `kube-system` namespace.
- - `kube-proxy` is not managed by an automated tool, such as Helm or ArgoCD.
- - Operator can access `kubernetes` service and endpoints.
+### Auto configuration
 
-To do this, instead of applying `custom-resources.yaml` directly using kubectl create on **Step 2**, download the file first so you can edit it:
+You can choose the automatic eBPF configuration if your cluster meets the following requirements:
+- Install $[prodname] with the Operator.
+- Your cluster has <code>kube-proxy</code> running in the <code>kube-system</code> namespace.
+- <code>kube-proxy</code> is <strong>not</strong> managed by an automated tool, such as Helm or ArgoCD.
+- The Operator can access <code>kubernetes</code> service and endpoints.
 
-```bash
- curl -o custom-resources.yaml $[manifestsUrl]/manifests/custom-resources.yaml
-```
+<DocCardList items={[
+    {
+      type: 'link',
+      href: 'install-ebpf',
+      label: 'Auto Configuration',
+      description: 'Install Calico in eBPF mode with auto configuration.',
+    }, 
+]} />
 
-Edit the file and find the `Installation` resource, (usually at the top).
-To enable eBPF mode, add a `calicoNetwork` section inside the `spec` with the `bpfNetworkBootstrap`, `kubeProxyManagement`, and `linuxDataplane` fields. 
-For EKS Bottlerocket, also include the `flexVolumePath` field.
+### Manual configuration
 
-For example:
+If any of the auto-configuration requirements aren’t met, manual configuration should be selected.
 
-```yaml
-# This section includes base $[prodname] installation configuration.
-
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-   # Added calicoNetwork section with linuxDataplane field
-  calicoNetwork:
-    linuxDataplane: BPF
-    bpfNetworkBootstrap: Enabled
-    kubeProxyManagement: Enabled
-
-   # EKS with Bottlerocket as node image only:
-   # flexVolumePath: /var/lib/kubelet/plugins
-
-   # Install Calico Open Source
-   variant: Calico
-
-```
-
-Then apply the edited file:
-
-```bash
-kubectl create -f custom-resources.yaml
-```
-</TabItem>
-
-<TabItem label="Manual config" value="<Manual-1">
-
-<InstallBPFGuide installMode="manual"/>
-
-</TabItem>
-
-</Tabs>
+<DocCardList items={[
+    {
+      type: 'link',
+      href: 'install-ebpf-manual',
+      label: 'Manual Configuration',
+      description: 'Install Calico in eBPF mode with manual configuration.',
+    },    
+]} />
 
 ## Next steps
 

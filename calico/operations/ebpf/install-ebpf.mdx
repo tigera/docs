@@ -1,0 +1,124 @@
+---
+description: Install Calico in eBPF mode with auto configuration.
+---
+
+# Auto configuration
+
+## Before you begin
+- Learn more [about eBPF](../ebpf/overview.mdx): Concepts, Supported platforms, Performance, etc.
+
+## Requirements
+
+Your cluster must meet the following requirements to proceed with the auto-configuration process:
+- Install $[prodname] with the Operator.
+- Your cluster has <code>kube-proxy</code> running in the <code>kube-system</code> namespace.
+- <code>kube-proxy</code> is <strong>not</strong> managed by an automated tool, such as Helm or ArgoCD.
+- The Operator can access <code>kubernetes</code> service and endpoints.
+
+## How to
+
+The steps below outline how to install $[prodname] directly in eBPF mode:
+
+- [Create a cluster](#create-a-suitable-cluster) suitable to run $[prodname] **with the added requirement that the nodes must use a recent
+  enough kernel**.
+- [Install the Tigera Operator](#install-the-tigera-operator) (possibly via a Helm chart), and the associated Custom Resource Definitions.
+- **[Download and tweak the installation Custom Resource](#tweak-and-apply-installation-custom-resources) to tell the operator to use eBPF mode.**
+- [Apply a set of Custom Resources](#tweak-and-apply-installation-custom-resources) to tell the operator what to install.
+- [Wait for the operator to provision all the associated resources and report back via its status resource](#monitor-the-progress-of-the-installation).
+
+### Create a suitable cluster
+
+The basic requirement for eBPF mode is to have a recent-enough kernel (see [Overview page](../ebpf/overview.mdx#supported)).
+
+At this time, we recommend `kubeadm`-provisioned clusters for **auto-configuration**, which are supported as long as the chosen base OS (such as Ubuntu 20.04) meets the kernel requirements.
+
+### Install the Tigera Operator
+
+Install the Tigera Operator without applying the `custom-resources.yaml` - you will update this file in a later step in this doc. 
+
+```bash
+ kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+```
+
+### Tweak and apply installation Custom Resources
+
+When the main install guide tells you to apply the `custom-resources.yaml`, typically by running `kubectl create` with
+the URL of the file directly, you should instead download the file, so that you can edit it:
+
+```bash
+ curl -o custom-resources.yaml $[manifestsUrl]/manifests/custom-resources.yaml
+```
+
+Edit the file in your editor of choice and find the `Installation` resource, which should be at the top of the file.
+To enable eBPF mode, we need to add a new `calicoNetwork` section inside the `spec` of the Installation resource,
+including the `linuxDataplane`, `bpfNetworkBootstrap`, and `kubeProxyManagement` fields. For EKS Bottlerocket OS only, you should also add the `flexVolumePath` setting
+as shown below.
+
+For example:
+
+```yaml
+# This section includes base $[prodname] installation configuration.
+
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+   # Added calicoNetwork section with linuxDataplane field
+  calicoNetwork:
+    linuxDataplane: BPF
+    bpfNetworkBootstrap: Enabled
+    kubeProxyManagement: Enabled
+
+   # EKS with Bottlerocket as node image only:
+   # flexVolumePath: /var/lib/kubelet/plugins
+
+   # Install Calico Open Source
+   variant: Calico
+
+# This section configures the Calico API server.
+
+apiVersion: operator.tigera.io/v1
+kind: APIServer 
+metadata: 
+  name: default 
+spec: {}
+```
+
+Then apply the edited file:
+
+```bash
+kubectl create -f custom-resources.yaml
+```
+
+:::note
+
+If you are running kube-proxy in IPVS mode, switch to iptables mode before creating the Custom Resources.
+
+:::
+
+:::tip
+
+If you already created the custom resources, you can switch your cluster over to eBPF mode by updating the
+installation resource. The operator will automatically roll out the change.
+
+```bash
+kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF", "bpfNetworkBootstrap":"Enabled", "kubeProxyManagement":"Enabled", "hostPorts":null}}}'
+```
+
+:::
+
+### Monitor the progress of the installation
+
+You can monitor progress of the installation with the following command:
+
+```bash
+watch kubectl get tigerastatus
+```
+
+## Next steps
+
+**Recommended**
+
+- [Learn more about eBPF](use-cases-ebpf.mdx)
+- [Debug eBPF policies](../../network-policy/policy-rules/log-rules.mdx)
