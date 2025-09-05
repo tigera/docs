@@ -20,6 +20,9 @@ import Icmp from '@site/calico-cloud/_includes/content/_icmp.mdx';
 
 import Rule from '@site/calico-cloud/_includes/content/_rule.mdx';
 
+import Httpmatch from '@site/calico-cloud/_includes/content/_httpmatch.mdx';
+
+
 A global network policy resource (`GlobalNetworkPolicy`) represents an ordered set of rules which are applied
 to a collection of endpoints that match a [label selector](#selector).
 
@@ -160,8 +163,51 @@ process it more efficiently.  Currently only one hint is defined:
   the policy on every node so that there is less work to do when the first endpoint matching the policy shows up.
   It also prevents work from being done to tear down the policy when the last endpoint is drained.
 
+## Application layer policy
+
+Application layer policy is an optional feature of $[prodname] and
+[must be enabled](../../network-policy/application-layer-policies/alp.mdx)
+to use the following match criteria.
+
+:::note
+
+Application layer policy match criteria are supported with the following restrictions.
+
+- Only ingress policy is supported. Egress policy must not contain any application layer policy match clauses.
+- Rules must have the action `Allow` if they contain application layer policy match clauses.
+
+:::
+
+### HTTPMatch
+
+<Httpmatch />
+
 ## Supported operations
 
 | Datastore type           | Create/Delete | Update | Get/List | Notes |
 | ------------------------ | ------------- | ------ | -------- | ----- |
 | Kubernetes API datastore | Yes           | Yes    | Yes      |
+
+#### List filtering on tiers
+
+List and watch operations may specify label selectors or field selectors to filter `GlobalNetworkPolicy` resources on tiers returned by the API server.
+When no selector is specified, the API server returns all `GlobalNetworkPolicy` resources from all tiers that the user has access to.
+
+##### Field selector
+
+When using the field selector, supported operators are `=` and `==`
+
+The following example shows how to retrieve all `GlobalNetworkPolicy` resources in the default tier:
+
+```bash
+kubectl get globalnetworkpolicy --field-selector spec.tier=default
+```
+
+##### Label selector
+
+When using the label selector, supported operators are `=`, `==` and `IN`.
+
+The following example shows how to retrieve all `GlobalNetworkPolicy` resources in the `default` and `net-sec` tiers:
+
+```bash
+kubectl get globalnetworkpolicy -l 'projectcalico.org/tier in (default, net-sec)'
