@@ -478,6 +478,10 @@ export default async function createAsyncConfig() {
               path: 'next',
               banner: 'unreleased',
             },
+            '22-1': {
+              path: '/',
+              banner: 'none',
+            },
             '21-2': {
               path: '/',
               banner: 'none',
