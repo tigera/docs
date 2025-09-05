@@ -1,0 +1,82 @@
+---
+description: Steps to connect your cluster to Calico Cloud.
+title: Install using a private registry
+---
+
+# Connect a cluster to Calico Cloud using a private registry
+
+You can perform a Helm installation from images stored on a private registry.
+
+## Prerequisites
+
+* You have an active Calico Cloud Pro account.
+* You are signed in to the web console as a user with the **Owner**, **Admin**, or **DevOps** role.
+* You have at least one cluster that meets our [system requirements](system-requirements.mdx).
+* You have kubectl access to the cluster.
+* You have installed Helm 3.0 or later on your workstation.
+* You have [added the Calico Cloud images to a private registry](setup-private-registry.mdx), and you have the following information about the registry:
+  * Registry secret name
+    :::note
+    If your private registry requires credentials, create a `calico-cloud` namespace on your cluster.
+    Then, create an image pull secret and use this name for the **Registry Secret Name**.
+    :::
+  * Image registry
+  * Image path
+
+
+## Install Calico Cloud using a private registry
+
+1. From the **Managed Clusters** page, click **Connect Cluster**.
+1. In the **Connect a Cluster** dialog, enter a **Cluster Name** and select a **Cluster Type**.
+1. Optional: If you must install a specific older release, select the Calico Cloud version you want to install. We always recommend the latest version, which is installed by default.
+1. Click **Advanced Options**, and then select both **Install via helm** and **Private registry**.
+1. Enter the **Registry Secret Name**, **Image registry**, and **Image path**.
+1. Click **Connect** to generate a unique Helm installation command. Copy the command.
+1. Optional: If you want to enable the Packet Capture feature, you can append `--set installer.components.packetCaptureAPI.state=Enabled` to the generated Helm command.
+   You can change this option only by reinstalling or upgrading Calico Cloud and changing the values.
+
+   | Feature | Key | Values |
+   |---------|-----|--------|
+   | Packet Capture | `installer.components.packetCaptureAPI.state` |  `Enabled`, `Disabled` (default\*) <br/> * The default for new clusters is `Disabled`. For upgrades for previously connected clusters, the default will retain the previous state. |
+   | Compliance Reports | `installer.components.compliance.enabled` | `true`, `false` (default) |
+
+   ```bash title="Example of generated Helm command with user-added parameters"
+   helm repo add calico-cloud https://installer.calicocloud.io/charts --force-update && helm upgrade --install calico-cloud-crds calico-cloud/calico-cloud-crds --namespace calico-cloud --create-namespace && helm upgrade --install calico-cloud calico-cloud/calico-cloud --namespace calico-cloud --set apiKey=ryl34elz8:9dav6eoag:ifk1uwruwlgp7vzn7ecijt5zjbf5p9p1il1ag8877ylwjo4muu19wzg2g8x5qa7x --set installer.clusterName=my-cluster --set installer.calicoCloudVersion=v19.1.0 \
+   --set installer.components.packetCaptureAPI.state=Enabled
+   ```
+
+   In this example, the command connects the cluster to Calico Cloud with the Packet Capture feature enabled.
+
+   <details>
+   <summary>Use alternate feature keys for legacy features</summary>
+
+   The Image Assurance and Container Threat Detection features were removed for new users in Calico Cloud 21.1.0.
+   Legacy users of those features can continue to use a deprecated version until the features are completely removed in a future release.
+
+
+   | Feature | Key | Values |
+   |---------|-----|--------|
+   | Image Assurance | `installer.components.imageAssurance.state` | `Enabled`, `Disabled` (default) |
+   | Container Threat Detection | `installer.components.runtimeSecurity.state` | `Enabled`, `Disabled` (default\*) <br/> * The default for new clusters is `Disabled`. For upgrades for previously connected clusters, the default will retain the previous state. |
+   | Packet Capture | `installer.components.packetCaptureAPI.state` |  `Enabled`, `Disabled` (default\*) <br/> * The default for new clusters is `Disabled`. For upgrades for previously connected clusters, the default will retain the previous state. |
+   | Compliance Reports | `installer.components.compliance.enabled` | `true`, `false` (default) |
+
+   ```bash title="Example of generated Helm command with user-added parameters"
+   helm repo add calico-cloud https://installer.calicocloud.io/charts --force-update && helm upgrade --install calico-cloud-crds calico-cloud/calico-cloud-crds --namespace calico-cloud --create-namespace && helm upgrade --install calico-cloud calico-cloud/calico-cloud --namespace calico-cloud --set apiKey=ryl34elz8:9dav6eoag:ifk1uwruwlgp7vzn7ecijt5zjbf5p9p1il1ag8877ylwjo4muu19wzg2g8x5qa7x --set installer.clusterName=my-cluster --set installer.calicoCloudVersion=v19.1.0 \
+   --set installer.components.imageAssurance.state=Enabled \
+   --set installer.components.runtimeSecurity.state=Enabled \
+   ```
+   In this example, the command connects the cluster to Calico Cloud with Image Assurance and Container Threat Detection features enabled.
+
+   </details>
+
+1. From a terminal, paste and run the command.
+
+1. On the **Managed Clusters** page, you should immediately see your cluster in the list of managed clusters.
+   Monitor the status under **Connection Status**.
+   When the status changes to **Connected**, installation is complete and your cluster is connected to Calico Cloud.
+
+## Additional resources
+
+* [Calico Cloud troubleshooting checklist](checklist.mdx)
+* [Tigera Operator troubleshooting checklist](operator-checklist.mdx)

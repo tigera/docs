@@ -1,0 +1,99 @@
+---
+description: Configure an HTTP proxy to use for connections that leave the cluster
+---
+
+# Configure an outbound HTTP proxy
+
+$[prodname] supports the use of HTTP proxies for connections that leave the cluster and originate from $[prodname] containers.
+
+`HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment variables can be set on $[prodname] containers by using a mutating admission webhook, or by configuration through the Installation CR if preferred. In the latter case, the Tigera Operator will be responsible for setting proxy environment variables on $[prodname] containers that egress out of the cluster.
+
+With either environment variable configuration method, the Tigera Operator will detect the proxy environment variables that are set on $[prodname] containers that egress out of the cluster and ensure that network policy in the allow-tigera tier allows these connections.
+
+This page will outline how to configure an HTTP proxy using the Installation CR.
+
+:::caution
+
+$[prodname] assumes that you have exempted in-cluster destinations (including the Kubernetes API server) from proxying via the `NO_PROXY` variable.
+
+:::
+
+## Configuration via Helm
+If you wish to manually configure $[prodname] via Helm to set proxy environment variables on $[prodname] containers (rather than using a mutating admission webhook), you will first need to familiarize yourself with how to [customize the $[prodname] Helm chart using values.yaml](../get-started/install-automated#prepare-your-valuesyaml-with-customizations).
+
+Following the instructions linked above, retrieve your `<custom-values>.yaml`. Edit the file to set the `installer.components.installation.proxy` path, which configures the Installation CR with your proxy. This instructs the Tigera Operator to program your proxy on relevant containers that it deploys. e.g.:
+
+```yaml
+installer:
+  components:
+    installation:
+      proxy:
+        httpProxy:  <HTTP proxy value>
+        httpsProxy: <HTTPS proxy value>
+        noProxy:    <No proxy value>
+```
+
+In your `<custom-values>.yaml` file, you'll also need to set the `installer.components.ccInstaller.operatorDeployment.spec.template.spec.containers` path, which programs your proxy on the calico-cloud-controller-manager pod.
+
+```yaml
+installer:
+  components:
+    ccInstaller:
+      operatorDeployment:
+        spec:
+          template:
+            spec:
+              containers:
+                - name: calico-cloud
+                  env:
+                    - name: HTTP_PROXY
+                      value: <HTTP proxy value>
+                    - name: HTTPS_PROXY
+                      value: <HTTPS proxy value>
+                    - name: NO_PROXY
+                      value: <No proxy value>
+
+```
+
+Once you've completed your edits to your `<custom-values>.yaml`, you can [install](../get-started/install-automated#install-calico-cloud-as-part-of-an-automated-workflow-1) $[prodname] using your customized values.
+
+:::caution
+
+Ensure that the other required values for the Helm chart are set in the values.yaml file, as indicated by the generated helm install command.
+
+:::
+
+## Configuration via Manifest
+If you wish to manually configure $[prodname] via manifests to set proxy environment variables on $[prodname] containers (rather than using a mutating admission webhook), you’ll need to edit the manifests generated at install and reinstall time.
+
+First, you’ll need to edit the cc-operator deploy.yaml so that the `calico-cloud/calico-cloud-controller-manager` Deployment resource has your required environment variables (`HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY`) set in its `env` section.
+
+Second, you’ll need to edit the managed-cluster deploy.yaml so that the `calico-cloud/default` Installer resource has the Installation CR proxy configuration set. This is set at the `.spec.components.installation.proxy` path, e.g.
+
+```
+apiVersion: operator.calicocloud.io/v1
+kind: Installer
+metadata:
+  name: default
+  namespace: calico-cloud
+spec:
+  clusterName: "proxy-cluster"
+  resourceVersion: "20241209202443"
+  components:
+    installation:
+      proxy:
+        httpProxy:  <HTTP proxy value>
+        httpsProxy: <HTTPS proxy value>
+        noProxy:    <No proxy value>
+```
+
+## Validating Configuration
+Once your install or reinstall has completed, you can:
+* Check the Installation CR to validate that the `.spec.proxy` path has been set as expected
+* Check the calico-cloud-controller-manager Deployment to validate that the environment variables have been set on the container as expected
+
+:::caution
+
+You can manually edit the two places above to configure $[prodname] to use a proxy, but keep in mind that the reinstall process (via Helm or manifest) may overwrite your changes if you did not follow the steps in previous sections.
+
+:::
