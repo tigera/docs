@@ -31,29 +31,91 @@ By default, Charmed Kubernetes uses Calico for networking. Other CNI options lik
 
 **Required**
 
-- A [compatible Charmed Kubernetes cluster](../compatibility.mdx#charmed-kubernetes)
 - Your cluster meets the [system requirements](requirements.mdx)
 - A [Tigera license key and credentials](calico-enterprise.mdx)
 - [Install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) on your workstation
 - [Install juju](https://juju.is/docs/juju/install-juju) on your workstation (if managing the cluster directly)
+- A [compatible Charmed Kubernetes cluster](../compatibility.mdx#charmed-kubernetes)
+- A [compatible Charmed Kubernetes bundle](https://github.com/charmed-kubernetes/bundle/tree/main) configured without a CNI (eg. calico)
 
-## How to
+:::caution
 
-1. [Install $[prodname]](#install-calico-enterprise)
-1. [Install the $[prodname] license](#install-the-calico-enterprise-license)
+**Custom bundle file required**
 
-<InstallCharmedK8s clusterType='standalone' />
+The default Charmed Kubernetes bundle includes a managed calico charm that is unsupported to migrate to $[prodname].
 
-## Next steps
+For successful $[prodname] installation with Charmed Kubernetes, we recommend using a custom bundle file without the calico charm instead of using default Charmed Kubernetes bundle directly. This ensures proper configuration and compatibility to install $[prodname] smoothly.
 
-- [Configure access to the $[prodname] web console](../../operations/cnx/access-the-manager.mdx)
-- [Get started with Kubernetes network policy](../../network-policy/get-started/kubernetes-network-policy.mdx)
-- [Get started with $[prodname] network policy](../../network-policy/beginners/calico-network-policy.mdx)
-- [Enable default deny for Kubernetes pods](../../network-policy/beginners/kubernetes-default-deny.mdx)
+:::
 
-**Additional resources**
+An compatible bundle manifest to successfully install $[prodname] is below:
 
-- [Charmed Kubernetes documentation](https://ubuntu.com/kubernetes/charmed-k8s)
-- [Charmed Kubernetes quickstart](https://ubuntu.com/kubernetes/charmed-k8s/docs/quickstart)
-- [Juju documentation](https://juju.is/docs)
-- [Canonical Kubernetes operations](https://ubuntu.com/kubernetes/docs) 
+<details>
+<summary>Charmed Kubernetes bundle manifest</summary>
+
+```yaml
+description: A highly-available, production-grade Kubernetes cluster.
+docs: https://discourse.charmhub.io/t/charmed-kubernetes-bundle/14447
+issues: https://bugs.launchpad.net/charmed-kubernetes-bundles
+series: jammy
+source: https://github.com/charmed-kubernetes/bundle
+website: https://ubuntu.com/kubernetes/charmed-k8s
+name: charmed-kubernetes
+applications:
+  containerd:
+    charm: containerd
+    channel: 1.32/stable
+  easyrsa:
+    charm: easyrsa
+    channel: 1.32/stable
+    constraints: arch=amd64 cpu-cores=2 mem=8192 root-disk=16384
+    num_units: 1
+  etcd:
+    charm: etcd
+    channel: 1.32/stable
+    constraints: arch=amd64 cpu-cores=2 mem=8192 root-disk=16384
+    storage:
+      data: loop,1,1024M
+    num_units: 1
+    options:
+      channel: 3.4/stable
+  kubernetes-control-plane:
+    charm: kubernetes-control-plane
+    channel: 1.32/stable
+    constraints: arch=amd64 cpu-cores=2 mem=8192 root-disk=16384
+    num_units: 1
+    expose: true
+    options:
+      channel: 1.32/stable
+  kubernetes-worker:
+    charm: kubernetes-worker
+    channel: 1.32/stable
+    constraints: arch=amd64 cpu-cores=2 mem=8192 root-disk=16384
+    num_units: 3
+    expose: true
+    options:
+      channel: 1.32/stable
+relations:
+- - kubernetes-control-plane:kube-control
+  - kubernetes-worker:kube-control
+- - kubernetes-control-plane:certificates
+  - easyrsa:client
+- - kubernetes-control-plane:etcd
+  - etcd:db
+- - kubernetes-worker:certificates
+  - easyrsa:client
+- - etcd:certificates
+  - easyrsa:client
+- - containerd:containerd
+  - kubernetes-worker:container-runtime
+- - containerd:containerd
+  - kubernetes-control-plane:container-runtime
+```
+
+</details>
+
+Create the Charmed Kubernetes cluster by specifying the bundle file in the `juju deploy` command:
+
+```
+juju d
+``` 
