@@ -193,6 +193,10 @@ test('Crawl the docs and execute tests', async () => {
     'https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_rosa_with_hcp_clusters/rosa-hcp-cluster-no-cli#rosa-operator-config_rosa-hcp-cluster-no-cni',
     'https://docs.splunk.com/Documentation/Splunk/8.0.0/Data/UsetheHTTPEventCollector',
     'https://guardian.calico-system.svc',
+    'https://developer.hashicorp.com/terraform',
+    'https://www.terraform.io/',
+    'https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_rosa_with_hcp_clusters/rosa-hcp-sts-creating-a-cluster-quickly',
+    'https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_rosa_with_hcp_clusters/rosa-hcp-sts-creating-a-cluster-quickly#rosa-hcp-creating-vpc'
   ];
 
   const lc = linkChecker();
