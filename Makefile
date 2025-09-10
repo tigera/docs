@@ -20,7 +20,7 @@
 ##         - Outputs all of the branch-related targets that you can
 ##           use to update a specific branch's operator docs.
 
-GO_BUILD_VER?=v0.95
+GO_BUILD_VER?=1.24.6-llvm18.1.8-k8s1.33.3
 CALICO_BUILD?=calico/go-build:$(GO_BUILD_VER)
 LOCAL_USER_ID?=$(shell id -u $$USER)
 PACKAGE_NAME?=github.com/projectcalico/calico/calico
@@ -241,6 +241,10 @@ build-crd-reference-docs: $(CRD_DOC_GENERATOR)
 		--output-path=builder
 	@cp builder/out.md $(PRODUCT)/reference/installation/_api.mdx && \
 		sed -i '' 's/<br \/>/ /g' $(PRODUCT)/reference/installation/_api.mdx
+		sed -i '' 's/ \(WARNING:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
+		sed -i '' 's/ \(Default:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
+		sed -i '' 's/ \(Supported values are:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
+
 
 
 update-cloud-image-list:

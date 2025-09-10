@@ -187,11 +187,10 @@ test('Crawl the docs and execute tests', async () => {
     /^https?:\/\/github\.com\//,
     /^https?:\/\/(git|examples)\.k8s\.io\//,
     'https://console.developers.google.com/apis/library/admin.googleapis.com/',
-    'https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_rosa_with_hcp_clusters/rosa-hcp-cluster-no-cli/',
-    'https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_rosa_with_hcp_clusters/rosa-hcp-cluster-no-cli#rosa-sts-byo-oidc_rosa-hcp-cluster-no-cni',
-    'https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_rosa_with_hcp_clusters/rosa-hcp-cluster-no-cli#rosa-hcp-sts-creating-a-cluster-cli_rosa-hcp-cluster-no-cni-no-cni',
-    'https://docs.redhat.com/en/documentation/red_hat_openshift_service_on_aws/4/html/install_rosa_with_hcp_clusters/rosa-hcp-cluster-no-cli#rosa-operator-config_rosa-hcp-cluster-no-cni',
     'https://docs.splunk.com/Documentation/Splunk/8.0.0/Data/UsetheHTTPEventCollector',
+    'https://guardian.calico-system.svc',
+    'https://developer.hashicorp.com/terraform',
+    'https://www.terraform.io/'
   ];
 
   const lc = linkChecker();

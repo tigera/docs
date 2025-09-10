@@ -1,0 +1,88 @@
+---
+description: Learn how to isolate namespaces for ingress traffic.
+---
+
+# Namespace isolation and access controls
+
+In this article you will learn how to create $[prodname] global network policies to isolate namespaces for ingress traffic.
+
+## Isolate access
+
+Isolating ingress traffic access can be implemented across different groups in your organization, for example:
+
+- Business unit, development team, or project
+- Deployment environment (Dev/Stage/Prod or Pre-prod/Prod)
+- Control plane
+- Management plane
+- Compliance environment
+
+## Create global network policies
+
+Microsegmentation across namespaces is achieved using $[prodname] policy labels and selectors with a **Pass** action rule. If you are unfamiliar with policy action rules, see [Tutorial - Understanding policy tiers](../../network-policy/policy-tiers/tiered-policy.mdx).
+
+In the following example, let's assume the following:
+
+- We created a **security tier** (recommended for your enterprise security controls like multi-tenancy)
+- Two development teams (`dev1` and `dev2`), each managing two applications or microservices
+- The security tier will delegate (pass) microsegmentation controls to the application tier
+- We will use a GlobalNetworkPolicy with cluster wide scope that applies to pods in all namespaces in the cluster.
+
+For example:
+
+![multi-tenancy-ingress](/img/calico-cloud/multi-tenancy-ingress.png)
+
+**GlobalNetworkPolicy 1**
+
+The following policy is for ingress traffic that goes through a trusted load balancer. It resides in the security tier, and uses the **Pass** action rule to delegate control to the application tier for the `dev1` tenant. Because the application tier contains endpoints that apply, traffic is processed.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: security.ingress-dev1
+spec:
+  tier: security
+  order: 200
+  selector: tenant == "dev1"
+  ingress:
+    - action: Pass
+      source:
+        selector: trusted-ep == "load-balancer"
+    - action: Pass
+      source:
+        selector: tenant == "dev1"
+  types:
+    - Ingress
+```
+
+**GlobalNetworkPolicy 2**
+
+Similarly, we create a second GlobalNetworkPolicy for `dev2` tenant that delegates control to the application tier for the `dev2` applications.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: security.ingress-dev2
+spec:
+  tier: security
+  order: 300
+  selector: tenant == "dev2"
+  ingress:
+    - action: Pass
+      source:
+        selector: trusted-ep == "load-balancer"
+    - action: Pass
+      source:
+        selector: tenant == "dev2"
+  types:
+    - Ingress
+```
+
+## Summary and recommendations
+
+In these examples, we implemented ingress access controls for two development teams. The global network policy has cluster-wide scope (applying to pods in all namespaces in the cluster). For **egress controls**, we recommend the following:
+
+- Use permissive egress policies for intra-cluster communication
+- Implement [Global default deny](default-deny.mdx) security controls
+- Implement [Global egress access controls](global-egress.mdx) for communication with endpoints external to the cluster in the security tier. These controls govern the communication of all applications for a given tenant with the outside world.
