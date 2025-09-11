@@ -69,6 +69,7 @@ test('Crawl the docs and execute tests', async () => {
     `https://installer.calicocloud.io/`,
     `https://installer.calicocloud.io/charts`,
     `https://docs.tigera.io/calico/charts`,
+    'https://downloads.tigera.io/ee/charts',
     'https://Q4GSZWRKBA-dsn.algolia.net',
     'http://backend.stars:6379/status',
     'http://client.client:9000/status',
