@@ -191,7 +191,9 @@ test('Crawl the docs and execute tests', async () => {
     'https://docs.splunk.com/Documentation/Splunk/8.0.0/Data/UsetheHTTPEventCollector',
     'https://guardian.calico-system.svc',
     'https://developer.hashicorp.com/terraform',
-    'https://www.terraform.io/'
+    'https://www.terraform.io/',
+    'http://developer.openstack.org/api-ref-networking-v2.html',
+    'https://docs.openstack.org/kolla-ansible/rocky/user/multi-regions.html'
   ];
 
   const lc = linkChecker();
