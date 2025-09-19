@@ -44,12 +44,7 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
 1. Create a `NonClusterHost` custom resource.
 
-    This resource enables the cluster-side ingestion endpoint to receive logs from non-cluster hosts. Additionally, it provides a dedicated Typha deployment for managing communication between the non-cluster host agent and Typha.
-
-    | Field         | Description                                                          | Accepted Values                                                          | Schema |
-    | ------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ |
-    | endpoint      | Required. Location of the log ingestion point for non-cluster hosts. | Any HTTPS URL with a domain name and a port number                       | string |
-    | typhaEndpoint | Required. Location of the Typha endpoint for non-cluster host agent and Typha communication. | Any IP address or domain name with a port number | string |
+    This resource enables the cluster-side ingestion endpoint to receive logs from non-cluster hosts. It also provides a dedicated Typha deployment to manage communication between the non-cluster host agent and Typha. To ensure proper operation, verify that the non-cluster hosts or VMs have network connectivity to your Kubernetes cluster.
 
     ```bash
     kubectl create -f - <<EOF
@@ -63,52 +58,33 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
     EOF
     ```
 
+    | Field         | Description                                                          | Accepted Values                                                          | Schema |
+    | ------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ |
+    | endpoint      | Required. Location of the log ingestion point for non-cluster hosts. | Any HTTPS URL with a domain name and a port number                       | string |
+    | typhaEndpoint | Required. Location of the Typha endpoint for non-cluster host agent and Typha communication. If you are using an ingress controller or an external load balancer, ensure it is configured to allow TCP Layer 4 passthrough. This is required for non-cluster host agent to establish a mutual TLS (mTLS) connection to the cluster. | Any IP address or domain name with a port number | string |
+
     Wait until the Tigera Manager and non-cluster Typha deployments reach the Available status before proceeding to the next step.
 
-2. Obtain the token for `tigera-noncluster-host` service account.
+1. Create a `kubeconfig` file for your non-cluster host or VM:
 
     ```bash
-    kubectl get secret -n calico-system tigera-noncluster-host -o jsonpath='{.data.token}' | base64 --decode
+    calicoctl nonclusterhost generate-config [--namespace=<NAMESPACE>] [--serviceaccount=<SERVICEACCOUNT>] [--certfile=<CERTFILE>] > kubeconfig
     ```
 
-3. Create a `kubeconfig` file for your non-cluster host or VM similar to the following:
+    | Parameter      | Description                                                                                              | Default Values         |
+    | -------------- | -------------------------------------------------------------------------------------------------------- | ---------------------- |
+    | namespace      | Optional. The namespace where the service account for non-cluster hosts resides.                         | calico-system          |
+    | serviceaccount | Optional. The service account used by non-cluster hosts to authenticate and securely access the cluster. | tigera-noncluster-host |
+    | certfile       | Optional. Path to the file containing the PEM-encoded authority certificates. Use this option if you are providing your own [TLS certificates for Calico Enterprise Manager](../../operations/comms/manager-tls.mdx). If not specified, the Tigera root CA certificate will be used by default. | |
 
-    ```yaml
-    apiVersion: v1
-    kind: Config
-    current-context: noncluster-hosts
-    preferences: {}
-    clusters:
-    - cluster:
-        certificate-authority-data: <certificate-authority-data>
-        server: <server>
-      name: noncluster-hosts
-    contexts:
-    - context:
-        cluster: noncluster-hosts
-        user: tigera-noncluster-host
-      name: noncluster-hosts
-    users:
-    - name: tigera-noncluster-host
-      user:
-        token: <token>
-    ```
-
-    Replace the following:
-    - Cluster:
-      - `<server>`: The URL of the Kubernetes API server.
-      - `<certificate-authority-data>`: Base64 encoded CA certificate to verify the Kubernetes API server's certificate.
-    - User:
-      - `<token>`: A bearer token associated with the `tigera-noncluster-host` service account obtained in the previous step.
-
-4. Create a [`HostEndpoint` resource](../../reference/host-endpoints/overview.mdx) for each non-cluster host or VM. The `node` and `expectedIPs` fields are required to match the hostname and the expected interface IP addresses.
+1. Create a [`HostEndpoint` resource](../../reference/host-endpoints/overview.mdx) for each non-cluster host or VM. The `node` and `expectedIPs` fields are required to match the hostname and the expected interface IP addresses.
 
 ### Set up your non-cluster host or VM
 
 1. Configure the Calico Enterprise repository.
 
     ```bash
-    curl -sfL https://downloads.tigera.io/ee/rpms/v3.21/calico_enterprise.repo -o /etc/yum.repos.d/calico-enterprise.repo
+    curl -sfL https://downloads.tigera.io/ee/rpms/v3.22/calico_enterprise.repo -o /etc/yum.repos.d/calico-enterprise.repo
     ```
 
     Only Red Hat Enterprise Linux 8 and 9 x86-64 operating systems are supported in this version of $[prodname].
@@ -121,7 +97,7 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
       dnf install calico-node calico-fluent-bit
       ```
 
-1. Copy the kubeconfig created in cluster setup step 3 to host folder `/etc/calico/kubeconfig` and change ownership to `calico:calico`.
+1. Copy the `kubeconfig` created in cluster setup step 2 to host folder `/etc/calico/kubeconfig`.
 
 1. Start Calico node and log forwarder.
 
@@ -132,22 +108,18 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
     You can configure the Calico node by tuning the environment variables defined in the `/etc/calico/calico-node/calico-node.env` file. For more information, see the [Felix configuration reference](../../reference/resources/felixconfig.mdx).
 
-### Configure hosts to communicate with your Kubernetes cluster
+### Configure high availability mode
 
-You must ensure that the non-cluster hosts or VMs can communicate with your Kubernetes cluster. If you are using an ingress controller or an external load balancer, ensure it is configured to allow TCP Layer 4 passthrough. This is required for non-cluster host agent to establish a mutual TLS (mTLS) connection to the cluster via the `typhaEndpoint` endpoint.
+High availability (HA) mode helps protect workloads running on hosts and VMs by providing an automated disaster recovery setup. This works by running one active and one passive Kubernetes clusters that share configurations.
 
-Below are some vendor-specific considerations:
+For HA mode to function correctly, the customer's load balancer (LB) must be configured to switch traffic between the active and passive clusters during failover and failback events. Without proper LB configuration, HA mode will not work as expected.
 
-#### AWS
+To enable this functionality, system administrators are responsible for the following prerequisites:
 
-- The node must reside in the same VPC as the nodes in your Kubernetes cluster, and utilize the AWS VPC CNI plugin (the default for Amazon EKS).
-- Ensure that the Kubernetes cluster's security group permits inbound traffic from the host. You may need to add a rule allowing traffic from the hosts or VMs.
-- For successful communication with an EKS cluster, the appropriate IAM roles must be configured.
-- The host or VM must also be authenticated to access the cluster using tools such as [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html) and the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
-
-#### GKE
-
-- To enable communication with your Kubernetes cluster from a non-cluster host, the host must be directly reachable or routable. This configuration is not enabled by default when using GKE’s VPC-native network routing.
+- Clusters are in place: Both the active and passive Kubernetes clusters are deployed and maintained.
+- Resources are synchronized: Key resources (such as network policies, configurations, and non-cluser host resources) are kept in sync from the active cluster to the passive cluster.
+- Domain names are used: Log ingestion and Typha endpoints in the `NonClusterHost` resource must be set up with domain names, not IP addresses.
+- Secrets are copied: The `tigera-ca-private` secret from the active cluster must be copied to the passive cluster under the `tigera-operator` namespace. After copying, wait until all Calico components are running and healthy in the passive cluster before proceeding.
 
 ## Additional resources
 
