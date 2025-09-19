@@ -108,6 +108,19 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
     You can configure the Calico node by tuning the environment variables defined in the `/etc/calico/calico-node/calico-node.env` file. For more information, see the [Felix configuration reference](../../reference/resources/felixconfig.mdx).
 
+### Configure high availability mode
+
+High availability (HA) mode helps protect workloads running on hosts and VMs by providing an automated disaster recovery setup. This works by running one active and one passive Kubernetes clusters that share configurations.
+
+For HA mode to function correctly, the customer's load balancer (LB) must be configured to switch traffic between the active and passive clusters during failover and failback events. Without proper LB configuration, HA mode will not work as expected.
+
+To enable this functionality, system administrators are responsible for the following prerequisites:
+
+- Clusters are in place: Both the active and passive Kubernetes clusters are deployed and maintained.
+- Resources are synchronized: Key resources (such as network policies, configurations, and non-cluser host resources) are kept in sync from the active cluster to the passive cluster.
+- Domain names are used: Log ingestion and Typha endpoints in the `NonClusterHost` resource must be set up with domain names, not IP addresses.
+- Secrets are copied: The `tigera-ca-private` secret from the active cluster must be copied to the passive cluster under the `tigera-operator` namespace. After copying, wait until all Calico components are running and healthy in the passive cluster before proceeding.
+
 ## Additional resources
 
 - [Protect hosts and VMs](../../network-policy/hosts/protect-hosts.mdx)
