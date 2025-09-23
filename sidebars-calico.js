@@ -41,6 +41,7 @@ module.exports = {
         'getting-started/kubernetes/quickstart',
         'getting-started/kubernetes/requirements',
         'getting-started/kubernetes/community-tested',
+        'getting-started/kubernetes/install-kubeadm',
         'getting-started/kubernetes/managed-public-cloud/eks',
         'getting-started/kubernetes/managed-public-cloud/gke',
         'getting-started/kubernetes/managed-public-cloud/iks',
