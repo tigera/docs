@@ -18,55 +18,68 @@ aggregation is suitable for your implementation.
 
 ### Volume and cost versus visibility
 
-$[prodname] enables flow log aggregation for pod/workload endpoints by default, and uses an aggressive aggregation level to reduce log volume. The
-level assumes that most users do not need to see pod IP information (due to the ephemeral nature of pod IP address allocation). However, it all
-depends on your deployment; we recommend reviewing aggregation levels to understand what information gets grouped (and thus suppressed from view).
+$[prodname] enables flow log aggregation by default using default aggregation levels that balance log volume with comprehensive visibility. The
+defaults assume that most users do not need to see pod IP information (due to the ephemeral nature of pod IP address allocation) for allowed traffic,
+but provides additional details on denied traffic that is more likely to need investigation. However, it all depends on your deployment;
+we recommend reviewing aggregation levels to understand what information gets grouped (and thus suppressed from view).
 
-### Aggregation types and levels
+### Aggregation levels
 
-For allowed flows, the default aggregation level is 2, `AnyConnectionFromSamePodPrefix` and for denied flows the default aggregation level is 1,
-`AnyConnectionFromSameSourcePod`.
+For allowed flows, the default aggregation level is 2, and for denied flows the default aggregation level is 1.
 
-The following table summarizes the aggregation levels by flow log traffic:
+#### Level 0: no aggregation
 
-| **Level** | **Name**                            | **Description**                                                   |
-|-----------|-------------------------------------|-------------------------------------------------------------------|
-| 0         |                                     | No aggregation                                                    |
-| 1         | AnyConnectionFromSameSourcePod      | Identity fields below source pod level are masked out. It means that flows, to the same destination, from processes or controllers in the same source pod, are aggregated together. |
-| 2         | AnyConnectionFromSamePodPrefix      | In addition to the above, source pod names are aggregated based on their shared prefixes. This means that flows, to the same destination, from pods within the same pod controller (Deployment/ReplicaSet) are aggregated together. |
-| 3         | AnyConnectionBetweenSamePodPrefixes | This level of aggregation builds on the previous two levels and also groups destination pod names based on their shared prefixes. |
+Create separate flow logs for each distinct 5-tuple (protocol, source and destination IP and port) observed.  This level is not recommended
+due to high log volumes.
+
+#### Level 1: aggregate source ports
+
+Aggregate flow data relating to multiple connections that only differ in source port. This reduces log volume by discarding source port information,
+which is usually ephemeral and of little value.
+
+#### Level 2: aggregate IPs and source ports
+
+In addition to the above, aggregate flows that have related sources and destinations into a single log depending on the source and
+destination type.
+- Pods created by the same pod controller (Deployments, ReplicaSets, etc.) are combined and identified by their common pod prefix,
+- IP addresses in the same NetworkSet are aggregated under that shared NetworkSet,
+- When no more precise identity is known, arbitrary IP addresses are aggregated to either public (`pub`) and private (`pvt`) as defined in RFC1918.
+
+#### Level 3: aggregate IPs, source and dest ports
+
+In addition to the above, aggregate flows with different destination ports that otherwise share together.
+This is intended to reduce log volumes in situations where a lot of network probing is expected (for example by `nmap`) but is not typically needed
+unless log analysis indicates it will be beneficial.
 
 ### Understanding aggregation level differences
 
 Here are examples of pod-to-pod flows, highlighting the differences between flow logs at various aggregation levels.
 
-The source port is usually ephemeral and does not convey useful information. By suppressing the source port, `AnyConnectionFromSameSourcePod` aggregation
-type minimizes the flow logs generated for traffic coming from different containers within the same pod and going to the same destination endpoint
-and port. The two flows originating from `client-a` without aggregation are combined into one. 
+By suppressing the source port, aggregation level 1 minimizes the flow logs generated for applications that make many connections to the same destination.
+The two flows originating from `client-a` without aggregation are combined into one.
 
-In Kubernetes, pod controllers (Deployments, DaemonSets, ReplicaSets etc.) can automatically create names for pods. For example, the pods `nginx-1` 
-and `nginx-2` are created by the ReplicaSet `nginx`. The controller's name is considered a pod-prefix and is used to aggregate flow log entries 
-(indicated with an asterisk * at the end of the name). Flow logs originating from pods with the same prefix will be aggregated as long as the traffic 
-is on the same protocol, and destined towards the same IP, and destination port. The three flow logs without aggregation originating from `client-a` 
-and `client-b` are combined into a single flow log. This aggregation level is called `AnyConnectionFromSameSourcePodPrefix`.
+In Kubernetes, pod controllers (Deployments, ReplicaSets, etc.) automatically name the pods they create with a common prefix.
+For example, the pods `nginx-1` and `nginx-2` are created by the ReplicaSet `nginx`. At aggregation level 2 that prefix is used to aggregate flow log entries and
+is indicated with an asterisk (`*`) at the end of the name. The flows originating from `client-a` and `client-b` are combined into a single flow log.
 
-Finally, with `AnyConnectionBetweenSamePodPrefixes` we combine source and destination pods that are part of the same pod controller. With level 3, the flow logs
-are aggregated by the destination port and protocol, as long as they originate from pods with the same pod-prefix and destined for pods of the same 
-pod-prefix. Previously distinct logs are aggregated into a single flow log (see the last row).
+Finally, level 3 combines flows between matching pod prefixes that target distinct destination ports, as seen in the last example row below.
+
+Aggregation is currently performed on a per-node basis, but this behavior may change.  Certain other fields are always kept separate
+and not aggregated together such as `action` (i.e. denied traffic and allowed traffic will always be logged separately).
 
 |                          |           | **Src Traffic**  | |          | **Dst Traffic**  | |          | **Packet counts**      | |
 |--------------------------|-----------|----------|---------|----------|----------|---------|----------|------------|-------------|
 | **Aggr lvl**             | **Flows** | **Name** | **IP**  | **Port** | **Name** | **IP**  | **Port** | **Pkt in** | **Pkt out** |
-| 0 (no aggr)              | 4         | client-a | 1.1.1.1 | 45556    | nginx-1  | 2.2.2.2 | 80       | 1          | 2           |
+| 0 (no aggregation)       | 4         | client-a | 1.1.1.1 | 45556    | nginx-1  | 2.2.2.2 | 80       | 1          | 2           |
 |                          |           | client-b | 1.1.2.2 | 45666    | nginx-2  | 2.2.3.3 | 80       | 2          | 2           |
 |                          |           | client-a | 1.1.1.1 | 65533    | nginx-1  | 2.2.2.2 | 80       | 1          | 3           |
-|                          |           | client-c | 1.1.1.2 | 65534    | nginx-2  | 2.2.3.3 | 80       | 3          | 4           |
+|                          |           | client-c | 1.1.3.3 | 65534    | nginx-2  | 2.2.3.3 | 8080     | 3          | 4           |
 | 1 (src port)             | 3         | client-a | 1.1.1.1 | -        | nginx-1  | 2.2.2.2 | 80       | 2          | 5           |
 |                          |           | client-b | 1.1.2.2 | -        | nginx-1  | 2.2.2.2 | 80       | 2          | 2           |
-|                          |           | client-c | 1.1.3.3 | -        | nginx-2  | 2.2.3.3 | 80       | 3          | 4           |
-| 2 (src pod-prefix)       | 2         | client-* | -       | -        | nginx-1  | 2.2.2.2 | 80       | 4          | 7           |
-|                          |           | client-* | -       | -        | nginx-2  | 2.2.3.3 | 80       | 3          | 4           |
-| 3 (src/dest pod-prefix)  | 1         | client-* | -       | -        | nginx-*  | -       | 80       | 7          | 11          |
+|                          |           | client-c | 1.1.3.3 | -        | nginx-2  | 2.2.3.3 | 8080     | 3          | 4           |
+| 2 (+src/dest pod-prefix) | 2         | client-* | -       | -        | nginx-*  | -       | 80       | 4          | 7           |
+|                          |           | client-* | -       | -        | nginx-*  | -       | 8080     | 3          | 4           |
+| 3 (+dest port)           | 1         | client-* | -       | -        | nginx-*  | -       | -        | 7          | 11          |
 
 ## How to
 

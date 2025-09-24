@@ -341,6 +341,7 @@ module.exports = {
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/pod-mac-address',
             'networking/configuring/node-local-dns-cache',
+            'networking/configuring/qos-controls',
           ],
         },
         {

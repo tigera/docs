@@ -32,7 +32,7 @@ export default function ConfigDataplaneOpenShiftManifests(props) {
                   The following command extracts the <code>apiServerURL</code> from the <code>manifests/cluster-infrastructure-02-config.yml</code> file and sets it.
                 </p>
                 <CodeBlock language='bash'>
-                {`API_SERVER_URL=$(cat manifests/cluster-infrastructure-02-config.yml | sed -n 's/.*apiServerURL: https:\\/\\/\\(api\\.[^:]*\\).*/\\1/p') && \\
+                {`API_SERVER_URL=$(cat manifests/cluster-infrastructure-02-config.yml | sed -n 's/.*apiServerInternalURI: https:\\/\\/\\(api-int\\.[^:]*\\).*/\\1/p') && \\
 sed -i "s|^\\([^:]*KUBERNETES_SERVICE_HOST: \\).*\\$|\\1\\"$API_SERVER_URL\\"|" manifests/01-configmap-kubernetes-services-endpoint.yaml`}
                 </CodeBlock>
               </Then>

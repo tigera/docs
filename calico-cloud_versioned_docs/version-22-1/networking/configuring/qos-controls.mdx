@@ -6,17 +6,15 @@ description: Configure QoS (Quality of Service) Controls to limit ingress and/or
 
 ## Big picture
 
-Configure QoS (Quality of Service) Controls to limit ingress and/or egress bandwidth, packet rate and number of connections used by $[prodname] workloads in order to prevent them from overusing or overloading network resources.
-Additionally, it allows configuring Differentiated Services (DiffServ) on egress traffic of $[prodname] workloads and hosts.
+Configure QoS (Quality of Service) Controls to limit ingress and/or egress bandwidth, packet rate and number of connections used by Calico workloads in order to prevent them from overusing or overloading network resources.
 
 ## Value
 
-With QoS controls, $[prodname] enforces network resource limits (bandwidth, packet rate, connections) for Kubernetes pods and OpenStack VMs, ensuring fair resource allocation and preventing performance degradation for other workloads.
-$[prodname] can also apply DiffServ on egress traffic to allow upstream devices to prioritise forwarding accordingly.
+With QoS controls, $[prodname] enforces network resource limits (bandwidth, packet rate, connections) for Kubernetes pods, ensuring fair resource allocation and preventing performance degradation for other workloads.
 
 ## Limitations
 
-* Configuring limits for established connections is not supported on installations that use the eBPF data plane.
+- This feature is currently supported on the **iptables** and **nftables** modes only, **eBPF** mode does not support it at the moment.
 
 ## Concepts
 
@@ -28,7 +26,6 @@ $[prodname] implements three types of QoS Controls, which can be configured usin
 1. Bandwidth: limiting the bit rate of traffic into/out of the pod
 2. Packet rate: limiting the number of packets per second that can be sent or received by the pod
 3. Number of established connections: limiting the absolute number of connections that the pod may initiate or accept
-4. Differentiated Services (DiffServ): setting Differentiated Services Code Point (DSCP) on egress traffic leaving clusters or toward hosts
 
 ### Annotations
 
@@ -61,7 +58,6 @@ spec:
 - [Configure bandwidth limits](#configure-bandwidth-limits)
 - [Configure packet rate limits](#configure-packet-rate-limits)
 - [Configure established connection limits](#configure-established-connection-limits)
-- [Configure DiffServ](#configure-diffserv)
 
 ### Configure bandwidth limits
 
@@ -108,28 +104,3 @@ Use the annotations below to configure limits for the number of established conn
 | `qos.projectcalico.org/ingressMaxConnections` | Specifies the maximum number of ingress connections.<br/>Min value: `1`<br/>Max value: `4294967295`                                                                                                                                    |
 | `qos.projectcalico.org/egressMaxConnections`  | Specifies the maximum number of egress connections.<br/>Min value: `1`<br/>Max value: `4294967295`                                                                                                                                     |
 
-### Configure DiffServ
-
-Use the annotation below to set DSCP on egress traffic toward an endpoint outside cluster or another host in cluster. Unlike, other QoS controls, this annotation can also be set on a [host endpoint](../../reference/host-endpoints).
-For example, to set DSCP AF11 on a host endpoint:
-
-```yaml noValidation
-apiVersion: projectcalico.org/v3
-kind: HostEndpoint
-metadata:
-  name: my-hep
-  annotations:
-	qos.projectcalico.org/dscp: "AF11"
-  labels:
-    app: my-app
-spec:
-	(...)
-```
-
-| Annotation                                  | Description                                                                                                                                                                                                                        |
-|---------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `qos.projectcalico.org/dscp` | Specifies the DSCP value of egress traffic toward an endpoint outside cluser or another host in cluster.<br/>Min value: `0`<br/>Max value: `63`<br/>String values: DF, EF, AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6                                                                                                                                     |
-
-## Additional resources
-
-- [QoS controls on Openstack](../openstack/neutron-api.mdx#qos)

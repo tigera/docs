@@ -34,15 +34,31 @@ When using the Amazon VPC CNI plugin, $[prodname] does not support enforcement o
 
 :::
 
-***Prerequisites***
-
-* You [disabled network policy for the AWS VPC CNI](https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html). 
 
 1. First, create an Amazon EKS cluster.
 
    ```bash
    eksctl create cluster --name  <my-calico-cluster>
    ```
+
+   Do **not** enable [network policy for the AWS VPC CNI](https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html); it conflicts with $[prodname].
+
+1. Configure AWS VPC CNI to [annotate Pods with their IPs](https://github.com/aws/amazon-vpc-cni-k8s?tab=readme-ov-file#annotate_pod_ip-v193).
+   Note the requirement to grant the "patch" permission to the `aws-node` daemon set to avoid permission errors.
+   This setting ensures that pod IPs propagate quickly from AWS VPC CNI to $[prodname].
+
+    ```bash
+    cat << EOF > append.yaml
+    - apiGroups:
+      - ""
+      resources:
+      - pods
+      verbs:
+      - patch
+    EOF
+    kubectl apply -f <(cat <(kubectl get clusterrole aws-node -o yaml) append.yaml)
+    kubectl set env  -n kube-system daemonset/aws-node ANNOTATE_POD_IP=true
+    ```
 
 1. Install the operator.
 

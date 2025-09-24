@@ -69,6 +69,7 @@ test('Crawl the docs and execute tests', async () => {
     `https://installer.calicocloud.io/`,
     `https://installer.calicocloud.io/charts`,
     `https://docs.tigera.io/calico/charts`,
+    'https://downloads.tigera.io/ee/charts',
     'https://Q4GSZWRKBA-dsn.algolia.net',
     'http://backend.stars:6379/status',
     'http://client.client:9000/status',
@@ -190,7 +191,9 @@ test('Crawl the docs and execute tests', async () => {
     'https://docs.splunk.com/Documentation/Splunk/8.0.0/Data/UsetheHTTPEventCollector',
     'https://guardian.calico-system.svc',
     'https://developer.hashicorp.com/terraform',
-    'https://www.terraform.io/'
+    'https://www.terraform.io/',
+    'http://developer.openstack.org/api-ref-networking-v2.html',
+    'https://docs.openstack.org/kolla-ansible/rocky/user/multi-regions.html'
   ];
 
   const lc = linkChecker();
