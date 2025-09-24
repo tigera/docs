@@ -10,18 +10,13 @@ To understand basic concepts, we recommend the following video by Tigera Enginee
 
 ## Troubleshoot access to services
 
-If pods or hosts within your cluster have trouble accessing services, check the following:
+- Verify that eBPF mode is correctly enabled
 
-- Either $[prodname]'s eBPF mode or `kube-proxy` must be active on a host for services to function. If you
-  disabled `kube-proxy` when enabling eBPF mode, verify that eBPF mode is actually functioning. If $[prodname]
-  detects that the kernel is not supported, it will fall back to standard data plane mode (which does not support
-  services).
-
-  To verify that eBPF mode is correctly enabled, examine the log for a `$[noderunning]` container; if
+  Examine the log for a `$[noderunning]` container; in the extremely rare case when
   eBPF mode is not supported it will log an `ERROR` log that says
 
   ```bash
-  BPF data plane mode enabled but not supported by the kernel.  Disabling BPF mode.
+  BPF data plane mode enabled but not supported by the kernel. Disabling BPF mode.
   ```
 
   If BPF mode is correctly enabled, you should see an `INFO` log that says
@@ -30,9 +25,12 @@ If pods or hosts within your cluster have trouble accessing services, check the 
   BPF enabled, starting BPF endpoint manager and map manager.
   ```
 
-- In eBPF mode, external client access to services (typically NodePorts) is implemented using VXLAN encapsulation.
+- In eBPF mode, forwaring external client access to services (typically NodePorts) from node to node is implemented using VXLAN encapsulation.
   If NodePorts time out when the backing pod is on another node, check your underlying network fabric allows
   VXLAN traffic between the nodes. VXLAN is a UDP protocol; by default it uses port 4789.
+
+  Note that this VXLAN traffic is separate from any overlay network that you may be using for pod-to-pod traffic.
+
 - In DSR mode, $[prodname] requires that the underlying network fabric allows one node to respond on behalf of
   another.
 
@@ -45,7 +43,7 @@ If pods or hosts within your cluster have trouble accessing services, check the 
 
 # The `calico-bpf` tool
 
-Since BPF maps contain binary data, the $[prodname] team wrote a tool to examine $[prodname]'s BPF maps.
+To inspect $[prodname]'s internal datastructures, you can use the `calico-bpf` tool.
 The tool is embedded in the $[nodecontainer] container image. To run the tool:
 
 - Find the name of the $[nodecontainer] Pod on the host of interest using
@@ -59,7 +57,7 @@ The tool is embedded in the $[nodecontainer] container image. To run the tool:
 - Run the tool as follows:
 
   ```bash
-  kubectl exec -n calico-system calico-node-abcdef -- calico-node -bpf ...
+  kubectl exec -n calico-system calico-node-abcdef -- calico-node -bpf <args>
   ```
 
   For example, to show the tool's help:
@@ -69,103 +67,137 @@ The tool is embedded in the $[nodecontainer] container image. To run the tool:
 
   Usage:
     calico-bpf [command]
-
   Available Commands:
     arp          Manipulates arp
+    cleanup      Removes all calico-bpf programs and maps
+    completion   Generate the autocompletion script for the specified shell
     connect-time Manipulates connect-time load balancing programs
     conntrack    Manipulates connection tracking
     counters     Show and reset counters
     help         Help about any command
+    ifstate      Manipulates ifstate
     ipsets       Manipulates ipsets
     nat          Manipulates network address translation (nat)
+    policy       Dump policy attached to interface
+    profiling    Show and reset profiling data
     routes       Manipulates routes
     version      Prints the version and exits
-
-  Flags:
-    --config string   config file (default is $HOME/.calico-bpf.yaml)
-    -h, --help            help for calico-bpf
-        --log-level string   Set log level (default "warn")
-    -t, --toggle          Help message for toggle
-  ```
 
   (Since the tool is embedded in the main `calico-node` binary the `--help` option is not available, but running
   `calico-node -bpf help` does work.)
 
-  To dump the BPF conntrack table:
+  For example, to dump the BPF conntrack table use:
 
   ```
   kubectl exec -n calico-system calico-node-abcdef -- calico-node -bpf conntrack dump
   ...
   ```
 
-  Also, it is possible to fetch various counters, like packets dropped by a policy or different errors, from BPF data plane using the same tool.
-  For example, to dump the BPF counters of `eth0` interface:
+## Debug access to services
+
+  Inspect the BPF NAT table to verify that the service is correctly programmed. To dump the BPF NAT table:
+
+  ```
+  kubectl exec -n calico-system calico-node-abcdef -- calico-node -bpf nat dump
+
+  10.96.0.10 port 53 proto 6 id 4 count 2 local 0
+	  4:0	 192.168.129.66:53
+	  4:1	 192.168.129.68:53
+  10.96.0.10 port 53 proto 17 id 6 count 2 local 0
+	  6:0	 192.168.129.66:53
+	  6:1	 192.168.129.68:53
+  10.96.0.10 port 9153 proto 6 id 5 count 2 local 0
+	  5:0	 192.168.129.66:9153
+	  5:1	 192.168.129.68:9153
+  10.105.77.92 port 5473 proto 6 id 0 count 2 local 0
+	  0:0	 10.128.1.192:5473
+	  0:1	 10.128.1.195:5473
+  10.105.187.231 port 8081 proto 6 id 2 count 1 local 0
+	  2:0	 192.168.105.131:8081
+  10.109.136.88 port 7443 proto 6 id 1 count 1 local 0
+	  1:0	 192.168.129.72:7443
+  10.109.139.39 port 443 proto 6 id 7 count 2 local 0
+	  7:0	 192.168.129.67:5443
+	  7:1	 192.168.129.69:5443
+  10.96.0.1 port 443 proto 6 id 3 count 1 local 0
+	  3:0	 10.128.0.255:6443
+
+  ```
+
+  Inspect the BPF conntrack table to verify that connections are being tracked. To dump the BPF conntrack table:
+
+  ```
+  kubectl exec -n calico-system calico-node-abcdef -- calico-node -bpf conntrack dump
+
+  TCP 192.168.58.7:49178 -> 10.111.57.87:80 -> 192.168.105.136:80  Active ago 4.486606371s CLOSED              <--- example of connection to service with per-packet NAT
+  TCP 10.128.1.194:41513 -> 10.128.1.192:179  Active ago 26.442759238s ESTABLISHED                             <--- example of connection without NAT or with connect-time NAT
+  TCP 192.168.58.7:42818 -> 10.111.57.87:80 -> 192.168.105.136:80  Active ago 1m15.987585857s CLOSED
+  TCP 10.128.1.192:58208 -> 10.109.136.88:7443 -> 192.168.58.5:7443  Active ago 4.935017508s ESTABLISHED
+  UDP 162.142.125.240:30603 -> 10.128.1.192:18989  Active ago 1m0.816678617s
+  UDP 127.0.0.1:48611 -> 127.0.0.53:53  Active ago 17.789851961s
+  ```
+
+  Note that traffic originating within the cluster uses connect-time load balancing. By default, the connect-time
+  load balancing is only enabled for TCP traffic. When connect-time load
+  balancing is used, the conntrack table will not show the NAT resolution as
+  that happens when the application calls `connect()`.
+
+## Check if $[prodname] is dropping packets
+
+  If you suspect that $[prodname] is dropping packets, you can use the
+  `calico-bpf` tool to check the BPF counters. Since the eBPF dataplane is split
+  into programs that are attached to interfaces, you must check the counters on
+  the relevant interface. You can either dump counters for all interfaces or user `--iface=<ifacename>` to dump
+  counters for a specific interface.
+
+  Increasing counter `Dropped by policy` indicates that $[prodname] is dropping packets due to policy and you should
+  check your policy configuration.
 
   ```
   kubectl exec -n calico-system calico-node-abcdef -- calico-node -bpf counters dump --iface=eth0
   +----------+--------------------------------+---------+--------+-----+
   | CATEGORY |              TYPE              | INGRESS | EGRESS | XDP |
   +----------+--------------------------------+---------+--------+-----+
-  | Accepted | by another program             |       0 |      0 |   0 |
-  |          | by failsafe                    |       0 |      2 |  23 |
-  |          | by policy                      |       1 |      0 |   0 |
-  | Dropped  | by policy                      |       0 |      0 |   0 |
-  |          | failed decapsulation           |       0 |      0 |   0 |
-  |          | failed encapsulation           |       0 |      0 |   0 |
-  |          | incorrect checksum             |       0 |      0 |   0 |
-  |          | malformed IP packets           |       0 |      0 |   0 |
-  |          | packets with unknown route     |       0 |      0 |   0 |
-  |          | packets with unknown source    |       0 |      0 |   0 |
-  |          | packets with unsupported IP    |       0 |      0 |   0 |
+  | Accepted | by another program             |       0 |      0 | N/A |
+  |          | by failsafe                    |       0 |      0 | N/A |
+  |          | by policy                      |       0 |      4 | N/A |
+  | Dropped  | NAT source collision           |       0 |      0 | N/A |
+  |          | resolution failed              |         |        |     |
+  |          | QoS control limit              |       0 |      0 | N/A |
+  |          | by policy                      |       0 |     11 | N/A |
+  |          | failed decapsulation           |       0 |      0 | N/A |
+  |          | failed encapsulation           |       0 |      0 | N/A |
+  |          | failed to create conntrack     |       0 |      0 | N/A |
+  |          | fragment of yet incomplete     |       0 |      0 | N/A |
+  |          | packet                         |         |        |     |
+  |          | fragment out of order within   |       0 |      0 | N/A |
+  |          | host                           |         |        |     |
+  |          | fragments not supported        |       0 |      0 | N/A |
+  |          | incorrect checksum             |       0 |      0 | N/A |
+  |          | malformed IP packets           |       0 |      0 | N/A |
+  |          | packets hitting blackhole      |       0 |      0 | N/A |
+  |          | route                          |         |        |     |
+  |          | packets with unknown route     |       0 |      0 | N/A |
+  |          | packets with unknown source    |       0 |      0 | N/A |
+  |          | packets with unsupported IP    |       0 |      0 | N/A |
   |          | options                        |         |        |     |
-  |          | too short packets              |       0 |      0 |   0 |
-  | Total    | packets                        |      27 |    124 |  41 |
+  |          | too short packets              |       0 |      0 | N/A |
+  | Other    | packets hitting NAT source     |       0 |      0 | N/A |
+  |          | collision                      |         |        |     |
+  | Redirect | neigh                          |       0 |      0 | N/A |
+  |          | peer                           |       0 |      0 | N/A |
+  |          | plain                          |      20 |      0 | N/A |
+  | Total    | packets                        |      34 |     22 | N/A |
   +----------+--------------------------------+---------+--------+-----+
-  dumped eth0 counters.
   ```
-
-## Check if a program is dropping packets
-
-To check if an eBPF program is dropping packets, you can use either the `calico-bpf` or `tc` command-line tool. For example, if you
-are worried that the eBPF program attached to `eth0` is dropping packets, you can use `calico-bpf` to fetch BPF counters as described
-in the previous section and look for one of the `Dropped` counters or you can run the following command:
-
-```
-tc -s qdisc show dev eth0
-```
-
-The output should look like the following; find the `clsact` qdisc, which is the attachment point for eBPF programs.
-The `-s` option to `tc` causes `tc` to display the count of dropped packets, which amounts to the count of packets
-dropped by the eBPF programs.
-
-```
-...
-qdisc clsact 0: dev eth0 root refcnt 2
- sent 1340 bytes 10 pkt (dropped 10, overlimits 0 requeues 0)
- backlog 0b 0p requeues 0
-...
-```
-
-## Debug high CPU usage
-
-If you notice `$[noderunning]` using high CPU:
-
-- Check if `kube-proxy` is still running. If `kube-proxy` is still running, you must either disable `kube-proxy` or
-  ensure that the Felix configuration setting `bpfKubeProxyIptablesCleanupEnabled` is set to `false`. If the setting
-  is set to `true` (its default), then Felix will attempt to remove `kube-proxy`'s iptables rules. If `kube-proxy` is
-  still running, it will fight with `Felix`.
-- If your cluster is very large, or your workload involves significant service churn, you can increase the interval
-  at which Felix updates the services data plane by increasing the `bpfKubeProxyMinSyncPeriod` setting. The default is
-  1 second. Increasing the value has the trade-off that service updates will happen more slowly.
-- $[prodname] supports endpoint slices, similarly to `kube-proxy`. If your Kubernetes cluster supports endpoint
-  slices and they are enabled, then you can enable endpoint slice support in $[prodname] with the
-  `bpfKubeProxyEndpointSlicesEnabled` configuration flag.
 
 ## eBPF program debug logs
 
-$[prodname]'s eBPF programs contain optional detailed debug logging. Although the logs can be very verbose (because
-the programs will log every packet), they can be invaluable to diagnose eBPF program issues. To enable the log, set the
-`bpfLogLevel` Felix configuration setting to `Debug`.
+Sometimes it is necessary to examine the logs that are emitted by the eBPF
+programs themselves.  Although the logs can be very verbose (because the
+programs will log every packet), they can be invaluable to diagnose eBPF program
+issues. To enable the log, set the `bpfLogLevel` Felix configuration setting to
+`Debug`.
 
 :::caution
 
@@ -173,10 +205,20 @@ Enabling logs in this way has a significant impact on eBPF program performance.
 
 :::
 
+To reduce the performance impact in production clusters, you can target logging
+to specific traffic and/or specific interfaces using the
+[bpfLogFilters](../../reference/felix/configuration.mdx#BPFLogFilters) Felix
+configuration setting. Filters are pcap expressions.
+
+Note that the filters are applied to the original packet, before any NAT or
+encapsulation. Therefore, to log a packet that is being sent to a service making
+its way via different devices, you must filter on the service IP and port and
+also the backend pod IP and port.
+
 > The logs are emitted to the kernel trace buffer, and they can be examined using the following command:
 
 ```
-tc exec bpf debug
+kubectl exec -n calico-system calico-node-abcdef -- bpftool prog tracelog
 ```
 
 Logs have the following format:
@@ -202,8 +244,83 @@ The parts of the log are explained below:
   - A host endpoint ingress program is executed on the path from external node to the host.
   - A host endpoint egress program is executed on the path from host to external host.
 
+- you may also see `ens192---X` which indicates an XDP program. $[prodname] uses XDP programs to implement `doNotTrack` policies on host devices only.
+
 - `Final result=ALLOW (-1). Program execution time: 7366ns` is the message. In this case, logging the final result of
   the program. Note that the timestamp is massively distorted by the time spent logging.
+
+## Debugging policy issues
+
+If you suspect that $[prodname] is dropping packets due to policy, you can use the
+`calico-bpf` tool to dump the policy that is attached to a specific interface.
+
+```
+kubectl exec -n calico-system calico-node-abcdef -- calico-node -bpf policy dump <interface> <hook>
+
+where `<interface>` is the name of the interface and `<hook>` is either `ingress`, `egress`, `xdp` or `all`.
+```
+
+Dump of an ingress policy. Note that ingress policy for a pod is attached to the egress hook of the host-side of the caliX veth pair.
+
+```
+IfaceName: calic6918c18abf
+Hook: tc egress
+Error:
+Policy Info:
+// Start of policy default/knp.default.allow-nginx-from-ubuntu
+// Start of rule action:"allow"  protocol:{name:"tcp"}  dst_ports:{first:80  last:80}  src_ip_set_ids:"s:nzE8vwTu69FSscx2FDKjb20D9dZxEyVxsWFqwA"  original_src_selector:"projectcalico.org/orchestrator == 'k8s' && app == 'ubuntu-client'"  rule_id:"29vMYcPWr7reSxxN"
+// IPSets src_ip_set_ids:<0x303904ae5eae5418>
+// count = 0
+// End of rule 29vMYcPWr7reSxxN
+// End of policy default/knp.default.allow-nginx-from-ubuntu
+// End of tier default: deny
+// Start of rule action:"allow"  rule_id:"aBMQCbsUMESPKGRp"
+// count = 4
+
+```
+
+Rules that use selectors refer to IP sets. You can dump the contents of an IP set using the `ipsets` command and you can check whether the IP set contains the expected members:
+
+```
+kubectl exec -n calico-system calico-node-abcdef -- calico-node -bpf ipsets dump
+
+IP set 0xf5a9c5c64576db73
+   192.168.58.5/32
+
+IP set 0xffef9f925a8a4ca4
+   192.168.129.66/32
+   192.168.129.68/32
+```
+
+## Debugging calico-node not ready
+
+If you notice that a `calico-node` pod is not ready, check its logs for errors. The most likely reason for `calico-node` not being ready in eBPF mode is
+that $[prodname] is not able to update a program attached to an interface. Look for the following type of warning:
+
+```
+2025-09-22 22:39:59.801 [WARNING][10374] felix/bpf_ep_mgr.go 2107: Failed to apply policy to endpoint, leaving it dirty error=<error message>
+```
+
+One reason for this type of error is that the eBPF programs provided in the $[nodecontainer] image are not compatible with the verifier used by your kernel. Each kernel must ensure that the eBPF programs it loads are safe to run, however,
+capabilities of the verifier vary between kernel versions. We do test the eBPF programs with a range of kernels, but it is impossible to test all kernels. You may see errors such as if the verifire rejects a program:
+
+```
+265: (79) r1 = *(u64 *)(r10 -72)      ; R1_w=ctx(off=0,imm=0) R10=fp0
+266: (79) r2 = *(u64 *)(r10 -128)     ; R2_w=scalar(umin=14,umax=74,var_off=(0x2; 0x7c)) R10=fp0
+267: (b7) r5 = 0                      ; R5_w=0
+268: (85) call bpf_skb_store_bytes#9
+invalid access to map value, value_size=1512 off=8 size=0
+R3 min value is outside of the allowed memory range
+processed 1102 insns (limit 1000000) max_states_per_insn 2 total_states 38 peak_states 38 mark_read 27
+-- END PROG LOAD LOG --
+libbpf: prog 'calico_tc_skb_ipv4_frag': failed to load: -13
+libbpf: failed to load object '/usr/lib/calico/bpf/to_wep_no_log.o'
+2025-07-31 17:36:15.708 [WARNING][45] felix/bpf_ep_mgr.go 2124: Failed to apply policy to endpoint, leaving it dirty error=attaching program to wep: loading generic v4 tc hook program: error loading program: error loading object permission denied
+attaching program to wep: loading generic v4 tc hook program: error loading program: error loading object permission denied name="enif327a56b833" wepID=&types.WorkloadEndpointID{OrchestratorId:"k8s", WorkloadId:"calico-system/csi-node-driver-tggmr", EndpointId:"eth0"}
+2025-07-31 17:36:15.708 [WARNING][45] felix/bpf_ep_mgr.go 2124: Failed to apply policy to endpoint, leaving it dirty error=attaching program to wep: loading generic v4 tc hook program: error loading program: error loading object permission denied
+```
+
+If you see errors of this type, please open an issue on the $[prodname] GitHub repository, including details of your kernel version and distribution.
 
 ## Poor performance
 
@@ -245,3 +362,19 @@ A number of problems can reduce the performance of the eBPF data plane.
 
 - If you are running your cluster in a cloud such as AWS, then your cloud provider may limit the bandwidth between
   nodes in your cluster. For example, most AWS nodes are limited to 5GBit per connection.
+
+## Debug high CPU usage
+
+If you notice `$[noderunning]` using high CPU:
+
+- Check if `kube-proxy` is still running. If `kube-proxy` is still running, you must either disable `kube-proxy` or
+  ensure that the Felix configuration setting `bpfKubeProxyIptablesCleanupEnabled` is set to `false`. If the setting
+  is set to `true` (its default), then Felix will attempt to remove `kube-proxy`'s iptables rules. If `kube-proxy` is
+  still running, it will fight with `Felix`.
+- If your cluster is very large, or your workload involves significant service churn, you can increase the interval
+  at which Felix updates the services data plane by increasing the `bpfKubeProxyMinSyncPeriod` setting. The default is
+  1 second. Increasing the value has the trade-off that service updates will happen more slowly.
+- $[prodname] supports endpoint slices, similarly to `kube-proxy`. If your Kubernetes cluster supports endpoint
+  slices and they are enabled, then you can enable endpoint slice support in $[prodname] with the
+  `bpfKubeProxyEndpointSlicesEnabled` configuration flag.
+
