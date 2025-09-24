@@ -2,7 +2,8 @@
 description: Install Calico Enterprise on a Charmed Kubernetes cluster.
 ---
 
-import InstallCharmedK8s from '@site/calico-enterprise_versioned_docs/version-3.22-1/_includes/components/InstallCharmedK8s';
+import InstallGeneric from '@site/calico-enterprise/_includes/components/InstallGeneric';
+import Admonition from '@theme/Admonition';
 
 # Charmed Kubernetes
 
@@ -23,89 +24,250 @@ Install $[prodname] on a Canonical Charmed Kubernetes cluster.
     details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
   />
 
-:::note
-
-By default, Charmed Kubernetes uses Calico for networking. Other CNI options like Flannel or Canal can be configured using bundle overlays during deployment.
-
-:::
-
 **Required**
 
 - Your cluster meets the [system requirements](requirements.mdx)
+- A [compatible Charmed Kubernetes cluster](../compatibility.mdx#charmed-kubernetes)
+- A [compatible Charmed Kubernetes bundle](https://github.com/charmed-kubernetes/bundle/tree/main/releases) configured without a CNI
 - A [Tigera license key and credentials](calico-enterprise.mdx)
 - [Install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) on your workstation
 - [Install juju](https://juju.is/docs/juju/install-juju) on your workstation (if managing the cluster directly)
-- A [compatible Charmed Kubernetes cluster](../compatibility.mdx#charmed-kubernetes)
-- A [compatible Charmed Kubernetes bundle](https://github.com/charmed-kubernetes/bundle/tree/main) configured without a CNI (eg. calico)
+
+## Prepare a compatible cluster for $[prodname] using a custom bundle
 
 :::caution
+The default Charmed Kubernetes bundle includes a managed calico charm that is currently unsupported by the operator to easily migrate to $[prodname].
 
-**Custom bundle file required**
-
-The default Charmed Kubernetes bundle includes a managed calico charm that is unsupported to migrate to $[prodname].
-
-For successful $[prodname] installation with Charmed Kubernetes, we recommend using a custom bundle file without the calico charm instead of using default Charmed Kubernetes bundle directly. This ensures proper configuration and compatibility to install $[prodname] smoothly.
+For successful $[prodname] installation with Charmed Kubernetes, it is currently required to use a custom bundle file without the calico charm instead of using default Charmed Kubernetes bundle directly. This ensures proper configuration and compatibility to install $[prodname] smoothly.
 
 :::
 
-An compatible bundle manifest to successfully install $[prodname] is below:
 
+1. Get a copy of the bundle file located in [Charmed Kubernetes Github Releases](https://github.com/charmed-kubernetes/bundle/tree/main/releases).
+
+    For example, to get the default bundle for the v1.33 charmed kubernetes release:
+
+    ```bash
+    curl -o charmed-kubernetes-bundle.yaml -L https://raw.githubusercontent.com/charmed-kubernetes/bundle/refs/heads/main/releases/1.33/bundle.yaml
+    ```
+
+    <details>
+    <summary>Charmed Kubernetes bundle with managed CNI (Before)</summary>
+
+    ```yaml
+    description: A highly-available, production-grade Kubernetes cluster.
+    docs: https://discourse.charmhub.io/t/charmed-kubernetes-bundle/14447
+    issues: https://bugs.launchpad.net/charmed-kubernetes-bundles
+    series: noble
+    source: https://github.com/charmed-kubernetes/bundle
+    website: https://ubuntu.com/kubernetes/charmed-k8s
+    name: charmed-kubernetes
+    applications:
+      calico:
+        annotations:
+          gui-x: '475'
+          gui-y: '605'
+        channel: 1.33/stable
+        charm: calico
+        options:
+          vxlan: Always
+      containerd:
+        annotations:
+          gui-x: '475'
+          gui-y: '800'
+        channel: 1.33/stable
+        charm: containerd
+      easyrsa:
+        annotations:
+          gui-x: '90'
+          gui-y: '420'
+        channel: 1.33/stable
+        charm: easyrsa
+        constraints: cores=1 mem=4G root-disk=16G
+        num_units: 1
+      etcd:
+        annotations:
+          gui-x: '800'
+          gui-y: '420'
+        channel: 1.33/stable
+        charm: etcd
+        constraints: cores=2 mem=8G root-disk=16G
+        num_units: 3
+        options:
+          channel: 3.4/stable
+      kubeapi-load-balancer:
+        annotations:
+          gui-x: '450'
+          gui-y: '250'
+        channel: 1.33/stable
+        charm: kubeapi-load-balancer
+        constraints: cores=1 mem=4G root-disk=16G
+        expose: true
+        num_units: 1
+      kubernetes-control-plane:
+        annotations:
+          gui-x: '800'
+          gui-y: '850'
+        channel: 1.33/stable
+        charm: kubernetes-control-plane
+        constraints: cores=2 mem=8G root-disk=16G
+        num_units: 2
+        options:
+          channel: 1.33/stable
+      kubernetes-worker:
+        annotations:
+          gui-x: '90'
+          gui-y: '850'
+        channel: 1.33/stable
+        charm: kubernetes-worker
+        constraints: cores=2 mem=8G root-disk=16G
+        expose: true
+        num_units: 3
+        options:
+          channel: 1.33/stable
+    relations:
+    - - kubernetes-control-plane:loadbalancer-external
+      - kubeapi-load-balancer:lb-consumers
+    - - kubernetes-control-plane:loadbalancer-internal
+      - kubeapi-load-balancer:lb-consumers
+    - - kubernetes-control-plane:kube-control
+      - kubernetes-worker:kube-control
+    - - kubernetes-control-plane:certificates
+      - easyrsa:client
+    - - etcd:certificates
+      - easyrsa:client
+    - - kubernetes-control-plane:etcd
+      - etcd:db
+    - - kubernetes-worker:certificates
+      - easyrsa:client
+    - - kubeapi-load-balancer:certificates
+      - easyrsa:client
+    - - calico:etcd
+      - etcd:db
+    - - calico:cni
+      - kubernetes-control-plane:cni
+    - - calico:cni
+      - kubernetes-worker:cni
+    - - containerd:containerd
+      - kubernetes-worker:container-runtime
+    - - containerd:containerd
+      - kubernetes-control-plane:container-runtime
+    ```
+
+    </details>
+
+    Modify the bundle file in a text editor and do the following:
+
+1. Remove the calico application from the `applications` section.
+
+   ```
+   calico:
+     annotations:
+       gui-x: '475'
+       gui-y: '605'
+     channel: 1.33/stable
+     charm: calico
+     options:
+       vxlan: Always
+   ```
+
+1. Remove all calico relations from the `relations` section.
+
+    ```yaml
+    - - calico:etcd
+      - etcd:db
+    - - calico:cni
+      - kubernetes-control-plane:cni
+    - - calico:cni
+      - kubernetes-worker:cni
+    ```
+
+An example of a compatible bundle without the `calico` charm:
 <details>
-<summary>Charmed Kubernetes bundle manifest</summary>
+<summary>Charmed Kubernetes bundle without Calico CNI (After)</summary>
 
 ```yaml
 description: A highly-available, production-grade Kubernetes cluster.
 docs: https://discourse.charmhub.io/t/charmed-kubernetes-bundle/14447
 issues: https://bugs.launchpad.net/charmed-kubernetes-bundles
-series: jammy
+series: noble
 source: https://github.com/charmed-kubernetes/bundle
 website: https://ubuntu.com/kubernetes/charmed-k8s
 name: charmed-kubernetes
 applications:
   containerd:
+    annotations:
+      gui-x: '475'
+      gui-y: '800'
+    channel: 1.33/stable
     charm: containerd
-    channel: 1.33/stable
   easyrsa:
-    charm: easyrsa
+    annotations:
+      gui-x: '90'
+      gui-y: '420'
     channel: 1.33/stable
-    constraints: arch=amd64 cpu-cores=2 mem=8192 root-disk=16384
+    charm: easyrsa
+    constraints: cores=1 mem=4G root-disk=16G
     num_units: 1
   etcd:
-    charm: etcd
+    annotations:
+      gui-x: '800'
+      gui-y: '420'
     channel: 1.33/stable
-    constraints: arch=amd64 cpu-cores=2 mem=8192 root-disk=16384
-    storage:
-      data: loop,1,1024M
-    num_units: 1
+    charm: etcd
+    constraints: cores=2 mem=8G root-disk=16G
+    num_units: 3
     options:
       channel: 3.4/stable
-  kubernetes-control-plane:
-    charm: kubernetes-control-plane
+  kubeapi-load-balancer:
+    annotations:
+      gui-x: '450'
+      gui-y: '250'
     channel: 1.33/stable
-    constraints: arch=amd64 cpu-cores=2 mem=8192 root-disk=16384
-    num_units: 1
+    charm: kubeapi-load-balancer
+    constraints: cores=1 mem=4G root-disk=16G
     expose: true
+    num_units: 1
+  kubernetes-control-plane:
+    annotations:
+      gui-x: '800'
+      gui-y: '850'
+    channel: 1.33/stable
+    charm: kubernetes-control-plane
+    constraints: cores=2 mem=8G root-disk=16G
+    num_units: 2
     options:
       channel: 1.33/stable
   kubernetes-worker:
-    charm: kubernetes-worker
+    annotations:
+      gui-x: '90'
+      gui-y: '850'
     channel: 1.33/stable
-    constraints: arch=amd64 cpu-cores=2 mem=8192 root-disk=16384
-    num_units: 3
+    charm: kubernetes-worker
+    constraints: cores=2 mem=8G root-disk=16G
     expose: true
+    num_units: 3
     options:
       channel: 1.33/stable
 relations:
+- - kubernetes-control-plane:loadbalancer-external
+  - kubeapi-load-balancer:lb-consumers
+- - kubernetes-control-plane:loadbalancer-internal
+  - kubeapi-load-balancer:lb-consumers
 - - kubernetes-control-plane:kube-control
   - kubernetes-worker:kube-control
 - - kubernetes-control-plane:certificates
+  - easyrsa:client
+- - etcd:certificates
   - easyrsa:client
 - - kubernetes-control-plane:etcd
   - etcd:db
 - - kubernetes-worker:certificates
   - easyrsa:client
-- - etcd:certificates
+- - kubeapi-load-balancer:certificates
   - easyrsa:client
+- - calico:etcd
+  - etcd:db
 - - containerd:containerd
   - kubernetes-worker:container-runtime
 - - containerd:containerd
@@ -114,52 +276,74 @@ relations:
 
 </details>
 
-Create the Charmed Kubernetes cluster by specifying the bundle file in the `juju deploy` command:
+## Setup Juju and deploy the cluster using your custom bundle file
 
-```
-juju deploy ./bundle.yaml
-```
+1. Configure juju with a default credential by adding a new credential or use an existing credential:
+   ```
+   juju add-credential <credential-name>
+   ```
 
-**Configure cluster for $[prodname]**
+1. Create the controller with a unique name and use the credential created in Step 1:
+   ```
+   juju bootstrap <controller-name> --credential <credential-name>
+   ```
 
-Ensure the Charmed Kubernetes model and its applications are stable by running:
+1. Create the model with a unique name:
+   ```
+   juju add-model <model-name>
+   ```
 
-```bash
-juju wait-for model $modelName --query='life=="alive" && status=="available"'
-```
+1. Create the Charmed Kubernetes cluster by specifying the bundle file you created in the `juju deploy` command:
+   ```
+   juju deploy ./charmed-kubernetes-bundle-no-calico.yaml
+   ```
 
-Also ensure the applications and units are active in the model by running:
+1. If you notice that the `kubernetes-control-plane` and `kubernetes-worker` are in waiting status due to missing CNI, this can be prevented by setting `ignore-missing-cni=true` in the `kubernetes-control-plane` and `kubernetes-worker` charms by running:
+   ```bash
+   juju config kubernetes-control-plane ignore-missing-cni=true
+   juju config kubernetes-worker ignore-missing-cni=true
+   ```
 
-```bash
-juju status
-```
+   :::note
+   - `ignore-missing-cni=true` allows the `kubernetes-control-plane` and `kubernetes-worker` charms to be ready without waiting for a CNI plugin to be installed since $[prodname] will provide its own.
+   :::
 
-You may notice that the `kubernetes-control-plane` and `kubernetes-worker` are in waiting status due to missing CNI. This status can be prevented by ensuring setting `ignore-missing-cni=true` in the `kubernetes-control-plane` and `kubernetes-worker` charms by running:
+1. To allow setup of the CNI to be taken care of by $[prodname], the `kubernetes-control-plane` charm also needs to allow privileged pods by running:
+   ```bash
+   juju config kubernetes-control-plane allow-privileged=true
+   ```
 
-```bash
-juju config kubernetes-control-plane ignore-missing-cni=true
-juju config kubernetes-worker ignore-missing-cni=true
-```
+   :::note
+   - `allow-privileged=true` enables privileged containers which are required to let $[prodname] setup the CNI by deploying its own calico-node daemonset
+   :::
 
-:::note
-- `ignore-missing-cni=true` allows the `kubernetes-control-plane` and `kubernetes-worker` charms to be ready without waiting for a CNI plugin to be installed since $[prodname] will provide its own.
-:::
+1. Ensure the applications and units are active in the model by running:
+   ```bash
+   juju status
+   ```
 
-To allow setup of the CNI to be taken care of by $[prodname], the `kubernetes-control-plane` charm also needs to allow privileged pods by running:
-```bash
-juju config kubernetes-control-plane allow-privileged=true
-```
+   The charmed kubernetes cluster should be healthy within a hour. 
 
-:::note
-- `allow-privileged=true` enables privileged containers which are required to let $[prodname] setup the CNI by deploying its own calico-node daemonset
-:::
+1. Ensure the Charmed Kubernetes model and its applications are stable by running:
+   ```bash
+   juju wait-for model $modelName --query='life=="alive" && status=="available"'
+   ```
+
+1. (Optional) - Get a copy of the kubeconfig from the `kubernetes-control-plane` application by running:
+   ```bash
+   juju scp kubernetes-control-plane/0:config kubeconfig
+   ```
 
 ## How to
 
 1. [Install $[prodname]](#install-calico-enterprise)
 1. [Install the $[prodname] license](#install-the-calico-enterprise-license)
 
-<InstallCharmedK8s clusterType='standalone' />
+<Admonition type='caution'>
+  For Charmed Kubernetes clusters, you cannot use AWS EBS storage classes. You must configure an alternative storage solution such as local storage or another compatible storage provider.
+</Admonition>
+
+<InstallGeneric clusterType='standalone' />
 
 ## Next steps
 
@@ -170,7 +354,7 @@ juju config kubernetes-control-plane allow-privileged=true
 
 **Additional resources**
 
-- [Charmed Kubernetes documentation](https://ubuntu.com/kubernetes/charmed-k8s)
+- [Charmed Kubernetes documentation](https://ubuntu.com/kubernetes/charmed-k8s/docs/install-manual)
 - [Charmed Kubernetes quickstart](https://ubuntu.com/kubernetes/charmed-k8s/docs/quickstart)
 - [Juju documentation](https://juju.is/docs)
-- [Canonical Kubernetes operations](https://ubuntu.com/kubernetes/docs) 
+- [Canonical Kubernetes operations](https://ubuntu.com/kubernetes/docs)
