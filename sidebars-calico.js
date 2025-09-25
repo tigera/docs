@@ -35,7 +35,7 @@ module.exports = {
       label: 'Installing and upgrading',
       link: {
         type: 'doc',
-        id: 'getting-started/index',
+        id: 'getting-started/install',
       },
       items: [
         'getting-started/kubernetes/quickstart',
