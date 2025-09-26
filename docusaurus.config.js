@@ -105,7 +105,7 @@ export default async function createAsyncConfig() {
         },
         announcementBar: {
           id: "calico_ebpf",
-          content: 'Master Kubernetes network security with Calico. Join our hybrid event, CalicoCon 2025, on November 10! <a href="https://link.tigera.io/ujbNx">Register now 🚀</a>',
+          content: 'Master Kubernetes network security with Calico. Join our hybrid event, CalicoCon 2025, on November 10! <a href="https://link.tigera.io/ujbNx">Register now </a>🚀',
           backgroundColor: "#FCE181",
           textColor: "#000",
           isCloseable: true
