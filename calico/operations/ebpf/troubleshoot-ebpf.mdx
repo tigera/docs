@@ -366,6 +366,26 @@ A number of problems can reduce the performance of the eBPF data plane.
 - If you are running your cluster in a cloud such as AWS, then your cloud provider may limit the bandwidth between
   nodes in your cluster. For example, most AWS nodes are limited to 5GBit per connection.
 
+### Runtime profiling
+
+Release 3.31 introduced runtime profiling of the eBPF programs. The profiling data can be examined using the
+`calico-node -bpf profiling e2e` command. The command resets the profiling data after dumping it.
+
+```
+----------------+-------------+-----+-------------+-------+-------------+-------+-------------+-------+
+|     IFACE      | INGRESS NEW |  #  | INGRESS EST |   #   | EGRESS NEW  |   #   | EGRESS ETS  |   #   |
++----------------+-------------+-----+-------------+-------+-------------+-------+-------------+-------+
+| lo             | ---         | --- | ---         | ---   | 142.263 ns  | 10272 | ---         | ---   |
+| eth0           | 2492.344 ns |  32 | 1535.443 ns | 16114 | 6296.421 ns |   749 | 1503.339 ns | 10982 |
+| eni76136be4c77 | 5031.436 ns | 149 | 1194.923 ns |  1421 | 4950.196 ns |   138 | 1437.015 ns |  1432 |
+| eni80d5c04bc95 | 7773.459 ns |  74 | 1508.973 ns |   641 | 4907.333 ns |    69 | 1715.848 ns |   646 |
+| eth1           | 136.250 ns  |  24 | ---         | ---   | 75.320 ns   |    25 | ---         | ---   |
+| eni5f8ab1cfc29 | 107.250 ns  |  36 | 1068.596 ns |  1514 | 189.528 ns  |    36 | 1104.335 ns |  1658 |
+| bpfout.cali    | 440.000 ns  |   1 | ---         | ---   | 206.000 ns  |     1 | ---         | ---   |
++----------------+-------------+-----+-------------+-------+-------------+-------+-------------+-------+
+
+```
+
 ## Debug high CPU usage
 
 If you notice `$[noderunning]` using high CPU:
