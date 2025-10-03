@@ -1,0 +1,139 @@
+---
+description: Switch AKS clusters between Azure-managed and self-managed Calico
+title: Migrating AKS clusters between Azure-managed and self-managed Calico
+---
+
+# Microsoft Azure Kubernetes Service (AKS)
+
+## Big picture
+
+As discussed in the AKS Installation guide, there are three main ways to use $[prodname] in AKS:
+
+1. use the built-in support for $[prodname] in AKS
+
+    - AKS has built-in support for $[prodname], providing a robust implementation of the full Kubernetes Network Policy API.
+    - Your $[prodname] installation will be managed and supported by Azure.
+
+1. Azure networking with self-managed $[prodname]
+
+    - You will be able to make use of advanced $[prodname] features, like $[prodname] policy, Global Network policy, Whisker observability, etc
+    - Your cluster will be supported by Azure, but the $[prodname] features would not be supported by Azure. You will need to upgrade $[prodname] yourself. For community support, get an invite to our slack channel at: http://slack.project$[prodname].org/ or raise an issue in GitHub. Commercial support plans are also available.
+
+1. use $[prodname] for Networking and Policy in AKS, in place of the default Azure VPC networking
+
+    - This allows you to take advantage of the full set of $[prodname] networking features.
+    - Your cluster will be supported by Azure, but the $[prodname] features would not be supported by Azure. You will need to upgrade $[prodname] yourself. For community support, get an invite to our slack channel at: http://slack.project$[prodname].org/ or raise an issue in GitHub. Commercial support plans are also available.
+
+It is possible to migrate an existing AKS cluster between the first two modes. The following sections describe how to do this.
+
+## Value
+
+AKS has built-in support for $[prodname], providing a robust implementation of the full Kubernetes Network Policy API.
+
+AKS users wanting to go beyond Kubernetes network policy capabilities can install a self-managed $[prodname] to make full use of advanced features like the $[prodname] Network Policy API, Whisker for Observability, etc.
+
+## Prerequisites
+
+Use this procedure if you have an existing cluster which uses Azure CNI and Azure-managed $[prodname] for policy, and you now wish to migrate to self-managed $[prodname] in order to use Advanced $[prodname] features like $[prodname] Network Policy or Whisker Observability.
+
+You can use this command to check your existing cluster configuration.  If you get the output shown below, then you have Azure CNI and Azure-managed $[prodname] for policy and can use this procedure to migrate to self-managed $[prodname]:
+
+  ```bash
+  az aks show --name my-calico-cluster --resource-group my-calico-rg  \
+    --query "networkProfile.networkPlugin, networkProfile.networkPolicy"
+[
+  "azure",
+  "calico"
+]
+  ```
+
+:::warning
+Application connectivity may be disrupted during the migration
+
+Network policy will be removed during the migration and must be re-applied after the migration.
+:::
+
+
+1. Get all existing network policies from all namespaces and write them out to a file
+    ```bash
+    kubectl get netpol -A -o yaml  > network-policy.yaml
+    ```
+    Review the file to check everything you expect to be there, is.
+
+1. Do the migration
+    ```bash
+    az aks update --name my-calico-cluster --resource-group my-calico-rg --network-policy=none
+    ```
+
+1. Confirm that the migration has completed successfully
+    ```bash
+    az aks show --name my-calico-cluster --resource-group my-calico-rg  \
+      --query "networkProfile.networkPlugin, networkProfile.networkPolicy"
+    [
+    "azure",
+    "none"
+    ]
+    ```
+
+1. Install $[prodname].
+    Note that we do not install CRDs here, since they may already exist. Operator will check and create any missing ones.
+    ```bash
+    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/tigera-operator.yaml
+    ```
+
+1. Configure the $[prodname] installation
+    ```bash
+    kubectl create -f - <<EOF
+    kind: Installation
+    apiVersion: operator.tigera.io/v1
+    metadata:
+      name: default
+    spec:
+      kubernetesProvider: AKS
+      cni:
+        type: AzureVNET
+    ---
+
+    # This optional section configures the Calico API server.
+    # For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io/v1.APIServer
+    apiVersion: operator.tigera.io/v1
+    kind: APIServer
+    metadata:
+      name: default
+    spec: {}
+
+    ---
+
+    # This optional section enables the Calico Goldmane flow aggregator.
+    apiVersion: operator.tigera.io/v1
+    kind: Goldmane
+    metadata:
+      name: default
+
+    ---
+
+    # This optional section enables the Calico Whisker observability UI.
+    apiVersion: operator.tigera.io/v1
+    kind: Whisker
+    metadata:
+      name: default
+    EOF
+    ```
+
+1. Confirm that $[prodname] is up and running
+    ```bash
+    kubectl get tigerastatus
+
+    NAME        AVAILABLE   PROGRESSING   DEGRADED   SINCE
+    apiserver   True        False         False      100s
+    calico      True        False         False      50s
+    goldmane    True        False         False      55s
+    ippools     True        False         False      105s
+    whisker     True        False         False      80s
+    ```
+Check that all components report `AVAILABLE` as `True`.
+
+1. Re-apply all existing policies
+    ```bash
+    kubectl apply -f network-policy.yaml
+    ```
