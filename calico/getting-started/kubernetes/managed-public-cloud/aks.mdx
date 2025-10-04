@@ -11,13 +11,32 @@ Enable $[prodname] in AKS managed Kubernetes service.
 
 ## Value
 
-AKS has built-in support for $[prodname], providing a robust implementation of the full Kubernetes Network Policy API. AKS users wanting to go beyond Kubernetes network policy capabilities can make full use of the $[prodname] Network Policy API.
+There are a number of ways to use $[prodname] in AKS:
 
-You can also use $[prodname] for networking on AKS in place of the default Azure VPC networking. This allows you to take advantage of the full set of $[prodname] networking features.
+1. use the built-in support for $[prodname] in AKS
+
+  - AKS has built-in support for $[prodname], providing a robust implementation of the full Kubernetes Network Policy API.
+  - Your $[prodname] installation will be managed and supported by Azure.
+
+1. Azure networking with self-managed $[prodname]
+
+  - You will be able to make use of advanced $[prodname] features, like $[prodname] policy, Global Network policy, Whisker observability, etc
+  - Your cluster will be supported by Azure, but the Calico features would not be supported by Azure. You will need to upgrade Calico yourself. For community support, get an invite to our slack channel at: http://slack.projectcalico.org/ or raise an issue in GitHub. Commercial support plans are also available.
+
+1. use $[prodname] for Networking and Policy in AKS, in place of the default Azure VPC networking
+
+  - This allows you to take advantage of the full set of Calico networking features.
+  - Your cluster will be supported by Azure, but the Calico features would not be supported by Azure. You will need to upgrade Calico yourself. For community support, get an invite to our slack channel at: http://slack.projectcalico.org/ or raise an issue in GitHub. Commercial support plans are also available.
+
+## Prerequisites
+
+- [Install the `az` command line tool](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
+- [Login to Azure](https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli)
+- [Create a service principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli)
 
 ## How to
 
-### Install AKS with $[prodname] for network policy
+### Install AKS with Azure CNI and Azure-managed $[prodname] for network policy
 
 The geeky details of what you get:
 
@@ -26,16 +45,108 @@ The geeky details of what you get:
   details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
 />
 
-Alternatively you can run in Azure CNI overlay mode.
+  ```bash
+   # Create a resource group
+   az group create --name my-calico-rg --location westcentralus
+   az group create --name my-calico-rg --location westcentralus
+     --resource-group my-calico-rg \
+     --name my-calico-cluster \
+     --location westcentralus \
+     --pod-cidr 192.168.0.0/16 \
+     --network-plugin azure \
+     --network-policy calico
+  ```
+
+### Install AKS with Azure CNI and self-managed Calico for network policy
 
 The geeky details of what you get:
 
 <GeekDetails
   prodname='$[prodname]'
-  details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:Yes,Routing:VPC Native,Datastore:Kubernetes'
+  details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
 />
 
-To enable $[prodname] network policy enforcement, follow these step-by-step instructions: [Create an AKS cluster and enable network policy](https://docs.microsoft.com/en-us/azure/aks/use-network-policies).
+1. Create an Azure AKS cluster with Azure CNI pre-installed, but no Network Policy.
+
+   ```bash
+   # Create a resource group
+   az group create --name my-calico-rg --location westcentralus
+   az aks create \
+     --resource-group my-calico-rg \
+     --name my-calico-cluster \
+     --location westcentralus \
+     --pod-cidr 192.168.0.0/16 \
+     --network-plugin azure \
+     --network-policy none
+   ```
+
+1. Get credentials to allow you to access the cluster with `kubectl`:
+
+   ```bash
+   az aks get-credentials --resource-group my-calico-rg --name my-calico-cluster
+   ```
+
+1. Now that you have a cluster configured, you can install $[prodname].
+
+1. Install the Tigera Operator and custom resource definitions.
+
+   ```bash
+   kubectl create -f $[manifestsUrl]/manifests/operator-crds.yaml
+   kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+   ```
+
+1. Configure the $[prodname] installation.
+
+   ```bash
+   kubectl create -f - <<EOF
+   kind: Installation
+   apiVersion: operator.tigera.io/v1
+   metadata:
+     name: default
+   spec:
+     kubernetesProvider: AKS
+     cni:
+       type: AzureVNET
+
+   ---
+
+   # This section configures the Calico API server.
+   # For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io/v1.APIServer
+   apiVersion: operator.tigera.io/v1
+   kind: APIServer
+   metadata:
+      name: default
+   spec: {}
+
+   ---
+
+   # Configures the Calico Goldmane flow aggregator.
+   apiVersion: operator.tigera.io/v1
+   kind: Goldmane
+   metadata:
+     name: default
+
+   ---
+
+   # Configures the Calico Whisker observability UI.
+   apiVersion: operator.tigera.io/v1
+   kind: Whisker
+   metadata:
+     name: default
+   EOF
+   ```
+
+1. Confirm that $[prodname] is up and running
+   ```bash
+   kubectl get tigerastatus
+   NAME        AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver   True        False         False      100s
+   calico      True        False         False      50s
+   goldmane    True        False         False      55s
+   ippools     True        False         False      105s
+   whisker     True        False         False      80s
+   ```
+Check that all components report `AVAILABLE` as `True`.
 
 ### Install AKS with $[prodname] networking
 
@@ -57,7 +168,12 @@ The geeky details of what you get:
    ```bash
    # Create a resource group
    az group create --name my-calico-rg --location westcentralus
-   az aks create --resource-group my-calico-rg --name my-calico-cluster --location westcentralus --pod-cidr 192.168.0.0/16 --network-plugin none
+   az aks create \
+     --resource-group my-calico-rg \
+     --name my-calico-cluster \
+     --location westcentralus \
+     --pod-cidr 192.168.0.0/16 \
+     --network-plugin none
    ```
 
 1. Get credentials to allow you to access the cluster with `kubectl`:

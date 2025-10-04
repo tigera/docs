@@ -44,7 +44,15 @@ module.exports = {
         'getting-started/kubernetes/managed-public-cloud/eks',
         'getting-started/kubernetes/managed-public-cloud/gke',
         'getting-started/kubernetes/managed-public-cloud/iks',
-        'getting-started/kubernetes/managed-public-cloud/aks',
+        {
+          "type": "category",
+          "label": "Installing on AKS",
+          "link": null,
+          "items": [
+            "getting-started/kubernetes/managed-public-cloud/aks",
+            "getting-started/kubernetes/managed-public-cloud/aks-migrate"
+          ]
+        },
         'getting-started/kubernetes/self-managed-public-cloud/aws',
         'getting-started/kubernetes/self-managed-public-cloud/gce',
         'getting-started/kubernetes/self-managed-public-cloud/azure',
