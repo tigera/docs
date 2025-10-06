@@ -3,48 +3,46 @@ description: Switch AKS clusters between Azure-managed and self-managed Calico
 title: Migrating AKS clusters between Azure-managed and self-managed Calico
 ---
 
-# Microsoft Azure Kubernetes Service (AKS)
+# Migrate from Azure-managed Calico to self-managed Calico
 
-## Big picture
+This page describes how to migrate your AKS cluster from using Azure-managed Calico for network policy to using self-managed Calico for network policy. Doing this gives you access to the all of Calico's network policy features, including global network policy, staged network policy, and policy tiers.
 
-As discussed in the AKS Installation guide, there are three main ways to use $[prodname] in AKS:
+## Understanding Azure- and self-managed Calico for policy on AKS
 
-1. use the built-in support for $[prodname] in AKS
+### Azure-managed Calico on AKS
 
-    - AKS has built-in support for $[prodname], providing a robust implementation of the full Kubernetes Network Policy API.
-    - Your $[prodname] installation will be managed and supported by Azure.
+Azure offers Calico as a managed option for network policy enforcement.
+When you create an AKS cluster with `--network-policy calico`, Azure handles the installation and lifecycle of Calico's policy enforcement components.
+This managed version provides a robust, supported implementation of the standard Kubernetes Network Policy API.
+This is for users who need to enforce basic pod-to-pod communication rules, such as ingress and egress traffic based on pod labels and namespaces.
+However, this managed service is limited to the features within that standard API.
+You cannot change the Calico version, and you don't get access to Calico-specific custom resources or advanced features.
 
-1. Azure networking with self-managed $[prodname]
+## Self-managed Calico on AKS
 
-    - You will be able to make use of advanced $[prodname] features, like $[prodname] policy, Global Network policy, Whisker observability, etc
-    - Your cluster will be supported by Azure, but the $[prodname] features would not be supported by Azure. You will need to upgrade $[prodname] yourself. For community support, get an invite to our slack channel at: http://slack.project$[prodname].org/ or raise an issue in GitHub. Commercial support plans are also available.
+To access all of Calico's policy features, you must install it yourself on an AKS cluster.
+You can do this on an existing AKS cluster by changing the network policy configuration (--network-policy none) and then deploying Calico using the Tigera Operator.
+This approach gives you access to the Calico Network Policy API, which offers a richer set of features beyond the standard Kubernetes policies, including:
+* Global network policies: Rules that apply to all pods and endpoints across all namespaces, which is not possible with the standard Kubernetes Network Policy.
+* Order and priority: The ability to order policies and apply explicit deny rules, giving you more granular control over traffic flow.
+* Extended endpoint types: Calico policies can be applied to endpoints beyond just pods, such as host interfaces and VMs.
 
-1. use $[prodname] for Networking and Policy in AKS, in place of the default Azure VPC networking
-
-    - This allows you to take advantage of the full set of $[prodname] networking features.
-    - Your cluster will be supported by Azure, but the $[prodname] features would not be supported by Azure. You will need to upgrade $[prodname] yourself. For community support, get an invite to our slack channel at: http://slack.project$[prodname].org/ or raise an issue in GitHub. Commercial support plans are also available.
-
-It is possible to migrate an existing AKS cluster between the first two modes. The following sections describe how to do this.
-
-## Value
-
-AKS has built-in support for $[prodname], providing a robust implementation of the full Kubernetes Network Policy API.
-
-AKS users wanting to go beyond Kubernetes network policy capabilities can install a self-managed $[prodname] to make full use of advanced features like the $[prodname] Network Policy API, Whisker for Observability, etc.
+The key distinction is that the managed Azure version gives you a simple, hands-off experience for basic policy, while a self-managed installation gives you complete control and access to all of Calico's advanced network security features.
 
 ## Prerequisites
 
-Use this procedure if you have an existing cluster which uses Azure CNI and Azure-managed $[prodname] for policy, and you now wish to migrate to self-managed $[prodname] in order to use Advanced $[prodname] features like $[prodname] Network Policy or Whisker Observability.
-
-You can use this command to check your existing cluster configuration.  If you get the output shown below, then you have Azure CNI and Azure-managed $[prodname] for policy and can use this procedure to migrate to self-managed $[prodname]:
+You have an AKS cluster that uses Azure-managed Calico for network policy.
+To confirm that your cluster has this configuration, run the following command:
 
   ```bash
   az aks show --name my-calico-cluster --resource-group my-calico-rg  \
     --query "networkProfile.networkPlugin, networkProfile.networkPolicy"
-[
-  "azure",
-  "calico"
-]
+  ```
+  ```bash title='Expected output'
+  [
+    "azure",
+    "calico"
+  ]
   ```
 
 :::warning
@@ -53,35 +51,42 @@ Application connectivity may be disrupted during the migration
 Network policy will be removed during the migration and must be re-applied after the migration.
 :::
 
+## Migrate from Azure-managed Calico to self-managed Calico
+During this migration, you will save your current network policies, remove the Azure-managed Calico, install a self-managed Calico, and then reapply your network policies.
 
-1. Get all existing network policies from all namespaces and write them out to a file
+1. Get all existing network policies from all namespaces and write them out to a file:
     ```bash
-    kubectl get netpol -A -o yaml  > network-policy.yaml
+    kubectl get netpol -A -o yaml > network-policy.yaml
     ```
-    Review the file to check everything you expect to be there, is.
+    Review the file to make sure it contains all the policies you expect to be there.
 
-1. Do the migration
+1. Remove the Azure-managed Calico by modifying the AKS cluster configuration:
     ```bash
-    az aks update --name my-calico-cluster --resource-group my-calico-rg --network-policy=none
+    az aks update \
+      --name my-calico-cluster \
+      --resource-group my-calico-rg \
+      --network-policy=none
     ```
 
-1. Confirm that the migration has completed successfully
+1.  Verify the new configuration:
     ```bash
     az aks show --name my-calico-cluster --resource-group my-calico-rg  \
       --query "networkProfile.networkPlugin, networkProfile.networkPolicy"
+    ```
+    ```bash title='Expected output'
     [
-    "azure",
-    "none"
+      "azure",
+      "none"
     ]
     ```
 
 1. Install $[prodname].
-    Note that we do not install CRDs here, since they may already exist. Operator will check and create any missing ones.
+    Note that, unlike most Calico installs, we do not install CRDs here because they may already exist. Operator will check and create any missing ones.
     ```bash
     kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/tigera-operator.yaml
     ```
 
-1. Configure the $[prodname] installation
+1. Complete the installation by providing the configuration for $[prodname]
     ```bash
     kubectl create -f - <<EOF
     kind: Installation
@@ -136,4 +141,8 @@ Check that all components report `AVAILABLE` as `True`.
 1. Re-apply all existing policies
     ```bash
     kubectl apply -f network-policy.yaml
+    ```
+1. Check that all network policies are back in place in the cluster:
+    ```bash
+    kubectl get netpol -A -o yaml
     ```
