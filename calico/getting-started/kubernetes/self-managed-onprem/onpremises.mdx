@@ -50,29 +50,52 @@ $[prodname] can also be installed using raw manifests as an alternative to the o
 
 1. Download the custom resources necessary to configure $[prodname].
 
+   :::tip Automatic data plane deployment
+   You can select either eBPF or iptables to be deployed automatically.
+   :::
+   <Tabs groupId="data-plane" defaultValue="eBPF">
+   <TabItem label="eBPF" value = "eBPF">
+   ```shell
+   curl -O $[manifestsUrl]/manifests/custom-resources-bpf.yaml
    ```
-   curl $[manifestsUrl]/manifests/custom-resources.yaml -O
+   </TabItem>
+   <TabItem label="iptables" value = "iptables">
+   ```shell
+   curl -O $[manifestsUrl]/manifests/custom-resources.yaml
    ```
-
+   </TabItem>
+   </Tabs>
    If you wish to customize the $[prodname] install, customize the downloaded custom-resources.yaml manifest locally.
 
 1. Create the manifest to install $[prodname].
-
+    <Tabs groupId="data-plane" defaultValue="eBPF">
+   <TabItem label="eBPF" value = "eBPF">
+   ```shell
+   kubectl create -f custom-resources-bpf.yaml
    ```
+   </TabItem>
+   <TabItem label="iptables" value = "iptables">
+   ```shell
    kubectl create -f custom-resources.yaml
    ```
+   </TabItem>
+   </Tabs>
 
-1. Verify $[prodname] installation in your cluster.
+3. Monitor the deployment by running the following command:
 
+   ```shell
+   watch kubectl get tigerastatus
    ```
-   watch kubectl get pods -n calico-system
-   ```
 
-   You should see a result similar to the below.
+   After a few minutes, all the Calico components display `True` in the `AVAILABLE` column.
 
-   ```
-   NAMESPACE     NAME                READY   STATUS                  RESTARTS         AGE
-   kube-system   calico-node-txngh   1/1     Running                   0              54s
+   ```bash title="Expected output"
+   NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver                       True        False         False      4m9s
+   calico                          True        False         False      3m29s
+   goldmane                        True        False         False      3m39s
+   ippools                         True        False         False      6m4s
+   whisker                         True        False         False      3m19s
    ```
 
 <GeekDetails

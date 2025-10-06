@@ -92,6 +92,7 @@ The geeky details of what you get:
 1. Install the Tigera Operator and custom resource definitions.
 
    ```
+   kubectl create -f $[manifestsUrl]/manifests/operator-crds.yaml
    kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
    ```
 
@@ -104,8 +105,10 @@ The geeky details of what you get:
 1. Install $[prodname] by creating the necessary custom resource. For more information on configuration options available in this manifest, see [the installation reference](../../reference/installation/api.mdx).
 
    ```
-   kubectl create -f $[manifestsUrl]/manifests/custom-resources.yaml
+   kubectl create -f $[manifestsUrl]/manifests/custom-resources-bpf.yaml
    ```
+
+   This will complete the Calico Open Source installation with the eBPF data plane as the default.
 
    :::note
 
@@ -141,20 +144,24 @@ The geeky details of what you get:
    node/<your-hostname> untainted
    ```
 
-1. Confirm that you now have a node in your cluster with the following command.
+3. Monitor the deployment by running the following command:
 
-   ```
-   kubectl get nodes -o wide
-   ```
-
-   It should return something like the following.
-
-   ```
-   NAME              STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
-   <your-hostname>   Ready    master   52m   v1.12.2   10.128.0.28   <none>        Ubuntu 18.04.1 LTS   4.15.0-1023-gcp   docker://18.6.1
+   ```shell
+   watch kubectl get tigerastatus
    ```
 
-Congratulations! You now have a single-host Kubernetes cluster with $[prodname].
+   After a few minutes, all the Calico components display `True` in the `AVAILABLE` column.
+
+   ```bash title="Expected output"
+   NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver                       True        False         False      4m9s
+   calico                          True        False         False      3m29s
+   goldmane                        True        False         False      3m39s
+   ippools                         True        False         False      6m4s
+   whisker                         True        False         False      3m19s
+   ```
+
+   Congratulations! You now have a single-host Kubernetes cluster with $[prodname].
 
 ## Next steps
 
