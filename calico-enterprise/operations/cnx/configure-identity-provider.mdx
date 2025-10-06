@@ -74,6 +74,36 @@ When configuring your cluster, you may be asked for the following inputs:
      clientSecret: <your-base64-clientid-secret>
    ```
 
+   If you are using an external secret provider, you can mount your OIDC credentials as a volume through CSI Secret Store
+   Driver to avoid storing the credentials in the Kubernetes cluster.
+
+   Create a `SecretProviderClass` resource named `tigera-oidc-credentials` in the `tigera-operator` namespace that mounts
+   your OIDC credential fields as exactly two files: `clientID` and `clientSecret`.
+
+   In its spec, map your source secret/keys so the mounted filenames are precisely `clientID` and `clientSecret`. Use
+   your provider’s standard configuration options to supply these values.
+
+   For example, if you are integrating with AWS Secrets Manager, your `SecretProviderClass` might look like this:
+
+   ```yaml
+   apiVersion: secrets-store.csi.x-k8s.io/v1
+   kind: SecretProviderClass
+   metadata:
+     name: tigera-oidc-credentials
+     namespace: tigera-operator
+   spec:
+     provider: aws
+     parameters:
+       objects: |
+         - objectName: <name-of-oidc-credentials-in-aws-secretsmanager>
+           objectType: "secretsmanager"
+           jmesPath:
+             - path: <field-name-in-your-oidc-credentials-in-aws-secretsmanager-mapping-to-clientID>
+               objectAlias: "clientID"
+             - path: <field-name-in-your-oidc-credentials-in-aws-secretsmanager-mapping-to-clientSecret>
+               objectAlias: "clientSecret"
+   ```
+
 </TabItem>
 <TabItem label="Google OIDC" value="Google OIDC-1">
 
@@ -118,6 +148,39 @@ When configuring your cluster, you may be asked for the following inputs:
        # If you created a service account in the previous step, include the following two fields.
      serviceAccountSecret: <your-base64-json-contents>
      adminEmail: <your-base64-gsuite-user>
+   ```
+
+   If you are using an external secret provider, you can mount your OIDC credentials as a volume through CSI Secret Store
+   Driver to avoid storing the credentials in the Kubernetes cluster.
+
+   Create a `SecretProviderClass` resource named `tigera-oidc-credentials` in the `tigera-operator` namespace that mounts
+   your OIDC credential fields as files `clientID` and `clientSecret`, if you created a Google service account in the
+   previous step then also mount additional fields as files `serviceAccountSecret` and `adminEmail`.
+
+   In its spec, map your source secret/keys so the mounted files are named exactly `clientID` and `clientSecret` (required),
+   and optionally `serviceAccountSecret` and `adminEmail`. Use your provider’s standard configuration to supply these values.
+
+   For example, if you are integrating with AWS Secrets Manager, your `SecretProviderClass` resource might look like this:
+
+   ```yaml
+   apiVersion: secrets-store.csi.x-k8s.io/v1
+   kind: SecretProviderClass
+   metadata:
+     name: tigera-oidc-credentials
+     namespace: tigera-operator
+   spec:
+     provider: gcp
+     parameters:
+       secrets: |
+         - resourceName: "projects/<your-project-id>/secrets/tigera-oidc-client-id/versions/<secret-version>"
+           fileName: "clientID"
+         - resourceName: "projects/<your-project-id>/secrets/tigera-oidc-client-secret/versions/<secret-version>"
+           fileName: "clientSecret"
+         # If you created a service account in the previous step, include the following two files.
+         - resourceName: "projects/<your-project-id>/secrets/tigera-oidc-service-account-secret/versions/<secret-version>"
+           fileName: "serviceAccountSecret"
+         - resourceName: "projects/<your-project-id>/secrets/tigera-oidc-admin-email/versions/<secret-version>"
+           fileName: "adminEmail"
    ```
 
 </TabItem>
@@ -251,6 +314,39 @@ When configuring your cluster, you may be asked for the following inputs:
      bindPW: <your-base64-bind-password>
      rootCA: <your-base64-ca-cert-pem>
    ```
+
+   If you are using an external secret provider, you can mount your LDAP credentials as a volume through CSI Secret Store
+   Driver to avoid storing the credentials in the Kubernetes cluster.
+
+   Create a `SecretProviderClass` resource named `tigera-ldap-credentials` in the `tigera-operator` namespace that mounts
+   your LDAP credential fields as files `bindDN`, `bindPW` and `rootCA`.
+
+   In its spec, map your source secret/keys so the mounted files are named exactly `bindDN`, `bindPW` and `rootCA`.
+   Use your provider’s standard configuration to supply these values.
+
+   For example, if you are integrating with AWS Secrets Manager, your `SecretProviderClass` resource might look like this:
+
+   ```yaml
+   apiVersion: secrets-store.csi.x-k8s.io/v1
+   kind: SecretProviderClass
+   metadata:
+     name: tigera-ldap-credentials
+     namespace: tigera-operator
+   spec:
+     provider: aws
+     parameters:
+       objects: |
+         - objectName: <name-of-ldap-credentials-in-aws-secretsmanager>
+           objectType: "secretsmanager"
+           jmesPath:
+             - path: <field-name-in-your-ldap-credentials-in-aws-secretsmanager-mapping-to-bindDN>
+               objectAlias: "bindDN"
+             - path: <field-name-in-your-ldap-credentials-in-aws-secretsmanager-mapping-to-bindPW>
+               objectAlias: "bindPW"
+             - path: <field-name-in-your-ldap-credentials-in-aws-secretsmanager-mapping-to-rootCA>
+               objectAlias: "rootCA"
+   ```
+
   ### Troubleshooting LDAP
 
   **Problem**: Error: (502 bad gateway nginx) when logging in to the web console
