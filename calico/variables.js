@@ -17,7 +17,7 @@ const variables = {
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\CalicoWindows',
   ppa_repo_name: 'calico-master',
-  manifestsUrl: 'https://2025-04-16-v3-30-rehydrate.docs.eng.tigera.net', //Replace with hashrelease
+  manifestsUrl: 'https://2025-10-03-v3-31-quarterly.docs.eng.tigera.net', //Replace with hashrelease
   releases,
   registry: '',
   vppbranch: 'master',
