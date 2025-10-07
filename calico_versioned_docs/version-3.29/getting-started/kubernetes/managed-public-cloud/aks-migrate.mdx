@@ -1,0 +1,161 @@
+---
+description: Switch AKS clusters between Azure-managed and self-managed Calico
+title: Migrating AKS clusters to self-managed Calico
+---
+
+# Migrate from Azure-managed Calico to self-managed Calico
+
+This page describes how to migrate your AKS cluster from using Azure-managed Calico for network policy to using self-managed Calico for network policy. Doing this gives you access to the all of Calico's network policy features, including global network policy, staged network policy, and policy tiers.
+
+## Understanding Azure- and self-managed Calico for policy on AKS
+
+### Azure-managed Calico on AKS
+
+Azure offers Calico as a managed option for network policy enforcement.
+When you create an AKS cluster with `--network-policy calico`, Azure handles the installation and lifecycle of Calico's policy enforcement components.
+This managed version provides a robust, supported implementation of the standard Kubernetes Network Policy API.
+This is for users who need to enforce basic pod-to-pod communication rules, such as ingress and egress traffic based on pod labels and namespaces.
+However, this managed service is limited to the features within that standard API.
+You cannot change the Calico version, and you don't get access to Calico-specific custom resources or advanced features.
+
+## Self-managed Calico on AKS
+
+To access all of Calico's policy features, you must install it yourself on an AKS cluster.
+You can do this on an existing AKS cluster by changing the network policy configuration (--network-policy none) and then deploying Calico using the Tigera Operator.
+This approach gives you access to the Calico Network Policy API, which offers a richer set of features beyond the standard Kubernetes policies, including:
+
+- Global network policies: Rules that apply to all pods and endpoints across all namespaces, which is not possible with the standard Kubernetes Network Policy.
+- Order and priority: The ability to order policies and apply explicit deny rules, giving you more granular control over traffic flow.
+- Extended endpoint types: Calico policies can be applied to endpoints beyond just pods, such as host interfaces and VMs.
+
+The key distinction is that the managed Azure version gives you a simple, hands-off experience for basic policy, while a self-managed installation gives you complete control and access to all of Calico's advanced network security features.
+
+## Prerequisites
+
+You have an AKS cluster that uses Azure-managed Calico for network policy.
+To confirm that your cluster has this configuration, run the following command:
+
+```bash
+az aks show --name my-calico-cluster --resource-group my-calico-rg  \
+  --query "networkProfile.networkPlugin, networkProfile.networkPolicy"
+```
+
+```bash title='Expected output'
+[
+  "azure",
+  "calico"
+]
+```
+
+:::warning
+Application connectivity may be disrupted during the migration
+
+Network policy will be removed during the migration and must be re-applied after the migration.
+:::
+
+## Migrate from Azure-managed Calico to self-managed Calico
+
+During this migration, you will save your current network policies, remove the Azure-managed Calico, install a self-managed Calico, and then reapply your network policies.
+
+1.  Get all existing network policies from all namespaces and write them out to a file:
+
+    ```bash
+    kubectl get netpol -A -o yaml > network-policy.yaml
+    ```
+
+    Review the file to make sure it contains all the policies you expect to be there.
+
+1.  Remove the Azure-managed Calico by modifying the AKS cluster configuration:
+
+    ```bash
+    az aks update \
+      --name my-calico-cluster \
+      --resource-group my-calico-rg \
+      --network-policy=none
+    ```
+
+1.  Verify the new configuration:
+
+    ```bash
+    az aks show --name my-calico-cluster --resource-group my-calico-rg  \
+      --query "networkProfile.networkPlugin, networkProfile.networkPolicy"
+    ```
+
+    ```bash title='Expected output'
+    [
+      "azure",
+      "none"
+    ]
+    ```
+
+1.  Install $[prodname].
+    Note that, unlike most Calico installs, we do not install CRDs here because they may already exist. Operator will check and create any missing ones.
+
+    ```bash
+    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/tigera-operator.yaml
+    ```
+
+1.  Complete the installation by providing the configuration for $[prodname]
+
+    ```bash
+    kubectl create -f - <<EOF
+    kind: Installation
+    apiVersion: operator.tigera.io/v1
+    metadata:
+      name: default
+    spec:
+      kubernetesProvider: AKS
+      cni:
+        type: AzureVNET
+    ---
+
+    # This optional section configures the Calico API server.
+    # For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io/v1.APIServer
+    apiVersion: operator.tigera.io/v1
+    kind: APIServer
+    metadata:
+      name: default
+    spec: {}
+
+    ---
+
+    # This optional section enables the Calico Goldmane flow aggregator.
+    apiVersion: operator.tigera.io/v1
+    kind: Goldmane
+    metadata:
+      name: default
+
+    ---
+
+    # This optional section enables the Calico Whisker observability UI.
+    apiVersion: operator.tigera.io/v1
+    kind: Whisker
+    metadata:
+      name: default
+    EOF
+    ```
+
+1.  Confirm that $[prodname] is up and running
+    ```bash
+    kubectl get tigerastatus
+    ```
+
+    ```bash title='Expected output'
+        NAME        AVAILABLE   PROGRESSING   DEGRADED   SINCE
+        apiserver   True        False         False      100s
+        calico      True        False         False      50s
+        goldmane    True        False         False      55s
+        ippools     True        False         False      105s
+        whisker     True        False         False      80s
+    ```
+
+    Check that all components report `AVAILABLE` as `True`.
+
+1.  Re-apply all existing policies
+    ```bash
+    kubectl apply -f network-policy.yaml
+    ```
+1.  Check that all network policies are back in place in the cluster:
+    ```bash
+    kubectl get netpol -A -o yaml
+    ```
