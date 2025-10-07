@@ -31,8 +31,12 @@ export default async function createAsyncConfig() {
     baseUrl: '/',
     onBrokenAnchors: 'ignore',
     onBrokenLinks: 'throw',
-    onBrokenMarkdownLinks: 'throw',
     favicon: 'img/favicon.png',
+    markdown: {
+      hooks: {
+        onBrokenMarkdownLinks: 'throw',
+      }
+    },
 
     // Even if you don't use internalization, you can use this field to set useful
     // metadata like html lang. For example, if your site is Chinese, you may want
