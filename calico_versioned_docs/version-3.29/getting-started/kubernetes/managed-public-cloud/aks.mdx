@@ -5,19 +5,61 @@ title: Installing on AKS
 
 # Microsoft Azure Kubernetes Service (AKS)
 
-## Big picture
-
 Enable $[prodname] in AKS managed Kubernetes service.
 
-## Value
+## Using Calico with AKS
 
-AKS has built-in support for $[prodname], providing a robust implementation of the full Kubernetes Network Policy API. AKS users wanting to go beyond Kubernetes network policy capabilities can make full use of the $[prodname] Network Policy API.
+Azure Kubernetes Service (AKS) supports multiple configurations for networking and network policy using Calico.
+Your choice determines how networking is implemented, who manages Calico, and which features are available.
 
-You can also use $[prodname] for networking on AKS in place of the default Azure VPC networking. This allows you to take advantage of the full set of $[prodname] networking features.
+### Option 1: Azure-managed Calico (built-in)
 
-## How to
+With this option, AKS uses the Azure CNI plugin for networking and the Azure-managed Calico implementation for network policy.
 
-### Install AKS with $[prodname] for network policy
+- **Networking:** Provided by Azure CNI
+- **Network policy:** Implemented by Azure-managed Calico
+- **Management:** Calico components are installed, upgraded, and supported by Azure
+- **Features:** Full Kubernetes Network Policy API (standard features only)
+
+### Option 2: Self-managed Calico for network policy
+
+In this setup, your cluster still uses Azure CNI for networking, but you install and manage Calico yourself to enable advanced policy and observability capabilities.
+
+- **Networking:** Provided by Azure CNI
+- **Network policy:** Implemented by self-managed Calico
+- **Management:** You install, configure, and upgrade Calico
+- **Support:**
+  - Cluster supported by Azure
+  - Calico features supported by the community or a commercial support plan
+- **Features:**
+  - Advanced Calico policy and global network policy
+  - Whisker observability and other enterprise-grade capabilities
+
+This approach gives you more control and access to advanced Calico policy features while still benefiting from Azure’s managed networking infrastructure.
+
+### Option 3: Self-managed Calico for networking and network policy
+
+You can also use Calico CNI as the primary networking plugin in AKS, replacing Azure CNI entirely.
+This configuration provides the full Calico networking and policy feature set.
+
+- **Networking:** Provided by Calico CNI
+- **Network policy:** Implemented by Calico
+- **Management:** You install, configure, and upgrade Calico
+- **Support:**
+  - Cluster supported by Azure
+  - Calico features supported by the community or a commercial support plan
+- **Features:**
+  - Full Calico networking stack
+  - Advanced policy, global policy, and observability tools
+
+This option gives you maximum flexibility and functionality, but requires you to manage Calico yourself.
+
+## Prerequisites
+
+- You have an Azure account with permissions to create resource groups and AKS clusters.
+- You installed and configured the [az command line tool](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
+
+## Install AKS with Azure CNI for networking and Azure-managed $[prodname] for network policy
 
 The geeky details of what you get:
 
@@ -26,18 +68,111 @@ The geeky details of what you get:
   details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
 />
 
-Alternatively you can run in Azure CNI overlay mode.
+1. To create a cluster with Azure-managed Calico for policy, run the following command:
+   ```bash
+   # Create a resource group
+   az group create --name my-calico-rg --location westcentralus
+   az aks create \
+     --resource-group my-calico-rg \
+     --name my-calico-cluster \
+     --location westcentralus \
+     --pod-cidr 192.168.0.0/16 \
+     --network-plugin azure \
+     --network-policy calico
+   ```
+
+## Install AKS with Azure CNI for networking and self-managed Calico for network policy
 
 The geeky details of what you get:
 
 <GeekDetails
   prodname='$[prodname]'
-  details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:Yes,Routing:VPC Native,Datastore:Kubernetes'
+  details='Policy:Calico,IPAM:Azure,CNI:Azure,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
 />
 
-To enable $[prodname] network policy enforcement, follow these step-by-step instructions: [Create an AKS cluster and enable network policy](https://docs.microsoft.com/en-us/azure/aks/use-network-policies).
+1. Create an Azure AKS cluster with Azure CNI for networking and no configuration for network policy:
 
-### Install AKS with $[prodname] networking
+   ```bash
+   # Create a resource group
+   az group create --name my-calico-rg --location westcentralus
+   az aks create \
+     --resource-group my-calico-rg \
+     --name my-calico-cluster \
+     --location westcentralus \
+     --pod-cidr 192.168.0.0/16 \
+     --network-plugin azure \
+     --network-policy none
+   ```
+
+1. Get credentials to allow you to access the cluster with `kubectl`:
+
+   ```bash
+   az aks get-credentials --resource-group my-calico-rg --name my-calico-cluster
+   ```
+
+   Now that you have a cluster configured, you can install $[prodname].
+
+1. Install the Tigera Operator and custom resource definitions:
+
+   ```bash
+   kubectl create -f $[manifestsUrl]/manifests/operator-crds.yaml
+   kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+   ```
+
+1. Complete the installation by providing the configuration for $[prodname]
+
+   ```bash
+   kubectl create -f - <<EOF
+   kind: Installation
+   apiVersion: operator.tigera.io/v1
+   metadata:
+     name: default
+   spec:
+     kubernetesProvider: AKS
+     cni:
+       type: AzureVNET
+
+   ---
+
+   # This section configures the Calico API server.
+   # For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io/v1.APIServer
+   apiVersion: operator.tigera.io/v1
+   kind: APIServer
+   metadata:
+      name: default
+   spec: {}
+
+   ---
+
+   # Configures the Calico Goldmane flow aggregator.
+   apiVersion: operator.tigera.io/v1
+   kind: Goldmane
+   metadata:
+     name: default
+
+   ---
+
+   # Configures the Calico Whisker observability UI.
+   apiVersion: operator.tigera.io/v1
+   kind: Whisker
+   metadata:
+     name: default
+   EOF
+   ```
+
+1. Confirm that $[prodname] is up and running
+   ```bash
+   kubectl get tigerastatus
+   NAME        AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver   True        False         False      100s
+   calico      True        False         False      50s
+   goldmane    True        False         False      55s
+   ippools     True        False         False      105s
+   whisker     True        False         False      80s
+   ```
+Check that all components report `AVAILABLE` as `True`.
+
+## Install AKS with self-managed $[prodname] for networking and network policy
 
 **Limitations**
 
@@ -54,30 +189,35 @@ The geeky details of what you get:
 
 1. Create an Azure AKS cluster with no Kubernetes CNI pre-installed. Please refer to [Bring your own CNI with AKS](https://docs.microsoft.com/en-us/azure/aks/use-byo-cni?tabs=azure-cli) for details.
 
-   ```
-    # Create a resource group
-    az group create --name my-calico-rg --location westcentralus
-
-    az aks create --resource-group my-calico-rg --name my-calico-cluster --location westcentralus --pod-cidr 192.168.0.0/16 --network-plugin none
+   ```bash
+   # Create a resource group
+   az group create --name my-calico-rg --location westcentralus
+   az aks create \
+     --resource-group my-calico-rg \
+     --name my-calico-cluster \
+     --location westcentralus \
+     --pod-cidr 192.168.0.0/16 \
+     --network-plugin none
    ```
 
 1. Get credentials to allow you to access the cluster with `kubectl`:
 
-   ```
+   ```bash
    az aks get-credentials --resource-group my-calico-rg --name my-calico-cluster
    ```
 
 1. Now that you have a cluster configured, you can install $[prodname].
 
-1. Install the operator.
+1. Install the Tigera Operator and custom resource definitions.
 
-   ```
+   ```bash
+   kubectl create -f $[manifestsUrl]/manifests/operator-crds.yaml
    kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
    ```
 
-1. Configure the $[prodname] installation.
+1. Complete the installation by providing the configuration for $[prodname]
 
-   ```
+   ```bash
    kubectl create -f - <<EOF
    kind: Installation
    apiVersion: operator.tigera.io/v1
@@ -93,17 +233,36 @@ The geeky details of what you get:
         - cidr: 192.168.0.0/16
           encapsulation: VXLAN
    ---
+
+   # This section configures the Calico API server.
+   # For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io/v1.APIServer
    apiVersion: operator.tigera.io/v1
    kind: APIServer
    metadata:
       name: default
    spec: {}
+
+   ---
+
+   # Configures the Calico Goldmane flow aggregator.
+   apiVersion: operator.tigera.io/v1
+   kind: Goldmane
+   metadata:
+     name: default
+
+   ---
+
+   # Configures the Calico Whisker observability UI.
+   apiVersion: operator.tigera.io/v1
+   kind: Whisker
+   metadata:
+     name: default
    EOF
    ```
 
-1. Confirm that all of the pods are running with the following command.
+1. Confirm that all the pods are running with the following command.
 
-   ```
+   ```bash
    watch kubectl get pods -n calico-system
    ```
 
