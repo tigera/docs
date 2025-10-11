@@ -337,6 +337,7 @@ module.exports = {
       items: [
         'observability/get-started-cem',
         'observability/alerts',
+        'observability/dashboards',
         'observability/kibana',
         'observability/packetcapture',
         'observability/visualize-traffic',
