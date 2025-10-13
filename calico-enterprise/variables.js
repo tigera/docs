@@ -20,6 +20,7 @@ const variables = {
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\TigeraCalico',
   registry: 'gcr.io/unique-caldron-775/cnx/', // Change to 'quay.io/' for new release
+  envoyVersion: '1.5.0',
   chart_version_name: 'master',
   tigeraOperator: releases[0]['tigera-operator'],
   dikastesVersion: releases[0].components.dikastes.version,
