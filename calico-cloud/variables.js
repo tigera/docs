@@ -22,6 +22,7 @@ const variables = {
   dikastesVersion: releases[0].components.dikastes.version,
   releases,
   registry: 'quay.io/',
+  envoyVersion: '1.5.0',
   imageNames: {
     node: 'tigera/cnx-node',
     kubeControllers: 'tigera/kube-controllers',
