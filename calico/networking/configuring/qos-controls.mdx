@@ -14,6 +14,10 @@ Additionally, it allows configuring Differentiated Services (DiffServ) on egress
 With QoS controls, $[prodname] enforces network resource limits (bandwidth, packet rate, connections) for Kubernetes pods and OpenStack VMs, ensuring fair resource allocation and preventing performance degradation for other workloads.
 $[prodname] can also apply DiffServ on egress traffic to allow upstream devices to prioritise forwarding accordingly.
 
+## Requirements
+
+* Configuring limits for **bandwidth** on installations that use the **eBPF data plane** requires `tcx bpf_link`, which is available in the **Linux kernel v6.6 or newer**.
+
 ## Limitations
 
 * Configuring limits for established connections is not supported on installations that use the eBPF data plane.
@@ -129,6 +133,20 @@ spec:
 | Annotation                                  | Description                                                                                                                                                                                                                        |
 |---------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `qos.projectcalico.org/dscp` | Specifies the DSCP value of egress traffic toward an endpoint outside cluser or another host in cluster.<br/>Min value: `0`<br/>Max value: `63`<br/>String values: DF, EF, AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6                                                                                                                                     |
+
+## Troubleshooting
+
+If limits for **bandwidth** on installations that use the **eBPF data plane** don't seem to be enforced correctly, check calico-node logs to see if `tcx` may not be supported by
+the operating system with `kubectl logs`. For example:
+
+```
+$ kubectl logs -n calico-system calico-node-cc7q2 | grep "tcx"
+Defaulted container "calico-node" out of: calico-node, flexvol-driver (init), ebpf-bootstrap (init), install-cni (init)
+libbpf: prog 'cali_tcx_test': failed to attach to tcx: Invalid argument
+2025-10-14 20:13:06.961 [INFO][47] felix/bpf_ep_mgr.go 595: tcx is not supported. Falling back to tc
+```
+
+The log messages above mean `tcx` is not supported and thus, QoS limits for bandwidth are not supported on this node.
 
 ## Additional resources
 
