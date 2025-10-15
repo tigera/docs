@@ -14,9 +14,9 @@ Additionally, it allows configuring Differentiated Services (DiffServ) on egress
 With QoS controls, $[prodname] enforces network resource limits (bandwidth, packet rate, connections) for Kubernetes pods and OpenStack VMs, ensuring fair resource allocation and preventing performance degradation for other workloads.
 $[prodname] can also apply DiffServ on egress traffic to allow upstream devices to prioritise forwarding accordingly.
 
-## Requirements
+## Prerequisites
 
-* Configuring limits for **bandwidth** on installations that use the **eBPF data plane** requires `tcx bpf_link`, which is available in the **Linux kernel v6.6 or newer**.
+* If you use the eBPF data plane, your Linux nodes must be running kernel version 6.6 or higher in order to configure bandwidth QoS controls.
 
 ## Limitations
 
@@ -136,14 +136,18 @@ spec:
 
 ## Troubleshooting
 
-If limits for **bandwidth** on installations that use the **eBPF data plane** don't seem to be enforced correctly, check calico-node logs to see if `tcx` may not be supported by
+### Bandwidth is not enforced on eBPF
+
+If limits for bandwidth on installations that use the eBPF data plane don't seem to be enforced, check calico-node logs to see if `tcx` may not be supported by
 the operating system with `kubectl logs`. For example:
 
 ```
-$ kubectl logs -n calico-system calico-node-cc7q2 | grep "tcx"
+$ kubectl logs -n calico-system ds/calico-node | grep tcx
+Found 4 pods, using pod/calico-node-j9z5d
 Defaulted container "calico-node" out of: calico-node, flexvol-driver (init), ebpf-bootstrap (init), install-cni (init)
-libbpf: prog 'cali_tcx_test': failed to attach to tcx: Invalid argument
-2025-10-14 20:13:06.961 [INFO][47] felix/bpf_ep_mgr.go 595: tcx is not supported. Falling back to tc
+bird: libbpf: prog 'cali_tcx_test': failed to attach to tcx: Invalid argument
+2025-10-15 16:31:48.522 [INFO][81] felix/bpf_ep_mgr.go 595: tcx is not supported. Falling back to tc
 ```
 
-The log messages above mean `tcx` is not supported and thus, QoS limits for bandwidth are not supported on this node.
+The log messages above mean `tcx` is not supported and thus, QoS limits for bandwidth are not supported on this node. In order to solve this, upgrade the Linux kernel version on
+the node to 6.6 or later.
