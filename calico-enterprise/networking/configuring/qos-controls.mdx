@@ -14,6 +14,10 @@ Additionally, it allows configuring Differentiated Services (DiffServ) on egress
 With QoS controls, $[prodname] enforces network resource limits (bandwidth, packet rate, connections) for Kubernetes pods and OpenStack VMs, ensuring fair resource allocation and preventing performance degradation for other workloads.
 $[prodname] can also apply DiffServ on egress traffic to allow upstream devices to prioritise forwarding accordingly.
 
+## Prerequisites
+
+* If you use the eBPF data plane, your Linux nodes must be running kernel version 6.6 or higher in order to configure bandwidth QoS controls.
+
 ## Limitations
 
 * Configuring limits for established connections is not supported on installations that use the eBPF data plane.
@@ -128,5 +132,21 @@ spec:
 
 | Annotation                                  | Description                                                                                                                                                                                                                        |
 |---------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `qos.projectcalico.org/dscp` | Specifies the DSCP value of egress traffic toward an endpoint outside cluser or another host in cluster.<br/>Min value: `0`<br/>Max value: `63`<br/>String values: DF, EF, AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6                                                                                                                                     |
+| `qos.projectcalico.org/dscp` | Specifies the DSCP value of egress traffic toward an endpoint outside cluster or another host in cluster.<br/>Min value: `0`<br/>Max value: `63`<br/>String values: DF, EF, AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6                                                                                                                                     |
 
+## Troubleshooting
+
+### Bandwidth is not enforced on eBPF
+
+If you use the eBPF data plane and bandwidth limits aren't being enforced, check the calico-node logs to see if `tcx` is supported by the operating system.
+`tcx` is present in the Linux kernel version 6.6 and later, and it is required for bandwidth limits to work with the eBPF data plane.
+
+The following example shows logs that indicate an unsupported kernel version:
+
+```
+$ kubectl logs -n calico-system ds/calico-node | grep tcx
+Found 4 pods, using pod/calico-node-j9z5d
+Defaulted container "calico-node" out of: calico-node, flexvol-driver (init), ebpf-bootstrap (init), install-cni (init)
+bird: libbpf: prog 'cali_tcx_test': failed to attach to tcx: Invalid argument
+2025-10-15 16:31:48.522 [INFO][81] felix/bpf_ep_mgr.go 595: tcx is not supported. Falling back to tc
+```
