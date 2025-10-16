@@ -138,8 +138,10 @@ spec:
 
 ### Bandwidth is not enforced on eBPF
 
-If limits for bandwidth on installations that use the eBPF data plane don't seem to be enforced, check calico-node logs to see if `tcx` may not be supported by
-the operating system with `kubectl logs`. For example:
+If you use the eBPF data plane and bandwidth limits aren't being enforced, check the calico-node logs to see if `tcx` is supported by the operating system.
+`tcx` is present in the Linux kernel version 6.6 and later, and it is required for bandwidth limits to work with the eBPF data plane.
+
+The following example shows logs that indicate an unsupported kernel version:
 
 ```
 $ kubectl logs -n calico-system ds/calico-node | grep tcx
@@ -148,9 +150,6 @@ Defaulted container "calico-node" out of: calico-node, flexvol-driver (init), eb
 bird: libbpf: prog 'cali_tcx_test': failed to attach to tcx: Invalid argument
 2025-10-15 16:31:48.522 [INFO][81] felix/bpf_ep_mgr.go 595: tcx is not supported. Falling back to tc
 ```
-
-The log messages above mean `tcx` is not supported and thus, QoS limits for bandwidth are not supported on this node. In order to solve this, upgrade the Linux kernel version on
-the node to 6.6 or later.
 
 ## Additional resources
 
