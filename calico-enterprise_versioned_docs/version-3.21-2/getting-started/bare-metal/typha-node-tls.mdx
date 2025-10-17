@@ -1,0 +1,64 @@
+---
+description: Use custom TLS certificates for non-cluster Calico Node and Typha
+---
+
+# Use custom certificates for Node and Typha
+
+## Big picture
+
+Provide custom TLS certificates that allow mutual TLS authentication between non-cluster Calico Node and Typha.
+
+## Value
+
+By default, non-cluster Calico Node and Typha use a self-signed Certificate Authority (CA) and automatically generated certificates for mTLS authentication. You can optionally provide your own CA and certificates (BYO certificates) for enhanced security or compliance requirements.
+
+## Before you begin
+
+Get the Certificate Authority certificate and signed certificate and key pairs for Calico Node and Typha.
+
+## How to
+
+### Create the resource file
+
+1. Package your CA certificates into a ConfigMap.
+
+    Run the following command to create a ConfigMap containing your CA certificates. If you have already created the `typha-ca` ConfigMap following the steps in [Provide TLS certificates for Typha and Node](../../operations/comms/typha-node-tls.mdx), and your BYO certificates are signed by the same CA included in that ConfigMap, you can skip this step.
+
+    ```bash
+    kubectl create configmap typha-ca -n tigera-operator --from-file=caBundle=<path-to-ca-cert>
+    ```
+
+    :::tip
+
+    The `caBundle` can contain a single CA or multiple PEM blocks.  It must include the CAs trusted by both Node and Typha.
+
+    :::
+
+2. Create the Node TLS Secret for non-cluster hosts or VMs.
+
+    This secret stores the Calico Node TLS certificate and private key, and can be accessed by hosts or VMs outside of the cluster.
+
+    ```bash
+    kubectl create secret tls node-certs-noncluster-host \
+      -n tigera-operator \
+      --cert=<path-to-node-cert> --key=<path-to-node-key>
+    ```
+
+3. Replace the Typha TLS Secret for the non-cluster Typha deployment.
+
+    Update the secret used by the non-cluster Typha deployment with the appropriate TLS certificate and key.
+
+    ```bash
+    kubectl create secret generic typha-certs-noncluster-host \
+      -n tigera-operator \
+      --from-file=tls.crt=<path-to-typha-cert> \
+      --from-file=tls.key=<path-to-typha-key> \
+      --dry-run=client -o yaml | kubectl apply -f -
+    ```
+
+### Restart Calico Node service on non-cluster host or VM
+
+On each non-cluster host or VM:
+
+1. Remove any existing certificates and private keys from `/etc/calico/calico-node`.
+2. Restart the Calico Node service. The service will automatically retrieve and install the BYO certificates and private keys from the cluster.
