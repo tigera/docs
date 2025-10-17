@@ -1,0 +1,47 @@
+const releases = require('./releases.json');
+
+const variables = {
+  releaseTitle: 'master',
+  prodname: 'Calico',
+  prodnamedash: 'calico',
+  version: 'master',
+  baseUrl: '/calico/latest',
+  filesUrl: 'https://projectcalico.docs.tigera.io/master',
+  tutorialFilesURL: 'https://docs.tigera.io/files',
+  calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download',
+  tmpScriptsURL: 'https://docs.tigera.io/calico/next',
+  windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
+  prodnameWindows: 'Calico for Windows',
+  prodnamedashWindows: 'calico-for-windows',
+  nodecontainer: 'calico/node',
+  noderunning: 'calico-node',
+  rootDirWindows: 'C:\\CalicoWindows',
+  ppa_repo_name: 'calico-master',
+  manifestsUrl: 'https://2025-10-03-v3-31-quarterly.docs.eng.tigera.net', //Replace with hashrelease
+  releases,
+  registry: '',
+  vppbranch: 'master',
+  envoyVersion: '1.5.0',
+  tigeraOperator: releases[0]['tigera-operator'],
+  tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
+  imageNames: {
+    'calico/node': 'calico/node',
+    calicoctl: 'calico/ctl',
+    typha: 'calico/typha',
+    'calico/cni': 'calico/cni',
+    'calico/apiserver': 'calico/apiserver',
+    'calico/kube-controllers': 'calico/kube-controllers',
+    'calico-upgrade': 'calico-upgrade',
+    'calico/node-windows': 'calico/node-windows',
+    'calico/cni-windows': 'calico/cni-windows',
+    flannel: 'docker.io/flannelcni/flannel',
+    flannelMigration: 'calico/flannel-migration-controller',
+    'calico/dikastes': 'calico/dikastes',
+    'pilot-webhook': 'calico/pilot-webhook',
+    flexvol: 'calico/pod2daemon-flexvol',
+    'csi-driver': 'calico/csi',
+    'csi-node-driver-registrar': 'calico/node-driver-registrar',
+  },
+};
+
+module.exports = variables;

@@ -1,0 +1,481 @@
+---
+description: Quickstart for Calico.
+---
+
+import Screenshot from '/src/___new___/components/Screenshot';
+export let figCount = 1;
+
+# Calico quickstart guide
+
+This quickstart guide shows you how to install Calico, secure a cluster with network policy, and monitor network traffic with Calico Whisker.
+
+## Before you begin
+
+You'll need to install a few tools to complete this tutorial:
+
+* `kind`.
+  This is what you'll use to create a cluster on your workstation.
+  For installation instructions, see the [`kind` documentation](https://kind.sigs.k8s.io/docs/user/quick-start/).
+* Docker Engine or Docker Desktop.
+  This is required to run containers for the `kind` utility.
+  For installation instructions, see the [Docker documentation](https://docs.docker.com/desktop/).
+* `kubectl`.
+  This is the tool you'll use to interact with your cluster.
+  For installation instructions, see the [Kubernetes documentation](https://kubernetes.io/docs/tasks/tools/#kubectl)
+
+
+## Step 1: Create a cluster
+
+In this step, you will:
+* **Create a cluster:** Use `kind` to create a Kubernetes cluster.
+* **Verify the cluster:** Check that the cluster is running and ready.
+
+1. Create a file called `config.yaml` and give it the following content:
+
+   ```bash
+   kind: Cluster
+   apiVersion: kind.x-k8s.io/v1alpha4
+   nodes:
+     - role: control-plane
+     - role: worker
+     - role: worker
+   networking:
+     disableDefaultCNI: true
+     podSubnet: 192.168.0.0/16
+   ```
+
+   This configuration file tells `kind` to create a cluster with one control-plane node and two worker nodes.
+   It instructs `kind` to create the cluster without a CNI.
+   The `podSubnet` range defines the IP addresses that Kubernetes will use for pods.
+
+2. Start your Kubernetes cluster with the configuration file by running the following command:
+
+   ```bash
+   kind create cluster --name=calico-cluster --config=config.yaml
+   ```
+
+   `kind` reads your configuration file and creates a cluster in a few minutes.
+
+   ```bash title='Expected output'
+   Creating cluster "calico-cluster" ...
+   ✓ Ensuring node image (kindest/node:v1.29.2) 🖼
+   ✓ Preparing nodes 📦 📦 📦
+   ✓ Writing configuration 📜
+   ✓ Starting control-plane 🕹️
+   ✓ Installing StorageClass 💾
+   ✓ Joining worker nodes 🚜
+   Set kubectl context to "kind-calico-cluster"
+   You can now use your cluster with:
+
+   kubectl cluster-info --context kind-calico-cluster
+
+   Thanks for using kind! 😊
+   ```
+
+3. To verify that your cluster is working, run the following command:
+
+   ```bash
+   kubectl get nodes
+   ```
+
+   You should see three nodes with the name you gave the cluster.
+
+   ```bash title="Expected output"
+   NAME                           STATUS     ROLES           AGE     VERSION
+   calico-cluster-control-plane   NotReady   control-plane   5m46s   v1.29.2
+   calico-cluster-worker          NotReady   <none>          5m23s   v1.29.2
+   calico-cluster-worker2         NotReady   <none>          5m22s   v1.29.2
+   ```
+
+   Don't wait for the nodes to get a `Ready` status.
+   They remain in a `NotReady` status until you configure networking in the next step.
+
+## Step 2. Install Calico
+
+In this step, you will install Calico in your cluster.
+
+1. Install the Tigera Operator and custom resource definitions.
+
+   ```bash
+   kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+   ```
+
+   ```bash title="Expected output"
+   namespace/tigera-operator created
+   serviceaccount/tigera-operator created
+   clusterrole.rbac.authorization.k8s.io/tigera-operator-secrets created
+   clusterrole.rbac.authorization.k8s.io/tigera-operator created
+   clusterrolebinding.rbac.authorization.k8s.io/tigera-operator created
+   rolebinding.rbac.authorization.k8s.io/tigera-operator-secrets created
+   deployment.apps/tigera-operator created
+   ```
+
+2. Install $[prodname] by creating the necessary custom resources.
+
+   ```bash
+   kubectl create -f $[manifestsUrl]/manifests/custom-resources.yaml
+   ```
+
+   ```bash title="Expected output"
+   installation.operator.tigera.io/default created
+   apiserver.operator.tigera.io/default created
+   goldmane.operator.tigera.io/default created
+   whisker.operator.tigera.io/default created
+   ```
+
+3. Monitor the deployment by running the following command:
+
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+
+   After a few minutes, all the Calico components display `True` in the `AVAILABLE` column.
+
+   ```bash title="Expected output"
+   NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver                       True        False         False      4m9s
+   calico                          True        False         False      3m29s
+   goldmane                        True        False         False      3m39s
+   ippools                         True        False         False      6m4s
+   whisker                         True        False         False      3m19s
+   ```
+
+## Step 3. Monitor network traffic in Calico Whisker
+
+The Whisker web console deploys automatically, but it is not accessible from outside the cluster by default.
+To view the web console, you need to allow access.
+
+In this step, you will:
+
+* **Set up port forwarding:** This allows you to access the Whisker web console from your browser.
+* **Open the Whisker web console:** View the network traffic logs in real time.
+
+1. From your terminal, run the following command:
+
+   ```bash
+   kubectl port-forward -n calico-system service/whisker 8081:8081
+   ```
+
+   ```bash title="Expected output"
+   Forwarding from 127.0.0.1:8081 -> 8081
+   Forwarding from [::1]:8081 -> 8081
+   ```
+
+   Keep this terminal open throughout the rest of this tutorial.
+   The Whisker web console needs the port forwarding to be active to receive logs.
+
+2. To open Calico Whisker, open your browser and go to `localhost:8081`.
+   You won't see any flows at the beginning.
+   But in a few moments, as the console receives flow logs, you'll begin to see a list of connections.
+
+   <Screenshot src="/img/whisker.jpg" alt="Whisker" />
+   *Figure {figCount++}: Whisker web console with allowed flows for core Kubernetes services.*
+
+   The web console accumulates flow logs in real time.
+   Keep this window open through the rest of the tutorial to see logs of the connections your pods are making.
+
+## Step 4. Deploy NGINX and BusyBox to generate traffic
+
+Now it's time to generate some network traffic.
+We'll do this first by deploying an NGINX server and exposing it as a service in the cluster.
+Then we'll make HTTP requests from another pod in the cluster to the NGINX server and to an external website.
+For this we'll use the BusyBox utility.
+
+In this step, you will:
+* **Create a server:** Deploy an NGINX web server in your Kubernetes cluster.
+* **Expose the server:** Make the NGINX server accessible within the cluster.
+* **Test connectivity:** Use a BusyBox pod to verify connections to the NGINX server and the public internet.
+
+1. Create a namespace for your application:
+
+   ```bash
+   kubectl create namespace quickstart
+   ```
+   ```bash title="Expected output"
+   namespace/quickstart created
+   ```
+
+1. Deploy an NGINX web server in the `quickstart` namespace:
+
+   ```bash
+   kubectl create deployment --namespace=quickstart nginx --image=nginx
+   ```
+   ```bash title="Expected output"
+   deployment.apps/nginx created
+   ```
+
+1. Expose the NGINX deployment to make it accessible within the cluster:
+
+   ```bash
+   kubectl expose --namespace=quickstart deployment nginx --port=80
+   ```
+   ```bash title="Expected output"
+   service/nginx exposed
+   ```
+
+1. Start a BusyBox session to test whether you can access the NGINX server.
+
+    ```bash
+    kubectl run --namespace=quickstart access --rm -ti --image busybox /bin/sh
+    ```
+
+    This command creates a BusyBox pod inside the `quickstart` namespace and starts a shell session inside the pod.
+
+    ```bash title="Expected output"
+    If you don't see a command prompt, try pressing enter.
+    / #
+    ```
+
+1. In the BusyBox shell, run the following command to test communication with the NGINX server:
+
+   ```bash
+   wget -qO- http://nginx
+   ```
+
+   You should see the HTML content of the NGINX welcome page.
+
+   ```html title="Expected output"
+   <!DOCTYPE html>
+   <html>
+   <head>
+   <title>Welcome to nginx!</title>
+   <style>
+   html { color-scheme: light dark; }
+   body { width: 35em; margin: 0 auto;
+   font-family: Tahoma, Verdana, Arial, sans-serif; }
+   </style>
+   </head>
+   <body>
+   <h1>Welcome to nginx!</h1>
+   <p>If you see this page, the nginx web server is successfully installed and
+   working. Further configuration is required.</p>
+
+   <p>For online documentation and support please refer to
+   <a href="http://nginx.org/">nginx.org</a>.<br/>
+   Commercial support is available at
+   <a href="http://nginx.com/">nginx.com</a>.</p>
+
+   <p><em>Thank you for using nginx.</em></p>
+   </body>
+   </html>
+   ```
+   This confirms that the BusyBox pod can access the NGINX server.
+
+1. In the Busybox shell, run the following command test communication with the public internet:
+
+    ```bash
+    wget -qO- https://docs.tigera.io/pod-connection-test.txt
+    ```
+
+    You should see the content of the file `pod-connectivity-test.txt`.
+
+    ```html title="Expected output"
+    You successfully connected to https://docs.tigera.io/pod-connection-test.txt.
+    ```
+
+    This confirms that the BusyBox pod can access the public internet.
+
+
+1. Return to your browser to see the connection appear in the Whisker web console.
+   You should see three new connection types: one to `coredns` one to `nginx`, and another to `PUBLIC NETWORK`.
+
+   <Screenshot src="/img/quickstart-whisker2.png" alt="whisker2" />
+   *Figure {figCount++}: Whisker web console showing allowed flows to NGINX server and `https://docs.tigera.io`.*
+
+
+## Step 5. Restrict all traffic with a default deny policy
+
+To effectively secure your cluster, it's best to start by denying all traffic, and then gradually allowing only the necessary traffic.
+We'll do this by applying a Global Calico Network Policy that denies all ingress and egress traffic by default.
+
+In this step, you will:
+* **Implement a global default deny policy:** Use a Global Calico Network Policy to deny all ingress and egress traffic by default.
+* **Verify access is denied:** Use your BusyBox pod to confirm that the policy is working as expected.
+
+1. Create a Global Calico Network Policy to deny all traffic except for the necessary system namespaces:
+
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: projectcalico.org/v3
+   kind: GlobalNetworkPolicy
+   metadata:
+     name: default-deny
+   spec:
+     selector: projectcalico.org/namespace not in {'kube-system', 'calico-system', 'calico-apiserver'}
+     types:
+       - Ingress
+       - Egress
+   EOF
+   ```
+   ```bash title="Expected output"
+   globalnetworkpolicy.projectcalico.org/default-deny created
+   ```
+
+1. Now go back to your BusyBox shell and test access to the NGINX server again:
+
+   ```bash
+   wget -qO- http://nginx
+   ```
+
+   You should see the following output, indicating that access is denied:
+
+   ```bash title="Expected output"
+   wget: bad address 'nginx'
+   ```
+
+1. Test access to the public internet again:
+
+   ```bash
+   wget -qO- https://docs.tigera.io/pod-connection-test.txt
+   ```
+
+   You should see the following output, indicating that egress traffic is also denied:
+
+   ```bash title="Expected output"
+   wget: bad address 'docs.tigera.io'
+   ```
+
+1. Return to your browser to see the denied flow logs appear in the Whisker web console.
+   You should see two denied flows to `coredns`.
+
+   <Screenshot src="/img/quickstart-whisker3.png" alt="whisker3" />
+   *Figure {figCount++}: Whisker web console showing denied flows to NGINX server and `https://docs.tigera.io`.*
+
+
+   By following these steps, you have successfully implemented a global default deny policy and verified that it is working as expected.
+
+## Step 6. Create targeted network policy for allowed traffic
+
+Now that you have a default deny policy in place, you need to create specific policies to allow only the necessary traffic for your applications to function.
+The `default-deny` policy blocks all ingress and egress traffic for pods not in system namespaces, including our `access` (BusyBox) and `nginx` pods in the `quickstart` namespace.
+
+In this step, you will:
+* **Allow egress traffic from BusyBox** Create a network policy to allow egress traffic from the BusyBox pod to the public internet.
+* **Allow ingress traffic to NGINX** Create a network policy to allow ingress traffic to the NGINX server.
+
+1.  Create a Calico network policy in the `quickstart` namespace that selects the `access` pod and allows all egress traffic from it.
+
+    ```bash
+    kubectl create -f - <<EOF
+    apiVersion: projectcalico.org/v3
+    kind: NetworkPolicy
+    metadata:
+      name: allow-busybox-egress
+      namespace: quickstart
+    spec:
+      selector: run == 'access'
+      types:
+      - Egress
+      egress:
+      - action: Allow
+    EOF
+    ```
+
+    ```bash title="Expected output"
+    networkpolicy.projectcalico.org/allow-busybox-egress created
+    ```
+
+1.  Back in the BusyBox shell, test access to the public internet again.
+    Because egress traffic is now allowed from this pod, this should succeed:
+
+    ```bash
+    wget -qO- https://docs.tigera.io/pod-connection-test.txt
+    ```
+
+    ```html title="Expected output"
+    You successfully connected to https://docs.tigera.io/pod-connection-test.txt.
+    ```
+
+1. Test access to the NGINX server again.
+   Egress *from* the `access` pod is allowed by the new policy, but ingress *to* the `nginx` pod is still blocked by the `default-deny` policy.
+   This request should fail.
+
+   ```bash
+   wget -qO- http://nginx
+   ```
+
+   ```bash title="Expected output"
+   wget: bad address 'nginx'
+   ```
+
+
+{/*    *Figure {figCount++}: Whisker showing allowed egress from BusyBox to public internet, but denied connection to NGINX.* */}
+
+4.  Create another Calico network policy in the `quickstart` namespace.
+    This policy selects the `nginx` pods (using the label `app=nginx`) and allows ingress traffic specifically *from* pods with the label `run=access`.
+
+    ```bash
+    kubectl create -f - <<EOF
+    apiVersion: projectcalico.org/v3
+    kind: NetworkPolicy
+    metadata:
+      name: allow-nginx-ingress
+      namespace: quickstart
+    spec:
+      selector: app == 'nginx'
+      types:
+      - Ingress
+      ingress:
+      - action: Allow
+        source:
+          selector: run == 'access'
+    EOF
+    ```
+
+    ```bash title="Expected output"
+    networkpolicy.org/allow-nginx-ingress created
+    ```
+
+1.  Test access to the NGINX server again.
+    From the BusyBox shell, test access to the NGINX server one more time:
+
+    ```bash
+    wget -qO- http://nginx
+    ```
+
+    Now that both egress from `access` *and* ingress to `nginx` (from `access`) are allowed, the connection should succeed. You'll see the NGINX welcome page:
+
+    ```html title="Expected output"
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <title>Welcome to nginx!</title>
+    <style>
+    html { color-scheme: light dark; }
+    body { width: 35em; margin: 0 auto;
+    font-family: Tahoma, Verdana, Arial, sans-serif; }
+    </style>
+    </head>
+    <body>
+    <h1>Welcome to nginx!</h1>
+    <p>If you see this page, the nginx web server is successfully installed and
+    working. Further configuration is required.</p>
+
+    <p>For online documentation and support please refer to
+    <a href="http://nginx.org/">nginx.org</a>.<br/>
+    Commercial support is available at
+    <a href="http://nginx.com/">nginx.com</a>.</p>
+
+    <p><em>Thank you for using nginx.</em></p>
+    </body>
+    </html>
+    ```
+
+You have now successfully implemented a default deny policy and then created targeted allow policies to restore connectivity only for your applications.
+
+## Step 7. Clean up
+
+* To remove the `kind` cluster, run the following command:
+
+  ```bash
+  kind delete cluster --name calico-cluster
+  ```
+
+  ```bash title="Expected output"
+  Deleting cluster "calico-cluster" ...
+  Deleted nodes: ["calico-cluster-control-plane" "calico-cluster-worker2" "calico-cluster-worker"]
+  ```
+
+## Additional resources
+
+* Want to dive deeper? [Explore this free](https://www.tigera.io/tutorials/?_sf_s=Calico%20Basics), interactive workshop to learn Calico basics, Kubernetes observability with Whisker, and more—right in your browser.
