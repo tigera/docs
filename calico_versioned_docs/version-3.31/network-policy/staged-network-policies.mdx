@@ -1,0 +1,145 @@
+---
+description: Stage and preview policies to observe traffic implications before enforcing them.
+---
+
+# Stage, preview impacts, and enforce policy
+
+## Big picture
+
+Stage and preview impacts on traffic before enforcing policy.
+
+## Value
+
+$[prodname] staged network policy resources let you test the traffic impact of the policy as if it were enforced, but without changing actual traffic flow.
+You can also preview the impacts of a staged policy on existing traffic.
+By verifying that correct flows are allowed and denied before enforcement, you can minimize misconfiguration and potential network disruption.
+
+## Concepts
+
+### About staged policies
+
+Staged policy resources follow the same structure as their enforced counterparts.
+
+|  Policy resource name | Staged policy resource name |
+| ------------------------|-----------------------------|
+| `CalicoNetworkPolicy` | `StagedCalicoNetworkPolicy` |
+| `GlobalNetworkPolicy` | `StagedGlobalNetworkPolicy` |
+| `NetworkPolicy` | `StagedKubernetesNetworkPolicy` |
+
+## How to
+
+- [Stage a policy](#stage-a-policy)
+- [Preview policy impact](#preview-policy-impact)
+- [Enforce a staged policy](#enforce-a-staged-policy)
+
+### Stage a policy
+
+Stage a policy to test it in a near replica of a production environment. A best practice is to stage a policy before enforcing it to avoid unintentionally exposing or blocking other network traffic.
+You can use custom resources to stage Kubernetes and $[prodname] policies, and apply them using `kubectl`. Here are sample YAML files.
+
+**Example: StagedGlobalNetworkPolicy**
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: StagedGlobalNetworkPolicy
+metadata:
+  name: default.allow-tcp-6379
+spec:
+  tier: default
+  selector: role == 'database'
+  types:
+    - Ingress
+    - Egress
+  ingress:
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: role == 'frontend'
+      destination:
+        ports:
+          - 6379
+  egress:
+    - action: Allow
+```
+
+**Example: StagedNetworkPolicy**
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: StagedNetworkPolicy
+metadata:
+  name: default.allow-tcp-6379
+  namespace: default
+spec:
+  tier: default
+  selector: role == 'database'
+  types:
+    - Ingress
+    - Egress
+  ingress:
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: role == 'frontend'
+      destination:
+        ports:
+          - 6379
+  egress:
+    - action: Allow
+```
+
+**Example: StagedKubernetesNetworkPolicy**
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: StagedKubernetesNetworkPolicy
+metadata:
+  name: test-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 172.17.0.0/16
+            except:
+              - 172.17.1.0/24
+        - namespaceSelector:
+            matchLabels:
+              project: myproject
+        - podSelector:
+            matchLabels:
+              role: frontend
+      ports:
+        - protocol: TCP
+          port: 6379
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/24
+      ports:
+        - protocol: TCP
+          port: 5978
+```
+
+### Preview policy impact
+
+The impact of staged policies are reflected in the `policies.pending` field of the generated [flow logs](../observability/view-flow-logs.mdx) in the Calico Whisker web console.
+This field shows what would happen to traffic if a staged policy is enforced.
+
+### Enforce a staged policy
+
+When the result of a staged policy is satisfactory, create an identical policy and apply it.
+
+## Additional resources
+
+- [Staged global network policy](../reference/resources/stagedglobalnetworkpolicy.mdx)
+- [Staged network policy](../reference/resources/stagednetworkpolicy.mdx)
+- [Staged Kubernetes network policy](../reference/resources/stagedkubernetesnetworkpolicy.mdx)
+- For details on how to configure RBAC for staged policy resources, see [Configuring RBAC for tiered policy](policy-tiers/rbac-tiered-policies.mdx).
+- For details on staged policy metrics, see [View flow logs](../observability/view-flow-logs.mdx).

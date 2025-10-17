@@ -1,0 +1,286 @@
+---
+description: Configure Resource requests and limits.
+---
+
+# Configure resource requests and limits
+
+## Big picture
+
+Resource requests and limits are essential configurations for managing resource allocation and ensuring optimal performance of Kubernetes workloads. In $[prodname], these configurations can be customized using custom resources to meet specific requirements and optimize resource utilization.
+
+:::note
+It's important to note that the CPU and memory values used in the examples are for demonstration purposes and should be adjusted based on individual system requirements. To find the list of all applicable containers for a component, please refer to its specification.
+:::
+
+## APIServer custom resource
+
+The [APIServer](../reference/installation/api.mdx#operator.tigera.io/v1.APIServer) CR provides a way to configure APIServerDeployment. The following sections provide example configurations for this CR.
+
+### APIServerDeployment
+
+To configure resource specification for the [APIServerDeployment](../reference/installation/api.mdx#operator.tigera.io/v1.APIServerDeployment), patch the APIServer CR using the below command:
+
+```bash
+kubectl patch apiserver default  --type=merge --patch='{"spec": {"apiServerDeployment":{"spec": {"template": {"spec": {"containers":[{"name":"calico-apiserver","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}},{"name":"tigera-queryserver","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
+```
+This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
+
+#### Verification
+
+You can verify the configured resources using the following command:
+
+```bash
+kubectl get deployment.apps/calico-apiserver -n calico-system -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
+```
+
+This command will output the configured resource requests and limits for the Calico APIServerDeployment component in JSON format.
+
+```bash
+{
+  "name": "calico-apiserver",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
+  }
+}
+```
+
+## Installation custom resource
+
+The [Installation CR](../reference/installation/api.mdx) provides a way to configure resources for various Calico Enterprise components, including TyphaDeployment, calicoNodeDaemonSet, CalicoNodeWindowsDaemonSet, csiNodeDriverDaemonSet and KubeControllersDeployment. The following sections provide example configurations for this CR.
+
+### TyphaDeployment
+
+To configure resource specification for the [TyphaDeployment](../reference/installation/api.mdx#operator.tigera.io/v1.TyphaDeployment), patch the installation CR using the below command:
+
+```bash
+kubectl patch installations default --type=merge --patch='{"spec": {"typhaDeployment": {"spec": {"template": {"spec": {"containers": [{"name": "calico-typha", "resources": {"requests": {"cpu": "100m", "memory": "100Mi"}, "limits": {"cpu": "1", "memory": "1000Mi"}}}]}}}}}}'
+```
+This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
+
+#### Verification
+
+You can verify the configured resources using the following command:
+
+```bash
+kubectl get deployment.apps/calico-typha -n calico-system -o json | jq '.spec.template.spec.containers[]| {name:.name,resources:.resources}'
+```
+
+This command will output the configured resource requests and limits for the Calico TyphaDeployment component in JSON format.
+
+```bash
+{
+  "name": "calico-typha",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
+  }
+}
+```
+
+
+### CalicoNodeDaemonSet
+
+To configure resource requests for the [calicoNodeDaemonSet](../reference/installation/api.mdx#operator.tigera.io/v1.calicoNodeDaemonSet) component, patch the installation CR using the below command:
+
+```bash
+kubectl patch installations default --type=merge --patch='{"spec": {"calicoNodeDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"calico-node","resources":{"requests":{"cpu":"100m", "memory":"100Mi"}, "limits":{"cpu":"1", "memory":"1000Mi"}}}]}}}}}}'
+```
+This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
+
+#### Verification
+
+You can verify the configured resources using the following command:
+
+```bash
+kubectl get daemonset.apps/calico-node -n calico-system -o json | jq '.spec.template.spec.containers[]| {name:.name,resources:.resources}'
+```
+
+This command will output the configured resource requests and limits for the Calico calicoNodeDaemonSet component in JSON format.
+
+```bash
+{
+  "name": "calico-node",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
+  }
+}
+```
+
+### calicoNodeWindowsDaemonSet
+
+To configure resource requests for the [calicoNodeWindowsDaemonSet](../reference/installation/api.mdx#operator.tigera.io/v1.calicoNodeWindowsDaemonSet) component, patch the installation CR using the below command:
+
+```bash
+kubectl patch installations default --type=merge --patch='{"spec": {"calicoNodeWindowsDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"calico-node-windows","resources":{"requests":{"cpu":"100m", "memory":"100Mi"}, "limits":{"cpu":"1", "memory":"1000Mi"}}}]}}}}}}'
+```
+This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
+
+#### Verification
+
+You can verify the configured resources using the following command:
+
+```bash
+kubectl get daemonset.apps/calico-node -n calico-system -o json | jq '.spec.template.spec.containers[]| {name:.name,resources:.resources}'
+```
+
+This command will output the configured resource requests and limits for the Calico calicoNodeWindowsDaemonSet component in JSON format.
+
+```bash
+{
+  "name": "calico-node",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
+  }
+}
+```
+
+### CalicoKubeControllersDeployment
+
+To configure resource requests for the [CalicoKubeControllersDeployment](../reference/installation/api.mdx#operator.tigera.io/v1.CalicoKubeControllersDeployment) component, patch the installation CR using the below command:
+
+```bash
+kubectl patch installations default --type=merge --patch='{"spec": {"calicoKubeControllersDeployment":{"spec": {"template": {"spec": {"containers":[{"name":"calico-kube-controllers","resources":{"requests":{"cpu":"100m", "memory":"100Mi"}, "limits":{"cpu":"1", "memory":"1000Mi"}}}]}}}}}}'
+```
+This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
+
+#### Verification
+
+You can verify the configured resources using the following command:
+
+```bash
+kubectl get deployment.apps/calico-kube-controllers -n calico-system -o json | jq '.spec.template.spec.containers[]| {name:.name,resources:.resources}'
+```
+
+This command will output the configured resource requests and limits for the Calico CalicoKubeControllersDeployment component in JSON format.
+
+```bash
+{
+  "name": "calico-kube-controllers",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
+  }
+}
+
+```
+
+### CSINodeDriverDaemonSet
+
+To configure resource requests for the [CSINodeDriverDaemonSet](../reference/installation/api.mdx#operator.tigera.io/v1.CSINodeDriverDaemonSet) component, patch the installation CR using the below command:
+
+```bash
+kubectl patch installations default --type=merge --patch='{"spec": {"csiNodeDriverDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"calico-csi","resources":{"requests":{"cpu":"100m", "memory":"100Mi"}, "limits":{"cpu":"1", "memory":"1000Mi"}}},{"name":"csi-node-driver-registrar","resources":{"requests":{"cpu":"50m", "memory":"50Mi"}, "limits":{"cpu":"1", "memory":"1000Mi"}}}]}}}}}}'
+```
+This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
+
+#### Verification
+
+You can verify the configured resources using the following command:
+
+```bash
+kubectl get daemonset.apps/csi-node-driver -n calico-system -o json | jq '.spec.template.spec.containers[]| {name:.name,resources:.resources}'
+```
+
+This command will output the configured resource requests and limits for the Calico calicoNodeDaemonSet component in JSON format.
+
+```bash
+{
+  "name": "calico-csi",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "100m",
+      "memory": "100Mi"
+    }
+  }
+}
+{
+  "name": "csi-node-driver-registrar",
+  "resources": {
+    "limits": {
+      "cpu": "1",
+      "memory": "1000Mi"
+    },
+    "requests": {
+      "cpu": "50m",
+      "memory": "50Mi"
+    }
+  }
+}
+```
+
+## Update via Helm
+
+To update configurations during installation via the [Helm chart](../getting-started/kubernetes/helm.mdx#install-calico), modify the values.yaml with the necessary resource values for the components prior to executing the helm install.
+
+:::note
+The provided example illustrates configuring the apiserver component. Follow a similar approach for other components to update resource requests and limits during installation using the Helm chart.
+:::
+
+
+### APIServer custom resource
+
+The [APIServer](../reference/installation/api.mdx#operator.tigera.io/v1.APIServer) CR provides a way to configure APIServerDeployment. The following sections provide example values.yaml for apiserver component.
+
+#### APIServerDeployment
+
+To configure resource specification for the [APIServerDeployment](../reference/installation/api.mdx#operator.tigera.io/v1.APIServerDeployment), update values.yaml with the appropriate resource values.
+
+```bash
+apiServer:
+  apiServerDeployment:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: calico-apiserver
+              resources:
+                limits:
+                  cpu: 1
+                  memory: 1000Mi
+                requests:
+                  cpu: 100m
+                  memory: 100Mi
+```
+
+You can verify the configured resources using the following command:
+
+```bash
+kubectl get deployment.apps/calico-apiserver -n calico-system -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
+```
