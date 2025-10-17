@@ -1,27 +1,26 @@
 const releases = require('./releases.json');
 
 const variables = {
-  releaseTitle: 'master',
+  releaseTitle: 'v3.31.0',
   prodname: 'Calico',
   prodnamedash: 'calico',
-  version: 'master',
+  version: 'v3.31',
   baseUrl: '/calico/latest',
-  filesUrl: 'https://projectcalico.docs.tigera.io/master',
+  filesUrl: 'https://projectcalico.docs.tigera.io/v3.31',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download',
-  tmpScriptsURL: 'https://docs.tigera.io/calico/next',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
   prodnameWindows: 'Calico for Windows',
   prodnamedashWindows: 'calico-for-windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\CalicoWindows',
-  ppa_repo_name: 'calico-master',
-  manifestsUrl: 'https://2025-10-03-v3-31-quarterly.docs.eng.tigera.net', //Replace with hashrelease
+  ppa_repo_name: 'calico-3.30',
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.31.0',
   releases,
   registry: '',
-  vppbranch: 'master',
-  envoyVersion: '1.5.0',
+  vppbranch: 'v3.30.0',
+  envoyVersion: '1.3.2',
   tigeraOperator: releases[0]['tigera-operator'],
   tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {
@@ -41,6 +40,13 @@ const variables = {
     flexvol: 'calico/pod2daemon-flexvol',
     'csi-driver': 'calico/csi',
     'csi-node-driver-registrar': 'calico/node-driver-registrar',
+    'calico/envoy-gateway': 'calico/envoy-gateway',
+    'calico/envoy-proxy': 'calico/envoy-proxy',
+    'calico/envoy-ratelimit': 'calico/envoy-ratelimit',
+    'calico/key-cert-provisioner': 'calico/key-cert-provisioner',
+    'calico/goldmane': 'calico/goldmane',
+    'calico/whisker': 'calico/whisker',
+    'calico/whisker-backend': 'calico/whisker-backend'
   },
 };
 
