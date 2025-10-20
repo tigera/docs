@@ -9,35 +9,93 @@ Learn about the new features, bug fixes, and other updates in this release of $[
 
 ## New features and enhancements
 
-## Technology preview features
+### Streamlined eBPF data plane installation
 
-## Deprecated and removed features
+You can now easily install Calico with the eBPF data plane on most on-prem clusters (like those created using kubeadm), without manual configuration.
+This new automated flow is enabled by setting parameters in the Installation API.
+
+Previously, installing Calico with the eBPF data plane required a series of manual steps to manage kube-proxy and API service endpoints.
+Now, the Tigera Operator handles all the necessary networking setup and kube-proxy disabling automatically, ensuring a seamless transition.
+
+This new, default behavior simplifies both fresh installations and switching an existing cluster's data plane from iptables to eBPF.
+You can still use the manual setup process if needed.
+
+see [Install Calico networking and network policy for on-premises deployments](../getting-started/kubernetes/self-managed-onprem/onpremises.mdx).
+
+### nftables data plane
+
+The nftables data plane is now generally available.
+
+This enhancement leverages the Service implementation in Kubernetes 1.31 that uses nftables for network filtering, promising better performance and scalability compared to the default iptables implementation.
+You can deploy Calico Open Source in nftables mode to provide a robust networking and network policy implementation that is fully compatible with the upstream kube-proxy utilizing nftables.
+
+For more information, see the [nftables data plane guide](../getting-started/kubernetes/nftables.mdx).
+
+### DSCP marking
+
+This release enhances your Quality of Service (QoS) controls by enabling you to set Differentiated Services Code Point (DSCP) markings on your outgoing network traffic.
+This capability is important for ensuring network prioritization for applications sensitive to latency or requiring differentiated treatment across a shared network.
+You can now assign a DSCP value directly to packets originating from your Kubernetes pods and Calico host endpoints using the new `qos.projectcalico.org/dscp` annotation.
+This approach moves the configuration of traffic priority from the network infrastructure layer to the application layer, giving you more reliable and enduring control.
+
+For more details on setting this up, check the [Configure QoS Controls](../networking/configuring/qos-controls.mdx#configure-diffserv).
+
+### Quality of Service controls for eBPF
+
+We added support for QoS controls with eBPF.
+If your cluster uses Calico's eBPF data plane, you can now use QoS controls for bandwidth limits, packet rate limits, and DSCP marking.
+
+For more information, see [Configure QoS controls](../networking/configuring/qos-controls.mdx).
+
+### Full interface address coverage for auto host endpoints
+
+You can now ensure that host endpoints automatically capture all IPv4 and IPv6 addresses across every network interface on your node.
+This capability is essential for a robust and consistent security posture because it ensures that all IP addresses associated with a host are correctly mapped and protected by your network policies.
+To manage which interfaces are included, you can use the new `interfacePattern` field in your `HostEndpointTemplate` within the `KubeControllersConfiguration`.
+
+For documentation and configuration examples, see [Kubernetes controllers configuration](../reference/resources/kubecontrollersconfig.mdx).
+
+### Fine-grained BGP control with per-peer local AS number
+
+You can now configure a distinct local AS number for each external BGP peer by using the new `localASNumber` field in the `BGPPeer` resource.
+
+This capability is essential for multi-homed topologies and environments where border nodes must peer with external networks, like government agencies, that require a specific local Autonomous System Number (ASN) different from the cluster's global or node-specific ASN configured in the `BGPConfiguration` resource.
+This new field allows you to override the default ASN on a per-peer basis, removing the need to dedicate entire nodes to a single external peer.
+
+If the `localASNumber` field is not set for a peer, Calico will automatically fall back to using the global or node-wide ASN as before, ensuring no change to your existing BGP behavior.
+
+For more information, see the documentation on [Set a local AS number for a specific BGP peer](../networking/configuring/bgp.mdx#set-a-local-as-number-for-a-specific-bgp-peer).
+
+### eBPF data plane: LRU connection tracking
+
+You can now ensure superior service availability and performance under heavy network load with the introduction of the Least Recently Used (LRU) hash map for connection tracking (conntrack) in the eBPF data plane.
+
+By switching to an LRU hash map, the conntrack system gains an intelligent, automatic eviction policy that removes the oldest, least recently used entries to make room for new connections, preventing network errors and dropped connections.
+
+### OpenStack: Immediate Neutron QoS policy application
+
+Updates to OpenStack Neutron Quality of Service (QoS) policies are now applied immediately, minimizing configuration delays in large-scale environments.
+Previously, policy changes relied on a slow, periodic resync process that could take a long time in large clusters.
+With this enhancement, Calico responds to all QoS policy and rule changes on the Neutron API in real-time, enforcing network requirements within seconds and ensuring tenants have a consistent, reliable network experience.
+
+### Enhancements
+
+* TBD
 
 ## Bug fixes
 
-{/*
-## Security fixes
-*/}
-## Known issues
+* TBD
+
 
 ## Release details
 
-### Calico Open Source 3.30.0 general availability release
+### Calico Open Source 3.31.0 general availability release
 
-April DD, 2025
+October 20, 2025
 
-Calico Open Source release 3.3.30 is now generally available.
+Calico Open Source release 3.31.0 is now generally available.
 
 #### Updating
-
-:::info[Update note]
-
-Updating your cluster to Calico Open Source 3.30 will not automatically enable the flow logs API or the Calico Whisker web console.
-To enable these features, you must apply the `Goldmane` and `Whisker` custom resources.
-
-For more information, see [Enable flow logs](../observability/enable-whisker.mdx).
-
-:::
 
 To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx)
 
