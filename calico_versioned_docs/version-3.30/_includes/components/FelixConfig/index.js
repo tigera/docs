@@ -59,7 +59,7 @@ const FelixConfig = ({ configType, name }) => {
     content = (
       <div className={styles.tabsContainer}>
         {matchedGroup.Fields.map((field, index) => (
-          <div key={field.NameCongigFile || index}>
+          <div key={field.NameConfigFile || index}>
             <h4 id={field.NameConfigFile}><code>{field.NameConfigFile}</code></h4>
             <Tabs
               groupId='operating-systems'
