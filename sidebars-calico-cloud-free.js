@@ -1,5 +1,3 @@
-// sidebars.js
-
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
   // Use the specific name you provided
