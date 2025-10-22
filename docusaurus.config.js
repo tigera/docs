@@ -405,12 +405,12 @@ export default async function createAsyncConfig() {
             },
             '3.31': {
               label: '3.31 (latest)',
-              path: '3.31',
+              path: 'latest',
               banner: 'unreleased',
             },
             '3.30': {
               label: '3.30',
-              path: 'latest',
+              path: '3.30',
               banner: 'none',
             },
             3.29: {
