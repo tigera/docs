@@ -17,6 +17,7 @@ export default function DocVersionBadge({className}) {
     'calico': 'Calico Open Source',
     'calico-enterprise': 'Calico Enterprise',
     'calico-cloud': 'Calico Cloud',
+    'calico-cloud-free': 'Calico Cloud Free Tier',
   };
 
   const pluginName = pluginNameMap[pluginId] || 'Unknown Plugin';

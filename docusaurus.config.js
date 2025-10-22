@@ -140,6 +140,13 @@ export default async function createAsyncConfig() {
                   className: 'navbar-product-link_calico-cloud',
                 },
                 {
+                  label: 'Calico Cloud Free Tier',
+                  type: 'docSidebar',
+                  sidebarId: 'calicoCloudFreeSidebar',
+                  docsPluginId: 'calico-cloud-free',
+                  className: 'navbar-product-link_calico-cloud-free',
+                },
+                {
                   label: 'Calico Enterprise',
                   type: 'docSidebar',
                   sidebarId: 'calicoEnterpriseSidebar',
@@ -493,6 +500,24 @@ export default async function createAsyncConfig() {
             },
           },
           sidebarPath: './sidebars-calico-cloud.js',
+          beforeDefaultRemarkPlugins: [variablesPlugin],
+          editUrl: generateEditUrl,
+        },
+      ],
+      [
+        '@docusaurus/plugin-content-docs',
+        /** @type {import('@docusaurus/plugin-content-docs').Options} */
+        {
+          id: 'calico-cloud-free',
+          path: 'calico-cloud-free',
+          routeBasePath: 'calico-cloud-free',
+
+          // Versioning options removed:
+          // onlyIncludeVersions: [...nextVersion, '22-1'],
+          // versions: {...},
+
+          editCurrentVersion: true,
+          sidebarPath: './sidebars-calico-cloud-free.js',
           beforeDefaultRemarkPlugins: [variablesPlugin],
           editUrl: generateEditUrl,
         },

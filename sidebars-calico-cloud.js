@@ -11,17 +11,6 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Calico Cloud Free Tier',
-      link: { type: 'doc', id: 'free/index' },
-      items: [
-        'free/overview',
-        'free/quickstart',
-        'free/connect-cluster-free',
-        'free/disconnect-cluster-free',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Install and upgrade',
       link: { type: 'doc', id: 'get-started/index' },
       items: [
