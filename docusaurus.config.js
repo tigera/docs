@@ -406,7 +406,7 @@ export default async function createAsyncConfig() {
             '3.31': {
               label: '3.31 (latest)',
               path: '3.31',
-              banner: 'unreleased',
+              banner: 'none',
             },
             '3.30': {
               label: '3.30 (latest)',
