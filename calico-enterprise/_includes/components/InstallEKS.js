@@ -365,7 +365,7 @@ EOF`}
             <li>
               <p>
                 Apply the{' '}
-                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.ManagementCluster`}>
+                <Link href={`${baseUrl}/reference/installation/api#managementcluster`}>
                   ManagementCluster
                 </Link>{' '}
                 CR.
