@@ -43,6 +43,20 @@ BUILDOS ?= $(shell uname -s)
 BUILDARCH ?= $(shell uname -m)
 endif
 
+# macOS ships with FreeBSD's sed, which requires a parameter to the -i flag;
+# meanwhile, Linux ships with GNU sed which does not accept a (separate) parameter.
+# This means there's no cross-platform way to call sed -i, so we can put this here
+# I guess.
+ifeq ($(BUILDOS),Darwin)
+SED_INPLACE = sed -i ''
+else
+SED_INPLACE = sed -i
+endif
+
+ifdef PRODUCT
+OP_VERSION := $(shell jq ".[0].\"tigera-operator\".version" -r $(PRODUCT)/releases.json)
+endif
+
 YARN=yarn
 YARN_ACTION_SUFFIX=
 ifeq ($(CONTAINERIZED),true)
@@ -127,20 +141,24 @@ index:
 
 .PHONY: $(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES) $(CALICO_CLOUD_BRANCHES)
 # This represents the list of branches  for Calico and Calico Enterprise,
-# which need the `build-operator-reference` target executed.
+# which need the `build-crd-reference-docs` target executed.
 $(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES): %__operator_reference : %
-	PRODUCT=$< $(MAKE) build-operator-reference 2>&1 | sed 's|^|[$<] |'
+	@PRODUCT=$< $(MAKE) --no-print-directory build-crd-reference-docs
 
-# Calico Cloud requires `build-operator-reference` but also requires
-# the `build-ia-operator-reference` target to be run as well.
+# Calico Cloud requires the legacy `build-operator-reference` target,
+# but also requires the `build-ia-operator-reference` target to be run
+# as well (for now).
 $(CALICO_CLOUD_BRANCHES) : %__operator_reference : %
-	PRODUCT=$< $(MAKE) build-operator-reference  2>&1 | sed 's|^|[$<] |'
-	PRODUCT=$< $(MAKE) build-ia-operator-reference  2>&1 | sed 's|^|[$<] |'
+	@PRODUCT=$< $(MAKE) --no-print-directory build-operator-reference
+	@PRODUCT=$< $(MAKE) --no-print-directory build-ia-operator-reference
 
 # This breaks up automatic generation by the three product
 # categories - OSS, cloud, and enterprise - but also retains
 # the `autogen` target, which updates all three.
-.PHONY: autogen autogen_calico autogen_enterprise autogen_cloud
+# 
+# Don't allow parallel jobs (this prevents breaking autogen targets)
+# and don't print commands that we run.
+.SILENT .NOTPARALLEL .PHONY: autogen autogen_calico autogen_enterprise autogen_cloud
 autogen: autogen_calico autogen_enterprise autogen_cloud
 autogen_calico: $(CALICO_BRANCHES)
 autogen_enterprise: $(CALICO_ENT_BRANCHES)
@@ -229,7 +247,10 @@ $(CRD_DOC_GENERATOR):
 	@cd .bin && tar -xv --get crd-ref-docs -f crd-ref-docs.$(CRD_REF_DOCS_VER).tar.gz
 	@mv .bin/crd-ref-docs $@
 
+.PHONY .SILENT: build-crd-reference-docs
 build-crd-reference-docs: $(CRD_DOC_GENERATOR)
+	$(info )
+	$(info Processing docs for $(PRODUCT))
 	@rm -rf builder && mkdir builder
 	@op_ver=$$(jq ".[0].\"tigera-operator\".version" -r $(PRODUCT)/releases.json) && \
 		echo "Checking out operator $$op_ver" && \
@@ -240,12 +261,10 @@ build-crd-reference-docs: $(CRD_DOC_GENERATOR)
 		--templates-dir=$(PRODUCT)/reference/installation/_crd-ref-docs/templates \
 		--output-path=builder
 	@cp builder/out.md $(PRODUCT)/reference/installation/_api.mdx && \
-		sed -i '' 's/<br \/>/ /g' $(PRODUCT)/reference/installation/_api.mdx
-		sed -i '' 's/ \(WARNING:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
-		sed -i '' 's/ \(Default:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
-		sed -i '' 's/ \(Supported values are:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
-
-
+		$(SED_INPLACE) 's/<br \/>/ /g' $(PRODUCT)/reference/installation/_api.mdx
+		$(SED_INPLACE) 's/ \(WARNING:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
+		$(SED_INPLACE) 's/ \(Default:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
+		$(SED_INPLACE) 's/ \(Supported values are:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
 
 update-cloud-image-list:
 	@if [ -z "${RUN_UPDATE_CLOUD_IMAGE_LIST}" ]; then echo "Use 'make run-update-cloud-image-list' instead"; false; fi
