@@ -182,7 +182,7 @@ export default function UpgradeOperatorSimple(props) {
             <li>
               <p>
                 If your cluster is a management cluster using v3.1 or older, apply a{' '}
-                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.ManagementCluster`}>
+                <Link href={`${baseUrl}/reference/installation/api#managementcluster`}>
                   ManagementCluster{' '}
                 </Link>
                 CR to your cluster.
@@ -199,7 +199,7 @@ EOF`}
             <li>
               <p>
                 If your cluster is v3.7 or older, apply a new{' '}
-                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.Monitor`}>Monitor </Link>
+                <Link href={`${baseUrl}/reference/installation/api#monitor`}>Monitor </Link>
                 CR to your cluster.
               </p>
               <CodeBlock language='bash'>
@@ -214,7 +214,7 @@ EOF`}
             <li>
               <p>
                 If your cluster is v3.16 or older, apply a new{' '}
-                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.PolicyRecommendation`}>PolicyRecommendation </Link>
+                <Link href={`${baseUrl}/reference/installation/api#policyrecommendation`}>PolicyRecommendation </Link>
                 CR to your cluster.
               </p>
               <CodeBlock language='bash'>
@@ -229,7 +229,7 @@ EOF`}
             <li>
               <p>
                 If your cluster is v3.19 or older, apply a new{' '}
-                <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.PacketCaptureAPI`}>PacketCaptureAPI </Link>
+                <Link href={`${baseUrl}/reference/installation/api#packetcaptureapi`}>PacketCaptureAPI </Link>
                  CR to your cluster.
               </p>
               <CodeBlock language='bash'>
