@@ -395,7 +395,7 @@ export default async function createAsyncConfig() {
           path: 'calico',
           routeBasePath: 'calico',
           editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.31','3.30','3.29','3.28'],
+          onlyIncludeVersions: [...nextVersion, '3.31','3.30','3.29',],
           lastVersion: '3.31',
           versions: {
             current: {
@@ -416,11 +416,6 @@ export default async function createAsyncConfig() {
             3.29: {
               label: '3.29',
               path: '3.29',
-              banner: 'none',
-            },
-            3.28: {
-              label: '3.28',
-              path: '3.28',
               banner: 'none',
             },
           },
