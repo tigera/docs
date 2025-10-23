@@ -142,15 +142,13 @@ index:
 .PHONY: $(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES) $(CALICO_CLOUD_BRANCHES)
 # This represents the list of branches  for Calico and Calico Enterprise,
 # which need the `build-crd-reference-docs` target executed.
-$(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES): %__operator_reference : %
+$(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES) $(CALICO_CLOUD_BRANCHES): %__operator_reference : %
 	@PRODUCT=$< $(MAKE) --no-print-directory build-crd-reference-docs
 
 # Calico Cloud requires the legacy `build-operator-reference` target,
 # but also requires the `build-ia-operator-reference` target to be run
 # as well (for now).
-$(CALICO_CLOUD_BRANCHES) : %__operator_reference : %
-	@PRODUCT=$< $(MAKE) --no-print-directory build-operator-reference
-	@PRODUCT=$< $(MAKE) --no-print-directory build-ia-operator-reference
+
 
 # This breaks up automatic generation by the three product
 # categories - OSS, cloud, and enterprise - but also retains
