@@ -75,7 +75,7 @@ export default function ConfigureManagedCluster(props) {
         <li>
           <p>
             Add a managed cluster and save the manifest containing a{' '}
-            <Link href={`${baseUrl}/reference/installation/api#operator.tigera.io/v1.ManagementClusterConnection`}>
+            <Link href={`${baseUrl}/reference/installation/api#managementclusterconnection`}>
               ManagementClusterConnection
             </Link>{' '}
             and a Secret.
