@@ -9,7 +9,7 @@ const variables = {
   openSourceVersion: releases[0].calico.minor_version.slice(1),
   baseUrl: '/calico-enterprise/latest',
   filesUrl: 'https://downloads.tigera.io/ee/v3.21.2',
-  rpmsUrl: 'https://downloads.tigera.io/ee/rpms/v3.21',
+  rpmsUrl: 'https://downloads.tigera.io/ee/rpms/' + releases[0].title.slice(0, 5),
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/3.21',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
