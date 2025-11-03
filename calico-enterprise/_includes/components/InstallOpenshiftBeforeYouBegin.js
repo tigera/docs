@@ -79,7 +79,7 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
         </li>
         <li>
           <p>
-            OpenShift installer <strong>v4.8 or 4.9</strong> and OpenShift command line interface from{' '}
+            OpenShift installer and OpenShift command line interface from{' '}
             <Link href='https://cloud.redhat.com/openshift/install/aws/installer-provisioned'>cloud.redhat.com</Link>
           </p>
         </li>
