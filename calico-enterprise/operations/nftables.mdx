@@ -1,0 +1,215 @@
+---
+description: Install Calico Enterprise using the nftables data plane.
+title: "nftables"
+---
+
+# Install Calico Enterprise using the nftables data plane
+
+This guide shows you how to install $[prodname] using the nftables data plane.
+
+nftables is a unified packet filtering and classification framework in the Linux kernel.
+It was designed to be the successor to the iptables module.
+
+To use nftables, your Kubernetes installation must be configured to use kube-proxy in nftables mode.
+In Kubernetes versions 1.33 and later, nftables mode is the default.
+For versions 1.31 and 1.32, you can specify nftables in the `KubeProxyConfiguration` resource.
+
+## Before you begin
+
+**Required**
+
+- A Linux host that meets the following requirements:
+
+  - x86-64, arm64, ppc64le, or s390x processor
+  - 2CPU
+  - 2GB RAM
+  - 10GB free disk space
+  - Linux kernel version 5.13 or later with `nft` >= 1.0.1
+
+- $[prodname] can manage `cali` and `tunl` interfaces on the host
+
+  If NetworkManager is present on the host, see [Configure NetworkManager](../operations/troubleshoot/troubleshooting.mdx#configure-networkmanager).
+
+## How to
+
+### Create a single-host Kubernetes cluster with the nftables kube-proxy enabled.
+
+:::note
+This procedure includes steps to explicitly configure nftables mode in kube-proxy, which is required for Kubernetes 1.31 and 1.32.
+If you're using Kubernetes 1.33 or later, you can create a cluster with kubeadm using the default settings.
+:::
+
+1. [Follow the Kubernetes instructions to install kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
+
+   :::note
+
+   After installing kubeadm, do not power down or restart
+   the host. Instead, continue directly to the next step.
+
+   :::
+
+1. As a regular user with sudo privileges, open a terminal on the host that you installed kubeadm on.
+
+1. Create a kubeadm configuration file that enables the nftables kube-proxy mode.
+
+   ```bash
+   cat > config.yaml <<EOF
+   apiVersion: kubeadm.k8s.io/v1beta4
+   kind: InitConfiguration
+   ---
+   kind: ClusterConfiguration
+   apiVersion: kubeadm.k8s.io/v1beta4
+   kubernetesVersion: v1.31.0
+   proxy: {}
+   networking:
+     podSubnet: "192.168.0.0/16"
+   ---
+   apiVersion: kubeproxy.config.k8s.io/v1alpha1
+   kind: KubeProxyConfiguration
+   mode: nftables
+   EOF
+   ```
+
+   :::note
+
+   If 192.168.0.0/16 is already in use within your network you must select a different pod network
+   CIDR, replacing 192.168.0.0/16 in the above configuration.
+
+   :::
+
+1. Initialize the control plane using the following command.
+
+   ```bash
+   sudo kubeadm init --config=config.yaml
+   ```
+
+1. Execute the following commands to configure kubectl (also returned by `kubeadm init`).
+
+   ```bash
+   mkdir -p $HOME/.kube
+   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+   sudo chown $(id -u):$(id -g) $HOME/.kube/config
+   ```
+
+### Install $[prodname] in nftables data plane mode
+
+***Prerequisites***
+
+* Your Kubernetes cluster has kube-proxy set to nftables mode.
+  You can check this in the kube-proxy configuration:
+  ```bash
+  kubectl -n kube-system get configmap kube-proxy -o yaml | grep "mode:"
+  ```
+  ```bash title='Expected output'
+  mode: "nftables"
+  ```
+
+***Procedure***
+
+1. Install the Tigera Operator and custom resource definitions.
+
+   ```bash
+   kubectl create -f $[filesUrl]/manifests/operator-crds.yaml
+   kubectl create -f $[filesUrl]/manifests/tigera-operator.yaml
+   ```
+
+   :::note
+
+   Due to the large size of the CRD bundle, `kubectl apply` might exceed request limits. Instead, use `kubectl create` or `kubectl replace`.
+
+   :::
+
+1. Download, edit, and create the `custom-resources.yaml` file.
+   1. Download the default `custom-resources.yaml` file:
+      ```bash
+      curl -O -L $[filesUrl]/manifests/custom-resources.yaml
+      ```
+   1. Enable nftables mode by setting `spec.linuxDataplane` to `nftables` in the `Installation` resource:
+      ```yaml title='Snippet from custom-resources.yaml with nftables mode enabled'
+      operator.tigera.io/v1.Installation
+      apiVersion: operator.tigera.io/v1
+      kind: Installation
+      metadata:
+        name: default
+      spec:
+        # Install Calico Enterprise
+        variant: TigeraSecureEnterprise
+
+        # List of image pull secrets to use when installing images from a container registry.
+        # If specified, secrets must be created in the `tigera-operator` namespace.
+        imagePullSecrets:
+          - name: tigera-pull-secret
+        # Optionally, a custom registry to use for pulling images.
+        # registry: <my-registry>
+      // highlight-next-line
+        linuxDataplane: Nftables
+      ```
+      If you have other customizations for your installation, you can add them now.
+      For more information about configuration options , see [the installation reference](../reference/installation/api.mdx).
+
+   1. To install $[prodname], create the modified `custom-resources.yaml` file:
+      ```bash
+      kubectl create -f custom-resources.yaml
+      ```
+
+      :::note
+
+      Before creating this manifest, read its contents and make sure its settings are correct for your environment. For example,
+      you may need to change the default IP pool CIDR to match your pod network CIDR.
+
+      :::
+
+1. Confirm that all of the pods are running with the following command.
+
+   ```bash
+   watch kubectl get pods -n calico-system
+   ```
+
+   Wait until each pod has the `STATUS` of `Running`.
+
+   :::note
+
+   The Tigera Operator installs resources in the `calico-system` namespace. Other install methods may use
+   the `kube-system` namespace instead.
+
+   :::
+
+1. Remove the taints on the control plane so that you can schedule pods on it.
+
+   ```bash
+   kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+   ```
+
+   It should return the following.
+
+   ```
+   node/<your-hostname> untainted
+   ```
+
+1. Confirm that you now have a node in your cluster with the following command.
+
+   ```bash
+   kubectl get nodes -o wide
+   ```
+
+   It should return something like the following.
+
+   ```
+   NAME              STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+   <your-hostname>   Ready    master   52m   v1.12.2   10.128.0.28   <none>        Ubuntu 18.04.1 LTS   4.15.0-1023-gcp   docker://18.6.1
+   ```
+
+Congratulations! You now have a single-host Kubernetes cluster with $[prodname] in nftables mode.
+
+## Next steps
+
+**Required**
+
+- [Install and configure calicoctl](../operations/clis/calicoctl/install.mdx)
+
+**Recommended tutorials**
+
+- [Secure a simple application using the Kubernetes NetworkPolicy API](../network-policy/get-started/kubernetes-policy-basic.mdx)
+- [Control ingress and egress traffic using the Kubernetes NetworkPolicy API](../network-policy/get-started/kubernetes-policy-advanced.mdx)
+- [Run a tutorial that shows blocked and allowed connections in real time](../network-policy/get-started/kubernetes-demo.mdx)
+- [Hands-on workshop: Learn the basics of Calico, and Kubernetes.](https://www.tigera.io/tutorials/?_sf_s=Calico%20Basics)

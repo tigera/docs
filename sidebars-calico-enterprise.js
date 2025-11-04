@@ -584,6 +584,7 @@ module.exports = {
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
+        'operations/nftables',
         'operations/decommissioning-a-node',
         {
           type: 'category',
