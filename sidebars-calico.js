@@ -272,6 +272,7 @@ module.exports = {
             'networking/configuring/pod-mac-address',
             'networking/configuring/node-local-dns-cache',
             'networking/configuring/qos-controls',
+            'networking/configuring/add-maglev-load-balancing',
           ],
         },
         {

@@ -1,0 +1,68 @@
+---
+description: Add Maglev load balancing to a Kubernetes service.
+---
+
+# Add Maglev load balancing to a service
+
+This guide shows you how to enable Maglev load balancing for external traffic to a service.
+Maglev load balancing opens up the possibility of using $[noderunning] as a distributed, fault-tolerant load balancer
+for externally-initiated connections, and allows for such connections to be preserved during a load balancer outage, provided another
+$[noderunning] is available to forward the connection instead.
+
+## Limitations
+
+Note Maglev load balancing cannot be used with the following:
+* In-cluster pod-to-service traffic.
+* NodePort-type services.
+* Kubernetes External Traffic Policy. Maglev chooses from a lookup table of all valid backends when performing backend selection.
+
+## Prerequisites
+
+* Your cluster uses the eBPF data plane with [direct server return mode](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf#try-out-direct-server-return-mode).
+* All your nodes are running on Linux.
+* You have a service with an IP advertised outside of the cluster.
+
+## Enable consistent-hash load balancing for a service
+
+To enable consistent-hash load balancing for a service, add the following annotation:
+
+```yaml
+lb.projectcalico.org/external-traffic-strategy: "maglev"
+```
+
+Or annotate a pre-existing service with:
+
+```bash
+kubectl -n <namespace> annotate service <service> 'lb.projectcalico.org/external-traffic-strategy: "maglev"'
+```
+
+Replace the following:
+* `<namespace>`: The namespace of the service.
+* `<service>`: The name of the service.
+
+
+To verify that $[prodname] has configured Maglev load balancing for the service, check the logs from any `calico-node` pod for the string `Wrote Maglev` in reference to your service.
+
+```bash title='Example log query'
+kubectl -n calico-system logs calico-node-7kltn | grep --ignore-case 'Wrote Maglev'
+```
+
+```bash title='Example output'
+2025-10-28 15:30:53.091 [INFO][75] felix/syncer.go 893: Wrote Maglev service backends to LUT service=default/svc:maglev-port
+```
+
+## Additional notes
+
+In order to evenly distribute traffic, consistent-hash-based load balancing algorithms like Maglev must allocate large lookup-tables (LUTs),
+leading to a larger memory footprint than basic algorithms e.g. random-selection, round-robin. For this reason, the feature is enabled on a
+per-service basis, rather than globally applying to all services.
+
+In $[prodname], we program these LUTs to the eBPF data plane as maps which can grow up to a maximum size.
+If you plan to provision more than 100 services, or if you plan for any one service to have more than 100 endpoints, the following
+FelixConfiguration options should be updated:
+ - [BPFMaglevMaxEndpointsPerService](../../reference/resources/felixconfig.mdx#bpfMaglevMaxEndpointsPerService)
+ - [BPFMaglevMaxServices](../../reference/resources/felixconfig.mdx#bpfMaglevMaxServices)
+
+## Additional resources
+* [FelixConfiguration](../../reference/resources/felixconfig.mdx)
+* [Enable the eBPF data plane](../../operations/ebpf/enabling-ebpf.mdx)
