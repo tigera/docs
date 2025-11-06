@@ -1,0 +1,31 @@
+---
+description: Prometheus support in Calico Enterprise.
+---
+
+# Prometheus support
+
+## Big picture
+
+$[prodname] uses the open-source [Prometheus monitoring and alerting toolkit](https://prometheus.io/docs/introduction/overview/). With these tools, you can view time-series metrics from $[prodname] components in the Prometheus and Grafana interfaces, or scrape the metrics for a BYO Prometheus deployment.
+
+## Install options
+
+### Use Prometheus operator managed by Tigera Operator
+
+You install the $[prodname] Prometheus operator and CRDs during $[prodname] installation. $[prodname] metrics and alerts are available in the web console. You configure alerts through Prometheus AlertManager.
+
+If you want to specify your own Prometheus operator during installation for management by the Tigera Operator, the required operator version must be **v0.40.0 or higher**. Because $[prodname] creates AlertManager and Prometheus CRs in the `tigera-prometheus` namespace, all you need to do is verify that your Prometheus operator is configured to manage Prometheus and AlertManager instances in the `tigera-prometheus` namespace.
+
+#### Prometheus on $[prodnameWindows]
+
+By default, the Windows firewall blocks listening on ports. For $[prodname] to manage the Prometheus metrics ports Windows firewall rules, enable the `windowsManageFirewallRules` setting in FelixConfiguration:
+
+```bash
+kubectl patch felixConfiguration default --type merge --patch '{"spec": {"windowsManageFirewallRules": "Enabled"}}'
+```
+
+[See the FelixConfiguration reference for more details](../../../reference/resources/felixconfig.mdx). You can also add a Windows firewall rule that allows listening on the Prometheus ports instead of having $[prodname] manage it.
+
+### Bring your own Prometheus
+
+For details, see [Bring your own Prometheus](byo-prometheus.mdx).

@@ -1,0 +1,113 @@
+---
+description: Steps to upgrade from open source Calico to Calico Enterprise on OpenShift.
+---
+
+import InstallOpenShiftManifests from '@site/calico-enterprise_versioned_docs/version-3.22-2/_includes/components/InstallOpenShiftManifests';
+import OpenShiftPrometheusOperator from '@site/calico-enterprise_versioned_docs/version-3.22-2/_includes/components/OpenShiftPrometheusOperator';
+import OpenShiftPullSecret from '@site/calico-enterprise_versioned_docs/version-3.22-2/_includes/components/OpenShiftPullSecret';
+
+# Upgrade from Calico to Calico Enterprise on OpenShift
+
+## Prerequisites
+
+Ensure that your Kubernetes cluster is running with open source Calico on the latest release using an operator-based
+installation. If not, follow the [Calico upgrade documentation](/calico/latest/operations/upgrading/openshift-upgrade)
+before continuing.
+
+Ensure your Kubernetes cluster is using the Kubernetes datastore. If you are using an `etcdv3` datastore, or the cluster doesn't have a datastore, contact Tigera Support to upgrade the datastore.
+
+Your Kubernetes cluster must not be running in production. Operator-based upgrades from open source Calico are not recommended for production clusters due to limited testing. Also, upgrades are not tested with open source Calico prior to v3.15.
+
+If your cluster already has $[prodname] installed, follow the [Upgrading $[prodname] from an earlier release guide](../upgrading-enterprise/openshift-upgrade.mdx) instead.
+
+## Prepare your cluster for the upgrade
+
+Calico Enterprise creates default-deny policies for all Calico and Tigera namespaces, including calico-system. If you deploy workloads into the calico-system namespace, you must create policy that allows the required traffic for your workloads prior to upgrade.
+
+### Deleting Goldmane and Whisker resources (for upgrades from Calico 3.30 or later)
+
+If you are upgrading from Calico 3.30 and have custom resources related to Goldmane and Whisker, you should delete these resources before the upgrade.
+
+```bash
+oc delete goldmanes,whiskers --all
+```
+
+If you receive error indicating the custom resource definitions or resource type does not exist, it means these resources were not present in your cluster. You can safely ignore the error and proceed.
+
+## Upgrade Calico to $[prodname]
+
+### Before you begin
+
+**Required**
+
+- [Configure a storage class for $[prodname].](../../../operations/logstorage/create-storage.mdx)
+
+### Install $[prodname]
+
+**Download the new manifests**
+
+Make the manifests directory.
+
+```bash
+mkdir manifests
+```
+
+<InstallOpenShiftManifests upgradeFrom='OpenSource' />
+
+**Add an image pull secret**
+
+<OpenShiftPullSecret />
+
+> (Optional) If your cluster architecture requires any custom [$[prodname] resources](../../../reference/resources/index.mdx) to function at startup, install them now using [calicoctl](../../../reference/clis/calicoctl/overview.mdx).
+
+**Install $[prodname]**
+
+1. Apply the Tigera Operators and custom resource definitions.
+
+   ```bash
+   oc apply --server-side --force-conflicts -f manifests/
+   ```
+
+2. Optional: If your cluster architecture requires any custom [Calico resources](../../../reference/resources/index.mdx) to function at startup, install them now using [calicoctl](../../../reference/clis/calicoctl/overview.mdx).
+
+3. Create the custom resources for $[prodname] features, see [the installation reference](../../../reference/installation/api.mdx).
+
+   ```bash
+   oc apply -f $[filesUrl]/manifests/ocp/tigera-enterprise-resources.yaml
+   ```
+
+4. Patch installation.
+
+   ```bash
+   oc patch installations.operator.tigera.io default --type merge -p '{"spec":{"variant":"TigeraSecureEnterprise","imagePullSecrets":[{"name":"tigera-pull-secret"}]}}'
+   ```
+
+5. You can now monitor the upgrade progress with the following command:
+
+   ```bash
+   watch oc get tigerastatus
+   ```
+
+Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+
+:::note
+
+To troubleshoot problems, use `oc get tigerastatus -o yaml`.
+
+:::
+
+### Install the $[prodname] license
+
+Install the $[prodname] license provided to you by Tigera.
+
+```
+oc create -f </path/to/license.yaml>
+```
+
+<OpenShiftPrometheusOperator upgradeFrom='OpenSource' />
+
+You can now monitor progress with the following command:
+
+```
+watch oc get tigerastatus
+```

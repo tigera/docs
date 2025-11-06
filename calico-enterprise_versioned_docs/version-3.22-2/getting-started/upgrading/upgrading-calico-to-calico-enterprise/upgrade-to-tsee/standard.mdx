@@ -1,0 +1,111 @@
+---
+description: Steps to upgrade from open source Calico to Calico Enterprise.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import UpgradeOperatorSimple from '@site/calico-enterprise_versioned_docs/version-3.22-2/_includes/components/UpgradeOperatorSimple';
+
+# Upgrade from Calico to Calico Enterprise
+
+## Prerequisites
+
+Ensure that your Kubernetes cluster is running with open source Calico on the latest release using an operator-based
+installation. If not, follow the [Calico upgrade documentation](/calico/latest/operations/upgrading/kubernetes-upgrade)
+before continuing.
+
+$[prodname] only supports clusters with a Kubernetes datastore.
+Please contact Tigera Support for assistance upgrading a cluster with an `etcdv3` datastore.
+
+If your cluster already has $[prodname] installed, follow the [Upgrading $[prodname] from an earlier release guide](../../upgrading-enterprise/kubernetes-upgrade-tsee/index.mdx) instead.
+
+For hybrid Linux and Windows clusters, ensure that your Windows nodes have at least 4 cores, 8GB RAM.
+
+## Prepare your cluster for the upgrade
+
+$[prodname] creates default-deny policies for all Calico and Tigera namespaces, including calico-system. If you deploy workloads into the calico-system namespace, you must create policy that allows the required traffic for your workloads prior to upgrade.
+
+### Deleting Goldmane and Whisker resources (for upgrades from Calico 3.30 or later)
+
+If you are upgrading from Calico 3.30 and have custom resources related to Goldmane and Whisker, you should delete these resources before the upgrade.
+
+```bash
+kubectl delete goldmanes,whiskers --all
+```
+
+If you receive error indicating the custom resource definitions or resource type does not exist, it means these resources were not present in your cluster. You can safely ignore the error and proceed.
+
+## Upgrade Calico to $[prodname]
+
+:::note
+
+GKE upgrades from open source Calico are not currently supported.
+
+:::
+
+### Before you begin
+
+**Required**
+
+- [Configure a storage class for $[prodname].](../../../../operations/logstorage/create-storage.mdx)
+
+### Install $[prodname]
+
+<Tabs>
+<TabItem label="Kubernetes" value="Kubernetes-0">
+
+<UpgradeOperatorSimple upgradeFrom='OpenSource' />
+
+</TabItem>
+<TabItem label="EKS" value="EKS-1">
+
+<UpgradeOperatorSimple
+  upgradeFrom='OpenSource'
+  provider='EKS'
+/>
+
+</TabItem>
+<TabItem label="AKS" value="AKS-2">
+
+:::note
+
+The following instructions are only for AKS clusters that use a Kubernetes reconciler. For AKS clusters with a self-managed Calico installation (including AKS clusters with Calico CNI), or a cluster that is not using a reconciler, follow the upgrade steps under the **Kubernetes** tab.
+
+:::
+
+These upgrade instructions will upgrade your AKS clusters with Azure CNI and an AKS-managed Calico installation.
+
+<UpgradeOperatorSimple
+  upgradeFrom='OpenSource'
+  provider='AKS'
+/>
+
+</TabItem>
+</Tabs>
+
+Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+
+:::note
+
+If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
+
+:::
+
+### Install the $[prodname] license
+
+To use $[prodname], you must install the license provided to you by Tigera.
+
+```
+kubectl create -f </path/to/license.yaml>
+```
+
+You can now monitor progress with the following command:
+
+```
+watch kubectl get tigerastatus
+```
+
+### Next steps
+
+- [Configure access to the $[prodname] web console](../../../../operations/cnx/access-the-manager.mdx)
+- [Authentication quickstart](../../../../operations/cnx/authentication-quickstart.mdx)
