@@ -1,0 +1,160 @@
+---
+description: Command to validate Calico resource files.
+---
+
+# calicoctl validate
+
+This sections describes the `calicoctl validate` command.
+
+Read the [calicoctl command line interface user reference](overview.mdx) for a full list of calicoctl commands.
+
+:::note
+
+The validate command works offline and does not require access to a datastore.
+It validates resource structure, syntax, and Calico-specific validation rules without applying changes to the cluster.
+
+:::
+
+## Displaying the help text for 'calicoctl validate' command
+
+Run `calicoctl validate --help` to display the following help menu for the command.
+
+```
+Usage:
+  calicoctl validate --filename=<FILENAME> [--recursive] [--skip-empty]
+
+Examples:
+  # Validate a single resource file.
+  calicoctl validate -f ./policy.yaml
+
+  # Validate resources from stdin.
+  cat policy.yaml | calicoctl validate -f -
+
+  # Validate all files in a directory recursively.
+  calicoctl validate -f ./resources/ --recursive
+
+Options:
+  -h --help                 Show this screen.
+  -f --filename=<FILENAME>  Filename to use to validate the resource.  If set to
+                            "-" loads from stdin. If filename is a directory, this command is
+                            invoked for each .json .yaml and .yml file within that directory,
+                            terminating after the first failure.
+  -R --recursive            Process the filename specified in -f or --filename recursively.
+     --skip-empty           Do not error if any files or directory specified using -f or --filename contain no
+                            data.
+
+Description:
+  The validate command validates Calico resource files for structural correctness
+  and Calico-specific validation rules without requiring access to a datastore.
+  JSON and YAML formats are accepted.
+
+  Valid resource types are:
+
+    - bgpconfiguration
+    - bgpfilter
+    - bgppeer
+    - clusterinformation
+    - felixconfiguration
+    - globalnetworkpolicy
+    - globalnetworkset
+    - hostendpoint
+    - ippool
+    - ipreservation
+    - kubecontrollersconfiguration
+    - networkpolicy
+    - networkset
+    - node
+    - profile
+    - tier
+    - workloadendpoint
+
+  The validate command performs comprehensive validation including:
+  - YAML/JSON syntax and structure validation
+  - Required field validation
+  - Calico-specific validation rules (e.g., valid selectors, IP addresses, protocols)
+  - Cross-field validation and constraints
+
+  The command returns a non-zero exit code if validation fails, making it
+  suitable for use in CI/CD pipelines and automation scripts.
+
+  The resources are validated in the order they are specified. Validation
+  stops at the first error encountered.
+```
+
+### Examples
+
+1. Validate a single policy file.
+
+   ```bash
+   calicoctl validate -f ./network-policy.yaml
+   ```
+
+   Results indicate successful validation.
+
+   ```
+   Successfully validated 1 'NetworkPolicy' resource(s)
+   ```
+
+2. Validate resources from stdin.
+
+   ```bash
+   cat resources.yaml | calicoctl validate -f -
+   ```
+
+   Results indicate successful validation of multiple resources.
+
+   ```
+   Successfully validated 3 resource(s)
+   ```
+
+3. Validate all resource files in a directory recursively.
+
+   ```bash
+   calicoctl validate -f ./calico-resources/ --recursive
+   ```
+
+   Results indicate validation failure.
+
+   ```
+   Failed to validate 'NetworkPolicy' resource: [error with field Selector = 'invalid@selector' (Reason: failed to validate Field: Selector because of Tag: selector )]
+   ```
+
+4. Validation with invalid selector example.
+
+   ```bash
+   calicoctl validate -f policy-with-invalid-selector.yaml
+   ```
+
+   Results show Calico-specific validation error.
+
+   ```
+   Failed to validate 'NetworkPolicy' resource: [error with field Selector = 'ga@rb"ag'e' (Reason: failed to validate Field: Selector because of Tag: selector )]
+   ```
+
+5. Validation with invalid IP address example.
+
+   ```bash
+   calicoctl validate -f bgppeer-with-invalid-ip.yaml
+   ```
+
+   Results show IP validation error.
+
+   ```
+   Failed to validate 'BGPPeer' resource: [error with field PeerIP = '999.999.999.999' (Reason: failed to validate Field: PeerIP because of Tag: IP:port )]
+   ```
+
+### Options
+
+```
+-f --filename=<FILENAME>  Filename to use to validate the resource.  If set to
+                          "-" loads from stdin.
+-R --recursive            Process the filename specified in -f or --filename recursively.
+   --skip-empty           Do not error if any files or directory specified using -f or --filename contain no
+                          data.
+```
+
+## See also
+
+- [Installing calicoctl](../../../operations/clis/calicoctl/install.mdx)
+- [Resources](../../resources/overview.mdx) for details on all valid resources, including file format and schema
+- [NetworkPolicy](../../resources/networkpolicy.mdx) for details on the selector-based policy model

@@ -1,0 +1,149 @@
+---
+description: API for this Calico Enterprise resource.
+---
+
+# Global report
+
+A global report resource is a configuration for generating compliance reports. A global report configuration in $[prodname] lets you:
+
+- Specify report contents, frequency, and data filtering
+- Specify the node(s) on which to run the report generation jobs
+- Enable/disable creation of new jobs for generating the report
+
+For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
+may be used to specify the resource type on the CLI:
+`globalreport.projectcalico.org`, `globalreports.projectcalico.org` and abbreviations such as
+`globalreport.p` and `globalreports.p`.
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalReport
+metadata:
+  name: weekly-full-inventory
+spec:
+  reportType: inventory
+  schedule: 0 0 * * 0
+  jobNodeSelector:
+    nodetype: infrastructure
+
+---
+apiVersion: projectcalico.org/v3
+kind: GlobalReport
+metadata:
+  name: hourly-accounts-networkaccess
+spec:
+  reportType: network-access
+  endpoints:
+    namespaces:
+      names: ['payable', 'collections', 'payroll']
+  schedule: 0 * * * *
+
+---
+apiVersion: projectcalico.org/v3
+kind: GlobalReport
+metadata:
+  name: monthly-widgets-controller-tigera-policy-audit
+spec:
+  reportType: policy-audit
+  schedule: 0 0 1 * *
+  endpoints:
+    serviceAccounts:
+      names: ['controller']
+    namespaces:
+      names: ['widgets']
+
+---
+apiVersion: projectcalico.org/v3
+kind: GlobalReport
+metadata:
+  name: daily-cis-benchmark
+spec:
+  reportType: cis-benchmark
+  schedule: 0 0 * * *
+  cis:
+    resultsFilters:
+      - benchmarkSelection: { kubernetesVersion: '1.13' }
+        exclude: ['1.1.4', '1.2.5']
+```
+
+## GlobalReport Definition
+
+### Metadata
+
+| Field  | Description                              | Accepted Values                                  | Schema |
+| ------ | ---------------------------------------- | ------------------------------------------------ | ------ |
+| name   | The name of this report.                 | Lower-case alphanumeric with optional `-` or `.` | string |
+| labels | A set of labels to apply to this report. |                                                  | map    |
+
+### Spec
+
+| Field           | Description                                                                                                                                                                                                                                                                                                 | Required | Accepted Values                                                                                                                                                                                                                      | Schema                                    |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| reportType      | The type of report to produce. This field controls the content of the report - see the links for each type for more details.                                                                                                                                                                                | Yes      | [cis&#8209;benchmark](compliance-reports/cis-benchmark.mdx), [inventory](compliance-reports/inventory.mdx), [network&#8209;access](compliance-reports/network-access.mdx), [policy&#8209;audit](compliance-reports/policy-audit.mdx) | string                                    |
+| endpoints       | Specify which endpoints are in scope. If omitted, selects everything.                                                                                                                                                                                                                                       |          |                                                                                                                                                                                                                                      | [EndpointsSelection](#endpointsselection) |
+| schedule        | Configure report frequency by specifying start and end time in [cron-format][cron-format]. Reports are started 30 minutes (configurable) after the scheduled value to allow enough time for data archival. A maximum limit of 12 schedules per hour is enforced (an average of one report every 5 minutes). | Yes      |                                                                                                                                                                                                                                      | string                                    |
+| jobNodeSelector | Specify the node(s) for scheduling the report jobs using selectors.                                                                                                                                                                                                                                         |          |                                                                                                                                                                                                                                      | map                                       |
+| suspend         | Disable future scheduled report jobs. In-flight reports are not affected.                                                                                                                                                                                                                                   |          |                                                                                                                                                                                                                                      | bool                                      |
+| cis             | Parameters related to generating a CIS benchmark report.                                                                                                                                                                                                                                                    |          |                                                                                                                                                                                                                                      | [CISBenchmarkParams](#cisbenchmarkparams) |
+
+### EndpointsSelection
+
+| Field           | Description                                                                                 | Schema                                      |
+| --------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| selector        | Endpoint label selector to restrict endpoint selection.                                     | string                                      |
+| namespaces      | Namespace name and label selector to restrict endpoints by selected namespaces.             | [NamesAndLabelsMatch](#namesandlabelsmatch) |
+| serviceAccounts | Service account name and label selector to restrict endpoints by selected service accounts. | [NamesAndLabelsMatch](#namesandlabelsmatch) |
+
+### CISBenchmarkParams
+
+| Fields               | Description                                                                                                                                                                                     | Required | Schema                                    |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------- |
+| highThreshold        | Integer percentage value that determines the lower limit of passing tests to consider a node as healthy. Default: 100                                                                           | No       | int                                       |
+| medThreshold         | Integer percentage value that determines the lower limit of passing tests to consider a node as unhealthy. Default: 50                                                                          | No       | int                                       |
+| includeUnscoredTests | Boolean value that when false, applies a filter to exclude tests that are marked as “Unscored” by the CIS benchmark standard. If true, the tests will be included in the report. Default: false | No       | bool                                      |
+| numFailedTests       | Integer value that sets the number of tests to display in the Top-failed Tests section of the CIS benchmark report. Default: 5                                                                  | No       | int                                       |
+| resultsFilters       | Specifies an include or exclude filter to apply on the test results that will appear on the report.                                                                                             | No       | [CISBenchmarkFilter](#cisbenchmarkfilter) |
+
+### CISBenchmarkFilter
+
+| Fields             | Description                                                                                    | Required | Schema                                          |
+| ------------------ | ---------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------- |
+| benchmarkSelection | Specify which set of benchmarks that this filter should apply to. Selects all benchmark types. | No       | [CISBenchmarkSelection](#cisbenchmarkselection) |
+| exclude            | Specify which benchmark tests to exclude                                                       | No       | array of strings                                |
+| include            | Specify which benchmark tests to include only (higher precedence than exclude)                 | No       | array of strings                                |
+
+### CISBenchmarkSelection
+
+| Fields            | Description                            | Required | Schema |
+| ----------------- | -------------------------------------- | -------- | ------ |
+| kubernetesVersion | Specifies a version of the benchmarks. | Yes      | string |
+
+### NamesAndLabelsMatch
+
+| Field    | Description                          | Schema |
+| -------- | ------------------------------------ | ------ |
+| names    | Set of resource names.               | list   |
+| selector | Selects a set of resources by label. | string |
+
+Use the `NamesAndLabelsMatch`to limit the scope of endpoints. If both `names`
+and `selector` are specified, the resource is identified using label _AND_ name
+match.
+
+:::note
+
+To use the $[prodname] compliance reporting feature, you must ensure all required resource types
+are being audited and the logs archived in Elasticsearch. You must explicitly configure the [Kubernetes API Server](../../observability/kube-audit.mdx)
+ to send audit logs for Kubernetes-owned resources
+to Elasticsearch.
+
+:::
+
+## Supported operations
+
+| Datastore type        | Create/Delete | Update | Get/List | Notes |
+| --------------------- | ------------- | ------ | -------- | ----- |
+| Kubernetes API server | Yes           | Yes    | Yes      |       |
+
+[cron-format]: https://en.wikipedia.org/wiki/Cron

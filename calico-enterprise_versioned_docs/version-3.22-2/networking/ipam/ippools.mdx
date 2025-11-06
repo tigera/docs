@@ -1,0 +1,117 @@
+---
+description: Create multiple IP pools
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Create multiple IP pools
+
+## Understanding multiple IP pools
+
+By default when you install $[prodname], a single IPv4 pool is created. This IP pool is used for allocating IP addresses to pods and, if needed,
+tunnels within your cluster.
+
+Sometimes you may want to configure additional IP pools. For example:
+
+- If the IP address space available for pods in your cluster is disjointed.
+- You want to [assign IP addresses based on cluster topology](assign-ip-addresses-topology.mdx).
+
+## Create multiple IP pools when installing Calico
+
+<Tabs>
+<TabItem label="Operator" value="Operator-0">
+
+You can edit the Installation resource within `custom-resources.yaml` to include multiple unique IP pools. The following
+example creates two IP pools assigned to different sets of nodes.
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  calicoNetwork:
+    ipPools:
+    - name: pool-zone-1
+      cidr: 192.168.0.0/24
+      encapsulation: VXLAN
+      nodeSelector: "zone == 'zone-1'"
+    - name: pool-zone-2
+      cidr: 192.168.1.0/24
+      encapsulation: VXLAN
+      nodeSelector: "zone == 'zone-2'"
+```
+
+After installing $[prodname], you can confirm the IP pools were created by using the following command:
+
+```bash
+kubectl get ippools
+```
+
+## Prevent the operator from managing IP pools
+
+In some cases, you may want to disable IP pool management within the operator and instead use calicoctl or kubectl to
+create and delete IP pools. To do this, you can edit the **Installation** resource with `custom-resources.yaml` to specify
+an empty list of IP pools.
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  calicoNetwork:
+    ipPools: []
+```
+
+With this configuration, the operator will wait for you to create IP pools before installing $[prodname] components.
+
+</TabItem>
+<TabItem label="Manifest" value="Manifest-1">
+
+When using manifests to install $[prodname], you can use calicoctl to manage multiple IP pools. For complete control, you can disable
+creation of the default IP pool before doing so.
+
+1. Disable the default IP pool by adding the following environment variable to the calico-node DaemonSet in `calico.yaml`.
+
+   ```yaml
+   env:
+   - name: NO_DEFAULT_POOLS
+      value: "true"
+  ```
+
+1. Then, install `calico.yaml`.
+
+1. Create the desired IP pools. For example, the following commands create two IP pools assigned to different sets of nodes.
+
+   ```bash
+   calicoctl create -f -<<EOF
+   apiVersion: projectcalico.org/v3
+   kind: IPPool
+   metadata:
+     name: pool-zone-1
+   spec:
+     cidr: 192.168.0.0/24
+     vxlanMode: Always
+     natOutgoing: true
+     nodeSelector: zone == "zone-1"
+   EOF
+   ```
+
+   ```bash
+   calicoctl create -f -<<EOF
+   apiVersion: projectcalico.org/v3
+   kind: IPPool
+   metadata:
+     name: pool-zone-2
+   spec:
+     cidr: 192.168.1.0/24
+     vxlanMode: Always
+     natOutgoing: true
+     nodeSelector: zone == "zone-2"
+   EOF
+   ```
+
+</TabItem>
+</Tabs>

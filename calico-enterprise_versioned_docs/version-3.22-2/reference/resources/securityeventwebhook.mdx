@@ -1,0 +1,158 @@
+---
+description: API for this Calico Enterprise resource.
+---
+
+# Security event webhook
+
+A security event webhook (`SecurityEventWebhook`) is a cluster-scoped resource that represents instances
+of integrations with external systems through the webhook callback mechanism.
+
+For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
+can be used to specify the resource type on the CLI:
+`securityeventwebhook.projectcalico.org`, `securityeventwebhooks.projectcalico.org` and abbreviations such as
+`securityeventwebhook.p` and `securityeventwebhooks.p`.
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: SecurityEventWebhook
+metadata:
+  name: jira-webhook
+  annotations:
+    webhooks.projectcalico.org/labels: 'Cluster name:Calico Enterprise'
+spec:
+  consumer: Jira
+  state: Enabled
+  query: type=waf
+  config:
+    - name: url
+      value: 'https://your-jira-instance-name.atlassian.net/rest/api/2/issue/'
+    - name: project
+      value: PRJ
+    - name: issueType
+      value: Bug
+    - name: username
+      valueFrom:
+        secretKeyRef:
+          name: jira-secrets
+          key: username
+    - name: apiToken
+      valueFrom:
+        secretKeyRef:
+          name: jira-secrets
+          key: token
+```
+
+## Security event webhook definition
+
+### Metadata
+
+| Field | Description                                               | Accepted Values                                     | Schema |
+| ----- | --------------------------------------------------------- | --------------------------------------------------- | ------ |
+| name  | Unique name to describe this resource instance. Required. | Alphanumeric string with optional `.`, `_`, or `-`. | string |
+
+#### Annotations
+
+Security event webhooks provide an easy way to add arbitrary data to the webhook generated HTTP payload through the metadata annotation.
+The value of the `webhooks.projectcalico.org/labels`, if present, will be converted into the payload labels.
+The value must conform to the following rules:
+
+- Key and value data for a single label are separated by the `:` character,
+- Multiple labels are separated by the `,` character.
+
+### Spec
+
+| Field    | Description                                                                                                     | Accepted Values                     | Schema                                                                  | Required                    |
+| -------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------| --------------------------- |
+| consumer | Specifies intended consumer of the webhook.                                                                     | Slack, Jira, Alertmanager, Generic  | string                                                                  | yes                         |
+| state    | Defines current state of the webhook.                                                                           | Enabled, Disabled, Debug            | string                                                                  | yes                         |
+| query    | Defines query used to retrieve security events from Calico.                                                     | [see Query](#query)                 | string                                                                  | yes                         |
+| config   | Webhook configuration, required contents of this structure is determined by the value of the `consumer` field.  | [see Config](#configuration)        | list of [SecurityEventWebhookConfigVar](#securityeventwebhookconfigvar) | yes                         |
+
+### SecurityEventWebhookConfigVar
+
+| Field        | Description                                                                | Schema                                                                      | Required                            |
+| ------------ | -------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------- |
+| name         | Configuration variable name.                                               | string                                                                      | yes                                 |
+| value        | Direct value for the variable.                                             | string                                                                      | yes if `valueFrom` is not specified  |
+| valueFrom    | Value defined either in a Kubernetes ConfigMap or in a Kubernetes Secret. | [SecurityEventWebhookConfigVarSource](#securityeventwebhookconfigvarsource) | yes if `value` is not specified     |
+
+### SecurityEventWebhookConfigVarSource
+
+| Field            | Description                       | Schema                                                                                                       | Required                                  |
+| ---------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| configMapKeyRef  | Kubernetes ConfigMap reference.   | `ConfigMapKeySelector` (referenced ConfigMap key should exist in the `tigera-intrusion-detection` namespace) | yes if `secretKeyRef` is not specified    |
+| secretKeyRef     | Kubernetes Secret reference.      | `SecretKeySelector` (referenced Secret key should exist in the `tigera-intrusion-detection` namespace)       | yes if `configMapKeyRef` is not specified  |
+
+### Status
+
+Field `status` reflects the health of a webhook. It is a list of [Kubernetes Conditions](https://pkg.go.dev/k8s.io/apimachinery@v0.23.0/pkg/apis/meta/v1#Condition).
+
+## Query
+
+Security event webhooks use a domain-specific query language to select which records
+from the data set should trigger the HTTP request.
+
+The query language is composed of any number of selectors, combined
+with boolean expressions (`AND`, `OR`, and `NOT`), set expressions
+(`IN` and `NOTIN`) and bracketed subexpressions. These are translated
+by $[prodname] to Elastic DSL queries that are executed on the backend.
+
+Set expressions support wildcard operators asterisk (`*`) and question mark (`?`).
+The asterisk sign matches zero or more characters and the question mark matches a single character.
+
+A selector consists of a key, comparator, and value. Keys and values
+may be identifiers consisting of alphanumerics and underscores (`_`)
+with the first character being alphabetic or an underscore, or may be
+quoted strings. Values may also be integer or floating point numbers.
+Comparators may be `=` (equal), `!=` (not equal), `<` (less than),
+`<=` (less than or equal), `>` (greater than), or `>=` (greater than
+or equal).
+
+## Configuration
+
+Data required to be present in the `config` section of the security event webhook `spec` depends on the intended consumer for the HTTP
+requests generated by the webhook. The value in the `consumer` field of the `spec` specifies the consumer and therefore data
+that is required to be present. Currently Calico supports the following consumers: `Slack`, `Jira`, `Alertmanager` and `Generic`.
+Payloads generated by the webhook will be different for each of the listed use cases.
+
+### Slack
+
+Data fields required for the `Slack` value present in the `spec.consumer` field of a webhook:
+
+| Field            | Description                                                                     | Required   |
+| ---------------- | ------------------------------------------------------------------------------  | ---------- |
+| url              | A valid Slack [Incoming Webhook URL](https://api.slack.com/messaging/webhooks). | yes        |
+
+### Generic
+
+Data fields required for the `Generic` value present in the `spec.consumer` field of a webhook:
+
+| Field            | Description                                          | Required   |
+| ---------------- | ---------------------------------------------------  | ---------- |
+| url              | A generic and valid URL of another HTTP(s) endpoint. | yes        |
+
+### Jira
+
+Data fields required for the `Jira` value present in the `spec.consumer` field of a webhook:
+
+| Field            | Description                                                            | Required   |
+| ---------------- | ---------------------------------------------------------------------- | ---------- |
+| url              | URL of a Jira REST API v2 endpoint for the organisation.               | yes        |
+| project          | A valid Jira project abbreviation.                                     | yes        |
+| issueType        | A valid issue type for the selected project, examples: `Bug` or `Task` | yes        |
+| username         | A valid Jira user name.                                                | yes        |
+| apiToken         | A valid Jira API token for the user.                                   | yes        |
+
+### Alertmanager
+
+Data fields required for the `Alertmanager` value present in the `spec.consumer` field of a webhook:
+
+| Field            | Description                                                                             | Required   |
+| ---------------- | --------------------------------------------------------------------------------------- | ---------- |
+| url              | URL of the Alertmanager REST API v2 endpoint for alerts (ending with `/api/v2/alerts`). | yes        |
+| basicAuth        | MD5 checksum of username and password separated by the colon character.                 | no         |
+| ca.crt           | Certificate authority in PEM format (required for mTLS configuration).                  | no         |
+| tls.key          | Private key in PEM format (required for mTLS configuration).                            | no         |
+| tls.crt          | Certificate in PEM format (required for mTLS configuration).                            | no         |
