@@ -1,0 +1,454 @@
+---
+description: Tutorial for ingress gateways and canary deployment
+---
+
+import CodeBlock from '@theme/CodeBlock';
+export const calicoVersion='v3.31.1'
+export const files=`https://raw.githubusercontent.com/projectcalico/calico/${calicoVersion}`;
+
+# Tutorial: Launch a canary deployment with Calico Ingress Gateway
+
+This tutorial shows you how to create a canary deployment by using Calico Ingress Gateway.
+
+## Overview
+
+A **canary deployment** is a progressive release strategy where a new version of an application is gradually rolled out to a small subset of users before being fully deployed.
+This approach allows teams to detect issues early, validate new features, and roll back quickly if needed, minimizing disruption to the majority of users.
+
+In $[prodname], canary deployments are implemented with a **traffic splitting** method that is defined in a routing resource associated with an ingress gateway.
+By defining routing rules, you direct a small proportion of your incoming traffic to the canary version of your workload for testing.
+The majority of the traffic continues to the stable version.
+
+As you become more confident in the canary version, you increase the proportion of traffic going to that version incrementally until it becomes the new stable version.
+
+## Use cases
+
+- **Feature Rollouts:** Safely release a new feature to a small subset of users to validate functionality and gather feedback before full deployment.
+- **Performance Testing:** Evaluate how a new version handles real-world traffic and resource usage without affecting all users.
+- **Bug Detection:** Catch critical bugs or unexpected behavior in production with minimal user impact.
+- **A/B Testing:** Test different versions of a service to compare performance, user engagement, or conversion rates before committing to one.
+- **Compliance and Risk Management:** Gradually roll out updates in highly regulated or mission-critical environments to reduce the chance of widespread failures.
+
+Canary deployments are ideal when you want controlled, low-risk releases, allowing teams to monitor metrics, validate assumptions, and ensure stability before a full-scale rollout.
+
+## Before you begin
+
+You'll need to install a few tools to complete this tutorial:
+
+* `kind`.
+  This is what you'll use to create a cluster on your workstation.
+  For installation instructions, see the [`kind` documentation](https://kind.sigs.k8s.io/docs/user/quick-start/).
+* Docker Engine or Docker Desktop.
+  This is required to run containers for the `kind` utility.
+  For installation instructions, see the [Docker documentation](https://docs.docker.com/desktop/).
+* `kubectl`.
+  This is the tool you'll use to interact with your cluster.
+  For installation instructions, see the [Kubernetes documentation](https://kubernetes.io/docs/tasks/tools/#kubectl)
+
+## Step 1: Set up your environment
+
+For this tutorial, you need access to a cluster with Calico Open Source 1.30 or later installed.
+
+We'll use `kind` to create this environment, but you can use any other supported Kubernetes distribution with a compatible version of $[prodname].
+If you've already got a suitable environment, start the tutorial at [Step 2: Create the ingress gateway](#step-2-create-an-ingress-gateway).
+
+1. Create a `kind` cluster with one control-plane node and two worker nodes.
+
+   ```bash
+   cat > config.yaml <<EOF
+   kind: Cluster
+   apiVersion: kind.x-k8s.io/v1alpha4
+   nodes:
+     - role: control-plane
+     - role: worker
+     - role: worker
+   networking:
+     disableDefaultCNI: true
+     podSubnet: 192.168.0.0/16
+   EOF
+
+   kind create cluster --config config.yaml --name calico-cluster
+   ```
+
+   `kind` reads your configuration file and creates a cluster in a few minutes.
+
+   ```bash title='Expected output'
+   Creating cluster "calico-cluster" ...
+   ✓ Ensuring node image (kindest/node:v1.33.1) 🖼
+   ✓ Preparing nodes 📦 📦 📦
+   ✓ Writing configuration 📜
+   ✓ Starting control-plane 🕹️
+   ✓ Installing StorageClass 💾
+   ✓ Joining worker nodes 🚜
+   Set kubectl context to "kind-calico-cluster"
+   You can now use your cluster with:
+
+   kubectl cluster-info --context kind-calico-cluster
+
+   Thanks for using kind! 😊
+   ```
+
+2. To verify that your cluster is working, run the following command:
+
+   ```bash
+   kubectl get nodes
+   ```
+   You should see three nodes with the name you gave the cluster.
+
+   ```bash title="Expected output"
+   NAME                           STATUS     ROLES           AGE     VERSION
+   calico-cluster-control-plane   NotReady   control-plane   5m46s   v1.33.1
+   calico-cluster-worker          NotReady   <none>          5m23s   v1.33.1
+   calico-cluster-worker2         NotReady   <none>          5m22s   v1.33.1
+   ```
+
+   The nodes remain in a `NotReady` status until you configure networking in the next step.
+
+1. Install Calico Open Source by adding custom resource definitions, the Tigera Operator, and the custom resources.
+   <CodeBlock>
+   {`kubectl create -f ${files}/manifests/operator-crds.yaml
+   kubectl create -f ${files}/manifests/tigera-operator.yaml
+   kubectl create -f ${files}/manifests/custom-resources.yaml`}
+   </CodeBlock>
+1. Monitor the deployment by running the following command:
+
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+
+   After a few minutes, all the Calico components display `True` in the `AVAILABLE` column.
+
+   ```bash title="Expected output"
+   NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver                       True        False         False      4m9s
+   calico                          True        False         False      3m29s
+   goldmane                        True        False         False      3m39s
+   ippools                         True        False         False      6m4s
+   whisker                         True        False         False      3m19s
+   ```
+
+## Step 2. Create an ingress gateway
+
+Enable the Gateway API by creating a `GatewayAPI` resource.
+When you create this resource, the Tigera Operator pulls Envoy Gateway images and sets things up.
+Once that is set up, you can create supported Gateway API resources, such as the `Gateway` and routing resources.
+
+1. To enable Gateway API support, create a `GatewayAPI` resource with name `default`:
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: GatewayAPI
+   metadata:
+     name: default
+   EOF
+   ```
+
+   Shortly after this you will see that Gateway API resources are now available:
+
+   ```bash
+   kubectl api-resources | grep gateway.networking.k8s.io
+   ```
+
+   ```bash title='Expected output'
+   backendlbpolicies                   blbpolicy                                       gateway.networking.k8s.io/v1alpha2          true         BackendLBPolicy
+   backendtlspolicies                  btlspolicy                                      gateway.networking.k8s.io/v1alpha3          true         BackendTLSPolicy
+   gatewayclasses                      gc                                              gateway.networking.k8s.io/v1                false        GatewayClass
+   gateways                            gtw                                             gateway.networking.k8s.io/v1                true         Gateway
+   grpcroutes                                                                          gateway.networking.k8s.io/v1                true         GRPCRoute
+   httproutes                                                                          gateway.networking.k8s.io/v1                true         HTTPRoute
+   referencegrants                     refgrant                                        gateway.networking.k8s.io/v1beta1           true         ReferenceGrant
+   tcproutes                                                                           gateway.networking.k8s.io/v1alpha2          true         TCPRoute
+   tlsroutes                                                                           gateway.networking.k8s.io/v1alpha2          true         TLSRoute
+   udproutes                                                                           gateway.networking.k8s.io/v1alpha2          true         UDPRoute
+   ```
+
+   And also that there is a GatewayClass resource corresponding to the Envoy Gateway implementation included in $[prodname]:
+
+   ```bash
+   kubectl get gatewayclass -o=jsonpath='{.items[0].spec}' | jq
+   ```
+
+   ```bash title='Expected output'
+   {
+     "controllerName": "gateway.envoyproxy.io/gatewayclass-controller",
+     "parametersRef": {
+       "group": "gateway.envoyproxy.io",
+       "kind": "EnvoyProxy",
+       "name": "envoy-proxy-config",
+       "namespace": "tigera-gateway"
+     }
+   }
+   ```
+1. Create a `Gateway` resource that is linked to the `tigera-gateway-class`.
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: gateway.networking.k8s.io/v1
+   kind: Gateway
+   metadata:
+     name: canary-deployment-gateway
+   spec:
+     gatewayClassName: tigera-gateway-class
+     listeners:
+       - name: http
+         protocol: HTTP
+         port: 80
+   EOF
+   ```
+
+   You will refer to this gateway name for all services you want to use the gateway.
+
+## Step 3. Deploy v1 (stable) and v2 (canary) of an application
+
+To demonstrate traffic splitting, you need two services.
+You'll create two versions of the `ingress-gateway-demo` application: v1 (stable) and v2 (the canary build).
+The app is a simple web server that serves a single line of HTML.
+
+1. Create a namespace for the `ingress-gateway-demo` application:
+
+   ```bash
+   cat << EOF | kubectl create -f -
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: ingress-gateway-demo
+   EOF
+   ```
+
+1. Deploy the stable version of the `ingress-gateway-demo` app.
+   This set of manifests includes:
+   * a ConfigMap (app-v1-html): Stores the static index.html file (the content of the app).
+   * a Deployment (app-v1): Runs a single replica of the BusyBox container, serving the HTML content stored in the ConfigMap.
+   * a Service (app-v1): Exposes the BusyBox pods on a stable internal IP address for access within the cluster.
+
+   ```bash
+   cat << EOF | kubectl apply -f -
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: app-v1-html
+     namespace: ingress-gateway-demo
+   data:
+     index.html: |
+       <html><body><h1>App Version 1</h1></body></html>
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: app-v1
+     namespace: ingress-gateway-demo
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: ingress-gateway-demo
+         version: v1
+     template:
+       metadata:
+         labels:
+           app: ingress-gateway-demo
+           version: v1
+       spec:
+         containers:
+           - name: busybox
+             image: busybox:latest
+             command: ["sh", "-c", "httpd -f -p 80 -h /var/www/html"]
+             ports:
+               - containerPort: 80
+             volumeMounts:
+               - name: html
+                 mountPath: /var/www/html
+         volumes:
+           - name: html
+             configMap:
+               name: app-v1-html
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: app-v1
+     namespace: ingress-gateway-demo
+   spec:
+     selector:
+       app: ingress-gateway-demo
+       version: v1
+     ports:
+       - port: 80
+         targetPort: 80
+   EOF
+   ```
+   ```bash title='Expected output'
+   configmap/app-v1-html created
+   deployment.apps/app-v1 created
+   service/app-v1 created
+   ```
+1. Now deploy the same resources for the canary build, ingress-gateway-demo v2:
+   ```bash
+   cat << EOF | kubectl apply -f -
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: app-v2-html
+     namespace: ingress-gateway-demo
+   data:
+     index.html: |
+       <html><body><h1>App Version 2</h1></body></html>
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: app-v2
+     namespace: ingress-gateway-demo
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: ingress-gateway-demo
+         version: v2
+     template:
+       metadata:
+         labels:
+           app: ingress-gateway-demo
+           version: v2
+       spec:
+         containers:
+           - name: busybox
+             image: busybox:latest
+             command: ["sh", "-c", "httpd -f -p 80 -h /var/www/html"]
+             ports:
+               - containerPort: 80
+             volumeMounts:
+               - name: html
+                 mountPath: /var/www/html
+         volumes:
+           - name: html
+             configMap:
+               name: app-v2-html
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: app-v2
+     namespace: ingress-gateway-demo
+   spec:
+     selector:
+       app: ingress-gateway-demo
+       version: v2
+     ports:
+       - port: 80
+         targetPort: 80
+   EOF
+   ```
+
+   ```bash title='Expected output'
+   configmap/app-v2-html created
+   deployment.apps/app-v2 created
+   service/app-v2 created
+   ```
+
+## Step 4: Define an `HTTPRoute` resource to split traffic between app-v1 and app-v2
+
+The `HTTPRoute` below routes 80% of requests to app-v1 and 20% to app-v2
+
+  ```bash
+  cat << EOF | kubectl apply -f -
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: HTTPRoute
+  metadata:
+    name: traffic-splitting
+  spec:
+    parentRefs:
+      - name: canary-deployment-gateway
+        namespace: default
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - name: app-v1
+            namespace: ingress-gateway-demo
+            port: 80
+            weight: 80
+          - name: app-v2
+            namespace: ingress-gateway-demo
+            port: 80
+            weight: 20
+  EOF
+  ```
+
+## Step 5. Allow ingress traffic from the gateway to reach services in the `ingress-gateway-demo` namespace
+
+You can permit traffic to be routed from the gateway to your app by adding definitions to a `ReferenceGrant` resource.
+
+  ```bash
+  kubectl apply -f - <<EOF
+  apiVersion: gateway.networking.k8s.io/v1beta1
+  kind: ReferenceGrant
+  metadata:
+    name: ingress-gateway-demo
+    namespace: ingress-gateway-demo
+  spec:
+    from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: default
+    to:
+    - group: ""
+      kind: Service
+  EOF
+  ```
+  After a minute your gateway and services should be ready.
+
+
+
+## Step 6. Test the canary deployment
+
+For this tutorial, we'll try accessing the app through the gateway by port-forwarding to your local workstation.
+In a real-world scenario, you'd set up a load balancer to direct external traffic.
+
+1. Get the service name for your ingress gateway:
+
+   ```bash
+   CANARY_DEMO=$(kubectl get svc -n tigera-gateway -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep canary)
+   echo "CANARY_DEMO is: $CANARY_DEMO"
+   ```
+
+   ```bash title='Example output'
+   CANARY_DEMO is: envoy-default-canary-deployment-gateway-c84e1eb6
+   ```
+1. Set up port forwarding for the service:
+
+   ```bash
+   kubectl port-forward -n tigera-gateway svc/$CANARY_DEMO 30135:80
+   ```
+   Now you can access the app in your web browser at http://localhost:30135.
+
+
+1. Now, in another terminal, you can test the canary build by accessing the app and checking how often each version is used:
+
+   ```bash
+   for i in $(seq 200); do curl -s http://localhost:30135/ | grep "<h1>"; done | \
+   awk '
+   /App Version 1/ {v1++}
+   /App Version 2/ {v2++}
+   END {
+     total=v1+v2
+     printf("Version 1: %d (%.1f%%)\nVersion 2: %d (%.1f%%)\n",
+            v1, v1/total*100, v2, v2/total*100)
+   }'
+   ```
+
+   ```bash title='Sample output'
+   Version 1: 161 (80.5%)
+   Version 2: 39 (19.5%)
+   ```
+
+## Step 7. Clean up your environment
+
+* To clean up your tutorial environment, run the following command:
+
+  ```bash
+  kind delete cluster --name calico-cluster
+  ```
