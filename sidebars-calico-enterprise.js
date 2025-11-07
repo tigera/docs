@@ -147,7 +147,12 @@ module.exports = {
       link: { type: 'doc', id: 'networking/index' },
       items: [
         'networking/determine-best-networking',
-        'networking/gateway-api',
+        {
+          type: 'category',
+          label: 'Ingress gateway',
+          link: null,
+          items: ['networking/gateway-api', 'networking/ingress-gateway/tutorial-ingress-gateway-canary'],
+        },
         {
           type: 'category',
           label: 'Networking basics',
