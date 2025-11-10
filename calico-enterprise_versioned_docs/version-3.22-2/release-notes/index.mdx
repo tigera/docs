@@ -3,14 +3,7 @@ description: What's new, and why features provide value for upgrading.
 title: Release notes
 ---
 
-# Calico Enterprise X.Y release notes
-
-:::info early preview release
-
-Calico Enterprise X.Y can be used for previewing and testing purposes only.
-It is not supported for use in production.
-
-:::
+# Calico Enterprise 3.22 release notes
 
 Learn about the new features, bug fixes, and other updates in this release of $[prodname].
 
@@ -18,20 +11,134 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
 
 ## New features and enhancements
 
-### Deprecated and removed features
+### Calico Ingress Gateway is GA
 
-## Technology Preview features
+Calico Ingress Gateway is now supported with general availability.
+Calico Ingress Gateway is an enterprise-hardened, 100% upstream distribution of Envoy Gateway. Envoy Gateway is an implementation of the Kubernetes Gateway API with several extensions that provide advanced security and traffic management features.
+
+For more information, see [Configure an ingress gateway](../networking/gateway-api.mdx).
+
+### Web application firewall for Calico Ingress Gateway
+
+The release adds the ability to configure a web application firewall for Calico Ingress Gateway.
+
+For more information, see [Deploying WAF with an ingress gateway](../threat/deploying-waf-ingress-gateway.mdx).
+
+### External load balancers for Calico Ingress Gateway
+
+This release adds customization options for specifying external load balancers for `Gateway` resources in your cluster.
+
+For more information, see [Customize gateway deployment and features](../networking/gateway-api.mdx#customize-gateway-deployment-and-features).
+
+### HTTP header-based matching for application layer policies
+
+This release includes support for HTTP header-based matching for application layer policies.
+You can now write deny and allow rules for L7 ingress traffic by matching values in HTTP headers.
+
+For more information, see [Global network policy](../reference/resources/globalnetworkpolicy.mdx#httpheadermatch).
+
+### Enhanced visibility for denied pre-DNAT traffic
+
+This update delivers flow logs specifically for denied traffic by Calico pre-DNAT policies.
+Now, you can quickly identify and understand why certain traffic is being blocked at the earliest stage of packet processing, greatly simplifying troubleshooting and providing assurance that your pre-DNAT policies are effectively enforcing your desired access controls.
+
+For more information, see [Apply policy to forwarded traffic](../network-policy/hosts/host-forwarded-traffic.mdx).
+
+### Observability tools for non-cluster hosts and VMs
+
+You can now view traffic from connected non-cluster hosts and VMs using observability tools such as Flow Visualizer and Service Graph.
+This lets you observe and analyze traffic patterns for all your workloads, regardless of the platform.
+
+For more information about these observability tools, see [Network visualization](../observability/visualize-traffic.mdx).
+
+### Consolidated log forwarding for non-cluster hosts
+
+This release includes a simpler way to forward logs from your non-cluster hosts.
+You can now forward these logs from your management cluster, which saves you the burden of configuring access to your data store for each external host.
+
+For more information, see [Archive logs](../observability/elastic/archive-storage.mdx).
+
+
+{/* Start 3.22.0-2.0 features */}
+
+### External secret provider support
+
+Calico Enterprise now supports loading credentials for external identity providers directly from a CSI Secret Store Driver, eliminating the need to store sensitive client secrets within Kubernetes.
+This capability is critical if you have security policies that prohibit creating Kubernetes secrets.
+
+Instead of creating a secret, you can configure a `SecretProviderClass` resource that mounts fields, such as `clientID` and `clientSecret`, directly from your external vault onto the `tigera-dex` pod.
+This support is now available for **OIDC**, **Google**, and **LDAP** identity connectors.
+
+For complete configuration instructions, see [Configure an external identity provider](../operations/cnx/configure-identity-provider.mdx).
+
+
+### Enhanced observability with built-in dashboards (tech preview)
+
+Calico Enterprise now includes a comprehensive set of built-in observability dashboards, making it easier for you to quickly assess cluster activity, network health, and security posture without having to navigate to a separate Kibana instance.
+
+You now have access to the following dashboards in the web console:
+
+* **Cluster Health:** A high-level overview of overall cluster activity.
+* **Traffic Volume:** A high-level view of traffic flow within your cluster.
+* **Flow Logs:** An overview of packet activity to help spot unusual flows.
+* **DNS Logs:** Summarized DNS data for performance and lookup analysis.
+* **HTTP Traffic:** Application performance metrics for Kubernetes services, assisting with workload health assessment.
+* **Network Performance:** Provides TCP metrics to help identify bottlenecks, packet loss, and performance issues.
+
+For more information, see [Dashboards](../observability/dashboards.mdx).
+
+### High availability for hosts and VMs
+
+Calico Enterprise now supports high availability mode for bare metal hosts and VMs protected by network policy.
+
+This mode enables hosts to automatically fail over to a standby Kubernetes cluster when the primary fails, using an external load balancer to manage traffic.
+For this to work, you must use domain names for endpoints and synchronize network policies between the active and passive clusters.
+This feature is critical for maintaining continuous policy enforcement and disaster recovery.
+
+For more information, see [Configure high availability mode](../getting-started/bare-metal/about.mdx#configure-high-availability-mode).
+
+{/* End 3.22.0-2.0 features */}
+
+### Enhancements
+
+* To support a minimal footprint and simplify resource management, the API server component and its associated resources
+have been moved from the `tigera-system` namespace to the `calico-system` namespace. In addition, in managed clusters
+namespaces `tigera-manager`, `tigera-policy-recommendation` and `tigera-elasticsearch` have been removed. Permissions
+that were previously bound to service accounts in those namespaces have been moved to Guardian's cluster role.
 
 ## Release details
 
-### Calico Enterprise X.Y.Z (early preview)
+### Calico Enterprise 3.22.0-1.0 (early preview)
 
-January xx, 2024
+August 6, 2025
 
-Calico Enterprise X.Y.Z is now available as an early preview release.
+Calico Enterprise 3.22.0-1.0 is now available as an early preview release.
 This release is for previewing and testing purposes only.
 It is not supported for use in production.
 
+This Calico Enterprise release is based on [Calico Open Source 3.30](/calico/3.30/release-notes).
+
+#### Known issues
+
+eBPF deployments within MKE fail to properly configure the VXLAN tunnel device. This issue is isolated to eBPF deployments. A fix for this issue will be included in the next release.
+
 {/*
-To update an existing installation of Calico Enterprise X.Y, see [Install a patch release](../getting-started/manifest-archive.mdx).
+To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
 */}
+
+### Calico Enterprise 3.22.0-2.0 (early preview)
+
+November 14, 2025
+
+Calico Enterprise 3.22.0-2.0 is now available as an early preview release.
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+
+This release adds the following features:
+* [External secret provider support](#external-secret-provider-support)
+* [Enhanced observability with built-in dashboards (tech preview)](#enhanced-observability-with-built-in-dashboards-tech-preview)
+* [High availability for hosts and VMs](#high-availability-for-hosts-and-vms)
+
+This Calico Enterprise release is based on [Calico Open Source 3.31](/calico/3.31/release-notes).
+
+To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
