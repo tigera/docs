@@ -149,7 +149,7 @@ spec:
             To control managed clusters from your central management plane, you must ensure it is reachable for
             connections. The simplest way to get started (but not for production scenarios), is to configure a{' '}
             <code>NodePort</code> service to expose the management cluster. Note that the service must live within the{' '}
-            <code>tigera-manager</code> namespace.
+            <code>calico-system</code> namespace.
           </p>
           <ol>
             <li>
@@ -166,8 +166,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: tigera-manager-mcm
-  namespace: tigera-manager
+  name: calico-manager-mcm
+  namespace: calico-system
 spec:
   ports:
   - nodePort: 30449
@@ -175,7 +175,7 @@ spec:
     protocol: TCP
     targetPort: 9449
   selector:
-    k8s-app: tigera-manager
+    k8s-app: calico-manager
   type: NodePort
 EOF`}
               </CodeBlock>

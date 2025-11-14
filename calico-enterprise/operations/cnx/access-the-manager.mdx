@@ -38,14 +38,14 @@ For security, the $[prodname] web console is not exposed outside of the cluster 
 
 **Basic ingress controller, no modification**
 
-The following example uses `tigera-manager` as the backend service without modification. Use the `tigera-manager` service only when edits to the service are not required. (Note if you try to make changes to `tigera-manager`, changes may appear to take effect, but the service always resets to the default and is not overwritten.)
+The following example uses `calico-manager` as the backend service without modification. Use the `calico-manager` service only when edits to the service are not required. (Note if you try to make changes to `calico-manager`, changes may appear to take effect, but the service always resets to the default and is not overwritten.)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: tigera-manager
-  namespace: tigera-manager
+  name: calico-manager
+  namespace: calico-system
 spec:
   rules:
     - http:
@@ -54,21 +54,21 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service:
-                name: tigera-manager
+                name: calico-manager
                 port:
                   number: 9443
 ```
 
 **Advanced ingress controllers, with modifications**
 
-If you need to annotate or modify the service, you must create your own service (`serviceName: <your own name>`) in the `tigera-manager` namespace, and use it in the ingress resource. For example:
+If you need to annotate or modify the service, you must create your own service (`serviceName: <your own name>`) in the `calico-system` namespace, and use it in the ingress resource. For example:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: tigera-manager
-  namespace: tigera-manager
+  name: calico-manager
+  namespace: calico-system
 spec:
   rules:
     - http:
@@ -95,12 +95,12 @@ To expose the manager using a load balancer, create the following service.
 kind: Service
 apiVersion: v1
 metadata:
-  name: tigera-manager-external
-  namespace: tigera-manager
+  name: calico-manager-external
+  namespace: calico-system
 spec:
   type: LoadBalancer
   selector:
-    k8s-app: tigera-manager
+    k8s-app: calico-manager
   externalTrafficPolicy: Local
   ports:
     - port: 9443
@@ -108,7 +108,7 @@ spec:
       protocol: TCP
 ```
 
-After creating the service, it may take a few minutes for the load balancer to be created. Once complete, the load balancer IP address appears as an `ExternalIP` in `kubectl get services -n tigera-manager tigera-manager-external`.
+After creating the service, it may take a few minutes for the load balancer to be created. Once complete, the load balancer IP address appears as an `ExternalIP` in `kubectl get services -n calico-system calico-manager-external`.
 
 ### Log in to the $[prodname] web console
 
@@ -120,7 +120,7 @@ Access the $[prodname] web console in your browser at: `https://localhost:9443`
 To forward traffic locally, use the following command:
 
 ```bash
-kubectl port-forward -n tigera-manager service/tigera-manager 9443:9443
+kubectl port-forward -n calico-system service/calico-manager 9443:9443
 ```
 
 ### Log in to the $[prodname] web console
@@ -133,7 +133,7 @@ Access the $[prodname] web console in your browser at: `https://localhost:9443`
 To expose the web console using OpenShift routes, create the following route with these required parameters:
 
 - host: `<clustername>.<URL>`
-- name: `tigera-manager`
+- name: `calico-manager`
 - targetPort: `9443`
 
 **Example**
@@ -142,13 +142,13 @@ To expose the web console using OpenShift routes, create the following route wit
 kind: Route
 apiVersion: route.openshift.io/v1
 metadata:
-  name: tigera-manager
-  namespace: tigera-manager
+  name: calico-manager
+  namespace: calico-system
 spec:
   host: manager.apps.demo-ocp.tigera-solutions.io
   to:
     kind: Service
-    name: tigera-manager
+    name: calico-manager
     weight: 100
   port:
     targetPort: 9443
