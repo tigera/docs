@@ -122,25 +122,60 @@ Try the [Calico Cloud Free Tier quickstart guide](quickstart.mdx) to create a cl
 
 ## Troubleshooting
 
-### Connection status remains **Disconnected**
+This section describes solutions to common connection problems.
 
-#### Your network environment restricts egress traffic to the Calico Cloud management cluster
+### Connection status is **Connected**, but there is no data in my dashboards or Service Graph
+
+#### Cause: The `Goldmane` resource is not enabled
+
+Goldmane is the component that serves the flow logs API.
+Without it, your cluster may be able to connect to Calico Cloud Free Tier, but it won't be able to provide flow logs.
+
+To fix this problem:
+
+* [Enable `Goldmane` custom resource](/calico/latest/observability/enable-whisker).
+
+  A few minutes after you apply the `Goldmane` resource, you will begin to see data in your dashboards and Service Graph.
+
+### Connection status remains **Disconnected** after applying the connection manifest
+
+#### Cause 1: Your cluster is running Calico Open Source 3.29 or earlier
+
+Clusters with Calico Open Source 3.29 or earlier can't connect to Calico Cloud Free Tier.
+
+After applying the connection manifest, you may get output like this:
+
+```bash
+secret/tigera-managed-cluster-connection created
+secret/tigera-voltron-linseed-certs-public created
+error: resource mapping not found for name: "tigera-secure" namespace: "" from "STDIN": no matches for kind "ManagementClusterConnection" in version "operator.tigera.io/v1"
+ensure CRDs are installed first
+```
+
+To fix this problem:
+
+1. [Upgrade your cluster to Calico Open Source 3.30 or later](/calico/latest/operations/upgrading/kubernetes-upgrade#upgrading-an-installation-that-uses-the-operator) and [enable the `Goldmane` resource](/calico/latest/observability/enable-whisker).
+1. Reapply the connection manifest.
+
+#### Cause 2: Your network environment restricts egress traffic to the Calico Cloud management cluster
 
 If your network environment restricts egress traffic to the Calico Cloud management cluster, you need to create allow rules so your cluster can connect.
 
-You can find the address of the Calico Cloud management cluster in the `ManagementClusterAddr` field of the `ManagementClusterConnection` resource:
+To fix this problem:
 
-```bash
-kubectl get managementclusterconnection tigera-secure -o jsonpath='{.spec.managementClusterAddr}'
-```
+1. Locate the address of the Calico Cloud management cluster in the `ManagementClusterAddr` field of the `ManagementClusterConnection` resource:
 
-You'll see something like this:
+   ```bash
+   kubectl get managementclusterconnection tigera-secure -o jsonpath='{.spec.managementClusterAddr}'
+   ```
 
-```bash title='Sample output'
-oss-ui-01-management.calicocloud.io:443
-```
+   You'll see something like this:
 
-Make sure your network allows TCP egress traffic to this address.
+   ```bash title='Sample output'
+   oss-ui-01-management.calicocloud.io:443
+   ```
+
+1. Make sure your network allows TCP egress traffic to this address.
 
 
 ## Next steps
