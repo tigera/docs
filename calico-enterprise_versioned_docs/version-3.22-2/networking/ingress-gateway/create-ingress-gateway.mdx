@@ -1,0 +1,74 @@
+---
+description: Create an ingress gateway to manage ingress traffic with the Kubernetes Gateway API.
+---
+
+# Create and use an ingress gateway
+
+Create an ingress gateway to manage ingress traffic with the Kubernetes Gateway API.
+
+
+## Limitations
+
+*
+
+
+## Prerequisites
+
+
+
+## Create an ingress gateway
+
+1. To enable Gateway API support, create a `GatewayAPI` resource with name `default`:
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: GatewayAPI
+   metadata:
+     name: default
+   EOF
+   ```
+   The Tigera Operator deploys Gateway API resources, including the `GatewayClass` resource you need to create your gateway.
+
+   You can verify this:
+
+   ```bash
+   kubectl get gatewayclass
+   ```
+   ```bash title='Expected output'
+   NAME                   CONTROLLER                                      ACCEPTED   AGE
+   tigera-gateway-class   gateway.envoyproxy.io/gatewayclass-controller   True       144m
+   ```
+
+1. Create a `Gateway` resource that is linked to `tigera-gateway-class`.
+
+   ```yaml
+   apiVersion: gateway.networking.k8s.io/v1
+   kind: Gateway
+   metadata:
+     name: <gateway-name>
+   spec:
+     gatewayClassName: tigera-gateway-class
+   ```
+   Replace `<gateway-name>` with a name for your gateway.
+
+   You will refer to this gateway name for all services you want to use the gateway.
+
+1. Create a gateway routing resource that refers to your `Gateway` resource as `.spec.parentRefs`:
+
+    ```yaml title='Example HTTPRoute resource
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: <route-name>
+    spec:
+      parentRefs:
+        - name: <gateway-name>
+    ```
+
+
+## Additional resources:
+
+* Gateway API
+* Envoy Gateway
+* Tutorial: Deploy a canary depl
