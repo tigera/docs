@@ -2,9 +2,9 @@
 description: Install Calico Enterprise using Helm application package manager.
 ---
 
-# Helm
-
 import CodeBlock from '@theme/CodeBlock';
+
+# Helm
 
 ## Big picture
 
@@ -32,15 +32,11 @@ In this guide, you install the Tigera Calico operator and custom resource defini
 
 ### Download the Helm chart
 
-<CodeBlock language='bash'>
-    {'$[version]' === 'master'
-        ? `helm repo add tigera gs://tigera-helm-charts
+```bash
+helm repo add tigera-ee https://downloads.tigera.io/ee/charts
 helm repo update
-helm pull tigera/tigera-operator --version $[releaseTitle]`
-        : `helm repo add tigera-ee https://downloads.tigera.io/ee/charts
-helm repo update
-helm pull tigera-ee/tigera-operator --version $[releaseTitle]`}
-</CodeBlock>
+helm pull tigera-ee/tigera-operator --version $[releaseTitle]
+```
 
 ### Prepare the Installation Configuration
 
@@ -59,7 +55,7 @@ Example 1. Providing `kubernetesProvider`:  if you are installing on a cluster i
 
 Example 2. Providing custom settings in `values.yaml` for Azure AKS cluster with no Kubernetes CNI pre-installed:
 
-  ```yaml
+  ```bash
   cat > values.yaml <<EOF
   installation:
     kubernetesProvider: AKS
@@ -98,39 +94,28 @@ To install a standard $[prodname] cluster with Helm:
 
 1. Install the Tigera Operator and custom resource definitions using the Helm 3 chart:
 
-  <CodeBlock language='bash'>
-     {'$[version]' === 'master'
-       ? `helm install $[prodnamedash] tigera/tigera-operator --version tigera-operator-v0.0 \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
---set-file licenseKeyContent=<path/to/license/file/yaml> \\
---namespace tigera-operator --create-namespace`
-       : `helm install $[prodnamedash] tigera-operator-$[chart_version_name].tgz \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
---set-file licenseKeyContent=<path/to/license/file/yaml> \\
---namespace tigera-operator --create-namespace`}
-  </CodeBlock>
+   ```bash
+   helm install $[prodnamedash] tigera-operator-$[chart_version_name].tgz \
+   --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
+   --set-file licenseKeyContent=<path/to/license/file/yaml> \
+   --namespace tigera-operator --create-namespace
+   ```
 
-  or if you created a `values.yaml` above:
+   or if you created a `values.yaml` above:
 
-  <CodeBlock language='bash'>
-     {'$[version]' === 'master'
-       ? `helm install $[prodnamedash] tigera/tigera-operator --version tigera-operator-v0.0 -f values.yaml \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
---set-file licenseKeyContent=<path/to/license/file/yaml> \\
---namespace tigera-operator --create-namespace`
-       : `helm install $[prodnamedash] tigera-operator-$[chart_version_name].tgz -f values.yaml \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
---set-file licenseKeyContent=<path/to/license/file/yaml> \\
---namespace tigera-operator --create-namespace`}
-  </CodeBlock>
-
+   ```bash
+   helm install $[prodnamedash] tigera-operator-$[chart_version_name].tgz -f values.yaml \
+   --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
+   --set-file licenseKeyContent=<path/to/license/file/yaml> \
+   --namespace tigera-operator --create-namespace
+   ```
 1. You can now monitor progress with the following command:
 
-  ```bash
-  watch kubectl get tigerastatus
-  ```
+   ```bash
+   watch kubectl get tigerastatus
+   ```
 
-  Congratulations! You have now installed $[prodname] using the Helm 3 chart.
+   Congratulations! You have now installed $[prodname] using the Helm 3 chart.
 
 ## Next steps
 
