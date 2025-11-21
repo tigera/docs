@@ -1,0 +1,95 @@
+---
+description: Create an ingress gateway to manage ingress traffic with the Kubernetes Gateway API.
+---
+
+# Create an ingress gateway
+
+Create an ingress gateway to manage ingress traffic with the Kubernetes Gateway API.
+
+## Creating an ingress gateway with Calico Ingress Gateway
+
+Calico Ingress Gateway is based on Envoy Gateway, an open-source implementation of the Gateway API.
+Calico provides a simple, convenient way to deploy and manage this implementation.
+
+Creating an ingress gateway with Calico Ingress Gateway involves only a few steps.
+You need to do the following:
+* Enable Calico Ingress Gateway by creating a `GatewayAPI` resource.
+* Create a `Gateway` resource that references `tigera-gateway-class`, the name of the `GatewayClass` resource created by the Tigera Operator.
+* When you create your gateway routing resources, you refer to this `Gateway` resource.
+
+## Limitations
+
+* Calico Ingress Gateway is not supported on Windows nodes.
+
+## Prerequisites
+
+* You have an understanding of the [Kubernetes Gateway API](https://gateway-api.sigs.k8s.io/) and know how you want to configure it for your system.
+* $[prodname] was installed on your cluster using the Tigera Operator.
+* Your cluster is provisioned to support services of type `LoadBalancer`.
+
+## Create an ingress gateway
+
+1. To enable Gateway API support, create a `GatewayAPI` resource with name `default`:
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: GatewayAPI
+   metadata:
+     name: default
+   EOF
+   ```
+   The Tigera Operator pulls and sets up the hardened Envoy Gateway images.
+   This gives you a set of Gateway API resources, including the `GatewayClass` resource you need to create your gateway.
+
+   To verify, you can check to see if the `GatewayClass` resource is available:
+
+   ```bash
+   kubectl get gatewayclass
+   ```
+   ```bash title='Expected output'
+   NAME                   CONTROLLER                                      ACCEPTED   AGE
+   tigera-gateway-class   gateway.envoyproxy.io/gatewayclass-controller   True       4m
+   ```
+   :::tip
+   `tigera-gateway-class` is the name of the single default `GatewayClass` resource that is created when you enable Gateway API support.
+   You can define additional gateway classes{/*TODO: Add link with customization doc*/}, along with other customizations, in the `GatewayAPI` resource.
+   :::
+
+1. Create a `Gateway` resource that is linked to `tigera-gateway-class`.
+
+   ```yaml title='Example snippet of a Gateway resource with default gatewayClassName'
+   apiVersion: gateway.networking.k8s.io/v1
+   kind: Gateway
+   metadata:
+   // highlight-next-line
+     name: <gateway-name>
+   spec:
+   // highlight-next-line
+     gatewayClassName: tigera-gateway-class
+     ...
+   ```
+   Replace `<gateway-name>` with a name for your gateway.
+   You will refer to this gateway name for all services you want to use the gateway.
+
+1. Create a gateway routing resource that refers to your `Gateway` resource as `.spec.parentRefs`:
+
+    ```yaml title='Example snippet of an HTTPRoute resource'
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: example-httproute
+    spec:
+    // highlight-start
+      parentRefs:
+        - name: <gateway-name>
+    // highlight-end
+      ...
+    ```
+    Replace `<gateway-name>` with the name of your `Gateway` resource.
+
+## Additional resources
+
+* [Kubernetes Gateway API documentation](https://gateway-api.sigs.k8s.io/)
+* [Envoy Gateway documentation](https://gateway.envoyproxy.io/docs/)
+{/** Tutorial: Deploy a canary deployment*/}
