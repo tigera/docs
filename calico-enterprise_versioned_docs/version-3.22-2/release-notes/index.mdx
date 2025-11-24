@@ -16,7 +16,7 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
 Calico Ingress Gateway is now supported with general availability.
 Calico Ingress Gateway is an enterprise-hardened, 100% upstream distribution of Envoy Gateway. Envoy Gateway is an implementation of the Kubernetes Gateway API with several extensions that provide advanced security and traffic management features.
 
-For more information, see [Configure an ingress gateway](../networking/gateway-api.mdx).
+For more information, see [About Calico Ingress Gateway](../networking/ingress-gateway/about-calico-ingress-gateway.mdx).
 
 ### Web application firewall for Calico Ingress Gateway
 
@@ -28,7 +28,7 @@ For more information, see [Deploying WAF with an ingress gateway](../threat/depl
 
 This release adds customization options for specifying external load balancers for `Gateway` resources in your cluster.
 
-For more information, see [Customize gateway deployment and features](../networking/gateway-api.mdx#customize-gateway-deployment-and-features).
+For more information, see [Customize gateway deployment and features](../networking/ingress-gateway/customize-ingress-gateway.mdx#customize-gateway-deployment-and-features).
 
 ### HTTP header-based matching for application layer policies
 
@@ -139,6 +139,31 @@ This release adds the following features:
 * [Enhanced observability with built-in dashboards (tech preview)](#enhanced-observability-with-built-in-dashboards-tech-preview)
 * [High availability for hosts and VMs](#high-availability-for-hosts-and-vms)
 
-This Calico Enterprise release is based on [Calico Open Source 3.31](/calico/3.31/release-notes).
+This Calico Enterprise release is based on [Calico Open Source 3.31](https://docs.tigera.io/calico/3.31/release-notes).
+
+#### Compatibility notes
+
+* EKS installations using eBPF on Amazon Linux 2 nodes are not currently supported due to a kernel issue on these systems.
+
+#### Enhancements
+
+* The UI now uses the OIDC code flow when communicating with Dex, which is more secure. This affects all external identity providers (OIDC, LDAP, Openshift).
+* Added support for custom-signed Calico Node certificates on non-cluster hosts.
+* Add Support for IPv4 fragmentation in eBPF mode.
+
+#### Bug fixes
+
+* ***Breaking change***: This release fixes the defaulting behaviour for `Authentication.Spec.OIDC.requestedScopes` such that it now includes `offline_access` as documented in the API. In the unlikely case that your identity provider does not support `offline_access` and if you did previously not specify `requestedScopes`, you should set `requestedScopes` to `[profile, openid, email]`.
+* Fixed an issue that prevented the UI from renewing session tokens when using LDAP.
+* Fixed an issue where the operator would run into access errors if it was installed in a namespace other than `tigera-operator`.
+* Fixed an issue where CSRs need manual deletion if a non-cluster host's CSR was rejected by the certificate signer.
+* When IPAM runs out of address space, Calico will try to reclaim empty blocks from other nodes before giving up.
+* Avoid writing 0 or negative values to prometheus from linseed, leading to recoverable panics in the logs.
+
+#### Known issues
+
+* Installations on EKS using the eBPF dataplane on AmazonLinux 2023, Bottlerocket, or Flatcar are currently unsupported as these installations may may fail due to a recent kernel change on these systems.
+
+#### Upgrading
 
 To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
