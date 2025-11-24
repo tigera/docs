@@ -151,7 +151,12 @@ module.exports = {
           type: 'category',
           label: 'Ingress gateway',
           link: null,
-          items: ['networking/gateway-api', 'networking/ingress-gateway/tutorial-ingress-gateway-canary'],
+          items: [
+            'networking/ingress-gateway/about-calico-ingress-gateway',
+            'networking/ingress-gateway/create-ingress-gateway',
+            'networking/ingress-gateway/customize-ingress-gateway',
+            'networking/ingress-gateway/tutorial-ingress-gateway-canary'
+          ],
         },
         {
           type: 'category',
