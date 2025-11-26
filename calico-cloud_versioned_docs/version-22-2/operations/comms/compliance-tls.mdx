@@ -1,0 +1,35 @@
+---
+description: Add TLS certificate to secure access to compliance.
+---
+
+# Provide TLS certificates for compliance
+
+## Big picture
+
+Provide TLS certificates to secure access to $[prodname] to the compliance components.
+
+## Value
+
+Providing TLS certificates for $[prodname] compliance components is recommended as part of a zero trust network model for security.
+
+## Before you begin...
+
+By default, $[prodname] uses self-signed certificates for its compliance reporting components. To provide TLS certificates,
+get the certificate and key pair for the $[prodname] compliance using any X.509-compatible tool or from your organization's
+Certificate Authority. The certificate must have Common Name or a Subject Alternate Name of `compliance.tigera-compliance.svc`.
+
+## How to
+
+### Add TLS certificates for compliance
+
+To provide TLS certificates for use by $[prodname] compliance components during deployment, you must create a secret before applying the 'custom-resource.yaml' or before creating the Compliance resource. Use the following command to create a secret:
+
+```bash
+kubectl create secret generic tigera-compliance-server-tls -n tigera-operator --from-file=tls.crt=</path/to/certificate-file> --from-file=tls.key=</path/to/key-file>
+```
+
+To update existing certificates, run the following command:
+
+```bash
+kubectl create secret generic tigera-compliance-server-tls -n tigera-operator --from-file=tls.crt=</path/to/certificate-file> --from-file=tls.key=</path/to/key-file> --dry-run -o yaml --save-config | kubectl replace -f -
+```
