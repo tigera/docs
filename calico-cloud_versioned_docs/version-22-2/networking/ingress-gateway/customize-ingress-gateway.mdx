@@ -1,0 +1,245 @@
+---
+description: Learn how to customize your ingress gateway.
+---
+
+# Customizing your ingress gateway
+
+You can specify core configuration elements of your ingress gateway by specifying a configuration in the `GatewayAPI` resource.
+Alternatively, for the complete set of customization options available to Envoy Gateway, you can provide your own Envoy Gateway configuration.
+
+## Customizing an ingress gateway with the `GatewayAPI` resource
+
+Many customizations are available for the `GatewayAPI` resource.
+This resource has fields that allow some aspects of Gateway deployments to be customized.
+For example:
+- `spec.gatewayDeployment.spec.template.metadata` allows arbitrary labels or annotations to be added to the pod that is created to implement each configured Gateway.
+- `spec.gatewayDeployment.spec.template.spec.nodeSelector` allows control over where gateway implementation pods are scheduled.
+- `spec.gatewayDeployment.spec.template.spec.containers` allows control over the memory and CPU that the gateway implementation pods can use.
+- `spec.gatewayControllerDeployment.spec.template.spec.nodeSelector` allows control over where the gateway controller is scheduled.
+- `spec.gatewayDeployment.service.metadata.annotations` allows control over annotations to place on the service that is provisioned for each Gateway; these can be used, for example, to configure the cloud-specific type and properties of the associated external load balancer.
+- `spec.gatewayDeployment.service.spec.*loadbalancer*` allows control over the corresponding `*loadbalancer*` fields in the service that is provisioned for each gateway; in some clouds these can also be used to configure the type and properties of the associated external load balancer.
+- `spec.gatewayClasses` allows the provisioning of multiple `GatewayClass` resources, each with its own set of customizations, instead of the single `tigera-gateway-class` gateway class that the Tigera Operator provisions by default.
+
+For full details, see [the `GatewayAPI` reference documentation](../../reference/installation/api.mdx#gatewayapi).
+
+To make use of these customization fields, use `kubectl edit gatewayapi tigera-secure` to edit the YAML for the `GatewayAPI` resource, and add or modify the customization fields that you require.
+
+### Customization examples
+
+This section contains examples of common customizations.
+
+#### Handle high traffic with multiple gateway pods and adequate memory per-pod
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: tigera-secure
+spec:
+  gatewayClasses:
+    - name: high-traffic-class
+      gatewayDeployment:
+        spec:
+          replicas: 3
+          template:
+            spec:
+              containers:
+                - name: envoy
+                  resources:
+                    requests:
+                      memory: "5GiB"
+EOF
+```
+
+#### Set up external load balancers with cloud-specific features
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: tigera-secure
+spec:
+  gatewayClasses:
+    - name: class-with-aws-load-balancer
+      gatewayService:
+        metadata:
+          annotations:
+            service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+EOF
+```
+
+#### Configure multiple gateway classes
+
+For example, to provision both of the previous custom classes at the same time:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: tigera-secure
+spec:
+  gatewayClasses:
+    - name: high-traffic-class
+      gatewayDeployment:
+        spec:
+          replicas: 3
+          template:
+            spec:
+              containers:
+                - name: envoy
+                  resources:
+                    requests:
+                      memory: "5GiB"
+    - name: class-with-aws-load-balancer
+      gatewayService:
+        metadata:
+          annotations:
+            service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+EOF
+```
+
+## Customizing an ingress gateway with a custom Envoy configuration
+
+For greater control over your ingress gateway deployment, you can create a custom Envoy configuration file using any configuration supported by Envoy Gateway $[envoyVersion].
+Such changes are not validated by the Tigera Operator, and they require a high level of comfort with using Envoy Gateway.
+
+### Customize the Envoy configuration for your ingress gateway
+
+To use a custom Envoy configuration, you can modify and apply a copy of the default Envoy configuration.
+
+1. Save a copy of the default Envoy configuration file:
+   ```bash
+   kubectl get configmap envoy-gateway-config -n tigera-gateway -o yaml > <custom-envoy-configuration>.yaml
+   ```
+   Replace `<custom-envoy-configuration>` with a name for your custom configuration.
+   ```yaml title='Example of a default Envoy configuration'
+   apiVersion: v1
+   data:
+     envoy-gateway.yaml: |
+       apiVersion: gateway.envoyproxy.io/v1alpha1
+       extensionApis:
+         enableBackend: true
+         enableEnvoyPatchPolicy: true
+       gateway:
+         controllerName: gateway.envoyproxy.io/gatewayclass-controller
+       kind: EnvoyGateway
+       logging:
+         level:
+           default: info
+       provider:
+         kubernetes:
+           rateLimitDeployment:
+             container:
+               image: quay.io/calico/envoy-ratelimit:v3.31.1
+             patch:
+               type: StrategicMerge
+               value:
+                 spec:
+                   template:
+                     spec:
+                       containers:
+                       - imagePullPolicy: IfNotPresent
+                         name: envoy-ratelimit
+             pod: {}
+           shutdownManager:
+             image: quay.io/calico/envoy-gateway:v3.31.1
+         type: Kubernetes
+   kind: ConfigMap
+   metadata:
+     creationTimestamp: "2025-11-18T12:34:04Z"
+     labels:
+       app.kubernetes.io/instance: tigera-gateway-api
+       app.kubernetes.io/managed-by: Helm
+       app.kubernetes.io/name: gateway-helm
+       app.kubernetes.io/version: v1.5.0
+       helm.sh/chart: gateway-helm-v1.5.0
+     name: envoy-gateway-config
+     namespace: tigera-gateway
+     ownerReferences:
+     - apiVersion: operator.tigera.io/v1
+       blockOwnerDeletion: true
+       controller: true
+       kind: GatewayAPI
+       name: default
+       uid: ace36d13-3afc-4c52-b894-dc2b322bc36e
+     resourceVersion: "1978"
+     uid: 8135e15d-cc91-4e02-ab97-2910cff56008
+   ```
+1. Remove the following cluster-generated metadata fields:
+   * `creationTimestamp`
+   * `ownerReferences`
+   * `resourceVersion`
+   * `uid`
+1. Change `metadata.name` from the default `envoy-gateway-config` to something else.
+1. Add your customizations to the `data.envoy-gateway.yaml` section.
+
+   ```yaml title='Example of a customized Envoy configuration file with Jaeger integration'
+   apiVersion: v1
+   data:
+     envoy-gateway.yaml: |
+       apiVersion: gateway.envoyproxy.io/v1alpha1
+       extensionApis:
+         enableBackend: true
+         enableEnvoyPatchPolicy: true
+       gateway:
+         controllerName: gateway.envoyproxy.io/gatewayclass-controller
+       kind: EnvoyGateway
+       logging:
+         level:
+           default: info
+       provider:
+         kubernetes:
+           rateLimitDeployment:
+             container:
+               image: quay.io/calico/envoy-ratelimit:v3.31.1
+             patch:
+               type: StrategicMerge
+               value:
+                 spec:
+                   template:
+                     spec:
+                       containers:
+                       - imagePullPolicy: IfNotPresent
+                         name: envoy-ratelimit
+             pod: {}
+           shutdownManager:
+             image: quay.io/calico/envoy-gateway:v3.31.1
+         type: Kubernetes
+       // highlight-start
+       tracing:
+         enabled: true
+         provider:
+           type: Jaeger
+           jaeger:
+             host: jaeger-collector.observability.svc.cluster.local
+             port: 14268
+       // highlight-end
+   kind: ConfigMap
+   metadata:
+     labels:
+       app.kubernetes.io/instance: tigera-gateway-api
+       app.kubernetes.io/managed-by: Helm
+       app.kubernetes.io/name: gateway-helm
+       app.kubernetes.io/version: v1.5.0
+       helm.sh/chart: gateway-helm-v1.5.0
+   // highlight-next-line
+     name: custom-envoy-gateway-config
+     namespace: tigera-gateway
+   ```
+
+1. Apply the customized Envoy configuration:
+   ```bash
+   kubectl apply -f custom-envoy-config.yaml
+   ```
+1. Patch the `GatewayAPI` resource to include the path of the custom Envoy configuration:
+   ```bash
+   kubectl patch gatewayapi tigera-secure --type='json' -p='[{"op": "replace", "path": "/spec/envoyGatewayConfigRef", "value": {"name": "custom-envoy-config", "namespace": "tigera-gateway"}}]'
+   ```
+
+## Additional resources
+
+* `GatewayAPI` spec in the [Installation API documentation](../../reference/installation/api.mdx#gatewayapi)
+* [Envoy Gateway documentation](https://gateway.envoyproxy.io/docs/)
