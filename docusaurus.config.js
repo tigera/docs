@@ -479,7 +479,7 @@ export default async function createAsyncConfig() {
           versions: {
             current: {
               label: 'Next',
-              path: 'next',
+              path: '/',
               banner: 'unreleased',
             },
             '22-1': {
