@@ -128,12 +128,18 @@ If Service contains "projectcalico.org/loadBalancerIPs" annotation and either "p
 ### Manage LoadBalancer kube-controller assignment mode
 
 In certain cases you might not wish for $[prodname] to automatically assign IP addresses to your Service. This can be useful in case you have multiple Service IPAM solutions in your cluster.
-LoadBalancer kube-controller is able to operate in two distinct modes ```AllServices``` in which $[prodname] assigns IP address to each Service in your cluster and ```RequestedServicesOnly``` in which $[prodname] only assigns IP addresses to Service with annotations mentioned above.
+LoadBalancer kube-controller is able to operate in two distinct modes ```AllServices``` in which $[prodname] assigns IP address to each Service in your cluster and ```RequestedServicesOnly``` in which $[prodname] only assigns IP addresses to Service with annotations mentioned above or if `Service.spec.loadBalancerClass` is set to `calico`.
 You can change the mode at any point, but note that switching to ```RequestedServicesOnly``` will unassign any addresses from Services that do not contain the above annotations.
 
 ```bash
 kubectl patch kubecontrollersconfiguration default --patch '{"spec": {"controllers":{"loadBalancer":{"assignIPs": "RequestedServicesOnly"}}}}'
 ```
+
+:::note
+
+LoadBalancer controller considers the `Service.spec.loadBalancerClass`, it will skip assignment for Services where `loadBalancerClass` is set to a value other than `calico`, regardless of the `assignIPs` setting.
+
+:::
 
 ### Additional resources
 
