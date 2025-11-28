@@ -1,6 +1,59 @@
 const ccImageLists = {
+  // curl -0 https://installer.calicocloud.io/manifests/v3.22.0-2.0-7/image-list
+  'v22.1.0 (latest)': `quay.io/tigera/apiserver:v3.22.0-2.0
+quay.io/tigera/compliance-benchmarker:v3.22.0-2.0
+quay.io/tigera/compliance-controller:v3.22.0-2.0
+quay.io/tigera/compliance-reporter:v3.22.0-2.0
+quay.io/tigera/compliance-snapshotter:v3.22.0-2.0
+quay.io/tigera/key-cert-provisioner:v3.22.0-2.0
+quay.io/tigera/deep-packet-inspection:v3.22.0-2.0
+quay.io/tigera/ui-apis:v3.22.0-2.0
+quay.io/tigera/fluentd:v3.22.0-2.0
+quay.io/tigera/fluentd-windows:v3.22.0-2.0
+quay.io/tigera/guardian:v3.22.0-2.0
+quay.io/tigera/intrusion-detection-controller:v3.22.0-2.0
+quay.io/tigera/waf-http-filter:v3.22.0-2.0
+quay.io/tigera/webhooks-processor:v3.22.0-2.0
+quay.io/tigera/manager:v3.22.0-2.0
+quay.io/tigera/packetcapture:v3.22.0-2.0
+quay.io/tigera/policy-recommendation:v3.22.0-2.0
+quay.io/tigera/egress-gateway:v3.22.0-2.0
+quay.io/tigera/l7-collector:v3.22.0-2.0
+quay.io/tigera/gateway-l7-collector:v3.22.0-2.0
+quay.io/tigera/envoy:v3.22.0-2.0
+quay.io/tigera/prometheus:v3.22.0-2.0
+quay.io/tigera/prometheus-service:v3.22.0-2.0
+quay.io/tigera/alertmanager:v3.22.0-2.0
+quay.io/tigera/queryserver:v3.22.0-2.0
+quay.io/tigera/kube-controllers:v3.22.0-2.0
+quay.io/tigera/node:v3.22.0-2.0
+quay.io/tigera/node-windows:v3.22.0-2.0
+quay.io/tigera/typha:v3.22.0-2.0
+quay.io/tigera/cni:v3.22.0-2.0
+quay.io/tigera/cni-windows:v3.22.0-2.0
+quay.io/tigera/es-gateway:v3.22.0-2.0
+quay.io/tigera/linseed:v3.22.0-2.0
+quay.io/tigera/dikastes:v3.22.0-2.0
+quay.io/tigera/l7-admission-controller:v3.22.0-2.0
+quay.io/tigera/pod2daemon-flexvol:v3.22.0-2.0
+quay.io/tigera/csi:v3.22.0-2.0
+quay.io/tigera/node-driver-registrar:v3.22.0-2.0
+quay.io/tigera/envoy-gateway:v3.22.0-2.0
+quay.io/tigera/envoy-proxy:v3.22.0-2.0
+quay.io/tigera/envoy-ratelimit:v3.22.0-2.0
+quay.io/tigera/operator:v1.40.1
+quay.io/tigera/image-assurance-admission-controller:v1.22.9
+quay.io/tigera/image-assurance-operator:v1.22.9
+quay.io/tigera/image-assurance-container-runtime-adaptor:v1.22.9
+quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
+quay.io/tigera/runtime-security-operator:v1.23.2
+quay.io/tigera/skimble:v1.23.2
+quay.io/tigera/cc-core:v0.3.3
+quay.io/tigera/prometheus-operator:v3.22.0-2.0
+quay.io/tigera/prometheus-config-reloader:v3.22.0-2.0
+quay.io/tigera/cc-cni-config-scanner:v0.7`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.0-1.0-11/image-list
-  'v22.0.1 (latest)': `quay.io/tigera/cnx-apiserver:v3.22.0-1.0
+  'v22.0.1': `quay.io/tigera/cnx-apiserver:v3.22.0-1.0
 quay.io/tigera/compliance-benchmarker:v3.22.0-1.0
 quay.io/tigera/compliance-controller:v3.22.0-1.0
 quay.io/tigera/compliance-reporter:v3.22.0-1.0
