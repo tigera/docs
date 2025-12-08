@@ -22,7 +22,7 @@ function NodeRequirementsEnt(props) {
         </li>
         <li>
           <p>
-            Linux kernel 3.10 or later with <Link href='#kernel-dependencies'>required dependencies</Link>. The
+            Linux kernel 5.10 or later with <Link href='#kernel-dependencies'>required dependencies</Link>. The
             following distributions have the required kernel, its dependencies, and are known to work well with{' '}
             {prodname} and {props.orch}.
           </p>
