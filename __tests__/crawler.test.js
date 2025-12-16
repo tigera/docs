@@ -197,7 +197,8 @@ test('Crawl the docs and execute tests', async () => {
     'https://archive.istio.io/v1.15/docs/setup/additional-setup/sidecar-injection/#automatic-sidecar-injection',
     'https://istio.io/v1.15/docs/reference/config/security/peer_authentication/',
     'https://istio.io/v1.15/docs/setup/install/',
-    'https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/'
+    'https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/',
+    'https://calico-docs.mcp.kapa.ai'
   ];
 
   const lc = linkChecker();
