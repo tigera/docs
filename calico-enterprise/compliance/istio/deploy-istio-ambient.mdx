@@ -1,0 +1,154 @@
+---
+description: This page explains how to deploy Calico's bundled version of Istio in ambient mode.
+---
+
+# Deploy Istio Ambient Mode on your cluster
+
+You can deploy Calico's bundled version of Istio in ambient mode to provide mTLS encryption to your workloads.
+
+## Limitations
+
+* [Application layer network policies](../../network-policy/application-layer-policies/alp.mdx) are not compatible with the Istio service mesh.
+* Istio Ambient Mode does not work together with [workload-based web application firewalls](../../threat/web-application-firewall.mdx).
+* The service mesh is not supported for use on clusters that are also part of a [cluster mesh](../../multicluster/index.mdx).
+* Destination ports are preserved only when Istio is deployed without Waypoint.
+  If you deploy Waypoint, all traffic through Waypoint will show port 15008 as its destination port.
+* Connect-time load balancing with the eBPF data plane is not compatible with Waypoint.
+
+## Prerequisites
+
+* $[prodname] is installed and managed by the Tigera Operator.
+
+## Install Istio in ambient mode on your cluster
+
+You can create an Istio service mesh in ambient mode by creating the `Istio` custom resource.
+
+* To install Istio in ambient mode, apply the `Istio` custom resource to your cluster:
+
+   ```bash
+   cat <<EOF | kubectl apply -f -
+   apiVersion: operator.tigera.io/v1
+   kind: Istio
+   metadata:
+     name: default
+   EOF
+   ```
+
+   :::note
+   To customize resource requirements for your Istio deployment, see the options available in the [installation API documentation](../../reference/installation/api.mdx).
+   :::
+
+   To verify the installation:
+
+   ```bash
+   kubectl get tigerastatus
+   ```
+
+   ```shell title='Example output'
+   NAME                          AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver                     True        False         False      9m59s
+   calico                        True        False         False      9m4s
+   intrusion-detection           True        False         False      5m39s
+   ippools                       True        False         False      10m
+   // highlight-next-line
+   istio                         True        False         False      19s
+   log-collector                 True        False         False      8m34s
+   log-storage                   True        False         False      10m
+   log-storage-access            True        False         False      4m24s
+   log-storage-dashboards        True        False         False      4m58s
+   log-storage-elastic           True        False         False      5m4s
+   log-storage-esmetrics         True        False         False      4m54s
+   log-storage-kubecontrollers   True        False         False      5m9s
+   log-storage-secrets           True        False         False      10m
+   manager                       True        False         False      8m24s
+   monitor                       True        False         False      9m44s
+   policy-recommendation         True        False         False      9m24s
+   tiers                         True        False         False      9m44s
+   ```
+   Now you can add your workloads to the Istio service mesh.
+
+## Add a workload to the Istio service mesh
+
+You can add workloads to the mesh by labeling them.
+Communication between labelled namespaces and services goes through the mesh and uses mTLS encryption.
+
+:::warning
+
+Don't label $[prodname] resources to add them to the service mesh.
+Doing this can cause interruptions and failure to your cluster network.
+
+If you want to secure $[prodname] components, see [Secure Calico component communications](../../operations/comms/index.mdx).
+:::
+
+1. To add workloads to your Istio service mesh, add the `istio.io/dataplane-mode=ambient` label to a service or namespace resource:
+
+   ```bash title='Adding a namespace to the Istio service mesh'
+   kubectl label namespace <namespace> istio.io/dataplane-mode=ambient
+   ```
+   Replace `<namespace>` with the namespace you want to include in the mesh.
+
+   ```bash title='Adding a service to the Istio service mesh'
+   kubectl label service --namespace=<namespace> <service> istio.io/dataplane-mode=ambient
+   ```
+   Replace the following:
+   * `<service>`: The name of the service you want to include in the mesh.
+   * `<namespace>`: The namespace your service is in.
+
+## Removing Istio
+
+If you want to remove Istio, first remove the labels you applied to services and namespaces.
+When that's done, you can delete the `Istio` custom resource.
+
+1. Remove the label from namespaces and services by running the following commands:
+
+   ```bash
+   kubectl label namespaces --all istio.io/dataplane-mode=ambient-
+   kubectl label services --all --all-namespaces istio.io/dataplane-mode=ambient-
+   ```
+1. Remove the `Istio` custom resource:
+
+   ```bash
+   kubectl delete istio.operator.tigera.io default
+   ```
+
+## Troubleshooting commands
+
+Check whether Istio pods are deployed:
+
+```bash
+kubectl get pods -n calico-system | grep 'istio\|ztunnel'
+```
+
+Check whether Istio CRDs are deployed:
+
+```bash
+kubectl get crd | grep istio
+```
+
+Check which services and namespaces are in the mesh:
+
+* Requires [istioctl](https://istio.io/latest/docs/ops/diagnostic-tools/istioctl/).
+
+```bash
+istioctl ztunnel-config workloads -n calico-system
+```
+
+Check for errors logged by the zTunnel component:
+
+```bash
+ZTUNNEL_PODS=$(kubectl get pod -n calico-system \
+  -l app.kubernetes.io/name=ztunnel \
+  -o jsonpath='{.items[*].metadata.name}')
+
+for P in $ZTUNNEL_PODS; do
+  echo "--- Checking logs for pod: $P ---"
+  kubectl logs $P -n calico-system 2>/dev/null | \
+    grep -i error | \
+    grep -i app1
+done
+```
+
+## Additional resources
+
+* [Overview of Istio ambient mode](https://istio.io/latest/docs/ambient/overview/).
+* [Configuration options](../../reference/installation/api).
