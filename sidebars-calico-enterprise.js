@@ -463,6 +463,15 @@ module.exports = {
       label: 'Compliance and security',
       link: { type: 'doc', id: 'compliance/index' },
       items: [
+        {
+          type: 'category',
+          label: 'Istio Ambient Mode',
+          link: null,
+          items: [
+            'compliance/istio/about-istio-ambient',
+            'compliance/istio/deploy-istio-ambient',
+          ],
+        },
         'compliance/enable-compliance',
         'compliance/overview',
         'compliance/compliance-reports-cis',
