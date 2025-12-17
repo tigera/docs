@@ -486,10 +486,6 @@ export default async function createAsyncConfig() {
               path: '/',
               banner: 'none',
             },
-            '22-1': {
-              path: '/',
-              banner: 'none',
-            },
           },
           sidebarPath: './sidebars-calico-cloud.js',
           beforeDefaultRemarkPlugins: [variablesPlugin],
