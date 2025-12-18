@@ -27,18 +27,17 @@ You can enforce $[prodname] network policy for Istio application layer policy us
 **Supported Istio versions**
 
 - **Istio v1.28.1** (tested and verified - recommended)
-- **Istio v1.18+** (should work with the IstioOperator approach)
-- **Legacy: Istio v1.15.2, v1.10.2** (use ConfigMap patching method - see [Legacy Installation](#legacy-installation-configmap-patching))
+- **Istio v1.22+** (minimum required for Kubernetes native sidecar support)
 
 :::note
 
-Istio v1.9.x and lower are not supported.
+This guide requires Istio 1.22+ with Kubernetes native sidecars. Traditional sidecar injection is not supported. For legacy Istio versions (v1.15.2, v1.10.2), see [Legacy Installation](#legacy-installation-configmap-patching).
 
 :::
 
-**Recommended Kubernetes versions**
+**Required Kubernetes versions**
 
-- **Kubernetes v1.29+**: Required for native sidecar support used by Istio 1.22+
+- **Kubernetes v1.29+**: Required for native sidecar support
 
 ## How to
 
@@ -74,28 +73,16 @@ calicoctl patch FelixConfiguration default --patch \
 kubectl patch installation default --type=merge -p '{"spec": {"flexVolumePath": "None"}}'
 ```
 
-### 2. Install $[prodname] CSI driver
-
-The CSI driver mounts the Felix Policy Sync socket into Dikastes containers.
-
-```bash
-kubectl apply -f $[manifestsUrl]/manifests/csi-driver.yaml
-```
-
-Verify the CSI driver is running:
-
-```bash
-kubectl get pods -n calico-system -l k8s-app=csi-node-driver
-```
-
-### 3. Install Istio
+### 2. Install Istio
 
 Follow the [upstream Istio installation documentation](https://istio.io/latest/docs/setup/getting-started/) to install Istio if not already installed.
 
 For testing, you can use:
 
 ```bash
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.1 sh -
+curl -L https://istio.io/downloadIstio -o install-istio.sh
+# Review the script before running it, then install:
+ISTIO_VERSION=1.28.1 sh install-istio.sh
 cd istio-1.28.1
 export PATH=$PWD/bin:$PATH
 ```
@@ -106,7 +93,7 @@ Do not run `istioctl install` yet if you want to configure Dikastes templates du
 
 :::
 
-### 4. Configure Istio with Dikastes injection templates
+### 3. Configure Istio with Dikastes injection templates
 
 #### Option A: IstioOperator Approach (Recommended)
 
@@ -160,8 +147,6 @@ spec:
                 name: dikastes-sock
               - mountPath: /var/run/felix
                 name: felix-sync
-            # Patch istio-proxy to mount dikastes socket
-            # This is REQUIRED for Envoy to access the Dikastes Unix socket
             initContainers:
             - name: istio-proxy
               volumeMounts:
@@ -211,7 +196,6 @@ spec:
                 name: dikastes-sock
               - mountPath: /var/run/felix
                 name: felix-sync
-            # Patch istio-proxy to mount dikastes socket
             initContainers:
             - name: istio-proxy
               volumeMounts:
@@ -254,7 +238,7 @@ istioctl manifest generate -f istio-operator-dikastes.yaml > istio-with-dikastes
 kubectl apply -f istio-with-dikastes.yaml
 ```
 
-### 5. Add Envoy authorization services
+### 4. Add Envoy authorization services
 
 Configure Istio's Envoy proxies to use Dikastes as an external authorization service.
 
@@ -269,7 +253,7 @@ This manifest creates:
 - **DestinationRule**: Disables mTLS for local socket communication
 - **EnvoyFilter**: Configures Envoy's `ext_authz` filter to call Dikastes
 
-### 6. Enable Istio injection for namespaces
+### 5. Enable Istio injection for namespaces
 
 Label the namespace where you want to deploy Istio-enabled workloads:
 
@@ -277,7 +261,7 @@ Label the namespace where you want to deploy Istio-enabled workloads:
 kubectl label namespace <your-namespace> istio-injection=enabled
 ```
 
-### 7. Annotate pods to inject Dikastes
+### 6. Annotate pods to inject Dikastes
 
 To inject the Dikastes sidecar into your pods, add the following annotation to your pod template:
 
@@ -309,7 +293,7 @@ The key difference:
 - `dikastes`: Runs as non-root user (999) - for application workloads
 - `dikastes-gateway`: Runs as root (0) - for ingress/egress gateways
 
-### 8. Verify Dikastes injection
+### 7. Verify Dikastes injection
 
 After deploying a workload with the annotation:
 
@@ -338,7 +322,7 @@ Successfully connected to Policy Sync server
 Starting synchronization with Policy Sync server
 ```
 
-### 9. (Optional) Enable strict mTLS
+### 8. (Optional) Enable strict mTLS
 
 For enhanced security, enable strict mutual TLS between services:
 
@@ -380,13 +364,13 @@ HTTP Request → Envoy → ext_authz → Dikastes → Felix Policy Sync API → 
 
 ### Kubernetes native sidecars
 
-Istio 1.22+ (including 1.28) uses Kubernetes 1.29+ native sidecar support. The `istio-proxy` runs as an init container with `restartPolicy: Always`, which provides:
+This integration requires Kubernetes 1.29+ native sidecar support with Istio 1.22+. The `istio-proxy` runs as an init container with `restartPolicy: Always`, which provides:
 
 - Guaranteed startup ordering (sidecar starts before application)
 - Automatic restart on failure
 - Proper lifecycle management
 
-This is why you'll see the istio-proxy in init containers but the pod shows 3/3 containers running.
+When you inspect pods, you'll see the istio-proxy in init containers but the pod status will show 3/3 containers running due to the native sidecar's `restartPolicy: Always`.
 
 ## Create $[prodname] network policies
 
@@ -429,10 +413,10 @@ Without explicit allow policies, Dikastes enforces a **default-deny** posture fo
 **Check namespace label**:
 
 ```bash
-kubectl get namespace <your-namespace> -o yaml | grep istio-injection
+kubectl get namespace <your-namespace> -o jsonpath='{.metadata.labels.istio-injection}'
 ```
 
-Should show: `istio-injection: enabled`
+Should show: `enabled`
 
 **Check pod annotation**:
 
@@ -445,7 +429,7 @@ Should show: `inject.istio.io/templates: sidecar,dikastes`
 **Verify templates in ConfigMap**:
 
 ```bash
-kubectl get configmap -n istio-system istio-sidecar-injector -o yaml | grep -c "dikastes:"
+kubectl get configmap -n istio-system istio-sidecar-injector -o jsonpath='{.data.values}' | grep -o "dikastes:" | wc -l
 ```
 
 Should return `2` (one for each template).
@@ -464,13 +448,13 @@ kubectl describe pod <pod-name> -n <your-namespace>
 kubectl logs <pod-name> -n <your-namespace> -c dikastes
 ```
 
-**Check CSI driver**:
+**Check CSI driver** (automatically installed with $[prodname]):
 
 ```bash
 kubectl get pods -n calico-system -l k8s-app=csi-node-driver
 ```
 
-All CSI driver pods should be `Running`.
+All CSI driver pods should be `Running`. The CSI driver is required for Dikastes to access the Felix Policy Sync API.
 
 **Verify Felix Policy Sync API**:
 
@@ -505,7 +489,11 @@ detected Calico CNI with 'bpfConnectTimeLoadBalancing=TCP';
 this must be set to 'bpfConnectTimeLoadBalancing=Disabled'
 ```
 
-This may affect connection-level load balancing but does not prevent basic functionality. For production deployments, consider adjusting the $[prodname] configuration as recommended.
+This may affect connection-level load balancing but does not prevent basic functionality. For production deployments, disable BPF connect-time load balancing:
+
+```bash
+kubectl patch felixconfiguration default --type merge -p '{"spec":{"bpfConnectTimeLoadBalancing":"Disabled"}}'
+```
 
 ## Legacy Installation (ConfigMap Patching)
 
