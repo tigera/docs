@@ -343,35 +343,6 @@ Apply:
 kubectl apply -f <filename>.yaml
 ```
 
-## Architecture
-
-### How it works
-
-When a request flows through an Istio-enabled pod with Dikastes:
-
-1. **Istio Proxy (Envoy)** intercepts the HTTP request
-2. **ext_authz filter** sends an authorization check to Dikastes via Unix socket (`/var/run/dikastes/dikastes.sock`)
-3. **Dikastes** queries Felix for policy decisions via the CSI-mounted socket (`/var/run/felix/nodeagent/socket`)
-4. **Felix** evaluates $[prodname] network policies and returns allow/deny
-5. **Dikastes** responds to Envoy with the authorization decision
-6. **Envoy** allows or blocks the request based on the decision
-
-### Communication paths
-
-```
-HTTP Request → Envoy → ext_authz → Dikastes → Felix Policy Sync API → Policy Decision
-```
-
-### Kubernetes native sidecars
-
-This integration requires Kubernetes 1.29+ native sidecar support with Istio 1.22+. The `istio-proxy` runs as an init container with `restartPolicy: Always`, which provides:
-
-- Guaranteed startup ordering (sidecar starts before application)
-- Automatic restart on failure
-- Proper lifecycle management
-
-When you inspect pods, you'll see the istio-proxy in init containers but the pod status will show 3/3 containers running due to the native sidecar's `restartPolicy: Always`.
-
 ## Create Calico network policies
 
 With Dikastes deployed, you can now create $[prodname] network policies to enforce Layer 7 access control.
