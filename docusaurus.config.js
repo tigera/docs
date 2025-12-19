@@ -30,11 +30,11 @@ export default async function createAsyncConfig() {
     url: 'https://docs.tigera.io',
     baseUrl: '/',
     onBrokenAnchors: 'ignore',
-    onBrokenLinks: 'throw',
+    onBrokenLinks: 'warn',
     favicon: 'img/favicon.png',
     markdown: {
       hooks: {
-        onBrokenMarkdownLinks: 'throw',
+        onBrokenMarkdownLinks: 'warn',
       }
     },
 
@@ -109,10 +109,10 @@ export default async function createAsyncConfig() {
         },
         announcementBar: {
           id: "calico_ebpf",
-          content: 'Calico 3.30+ users: <a href="https://calicocloud.io">Sign up for Calico Cloud Free today!</a>',
+          content: 'Documentation archive for Calico Enterprise 3.19. This version is no longer maintained. For the latest documentation, go to <a href="https://docs.tigera.io">https://docs.tigera.io</a>.',
           backgroundColor: "#FCE181",
           textColor: "#000",
-          isCloseable: true
+          isCloseable: false,
         },
         navbar: {
           logo: {
@@ -125,20 +125,6 @@ export default async function createAsyncConfig() {
               label: 'Documentation',
               className: 'documentation-dropdown',
               items: [
-                {
-                  label: 'Calico Open Source',
-                  type: 'docSidebar',
-                  sidebarId: 'calicoSidebar',
-                  docsPluginId: 'calico',
-                  className: 'navbar-product-link_calico',
-                },
-                {
-                  label: 'Calico Cloud',
-                  type: 'docSidebar',
-                  sidebarId: 'calicoCloudSidebar',
-                  docsPluginId: 'calico-cloud',
-                  className: 'navbar-product-link_calico-cloud',
-                },
                 {
                   label: 'Calico Enterprise',
                   type: 'docSidebar',
@@ -391,49 +377,11 @@ export default async function createAsyncConfig() {
         '@docusaurus/plugin-content-docs',
         /** @type {import('@docusaurus/plugin-content-docs').Options} */
         {
-          id: 'calico',
-          path: 'calico',
-          routeBasePath: 'calico',
-          editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.31','3.30','3.29',],
-          lastVersion: '3.31',
-          versions: {
-            current: {
-              label: 'Next',
-              path: 'next',
-              banner: 'unreleased',
-            },
-            '3.31': {
-              label: '3.31 (latest)',
-              path: 'latest',
-              banner: 'none',
-            },
-            '3.30': {
-              label: '3.30',
-              path: '3.30',
-              banner: 'none',
-            },
-            3.29: {
-              label: '3.29',
-              path: '3.29',
-              banner: 'none',
-            },
-          },
-          sidebarPath: './sidebars-calico.js',
-          beforeDefaultRemarkPlugins: [variablesPlugin],
-          editUrl: generateEditUrl,
-        },
-      ],
-      [
-        '@docusaurus/plugin-content-docs',
-        /** @type {import('@docusaurus/plugin-content-docs').Options} */
-        {
           id: 'calico-enterprise',
           path: 'calico-enterprise',
           routeBasePath: 'calico-enterprise',
           editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.22-2','3.21-2', '3.20-2', '3.19-2'],
-          lastVersion: '3.21-2',
+          onlyIncludeVersions: ['3.19-2'],
           versions: {
             current: {
               label: 'Next',
@@ -458,36 +406,10 @@ export default async function createAsyncConfig() {
             '3.19-2': {
               label: '3.19',
               path: '3.19',
-              banner: 'none',
+              banner: 'unmaintained',
             },
           },
           sidebarPath: './sidebars-calico-enterprise.js',
-          beforeDefaultRemarkPlugins: [variablesPlugin],
-          editUrl: generateEditUrl,
-        },
-      ],
-      [
-        '@docusaurus/plugin-content-docs',
-        /** @type {import('@docusaurus/plugin-content-docs').Options} */
-        {
-          id: 'calico-cloud',
-          path: 'calico-cloud',
-          routeBasePath: 'calico-cloud',
-          editCurrentVersion: true,
-          //To see builds for unreleased versions, remove comments in the next line.
-          onlyIncludeVersions: [...nextVersion, '22-2'],
-          versions: {
-            current: {
-              label: 'Next',
-              path: '/',
-              banner: 'unreleased',
-            },
-            '22-2': {
-              path: '/',
-              banner: 'none',
-            },
-          },
-          sidebarPath: './sidebars-calico-cloud.js',
           beforeDefaultRemarkPlugins: [variablesPlugin],
           editUrl: generateEditUrl,
         },
