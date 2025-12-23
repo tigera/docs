@@ -30,6 +30,13 @@ This release adds customization options for specifying external load balancers f
 
 For more information, see [Customize gateway deployment and features](../networking/ingress-gateway/customize-ingress-gateway.mdx#customize-gateway-deployment-and-features).
 
+### Istio Ambient Mode (tech preview)
+
+Calico now provides a bundled version of Istio in ambient mode, a sidecarless architecture that delivers robust mTLS encryption and service mesh security while significantly reducing resource consumption and operational overhead.
+This implementation, managed by the Tigera Operator, features an enhanced zTunnel proxy that preserves original destination ports to ensure existing Calico and Kubernetes network policies continue to function seamlessly without requiring rewrites.
+
+For more information, see [Istio Ambient Mode](../compliance/istio/about-istio-ambient.mdx).
+
 ### HTTP header-based matching for application layer policies
 
 This release includes support for HTTP header-based matching for application layer policies.
@@ -167,3 +174,37 @@ This Calico Enterprise release is based on [Calico Open Source 3.31](https://doc
 #### Upgrading
 
 To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
+
+### Calico Enterprise 3.22.0-3.0 (early preview)
+
+December 23, 2025
+
+Calico Enterprise 3.22.0-3.0 is now available as an early preview release.
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+
+This release adds the following features:
+* [Istio Ambient Mode](#istio-ambient-mode-tech-preview)
+
+#### Enhancements
+
+* We've improved the Service Graph for clusters that have a very high volume of flows. When a high volume of flows is detected for a time range, a new namespaced-focused experience provides quicker access to insights from the graph.
+We've also added more feedback into the UI to keep you informed on the progress of graph computation.
+* The namespace-focused experience will now also highlight namespaces that are estimated to take a long time to load with an orange indicator.
+* We now support installation of $[prodname] on MKE 4k.
+* ebpf: Added a new Felix configuration option `CgroupV2Path` to set a custom cgroupV2 mount path, improving compatibility with immutable OSes like Talos Linux.
+
+#### Bug fixes
+
+* eBPF - Fixed an issue with map operations for older kernels.
+
+#### Known issues
+
+* If you use the nftables data plane with L7 features (WAF or L7 logging) on a platform without legacy iptables support, such as OpenShift 4.20, these capabilities will fail to initialize.
+  This occurs because some Calico images are missing the required nftables binaries and incorrectly rely on legacy iptables modules that have been removed from newer operating systems.
+  As a workaround, ensure your host platform has legacy iptables kernel modules installed and loaded until a full fix is delivered in an upcoming patch release.
+* Kibana attempts external API calls that are blocked by network policies related to Elastic Fleet. Errors will show in the logs. There is no further impact.
+
+#### Upgrading
+To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
+
