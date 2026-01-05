@@ -196,7 +196,8 @@ test('Crawl the docs and execute tests', async () => {
     'https://docs.openstack.org/kolla-ansible/rocky/user/multi-regions.html',
     'https://archive.istio.io/v1.15/docs/setup/additional-setup/sidecar-injection/#automatic-sidecar-injection',
     'https://istio.io/v1.15/docs/reference/config/security/peer_authentication/',
-    'https://istio.io/v1.15/docs/setup/install/'
+    'https://istio.io/v1.15/docs/setup/install/',
+    'https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/'
   ];
 
   const lc = linkChecker();
