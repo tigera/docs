@@ -1,0 +1,70 @@
+---
+description: Learn how to use Policy Activity Logs to gain visibility into policy and rule activity.
+---
+
+# Policy Activity Logs
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## Big picture
+
+Policy Activity Logs provide granular visibility into network policy behavior within your cluster.
+
+## Value
+
+Track exactly which rules are evaluated and triggered, offering policy-centric context that complements standard Flow Logs.
+
+## How it Works
+
+- **Collection**: The Calico Enterprise dataplane automatically monitors policy rule evaluations across your cluster.
+- **Storage**: These events are securely forwarded and indexed in your Elasticsearch cluster for analysis.
+- **Analysis**: You can query the logs to audit network policy and rules and validate policy enforcement.
+
+## Configuration
+
+Policy Activity Logs are enabled by default.
+
+### Disabling the Feature
+
+To disable Policy Activity Logs, set the following environment variables:
+
+- **Felix**: `FELIX_PolicyActivityLogsFileEnabled: false`
+- **Fluentd**: `DISABLE_ES_POLICY_ACTIVITY_LOG: true`
+
+## Accessing the Data
+
+You can access Policy Activity Logs by querying Elasticsearch directly or visualizing them in Kibana (if configured).
+
+### Log Structure
+
+Each log entry contains the following key fields:
+
+| Field             | Description                                                                                  | Example                          |
+| ----------------- | -------------------------------------------------------------------------------------------- | -------------------------------- |
+| `policy.kind`     | The type of the policy (e.g., `NetworkPolicy`, `GlobalNetworkPolicy`).                       | `NetworkPolicy`                  |
+| `policy.namespace`| The namespace where the policy is defined.                                                   | `my-test`                        |
+| `policy.name`     | The unique name of the policy.                                                               | `my-tier.my-networkpolicy`       |
+| `rule`            | The identifier for the specific rule that was triggered, formatted as `{generation}-{direction}-{rule_index}`. | `2-ingress-4`  |
+| `cluster`         | The name of the cluster where the activity occurred.                                         | `cluster`                        |
+| `last_evaluated`  | The timestamp when the rule was last evaluated.                                              | `2025-12-01T23:09:28.384714204Z` |
+
+### Sample Query in Elasticsearch
+
+To find policies unused for 90 days:
+
+```
+GET tigera_secure_ee_policy_activity*/_search
+{
+  "query": {
+    "range": {
+      "last_evaluated": {
+        "lte": "now-90d"
+      }
+    }
+  }
+}
+```
