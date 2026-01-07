@@ -41,35 +41,36 @@ Each log entry contains the following key fields:
 | `cluster`         | The name of the cluster where the activity occurred.                                         | `cluster`                        |
 | `last_evaluated`  | The timestamp when the rule was last evaluated.                                              | `2025-12-01T23:09:28.384714204Z` |
 
+
+:::note
+
+The generation number in rule identifier represents the specific version of the policy at the time of evaluation.
+It increments whenever the policy is updated, allowing you to correlate activity logs with the exact policy configuration that was active when the traffic occurred.
+
+:::
+
 Supported values for `policy.kind` include:
 
 | Kind                                   | Description                                                                                                            |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `NetworkPolicy`                        | A standard namespaced Calico NetworkPolicy.                                                                            |
 | `GlobalNetworkPolicy`                  | A global Calico NetworkPolicy that applies to resources across all namespaces.                                         |
-| `KubernetesNetworkPolicy`              | A standard, namespaced Kubernetes NetworkPolicy.                                                                       |
+| `KubernetesNetworkPolicy`              | A standard Kubernetes NetworkPolicy.                                                                                   |
 | `KubernetesAdminNetworkPolicy`         | A Kubernetes AdminNetworkPolicy (ANP), allowing cluster administrators to secure the cluster with high-priority rules. |
 | `KubernetesBaselineAdminNetworkPolicy` | A Kubernetes BaselineAdminNetworkPolicy (BANP), establishing a default security baseline for the entire cluster.       |
 | `StagedNetworkPolicy`                  | A Calico NetworkPolicy in "Staged" mode (logs activity without enforcement).                                           |
 | `StagedGlobalNetworkPolicy`            | A Calico GlobalNetworkPolicy in "Staged" mode (logs activity without enforcement).                                     |
 | `StagedKubernetesNetworkPolicy`        | A Kubernetes NetworkPolicy that is being previewed in "Staged" mode.                                                   |
 
-:::note
-
-The generation number represents the specific version of the policy at the time of evaluation.
-It increments whenever the policy is updated, allowing you to correlate activity logs with the exact policy configuration that was active when the traffic occurred.
-
-:::
-
-### Identifying unused policies and rules
+### Examples to identify unused policies and rules
 
 Policy Activity Logs record only policies and rules that have been evaluated by actual network traffic. To identify unused policies or rules in your cluster, follow these steps:
 
-#### Find recently active policies or rules
+#### Find recently active policies or rules within a period
    
 Use the following Elasticsearch query to list all policies that have been evaluated in the last 90 days:
 
-```json
+```
 POST /tigera_secure_ee_policy_activity*/_search
 {
   "size": 0,
@@ -104,7 +105,7 @@ POST /tigera_secure_ee_policy_activity*/_search
 
 To see which rules have been triggered in the last 90 days, use this query:
 
-```json
+```
 POST /tigera_secure_ee_policy_activity*/_search
 {
   "size": 0,
@@ -120,7 +121,7 @@ POST /tigera_secure_ee_policy_activity*/_search
 
 #### Compare with your all network policies and rules
 - Export your current policy and rule inventory using `kubectl get ...` commands.
-- Compare the exported cluster with the list of active policies or rules returned by the queries above.
-- Any policies or rules present in your cluster but missing from the activity logs have not been evaluated by traffic in the last 90 days and may be considered unused.
+- Compare the exported policies/rules with the list of active policies/rules returned by the queries above.
+- Any policies/rules present in your cluster but missing from the activity logs have not been evaluated by traffic in the last 90 days and may be considered unused.
 
 > **Tip:** Regularly reviewing unused policies and rules can help you maintain a clean and secure cluster by removing obsolete or unnecessary resources.
