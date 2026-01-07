@@ -20,7 +20,7 @@ Track exactly which rules are evaluated and triggered, offering policy-centric c
 
 ## How it works
 
-- **Collection**: The Calico Enterprise automatically monitors policy and rule evaluations across your cluster.
+- **Collection**: Calico Enterprise automatically monitors policy and rule evaluations across your cluster.
 - **Storage**: These events are securely forwarded and indexed in your Elasticsearch cluster for analysis.
 - **Analysis**: You can query the logs to audit network policy and rules and validate policy enforcement history.
 
@@ -43,15 +43,50 @@ Each log entry contains the following key fields:
 
 ### Sample query in Elasticsearch
 
-To find policies unused for 90 days:
+To find policies used for 90 days:
 
 ```
-GET tigera_secure_ee_policy_activity*/_search
+POST /tigera_secure_ee_policy_activity*/_search
 {
+  "size": 0,
   "query": {
     "range": {
       "last_evaluated": {
-        "lte": "now-90d"
+        "gte": "now-90d"
+      }
+    }
+  },
+  "aggs": {
+    "policy_summary": {
+      "composite": {
+        "sources": [
+          { "kind": { "terms": { "field": "policy.kind" } } },
+          { "namespace": { "terms": { "field": "policy.namespace" } } },
+          { "name": { "terms": { "field": "policy.name" } } }
+        ]
+      },
+      "aggs": {
+        "latest_activity": {
+          "max": {
+            "field": "last_evaluated"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+To find rules used for 90 days:
+
+```
+POST /tigera_secure_ee_policy_activity*/_search
+{
+  "size": 0,
+  "query": {
+    "range": {
+      "last_evaluated": {
+        "gte": "now-90d"
       }
     }
   }
