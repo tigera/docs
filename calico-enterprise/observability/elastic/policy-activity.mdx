@@ -1,5 +1,5 @@
 ---
-description: Learn how to use Policy Activity Logs to gain visibility into policy and rule activity.
+description: Learn how to use policy activity logs to gain visibility into policy and rule activity.
 ---
 
 # Policy activity logs
@@ -10,31 +10,19 @@ This feature is in tech preview. Tech preview features may be subject to signifi
 
 :::
 
-## Big picture
+## About policy activity logs
 
-Policy Activity Logs provide granular visibility into network policy behavior within your cluster.
+Policy activity logs provide granular visibility into network policy behavior within your cluster. By tracking exactly which rules are evaluated and triggered, these logs offer policy-centric context that complements standard Flow Logs.
 
-## Value
+Regularly reviewing policy activity, especially unused policies and rules, helps you maintain a clean and secure cluster by identifying and removing obsolete resources.
 
-Track exactly which rules are evaluated and triggered, offering policy-centric context that complements standard Flow Logs.
-
-## How it works
-
-- **Collection**: Calico Enterprise automatically monitors policy and rule evaluations across your cluster.
-- **Storage**: These events are securely forwarded and indexed in your Elasticsearch cluster for analysis.
-- **Analysis**: You can query the logs to audit network policy and rules and validate policy enforcement history.
-
-## Accessing the data
-
-You can access Policy Activity Logs by querying Elasticsearch directly or visualizing them in Kibana (if configured).
-
-### Log structure
+## Log structure / Data types
 
 Each log entry contains the following key fields:
 
 | Field             | Description                                                                                  | Example                          |
 | ----------------- | -------------------------------------------------------------------------------------------- | -------------------------------- |
-| `policy.kind`     | The type of the policy. Possible values: `NetworkPolicy`, `GlobalNetworkPolicy`, `KubernetesNetworkPolicy`, `KubernetesAdminNetworkPolicy`, `KubernetesBaselineAdminNetworkPolicy`, `StagedNetworkPolicy`, `StagedGlobalNetworkPolicy`, `StagedKubernetesNetworkPolicy`                  | `NetworkPolicy`                  |
+| `policy.kind`     | The type of the policy. Possible values: `NetworkPolicy`, `GlobalNetworkPolicy`, `KubernetesNetworkPolicy`, `KubernetesAdminNetworkPolicy`, `KubernetesBaselineAdminNetworkPolicy`, `StagedNetworkPolicy`, `StagedGlobalNetworkPolicy`, `StagedKubernetesNetworkPolicy` | `NetworkPolicy` |
 | `policy.namespace`| The namespace where the policy is defined.                                                   | `my-test`                        |
 | `policy.name`     | The unique name of the policy.                                                               | `my-tier.my-networkpolicy`       |
 | `rule`            | The identifier for the specific rule that was triggered, formatted as `{generation}-{direction}-{rule_index}`. | `2-ingress-4`  |
@@ -44,29 +32,16 @@ Each log entry contains the following key fields:
 
 :::note
 
-The generation number in rule identifier represents the specific version of the policy at the time of evaluation.
+The generation number in the `rule` identifier (e.g., the `2` in `2-ingress-4`) reflects the specific version of the policy at the time of evaluation.
 It increments whenever the spec of the policy is updated, allowing you to correlate activity logs with the exact policy configuration that was active when the traffic occurred.
 
 :::
 
-Supported values for `policy.kind` include:
+## Find unused policies
 
-| Kind                                   | Description                                                                                                            |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `NetworkPolicy`                        | A standard namespaced Calico NetworkPolicy.                                                                            |
-| `GlobalNetworkPolicy`                  | A global Calico NetworkPolicy that applies to resources across all namespaces.                                         |
-| `KubernetesNetworkPolicy`              | A standard Kubernetes NetworkPolicy.                                                                                   |
-| `KubernetesAdminNetworkPolicy`         | A Kubernetes AdminNetworkPolicy (ANP), allowing cluster administrators to secure the cluster with high-priority rules. |
-| `KubernetesBaselineAdminNetworkPolicy` | A Kubernetes BaselineAdminNetworkPolicy (BANP), establishing a default security baseline for the entire cluster.       |
-| `StagedNetworkPolicy`                  | A Calico NetworkPolicy in "Staged" mode (logs activity without enforcement).                                           |
-| `StagedGlobalNetworkPolicy`            | A Calico GlobalNetworkPolicy in "Staged" mode (logs activity without enforcement).                                     |
-| `StagedKubernetesNetworkPolicy`        | A Kubernetes NetworkPolicy that is being previewed in "Staged" mode.                                                   |
+Policy activity logs record only policies and rules that have been evaluated by actual network traffic. To identify unused policies or rules in your cluster, follow these steps:
 
-### Examples to identify unused policies and rules
-
-Policy Activity Logs record only policies and rules that have been evaluated by actual network traffic. To identify unused policies or rules in your cluster, follow these steps:
-
-#### Find policies active within a recent period
+### Step 1: Retrieve active policies/rules
    
 Use the following Elasticsearch query to list all policies that have been evaluated in the last 90 days:
 
@@ -103,7 +78,6 @@ POST /tigera_secure_ee_policy_activity*/_search
 }
 ```
 
-#### Find rules active within a recent period
 To see which rules have been triggered in the last 90 days, use this query:
 
 ```
@@ -120,9 +94,13 @@ POST /tigera_secure_ee_policy_activity*/_search
 }
 ```
 
-#### Compare with your all network policies and rules
-- Export your current policy and rule inventory using `kubectl get ...` commands.
-- Compare the exported policies/rules with the list of active policies/rules returned by the queries above.
-- Any policies/rules present in your cluster but missing from the activity logs have not been evaluated by traffic in the last 90 days and may be considered unused.
+### Step 2: Retrieve all network policies and rules
 
-> **Tip:** Regularly reviewing unused policies and rules can help you maintain a clean and secure cluster by removing obsolete or unnecessary resources.
+Export your current policy and rule inventory using `kubectl get ...` commands.
+
+### Step 3: Compare lists
+
+Compare the output from the steps above to identify unused resources:
+* Match: Check if each policy (or specific rule ID) in your Cluster exists in the Active lists from Elasticsearch.
+* Identify Unused: Any policy or rule present in the inventory but missing from the active list has not been evaluated by traffic in the last 90 days.
+* Verify: Before deleting any resource, ensure it is not a newly deployed policy that simply hasn't received traffic yet.
