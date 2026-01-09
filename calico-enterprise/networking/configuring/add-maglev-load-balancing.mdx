@@ -5,22 +5,31 @@ description: Add Maglev load balancing to a Kubernetes service.
 # Add Maglev load balancing to a service
 
 This guide shows you how to enable Maglev load balancing for external traffic to a service.
-Maglev load balancing opens up the possibility of using $[noderunning] as a distributed, fault-tolerant load balancer
-for externally-initiated connections, and allows for such connections to be preserved during a load balancer outage, provided another
-$[noderunning] is available to forward the connection instead.
+
+Maglev load balancing opens up the possibility of using $[prodname] as a distributed, horizontally
+scalable load balancer for external connections, and allows for such connections to fail over from
+one load balancing node to another during a node outage.
+
+One case where you might enable Maglev for your service is when you wish to advertise the service IP out to your broader network as an ECMP route.
+$[prodname] nodes can be used as the nexthops for such a route. These nexthops allow external connections to that service to survive
+nexthop downtime and churn, say, in the case where a node must be taken down for maintenance.
+This is because traffic may failover onto another path when the normal path stops working.
+
 
 ## Limitations
 
 Note Maglev load balancing cannot be used with the following:
-* In-cluster pod-to-service traffic.
-* NodePort-type services.
+* Internal (pod-to-service) traffic.
+* NodePorts - as NodePort connections are always tied to a single node, and cannot failover to another.
 * Kubernetes External Traffic Policy. Maglev chooses from a lookup table of all valid backends when performing backend selection.
+
 
 ## Prerequisites
 
 * Your cluster uses the eBPF data plane with [direct server return mode](../../operations/ebpf/enabling-ebpf.mdx#try-out-direct-server-return-mode).
 * All your nodes are running on Linux.
-* You have a service with an IP advertised outside of the cluster.
+* You have a service with a VIP/External-IP, possibly allocated by $[prodname] [LB IPAM](../ipam/service-loadbalancer.mdx), which you are advertising outside of your cluster.
+
 
 ## Enable Maglev load balancing for a service
 
@@ -41,27 +50,42 @@ Replace the following:
 * `<service>`: The name of the service.
 
 
-To verify that $[prodname] has configured Maglev load balancing for the service, check the logs from any `calico-node` pod for the string `Wrote Maglev` in reference to your service.
+## Verify that $[prodname] has configured Maglev load balancing for the service
 
-```bash title='Example log query'
-kubectl -n calico-system logs calico-node-7kltn | grep --ignore-case 'Wrote Maglev'
+After annotating the service in-question, check any $[noderunning] container for an entry
+in the $[prodname] eBPF NAT table with the "maglev" flag.
+
+```bash title='Example NAT table dump'
+kubectl -n calico-system exec <pod-name> -- calico-node -bpf nat dump
 ```
 
-```bash title='Example output'
-2025-10-28 15:30:53.091 [INFO][75] felix/syncer.go 893: Wrote Maglev service backends to LUT service=default/svc:maglev-port
+Replace `<pod-name>` with the name of any calico-node pod.
+
+Check the command output for an entry with your service's IP, and the "maglev" flag mentioned in the same line:
+
 ```
+10.101.205.28 port 80 proto 6 id 7 count 4 local 1 flags maglev
+        7:0      192.168.95.210:9000
+        7:1      192.168.163.6:9000
+        7:2      192.168.221.69:9000
+        7:3      192.168.28.136:9000
+```
+
 
 ## Additional notes
+
+### BPF Map Sizing for Large Deployments
 
 In order to evenly distribute traffic, consistent-hash-based load balancing algorithms like Maglev must allocate large lookup-tables (LUTs),
 leading to a larger memory footprint than basic algorithms e.g. random-selection, round-robin. For this reason, the feature is enabled on a
 per-service basis, rather than globally applying to all services.
 
 In $[prodname], we program these LUTs to the eBPF data plane as maps which can grow up to a maximum size.
-If you plan to provision more than 100 services, or if you plan for any one service to have more than 100 endpoints, the following
-FelixConfiguration options should be updated:
+If you plan to provision more than 100 services, or if you plan for any one service to have more than 100 endpoints, then the $[prodname]
+FelixConfiguration should be updated to reflect that:
  - [BPFMaglevMaxEndpointsPerService](../../reference/resources/felixconfig.mdx#bpfMaglevMaxEndpointsPerService)
  - [BPFMaglevMaxServices](../../reference/resources/felixconfig.mdx#bpfMaglevMaxServices)
+
 
 ## Additional resources
 * [FelixConfiguration](../../reference/resources/felixconfig.mdx)
