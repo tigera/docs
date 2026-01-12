@@ -54,6 +54,7 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ isDarkMode, ...re
                   <Box sx={iconContainerStyle}>
                     <Image
                       src={info.image}
+                      alt={info.alt}
                       sx={iconStyle}
                       loading='lazy'
                     />

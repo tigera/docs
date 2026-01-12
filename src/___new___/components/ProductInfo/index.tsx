@@ -42,6 +42,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ sx, isDarkMode, ...rest }) =>
               <Box sx={sectionCol1Styles(hasDarkBg)}>
                 <Image
                   src={info.image}
+                  alt={info.alt}
                   sx={sectionScreenImage}
                   loading='lazy'
                 />

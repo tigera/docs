@@ -12,6 +12,7 @@ export default {
       ],
       linkDescription: 'Go to docs',
       image: 'img/calico-open-source.svg',
+      alt: 'Calico Open Source documentation',
     },
     {
       title: 'Calico Enterprise',
@@ -23,6 +24,7 @@ export default {
       ],
       linkDescription: 'Go to docs',
       image: 'img/calico-enterprise.drawio.svg',
+      alt: 'Calico Enterprise documentation',
     },
     {
       title: 'Calico Cloud',
@@ -34,6 +36,7 @@ export default {
       ],
       linkDescription: 'Go to docs',
       image: 'img/calico-cloud-features.svg',
+      alt: 'Calico Cloud documentation',
     },
   ],
   bestFit: [
@@ -42,6 +45,7 @@ export default {
       costSupport: ['Free, self-managed'],
       target: 'Users',
       image: 'img/calico-logo-badge.svg',
+      alt: 'Calico Open Source logo',
 
       bestFit: [' - Who want best-in-class networking and network policy capabilities.'],
     },
@@ -49,6 +53,7 @@ export default {
       title: 'Calico Enterprise',
       costSupport: ['Paid, self-managed'],
       image: '/img/calico-enterprise-logo-badge.svg',
+      alt: 'Calico Enterprise logo',
 
       target: 'Enterprise teams',
 
@@ -63,6 +68,7 @@ export default {
       title: 'Calico Cloud',
       costSupport: ['Pay-as-you-go, SaaS'],
       image: '/img/calico-cloud-logo-badge.svg',
+      alt: 'Calico Cloud logo',
 
       target: 'Small teams',
       bestFit: [' - Who need to manage the full spectrum of compliance in a web-based console for novice users:'],
