@@ -392,6 +392,7 @@ module.exports = {
               link: { type: 'doc', id: 'observability/elastic/l7/index' },
               items: ['observability/elastic/l7/configure', 'observability/elastic/l7/datatypes'],
             },
+            'observability/elastic/policy-activity',
             'observability/elastic/troubleshoot',
           ],
         },

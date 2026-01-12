@@ -75,7 +75,7 @@ You can find links to these preview builds as comments from Netlify.
 * Deploy preview. A full build with our production configuration.
 * Deploy preview for _calico-docs-preview-next_. This builds the site based on the current state of our unversioned development directories:
   * `calico/`
-  * `calico-enteprise/`
+  * `calico-enterprise/`
   * `calico-cloud/`
 
 If you're making changes to an upcoming version of any of the products, review your changes in _calico-docs-preview-next_.
