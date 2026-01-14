@@ -56,7 +56,7 @@ export default async function createAsyncConfig() {
           "The Calico Docs AI answers questions based on what it finds in our product documentation. As with all AI solutions, it's a good idea to verify answers in the source material. ",
         //"data-modal-example-questions": "Docs Calico use eBPF?,Get started with egress gateways",
         'data-modal-ask-ai-input-placeholder': 'Ask me a question about Calico',
-        'data-font-family': 'Poppins,Helvetica Neue,Helvetica,Arial,sans-serif',
+        'data-font-family': 'Source Sans 3,Poppins,Helvetica Neue,Helvetica,Arial,sans-serif',
         'data-modal-border-radius': '6px',
         'data-button-box-shadow': '2px 2px 8px rgba(0, 0, 0, 0.2)',
         'data-modal-header-bg-color': '#FFFFFF',
