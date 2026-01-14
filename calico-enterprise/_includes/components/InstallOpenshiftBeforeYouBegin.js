@@ -46,7 +46,7 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
           <p>
             OpenShift command line interface from{' '}
             <Link
-              href='https://cloud.redhat.com/openshift/install/aws/installer-provisioned'
+              href='https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/installing_on_aws/installer-provisioned-infrastructure'
               target='_blank'
               rel='noopener noreferrer'
             >
@@ -80,7 +80,7 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
         <li>
           <p>
             OpenShift installer and OpenShift command line interface from{' '}
-            <Link href='https://cloud.redhat.com/openshift/install/aws/installer-provisioned'>cloud.redhat.com</Link>
+            <Link href='https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/installing_on_aws/installer-provisioned-infrastructure'>docs.redhat.com</Link>
           </p>
         </li>
         <li>

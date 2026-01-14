@@ -32,7 +32,7 @@ export default function InstallOpenShift(props) {
       <Admonition type='note'>
         See the{' '}
         <Link
-          href='https://cloud.redhat.com/openshift/install'
+          href='https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/installation_overview/ocp-installation-overview'
           target='_blank'
           rel='noopener noreferrer'
         >
