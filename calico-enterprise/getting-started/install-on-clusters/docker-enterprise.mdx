@@ -1,12 +1,12 @@
 ---
-description: Install Calico Enterprise on an MKE cluster.
+description: Install Calico Enterprise on an MKE 3 cluster.
 ---
 
-# Mirantis Kubernetes Engine (MKE)
+# Mirantis Kubernetes Engine (MKE 3)
 
 ## Big picture
 
-Install $[prodname] on a Mirantis Kubernetes Engine (MKE) cluster (formerly Docker Enterprise).
+Install $[prodname] on a Mirantis Kubernetes Engine (MKE 3) cluster (formerly Docker Enterprise).
 
 ## Before you begin
 
@@ -23,14 +23,25 @@ The geeky details of what you get:
 
 **Required**
 
-- A [compatible MKE cluster](../compatibility.mdx#mke) with:
+- A [compatible MKE 3 cluster](../compatibility.mdx#mke) with:
 
   - A minimum of three nodes for non-production deployments
-  - CNI flag set to unmanaged, `--unmanaged-cni` so UCP does not install the default $[prodname] networking plugin
+  - CNI flag set to unmanaged, `--unmanaged-cni` so MKE 3 does not install the default $[prodname] networking plugin
 
   For help, see [Docker Enterprise](https://docs.docker.com/), and [Docker EE Best Practices and Design Considerations](https://docs.mirantis.com/docker-enterprise/v3.0/dockeree-ref-arch/deploy-manage/best-practices-design.html)
 
-- Install UCP control plane to access the cluster using [Docker Universal Control Plane CLI-Based Access](https://dockerlabs.collabnix.com/advanced/Docker-UCP-overview.html). After installing the control plane, enable the option "Allow all authenticated users, including service accounts, to schedule on all nodes, including UCP managers and DTR nodes."
+- To access the MKE 3 control plane via the CLI, you must download a Client Certificate Bundle from the web UI, which contains the necessary TLS certificates and environment scripts to authenticate kubectl and docker commands.
+  For more information, see [Access an MKE cluster (Client Bundles)](https://docs.mirantis.com/mke/3.8/ops/access-cluster.html).
+- Configure MKE 3 to allow the service account `tigera-operator` to schedule CNI workloads on all nodes in the cluster.
+  This can be done by executing the following command.
+  Refer to the MKE 3 documentation around obtaining an admin bearer authentication token for making this call.
+
+  ```bash
+  curl -k -H "Authorization: Bearer <authentication-token>" -X PUT https://<manager-node-IP>/collectionGrants/system:serviceaccount:tigera-operator:tigera-operator/swarm/scheduler
+  ```
+  Replace the following:
+  * `<authentication-token>`: The value of bearer admin token.
+  * `<manager-node-IP>`: The public IP for any manager node in the cluster.
 
 - Cluster meets [system requirements](requirements.mdx)
 
