@@ -31,7 +31,7 @@ export default async function createAsyncConfig() {
     baseUrl: '/',
     onBrokenAnchors: 'ignore',
     onBrokenLinks: 'throw',
-    favicon: 'img/favicon.png',
+    favicon: 'img/calico-logo-2026-badge.png',
     markdown: {
       hooks: {
         onBrokenMarkdownLinks: 'throw',
@@ -95,7 +95,7 @@ export default async function createAsyncConfig() {
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       {
-        image: 'img/favicon.png',
+        image: 'img/calico-logo-2026-badge.png',
         metadata: [
           {
             name: 'keywords',
@@ -119,8 +119,8 @@ export default async function createAsyncConfig() {
         },
         navbar: {
           logo: {
-            src: 'img/tigera-logo-black.png',
-            srcDark: 'img/tigera-logo-white.png',
+            src: 'img/tigera-logo-2026-black-text.svg',
+            srcDark: 'img/tigera-logo-2026-white-text.svg',
           },
           items: [
             {
