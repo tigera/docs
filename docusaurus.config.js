@@ -463,11 +463,6 @@ export default async function createAsyncConfig() {
               path: '3.20',
               banner: 'none',
             },
-            '3.19-2': {
-              label: '3.19',
-              path: '3.19',
-              banner: 'none',
-            },
           },
           sidebarPath: './sidebars-calico-enterprise.js',
           beforeDefaultRemarkPlugins: [variablesPlugin],
