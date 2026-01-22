@@ -51,7 +51,7 @@ export default async function createAsyncConfig() {
         'data-website-id': '578b0d26-ff67-42e3-b465-5839865a7471',
         'data-project-name': 'Calico',
         'data-project-color': '#F89C1D',
-        'data-project-logo': 'https://www.tigera.io/app/uploads/2021/06/Tigera-orange.png',
+        'data-project-logo': '/img/tigera-logo-2026.png',
         'data-modal-disclaimer':
           "The Calico Docs AI answers questions based on what it finds in our product documentation. As with all AI solutions, it's a good idea to verify answers in the source material. ",
         //"data-modal-example-questions": "Docs Calico use eBPF?,Get started with egress gateways",
