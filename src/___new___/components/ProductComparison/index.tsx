@@ -51,14 +51,6 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ isDarkMode, ...re
             {compareInfo.bestFit.map((info, index) => (
               <Tr key={index}>
                 <Td sx={{ textAlign: 'center' }}>
-                  <Box sx={iconContainerStyle}>
-                    <Image
-                      src={info.image}
-                      alt={info.alt}
-                      sx={iconStyle}
-                      loading='lazy'
-                    />
-                  </Box>
                   {info.title}
                 </Td>
                 <Td>
