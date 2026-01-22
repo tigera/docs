@@ -13,15 +13,6 @@ const CalicoProductCard: React.FC<CalicoProductCardProps> = ({
 }) => <Card
     sx={cardStyles}
 >
-        <Center py={5}>
-            <Image
-                src={imageSrc}
-                alt={alt}
-                boxSize={imageSize ?? '120px'}
-                maxHeight='120px'
-            />
-        </Center>
-
         <CardHeader pt={2} pb={0}>
             <Heading as="h5" size="md" fontWeight="bold">
                 {title}

@@ -5,37 +5,24 @@ import { gridStyles } from './styles';
 export type CalicoProduct = {
     title: string,
     description: string,
-    imageSrc: string,
-    alt: string,
-    imageSize?: string;
 }
 
 const products: CalicoProduct[] = [
     {
         title: 'Calico Open Source',
-        description: 'Open-source networking and security for containers and Kubernetes',
-        imageSrc: '/img/Calico-logo-2026-badge.svg',
-        alt: 'Calico Open Source icon',
+        description: 'Open-source networking and security for containers and Kubernetes'
     },
     {
         title: 'Calico Cloud Free Tier',
-        description: 'Observability & policy management for a single cluster',
-        imageSrc: '/img/Calico-logo-2026-badge.svg',
-        alt: 'Calico Cloud Free Tier icon',
-        imageSize: '130px',
+        description: 'Observability & policy management for a single cluster'
     },
     {
         title: 'Calico Cloud',
-        description: 'SaaS platform for Kubernetes networking and security',
-        imageSrc: '/img/Calico-logo-2026-badge.svg',
-        alt: 'Calico Cloud icon',
-        imageSize: '130px'
+        description: 'SaaS platform for Kubernetes networking and security'
     },
     {
         title: 'Calico Enterprise',
-        description: 'Self-managed platform for Kubernetes networking and security',
-        imageSrc: '/img/Calico-logo-2026-badge.svg',
-        alt: 'Calico Enterprise icon',
+        description: 'Self-managed platform for Kubernetes networking and security'
     },
 ];
 
