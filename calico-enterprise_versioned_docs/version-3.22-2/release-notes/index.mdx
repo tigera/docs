@@ -220,15 +220,23 @@ Calico Enterprise 3.22.1 is now available as a general availability release.
 
 This release is supported for use in production.
 
-#### Enhancements
+#### Breaking changes
 
-* TBD
+* Renamed the name of the certificate bundle in the tigera-ca-bundle configmaps from tigera-ca-bundle.crt to ca.crt. A copy of the operator signer can still be fond in the original location. This only affects users who use this bundle for features that are not managed by the operator in addition to bringing your own certificates.
+* Removed the prefix "cnx-" from image names. The new image names can all be found [here](../getting-started/private-registry/private-registry-regular.mdx).
+* We are requiring kernel support for the x86-64 v3 architecture in this release as we are beginning to migrate to UBI10.
 
 #### Bug fixes
 
 * Fixed an issue causing a panic in Felix when WAF/L7 features are enabled with eBPF dataplane.
 * Fixed an issue preventing WAF/L7 features to work on hosts without legacy iptables support, such as Openshift 4.20.
 * Fixed an issue where Kibana was making connections to public endpoints.
+* Added an egress rule to allow traffic from intrusion detection controller to the tigera-manager deployment. This fixed an issue where traffic would be blocked if the user applies a default deny policy to the namespace.
+* Fixed an issue where Guardian was missing the certificate of the Calico API server from its CA bundle. This issue only impacted clusters that were created using an older version of the Operator that did not use a centralized signer. (Calico Enterprise v3.12 and older.)
+* Fixed an issue that caused local workloads with borrowed IPs lose connectivity when using the eBPF dataplane.
+* Fixed an issue where the VXLAN overlay VNI is always 0 on the eBPF dataplane. [calico 10625](https://github.com/projectcalico/calico/pull/10625)
+* Fixed an issue where fragmented UDP packets were incorrectly handled, leading to denied flows.
+* Security updates.
 
 
 #### Known issues
