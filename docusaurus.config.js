@@ -26,7 +26,7 @@ export default async function createAsyncConfig() {
       },
     },
     title: 'Calico Documentation',
-    tagline: 'Active, zero-trust based security for containers and Kubernetes',
+    tagline: 'Unified network security and observability for Kubernetes',
     url: 'https://docs.tigera.io',
     baseUrl: '/',
     onBrokenAnchors: 'ignore',

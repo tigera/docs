@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Flex, Text, Box, Heading, SystemStyleObject } from '@chakra-ui/react';
+import { Image, Flex, Text, Box, Heading, SystemStyleObject } from '@chakra-ui/react';
 
 import {
   heroContainerStyles,
@@ -21,8 +21,20 @@ const HomepageHeader: React.FC<HeroBannerProps> = ({ sx, siteConfig, isDarkMode,
   return (
     <Flex
       sx={{ ...heroContainerStyles, ...sx }}
+      flexDirection="row"
+      alignItems="center"
+      gap={{ base: 4, md: 8 }}
       {...rest}
     >
+      <Image
+        src="/img/Calico-logo-2026-badge.svg"
+        alt="Calico logo"
+        boxSize={{ base: "60px", md: "100px", lg: "120px" }}
+        objectFit="contain"
+        flexShrink={0}
+        // -------------------------------
+      />
+
       <Flex sx={heroInnerContainerStyles}>
         <Flex sx={heroTextContentStyles}>
           <Box sx={heroTextInnerContentStyles}>
