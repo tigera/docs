@@ -87,7 +87,7 @@ const SelectDocs: React.FC<SelectDocsProps> = ({ isDarkMode, ...rest }) => (
                 display="inline-flex"
                 alignItems="center" // Keeps text and arrow vertically aligned
                 rightIcon={<ArrowForwardIcon />}
-                color="black"
+                color="var(--ifm-link-color)"
                 fontWeight="bold"
                 fontSize="md"
                 height="auto"
