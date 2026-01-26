@@ -1,0 +1,168 @@
+---
+description: Upgrade to a newer version of Calico Enterprise installed with Helm.
+---
+
+# Upgrade Calico Enterprise installed with Helm
+
+import CodeBlock from '@theme/CodeBlock';
+
+:::note
+
+All upgrades in $[prodname] are free with a valid license.
+
+:::
+
+## Prerequisites
+
+- Verify that your Kubernetes cluster is using Helm
+
+  ```bash
+  kubectl get tigerastatus
+  ```
+
+  If the result is successful, then your installation is using Helm.
+
+## Prepare your cluster for the upgrade
+
+During the upgrade the controller that manages Elasticsearch is updated. Because of this, the $[prodname] LogStorage
+CR is temporarily removed during upgrade. Features that depend on LogStorage are temporarily unavailable, among which
+are the dashboards in the web console. Data ingestion is temporarily paused and will continue when the LogStorage is
+up and running again.
+
+To retain data from your current installation (optional), ensure that the currently mounted persistent volumes
+have their reclaim policy set to [retain data](https://kubernetes.io/docs/tasks/administer-cluster/change-pv-reclaim-policy/).
+Retaining data is only recommended for users that use a valid Elastic license. Trial licenses can get invalidated during
+the upgrade.
+
+If your cluster has Windows nodes and uses custom TLS certificates for log storage then, prior to upgrade, prepare and apply new certificates for [log storage](../../../../operations/comms/log-storage-tls.mdx) that include the required service DNS names.
+
+### Upgrade OwnerReferences
+
+If you do not use OwnerReferences on resources in the projectcalico.org/v3 API group, you can skip this section.
+
+Starting in $[prodname] v3.19, a change in the way UIDs are generated for projectcalico.org/v3 resources requires that you update any OwnerReferences
+that refer to projectcalico.org/v3 resources as an owner. After upgrade, the UID for all projectcalico.org/v3 resources will be changed, resulting in any
+owned resources being garbage collected by Kubernetes.
+
+1. Remove any OwnerReferences from resources in your cluster that have `apiGroup: projectcalico.org/v3`.
+1. Perform the upgrade normally.
+1. Add new OwnerReferences to your resources referencing the new UID.
+
+### Default Deny
+
+$[prodname] creates a default-deny for the calico-system namespace. If you deploy workloads into the calico-system namespace, you must create policy that allows the required traffic for your workloads prior to upgrade.
+
+## Upgrade from 3.19 or later
+
+:::note
+
+These steps differ based on your cluster type. If you are unsure of your cluster type, look at the field `clusterManagementType` when you run `kubectl get installation -o yaml` before you proceed.
+
+:::
+
+1. Get the Helm chart
+
+   <CodeBlock language='bash'>
+     {'$[version]' === 'master'
+       ? (`gsutil cp gs://tigera-helm-charts/tigera-operator-v0.0.tgz`)
+       : (`curl -O -L $[downloadsurl]/ee/charts/tigera-operator-$[chart_version_name].tgz`)
+      }
+   </CodeBlock>
+
+1. Install the $[prodname] custom resource definitions.
+
+   ```bash
+   kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/operator-crds.yaml
+   kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/prometheus-operator-crds.yaml
+   kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/eck-operator-crds.yaml
+   ```
+
+1. If your cluster is v3.19 or older, update `values.yaml` with `packetCaptureAPI` enabled to true.
+
+    If your `values.yaml` configuration does not include `packetCaptureAPI`, add `packetCaptureAPI` to the configuration and set `enabled` to `true`.
+
+     ```
+     packetCaptureAPI:
+       enabled: true
+    ```
+
+    or
+
+    If you are using default `values.yaml`, copy the custom `values.yaml` and update packetCaptureAPI's `enabled`  to `true`. Then, replace `<path-to-values.yaml>` in the next step with this modified `values.yaml` for the helm upgrade.
+
+    <CodeBlock language='bash'>
+        {'$[version]' === 'master'
+            ? (
+            `helm show values ./tigera-operator-v0.0.tgz >values.yaml`
+            )
+            : (
+            `helm show values ./tigera-operator-$[chart_version_name].tgz >values.yaml`
+            )
+        }
+    </CodeBlock>
+
+1. Optional: Compliance and packetcapture features are optional. To enable or maintain the enabled status, review the `values.yaml` file and set the flag to `enabled: true`.
+
+    If your `values.yaml` configuration does not include `compliance` or `packetCaptureAPI`, add them to the configuration and set to `enabled: true`
+
+    ```
+    packetCaptureAPI:
+        enabled: true
+
+    compliance:
+        enabled:true
+    ```
+
+    or
+
+    If you are using default `values.yaml`, copy the custom `values.yaml` and update compliance and packetCaptureAPI's `enabled`  to `true`. Then, replace `<path-to-values.yaml>` in the next step with this modified `values.yaml` for the helm upgrade.
+
+    <CodeBlock language='bash'>
+        {'$[version]' === 'master'
+            ? (
+            `helm show values ./tigera-operator-v0.0.tgz >values.yaml`
+            )
+            : (
+            `helm show values ./tigera-operator-$[chart_version_name].tgz >values.yaml`
+            )
+        }
+    </CodeBlock>
+
+1. Run the Helm upgrade command for `tigera-operator` and make sure to either update `values.yaml` with your configuration or use custom `values.yaml` file:
+
+  <CodeBlock language='bash'>
+    {'$[version]' === 'master'
+      ? (
+        `helm upgrade calico-enterprise --values=<path-to-values-yaml> tigera-operator-v0.0.tgz \\
+  --set-file imagePullSecrets.tigera-pull-secret=<path-to-pull-secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path-to-pull-secret> \\
+  --set-file licenseKeyContent=<path-to-license-file-yaml> \\
+  --namespace tigera-operator`
+      )
+      : (
+        `helm upgrade calico-enterprise --values=<path-to-values-yaml> tigera-operator-$[chart_version_name].tgz \\
+  --set-file imagePullSecrets.tigera-pull-secret=<path-to-pull-secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path-to-pull-secret> \\
+  --set-file licenseKeyContent=<path-to-license-file-yaml> \\
+  --namespace tigera-operator`
+        )
+    }
+  </CodeBlock>
+
+  :::note
+
+  If you previously upgraded from open source to enterprise, your installation name will be `calico`. Substitute the command
+  above with `helm upgrade calico ...` instead.
+
+  :::
+
+  1. You can monitor progress with the following command:
+
+  ```bash
+   watch kubectl get tigerastatus
+   ```
+
+:::note
+
+Make sure you have the `CNI Type` defined in your `values.yaml` file, especially if it is different from the default `CNI` type.
+If there are any problems you can use `kubectl get tigerastatus -o yaml` to get more details.
+
+:::

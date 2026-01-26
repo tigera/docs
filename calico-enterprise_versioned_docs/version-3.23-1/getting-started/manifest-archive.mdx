@@ -1,0 +1,109 @@
+---
+description: Install an older patch release of Calico Enterprise.
+---
+
+# Install a patch release
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import ReleaseArchiveTable from "../_includes/components/ReleaseArchiveTable";
+
+Installing the most recent patch version of $[prodname] $[version] ensures that you have the latest bug fixes and improvements.
+But you can always install, or downgrade to, a previous patch version.
+Installing an older patch can help if you encounter problems with the latest patch, or if you're required to install only a specific patch version.
+
+## Before you begin
+
+This feature is:
+
+- Available in 3.0 and later
+- Not available for Helm with operator
+
+## How to
+
+1. Download the release archive for your patch version from the following table:
+
+   <ReleaseArchiveTable/>
+
+1. Untar the **release-vx.y.z-vx.y.z.tgz** to a local directory.
+
+   ```bash
+   tar xzvf release-vx.y.z-vx.y.z.tgz
+   ```
+
+<Tabs>
+<TabItem label="Kubernetes" value="Kubernetes-0">
+
+In the patch release archive, navigate to the `manifests` folder.
+
+1. Follow the [quickstart installation](install-on-clusters/kubernetes/quickstart.mdx), making the following changes:
+
+   1. Install Tigera Operator and custom resource definitions.
+
+      ```bash
+      kubectl create -f <your-local-directory-archive>/manifests/operator-crds.yaml
+      kubectl create -f <your-local-directory-archive>/manifests/tigera-operator.yaml
+      ```
+
+   2. If you are not using an existing Prometheus operator, install it.
+
+      ```bash
+      kubectl create -f <your-local-directory-archive>/manifests/tigera-prometheus-operator.yaml
+      ```
+
+   3. Install Tigera custom resources.
+
+      ```bash
+      kubectl create -f <your-local-directory-archive>/manifests/custom-resources.yaml
+      ```
+
+      :::note
+
+      For platforms like AKS or EKS, you must modify the command to be platform specific.
+      EKS example: `kubectl create -f <your-local-directory-archive>/manifests/eks/custom-resources.yaml`
+
+      :::
+
+</TabItem>
+<TabItem label="OpenShift" value="OpenShift-1">
+
+In the patch release archive, navigate to the `ocp-manifests` folder which contains three folders `install-manifests`,
+`enterprise-resources`, and `upgrade-manifests`.
+
+- `install-manifests` contains all the manifests needed for minimal OCP cluster.
+- `enterprise-resources` contains the $[prodname] resources.
+- `upgrade-manifests` folder contains all the manifests needed for upgrading $[prodname].
+
+1. Create the cluster by following [the standard installation](install-on-clusters/openshift/installation.mdx), with the following caveat:
+
+   1. After the Kubernetes manifests directory is generated, copy the files from `install-manifests` instead of downloading the manifests.
+
+      :::note
+
+      Before creating the cluster, be sure to add an image pull secret in `install-manifests/02-pull-secret.yaml`
+
+      :::
+
+1. Install $[prodname] resources:
+
+   ```bash
+   cd <your-local-directory-archive>/ocp-manifests/enterprise-resources && oc create -f
+   ```
+
+</TabItem>
+<TabItem label="Features" value="Features-2">
+
+In the patch release archive, there are additional manifests relating to specific features.
+
+**Examples**
+
+To apply the patch release for threat defense features.
+
+```bash
+cd <your-local-directory-archive>/manifests/threatdef && kubectl create -f ejr-vpn.yaml.yaml
+cd <your-local-directory-archive>/manifests/threatdef && kubectl create -f tor-exit-feed.yaml
+```
+
+</TabItem>
+
+</Tabs>
