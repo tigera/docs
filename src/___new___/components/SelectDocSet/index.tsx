@@ -76,7 +76,7 @@ const SelectDocs: React.FC<SelectDocsProps> = ({ isDarkMode, ...rest }) => (
               <Heading as="h3" size="md" mb={4} color="black">
                 {info.heading}
               </Heading>
-              <Text fontSize="sm" color="gray.700">
+              <Text fontSize="md" color="gray.700">
                 {info.caption}
               </Text>
             </Box>
