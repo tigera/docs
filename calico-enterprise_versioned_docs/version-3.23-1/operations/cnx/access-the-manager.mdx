@@ -1,0 +1,172 @@
+---
+description: Configure access to the web console.
+---
+
+# Configure access to the web console
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Big picture
+
+Configure access to the $[prodname] web console user interface.
+
+## Value
+
+For security, the $[prodname] web console is not exposed outside of the cluster by default. You can configure access to the $[prodname] web console using ingress, a load balancer service, or port forwarding.
+
+## Before you begin
+
+**Required**
+
+- [Install $[prodname]](../../getting-started/index.mdx)
+- Choose one of the following access options and complete the required configuration:
+
+| Option             | Description                                                                                                                                                                                                                                                                            | Requirement                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Kubernetes ingress | Configure your cluster with an ingress controller to implement the `Ingress` resource using [Kubernetes ingress](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer).                                                                                       | Ensure the $[prodname] web console receives a HTTPS (TLS) connection (not unencrypted HTTP). If you require TLS termination at your ingress, you must use a proxy that supports transparent HTTP/2 proxying, (for example, Envoy), or re-originate a TLS connection from your proxy to the $[prodname] web console. If you do not require TLS termination, configure your proxy to “pass thru” the TLS to the $[prodname] web console. |
+| Load balancer      | Configure your cluster with a service load balancer controller to implement the external load balancer. See [Kubernetes loadbalancer](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/)                                                      | Ensure the $[prodname] web console receives a HTTPS (TLS) connection (not unencrypted HTTP). If you require TLS termination at your load balancer, you must use a load balancer that supports transparent HTTP/2 proxying, or re-originate a TLS connection from your load balancer to the $[prodname] web console. If you do not require TLS termination, configure your proxy to “pass thru” the TLS to the $[prodname] web console. |
+| Port forwarding    | Forward traffic from a local port to the Kubernetes API server, where it is proxied to the web console. This approach is **not recommended for production**, but is useful if you do not have a load balancer or ingress infrastructure configured, or you need to get started quickly. | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| OpenShift routes   | Use OpenShift routes to expose a service by giving it an externally-reachable hostname (for example, `www.example.com`) .                                                                                                                                                              | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
+
+## How to
+
+### Configure access to the $[prodname] web console
+
+<Tabs>
+<TabItem label="Ingress" value="Ingress-0">
+
+**Basic ingress controller, no modification**
+
+The following example uses `calico-manager` as the backend service without modification. Use the `calico-manager` service only when edits to the service are not required. (Note if you try to make changes to `calico-manager`, changes may appear to take effect, but the service always resets to the default and is not overwritten.)
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: calico-manager
+  namespace: calico-system
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: calico-manager
+                port:
+                  number: 9443
+```
+
+**Advanced ingress controllers, with modifications**
+
+If you need to annotate or modify the service, you must create your own service (`serviceName: <your own name>`) in the `calico-system` namespace, and use it in the ingress resource. For example:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: calico-manager
+  namespace: calico-system
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: annotated-service
+                port:
+                  number: 9443
+```
+
+### Log in to the $[prodname] web console
+
+Access the $[prodname] web console in your browser using the URL for your ingress controller. For example: `https://<ingress-url>`.
+
+</TabItem>
+<TabItem label="Load balancer service" value="Load balancer service-1">
+
+To expose the manager using a load balancer, create the following service.
+
+```yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: calico-manager-external
+  namespace: calico-system
+spec:
+  type: LoadBalancer
+  selector:
+    k8s-app: calico-manager
+  externalTrafficPolicy: Local
+  ports:
+    - port: 9443
+      targetPort: 9443
+      protocol: TCP
+```
+
+After creating the service, it may take a few minutes for the load balancer to be created. Once complete, the load balancer IP address appears as an `ExternalIP` in `kubectl get services -n calico-system calico-manager-external`.
+
+### Log in to the $[prodname] web console
+
+Access the $[prodname] web console in your browser using the load balancer's external IP address. For example: `https://<ExternalIP>:9443`.
+
+</TabItem>
+<TabItem label="Port forwarding" value="Port forwarding-2">
+
+To forward traffic locally, use the following command:
+
+```bash
+kubectl port-forward -n calico-system service/calico-manager 9443:9443
+```
+
+### Log in to the $[prodname] web console
+
+Access the $[prodname] web console in your browser at: `https://localhost:9443`
+
+</TabItem>
+<TabItem label="OpenShift routes" value="OpenShift routes-3">
+
+To expose the web console using OpenShift routes, create the following route with these required parameters:
+
+- host: `<clustername>.<URL>`
+- name: `calico-manager`
+- targetPort: `9443`
+
+**Example**
+
+```yaml
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: calico-manager
+  namespace: calico-system
+spec:
+  host: manager.apps.demo-ocp.tigera-solutions.io
+  to:
+    kind: Service
+    name: calico-manager
+    weight: 100
+  port:
+    targetPort: 9443
+  tls:
+    termination: passthrough
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+```
+
+### Log in to the $[prodname] web console
+
+Access the $[prodname] web console in your browser using the URL with clustername. For example: `https://manager.apps.demo-ocp.tigera-solutions.io:9443`
+
+</TabItem>
+
+</Tabs>
+
+## Additional resources
+
+- [Authentication quickstart](authentication-quickstart.mdx)
+- [Configure an external identity provider](configure-identity-provider.mdx)

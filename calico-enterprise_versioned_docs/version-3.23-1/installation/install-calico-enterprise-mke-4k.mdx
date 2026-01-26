@@ -1,0 +1,159 @@
+---
+description: Draft installation guide for Mirantis Kubernetes Engine 4k
+title: Mirantis Kubernetes Engine 4k (MKE 4k)
+---
+
+# Install Calico Enterprise on Mirantis Kubernetes Engine 4k
+
+This installation guide explains how to install $[prodname] on MKE 4k with the Tigera Operator.
+
+## About installing Calico Enterprise on MKE 4k
+
+Installing $[prodname] on MKE 4k differs from most Kubernetes deployments because the CNI must be integrated directly into the cluster provisioning workflow.
+In a standard environment, you might install a CNI after the cluster is fully operational; however, MKE 4k requires you to declare a "custom" networking provider at the start.
+
+This approach creates a coordinated installation where the MKE 4k installer pauses mid-process to wait for you to deploy $[prodname].
+The nodes will remain in a NotReady state and the MKE installer will remain "pending" until the Tigera Operator is installed and networking is established.
+
+## Prerequisites
+
+* You have already prepared to install a Kubernetes cluster with MKE 4k:
+  * You are familiar with the installation and configuration process.
+  * You have set up infrastructure that meets the [MKE 4k system requirements](https://docs.mirantis.com/mke4k/latest/getting-started/system-requirements/).
+  * You have modified an installation configuration file with provisioning information about your infrastructure.
+  * You have installed the `mkectl` command line tool on your workstation.
+* Your infrastructure meets the Calico Enterprise [system requirements](../getting-started/install-on-clusters/requirements.mdx).
+* You understand your [log storage requirements](../operations/logstorage/log-storage-recommendations.mdx) and have planned how you want to add storage in your environment.
+
+## Start the MKE 4k installation
+
+1. In your installation configuration file, make the following changes:
+   1. Specify that you want to use a custom networking provider:
+      ```yaml
+      spec:
+        network:
+          providers:
+            - enabled: true
+            provider: "custom"
+      ```
+   1. Optional: If you don't want to use the default pod CIDR range 192.168.0.0/16, specify the range in the installation configuration file.
+      The pod CIDR range cannot easily be changed later, and it must be configured before you install $[prodname].
+      Edit the configuration file as follows:
+      ```yaml
+      spec:
+        network:
+          providers:
+            - enabled: true
+            provider: "custom"
+            extraConfig:
+              cidrV4: <pod-cidr>
+      ```
+      Replace `<pod-cidr>` with a pod CIDR range that suits your deployment and does not conflict with other ranges in your network.
+
+1. To start the MKE 4k installation process, run the following command:
+
+   ```bash
+   mkectl apply -f <mke-configuration-file>.yaml --cni-check-timeout <cni-timeout-duration>
+   ```
+   Replace the following:
+   * `<mke-configuration-file>`: The path of your installation configuration file.
+   * `<cni-timeout-duration>`: The amount of time, in minutes, that the MKE 4k installer will wait for you to complete the network installation.
+
+   Wait until you see that the installer is waiting for cluster networking to be established.
+
+   ```bash title="Example output"
+   waiting 60 minutes for cluster networking to be established using custom CNI provider
+   ```
+
+1. SSH into one of the controller nodes and run the following command:
+
+   ```bash
+   sudo /usr/local/bin/k0s kubeconfig admin
+   ```
+
+   Add the kubeconfig to your local kubectl.
+
+   :::important
+   Don't close this terminal session as you move to the next step.
+   The MKE 4k installation process does not complete until after you install $[prodname].
+   For the next step, open a second terminal session.
+   After you install $[prodname], you can return to the first terminal session to observe and verify the installation process.
+   :::
+
+## Install Calico Enterprise
+
+In a new terminal, install the $[prodname] CNI.
+
+1. [Configure a `StorageClass` resource for ElasticSearch](../operations/logstorage/create-storage.mdx).
+
+1. Install the Tigera Operator and custom resource definitions.
+
+   ```bash
+   kubectl apply --server-side -f $[filesUrl]/manifests/operator-crds.yaml
+   kubectl apply -f $[filesUrl]/manifests/tigera-operator.yaml
+   ```
+
+1. Install your pull secret.
+
+   If pulling images directly from `quay.io/tigera`, you will likely want to use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
+
+   ```bash
+   kubectl create secret generic tigera-pull-secret \
+       --type=kubernetes.io/dockerconfigjson -n tigera-operator \
+       --from-file=.dockerconfigjson=<pull-secret>
+   ```
+   Replace `<pull-secret>` with the path to your pull secret.
+
+1. Optional: If your cluster architecture requires any custom Calico Enterprise resources to function at startup, install them now using calicoctl.
+
+1. Optional: Compliance and packet capture features are optional.
+   To enable these features during installation, download and review the `custom-resources.yaml` file.
+   Uncomment the necessary CRs and use this `custom-resources.yaml` for installation.
+
+   ```bash
+   curl -O -L $[filesUrl]/manifests/custom-resources.yaml
+   ```
+
+1. Install the Tigera custom resources.
+   For more information on configuration options available in this manifest, see [the installation reference](../reference/installation/api.mdx).
+   ```bash
+   kubectl create -f $[filesUrl]/manifests/custom-resources.yaml
+   ```
+
+1. Restrict privileged container access in the `tigera-elasticsearch` namespace to only the necessary Tigera and ElasticSearch service accounts using an MKE admission policy annotation.
+   ```bash
+   kubectl annotate namespace tigera-elasticsearch "mke.mirantis.com/allowed-accounts-privileged=system:serviceaccount:tigera-eck-operator:elastic-operator,system:serviceaccount:tigera-elasticsearch:tigera-elasticsearch"`
+   ```
+
+1. Wait until the API server shows a status of `Available`, and then proceed to the next section.
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+
+1. Install the Calico Enterprise license.
+   ```bash
+   kubectl create -f <license>.yaml
+   ```
+   Replace `<license>` with the path to your license file.
+
+1. Continue monitoring until all items in tigera-status are `Available`
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+   When the $[prodname] installation is complete, you can return to your other terminal and wait for the MKE 4k installation to finish.
+
+## Next steps
+
+**Recommended**
+
+- [Configure access to the $[prodname] web console](../operations/cnx/access-the-manager.mdx)
+- [Authentication quickstart](../operations/cnx/authentication-quickstart.mdx)
+- [Configure your own identity provider](../operations/cnx/configure-identity-provider.mdx)
+
+**Recommended - Networking**
+
+- The default networking uses IP in IP encapsulation with BGP routing. For all networking options, see [Determine best networking option](../networking/determine-best-networking.mdx).
+
+**Recommended - Security**
+
+- [Get started with $[prodname] tiered network policy](../network-policy/policy-tiers/tiered-policy.mdx)

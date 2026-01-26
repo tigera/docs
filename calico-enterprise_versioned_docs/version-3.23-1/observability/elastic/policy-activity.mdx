@@ -1,0 +1,119 @@
+---
+description: Learn how to use policy activity logs to gain visibility into policy and rule activity.
+---
+
+# Policy activity logs
+
+:::note
+
+This feature is in tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## About policy activity logs
+
+Policy activity logs provide granular visibility into network policy behavior within your cluster. By tracking exactly which rules are evaluated and triggered, these logs offer policy-centric context that complements standard Flow Logs.
+
+Regularly reviewing policy activity, especially unused policies and rules, helps you maintain a clean and secure cluster by identifying and removing obsolete resources.
+
+## Log structure
+
+Each log entry contains the following key fields:
+
+| Field             | Description                                                                                  | Example                          |
+| ----------------- | -------------------------------------------------------------------------------------------- | -------------------------------- |
+| `policy.kind`     | The type of the policy. Possible values: `NetworkPolicy`, `GlobalNetworkPolicy`, `KubernetesNetworkPolicy`, `KubernetesAdminNetworkPolicy`, `KubernetesBaselineAdminNetworkPolicy`, `StagedNetworkPolicy`, `StagedGlobalNetworkPolicy`, `StagedKubernetesNetworkPolicy` | `NetworkPolicy` |
+| `policy.namespace`| The namespace where the policy is defined.                                                   | `my-test`                        |
+| `policy.name`     | The unique name of the policy.                                                               | `my-tier.my-networkpolicy`       |
+| `rule`            | The identifier for the specific rule that was triggered, formatted as `{generation}-{direction}-{rule_index}`. | `2-ingress-4`  |
+| `cluster`         | The name of the cluster where the activity occurred.                                         | `cluster`                        |
+| `last_evaluated`  | The timestamp when the rule was last evaluated.                                              | `2025-12-01T23:09:28.384714204Z` |
+
+
+:::note
+
+The generation number in the `rule` identifier (e.g., the `2` in `2-ingress-4`) reflects the `metadata.generation` of the policy at the time of evaluation.
+
+It increments whenever the spec of the policy is updated, allowing you to correlate activity logs with the exact policy configuration that was active when the traffic occurred.
+
+:::
+
+## Find unused policies
+
+Policy activity logs record only policies and rules that have been evaluated by actual network traffic. To identify unused policies or rules in your cluster, follow these steps:
+
+### Step 1: Retrieve active policies/rules
+   
+Use the following Elasticsearch query to list all policies that have been evaluated in the last 90 days:
+
+```
+POST /tigera_secure_ee_policy_activity*/_search
+{
+  "size": 0,
+  "query": {
+    "range": {
+      "last_evaluated": {
+        "gte": "now-90d"
+      }
+    }
+  },
+  "aggs": {
+    "active_policies": {
+      "composite": {
+        "size": 1000,
+        "sources": [
+          { "kind": { "terms": { "field": "policy.kind" } } },
+          { "namespace": { "terms": { "field": "policy.namespace" } } },
+          { "name": { "terms": { "field": "policy.name" } } }
+        ]
+      },
+      "aggs": {
+        "latest_activity": {
+          "max": {
+            "field": "last_evaluated"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+To see which rules have been triggered in the last 90 days, use this query:
+
+```
+POST /tigera_secure_ee_policy_activity*/_search
+{
+  "size": 10000,
+  "query": {
+    "range": {
+      "last_evaluated": {
+        "gte": "now-90d"
+      }
+    }
+  }
+}
+```
+
+::: note
+
+If you need to retrieve more than 10,000 logs, do not simply increase the size. Instead, use pagination (especially `scroll API`) to scroll through results efficiently.
+
+[Learn more](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/paginate-search-results)
+:::
+
+### Step 2: Retrieve all network policies and rules
+
+Export your current policy and rule inventory using `kubectl get ...` commands.
+
+### Step 3: Compare lists
+
+Compare the output from the steps above to identify unused resources:
+- Match: Check if each policy (or specific rule ID) in your Cluster exists in the active lists from Elasticsearch.
+- Identify Unused: Any policy or rule present in the inventory but missing from the active list has not been evaluated by traffic in the last 90 days.
+- Verify: Before deleting any resource, ensure it is not a newly deployed policy that simply hasn't received traffic yet.
+
+## Limitations
+
+- **Logs require traffic**: Policy activity logs are only generated when a rule is evaluated by traffic. Resources that have never been hit will not appear in these logs. You cannot identify them by querying for "old" logs; you must identify them by their absence from the active log data (as performed in the comparison steps above).
+- **Long-lived connections**: A policy evaluation is logged only when a connection is established. If a connection remains open for a long duration (e.g., longer than your 90-day query window), the associated policy may not generate new logs, potentially making it appear "unused" despite actively carrying traffic.

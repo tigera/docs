@@ -1,0 +1,122 @@
+---
+description: Manage security events from your cluster in a single place.
+---
+
+# Security event management
+
+Manage security events from your cluster in a single place.
+
+## Value
+
+Security events indicate that a threat actor may be present in your Kubernetes cluster. For example, a DNS request to a malicious hostname, a triggered WAF rule, or the opening of a sensitive file. $[prodname] provides security engineers and incident response teams with a single dashboard to manage threat alerts. Benefits include:
+
+- A filtered list of critical events with recommended remediation
+- Identify impacts on applications
+- Understand the scope and frequency of the issue
+- Manage alert noise by dismissing events (show/hide)
+- Manage alert noise by creating exceptions
+
+## Before you begin
+
+**Required**
+
+- [WAF is enabled](./web-application-firewall.mdx)
+
+**Limitations**
+
+- Only WAF basic security events. Over time, the dashboard will contain a full range of $[prodname] security events.
+- You cannot control which users can view or edit the page using fine-grained role-based access controls
+
+## Security Events Dashboard
+
+The **Security Events Dashboard** page gives you a high-level view of recent security events.
+You can use this visual reference to get an overall sense of your cluster's health.
+If you find anything that merits further investigation, you can click on an event for more details.
+
+* In the web console, go to **Threat defense&nbsp;>&nbsp;Security Events Dashboard**.
+
+![Security Events Dashboard](/img/calico-enterprise/security-events-dashboard.png)
+
+## Security Events
+
+The **Security Events** page lists all the security events that have been detected for your cluster.
+You can view and filter your security events to focus on
+
+* In the web console, go to **Threat Defense&nbsp;>&nbsp;Security Events**.
+
+### Dismiss a security event
+
+You can clear your security events list by dismissing events that you've finished reviewing.
+When you dismiss an event, that event is no longer visibile in the list.
+
+1. In the web console, go to **Threat Defense&nbsp;>&nbsp;Security Events**.
+1. Find a security event in the list, and then click **Action&nbsp;>&nbsp;Dismiss Security Event**.
+
+### Create a security event exception
+
+You can prevent certain kinds of security events from appearing in the list by creating a security event exception.
+This is helpful if you want to reduce alert noise for workloads that you know are safe.
+When you create an exception, all matching security events are removed from the security events list.
+Future matches will not appear in the list.
+
+1. In the web console, go to **Threat Defense&nbsp;>&nbsp;Security Events**.
+1. Find a security event in the list, and then click **Action&nbsp;>&nbsp;Add exception**.
+1. On the **Create an Exception** dialog, select a scope for the exception and click **Create Exception**.
+
+You can manage your exceptions by clicking **Threat Defense&nbsp;>&nbsp;Security Events&nbsp;>&nbsp;Exceptions**.
+You can browse, edit, and delete exceptions on the list.
+
+### UI help
+
+**Event details page**
+
+Provides actions to remediate the detection and stop the attack from progressing. For example:
+
+![waf-security](/img/calico-enterprise/waf-security-events-latest.png)
+
+**Severity**
+
+$[prodname] calculates severity (Critical, High, Medium, Low) using a combination of NIST CVSS 3.0 and MITRE IDs.
+
+**MITRE IDs**
+
+Multiple MITRE IDs may be associated with a security event.
+
+**Attack Vector**
+- Network
+- Process
+- File
+
+**MITRE Tactic** (based on the [MITRE tactics](https://attack.mitre.org/tactics/enterprise/)) includes a specific path, method, or scenario that can compromise cluster security. Valid entries:
+
+| Tactic                                                       | Target                          | Attack techniques                                            |
+| ------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------ |
+| [Initial access](https://attack.mitre.org/tactics/TA0001/)   | Network                         | Gain an initial foothold within a network using various entry vectors. |
+| [Execution](https://attack.mitre.org/tactics/TA0002/)        | Code in local or remove systems | Control code running on local or remote systems using malicious code. |
+| [Impact](https://attack.mitre.org/tactics/TA0040/)           | Systems and data                | Disrupt availability or compromise integrity by manipulating business and operational processes. |
+| [Persistence](https://attack.mitre.org/tactics/TA0003/)      | Maintain footholds              | Maintain access to systems across restarts, credential changes, and other interruptions. |
+| [Privilege Escalation](https://attack.mitre.org/tactics/TA0004/) | Access permissions              | Access higher-level permissions on a system or network.      |
+| [Defense Evasion](https://attack.mitre.org/tactics/TA0005/)  | Avoid detection                 | Masquerade and hide malware to avoid detection to compromise software, data, scripts, and processes. |
+| [Discovery](https://attack.mitre.org/tactics/TA0007/)        | Determine your environment      | Gain knowledge about your system and internal network.       |
+
+### Frequently asked questions
+
+**How is the recommended remediation determined?**
+
+The Tigera Security Research team maps MITRE IDs to events and provides the recommended remediation.
+
+**Will I see all $[prodname] alerts in this dashboard?**
+
+No. $[prodname] security events do not encompass all types of alerts nor all security alert types; they only contain alerts for threats. Alerts for vulnerabilities detected in a container image, or misconfigurations in your Kubernetes cluster, are displayed in their respective dashboards. However, when vulnerabilities or misconfigurations are exploited by an attacker, those indicators of an attack are considered security events.
+
+**What does dismissing a security event do?**
+
+Dismissing a security event hides it from view.
+
+**Why are some fields in columns blank?**
+
+Security events generated from older managed clusters will not have values for the new fields (for example, MITRE IDs). You can dismiss these events.
+
+**Where can I view security event logs?**
+
+Go to: **Logs**, Kibana index, `tigera_secure_ee_events`.

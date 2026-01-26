@@ -1,0 +1,603 @@
+---
+description: Configure specific application traffic to exit the cluster through an egress gateway.
+redirect_from:
+  - /compliance/egress-gateways
+---
+
+# Configure egress gateways, on-premises
+
+## Big picture
+
+Configure specific application traffic to exit the cluster through an egress gateway.
+
+## Value
+
+When traffic from particular applications leaves the cluster to access an external destination, it
+can be useful to control the source IP of that traffic. For example, there may be an additional
+firewall around the cluster, whose purpose includes policing external accesses from the cluster, and
+specifically that particular external destinations can only be accessed from authorised workloads
+within the cluster.
+
+$[prodname]'s own policy (including [DNS policy](../../network-policy/domain-based-policy.mdx)) and
+per-node firewalls can ensure this, but deployments may like to deepen their defense by adding an
+external firewall as well. If the external firewall is configured to allow outbound connections
+only from particular source IPs, and the intended cluster workloads can be configured so that their
+outbound traffic will have one of those source IPs, then the defense in depth objective is achieved.
+
+$[prodname] allows specifying an [IP pool](../../reference/resources/ippool.mdx) for each pod or namespace, and
+even a [specific IP](../ipam/use-specific-ip.mdx) for a new pod, but this requires predicting how many pods
+there will be representing a particular application, so that the IP pool can be correctly sized.
+When IPs are a precious resource, over-sizing the pool is wasteful; but under-sizing is also
+problematic, as then IPs will not be available within the desired range as the application is
+scaled.
+
+Egress gateways provide an alternative approach. Application pods and namespaces are provisioned
+with IPs from the default (and presumably plentiful) pool, but also configured so that their
+outbound traffic is directed through an egress gateway. (Or, for resilience, through one of a small
+number of egress gateways.) The egress gateways are set up to use a [specific IP pool](../ipam/legacy-firewalls.mdx)
+ and to perform an SNAT on the traffic passing through them. Hence, any
+number of application pods can have their outbound connections multiplexed through a fixed small
+number of egress gateways, and all of those outbound connections acquire a source IP from the egress
+gateway IP pool.
+
+:::note
+
+The source port of an outbound flow through an egress gateway can generally _not_ be
+preserved. Changing the source port is how Linux maps flows from many upstream IPs onto a single
+downstream IP.
+
+:::
+
+Egress gateways are also useful if there is a reason for wanting all outbound traffic from a
+particular application to leave the cluster through a particular node or nodes. For this case, the
+gateways just need to be scheduled to the desired nodes, and the application pods/namespaces
+configured to use those gateways.
+
+## Concepts
+
+### Egress gateway
+
+An egress gateway acts as a transit pod for the outbound application traffic that is configured to
+use it. As traffic leaving the cluster passes through the egress gateway, its source IP is changed
+to that of the egress gateway pod, and the traffic is then forwarded on.
+
+### Source IP
+
+When an outbound application flow leaves the cluster, its IP packets will have a source IP.
+Normally this is the pod IP of the pod that originated the flow, or the node IP of the node hosting
+that pod. It will be the **node IP** if the pod IP came from an [IP pool](../../reference/resources/ippool.mdx) with `natOutgoing: true`, and the **pod IP** if
+not. (Assuming no other CNI plugin has been configured to NAT outgoing traffic.)
+
+With an egress gateway involved that is all still true, except that now it's the egress gateway that
+counts, instead of the original application pod. So the flow will have the egress gateway's **node
+IP**, if the egress gateway's pod IP came from an [IP pool](../../reference/resources/ippool.mdx)
+ with `natOutgoing: true`, and the egress
+gateway's **pod IP** otherwise.
+
+### Control the use of egress gateways
+
+If a cluster ascribes special meaning to traffic flowing through egress gateways, it will be
+important to control when cluster users can configure their pods and namespaces to use them, so that
+non-special pods cannot impersonate the special meaning.
+
+If namespaces in a cluster can only be provisioned by cluster admins, one option is to enable egress
+gateway function only on a per-namespace basis. Then only cluster admins will be able to configure
+any egress gateway usage.
+
+Otherwise -- if namespace provisioning is open to users in general, or if it's desirable for egress
+gateway function to be enabled both per-namespace and per-pod -- a [Kubernetes admission controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
+ will be
+needed. This is a task for each deployment to implement for itself, but possible approaches include
+the following.
+
+1.  Decide whether a given Namespace or Pod is permitted to use egress annotations at all, based on
+    other details of the Namespace or Pod definition.
+
+1.  Evaluate egress annotation selectors to determine the egress gateways that they map to, and
+    decide whether that usage is acceptable.
+
+1.  Impose the cluster's own bespoke scheme for a Namespace or Pod to identify the egress gateways
+    that it wants to use, less general than $[prodname]'s egress annotations. Then the
+    admission controller would police those bespoke annotations (that that cluster's users could
+    place on Namespace or Pod resources) and either reject the operation in hand, or allow it
+    through after adding the corresponding $[prodname] egress annotations.
+
+### Policy enforcement for flows via an egress gateway
+
+For an outbound connection from a client pod, via an egress gateway, to a destination outside the
+cluster, there is more than one possible enforcement point for policy:
+
+The path of the traffic through policy is as follows:
+
+1. Packet leaves the client pod and passes through its egress policy.
+2. The packet is encapsulated by the client pod's host and sent to the egress gateway
+3. The encapsulated packet is sent from the host to the egress gateway pod.
+4. The egress gateway pod de-encapsulates the packet and sends the packet out again with its own address.
+5. The packet leaves the egress gateway pod through its egress policy.
+
+To ensure correct operation, (as of v3.15) the encapsulated traffic between host and egress gateway is auto-allowed by
+$[prodname] and other ingress traffic is blocked. That means that there are effectively two places where
+policy can be applied:
+
+1.  on egress from the client pod
+2.  on egress from the egress gateway pod (see limitations below).
+
+The policy applied at (1) is the most powerful since it implicitly sees the original source of the traffic (by
+virtue of being attached to that original source). It also sees the external destination of the traffic.
+
+Since an egress gateway will never originate its own traffic, one option is to rely on policy applied at (1) and
+to allow all traffic to at (2) (either by applying no policy or by applying an "allow all").
+
+Alternatively, for maximum "defense in depth" applying policy at both (1) and (2) provides extra protection should
+the policy at (1) be disabled or bypassed by an attacker. Policy at (2) has the following limitations:
+
+- [Domain-based policy](../../network-policy/domain-based-policy.mdx) is not supported at egress from egress
+  gateways. It will either fail to match the expected traffic, or it will work intermittently if the egress gateway
+  happens to be scheduled to the same node as its clients. This is because any DNS lookup happens at the client pod.
+  By the time the policy reaches (2) the DNS information is lost and only the IP addresses of the traffic are available.
+
+- The traffic source will appear to be the egress gateway pod, the source information is lost in the address
+  translation that occurs inside the egress gateway pod.
+
+That means that policies at (2) will usually take the form of rules that match only on destination port and IP address,
+either directly in the rule (via a CIDR match) or via a (non-domain based) NetworkSet. Matching on source has little
+utility since the IP will always be the egress gateway and the port of translated traffic is not always preserved.
+
+:::note
+
+Since v3.15.0, $[prodname] also sends health probes to the egress gateway pods from the nodes where
+their clients are located. In iptables mode, this traffic is auto-allowed at egress from the host and ingress
+to the egress gateway. In eBPF mode, the probe traffic can be blocked by policy, so you must ensure that this traffic allowed; this should be fixed in an upcoming
+patch release.
+
+:::
+
+## Before you begin
+
+**Required**
+
+- Calico CNI
+- Open port UDP 4790 on the host
+
+**Not Supported**
+
+- GKE
+- Windows
+
+## How to
+
+- [Enable egress gateway support](#enable-egress-gateway-support)
+- [Provision an egress IP pool](#provision-an-egress-ip-pool)
+- [Deploy a group of egress gateways](#deploy-a-group-of-egress-gateways)
+- [Configure iptables backend for egress gateways](#configure-iptables-backend-for-egress-gateways)
+- [Configure namespaces and pods to use egress gateways](#configure-namespaces-and-pods-to-use-egress-gateways)
+- [Optionally enable ECMP load balancing](#optionally-enable-ecmp-load-balancing)
+- [Verify the feature operation](#verify-the-feature-operation)
+- [Control the use of egress gateways](#control-the-use-of-egress-gateways)
+- [Upgrade egress gateways](#upgrade-egress-gateways)
+
+### Enable egress gateway support
+
+In the default **FelixConfiguration**, set the `egressIPSupport` field to `EnabledPerNamespace` or
+`EnabledPerNamespaceOrPerPod`, according to the level of support that you need in your cluster. For
+support on a per-namespace basis only:
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p \
+    '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
+```
+
+Or for support both per-namespace and per-pod:
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p \
+    '{"spec":{"egressIPSupport":"EnabledPerNamespaceOrPerPod"}}'
+```
+
+:::note
+
+- `egressIPSupport` must be the same on all cluster nodes, so you should set them only in the
+  `default` FelixConfiguration resource.
+- The operator automatically enables the required policy sync API in the FelixConfiguration.
+
+:::
+
+### Provision an egress IP pool
+
+Provision a small IP Pool with the range of source IPs that you want to use for a particular
+application when it connects to an external service. For example:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+  name: egress-ippool-1
+spec:
+  cidr: 10.10.10.0/30
+  blockSize: 32
+  nodeSelector: "!all()"
+EOF
+```
+
+Where:
+
+- It is best to set the `blockSize` to 32 so that each block contains only a single IP address:
+
+  - Scheduling a single egress gateway to a node causes the node to claim a whole block.  The other IPs in the block
+    are wasted unless a second egress gateway (with the same pool configuration) is scheduled to the same node.
+
+  - Empty /32 blocks can always be reclaimed from other nodes if the pool runs out of blocks.  This ensures that an
+    egress gateway can always be scheduled if there are free IPs in the pool.
+
+  Setting `strictAffinity` to `false` in the [IPAM configuration](../../reference/resources/ipamconfig) also prevents the
+  above problems by allowing nodes to "borrow" IPs from other nodes' blocks.  However, using /32 blocks:
+
+  - Avoids a dependency on a setting that is shared with other IP pools.
+
+  - Results in simpler, uniform route advertisements (rather than a mix of block size routes and /32 routes).
+
+  - Results in less route churn.
+
+- `nodeSelector: "!all()"` is recommended so that this egress IP pool is not accidentally used for cluster pods in general. Specifying this `nodeSelector` means that the IP pool is only used for pods that explicitly identify it in their `cni.projectcalico.org/ipv4pools` annotation.
+
+- Set `ipipMode` or `vxlanMode` to `Always` if the pod network has [IPIP or VXLAN](../configuring/vxlan-ipip.mdx) enabled.
+
+  :::note
+
+  This setting is not specific to egress gateway. In some cases where nodes happen to be in the same subnet, setting the value to `Never`will work the same as `Always`. It all depends on the hop from the client node to the egress gateway node. For example, if the client nodes are in the same AWS subnet, and you are using `Always` because some of the nodes are in different subnets, then `Never` will work for the egress IP Pool when the client and gateway nodes are in the same subnet.
+
+  :::
+
+### Deploy a group of egress gateways
+
+Use an egress gateway custom resource to deploy a group of egress gateways, using the egress IP Pool.
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: operator.tigera.io/v1
+kind: EgressGateway
+metadata:
+  name: egress-gateway
+  namespace: default
+spec:
+  logSeverity: "Info"
+  replicas: 1
+  ipPools:
+  - cidr: "10.10.10.0/30"
+  egressGatewayFailureDetection:
+    healthTimeoutDataStoreSeconds: 30
+    icmpProbe:
+      ips: ["34.56.2.7"]
+      timeoutSeconds: 15
+      intervalSeconds: 5
+    httpProbe:
+      urls: ["http://example.com"]
+      timeoutSeconds: 30
+      intervalSeconds: 10
+  template:
+    metadata:
+      labels:
+        egress-code: red
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      terminationGracePeriodSeconds: 0
+EOF
+```
+
+:::note
+
+When deploying egress gateway in a non-default namespace on OpenShift, the namespace needs to be set privileged by adding the following to the namespace:
+
+##### Label
+```
+openshift.io/run-level: "0"
+pod-security.kubernetes.io/enforce: privileged
+pod-security.kubernetes.io/enforce-version: latest
+```
+##### Annotation
+```
+security.openshift.io/scc.podSecurityLabelSync: "false"
+```
+:::
+
+Where:
+
+- It is advisable to have more than one egress gateway per group, so that the egress IP function continues if one of the gateways crashes or needs to be restarted. When there are multiple gateways in a group, outbound traffic from the applications using that group is load-balanced across the available gateways. The number of `replicas` specified must be less than or equal to the number of free IP addresses in the IP Pool.
+
+- IPPool can be specified either by its name (e.g. `-name: egress-ippool-1`) or by its CIDR (e.g. `-cidr: 10.10.10.0/31`).
+
+- The labels are arbitrary. You can choose whatever names and values are convenient for your cluster's Namespaces and Pods to refer to in their egress selectors.
+
+  If labels are not specified, a default label `projectcalico.org/egw`:`name` will be added by the Tigera Operator.
+
+- icmpProbe may be used to specify the Probe IPs, ICMP interval and timeout in seconds. `ips` if set, the
+  egress gateway pod will probe each IP periodically using an ICMP ping. If all pings fail then the egress
+  gateway will report non-ready via its health port. `intervalSeconds` controls the interval between probes.
+  `timeoutSeconds` controls the timeout before reporting non-ready if no probes succeed.
+
+  ```yaml
+  icmpProbe:
+    ips:
+    - probeIP
+    - probeIP
+    timeoutSeconds: 20
+    intervalSeconds: 10
+  ```
+
+- httpProbe may be used to specify the Probe URLs, HTTP interval and timeout in seconds. `urls` if set, the
+  egress gateway pod will probe each external service periodically. If all probes fail then the egress
+  gateway will report non-ready via its health port. `intervalSeconds` controls the interval between probes.
+  `timeoutSeconds` controls the timeout before reporting non-ready if all probes are failing.
+
+  ```yaml
+  httpProbe:
+    urls:
+    - probeURL
+    - probeURL
+    timeoutSeconds: 30
+    intervalSeconds: 10
+  ```
+- Please refer to the [operator reference docs](../../reference/installation/api.mdx) for details about the egress gateway resource type.
+
+The health port `8080` is used by:
+
+- The Kubernetes `readinessProbe` to expose the status of the egress gateway pod (and any ICMP/HTTP
+  probes).
+- Remote pods to check if the egress gateway is "ready". Only "ready" egress
+  gateways will be used for remote client traffic. This traffic is automatically allowed by $[prodname] and
+  no policy is required to allow it. $[prodname] only sends probes to egress gateway pods that have a named
+  "health" port. This ensures that during an upgrade, health probes are only sent to upgraded egress gateways.
+
+### Deploy on a RKE2 CIS-hardened cluster
+
+If you are deploying `egress-gateway` on a RKE2 CIS-hardened cluster, its `PodSecurityPolicies` restrict the `securityContext` and `volumes` required by egress gateway. When deploying using the egress gateway custom resource, the Tigera Operator sets up `PodSecurityPolicy`, `Role`, `RoleBinding` and associated `ServiceAccount`.
+
+### Configure iptables backend for egress gateways
+
+The Tigera Operator configures egress gateways to use the same iptables backend as `calico-node`.
+To modify the iptables backend for egress gateways, you must change the `iptablesBackend` field in the [Felix configuration](../../reference/resources/felixconfig.mdx).
+
+### Configure IP autodetection for dual-ToR clusters.
+
+If you plan to use Egress Gateways in a [dual-ToR cluster](../configuring/dual-tor.mdx), you must also adjust the $[nodecontainer] IP
+auto-detection method to pick up the stable IP, for example using the `interface: lo` setting
+(The default first-found setting skips over the lo interface). This can be configured via the
+$[prodname] [Installation resource](../../reference/installation/api.mdx#nodeaddressautodetection).
+
+### Configure namespaces and pods to use egress gateways
+
+You can configure namespaces and pods to use an egress gateway by:
+* annotating the namespace or pod
+* applying an egress gateway policy to the namespace or pod.
+
+Using an egress gateway policy is more complicated, but it allows advanced use cases.
+
+#### Configure a namespace or pod to use an egress gateway (annotation method)
+
+In a $[prodname] deployment, the Kubernetes namespace and pod resources honor annotations that
+tell that namespace or pod to use particular egress gateways. These annotations are selectors, and
+their meaning is "the set of pods, anywhere in the cluster, that match those selectors".
+
+So, to configure all the pods in a namespace to use the egress gateways that are
+labelled with `egress-code: red`, you would annotate that namespace like this:
+
+```bash
+kubectl annotate ns <namespace> egress.projectcalico.org/selector="egress-code == 'red'"
+```
+
+By default, that selector can only match egress gateways in the same namespace. To select gateways
+in a different namespace, specify a `namespaceSelector` annotation as well, like this:
+
+```bash
+kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="projectcalico.org/name == 'default'"
+```
+
+Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
+$[prodname] [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
+
+To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
+creating the pod. For example:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    egress.projectcalico.org/selector: egress-code == 'red'
+    egress.projectcalico.org/namespaceSelector: projectcalico.org/name == 'default'
+  name: my-client,
+  namespace: my-namespace,
+spec:
+  ...
+EOF
+```
+
+#### Configure a namespace or pod to use an egress gateway (egress gateway policy method)
+
+Creating an egress gateway policy allows gives you more control over how your egress gateways work.
+For example, you can:
+  - Send egress gateway traffic to multiple egress gateways, depending on the destination.
+  - Skip egress gateways for traffic that is bound for local endpoints that aren't in the cluster.
+
+The following is an example of Egress Gateway Policy:
+
+```yaml noValidation
+apiVersion: projectcalico.org/v3
+kind: EgressGatewayPolicy
+metadata:
+  name: "egw-policy1"
+spec:
+  rules:
+  // callout-for-next-line
+  - destination:
+      cidr: 10.0.0.0/8
+    description: "Local: no gateway"
+  - destination:
+      cidr: 11.0.0.0/8
+    description: "Gateway to on prem"
+    // callout-for-next-line
+    gateway:
+      // callout-for-next-line
+      namespaceSelector: "projectcalico.org/name == 'default'"
+      // callout-for-next-line
+      selector: "egress-code == 'blue'"
+      // callout-for-next-line
+      maxNextHops: 2
+  - description: "Gateway to internet"
+    gateway:
+      namespaceSelector: "projectcalico.org/name == 'default'"
+      selector: "egress-code == 'red'"
+    // callout-for-next-line
+    gatewayPreference: PreferNodeLocal
+```
+
+1. If the `destination` field is not specified, it takes the default value of 0.0.0.0/0.
+
+1. If the `gateway` field is not specified, then egress traffic is routed locally, and not through an egress gateway.
+   This is helpful for reaching local endpoints that are not part of a cluster.
+
+1. Required when `gateway` field is specified.
+
+1. Required when `gateway` field is specified.
+
+1. The `maxNextHops` field specifies the maximum number of egress gateway replicas from the selected deployment that a pod depends on. For more information, see [Optimize egress networking for workloads with long-lived TCP connections](egress-gateway-maintenance.mdx#reduce-the-impact-of-gateway-downtime).
+
+1. `gatewayPreference` specifies hints to the gateway selection process. The default `None`, selects the default selection process. If set to `PreferNodeLocal`, then egress gateways local to the client's node are used if available. If there are no local egress gateways, $[prodname] uses other egress gateways. In this example, for the default route, egress gateways local to the client's node are used if present. If not, all egress gateways matching the selector are used.
+
+:::note
+
+CIDRs specified in rules in an egress gateway policy are matched in Longest Prefix Match(LPM) fashion. 
+
+:::
+
+$[prodname] rejects egress gateway policies that do any of the following:
+* The policy has no rule that specifies a gateway or a destination
+* The policy has a rule with empty `selector` or `namespaceSelector` fields.
+* The policy has two or more rules with the same destination.
+
+To configure all the pods in a namespace to use an egress gateway policy named `egw-policy1`, you could annotate the namespace like this:
+
+```bash
+kubectl annotate ns <namespace> egress.projectcalico.org/egressGatewayPolicy="egw-policy1"
+```
+
+To configure a specific Kubernetes pod to use the same policy, specify the same annotations when
+creating the pod.
+For example:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    egress.projectcalico.org/egressGatewayPolicy: "egw-policy1"
+  name: my-client,
+  namespace: my-namespace,
+spec:
+  ...
+EOF
+```
+
+:::caution
+
+You must create the egress gateway policy before you apply it to a namespace or pod.
+If you attempt to apply an egress gateway policy that has not been created, $[prodname] will block all traffic from the namespace or pod.
+
+:::
+
+### Optionally enable ECMP load balancing
+
+If you are provisioning multiple egress gateways for a given client pod, and you want
+traffic from that client to load balance across the available gateways, set the
+`fib_multipath_hash_policy`
+[sysctl](https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/) to allow that:
+
+```bash
+sudo sysctl -w net.ipv4.fib_multipath_hash_policy=1
+```
+
+You will need this on each node with clients that you want to load balance across multiple
+egress gateways.
+
+### Verify the feature operation
+
+To verify the feature operation, cause the application pod to initiate a connection to a server
+outside the cluster, and observe -- for example using tcpdump -- the source IP of the connection
+packet as it reaches the server.
+
+:::note
+
+In order for such a connection to complete, the server must know how to route back to
+the egress gateway's IP.
+
+:::
+
+By way of a concrete example, you could use netcat to run a test server outside the cluster; for
+example:
+
+```bash
+docker run --net=host --privileged subfuzion/netcat -v -l -k -p 8089
+```
+
+Then provision an egress IP Pool, and egress gateways, as above.
+
+Then deploy a pod, with egress annotations as above, and with any image that includes netcat, for example:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-netcat-pod
+  namespace: my-namespace
+spec:
+  containers:
+  - name: alpine
+    image: alpine
+    command: ["/bin/sleep"]
+    args: ["infinity"]
+EOF
+```
+
+Now you can use `kubectl exec` to initiate an outbound connection from that pod:
+
+```bash
+kubectl exec <pod name> -n <pod namespace> -- nc <server IP> 8089 </dev/null
+```
+
+where `<server IP>` should be the IP address of the netcat server.
+
+Then, if you check the logs or output of the netcat server, you should see:
+
+```
+Connection from <source IP> <source port> received
+```
+
+with `<source IP>` being one of the IPs of the egress IP pool that you provisioned.
+
+## Upgrade egress gateways
+
+From v3.16, egress gateway deployments are managed by the Tigera Operator.
+
+- When upgrading from a pre-v3.16 release, no automatic upgrade will occur. To upgrade a pre-v3.16 egress gateway deployment,
+  create an equivalent EgressGateway resource with the same namespace and the same name as mentioned [above](#deploy-a-group-of-egress-gateways);
+  the operator will then take over management of the old Deployment resource, replacing it with the upgraded version.
+
+- Use `kubectl apply` to create the egress gateway resource. Tigera Operator will read the newly created resource and wait
+  for the other $[prodname] components to be upgraded. Once the other $[prodname] components are upgraded, Tigera Operator
+  will upgrade the existing egress gateway deployment with the new image.
+
+By default, upgrading egress gateways will sever any connections that are flowing through them. To minimise impact,
+the egress gateway feature supports some advanced options that give feedback to affected pods. For more details see
+the [egress gateway maintenance guide](egress-gateway-maintenance.mdx).
+
+## Additional resources
+
+Please see also:
+
+- The `egressIP...` fields of the [FelixConfiguration resource](../../reference/resources/felixconfig.mdx#spec).
+- [Additional configuration for egress gateway maintenance](egress-gateway-maintenance.mdx)

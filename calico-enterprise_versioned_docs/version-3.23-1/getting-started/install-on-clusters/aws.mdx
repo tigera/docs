@@ -1,0 +1,155 @@
+---
+description: Install Calico Enterprise with a self-managed Kubernetes cluster using kOps on AWS.
+---
+
+# kOps on AWS
+
+## Big picture
+
+Install $[prodname] with a self-managed Kubernetes cluster using Kubernetes Operations (kOps) on AWS. kOps is a cluster management tool that provisions cluster VMs and installs Kubernetes. It is a good default choice for most because it gives you access to all $[prodname] [flexible and powerful networking features](../../networking/index.mdx). However, other options may work better for your environment.
+
+## Before you begin
+
+**CNI support**
+
+- Calico CNI for networking with $[prodname] network policy
+
+  The geeky details of what you get:
+
+  <GeekDetails
+    prodname='$[prodname]'
+    details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+  />{' '}
+
+- AWS VPC CNI for networking with $[prodname] network policy
+
+  The geeky details of what you get:
+
+  <GeekDetails
+    prodname='$[prodname]'
+    details='Policy:Calico,IPAM:AWS,CNI:AWS,Overlay:No,Routing:VPC Native,Datastore:Kubernetes'
+  />
+
+**Required**
+
+- A [compatible kOps cluster](../compatibility.mdx#kops-on-aws)
+- A [Tigera license key and credentials](calico-enterprise.mdx)
+- Cluster meets [system requirements](requirements.mdx)
+- [Install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- [Install AWS CLI tools](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
+
+## How to
+
+Select one of the following installation paths:
+
+- [Install Calico Enterprise networking and network policy](#install-calico-enterprise-networking-and-network-policy)
+- [Install Amazon VPC networking with Calico Enterprise network policy](#install-amazon-vpc-networking-with-calico-enterprise-network-policy)
+
+### Install Calico Enterprise networking and network policy
+
+To use kOps to create a cluster with $[prodname] networking and network policy:
+
+1. [Install kOps](https://kops.sigs.k8s.io/install/) on your workstation.
+1. [Set up your environment for AWS](https://kops.sigs.k8s.io/getting_started/aws/) .
+1. Be sure to [set up an S3 state store](https://kops.sigs.k8s.io/getting_started/aws/#cluster-state-storage) and export its name:
+
+   ```bash
+   export KOPS_STATE_STORE=s3://<name-of-your-state-store-bucket>
+   ```
+
+1. Configure kOps to use $[prodname] for networking.
+   Create a cluster with kOps using the `--networking cni` flag. For example:
+
+   ```
+   kops create cluster \
+    --zones us-west-2a \
+    --networking cni \
+    <name-of-your-cluster>
+   ```
+
+   :::note
+
+   The name of the cluster must be chosen as a valid DNS name belonging to the root user. It can either be a subdomain of an existing domain name or a subdomain which can be configured on AWS Route 53 service.
+
+   :::
+
+   Or, you can add `cni` to your cluster config. Run `kops update cluster --name=<name-of-your-cluster>` and set the following networking configuration.
+
+   ```yaml
+   networking:
+     cni: {}
+   ```
+
+   :::note
+
+   Setting the `--networking cni` flag delegates the installation of the CNI to the user for a later stage.
+
+   :::
+
+1. The provisioned kOps cluster will assign its own set of pod network CIDR in the kube-proxy instance different than the one $[prodname] expects. To set the cluster cidr for the kube-proxy to match the one expected by $[prodname] edit the cluster config `kops edit cluster <name-of-your-cluster>` and add the `kubeProxy` config with the `clusterCIDR` expected by the default $[prodname] installation.
+
+   ```yaml noValidation
+   spec:
+      ...
+      kubeProxy:
+         clusterCIDR: 192.168.0.0/16
+   ```
+
+   :::note
+
+   For more advanced pod networking CIDR configuration, the requirement is to have `ipPools` CIDR set by the $[prodname] installation to match cluster CIDR set in kube-proxy. Calico's `ipPools` setting is obtainable in the Installation resource `kubectl get installation -o yaml` and can be configured by editing the operator manifest found in the [install instructions for $[prodname]](kubernetes/generic-install.mdx).
+
+   :::
+
+1. The default size of the provisioned instance groups for the cluster might not be sufficient for the full installation of kubernetes and $[prodname]. To increase the size of the instance groups run `kops edit ig <name-of-instance-group-in-your-cluster> --name <name-of-your-cluster>` and edit the following fields accordingly.
+
+   ```yaml noValidation
+      spec:
+         ...
+         machineType: t3.medium
+         maxSize: 1
+         minSize: 1
+   ```
+
+   The name of the instance groups can be obtained from `kops get instancegroups --name <name-of-your-cluster>`.
+
+1. Once your cluster has been configured run `kops update cluster --name=<name-of-your-cluster>` to preview the changes. Then the same command with `--yes` option (ie. `kops update cluster --name=<name-of-your-cluster> --yes`) to commit the changes to AWS to create the cluster. It may take 10 to 15 minutes for the cluster to be fully created.
+
+   :::note
+
+   Once the cluster has been created, the `kubectl` command should be pointing to the newly created cluster. By default `kops>=1.19` does not update `kubeconfig` to include the cluster certificates, accesses to the cluster through `kubectl` must be configured.
+
+   :::
+
+1. Validate that nodes are created.
+
+   ```bash
+   kubectl get nodes
+   ```
+
+   The above should return the status of the nodes in the `Not Ready` state.
+
+1. KOps does not install any CNI when the flag `--networking cni` or `spec.networking: cni {}` is used. In this case the user is expected to install the CNI separately.
+   To Install $[prodname] follow the [install instructions for $[prodname]](kubernetes/generic-install.mdx).
+
+1. Finally, to delete your cluster once finished, run `kops delete cluster <name-of-your-cluster> --yes`.
+
+You can further customize the $[prodname] install with [options listed in the kops documentation](https://kops.sigs.k8s.io/networking/#calico-example-for-cni-and-network-policy).
+
+### Install Amazon VPC networking with Calico Enterprise network policy
+
+You can use Amazon’s VPC CNI plugin for networking, and $[prodname] for network policy. The advantage of this approach is that pods are assigned IP addresses associated with Elastic Network Interfaces on worker nodes. The IPs come from the VPC network pool, and therefore do not require NAT to access resources outside the Kubernetes cluster.
+
+Set your kOps cluster configuration to:
+
+```yaml
+networking:
+  amazonvpc: {}
+```
+
+After the cluster is up and ready, [Install $[prodname]](kubernetes/generic-install.mdx).
+
+## Next steps
+
+- [Video: Everything you need to know about Kubernetes pod networking on AWS](https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-pod-networking-on-aws/)
+- [Try out $[prodname] network policy](../../network-policy/beginners/calico-network-policy.mdx)
