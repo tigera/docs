@@ -1,14 +1,26 @@
-import React from 'react';
-import ColorModeToggle from '@theme-original/ColorModeToggle';
 import { useColorMode } from '@chakra-ui/react';
+import ColorModeToggle from '@theme-original/ColorModeToggle';
+import React from 'react';
 
-export default function ColorModeToggleWrapper(props: any) {
-  const { value } = props;
-  const colorMode = useColorMode();
+type ColorModeProps = {
+  onChange: (value: string) => void
+  value: string | null;
+}
+
+export default function ColorModeToggleWrapper({ onChange, ...rest }: ColorModeProps) {
+  const { setColorMode } = useColorMode();
+  const { value } = rest;
+
+  const handleChange = (value: string) => {
+    setColorMode(value);
+    onChange(value);
+  }
 
   React.useEffect(() => {
-    colorMode.setColorMode(value);
+    if (value) {
+      setColorMode(value);
+    }
   }, [value]);
 
-  return <ColorModeToggle {...props} />;
+  return <ColorModeToggle {...rest} onChange={handleChange} />;
 }
