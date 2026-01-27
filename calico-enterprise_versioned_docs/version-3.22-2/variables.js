@@ -2,13 +2,13 @@ const releases = require('./releases.json');
 const componentImage = require('../../src/components/utils/componentImage');
 
 const variables = {
-  releaseTitle: 'v3.22.0-3.0',
+  releaseTitle: 'v3.22.1',
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'v3.22',
   openSourceVersion: releases[0].calico.minor_version.slice(1),
-  baseUrl: '/calico-enterprise/3.22',
-  filesUrl: 'https://downloads.tigera.io/ee/v3.22.0-3.0',
+  baseUrl: '/calico-enterprise/latest',
+  filesUrl: 'https://downloads.tigera.io/ee/v3.22.1',
   rpmsUrl: 'https://downloads.tigera.io/ee/rpms/' + releases[0].title.slice(0, 5),
   tutorialFilesURL: 'https://docs.tigera.io/files',
   tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/3.22',
@@ -20,7 +20,7 @@ const variables = {
   rootDirWindows: 'C:\\TigeraCalico',
   registry: 'quay.io/',
   envoyVersion: '1.5.0',
-  chart_version_name: 'v3.22.0-3.0-0',
+  chart_version_name: 'v3.22.1-0',
   tigeraOperator: releases[0]['tigera-operator'],
   dikastesVersion: releases[0].components.dikastes.version,
   releases,

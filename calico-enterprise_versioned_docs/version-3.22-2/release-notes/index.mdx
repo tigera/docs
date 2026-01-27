@@ -209,5 +209,62 @@ We've also added more feedback into the UI to keep you informed on the progress 
   As a workaround, avoid enabling WAF/L7 functionalities with eBPF dataplane.
 
 #### Upgrading
+
 To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
 
+### Calico Enterprise 3.22.1 general availability release
+
+January 26, 2026
+
+Calico Enterprise 3.22.1 is now available as a general availability release.
+
+This release is supported for use in production.
+
+#### Breaking changes
+
+* Renamed the name of the certificate bundle in the tigera-ca-bundle configmaps from tigera-ca-bundle.crt to ca.crt. A copy of the operator signer can still be fond in the original location. This only affects users who use this bundle for features that are not managed by the operator in addition to bringing your own certificates.
+* Removed the prefix "cnx-" from image names. The new image names can all be found [here](../getting-started/install-on-clusters/private-registry/private-registry-regular.mdx).
+* We are requiring kernel support for the x86-64 v3 architecture in this release as we are beginning to migrate to UBI10.
+
+#### Bug fixes
+
+* Fixed an issue causing a panic in Felix when WAF/L7 features are enabled with eBPF dataplane.
+* Fixed an issue preventing WAF/L7 features to work on hosts without legacy iptables support, such as Openshift 4.20.
+* Fixed an issue where Kibana was making connections to public endpoints.
+* Added an egress rule to allow traffic from intrusion detection controller to the tigera-manager deployment. This fixed an issue where traffic would be blocked if the user applies a default deny policy to the namespace.
+* Fixed an issue where Guardian was missing the certificate of the Calico API server from its CA bundle. This issue only impacted clusters that were created using an older version of the Operator that did not use a centralized signer. (Calico Enterprise v3.12 and older.)
+* Fixed an issue that caused local workloads with borrowed IPs lose connectivity when using the eBPF dataplane.
+* Fixed an issue where the VXLAN overlay VNI is always 0 on the eBPF dataplane. [calico 10625](https://github.com/projectcalico/calico/pull/10625)
+* Fixed an issue where fragmented UDP packets were incorrectly handled, leading to denied flows.
+* Security updates.
+
+
+#### Known issues
+
+* Pod restart may be required after initial deployment with Istio Ambient Mode.
+
+  When using Calico eBPF dataplane with Istio ambient mode, pods created before ztunnel/istiod are fully ready may experience HBONE tunnel routing failures.
+  Affected pods show connection resets (curl error 56) or TLS handshake failures when communicating with other ambient-enrolled pods.
+
+  Symptoms:
+  - curl: (56) Recv failure: Connection reset by peer between ambient pods
+  - ztunnel logs showing received corrupt message of type InvalidContentType
+  - Traffic works from non-ambient pods and via localhost
+
+  Workaround:
+  Restart affected deployments after enabling ambient mode:
+  ```shell
+  kubectl rollout restart deployment -n <namespace>
+  ```
+
+  Root Cause:
+  Pods created during initial ambient mode setup may have stale ztunnel INPOD socket state, causing HBONE traffic to route to the application port instead of the ztunnel HBONE listener (port 15008).
+
+* There is a bug in which the image pull secret is not propagated to the target namespace when deploying Istio Ambient Mode.
+  Affects only users using a private registry.
+* IPv4 addresses are not currently accepted as valid values for KUBERNETES_SERVICE_HOST - please use a hostname instead.  This issue will be resolved in the next patch release.
+
+
+#### Upgrading
+
+To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
