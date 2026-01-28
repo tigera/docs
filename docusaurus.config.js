@@ -95,6 +95,11 @@ export default async function createAsyncConfig() {
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       {
+        colorMode: {
+          defaultMode: 'light',
+          disableSwitch: false,
+          respectPrefersColorScheme: false,
+        },
         image: 'img/calico-logo-2026-badge.png',
         metadata: [
           {
