@@ -93,248 +93,248 @@ export default async function createAsyncConfig() {
     ],
 
     themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
-    {
-      colorMode: {
-        defaultMode: 'light',
-        disableSwitch: false,
-        respectPrefersColorScheme: false,
-      },
-      image: 'img/calico-logo-2026-badge.png',
-      metadata: [
-        {
-          name: 'keywords',
-          content:
-            'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp',
+      /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+      {
+        colorMode: {
+          defaultMode: 'light',
+          disableSwitch: false,
+          respectPrefersColorScheme: false,
         },
-      ],
-      algolia: {
-        appId: 'Q4GSZWRKBA',
-        apiKey: '34ecd6611b6cef7a420bd30587d0d502',
-        indexName: 'calico',
-        contextualSearch: true,
-        searchPagePath: '/search',
-      },
-      announcementBar: {
-        id: "calico_ebpf",
-        content: 'Calico 3.30+ users: <a href="https://calicocloud.io">Sign up for Calico Cloud Free today!</a>',
-        backgroundColor: "#FCE181",
-        textColor: "#000",
-        isCloseable: true
-      },
-      navbar: {
-        logo: {
-          src: 'img/tigera-logo-2026-black-text.svg',
-          srcDark: 'img/tigera-logo-2026-white-text.svg',
-        },
-        items: [
+        image: 'img/calico-logo-2026-badge.png',
+        metadata: [
           {
-            type: 'dropdown',
-            label: 'Documentation',
-            className: 'documentation-dropdown',
-            items: [
-              {
-                label: 'Calico Open Source',
-                type: 'docSidebar',
-                sidebarId: 'calicoSidebar',
-                docsPluginId: 'calico',
-                className: 'navbar-product-link_calico',
-              },
-              {
-                label: 'Calico Cloud',
-                type: 'docSidebar',
-                sidebarId: 'calicoCloudSidebar',
-                docsPluginId: 'calico-cloud',
-                className: 'navbar-product-link_calico-cloud',
-              },
-              {
-                label: 'Calico Enterprise',
-                type: 'docSidebar',
-                sidebarId: 'calicoEnterpriseSidebar',
-                docsPluginId: 'calico-enterprise',
-                className: 'navbar-product-link_calico-enterprise',
-              },
-            ],
-          },
-          {
-            type: 'docsVersionDropdown',
-            position: 'left',
-            // className for product specific items must start with 'product-'
-            dropdownItemsAfter: [
-              {
-                type: 'html',
-                value: '<hr class="dropdown-separator" />',
-              },
-              {
-                to: '/archive',
-                label: 'All versions',
-              },
-            ],
-          },
-          {
-            label: 'Tutorials',
-            // TODO: Marketing is building a page at /tutorials. Using self-paced-workshops as placeholder.
-            to: 'https://www.tigera.io/tutorials/',
-            position: 'left',
-          },
-          {
-            label: 'Certification',
-            to: 'https://www.tigera.io/lp/calico-certification/',
-          },
-          {
-            label: 'Try Calico Cloud',
-            to: 'https://www.calicocloud.io/home',
-            position: 'left',
-          },
-          {
-            type: 'dropdown',
-            label: 'Use cases',
-            position: 'left',
-            items: [
-              {
-                label: 'Microsegmentation',
-                to: '/use-cases/microsegmentation',
-              },
-              {
-                label: 'Observability',
-                to: '/use-cases/observability',
-              },
-              {
-                label: 'Egress access controls',
-                to: '/use-cases/egress-access-controls',
-              },
-              {
-                label: 'Egress gateways',
-                to: '/use-cases/egress-gateways',
-              },
-              {
-                label: 'Cluster mesh',
-                to: '/use-cases/cluster-mesh',
-              },
-            ],
-          },
-          {
-            href: 'https://github.com/projectcalico',
-            position: 'right',
-            className: 'header-icon-link github-icon',
-            'aria-label': 'GitHub repository',
+            name: 'keywords',
+            content:
+              'kubernetes,k8s,kubernetes security,container security,kubernetes networking,kubernetes monitoring,cwpp,cnapp',
           },
         ],
-      },
-      footer: {
-        style: 'dark',
-        links: [
-          {
-            title: 'Learn',
-            items: [
-              {
-                label: 'Documentation',
-                to: '/',
-              },
-              {
-                label: 'Events',
-                to: 'https://www.tigera.io/events',
-              },
-              {
-                label: 'Resource center',
-                to: 'https://www.tigera.io/resources',
-              },
-              {
-                label: 'Blog',
-                to: 'https://www.tigera.io/blog',
-              },
-              {
-                label: 'Trade shows',
-                to: 'https://www.tigera.io/lp/tradeshows',
-              },
-              {
-                label: 'Certification',
-                to: 'https://www.tigera.io/lp/calico-certification',
-              },
-              {
-                label: 'Guides',
-                to: 'https://www.tigera.io/learn/guides/kubernetes-monitoring',
-              },
-            ],
+        algolia: {
+          appId: 'Q4GSZWRKBA',
+          apiKey: '34ecd6611b6cef7a420bd30587d0d502',
+          indexName: 'calico',
+          contextualSearch: true,
+          searchPagePath: '/search',
+        },
+        announcementBar: {
+          id: "calico_ebpf",
+          content: 'Calico 3.30+ users: <a href="https://calicocloud.io">Sign up for Calico Cloud Free today!</a>',
+          backgroundColor: "#FCE181",
+          textColor: "#000",
+          isCloseable: true
+        },
+        navbar: {
+          logo: {
+            src: 'img/tigera-logo-2026-black-text.svg',
+            srcDark: 'img/tigera-logo-2026-white-text.svg',
           },
-          {
-            title: 'Support',
-            items: [
-              {
-                label: 'Customer success',
-                to: 'https://www.tigera.io/customer-success',
-              },
-              {
-                label: 'Support portal',
-                to: 'https://support.tigera.io/s/login/',
-              },
-              {
-                label: 'Security bulletins',
-                to: 'https://www.tigera.io/security-bulletins',
-              },
-              {
-                label: 'Report a security issue',
-                to: 'https://www.tigera.io/vulnerability-disclosure',
-              },
-            ],
-          },
-          {
-            title: 'Open source',
-            items: [
-              {
-                label: 'Project Calico',
-                to: 'https://www.tigera.io/project-calico',
-              },
-              {
-                label: 'Community',
-                to: 'https://www.tigera.io/project-calico/community',
-              },
-              {
-                label: 'GitHub',
-                to: 'https://github.com/projectcalico',
-              },
-              {
-                label: 'Stack Overflow',
-                to: 'https://stackoverflow.com/questions/tagged/calico',
-              },
-              {
-                label: 'Slack',
-                to: 'https://calicousers.slack.com/',
-              },
-            ],
-          },
-          {
-            title: 'Company',
-            items: [
-              {
-                label: 'About Calico',
-                to: 'https://www.tigera.io/about',
-              },
-              {
-                label: 'Customers',
-                to: 'https://www.tigera.io/customer-stories',
-              },
-              {
-                label: 'Partners',
-                to: 'https://www.tigera.io/partners',
-              },
-              {
-                label: 'Newsroom',
-                to: 'https://www.tigera.io/media',
-              },
-              {
-                label: 'Careers',
-                to: 'https://www.tigera.io/careers',
-              },
-              {
-                label: 'Contact',
-                to: 'https://www.tigera.io/contact',
-              },
-            ],
-          },
-        ],
-        // TODO: Add appropriate icons and links
-        copyright: `
+          items: [
+            {
+              type: 'dropdown',
+              label: 'Documentation',
+              className: 'documentation-dropdown',
+              items: [
+                {
+                  label: 'Calico Open Source',
+                  type: 'docSidebar',
+                  sidebarId: 'calicoSidebar',
+                  docsPluginId: 'calico',
+                  className: 'navbar-product-link_calico',
+                },
+                {
+                  label: 'Calico Cloud',
+                  type: 'docSidebar',
+                  sidebarId: 'calicoCloudSidebar',
+                  docsPluginId: 'calico-cloud',
+                  className: 'navbar-product-link_calico-cloud',
+                },
+                {
+                  label: 'Calico Enterprise',
+                  type: 'docSidebar',
+                  sidebarId: 'calicoEnterpriseSidebar',
+                  docsPluginId: 'calico-enterprise',
+                  className: 'navbar-product-link_calico-enterprise',
+                },
+              ],
+            },
+            {
+              type: 'docsVersionDropdown',
+              position: 'left',
+              // className for product specific items must start with 'product-'
+              dropdownItemsAfter: [
+                {
+                  type: 'html',
+                  value: '<hr class="dropdown-separator" />',
+                },
+                {
+                  to: '/archive',
+                  label: 'All versions',
+                },
+              ],
+            },
+            {
+              label: 'Tutorials',
+              // TODO: Marketing is building a page at /tutorials. Using self-paced-workshops as placeholder.
+              to: 'https://www.tigera.io/tutorials/',
+              position: 'left',
+            },
+            {
+              label: 'Certification',
+              to: 'https://www.tigera.io/lp/calico-certification/',
+            },
+            {
+              label: 'Try Calico Cloud',
+              to: 'https://www.calicocloud.io/home',
+              position: 'left',
+            },
+            {
+              type: 'dropdown',
+              label: 'Use cases',
+              position: 'left',
+              items: [
+                {
+                  label: 'Microsegmentation',
+                  to: '/use-cases/microsegmentation',
+                },
+                {
+                  label: 'Observability',
+                  to: '/use-cases/observability',
+                },
+                {
+                  label: 'Egress access controls',
+                  to: '/use-cases/egress-access-controls',
+                },
+                {
+                  label: 'Egress gateways',
+                  to: '/use-cases/egress-gateways',
+                },
+                {
+                  label: 'Cluster mesh',
+                  to: '/use-cases/cluster-mesh',
+                },
+              ],
+            },
+            {
+              href: 'https://github.com/projectcalico',
+              position: 'right',
+              className: 'header-icon-link github-icon',
+              'aria-label': 'GitHub repository',
+            },
+          ],
+        },
+        footer: {
+          style: 'dark',
+          links: [
+            {
+              title: 'Learn',
+              items: [
+                {
+                  label: 'Documentation',
+                  to: '/',
+                },
+                {
+                  label: 'Events',
+                  to: 'https://www.tigera.io/events',
+                },
+                {
+                  label: 'Resource center',
+                  to: 'https://www.tigera.io/resources',
+                },
+                {
+                  label: 'Blog',
+                  to: 'https://www.tigera.io/blog',
+                },
+                {
+                  label: 'Trade shows',
+                  to: 'https://www.tigera.io/lp/tradeshows',
+                },
+                {
+                  label: 'Certification',
+                  to: 'https://www.tigera.io/lp/calico-certification',
+                },
+                {
+                  label: 'Guides',
+                  to: 'https://www.tigera.io/learn/guides/kubernetes-monitoring',
+                },
+              ],
+            },
+            {
+              title: 'Support',
+              items: [
+                {
+                  label: 'Customer success',
+                  to: 'https://www.tigera.io/customer-success',
+                },
+                {
+                  label: 'Support portal',
+                  to: 'https://support.tigera.io/s/login/',
+                },
+                {
+                  label: 'Security bulletins',
+                  to: 'https://www.tigera.io/security-bulletins',
+                },
+                {
+                  label: 'Report a security issue',
+                  to: 'https://www.tigera.io/vulnerability-disclosure',
+                },
+              ],
+            },
+            {
+              title: 'Open source',
+              items: [
+                {
+                  label: 'Project Calico',
+                  to: 'https://www.tigera.io/project-calico',
+                },
+                {
+                  label: 'Community',
+                  to: 'https://www.tigera.io/project-calico/community',
+                },
+                {
+                  label: 'GitHub',
+                  to: 'https://github.com/projectcalico',
+                },
+                {
+                  label: 'Stack Overflow',
+                  to: 'https://stackoverflow.com/questions/tagged/calico',
+                },
+                {
+                  label: 'Slack',
+                  to: 'https://calicousers.slack.com/',
+                },
+              ],
+            },
+            {
+              title: 'Company',
+              items: [
+                {
+                  label: 'About Calico',
+                  to: 'https://www.tigera.io/about',
+                },
+                {
+                  label: 'Customers',
+                  to: 'https://www.tigera.io/customer-stories',
+                },
+                {
+                  label: 'Partners',
+                  to: 'https://www.tigera.io/partners',
+                },
+                {
+                  label: 'Newsroom',
+                  to: 'https://www.tigera.io/media',
+                },
+                {
+                  label: 'Careers',
+                  to: 'https://www.tigera.io/careers',
+                },
+                {
+                  label: 'Contact',
+                  to: 'https://www.tigera.io/contact',
+                },
+              ],
+            },
+          ],
+          // TODO: Add appropriate icons and links
+          copyright: `
             <div>
             </br>
               <div class='footer-copyright__title'>Copyright © ${new Date().getFullYear()} Tigera, Inc.</div>
@@ -369,30 +369,30 @@ export default async function createAsyncConfig() {
               </div>
             </div>
           `,
-      },
-      docs: {
-        sidebar: {
-          autoCollapseCategories: true,
+        },
+        docs: {
+          sidebar: {
+            autoCollapseCategories: true,
+          },
+        },
+        prism: {
+          theme: lightCodeTheme,
+          darkTheme: darkCodeTheme,
+          additionalLanguages: ['powershell'],
+          magicComments: [
+            // Default highlight class name (should be specified)-
+            {
+              className: 'theme-code-block-highlighted-line',
+              line: 'highlight-next-line',
+              block: { start: 'highlight-start', end: 'highlight-end' },
+            },
+            {
+              className: 'code-block-callout',
+              line: 'callout-for-next-line',
+            },
+          ],
         },
       },
-      prism: {
-        theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
-        additionalLanguages: ['powershell'],
-        magicComments: [
-          // Default highlight class name (should be specified)-
-          {
-            className: 'theme-code-block-highlighted-line',
-            line: 'highlight-next-line',
-            block: { start: 'highlight-start', end: 'highlight-end' },
-          },
-          {
-            className: 'code-block-callout',
-            line: 'callout-for-next-line',
-          },
-        ],
-      },
-    },
     plugins: [
       'docusaurus-plugin-sass',
       [
@@ -403,7 +403,7 @@ export default async function createAsyncConfig() {
           path: 'calico',
           routeBasePath: 'calico',
           editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.31', '3.30', '3.29'],
+          onlyIncludeVersions: [...nextVersion, '3.31','3.30','3.29'],
           lastVersion: '3.31',
           versions: {
             current: {
@@ -440,7 +440,7 @@ export default async function createAsyncConfig() {
           path: 'calico-enterprise',
           routeBasePath: 'calico-enterprise',
           editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.22-2', '3.21-2', '3.20-2'],
+          onlyIncludeVersions: [...nextVersion, '3.22-2','3.21-2','3.20-2'],
           lastVersion: '3.22-2',
           versions: {
             current: {
