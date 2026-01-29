@@ -9,6 +9,16 @@ import { prodname, prodnameWindows } from '../../variables';
 function CalicoWindowsInstallFirstStep(props) {
   if (props.networkingType === 'vxlan') {
     return (
+      <>
+      <li>
+        Ensure that cross-subnet encapsulation is disabled. You must use <code>VXLAN</code> and NOT <code>VXLANCrossSubnet</code>
+        as the <code>encapsulation:</code> of your IP pool. Use this command to change it if you only have one IP pool configured:
+        <br />
+        <br />
+        <CodeBlock language='bash'>
+          {`kubectl patch installation default --type='json' -p='[{"op": "replace", "path": "/spec/calicoNetwork/ipPools/0/encapsulation", "value": "VXLAN"}]`}
+        </CodeBlock>
+      </li>
       <li>
         Ensure that BGP is disabled.
         <ul>
@@ -20,6 +30,7 @@ function CalicoWindowsInstallFirstStep(props) {
           </CodeBlock>
         </ul>
       </li>
+      </>
     );
   }
 
