@@ -62,6 +62,7 @@ module.exports = {
             'tutorials/calico-cloud-features/tour',
             'tutorials/calico-cloud-features/service-graph',
             'tutorials/calico-cloud-features/networksets',
+            'tutorials/calico-cloud-features/projects',
           ],
         },
         {
