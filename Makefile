@@ -365,3 +365,13 @@ vale:
 		-v $(CURDIR)/.github/styles:/styles \
 		-v $(CURDIR):/docs \
 		-w /docs/$(PRODUCT) jdkato/vale .
+
+# --------------------------------------------------------------------------- #
+# Felix Configuration Sync                                                    #
+# --------------------------------------------------------------------------- #
+
+.PHONY: update-felix-config
+update-felix-config:
+	$(if $(GITHUB_TOKEN),,$(error GITHUB_TOKEN is not set or empty, but is required))
+	@echo "Updating Felix configurations for OSS and Enterprise..."
+	@./scripts/update-felix-config.sh
