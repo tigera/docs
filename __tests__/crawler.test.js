@@ -199,7 +199,8 @@ test('Crawl the docs and execute tests', async () => {
     'https://istio.io/v1.15/docs/setup/install/',
     'https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/',
     'https://calico-docs.mcp.kapa.ai',
-    'https://docs.tigera.io/img/calico-logo-2026-badge.png'
+    'https://docs.tigera.io/img/calico-logo-2026-badge.png',
+    'https://microk8s.io/docs/clustering' // TEMP
   ];
 
   const lc = linkChecker();
