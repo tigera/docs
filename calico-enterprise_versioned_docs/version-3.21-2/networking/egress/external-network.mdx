@@ -71,6 +71,19 @@ kubectl patch felixconfiguration default --type='merge' -p \
     '{"spec":{"externalNetworkSupport":"Enabled"}}'
 ```
 
+### Configure egress interfaces
+
+To configure which host interfaces should be used for egress traffic and have the `src_valid_mark` set, configure the `egressIPHostIfacePattern` field in the default **FelixConfiguration**. This field accepts a comma-separated list of interface names and/or regular expressions. Regular expressions must be wrapped in `/.../ `.
+
+For example, to configure interfaces matching the pattern `ens20` or `ens21` with VLAN IDs 100 or 200:
+
+```bash
+kubectl patch felixconfiguration default --type='merge' -p \
+    '{"spec":{"egressIPHostIfacePattern":"/^ens2[01][./](100|200)$/"}}'
+```
+
+This ensures that $[prodname] sets the `src_valid_mark` on interfaces matching the specified patterns, which is required for proper egress gateway functionality with external networks.
+
 ### Create external network resources
 
 Add an `ExternalNetwork` resource to the cluster for each external networks. For example, to create an `ExternalNetwork` for `red` network.
