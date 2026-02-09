@@ -29,6 +29,7 @@ CLEANUP_FILES=()
 # cleanup()                                                                   #
 # Internal function triggered on script exit to remove all temp files.        #
 # --------------------------------------------------------------------------- #
+# shellcheck disable=SC2317
 cleanup() {
     local file
     for file in "${CLEANUP_FILES[@]:-}"; do
@@ -49,9 +50,9 @@ update_felix_config() {
     tmpfile=$(mktemp -t remote-url-output.XXXXXX)
     CLEANUP_FILES+=("$tmpfile")
 
-    printf "%s\n\n" "Begin processing $VERSION"
-    printf "%s\n" "Target path: $LOCAL_PATH"
-    printf "%s\n" "Source URL: $REMOTE_URL"
+    echo "Begin processing ${VERSION}"
+    echo "Target path: ${LOCAL_PATH}"
+    echo "Source URL: ${REMOTE_URL}"
 
     curl -fsSL \
           -H "Authorization: token $GITHUB_TOKEN" \
@@ -67,7 +68,7 @@ update_felix_config() {
     fi
 
     mv "$tmpfile" "$LOCAL_PATH"
-    printf "%s\n\n\n" "Finished processing $VERSION."
+    echo -e "Finished processing ${VERSION}.\n\n"
 }
 
 # --------------------------------------------------------------------------- #
@@ -90,7 +91,7 @@ update_versions_OSS () {
         REMOTE_URL="https://raw.githubusercontent.com/projectcalico/calico/refs/heads/release-v${VERSION}/felix/docs/config-params.json"
 
         if [[ "$VERSION" == "3.29" ]]; then
-            printf "%s\n" "Skipping $VERSION: No action required."
+            echo "Skipping ${VERSION}: No action required."
             continue
         fi
 
@@ -129,7 +130,7 @@ update_versions_CE() {
         REMOTE_URL="https://api.github.com/repos/tigera/calico-private/contents/felix/docs/config-params.json?ref=${branch}"
 
         if [[ "$VERSION" == "3.20-2" ]]; then
-            printf "%s\n" "Skipping $VERSION: No action required."
+            echo "Skipping ${VERSION}: No action required."
             continue
         fi
 
@@ -144,8 +145,9 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
     exit "$E_MISSING_TOKEN"
 fi
 
-printf "OSS Versions: %s\n" "${VERSIONS_OSS[*]}"
-printf "CE Versions:  %s\n\n" "${VERSIONS_CE[*]}"
+echo "OSS Versions:" "${VERSIONS_OSS[*]}"
+echo "CE Versions:" "${VERSIONS_CE[*]}"
+echo
 
 update_master_OSS
 update_versions_OSS VERSIONS_OSS
@@ -153,5 +155,5 @@ update_versions_OSS VERSIONS_OSS
 update_master_CE
 update_versions_CE VERSIONS_CE
 
-printf "%s\n" "All updates are complete."
+echo "All updates are complete."
 exit "$SUCCESS"
