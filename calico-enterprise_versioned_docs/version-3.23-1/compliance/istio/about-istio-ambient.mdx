@@ -4,50 +4,11 @@ description: An overview of Calico's bundled version of Istio Ambient Mode
 
 # Istio Ambient Mode
 
-You can use $[prodname] to deploy and manage an Istio service mesh on your cluster.
-$[prodname] installs Istio in ambient mode, which conserves resources while providing the same robust mTLS encryption for your workloads.
+:::important
 
-:::note
+Istio Ambient Mode is not available in this early preview version of Calico Enterprise (3.23.0-1.0).
+It will be included in the next early preview release.
 
-Istio Ambient Mode is a tech preview feature.
-Tech preview features are subject to significant changes before they become GA.
+For more information about Istio Ambient Mode, see [Istio Ambient Mode](/calico-enterprise/latest/compliance/istio/about-istio-ambient) in the documentation for Calico Enterprise 3.22
 
 :::
-
-## About Istio Ambient Mode
-
-Istio is a service mesh that manages and secures communication between microservices.
-Typically, Istio uses sidecar proxies that are deployed alongside every pod in the service mesh.
-At scale, running these sidecar proxies can be difficult to manage and a drain on resources.
-
-Istio Ambient Mode is a simplified service mesh architecture that removes the need for a sidecar proxy next to every pod.
-Instead, it uses node-level components for shared security and a layered approach for advanced traffic management.
-This design saves on computing resources and simplifies operations.
-
-## About Istio Ambient Mode on Calico
-
-$[prodname] provides a bundled version of Istio that can be installed and managed by the Tigera Operator.
-
-This integration automates the lifecycle of the Istio components to reduce manual configuration overhead.
-CVEs are addressed as part of the regular $[prodname] patch release cadence.
-Administrators provision the Istio service mesh by defining a standard `Istio` custom resource.
-
-### The enhanced zTunnel proxy
-
-The zTunnel component in Istio Ambient Mode is a lightweight proxy that runs on every node.
-
-Its main job is to handle encryption, authentication, and policy enforcement for traffic at Layer 4.
-
-A challenge in the original Istio Ambient Mode is that when traffic is routed through the zTunnel, it gets placed into a tunnel on a specific port (15008).
-This change makes it impossible for existing Layer 3 or Layer 4 network policies (like those from Calico) to see the original destination port of the traffic.
-
-Calico addresses this by using an enhanced zTunnel that is modified to preserve the original destination port.
-This modification allows existing Calico and Kubernetes network policies to continue functioning exactly as they did before, without needing any rewrites, even though the traffic is now encrypted with mTLS.
-
-These zTunnel enhancements are not compatible with Istio's application-layer Waypoint proxy.
-If you deploy Waypoint, the reported destination ports will follow the original behavior.
-Existing network policies need to be adapted to allow communication to port 15008.
-
-## Additional resources
-* [Overview of Istio ambient mode](https://istio.io/latest/docs/ambient/overview/).
-* [Ambient and Kubernetes NetworkPolicy](https://istio.io/latest/docs/ambient/usage/networkpolicy/)
