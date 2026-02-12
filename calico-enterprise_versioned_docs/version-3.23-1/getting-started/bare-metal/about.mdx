@@ -10,19 +10,26 @@ Secure hosts and virtual machines (VMs) running outside of Kubernetes by install
 
 ## Value
 
-Calico Enterprise can also be used to protect hosts and VMs running outside of a Kubernetes cluster. In many cases, these are applications and workloads that cannot be easily containerized. $[prodname] lets you protect and gain visibility into these **non-cluster hosts** and use the same robust Calico network policy that you use for pods.
+Calico Enterprise can also be used to protect hosts and VMs running outside of a Kubernetes cluster.
+In many cases, these are applications and workloads that cannot be easily containerized.
+$[prodname] lets you protect and gain visibility into these **non-cluster hosts** and use the same robust Calico network policy that you use for pods.
 
 ## Concepts
 
 ### Non-cluster hosts and host endpoints
 
-A non-cluster host or VM is a computer that is running an application that is _not part of a Kubernetes cluster_. $[prodname] enables you to protect these hosts and VMs using the same Calico network policy that you use for workloads running inside a Kubernetes cluster. It also generates flow logs that provide visibility into the communication that host or VM is having with other endpoints in your environment.
+A non-cluster host or VM is a computer that is running an application that is _not part of a Kubernetes cluster_.
+$[prodname] enables you to protect these hosts and VMs using the same Calico network policy that you use for workloads running inside a Kubernetes cluster.
+It also generates flow logs that provide visibility into the communication that host or VM is having with other endpoints in your environment.
 
 In the following diagram, a Kubernetes cluster is running $[prodname] with networking (for pod-to-pod communication) and network policy; the non-cluster host uses Calico network policy for host protection and to generate flow logs for observability.
 
 ![non-cluster-host](/img/calico-enterprise/non-cluster-host.png)
 
-For non-cluster hosts and VMs, you can secure host interfaces using **host endpoints**. Host endpoints can have labels that work the same as labels on pods/workload endpoints in Kubernetes. The advantage is that you can write network policy rules to apply to both workload endpoints and host endpoints using label selectors; where each selector can refer to the either type (or be a mix of the two). For example, you can easily write a global policy that applies to every host, VM, or pod that is running Calico.
+For non-cluster hosts and VMs, you can secure host interfaces using **host endpoints**.
+Host endpoints can have labels that work the same as labels on pods/workload endpoints in Kubernetes.
+The advantage is that you can write network policy rules to apply to both workload endpoints and host endpoints using label selectors; where each selector can refer to the either type (or be a mix of the two).
+For example, you can easily write a global policy that applies to every host, VM, or pod that is running Calico.
 
 To learn how to restrict traffic to/from hosts and VMs using Calico network policy, see [Protect hosts and VMs](../../network-policy/hosts/protect-hosts.mdx).
 
@@ -44,82 +51,91 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
 1. Create a `NonClusterHost` custom resource.
 
-    This resource enables the cluster-side ingestion endpoint to receive logs from non-cluster hosts. It also provides a dedicated Typha deployment to manage communication between the non-cluster host agent and Typha. To ensure proper operation, verify that the non-cluster hosts or VMs have network connectivity to your Kubernetes cluster.
+   This resource enables the cluster-side ingestion endpoint to receive logs from non-cluster hosts.
+   It also provides a dedicated Typha deployment to manage communication between the non-cluster host agent and Typha.
+   To ensure proper operation, verify that the non-cluster hosts or VMs have network connectivity to your Kubernetes cluster.
 
-    ```bash
-    kubectl create -f - <<EOF
-    apiVersion: operator.tigera.io/v1
-    kind: NonClusterHost
-    metadata:
-      name: tigera-secure
-    spec:
-      endpoint: <https://domain-or-ip-address:port>
-      typhaEndpoint: <domain-or-ip-address:port>
-    EOF
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: NonClusterHost
+   metadata:
+     name: tigera-secure
+   spec:
+     endpoint: <https://domain-or-ip-address:port>
+     typhaEndpoint: <domain-or-ip-address:port>
+   EOF
     ```
 
-    | Field         | Description                                                          | Accepted Values                                                          | Schema |
-    | ------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ |
-    | endpoint      | Required. Location of the log ingestion point for non-cluster hosts. | Any HTTPS URL with a domain name and a port number                       | string |
-    | typhaEndpoint | Required. Location of the Typha endpoint for non-cluster host agent and Typha communication. If you are using an ingress controller or an external load balancer, ensure it is configured to allow TCP Layer 4 passthrough. This is required for non-cluster host agent to establish a mutual TLS (mTLS) connection to the cluster. | Any IP address or domain name with a port number | string |
+   | Field         | Description                                                          | Accepted Values                                                          | Schema |
+   | ------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ |
+   | endpoint      | Required. Location of the log ingestion point for non-cluster hosts. | Any HTTPS URL with a domain name and a port number                       | string |
+   | typhaEndpoint | Required. Location of the Typha endpoint for non-cluster host agent and Typha communication. If you are using an ingress controller or an external load balancer, ensure it is configured to allow TCP Layer 4 passthrough. This is required for non-cluster host agent to establish a mutual TLS (mTLS) connection to the cluster. | Any IP address or domain name with a port number | string |
 
-    Wait until the Tigera Manager and non-cluster Typha deployments reach the Available status before proceeding to the next step.
+   Wait until the Tigera Manager and non-cluster Typha deployments reach the Available status before proceeding to the next step.
 
 1. Create a `kubeconfig` file for your non-cluster host or VM:
 
-    ```bash
-    calicoctl nonclusterhost generate-config [--namespace=<namespace>] [--serviceaccount=<service-account>] [--certfile=<certificate-file>] > kubeconfig
-    ```
+   ```bash
+   calicoctl nonclusterhost generate-config [--namespace=<namespace>] [--serviceaccount=<service-account>] [--certfile=<certificate-file>] > kubeconfig
+   ```
 
-    | Parameter      | Description                                                                                              | Default Values         |
-    | -------------- | -------------------------------------------------------------------------------------------------------- | ---------------------- |
-    | namespace      | Optional. The namespace where the service account for non-cluster hosts resides.                         | calico-system          |
-    | serviceaccount | Optional. The service account used by non-cluster hosts to authenticate and securely access the cluster. | tigera-noncluster-host |
-    | certfile       | Optional. Path to the file containing the PEM-encoded authority certificates. Use this option if you are providing your own [TLS certificates for Calico Enterprise Manager](../../operations/comms/manager-tls.mdx). If not specified, the Tigera root CA certificate will be used by default. | |
+   | Parameter      | Description                                                                                              | Default Values         |
+   | -------------- | -------------------------------------------------------------------------------------------------------- | ---------------------- |
+   | namespace      | Optional. The namespace where the service account for non-cluster hosts resides.                         | calico-system          |
+   | serviceaccount | Optional. The service account used by non-cluster hosts to authenticate and securely access the cluster. | tigera-noncluster-host |
+   | certfile       | Optional. Path to the file containing the PEM-encoded authority certificates. Use this option if you are providing your own [TLS certificates for Calico Enterprise Manager](../../operations/comms/manager-tls.mdx). If not specified, the Tigera root CA certificate will be used by default. | |
 
-1. Create a [`HostEndpoint` resource](../../reference/host-endpoints/overview.mdx) for each non-cluster host or VM. The `node` and `expectedIPs` fields are required to match the hostname and the expected interface IP addresses.
+1. Create a [`HostEndpoint` resource](../../reference/host-endpoints/overview.mdx) for each non-cluster host or VM.
+   The `node` and `expectedIPs` fields are required to match the hostname and the expected interface IP addresses.
 
 ### Set up your non-cluster host or VM
 
 1. Configure the Calico Enterprise repository.
 
-    ```bash
-    curl -sfL $[rpmsUrl]/calico_enterprise.repo -o /etc/yum.repos.d/calico-enterprise.repo
-    ```
+   ```bash
+   curl -sfL $[rpmsUrl]/calico_enterprise.repo -o /etc/yum.repos.d/calico-enterprise.repo
+   ```
 
-    Only Red Hat Enterprise Linux 8 and 9 x86-64 operating systems are supported in this version of $[prodname].
+   Only Red Hat Enterprise Linux 8 and 9 x86-64 operating systems are supported in this version of $[prodname].
 
 1. Install Calico node and fluent-bit log forwarder packages.
 
-    - Use `dnf` to install the `calico-node` and `calico-fluent-bit` packages:
+   - Use `dnf` to install the `calico-node` and `calico-fluent-bit` packages:
 
-      ```bash
-      dnf install calico-node calico-fluent-bit
-      ```
+     ```bash
+     dnf install calico-node calico-fluent-bit
+     ```
 
 1. Copy the `kubeconfig` created in cluster setup step 2 to host folder `/etc/calico/kubeconfig`.
 
 1. Start Calico node and log forwarder.
 
-    ```bash
-    systemctl enable --now calico-node.service
-    systemctl enable --now calico-fluent-bit.service
-    ```
+   ```bash
+   systemctl enable --now calico-node.service
+   systemctl enable --now calico-fluent-bit.service
+   ```
 
-    You can configure the Calico node by tuning the environment variables defined in the `/etc/calico/calico-node/calico-node.env` file. For more information, see the [Felix configuration reference](../../reference/resources/felixconfig.mdx).
+   You can configure the Calico node by tuning the environment variables defined in the `/etc/calico/calico-node/calico-node.env` file.
+   For more information, see the [Felix configuration reference](../../reference/resources/felixconfig.mdx).
 
 ### Configure high availability mode
 
-High availability (HA) mode helps protect workloads running on hosts and VMs by providing an automated disaster recovery setup. It operates with two Kubernetes clusters: an active cluster and a passive cluster that remains synchronized and ready to take over if the active cluster becomes unavailable.
+High availability (HA) mode helps protect workloads running on hosts and VMs by providing an automated disaster recovery setup.
+It operates with two Kubernetes clusters: an active cluster and a passive cluster that remains synchronized and ready to take over if the active cluster becomes unavailable.
 
-For HA mode to function correctly, a correctly configured load balancer (LB) is required to switch traffic between clusters during failover and failback events. The LB must detect failures, redirect traffic to the passive cluster, and restore traffic to the active cluster once it is healthy. Without a proper configuration, HA mode will not work as expected.
+For HA mode to function correctly, a correctly configured load balancer (LB) is required to switch traffic between clusters during failover and failback events.
+The LB must detect failures, redirect traffic to the passive cluster, and restore traffic to the active cluster once it is healthy.
+Without a proper configuration, HA mode will not work as expected.
 
-Your hosts or VMs are inherently HA-ready once you completed the setup steps. They automatically connect to the appropriate cluster. To enable HA mode, system administrators must perform the following steps:
+Your hosts or VMs are inherently HA-ready once you completed the setup steps. They automatically connect to the appropriate cluster.
+To enable HA mode, system administrators must perform the following steps:
 
 - Deploy and maintain both clusters: Provision and manage both the active and passive Kubernetes clusters.
 - Synchronize resources: Keep all relevant resources (such as network policies, configurations, and non-cluser host resources) synchronized from the active cluster to the passive cluster.
 - Configure domain names: Use domain names (not static IP addresses) for log ingestion and Typha endpoints in the `NonClusterHost` resource.
-- Replicate secrets: Copy the `tigera-ca-private` secret from the active cluster to the passive cluster under the `tigera-operator` namespace. After copying, verify that all Calico components in the passive cluster are running and healthy.
+- Replicate secrets: Copy the `tigera-ca-private` secret from the active cluster to the passive cluster under the `tigera-operator` namespace.
+  After copying, verify that all Calico components in the passive cluster are running and healthy.
 
 ## Additional resources
 
