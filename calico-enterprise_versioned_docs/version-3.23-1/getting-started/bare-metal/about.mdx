@@ -2,6 +2,9 @@
 description: Install Calico on non-cluster hosts and VMs
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Install Calico on non-cluster hosts and VMs
 
 ## Big picture
@@ -40,10 +43,13 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 - Kubernetes API datastore is up and running and is accessible from the host
 
   If $[prodname] is installed on a cluster, you already have a datastore.
-
 - Non-cluster host or VM meets $[prodname] [system requirements](../install-on-clusters/requirements.mdx)
 
   Ensure that your node OS includes the `ipset` and `conntrack` kernel dependencies.
+- The following operating systems are supported for non-cluster hosts and VMs:
+  * RHEL 8 and RHEL 9 (on x86-64 v3 chip architectures only)
+  * Ubuntu 22.04 and Ubuntu 24.04
+  * Debian 12 and Debian 13
 
 ## How to
 
@@ -91,21 +97,38 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 
 ### Set up your non-cluster host or VM
 
-1. Configure the Calico Enterprise repository.
-
+1. Download the Calico Enterprise repository to work with your Linux distro.
+   <Tabs groupId="linux-distro">
+   <TabItem label="RHEL" value="rhel-0">
    ```bash
-   curl -sfL $[rpmsUrl]/calico_enterprise.repo -o /etc/yum.repos.d/calico-enterprise.repo
+   curl -sfL $[rhelPkgUrl]/calico_enterprise.repo -o /etc/yum.repos.d/calico-enterprise.repo
    ```
-
-   Only Red Hat Enterprise Linux 8 and 9 x86-64 operating systems are supported in this version of $[prodname].
-
+   </TabItem>
+   <TabItem label="Debian/Ubuntu" value="debian-1">
+   1. Add the Tigera GPG key:
+      ```bash
+      curl -fsSL $[debianKeyUrl] | sudo gpg --dearmor -o /usr/share/keyrings/tigera-keyring.gpg
+      ```
+   1. Add the Calico Enterprise repo to your sources list:
+      ```bash
+      echo "deb [signed-by=/usr/share/keyrings/tigera-keyring.gpg] $[debianKeyUrl]/ ./" | \
+      sudo tee /etc/apt/sources.list.d/calico-enterprise.list
+      ```
+   </TabItem>
+   </Tabs>
 1. Install Calico node and fluent-bit log forwarder packages.
-
-   - Use `dnf` to install the `calico-node` and `calico-fluent-bit` packages:
-
-     ```bash
-     dnf install calico-node calico-fluent-bit
-     ```
+   <Tabs groupId="linux-distro">
+   <TabItem label="RHEL" value="rhel-0">
+   ```bash
+   dnf install calico-node calico-fluent-bit
+   ```
+   </TabItem>
+   <TabItem label="Debian/Ubuntu" value="debian-1">
+   ```bash
+   sudo apt install calico-node calico-fluent-bit
+   ```
+   </TabItem>
+   </Tabs>
 
 1. Copy the `kubeconfig` created in cluster setup step 2 to host folder `/etc/calico/kubeconfig`.
 
@@ -128,7 +151,10 @@ For HA mode to function correctly, a correctly configured load balancer (LB) is 
 The LB must detect failures, redirect traffic to the passive cluster, and restore traffic to the active cluster once it is healthy.
 Without a proper configuration, HA mode will not work as expected.
 
-Your hosts or VMs are inherently HA-ready once you completed the setup steps. They automatically connect to the appropriate cluster.
+
+Your hosts or VMs are inherently HA-ready once you completed the setup steps.
+They automatically connect to the appropriate cluster.
+
 To enable HA mode, system administrators must perform the following steps:
 
 - Deploy and maintain both clusters: Provision and manage both the active and passive Kubernetes clusters.
