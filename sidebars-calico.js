@@ -340,7 +340,6 @@ module.exports = {
       },
       items: [
         'network-policy/adopt-zero-trust',
-        'network-policy/non-privileged',
         {
           type: 'category',
           label: 'Get started with policy',
