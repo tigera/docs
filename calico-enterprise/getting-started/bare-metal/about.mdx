@@ -46,10 +46,15 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
 - Non-cluster host or VM meets $[prodname] [system requirements](../install-on-clusters/requirements.mdx)
 
   Ensure that your node OS includes the `ipset` and `conntrack` kernel dependencies.
-- The following operating systems are supported for non-cluster hosts and VMs:
-  * RHEL 8 and RHEL 9 (on x86-64 v3 chip architectures only)
-  * Ubuntu 22.04 and Ubuntu 24.04
-  * Debian 12 and Debian 13
+- Ensure that your node supports the x86-64 v3 microarchitecture. You can check this via the program interpreter on the node:
+  ```bash
+  /lib64/ld-linux-x86-64.so.2 --help
+  ```
+  If you see a line that says `x86-64-v3 (supported, searched)`, your processor supports the required microarchitecture.
+- The following host operating systems are supported:
+  * RHEL 8 and RHEL 9
+  * Ubuntu 22.04 LTS (Jammy) and 24.04 LTS (Noble)
+  * Debian 12 (Bookworm) and Debian 13 (Trixie)
 
 ## How to
 
@@ -104,15 +109,18 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
    curl -sfL $[rhelPkgUrl]/calico_enterprise.repo -o /etc/yum.repos.d/calico-enterprise.repo
    ```
    </TabItem>
-   <TabItem label="Debian/Ubuntu" value="debian-1">
-   1. Add the Tigera GPG key:
+   <TabItem label="Debian/Ubuntu" value="ubuntu-1">
+   1. Download the appropriate sources file for your operating system:
       ```bash
-      curl -fsSL $[debianKeyUrl] | sudo gpg --dearmor -o /usr/share/keyrings/tigera-keyring.gpg
+      curl -fsSL -o calico-enterprise.sources $[debPkgUrl]/$(lsb_release -cs).sources
       ```
-   1. Add the Calico Enterprise repo to your sources list:
+   1. Copy the file into your apt sources directory:
       ```bash
-      echo "deb [signed-by=/usr/share/keyrings/tigera-keyring.gpg] $[debianKeyUrl]/ ./" | \
-      sudo tee /etc/apt/sources.list.d/calico-enterprise.list
+      sudo cp calico-enterprise.sources /etc/apt/sources.list.d/
+      ```
+   1. Tell apt to download the updated package index
+      ```bash
+      sudo apt-get update
       ```
    </TabItem>
    </Tabs>
@@ -123,7 +131,7 @@ To learn how to restrict traffic to/from hosts and VMs using Calico network poli
    dnf install calico-node calico-fluent-bit
    ```
    </TabItem>
-   <TabItem label="Debian/Ubuntu" value="debian-1">
+   <TabItem label="Debian/Ubuntu" value="ubuntu-1">
    ```bash
    sudo apt install calico-node calico-fluent-bit
    ```
