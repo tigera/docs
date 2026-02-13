@@ -200,7 +200,8 @@ test('Crawl the docs and execute tests', async () => {
     'https://sysctl-explorer.net/net/ipv4/fib_multipath_hash_policy/',
     'https://calico-docs.mcp.kapa.ai',
     'https://docs.tigera.io/img/calico-logo-2026-badge.png',
-    'https://microk8s.io/docs/clustering' // TEMP
+    'http://www.w3.org/2000/svg', // Appears in SVG file 'xmlns', doesn't need checking
+    'https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html' // TEMP
   ];
 
   const lc = linkChecker();
