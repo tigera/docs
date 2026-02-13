@@ -31,7 +31,7 @@ function NodeRequirementsEnt(props) {
             {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.HostProtection) && (
               <>
                 <li>Ubuntu 20.04 and 22.04</li>
-                <li>RHEL 8 and 9</li>
+                <li>RHEL 8 (deprecated) and RHEL 9</li>
                 <li>Debian 10</li>
                 <li>Azure Linux Container Host</li>
               </>
