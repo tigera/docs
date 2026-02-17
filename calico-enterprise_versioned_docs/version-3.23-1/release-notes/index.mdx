@@ -44,6 +44,16 @@ For more information, see [Dashboards](../observability/dashboards.mdx#ingress-g
   Logs and Service Graph now prioritize namespace-specific matches over GlobalNetworkSets and other namespace matches to ensure more accurate identity attribution.
 * User experience improvements to the Flow Summary card.
 
+## Breaking changes
+* The Manager UI deployment has been moved from the `tigera-manager` namespace to the `calico-system` namespace and is now called `calico-manager`.
+If you expose the deployment via an ingress, load balancer or node port service, you need to remove these and recreate the resources in the new namespace.
+This also applies to multi-cluster management users exposing the tunnel port. If you are overriding resources and / limits we suggest using the new
+container name by replacing `tigera-` with `calico-`, even though we preserved backwards compatibility.
+Please consult the following resources for exposing the Manager UI:
+    * [Access the Manager](../operations/cnx/access-the-manager.mdx).
+    * [Create a Management Cluster](../multicluster/set-up-multi-cluster-management/standard-install/create-a-management-cluster.mdx).
+
+
 ## Deprecated and removed features
 
 The following features are deprecated and will be removed in an upcoming release:
@@ -60,6 +70,8 @@ The following features are deprecated and will be removed in an upcoming release
 * In clusters using the eBPF data plane with strict reverse path forwarding (RPF) enabled, link-local discovery packets may be incorrectly dropped.
   This can interfere with neighbor discovery and local network communication.
   This issue will be resolved in the next release.
+* The combination of BPF dataplane on EKS with Bottlerocket is currently not working, we are currently investigating the issue.
+* There is an issue loading the DNS parser on ARM64 with BPF dataplane, which can result in timeouts.
 
 {/* ## Bug fixes */}
 
