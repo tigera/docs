@@ -11,7 +11,7 @@ export default function ReqsKernel() {
         as='h2'
         id='kernel-dependencies'
       >
-        Kernel Dependencies
+        Kernel dependencies
       </Heading>
       <Admonition type='tip'>
         <p>If you are using one of the recommended distributions, you will already satisfy these.</p>
