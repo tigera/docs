@@ -12,7 +12,7 @@ export default function HostEndpointsUpgrade(props) {
         as='h2'
         id='host-endpoints'
       >
-        Host Endpoints
+        Host endpoints
       </Heading>
       <Admonition type='caution'>
         If your cluster has host endpoints with <code>interfaceName: *</code> you must prepare your cluster before
