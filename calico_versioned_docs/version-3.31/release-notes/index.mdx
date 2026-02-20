@@ -285,3 +285,99 @@ December 19, 2025
 #### Updating
 
 To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx).
+
+### Calico Open Source 3.31.4 bug fix release
+
+TODO: date
+
+#### Bug fixes
+
+* Before this update, a race condition in the EndpointSlice IP-family matching logic
+  caused dual-stack Services with `externalTrafficPolicy: Local` to lose their local BGP route advertisements.
+  With this update, endpoint filtering uses `Service.spec.ipFamilies` together with each EndpointSlice's address type,
+  and dual-stack service advertisements remain stable.
+  [calico 11786](https://github.com/projectcalico/calico/pull/11786) (@MichalFupso)
+
+* The `NatPortRange` option, which controls the range of ports used for outbound NAT,
+  rendered incorrectly when Felix operated in nftables mode.
+  This caused nftables rules to be generated with an invalid port range syntax.
+  Felix correctly renders `NatPortRange` in nftables mode in this release,
+  and NAT port range rules apply as expected.
+  [calico 11741](https://github.com/projectcalico/calico/pull/11741) (@nelljerram)
+
+* This release fixes an issue where the Tigera Operator uninstalled the CNI plugin
+  and the `kube-proxy` service on Windows nodes even when a non-Calico CNI was in use.
+  The Operator disrupted networking for workloads that relied on the third-party CNI.
+  The Operator checks whether Calico CNI is active before removing CNI and `kube-proxy` components,
+  and third-party CNI configurations are no longer affected.
+  [calico 11722](https://github.com/projectcalico/calico/pull/11722) (@coutinhop)
+
+* When the CNI plugin installer wrote the Kubernetes API server URL to the CNI configuration,
+  it wrapped IPv4 addresses in square brackets.
+  This produced a malformed URL that was exposed by a recent fix to the Go URL parser,
+  which caused CNI configuration to fail on IPv4 clusters.
+  The installer no longer adds square brackets to non-IPv6 addresses,
+  and CNI configuration generates valid URLs on all address families.
+  [calico 11719](https://github.com/projectcalico/calico/pull/11719) (@fasaxc)
+
+* Calico components contained integer overflow and alignment issues
+  that prevented them from running on 32-bit architectures.
+  With this release, the affected code paths handle 32-bit integer sizes correctly,
+  and Calico operates as expected on 32-bit platforms.
+  [calico 11705](https://github.com/projectcalico/calico/pull/11705) (@juanluisvaladas)
+
+* VXLAN overlay traffic routes correctly after an eBPF data plane regression is resolved.
+  In earlier releases, switching to a flow-based VXLAN device caused the VXLAN Network Identifier (VNI)
+  to be set to 0 regardless of the configured value, which broke overlay connectivity.
+  Felix sets the VNI to the configured value when programming the flow-based VXLAN device.
+  [calico 11695](https://github.com/projectcalico/calico/pull/11695) (@tomastigera)
+
+* Before this release, the eBPF data plane returned an ICMP "packet too big" response
+  for large UDP Generic Segmentation Offload (GSO) packets arriving at a NodePort.
+  The ICMP response had no effect on the sender, and the kernel treated each oversized segment as lost,
+  which caused significant performance degradation for UDP protocols like QUIC and HTTP/3.
+  The eBPF data plane encapsulates UDP GSO packets into the VXLAN tunnel,
+  and NodePort performance for QUIC and HTTP/3 traffic is restored.
+  [calico 11659](https://github.com/projectcalico/calico/pull/11659) (@tomastigera)
+
+* Before this update, the eBPF data plane incorrectly excluded local workloads with borrowed IP addresses
+  from the workload route check.
+  As a consequence, those workloads lost network connectivity.
+  With this update, Felix uses an explicit local-workload flag instead of relying on the borrowed-IP flag,
+  and local workloads with borrowed IPs retain connectivity.
+  [calico 11654](https://github.com/projectcalico/calico/pull/11654) (@fasaxc)
+
+* When the eBPF data plane removed VXLAN tunnel headers during NodePort decapsulation,
+  it adjusted the GSO size incorrectly.
+  The kernel dropped packets whose payload was smaller than the inflated GSO size,
+  which caused TCP retransmissions and latency spikes for traffic traversing NodePort services.
+  The eBPF data plane sets the `BPF_F_ADJ_ROOM_FIXED_GSO` flag during VXLAN decapsulation
+  to preserve the original GSO size, and packets are no longer dropped.
+  [calico 11613](https://github.com/projectcalico/calico/pull/11613) (@tomastigera)
+
+<!-- TODO: verify cause/consequence - PR body suggests compaction was tied to resync loop but details are sparse -->
+* In Calico for OpenStack deployments, the periodic etcd compaction request was tied to the data-resync loop.
+  If a resync took a long time or periodic resync was disabled,
+  etcd compaction did not run on schedule, which allowed the etcd database to grow unchecked.
+  The compaction loop runs independently of the resync cycle in this release,
+  and etcd compaction occurs at the configured interval regardless of resync activity.
+  [calico 11575](https://github.com/projectcalico/calico/pull/11575) (@nelljerram)
+
+* The eBPF data plane miscalculated fragment offsets for IP packets larger than 8,000 bytes
+  due to an incorrect order of operations.
+  As a consequence, reassembly of fragmented packets between 8,000 and 16,000 bytes failed silently.
+  With this update, the offset calculation is corrected,
+  and IP fragment reassembly succeeds for packets up to 16,000 bytes.
+  [calico 11562](https://github.com/projectcalico/calico/pull/11562) (@fasaxc)
+
+#### Enhancements
+
+- Add configurable `resync_max_interval_secs` field for OpenStack deployments that defines the maximum time allowed between successful periodic resyncs. Logs an error message if the interval exceeds the threshold. [calico 11650](https://github.com/projectcalico/calico/pull/11650) (@nelljerram)
+
+#### Other changes
+
+- Calico continues to be tested against OpenStack Caracal but has stopped testing against OpenStack Yoga. Yoga has been "unmaintained" for over a year and is not compatible with current CI platforms based on Ubuntu 22.04. [calico 11745](https://github.com/projectcalico/calico/pull/11745) (@nelljerram)
+
+#### Updating
+
+To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx).
