@@ -13,6 +13,12 @@ import TabItem from '@theme/TabItem';
 
 Install the Calico API server on an existing cluster to enable management of Calico APIs using kubectl.
 
+:::tip
+
+Starting in Calico v3.32.0, you can use [native v3 CRDs](native-v3-crds.mdx) to manage `projectcalico.org/v3` resources directly with `kubectl` without installing the aggregation API server. If you are setting up a new cluster and want a simpler architecture, consider native v3 CRDs instead.
+
+:::
+
 ## Value
 
 The API server provides a REST API for Calico, and allows management of `projectcalico.org/v3` APIs using kubectl without the need for calicoctl.
@@ -39,6 +45,8 @@ in this document are not required.
 In previous releases, calicoctl has been required to manage Calico API resources in the `projectcalico.org/v3` API group. The calicoctl CLI tool provides important validation and defaulting on these APIs. The Calico API server performs
 that defaulting and validation server-side, exposing the same API semantics without a dependency on calicoctl.
 
+Alternatively, when using [native v3 CRDs](native-v3-crds.mdx), `projectcalico.org/v3` resources are native CRDs, so `kubectl` works directly without needing either the API server or calicoctl for resource management.
+
 calicoctl is still required for the following subcommands:
 
 - [calicoctl node](../reference/calicoctl/node/index.mdx)
@@ -55,14 +63,16 @@ Select the method below based on your installation method.
 <Tabs>
 <TabItem label="Operator install" value="Operator install-0">
 
-1. Create an instance of an `operator.tigera.io/APIServer` with the following contents.
+1. Create an instance of an `operator.tigera.io/APIServer` with the following command.
 
-   ```yaml
+   ```bash
+   kubectl create -f - <<EOF
    apiVersion: operator.tigera.io/v1
    kind: APIServer
    metadata:
      name: default
    spec: {}
+   EOF
    ```
 
 1. Confirm it appears as `Available` with the following command.
@@ -183,7 +193,7 @@ To uninstall the API server, use the following instructions depending on your in
 </TabItem>
 </Tabs>
 
-Once removed, you will need to use calicoctl to manage projectcalico.org/v3 APIs.
+Once removed, you will need to use calicoctl to manage projectcalico.org/v3 APIs, unless you are using [native v3 CRDs](native-v3-crds.mdx) where `kubectl` works directly.
 
 ## Next steps
 
