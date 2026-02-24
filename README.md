@@ -158,13 +158,18 @@ Coverage thresholds: 85% branches/functions, 90% lines/statements. Tests live in
 
 Visual regression testing to catch unintended UI changes, especially useful when upgrading dependencies.
 
-```bash
-yarn build                   # Must build first
-yarn test:screenshots        # Run visual regression tests
-yarn test:show-report        # View test failure report
-```
+The best strategy is to run the tests on a clean branch **before** making changes to gather baseline screenshots, then run them again after your changes to detect regressions.
 
-**Workflow:** Run tests on a clean branch to capture baseline screenshots. Make your changes, then run tests again to detect regressions.
+#### Running screenshot tests locally
+
+1. Run `yarn build`
+2. Run `yarn test:screenshots` — all tests will fail on the first pass since no baseline screenshots exist yet
+3. Run `yarn test:screenshots` again — all tests should now pass (baselines have been captured)
+4. Make your changes (dependency upgrades, etc.)
+5. Run `yarn test:screenshots` to check for visual regressions
+6. Run `yarn test:show-report` to view failures
+
+> **Tip:** If tests keep timing out on a clean branch, try running `yarn start` first. Cancel once the dev build completes, then re-run the tests.
 
 ### Link checking
 
