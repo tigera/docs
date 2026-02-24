@@ -1,183 +1,285 @@
-Production: [![Netlify Status](https://api.netlify.com/api/v1/badges/58c3464e-f1ba-4a32-8c6e-0e41fe8e0f45/deploy-status)](https://app.netlify.com/sites/tigera/deploys)
-vNext: [![Netlify Status](https://api.netlify.com/api/v1/badges/b5b32cd6-5303-4d84-90e8-9379a961a5bf/deploy-status)](https://app.netlify.com/sites/calico-docs-preview-next/deploys)
+<p align="center">
+  <img src="static/img/Calico-logo-2026-black-text.svg" alt="Calico Documentation" width="400">
+</p>
 
-# Calico & Tigera Docs
+<p align="center">
+  <a href="https://app.netlify.com/sites/tigera/deploys"><img src="https://api.netlify.com/api/v1/badges/58c3464e-f1ba-4a32-8c6e-0e41fe8e0f45/deploy-status" alt="Production build status"></a>
+  <a href="https://app.netlify.com/sites/calico-docs-preview-next/deploys"><img src="https://api.netlify.com/api/v1/badges/b5b32cd6-5303-4d84-90e8-9379a961a5bf/deploy-status" alt="Next build status"></a>
+</p>
 
-This is the full set of product docs for Calico & Tigera. It includes our Open Source (Project Calico) docs
-as well as our Enterprise and Cloud docs.
+# Calico & Tigera Documentation
 
-This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
+This repository contains the source for [docs.tigera.io](https://docs.tigera.io), the official documentation for the Calico family of products. It covers networking, security, and observability for Kubernetes across four product editions:
 
-## Prerequisites
+- **Calico Open Source** (`calico/`) — upstream open source networking and security
+- **Calico Enterprise** (`calico-enterprise/`) — commercial enterprise offering
+- **Calico Cloud** (`calico-cloud/`) — SaaS managed service
+- **Calico Cloud Free Tier** (shares the `calico-cloud/` directory)
 
-Either
+Built with [Docusaurus 3](https://docusaurus.io/), React 19, and TypeScript. Deployed via Netlify.
 
-* docker (to run the containerised version of the build)
+## Table of contents
 
-Or
+- [Quick start](#quick-start)
+- [Build and development commands](#build-and-development-commands)
+- [Project structure](#project-structure)
+- [Content authoring](#content-authoring)
+- [Testing](#testing)
+- [Linting and style](#linting-and-style)
+- [CI/CD and deployment](#cicd-and-deployment)
+- [Operator API documentation](#operator-api-documentation)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [Getting help](#getting-help)
+- [License](#license)
 
-* Node.js v22.17.0+. Use the outstanding [nvm tool](https://github.com/nvm-sh/nvm) to manage your node versions. Run `nvm use` or `nvm install` to use the correct node version.
-* yarn `npm install -g yarn`
-* Fork and clone our docs repo <https://github.com/tigera/docs>
+## Quick start
 
-## Local development
+### Prerequisites
+
+|               | Native                                          | Docker            |
+|---------------|-------------------------------------------------|-------------------|
+| **Requires**  | Node.js v22.17.0+ (see `.nvmrc`), Corepack      | Docker            |
+| **Setup**     | `nvm use && corepack enable`                     | Just have Docker running |
+
+This project uses Yarn 4.9.2, managed via [Corepack](https://nodejs.org/api/corepack.html). You must run `corepack enable` before any yarn commands.
+
+### Get running
 
 ```bash
-make start 
-```
+# Clone the repo
+git clone https://github.com/tigera/docs.git
+cd docs
 
-or
+# Native
+make init          # Enables Corepack and runs yarn install
+make start         # Dev server at http://localhost:3000
 
-```bash
+# Or with Docker
 make start CONTAINERIZED=true
 ```
 
-This command starts a local development server on http://localhost:3000. Most changes are reflected live without
-having to restart the server. This build is faster, but does not produce all the warnings and errors of a full build.
+`make start` builds only released documentation versions. To include unreleased (next) versions, use `make start-next` instead.
 
-## Full build and serve
+## Build and development commands
 
-```bash
-make build
-make serve
-```
+| Command | Description |
+|---|---|
+| `make init` | Install dependencies (enables Corepack, runs `yarn install`) |
+| `make start` | Dev server at localhost:3000 (released versions only) |
+| `make start-next` | Dev server including unreleased "next" docs |
+| `make build` | Full production build |
+| `make build-next` | Full build including unreleased docs |
+| `make serve` | Build and serve the production site |
+| `make serve-next` | Build-next and serve |
+| `make clean` | Remove build artifacts |
+| `make manual-clean` | Nuclear clean: removes `node_modules`, `.yarn`, `.docusaurus`, `build` |
 
-or
+All commands support `CONTAINERIZED=true` for Docker-based builds (e.g., `make build CONTAINERIZED=true`).
 
-```bash
-make build CONTAINERIZED=true
-make serve CONTAINERIZED=true
-```
+> **Note:** When switching between native and containerized builds, the `init` target automatically detects the change and runs `manual-clean` for you.
 
-This command generates static content into the `build` directory and can be served using any static content hosting
-service. This is a full build which is exactly what Netlify runs to build the site, therefore, you will get more
-warning and error output. If you are trying to reproduce an error on Netlify, this is a great place to start.
-
-## Building the site with unreleased docs versions
-
-In production, we don't build or publish unreleased doc sets.
-If you'd like to preview changes to those versions locally, you can run the following commands:
-
-```bash
-make serve-next
-```
-
-```bash
-make build-next
-make serve
-```
-
-## Viewing changes in preview builds
-
-Each pull request against the `main` branch generates two preview builds.
-You can find links to these preview builds as comments from Netlify.
-
-* Deploy preview. A full build with our production configuration.
-* Deploy preview for _calico-docs-preview-next_. This builds the site based on the current state of our unversioned development directories:
-  * `calico/`
-  * `calico-enterprise/`
-  * `calico-cloud/`
-
-If you're making changes to an upcoming version of any of the products, review your changes in _calico-docs-preview-next_.
-
-### Viewing your changes locally for unreleased documentation
-
-If you prefer to view changes to unreleased documentation locally, you must modify the `docusaurus.config.js` file.
-Add 'current' to the list for `onlyIncludeVersions` for the product docs you want to build.
-
-```js
-      {
-        id: 'calico',
-        path: 'calico',
-        routeBasePath: 'calico',
-        editCurrentVersion: true,
-        onlyIncludeVersions: ['current','3.27','3.26','3.25'], // 'current' is added to build the in-development docs  
-        versions: {
-          current: {
-            label: 'Next',
-            path: 'next',
-            banner: 'unreleased',
-          },
-          3.28: {
-            label: '3.28 (latest)',
-            path: '3.28',
-            banner: 'none'
-          },
-          3.27: {
-            label: '3.27 (latest)',
-            path: 'latest',
-            banner: 'none',
-          },
+## Project structure
 
 ```
-
-With this configuration, run `yarn start` or `yarn build && yarn serve` to see your changes.
-
-## Updating the Operator API docs
-
-This repo includes functionality to automatically update the Operator API docs from the current version of Operator
-for each branch. The following Makefile targets will help you update the docs you want to update:
-
-Automatically update all branches for all products:
-
-```bash
-make autogen
+docs/
+├── calico/                              # Calico OSS — next (unreleased) version
+├── calico_versioned_docs/               # Calico OSS — released versions (3.29, 3.30, 3.31)
+├── calico-enterprise/                   # Enterprise — next (unreleased) version
+├── calico-enterprise_versioned_docs/    # Enterprise — released versions (3.20-2 through 3.23-1)
+├── calico-cloud/                        # Cloud — next (unreleased) version
+├── calico-cloud_versioned_docs/         # Cloud — released versions (22-2)
+├── src/
+│   ├── components/                      # Shared React components
+│   ├── theme/                           # Docusaurus theme overrides
+│   ├── remark/                          # Custom remark plugins (variable substitution)
+│   └── utils/                           # Utility functions (link checking)
+├── scripts/                             # Build automation, version cutting, API doc generation
+├── static/                              # Static assets, images, Netlify config
+├── docusaurus.config.js                 # Main Docusaurus configuration
+└── Makefile                             # Build system entry point
 ```
 
-Automatically update all branches for a specific product:
+### Versioning model
 
-```bash
-make autogen_calico         # To update all Calico OSS releases
-make autogen_enterprise     # To update all Calico Enterprise releases
-make autogen_cloud          # To update all Calico Cloud releases
+All versions live on the `main` branch — there are no version branches.
+
+- **Unversioned directories** (`calico/`, `calico-enterprise/`, `calico-cloud/`) contain the next unreleased version. These are not built in production; use `make start-next` to preview them.
+- **Versioned directories** (e.g., `calico_versioned_docs/version-3.31/`) contain released documentation.
+- At release time, unversioned content is copied into new versioned directories using `scripts/cut-new-version.sh`.
+
+**Where to make changes:**
+
+- New features go in unversioned directories.
+- Bug fixes to released docs go in the corresponding versioned directory.
+
+### Feature flow
+
+Features typically flow: **Open Source → Enterprise → Cloud**. When documenting new OSS features, they should also be added to the `calico-enterprise/` and `calico-cloud/` directories.
+
+Exception: `calicoctl` is not used with Cloud products.
+
+## Content authoring
+
+### Variables
+
+MDX files use `$[variableName]` tokens that are replaced at build time by a custom remark plugin (`src/remark/variablesPlugin.js`). Variables are defined in `variables.js` files at the root of each product/version directory.
+
+For example:
+
+```mdx
+Install $[prodname] version $[version] using the Tigera operator.
 ```
 
-Detect and print a list of all of the makefile targets for each branch for all products. You
-can then run one of these targets to update the operator reference specifically for that branch.
+This renders differently depending on which product directory the file lives in (e.g., "Calico" vs. "Calico Enterprise").
 
-```bash
-# Get the list of operator reference update targets
-❯ make show_current_branches
-Calico branch targets:
-* calico__operator_reference
-* calico_versioned_docs/version-3.25__operator_reference
-* calico_versioned_docs/version-3.26__operator_reference
-* calico_versioned_docs/version-3.27__operator_reference
+Common variables: `prodname`, `version`, `baseUrl`, `filesUrl`, `registry`, `tigeraOperator`.
 
-Calico enterprise branch targets:
-* calico-enterprise__operator_reference
-* calico-enterprise_versioned_docs/version-3.16__operator_reference
-* calico-enterprise_versioned_docs/version-3.17__operator_reference
-* calico-enterprise_versioned_docs/version-3.18__operator_reference
-* calico-enterprise_versioned_docs/version-3.18-2__operator_reference
-* calico-enterprise_versioned_docs/version-3.19-1__operator_reference
+### Partials and components
 
-Calico cloud branch targets:
-* calico-cloud__operator_reference
-* calico-cloud_versioned_docs/version-19-1__operator_reference
+Each product directory contains `_includes/` with reusable content snippets and React components. Shared components live in `src/components/` and are registered in `src/theme/MDXComponents.js` for use in any MDX file.
 
-# Trigger the operator reference update for Calico Enterprise v3.18
-❯ make calico-enterprise_versioned_docs/version-3.18__operator_reference
-...build output here...
-```
+### Release metadata
+
+Each product/version directory has a `releases.json` file containing component version information used for install instructions, image tags, and download URLs.
 
 ## Testing
 
-### Screenshot tests
+### Component tests (Jest)
 
-Screenshot tests are useful for checking for visual regressions after upgrading dependencies.
-The best strategy is to run the tests on a clean branch <u>**before**</u> making changes to gather screenshots of the app in its current state. Then upgrade your dependencies and run the tests again.
+```bash
+yarn test:components         # Run unit tests
+yarn test:components:ci      # Silent mode for CI
+```
 
-#### Running screenshot tests locally
+Coverage thresholds: 85% branches/functions, 90% lines/statements. Tests live in `__test__/` subdirectories next to the components they test.
 
-- Run `yarn build`
-- Run `yarn test:screenshots`
-- All tests will fail on the first pass since there is no existing screenshots
-- Run `yarn test:screenshots` again. All tests should pass.
-- Make your changes (Deps upgrade etc)
-- Run `yarn test:screenshots` to check for visual regressions
-- Run `yarn test:show-report` to view failures
+### Screenshot tests (Playwright)
 
-#### Troubleshooting
+Visual regression testing to catch unintended UI changes, especially useful when upgrading dependencies.
 
-If the tests keep timing out on a clean branch, try running `yarn start`. Cancel once the dev build has completed.
+```bash
+yarn build                   # Must build first
+yarn test:screenshots        # Run visual regression tests
+yarn test:show-report        # View test failure report
+```
+
+**Workflow:** Run tests on a clean branch to capture baseline screenshots. Make your changes, then run tests again to detect regressions.
+
+### Link checking
+
+Internal links are validated at build time — `onBrokenLinks` is set to `'throw'` in `docusaurus.config.js`, so broken links will fail the build.
+
+## Linting and style
+
+### Vale (prose linting)
+
+[Vale](https://vale.sh/) lints markdown and MDX files for style and terminology consistency. It runs automatically on PRs via GitHub Actions.
+
+To run locally (requires Docker):
+
+```bash
+make vale PRODUCT=calico
+```
+
+Configuration: `.vale.ini`. Custom styles: `.github/styles/CalicoStyle/`. Vale is configured to ignore `$[variableName]` tokens.
+
+### Prettier (code formatting)
+
+Configuration in `.prettierrc`: 2-space indent, 120-character width, single quotes, trailing commas (ES5).
+
+## CI/CD and deployment
+
+### Netlify
+
+Production deploys from `main` to [docs.tigera.io](https://docs.tigera.io).
+
+### PR preview builds
+
+Each pull request generates two Netlify preview builds (links appear as PR comments):
+
+1. **Production preview** — full build with production configuration
+2. **Next preview** (`calico-docs-preview-next`) — includes unreleased docs from `calico/`, `calico-enterprise/`, and `calico-cloud/`
+
+Use the "next" preview when reviewing changes to upcoming versions.
+
+### GitHub Actions
+
+Two workflows run on every PR:
+
+- **Vale linting** (`.github/workflows/vale.yml`) — prose style checks with inline PR feedback
+- **Component tests** (`.github/workflows/validate.yml`) — Jest unit tests
+
+## Operator API documentation
+
+Operator API reference docs are auto-generated from the [tigera/operator](https://github.com/tigera/operator) repo. Requires Docker and a `GITHUB_TOKEN` environment variable.
+
+```bash
+make autogen                 # Update all products, all versions
+make autogen_calico          # Calico OSS only
+make autogen_enterprise      # Enterprise only
+make autogen_cloud           # Cloud only
+```
+
+To update a specific product version, list available targets and run one directly:
+
+```bash
+make show_current_branches
+
+# Example output:
+# Calico branch targets:
+# * calico__operator_reference
+# * calico_versioned_docs/version-3.29__operator_reference
+# * calico_versioned_docs/version-3.30__operator_reference
+# * calico_versioned_docs/version-3.31__operator_reference
+#
+# Calico enterprise branch targets:
+# * calico-enterprise__operator_reference
+# * calico-enterprise_versioned_docs/version-3.20-2__operator_reference
+# * calico-enterprise_versioned_docs/version-3.21-2__operator_reference
+# * calico-enterprise_versioned_docs/version-3.22-2__operator_reference
+# * calico-enterprise_versioned_docs/version-3.23-1__operator_reference
+#
+# Calico cloud branch targets:
+# * calico-cloud__operator_reference
+# * calico-cloud_versioned_docs/version-22-2__operator_reference
+
+# Then run a specific target:
+make calico-enterprise_versioned_docs/version-3.22-2__operator_reference
+```
+
+## Troubleshooting
+
+| Problem | Solution |
+|---|---|
+| Build fails with "Cannot find package '@docusaurus/logger'" | Wrong Node version. Need v22.17.0+ (check `.nvmrc`). |
+| `packageManager` yarn error | Run `corepack enable` first. |
+| `make clean` fails when dependencies aren't installed | Use `make manual-clean` instead. |
+| React version mismatch warnings during `yarn install` | Expected and non-blocking. Safe to ignore. |
+| Broken internal links fail the build | `onBrokenLinks` is set to `'throw'`. Fix the broken link in the source. |
+| Screenshot tests timeout on a clean branch | Run `yarn start` first, cancel once the dev build completes, then re-run tests. |
+
+## Contributing
+
+1. Fork the repo and create a feature branch.
+2. Make your changes (see [Content authoring](#content-authoring) and [Project structure](#project-structure) for guidance).
+3. Submit a pull request against `main`.
+
+**Guidelines:**
+
+- New features go in unversioned directories. Bug fixes to released versions go in the corresponding versioned directory.
+- Features flow: Open Source → Enterprise → Cloud. New OSS features should also be added to Enterprise and Cloud directories.
+- Every PR receives two preview builds and is automatically checked by Vale and Jest.
+
+## Getting help
+
+- [Calico documentation](https://docs.tigera.io) — the live site
+- [Project Calico community](https://www.tigera.io/project-calico/community)
+- [GitHub](https://github.com/projectcalico)
+- [Calico on Stack Overflow](https://stackoverflow.com/questions/tagged/calico)
+- [Tigera support portal](https://support.tigera.io/) (Enterprise and Cloud customers)
+- [Report a security vulnerability](https://www.tigera.io/vulnerability-disclosure)
+
+## License
+
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
