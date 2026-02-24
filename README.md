@@ -52,7 +52,7 @@ git clone https://github.com/tigera/docs.git
 cd docs
 
 # Native
-make init          # Enables Corepack and runs yarn install
+nvm use && corepack enable
 make start         # Dev server at http://localhost:3000
 
 # Or with Docker
@@ -65,7 +65,6 @@ make start CONTAINERIZED=true
 
 | Command | Description |
 |---|---|
-| `make init` | Install dependencies (enables Corepack, runs `yarn install`) |
 | `make start` | Dev server at localhost:3000 (released versions only) |
 | `make start-next` | Dev server including unreleased "next" docs |
 | `make build` | Full production build |
@@ -77,7 +76,7 @@ make start CONTAINERIZED=true
 
 All commands support `CONTAINERIZED=true` for Docker-based builds (e.g., `make build CONTAINERIZED=true`).
 
-> **Note:** When switching between native and containerized builds, the `init` target automatically detects the change and runs `manual-clean` for you.
+> **Note:** Dependencies are installed automatically when you run any build or start command. When switching between native and containerized builds, the build system detects the change and runs `manual-clean` for you.
 
 ## Project structure
 
