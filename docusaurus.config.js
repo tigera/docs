@@ -116,8 +116,8 @@ export default async function createAsyncConfig() {
           searchPagePath: '/search',
         },
         announcementBar: {
-          id: "calico_ebpf",
-          content: 'Calico 3.30+ users: <a href="https://calicocloud.io">Sign up for Calico Cloud Free today!</a>',
+          id: "calico_hackathon",
+          content: '🚀 The <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=Docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon</a> is live! Leverage Calico 3.30+ to solve networking challenges and win up to $1,000.',
           backgroundColor: "#FCE181",
           textColor: "#000",
           isCloseable: true
