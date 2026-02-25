@@ -33,6 +33,18 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
   - Another supported distribution with Linux kernel v5.3 or above.  {/*TODO-XREFS-CC */}
   - Immutable operating systems (e.g., Talos Linux): Ensure the `CgroupV2Path` in the `FelixConfiguration` CRD is set to a writable path.
 
+#### Kernel version requirements for eBPF features
+
+Some eBPF features require a higher kernel version than the base eBPF data plane.
+
+| Feature | Minimum kernel version | Details |
+|---|---|---|
+| Base eBPF data plane | v5.3 (RHEL: v4.18.0-193) | v5.8+ with CO-RE recommended for better performance |
+| [XDP acceleration](../../network-policy/extreme-traffic/defend-dos-attack.mdx) | v4.16 | Used for DoS mitigation; when `bpfEnabled` is `true`, policy is always accelerated using best available BPF technology |
+| Log rules in eBPF mode | v5.16 | Logs sent to trace pipe via `bpftool prog tracelog` |
+| [QoS bandwidth controls](../../networking/configuring/qos-controls.mdx) | v6.6 | Requires `tcx` support. Established connection limits not supported with eBPF |
+| [DNS policy inline mode](../../network-policy/domain-based-policy.mdx) | v5.17 (RHEL: v5.14) | `BPFDNSPolicyMode: Inline` parses DNS responses in eBPF before they reach the application. Only wildcard prefixes (`*.x.y.z`) supported. Falls back to `NoDelay` on older kernels |
+
 - An underlying network fabric that allows VXLAN traffic between hosts. In eBPF mode, VXLAN is used to forward Kubernetes NodePort traffic.
 
 **Unsupported platforms**
@@ -55,7 +67,6 @@ eBPF supports AKS with Calico CNI and $[prodname] network policy. However, with 
 - Host endpoint `doNotTrack` policy (other policy types are supported)
 - Floating IPs
 - SCTP (either for policy or services)
-- `Log` action in policy rules
 - Tagged VLAN devices
 - L7 logs
 - Application layer policies
