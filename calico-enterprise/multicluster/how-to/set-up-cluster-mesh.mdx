@@ -1,0 +1,284 @@
+---
+description: Configure a cluster mesh by connecting clusters together for cross-cluster endpoint sharing, connectivity, and service discovery.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Set up cluster mesh
+
+Create a $[prodname] cluster mesh by connecting clusters together. Once created, the cluster mesh enables multi-cluster networking, network policy for cross-cluster connections, cross-cluster services, and encryption via WireGuard.
+
+## Before you begin
+
+**Required**
+
+- [Configure federated endpoint identity](../explanation/cluster-mesh.mdx) — understand how the mesh works before proceeding.
+- All clusters in the mesh must have $[prodname] installed.
+
+If you plan to use $[prodname] multi-cluster networking (overlay routing), also verify:
+
+- All nodes participating in the cluster mesh can establish connections to each other via their private IP.
+- All nodes participating in the cluster mesh have unique node names.
+- Pod CIDRs between clusters do not overlap.
+- All clusters have at least one overlay network in common (VXLAN and/or WireGuard).
+- All clusters have the same `routeSource` setting on `FelixConfiguration`.
+
+If using VXLAN:
+- The `vxlan*` settings on `FelixConfiguration` must be the same across clusters participating in the mesh.
+- The underlying network must allow traffic on `vxlanPort` between clusters participating in the mesh.
+- All clusters must use Calico CNI.
+
+If using WireGuard:
+- The `wireguard*` settings on `FelixConfiguration` must be the same across clusters participating in the mesh.
+- The underlying network must allow traffic on `wireguardListeningPort` between clusters participating in the mesh.
+- All clusters must use Calico CNI OR All clusters must use non-Calico CNI (mixing non-Calico CNI types is supported).
+
+:::note
+
+Much like intra-cluster routing in $[prodname], cross-cluster routing can utilize both VXLAN and WireGuard at the same time. If both are enabled and a WireGuard peer is not ready, communication with that peer will fall back to VXLAN.
+
+:::
+
+## Generate credentials for cross-cluster resource synchronization
+
+The basis of cluster mesh is the ability for a cluster to connect to a remote cluster and sync data from it. This enables each $[prodname] cluster to have a view into the datastore that includes both local and remote cluster pods.
+
+In this section, you will create a `kubeconfig` for each cluster. This `kubeconfig` is what other clusters will use to connect to a given cluster and synchronize data from it.
+
+**For each** cluster in the cluster mesh, utilizing an existing `kubeconfig` with administrative privileges, follow these steps:
+
+1. Create the ServiceAccount used by remote clusters for authentication:
+
+   ```bash
+   kubectl apply -f $[filesUrl]/manifests/federation-remote-sa.yaml
+   ```
+
+1. Create the ClusterRole and ClusterRoleBinding used by remote clusters for authorization:
+
+   ```bash
+   kubectl apply -f $[filesUrl]/manifests/federation-rem-rbac-kdd.yaml
+   ```
+1. Create the ServiceAccount token that will be used in the `kubeconfig`:
+
+   ```yaml
+   kubectl apply -f - <<EOF
+   apiVersion: v1
+   kind: Secret
+   type: kubernetes.io/service-account-token
+   metadata:
+     name: tigera-federation-remote-cluster
+     namespace: calico-system
+     annotations:
+       kubernetes.io/service-account.name: "tigera-federation-remote-cluster"
+   EOF
+   ```
+
+1. Use the following command to create your `kubeconfig` at `$KUBECONFIG_NAME`:
+   ```yaml
+   echo "apiVersion: v1
+   kind: Config
+   users:
+     - name: tigera-federation-remote-cluster
+       user:
+         token: $(kubectl get secret tigera-federation-remote-cluster -n calico-system -o=jsonpath='{.data.token}' | base64 -d)
+   clusters:
+     - name: tigera-federation-remote-cluster
+       cluster:
+         certificate-authority-data: $(kubectl config view --raw -o=jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+         server: $(kubectl config view --raw -o=jsonpath='{.clusters[0].cluster.server}')
+   contexts:
+     - name: tigera-federation-remote-cluster-ctx
+       context:
+         cluster: tigera-federation-remote-cluster
+         user: tigera-federation-remote-cluster
+   current-context: tigera-federation-remote-cluster-ctx" > $KUBECONFIG_NAME
+   ```
+
+1. Verify that the `kubeconfig` file works:
+
+   Issue the following command to validate the `kubeconfig` file can be used to connect to the current cluster and access resources:
+   ```bash
+   kubectl --kubeconfig=$KUBECONFIG_NAME get nodes
+   ```
+
+Once you've created a `kubeconfig` for **each** cluster, proceed to the next section.
+
+## Establish cross-cluster resource synchronization
+
+The cluster mesh is formed when each cluster connects to every other cluster to synchronize data. A cluster connects to another cluster using a RemoteClusterConfiguration, which references a kubeconfig created for the remote cluster.
+
+Within each cluster, create a RemoteClusterConfiguration for each other cluster in the mesh.
+
+<Tabs>
+<TabItem value="$[prodname] multi-cluster Routing" label="$[prodname] multi-cluster routing">
+
+$[prodname] achieves cross-cluster routing by extending the overlay network of a cluster to include nodes from remote clusters.
+
+**For each pair** of clusters in the cluster mesh (e.g. \{A,B\}, \{A,C\}, \{B,C\} for clusters A,B,C):
+
+1. In cluster 1, create a secret that contains the `kubeconfig` for cluster 2:
+
+   Determine the namespace (`<secret-namespace>`) for the secret to replace in all steps.
+   The simplest method to create a secret for a remote cluster is to use the `kubectl` command because it correctly encodes the data and formats the file.
+   ```bash
+   kubectl create secret generic remote-cluster-secret-name -n <secret-namespace> \
+      --from-literal=datastoreType=kubernetes \
+      --from-file=kubeconfig=<kubeconfig file>
+   ```
+
+1. If RBAC is enabled in cluster 1, create a Role and RoleBinding for $[prodname] to use to access the secret that contains the `kubeconfig` for cluster 2:
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: Role
+   metadata:
+     name: remote-cluster-secret-access
+     namespace: <secret-namespace>
+   rules:
+   - apiGroups: [""]
+     resources: ["secrets"]
+     verbs: ["watch", "list", "get"]
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: RoleBinding
+   metadata:
+     name: remote-cluster-secret-access
+     namespace: <secret-namespace>
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: Role
+     name: remote-cluster-secret-access
+   subjects:
+   - kind: ServiceAccount
+     name: calico-typha
+     namespace: calico-system
+   EOF
+   ```
+
+1. Create the RemoteClusterConfiguration in cluster 1:
+
+   Within the RemoteClusterConfiguration, we specify the secret used to access cluster 2, and the overlay routing mode which toggles the establishment of cross-cluster overlay routes.
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: projectcalico.org/v3
+   kind: RemoteClusterConfiguration
+   metadata:
+     name: cluster-2
+   spec:
+     clusterAccessSecret:
+       name: remote-cluster-secret-name
+       namespace: <secret-namespace>
+       kind: Secret
+     syncOptions:
+       overlayRoutingMode: Enabled
+   EOF
+   ```
+
+1. [Validate](validate-multi-cluster-setup.mdx) that the remote cluster connection can be established.
+
+1. Repeat the above steps, switching cluster 1 and cluster 2.
+
+</TabItem>
+<TabItem value="Network-provided routing" label="Network-provided routing">
+In this setup, the cluster mesh will rely on the underlying network to provide cross-cluster routing that preserves pod IPs.
+
+**For each pair** of clusters in the cluster mesh (e.g. \{A,B\}, \{A,C\}, \{B,C\} for clusters A,B,C):
+
+1. In cluster 1, create a secret that contains the `kubeconfig` for cluster 2:
+
+   Determine the namespace (`<secret-namespace>`) for the secret to replace in all steps.
+   The simplest method to create a secret for a remote cluster is to use the `kubectl` command because it correctly encodes the data and formats the file.
+   ```bash
+   kubectl create secret generic remote-cluster-secret-name -n <secret-namespace> \
+      --from-literal=datastoreType=kubernetes \
+      --from-file=kubeconfig=<kubeconfig file>
+   ```
+
+1. If RBAC is enabled in cluster 1, create a Role and RoleBinding for $[prodname] to use to access the secret that contains the `kubeconfig` for cluster 2:
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: Role
+   metadata:
+     name: remote-cluster-secret-access
+     namespace: <secret-namespace>
+   rules:
+   - apiGroups: [""]
+     resources: ["secrets"]
+     verbs: ["watch", "list", "get"]
+   ---
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: RoleBinding
+   metadata:
+     name: remote-cluster-secret-access
+     namespace: <secret-namespace>
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: Role
+     name: remote-cluster-secret-access
+   subjects:
+   - kind: ServiceAccount
+     name: calico-typha
+     namespace: calico-system
+   EOF
+   ```
+
+1. Create the RemoteClusterConfiguration in cluster 1:
+
+   Within the RemoteClusterConfiguration, we specify the secret used to access cluster 2, and the overlay routing mode which toggles the establishment of cross-cluster overlay routes.
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: projectcalico.org/v3
+   kind: RemoteClusterConfiguration
+   metadata:
+     name: cluster-2
+   spec:
+     clusterAccessSecret:
+       name: remote-cluster-secret-name
+       namespace: <secret-namespace>
+       kind: Secret
+     syncOptions:
+       overlayRoutingMode: Disabled
+   EOF
+   ```
+
+1. If you have no IP pools in cluster 1 with NAT-outgoing enabled, skip this step.
+
+   Otherwise, if you have IP pools in cluster 1 with NAT-outgoing enabled, and workloads in that pool will egress to workloads in cluster 2, you need to instruct $[prodname] to not perform NAT on traffic destined for IP pools in cluster 2.
+
+   You can achieve this by creating a disabled IP pool in cluster 1 for each CIDR in cluster 2. This IP pool should have NAT-outgoing disabled. For example:
+
+    ```yaml
+    apiVersion: projectcalico.org/v3
+    kind: IPPool
+    metadata:
+      name: cluster2-main-pool
+    spec:
+      cidr: <Cluster 2 CIDR>
+      disabled: true
+    ```
+
+1. [Validate](validate-multi-cluster-setup.mdx) that the remote cluster connection can be established.
+
+1. Repeat the above steps, switching cluster 1 and cluster 2.
+
+</TabItem>
+</Tabs>
+
+After completing the above steps for all cluster pairs in the cluster mesh, your clusters should now be forming a cluster mesh. You should now be able to route traffic between clusters, and write policy that can select remote workloads.
+
+## Switch to multi-cluster networking
+
+The steps above assume that you are configuring both federated endpoint identity and multi-cluster networking for the first time. If you already have federated endpoint identity, and want to use multi-cluster networking, follow these steps:
+
+1. Validate that all [requirements](#before-you-begin) for multi-cluster networking have been met.
+2. Update the ClusterRole in each cluster in the cluster mesh using the RBAC manifest found in [Generate credentials for cross-cluster authentication](#generate-credentials-for-cross-cluster-resource-synchronization)
+3. In all RemoteClusterConfigurations, set `Spec.OverlayRoutingMode` to `Enabled`.
+4. Verify that all RemoteClusterConfigurations are bidirectional (in both directions for each cluster pair) using these [instructions](#establish-cross-cluster-resource-synchronization).
+5. If you had previously created disabled IP pools to prevent NAT outgoing from applying to remote cluster destinations, those disabled IP pools are no longer needed when using multi-cluster networking and must be deleted.
+
+## Next steps
+
+- [Validate multi-cluster setup](validate-multi-cluster-setup.mdx)
+- [Configure federated services](configure-federated-services.mdx)

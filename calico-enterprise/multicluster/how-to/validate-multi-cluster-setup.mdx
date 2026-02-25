@@ -1,0 +1,52 @@
+---
+description: Validate your multi-cluster setup including RemoteClusterConfiguration, federated endpoint identity, and multi-cluster networking.
+---
+
+# Validate multi-cluster setup
+
+## Validate RemoteClusterConfiguration and federated endpoint identity
+
+### Check remote cluster connection
+
+You can validate in a local cluster that Typha has synced to the remote cluster through the [Prometheus metrics for Typha](../../reference/component-resources/typha/prometheus#metric-reference).
+
+Alternatively, you can check the Typha logs for remote cluster connection status. Run the following command:
+```bash
+kubectl logs deployment/calico-typha -n calico-system | grep "Sending in-sync update"
+```
+You should see an entry for each RemoteClusterConfiguration in the local cluster.
+
+If either output contains unexpected results, proceed to the [Troubleshooting](../troubleshooting.mdx) page.
+
+## Validate multi-cluster networking
+
+If all requirements were met for $[prodname] to establish multi-cluster networking, you can test the functionality by establishing a connection from a pod in a local cluster to the IP of a pod in a remote cluster. Ensure that there is no policy in either cluster that may block this connection.
+
+If the connection fails, proceed to the [Troubleshooting](../troubleshooting.mdx) page.
+
+## Create remote-identity-aware network policy
+
+With federated endpoint identity and routing between clusters established, you can now use labels to reference endpoints on a remote cluster in local policy rules, rather than referencing them by IP address.
+
+The main policy selector still refers only to local endpoints; and that selector chooses which local endpoints to apply the policy.
+However, rule selectors can now refer to both local and remote endpoints.
+
+In the following example, cluster A (an application cluster) has a network policy that governs outbound connections to cluster B (a database cluster).
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+    name: default.app-to-db
+    namespace: myapp
+spec:
+    # The main policy selector selects endpoints from the local cluster only.
+    selector: app == 'backend-app'
+    tier: default
+    egress:
+    - destination:
+        # Rule selectors can select endpoints from local AND remote clusters.
+        selector: app == 'postgres'
+      protocol: TCP
+      ports: [5432]
+      action: Allow
+```

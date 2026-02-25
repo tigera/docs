@@ -1,0 +1,109 @@
+---
+description: Reference for Helm values used in multi-cluster management installations.
+---
+
+# Helm values
+
+Reference for Helm `values.yaml` blocks used in $[prodname] multi-cluster management installations.
+
+For the complete Helm installation reference, see [Helm installation reference](../../reference/installation/helm_customization).
+
+## Management cluster values
+
+### `managementCluster`
+
+Configure the cluster as a management cluster.
+
+```yaml
+managementCluster:
+  enabled: true
+  address: <management-cluster-addr>:<port>
+  service:
+    enabled: true
+    annotations:
+    type: NodePort            # or LoadBalancer
+    port: 9449
+    targetPort: 9449
+    protocol: TCP
+    nodePort: 30449           # only for NodePort
+```
+
+| Field | Description |
+|---|---|
+| `enabled` | Set to `true` to configure this cluster as a management cluster. |
+| `address` | The address (host:port) that managed clusters use to connect. For LoadBalancer, set this after the LB is provisioned. |
+| `service.enabled` | Set to `true` to create a Service to expose the management cluster. |
+| `service.type` | `NodePort` or `LoadBalancer`. |
+| `service.port` | Service port. Must be `9449`. |
+| `service.targetPort` | Target port on the Manager pod. Must be `9449`. |
+| `service.nodePort` | External node port (NodePort only). |
+| `service.annotations` | Service annotations (e.g., for AWS NLB configuration). |
+
+#### EKS LoadBalancer annotations
+
+If using EKS with a LoadBalancer, add the following annotations:
+
+```yaml
+managementCluster:
+  service:
+    annotations:
+    - key: service.beta.kubernetes.io/aws-load-balancer-type
+      value: "external"
+    - key: service.beta.kubernetes.io/aws-load-balancer-nlb-target-type
+      value: "instance"
+    - key: service.beta.kubernetes.io/aws-load-balancer-scheme
+      value: "internet-facing"
+```
+
+### `managedClusters`
+
+Register managed clusters on the management cluster.
+
+```yaml
+managedClusters:
+  enabled: true
+  clusters:
+  - name: my-managed-cluster
+    operatorNamespace: tigera-operator
+    certificate: <base64-encoded-cert>
+```
+
+| Field | Description |
+|---|---|
+| `enabled` | Set to `true` to register managed clusters. |
+| `clusters[].name` | Name of the managed cluster. |
+| `clusters[].operatorNamespace` | Namespace where the Tigera Operator runs on the managed cluster. |
+| `clusters[].certificate` | Base64-encoded certificate for the managed cluster. |
+
+## Managed cluster values
+
+### `managementClusterConnection`
+
+Configure the cluster as a managed cluster.
+
+```yaml
+managementClusterConnection:
+  enabled: true
+  managementClusterAddress: <management-cluster-addr>:<port>
+  management:
+    tls:
+      crt: <base64-management-cluster-cert>
+  managed:
+    tls:
+      crt: <base64-managed-cluster-cert>
+      key: <base64-managed-cluster-key>
+```
+
+| Field | Description |
+|---|---|
+| `enabled` | Set to `true` to configure this cluster as a managed cluster. |
+| `managementClusterAddress` | Address of the management cluster. |
+| `management.tls.crt` | Base64-encoded TLS certificate of the management cluster. |
+| `managed.tls.crt` | Base64-encoded TLS certificate for the managed cluster. |
+| `managed.tls.key` | Base64-encoded TLS private key for the managed cluster. |
+
+:::note
+
+When installing a managed cluster with Helm, also set `logStorage.enabled=false` and `manager.enabled=false` because these components run on the management cluster.
+
+:::

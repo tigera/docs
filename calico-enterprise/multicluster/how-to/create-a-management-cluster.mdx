@@ -1,36 +1,126 @@
 ---
-description: Install Calico Enterprise management cluster using Helm application package manager.
+description: Create a Calico Enterprise management cluster to manage multiple clusters from a single management plane.
 ---
-
-# Create a Calico Enterprise management cluster
 
 import CodeBlock from '@theme/CodeBlock';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-## Big picture
-
-Create a $[prodname] management cluster to manage multiple clusters from a single management plane using Helm 3.
-
-## Value
-
-Helm charts are a way to package up an application for Kubernetes (similar to `apt` or `yum` for operating systems). Helm is also used by tools like ArgoCD to manage applications in a cluster, taking care of install, upgrade (and rollback if needed), etc.
+# Create a management cluster
 
 ## Before you begin
 
 **Required**
 
-- Install Helm 3
-- `kubeconfig` is configured to work with your cluster (check by running `kubectl get nodes`)
-- [Credentials for the Tigera private registry and a license key](../../../getting-started/install-on-clusters/calico-enterprise.mdx)
+- A $[prodname] cluster, see [here](../../getting-started/install-on-clusters/index.mdx) for help
+- A reachable, public IP address for the management cluster
 
-## Concepts
+For Helm installations, you also need:
 
-### Operator-based installation
-
-In this guide, you install the Tigera Calico operator and custom resource definitions using the Helm 3 chart. The Tigera Operator provides lifecycle management for $[prodname] exposed via the Kubernetes API defined as a custom resource definition.
+- Helm 3 installed
+- `kubeconfig` configured to work with your cluster (check by running `kubectl get nodes`)
+- [Credentials for the Tigera private registry and a license key](../../getting-started/install-on-clusters/calico-enterprise.mdx)
 
 ## How to
+
+<Tabs groupId="install-method">
+<TabItem label="Operator" value="operator">
+
+### Create a management cluster
+
+To control managed clusters from your central management plane, you must ensure it is reachable for connections. The simplest way to get started (but not for production scenarios), is to configure a `NodePort` service to expose the management cluster. Note that the service must live within the `calico-system` namespace.
+
+1.  Create a service to expose the management cluster.
+    The following example of a NodePort service may not be suitable for production and high availability. For options, see [Port and service requirements](../reference/port-and-service-requirements.mdx).
+    Apply the following service manifest.
+
+    ```bash
+    kubectl create -f - <<EOF
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: calico-manager-mcm
+      namespace: calico-system
+    spec:
+      ports:
+      - nodePort: 30449
+        port: 9449
+        protocol: TCP
+        targetPort: 9449
+      selector:
+        k8s-app: calico-manager
+      type: NodePort
+    EOF
+    ```
+
+1.  Export the service port number, and the public IP or host of the management cluster. (Ex. "example.com:1234" or "10.0.0.10:1234".)
+    ```bash
+    export MANAGEMENT_CLUSTER_ADDR=<your-management-cluster-addr>
+    ```
+1.  Apply the [ManagementCluster](../../reference/installation/api.mdx#managementcluster) CR.
+
+    ```bash
+    kubectl apply -f - <<EOF
+    apiVersion: operator.tigera.io/v1
+    kind: ManagementCluster
+    metadata:
+      name: tigera-secure
+    spec:
+      address: $MANAGEMENT_CLUSTER_ADDR
+    EOF
+    ```
+
+### Create an admin user and verify management cluster connection
+
+To access resources in a managed cluster from the $[prodname] web console within the management cluster, the logged-in user must have appropriate permissions defined in that managed cluster (clusterrole bindings).
+
+1. Create an admin user called, `mcm-user` in the default namespace with full permissions, by applying the following commands.
+
+   ```bash
+   kubectl create sa mcm-user
+   kubectl create clusterrolebinding mcm-user-admin --serviceaccount=default:mcm-user --clusterrole=tigera-network-admin
+   ```
+
+1. Create a secret for the service account
+
+   :::note
+
+   This step is needed if your Kubernetes cluster is version v1.24 or above. Prior to Kubernetes v1.24, this secret is created automatically.
+
+   :::
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: v1
+   kind: Secret
+   type: kubernetes.io/service-account-token
+   metadata:
+     name: mcm-user
+     annotations:
+       kubernetes.io/service-account.name: "mcm-user"
+   EOF
+   ```
+
+1. For Kubernetes v1.24+, use the following command to obtain the token for the secret associated with your host
+
+   ```bash
+   kubectl describe secret mcm-user
+   ```
+
+   For Kubernetes clusters prior to version v1.24, use the following command to retrieve your token:
+
+   ```bash
+   kubectl get secret $(kubectl get serviceaccount mcm-user -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep token) -o go-template='{{.data.token | base64decode}}' && echo
+   ```
+
+   In the top right banner, your management cluster is displayed as the first entry in the cluster selection drop-down menu with the fixed name, `management cluster`.
+
+   ![Cluster Created](/img/calico-enterprise/mcm/mcm-management-cluster.png)
+
+You have successfully installed a management cluster.
+
+</TabItem>
+<TabItem label="Helm" value="helm">
 
 ### Get the Helm chart
 
@@ -53,7 +143,7 @@ Some important configurations you might need to provide to the installer (via `v
 
 Here are some examples for updating `values.yaml` with your configurations:
 
-Example 1. Providing `kubernetesProvider`:  if you are installing on a cluster installed by EKS, set the `kubernetesProvider` as described in the [Installation reference](../../../reference/installation/api.mdx#provider)
+Example 1. Providing `kubernetesProvider`:  if you are installing on a cluster installed by EKS, set the `kubernetesProvider` as described in the [Installation reference](../../reference/installation/api.mdx#provider)
 
   ```bash
   echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml
@@ -75,16 +165,16 @@ Example 2. Providing custom settings in `values.yaml` for Azure AKS cluster with
   EOF
   ```
 
-For more information about configurable options via `values.yaml` please see [Helm installation reference](../../../reference/installation/helm_customization).
+For more information about configurable options via `values.yaml` please see [Helm installation reference](../../reference/installation/helm_customization).
 
 ### Install $[prodname]
 
-<Tabs>
+<Tabs groupId="service-type">
 <TabItem label="NodePort" value="NodePort">
 
-To install a $[prodname] [management](create-a-management-cluster-helm#value) cluster with Helm, using a NodePort service:
+To install a $[prodname] management cluster with Helm, using a NodePort service:
 
-1. [Configure a storage class for Calico Enterprise](../../../operations/logstorage/create-storage).
+1. [Configure a storage class for Calico Enterprise](../../operations/logstorage/create-storage).
 
 1. Export the service node port number
 
@@ -131,7 +221,7 @@ To install a $[prodname] [management](create-a-management-cluster-helm#value) cl
       targetPort: 9449
       protocol: TCP
       nodePort: $EXT_SERVICE_NODE_PORT
-  
+
   managedClusters:
     enabled: true
     clusters:
@@ -163,7 +253,7 @@ To install a $[prodname] [management](create-a-management-cluster-helm#value) cl
 </TabItem>
 <TabItem label="LoadBalancer" value="LoadBalancer">
 
-To install a $[prodname] [management](create-a-management-cluster-helm#value) cluster with Helm, using a LoadBalancer service:
+To install a $[prodname] management cluster with Helm, using a LoadBalancer service:
 
 #### Meet cloud provider requirements
 
@@ -173,7 +263,7 @@ For example, if you are using EKS, you must meet the requirements defined in [cr
 
 #### Install the management cluster
 
-1. [Configure a storage class for Calico Enterprise](../../../operations/logstorage/create-storage).
+1. [Configure a storage class for Calico Enterprise](../../operations/logstorage/create-storage).
 
 1. Export one or more managed clusters.
 
@@ -263,7 +353,7 @@ For example, if you are using EKS, you must meet the requirements defined in [cr
   ```
 
   Replace the `address` field in the ManagementCluster resource.
-    
+
   ```bash
   kubectl patch managementcluster tigera-secure --type merge -p "{\"spec\":{\"address\":\"${MANAGEMENT_CLUSTER_ADDR}\"}}"
   ```
@@ -271,7 +361,7 @@ For example, if you are using EKS, you must meet the requirements defined in [cr
 </TabItem>
 </Tabs>
 
-#### Create an admin user and verify management cluster connection
+### Create an admin user and verify management cluster connection
 
 To access resources in a managed cluster from the $[prodname] web console within the management cluster, the logged-in user must have appropriate permissions defined in that managed cluster (clusterrole bindings).
 
@@ -285,20 +375,13 @@ Create an admin user, `mcm-user`, in the default namespace with full permissions
 
   Use the generated token, to connect to the UI. In the top right banner in the UI, your management cluster is displayed as the first entry in the cluster selection drop-down menu with the fixed name, `management cluster`.
 
-  Congratulations! You have now installed $[prodname] for a management cluster using the Helm 3 chart.
+  Congratulations! You have now installed $[prodname] for a management cluster.
+
+</TabItem>
+</Tabs>
 
 ## Next steps
 
-**Recommended**
-
-- [Configure access to the $[prodname] web console](../../../operations/cnx/access-the-manager.mdx)
-- [Authentication quickstart](../../../operations/cnx/authentication-quickstart.mdx)
-- [Configure your own identity provider](../../../operations/cnx/configure-identity-provider.mdx)
-
-**Recommended - Networking**
-
-- The default networking is IP in IP encapsulation using BGP routing. For all networking options, see [Determine best networking option](../../../networking/determine-best-networking.mdx).
-
-**Recommended - Security**
-
-- [Get started with $[prodname] tiered network policy](../../../network-policy/policy-tiers/tiered-policy.mdx)
+- [Create a managed cluster](create-a-managed-cluster.mdx)
+- [Port and service requirements](../reference/port-and-service-requirements.mdx)
+- [Change cluster type](change-cluster-type.mdx)

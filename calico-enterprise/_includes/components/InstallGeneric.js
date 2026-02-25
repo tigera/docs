@@ -156,8 +156,8 @@ spec:
               <p>
                 Create a service to expose the management cluster. The following example of a NodePort service may not
                 be suitable for production and high availability. For options, see{' '}
-                <Link href={`${baseUrl}/multicluster/mcm/fine-tune-deployment`}>
-                  Fine-tune multi-cluster management for production
+                <Link href={`${baseUrl}/multicluster/reference/port-and-service-requirements`}>
+                  Port and service requirements
                 </Link>
                 . Apply the following service manifest.
               </p>

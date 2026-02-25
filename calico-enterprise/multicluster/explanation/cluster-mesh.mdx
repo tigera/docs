@@ -1,0 +1,94 @@
+---
+description: Understand how Calico Enterprise cluster mesh enables cross-cluster endpoint identity, federated services, and multi-cluster networking.
+---
+
+# Cluster mesh
+
+## Overview
+
+$[prodname] cluster mesh secures cross-cluster connections with identity-aware network policy and federates services for cross-cluster service discovery. It also provides multi-cluster networking to establish cross-cluster connectivity.
+
+## Why cluster mesh
+
+By default, pods can only communicate with pods within the same cluster. Services and network policy only select pods from the local cluster. $[prodname] cluster mesh overcomes these barriers with three features:
+
+- **Federated endpoint identity** — A local cluster includes the workload and host endpoints of remote clusters in the calculation of local network policies on each node.
+- **Federated services** — A local Kubernetes Service populates with Endpoints selected from both local and remote cluster Services.
+- **Multi-cluster networking** — An overlay network between clusters provides cross-cluster connectivity.
+
+## Pod IP routability
+
+$[prodname] cluster mesh operates at the network layer based on pod IPs.
+
+Federated endpoint identity and federated services both require that pod IPs are routable between clusters. Identity-aware network policy needs source and destination pod IPs preserved to establish pod identity. Federated Service endpoints must also be routable to be useful.
+
+You can establish pod IP routability in two ways:
+
+- **$[prodname] multi-cluster networking** — extends the overlay network (VXLAN and/or WireGuard) between clusters.
+- **Network-provided routing** — manually set up routing without encapsulation (e.g. VPC routing, BGP routing).
+
+## Federated endpoint identity
+
+Federated endpoint identity allows a local cluster to include remote cluster endpoints in local policy calculations. For example, Cluster A can write a network policy that allows its application pods to talk to database pods in Cluster B.
+
+Key points:
+
+- Network policies are **not** federated — policies from a remote cluster are not applied to local endpoints.
+- Only the local cluster's policies are rendered and applied locally.
+- Rule selectors can reference both local and remote endpoints based on labels.
+
+This works because each cluster synchronizes endpoint data from remote clusters via `RemoteClusterConfiguration` resources. Traffic from remote clusters preserves pod IPs, and the local cluster associates those IPs with the pod specifications it synchronized.
+
+## Federated services
+
+Federated services provide cross-cluster service discovery. A federated service consolidates endpoints from services across all clusters in the mesh into a single local Service.
+
+The Tigera Federated Services Controller manages federated services:
+
+- It monitors services across all clusters in the mesh.
+- It populates a local federated service with endpoints matching a `federation.tigera.io/serviceSelector` annotation.
+- It does not change configuration on remote clusters.
+
+A federated service uses an annotation instead of a pod selector:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-federated
+  namespace: default
+  annotations:
+    federation.tigera.io/serviceSelector: run == "my-app"
+spec:
+  ports:
+    - name: my-app-ui
+      port: 8080
+      protocol: TCP
+  type: ClusterIP
+```
+
+Endpoints are selected only when the service port name and protocol in the federated service matches the port name and protocol in the backing service. If you have an existing service discovery mechanism, federated services are optional.
+
+## Multi-cluster networking
+
+$[prodname] multi-cluster networking extends the overlay network of a cluster to include nodes from remote clusters. This is made possible by each cluster having a view into the datastore that includes remote pods and nodes.
+
+Multi-cluster networking uses the `overlayRoutingMode` field in `RemoteClusterConfiguration`. When set to `Enabled`, the cluster establishes cross-cluster overlay routes.
+
+Both VXLAN and WireGuard are supported for cross-cluster routing. If both are enabled and a WireGuard peer is not ready, communication falls back to VXLAN.
+
+## How the mesh is formed
+
+The cluster mesh is formed by a set of bidirectional `RemoteClusterConfiguration` connections:
+
+1. Each cluster creates a `kubeconfig` with limited credentials for remote clusters to use.
+2. Each cluster creates a `RemoteClusterConfiguration` for every other cluster, referencing the remote cluster's `kubeconfig` stored in a Secret.
+3. Typha connects to each remote cluster's API server using the stored credentials and synchronizes endpoint, node, and IP pool data.
+
+For a mesh of clusters A, B, and C, you need `RemoteClusterConfiguration` resources for each pair in both directions: \{A→B, B→A, A→C, C→A, B→C, C→B\}.
+
+## Next steps
+
+- [Security model](security-model.mdx)
+- [Set up cluster mesh](../how-to/set-up-cluster-mesh.mdx)
+- [Configure federated services](../how-to/configure-federated-services.mdx)

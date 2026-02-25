@@ -1,0 +1,81 @@
+---
+description: Understand the security model for Calico Enterprise multi-cluster management, including credential generation, certificate management, and cross-cluster RBAC.
+---
+
+# Security model
+
+This page explains how $[prodname] secures communication and enforces access control across management and managed clusters, as well as within a cluster mesh.
+
+## Management cluster connection security
+
+### Certificate-based authentication
+
+When a managed cluster is registered on the management cluster (via a `ManagedCluster` resource), an installation manifest is generated containing a `ManagementClusterConnection` with the credentials the managed cluster needs to connect. The Guardian component on the managed cluster uses these credentials to establish and maintain a secure tunnel to the management cluster over port 9449.
+
+For Helm-based installations, certificates are generated explicitly:
+
+1. A self-signed certificate and key pair is generated for each managed cluster.
+2. The managed cluster's certificate is registered on the management cluster.
+3. The management cluster's TLS certificate is provided to the managed cluster for verification.
+
+This mutual TLS model ensures that both sides of the connection are authenticated.
+
+### User identity propagation
+
+When a user accesses a managed cluster's resources through the management cluster web console:
+
+1. The user authenticates against the management cluster using a service account or user account.
+2. The management cluster passes the user's identity to the managed cluster for authorization.
+3. The managed cluster evaluates the request against its own Kubernetes RBAC rules.
+
+This means:
+- All users must have a valid account on the management cluster to log in.
+- Users must have the **same username** defined on both the management cluster and any managed clusters they access.
+- A user can have different permissions on each managed cluster, defined by Kubernetes Role and ClusterRole objects, but the username in the corresponding RoleBinding/ClusterRoleBinding must match.
+
+## Cluster mesh security
+
+### Federation credentials
+
+Each cluster in a cluster mesh creates a dedicated ServiceAccount (`tigera-federation-remote-cluster`) with limited permissions for remote clusters to use. The credentials flow is:
+
+1. A ServiceAccount is created in the `calico-system` namespace.
+2. A ClusterRole and ClusterRoleBinding grant the account read-only access to the resources needed for federation (endpoints, nodes, IP pools, profiles).
+3. A `kubeconfig` is generated from the ServiceAccount token and the cluster's API server certificate.
+4. The `kubeconfig` is shared with remote clusters and stored as a Kubernetes Secret.
+
+### Secret access control
+
+When a cluster stores a remote cluster's `kubeconfig` as a Secret, Typha needs access to read it. An RBAC Role and RoleBinding in the secret's namespace grants the `calico-typha` ServiceAccount permission to watch, list, and get secrets in that namespace.
+
+### Credential verification
+
+You can verify that stored credentials work by extracting the kubeconfig from the secret and testing it:
+
+```bash
+kubectl get secret -n <secret-namespace> remote-cluster-secret-name \
+  -o=jsonpath="{.data.kubeconfig}" | base64 -d > verify_kubeconfig
+kubectl --kubeconfig=verify_kubeconfig get nodes
+```
+
+## Log data access control
+
+Log data from all managed clusters is stored in centralized Elasticsearch on the management cluster. Access to log data is controlled using Kubernetes RBAC:
+
+- The API group is `lma.tigera.io`.
+- `resources` controls access by cluster name.
+- `resourceNames` controls access by log type (`flows`, `audit`, `audit_ee`, `audit_kube`, `events`, `dns`, `l7`).
+
+For example, to allow access to flow and DNS logs for a specific cluster:
+
+```yaml
+- apiGroups: ['lma.tigera.io']
+  resources: ['app-cluster']
+  resourceNames: ['flows', 'dns']
+  verbs: ['get']
+```
+
+## Next steps
+
+- [Configure cross-cluster RBAC](../how-to/configure-cross-cluster-rbac.mdx)
+- [Architecture](architecture.mdx)

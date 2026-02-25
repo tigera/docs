@@ -259,8 +259,8 @@ spec:
               <p>
                 The following example of a NodePort service may not be suitable for production and high availability.
                 For options, see{' '}
-                <Link href={`${baseUrl}/multicluster/mcm/fine-tune-deployment`}>
-                  Fine-tune multi-cluster management for production
+                <Link href={`${baseUrl}/multicluster/reference/port-and-service-requirements`}>
+                  Port and service requirements
                 </Link>
                 .
               </p>

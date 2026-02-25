@@ -1,0 +1,71 @@
+---
+description: Configure user permissions and RBAC for multi-cluster management.
+---
+
+# Configure cross-cluster RBAC
+
+Configure user permissions across your management and managed clusters for production environments.
+
+## Review user permissions
+
+When defining roles and permissions across your clusters, make note of the following:
+
+- All users that log in to the $[prodname] web console must use a valid service account or user account in the management cluster.
+- When the management cluster performs actions on a managed cluster, it passes the user ID of the current logged in user to the managed cluster for authorization. As a requirement, the user must have the same username defined across the management cluster and managed clusters. A user can have different permissions for accessing resources in each managed cluster, as defined by Kubernetes Role and ClusterRole objects, but the username used in the corresponding RoleBinding and ClusterRoleBinding objects must always match what is in the management cluster.
+
+## Configure permissions for managed cluster log data
+
+Log data across all managed clusters is stored in a centralized Elasticsearch within the management cluster. You can use [Kubernetes RBAC roles and cluster roles](https://kubernetes.io/rbac/) to define granular access to cluster log data. For example, using the RBAC rule syntax, you can define rules to control access to specific log types or specific clusters by using the resources and resourceNames list fields.
+
+$[prodname] log data is stored within Elasticsearch indexes. The indexes have the following naming scheme:
+
+```bash
+<log-type>.<cluster-name>.<date>
+```
+
+A standalone cluster uses the cluster name cluster for Elasticsearch indexes. This is also the name used by a management cluster. For a managed cluster, its cluster name is the value chosen by the user at the time of registration, through the $[prodname] web console.
+
+To restrict to a specific cluster or subset of clusters use, resources. To restrict to a specific log type use, resourceNames. The following are valid cluster types:
+
+- "flows"
+- "audit"
+- "audit_ee"
+- "audit_kube"
+- "events"
+- "dns"
+- "l7"
+
+### Examples
+
+The rule below allows access to log types flow and DNS for a single cluster with the name app-cluster.
+
+```yaml
+- apiGroups: ['lma.tigera.io']
+  resources: ['app-cluster']
+  resourceNames: ['flows', 'dns']
+  verbs: ['get']
+```
+
+:::note
+
+The apiGroups will always be `lma.tigera.io`. The verbs will always be get.
+
+:::
+
+The rule below allows access to any cluster for log types flow, DNS and audit.
+
+```yaml
+- apiGroups: ['lma.tigera.io']
+  resources: ['*']
+  resourceNames: ['flows', 'dns', 'audit']
+  verbs: ['get']
+```
+
+The rule below allows access to any cluster for all log types.
+
+```yaml
+- apiGroups: ['lma.tigera.io']
+  resources: ['*']
+  resourceNames: ['*']
+  verbs: ['get']
+```

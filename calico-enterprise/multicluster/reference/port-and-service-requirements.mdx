@@ -1,0 +1,103 @@
+---
+description: Port, service, and network requirements for multi-cluster management and cluster mesh.
+---
+
+# Port and service requirements
+
+## Management cluster service requirements
+
+The management cluster must be exposed to managed clusters via a Kubernetes Service. The service configuration must meet these requirements:
+
+- Uses TCP protocol
+- Maps to port 9449 on the Manager (web console) pod
+- Exists within the `calico-system` namespace
+- Uses label selector `k8s-app: calico-manager`
+
+### NodePort example
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: calico-manager-mcm
+  namespace: calico-system
+spec:
+  type: NodePort
+  ports:
+    - nodePort: 30449
+      port: 9449
+      protocol: TCP
+      targetPort: 9449
+  selector:
+    k8s-app: calico-manager
+```
+
+### LoadBalancer example
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: calico-manager-mcm
+  namespace: calico-system
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 9449
+      protocol: TCP
+      targetPort: 9449
+  selector:
+    k8s-app: calico-manager
+```
+
+:::note
+
+Using a LoadBalancer may require additional steps, depending on how you provisioned your Kubernetes cluster.
+
+:::
+
+:::note
+
+If you previously set up a management cluster with a service, don't forget to update the IP address in each managed cluster, by editing the `ManagementClusterConnection` and applying it, or by using `kubectl edit managementclusterconnection tigera-secure`.
+
+:::
+
+For both NodePort and LoadBalancer, a security rule/firewall rule is needed to allow connections to the management cluster.
+
+## Cluster mesh network requirements
+
+### Node connectivity
+
+All nodes participating in the cluster mesh must be able to establish connections to each other via their private IP.
+
+### Unique node names
+
+All nodes participating in the cluster mesh must have unique node names.
+
+### Non-overlapping pod CIDRs
+
+Pod CIDRs between clusters must not overlap.
+
+### Overlay requirements
+
+All clusters must have at least one overlay network in common (VXLAN and/or WireGuard).
+
+All clusters must have the same `routeSource` setting on `FelixConfiguration`.
+
+#### VXLAN requirements
+
+- The `vxlan*` settings on `FelixConfiguration` must be the same across clusters.
+- The underlying network must allow traffic on `vxlanPort` between clusters.
+- All clusters must use Calico CNI.
+
+#### WireGuard requirements
+
+- The `wireguard*` settings on `FelixConfiguration` must be the same across clusters.
+- The underlying network must allow traffic on `wireguardListeningPort` between clusters.
+- All clusters must use Calico CNI OR all clusters must use non-Calico CNI (mixing non-Calico CNI types is supported).
+
+:::note
+
+Cross-cluster routing can utilize both VXLAN and WireGuard at the same time. If both are enabled and a WireGuard peer is not ready, communication with that peer will fall back to VXLAN.
+
+:::

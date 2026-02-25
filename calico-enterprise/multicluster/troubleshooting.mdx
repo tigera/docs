@@ -1,0 +1,101 @@
+---
+description: Troubleshoot multi-cluster management, RemoteClusterConfiguration, federated endpoint identity, and multi-cluster networking.
+---
+
+# Troubleshooting
+
+## Troubleshoot RemoteClusterConfiguration and federated endpoint identity
+
+### Verify configuration
+
+For each impacted remote cluster pair (between cluster A and cluster B):
+1. Retrieve the `kubeconfig` from the secret stored in cluster A. Manually verify that it can be used to connect to cluster B.
+   ```bash
+   kubectl get secret -n <secret-namespace> remote-cluster-secret-name -o=jsonpath="{.data.kubeconfig}" | base64 -d > verify_kubeconfig_b
+   kubectl --kubeconfig=verify_kubeconfig_b get nodes
+   ```
+   This validates that the credentials used by Typha to connect to cluster B's API server are stored in the correct location and provide sufficient access.
+
+   The command above should yield a result like the following:
+   ```
+    NAME              STATUS   ROLES    AGE   VERSION
+    clusterB-master   Ready    master   7d    v1.27.0
+    clusterB-worker-1 Ready    worker   7d    v1.27.0
+    clusterB-worker-2 Ready    worker   7d    v1.27.0
+   ```
+
+    If you do not see the nodes of cluster B listed in response to the command above, verify that you [created](how-to/set-up-cluster-mesh.mdx#generate-credentials-for-cross-cluster-resource-synchronization) the `kubeconfig` for cluster B correctly, and that you [stored](how-to/set-up-cluster-mesh.mdx#establish-cross-cluster-resource-synchronization) it in cluster A correctly.
+
+    If you do see the nodes of cluster B listed in response to the command above, you can run this test (or a similar test) on a node in cluster A to verify that cluster A nodes can connect to the API server of cluster B.
+
+2. Validate that the Typha service account in Cluster A is authorized to retrieve the `kubeconfig` secret for cluster B.
+   ```bash
+    kubectl auth can-i list secrets --namespace <secret-namespace> --as=system:serviceaccount:calico-system:calico-typha
+   ```
+
+    This command should yield the following output:
+    ```
+    yes
+    ```
+
+    If the command does not return this output, verify that you correctly [configured RBAC](how-to/set-up-cluster-mesh.mdx#establish-cross-cluster-resource-synchronization) in cluster A.
+
+3. Repeat the above, switching cluster A to cluster B.
+
+### Check logs
+
+Validate that querying Typha logs yield the expected result outlined in the [validation](how-to/validate-multi-cluster-setup.mdx) page.
+
+If the Typha logs do not yield the expected result, review the warning or error-related logs in `typha` or `calico-node` for insights.
+
+### calicoq
+
+[calicoq](../operations/clis/calicoq/installing) can be used to emulate the connection that Typha will make to remote clusters. Use the following command:
+```bash
+calicoq eval "all()"
+```
+If all remote clusters are accessible, calicoq returns something like the following. Note the remote cluster prefixes: there should be endpoints prefixed with the name of each RemoteClusterConfiguration in the local cluster.
+```
+Endpoints matching selector all():
+  Workload endpoint remote-cluster-1/host-1/k8s/kube-system.kube-dns-5fbcb4d67b-h6686/eth0
+  Workload endpoint remote-cluster-1/host-2/k8s/kube-system.cnx-manager-66c4dbc5b7-6d9xv/eth0
+  Workload endpoint host-a/k8s/kube-system.kube-dns-5fbcb4d67b-7wbhv/eth0
+  Workload endpoint host-b/k8s/kube-system.cnx-manager-66c4dbc5b7-6ghsm/eth0
+```
+
+If this command fails, the error messages returned by the command may provide insight into where issues are occurring.
+
+## Troubleshoot multi-cluster networking
+
+### Basic validation
+
+* Ensure that RemoteClusterConfiguration and federated endpoint identity are [functioning correctly](how-to/validate-multi-cluster-setup.mdx)
+* Verify that you have met the [prerequisites](reference/port-and-service-requirements.mdx#cluster-mesh-network-requirements) for multi-cluster networking
+* If you had previously set up RemoteClusterConfigurations without multi-cluster networking, and are upgrading to use the feature, review the [switching considerations](how-to/set-up-cluster-mesh.mdx#switch-to-multi-cluster-networking)
+* Verify that traffic between clusters is not being denied by network policy
+
+### Check overlayRoutingMode
+
+Ensure that `overlayRoutingMode` is set to `"Enabled"` on all RemoteClusterConfigurations.
+
+If overlay routing is successfully enabled, you can view the logs of a Typha instance using:
+```bash
+kubectl logs deployment/calico-typha -n calico-system
+```
+
+You should see an output for each connected remote cluster that looks like this:
+```
+18:49:35.394 [INFO][14] wrappedcallbacks.go 443: Creating syncer for RemoteClusterConfiguration(my-cluster)
+18:49:35.394 [INFO][14] watchercache.go 186: Full resync is required ListRoot="/calico/ipam/v2/assignment/"
+18:49:35.395 [INFO][14] watchercache.go 186: Full resync is required ListRoot="/calico/resources/v3/projectcalico.org/workloadendpoints"
+18:49:35.396 [INFO][14] watchercache.go 186: Full resync is required ListRoot="/calico/resources/v3/projectcalico.org/hostendpoints"
+18:49:35.396 [INFO][14] watchercache.go 186: Full resync is required ListRoot="/calico/resources/v3/projectcalico.org/profiles"
+18:49:35.396 [INFO][14] watchercache.go 186: Full resync is required ListRoot="/calico/resources/v3/projectcalico.org/nodes"
+18:49:35.397 [INFO][14] watchercache.go 186: Full resync is required ListRoot="/calico/resources/v3/projectcalico.org/ippools"
+```
+
+If you do not see the each of the resource types above, overlay routing was not successfully enabled in your cluster. Verify that you followed the [setup](how-to/set-up-cluster-mesh.mdx#establish-cross-cluster-resource-synchronization) correctly for overlay routing, and that the cluster is using a version of $[prodname] that supports multi-cluster networking.
+
+### Check logs
+
+Warning or error logs in `typha` or `calico-node` may provide insight into where issues are occurring.

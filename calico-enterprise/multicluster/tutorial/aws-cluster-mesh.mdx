@@ -1,0 +1,115 @@
+---
+description: Set up a Calico Enterprise cluster mesh between an on-premise cluster and an AWS cluster.
+---
+
+# Cluster mesh with AWS
+
+## Objectives
+
+In this tutorial, you will learn how to:
+
+- Configure an on-premise cluster to peer with an AWS cluster using a VPN
+- Set up a RemoteClusterConfiguration to connect the clusters
+- Configure federated services across the mesh
+
+## Prerequisites
+
+- An on-premise Kubernetes cluster with $[prodname] installed
+- An AWS EKS cluster with $[prodname] installed
+- VPN connectivity between on-premise and AWS networks
+- [Cluster mesh credentials](../how-to/set-up-cluster-mesh.mdx#generate-credentials-for-cross-cluster-resource-synchronization) generated for both clusters
+
+## Architecture overview
+
+The on-premise cluster is installed on real hardware where node and pod IPs are routable, using an edge VPN router to peer with the AWS cluster.
+
+![A diagram showing the key configuration requirements setting up an AWS cluster (using AWS VPN CNI) peering with an on-premise cluster.](/img/calico-enterprise/federation/aws-rcc.svg)
+
+## Step 1: Configure the on-premise cluster
+
+Configure the following $[prodname] resources on the on-premise cluster:
+
+- **IP pool**: Configure for on-premise IP assignment with IPIP disabled.
+- **BGP peering**: Set up peering to the VPN router.
+- **RemoteClusterConfiguration**: Reference the AWS cluster.
+- **Federated services**: Use the $[prodname] Federated Services Controller for AWS cluster service discovery.
+
+### BGP configuration notes
+
+If your VPN Router is configured as a route reflector for the on-premise cluster:
+
+- Configure the default BGP Configuration resource to disable node-to-node mesh.
+- Configure a global BGP Peer resource to peer with the VPN router.
+
+If the IP Pool has `Outgoing NAT` enabled, then you must add an IP Pool covering the AWS cluster VPC with `disabled` set to `true`. When set to `true`, the pool is not used for IP allocations, and SNAT is not performed for traffic to the AWS cluster.
+
+## Step 2: Configure the AWS environment
+
+### VPC configuration
+
+1. Choose a VPC CIDR that does not overlap with the on-premise IP ranges.
+2. Create 4 subnets within the VPC, split across two AZs (for availability), such that each AZ has a public and private subnet:
+   - The private subnet is used for node and pod IP allocation.
+   - The public subnet is used to home a NAT gateway for pod-to-internet traffic.
+
+### VPN configuration
+
+1. Peer the VPC to the on-premise network using a VPN. Configure a VPN gateway for the AWS side, and a classic VPN for the customer side. BGP is used for route distribution.
+
+### Routing tables
+
+- **Private subnet routing table**:
+  - Set "propagate" to "true" to ensure BGP-learned routes are distributed.
+  - Default route to the NAT gateway for public internet traffic.
+  - Local VPC traffic.
+- **Public subnet routing table**: Default route to the internet gateway.
+
+### Security groups
+
+Configure security groups for the worker nodes with:
+- A rule to allow traffic from the peered networks.
+- Other rules required for setting up VPN peering (refer to the AWS docs for details).
+
+## Step 3: Create a Network Load Balancer
+
+To automatically create a Network Load Balancer (NLB) for the AWS deployment, apply a service with the correct annotation:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+  name: nginx-external
+spec:
+  externalTrafficPolicy: Local
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    run: nginx
+  type: LoadBalancer
+```
+
+## Step 4: Set up the cluster mesh
+
+Follow the steps in [Set up cluster mesh](../how-to/set-up-cluster-mesh.mdx) to create RemoteClusterConfigurations between the on-premise and AWS clusters.
+
+## Step 5: Verify the mesh
+
+Follow the steps in [Validate multi-cluster setup](../how-to/validate-multi-cluster-setup.mdx) to verify that the clusters are connected and routing traffic correctly.
+
+## Summary
+
+You have configured a cluster mesh between an on-premise cluster and an AWS cluster. The clusters can now:
+
+- Share endpoint identity for identity-aware network policy
+- Federate services for cross-cluster service discovery
+- Route traffic between clusters
+
+## Next steps
+
+- [Configure federated services](../how-to/configure-federated-services.mdx)
+- [Cluster mesh concepts](../explanation/cluster-mesh.mdx)

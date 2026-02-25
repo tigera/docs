@@ -1,42 +1,82 @@
 ---
-description: Install Calico Enterprise managed cluster using Helm application package manager.
+description: Create a Calico Enterprise managed cluster that you can control from your management cluster.
 ---
 
-# Create a Calico Enterprise managed cluster
-
 import CodeBlock from '@theme/CodeBlock';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import InstallAKS from '@site/calico-enterprise/_includes/components/InstallAKS';
+import InstallGKE from '@site/calico-enterprise/_includes/components/InstallGKE';
+import InstallEKS from '@site/calico-enterprise/_includes/components/InstallEKS';
+import InstallGeneric from '@site/calico-enterprise/_includes/components/InstallGeneric';
+import InstallOpenShift from '@site/calico-enterprise/_includes/components/InstallOpenShift';
 
-## Big picture
-
-Create a $[prodname] managed cluster that you can control from your management cluster using Helm 3.
-
-## Value
-
-Helm charts are a way to package up an application for Kubernetes (similar to `apt` or `yum` for operating systems). Helm is also used by tools like ArgoCD to manage applications in a cluster, taking care of install, upgrade (and rollback if needed), etc.
+# Create a managed cluster
 
 ## Before you begin
 
 **Required**
 
-- Install Helm 3
-- `kubeconfig` is configured to work with your cluster (check by running `kubectl get nodes`)
-- [Credentials for the Tigera private registry and a license key](../../../getting-started/install-on-clusters/calico-enterprise.mdx)
+- A [$[prodname] management cluster](create-a-management-cluster.mdx)
+- A [$[prodname] pull secret](../../getting-started/install-on-clusters/calico-enterprise.mdx)
 
-## Concepts
+For Helm installations, you also need:
 
-### Operator-based installation
-
-In this guide, you install the Tigera Calico operator and custom resource definitions using the Helm 3 chart. The Tigera Operator provides lifecycle management for $[prodname] exposed via the Kubernetes API defined as a custom resource definition.
+- Helm 3 installed
+- `kubeconfig` configured to work with your cluster (check by running `kubectl get nodes`)
 
 ## How to
 
+<Tabs groupId="install-method">
+<TabItem label="Operator" value="operator">
+
+### Create a managed cluster
+
+Follow these steps in the cluster you intend to use as the managed cluster.
+
+<Tabs groupId="platform">
+<TabItem label="Kubernetes" value="Kubernetes-0">
+
+<InstallGeneric clusterType='managed' />
+
+</TabItem>
+<TabItem label="GKE" value="GKE-1">
+
+<InstallGKE clusterType='managed' />
+
+</TabItem>
+<TabItem label="EKS" value="EKS-2">
+
+<InstallEKS clusterType='managed' />
+
+</TabItem>
+<TabItem label="AKS" value="AKS-3">
+
+<InstallAKS clusterType='managed' />
+
+</TabItem>
+<TabItem label="Openshift" value="Openshift-4">
+
+<InstallOpenShift clusterType='managed' />
+
+</TabItem>
+
+</Tabs>
+
+</TabItem>
+<TabItem label="Helm" value="helm">
+
 ### Download the Helm chart
 
-```bash
-helm repo add tigera-ee https://downloads.tigera.io/ee/charts
+<CodeBlock language='bash'>
+{'$[version]' === 'master'
+    ? `helm repo add tigera gs://tigera-helm-charts
 helm repo update
-helm pull tigera-ee/tigera-operator --version $[releaseTitle]
-```
+helm pull tigera/tigera-operator --version $[releaseTitle]`
+    : `helm repo add tigera-ee https://downloads.tigera.io/ee/charts
+helm repo update
+helm pull tigera-ee/tigera-operator --version $[releaseTitle]`}
+</CodeBlock>
 
 ### Prepare the Installation Configuration
 
@@ -47,7 +87,7 @@ Some important configurations you might need to provide to the installer (via `v
 
 Here are some examples for updating `values.yaml` with your configurations:
 
-Example 1. Providing `kubernetesProvider`:  if you are installing on a cluster installed by EKS, set the `kubernetesProvider` as described in the [Installation reference](../../../reference/installation/api.mdx#provider)
+Example 1. Providing `kubernetesProvider`:  if you are installing on a cluster installed by EKS, set the `kubernetesProvider` as described in the [Installation reference](../../reference/installation/api.mdx#provider)
 
   ```bash
   echo '{ installation: {kubernetesProvider: EKS }}' > values.yaml
@@ -69,11 +109,11 @@ Example 2. Providing custom settings in `values.yaml` for Azure AKS cluster with
   EOF
   ```
 
-For more information about configurable options via `values.yaml` please see [Helm installation reference](../../../reference/installation/helm_customization).
+For more information about configurable options via `values.yaml` please see [Helm installation reference](../../reference/installation/helm_customization).
 
 ### Install $[prodname]
 
-To install a $[prodname] [managed](../standard-install/create-a-managed-cluster#value) cluster with Helm:
+To install a $[prodname] managed cluster with Helm:
 
 1. Export the service port number, and the public IP or host of the management cluster. (Ex. "example.com:1234" or "10.0.0.10:1234".)
 
@@ -82,7 +122,7 @@ To install a $[prodname] [managed](../standard-install/create-a-managed-cluster#
   ```
 
 1. Export the management cluster certificate and managed cluster certificate and key.
-  
+
   If you haven't already done so, generate the base64 encoded CRT and KEY for this managed cluster:
 
   ```bash
@@ -153,20 +193,12 @@ Define admin-level permissions for the service account `mcm-user` we created to 
   kubectl create clusterrolebinding mcm-user-admin --clusterrole=tigera-network-admin --serviceaccount=default:mcm-user
   ```
 
-  Congratulations! You have now installed $[prodname] for a managed cluster using the Helm 3 chart.
+  Congratulations! You have now installed $[prodname] for a managed cluster.
+
+</TabItem>
+</Tabs>
 
 ## Next steps
 
-**Recommended**
-
-- [Configure access to the $[prodname] web console](../../../operations/cnx/access-the-manager.mdx)
-- [Authentication quickstart](../../../operations/cnx/authentication-quickstart.mdx)
-- [Configure your own identity provider](../../../operations/cnx/configure-identity-provider.mdx)
-
-**Recommended - Networking**
-
-- The default networking is IP in IP encapsulation using BGP routing. For all networking options, see [Determine best networking option](../../../networking/determine-best-networking.mdx).
-
-**Recommended - Security**
-
-- [Get started with $[prodname] tiered network policy](../../../network-policy/policy-tiers/tiered-policy.mdx)
+- [Configure log storage](configure-log-storage.mdx)
+- [Change cluster type](change-cluster-type.mdx)
