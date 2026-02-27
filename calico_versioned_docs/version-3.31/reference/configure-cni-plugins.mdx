@@ -400,11 +400,13 @@ When using `host-local` IPAM with the Kubernetes API datastore, you must configu
 
 #### Disabling the `upgrade-ipam` init container
 
-To use host-local IPAM on a manifest-based installation of $[prodname], you should disable the `upgrade-ipam` init container.
+When using `host-local` IPAM on a manifest-based installation of $[prodname], you should remove the `upgrade-ipam` init container from the `calico-node` DaemonSet definition in the manifest before applying it.
+
+If $[prodname] is already installed, you can remove the init container with the following command:
 
 ```bash
 kubectl get ds calico-node -n kube-system -o json | \
-jq 'del(.spec.template.spec.initContainers[] | select(.name == "upgrade-ipam"))' | \
+jq 'del(.spec.template.spec.initContainers[]? | select(.name == "upgrade-ipam"))' | \
 kubectl apply -f -
 ```
 
