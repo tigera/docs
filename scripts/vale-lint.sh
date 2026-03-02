@@ -23,7 +23,7 @@
 set -euo pipefail
 
 # Check dependencies
-for cmd in vale mdx2vast rg perl git; do
+for cmd in vale mdx2vast rg perl; do
   if ! command -v "$cmd" &>/dev/null; then
     echo "Error: $cmd is not installed." >&2
     exit 1
@@ -32,7 +32,8 @@ done
 
 # Save the list of files containing $[...] so we can restore them after
 filelist=$(mktemp)
-trap 'rm -f "$filelist"' EXIT
+backupdir=$(mktemp -d)
+trap 'rm -f "$filelist"; rm -rf "$backupdir"' EXIT
 
 rg -l '\$\[[^\]]*\]' -g '*.mdx' -g '*.md' . > "$filelist" 2>/dev/null || true
 
@@ -41,10 +42,19 @@ if [ ! -s "$filelist" ]; then
   exec vale "$@"
 fi
 
-# Restore files on exit (success or failure)
+# Back up each file to a temp directory preserving relative paths
+while IFS= read -r f; do
+  mkdir -p "$backupdir/$(dirname "$f")"
+  cp "$f" "$backupdir/$f"
+done < "$filelist"
+
+# Restore files from backups on exit (success or failure)
 cleanup() {
-  xargs git checkout -- < "$filelist" 2>/dev/null || true
+  while IFS= read -r f; do
+    cp "$backupdir/$f" "$f" 2>/dev/null || true
+  done < "$filelist"
   rm -f "$filelist"
+  rm -rf "$backupdir"
 }
 trap cleanup EXIT
 
