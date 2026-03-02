@@ -17,13 +17,13 @@ Use $[prodname] network policy to control traffic from Kubernetes clusters in yo
 
 ## Value
 
-As platform and security engineers, you want your apps to securely communicate with the external world. But you also want to secure the network traffic from the Kubernetes clusters using your Fortigate firewalls. Using the Fortinet/$[prodname] integration, security teams can retain firewall responsibility, secure traffic using $[prodname] network policy, which frees up time for ITOps.
+As platform and security engineers, you want your apps to securely communicate with the external world. But you also want to secure the network traffic from the Kubernetes clusters using your FortiGate firewalls. Using the Fortinet/$[prodname] integration, security teams can retain firewall responsibility, secure traffic using $[prodname] network policy, which frees up time for ITOps.
 
 ## Concepts
 
 ## Integration at a glance
 
-This $[prodname]/Fortinet integration workflow lets you control egress traffic leaving the Kubernetes cluster. You create perimeter firewall policies in FortiManager and FortiGate that reference Kubernetes workloads. $[prodname] acts as a conduit, using the `tigera-firewall-controller` and global network policies to pass Kubernetes workload information to FortiManager and Fortigate devices where policies are applied and enforced.
+This $[prodname]/Fortinet integration workflow lets you control egress traffic leaving the Kubernetes cluster. You create perimeter firewall policies in FortiManager and FortiGate that reference Kubernetes workloads. $[prodname] acts as a conduit, using the `tigera-firewall-controller` and global network policies to pass Kubernetes workload information to FortiManager and FortiGate devices where policies are applied and enforced.
 
 The basic workflow is:
 
@@ -31,7 +31,7 @@ The basic workflow is:
 1. Create $[prodname] global network policies with selectors that match those pods. Each global network policy maps to an address group in the FortiGate firewall.
 1. Deploy the `tigera firewall controller` in the Kubernetes cluster.
 1. Create a ConfigMap with Fortinet firewall information.  
-   The `tigera firewall controller` reads the ConfigMap, gets the FortiGate firewall IP address, API token, and source IP address selection with `node` or `pod`. In your Kubernetes cluster, the controller populates pod IPs or Kubernetes node IPs of selector matching pods in Fortigate address group objects.
+   The `tigera firewall controller` reads the ConfigMap, gets the FortiGate firewall IP address, API token, and source IP address selection with `node` or `pod`. In your Kubernetes cluster, the controller populates pod IPs or Kubernetes node IPs of selector matching pods in FortiGate address group objects.
 
 ## Before you begin
 
@@ -64,13 +64,13 @@ The basic workflow is:
 
 1. Create a tier for organizing global network policies.
 
-   Create a new [Tier](../../policy-tiers/tiered-policy.mdx) to organize all Fortigate firewall global network policies in a single location.
+   Create a new [Tier](../../policy-tiers/tiered-policy.mdx) to organize all FortiGate firewall global network policies in a single location.
 
 1. Note the tier name to use in a later step for the FortiGate firewall information config map.
 
 1. Create a GlobalNetworkPolicy for address group mappings.
 
-   For example, a GlobalNetworkPolicy can select a set of pods that require egress access to external workloads. In the following GlobalNetworkPolicy, the firewall controller creates an address group named, `default.production-microservice1` in the Fortigate firewall. The members of `default.production-microservice1` address group include IP addresses of nodes. Each node can host one or more pods whose label selector match with `env == 'prod' && role == 'microservice1'`. Each GlobalNetworkPolicy maps to an address group in FortiGate firewall.
+   For example, a GlobalNetworkPolicy can select a set of pods that require egress access to external workloads. In the following GlobalNetworkPolicy, the firewall controller creates an address group named, `default.production-microservice1` in the FortiGate firewall. The members of `default.production-microservice1` address group include IP addresses of nodes. Each node can host one or more pods whose label selector match with `env == 'prod' && role == 'microservice1'`. Each GlobalNetworkPolicy maps to an address group in FortiGate firewall.
 
    ```yaml
    apiVersion: projectcalico.org/v3
@@ -126,12 +126,12 @@ The basic workflow is:
 
    | Field                            | Enter values...                                                                                                                                                                                                                                                                       |
    | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | tigera.firewall.policy.selector  | The tier name with the global network policies with the Fortigate address group mappings.<br/>For example, this selects the global network policies in the `default` tier:<br/>`tigera.firewall.policy.selector: "projectcalico.org/tier == 'default'"                                |
+   | tigera.firewall.policy.selector  | The tier name with the global network policies with the FortiGate address group mappings.<br/>For example, this selects the global network policies in the `default` tier:<br/>`tigera.firewall.policy.selector: "projectcalico.org/tier == 'default'"                                |
    | tigera.firewall.addressSelection | The addressSelection for outbound traffic leaving the cluster.<br/>For example, if outgoingNat is enabled in cluster and compute Node IP address is used "tigera.firewall.addressSelection == `node` or <br/> If pod IP address used then "tigera.firewall.addressSelection == `pod`" |
 
 ### Create a config map with FortiGate and FortiManager information
 
-1. In the [Fortigate ConfigMap manifest]($[filesUrl_CE]/manifests/fortinet-device-configmap.yaml), add your FortiGate firewall information in the data section, `tigera.firewall.fortigate`.
+1. In the [FortiGate ConfigMap manifest]($[filesUrl_CE]/manifests/fortinet-device-configmap.yaml), add your FortiGate firewall information in the data section, `tigera.firewall.fortigate`.
 
    Where:
 
