@@ -866,6 +866,14 @@ module.exports = {
           ],
         },
         'reference/attribution',
+        {
+          type: 'category',
+          label: 'FOSSA Reports',
+          collapsed: true,
+          items: [
+            'reference/fossa-reports/3-23-0-1-0',
+          ],
+        },
         'reference/rest-api-reference',
         'reference/component-versions',
         'reference/faq',
