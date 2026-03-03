@@ -534,11 +534,11 @@ export default async function createAsyncConfig() {
           '/calico/latest/network-policy/get-started/calico-policy/calico-network-policy',
           '/calico-enterprise/latest/network-policy/policy-tiers/tiered-policy',
           '/calico/latest/operations/ebpf/enabling-ebpf',
-          '/calico-enterprise/latest/observability/',
+          '/calico-enterprise/latest/observability',
           '/calico/latest/networking/configuring/bgp',
           '/calico-cloud/get-started/system-requirements',
         ],
-        optionalSections: ['release-notes'],
+        optionalSections: ['release notes'],
       }],
     ],
     customFields: {
