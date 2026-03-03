@@ -223,14 +223,17 @@ export default function llmsTxtPlugin(context, options) {
       }
       allDocsFlat.push(...useCaseDocs);
 
+      // Normalize permalink for consistent lookup (strip trailing slash)
+      const normalizePermalink = (p) => p.replace(/\/+$/, '') || '/';
+
       const docsByPermalink = new Map();
       for (const doc of allDocsFlat) {
-        docsByPermalink.set(doc.permalink, doc);
+        docsByPermalink.set(normalizePermalink(doc.permalink), doc);
       }
 
       const topPageDocs = [];
       for (const permalink of topPages) {
-        const doc = docsByPermalink.get(permalink);
+        const doc = docsByPermalink.get(normalizePermalink(permalink));
         if (doc) {
           topPageDocs.push(doc);
         } else {
