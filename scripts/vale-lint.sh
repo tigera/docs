@@ -22,10 +22,20 @@
 
 set -euo pipefail
 
+# Prevent concurrent runs -- PICKLEVAR replacement modifies files in-place,
+# so running this script while other processes edit docs will corrupt files.
+LOCKDIR="${TMPDIR:-/tmp}/vale-lint.lock"
+if ! mkdir "$LOCKDIR" 2>/dev/null; then
+  echo "Error: another vale-lint.sh is already running (lock: $LOCKDIR)." >&2
+  echo "If this is stale, remove it with: rm -rf $LOCKDIR" >&2
+  exit 1
+fi
+
 # Check dependencies
 for cmd in vale mdx2vast rg perl; do
   if ! command -v "$cmd" &>/dev/null; then
     echo "Error: $cmd is not installed." >&2
+    rm -rf "$LOCKDIR"
     exit 1
   fi
 done
@@ -33,12 +43,13 @@ done
 # Save the list of files containing $[...] so we can restore them after
 filelist=$(mktemp)
 backupdir=$(mktemp -d)
-trap 'rm -f "$filelist"; rm -rf "$backupdir"' EXIT
 
 rg -l '\$\[[^\]]*\]' -g '*.mdx' -g '*.md' . > "$filelist" 2>/dev/null || true
 
 if [ ! -s "$filelist" ]; then
   # No files need replacement; run vale directly
+  rm -f "$filelist"
+  rm -rf "$backupdir" "$LOCKDIR"
   exec vale "$@"
 fi
 
@@ -54,7 +65,7 @@ cleanup() {
     cp "$backupdir/$f" "$f" 2>/dev/null || true
   done < "$filelist"
   rm -f "$filelist"
-  rm -rf "$backupdir"
+  rm -rf "$backupdir" "$LOCKDIR"
 }
 trap cleanup EXIT
 
