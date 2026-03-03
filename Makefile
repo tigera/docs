@@ -356,6 +356,35 @@ release-prep/create-pr:
 	$(call github_pr_create,$(GIT_REPO_SLUG),[$(GIT_PR_BRANCH_BASE)] $(if $(SEMAPHORE), Semaphore,) Auto Release Update for $(PRODUCT) $(VERSION),$(GIT_PR_BRANCH_HEAD),$(GIT_PR_BRANCH_BASE))
 	echo 'Created release update pull request for $(VERSION): $(PR_NUMBER)'
 
+## --------------------------------------------------------------------------- ##
+## llms.txt generation                                                          ##
+## --------------------------------------------------------------------------- ##
+
+LLMS_OUTPUT_FILES = llms.txt calico/llms.txt calico/llms-full.txt \
+	calico-enterprise/llms.txt calico-enterprise/llms-full.txt \
+	calico-cloud/llms.txt calico-cloud/llms-full.txt
+
+.PHONY: generate-llms
+generate-llms: init
+	GENERATE_LLMS=true $(YARN) build
+	@echo "Copying generated llms.txt files to static/..."
+	@mkdir -p static/calico static/calico-enterprise static/calico-cloud
+	@for f in $(LLMS_OUTPUT_FILES); do \
+		cp "build/$$f" "static/$$f"; \
+	done
+	@echo "Done. Files written to static/."
+
+.PHONY: generate-llms-commit
+generate-llms-commit: generate-llms
+	@if git diff --quiet static/llms.txt static/calico static/calico-enterprise static/calico-cloud 2>/dev/null; then \
+		echo "No changes to llms.txt files."; \
+	else \
+		git add static/llms.txt static/calico/llms.txt static/calico/llms-full.txt \
+			static/calico-enterprise/llms.txt static/calico-enterprise/llms-full.txt \
+			static/calico-cloud/llms.txt static/calico-cloud/llms-full.txt; \
+		git commit -m "Update generated llms.txt files"; \
+	fi
+
 .PHONY: vale
 # Run vale against the specified PRODUCT. There will probably be lots of failures
 # because there needs to be a general review and update to resolve all the existing issues.

@@ -519,6 +519,27 @@ export default async function createAsyncConfig() {
           editUrl: generateEditUrl,
         },
       ],
+      ['./src/plugins/docusaurus-plugin-llms-txt', {
+        siteDescription: 'Calico documentation for networking, network security, and observability for Kubernetes, including Calico Open Source, Calico Enterprise, and Calico Cloud.',
+        productDescriptions: {
+          'calico': 'Open source networking and network security for containers and Kubernetes.',
+          'calico-enterprise': 'Enterprise-grade networking, security, and observability for Kubernetes.',
+          'calico-cloud': 'SaaS-based Kubernetes security and observability platform.',
+        },
+        topPages: [
+          '/calico/latest/getting-started/kubernetes/quickstart',
+          '/calico-enterprise/latest/getting-started/install-on-clusters/kubernetes/quickstart',
+          '/calico-cloud/get-started/connect-cluster',
+          '/calico/latest/networking/determine-best-networking',
+          '/calico/latest/network-policy/get-started/calico-policy/calico-network-policy',
+          '/calico-enterprise/latest/network-policy/policy-tiers/tiered-policy',
+          '/calico/latest/operations/ebpf/enabling-ebpf',
+          '/calico-enterprise/latest/observability/',
+          '/calico/latest/networking/configuring/bgp',
+          '/calico-cloud/get-started/system-requirements',
+        ],
+        optionalSections: ['release-notes'],
+      }],
     ],
     customFields: {
       isTesting: process.env.TESTING || false,
