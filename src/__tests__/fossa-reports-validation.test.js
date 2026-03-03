@@ -93,7 +93,10 @@ describe('FOSSA Netlify redirect', () => {
   });
 });
 
-describe('FOSSA S3 bucket existence', () => {
+// S3 bucket checks are opt-in: set RUN_S3_CHECKS=1 to enable (skipped in CI by default)
+const runS3Checks = process.env.RUN_S3_CHECKS === '1';
+
+(runS3Checks ? describe : describe.skip)('FOSSA S3 bucket existence', () => {
   const allVersions = [
     ...new Set(
       Object.keys(fossaMappings).flatMap((sf) => extractFossaVersionsFromSidebar(sf))
@@ -101,10 +104,9 @@ describe('FOSSA S3 bucket existence', () => {
   ];
 
   it.each(allVersions)('S3 bucket exists for version %s', async (version) => {
-    const bucketUrl = `https://s3.amazonaws.com/ce-${version}-attribution-report/`;
-    const res = await fetch(bucketUrl, { method: 'GET' });
-    const body = await res.text();
-    // AccessDenied or PermanentRedirect = bucket exists; NoSuchBucket = missing
-    expect(body).not.toContain('NoSuchBucket');
+    const bucketUrl = `https://ce-${version}-attribution-report.s3.amazonaws.com/`;
+    const res = await fetch(bucketUrl, { method: 'HEAD' });
+    // 403 (AccessDenied) or 301 (PermanentRedirect) = bucket exists; 404 = missing
+    expect(res.status).not.toBe(404);
   }, 10000);
 });

@@ -6,6 +6,8 @@ export default function FossaReport({ version }) {
     <iframe
       src={src}
       title={`FOSSA Attribution Report - ${version}`}
+      sandbox=""
+      referrerPolicy="no-referrer"
       style={{
         width: '100%',
         height: '80vh',
