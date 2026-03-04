@@ -114,24 +114,33 @@ Get the [status of DeepPacketInspection](../reference/resources/deeppacketinspec
 kubectl get <deep_packet_inspection_resource_name> -n <deep_packet_inspection_namespace>
 ```
 
-### Install custom Snort rules
+### Customize Snort rules and configuration
 
-If you don't want to use the [Snort community rules](https://www.snort.org/downloads/#rule-downloads), you can install a custom set of Snort rules to perform deep packet inspections.
-You may want to install your own rules if:
-* you use a paid subscription to a Snort ruleset
-* you have written your own Snort rules.
+By default, $[prodname] DPI uses [Snort community rules](https://www.snort.org/downloads/#rule-downloads) with a default Snort3 configuration.
+You can customize these defaults using init containers that run before the DPI pods start.
 
-Beyond custom rules, if you have a paid Snort subscription, you can also customize Snort configuration to fine-tune how DPI generates alerts. For example, you can:
-* **Limit alert rates** to reduce the volume of alerts generated for noisy rules
-* **Suppress alerts** for specific rules or traffic sources that are known to be benign
-* **Apply rate filters** to dynamically change alert behavior based on traffic patterns
+Common reasons to customize Snort for DPI include:
 
-These customizations are managed through the Snort configuration file (`snort.lua`) and are mounted into the DPI container using the same initContainers mechanism described below. For details on configuring filters, suppressions, and rate limits, see the [Snort3 documentation](https://docs.snort.org/).
+* **Custom rules**: Replace or supplement the built-in community rules with paid Snort subscription rules or your own custom rules.
+* **Alert rate control**: Reduce alert noise by configuring Snort3 thresholding, filtering, or suppression through the `snort.lua` configuration file.
 
-:::important
+Customizing rules and customizing the Snort configuration are separate procedures that use different files and destination paths.
+You can apply either or both.
+
+:::note
+
+Snort3 offers extensive configuration options beyond what is documented here. For full details on writing custom rules or configuring `snort.lua`, refer to the [Snort3 documentation](https://docs.snort.org/).
+
+:::
+
+#### Install custom Snort rules
+
+Use this procedure to replace the built-in Snort community rules with your own rule set.
+
+::::important
 If you install custom Snort rules, $[prodname] will stop updating the community rules with each minor release.
 You will be responsible for making sure your rules are up to date.
-:::
+::::
 
 1. Create a container with your custom Snort rules.
 
@@ -182,6 +191,112 @@ You will be responsible for making sure your rules are up to date.
       ```
 
    1. If these rules match those in your custom set, then the installation was successful.
+
+#### Customize Snort configuration
+
+Use this procedure to modify the Snort3 configuration file (`snort.lua`).
+This is required for customizations like alert rate limiting, event filtering, and alert suppression, which are controlled through `snort.lua` rather than through rule files.
+
+For example, if DPI is generating a high volume of alerts, you can configure Snort3 event filters, suppressions, and rate filters in `snort.lua` to reduce noise and focus on the alerts that matter.
+For details on `snort.lua` configuration options, see the [Snort3 documentation](https://docs.snort.org/).
+
+1. Extract the default `snort.lua` from a running DPI pod:
+
+   ```bash
+   export POD=$(kubectl get pods -n tigera-dpi -l k8s-app=tigera-dpi \
+     -o jsonpath='{.items[0].metadata.name}')
+   kubectl cp tigera-dpi/$POD:/usr/etc/snort/snort.lua ./snort.lua -c tigera-dpi
+   ```
+
+1. Edit `snort.lua` with your desired changes.
+
+1. Create a container with your modified configuration.
+
+   1. Create a `Dockerfile`:
+
+      ```yaml
+      FROM alpine:3.14
+      COPY snort.lua /snort-config/snort.lua
+      ENTRYPOINT [ "/bin/sh", "-c", "cp /snort-config/snort.lua /usr/etc/snort/snort.lua" ]
+      ```
+
+   1. Build and push the image:
+
+      ```bash
+      docker build . -t <your-config-image-name>:<your-config-image-tag>
+      docker push <your-config-image-name>:<your-config-image-tag>
+      ```
+
+1. Update the `IntrusionDetection` resource with the custom configuration image.
+
+   ```yaml
+   spec:
+     deepPacketInspectionDaemonset:
+       spec:
+         template:
+           spec:
+             initContainers:
+             - name: snort-config
+               image: <your-config-image-name>:<your-config-image-tag>
+   ```
+
+    This can also be done by running the following command:
+
+    ```bash
+    kubectl patch intrusiondetection tigera-secure --type merge -p '{"spec":{"deepPacketInspectionDaemonset":{"spec":{"template":{"spec":{"initContainers":[{"name":"snort-config", "image":"<your-config-image-name>:<your-config-image-tag>"}]}}}}}}'
+    ```
+
+1. Verify that the DPI pods restart successfully:
+
+   ```bash
+   kubectl get pods -n tigera-dpi -w
+   ```
+
+   If pods enter a `CrashLoopBackOff` state, check the init container and DPI container logs for Lua syntax errors:
+
+   ```bash
+   kubectl logs -n tigera-dpi <pod-name> -c tigera-dpi
+   ```
+
+#### Combine custom rules and configuration
+
+If you need both custom rules and a custom `snort.lua`, you can either combine them in a single init container image or use two separate init containers.
+
+**Option 1: Single init container (recommended)**
+
+Create one image that copies both the rules and the configuration:
+
+```yaml
+FROM alpine:3.14
+COPY snort-rules /snort-rules
+COPY snort.lua /snort-config/snort.lua
+ENTRYPOINT [ "/bin/sh", "-c", "cp /snort-rules/* /usr/etc/snort/rules/ && cp /snort-config/snort.lua /usr/etc/snort/snort.lua" ]
+```
+
+**Option 2: Two init containers**
+
+Use separate images for rules and configuration. Init containers run in the order they are listed.
+
+```yaml
+spec:
+  deepPacketInspectionDaemonset:
+    spec:
+      template:
+        spec:
+          initContainers:
+          - name: snort-rules
+            image: <your-rules-image-name>:<your-rules-image-tag>
+          - name: snort-config
+            image: <your-config-image-name>:<your-config-image-tag>
+```
+
+#### Revert to default Snort rules and configuration
+
+To remove all customizations and return to the built-in Snort community rules and default configuration, remove the `deepPacketInspectionDaemonset` spec from the `IntrusionDetection` resource:
+
+```bash
+kubectl patch intrusiondetection tigera-secure --type json -p '[{"op":"remove","path":"/spec/deepPacketInspectionDaemonset"}]'
+```
 
 ## Additional resources
 
