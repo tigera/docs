@@ -373,5 +373,5 @@ vale:
 .PHONY: update-felix-config
 update-felix-config:
 	$(if $(GITHUB_TOKEN),,$(error GITHUB_TOKEN is not set or empty, but is required))
-	@echo "Updating Felix configurations for OSS and Enterprise..."
+	@echo "Updating Felix configurations for OSS, Enterprise, and Cloud..."
 	@./scripts/update-felix-config.sh
