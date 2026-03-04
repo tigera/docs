@@ -320,6 +320,41 @@ kubectl replace -f ruleset.configmap.yaml
 
 Read more about the order of execution for plugins here: https://coreruleset.org/docs/4-about-plugins/4-1-plugins/
 
+#### GeoIP-based rules
+
+WAF includes an embedded city-level geolocation database, enabling you to write rules that filter traffic
+based on geographic origin. You can use the `@geoLookup` operator along with `GEO` variables like
+`GEO:COUNTRY_CODE` in your custom rules.
+
+**Example: Block traffic from a specific country**
+
+```bash
+# Look up the geographic location of the client IP
+SecRule REMOTE_ADDR "@geoLookup" "phase:1,id:155,nolog,pass"
+
+# Deny the request if the country code matches
+SecRule GEO:COUNTRY_CODE "@streq RU" "phase:1,id:157,deny,msg:'Access from this country is not allowed'"
+```
+
+**Example: Deny traffic from IPs not found in the GeoIP database (e.g. private IPs)**
+
+```bash
+SecRule REMOTE_ADDR "@geoLookup" "phase:1,id:155,nolog,pass"
+
+# &GEO equals 0 when the IP was not found in the database
+SecRule &GEO "@eq 0" "phase:1,id:156,deny,msg:'Failed to lookup IP'"
+```
+
+:::note
+
+You can combine both rules to deny unknown IPs while also blocking specific countries. If you only want to
+block certain countries but allow private/unknown IPs through, omit the `&GEO "@eq 0"` rule.
+
+:::
+
+GeoIP data provided by [DB-IP](https://db-ip.com), available under the
+[Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+
 ## View WAF events
 
 ### Security Events
