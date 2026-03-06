@@ -12,7 +12,7 @@ jobs:
       - name: Get changed files
         id: changed
         run: |
-          FILES=$(git diff --name-only --diff-filter=d ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- '*.md' '*.mdx' | tr '\n' ' ')
+          FILES=$(git diff --name-only --diff-filter=d ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- '*.md' '*.mdx' | tr '\n' ' ')
           echo "files=$FILES" >> "$GITHUB_OUTPUT"
           if [ -z "$FILES" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -38,7 +38,10 @@ jobs:
         if: steps.changed.outputs.skip == 'false'
         run: |
           sudo apt-get install ripgrep
-          rg -l0 '\$\[[^\]]*\]' -g '*.mdx' -g '*.md' . | xargs -0 perl -i -pe 's/\$\[[^\]]*\]/PICKLEVAR/g'
+          FILES="${{ steps.changed.outputs.files }}"
+          if [ -n "$FILES" ]; then
+            rg -l0 '\$\[[^\]]*\]' -- $FILES | xargs -0 perl -i -pe 's/\$\[[^\]]*\]/PICKLEVAR/g' || true
+          fi
       - name: Run Vale with Reviewdog
         if: steps.changed.outputs.skip == 'false'
         uses: errata-ai/vale-action@reviewdog
