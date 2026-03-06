@@ -396,7 +396,7 @@ e2e` command. The command resets the profiling data after dumping it.
 
 ```
 
-## MKE: VXLAN device DOWN {#mke-vxlan-device-down}
+## MKE: VXLAN device DOWN
 
 On MKE clusters, after enabling eBPF mode, the `vxlan.calico` device may stay DOWN with Felix logs showing:
 
@@ -404,7 +404,7 @@ On MKE clusters, after enabling eBPF mode, the `vxlan.calico` device may stay DO
 Failed to set tunnel device up error=address already in use
 ```
 
-This happens because MKE's Docker Swarm overlay networking creates VXLAN devices on UDP port 4789 inside Docker network namespaces (`/run/docker/netns/`). In eBPF mode with BTF support (kernel v5.8+), Felix creates `vxlan.calico` in flow mode (`external`), which acts as a catch-all on its UDP port. The kernel rejects this because Docker Swarm's VXLAN device already holds port 4789.
+This happens because MKE's Docker Swarm overlay networking creates VXLAN devices on UDP port 4789 inside Docker network namespaces (`/run/docker/netns/`). In eBPF mode, when BTF is available on the node (typically kernel v5.8+), Felix creates `vxlan.calico` in flow mode (`external`), which acts as a catch-all on its UDP port. The kernel rejects this because Docker Swarm's VXLAN device already holds port 4789.
 
 In iptables mode this conflict doesn't occur because Calico's VXLAN device binds with a specific VNI (4096), which can coexist with Docker Swarm's VXLAN on the same port.
 
@@ -417,9 +417,9 @@ kubectl exec -n calico-system <calico-node-pod> -- ip -d link show vxlan.calico
 # Check what holds port 4789 (shows a kernel-owned socket with no process name)
 kubectl exec -n calico-system <calico-node-pod> -- ss -ulnp sport = :4789
 
-# Find Docker Swarm VXLAN devices in Docker network namespaces
+# Find Docker Swarm VXLAN devices in Docker network namespaces (run on the node via SSH)
 for ns in /run/docker/netns/*; do
-  echo "=== $(basename $ns) ==="
+  echo "=== $(basename "$ns") ==="
   nsenter --net="$ns" ip -d link show type vxlan 2>/dev/null
 done
 ```
