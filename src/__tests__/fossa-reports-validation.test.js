@@ -3,110 +3,106 @@ import path from 'path';
 
 const ROOT = path.resolve(__dirname, '..', '..');
 
-// Dynamically discover all sidebar files and their corresponding docs directories
-function discoverSidebarMappings() {
-  const mappings = {};
+// Dynamically discover all calico-enterprise docs version directories
+function discoverDocsVersions() {
+  const versions = [];
 
-  // Main sidebar → next docs
-  mappings['sidebars-calico-enterprise.js'] = 'calico-enterprise/reference/fossa-reports';
+  // "next" docs
+  versions.push({
+    label: 'next',
+    docsDir: 'calico-enterprise',
+    sidebarFile: 'sidebars-calico-enterprise.js',
+  });
 
-  // Versioned sidebars → versioned docs
-  const versionedDir = path.join(ROOT, 'calico-enterprise_versioned_sidebars');
-  if (fs.existsSync(versionedDir)) {
-    for (const file of fs.readdirSync(versionedDir)) {
-      const match = file.match(/^(version-.+)-sidebars\.json$/);
-      if (!match) continue;
-      const versionId = match[1];
-      const sidebarRelPath = `calico-enterprise_versioned_sidebars/${file}`;
-      const docsRelPath = `calico-enterprise_versioned_docs/${versionId}/reference/fossa-reports`;
-      mappings[sidebarRelPath] = docsRelPath;
+  // Versioned docs
+  const versionedDocsDir = path.join(ROOT, 'calico-enterprise_versioned_docs');
+  if (fs.existsSync(versionedDocsDir)) {
+    for (const dir of fs.readdirSync(versionedDocsDir)) {
+      if (!dir.startsWith('version-')) continue;
+      const sidebarFile = `calico-enterprise_versioned_sidebars/${dir}-sidebars.json`;
+      if (!fs.existsSync(path.join(ROOT, sidebarFile))) continue;
+      versions.push({
+        label: dir,
+        docsDir: `calico-enterprise_versioned_docs/${dir}`,
+        sidebarFile,
+      });
     }
   }
 
-  return mappings;
+  return versions;
 }
 
-function extractFossaVersionsFromSidebar(sidebarPath) {
-  const content = fs.readFileSync(path.join(ROOT, sidebarPath), 'utf8');
-  const matches = content.match(/reference\/fossa-reports\/([^"'\s,\]]+)/g) || [];
-  return matches.map((m) => m.replace('reference/fossa-reports/', ''));
-}
+const docsVersions = discoverDocsVersions();
 
-function getMdxVersionsInDir(docsDir) {
-  const fullPath = path.join(ROOT, docsDir);
-  if (!fs.existsSync(fullPath)) return [];
-  return fs
-    .readdirSync(fullPath)
-    .filter((f) => f.endsWith('.mdx'))
-    .map((f) => f.replace('.mdx', ''));
-}
-
-const allMappings = discoverSidebarMappings();
-
-// Filter to only sidebars that have FOSSA entries
-const fossaMappings = Object.fromEntries(
-  Object.entries(allMappings).filter(
-    ([sidebarFile]) => extractFossaVersionsFromSidebar(sidebarFile).length > 0
-  )
+// Filter to versions that have a fossa-reports.mdx file
+const fossaVersions = docsVersions.filter(({ docsDir }) =>
+  fs.existsSync(path.join(ROOT, docsDir, 'reference', 'fossa-reports.mdx'))
 );
 
-describe('FOSSA Reports consistency', () => {
-  it('at least one sidebar contains FOSSA report entries', () => {
-    expect(Object.keys(fossaMappings).length).toBeGreaterThan(0);
+describe('FOSSA Reports structure', () => {
+  it('at least one docs version has a FOSSA reports page', () => {
+    expect(fossaVersions.length).toBeGreaterThan(0);
   });
 
-  for (const [sidebarFile, docsDir] of Object.entries(fossaMappings)) {
-    const label = path.basename(sidebarFile);
-
+  for (const { label, docsDir, sidebarFile } of fossaVersions) {
     describe(label, () => {
-      const sidebarVersions = extractFossaVersionsFromSidebar(sidebarFile);
-      const mdxVersions = getMdxVersionsInDir(docsDir);
-
-      it('every sidebar entry has a matching MDX file', () => {
-        const missing = sidebarVersions.filter((v) => !mdxVersions.includes(v));
-        expect(missing).toEqual([]);
+      it('has reference/fossa-reports.mdx', () => {
+        const mdxPath = path.join(ROOT, docsDir, 'reference', 'fossa-reports.mdx');
+        expect(fs.existsSync(mdxPath)).toBe(true);
       });
 
-      it('every MDX file has a matching sidebar entry', () => {
-        const orphaned = mdxVersions.filter((v) => !sidebarVersions.includes(v));
-        expect(orphaned).toEqual([]);
+      it('does NOT have a reference/fossa-reports/ directory', () => {
+        const dirPath = path.join(ROOT, docsDir, 'reference', 'fossa-reports');
+        const isDir = fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory();
+        expect(isDir).toBe(false);
       });
 
-      it('each MDX file version prop matches its filename', () => {
-        for (const version of mdxVersions) {
-          const mdxPath = path.join(ROOT, docsDir, `${version}.mdx`);
-          const content = fs.readFileSync(mdxPath, 'utf8');
-          const match = content.match(/<FossaReport\s+version="([^"]+)"/);
-          expect(match).not.toBeNull();
-          expect(match[1]).toBe(version);
-        }
+      it('MDX imports releases.json and FossaReport component', () => {
+        const mdxPath = path.join(ROOT, docsDir, 'reference', 'fossa-reports.mdx');
+        const content = fs.readFileSync(mdxPath, 'utf8');
+        expect(content).toContain("from '../releases.json'");
+        expect(content).toContain('<FossaReport releases={releases}');
+      });
+
+      it('sidebar has flat "reference/fossa-reports" entry', () => {
+        const content = fs.readFileSync(path.join(ROOT, sidebarFile), 'utf8');
+        expect(content).toContain('reference/fossa-reports');
+        // Should NOT contain old per-version pattern (subdirectory paths)
+        expect(content).not.toMatch(/reference\/fossa-reports\//);
       });
     });
   }
 });
 
-describe('FOSSA Netlify redirect', () => {
-  it('netlify.toml contains the FOSSA wildcard proxy redirect', () => {
-    const toml = fs.readFileSync(path.join(ROOT, 'netlify.toml'), 'utf8');
-    expect(toml).toContain('/calico-enterprise/fossa-reports/:version/attribution-report.html');
-    expect(toml).toContain('attribution-report.s3.amazonaws.com');
-  });
-});
-
-// S3 bucket checks are opt-in: set RUN_S3_CHECKS=1 to enable (skipped in CI by default)
+// S3 bucket checks (opt-in: set RUN_S3_CHECKS=1 to enable)
 const runS3Checks = process.env.RUN_S3_CHECKS === '1';
 
 (runS3Checks ? describe : describe.skip)('FOSSA S3 bucket existence', () => {
-  const allVersions = [
+  // Extract unique minor versions from all releases.json files
+  const minorVersions = [
     ...new Set(
-      Object.keys(fossaMappings).flatMap((sf) => extractFossaVersionsFromSidebar(sf))
+      fossaVersions
+        .map(({ docsDir }) => {
+          const releasesPath = path.join(ROOT, docsDir, 'releases.json');
+          if (!fs.existsSync(releasesPath)) return null;
+          const releases = JSON.parse(fs.readFileSync(releasesPath, 'utf8'));
+          const latest = releases.find((r) => r.title !== 'master');
+          if (!latest) return null;
+          const parts = latest.title.replace(/^v/, '').split('.');
+          return `${parts[0]}-${parts[1]}`;
+        })
+        .filter(Boolean)
     ),
   ];
 
-  it.each(allVersions)('S3 bucket exists for version %s', async (version) => {
-    const bucketUrl = `https://ce-${version}-attribution-report.s3.amazonaws.com/`;
-    const res = await fetch(bucketUrl, { method: 'HEAD' });
-    // 403 (AccessDenied) or 301 (PermanentRedirect) = bucket exists; 404 = missing
-    expect(res.status).not.toBe(404);
-  }, 10000);
+  it.each(minorVersions)(
+    'S3 bucket exists for minor version %s',
+    async (s3Key) => {
+      const bucketUrl = `https://ce-${s3Key}-attribution-report.s3.amazonaws.com/`;
+      const res = await fetch(bucketUrl, { method: 'HEAD' });
+      // 403 (AccessDenied) = bucket exists but private; 404 = bucket missing
+      expect(res.status).not.toBe(404);
+    },
+    10000
+  );
 });
