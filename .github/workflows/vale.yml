@@ -7,22 +7,41 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Get changed files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only --diff-filter=d ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- '*.md' '*.mdx' | tr '\n' ' ')
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          if [ -z "$FILES" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Enable Corepack
+        if: steps.changed.outputs.skip == 'false'
         run: corepack enable
       - name: Setup Node.js with Yarn
+        if: steps.changed.outputs.skip == 'false'
         uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: yarn
       - name: Install dependencies
+        if: steps.changed.outputs.skip == 'false'
         run: yarn install --immutable
       - name: Install mdx2vast globally
+        if: steps.changed.outputs.skip == 'false'
         run: npm install -g mdx2vast
       - name: Swap stuff
+        if: steps.changed.outputs.skip == 'false'
         run: |
           sudo apt-get install ripgrep
           rg -l0 '\$\[[^\]]*\]' -g '*.mdx' -g '*.md' . | xargs -0 perl -i -pe 's/\$\[[^\]]*\]/PICKLEVAR/g'
       - name: Run Vale with Reviewdog
+        if: steps.changed.outputs.skip == 'false'
         uses: errata-ai/vale-action@reviewdog
         with:
+          files: ${{ steps.changed.outputs.files }}
           fail_on_error: false
