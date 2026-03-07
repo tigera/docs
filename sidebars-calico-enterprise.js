@@ -866,6 +866,7 @@ module.exports = {
           ],
         },
         'reference/attribution',
+        'reference/fossa-reports',
         'reference/rest-api-reference',
         'reference/component-versions',
         'reference/faq',
