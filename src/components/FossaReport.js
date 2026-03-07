@@ -13,7 +13,7 @@ export default function FossaReport({ releases }) {
 
   const minor = getMinorVersion(latest.title);
   const s3Key = minor.replace(/\./g, '-');
-  const src = `https://ce-${s3Key}-attribution-report.s3.amazonaws.com/attribution-report.html`;
+  const src = `/calico-enterprise/fossa-reports/${s3Key}/attribution-report.html`;
 
   return (
     <div>
@@ -22,7 +22,6 @@ export default function FossaReport({ releases }) {
         src={src}
         title={`FOSSA Attribution Report - Calico Enterprise ${minor}`}
         sandbox=""
-        referrerPolicy="no-referrer"
         style={{
           width: '100%',
           height: '80vh',
