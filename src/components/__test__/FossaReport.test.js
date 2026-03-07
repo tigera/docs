@@ -9,14 +9,14 @@ const mockReleases = [
 ];
 
 describe('<FossaReport />', () => {
-  it('renders iframe with Netlify proxy URL', () => {
+  it('renders iframe with direct S3 URL', () => {
     const { getByTitle } = render(<FossaReport releases={mockReleases} />);
     const iframe = getByTitle(/FOSSA Attribution Report - Calico Enterprise 3\.22/);
     expect(iframe).toBeInTheDocument();
     expect(iframe.tagName).toBe('IFRAME');
     expect(iframe).toHaveAttribute(
       'src',
-      '/calico-enterprise/fossa-reports/3-22/attribution-report.html'
+      'https://ce-3-22-attribution-report.s3.amazonaws.com/attribution-report.html'
     );
   });
 
@@ -26,7 +26,7 @@ describe('<FossaReport />', () => {
     const iframe = getByTitle(/3\.20/);
     expect(iframe).toHaveAttribute(
       'src',
-      '/calico-enterprise/fossa-reports/3-20/attribution-report.html'
+      'https://ce-3-20-attribution-report.s3.amazonaws.com/attribution-report.html'
     );
   });
 
@@ -47,7 +47,7 @@ describe('<FossaReport />', () => {
     const link = getByText(/open report in new tab/i);
     expect(link).toHaveAttribute(
       'href',
-      '/calico-enterprise/fossa-reports/3-22/attribution-report.html'
+      'https://ce-3-22-attribution-report.s3.amazonaws.com/attribution-report.html'
     );
     expect(link).toHaveAttribute('target', '_blank');
   });
