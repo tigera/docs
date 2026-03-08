@@ -326,6 +326,38 @@ kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyIptable
 
 If both `kube-proxy` and `BPFKubeProxyIptablesCleanupEnabled` is enabled then `kube-proxy` will write its iptables rules and Felix will try to clean them up resulting in iptables flapping between the two.
 
+You should also set `bpfKubeProxyHealthzPort` to `0` to disable the health check server in $[prodname]'s BPF kube-proxy replacement, which by default binds to port 10256 and would conflict with the Kubernetes `kube-proxy` already running on the node. The Kubernetes `kube-proxy` can serve the health check equally well, so there is no degradation.
+
+```
+kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyHealthzPort": 0}}'
+```
+
+### MKE: Change the VXLAN port before enabling eBPF
+
+:::caution
+
+MKE uses Docker Swarm overlay networking, which creates VXLAN devices on UDP port 4789 inside Docker network namespaces.
+When $[prodname] switches to eBPF mode on kernels where BTF is available (typically v5.8+), Felix creates the `vxlan.calico` device in
+flow mode, which acts as a catch-all on its UDP port. The kernel rejects this when another VXLAN device (Docker Swarm's)
+already holds the same port, causing `vxlan.calico` to stay DOWN with `address already in use` errors.
+
+**You must change the VXLAN port before enabling eBPF on MKE clusters:**
+
+```bash
+kubectl patch felixconfiguration default --type merge -p '{"spec":{"vxlanPort":4790}}'
+```
+
+Wait for all calico-node pods to recreate the VXLAN device on the new port, then verify on each node:
+
+```bash
+kubectl exec -n calico-system <calico-node-pod> -- ip -d link show vxlan.calico
+```
+
+Confirm the device shows `dstport 4790` (or your chosen port) and is UP before proceeding.
+Ensure that the chosen UDP port is allowed by your underlying network between all nodes.
+
+:::
+
 ### Enable eBPF mode
 
 **The next step depends on whether you installed $[prodname] using the operator, or a manifest:**
