@@ -318,6 +318,12 @@ kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyIptable
 
 If both `kube-proxy` and `BPFKubeProxyIptablesCleanupEnabled` is enabled then `kube-proxy` will write its iptables rules and Felix will try to clean them up resulting in iptables flapping between the two.
 
+You should also change `bpfKubeProxyHealthzPort` to an unused port to avoid conflicting with the Kubernetes `kube-proxy`'s default health check port (10256). The Kubernetes `kube-proxy` can serve the health check equally well, so there is no degradation. Changing the health check port of the Kubernetes `kube-proxy` is typically not possible on managed platforms such as AKS. Choose a port that is not already in use on your nodes (for example, 10258; note that 10257 may be used by containerd).
+
+```
+kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyHealthzPort": 10258}}'
+```
+
 ### Enable eBPF mode
 
 **The next step depends on whether you installed $[prodname] using the operator, or a manifest:**
