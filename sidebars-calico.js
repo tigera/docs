@@ -536,6 +536,7 @@ module.exports = {
         'operations/datastore-migration',
         'operations/operator-migration',
         'operations/install-apiserver',
+        'operations/native-v3-crds',
         {
           type: 'category',
           label: 'Monitor',

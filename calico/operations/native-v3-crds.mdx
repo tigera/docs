@@ -1,0 +1,190 @@
+---
+description: Enable native projectcalico.org/v3 CRDs to use Calico resources directly as CRDs without the aggregation API server.
+---
+
+# Enable native v3 CRDs
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## Big picture
+
+Enable native `projectcalico.org/v3` CRDs so that Calico resources are backed directly by CRDs, eliminating the need for the Calico aggregation API server.
+
+## Value
+
+By default, $[prodname] uses an aggregation API server to serve `projectcalico.org/v3` APIs, storing resources internally as `crd.projectcalico.org/v1` CRDs. When using native `projectcalico.org/v3` CRDs, Calico resources are CRDs themselves, which provides several benefits:
+
+- **Simpler architecture** — no aggregation API server to deploy and manage
+- **GitOps-friendly** — no ordering dependencies between CRDs and the API server, so tools like ArgoCD and Flux can apply resources in any order
+- **Less platform friction** — removes the need for host-network pods and other requirements of the aggregation API server
+- **kubectl works directly** — manage `projectcalico.org/v3` resources with `kubectl` without installing the API server separately
+- **Native Kubernetes validation and defaulting** — uses CEL validation rules embedded in the CRD schemas and MutatingAdmissionPolicies for defaulting, leveraging built-in Kubernetes mechanisms instead of a custom API server
+
+## Concepts
+
+### How native `projectcalico.org/v3` CRDs work
+
+When using native `projectcalico.org/v3` CRDs:
+
+- $[prodname] resources use the `projectcalico.org/v3` API group and are registered as native Kubernetes CRDs.
+- The `APIServer` custom resource is still created, but instead of running the aggregation API server, it deploys a webhooks pod that handles validation and defaulting via admission policies.
+- $[prodname] auto-detects the mode at startup based on which CRDs are installed on the cluster. If the `projectcalico.org/v3` CRDs are present, it uses them natively; if the `crd.projectcalico.org/v1` CRDs are present, it runs in API server mode.
+
+### Validation and defaulting
+
+When using native `projectcalico.org/v3` CRDs, resource validation and defaulting are handled by native CRD validation and defaulting, as well as ValidatingAdmissionPolicies and MutatingAdmissionPolicies. $[prodname] uses [MutatingAdmissionPolicies](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/) for defaulting, which are currently a **beta** Kubernetes feature. You must ensure that the `MutatingAdmissionPolicy` feature gate is enabled on your Kubernetes API server before using native `projectcalico.org/v3` CRDs.
+
+## Before you begin
+
+- A Kubernetes cluster **without** $[prodname] installed, or a cluster where you are performing a fresh install. There is no automated migration tooling from an existing API server mode cluster to native `projectcalico.org/v3` CRDs at this time.
+- The `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) must be enabled on the Kubernetes API server. This feature is beta in Kubernetes and is not enabled by default.
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## How to
+
+### Install $[prodname] with native `projectcalico.org/v3` CRDs
+
+Select the method below based on your preferred installation method.
+
+<Tabs>
+<TabItem label="Helm install" value="Helm install-0">
+
+1. Add the $[prodname] Helm repo:
+
+   ```bash
+   helm repo add projectcalico https://docs.tigera.io/calico/charts
+   ```
+
+1. Create the `tigera-operator` namespace:
+
+   ```bash
+   kubectl create namespace tigera-operator
+   ```
+
+1. Install the v3 CRD chart instead of the default v1 CRD chart:
+
+   ```bash
+   helm install calico-crds projectcalico/projectcalico.org.v3 --version $[releaseTitle] --namespace tigera-operator
+   ```
+
+   :::note
+
+   This replaces the `crd.projectcalico.org.v1` chart used in the default installation. Do not install both CRD charts.
+
+   :::
+
+1. Install the Tigera Operator:
+
+   ```bash
+   helm install $[prodnamedash] projectcalico/tigera-operator --version $[releaseTitle] --namespace tigera-operator
+   ```
+
+   If you have a `values.yaml` with custom configuration:
+
+   ```bash
+   helm install $[prodnamedash] projectcalico/tigera-operator --version $[releaseTitle] -f values.yaml --namespace tigera-operator
+   ```
+
+</TabItem>
+<TabItem label="Manifest install" value="Manifest install-1">
+
+1. Install the v3 CRDs:
+
+   ```bash
+   kubectl create -f $[manifestsUrl]/manifests/v3_projectcalico_org.yaml
+   ```
+
+   :::note
+
+   This replaces the `v1_crd_projectcalico_org.yaml` manifest used in the default installation. Do not install both CRD manifests.
+
+   :::
+
+1. Install the Tigera Operator and custom resources:
+
+   ```bash
+   kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+   ```
+
+</TabItem>
+</Tabs>
+
+After installing, complete the following steps:
+
+1. Create the `APIServer` CR to deploy the webhooks pod. This does **not** run the aggregation API server — instead it deploys admission webhooks that handle validation and defaulting.
+
+   ```bash
+   kubectl create -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: APIServer
+   metadata:
+     name: default
+   spec: {}
+   EOF
+   ```
+
+1. Confirm that all pods are running:
+
+   ```bash
+   watch kubectl get pods -n calico-system
+   ```
+
+1. Verify that `projectcalico.org` resources are available:
+
+   ```bash
+   kubectl api-resources | grep '\sprojectcalico.org'
+   ```
+
+You can now use `kubectl` directly to manage $[prodname] resources, for example:
+
+```bash
+kubectl get ippools
+kubectl get felixconfigurations
+kubectl get bgpconfigurations
+```
+
+## Behavioral differences from API server mode
+
+For most clients, the API should continue to behave as expected and consistently with existing behavior. There are a few small exceptions noted below.
+
+### kubectl access
+
+When using native `projectcalico.org/v3` CRDs, `kubectl` can manage Calico resources directly without installing the aggregation API server. There is no separate install step or cache-clearing required.
+
+### IPPool CIDR overlap validation
+
+In API server mode, creating an IPPool with a CIDR that overlaps an existing pool is rejected synchronously at creation time.
+
+When using native `projectcalico.org/v3` CRDs, IPPool CIDR overlap validation is **asynchronous**. Pools with overlapping CIDRs are created successfully but receive a `Disabled` status condition. IPAM does not allocate addresses from disabled pools. Check the IPPool status to identify pools that have been disabled due to CIDR overlap:
+
+```bash
+kubectl get ippool <pool-name> -o yaml
+```
+
+### Tier RBAC enforcement
+
+In both modes, tier-based RBAC uses the same `ClusterRole` and `RoleBinding` definitions with pseudo-resources like `tier.networkpolicies` and `tier.globalnetworkpolicies`.
+
+In API server mode, tier RBAC is enforced for all operations (create, update, delete, get, list, watch) by the aggregation API server.
+
+When using native `projectcalico.org/v3` CRDs, tier RBAC is enforced via the admission webhook for **create, update, and delete** operations. However, **GET, LIST, and WATCH** operations on tiered policies are **not enforced** because admission webhooks cannot intercept read operations. This is a known limitation.
+
+### calicoctl
+
+`calicoctl` continues to work when using native `projectcalico.org/v3` CRDs but is less necessary since `kubectl` handles Calico resources natively. `calicoctl` is still useful for:
+
+- [calicoctl node](../reference/calicoctl/node/index.mdx) subcommands
+- [calicoctl ipam](../reference/calicoctl/ipam/index.mdx) subcommands
+- [calicoctl convert](../reference/calicoctl/convert.mdx)
+- [calicoctl version](../reference/calicoctl/version.mdx)
+
+## Known limitations
+
+- **No automated migration** — There is no automated migration tooling for converting an existing cluster from API server mode to native `projectcalico.org/v3` CRDs. This is planned for a follow-on release.
+- **GET/LIST/WATCH tier RBAC not enforced** — Admission webhooks cannot intercept read operations, so tier-based RBAC for GET, LIST, and WATCH is not enforced when using native `projectcalico.org/v3` CRDs.
