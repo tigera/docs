@@ -116,12 +116,20 @@ export default async function createAsyncConfig() {
           searchPagePath: '/search',
         },
         announcementBar: {
-          id: "calico_hackathon",
-          content: '🚀 The <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=Docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon</a> is live! Leverage Calico 3.30+ to solve networking challenges and win up to $1,000.',
+          id: "calico_hackathon_midway",
+          content: '🛡️ Hack the latest features: Leverage Calico 3.30+ to solve networking challenges and win up to $1,000. <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=Docs_site&utm_campaign=Hackathon2026">Enter the Calico 3.30+ Hackathon</a>',
           backgroundColor: "#FCE181",
           textColor: "#000",
-          isCloseable: true
+          isCloseable: true,
         },
+        // DOCS-2862: Hackathon deadline approaching (go-live March 24)
+        // announcementBar: {
+        //   id: "calico_hackathon_deadline",
+        //   content: '🏃 Only one week left (Ends March 31, 2026!) Finalize your GitHub repo and demo video to enter the <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=Docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon</a>',
+        //   backgroundColor: "#FCE181",
+        //   textColor: "#000",
+        //   isCloseable: true,
+        // },
         navbar: {
           logo: {
             src: 'img/tigera-logo-2026-black-text.svg',
@@ -519,6 +527,27 @@ export default async function createAsyncConfig() {
           editUrl: generateEditUrl,
         },
       ],
+      ['./src/plugins/docusaurus-plugin-llms-txt', {
+        siteDescription: 'Calico documentation for networking, network security, and observability for Kubernetes, including Calico Open Source, Calico Enterprise, and Calico Cloud.',
+        productDescriptions: {
+          'calico': 'Open source networking and network security for containers and Kubernetes.',
+          'calico-enterprise': 'Enterprise-grade networking, security, and observability for Kubernetes.',
+          'calico-cloud': 'SaaS-based Kubernetes security and observability platform.',
+        },
+        topPages: [
+          '/calico/latest/getting-started/kubernetes/quickstart',
+          '/calico-enterprise/latest/getting-started/install-on-clusters/kubernetes/quickstart',
+          '/calico-cloud/get-started/connect-cluster',
+          '/calico/latest/networking/determine-best-networking',
+          '/calico/latest/network-policy/get-started/calico-policy/calico-network-policy',
+          '/calico-enterprise/latest/network-policy/policy-tiers/tiered-policy',
+          '/calico/latest/operations/ebpf/enabling-ebpf',
+          '/calico-enterprise/latest/observability',
+          '/calico/latest/networking/configuring/bgp',
+          '/calico-cloud/get-started/system-requirements',
+        ],
+        optionalSections: ['release notes'],
+      }],
     ],
     customFields: {
       isTesting: process.env.TESTING || false,

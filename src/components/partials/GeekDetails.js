@@ -139,8 +139,8 @@ const detailsMap = {
         are connected to the underlying network.
       </p>
       <p>
-        The Azure CNI and IPAM plugins provide pods with IP addresses from the underlying Azure VNET (Virtual Network)
-        to provide a VPC-Native pod network. The Azure VNET is used to route pod traffic between nodes, and understands
+        The Azure CNI and IPAM plugins provide pods with IP addresses from the underlying Azure VNet (Virtual Network)
+        to provide a VPC-Native pod network. The Azure VNet is used to route pod traffic between nodes, and understands
         which pod IP address are located on which nodes. This avoids the need for an overlay, and typically has good
         network performance characteristics.
       </p>
@@ -310,7 +310,7 @@ const detailsMap = {
       </p>
       <p>
         The Azure IPAM plugin dynamically allocates small blocks of IP addresses to nodes as required, using IP
-        addresses from the underlying VNET (Virtual Network). The Azure IPAM plugin is used in conjunction with the
+        addresses from the underlying VNet (Virtual Network). The Azure IPAM plugin is used in conjunction with the
         Azure CNI plugin to provide VPC native pod networking.
       </p>
     </>
