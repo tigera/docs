@@ -34,41 +34,34 @@ function discoverDocsVersions() {
 
 const docsVersions = discoverDocsVersions();
 
-// Filter to versions that have a fossa-reports.mdx file
-const fossaVersions = docsVersions.filter(({ docsDir }) =>
-  fs.existsSync(path.join(ROOT, docsDir, 'reference', 'fossa-reports.mdx'))
-);
+// Filter to versions that have an attribution.mdx with the FossaReport component
+const fossaVersions = docsVersions.filter(({ docsDir }) => {
+  const mdxPath = path.join(ROOT, docsDir, 'reference', 'attribution.mdx');
+  return fs.existsSync(mdxPath) && fs.readFileSync(mdxPath, 'utf8').includes('FossaReport');
+});
 
-describe('FOSSA Reports structure', () => {
-  it('at least one docs version has a FOSSA reports page', () => {
+describe('FOSSA attribution structure', () => {
+  it('at least one docs version has a FOSSA-powered attribution page', () => {
     expect(fossaVersions.length).toBeGreaterThan(0);
   });
 
   for (const { label, docsDir, sidebarFile } of fossaVersions) {
     describe(label, () => {
-      it('has reference/fossa-reports.mdx', () => {
-        const mdxPath = path.join(ROOT, docsDir, 'reference', 'fossa-reports.mdx');
-        expect(fs.existsSync(mdxPath)).toBe(true);
-      });
-
-      it('does NOT have a reference/fossa-reports/ directory', () => {
-        const dirPath = path.join(ROOT, docsDir, 'reference', 'fossa-reports');
-        const isDir = fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory();
-        expect(isDir).toBe(false);
-      });
-
-      it('MDX imports releases.json and FossaReport component', () => {
-        const mdxPath = path.join(ROOT, docsDir, 'reference', 'fossa-reports.mdx');
+      it('attribution.mdx imports releases.json and FossaReport component', () => {
+        const mdxPath = path.join(ROOT, docsDir, 'reference', 'attribution.mdx');
         const content = fs.readFileSync(mdxPath, 'utf8');
         expect(content).toContain("from '../releases.json'");
         expect(content).toContain('<FossaReport releases={releases}');
       });
 
-      it('sidebar has flat "reference/fossa-reports" entry', () => {
+      it('sidebar has "reference/attribution" entry', () => {
         const content = fs.readFileSync(path.join(ROOT, sidebarFile), 'utf8');
-        expect(content).toContain('reference/fossa-reports');
-        // Should NOT contain old per-version pattern (subdirectory paths)
-        expect(content).not.toMatch(/reference\/fossa-reports\//);
+        expect(content).toContain('reference/attribution');
+      });
+
+      it('does NOT have a separate fossa-reports.mdx', () => {
+        const fossaPath = path.join(ROOT, docsDir, 'reference', 'fossa-reports.mdx');
+        expect(fs.existsSync(fossaPath)).toBe(false);
       });
     });
   }
