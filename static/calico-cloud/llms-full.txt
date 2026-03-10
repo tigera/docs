@@ -837,9 +837,9 @@ In this step, you will:
 
 7. In the web console, go to the **Service Graph** page to view your flow logs. It may take up to 5 minutes for the flows to appear. When they appear, click the `quickstart` namespace in the Service Graph to filter the view to show the flows only in that namespace. In the list of flows, you should see three new connection types: one to `coredns` one to `nginx`, and another to `pub`, meaning "public network".
 
-   ![Service Graph with \`quickstart\` namepace selected showing flows to NGINX and public network](https://docs.tigera.io/img/calico-cloud/quickstart-3.png)
+   ![Service Graph with \`quickstart\` namespace selected showing flows to NGINX and public network](https://docs.tigera.io/img/calico-cloud/quickstart-3.png)
 
-   *Figure <!-- -->3<!-- -->: Service Graph with `quickstart` namepace selected showing flows to NGINX and public network.*
+   *Figure <!-- -->3<!-- -->: Service Graph with `quickstart` namespace selected showing flows to NGINX and public network.*
 
 ## Step 5. Restrict all traffic with a default deny policy[​](#step-5-restrict-all-traffic-with-a-default-deny-policy)
 
@@ -1489,7 +1489,7 @@ The Calico Cloud installer may be able to successfully connect
 
 ## Kubernetes versions[​](#kubernetes-versions)
 
-To install Calico Cloud v22.1.0, your Kubernetes distribution must be based on one of the following Kubernetes versions:
+To install Calico Cloud v22.2.0, your Kubernetes distribution must be based on one of the following Kubernetes versions:
 
 - Kubernetes 1.34
 - Kubernetes 1.33
@@ -1545,18 +1545,18 @@ To access the web console, you can use latest two versions of the following web 
 
 ## Kubernetes reconcilers[​](#kubernetes-reconcilers)
 
-- Calico Cloud cannot be usually be installed on clusters that are managed by any kind of Kubernetes reconciler (for example, Addon-manager). To verify, look for an annotation called `addonmanager.kubernetes.io/mode` on either of the following resources. (The resources may not exist).
+- Calico Cloud cannot be usually be installed on clusters that are managed by any kind of Kubernetes reconciler (for example, the Kubernetes `addon-manager` component). To verify, look for an annotation called `addonmanager.kubernetes.io/mode` on either of the following resources. (The resources may not exist).
 
   - `tigera-operator` deployment in the `tigera-operator` namespace
   - `calico-node` daemonset in the `kube-system` namespace
 
-  If the following command finds addonmanager on either of the resources, then Addon-manager is being used. Find a different cluster to use.
+  If the following command finds addonmanager on either of the resources, then the `addon-manager` component is being used. Find a different cluster to use.
 
   ```bash
   kubectl get <type> -n <namespace> <resource-name> -o yaml | grep ' addonmanager.kubernetes.io/mode:'
   ```
 
-- Some AKS clusters with AddonManager are compatible with Calico Cloud. If output from the following command includes "EnsureExists", then the install is compatible with Calico Cloud.
+- Some AKS clusters with the `addon-manager` component are compatible with Calico Cloud. If output from the following command includes "EnsureExists", then the install is compatible with Calico Cloud.
 
   ```bash
   kubectl get CustomResourceDefinition installations.operator.tigera.io -o yaml | grep ' addonmanager.kubernetes.io/mode:'
@@ -1564,7 +1564,7 @@ To access the web console, you can use latest two versions of the following web 
 
   > **SECONDARY:** If the command output does not include "EnsureExists" and you are on a recent version of AKS your cluster might still be compatible. You can [contact Support](https://tigeraio.my.site.com/community/s/login/) for more information.
 
-  > **WARNING:** If your cluster already has Calico installed by AKS and managed by AddonManager, the standard [uninstall](https://docs.tigera.io/calico-cloud/operations/disconnect) is not supported. You will need to reach out to support to create a plan to uninstall Calico Cloud.
+  > **WARNING:** If your cluster already has Calico installed by AKS and managed by the `addon-manager` component, the standard [uninstall](https://docs.tigera.io/calico-cloud/operations/disconnect) is not supported. You will need to reach out to support to create a plan to uninstall Calico Cloud.
 
 ## Distribution-specific requirements[​](#distribution-specific-requirements)
 
@@ -1687,7 +1687,7 @@ Verify that intranode visibility is set to `Enabled` by running the following co
 gcloud container clusters describe <cluster-name> --flatten networkConfig.enableIntraNodeVisibility
 ```
 
-If intranode visibiliity is not enabled, you must enable it by following running the following command:
+If intranode visibility is not enabled, you must enable it by following running the following command:
 
 ```bash
 gcloud container clusters update <cluster-name> --enable-intra-node-visibility
@@ -1731,7 +1731,7 @@ You can quickly connect a cluster to Calico Cloud by generating a unique kubectl
    Example of generated kubectl command with alternate manifest
 
    ```bash
-   kubectl apply -f https://installer.calicocloud.io/manifests/cc-operator/latest/deploy-with-container-security.yaml && curl -H "Authorization: Bearer ..." "https://www.calicocloud.io/api/managed-cluster/deploy-with-container-security.yaml?version=v22.1.0" | kubectl apply -f -
+   kubectl apply -f https://installer.calicocloud.io/manifests/cc-operator/latest/deploy-with-container-security.yaml && curl -H "Authorization: Bearer ..." "https://www.calicocloud.io/api/managed-cluster/deploy-with-container-security.yaml?version=v22.2.0" | kubectl apply -f -
    ```
 
 6. From a terminal, paste and run the command.
@@ -1842,7 +1842,7 @@ You can perform a Helm installation from images stored on a private registry.
 
 4. Optional: If you must install a specific older release, select the Calico Cloud version you want to install. We always recommend the latest version, which is installed by default.
 
-5. Click **Advanced Options**, and then select both **Install via helm** and **Private registry**.
+5. Click **Advanced Options**, and then select both **Install via Helm** and **Private registry**.
 
 6. Enter the **Registry Secret Name**, **Image registry**, and **Image path**.
 
@@ -1930,19 +1930,19 @@ To do this, you can either edit the default `values.yaml` file or pass individua
 
 ### Required parameters[​](#required-parameters)
 
-The following paramaters are required for all Calico Cloud installations.
+The following parameters are required for all Calico Cloud installations.
 
 | Parameter                      | Value  | Example        | Description                                             |
 | ------------------------------ | ------ | -------------- | ------------------------------------------------------- |
 | `installer.clusterName`        | string | `cluster-name` | The name given to your managed cluster in Calico Cloud. |
-| `installer.calicoCloudVersion` | string | `v22.1.0`      | The version of Calico Cloud you're installing.          |
+| `installer.calicoCloudVersion` | string | `v22.2.0`      | The version of Calico Cloud you're installing.          |
 
 Example from values.yaml with clusterName and calicoCloudVersion
 
 ```yaml
 installer:
  clusterName: example-cluster
- calicoCloudVersion: v22.1.0
+ calicoCloudVersion: v22.2.0
 ```
 
 ### Optional parameters for private registries[​](#optional-parameters-for-private-registries)
@@ -2026,7 +2026,7 @@ For many Calico Cloud components, you can specify node selectors, tolerations, a
    ```yaml
    installer:
     clusterName: example-cluster
-    calicoCloudVersion: v22.1.0
+    calicoCloudVersion: v22.2.0
    ```
 
 4. Add values for the optional parameters. For each resource you want to edit, uncomment the object, add a value, and save.
@@ -2134,65 +2134,69 @@ Add the required Calico Cloud images to a private registry.
 
 ### Select your version:
 
-v22.1.0 (latest)Helm command to add images for Calico Cloud v22.1.0 (latest)
+v22.2.0 (latest)Helm command to add images for Calico Cloud v22.2.0 (latest)
 
 ```javascript
 helm repo add calico-cloud https://installer.calicocloud.io/charts
 INSTALLER_IMAGE="quay.io/tigera/cc-operator:$(helm show chart calico-cloud/calico-cloud | grep version: | sed -e 's/version: *//' -e 's/+/-g/')"
 IMAGES=(
 $INSTALLER_IMAGE
-quay.io/tigera/apiserver:v3.22.0-2.0
-quay.io/tigera/compliance-benchmarker:v3.22.0-2.0
-quay.io/tigera/compliance-controller:v3.22.0-2.0
-quay.io/tigera/compliance-reporter:v3.22.0-2.0
-quay.io/tigera/compliance-snapshotter:v3.22.0-2.0
-quay.io/tigera/key-cert-provisioner:v3.22.0-2.0
-quay.io/tigera/deep-packet-inspection:v3.22.0-2.0
-quay.io/tigera/ui-apis:v3.22.0-2.0
-quay.io/tigera/fluentd:v3.22.0-2.0
-quay.io/tigera/fluentd-windows:v3.22.0-2.0
-quay.io/tigera/guardian:v3.22.0-2.0
-quay.io/tigera/intrusion-detection-controller:v3.22.0-2.0
-quay.io/tigera/waf-http-filter:v3.22.0-2.0
-quay.io/tigera/webhooks-processor:v3.22.0-2.0
-quay.io/tigera/manager:v3.22.0-2.0
-quay.io/tigera/packetcapture:v3.22.0-2.0
-quay.io/tigera/policy-recommendation:v3.22.0-2.0
-quay.io/tigera/egress-gateway:v3.22.0-2.0
-quay.io/tigera/l7-collector:v3.22.0-2.0
-quay.io/tigera/gateway-l7-collector:v3.22.0-2.0
-quay.io/tigera/envoy:v3.22.0-2.0
-quay.io/tigera/prometheus:v3.22.0-2.0
-quay.io/tigera/prometheus-service:v3.22.0-2.0
-quay.io/tigera/alertmanager:v3.22.0-2.0
-quay.io/tigera/queryserver:v3.22.0-2.0
-quay.io/tigera/kube-controllers:v3.22.0-2.0
-quay.io/tigera/node:v3.22.0-2.0
-quay.io/tigera/node-windows:v3.22.0-2.0
-quay.io/tigera/typha:v3.22.0-2.0
-quay.io/tigera/cni:v3.22.0-2.0
-quay.io/tigera/cni-windows:v3.22.0-2.0
-quay.io/tigera/es-gateway:v3.22.0-2.0
-quay.io/tigera/linseed:v3.22.0-2.0
-quay.io/tigera/dikastes:v3.22.0-2.0
-quay.io/tigera/l7-admission-controller:v3.22.0-2.0
-quay.io/tigera/pod2daemon-flexvol:v3.22.0-2.0
-quay.io/tigera/csi:v3.22.0-2.0
-quay.io/tigera/node-driver-registrar:v3.22.0-2.0
-quay.io/tigera/envoy-gateway:v3.22.0-2.0
-quay.io/tigera/envoy-proxy:v3.22.0-2.0
-quay.io/tigera/envoy-ratelimit:v3.22.0-2.0
-quay.io/tigera/operator:v1.40.1
+quay.io/tigera/apiserver:v3.22.1
+quay.io/tigera/compliance-benchmarker:v3.22.1
+quay.io/tigera/compliance-controller:v3.22.1
+quay.io/tigera/compliance-reporter:v3.22.1
+quay.io/tigera/compliance-snapshotter:v3.22.1
+quay.io/tigera/key-cert-provisioner:v3.22.1
+quay.io/tigera/deep-packet-inspection:v3.22.1
+quay.io/tigera/ui-apis:v3.22.1
+quay.io/tigera/fluentd:v3.22.1
+quay.io/tigera/fluentd-windows:v3.22.1
+quay.io/tigera/guardian:v3.22.1
+quay.io/tigera/intrusion-detection-controller:v3.22.1
+quay.io/tigera/waf-http-filter:v3.22.1
+quay.io/tigera/webhooks-processor:v3.22.1
+quay.io/tigera/manager:v3.22.1
+quay.io/tigera/packetcapture:v3.22.1
+quay.io/tigera/policy-recommendation:v3.22.1
+quay.io/tigera/egress-gateway:v3.22.1
+quay.io/tigera/l7-collector:v3.22.1
+quay.io/tigera/gateway-l7-collector:v3.22.1
+quay.io/tigera/envoy:v3.22.1
+quay.io/tigera/prometheus:v3.22.1
+quay.io/tigera/prometheus-service:v3.22.1
+quay.io/tigera/alertmanager:v3.22.1
+quay.io/tigera/queryserver:v3.22.1
+quay.io/tigera/kube-controllers:v3.22.1
+quay.io/tigera/node:v3.22.1
+quay.io/tigera/node-windows:v3.22.1
+quay.io/tigera/typha:v3.22.1
+quay.io/tigera/cni:v3.22.1
+quay.io/tigera/cni-windows:v3.22.1
+quay.io/tigera/es-gateway:v3.22.1
+quay.io/tigera/linseed:v3.22.1
+quay.io/tigera/dikastes:v3.22.1
+quay.io/tigera/l7-admission-controller:v3.22.1
+quay.io/tigera/pod2daemon-flexvol:v3.22.1
+quay.io/tigera/csi:v3.22.1
+quay.io/tigera/node-driver-registrar:v3.22.1
+quay.io/tigera/envoy-gateway:v3.22.1
+quay.io/tigera/envoy-proxy:v3.22.1
+quay.io/tigera/envoy-ratelimit:v3.22.1
+quay.io/tigera/istio-pilot:v3.22.1
+quay.io/tigera/istio-install-cni:v3.22.1
+quay.io/tigera/istio-ztunnel:v3.22.1
+quay.io/tigera/istio-proxyv2:v3.22.1
+quay.io/tigera/operator:v1.40.5
 quay.io/tigera/image-assurance-admission-controller:v1.22.9
 quay.io/tigera/image-assurance-operator:v1.22.9
 quay.io/tigera/image-assurance-container-runtime-adaptor:v1.22.9
 quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
 quay.io/tigera/runtime-security-operator:v1.23.2
 quay.io/tigera/skimble:v1.23.2
-quay.io/tigera/cc-core:v0.3.3
-quay.io/tigera/prometheus-operator:v3.22.0-2.0
-quay.io/tigera/prometheus-config-reloader:v3.22.0-2.0
-quay.io/tigera/cc-cni-config-scanner:v0.7
+quay.io/tigera/cc-core:v0.3.4
+quay.io/tigera/prometheus-operator:v3.22.1
+quay.io/tigera/prometheus-config-reloader:v3.22.1
+quay.io/tigera/cc-cni-config-scanner:v0.7.1
 )
 ```
 
@@ -2261,7 +2265,7 @@ Follow the directions [to connect a cluster to Calico Cloud](https://docs.tigera
 | Threat defense                 | - No threat defense features are supported.                                                                                                                                                                                |
 | Image Assurance                | - No Image Assurance features are supported.                                                                                                                                                                               |
 | Multi-cluster management       | - Multi-cluster management federated identity endpoints and services - Federated endpoint identity and services                                                                                                            |
-| Compliance and security        | - CIS benchmark and other reports - Wireguard encryption for pod-to-pod traffic and host-to-host traffic                                                                                                                   |
+| Compliance and security        | - CIS benchmark and other reports - WireGuard encryption for pod-to-pod traffic and host-to-host traffic                                                                                                                   |
 | Data plane                     | - eBPF is a Linux-based feature                                                                                                                                                                                            |
 
 ## Calico Cloud BGP networking limitations[​](#calico-cloud-bgp-networking-limitations)
@@ -2432,7 +2436,7 @@ Calico Cloud supports flow logs with these limitations:
 - No packet/bytes stats for denied traffics
 - Inaccurate `num_flows_started` and `num_flows_completed` stats with VXLAN networking
 - No DNS stats
-- No Http stats
+- No HTTP stats
 - No RuleTrace for tiers
 - No BGP logs
 
@@ -3208,7 +3212,7 @@ To upgrade a managed cluster to the latest version of Calico Cloud:
    Example of generated kubectl command with alternate manifest
 
    ```bash
-   kubectl apply -f https://installer.calicocloud.io/manifests/cc-operator/latest/deploy-with-container-security.yaml && curl -H "Authorization: Bearer ..." "https://www.calicocloud.io/api/managed-cluster/deploy-with-container-security.yaml?version=v22.1.0" | kubectl apply -f -
+   kubectl apply -f https://installer.calicocloud.io/manifests/cc-operator/latest/deploy-with-container-security.yaml && curl -H "Authorization: Bearer ..." "https://www.calicocloud.io/api/managed-cluster/deploy-with-container-security.yaml?version=v22.2.0" | kubectl apply -f -
    ```
 
 5. From a terminal, paste and run the command. The cluster's status under **Connection Status** changes to **Disconnected: Installing**. When the upgrade is complete, the status changes to **Connected**.
@@ -3768,7 +3772,7 @@ Dashboards help you see and understand the activity in your cluster. Each dashbo
 
 - The **Flow Logs** dashboard gives you an overview of how packets are being sent and received by all the pods in your cluster.
 
-- The **HTTP Traffic** dashboard provides application performance metrics for inscope Kubernetes services.
+- The **HTTP Traffic** dashboard provides application performance metrics for in-scope Kubernetes services.
 
 - The **Network Performance** dashboard provides TCP metrics to help you identify bottlenecks, packet loss, and performance issues.
 
@@ -3820,7 +3824,7 @@ For convenience, the Alerts tab duplicates the alerts you have enabled in the **
 
 **Capture jobs**
 
-Service Graph integrates a packet feature for capturing traffic for a specific namespace, service, replica set, daemonset, statefulset, or pod. You can then download capture files to your favorite visualization tool like WireShark.
+Service Graph integrates a packet feature for capturing traffic for a specific namespace, service, replica set, daemonset, statefulset, or pod. You can then download capture files to your favorite visualization tool like Wireshark.
 
 > Right-click on any endpoint to start or schedule a capture.
 
@@ -5259,7 +5263,7 @@ While you can (and should) use firewalls to restrict traffic at the perimeters o
 
 Network policy on the other hand is designed for the dynamic nature of Kubernetes by following the standard Kubernetes paradigm of using label selectors to define groups of pods, rather than IP addresses. And because network policy is enforced within the cluster itself it can police both north-south and east-west traffic.
 
-Network policy represents an important evolution of network security, not just because it handles the dynamic nature of modern microservices, but because it empowers dev and devops engineers to easily define network security themselves, rather than needing to learn low-level networking details or raise tickets with a separate team responsible for managing firewalls. Network policy makes it easy to define intent, such as "only this microservice gets to connect to the database", write that intent as code (typically in YAML files), and integrate authoring of network policies into git workflows and CI/CD processes.
+Network policy represents an important evolution of network security, not just because it handles the dynamic nature of modern microservices, but because it empowers dev and DevOps engineers to easily define network security themselves, rather than needing to learn low-level networking details or raise tickets with a separate team responsible for managing firewalls. Network policy makes it easy to define intent, such as "only this microservice gets to connect to the database", write that intent as code (typically in YAML files), and integrate authoring of network policies into git workflows and CI/CD processes.
 
 > **SECONDARY:** Note: Calico Cloud offers capabilities that can help perimeter firewalls integrate more tightly with Kubernetes. However, this does not remove the need or value of network policies within the cluster itself.)
 
@@ -6878,7 +6882,7 @@ Let’s review two common approaches.
 
   In this model, network policy is treated as code, built into and tested during the development process, just like any other critical part of a microservice’s code. The team responsible for developing a microservice has a good understanding of other microservices they consume and depend on, and which microservices consume their microservice. With a defined, standardized approach to policy and label schemas, there is no reason that the teams cannot implement network policies for their microservice as part of the development of the microservice. With visibility in Service Graph, teams can even do basic troubleshooting.
 
-- **Dev/Ops writes policy, microservice team focuses on internals** An equally valid approach is to have development teams focus purely on the internals of the microservices they are responsible for, and leave responsibility for operating the microservices with devops teams. A Dev/ops team needs the same understanding as the microservices team above. However, network security may come much later in the organization’s processes, or even as an afterthought on a system already in production. This can be more challenging because getting network policies wrong can have significant production impacts. But using Calico Cloud tools, this approach is still achievable.
+- **Dev/Ops writes policy, microservice team focuses on internals** An equally valid approach is to have development teams focus purely on the internals of the microservices they are responsible for, and leave responsibility for operating the microservices with DevOps teams. A Dev/ops team needs the same understanding as the microservices team above. However, network security may come much later in the organization’s processes, or even as an afterthought on a system already in production. This can be more challenging because getting network policies wrong can have significant production impacts. But using Calico Cloud tools, this approach is still achievable.
 
 When you get clarity on who can write policies, you can move to creating tiers. Calico Cloud tiers, along with standard Kubernetes RBAC, provide the infrastructure to meet security concerns across teams.
 
@@ -7348,7 +7352,7 @@ The following diagrams show the relationship between all of the elements that af
 
 - **Tiers** group and order policies
 - **Policy action rules** define how to process traffic in and across tiers, and policy labels and selectors specify how groups of pods are allowed to communicate with each other and other network endpoints
-- The **CNI**, **Calico Cloud components**, and underlying **dataplane** (iptables/eBPF) all make use of labels and selectors as part of routing traffic.
+- The **CNI**, **Calico Cloud components**, and underlying **data plane** (iptables/eBPF) all make use of labels and selectors as part of routing traffic.
 
 ![tier-funnel](https://docs.tigera.io/assets/images/tier-funnel-54307b875cf8092dc31db531fdb328db.png)
 
@@ -10744,7 +10748,7 @@ spec:
 
 ### Tuning performance and latency[​](#tuning-performance-and-latency)
 
-Calico Cloud supports different DNS policy modes with different peformance and latency implications. The default mode for the iptables and nftables data planes is `DelayDeniedPacket`. The eBPF data plane defaults to `Inline` on kernels 5.17 (or RedHat 5.14) and newer and to `NoDelay` on older kernels. The Windows data plane support only `NoDelay` mode.
+Calico Cloud supports different DNS policy modes with different performance and latency implications. The default mode for the iptables and nftables data planes is `DelayDeniedPacket`. The eBPF data plane defaults to `Inline` on kernels 5.17 (or RedHat 5.14) and newer and to `NoDelay` on older kernels. The Windows data plane support only `NoDelay` mode.
 
 With `NoDelay` mode, new pods sometimes fail to connect to domains that are allowed by a DNS policy. In these cases, the pod tries to connect to a domain before Calico Cloud has finished processing the DNS policy that allows the connection. As soon as the processing is complete, the pod is able to connect.
 
@@ -11066,13 +11070,13 @@ Use Calico Cloud network policy to control traffic from Kubernetes clusters in y
 
 ## Value[​](#value)
 
-As platform and security engineers, you want your apps to securely communicate with the external world. But you also want to secure the network traffic from the Kubernetes clusters using your Fortigate firewalls. Using the Fortinet/Calico Cloud integration, security teams can retain firewall responsibility, secure traffic using Calico Cloud network policy, which frees up time for ITOps.
+As platform and security engineers, you want your apps to securely communicate with the external world. But you also want to secure the network traffic from the Kubernetes clusters using your FortiGate firewalls. Using the Fortinet/Calico Cloud integration, security teams can retain firewall responsibility, secure traffic using Calico Cloud network policy, which frees up time for ITOps.
 
 ## Concepts[​](#concepts)
 
 ## Integration at a glance[​](#integration-at-a-glance)
 
-This Calico Cloud/Fortinet integration workflow lets you control egress traffic leaving the Kubernetes cluster. You create perimeter firewall policies in FortiManager and FortiGate that reference Kubernetes workloads. Calico Cloud acts as a conduit, using the `tigera-firewall-controller` and global network policies to pass Kubernetes workload information to FortiManager and Fortigate devices where policies are applied and enforced.
+This Calico Cloud/Fortinet integration workflow lets you control egress traffic leaving the Kubernetes cluster. You create perimeter firewall policies in FortiManager and FortiGate that reference Kubernetes workloads. Calico Cloud acts as a conduit, using the `tigera-firewall-controller` and global network policies to pass Kubernetes workload information to FortiManager and FortiGate devices where policies are applied and enforced.
 
 The basic workflow is:
 
@@ -11081,7 +11085,7 @@ The basic workflow is:
 3. Deploy the `tigera firewall controller` in the Kubernetes cluster.
 4. Create a ConfigMap with Fortinet firewall information.
    <!-- -->
-   The `tigera firewall controller` reads the ConfigMap, gets the FortiGate firewall IP address, API token, and source IP address selection with `node` or `pod`. In your Kubernetes cluster, the controller populates pod IPs or Kubernetes node IPs of selector matching pods in Fortigate address group objects.
+   The `tigera firewall controller` reads the ConfigMap, gets the FortiGate firewall IP address, API token, and source IP address selection with `node` or `pod`. In your Kubernetes cluster, the controller populates pod IPs or Kubernetes node IPs of selector matching pods in FortiGate address group objects.
 
 ## Before you begin[​](#before-you-begin)
 
@@ -11115,13 +11119,13 @@ The basic workflow is:
 
 1. Create a tier for organizing global network policies.
 
-   Create a new [Tier](https://docs.tigera.io/calico-cloud/network-policy/policy-tiers/tiered-policy) to organize all Fortigate firewall global network policies in a single location.
+   Create a new [Tier](https://docs.tigera.io/calico-cloud/network-policy/policy-tiers/tiered-policy) to organize all FortiGate firewall global network policies in a single location.
 
 2. Note the tier name to use in a later step for the FortiGate firewall information config map.
 
 3. Create a GlobalNetworkPolicy for address group mappings.
 
-   For example, a GlobalNetworkPolicy can select a set of pods that require egress access to external workloads. In the following GlobalNetworkPolicy, the firewall controller creates an address group named, `default.production-microservice1` in the Fortigate firewall. The members of `default.production-microservice1` address group include IP addresses of nodes. Each node can host one or more pods whose label selector match with `env == 'prod' && role == 'microservice1'`. Each GlobalNetworkPolicy maps to an address group in FortiGate firewall.
+   For example, a GlobalNetworkPolicy can select a set of pods that require egress access to external workloads. In the following GlobalNetworkPolicy, the firewall controller creates an address group named, `default.production-microservice1` in the FortiGate firewall. The members of `default.production-microservice1` address group include IP addresses of nodes. Each node can host one or more pods whose label selector match with `env == 'prod' && role == 'microservice1'`. Each GlobalNetworkPolicy maps to an address group in FortiGate firewall.
 
    ```yaml
    apiVersion: projectcalico.org/v3
@@ -11172,12 +11176,12 @@ The basic workflow is:
 
    | Field                            | Enter values...                                                                                                                                                                                                                                                             |
    | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | tigera.firewall.policy.selector  | The tier name with the global network policies with the Fortigate address group mappings. For example, this selects the global network policies in the `default` tier: \`tigera.firewall.policy.selector: "projectcalico.org/tier == 'default'"                             |
+   | tigera.firewall.policy.selector  | The tier name with the global network policies with the FortiGate address group mappings. For example, this selects the global network policies in the `default` tier: \`tigera.firewall.policy.selector: "projectcalico.org/tier == 'default'"                             |
    | tigera.firewall.addressSelection | The addressSelection for outbound traffic leaving the cluster. For example, if outgoingNat is enabled in cluster and compute Node IP address is used "tigera.firewall.addressSelection == `node` or If pod IP address used then "tigera.firewall.addressSelection == `pod`" |
 
 ### Create a config map with FortiGate and FortiManager information[​](#create-a-config-map-with-fortigate-and-fortimanager-information)
 
-1. In the [Fortigate ConfigMap manifest](https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/fortinet-device-configmap.yaml), add your FortiGate firewall information in the data section, `tigera.firewall.fortigate`.
+1. In the [FortiGate ConfigMap manifest](https://downloads.tigera.io/ee/v3.22.1/manifests/fortinet-device-configmap.yaml), add your FortiGate firewall information in the data section, `tigera.firewall.fortigate`.
 
    Where:
 
@@ -11206,7 +11210,7 @@ The basic workflow is:
     key: apikey-fortigate-east2
    ```
 
-2. In the [FortiManager ConfigMap manifest](https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/fortinet-device-configmap.yaml), add your FortiManager information in the data section, `tigera.firewall.fortimgr`.
+2. In the [FortiManager ConfigMap manifest](https://downloads.tigera.io/ee/v3.22.1/manifests/fortinet-device-configmap.yaml), add your FortiManager information in the data section, `tigera.firewall.fortimgr`.
 
    Where:
 
@@ -11238,7 +11242,7 @@ The basic workflow is:
 1. Apply the manifest.
 
    ```text
-   kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/fortinet-device-configmap.yaml
+   kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/fortinet-device-configmap.yaml
    ```
 
 ### Install FortiGate ApiKey and FortiManager password as secrets[​](#install-fortigate-apikey-and-fortimanager-password-as-secrets)
@@ -11272,7 +11276,7 @@ The basic workflow is:
 2. Apply the manifest.
 
    ```text
-   kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/fortinet.yaml
+   kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/fortinet.yaml
    ```
 
 ## Verify the integration[​](#verify-the-integration)
@@ -11281,7 +11285,7 @@ The basic workflow is:
 2. Under **Policy & Objects**, click **Addresses**.
 3. Verify that your Kubernetes-related address objects and address group objects are created with the following comments "Managed by Tigera Calico Cloud".
 
-Fof all FortiManagers that are configured to work with firewall-controller, log in to each FortiManager UI with the correct ADOM.
+For all FortiManagers that are configured to work with firewall-controller, log in to each FortiManager UI with the correct ADOM.
 
 1. Click **Policy & Objects**, **Object Configuration**, \*\*Addresses.
 2. Verify that your Kubernetes-related address objects and address group objects are created with the following comments "Managed by Tigera Calico Cloud".
@@ -11367,7 +11371,7 @@ Create a [Calico Cloud tier](https://docs.tigera.io/calico-cloud/network-policy/
     kubectl create namespace tigera-firewall-controller
    ```
 
-2. In this [FortiManager ConfigMap manifest](https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/fortimanager-device-configmap.yaml), add your FortiManager device information in the data section: `tigera.firewall.fortimanager-policies`. For example:
+2. In this [FortiManager ConfigMap manifest](https://downloads.tigera.io/ee/v3.22.1/manifests/fortimanager-device-configmap.yaml), add your FortiManager device information in the data section: `tigera.firewall.fortimanager-policies`. For example:
 
    ```yaml
     tigera.firewall.fortimanager-policies: |
@@ -11400,7 +11404,7 @@ Create a [Calico Cloud tier](https://docs.tigera.io/calico-cloud/network-policy/
 3. Apply the manifest.
 
    ```bash
-   kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/fortimanager-device-configmap.yaml
+   kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/fortimanager-device-configmap.yaml
    ```
 
 ## Install FortiManager password as secrets[​](#install-fortimanager-password-as-secrets)
@@ -11428,7 +11432,7 @@ kubectl create secret generic fortimgr-east1 \
 2. Apply the manifest.
 
    ```bash
-   kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/fortimanager.yaml
+   kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/fortimanager.yaml
    ```
 
 ## Verify the integration[​](#verify-the-integration)
@@ -12581,7 +12585,7 @@ The **Flow Logs** dashboard gives you an overview of how packets are being sent 
 
 ### HTTP Traffic[​](#http-traffic)
 
-The **HTTP Traffic** dashboard provides application performance metrics for inscope Kubernetes services. The data can assist service owners and platform personnel in assessing the health of cluster workloads without the need for a full service mesh. [L7 logs](https://docs.tigera.io/calico-cloud/observability/elastic/l7/configure) are not enabled by default, and must be configured.
+The **HTTP Traffic** dashboard provides application performance metrics for in-scope Kubernetes services. The data can assist service owners and platform personnel in assessing the health of cluster workloads without the need for a full service mesh. [L7 logs](https://docs.tigera.io/calico-cloud/observability/elastic/l7/configure) are not enabled by default, and must be configured.
 
 ![HTTP Traffic dashboard](https://docs.tigera.io/img/calico-cloud/dashboard-l7.png)
 
@@ -12702,7 +12706,7 @@ The dashboard provides the following metrics/data, which can be edited as requir
 
 ![l7-dashboard](https://docs.tigera.io/assets/images/l7-dashboard-c9ce16b14c131a58e2fe90ed9d05943a.png)
 
-The L7 HTTP dashboard provides application performance metrics for inscope Kubernetes services. The data can assist service owners and platform personnel in assessing the health of cluster workloads without the need for a full service mesh. [L7 logs](https://docs.tigera.io/calico-cloud/observability/elastic/l7/configure) are not enabled by default, and must be configured.
+The L7 HTTP dashboard provides application performance metrics for in-scope Kubernetes services. The data can assist service owners and platform personnel in assessing the health of cluster workloads without the need for a full service mesh. [L7 logs](https://docs.tigera.io/calico-cloud/observability/elastic/l7/configure) are not enabled by default, and must be configured.
 
 The default metrics are:
 
@@ -12743,7 +12747,7 @@ The full flow log is now displayed in Tabular format by default. To view the log
 
 Tor and VPN-based traffic indicate the use of anonymization techniques in an attempt to mask the origins and destination of network traffic. Calico Cloud has built-in capabilities to assist with detecting such traffic and requires minimal [configuration](https://docs.tigera.io/calico-cloud/threat/tor-vpn-feed-and-dashboard) to activate.
 
-Once enabled, the Tigera Secure EE Tor-VPN logs dashboard can provide a view into any traffic to/from Tor and VPN gateways. The information quickly provides InfoSec teams and operators a focused view on anonymization-based traffic patterns. The reported flows can be filtered in the Tor-VPN controls window and the flow logs for inscope traffic can be reviewed in the Tor-VPN-search window.
+Once enabled, the Tigera Secure EE Tor-VPN logs dashboard can provide a view into any traffic to/from Tor and VPN gateways. The information quickly provides InfoSec teams and operators a focused view on anonymization-based traffic patterns. The reported flows can be filtered in the Tor-VPN controls window and the flow logs for in-scope traffic can be reviewed in the Tor-VPN-search window.
 
 ## Create custom filters and queries[​](#create-custom-filters-and-queries)
 
@@ -12771,7 +12775,7 @@ Capture live traffic inside a Kubernetes cluster, and export to visualization to
 
 Calico Cloud packet capture is implemented in a Kubernetes-native way so you can troubleshoot service/application connectivity issues and performance issues. You can start a packet capture in the web console Service Graph, or using the CLI.
 
-Packet capture integration with **Service Graph** makes it very easy to capture traffic for a specific namespace, service, replica set, daemonset, statefulset, or pod. Just right-click on an endpoint to start or schedule a capture, and then download capture files to your favorite visualization tool like WireShark.
+Packet capture integration with **Service Graph** makes it very easy to capture traffic for a specific namespace, service, replica set, daemonset, statefulset, or pod. Just right-click on an endpoint to start or schedule a capture, and then download capture files to your favorite visualization tool like Wireshark.
 
 With Calico Cloud packet capture you can:
 
@@ -12793,7 +12797,7 @@ Typically, when you troubleshoot microservices and applications for connectivity
 
 1. Determine the workload(s) you want to capture.
 2. Start/schedule a packet capture job in Service Graph (Manager UI) or the CLI.
-3. After the capture is finished, download the packet capture files (known as `pcap` files), and import them into your analysis tool (for example, WireShark).
+3. After the capture is finished, download the packet capture files (known as `pcap` files), and import them into your analysis tool (for example, Wireshark).
 
 For a simple use case workflow, see [Faster troubleshooting of microservices, containers, and Kubernetes with Dynamic Packet Capture](https://www.tigera.io/blog/faster-troubleshooting-of-microservices-containers-and-kubernetes-with-dynamic-packet-capture/).
 
@@ -13225,7 +13229,7 @@ Calico Cloud compliance reports are based on archived **flow logs** and **audit 
 - Global network policies
 - Network sets
 
-Calico Cloud also supports archiving [Cloudwatch for EKS audit logs](https://docs.tigera.io/calico-cloud/reference/installation/api#logcollectorspec).
+Calico Cloud also supports archiving [CloudWatch for EKS audit logs](https://docs.tigera.io/calico-cloud/reference/installation/api#logcollectorspec).
 
 ## Additional resources[​](#additional-resources)
 
@@ -13452,8 +13456,8 @@ The following table details the key/value pairs in the JSON blob, including thei
 | Name                              | Datatype          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | --------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `host`                            | keyword           | Name of the node that collected the flow log entry.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `start_time`                      | date              | Start time of log collection in UNIX timestamp format.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `end_time`                        | date              | End time of log collection in UNIX timestamp format.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `start_time`                      | date              | Start time of log collection in Unix timestamp format.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `end_time`                        | date              | End time of log collection in Unix timestamp format.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `action`                          | keyword           | - `allow`: Calico Cloud accepted the flow. - `deny`: Calico Cloud denied the flow.                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `bytes_in`                        | long              | Number of incoming bytes since the last export.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `bytes_out`                       | long              | Number of outgoing bytes since the last export.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -13511,7 +13515,7 @@ The `policies` field contains four sub-fields, `all_policies`, `enforced_policie
 | Name                | Datatype          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `all_policies`      | array of keywords | **Deprecated.** This field is a legacy field calculated at flow start time that combines both enforced and staged policies. Because it mixes actual verdicts with simulated ones, it can be misleading and is planned for removal. **Note:** This field may still appear in logs from older clusters reporting to a newer management cluster.                                                                                                                                                                                          |
-| `enforced_policies` | array of keywords | The policies that were actually enforced on the flow. This list is determined by the dataplane when the flow starts and remains fixed for the flow's lifetime. It represents the concrete actions taken on the traffic.                                                                                                                                                                                                                                                                                                                |
+| `enforced_policies` | array of keywords | The policies that were actually enforced on the flow. This list is determined by the data plane when the flow starts and remains fixed for the flow's lifetime. It represents the concrete actions taken on the traffic.                                                                                                                                                                                                                                                                                                               |
 | `pending_policies`  | array of keywords | A simulation of what policy evaluation would look like at the time of log generation. It represents a hypothetical restart of the flow where all staged policies are considered active. This field captures types of updates such as: (1) changes to active policies made after the flow started (for example, if a new policy is added that would deny the flow if it restarted), (2) staged policies treated as if they were enforced, and (3) domain-based policies evaluated based on the DNS state at the time of log generation. |
 | `transit_policies`  | array of keywords | Policies applied to traffic transiting through the node (for example, policies applied to host endpoints with `applyOnForward: true`) or during pre-DNAT processing. This field functions like `enforced_policies` but specifically for traffic being evaluated at the host endpoint. **Note**: This field is only populated when `flowLogsPolicyScope` is set to `AllPolicies` in the `FelixConfiguration`.                                                                                                                           |
 
@@ -13998,8 +14002,8 @@ Calico Cloud pushes DNS activity logs to Elasticsearch, for DNS information that
 
 | Name               | Datatype          | Description                                                                                                                                                                                                                                                                                                                                                                        |
 | ------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `start_time`       | date              | When the collection of the log began in UNIX timestamp format.                                                                                                                                                                                                                                                                                                                     |
-| `end_time`         | date              | When the collection of the log concluded in UNIX timestamp format.                                                                                                                                                                                                                                                                                                                 |
+| `start_time`       | date              | When the collection of the log began in Unix timestamp format.                                                                                                                                                                                                                                                                                                                     |
+| `end_time`         | date              | When the collection of the log concluded in Unix timestamp format.                                                                                                                                                                                                                                                                                                                 |
 | `type`             | keyword           | This field contains one of the following values: ● `LOG`: Indicates that this is a normal DNS activity log. ● `UNLOGGED`: Indicates that this log is reporting DNS activity that could not be logged in detail because of [DNSLogsFilePerNodeLimit](https://docs.tigera.io/calico-cloud/reference/resources/felixconfig#spec).                                                     |
 | `count`            | long              | When `type` is: ● `LOG`: How many DNS lookups there were, during the log collection interval, with details matching this log. ● `UNLOGGED`: The number of DNS responses that could not be logged in detail because of [DNSLogsFilePerNodeLimit](https://docs.tigera.io/calico-cloud/reference/resources/felixconfig#spec). In this case none of the following fields are provided. |
 | `client_ip`        | ip                | The IP address of the client pod. A null value indicates aggregation.                                                                                                                                                                                                                                                                                                              |
@@ -14275,8 +14279,8 @@ The following table details the key/value pairs in the JSON blob, including thei
 | Name                     | Datatype | Description                                                                                                                                                                                                                                                                                        |
 | ------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `host`                   | keyword  | Name of the node that collected the L7 log entry.                                                                                                                                                                                                                                                  |
-| `start_time`             | date     | Start time of log collection in UNIX timestamp format.                                                                                                                                                                                                                                             |
-| `end_time`               | date     | End time of log collection in UNIX timestamp format.                                                                                                                                                                                                                                               |
+| `start_time`             | date     | Start time of log collection in Unix timestamp format.                                                                                                                                                                                                                                             |
+| `end_time`               | date     | End time of log collection in Unix timestamp format.                                                                                                                                                                                                                                               |
 | `bytes_in`               | long     | Number of incoming bytes since the last export.                                                                                                                                                                                                                                                    |
 | `bytes_out`              | long     | Number of outgoing bytes since the last export.                                                                                                                                                                                                                                                    |
 | `duration_mean`          | long     | Mean duration time of all the requests that match this combination of L7 data in nanoseconds.                                                                                                                                                                                                      |
@@ -14431,7 +14435,7 @@ rules:
 
 ### Enable audit logs in EKS[​](#enable-audit-logs-in-eks)
 
-Amazon EKS writes Kubernetes audit logs to [Amazon Cloudwatch logs](https://aws.amazon.com/cloudwatch/).
+Amazon EKS writes Kubernetes audit logs to [Amazon CloudWatch logs](https://aws.amazon.com/cloudwatch/).
 
 1. In the EKS management console, access your EKS cluster.
 2. Under **Logging**, click **Update**.
@@ -14439,9 +14443,9 @@ Amazon EKS writes Kubernetes audit logs to [Amazon Cloudwatch logs](https://aws.
    <!-- -->
    ![Audit Log](https://docs.tigera.io/img/calico-enterprise/audit-log.png)
 4. Wait for the update to complete. The blue progress bar at the top of the page displays the message, “Cluster config update in progress.”
-5. Under **Logging**, **Cloudwatch**, make a note of the URL value for a later step, then click the link.
+5. Under **Logging**, **CloudWatch**, make a note of the URL value for a later step, then click the link.
    <!-- -->
-   ![Cloudwatch Logging](https://docs.tigera.io/img/calico-enterprise/cloudwatch-url.png)
+   ![CloudWatch Logging](https://docs.tigera.io/img/calico-enterprise/cloudwatch-url.png)
 6. In the **Log Streams** list, make note of the common prefix (for example, kube-apiserver-audit) for a later step.
    <!-- -->
    ![Log Streams](https://docs.tigera.io/img/calico-enterprise/log-streams.png)
@@ -14459,7 +14463,7 @@ Amazon EKS writes Kubernetes audit logs to [Amazon Cloudwatch logs](https://aws.
 
    b. In the Set permissions section, select the policy, `CloudWatchLogsReadOnlyAccess` to set read only permissions.
 
-   ![Cloudwatch URL](https://docs.tigera.io/img/calico-enterprise/cloudwatch-readonly.png)
+   ![CloudWatch URL](https://docs.tigera.io/img/calico-enterprise/cloudwatch-readonly.png)
 
 3. Optional: In the **Add tags** section, add a tag for the user based on your cluster information.
 
@@ -14471,9 +14475,9 @@ Amazon EKS writes Kubernetes audit logs to [Amazon Cloudwatch logs](https://aws.
 
    where:
 
-   - `additionalSources`: Section where EKS Cloudwatch logs are specified.
-   - `eksCloudwatchLog`: Configuration section containing EKS Cloudwatch logs.
-   - `fetchInterval`: Interval in seconds for Calico Cloud to get logs from Cloudwatch. Default: 60 seconds, this fetches 1MB every 60 seconds, adjust it based number on CRUD operations performed on cluster resource.
+   - `additionalSources`: Section where EKS CloudWatch logs are specified.
+   - `eksCloudwatchLog`: Configuration section containing EKS CloudWatch logs.
+   - `fetchInterval`: Interval in seconds for Calico Cloud to get logs from CloudWatch. Default: 60 seconds, this fetches 1MB every 60 seconds, adjust it based number on CRUD operations performed on cluster resource.
    - `groupName`: Name of the `Log Group` (value from "Enable audit logs in EKS")
    - `region`: AWS region where EKS cluster is hosted (value from "Enable audit logs in EKS")
    - `streamPrefix`: Prefix of `Log Stream` (value from "Enable audit logs in EKS")
@@ -14496,9 +14500,9 @@ Amazon EKS writes Kubernetes audit logs to [Amazon Cloudwatch logs](https://aws.
     state: Ready
    ```
 
-### Configure authentication between Calico Cloud and Cloudwatch logs[​](#configure-authentication-between-calico-cloud-and-cloudwatch-logs)
+### Configure authentication between Calico Cloud and CloudWatch logs[​](#configure-authentication-between-calico-cloud-and-cloudwatch-logs)
 
-In this step, you add AWS authentication information to enable Calico Cloud to get logs from the EKS Cloudwatch instance.
+In this step, you add AWS authentication information to enable Calico Cloud to get logs from the EKS CloudWatch instance.
 
 Add a Secret with the name, `tigera-eks-log-forwarder-secret` in the namespace, `tigera-operator`, and the AWS [Security Credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) in the data section.
 
@@ -14729,7 +14733,7 @@ The **Security Events** page lists all the security events that have been detect
 
 ### Dismiss a security event[​](#dismiss-a-security-event)
 
-You can clear your security events list by dismissing events that you've finished reviewing. When you dismiss an event, that event is no longer visibile in the list.
+You can clear your security events list by dismissing events that you've finished reviewing. When you dismiss an event, that event is no longer visible in the list.
 
 1. In the web console, go to **Threat Defense > Security Events**.
 2. Find a security event in the list, and then click **Action > Dismiss Security Event**.
@@ -15152,11 +15156,19 @@ To add threat feeds to Calico Cloud for automatic updates (default is once a day
 
 2. Add your threat feed on the Add a New Threat Feed window. For example:
 
+   <!-- -->
+
    - **Feed Name**: feodo-tracker
    - **Description**: This is my threat feed based on domains.
-   - **URL**: [https://my.threatfeed.com/deny-list](https://my.threatfeed.com/deny-list)
-   - **Content type**: DomainNameSet
-   - **Labels**: Choose a label from the list.
+
+<!-- -->
+
+- **URL**: [https://my.threatfeed.com/deny-list](https://my.threatfeed.com/deny-list)
+
+<!-- -->
+
+- **Content type**: DomainNameSet
+- **Labels**: Choose a label from the list.
 
 3. Click **Save Changes**.
 
@@ -15242,7 +15254,7 @@ In this section we will look at how to add Tor and VPN feeds to Calico Cloud. In
    <!-- -->
 
    ```shell
-   kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/threatdef/vpn-feed.yaml
+   kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/threatdef/vpn-feed.yaml
    ```
 
    <!-- -->
@@ -15252,7 +15264,7 @@ In this section we will look at how to add Tor and VPN feeds to Calico Cloud. In
    <!-- -->
 
    ```shell
-   kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/threatdef/tor-exit-feed.yaml
+   kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/threatdef/tor-exit-feed.yaml
    ```
 
 2. Now, you can monitor the Dashboard for any malicious activity. The dashboard can be found at the Calico Cloud web console, go to "kibana" and then go to "Dashboard". Select "Tor-VPN Dashboard".
@@ -15381,6 +15393,14 @@ If you don't want to use the [Snort community rules](https://www.snort.org/downl
 
 - you use a paid subscription to a Snort ruleset
 - you have written your own Snort rules.
+
+Beyond custom rules, if you have a paid Snort subscription, you can also customize Snort configuration to fine-tune how DPI generates alerts. For example, you can:
+
+- **Limit alert rates** to reduce the volume of alerts generated for noisy rules
+- **Suppress alerts** for specific rules or traffic sources that are known to be benign
+- **Apply rate filters** to dynamically change alert behavior based on traffic patterns
+
+These customizations are managed through the Snort configuration file (`snort.lua`) and are mounted into the DPI container using the same initContainers mechanism described below. For details on configuring filters, suppressions, and rate limits, see the [Snort3 documentation](https://docs.snort.org/).
 
 > **INFO:** If you install custom Snort rules, Calico Cloud will stop updating the community rules with each minor release. You will be responsible for making sure your rules are up to date.
 
@@ -16058,7 +16078,7 @@ You can add additional directives to the `directivesJson` array to further custo
 
 Detect and block vulnerable images from container workloads.
 
-## Scaning images for vulnerabilities[​](#scaning-images-for-vulnerabilities)
+## Scanning images for vulnerabilities[​](#scanning-images-for-vulnerabilities)
 
 ##### [Choose an image scanning method](https://docs.tigera.io/calico-cloud/image-assurance/scanners/overview)
 
@@ -16330,13 +16350,13 @@ If the CLI scanner is part of your pipeline, scanning is done before runtime and
    **Linux**
 
    ```shell
-   curl -Lo tigera-scanner https://installer.calicocloud.io/tigera-scanner/v3.22.0-2.0-7/image-assurance-scanner-cli-linux-amd64
+   curl -Lo tigera-scanner https://installer.calicocloud.io/tigera-scanner/v3.22.1-1/image-assurance-scanner-cli-linux-amd64
    ```
 
    **macOS**
 
    ```shell
-   curl -Lo tigera-scanner https://installer.calicocloud.io/tigera-scanner/v3.22.0-2.0-7/image-assurance-scanner-cli-darwin-amd64
+   curl -Lo tigera-scanner https://installer.calicocloud.io/tigera-scanner/v3.22.1-1/image-assurance-scanner-cli-darwin-amd64
    ```
 
 2. Set the executable flag on the binary.
@@ -16908,7 +16928,7 @@ Container admission policies are custom Kubernetes resources that allow you to c
    You can either generate the TLS key and certificate yourself and move them to the current folder under the names `admission_controller_key.pem` and `admission_controller_cert.pem`, or use the following command to generate the pair:
 
    ```bash
-   export URL="https://installer.calicocloud.io/manifests/v3.22.0-2.0-7/manifests" && curl ${URL}/generate-open-ssl-key-cert-pair.sh | bash
+   export URL="https://installer.calicocloud.io/manifests/v3.22.1-1/manifests" && curl ${URL}/generate-open-ssl-key-cert-pair.sh | bash
    ```
 
    > **WARNING:** If you generate the key and certificate pair yourself, you must set the SANS to `tigera-image-assurance-admission-controller-service.tigera-image-assurance.svc`.
@@ -17017,7 +17037,7 @@ This indicates that the Kubernetes API server is not sending admission requests 
 > - For users who started using Calico Cloud in April 2025 or later, this feature is not available.
 > - Legacy users, who started using Calico Cloud before April 2025, can continue to use this feature until it is removed in a future release.
 
-You can create and assign Jira issues with information about vulnerabilties from your Image Assurance scan results.
+You can create and assign Jira issues with information about vulnerabilities from your Image Assurance scan results.
 
 ![ia-jira-after-creation](https://docs.tigera.io/assets/images/ia-jira-after-creation-92e2960f74edcc9c69005ac998bf5713.png) *Scan results detail with link to Jira issue.*
 
@@ -17419,14 +17439,14 @@ To change the delay, go to the installation manifest, and uncomment and set the 
 
 You can run reports at any time to specify a different start/end time, and if a scheduled report fails.
 
-Calico Cloud GlobalReport schedules Kubernetes Jobs, which create a single-run pod to generate a report and store it in Elasticsearch. Because you need to run reports as a pod, you need higher permissions: allow `create` access access for pods in namespace `tigera-compliance` using the `tigera-compliance-reporter` service account.
+Calico Cloud GlobalReport schedules Kubernetes Jobs, which create a single-run pod to generate a report and store it in Elasticsearch. Because you need to run reports as a pod, you need higher permissions: allow `create` access for pods in namespace `tigera-compliance` using the `tigera-compliance-reporter` service account.
 
 To run a report on demand:
 
 1. Download the pod template corresponding to your installation method.
 
    ```bash
-   curl https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/compliance-reporter-pod-managed.yaml -o compliance-reporter-pod.yaml
+   curl https://downloads.tigera.io/ee/v3.22.1/manifests/compliance-reporter-pod-managed.yaml -o compliance-reporter-pod.yaml
    ```
 
 2. Edit the template as follows:
@@ -17594,7 +17614,7 @@ To manually run a report:
    **Operator**
 
    ```bash
-   curl https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/compliance-reporter-pod-managed.yaml -o compliance-reporter-pod.yaml
+   curl https://downloads.tigera.io/ee/v3.22.1/manifests/compliance-reporter-pod-managed.yaml -o compliance-reporter-pod.yaml
    ```
 
 2. Edit the template as follows:
@@ -17714,7 +17734,7 @@ To install WireGuard for OpenShift v4.8:
 1. Install requirements:
 
    - [CoreOS Butane](https://coreos.github.io/butane/getting-started/)
-   - [Openshift CLI](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html)
+   - [OpenShift CLI](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html)
 
 2. Download and configure the tools needed for kmods.
 
@@ -17805,13 +17825,13 @@ metadata:
 
 ### Enable WireGuard statistics[​](#enable-wireguard-statistics)
 
-Since v3.11.1, WireGuard statistics are now automatically enabled with the enable wireguard setting(s) mentioned above.
+Since v3.11.1, WireGuard statistics are now automatically enabled with the enable WireGuard setting(s) mentioned above.
 
 ### View WireGuard statistics[​](#view-wireguard-statistics)
 
 To view WireGuard statistics in the web console, you must enable them. From the left navbar, click **Dashboard**, and the Layout Settings icon.
 
-![Wireguard Dashboard Toggle](https://docs.tigera.io/assets/images/stats-toggle-902e5bebc0151b882aeadd3cbb3f0dbc.png)
+![WireGuard Dashboard Toggle](https://docs.tigera.io/assets/images/stats-toggle-902e5bebc0151b882aeadd3cbb3f0dbc.png)
 
 ### Disable WireGuard for an individual node[​](#disable-wireguard-for-an-individual-node)
 
@@ -17904,7 +17924,7 @@ installer:
 
 Once you've completed your edits to your `<custom-values>.yaml`, you can [install](https://docs.tigera.io/calico-cloud/get-started/install-automated#install-calico-cloud-as-part-of-an-automated-workflow-1) Calico Cloud using your customized values.
 
-> **WARNING:** Ensure that the other required values for the Helm chart are set in the values.yaml file, as indicated by the generated helm install command.
+> **WARNING:** Ensure that the other required values for the Helm chart are set in the values.yaml file, as indicated by the generated Helm install command.
 
 ## Configuration via Manifest[​](#configuration-via-manifest)
 
@@ -20468,7 +20488,7 @@ IP in IP supports only IPv4 addresses.
 
 ### Best practice[​](#best-practice)
 
-Calico has an option to selectively encapsulate only traffic that crosses subnet boundaries. We recommend using the **cross-subnet** option with IP in IP or VXLAN to minimize encapsulation overhead. Cross-subnet mode provides better performance in AWS multi-AZ deployments, Azure VNETs, and on networks where routers are used to connect pools of nodes with L2 connectivity.
+Calico has an option to selectively encapsulate only traffic that crosses subnet boundaries. We recommend using the **cross-subnet** option with IP in IP or VXLAN to minimize encapsulation overhead. Cross-subnet mode provides better performance in AWS multi-AZ deployments, Azure VNets, and on networks where routers are used to connect pools of nodes with L2 connectivity.
 
 Be aware that switching encapsulation modes can cause disruption to in-progress connections. Plan accordingly.
 
@@ -21192,7 +21212,7 @@ Use the annotations below to configure bandwidth and burst limits for traffic go
 | `qos.projectcalico.org/egressPeakrate`   | Specifies the egress peak rate limit, i.e. the bandwidth limit during bursts (in bits per second). Optional, defaults to unlimited. Must be higher than the bandwidth limit. Min value: `1.01k` Max value: `1.01P`  |
 | `qos.projectcalico.org/egressMinburst`   | Specifies the egress minburst, i.e. the burst size for peak rate (in **bytes**). Optional, defaults to the MTU value. Min value: `1k` Max value: `100M`                                                             |
 
-If the [Kubernetes bandwidth plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/) annotations `kubernetes.io/ingress-bandwidth` or `kubernetes.io/egress-bandwidth` are configured and the `qos.projectcalico.org` annotations are not, they are honored and Calico Cloud will configure bandwidth limits based on them. The Calico Cloud specific annotations take precedence, so if both are configured, the Kubernetes annotation will be ignored. This makes upgrading from a Calico Cloud version that uses the bandwidth plugin to a version with native bandwith limiting seamless, as the behavior will remain consistent across versions (with Calico Cloud replacing the functionality previously provided by the Kubernetes bandwidth plugin).
+If the [Kubernetes bandwidth plugin](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/) annotations `kubernetes.io/ingress-bandwidth` or `kubernetes.io/egress-bandwidth` are configured and the `qos.projectcalico.org` annotations are not, they are honored and Calico Cloud will configure bandwidth limits based on them. The Calico Cloud specific annotations take precedence, so if both are configured, the Kubernetes annotation will be ignored. This makes upgrading from a Calico Cloud version that uses the bandwidth plugin to a version with native bandwidth limiting seamless, as the behavior will remain consistent across versions (with Calico Cloud replacing the functionality previously provided by the Kubernetes bandwidth plugin).
 
 One essential difference between the bandwidth plugin and Calico Cloud's implementations is that with Calico Cloud, the bandwidth limits take effect immediately, whereas with the bandwidth plugin the pods need to be recreated for the limits to take effect.
 
@@ -21238,9 +21258,9 @@ spec:
  (...)
 ```
 
-| Annotation                   | Description                                                                                                                                                                                                                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `qos.projectcalico.org/dscp` | Specifies the DSCP value of egress traffic toward an endpoint outside cluser or another host in cluster. Min value: `0` Max value: `63` String values: DF, EF, AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6 |
+| Annotation                   | Description                                                                                                                                                                                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `qos.projectcalico.org/dscp` | Specifies the DSCP value of egress traffic toward an endpoint outside cluster or another host in cluster. Min value: `0` Max value: `63` String values: DF, EF, AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6 |
 
 ### Egress gateways
 
@@ -21403,14 +21423,26 @@ metadata:
  name: egress-ippool-1
 spec:
  cidr: 10.10.10.0/30
- blockSize: 31
+ blockSize: 32
  nodeSelector: "!all()"
 EOF
 ```
 
 Where:
 
-- `blockSize` must be specified when the prefix length of the whole `cidr` is more than the default `blockSize` of 26.
+- It is best to set the `blockSize` to 32 so that each block contains only a single IP address:
+
+  - Scheduling a single egress gateway to a node causes the node to claim a whole block. The other IPs in the block are wasted unless a second egress gateway (with the same pool configuration) is scheduled to the same node.
+
+  - Empty /32 blocks can always be reclaimed from other nodes if the pool runs out of blocks. This ensures that an egress gateway can always be scheduled if there are free IPs in the pool.
+
+  Setting `strictAffinity` to `false` in the [IPAM configuration](https://docs.tigera.io/calico-cloud/reference/resources/ipamconfig) also prevents the above problems by allowing nodes to "borrow" IPs from other nodes' blocks. However, using /32 blocks:
+
+  - Avoids a dependency on a setting that is shared with other IP pools.
+
+  - Results in simpler, uniform route advertisements (rather than a mix of block size routes and /32 routes).
+
+  - Results in less route churn.
 
 - `nodeSelector: "!all()"` is recommended so that this egress IP pool is not accidentally used for cluster pods in general. Specifying this `nodeSelector` means that the IP pool is only used for pods that explicitly identify it in their `cni.projectcalico.org/ipv4pools` annotation.
 
@@ -22786,7 +22818,7 @@ metadata:
  name: egress-ip-red-pool
 spec:
  cidr: 10.10.10.0/30
- blockSize: 31
+ blockSize: 32
  nodeSelector: "!all()"
  vxlanMode: Never
 EOF
@@ -22794,7 +22826,19 @@ EOF
 
 Where:
 
-- `blockSize` must be specified when the prefix length of the whole `cidr` is more than the default `blockSize` of 26.
+- It is best to set the `blockSize` to 32 so that each block contains only a single IP address:
+
+  - Scheduling a single egress gateway to a node causes the node to claim a whole block. The other IPs in the block are wasted unless a second egress gateway (with the same pool configuration) is scheduled to the same node.
+
+  - Empty /32 blocks can always be reclaimed from other nodes if the pool runs out of blocks. This ensures that an egress gateway can always be scheduled if there are free IPs in the pool.
+
+  Setting `strictAffinity` to `false` in the [IPAM configuration](https://docs.tigera.io/calico-cloud/reference/resources/ipamconfig) also prevents the above problems by allowing nodes to "borrow" IPs from other nodes' blocks. However, using /32 blocks:
+
+  - Avoids a dependency on a setting that is shared with other IP pools.
+
+  - Results in simpler, uniform route advertisements (rather than a mix of block size routes and /32 routes).
+
+  - Results in less route churn.
 
 - `nodeSelector: "!all()"` is recommended so that this egress IP pool is not accidentally used for cluster pods in general. Specifying this `nodeSelector` means that the IP pool is only used for pods that explicitly identify it in their `cni.projectcalico.org/ipv4pools` annotation.
 
@@ -25510,13 +25554,13 @@ In this section, we will create a `kubeconfig` for each cluster. This `kubeconfi
 1. Create the ServiceAccount used by remote clusters for authentication:
 
    ```bash
-   kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/federation-remote-sa.yaml
+   kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/federation-remote-sa.yaml
    ```
 
 2. Create the ClusterRole and ClusterRoleBinding used by remote clusters for authorization:
 
    ```bash
-   kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/federation-rem-rbac-kdd.yaml
+   kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/federation-rem-rbac-kdd.yaml
    ```
 
 3. Create the ServiceAccount token that will be used in the `kubeconfig`:
@@ -26329,7 +26373,7 @@ The script migrates all applicable Calico Cloud components to open-source Projec
 
 > **SECONDARY:** To successfully downgrade to an open-source Calico configuration, policies must allow necessary traffic to and from Calico Cloud and open-source Calico namespaces. If you keep policies in the default tier (especially GlobalNetworkPolicies), and you have default deny policies, update or add policies accordingly to allow this necessary traffic.
 
-> **WARNING:** If your cluster began with Calico installed and managed by AKS with AddonManager, this uninstall process will not be successful. You will need to reach out to your support contact to create a plan to uninstall Calico Cloud.
+> **WARNING:** If your cluster began with Calico installed and managed by AKS with the `addon-manager` component, this uninstall process will not be successful. You will need to reach out to your support contact to create a plan to uninstall Calico Cloud.
 
 ### Before you begin[​](#before-you-begin)
 
@@ -26338,7 +26382,7 @@ The script migrates all applicable Calico Cloud components to open-source Projec
 
 ### Run the migration script[​](#run-the-migration-script)
 
-1. Download the script `curl -O https://installer.calicocloud.io/manifests/v3.22.0-2.0-7/downgrade.sh`.
+1. Download the script `curl -O https://installer.calicocloud.io/manifests/v3.22.1-1/downgrade.sh`.
 
 2. Make the script executable `chmod +x downgrade.sh`.
 
@@ -27057,9 +27101,9 @@ Calico Cloud uses the open-source [Prometheus monitoring and alerting toolkit](h
 
 - Use Prometheus operator managed by Tigera Operator
 
-  You install the Calico Cloud Prometheus operator and CRDs during Calico Cloud installation. Calico Cloud metrics and alerts are available in the web console. You configure alerts through Prometheus AlertManager.
+  You install the Calico Cloud Prometheus operator and CRDs during Calico Cloud installation. Calico Cloud metrics and alerts are available in the web console. You configure alerts through Prometheus Alertmanager.
 
-  If you want to specify your own Prometheus operator during installation for management by the Tigera Operator, the require operator version must be **v0.40.0 or higher**. Because Calico Cloud creates AlertManager and Prometheus CRs in the `tigera-prometheus` namespace, all you need to do is verify that your Prometheus operator is configured to manage Prometheus and AlertManager instances in the `tigera-prometheus` namespace.
+  If you want to specify your own Prometheus operator during installation for management by the Tigera Operator, the require operator version must be **v0.40.0 or higher**. Because Calico Cloud creates Alertmanager and Prometheus CRs in the `tigera-prometheus` namespace, all you need to do is verify that your Prometheus operator is configured to manage Prometheus and Alertmanager instances in the `tigera-prometheus` namespace.
 
 - [Bring your own Prometheus](https://docs.tigera.io/calico-cloud/operations/monitor/prometheus/byo-prometheus)
 
@@ -27537,9 +27581,9 @@ calico_denied_bytes`                                                            
 | Threshold breach recommendations | See the **Errors Plot graph** to determine if the scope is cluster-wide or node-local. Check calico-node logs. Check resource usage and contention on Kubernetes nodes and calico-nodes. Add nodes/resources if needed. If resource contention is not seen, restart calico-node(s) and monitor. Ensure that other process using IPtables are not blocking Calico Cloud network policy management. |
 | Priority level                   | Optional.                                                                                                                                                                                                                                                                                                                                                                                         |
 
-### Iptables restore errors[​](#iptables-restore-errors)
+### iptables restore errors[​](#iptables-restore-errors)
 
-| Iptables restore errors          |                                                                                                                                                                                                                                                                                         |
+| iptables restore errors          |                                                                                                                                                                                                                                                                                         |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Metric                           | `sum(rate(felix_iptables_restore_errors{5m}))`                                                                                                                                                                                                                                          |
 | Explanation                      | The number of iptables-restore errors over five minutes. The iptables-restore command is used when Calico Cloud makes a change to iptables. For example, a new WEP or HEP is created, changes to a WEP or HEP or a change to a policy that affects a WEP or HEP.                        |
@@ -27548,9 +27592,9 @@ calico_denied_bytes`                                                            
 | Threshold breach recommendations | See the Errors Plot graph to determine if the scope is cluster-wide or node-local. Check calico-node logs. Check resource usage and contention on Kubernetes nodes and calico-nodes. Add nodes/resources if needed. If no resource contention is seen, restart calico-node and monitor. |
 | Priority level                   | Optional.                                                                                                                                                                                                                                                                               |
 
-### Iptables save errors[​](#iptables-save-errors)
+### iptables save errors[​](#iptables-save-errors)
 
-| Iptables save errors             |                                                                                                                                                                                                                                                                                                                                                              |
+| iptables save errors             |                                                                                                                                                                                                                                                                                                                                                              |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Metric                           | `sum(rate(felix_iptables_save_errors{5m}))`                                                                                                                                                                                                                                                                                                                  |
 | Example value                    | `{} 0`                                                                                                                                                                                                                                                                                                                                                       |
@@ -27740,7 +27784,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/prometheus/elasticsearch-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/prometheus/elasticsearch-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -27782,7 +27826,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/prometheus/fluentd-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/prometheus/fluentd-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -27824,7 +27868,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/prometheus/calico-node-monitor-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/prometheus/calico-node-monitor-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in $NAMESPACE.
@@ -27866,7 +27910,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/prometheus/kube-controller-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/prometheus/kube-controller-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -27935,7 +27979,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/prometheus/felix-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/prometheus/felix-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -27969,7 +28013,7 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f https://downloads.tigera.io/ee/v3.22.0-2.0/manifests/prometheus/typha-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f https://downloads.tigera.io/ee/v3.22.1/manifests/prometheus/typha-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -28336,7 +28380,7 @@ Alertmanager is used by Calico Cloud to route alerts from Prometheus to the admi
 
 More detailed information about Alertmanager is available in the [upstream documentation](https://prometheus.io/docs/alerting/latest/configuration).
 
-### Updating the AlertManager config[​](#updating-the-alertmanager-config)
+### Updating the Alertmanager config[​](#updating-the-alertmanager-config)
 
 - Save the current alertmanager secret, usually named `alertmanager-<your-alertmanager-name>`. Our manifests will end up creating a secret called: `alertmanager-calico-node-alertmanager`.
 
@@ -28963,7 +29007,7 @@ To be able to disable `kube-proxy`, Calico Cloud needs to communicate to the API
 
 - `kops` typically sets up a load balancer of some sort in front of the API server. You should use the FQDN and port of the API load balancer, for example `api.internal.<clustername>` as the `KUBERNETES_SERVICE_HOST` below and 443 as the `KUBERNETES_SERVICE_PORT`.
 
-- OpenShift requires various DNS records to be created for the cluster; one of these is exactly what we need: `api-int.<cluster_name>.<base_domain>` should point to the API server or to the load balancer in front of the API server. Use that (filling in the `<cluster_name>` and `<base_domain>` as appropriate for your cluster) for the `KUBERNETES_SERVICE_HOST` below. Openshift uses 6443 for the `KUBERNETES_SERVICE_PORT`.
+- OpenShift requires various DNS records to be created for the cluster; one of these is exactly what we need: `api-int.<cluster_name>.<base_domain>` should point to the API server or to the load balancer in front of the API server. Use that (filling in the `<cluster_name>` and `<base_domain>` as appropriate for your cluster) for the `KUBERNETES_SERVICE_HOST` below. OpenShift uses 6443 for the `KUBERNETES_SERVICE_PORT`.
 
 - For AKS and EKS clusters you should use the FQDN of the API server's load balancer. This can be found with
 
@@ -35435,7 +35479,7 @@ spec:
 
 | Field               | Description                                                                                                                                                                     | Accepted Values | Schema | Default |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------ | ------- |
-| matchPaterrn        | Pattern to match one or more interfaces. Supports exact interface names, match on interface prefixes (e.g., “eth\*”), or “\*” to select all interfaces on the selected node(s). |                 | string |         |
+| matchPattern        | Pattern to match one or more interfaces. Supports exact interface names, match on interface prefixes (e.g., “eth\*”), or “\*” to select all interfaces on the selected node(s). |                 | string |         |
 | minimumRecvInterval | The minimum interval between received BFD packets. Must be a whole number of milliseconds greater than 0.                                                                       |                 | string | 10ms    |
 | minimumSendInterval | The minimum interval between transmitted BFD packets. Must be a whole number of milliseconds greater than 0.                                                                    |                 | string | 100ms   |
 | idleSendInterval    | The interval between transmitted BFD packets when the BFD peer is idle. Must be a whole number of milliseconds greater than 0.                                                  |                 | string | 1m      |
@@ -36357,9 +36401,9 @@ An asset (Pod or HostEndpoint) is flagged as in-scope by endpoint labels, namesp
 
 An endpoint is ingress protected if it has at least one Ingress policy that is applied to it.
 
-A service is ingress protected if all of the inscope endpoints within that service are ingress protected.
+A service is ingress protected if all of the in-scope endpoints within that service are ingress protected.
 
-A namespace is ingress protected if all of the inscope endpoints within that namespace are ingress protected.
+A namespace is ingress protected if all of the in-scope endpoints within that namespace are ingress protected.
 
 *How this applies to the report*: An endpoint is ingress protected only if it was ingress protected throughout the entire report interval.
 
@@ -36375,9 +36419,9 @@ An endpoint is flagged as allowing ingress traffic from another namespace if it 
 - has no source selector or source CIDR configured, or
 - (for GlobalNetworkPolicy) has no source CIDR.
 
-A service is flagged as allowing ingress traffic from another namespace if any of the inscope endpoints within that service are flagged.
+A service is flagged as allowing ingress traffic from another namespace if any of the in-scope endpoints within that service are flagged.
 
-A namespace is flagged as allowing ingress traffic from another namespace if all of the inscope endpoints within that namespace are flagged.
+A namespace is flagged as allowing ingress traffic from another namespace if all of the in-scope endpoints within that namespace are flagged.
 
 *How this applies to the report*: An endpoint is flagged as allowing ingress traffic from another namespace if it was flagged at any time during the report interval.
 
@@ -36393,9 +36437,9 @@ An endpoint is flagged as allowing ingress traffic from the internet if it has o
 - has a source CIDR in the non-private IP ranges and has no source selector, or
 - has a source selector that matches one or more NetworkSets that contain at least one non-private IP.
 
-A service is flagged as allowing ingress traffic from the internet if any of the inscope endpoints within that service are flagged.
+A service is flagged as allowing ingress traffic from the internet if any of the in-scope endpoints within that service are flagged.
 
-A namespace is flagged as allowing ingress traffic from the internet if all of the inscope endpoints within that namespace are flagged.
+A namespace is flagged as allowing ingress traffic from the internet if all of the in-scope endpoints within that namespace are flagged.
 
 *How this applies to the report*: An endpoint is flagged as allowing ingress traffic from the internet if it was flagged as such at any time during the report interval.
 
@@ -36407,9 +36451,9 @@ As per ingress, but with egress policy rules and destination selector/CIDR. Note
 
 An endpoint is flagged as Envoy Enabled if the associated Pod Spec and Annotations indicate that an Istio init and main container are deployed in the Pod. Provided Istio is appropriately configured on the cluster, this can be extrapolated to be indication of whether mTLS is enabled for the endpoint.
 
-A service is flagged as Envoy enabled if all of the inscope endpoints within that service are flagged.
+A service is flagged as Envoy enabled if all of the in-scope endpoints within that service are flagged.
 
-A namespace is flagged as Envoy enabled if all of the inscope endpoints within that namespace are flagged.
+A namespace is flagged as Envoy enabled if all of the in-scope endpoints within that namespace are flagged.
 
 *How this applies to the report*: An endpoint is flagged as Envoy enabled if it was flagged as such throughout the entire report interval.
 
@@ -36638,9 +36682,9 @@ spec:
 EOF
 ```
 
-## Openshift[​](#openshift)
+## OpenShift[​](#openshift)
 
-While there is no extra setup configuration required by the user to generate a benchmark report for Openshift, the result sets will be different than a report generated for regular Kubernetes clusters. Use the [Openshift Container Platform Security Guide](https://static.open-scap.org/ssg-guides/ssg-ocp4-guide-index.html) to cross-reference the benchmark results.
+While there is no extra setup configuration required by the user to generate a benchmark report for OpenShift, the result sets will be different than a report generated for regular Kubernetes clusters. Use the [OpenShift Container Platform Security Guide](https://static.open-scap.org/ssg-guides/ssg-ocp4-guide-index.html) to cross-reference the benchmark results.
 
 ## Downloadable reports[​](#downloadable-reports)
 
@@ -36974,7 +37018,7 @@ spec:
 | wireguardMTUV6                        | MTU set on the IPv6 WireGuard interface created by Felix. Zero value means auto-detect. See [Configuring MTU](https://docs.tigera.io/calico-cloud/networking/configuring/mtu).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | int                                                          | int                                             | 0                                                                                                                                                                                                                                                                 |
 | wireguardRoutingRulePriority          | WireGuard routing rule priority value set up by Felix. If you change the default value, set it to a value most appropriate to routing rules for your nodes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | 1-32765                                                      | int                                             | 99                                                                                                                                                                                                                                                                |
 | wireguardHostEncryptionEnabled        | **Experimental**: Adds host-namespace workload IP's to WireGuard's list of peers. Should **not** be enabled when WireGuard is enabled on a cluster's control plane node, as networking deadlock can occur.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | true, false                                                  | boolean                                         | false                                                                                                                                                                                                                                                             |
-| wireguardKeepAlive                    | WireguardKeepAlive controls Wireguard PersistentKeepalive option. Set 0 to disable. \[Default: 0]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `5s`, `10s`, `1m` etc.                                       | duration                                        | `0`                                                                                                                                                                                                                                                               |
+| wireguardKeepAlive                    | WireguardKeepAlive controls WireGuard PersistentKeepalive option. Set 0 to disable. \[Default: 0]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `5s`, `10s`, `1m` etc.                                       | duration                                        | `0`                                                                                                                                                                                                                                                               |
 | xdpRefreshInterval                    | Period at which Felix re-checks the XDP state in the data plane to ensure that no other process has accidentally broken Calico Cloud's rules. Set to 0 to disable XDP refresh.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `5s`, `10s`, `1m` etc.                                       | duration                                        | `90s`                                                                                                                                                                                                                                                             |
 | xdpEnabled                            | When `bpfEnabled` is `false`: enable XDP acceleration for host endpoint policies. When `bpfEnabled` is `true`, XDP is automatically used for Calico policy where that makes sense, regardless of this setting. \[Default: `true`]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | true,false                                                   | boolean                                         | `true`                                                                                                                                                                                                                                                            |
 | dnsCacheFile                          | The name of the file that Felix uses to preserve learnt DNS information when restarting.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | file name                                                    | string                                          | `/var/run/calico/felix-dns-cache.txt`                                                                                                                                                                                                                             |
@@ -37044,7 +37088,7 @@ When `bpfEnabled` is `true` the "xdp" settings all have no effect; in BPF mode t
 
 ### Health Timeout Overrides[​](#health-timeout-overrides)
 
-Felix has internal liveness and readiness watchdog timers that monitor its various loops. If a loop fails to "check in" within the allotted timeout then Felix will report non-Ready or non-Live on its health port (which is monitored by Kubelet in a Kubernetes system). If Felix reports non-Live, this can result in the Pod being restarted.
+Felix has internal liveness and readiness watchdog timers that monitor its various loops. If a loop fails to "check in" within the allotted timeout then Felix will report non-Ready or non-Live on its health port (which is monitored by kubelet in a Kubernetes system). If Felix reports non-Live, this can result in the Pod being restarted.
 
 In Kubernetes, if you see the calico-node Pod readiness or liveness checks fail intermittently, check the calico-node Pod log for a log from Felix that gives the overall health status (the list of components will depend on which features are enabled):
 
@@ -42626,7 +42670,7 @@ kube-controllers also exports the default set of metrics that Prometheus makes a
 | `process_max_fds`                            | Maximum number of open file descriptors.                           |
 | `process_open_fds`                           | Number of open file descriptors.                                   |
 | `process_resident_memory_bytes`              | Resident memory size in bytes.                                     |
-| `process_start_time_seconds`                 | Start time of the process since unix epoch in seconds.             |
+| `process_start_time_seconds`                 | Start time of the process since Unix epoch in seconds.             |
 | `process_virtual_memory_bytes`               | Virtual memory size in bytes.                                      |
 | `promhttp_metric_handler_requests_in_flight` | Current number of scrapes being served.                            |
 | `promhttp_metric_handler_requests_total`     | Total number of scrapes by HTTP status code.                       |
@@ -42977,7 +43021,7 @@ The full list of parameters which can be set is as follows.
 | `PrometheusMetricsHost`             | `FELIX_PROMETHEUSMETRICSHOST`                                                                         | TCP network address that the Prometheus metrics server should bind to. \[Default: `""`]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | string                                                                                          |
 | `PrometheusMetricsPort`             | `FELIX_PROMETHEUSMETRICSPORT`                                                                         | TCP port that the Prometheus metrics server should bind to. \[Default: `9091`]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | int                                                                                             |
 | `PrometheusProcessMetricsEnabled`   | `FELIX_PROMETHEUSPROCESSMETRICSENABLED`                                                               | Set to `false` to disable process metrics collection, which the Prometheus client does by default. This reduces the number of metrics reported, reducing Prometheus load. \[Default: `true`]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | boolean                                                                                         |
-| `PrometheusWireguardMetricsEnabled` | `FELIX_PROMETHEUSWIREGUARDMETRICSENABLED`                                                             | Set to `false` to disable wireguard device metrics collection, which Felix does by default. \[Default: `true`]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | boolean                                                                                         |
+| `PrometheusWireguardMetricsEnabled` | `FELIX_PROMETHEUSWIREGUARDMETRICSENABLED`                                                             | Set to `false` to disable WireGuard device metrics collection, which Felix does by default. \[Default: `true`]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | boolean                                                                                         |
 | `RemoveExternalRoutes`              | `FELIX_REMOVEEXTERNALROUTES`                                                                          | Whether or not to remove device routes that have not been programmed by Felix. Disabling this will allow external applications to also add device routes. \[Default: `true`]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | bool                                                                                            |
 | `ReportingIntervalSecs`             | `FELIX_REPORTINGINTERVALSECS`                                                                         | Interval at which Felix reports its status into the datastore. 0 means disabled and is correct for Kubernetes-only clusters. Must be non-zero in OpenStack deployments. \[Default: `30`]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | int                                                                                             |
 | `ReportingTTLSecs`                  | `FELIX_REPORTINGTTLSECS`                                                                              | Time-to-live setting for process-wide status reports. \[Default: `90`]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | int                                                                                             |
@@ -43244,7 +43288,7 @@ The following parameters fine tune packet capture rotation:
 | wireguardMTUV6                 | MTU set on the IPv6 WireGuard interface created by Felix. Zero value means auto-detect. See [Configuring MTU](https://docs.tigera.io/calico-cloud/networking/configuring/mtu).                                                                                       | int             | int     | 0              |
 | wireguardRoutingRulePriority   | WireGuard routing rule priority value set up by Felix. If you change the default value, set it to a value most appropriate to routing rules for your nodes.                                                                                                          | 1-32765         | int     | 99             |
 | wireguardHostEncryptionEnabled | **Experimental**: Adds host-namespace workload IP's to WireGuard's list of peers. Should **not** be enabled when WireGuard is enabled on a cluster's control plane node, as networking deadlock can occur.                                                           | true, false     | boolean | false          |
-| wireguardKeepAlive             | WireguardKeepAlive controls Wireguard PersistentKeepalive option. Set 0 to disable. \[Default: 0]                                                                                                                                                                    | int             | int     | 25             |
+| wireguardKeepAlive             | WireguardKeepAlive controls WireGuard PersistentKeepalive option. Set 0 to disable. \[Default: 0]                                                                                                                                                                    | int             | int     | 25             |
 
 For more information on encrypting in-cluster traffic with WireGuard, refer to [Encrypt cluster pod traffic](https://docs.tigera.io/calico-cloud/compliance/encrypt-cluster-pod-traffic)
 
@@ -43334,8 +43378,8 @@ Felix exports a number of Prometheus metrics. The current set is as follows. Sin
 | `felix_int_dataplane_iface_msg_batch_size`                 | Number of interface state messages processed in each batch. Higher values indicate we're doing more batching to try to keep up.                           |
 | `felix_int_dataplane_messages`                             | Number data plane messages by type.                                                                                                                       |
 | `felix_int_dataplane_msg_batch_size`                       | Number of messages processed in each batch. Higher values indicate we're doing more batching to try to keep up.                                           |
-| `felix_ipsec_bindings_total`                               | Total number of ipsec bindings.                                                                                                                           |
-| `felix_ipsec_errors`                                       | Number of ipsec command failures.                                                                                                                         |
+| `felix_ipsec_bindings_total`                               | Total number of IPsec bindings.                                                                                                                           |
+| `felix_ipsec_errors`                                       | Number of IPsec command failures.                                                                                                                         |
 | `felix_ipset_calls`                                        | Number of ipset commands executed.                                                                                                                        |
 | `felix_ipset_errors`                                       | Number of ipset command failures.                                                                                                                         |
 | `felix_ipset_lines_executed`                               | Number of ipset operations executed.                                                                                                                      |
@@ -43418,7 +43462,7 @@ This is a technical statistic that shows how many times the label index has empl
 
 - `endpoint|parent-multi-value`: the label index was able to limit the scan to only those endpoints/parents that have a particular label and one of a few values. For example, selector `label in {"a", "b")` would only scan items that had exactly that label with one of the given values.
 
-- `endpoint|parent-label-name`: the label index was able to limit the scan to only those endpoints/parents that hava a particular label (but was unable to limit it to a particular subset of values). For example, `has(label)` would result in that kind of scan.
+- `endpoint|parent-label-name`: the label index was able to limit the scan to only those endpoints/parents that have a particular label (but was unable to limit it to a particular subset of values). For example, `has(label)` would result in that kind of scan.
 
 Terminology: here "endpoint" means "endpoint or NetworkSet" and "parent" is Felix's internal name for resources like Kubernetes Namespaces. A "parent" scan means that the label index scanned all endpoints that have a parent matching the strategy.
 
@@ -43460,20 +43504,20 @@ Felix also exports the default set of metrics that Prometheus makes available. C
 | `process_max_fds`                  | Maximum number of open file descriptors.                                                    |
 | `process_open_fds`                 | Number of open file descriptors.                                                            |
 | `process_resident_memory_bytes`    | Resident memory size in bytes.                                                              |
-| `process_start_time_seconds`       | Start time of the process since unix epoch in seconds.                                      |
+| `process_start_time_seconds`       | Start time of the process since Unix epoch in seconds.                                      |
 | `process_virtual_memory_bytes`     | Virtual memory size in bytes.                                                               |
 | `process_virtual_memory_max_bytes` | Maximum amount of virtual memory available in bytes.                                        |
 
-### Wireguard Metrics[​](#wireguard-metrics)
+### WireGuard Metrics[​](#wireguard-metrics)
 
-Felix also exports wireguard device stats if found/detected. Can be disabled via Felix configuration.
+Felix also exports WireGuard device stats if found/detected. Can be disabled via Felix configuration.
 
 | Name                                 | Description                                                                                       |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | `wireguard_meta`                     | Gauge. Device / interface information for a felix/calico node, values are in this metric's labels |
 | `wireguard_bytes_rcvd`               | Counter. Current bytes received from a peer identified by a peer public key and endpoint          |
 | `wireguard_bytes_sent`               | Counter. Current bytes sent to a peer identified by a peer public key and endpoint                |
-| `wireguard_latest_handshake_seconds` | Gauge. Last handshake with a peer, unix timestamp in seconds.                                     |
+| `wireguard_latest_handshake_seconds` | Gauge. Last handshake with a peer, Unix timestamp in seconds.                                     |
 
 ### Configuration on public clouds
 
@@ -44051,7 +44095,7 @@ Then you should observe that the new Calico Cloud policy is enforced for new pac
 
 24 Feb 2021
 
-Calico Cloud incorporates various open source softwares. The following open source components and their respective licenses used in the product are provided for your informational purposes. In the table below, you can look at the details of each project and license associated with it.
+Calico Cloud incorporates various open source software. The following open source components and their respective licenses used in the product are provided for your informational purposes. In the table below, you can look at the details of each project and license associated with it.
 
 | Project                                                                        | Artifact Name                                                                                   | LICENSE              |
 | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | -------------------- |
@@ -44753,7 +44797,7 @@ In a Calico Cloud network, each host acts as a gateway router for the workloads 
 
 While the routing table may look a little odd to someone who is used to configuring LAN networking, using explicit routes rather than subnet-local gateways is fairly common in WAN networking.
 
-## Why isn't Calico Cloud working with a containerized Kubelet?[​](#why-isnt-calico-cloud-working-with-a-containerized-kubelet)
+## Why isn't Calico Cloud working with a containerized kubelet?[​](#why-isnt-calico-cloud-working-with-a-containerized-kubelet)
 
 Calico Cloud hosted install places the necessary CNI binaries and config on each Kubernetes node in a directory on the host as specified in the manifest. By default it places binaries in /opt/cni/bin and config /etc/cni/net.d.
 
@@ -45050,9 +45094,15 @@ Go to [Calico Cloud Status](https://status.calicocloud.io) to view the current s
 
 ### Calico Cloud release notes
 
-## February 5, 2026 (web console update)
+## March 5, 2026 (version 22.2.0)
 
 ### New features and enhancements[​](#new-features-and-enhancements)
+
+- Enhancements to to Calico Cloud dashboards.
+
+## February 5, 2026 (web console update)
+
+### New features and enhancements[​](#new-features-and-enhancements-1)
 
 #### Projects[​](#projects)
 
@@ -45074,7 +45124,7 @@ For more information, see [Create and assign custom roles](https://docs.tigera.i
 
 ## December 1, 2025 (version 22.1.0)
 
-### New features and enhancements[​](#new-features-and-enhancements-1)
+### New features and enhancements[​](#new-features-and-enhancements-2)
 
 #### Dashboards are GA[​](#dashboards-are-ga)
 
@@ -45108,7 +45158,7 @@ This release adds support for Kubernetes 1.34.
 
 ## October 21, 2025 (web console update)
 
-### New features and enhancements[​](#new-features-and-enhancements-2)
+### New features and enhancements[​](#new-features-and-enhancements-3)
 
 - Improved search and user experience for the **Policies** page in the Calico Cloud Free Tier web console.
 
@@ -45124,7 +45174,7 @@ This release adds support for Kubernetes 1.34.
 
 ## September 8, 2025 (version 22.0.0)
 
-### New features and enhancements[​](#new-features-and-enhancements-3)
+### New features and enhancements[​](#new-features-and-enhancements-4)
 
 #### Calico Ingress Gateway is GA[​](#calico-ingress-gateway-is-ga)
 
@@ -45172,7 +45222,7 @@ You can now install or upgrade to the following versions:
 
 ## August 5, 2025 (web console update)
 
-### New features and enhancements[​](#new-features-and-enhancements-4)
+### New features and enhancements[​](#new-features-and-enhancements-5)
 
 #### Predefined user roles for Entra ID groups[​](#predefined-user-roles-for-entra-id-groups)
 
@@ -45182,7 +45232,7 @@ For more information, see [Give role-based access to an Entra ID group](https:/
 
 ## June 23, 2025 (version 21.3.0)
 
-### New features and enhancements[​](#new-features-and-enhancements-5)
+### New features and enhancements[​](#new-features-and-enhancements-6)
 
 #### Policy recommendations for Calico Cloud Free Tier[​](#policy-recommendations-for-calico-cloud-free-tier)
 
@@ -45237,7 +45287,7 @@ This release adds support for Kubernetes 1.32 and 1.33.
 
 ## May 5, 2025 (web console update)[​](#may-5-2025-web-console-update)
 
-### New features and enhancements[​](#new-features-and-enhancements-6)
+### New features and enhancements[​](#new-features-and-enhancements-7)
 
 #### Introducing Calico Cloud Free Tier[​](#introducing-calico-cloud-free-tier)
 
@@ -45257,7 +45307,7 @@ For more information about Calico Cloud Free Tier, see the [overview](https://do
 
 ## April 29, 2025 (version 21.2.0)
 
-### New features and enhancements[​](#new-features-and-enhancements-7)
+### New features and enhancements[​](#new-features-and-enhancements-8)
 
 #### New pre-defined user roles[​](#new-pre-defined-user-roles)
 
@@ -45314,7 +45364,7 @@ For more information, see [Install Calico Cloud](https://docs.tigera.io/calico-c
 
 ## March 10, 2025 (version 21.0.0)
 
-### New features and enhancements[​](#new-features-and-enhancements-8)
+### New features and enhancements[​](#new-features-and-enhancements-9)
 
 #### Custom dashboards (tech preview)[​](#custom-dashboards-tech-preview)
 
@@ -45356,7 +45406,7 @@ You can now install or upgrade to the following versions:
 
 ## February 11, 2025 (version 20.4.0)
 
-### New features and enhancements[​](#new-features-and-enhancements-9)
+### New features and enhancements[​](#new-features-and-enhancements-10)
 
 #### Exporting custom dashboard cards as CSV files[​](#exporting-custom-dashboard-cards-as-csv-files)
 
@@ -45372,7 +45422,7 @@ We added support for customizing the namespace labels on AKS clusters. By defaul
 
 ## January 9, 2025 (web console update)[​](#january-9-2025-web-console-update)
 
-### New features and enhancements[​](#new-features-and-enhancements-10)
+### New features and enhancements[​](#new-features-and-enhancements-11)
 
 #### Secure web console access with IP allowlists[​](#secure-web-console-access-with-ip-allowlists)
 
@@ -45389,7 +45439,7 @@ To configure an IP allowlist, [open a support ticket](https://tigeraio.my.site.c
 
 ## December 17, 2024 (web console update)[​](#december-17-2024-web-console-update)
 
-### New features and enhancements[​](#new-features-and-enhancements-11)
+### New features and enhancements[​](#new-features-and-enhancements-12)
 
 #### Dashboards (tech preview)[​](#dashboards-tech-preview)
 
@@ -45403,7 +45453,7 @@ For more information, see [Dashboards](https://docs.tigera.io/calico-cloud/obser
 
 > **INFO:** Because of a breaking change, this version is no longer available. Upgrade instead to [Calico Cloud 20.3.1](#20.3.1) or later.
 
-### New features and enhancements[​](#new-features-and-enhancements-12)
+### New features and enhancements[​](#new-features-and-enhancements-13)
 
 #### Image Assurance scan result management[​](#image-assurance-scan-result-management)
 
@@ -45419,7 +45469,7 @@ Calico Cloud now includes search-to-filter capabilities on the policy board and 
 
 #### Envoy deployment as a sidecar[​](#envoy-deployment-as-a-sidecar)
 
-Calico Cloud now provides the ability to deploy Envoy as a sidecar so application layer policy and logging are compatible with other features such as egress gateways, Wireguard for data-in-transit encryption, and Calico’s eBPF data plane.
+Calico Cloud now provides the ability to deploy Envoy as a sidecar so application layer policy and logging are compatible with other features such as egress gateways, WireGuard for data-in-transit encryption, and Calico’s eBPF data plane.
 
 For more information, see [Application layer policy](https://docs.tigera.io/calico-cloud/network-policy/application-layer-policies/alp) and [L7 logs](https://docs.tigera.io/calico-cloud/observability/elastic/l7/configure).
 
@@ -45451,7 +45501,7 @@ For more information see [Deploy a dual ToR cluster](https://docs.tigera.io/cali
 
 ## November 6, 2024 (version 20.2.0)[​](#november-6-2024-version-2020)
 
-### New features and enhancements[​](#new-features-and-enhancements-13)
+### New features and enhancements[​](#new-features-and-enhancements-14)
 
 #### Image Assurance scan result management[​](#image-assurance-scan-result-management-1)
 
@@ -45469,7 +45519,7 @@ In this release, you can more easily manage your Image Assurance scan results by
 
 ## October 1, 2024 (version 20.1.0)[​](#october-1-2024-version-2010)
 
-### New features and enhancements[​](#new-features-and-enhancements-14)
+### New features and enhancements[​](#new-features-and-enhancements-15)
 
 #### View and manage detectors for Container Threat Detection[​](#view-and-manage-detectors-for-container-threat-detection)
 
@@ -45499,7 +45549,7 @@ Image Assurance scans results now include information using the [Exploit Predict
 
 ## September 10, 2024 (version 20.0.0)[​](#september-10-2024-version-2000)
 
-### New features and enhancements[​](#new-features-and-enhancements-15)
+### New features and enhancements[​](#new-features-and-enhancements-16)
 
 #### Helm customizations[​](#helm-customizations)
 
@@ -45548,7 +45598,7 @@ For information about upgrading, see [Upgrade Calico Cloud](https://docs.tigera.
 
 ## July 9, 2024 (version 19.4.0)[​](#july-9-2024-version-1940)
 
-## New features and enhancements[​](#new-features-and-enhancements-16)
+## New features and enhancements[​](#new-features-and-enhancements-17)
 
 ### Bulk vulnerability exceptions for Image Assurance[​](#bulk-vulnerability-exceptions-for-image-assurance)
 
@@ -45563,7 +45613,7 @@ For more information, see [Exclude vulnerabilities from scan results](https://do
 
 ## June 11, 2024 (version 19.3.0)[​](#june-11-2024-version-1930)
 
-### New features and enhancements[​](#new-features-and-enhancements-17)
+### New features and enhancements[​](#new-features-and-enhancements-18)
 
 #### Jira integration for Image Assurance scan results[​](#jira-integration-for-image-assurance-scan-results)
 
@@ -45597,7 +45647,7 @@ For security events that contain external IP addresses, Calico Cloud now automat
 
 #### Extend Workload-based WAF to Ingress Gateways[​](#extend-workload-based-waf-to-ingress-gateways)
 
-This latest release enables operators to plug-in a modifiedsimplified version of WAF to their own instances of Envoy. This allows users to deploy this version of WAF at the edge of their cluster integrated with an Ingress Gateway (if based on Envoy), with fully customizable rules based on OWASP CoreRuleSet 4.0 and powered by the Coraza engine.
+This latest release enables operators to plug-in a modified, simplified version of WAF to their own instances of Envoy. This allows users to deploy this version of WAF at the edge of their cluster integrated with an Ingress Gateway (if based on Envoy), with fully customizable rules based on OWASP CoreRuleSet 4.0 and powered by the Coraza engine.
 
 For more information, see [Deploying WAF with an ingress gateway ](https://docs.tigera.io/calico-cloud/threat/deploying-waf-ingress-gateway).
 
@@ -45607,7 +45657,7 @@ Calico Cloud now provides the ability to set resource requests and limits for th
 
 ### Known issues[​](#known-issues-2)
 
-- It is no longer supported to uninstall Calico Cloud on a cluster that before connecting to Calico Cloud it had Calico managed with AddonManager. This includes AKS clusters that had Calico installed and managed by AKS.
+- It is no longer supported to uninstall Calico Cloud on a cluster that before connecting to Calico Cloud it had Calico managed with the `addon-manager` component. This includes AKS clusters that had Calico installed and managed by AKS.
 
 ### Bug fixes[​](#bug-fixes-8)
 
@@ -45615,7 +45665,7 @@ Calico Cloud now provides the ability to set resource requests and limits for th
 
 ## April 30, 2024 (version 19.2.0)[​](#april-30-2024-version-1920)
 
-### New features and enhancements[​](#new-features-and-enhancements-18)
+### New features and enhancements[​](#new-features-and-enhancements-19)
 
 #### Automated installation with client credentials[​](#automated-installation-with-client-credentials)
 
@@ -45643,7 +45693,7 @@ For more information, see [Configure exclusions for image scanning](https://docs
 
 ## February 28, 2024 (version 19.0.0)[​](#february-28-2024-version-1900)
 
-### New features and enhancements[​](#new-features-and-enhancements-19)
+### New features and enhancements[​](#new-features-and-enhancements-20)
 
 #### Improved flow log filtering for destination domains[​](#improved-flow-log-filtering-for-destination-domains)
 
@@ -45672,7 +45722,7 @@ We've added the following improvements to the [Security events dashboard](https:
 
 ## January 31, 2024 (version 18.3.0)[​](#january-31-2024-version-1830)
 
-### New features and enhancements[​](#new-features-and-enhancements-20)
+### New features and enhancements[​](#new-features-and-enhancements-21)
 
 #### Assign custom roles to users automatically with Entra ID (formerly Azure AD) groups[​](#assign-custom-roles-to-users-automatically-with-entra-id-formerly-azure-ad-groups)
 
@@ -45698,7 +45748,7 @@ For more information, see [Configure federated endpoint identity and services](h
 
 #### Support for Azure CNI with overlay networking for AKS[​](#support-for-azure-cni-with-overlay-networking-for-aks)
 
-We now officially support AKS clusters that are using overlay networking. This option is useful if you've exhausted your IP addresses. This option augments existing support for Azure CNI with no overlay (where a VNET IP address is assigned to every pod).
+We now officially support AKS clusters that are using overlay networking. This option is useful if you've exhausted your IP addresses. This option augments existing support for Azure CNI with no overlay (where a VNet IP address is assigned to every pod).
 
 #### Support for Kubernetes 1.28[​](#support-for-kubernetes-128)
 
@@ -45716,7 +45766,7 @@ This release adds support for Kubernetes 1.28.
 
 ## December 21, 2023 (version 18.2.0)[​](#december-21-2023-version-1820)
 
-### New features and enhancements[​](#new-features-and-enhancements-21)
+### New features and enhancements[​](#new-features-and-enhancements-22)
 
 #### Security Posture Overview dashboard[​](#security-posture-overview-dashboard)
 
@@ -45736,7 +45786,7 @@ This release comes with support for connecting RKE2 clusters to Calico Cloud.
 
 ## November 29, 2023 (version 18.1.0)[​](#november-29-2023-version-1810)
 
-### New features and enhancements[​](#new-features-and-enhancements-22)
+### New features and enhancements[​](#new-features-and-enhancements-23)
 
 - We limited the permissions that are assigned to the Calico Cloud installer. Previously, the installer had cluster administrator privileges. Now the installer gets access only to what is required to install Calico Cloud.
 - **Image Assurance**. We added a filter that lets you sort your list of running images by severity rating.
@@ -45752,7 +45802,7 @@ This release comes with support for connecting RKE2 clusters to Calico Cloud.
 
 ## October 23, 2023 (version 18.0.0)[​](#october-23-2023-version-1800)
 
-### New features and enhancements[​](#new-features-and-enhancements-23)
+### New features and enhancements[​](#new-features-and-enhancements-24)
 
 #### Image Assurance registry scanner[​](#image-assurance-registry-scanner)
 
@@ -45811,7 +45861,7 @@ If you are experiencing any login issues, go to [https://calicocloud.io](https:/
 
 ## September 11, 2023 (version 17.1.1)[​](#september-11-2023-version-1711)
 
-### New features and enhancements[​](#new-features-and-enhancements-24)
+### New features and enhancements[​](#new-features-and-enhancements-25)
 
 - We redesigned a section of the Image Assurance UI to make it easier to see how vulnerable an image is.
 - We made improvements to the way Container Threat Detection processes large volumes of alerts.
@@ -45823,7 +45873,7 @@ If you are experiencing any login issues, go to [https://calicocloud.io](https:/
 
 ## September 5, 2023 (version 17.1.0)[​](#september-5-2023-version-1710)
 
-### New features and enhancements[​](#new-features-and-enhancements-25)
+### New features and enhancements[​](#new-features-and-enhancements-26)
 
 #### Improvements to software versioning for Calico Cloud installations on managed clusters[​](#improvements-to-software-versioning-for-calico-cloud-installations-on-managed-clusters)
 
@@ -45878,7 +45928,7 @@ This allows you to successfully reinstall or upgrade to Calico Cloud by followin
 
 ## August 21, 2023 (version 17.0.0)[​](#august-21-2023-version-1700)
 
-### New features and enhancements[​](#new-features-and-enhancements-26)
+### New features and enhancements[​](#new-features-and-enhancements-27)
 
 #### New policy recommendations engine for namespace isolation[​](#new-policy-recommendations-engine-for-namespace-isolation)
 
@@ -45896,9 +45946,9 @@ Calico Cloud has added support for DNS rules in clusters using NodeLocal DNSCach
 
 Calico Cloud includes updates to the UI that allows you to select which services are enabled for the Workload-based Web Application Firewall. [Web application firewall](https://docs.tigera.io/calico-cloud/threat/web-application-firewall).
 
-#### Wireguard support for AKS and EKS with Calico CNI[​](#wireguard-support-for-aks-and-eks-with-calico-cni)
+#### WireGuard support for AKS and EKS with Calico CNI[​](#wireguard-support-for-aks-and-eks-with-calico-cni)
 
-Calico Cloud now offers official support for Wireguard when using Microsoft AKS or Amazon EKS with Calico CNI. This mode of deployment offers performance benefits and a more efficient routing table compared to using cloud provider CNIs. [Encrypt data in transit](https://docs.tigera.io/calico-cloud/compliance/encrypt-cluster-pod-traffic).
+Calico Cloud now offers official support for WireGuard when using Microsoft AKS or Amazon EKS with Calico CNI. This mode of deployment offers performance benefits and a more efficient routing table compared to using cloud provider CNIs. [Encrypt data in transit](https://docs.tigera.io/calico-cloud/compliance/encrypt-cluster-pod-traffic).
 
 #### Additional custom roles for Calico Cloud[​](#additional-custom-roles-for-calico-cloud)
 
@@ -45917,7 +45967,7 @@ You can now create custom role-based access controls for two new roles: "Usage M
 
 ## June 6, 2023[​](#june-6-2023)
 
-### New features and enhancements[​](#new-features-and-enhancements-27)
+### New features and enhancements[​](#new-features-and-enhancements-28)
 
 #### In-cluster scanning with Image Assurance[​](#in-cluster-scanning-with-image-assurance)
 
@@ -45939,7 +45989,7 @@ Calico Cloud no longer supports installation on RKE or RKE2.
 
 ## April 11, 2023[​](#april-11-2023)
 
-## New features and enhancements[​](#new-features-and-enhancements-28)
+## New features and enhancements[​](#new-features-and-enhancements-29)
 
 ### Updates to Managed Clusters[​](#updates-to-managed-clusters)
 
@@ -45976,7 +46026,7 @@ Calico Cloud components were updated with more restrictive access for pods and c
 
 ## February 28, 2023[​](#february-28-2023)
 
-### New features and enhancements[​](#new-features-and-enhancements-29)
+### New features and enhancements[​](#new-features-and-enhancements-30)
 
 - Adds Bottlerocket support for Container Threat Detection.
 - Adds support for scanning multiple images with Image Assurance
@@ -45988,7 +46038,7 @@ Calico Cloud components were updated with more restrictive access for pods and c
 
 ## February 7, 2023[​](#february-7-2023)
 
-### New features and enhancements[​](#new-features-and-enhancements-30)
+### New features and enhancements[​](#new-features-and-enhancements-31)
 
 #### New and improved Dashboards[​](#new-and-improved-dashboards)
 
@@ -46024,7 +46074,7 @@ Calico Cloud has improved the probes to check readiness and outbound connectivit
 
 ## December 13, 2022[​](#december-13-2022)
 
-### New features and enhancements[​](#new-features-and-enhancements-31)
+### New features and enhancements[​](#new-features-and-enhancements-32)
 
 #### Search by CVE in Image Assurance[​](#search-by-cve-in-image-assurance)
 
@@ -46119,7 +46169,7 @@ Calico Cloud has added a new configuration option in Felix (`DNSPolicyMode`) tha
 
 ### Improvement: Additional predefined RBAC options[​](#improvement-additional-predefined-rbac-options)
 
-Calico Cloud now supports 3 more pre-defined RBAC controls (devops, security and compliance persona) for role assignment.
+Calico Cloud now supports 3 more pre-defined RBAC controls (DevOps, security and compliance persona) for role assignment.
 
 ### Improvement: Anomaly detection deployment[​](#improvement-anomaly-detection-deployment)
 
