@@ -12,12 +12,14 @@ jobs:
       - name: Get changed files
         id: changed
         run: |
-          FILES=$(git diff --name-only --diff-filter=d ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- '*.md' '*.mdx' | tr '\n' ' ')
-          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          FILES=$(git diff --name-only --diff-filter=d ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- '*.md' '*.mdx')
           if [ -z "$FILES" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo 'files=all' >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
+            JSON=$(echo "$FILES" | jq -R -s -c 'split("\n") | map(select(. != ""))')
+            echo "files=$JSON" >> "$GITHUB_OUTPUT"
           fi
       - name: Enable Corepack
         if: steps.changed.outputs.skip == 'false'
@@ -38,7 +40,7 @@ jobs:
         if: steps.changed.outputs.skip == 'false'
         run: |
           sudo apt-get install ripgrep
-          FILES="${{ steps.changed.outputs.files }}"
+          FILES=$(echo '${{ steps.changed.outputs.files }}' | jq -r '.[]' | tr '\n' ' ')
           if [ -n "$FILES" ]; then
             rg -l0 '\$\[[^\]]*\]' -- $FILES | xargs -0 perl -i -pe 's/\$\[[^\]]*\]/PICKLEVAR/g' || true
           fi
