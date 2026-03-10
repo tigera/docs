@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   generate:
@@ -48,14 +49,22 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Commit and push
+      - name: Create PR with updates
         if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          BRANCH="chore/update-llms-txt-$(date +%Y-%m-%d)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
           git add static/llms.txt \
             static/calico/llms.txt static/calico/llms-full.txt \
             static/calico-enterprise/llms.txt static/calico-enterprise/llms-full.txt \
             static/calico-cloud/llms.txt static/calico-cloud/llms-full.txt
           git commit -m "chore: update generated llms.txt files"
-          git push
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --title "chore: update generated llms.txt files" \
+            --body "Automated weekly update of llms.txt and llms-full.txt files." \
+            --base main
