@@ -116,8 +116,8 @@ export default async function createAsyncConfig() {
           searchPagePath: '/search',
         },
         announcementBar: {
-          id: "calico_hackathon_midway",
-          content: '🛡️ Hack the latest features: Leverage Calico 3.30+ to solve networking challenges and win up to $1,000. <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=Docs_site&utm_campaign=Hackathon2026">Enter the Calico 3.30+ Hackathon</a>',
+          id: "ai_agent_governance_kubecon",
+          content: '🛠️ How do you govern autonomous AI agents? Register for the AI Agent Governance Workshop @ KubeCon EU (March 23, 2026) <a href="https://link.tigera.io/umnHe">Learn more →</a>',
           backgroundColor: "#FCE181",
           textColor: "#000",
           isCloseable: true,
