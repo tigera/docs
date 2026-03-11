@@ -28,9 +28,9 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
 - arm64 (little-endian)
 - Linux distribution/kernel:
 
-  - Ubuntu 20.04 or above.
-  - Red Hat v8.2 with Linux kernel v4.18.0-193 or above (Red Hat have backported the required features to that build).
-  - Another supported distribution with Linux kernel v5.3 or above.  {/*TODO-XREFS-CC */}
+  - Ubuntu 22.04 or above.
+  - Red Hat v8.4 with Linux kernel v4.18.0-305 or above (Red Hat have backported the required features to that build).
+  - Another supported distribution with Linux kernel v5.10 or above.  {/*TODO-XREFS-CC */}
   - Immutable operating systems (e.g., Talos Linux): Ensure the `CgroupV2Path` in the `FelixConfiguration` CRD is set to a writable path.
 
 #### Kernel version requirements for eBPF features
@@ -39,15 +39,14 @@ Some eBPF features require a higher kernel version than the base eBPF data plane
 
 | Feature | Minimum kernel version | Details |
 |---|---|---|
-| Base eBPF data plane | v5.3 (RHEL: v4.18.0-193) | v5.8+ with CO-RE recommended for better performance |
-| [XDP acceleration](../../network-policy/extreme-traffic/defend-dos-attack.mdx) | v4.16 | Used for DoS mitigation; when `bpfEnabled` is `true`, policy is always accelerated using best available BPF technology |
+| Base eBPF data plane | v5.10 (RHEL: v4.18.0-305) | CO-RE supported at this version for better performance |
 | Log rules in eBPF mode | v5.16 | Logs sent to trace pipe via `bpftool prog tracelog` |
 | [QoS bandwidth controls](../../networking/configuring/qos-controls.mdx) | v6.6 | Requires `tcx` support. Established connection limits not supported with eBPF |
 | [DNS policy inline mode](../../network-policy/domain-based-policy.mdx) | v5.17 (RHEL: v5.14) | `BPFDNSPolicyMode: Inline` parses DNS responses in eBPF before they reach the application. Only wildcard prefixes (`*.x.y.z`) supported. Falls back to `NoDelay` on older kernels |
 
 :::warning
 
-While v5.3 is the minimum kernel version required for the eBPF data plane, we strongly recommend using kernel v5.8 or above, which adds support for [CO-RE (Compile Once - Run Everywhere)](https://docs.ebpf.io/concepts/core/). CO-RE significantly improves compatibility and performance across kernel versions. For access to all eBPF features, we recommend kernel v6.6 or above.
+The minimum kernel version required for the eBPF data plane is v5.10, which includes support for [CO-RE (Compile Once - Run Everywhere)](https://docs.ebpf.io/concepts/core/). CO-RE significantly improves compatibility and performance across kernel versions. For access to all eBPF features, we recommend kernel v6.6 or above.
 
 :::
 
@@ -113,15 +112,15 @@ The output should look like this:
 5.4.0-42-generic #46-Ubuntu SMP Fri Jul 10 00:24:02 UTC 2020
 ```
 
-In this case the kernel version is v5.4, which is suitable.
+In this case the kernel version is v5.4, which is not suitable (minimum is v5.10).
 
 On Red Hat-derived distributions, you may see something like this:
 
 ```
-4.18.0-193.el8.x86_64 (mockbuild@x86-vm-08.build.eng.bos.redhat.com)
+4.18.0-305.el8.x86_64 (mockbuild@x86-vm-08.build.eng.bos.redhat.com)
 ```
 
-Since the Red Hat kernel is v4.18 with at least build number 193, this kernel is suitable.
+Since the Red Hat kernel is v4.18 with at least build number 305 (RHEL 8.4), this kernel is suitable.
 
 ### Configure $[prodname] to talk directly to the API server
 
