@@ -363,6 +363,7 @@ module.exports = {
             'networking/configuring/node-local-dns-cache',
             'networking/configuring/qos-controls',
             'networking/configuring/add-maglev-load-balancing',
+            'networking/configuring/mark-lb-node-for-maintenance',
           ],
         },
         {
