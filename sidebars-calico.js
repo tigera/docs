@@ -533,6 +533,7 @@ module.exports = {
             'operations/image-options/alternate-registry',
           ],
         },
+        'operations/crd-migration',
         'operations/datastore-migration',
         'operations/operator-migration',
         'operations/install-apiserver',
