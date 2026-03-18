@@ -35,6 +35,7 @@ var componentsToPrune = []string{
 // Components where the key in the upstream yaml file is different from what's present in docs
 var componentsToRename = map[string]string{
 	"upstream-fluentd": "coreos-fluentd",
+	"upstream-istio":   "coreos-istio",
 }
 
 // Components that we leave as-is without updating
