@@ -2,7 +2,7 @@
 
 export default {
   'html, body': {
-    fontFamily: '"Poppins", "Helvetica Neue", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"DM Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif',
   },
   img: {
     verticalAlign: 'unset',
