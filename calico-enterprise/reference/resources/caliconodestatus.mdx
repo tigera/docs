@@ -11,14 +11,14 @@ Calico node status resource is only valid when $[prodname] BGP networking is in 
 
 ### Notes
 
-The updating of `CalicoNodeStatus` will have a small performance impact on CPU/Memory usage of the node as well as adding load to kubernetes apiserver.
+The updating of `CalicoNodeStatus` will have a small performance impact on CPU/Memory usage of the node as well as adding load to Kubernetes `apiserver`.
 
 In our testing on a ten node, full mesh cluster, a `CalicoNodeStatus` resource was created for each node where the update interval was set to ten seconds. On each node, this resulted in an increase in CPU use of 5% of a vCPU and an increase of 4MB of memory. The control plane node recorded an increase in CPU usage of 5% of a vCPU for these 10 nodes.
 
 :::caution
 
 The implementation of `CalicoNodeStatus` is designed to handle a small number of nodes (less than 10 is recommended) reporting back status in the same time. If `CalicoNodeStatus` are created for a large number of nodes, and with short update interval,
-the kubernetes apiserver may become slower and less responsive.
+the Kubernetes `apiserver` may become slower and less responsive.
 You should create `CalicoNodeStatus` for the node you are interested in and for debugging purpose only. `CalicoNodeStatus` resource should be deleted upon the completion of the debugging process.
 
 :::
@@ -148,10 +148,10 @@ status:
 
 | Field       | Description                                                                                                                            | Values                                                                               |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| lastUpdated | Timestamp representing the server time when the CalicoNodeStatus object last updated. It is represented in RFC3339 form and is in UTC. |
-| agent       | List of [BGP daemon status](#bgpdaemonstatus) on the node.                                                                             | 'birdV4' holds status of IPv4 bird daemon, 'birdV6' holds status of IPv6 bird daemon |
-| bgp         | List of [BGP status](#bgpstatus) on the node.                                                                                          | 'peersV4' holds status of IPv4 BGP peers, 'peersV6' holds status of IPv6 BGP peers   |
-| routes      | List of [Route status](#routestatus) learned by BGP daemon on the node.                                                                | 'routesV4' holds status of IPv4 routes , 'routesV6' holds status of IPv6 routes      |
+| `lastUpdated` | Timestamp representing the server time when the CalicoNodeStatus object last updated. It is represented in RFC3339 form and is in UTC. |
+| `agent`       | List of [BGP daemon status](#bgpdaemonstatus) on the node.                                                                             | 'birdV4' holds status of IPv4 bird daemon, 'birdV6' holds status of IPv6 bird daemon |
+| `bgp`         | List of [BGP status](#bgpstatus) on the node.                                                                                          | 'peersV4' holds status of IPv4 BGP peers, 'peersV6' holds status of IPv6 BGP peers   |
+| `routes`      | List of [Route status](#routestatus) learned by BGP daemon on the node.                                                                | 'routesV4' holds status of IPv4 routes , 'routesV6' holds status of IPv6 routes      |
 
 ### Classes
 
@@ -175,10 +175,10 @@ status:
 
 | Field                  | Description                                            | Schema                       |
 | ---------------------- | ------------------------------------------------------ | ---------------------------- |
-| numberEstablishedV4    | The total number of IPv4 established bgp sessions.     | int                          |
-| numberNotEstablishedV4 | The total number of IPv4 non-established bgp sessions. | int                          |
-| numberEstablishedV6    | The total number of IPv6 established bgp sessions.     | int                          |
-| numberNotEstablishedV6 | The total number of IPv6 non-established bgp sessions. | int                          |
+| numberEstablishedV4    | The total number of IPv4 established BGP sessions.     | int                          |
+| numberNotEstablishedV4 | The total number of IPv4 non-established BGP sessions. | int                          |
+| numberEstablishedV6    | The total number of IPv6 established BGP sessions.     | int                          |
+| numberNotEstablishedV6 | The total number of IPv6 non-established BGP sessions. | int                          |
 | peersV4                | IPv4 BGP peers status on the node.                     | List of [BGP peer](#bgppeer) |
 | peersV6                | IPv6 BGP peers status on the node.                     | List of [BGP peer](#bgppeer) |
 
@@ -202,15 +202,15 @@ status:
 
 | Field       | Description                                                                                                                                  | Schema                       | Possible Values |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------- |
-| type        | Type indicates if the route is being used for forwarding or not.                                                                             | string                       | FIB, RIB        |
-| destination | Destination IP of the route.                                                                                                                 | `ip`                         |                 |
-| gateway     | Gateway IP of the route. If the route does not involve a gateway, for example a direct route, the value is `N/A`.                            | `ip` or `N/A`                |                 |
-| interface   | Network interface for the destination. For a blackhole route, the value is `blackhole`. For a unreachable route, the value is `unreachable`. | string                       |                 |
-| learnedFrom | Information regarding where this route originated.                                                                                           | [learned from](#learnedfrom) |                 |
+| `type`        | Type indicates if the route is being used for forwarding or not.                                                                             | string                       | FIB, RIB        |
+| `destination` | Destination IP of the route.                                                                                                                 | `ip`                         |                 |
+| `gateway`     | Gateway IP of the route. If the route does not involve a gateway, for example a direct route, the value is `N/A`.                            | `ip` or `N/A`                |                 |
+| `interface`   | Network interface for the destination. For a blackhole route, the value is `blackhole`. For a unreachable route, the value is `unreachable`. | string                       |                 |
+| `learnedFrom` | Information regarding where this route originated.                                                                                           | [learned from](#learnedfrom) |                 |
 
 ### LearnedFrom
 
 | Field      | Description                                                                             | Schema | Possible Values                           |
 | ---------- | --------------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
-| sourceType | Type of the source where a route is learned from.                                       | string | Kernel, Static, Direct, NodeMesh, BGPPeer |
-| peerIP     | If sourceType is NodeMesh or BGPPeer, IP address of the router that sent us this route. | `ip`   |                                           |
+| `sourceType` | Type of the source where a route is learned from.                                       | string | Kernel, Static, Direct, NodeMesh, BGPPeer |
+| `peerIP`     | If `sourceType` is NodeMesh or BGPPeer, IP address of the router that sent us this route. | `ip`   |                                           |

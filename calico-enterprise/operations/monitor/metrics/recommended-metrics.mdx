@@ -16,7 +16,7 @@ $[prodname] Typha, Felix, and policy components are the most critical to monitor
 
 Typha is a caching datastore proxy that sits between calico-nodes and Kubernetes API Server. Its primary function is to allow for increased cluster scale by reducing the load on Kubernetes API Server. Without Typha, large clusters (200+ nodes) would need a considerable amount of memory to correspond to the continuous watches and requests from calico-nodes running in the cluster.
 
-Typha maintains a single datastore connection on behalf of all of its clients (processes running in the calico-node pods, with Felix being Typhas’ main client). Typha watches for node, pod, network policy, bgp configuration, and other events on the Kubernetes API Server, caches and deduplicates this data, and fans out these events to its clients.
+Typha maintains a single datastore connection on behalf of all of its clients (processes running in the calico-node pods, with Felix being Typhas’ main client). Typha watches for node, pod, network policy, BGP configuration, and other events on the Kubernetes API Server, caches and deduplicates this data, and fans out these events to its clients.
 
 ### Felix
 
@@ -27,7 +27,7 @@ Felix must be continuously in sync with the datastore to ensure the correct set 
 
 ### About metrics
 
-Each $[prodname] component that you want to connect to Prometheus for endpoint metrics has its own configuration (bgp, license, policy, felix, and typha).
+Each $[prodname] component that you want to connect to Prometheus for endpoint metrics has its own configuration (BGP, license, policy, Felix, and Typha).
 
 Note that Felix is a separate application with metric endpoints, its own core metrics to monitor itself, and a separate port for a second policy metric endpoint.
 
@@ -58,8 +58,8 @@ This section provides metrics recommendations for maintaining optimal cluster op
 
 | Datastore cache size             |                                                              |
 | -------------------------------- | ------------------------------------------------------------ |
-| Metric                           | <strong>Note</strong>: Syncer (type) is Typha's internal name for a client (type).<br /><strong>Individual syncer values</strong>:<br /><code>(typha_cache_size\{syncer="bgp"\})</code> <br /><code>(typha_cache_size\{syncer="dpi"\})</code><br /><code>(typha_cache_size\{syncer="felix"\})</code><br /><code>(typha_cache_size\{syncer="node-status"\})</code><br /><code> (typha_cache_size\{syncer="tunnel-ip-allocation"\})</code><br /><br /><strong>Sum of all syncers</strong>:<br />The sum of all cache sizes (each syncer type has a cache).<br /><code>sum by (instance)</code> <code>(typha_cache_size)</code><br /><br /><strong>Largest syncer</strong>:<br /><code>max by (instance)</code> <code>(typha_cache_size)</code> |
-| Example value                    | Example of: <code>max by (instance)</code> <code>(typha_cache_size\{syncer="felix"\})</code><br /><br /><code>\{instance="10.0.1.20:9093"\} 661</code><br /><code>\{instance="10.0.1.31:9093"\} 661</code> |
+| Metric                           | <strong>Note</strong>: Syncer (type) is Typha's internal name for a client (type).<br /><strong>Individual syncer values</strong>:<br /><code>(typha_cache_size\{syncer="BGP"\})</code> <br /><code>(typha_cache_size\{syncer="dpi"\})</code><br /><code>(typha_cache_size\{syncer="Felix"\})</code><br /><code>(typha_cache_size\{syncer="node-status"\})</code><br /><code> (typha_cache_size\{syncer="tunnel-ip-allocation"\})</code><br /><br /><strong>Sum of all syncers</strong>:<br />The sum of all cache sizes (each syncer type has a cache).<br /><code>sum by (instance)</code> <code>(typha_cache_size)</code><br /><br /><strong>Largest syncer</strong>:<br /><code>max by (instance)</code> <code>(typha_cache_size)</code> |
+| Example value                    | Example of: <code>max by (instance)</code> <code>(typha_cache_size\{syncer="Felix"\})</code><br /><br /><code>\{instance="10.0.1.20:9093"\} 661</code><br /><code>\{instance="10.0.1.31:9093"\} 661</code> |
 | Explanation                      | The total number of key/value pairs in Typha's in-memory cache.This metric represents the scale of the $[prodname] datastore as it tracks how many WEPs (pods and services), HEPs (hostendpoints), networksets, globalnetworksets, $[prodname] Network Policies etc that Typha is aware of across the entire Calico Federation.You can use this metric to monitor individual syncers to Typha (like Felix, BGP etc), or to get a sum of all syncers. We recommend that you monitor the largest syncer but it is completely up to you. This is a good metric to understand how much data is in Typha. <strong>Note</strong>: If all Typhas are in sync then they should have the same value for this metric. |
 | Threshold value recommendation   | The value of this metric will depend on the scale of the Calico Federation and will always increase as WEPs, $[prodname] network policies and clusters are added. Achieve a baseline first, then monitor for any unexpected increases from the baseline. |
 | Threshold breach symptoms        | Unexpected increases may indicate memory leaks and performance issues with Typha. |
@@ -233,7 +233,7 @@ The following metrics are applicable only if you have implemented [Cluster mesh]
 | Example value                    | <code>\{instance="10.0.1.20:9093"\} 0</code>                              |
 | Explanation                      | The rate of updates from the datastore(s). For example, updates to Pods/Nodes/Policies/etc. |
 | Threshold value recommendation   | Intermittent spikes are expected.  Constant updates indicates a very busy cluster (for example, lots of pod churn). |
-| Threshold breach symptoms        | Constant updates could lead to overloaded Typhas whereTyphas clients could fall behind. |
+| Threshold breach symptoms        | Constant updates could lead to overloaded Typhas `whereTyphas` clients could fall behind. |
 | Threshold breach recommendations | Ensure Typha has enough resources to handle a very dynamic cluster. |
 | Priority level                   | Optional.                                                    |
 
@@ -364,7 +364,7 @@ The following policy metrics are a separate endpoint exposed by Felix that are u
 | Explanation                      | Amount of memory in use by  calico-node.                     |
 | Threshold value recommendation   | Recommended to achieve a baseline first, then monitor for any unexpected increases from this baseline. Investigate if maintained CPU usage goes above 90% of what is available from the underlying node. |
 | Threshold breach symptoms        | Unexpected, maintained, memory usage could cause Felix to fall behind and could cause delays to policy updates. |
-| Threshold breach recommendations | Check memory usage on Kubernetes nodes. Increase resources if needed, rollout restart typha(s) if needed. |
+| Threshold breach recommendations | Check memory usage on Kubernetes nodes. Increase resources if needed, rollout restart Typha(s) if needed. |
 | Priority level                   | Recommended.                                                 |
 
 ### Active hosts on each endpoint
@@ -472,8 +472,8 @@ The following policy metrics are a separate endpoint exposed by Felix that are u
 | Example value                    | <code>\{\} 0</code>                                                      |
 | Explanation                      | Number of ipset creation, modification, and deletion command failures. This metric reports how many times the ipset command has failed when Felix tried to run it. An error can occur when Felix sends bad ipset command data, or the kernel throws an error (potentially because it was too busy to handle this request at that time). |
 | Threshold value recommendation   | Occasional errors are normal.  Investigate error counters that rapidly rise. |
-| Threshold breach symptoms        | $[prodname] network policies may not scope all endpoints in network policy rules. Cluster nodes may be under resource contention, which may result in other _error and _seconds metrics rising. Repeated errors could mean some persistent problem (for example, some other process has created an IP set with that name, which is incompatible). |
-| Threshold breach recommendations | See the <strong>Errors Plot graph</strong> to determine if the scope is cluster-wide or node-local.  Check calico-node logs. Check resource usage and contention on Kubernetes nodes and calico-nodes.  Add nodes/resources if needed.  If resource contention is not seen, restart calico-node(s) and monitor.  Ensure that other process using IPtables are not blocking $[prodname] network policy management. |
+| Threshold breach symptoms        | $[prodname] network policies may not scope all endpoints in network policy rules. Cluster nodes may be under resource contention, which may result in other `_error` and `_seconds` metrics rising. Repeated errors could mean some persistent problem (for example, some other process has created an IP set with that name, which is incompatible). |
+| Threshold breach recommendations | See the <strong>Errors Plot graph</strong> to determine if the scope is cluster-wide or node-local.  Check calico-node logs. Check resource usage and contention on Kubernetes nodes and calico-nodes.  Add nodes/resources if needed.  If resource contention is not seen, restart calico-node(s) and monitor.  Ensure that other process using iptables are not blocking $[prodname] network policy management. |
 | Priority level                   | Optional.                                                    |
 
 ### iptables restore errors
@@ -483,7 +483,7 @@ The following policy metrics are a separate endpoint exposed by Felix that are u
 | Metric                           | <code>sum(rate(felix_iptables_restore_errors\{5m\}))</code>             |
 | Explanation                      | The number of iptables-restore errors over five minutes.  The iptables-restore command is used when $[prodname] makes a change to iptables.  For example, a new WEP or HEP is created, changes to a WEP or HEP or a change to a policy that affects a WEP or HEP. |
 | Threshold value recommendation   | Occasional errors are normal.  Investigate error counters that rapidly rise. |
-| Threshold breach symptoms        | $[prodname] network policies are not up to date. Cluster nodes may be under resource contention, which may result in other _error and _seconds metrics rising. |
+| Threshold breach symptoms        | $[prodname] network policies are not up to date. Cluster nodes may be under resource contention, which may result in other `_error` and `_seconds` metrics rising. |
 | Threshold breach recommendations | See the Errors Plot graph to determine if the scope is cluster-wide or node-local.  Check calico-node logs. Check resource usage and contention on Kubernetes nodes and calico-nodes.  Add nodes/resources if needed.  If no resource contention is seen, restart calico-node and monitor. |
 | Priority level                   | Optional.                                                    |
 
@@ -495,7 +495,7 @@ The following policy metrics are a separate endpoint exposed by Felix that are u
 | Example value                    | <code>\{\} 0</code>                                                      |
 | Explanation                      | Number of iptables-save errors. The iptables-save command is run before every iptables-restore command so that $[prodname] has the current state of iptables. |
 | Threshold value recommendation   | Occasional errors are normal.  Investigate error counters that rapidly rise. |
-| Threshold breach symptoms        | $[prodname] network policies are not up to date. Cluster nodes may be under resource contention, which may result in other _error and _seconds metrics rising.  Repeated errors could mean some persistent problem (for example, some other process has creating iptables rules that $[prodname] cannot decode with the version of iptables-save in use). |
+| Threshold breach symptoms        | $[prodname] network policies are not up to date. Cluster nodes may be under resource contention, which may result in other `_error` and `_seconds` metrics rising.  Repeated errors could mean some persistent problem (for example, some other process has creating iptables rules that $[prodname] cannot decode with the version of iptables-save in use). |
 | Threshold breach recommendations | See the Errors Plot graph to determine if the scope is cluster-wide or node-local.  Check calico-node logs. Check resource usage and contention on Kubernetes nodes and calico-nodes.  Add nodes/resources if needed.  If no resource contention is seen, restart calico-node and monitor. |
 | Priority level                   | Optional.                                                    |
 
@@ -507,7 +507,7 @@ The following policy metrics are a separate endpoint exposed by Felix that are u
 | Example value                    | <code>\{\} 0</code>                                                       |
 | Explanation                      | The number of times Felix fails to write out a log because the log buffer is full. |
 | Threshold value recommendation   | Occasional errors are normal.  Investigate error counters that rapidly rise. |
-| Threshold breach symptoms        | Calico-node may be under resource contention, which may result in other <strong>_error</strong> and <strong>_seconds</strong> metrics rising. |
+| Threshold breach symptoms        | Calico-node may be under resource contention, which may result in other <strong>`_error`</strong> and <strong>`_seconds`</strong> metrics rising. |
 | Threshold breach recommendations | See the <strong>Errors Plot graph</strong> to determine if the scope is cluster-wide or node-local.  Check resource usage and contention on Kubernetes nodes and calico-nodes.  Add nodes/resources if needed.  If no resource contention is seen, restart calico-node and monitor. |
 | Priority level                   | Optional.                                                    |
 
@@ -544,9 +544,9 @@ The following policy metrics are a separate endpoint exposed by Felix that are u
 | Metric                                               | <code>felix_route_table_list_seconds\{quantile="0.5"\}</code><br /><code>felix_route_table_list_seconds\{quantile="0.9"\}</code><br /><code>felix_route_table_list_seconds\{quantile="0.99"\}</code> |
 | Example value                                        | <code>felix_route_table_list_seconds\{quantile="0.5"\}:</code><code>felix_route_table_list_seconds\{<strong>endpoint</strong>="metrics-port",</code><code><strong>instance</strong>="10.0.1.30:9091",<strong>job</strong>="felix-metrics-svc",</code><code>namespace="calico-system", <strong>pod</strong>="calico-node-6pcqm",</code><code>quantile="0.5", <strong>service</strong>="felix-metrics-svc"\} 0.000860426</code> |
 | Explanation                                          | Time to list all the interfaces during a resync, viewed at the median, 90th percentile and 99th percentile. |
-| Threshold value recommendation                       | Thresholds will vary depending on the number of cali interfaces per node. It is recommended that a baseline be set to determine a normal threshold value. |
-| Threshold breach symptoms                            | High values indicate high CPU usage in felix and slow data plane updates. |
-| Threshold breach recommendations                     | Increase cluster resources. Reduce the number of cali interfaces per node where possible. |
+| Threshold value recommendation                       | Thresholds will vary depending on the number of `cali` interfaces per node. It is recommended that a baseline be set to determine a normal threshold value. |
+| Threshold breach symptoms                            | High values indicate high CPU usage in Felix and slow data plane updates. |
+| Threshold breach recommendations                     | Increase cluster resources. Reduce the number of `cali` interfaces per node where possible. |
 | Priority level                                       | Optional.                                                    |
 
 ### Felix graph update time quantile 0.5/0.9/0/99
@@ -557,6 +557,6 @@ The following policy metrics are a separate endpoint exposed by Felix that are u
 | Example value                                         | <code>felix_calc_graph_update_time_seconds\{quantile="0.5"\}:</code><code>felix_calc_graph_update_time_seconds\{<strong>endpoint</strong>="metrics-port",</code><code><strong>instance</strong>="10.0.1.30:9091", <strong>job</strong>="felix-metrics-svc",</code><code><strong>namespace</strong>="calico-system", <strong>pod</strong>="calico-node-6pcqm",</code><code>quantile="0.5", <strong>service</strong>="felix-metrics-svc"\} 0.00007129</code> |
 | Explanation                                           | This metric reports the time taken to update the calculation graph for each datastore on an update call, viewed at the median, 90th percentile and 99th percentile. The calculation graph is the Felix component that takes all the policies/workload endpoints/host endpoints information that it has received from Typha, and distills it down to data plane updates that are relevant for this node. |
 | Threshold value recommendation                        | After *start of day* (where we will typically get a large update), then values should be sub 1 second (with occasional blips to 1+ seconds). Should be measured in milliseconds with the occasional blip to a second or two. Investigate if the result is constantly in values of seconds. |
-| Threshold breach symptoms                             | High values indicate high CPU usage in felix and slow data plane updates. |
+| Threshold breach symptoms                             | High values indicate high CPU usage in Felix and slow data plane updates. |
 | Threshold breach recommendations                      | Increase cluster resources. Check calico-node logs. Rollout restart calico-node(s) if needed. |
 | Priority level                                        | Recommended.                                                 |

@@ -45,7 +45,7 @@ destination type.
 - IP addresses in the same NetworkSet are aggregated under that shared NetworkSet,
 - When no more precise identity is known, arbitrary IP addresses are aggregated to either public (`pub`) and private (`pvt`) as defined in RFC1918.
 
-#### Level 3: aggregate IPs, source and dest ports
+#### Level 3: aggregate IPs, source and destination ports
 
 In addition to the above, aggregate flows with different destination ports that otherwise share together.
 This is intended to reduce log volumes in situations where a lot of network probing is expected (for example by `nmap`) but is not typically needed
@@ -67,19 +67,19 @@ Finally, level 3 combines flows between matching pod prefixes that target distin
 Aggregation is currently performed on a per-node basis, but this behavior may change.  Certain other fields are always kept separate
 and not aggregated together such as `action` (i.e. denied traffic and allowed traffic will always be logged separately).
 
-|                          |           | **Src Traffic**  | |          | **Dst Traffic**  | |          | **Packet counts**      | |
+|                          |           | **Source Traffic**  | |          | **Destination Traffic**  | |          | **Packet counts**      | |
 |--------------------------|-----------|----------|---------|----------|----------|---------|----------|------------|-------------|
-| **Aggr lvl**             | **Flows** | **Name** | **IP**  | **Port** | **Name** | **IP**  | **Port** | **Pkt in** | **Pkt out** |
-| 0 (no aggregation)       | 4         | client-a | 1.1.1.1 | 45556    | nginx-1  | 2.2.2.2 | 80       | 1          | 2           |
-|                          |           | client-b | 1.1.2.2 | 45666    | nginx-2  | 2.2.3.3 | 80       | 2          | 2           |
-|                          |           | client-a | 1.1.1.1 | 65533    | nginx-1  | 2.2.2.2 | 80       | 1          | 3           |
-|                          |           | client-c | 1.1.3.3 | 65534    | nginx-2  | 2.2.3.3 | 8080     | 3          | 4           |
-| 1 (src port)             | 3         | client-a | 1.1.1.1 | -        | nginx-1  | 2.2.2.2 | 80       | 2          | 5           |
-|                          |           | client-b | 1.1.2.2 | -        | nginx-1  | 2.2.2.2 | 80       | 2          | 2           |
-|                          |           | client-c | 1.1.3.3 | -        | nginx-2  | 2.2.3.3 | 8080     | 3          | 4           |
-| 2 (+src/dest pod-prefix) | 2         | client-* | -       | -        | nginx-*  | -       | 80       | 4          | 7           |
-|                          |           | client-* | -       | -        | nginx-*  | -       | 8080     | 3          | 4           |
-| 3 (+dest port)           | 1         | client-* | -       | -        | nginx-*  | -       | -        | 7          | 11          |
+| **Aggr level**             | **Flows** | **Name** | **IP**  | **Port** | **Name** | **IP**  | **Port** | **Pkt in** | **Pkt out** |
+| 0 (no aggregation)       | 4         | client-a | 1.1.1.1 | 45556    | `nginx-1`  | 2.2.2.2 | 80       | 1          | 2           |
+|                          |           | client-b | 1.1.2.2 | 45666    | `nginx-2`  | 2.2.3.3 | 80       | 2          | 2           |
+|                          |           | client-a | 1.1.1.1 | 65533    | `nginx-1`  | 2.2.2.2 | 80       | 1          | 3           |
+|                          |           | client-c | 1.1.3.3 | 65534    | `nginx-2`  | 2.2.3.3 | 8080     | 3          | 4           |
+| 1 (source port)             | 3         | client-a | 1.1.1.1 | -        | `nginx-1`  | 2.2.2.2 | 80       | 2          | 5           |
+|                          |           | client-b | 1.1.2.2 | -        | `nginx-1`  | 2.2.2.2 | 80       | 2          | 2           |
+|                          |           | client-c | 1.1.3.3 | -        | `nginx-2`  | 2.2.3.3 | 8080     | 3          | 4           |
+| 2 (+src/dest pod-prefix) | 2         | client-* | -       | -        | `nginx-*`  | -       | 80       | 4          | 7           |
+|                          |           | client-* | -       | -        | `nginx-*`  | -       | 8080     | 3          | 4           |
+| 3 (+destination port)           | 1         | client-* | -       | -        | `nginx-*`  | -       | -        | 7          | 11          |
 
 ## How to
 

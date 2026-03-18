@@ -8,11 +8,11 @@ description: Specific troubleshooting steps for the VPP data plane.
 
 This page describes the troubleshooting steps for the [VPP data plane](../../getting-started/kubernetes/vpp/getting-started.mdx). If you did not configure the VPP data plane, this page is not for you!
 
-If you're encountering issues with the VPP data plane, feel free to reach out to us either on the [#vpp channel](https://calicousers.slack.com/archives/C017220EXU1) on the $[prodname] slack, or by opening a new issue in [GitHub](https://github.com/projectcalico/vpp-dataplane/issues)).
+If you're encountering issues with the VPP data plane, feel free to reach out to us either on the [#VPP channel](https://calicousers.slack.com/archives/C017220EXU1) on the $[prodname] slack, or by opening a new issue in [GitHub](https://github.com/projectcalico/vpp-dataplane/issues)).
 
-## Installing calivppctl
+## Installing `calivppctl`
 
-`calivppctl` is a helper bash script shipped alongside vpp container images. It can be installed to your host with the following methods, and helps collecting logs and debugging a running cluster with the VPP data plane installed.
+`calivppctl` is a helper bash script shipped alongside VPP container images. It can be installed to your host with the following methods, and helps collecting logs and debugging a running cluster with the VPP data plane installed.
 
 - With curl
 
@@ -53,7 +53,7 @@ Kubernetes does not run with swap enabled.
 
 ### Starting calico-vpp-node Daemon set
 
-Once the cluster is correctly started, the next issue can come from the Daemonset configuration.
+Once the cluster is correctly started, the next issue can come from the DaemonSet configuration.
 Best is to start by inspecting the pods : are they running correctly ?
 Usually configuration issues (available hugepages, memory, ...) will be reported here:
 
@@ -92,16 +92,16 @@ calivppctl log -agent myk8node1
 ```
 
 If all this doesn't play well you can always use the export to generate an `export.tar.gz`
-bundle and ask for help on the [#vpp channel](https://calicousers.slack.com/archives/C017220EXU1)
+bundle and ask for help on the [#VPP channel](https://calicousers.slack.com/archives/C017220EXU1)
 
 ```bash
 calivppctl export
 ```
 
-## Accessing the VPP cli
+## Accessing the VPP CLI
 
 For further debugging, tracing packets and inspecting VPP's internals, you can
-get a vpp shell using the following:
+get a VPP shell using the following:
 
 ```bash
 calivppctl vppctl myk8node1
@@ -116,7 +116,7 @@ vpp# show int
 vpp# show int addr
 ```
 
-To get more insights on the main interface (e.g. if you're using dpdk) you can check
+To get more insights on the main interface (e.g. if you're using `dpdk`) you can check
 for errors & drops in
 
 ```
@@ -215,7 +215,7 @@ calivppctl vppctl NODENAME show trace max 500 > somefile
 cat somefile | grep '1.2.3.4 -> 5.6.7.8' -A40 -B40
 ```
 
-Output looks quite cumbersome at first as it contains the whole path of a packet through VPP, from reception to tx.
+Output looks quite cumbersome at first as it contains the whole path of a packet through VPP, from reception to `tx`.
 
 ```
 vpp# show trace
@@ -269,7 +269,7 @@ Packet 2
 [...]
 ```
 
-#### Traffic from the phy
+#### Traffic from the `phy`
 
 If you want to capture traffic coming from the physical NIC, you should use `trace add` but with a different source node a.k.a `dpdk-input` or  `af-packet-input` or  `af_xdp-input` or `avf-input` instead of `virtio-input`.
 
@@ -327,7 +327,7 @@ The file should now be at `/var/lib/vpp/vppcapture` on your host 'NODENAME'. You
 
 To inspect traffic actually received by the pods (if `tcpdump` is installed in the pod), simply run `tcpdump -ni eth0` inside the pod. If tcpdump is not available in the pod, here are two options to still be able to capture pod traffic:
 
-#### Tcpdump is available on the host
+#### tcpdump is available on the host
 
 Provided that you have `tcpdump` installed on the host, you can use `nsenter` to attach to the pod's network namespace and use the host's `tcpdump` on the container's interface.
 
@@ -382,22 +382,22 @@ This requires privileges and thus is usually easier to run from the host. From t
 
 ### Traffic to the kubelet agent
 
-As the kubelet agent runs directly on the host without a network namespace, pods talking to it (e.g. coredns resolvers) would go through a specific path. Packets destined to it will be caught by VPP's punt mechanism, and will be forwarded to the host through a tap interface which will have the same name as the original interface in Linux.
+As the kubelet agent runs directly on the host without a network namespace, pods talking to it (e.g. CoreDNS resolvers) would go through a specific path. Packets destined to it will be caught by VPP's punt mechanism, and will be forwarded to the host through a tap interface which will have the same name as the original interface in Linux.
 
 To debug traffic within VPP, use the trace & check that traffic is correctly punted to the tap0 interface.
 
 On the host, you can use `tcpdump` normally to check the traffic.
 
-## Crashes & coredumps
+## Crashes & `coredumps`
 
-If VPP aborts unexpectedly, it will generate a coredump file, `vppcore.vpp_main.<pid>`, in the `/var/lib/vpp/` dir. If you encounter this situation, please note the exact version of the vpp image that generated the corefile (using the image hash) to facilitate further troubleshooting.
+If VPP aborts unexpectedly, it will generate a `coredump` file, `vppcore.vpp_main.<pid>`, in the `/var/lib/vpp/` dir. If you encounter this situation, please note the exact version of the VPP image that generated the `corefile` (using the image hash) to facilitate further troubleshooting.
 
-To explore the corefile run:
+To explore the `corefile` run:
 
 ```bash
 docker run -it --entrypoint=bash -v /var/lib/vpp/vppcore.vpp_main.12345:/root/vppcore calicovpp/vpp:VERSION
 ```
-You should now have a shell inside the vpp container.
+You should now have a shell inside the VPP container.
 
 ```bash
 apt update && apt install -y gdb

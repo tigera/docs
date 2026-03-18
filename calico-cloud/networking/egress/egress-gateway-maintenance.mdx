@@ -163,7 +163,7 @@ polling egress maintenance timestamp...
 gatewayMaintenanceStartedTimestamp has value "2022-04-19T17:24:46Z"
 ```
 
-We can see above that our script saw the value of the mounted volume change at the same time what we terminated our egress gateway pod. This work can be further developed to propagate notifications to our production workloads, without any need for polling kubernetes itself.
+We can see above that our script saw the value of the mounted volume change at the same time what we terminated our egress gateway pod. This work can be further developed to propagate notifications to our production workloads, without any need for polling Kubernetes itself.
 
 **Note**: It's not recommended to couple your production applications to a Kubernetes client for the purposes of polling pod information, as it could give an attacker greater privileges if successful in compromising a workload. Instead, use a method such as the downward API that fully decouples the program.
 
@@ -173,7 +173,7 @@ We can see above that our script saw the value of the mounted volume change at t
 
 So far we have observed egress gateway maintenance windows, added a termination grace period to gateway pods, and propagated maintenance information directly to our workloads. Finally, we are going to look at the `maxNextHops` annotation, which is designed to limit the impact of a terminating egress gateway.
 
-Below is a sample kubernetes deployment which was adapted from the earlier annotation-aware pod manifest. The deployment has 3 replicas, and is configured to use egress gateways:
+Below is a sample Kubernetes deployment which was adapted from the earlier annotation-aware pod manifest. The deployment has 3 replicas, and is configured to use egress gateways:
 
 ```yaml
 apiVersion: apps/v1
@@ -274,7 +274,7 @@ kubectl patch deploy annotation-aware-workloads --type=merge -p \
 :::note
 
 - Either a _pod or a namespace_ can be annotated with `egress.projectcalico.org/maxNextHops`, however, the `egress.projectcalico.org/selector` annotation must also be present on the selected resource.
-- If annotating pods, the `egressIPSupport` Felixconfiguration option must be set to `EnabledPerNamespaceOrPerPod`.
+- If annotating pods, the `egressIPSupport` `Felixconfiguration` option must be set to `EnabledPerNamespaceOrPerPod`.
 - If a pod's desired `maxNextHops` exceeds the total number of available egress gateways, scaling up the egress gateway deployment will result in the pod's egress networking updating until the desired number of gateways are being used.
 - In all other cases, the `maxNextHops` annotation only takes effect at the time a pod is created. To ensure a pod's egress networking remains functional for its entire lifecycle, modifications to `maxNextHops` after a pod's creation will have no effect. For this reason, it's recommended that any egress gateway deployments have been scaled prior to deploying dependent workloads.
 
