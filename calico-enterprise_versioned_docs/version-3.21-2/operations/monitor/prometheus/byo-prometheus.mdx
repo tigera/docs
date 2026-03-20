@@ -113,14 +113,10 @@ components directly using mTLS, or if you wish to enable metrics that are disabl
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+kubectl apply -f $[filesUrl]/manifests/prometheus/elasticsearch-metrics-service-monitor.yaml -n tigera-prometheus
 ```
 
-```bash
-kubectl apply -f $[filesUrl]/manifests/prometheus/elasticsearch-metrics-service-monitor.yaml -n $NAMESPACE
-```
-
-The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
+The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the tigera-prometheus.
 
 </TabItem>
 <TabItem label="fluentd" value="fluentd-1">
@@ -154,14 +150,10 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+kubectl apply -f  $[filesUrl]/manifests/prometheus/fluentd-metrics-service-monitor.yaml -n tigera-prometheus
 ```
 
-```bash
-kubectl apply -f  $[filesUrl]/manifests/prometheus/fluentd-metrics-service-monitor.yaml -n $NAMESPACE
-```
-
-The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
+The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the tigera-prometheus.
 
 </TabItem>
 <TabItem label="calico node" value="calico node-2">
@@ -195,14 +187,10 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+kubectl apply -f  $[filesUrl]/manifests/prometheus/calico-node-monitor-service-monitor.yaml -n tigera-prometheus
 ```
 
-```bash
-kubectl apply -f  $[filesUrl]/manifests/prometheus/calico-node-monitor-service-monitor.yaml -n $NAMESPACE
-```
-
-The .yamls have no namespace defined so when you apply `kubectl`, it is applied in $NAMESPACE.
+The .yamls have no namespace defined so when you apply `kubectl`, it is applied in tigera-prometheus.
 
 </TabItem>
 <TabItem label="kube-controllers" value="kube-controllers-3">
@@ -236,14 +224,10 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+kubectl apply -f  $[filesUrl]/manifests/prometheus/kube-controller-metrics-service-monitor.yaml -n tigera-prometheus
 ```
 
-```bash
-kubectl apply -f  $[filesUrl]/manifests/prometheus/kube-controller-metrics-service-monitor.yaml -n $NAMESPACE
-```
-
-The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
+The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the tigera-prometheus.
 
 </TabItem>
 <TabItem label="Felix" value="Felix-4">
@@ -306,14 +290,10 @@ kubectl patch felixConfiguration default --type merge --patch '{"spec":{"windows
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+kubectl apply -f  $[filesUrl]/manifests/prometheus/felix-metrics-service-monitor.yaml -n tigera-prometheus
 ```
 
-```bash
-kubectl apply -f  $[filesUrl]/manifests/prometheus/felix-metrics-service-monitor.yaml -n $NAMESPACE
-```
-
-The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
+The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the tigera-prometheus.
 
 </TabItem>
 <TabItem label="Typha" value="Typha-5">
@@ -341,14 +321,10 @@ installation.operator.tigera.io/default patched
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+kubectl apply -f  $[filesUrl]/manifests/prometheus/typha-metrics-service-monitor.yaml -n tigera-prometheus
 ```
 
-```bash
-kubectl apply -f  $[filesUrl]/manifests/prometheus/typha-metrics-service-monitor.yaml -n $NAMESPACE
-```
-
-The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
+The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the tigera-prometheus.
 
 </TabItem>
   </Tabs>
@@ -358,7 +334,7 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 1. Access the Prometheus dashboard using the port-forwarding feature.
 
    ```bash
-   kubectl port-forward pod/byo-prometheus-pod 9090:9090 -n $NAMESPACE
+   kubectl port-forward pod/byo-prometheus-pod 9090:9090 -n tigera-prometheus
    ```
 
 1. Browse to the Prometheus dashboard: http://localhost:9090.
@@ -372,35 +348,15 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 This section is applicable only if you experience issues with mTLS after following the [Scrape metrics from specific components directly](#scrape-metrics-from-specific-components)
 section.
 
-1. Use the following command to retrieve the tls.key and tls.cert.
+1. Extract the TLS credentials and CA bundle from the cluster.
 
    ```bash
-   export NAMESPACE=<my-prometheus-namespace>
+   kubectl get secret -n tigera-prometheus calico-node-prometheus-client-tls -o jsonpath='{.data.tls\.key}' | base64 -d > key.pem
+   kubectl get secret -n tigera-prometheus calico-node-prometheus-client-tls -o jsonpath='{.data.tls\.crt}' | base64 -d > cert.pem
+   kubectl get cm -n tigera-prometheus tigera-ca-bundle -o jsonpath='{.data.tigera-ca-bundle\.crt}' > bundle.pem
    ```
 
-   ```bash
-   kubectl get secret -n $NAMESPACE calico-node-prometheus-client-tls -o yaml
-   ```
-
-1. Save the tls.key and tls.cert content into key and cert after base64 decode.
-
-   ```bash
-   $:tls_key=<tls.key content>
-   $:echo $tls_key|base64 -d >key.pem
-
-   $:tls_cert=<tls.crt content>
-   $:echo $cert|base64 -d>cert.pem
-   ```
-
-1. Get the ca-bundle certificate using this command:
-
-   ```bash
-   kubectl get cm -n $NAMESPACE tigera-ca-bundle -o yaml
-   ```
-
-1. Open a new file (bundle.pem) in your favorite editor, and paste the content from "BEGIN CERTIFICATE" to "END CERTIFICATE".
-
-1. Port-forward the prometheus pods and run this command with the forwarded port.
+1. Port-forward the Prometheus pods and run this command with the forwarded port.
 
    ```bash
    curl --cacert bundle.pem --key key.pem  --cert cert.pem https://localhost:8080/metrics
