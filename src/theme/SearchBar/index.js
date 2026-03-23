@@ -208,6 +208,21 @@ function DocSearch({ contextualSearch, externalUrlRegex, ...props }) {
     searchButtonRef,
   });
 
+  // Prevent "/" from opening search when the user is typing in the Kapa AI
+  // chat widget, which uses non-standard input elements that bypass
+  // DocSearch's built-in INPUT/TEXTAREA check (DOCS-2845).
+  React.useEffect(() => {
+    function suppressSlashInKapa(e) {
+      if (e.key !== '/') return;
+      const target = e.composedPath?.()?.[0] || e.target;
+      if (target?.closest?.('[data-kapa-widget-container],.mantine-Modal-root')) {
+        e.stopPropagation();
+      }
+    }
+    window.addEventListener('keydown', suppressSlashInKapa, true);
+    return () => window.removeEventListener('keydown', suppressSlashInKapa, true);
+  }, []);
+
   const isBrowser = useIsBrowser();
   let searchBar;
 

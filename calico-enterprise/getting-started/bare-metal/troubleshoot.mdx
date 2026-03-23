@@ -1,0 +1,111 @@
+---
+description: Troubleshoot non-cluster hosts and VMs setup
+---
+
+# Troubleshoot non-cluster hosts and VMs setup
+
+This document provides guidance for troubleshooting Calico running on hosts and VMs outside of a cluster.
+
+## Useful commands
+
+These commands can help you collect logs and monitor system activities during troubleshooting.
+
+### On non-cluster hosts or VMs
+
+```bash
+journalctl -xue calico-node.service -f
+journalctl -xue calico-fluent-bit.service -f
+```
+
+### On the cluster side
+
+```bash
+kubectl logs -n calico-system -l k8s-app=calico-typha-noncluster-host
+kubectl logs -n tigera-manager -l k8s-app=tigera-manager -c tigera-voltron
+```
+
+You can monitor CertificateSigningRequests (CSR) by running:
+
+```bash
+kubectl get certificatesigningrequest -w
+```
+
+Monitoring CSRs is useful for debugging certificates used for Calico Node and Typha mutual TLS (mTLS) communication. The automatic CSR approval and signing flow can fail in several ways. For example:
+
+- The CSR request might not be created or submitted correctly.
+- The Tigera Operator CSR controller might not process it.
+- The Tigera Operator signer might reject the request due to invalid fields or missing permission.
+
+When such failure occur, the CSR status object contains detailed condition and error messages that help identify the root cause.
+
+## Common problems
+
+### No internet connection after installing the Calico Node package
+
+By default, $[prodname] blocks all traffic to and from host interfaces. You can use a profile with host endpoints to modify default behavior. Apply the built-in profile `projectcalico-default-allow`, which allows all ingress and egress traffic. Host endpoints that use this profile will have *allow-all* behavior instead of *deny-all* when no network policy is applied.
+
+Example `HostEndpoint` with the `projectcalico-default-allow` profile:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: HostEndpoint
+metadata:
+  name: <endpoint-name>
+spec:
+  interfaceName: <interface-name>
+  node: <node-hostname>
+  expectedIPs: ["<list-of-expected-ips>"]
+  profiles:
+    - projectcalico-default-allow
+```
+
+### Certificate signed by unknown authority
+
+If the certificate presented by the Kubernetes API server or Tigera Manager endpoint is not signed by a trusted Certificate Authority (CA), add the correct CA certificate to the system trust store. Alternatively, for the Calico fluent-bit log forwarder, you can temporarily disable TLS verifications by setting:
+
+```conf
+[OUTPUT]
+    ...
+    tls.verify  Off
+    ...
+```
+
+in the configuration file `/etc/calico/calico-fluent-bit/calico-fluent-bit.conf`.
+
+:::note
+
+Disabling TLS verification should only be used for testing or troubleshooting.
+
+:::
+
+### No object can be associated with CSR error
+
+If a CSR is denied with the following error:
+
+```text
+invalid: no object can be associated with CSR node-certs-noncluster-host:<hostname>
+```
+
+verify the following:
+
+* A corresponding host endpoint resource exists for the non-cluster host or VM.
+* The `spec.node` field in the host endpoint resource matches the non-cluster host name exactly.
+
+### Peer certificate does not have required CN
+
+If the non-cluster host fails to connect to the dedicated Typha deployment, check that the certificate Common Name (CN) values are consistent on both sides.
+
+On the non-cluster host or VM under the `/etc/calico/calico-node` folder:
+
+* In `calico-node.conf`, verify the `TyphaCN` value matches the remote Typha server certificate CN, or
+* In `calico-node.env`, verify the `FELIX_TYPHACN` value matches the remote Typha server certificate CN.
+
+On the cluster side (`calico-system/calico-typha-noncluster-host` deployment):
+
+* The `TYPHA_CLIENTCN` environment variable must match the CN used in the non-cluster node certificate.
+
+### Certificate is not renewed or updated
+
+The `calico-noncluster-host-init` process runs before the main `calico-node` service is responsible for renewing certificates that are expired or near expiry. Certificates are renewed automatically within 90 days of expiry.
+
+If you need to force immediate renewal, manually delete the existing certificate (`calico-node.crt`) and private key (`calico-node.key`) under the `/etc/calico/calico-node` folder and restart the service.

@@ -6,7 +6,7 @@
 #   Created: 2026-02-05                                                       #
 #                                                                             #
 #   Description: Synchronizes Felix configuration JSON files from GitHub      #
-#   repos (OSS & Enterprise) into local documentation paths.                  #
+#   repos (OSS, Enterprise & Cloud) into local documentation paths.           #
 #                                                                             #
 ###############################################################################
 
@@ -19,10 +19,12 @@ readonly E_MISSING_TOKEN=1
 readonly E_INVALID_JSON=2
 readonly VERSIONS_FILE_OSS="calico_versions.json"
 readonly VERSIONS_FILE_CE="calico-enterprise_versions.json"
+readonly VERSIONS_FILE_CC="calico-cloud_versions.json"
 
 # --- Global Variables ---
 VERSIONS_OSS=($(jq -r '.[]' "$VERSIONS_FILE_OSS"))
 VERSIONS_CE=($(jq -r '.[]' "$VERSIONS_FILE_CE"))
+VERSIONS_CC=($(jq -r '.[]' "$VERSIONS_FILE_CC"))
 CLEANUP_FILES=()
 
 # --------------------------------------------------------------------------- #
@@ -138,6 +140,42 @@ update_versions_CE() {
     done
 }
 
+# --------------------------------------------------------------------------- #
+# Cloud Functions                                                             #
+# --------------------------------------------------------------------------- #
+
+update_master_CC () {
+    VERSION="master"
+    LOCAL_PATH="calico-cloud/_includes/components/FelixConfig/config-params.json"
+    REMOTE_URL="https://api.github.com/repos/tigera/calico-private/contents/felix/docs/config-params.json?ref=master"
+    update_felix_config
+}
+
+update_versions_CC() {
+    local -n VERSIONS_ARRAY=$1
+    local i branch base_version ce_version
+
+    for i in "${!VERSIONS_ARRAY[@]}"; do
+        VERSION="${VERSIONS_ARRAY[$i]}"
+        # CC version "X-Y" maps to CE "3.X-Y" — prepend "3." to get the CE version
+        ce_version="3.${VERSION}"
+        base_version="${ce_version%-*}"
+
+        if [[ "$ce_version" == *"-2" ]]; then
+            branch="release-calient-v${base_version}"
+        elif [[ "$ce_version" == *"-1" ]]; then
+            branch="release-calient-v${base_version}-1"
+        else
+            branch="release-v${ce_version}"
+        fi
+
+        LOCAL_PATH="calico-cloud_versioned_docs/version-${VERSION}/_includes/components/FelixConfig/config-params.json"
+        REMOTE_URL="https://api.github.com/repos/tigera/calico-private/contents/felix/docs/config-params.json?ref=${branch}"
+
+        update_felix_config
+    done
+}
+
 # --- Main Logic ---
 
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
@@ -147,6 +185,7 @@ fi
 
 echo "OSS Versions:" "${VERSIONS_OSS[*]}"
 echo "CE Versions:" "${VERSIONS_CE[*]}"
+echo "CC Versions:" "${VERSIONS_CC[*]}"
 echo
 
 update_master_OSS
@@ -154,6 +193,9 @@ update_versions_OSS VERSIONS_OSS
 
 update_master_CE
 update_versions_CE VERSIONS_CE
+
+update_master_CC
+update_versions_CC VERSIONS_CC
 
 echo "All updates are complete."
 exit "$SUCCESS"

@@ -90,6 +90,7 @@ module.exports = {
           items: [
             'getting-started/bare-metal/about',
             'getting-started/bare-metal/typha-node-tls',
+            'getting-started/bare-metal/troubleshoot',
           ],
         },
         {

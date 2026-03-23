@@ -32,14 +32,14 @@ For more information, see [Calico nftables data plane](../getting-started/kubern
 
 ### Enhancements
 
-* ebpf: Faster redirection from host interface to workloads for any included traffic that does not use NAT (CTLB enabled or pod-to-pod) [calico 9213](https://github.com/projectcalico/calico/pull/9213) (@tomastigera)
+* eBPF: Faster redirection from host interface to workloads for any included traffic that does not use NAT (CTLB enabled or pod-to-pod) [calico 9213](https://github.com/projectcalico/calico/pull/9213) (@tomastigera)
 * Include license file in non-AMD64 images. [calico 8735](https://github.com/projectcalico/calico/pull/8735) (@fasaxc)
 * Address GitHub Dependabot security alerts [calico 9108](https://github.com/projectcalico/calico/pull/9108) (@hjiawei)
 * Improve cni-plugin binary install verification. [calico 8827](https://github.com/projectcalico/calico/pull/8827) (@coutinhop)
 * Felix's route programming now handles routing conflicts deterministically, prioritising routes based on their type.  Conntrack cleanup has been improved; cleanup is now correctly sequenced with route programming when IP addresses move from local to remote workloads. [calico 8418](https://github.com/projectcalico/calico/pull/8418) (@fasaxc)
 * In manifest installs, in order to prevent default IP-pools creation, `CALICO_IPV4POOL_CIDR`=`none` and `CALICO_IPV6POOL_CIDR`=`none` environment variable special values are now supported. [calico 8156](https://github.com/projectcalico/calico/pull/8156) (@kruftik)
 * The calico-kube-controllers container now runs with `securityContext.runAsNonRoot=true`. [calico 6499](https://github.com/projectcalico/calico/pull/6499) (@ialidzhikov)
-* New helm values.yaml field - additionalLabels - allows configuring labels on resources created by the chart. @TheCubicleJockey [calico 8722](https://github.com/projectcalico/calico/pull/8722) (@caseydavenport)
+* New Helm values.yaml field - additionalLabels - allows configuring labels on resources created by the chart. @TheCubicleJockey [calico 8722](https://github.com/projectcalico/calico/pull/8722) (@caseydavenport)
 * New Felix config param IPForwarding allows for preventing Felix from enabling IP forwarding on systems that are only using Calico for host protection (and hence don't need to forward traffic to workloads). [calico 9320](https://github.com/projectcalico/calico/pull/9320) (@fasaxc)
 * Felix now logs our policy selectors as well as the policy ID. [calico 9187](https://github.com/projectcalico/calico/pull/9187) (@fasaxc)
 * Felix's route resync logic has been optimised; it now uses 50% less CPU time and 80% less memory. [calico 9139](https://github.com/projectcalico/calico/pull/9139) (@fasaxc)
@@ -56,28 +56,28 @@ For more information, see [Calico nftables data plane](../getting-started/kubern
 ### BPF data plane
 
 * Fixed memory leak in BPF endpoint manager. [calico 9309](https://github.com/projectcalico/calico/pull/9309) (@tomastigera)
-* ebpf: Fix for Istio ambient mode - traffic that arrives from host should go back through host and not skip iptables [calico 9192](https://github.com/projectcalico/calico/pull/9192) (@tomastigera)
-* ebpf: When bpfConntrackBypass is disabled, ensure that iptables rules, which allow 3rd party iptables rules work for traffic originally for the host, are in place. [calico 9188](https://github.com/projectcalico/calico/pull/9188) (@tomastigera)
-* ebpf: Fixed frequently attaching BPF programs when pods annotations/labels change and eventually failing due to running out of  tc priority. [calico 9089](https://github.com/projectcalico/calico/pull/9089) (@sridhartigera)
-* ebpf: Fix parsing host IP update and re-attach program on all interfaces when there is a host IP update. [calico 9084](https://github.com/projectcalico/calico/pull/9084) (@sridhartigera)
+* eBPF: Fix for Istio ambient mode - traffic that arrives from host should go back through host and not skip iptables [calico 9192](https://github.com/projectcalico/calico/pull/9192) (@tomastigera)
+* eBPF: When bpfConntrackBypass is disabled, ensure that iptables rules, which allow 3rd party iptables rules work for traffic originally for the host, are in place. [calico 9188](https://github.com/projectcalico/calico/pull/9188) (@tomastigera)
+* eBPF: Fixed frequently attaching BPF programs when pods annotations/labels change and eventually failing due to running out of  tc priority. [calico 9089](https://github.com/projectcalico/calico/pull/9089) (@sridhartigera)
+* eBPF: Fix parsing host IP update and re-attach program on all interfaces when there is a host IP update. [calico 9084](https://github.com/projectcalico/calico/pull/9084) (@sridhartigera)
 * Fixed Missing routes for UDP services when in dual stack mode. [calico 9050](https://github.com/projectcalico/calico/pull/9050) (@sridhartigera)
-* ebpf: Fixed bug that would leave residual logging when log filters were applied and then disabled. [calico 9137](https://github.com/projectcalico/calico/pull/9137) (@tomastigera)
-* ebpf: Attach XDP to bond slave devices. [calico 9132](https://github.com/projectcalico/calico/pull/9132) (@sridhartigera)
-* ebpf: Fix Felix panic when using non-default BPF map sizes.  Size was not updated in all places resulting in failure to attach programs. [calico 9117](https://github.com/projectcalico/calico/pull/9117) (@fasaxc)
-* ebpf: Fixes missing iptables rules that would keep preexisting V6 connections working when switching to ebpf mode [calico 8943](https://github.com/projectcalico/calico/pull/8943) (@tomastigera)
-* ebpf: Don't drop, but reject unknown midflow tcp packets with rst [calico 8933](https://github.com/projectcalico/calico/pull/8933) (@tomastigera)
-* ebpf: Set bpfin/out.cali MTU to the smallest of all host ifaces including overlay. That means if jumbo frames are used, this device also uses them. [calico 8922](https://github.com/projectcalico/calico/pull/8922) (@tomastigera)
-* ebpf: Fix - let the node handle packet when we are not sure about the destination [calico 8921](https://github.com/projectcalico/calico/pull/8921) (@tomastigera)
-* ebpf: Cleanup BPF special devices when BPF is turned off [calico 8884](https://github.com/projectcalico/calico/pull/8884) (@tomastigera)
-* ebpf: Support for service loop prevention [calico 8876](https://github.com/projectcalico/calico/pull/8876) (@sridhartigera)
-* ebpf: Fixed forwarding, NATing and checksumming of related ICMP traffic (icmp errors) [calico 8858](https://github.com/projectcalico/calico/pull/8858) (@tomastigera)
-* ebpf: If a bond master device is part of the bpfDataIfacePattern regexp, calico attaches to it and not to the slaves [calico 8803](https://github.com/projectcalico/calico/pull/8803) (@sridhartigera)
-* ebpf: Forwarding services via vxlan tunnel uses different source ports for different flows to better utilize bonded devices and CPUs on the receiving side. [calico 8790](https://github.com/projectcalico/calico/pull/8790) (@tomastigera)
-* ebpf: Do not panic in dual-stack mode when a node is configured with only one and not both IPs or autodetection is not enabled for one. [calico 8760](https://github.com/projectcalico/calico/pull/8760) (@tomastigera)
-* ebpf: Clean up stale icmp6 conntrack entries [calico 8749](https://github.com/projectcalico/calico/pull/8749) (@tomastigera)
-* ebpf: Update map definition in sockops program to let libbpf v1.0+ load them successfully. [calico 8693](https://github.com/projectcalico/calico/pull/8693) (@debasishbsws)
-* ebpf: Fix map creation during upgrade. [calico 8684](https://github.com/projectcalico/calico/pull/8684) (@sridhartigera)
-* ebpf: Fix natOutgoing SNAT for icmp6 [calico 8679](https://github.com/projectcalico/calico/pull/8679) (@sridhartigera)
+* eBPF: Fixed bug that would leave residual logging when log filters were applied and then disabled. [calico 9137](https://github.com/projectcalico/calico/pull/9137) (@tomastigera)
+* eBPF: Attach XDP to bond slave devices. [calico 9132](https://github.com/projectcalico/calico/pull/9132) (@sridhartigera)
+* eBPF: Fix Felix panic when using non-default BPF map sizes.  Size was not updated in all places resulting in failure to attach programs. [calico 9117](https://github.com/projectcalico/calico/pull/9117) (@fasaxc)
+* eBPF: Fixes missing iptables rules that would keep preexisting V6 connections working when switching to eBPF mode [calico 8943](https://github.com/projectcalico/calico/pull/8943) (@tomastigera)
+* eBPF: Don't drop, but reject unknown midflow tcp packets with rst [calico 8933](https://github.com/projectcalico/calico/pull/8933) (@tomastigera)
+* eBPF: Set bpfin/out.cali MTU to the smallest of all host ifaces including overlay. That means if jumbo frames are used, this device also uses them. [calico 8922](https://github.com/projectcalico/calico/pull/8922) (@tomastigera)
+* eBPF: Fix - let the node handle packet when we are not sure about the destination [calico 8921](https://github.com/projectcalico/calico/pull/8921) (@tomastigera)
+* eBPF: Cleanup BPF special devices when BPF is turned off [calico 8884](https://github.com/projectcalico/calico/pull/8884) (@tomastigera)
+* eBPF: Support for service loop prevention [calico 8876](https://github.com/projectcalico/calico/pull/8876) (@sridhartigera)
+* eBPF: Fixed forwarding, NATing and checksumming of related ICMP traffic (icmp errors) [calico 8858](https://github.com/projectcalico/calico/pull/8858) (@tomastigera)
+* eBPF: If a bond master device is part of the bpfDataIfacePattern regexp, calico attaches to it and not to the slaves [calico 8803](https://github.com/projectcalico/calico/pull/8803) (@sridhartigera)
+* eBPF: Forwarding services via vxlan tunnel uses different source ports for different flows to better utilize bonded devices and CPUs on the receiving side. [calico 8790](https://github.com/projectcalico/calico/pull/8790) (@tomastigera)
+* eBPF: Do not panic in dual-stack mode when a node is configured with only one and not both IPs or autodetection is not enabled for one. [calico 8760](https://github.com/projectcalico/calico/pull/8760) (@tomastigera)
+* eBPF: Clean up stale icmp6 conntrack entries [calico 8749](https://github.com/projectcalico/calico/pull/8749) (@tomastigera)
+* eBPF: Update map definition in sockops program to let libbpf v1.0+ load them successfully. [calico 8693](https://github.com/projectcalico/calico/pull/8693) (@debasishbsws)
+* eBPF: Fix map creation during upgrade. [calico 8684](https://github.com/projectcalico/calico/pull/8684) (@sridhartigera)
+* eBPF: Fix natOutgoing SNAT for icmp6 [calico 8679](https://github.com/projectcalico/calico/pull/8679) (@sridhartigera)
 
 ### Windows
 
@@ -90,7 +90,7 @@ For more information, see [Calico nftables data plane](../getting-started/kubern
 
 * Helm: Fix error parsing kubernetesServiceEndpoint.host as an integer [calico 9067](https://github.com/projectcalico/calico/pull/9067) (@MichalFupso)
 * Helm: Fix rendering of KUBERNETES_SERVICE_PORT [calico 8865](https://github.com/projectcalico/calico/pull/8865) (@simonostendorf)
-* Fix error when using helm additionalLabels in conjunction with image pull secrets [calico 8785](https://github.com/projectcalico/calico/pull/8785) (@caseydavenport)
+* Fix error when using Helm additionalLabels in conjunction with image pull secrets [calico 8785](https://github.com/projectcalico/calico/pull/8785) (@caseydavenport)
 
 **General**
 
@@ -117,7 +117,7 @@ For more information, see [Calico nftables data plane](../getting-started/kubern
 * Reduce spammy logs in route table [calico 8879](https://github.com/projectcalico/calico/pull/8879) (@caseydavenport)
 * Fixed incorrect logging level related to service IPs. [calico 8816](https://github.com/projectcalico/calico/pull/8816) (@mazdakn)
 * Fix that Calico would ignore changes to Kubernetes Node InternalIP when using InternalIP node address autodetection. [calico 8728](https://github.com/projectcalico/calico/pull/8728) (@Levi080513)
-* ebpf: wg6 traffic is allowed even if blocked by policy [calico 8712](https://github.com/projectcalico/calico/pull/8712) (@tomastigera)
+* eBPF: wg6 traffic is allowed even if blocked by policy [calico 8712](https://github.com/projectcalico/calico/pull/8712) (@tomastigera)
 * Fix pods stuck in ContainerCreating state due to  "failed to create host netlink handle: protocol not supported" error on kernels that don't support XFRM. [calico 8710](https://github.com/projectcalico/calico/pull/8710) (@carloslima)
 * Fix missing log line numbers in cni-installer log output [calico 8696](https://github.com/projectcalico/calico/pull/8696) (@caseydavenport)
 * Restart calico/node if unable to set the NodeNetwork condition. [calico 8673](https://github.com/projectcalico/calico/pull/8673) (@cyclinder)
@@ -150,8 +150,8 @@ November 20, 2024
 
 #### Other changes
 
-- ebpf: real IPs in bpf debug output with co-re enabled kernels [calico 9465](https://github.com/projectcalico/calico/pull/9465) (@tomastigera)
-- Add setting to enable wireguard NAPI threading [calico 9414](https://github.com/projectcalico/calico/pull/9414) (@jrcichra)
+- eBPF: real IPs in bpf debug output with co-re enabled kernels [calico 9465](https://github.com/projectcalico/calico/pull/9465) (@tomastigera)
+- Add setting to enable WireGuard NAPI threading [calico 9414](https://github.com/projectcalico/calico/pull/9414) (@jrcichra)
 
 #### Updating
 
@@ -163,8 +163,8 @@ February 6, 2025
 
 #### Bug fixes
 
-- ebpf: fix icmp error delivery to host networked pods [calico 9749](https://github.com/projectcalico/calico/pull/9749) (@tomastigera)
-- ebpf: fixed routing from outside the cluster in EKS with aws-cni [calico 9629](https://github.com/projectcalico/calico/pull/9629) (@tomastigera)
+- eBPF: fix icmp error delivery to host networked pods [calico 9749](https://github.com/projectcalico/calico/pull/9749) (@tomastigera)
+- eBPF: fixed routing from outside the cluster in EKS with aws-cni [calico 9629](https://github.com/projectcalico/calico/pull/9629) (@tomastigera)
 - Fix: Map OpenStack-derived policy to the "default" tier, not "ossg". [calico 9778](https://github.com/projectcalico/calico/pull/9778) (@nelljerram)
 - Fix that libcalico-go would not always fill in the revision when listing certain resources (or single instances of certain resources).  This could result in missed watch events in components such as Typha. [calico 9689](https://github.com/projectcalico/calico/pull/9689) (@fasaxc)
 - Fix that nodes with borrowed VXLAN tunnel addresses were not reachable by pods. [calico 9685](https://github.com/projectcalico/calico/pull/9685) (@caseydavenport)
@@ -188,7 +188,7 @@ March 25, 2025
 
 #### Bug fixes
 
-- Fix race when setting Wireguard NAPI setting that could cause the NAPI setting not to be applied for several minutes. [calico 9801](https://github.com/projectcalico/calico/pull/9801) (@fasaxc)
+- Fix race when setting WireGuard NAPI setting that could cause the NAPI setting not to be applied for several minutes. [calico 9801](https://github.com/projectcalico/calico/pull/9801) (@fasaxc)
 
 #### Other changes
 
@@ -225,9 +225,9 @@ In version 3.29.4, we made the following updates to how policies are handled in 
 
 * Change OpenShift manifests order to fix an error when creating HCP clusters. [calico 10255](https://github.com/projectcalico/calico/pull/10255) (@coutinhop)
 * Fix missing RBAC permissions for kube-controller-manager to access tiers in manifest installs, which was preventing proper resource garbage collection. [calico 10230](https://github.com/projectcalico/calico/pull/10230) (@caseydavenport)
-* ebpf - Fix dropping packets from workloads to host interfaces not managed by calico. [calico 10226](https://github.com/projectcalico/calico/pull/10226) (@sridhartigera)
-* ebpf - Fix configuring arp entries for bpf NAT devices for systemd >= 242 [calico 10217](https://github.com/projectcalico/calico/pull/10217) (@sridhartigera)
-* ebpf - Fixed a bug where BPF programs were being re-attached to network interfaces unnecessarily, even when the host IP address had not changed. [calico 10164](https://github.com/projectcalico/calico/pull/10164) (@sridhartigera)
+* eBPF - Fix dropping packets from workloads to host interfaces not managed by calico. [calico 10226](https://github.com/projectcalico/calico/pull/10226) (@sridhartigera)
+* eBPF - Fix configuring arp entries for bpf NAT devices for systemd >= 242 [calico 10217](https://github.com/projectcalico/calico/pull/10217) (@sridhartigera)
+* eBPF - Fixed a bug where BPF programs were being re-attached to network interfaces unnecessarily, even when the host IP address had not changed. [calico 10164](https://github.com/projectcalico/calico/pull/10164) (@sridhartigera)
 
 #### Enhancements
 
@@ -251,8 +251,8 @@ July 17, 2025
 #### Bug fixes
 
 * Fix CalicoNodeStatus updates could get blocked by datastore errors [calico 10594](https://github.com/projectcalico/calico/pull/10594) (@theboringstuff)
-* ebpf - Fixed mounting cgroupv2 for connect time load balancing. [calico 10505](https://github.com/projectcalico/calico/pull/10505) (@sridhartigera)
-* ebpf - Fixed attaching bpf programs by atomically replacing the old program rather than attaching new and detaching old. [calico 10455](https://github.com/projectcalico/calico/pull/10455) (@sridhartigera)
+* eBPF - Fixed mounting cgroupv2 for connect time load balancing. [calico 10505](https://github.com/projectcalico/calico/pull/10505) (@sridhartigera)
+* eBPF - Fixed attaching bpf programs by atomically replacing the old program rather than attaching new and detaching old. [calico 10455](https://github.com/projectcalico/calico/pull/10455) (@sridhartigera)
 
 #### Updating
 
@@ -282,7 +282,7 @@ November 20, 2025
 
 #### Bug fixes
 
-* ebpf: Fixed loading connecttime load balancer program in 6.12 kernel [calico 11405](https://github.com/projectcalico/calico/pull/11405) (@sridhartigera)
+* eBPF: Fixed loading connecttime load balancer program in 6.12 kernel [calico 11405](https://github.com/projectcalico/calico/pull/11405) (@sridhartigera)
 * Fix AllowSpoofedSourcePrefixes for dual stack clusters. [calico 11374](https://github.com/projectcalico/calico/pull/11374) (@lucastigera)
 * Fix (release-tool): include image tarballs in release archive file [calico 11297](https://github.com/projectcalico/calico/pull/11297) (@radTuti)
 * Fix: reinstate support for VMs that are configured not to respond to ARP requests. [calico 11271](https://github.com/projectcalico/calico/pull/11271) (@nelljerram)

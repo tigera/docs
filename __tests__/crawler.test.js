@@ -87,6 +87,7 @@ test('Crawl the docs and execute tests', async () => {
     //`https://installer.calicocloud.io/manifests/v3.17.1-3/manifests`,
     //`https://installer.calicocloud.io/manifests/v3.17.1-4/manifests`,
     `https://d881b853ae312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com`,
+    /^https:\/\/fonts\.googleapis\.com\/css2/, // Google Fonts URLs with semicolons confuse the link checker
     `https://www.googletagmanager.com`,
     'https://www.googletagmanager.com/gtm.js?id=',
     'https://twitter.com/tigeraio',
@@ -201,7 +202,8 @@ test('Crawl the docs and execute tests', async () => {
     'https://calico-docs.mcp.kapa.ai',
     'https://docs.tigera.io/img/calico-logo-2026-badge.png',
     'http://www.w3.org/2000/svg', // Appears in SVG file 'xmlns', doesn't need checking
-    'https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html' // TEMP
+    'https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html', // TEMP
+    'https://review.openstack.org/#/c/344008/' // TEMP: dead link (503)
   ];
 
   const lc = linkChecker();

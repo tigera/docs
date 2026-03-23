@@ -398,6 +398,18 @@ When making use of the `usePodCidr` or `usePodCidrIPv6` options, the $[prodname]
 
 When using `host-local` IPAM with the Kubernetes API datastore, you must configure both $[nodecontainer] and the Typha deployment to use the `Node.podCIDR` field by setting the environment variable `USE_POD_CIDR=true` in each.
 
+#### Disabling the `upgrade-ipam` init container
+
+When using `host-local` IPAM on a manifest-based installation of $[prodname], you should remove the `upgrade-ipam` init container from the `calico-node` DaemonSet definition in the manifest before applying it.
+
+If $[prodname] is already installed, you can remove the init container with the following command:
+
+```bash
+kubectl get ds calico-node -n kube-system -o json | \
+jq 'del(.spec.template.spec.initContainers[]? | select(.name == "upgrade-ipam"))' | \
+kubectl apply -f -
+```
+
 </TabItem>
 </Tabs>
 
