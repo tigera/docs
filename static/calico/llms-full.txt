@@ -16595,6 +16595,10 @@ The **calico-ipam** plugin uses Calico’s IP pool resource to control how IP ad
 
 By default, Calico uses a single IP pool for the entire Kubernetes pod CIDR, but you can divide the pod CIDR into several pools. You can assign separate IP pools to particular selections of **nodes**, or to teams, users, or applications within a cluster using **namespaces**.
 
+> **SUCCESS:** Because Calico IPAM does not use the Kubernetes node CIDR allocations (`Node.spec.podCIDR`), you can set `--allocate-node-cidrs=false` on the kube-controller-manager. This prevents Kubernetes from allocating unused node CIDRs and avoids `CIDRNotAvailable` events on nodes.
+>
+> If you bootstrapped your cluster with kubeadm and passed `--pod-network-cidr`, kubeadm enables node CIDR allocation automatically. See the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/) for instructions on reconfiguring the controller manager after cluster creation.
+
 You can control which pools Calico uses for each pod using
 
 - node selectors
@@ -19901,9 +19905,9 @@ Best practices for configuring Neutron subnets in Calico deployments can be foun
 
 In Calico, these roles for the Neutron subnet are preserved in their entirety. All properties associated with these Neutron subnets are preserved and remain meaningful except for:
 
-`host_routes`
+- `host_routes`
 
-: These have no effect, as the compute nodes will route traffic immediately after it egresses the VM.
+  These have no effect, as the compute nodes will route traffic immediately after it egresses the VM.
 
 ## Ports[​](#ports)
 
@@ -19911,21 +19915,21 @@ In vanilla Neutron, a port represents a connection from a VM to a single layer 2
 
 All properties on a port work as normal, except for the following:
 
-`network_id`
+- `network_id`
 
-: The network ID still controls which Neutron network the port is attached to, and therefore still controls which Neutron subnets it will be placed in. However, as per the [note above](#networks), the Neutron network that a port is placed in does not affect which machines in the deployment it can contact.
+  The network ID still controls which Neutron network the port is attached to, and therefore still controls which Neutron subnets it will be placed in. However, as per the [note above](#networks), the Neutron network that a port is placed in does not affect which machines in the deployment it can contact.
 
 ### Extended Attributes: Port Binding Attributes[​](#extended-attributes-port-binding-attributes)
 
 The `binding:host-id` attribute works as normal. The following notes apply to the other attributes:
 
-`binding:profile`
+- `binding:profile`
 
-: This is unused in Calico.
+  This is unused in Calico.
 
-`binding:vnic_type`
+- `binding:vnic_type`
 
-: This field, if used, **must** be set to `normal`. If set to any other value, Calico will not correctly function!
+  This field, if used, **must** be set to `normal`. If set to any other value, Calico will not correctly function!
 
 ## Quotas[​](#quotas)
 
@@ -22070,15 +22074,10 @@ spec:
  egress:
  # allow all namespaces to communicate to DNS pods
  - action: Allow
- protocol: UDP
  destination:
- selector: 'k8s-app == "kube-dns"'
- ports:
- - 53
- - action: Allow
- protocol: TCP
- destination:
- selector: 'k8s-app == "kube-dns"'
+ services:
+ name: kube-dns
+ namespace: kube-system
  ports:
  - 53
 ```
@@ -23101,6 +23100,8 @@ spec:
 ```
 
 > **SECONDARY:** This policy also enacts a default-deny behavior for all pods, so make sure any other required application traffic is allowed by a policy.
+
+> **SUCCESS:** You may see examples elsewhere that use a label selector (for example, `selector: 'k8s-app == "kube-dns"'`) with explicit protocol and port rules to allow DNS traffic. That approach can be useful when you need to target pods directly without a backing Kubernetes Service, or when you need to restrict traffic to only a subset of a Service's ports or protocols. The service match syntax shown above is preferred in the common case because it is simpler and automatically resolves the correct endpoints and ports.
 
 ## Allow access from a specified service[​](#allow-access-from-a-specified-service)
 
