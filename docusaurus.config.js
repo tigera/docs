@@ -240,27 +240,27 @@ export default async function createAsyncConfig() {
                 },
                 {
                   label: 'Events',
-                  to: 'https://www.tigera.io/events',
+                  to: 'https://www.tigera.io/events/',
                 },
                 {
                   label: 'Resource center',
-                  to: 'https://www.tigera.io/resources',
+                  to: 'https://www.tigera.io/resources/',
                 },
                 {
                   label: 'Blog',
-                  to: 'https://www.tigera.io/blog',
+                  to: 'https://www.tigera.io/blog/',
                 },
                 {
                   label: 'Trade shows',
-                  to: 'https://www.tigera.io/lp/tradeshows',
+                  to: 'https://www.tigera.io/lp/tradeshows/',
                 },
                 {
                   label: 'Certification',
-                  to: 'https://www.tigera.io/lp/calico-certification',
+                  to: 'https://www.tigera.io/lp/calico-certification/',
                 },
                 {
                   label: 'Guides',
-                  to: 'https://www.tigera.io/learn/guides/kubernetes-monitoring',
+                  to: 'https://www.tigera.io/learn/guides/kubernetes-monitoring/',
                 },
               ],
             },
@@ -269,7 +269,7 @@ export default async function createAsyncConfig() {
               items: [
                 {
                   label: 'Customer success',
-                  to: 'https://www.tigera.io/customer-success',
+                  to: 'https://www.tigera.io/customer-success/',
                 },
                 {
                   label: 'Support portal',
@@ -277,11 +277,11 @@ export default async function createAsyncConfig() {
                 },
                 {
                   label: 'Security bulletins',
-                  to: 'https://www.tigera.io/security-bulletins',
+                  to: 'https://www.tigera.io/security-bulletins/',
                 },
                 {
                   label: 'Report a security issue',
-                  to: 'https://www.tigera.io/vulnerability-disclosure',
+                  to: 'https://www.tigera.io/vulnerability-disclosure/',
                 },
               ],
             },
@@ -290,11 +290,11 @@ export default async function createAsyncConfig() {
               items: [
                 {
                   label: 'Project Calico',
-                  to: 'https://www.tigera.io/project-calico',
+                  to: 'https://www.tigera.io/project-calico/',
                 },
                 {
                   label: 'Community',
-                  to: 'https://www.tigera.io/project-calico/community',
+                  to: 'https://www.tigera.io/project-calico/community/',
                 },
                 {
                   label: 'GitHub',
@@ -315,27 +315,27 @@ export default async function createAsyncConfig() {
               items: [
                 {
                   label: 'About Calico',
-                  to: 'https://www.tigera.io/about',
+                  to: 'https://www.tigera.io/about/',
                 },
                 {
                   label: 'Customers',
-                  to: 'https://www.tigera.io/customer-stories',
+                  to: 'https://www.tigera.io/customer-stories/',
                 },
                 {
                   label: 'Partners',
-                  to: 'https://www.tigera.io/partners',
+                  to: 'https://www.tigera.io/partners/',
                 },
                 {
                   label: 'Newsroom',
-                  to: 'https://www.tigera.io/media',
+                  to: 'https://www.tigera.io/media/',
                 },
                 {
                   label: 'Careers',
-                  to: 'https://www.tigera.io/careers',
+                  to: 'https://www.tigera.io/careers/',
                 },
                 {
                   label: 'Contact',
-                  to: 'https://www.tigera.io/contact',
+                  to: 'https://www.tigera.io/contact/',
                 },
               ],
             },
