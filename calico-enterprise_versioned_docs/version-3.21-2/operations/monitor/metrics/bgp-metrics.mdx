@@ -70,7 +70,23 @@ The metrics generated are:
 - `bgp_routes_imported` - Current number of routes successfully imported into the routing table.
 - `bgp_route_updates_received` - Total number of route updates received over time (since startup).
 
-$[prodname] will run BGP metrics for Prometheus by default. Metrics are directly available on each compute node at `http://<node-IP>:9900/metrics`.
+$[prodname] will run BGP metrics for Prometheus by default. Metrics are available on each compute node at `https://<node-IP>:9900/metrics`, secured with mTLS.
+
+To access BGP metrics directly, you must use the TLS credentials:
+
+1. Extract the TLS credentials and CA bundle from the cluster.
+
+   ```bash
+   kubectl get secret -n tigera-prometheus calico-node-prometheus-client-tls -o jsonpath='{.data.tls\.key}' | base64 -d > key.pem
+   kubectl get secret -n tigera-prometheus calico-node-prometheus-client-tls -o jsonpath='{.data.tls\.crt}' | base64 -d > cert.pem
+   kubectl get cm -n tigera-prometheus tigera-ca-bundle -o jsonpath='{.data.tigera-ca-bundle\.crt}' > bundle.pem
+   ```
+
+1. Verify you can access the metrics.
+
+   ```bash
+   curl --cacert bundle.pem --key key.pem --cert cert.pem https://<node-IP>:9900/metrics
+   ```
 
 Refer to [Configuring Prometheus](../prometheus/index.mdx) for information on how to create a new Alerting rule or updating the scraping interval for how often Prometheus collects the metrics.
 

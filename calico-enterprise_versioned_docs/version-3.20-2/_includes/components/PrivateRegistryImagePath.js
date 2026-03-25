@@ -115,7 +115,7 @@ sed -ie "/serviceAccountName: calico-prometheus-operator/a \      imagePullSecre
             {/* The second 'sed' should be removed once operator launches Prometheus & Alertmanager */}
 
             <p>
-                For <b>Openshift</b>, after downloading all manifests modify the following to use your custom registry:
+                For <b>OpenShift</b>, after downloading all manifests modify the following to use your custom registry:
             </p>
             <CodeBlock language='bash'>
                 {`sed -ie "s?quay.io.*/?$PRIVATE_REGISTRY/$IMAGE_PATH/?" manifests/02-tigera-operator.yaml`}

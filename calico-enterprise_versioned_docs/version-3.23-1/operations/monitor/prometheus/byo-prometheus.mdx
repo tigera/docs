@@ -372,35 +372,15 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 This section is applicable only if you experience issues with mTLS after following the [Scrape metrics from specific components directly](#scrape-metrics-from-specific-components)
 section.
 
-1. Use the following command to retrieve the tls.key and tls.cert.
+1. Extract the TLS credentials and CA bundle from the cluster.
 
    ```bash
-   export NAMESPACE=<my-prometheus-namespace>
+   kubectl get secret -n $NAMESPACE calico-node-prometheus-client-tls -o jsonpath='{.data.tls\.key}' | base64 -d > key.pem
+   kubectl get secret -n $NAMESPACE calico-node-prometheus-client-tls -o jsonpath='{.data.tls\.crt}' | base64 -d > cert.pem
+   kubectl get cm -n $NAMESPACE tigera-ca-bundle -o jsonpath='{.data.tigera-ca-bundle\.crt}' > bundle.pem
    ```
 
-   ```bash
-   kubectl get secret -n $NAMESPACE calico-node-prometheus-client-tls -o yaml
-   ```
-
-1. Save the tls.key and tls.cert content into key and cert after base64 decode.
-
-   ```bash
-   $:tls_key=<tls.key content>
-   $:echo $tls_key|base64 -d >key.pem
-
-   $:tls_cert=<tls.crt content>
-   $:echo $cert|base64 -d>cert.pem
-   ```
-
-1. Get the ca-bundle certificate using this command:
-
-   ```bash
-   kubectl get cm -n $NAMESPACE tigera-ca-bundle -o yaml
-   ```
-
-1. Open a new file (bundle.pem) in your favorite editor, and paste the content from "BEGIN CERTIFICATE" to "END CERTIFICATE".
-
-1. Port-forward the prometheus pods and run this command with the forwarded port.
+1. Port-forward the Prometheus pods and run this command with the forwarded port.
 
    ```bash
    curl --cacert bundle.pem --key key.pem  --cert cert.pem https://localhost:8080/metrics

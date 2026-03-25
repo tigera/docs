@@ -391,7 +391,6 @@ generate-llms-commit: generate-llms
 # Vale is currently used to test new changes.
 vale:
 	docker run --rm \
-		-v $(CURDIR)/.github/styles:/styles \
 		-v $(CURDIR):/docs \
 		-w /docs/$(PRODUCT) jdkato/vale .
 

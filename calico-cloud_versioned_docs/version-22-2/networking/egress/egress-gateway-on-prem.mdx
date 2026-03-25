@@ -214,14 +214,29 @@ metadata:
   name: egress-ippool-1
 spec:
   cidr: 10.10.10.0/30
-  blockSize: 31
+  blockSize: 32
   nodeSelector: "!all()"
 EOF
 ```
 
 Where:
 
-- `blockSize` must be specified when the prefix length of the whole `cidr` is more than the default `blockSize` of 26.
+- It is best to set the `blockSize` to 32 so that each block contains only a single IP address:
+
+  - Scheduling a single egress gateway to a node causes the node to claim a whole block.  The other IPs in the block
+    are wasted unless a second egress gateway (with the same pool configuration) is scheduled to the same node.
+
+  - Empty /32 blocks can always be reclaimed from other nodes if the pool runs out of blocks.  This ensures that an
+    egress gateway can always be scheduled if there are free IPs in the pool.
+
+  Setting `strictAffinity` to `false` in the [IPAM configuration](../../reference/resources/ipamconfig) also prevents the
+  above problems by allowing nodes to "borrow" IPs from other nodes' blocks.  However, using /32 blocks:
+
+  - Avoids a dependency on a setting that is shared with other IP pools.
+
+  - Results in simpler, uniform route advertisements (rather than a mix of block size routes and /32 routes).
+
+  - Results in less route churn.
 
 - `nodeSelector: "!all()"` is recommended so that this egress IP pool is not accidentally used for cluster pods in general. Specifying this `nodeSelector` means that the IP pool is only used for pods that explicitly identify it in their `cni.projectcalico.org/ipv4pools` annotation.
 

@@ -1,6 +1,6 @@
 export default {
     baseStyle: {
         fontFamily:
-            '"Poppins", "Helvetica Neue", "Helvetica", "Arial", sans-serif',
+            '"DM Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif',
     },
 };
