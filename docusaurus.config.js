@@ -124,7 +124,7 @@ export default async function createAsyncConfig() {
         },
         announcementBar: {
           id: "calico_hackathon_deadline",
-          content: '🏃 Only one week left (Ends March 31, 2026!) Finalize your GitHub repo and demo video to enter the <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=Docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon</a>.',
+          content: '🚀 Deadline Extended! (Ends April 30, 2026!) Finalize your GitHub repo and demo video to enter the <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon.</a>',
           backgroundColor: "#FCE181",
           textColor: "#000",
           isCloseable: true,
