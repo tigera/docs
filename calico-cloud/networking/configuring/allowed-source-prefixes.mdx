@@ -1,0 +1,52 @@
+---
+description: Allow pods to send traffic with a source IP address outside their own using the allowedSourcePrefixes annotation.
+---
+
+# Allow pods to use additional source IP prefixes
+
+## Big picture
+
+Allow pods to send egress traffic using source IP addresses outside their own pod IP, by specifying allowed source prefixes.
+
+## Value
+
+By default, Calico blocks egress traffic from pods when the source IP does not match the pod IP. This is a security measure to prevent IP spoofing. In certain use cases, such as pods acting as a transparent proxy that preserves the original source IP, pods need to send traffic with a different source address.
+
+## Concepts
+
+### Source IP spoofing protection
+
+Calico programs dataplane rules that drop egress packets from a pod if the source IP does not match the pod's own IP. The `allowedSourcePrefixes` annotation relaxes this restriction for specific IP prefixes on a per-pod basis.
+
+### FelixConfiguration prerequisite
+
+Because allowing non-pod source IPs is a security-sensitive operation, Felix disables support for the annotation by default. You must explicitly opt in by setting `workloadSourceSpoofing: Any` in the FelixConfiguration resource before the annotation takes effect.
+
+## Before you begin...
+
+Enable `workloadSourceSpoofing` in the FelixConfiguration resource:
+
+```yaml
+apiVersion: crd.projectcalico.org/v1
+kind: FelixConfiguration
+metadata:
+  name: default
+spec:
+  workloadSourceSpoofing: Any
+```
+
+:::caution
+
+Enabling `workloadSourceSpoofing` allows any pod with the annotation to send traffic with arbitrary source IPs within the specified prefixes. Ensure you have proper admission control in place to restrict which pods can use this annotation.
+
+:::
+
+## How to
+
+Annotate the pod with `cni.projectcalico.org/allowedSourcePrefixes` set to a JSON list of CIDR prefixes. For example:
+
+```yaml
+cni.projectcalico.org/allowedSourcePrefixes: '["192.168.10.0/24"]'
+```
+
+The annotation must be present when the pod is created; adding it later has no effect.
