@@ -1,0 +1,244 @@
+---
+description: Configure Calico to provide networking for KubeVirt virtual machines, including IP address persistence and live migration support.
+---
+
+# KubeVirt networking
+
+## Big picture
+
+$[prodname] provides networking for KubeVirt virtual machines (VMs) running on your Kubernetes cluster,
+including persistent IP addresses across VM lifecycle events and support for live migration.
+
+## Value
+
+KubeVirt runs VMs inside Kubernetes pods. When a VM reboots, is evicted, or live-migrates to
+another host, the underlying pod is destroyed and recreated. Without IP persistence, each new pod
+receives a fresh IP address, which breaks existing connections and changes the VM's network identity.
+
+$[prodname]'s KubeVirt support ensures that:
+
+- VMs retain the same IP address across reboots, pod evictions, and live migrations.
+- Live migration completes without breaking TCP connections or changing the VM's network identity.
+- Network policy is correctly applied to the VM on the destination host before migration traffic is switched.
+
+## Concepts
+
+### Supported networking mode: bridge
+
+$[prodname] supports KubeVirt live migration using the **bridge** binding mode. In bridge mode,
+the VM is connected to the pod network through a Linux bridge, and the VM uses the same IP address
+that $[prodname] assigns to the pod. This is required because:
+
+- **IP address persistence** depends on the VM IP matching the pod IP. Bridge mode ensures
+  the VM sees and uses the pod IP directly.
+- **Network policy** is applied on the pod's veth interface. Bridge mode preserves this
+  relationship so policy enforcement works correctly for VM traffic.
+- **Live migration** relies on detecting gratuitous ARP (GARP) packets from the VM on the
+  pod's veth interface to know when the VM has activated on the target host.
+
+Other KubeVirt networking modes (such as masquerade) are not supported for live migration
+because the VM would use a different IP than the pod IP, breaking IP persistence and
+policy enforcement.
+
+### BGP networking required
+
+Live migration currently requires BGP networking. Overlay networking (VXLAN, IP-in-IP)
+support is planned for a future release.
+
+### KubeVirt VM IP address persistence
+
+$[prodname] uses the VM's identity (rather than the pod's identity) as the IPAM allocation handle.
+When a VM's pod is recreated, the new pod is allocated the same IP address as the original.
+This is a cluster-wide setting controlled by the `IPAMConfiguration` resource.
+
+### Live migration
+
+When a KubeVirt VM live-migrates from one host to another, $[prodname] coordinates the network
+transition:
+
+1. The target pod is created on the destination host and assigned the same IP as the source pod.
+2. Network policy is programmed on the destination host before the VM becomes active.
+3. Once the VM activates on the target host, $[prodname] adjusts route priorities so that
+   traffic is steered to the new host.
+4. After a configurable convergence period (default 30 seconds), route priorities return to normal.
+
+### Policy setup timeout
+
+During live migration, KubeVirt needs to know when the destination host is ready for the VM.
+The `policy_setup_timeout_seconds` CNI configuration parameter interlocks the progress of the
+live migration with policy programming. The CNI plugin delays reporting success until network
+policy is in place on the destination, or until the timeout expires.
+
+## Before you begin
+
+- A working Kubernetes cluster with KubeVirt installed.
+- $[prodname] installed with BGP networking.
+- Access to `projectcalico.org/v3` resources, either by installing the $[prodname]
+  [API server](../../operations/install-apiserver.mdx) or by using
+  [calicoctl](../../operations/calicoctl/install.mdx).
+
+## How to
+
+### Enable live migration on VMs with bridge binding
+
+By default, KubeVirt does not allow [live migration](https://kubevirt.io/user-guide/compute/live_migration/)
+for VMs that use bridge binding on the pod network. To enable it, annotate your `VirtualMachine`
+template with `kubevirt.io/allow-pod-bridge-network-live-migration`:
+
+```yaml
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: my-vm
+spec:
+  template:
+    metadata:
+      annotations:
+        kubevirt.io/allow-pod-bridge-network-live-migration: ""
+    spec:
+      domain:
+        devices:
+          interfaces:
+            - name: default
+              bridge: {}
+      networks:
+        - name: default
+          pod: {}
+```
+
+The annotation must be placed in `spec.template.metadata.annotations` (the VMI template, not the
+VM itself). Without this annotation, KubeVirt rejects live migration attempts for VMs using
+bridge binding with an error like:
+`cannot migrate VMI which does not use masquerade to connect to the pod network`.
+
+:::note
+
+This annotation tells KubeVirt that the CNI plugin ($[prodname]) handles IP address
+preservation and network continuity during migration. $[prodname] ensures the target pod
+receives the same IP and that routes are updated to steer traffic to the new host.
+
+:::
+
+### Enable KubeVirt VM IP address persistence
+
+IP address persistence is enabled by default. If it has been previously disabled, re-enable
+it by updating the `IPAMConfiguration` resource:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: IPAMConfiguration
+metadata:
+  name: default
+spec:
+  strictAffinity: false
+  autoAllocateBlocks: true
+  maxBlocksPerHost: 0
+  kubeVirtVMAddressPersistence: Enabled
+```
+
+Or using `calicoctl`:
+
+```bash
+calicoctl ipam configure --kubevirt-ip-persistence=Enabled
+```
+
+:::note
+
+IP address persistence must be enabled for live migration to work. If persistence is disabled,
+the CNI plugin rejects migration target pods.
+
+:::
+
+### Configure policy setup timeout for live migration
+
+To ensure network policy is programmed on the destination host before the VM starts receiving
+traffic, configure `policy_setup_timeout_seconds` in the CNI configuration. This value specifies
+how long (in seconds) the CNI plugin waits for policy to be programmed before reporting success.
+
+In your CNI network configuration (typically `/etc/cni/net.d/10-calico.conflist`), add or
+update the `policy_setup_timeout_seconds` field:
+
+```json
+{
+  "name": "k8s-pod-network",
+  "cniVersion": "0.3.1",
+  "plugins": [
+    {
+      "type": "calico",
+      "policy_setup_timeout_seconds": 30,
+      ...
+    }
+  ]
+}
+```
+
+If you installed $[prodname] using the operator, you can configure this through the `Installation`
+resource's `calicoNetwork.cni` settings.
+
+### Configure live migration route priority
+
+$[prodname] uses Linux kernel route metrics to steer traffic during live migration.
+The route priority settings are configured through the `FelixConfiguration` resource:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: FelixConfiguration
+metadata:
+  name: default
+spec:
+  ipv4NormalRoutePriority: 1024
+  ipv4ElevatedRoutePriority: 512
+  ipv6NormalRoutePriority: 1024
+  ipv6ElevatedRoutePriority: 512
+  liveMigrationRouteConvergenceTime: 30s
+```
+
+| Field | Description | Default |
+|-------|-------------|---------|
+| `ipv4NormalRoutePriority` | Route metric under normal (non-migration) conditions. | 1024 |
+| `ipv4ElevatedRoutePriority` | Route metric during and immediately after live migration. Must be less than the normal priority (lower metric = higher priority in the Linux kernel). | 512 |
+| `ipv6NormalRoutePriority` | Same as `ipv4NormalRoutePriority` for IPv6. | 1024 |
+| `ipv6ElevatedRoutePriority` | Same as `ipv4ElevatedRoutePriority` for IPv6. | 512 |
+| `liveMigrationRouteConvergenceTime` | How long elevated route priority is held after migration completes, allowing BGP routes to converge across the cluster before reverting to normal priority. | 30s |
+
+:::note
+
+Route priority values must be in the range [1, 2147483646]. The elevated priority must be
+lower than the normal priority for traffic steering to work correctly.
+
+:::
+
+The defaults are suitable for most deployments. You may need to increase
+`liveMigrationRouteConvergenceTime` if your BGP topology requires more time for route propagation
+(for example, in large multi-rack deployments).
+
+If you use BGP networking, you must also set the normal route priority in the `BGPConfiguration`
+resource to match the `FelixConfiguration` values. BIRD uses this to identify elevated-priority
+routes during live migration and to correctly override local workload routes with higher-priority
+BGP-learned routes:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: BGPConfiguration
+metadata:
+  name: default
+spec:
+  ipv4NormalRoutePriority: 1024
+  ipv6NormalRoutePriority: 1024
+```
+
+:::warning
+
+The `ipv4NormalRoutePriority` and `ipv6NormalRoutePriority` values in `BGPConfiguration` must
+match the corresponding values in `FelixConfiguration`. Mismatched values will cause incorrect
+route selection during live migration.
+
+:::
+
+## Additional resources
+
+- [IPAMConfiguration reference](../../reference/resources/ipamconfig.mdx)
+- [FelixConfiguration reference](../../reference/resources/felixconfig.mdx)
+- [BGPConfiguration reference](../../reference/resources/bgpconfig.mdx)
+- [BGP routing for KubeVirt live migration](./live-migration-bgp.mdx)
+- [Configure BGP peering](../configuring/bgp.mdx)

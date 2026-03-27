@@ -329,6 +329,15 @@ module.exports = {
             'networking/openstack/neutron-api',
           ],
         },
+        {
+          type: 'category',
+          label: 'Calico networking for KubeVirt',
+          link: { type: 'doc', id: 'networking/kubevirt/index' },
+          items: [
+            'networking/kubevirt/kubevirt-networking',
+            'networking/kubevirt/live-migration-bgp',
+          ],
+        },
       ],
     },
     {
