@@ -5333,7 +5333,7 @@ The geeky details of what you get:
 
 - A compatible [Rancher Kubernetes Engine cluster](https://rancher.com/docs/rke/latest/en/) with version 1.3
 
-  - Configure your cluster with a [Cluster Config File](https://ranchermanager.docs.rancher.com/reference-guides/cluster-configuration/rancher-server-configuration/rke1-cluster-configuration#rke-cluster-config-file-reference) and specify [no network plugin](https://rancher.com/docs/rke/latest/en/config-options/add-ons/network-plugins/) by setting `plugin: none` under `network` in your configuration file.
+  - Configure your cluster with a [Cluster Config File](https://rke.docs.rancher.com/installation#creating-the-cluster-configuration-file) and specify [no network plugin](https://rancher.com/docs/rke/latest/en/config-options/add-ons/network-plugins/) by setting `plugin: none` under `network` in your configuration file.
 
 - RKE cluster meets the [Calico requirements](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)
 
@@ -11084,6 +11084,24 @@ kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyIptable
 
 If both `kube-proxy` and `BPFKubeProxyIptablesCleanupEnabled` is enabled then `kube-proxy` will write its iptables rules and Felix will try to clean them up resulting in iptables flapping between the two.
 
+### MKE: Change the VXLAN port before enabling eBPF[​](#mke-change-the-vxlan-port-before-enabling-ebpf)
+
+> **WARNING:** MKE uses Docker Swarm overlay networking, which creates VXLAN devices on UDP port 4789 inside Docker network namespaces. When Calico switches to eBPF mode on kernels where BTF is available (typically v5.8+), Felix creates the `vxlan.calico` device in flow mode, which acts as a catch-all on its UDP port. The kernel rejects this when another VXLAN device (Docker Swarm's) already holds the same port, causing `vxlan.calico` to stay DOWN with `address already in use` errors.
+>
+> **You must change the VXLAN port before enabling eBPF on MKE clusters:**
+>
+> ```bash
+> kubectl patch felixconfiguration default --type merge -p '{"spec":{"vxlanPort":4790}}'
+> ```
+>
+> Wait for all calico-node pods to recreate the VXLAN device on the new port, then verify on each node:
+>
+> ```bash
+> kubectl exec -n calico-system <calico-node-pod> -- ip -d link show vxlan.calico
+> ```
+>
+> Confirm the device shows `dstport 4790` (or your chosen port) and is UP before proceeding. Ensure that the chosen UDP port is allowed by your underlying network between all nodes.
+
 ### Enable eBPF mode[​](#enable-ebpf-mode)
 
 **The next step depends on whether you installed Calico using the operator, or a manifest:**
@@ -11354,6 +11372,14 @@ The eBPF data plane is supported on MKE with any Linux operating system that mee
 Since `kube-proxy` is not required in eBPF mode, you must disable `kube-proxy` at install time. With `MKE` you can do that by setting `--kube-proxy-mode=disabled` and `--kube-default-drop-masq-bits` when installing the cluster.
 
 More details can be found in [the MKE documentation](https://docs.mirantis.com/mke/current/install/predeployment/configure-networking/cluster-service-networking-options.html)
+
+> **WARNING:** MKE's Docker Swarm overlay networking uses UDP port 4789 for its own VXLAN devices. In eBPF mode, when BTF is available on the node (typically kernel v5.8+), Calico creates the `vxlan.calico` device in flow mode, which conflicts with Docker Swarm's use of the same port. You must change the VXLAN port before enabling eBPF:
+>
+> ```bash
+> kubectl patch felixconfiguration default --type merge -p '{"spec":{"vxlanPort":4790}}'
+> ```
+>
+> Ensure the chosen UDP port is allowed by your underlying network between all nodes. See [Troubleshoot eBPF mode](https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf#mke-vxlan-device-down) for more details.
 
 <!-- /tabs -->
 
@@ -11906,6 +11932,51 @@ Setting `bpfProfiling` to `Enabled` enables collection of runtime profiling data
 +----------------+-------------+-----+-------------+-------+-------------+-------+-------------+-------+
 
 ```
+
+## MKE: VXLAN device DOWN[​](#mke-vxlan-device-down)
+
+On MKE clusters, after enabling eBPF mode, the `vxlan.calico` device may stay DOWN with Felix logs showing:
+
+```text
+Failed to set tunnel device up error=address already in use
+```
+
+This happens because MKE's Docker Swarm overlay networking creates VXLAN devices on UDP port 4789 inside Docker network namespaces (`/run/docker/netns/`). In eBPF mode, when BTF is available on the node (typically kernel v5.8+), Felix creates `vxlan.calico` in flow mode (`external`), which acts as a catch-all on its UDP port. The kernel rejects this because Docker Swarm's VXLAN device already holds port 4789.
+
+In iptables mode this conflict doesn't occur because Calico's VXLAN device binds with a specific VNI (4096), which can coexist with Docker Swarm's VXLAN on the same port.
+
+**Diagnosis:**
+
+```bash
+# Confirm the VXLAN device is DOWN
+kubectl exec -n calico-system <calico-node-pod> -- ip -d link show vxlan.calico
+
+# Check what holds port 4789 (shows a kernel-owned socket with no process name)
+kubectl exec -n calico-system <calico-node-pod> -- ss -ulnp sport = :4789
+
+# Find Docker Swarm VXLAN devices in Docker network namespaces (run on the node via SSH)
+for ns in /run/docker/netns/*; do
+ echo "=== $(basename "$ns") ==="
+ nsenter --net="$ns" ip -d link show type vxlan 2>/dev/null
+done
+```
+
+**Fix:** Change Calico's VXLAN port to avoid the conflict:
+
+```bash
+kubectl patch felixconfiguration default --type merge -p '{"spec":{"vxlanPort":4790}}'
+```
+
+Felix will recreate `vxlan.calico` on the new port within seconds. Verify on each node:
+
+```bash
+kubectl exec -n calico-system <calico-node-pod> -- ip -d link show vxlan.calico
+# Should show: vxlan external ... dstport 4790 ... state UP
+```
+
+Ensure the chosen UDP port is allowed by your underlying network between all nodes.
+
+> **SUCCESS:** For MKE clusters, set the VXLAN port **before** enabling eBPF mode to avoid any disruption.
 
 ## Debug high CPU usage[​](#debug-high-cpu-usage)
 
