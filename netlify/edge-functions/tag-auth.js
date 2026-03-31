@@ -3,10 +3,17 @@ const PASSWORD = Netlify.env.get('TAG_PASSWORD');
 export default async (request, context) => {
   const cookie = request.headers.get('cookie') || '';
 
+  // Already authenticated — proxy to the private site
   if (cookie.includes('tag_auth=authorized')) {
-    return context.next();
+    const url = new URL(request.url);
+    const path = url.pathname.replace(/^\/tag/, '') || '/';
+    const target = `https://tag-docs-tigera.netlify.app/tag${path}${url.search}`;
+    return fetch(target, {
+      headers: request.headers,
+    });
   }
 
+  // Handle form submission
   if (request.method === 'POST') {
     const body = await request.formData();
     if (body.get('password') === PASSWORD) {
@@ -21,6 +28,7 @@ export default async (request, context) => {
     }
   }
 
+  // Show login page
   return new Response(`
     <!DOCTYPE html>
     <html>
