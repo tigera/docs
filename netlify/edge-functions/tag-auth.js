@@ -1,6 +1,13 @@
 const PASSWORD = Netlify.env.get('TAG_PASSWORD');
 
 export default async (request, context) => {
+  if (!PASSWORD) {
+    return new Response('Server configuration error: TAG_PASSWORD is not set.', {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  }
+
   const cookie = request.headers.get('cookie') || '';
 
   // Already authenticated — proxy to the private site
@@ -21,7 +28,7 @@ export default async (request, context) => {
       return new Response(null, {
         status: 302,
         headers: {
-          'Location': url.pathname,
+          'Location': url.pathname + url.search,
           'Set-Cookie': 'tag_auth=authorized; Path=/tag; HttpOnly; Secure; SameSite=Lax; Max-Age=86400',
         },
       });
@@ -43,7 +50,8 @@ export default async (request, context) => {
     <body>
       <form method="POST">
         <h3>Enter password to continue</h3>
-        <input type="password" name="password" placeholder="Password" autofocus />
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" placeholder="Password" autofocus />
         <button type="submit">Submit</button>
       </form>
     </body>
