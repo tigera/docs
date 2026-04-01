@@ -4,6 +4,12 @@ description: Migrate Calico resources from the aggregated API server (v1 CRDs) t
 
 # Migrate from API server to native CRDs
 
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
 ## Big picture
 
 Automatically migrate $[prodname] resources from the aggregated API server's `crd.projectcalico.org/v1` backing storage to native `projectcalico.org/v3` CRDs, allowing you to remove the API server component.
@@ -16,7 +22,7 @@ Newer $[prodname] installations use native `projectcalico.org/v3` CRDs directly,
 
 ### How it works
 
-The migration controller copies all $[prodname] resources from the v1 CRDs (used as backing storage by the API server) to native v3 CRDs. During the migration window, the datastore is briefly locked (`DatastoreReady=false`) so components pause and retain their cached dataplane state — existing workload connectivity is preserved throughout.
+The migration controller copies all $[prodname] resources from the v1 CRDs (used as backing storage by the API server) to native v3 CRDs. During the migration window, the datastore is briefly locked (`DatastoreReady=false`) so components pause and retain their cached data plane state — existing workload connectivity is preserved throughout.
 
 The migration proceeds through these phases:
 
@@ -36,7 +42,7 @@ The controller handles policy name migration (removing the legacy `default.` pre
 
 ### What happens during the migration window
 
-- Components (Felix, Typha, kube-controllers) pause and retain cached dataplane state
+- Components (Felix, Typha, kube-controllers) pause and retain cached data plane state
 - **Existing workload connectivity is preserved** — no packet loss expected
 - New pod scheduling and policy changes are blocked until migration completes
 - IPAM allocations are blocked during the final phase of the migration
@@ -55,18 +61,16 @@ The locked window is typically short (seconds to a few minutes depending on clus
 
 1. **Install v3 CRDs.**
 
-   Apply the v3 CRD manifests from the $[prodname] release. While the aggregated APIService is active, Kubernetes ignores these CRDs, so this is safe to do ahead of time.
+   Apply the v3 CRD manifests from the $[prodname] release. While the aggregated `APIService` is active, Kubernetes ignores these CRDs, so this is safe to do ahead of time.
 
    ```bash
-   kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/vX.Y.Z/manifests/v3_projectcalico_org.yaml
+   kubectl apply -f $[manifestsUrl]/manifests/v3_projectcalico_org.yaml
    ```
-
-   Replace `vX.Y.Z` with your $[prodname] version.
 
 2. **Install the DatastoreMigration CRD.**
 
    ```bash
-   kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/vX.Y.Z/manifests/migration.projectcalico.org_datastoremigrations.yaml
+   kubectl apply -f $[manifestsUrl]/manifests/migration.projectcalico.org_datastoremigrations.yaml
    ```
 
 3. **Create the DatastoreMigration CR.**
