@@ -56,7 +56,7 @@ export default async function createAsyncConfig() {
           "The Calico Docs AI answers questions based on what it finds in our product documentation. As with all AI solutions, it's a good idea to verify answers in the source material. ",
         //"data-modal-example-questions": "Docs Calico use eBPF?,Get started with egress gateways",
         'data-modal-ask-ai-input-placeholder': 'Ask me a question about Calico',
-        'data-font-family': 'Poppins,Helvetica Neue,Helvetica,Arial,sans-serif',
+        'data-font-family': 'DM Sans,Helvetica Neue,Helvetica,Arial,sans-serif',
         'data-modal-border-radius': '6px',
         'data-button-box-shadow': '2px 2px 8px rgba(0, 0, 0, 0.2)',
         'data-modal-header-bg-color': '#FFFFFF',
@@ -92,6 +92,13 @@ export default async function createAsyncConfig() {
       ],
     ],
 
+    stylesheets: [
+      {
+        href: 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap',
+        type: 'text/css',
+      },
+    ],
+
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       {
@@ -116,20 +123,12 @@ export default async function createAsyncConfig() {
           searchPagePath: '/search',
         },
         announcementBar: {
-          id: "ai_agent_governance_kubecon",
-          content: '🛠️ How do you govern autonomous AI agents? Register for the AI Agent Governance Workshop @ KubeCon EU (March 23, 2026) <a href="https://link.tigera.io/umnHe">Learn more →</a>',
+          id: "calico_hackathon_deadline",
+          content: '🚀 Deadline Extended! (Ends April 30, 2026!) Finalize your GitHub repo and demo video to enter the <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon.</a>',
           backgroundColor: "#FCE181",
           textColor: "#000",
           isCloseable: true,
         },
-        // DOCS-2862: Hackathon deadline approaching (go-live March 24)
-        // announcementBar: {
-        //   id: "calico_hackathon_deadline",
-        //   content: '🏃 Only one week left (Ends March 31, 2026!) Finalize your GitHub repo and demo video to enter the <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=Docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon</a>',
-        //   backgroundColor: "#FCE181",
-        //   textColor: "#000",
-        //   isCloseable: true,
-        // },
         navbar: {
           logo: {
             src: 'img/tigera-logo-2026-black-text.svg',
@@ -241,27 +240,27 @@ export default async function createAsyncConfig() {
                 },
                 {
                   label: 'Events',
-                  to: 'https://www.tigera.io/events',
+                  to: 'https://www.tigera.io/events/',
                 },
                 {
                   label: 'Resource center',
-                  to: 'https://www.tigera.io/resources',
+                  to: 'https://www.tigera.io/resources/',
                 },
                 {
                   label: 'Blog',
-                  to: 'https://www.tigera.io/blog',
+                  to: 'https://www.tigera.io/blog/',
                 },
                 {
                   label: 'Trade shows',
-                  to: 'https://www.tigera.io/lp/tradeshows',
+                  to: 'https://www.tigera.io/lp/tradeshows/',
                 },
                 {
                   label: 'Certification',
-                  to: 'https://www.tigera.io/lp/calico-certification',
+                  to: 'https://www.tigera.io/lp/calico-certification/',
                 },
                 {
                   label: 'Guides',
-                  to: 'https://www.tigera.io/learn/guides/kubernetes-monitoring',
+                  to: 'https://www.tigera.io/learn/guides/kubernetes-monitoring/',
                 },
               ],
             },
@@ -270,7 +269,7 @@ export default async function createAsyncConfig() {
               items: [
                 {
                   label: 'Customer success',
-                  to: 'https://www.tigera.io/customer-success',
+                  to: 'https://www.tigera.io/customer-success/',
                 },
                 {
                   label: 'Support portal',
@@ -278,11 +277,11 @@ export default async function createAsyncConfig() {
                 },
                 {
                   label: 'Security bulletins',
-                  to: 'https://www.tigera.io/security-bulletins',
+                  to: 'https://www.tigera.io/security-bulletins/',
                 },
                 {
                   label: 'Report a security issue',
-                  to: 'https://www.tigera.io/vulnerability-disclosure',
+                  to: 'https://www.tigera.io/vulnerability-disclosure/',
                 },
               ],
             },
@@ -291,11 +290,11 @@ export default async function createAsyncConfig() {
               items: [
                 {
                   label: 'Project Calico',
-                  to: 'https://www.tigera.io/project-calico',
+                  to: 'https://www.tigera.io/project-calico/',
                 },
                 {
                   label: 'Community',
-                  to: 'https://www.tigera.io/project-calico/community',
+                  to: 'https://www.tigera.io/project-calico/community/',
                 },
                 {
                   label: 'GitHub',
@@ -316,27 +315,27 @@ export default async function createAsyncConfig() {
               items: [
                 {
                   label: 'About Calico',
-                  to: 'https://www.tigera.io/about',
+                  to: 'https://www.tigera.io/about/',
                 },
                 {
                   label: 'Customers',
-                  to: 'https://www.tigera.io/customer-stories',
+                  to: 'https://www.tigera.io/customer-stories/',
                 },
                 {
                   label: 'Partners',
-                  to: 'https://www.tigera.io/partners',
+                  to: 'https://www.tigera.io/partners/',
                 },
                 {
                   label: 'Newsroom',
-                  to: 'https://www.tigera.io/media',
+                  to: 'https://www.tigera.io/media/',
                 },
                 {
                   label: 'Careers',
-                  to: 'https://www.tigera.io/careers',
+                  to: 'https://www.tigera.io/careers/',
                 },
                 {
                   label: 'Contact',
-                  to: 'https://www.tigera.io/contact',
+                  to: 'https://www.tigera.io/contact/',
                 },
               ],
             },

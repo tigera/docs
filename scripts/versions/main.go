@@ -40,6 +40,7 @@ var componentsToRename = map[string]string{
 // Components that we leave as-is without updating
 var componentsToIgnore = []string{
 	"upstream-dex",
+	"upstream-istio",
 }
 
 // TigeraOperator represents the tigera-operator configuration

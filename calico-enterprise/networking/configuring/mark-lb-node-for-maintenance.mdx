@@ -1,0 +1,62 @@
+---
+description: Mark a load balancer node for maintenance
+---
+
+# Mark a load balancer node for maintenance
+
+This guide shows you how to mark a node as being under maintenance.
+
+When a node is marked for maintenance, $[prodname] will avoid load balancing new service traffic
+to pods on that node until the annotation is removed. Existing connections will continue to work
+until they are finished.
+
+
+## Limitations
+
+The following limitations apply to load balancer maintenance features:
+
+ - Load balancer node maintenance features are only supported by the eBPF data plane.
+
+ - Upstream routers might still send traffic to marked nodes, if routing is not configured to exclude
+   the marked nodes. In this case, the node under maintenance will load balance traffic to a backend
+   on another node. [Maglev Load Balancing](add-maglev-load-balancing.mdx) can be used to mitigate the negative effects of upstream routing
+   adjustments.
+
+
+## Prerequisites
+
+* Your cluster uses the [eBPF data plane](../../operations/ebpf/enabling-ebpf.mdx).
+
+
+## Exclude backends on a node from load balancer backend selection
+
+To exclude a node's backends from load balancer backend selection, annotate the K8s node
+resource with the following annotation:
+
+```yaml
+lb.projectcalico.org/maintenance: "exclude-local-backends"
+```
+
+or from the terminal:
+
+```sh
+kubectl annotate node <name> 'lb.projectcalico.org/maintenance=exclude-local-backends'
+```
+
+To add the backends back into the selection pool, either remove the annotation, or set the value to "none".
+
+
+## Additional notes
+
+### Failsafes
+
+It is not possible to remove all backends of a service from backend selection via the maintenance annotation.
+In the event that the maintenance annotation would lead to an empty set of backends for a given service, no
+backends will be excluded at all for that service.
+
+
+## Additional resources
+* [Enable the eBPF data plane](../../operations/ebpf/enabling-ebpf.mdx)
+* [FelixConfiguration](../../reference/resources/felixconfig.mdx)
+* [Maglev Load Balancing](add-maglev-load-balancing.mdx)
+* [Advertise Service IPs using BGP](advertise-service-ips.mdx)

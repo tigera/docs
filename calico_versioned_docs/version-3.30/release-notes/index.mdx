@@ -380,8 +380,7 @@ To update a previous version of Calico, see [our upgrade guides](../operations/u
 
 November 26, 2025
 
-### Bug fixes
-
+#### Bug fixes
 
 * eBPF: Fixed loading connecttime load balancer program in 6.12 kernel [calico 11406](https://github.com/projectcalico/calico/pull/11406) (@sridhartigera)
 * Felix now explicitly sets priority 1024 for IPv6 routes instead of relying on kernel default, ensuring routes round-trip correctly when read from the kernel. [calico 11395](https://github.com/projectcalico/calico/pull/11395) (@fasaxc)
@@ -402,16 +401,44 @@ To update a previous version of Calico, see [our upgrade guides](../operations/u
 
 January 23, 2026
 
-### Bug fixes
+#### Bug fixes
 
 * OpenStack: make periodic compaction loop independent of resync [calico 11574](https://github.com/projectcalico/calico/pull/11574) (@nelljerram)
 
-### Other updates
+#### Other updates
 
 * Updated tigera-operator RBAC: create mutatingwebhooks, and update mutatingwebhooks. update restricted to specific resourceNames: envoy-gateway-topology-injector.tigera-gateway [calico 11688](https://github.com/projectcalico/calico/pull/11688) (@nelljerram)
 * Upgrade Envoy Gateway 1.3.2 -> 1.5.7 [calico 11673](https://github.com/projectcalico/calico/pull/11673) (@skoryk-oleksandr)
 * Add configurable field `resync_max_interval_secs` that defines the max time allowed between successful periodic resyncs. Log an error message if the interval exceeds the threshold. [calico 11647](https://github.com/projectcalico/calico/pull/11647) (@nelljerram)
 * Re-create and swap out Calico ipsets that are not possible to list due to different failures like user-space/kernel incompatibility. Performance: After failures to program IP sets, the data plane now does a partial resync of only the affected IP sets. This should reduce the overhead of dealing with a transient failure. [calico 11472](https://github.com/projectcalico/calico/pull/11472) (@mazdakn)
+
+#### Updating
+
+To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx)
+
+### Calico Open Source 3.30.7 bug fix release
+
+March 18, 2026
+
+#### Deprecations
+
+- Support for non-privileged mode has been removed from Operator installations. The `Installation.spec.nonPrivileged` field is deprecated, and setting it to `Enabled` will mark Calico as `Degraded`. [calico 12091](https://github.com/projectcalico/calico/pull/12091) (@MichalFupso)
+- We continue testing Calico against OpenStack Caracal, but have stopped testing Calico against OpenStack Yoga. This is because Yoga has now been "unmaintained" for over a year, and is not compatible with current CI platforms based on Ubuntu 22.04. [calico 11746](https://github.com/projectcalico/calico/pull/11746) (@nelljerram)
+
+#### Bug fixes
+
+- ebpf: Fixed issue where VXLAN traffic was dropped on nodes still running Calico 3.30 during a rolling upgrade to 3.31. This caused connectivity failures for host-networked pods communicating via Kubernetes services across nodes at different versions. Upgrading to this 3.30 patch release before upgrading to 3.31 resolves the issue. [calico 12054](https://github.com/projectcalico/calico/pull/12054) (@tomastigera)
+- Fix failure to enable ingress bandwidth QoS controls when a non-default qdisc previously existed on the workload interface (handle != 0). [calico 11984](https://github.com/projectcalico/calico/pull/11984) (@coutinhop)
+- Fix CNI delete timeout to start after IPAM lock acquisition, preventing "context deadline exceeded" failures during high pod churn. [calico 11943](https://github.com/projectcalico/calico/pull/11943) (@sridhartigera)
+- Fix advertisement of /32 LB IP addresses when not present in the Service Spec [calico 11928](https://github.com/projectcalico/calico/pull/11928) (@caseydavenport)
+- Prevent nil pointer dereference in LoadBalancer controller `handleBlockUpdate` [calico 11923](https://github.com/projectcalico/calico/pull/11923) (@MichalFupso)
+- Bugfix: fix rendering of NatPortRange option when using nftables. [calico 11740](https://github.com/projectcalico/calico/pull/11740) (@nelljerram)
+- Don't uninstall CNI and kube-proxy service when using non-Calico CNI on Windows with operator install. [calico 11723](https://github.com/projectcalico/calico/pull/11723) (@coutinhop)
+- Fix that the CNI plugin installer generated a malformed URL for IPv4 addresses. This bug was exposed by a fix to the golang URL parser. [calico 11720](https://github.com/projectcalico/calico/pull/11720) (@fasaxc)
+
+#### Other changes
+
+- Update LoadBalancer controller to not run when not explicitly configured as part of `ENABLED_CONTROLLERS` [calico 12055](https://github.com/projectcalico/calico/pull/12055) (@MichalFupso)%
 
 #### Updating
 
