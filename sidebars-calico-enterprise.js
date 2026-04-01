@@ -606,6 +606,7 @@ module.exports = {
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
+        'operations/crd-migration',
         'operations/nftables',
         'operations/decommissioning-a-node',
         {
