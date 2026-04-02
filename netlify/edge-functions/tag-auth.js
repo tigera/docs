@@ -10,13 +10,15 @@ export default async (request, context) => {
 
   const cookie = request.headers.get('cookie') || '';
 
-  // Already authenticated — proxy to the private site
+  // Already authenticated — proxy to the private site with shared secret
   if (cookie.includes('tag_auth=authorized')) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/^\/tag/, '') || '/';
     const target = `https://tag-docs-tigera.netlify.app/tag${path}${url.search}`;
+    const proxyHeaders = new Headers(request.headers);
+    proxyHeaders.set('x-proxy-secret', Netlify.env.get('PROXY_SECRET'));
     return fetch(target, {
-      headers: request.headers,
+      headers: proxyHeaders,
     });
   }
 
