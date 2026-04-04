@@ -119,7 +119,46 @@ $[prodname] can also be installed using raw manifests as an alternative to the o
 />
 
 </TabItem>
-<TabItem label="Manifest" value="Manifest-1">
+<TabItem label="Manifest (v3 CRDs)" value="Manifest-v3">
+
+This manifest installs $[prodname] using the native `projectcalico.org/v3` CRD API group. This is the recommended manifest-based install for new clusters - the v3 API group supports tiered policy, admission webhooks, and other features that aren't available with the legacy `crd.projectcalico.org/v1` API group.
+
+:::note
+
+If you're setting up a new cluster and don't need to customize the underlying Kubernetes resources, we recommend using the operator instead. The operator automatically manages the lifecycle of $[prodname] components, including upgrades and scaling.
+
+:::
+
+1. Download the $[prodname] v3 CRD manifest.
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico-v3-crds.yaml -O
+   ```
+
+1. If you are using pod CIDR `192.168.0.0/16`, skip to the next step.
+   If you are using a different pod CIDR with kubeadm, no changes are required - Calico will automatically detect the CIDR based on the running configuration.
+   For other platforms, make sure you uncomment the CALICO_IPV4POOL_CIDR variable in the manifest and set it to the same value as your chosen pod CIDR.
+1. Customize the manifest as necessary.
+1. Apply the manifest.
+
+   ```bash
+   kubectl apply -f calico-v3-crds.yaml
+   ```
+
+1. (Optional) Install the tiered RBAC webhooks. This adds a validating admission webhook that enforces tier-based access control for Calico network policies. The webhooks require TLS certificates - see the instructions at the top of the manifest for setup.
+
+   ```bash
+   curl $[manifestsUrl]/manifests/webhooks.yaml -O
+   kubectl apply -f webhooks.yaml
+   ```
+
+<GeekDetails
+  prodname='$[prodname]'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+</TabItem>
+<TabItem label="Manifest (legacy)" value="Manifest-1">
 
 Based on your datastore and number of nodes, select a link below to install $[prodname].
 
