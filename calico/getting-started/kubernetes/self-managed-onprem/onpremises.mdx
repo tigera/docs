@@ -164,6 +164,91 @@ If you're setting up a new cluster and don't need to customize the underlying Ku
 />
 
 </TabItem>
+<TabItem label="Migrate to v3 CRDs" value="Migrate-v3">
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+If you have an existing manifest-based $[prodname] install using the legacy `crd.projectcalico.org/v1` CRDs, you can migrate to the native `projectcalico.org/v3` CRDs. This enables tiered policy, admission webhooks, and other v3-only features.
+
+#### Prerequisites
+
+- $[prodname] installed via `calico.yaml` manifest (not operator)
+- `kubectl` access to the cluster
+- A recent $[prodname] version that includes the migration controller
+
+#### Migration steps
+
+1. Install the v3 CRDs alongside the existing v1 CRDs.
+
+   ```bash
+   kubectl apply --server-side --force-conflicts -f $[manifestsUrl]/api/config/crd/
+   ```
+
+1. Install the DatastoreMigration CRD.
+
+   ```bash
+   kubectl apply --server-side -f $[manifestsUrl]/kube-controllers/pkg/controllers/migration/crd/migration.projectcalico.org_datastoremigrations.yaml
+   ```
+
+1. Create a DatastoreMigration resource to start the migration. The migration controller copies all Calico resources from v1 CRDs to v3 CRDs.
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: migration.projectcalico.org/v1beta1
+   kind: DatastoreMigration
+   metadata:
+     name: v1-to-v3
+   spec:
+     type: APIServerToCRDs
+   EOF
+   ```
+
+1. Monitor the migration progress.
+
+   ```bash
+   kubectl get datastoremigration v1-to-v3 -w
+   ```
+
+   The migration transitions through `Pending` → `Migrating` → `Converged`. Once it reaches `Converged`, all resources have been copied to v3 CRDs.
+
+1. When the migration reaches `Converged`, configure calico-node (and calico-typha if present) to use the v3 API group.
+
+   ```bash
+   kubectl set env -n kube-system daemonset/calico-node CALICO_API_GROUP=projectcalico.org/v3
+   ```
+
+   If you're running calico-typha, update it as well:
+
+   ```bash
+   kubectl set env -n kube-system deployment/calico-typha CALICO_API_GROUP=projectcalico.org/v3
+   ```
+
+1. The migration controller monitors the rollout and transitions to `Complete` once all pods are running with the v3 API group. kube-controllers restarts automatically to pick up the new API group.
+
+   ```bash
+   kubectl get datastoremigration v1-to-v3 -w
+   ```
+
+1. Once the migration is `Complete`, delete the DatastoreMigration resource to clean up the old v1 CRDs.
+
+   ```bash
+   kubectl delete datastoremigration v1-to-v3
+   ```
+
+   The finalizer on the resource deletes all `crd.projectcalico.org` CRDs before removing the resource.
+
+1. (Optional) Install the tiered RBAC webhooks.
+
+   ```bash
+   curl $[manifestsUrl]/manifests/webhooks.yaml -O
+   kubectl apply -f webhooks.yaml
+   ```
+
+</TabItem>
 <TabItem label="Manifest" value="Manifest-1">
 
 Based on your datastore and number of nodes, select a link below to install $[prodname].
