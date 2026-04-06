@@ -10843,9 +10843,9 @@ This section explains how to enable the eBPF data plane on all compatible cluste
 
   <!-- -->
 
-  - Ubuntu 20.04.
-  - Red Hat v8.2 with Linux kernel v4.18.0-193 or above (Red Hat have backported the required features to that build).
-  - Another [supported distribution](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements) with Linux kernel v5.3 or above. Kernel v5.8 or above with CO-RE enabled is recommended for better performance.
+  - Ubuntu 22.04.
+  - Red Hat v8.4 with Linux kernel v4.18.0-305 or above (Red Hat have backported the required features to that build).
+  - Another [supported distribution](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements) with Linux kernel v5.10 or above.
 
 - An underlying network fabric that allows VXLAN traffic between hosts. In eBPF mode, VXLAN is used to forward Kubernetes NodePort traffic.
 
@@ -10892,18 +10892,18 @@ uname -rv
 The output should look like this:
 
 ```text
-5.4.0-42-generic #46-Ubuntu SMP Fri Jul 10 00:24:02 UTC 2020
+5.10.0-26-generic #28~20.04.1-Ubuntu SMP Fri Jan 27 14:30:10 UTC 2023
 ```
 
-In this case the kernel version is v5.4, which is suitable.
+In this case the kernel version is v5.10, which is suitable.
 
 On Red Hat-derived distributions, you may see something like this:
 
 ```text
-4.18.0-193.el8.x86_64 (mockbuild@x86-vm-08.build.eng.bos.redhat.com)
+4.18.0-305.el8.x86_64 (mockbuild@x86-vm-08.build.eng.bos.redhat.com)
 ```
 
-Since the Red Hat kernel is v4.18 with at least build number 193, this kernel is suitable.
+Since the Red Hat kernel is v4.18 with at least build number 305 (RHEL 8.4), this kernel is suitable.
 
 #### Performance[​](#performance)
 
@@ -11084,6 +11084,12 @@ kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyIptable
 
 If both `kube-proxy` and `BPFKubeProxyIptablesCleanupEnabled` is enabled then `kube-proxy` will write its iptables rules and Felix will try to clean them up resulting in iptables flapping between the two.
 
+You should also change `bpfKubeProxyHealthzPort` to an unused port to avoid conflicting with the Kubernetes `kube-proxy`'s default health check port (10256). The Kubernetes `kube-proxy` can serve the health check equally well, so there is no degradation. Changing the health check port of the Kubernetes `kube-proxy` is typically not possible on managed platforms such as AKS. Choose a port that is not already in use on your nodes (for example, 10258; note that other Kubernetes control plane components commonly use ports such as 10257 and 10259, so verify an unused port on your nodes with tools like `ss` or `netstat` before selecting one.
+
+```text
+kubectl patch felixconfiguration default --patch='{"spec": {"bpfKubeProxyHealthzPort": 10258}}'
+```
+
 ### MKE: Change the VXLAN port before enabling eBPF[​](#mke-change-the-vxlan-port-before-enabling-ebpf)
 
 > **WARNING:** MKE uses Docker Swarm overlay networking, which creates VXLAN devices on UDP port 4789 inside Docker network namespaces. When Calico switches to eBPF mode on kernels where BTF is available (typically v5.8+), Felix creates the `vxlan.calico` device in flow mode, which acts as a catch-all on its UDP port. The kernel rejects this when another VXLAN device (Docker Swarm's) already holds the same port, causing `vxlan.calico` to stay DOWN with `address already in use` errors.
@@ -11241,23 +11247,22 @@ eBPF (or "extended Berkeley Packet Filter"), is a technology that allows safe mi
 
 - Linux distribution/kernel:
 
-  - Ubuntu 20.04 or above.
-  - Red Hat v8.2 with Linux kernel v4.18.0-193 or above (Red Hat have backported the required features to that build).
-  - Another [supported distribution](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements) with Linux kernel v5.3 or above.
+  - Ubuntu 22.04 or above.
+  - Red Hat v8.4 with Linux kernel v4.18.0-305 or above (Red Hat have backported the required features to that build).
+  - Another [supported distribution](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements) with Linux kernel v5.10 or above.
   - Immutable operating systems (e.g., Talos Linux): Ensure the `CgroupV2Path` in the `FelixConfiguration` CRD is set to a writable path.
 
 #### Kernel version requirements for eBPF features[​](#kernel-version-requirements-for-ebpf-features)
 
 Some eBPF features require a higher kernel version than the base eBPF data plane.
 
-| Feature                                                                                                   | Minimum kernel version   | Details                                                                                                                |
-| --------------------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| Base eBPF data plane                                                                                      | v5.3 (RHEL: v4.18.0-193) | v5.8+ with CO-RE recommended for better performance                                                                    |
-| [XDP acceleration](https://docs.tigera.io/calico/latest/network-policy/extreme-traffic/defend-dos-attack) | v4.16                    | Used for DoS mitigation; when `bpfEnabled` is `true`, policy is always accelerated using best available BPF technology |
-| [Log rules in eBPF mode](https://docs.tigera.io/calico/latest/network-policy/policy-rules/log-rules)      | v5.16                    | Logs sent to trace pipe via `bpftool prog tracelog`                                                                    |
-| [QoS bandwidth controls](https://docs.tigera.io/calico/latest/networking/configuring/qos-controls)        | v6.6                     | Requires `tcx` support. Established connection limits not supported with eBPF                                          |
+| Feature                                                                                              | Minimum kernel version    | Details                                                                       |
+| ---------------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------- |
+| Base eBPF data plane                                                                                 | v5.10 (RHEL: v4.18.0-305) | CO-RE supported at this version for better performance                        |
+| [Log rules in eBPF mode](https://docs.tigera.io/calico/latest/network-policy/policy-rules/log-rules) | v5.16                     | Logs sent to trace pipe via `bpftool prog tracelog`                           |
+| [QoS bandwidth controls](https://docs.tigera.io/calico/latest/networking/configuring/qos-controls)   | v6.6                      | Requires `tcx` support. Established connection limits not supported with eBPF |
 
-> **WARNING:** While v5.3 is the minimum kernel version required for the eBPF data plane, we strongly recommend using kernel v5.8 or above, which adds support for [CO-RE (Compile Once - Run Everywhere)](https://docs.ebpf.io/concepts/core/). CO-RE significantly improves compatibility and performance across kernel versions. For access to all eBPF features, we recommend kernel v6.6 or above.
+> **WARNING:** The minimum kernel version required for the eBPF data plane is v5.10, which includes support for [CO-RE (Compile Once - Run Everywhere)](https://docs.ebpf.io/concepts/core/). CO-RE significantly improves compatibility and performance across kernel versions. For access to all eBPF features, we recommend kernel v6.6 or above.
 
 - An underlying network fabric that allows VXLAN traffic between hosts. In eBPF mode, VXLAN is used to forward Kubernetes NodePort traffic.
 
@@ -11332,7 +11337,7 @@ Select the appropriate tab below for distribution-specific instructions:
 
 > **SUCCESS:** If you're installing Calico on a self-managed kubeadm cluster, you can enable eBPF mode automatically following the operator installation method in [Install Calico for on-premises deployments](https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises). For this category of clusters, eBPF mode is the default data plane, and you don't need to follow the steps in this guide.
 
-`kubeadm` supports a number of base OSes; as long as the base OS chosen (such as Ubuntu 20.04) meets the kernel requirements, `kubeadm`-provisioned clusters are supported.
+`kubeadm` supports a number of base OSes; as long as the base OS chosen (such as Ubuntu 22.04) meets the kernel requirements, `kubeadm`-provisioned clusters are supported.
 
 Since `kube-proxy` is not required in eBPF mode, you must disable `kube-proxy` at install time. With `kubeadm` you can do that by passing the `--skip-phases=addon/kube-proxy` flag to `kubeadm init`:
 
@@ -11342,7 +11347,7 @@ kubeadm init --skip-phases=addon/kube-proxy
 
 **Tab: kOps**
 
-`kops` supports a number of base OSes; as long as the base OS chosen (such as Ubuntu 20.04 or RHEL 8.2) meets the kernel requirements, `kops`-provisioned clusters are supported.
+`kops` supports a number of base OSes; as long as the base OS chosen (such as Ubuntu 22.04 or RHEL 8.4) meets the kernel requirements, `kops`-provisioned clusters are supported.
 
 Since `kube-proxy` is not required in eBPF mode, you must disable `kube-proxy` at install time. With `kops` you can do that by setting the following in your `kops` configuration:
 
