@@ -2,7 +2,7 @@ const releases = require('./releases.json');
 
 const variables = {
   releaseTitle: 'v3.22.1',
-  cloudUserVersion: 'v22.2.0',
+  cloudUserVersion: 'v22.3.0',
   prodname: 'Calico Cloud',
   manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.31.2',
   prodnamedash: 'calico-cloud',
@@ -14,8 +14,8 @@ const variables = {
   rootDirWindows: 'C:\\TigeraCalico',
   nodecontainer: 'cnx-node',
   noderunning: 'calico-node',
-  cloudversion: 'v3.22.1-1',
-  clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.22.1-1',
+  cloudversion: 'v3.22.1-2',
+  clouddownloadurl: 'https://installer.calicocloud.io/manifests/v3.22.1-2',
   clouddownloadbase: 'https://installer.calicocloud.io',
   cloudoperatorimage: 'quay.io/tigera/cc-operator',
   imageassuranceversion: 'v1.22.7',
