@@ -128,18 +128,10 @@ receives the same IP and that routes are updated to steer traffic to the new hos
 ### Enable KubeVirt VM IP address persistence
 
 IP address persistence is enabled by default. If it has been previously disabled, re-enable
-it by updating the `IPAMConfiguration` resource:
+it by setting `kubeVirtVMAddressPersistence` to `Enabled` in the `IPAMConfiguration` resource:
 
-```yaml
-apiVersion: projectcalico.org/v3
-kind: IPAMConfiguration
-metadata:
-  name: default
-spec:
-  strictAffinity: false
-  autoAllocateBlocks: true
-  maxBlocksPerHost: 0
-  kubeVirtVMAddressPersistence: Enabled
+```bash
+kubectl patch ipamconfigurations default --type='merge' -p '{"spec": {"kubeVirtVMAddressPersistence": "Enabled"}}'
 ```
 
 Or using `calicoctl`:
@@ -157,7 +149,7 @@ the CNI plugin rejects migration target pods.
 
 ### Allow live migration ports through host endpoint policy
 
-If you use [host endpoint policies](../../reference/host-endpoints/failsafe.mdx), you must
+If you use [host endpoint policies](../../reference/host-endpoints/overview.mdx), you must
 allow the KubeVirt live migration ports (TCP 49152 and 49153) between hosts. These ports are
 used by libvirt/QEMU to transfer VM memory and block storage directly between the source and
 destination nodes during live migration.
@@ -169,11 +161,25 @@ or create appropriate host endpoint policies to allow this traffic. See
 ### Configure policy setup timeout for live migration
 
 To ensure network policy is programmed on the destination host before the VM starts receiving
-traffic, configure `policy_setup_timeout_seconds` in the CNI configuration. This value specifies
-how long (in seconds) the CNI plugin waits for policy to be programmed before reporting success.
+traffic, configure the policy setup timeout. This value specifies how long (in seconds) the
+CNI plugin waits for policy to be programmed before reporting success.
 
-In your CNI network configuration (typically `/etc/cni/net.d/10-calico.conflist`), add or
-update the `policy_setup_timeout_seconds` field:
+If you installed $[prodname] using the operator, configure the
+[`linuxPolicySetupTimeoutSeconds`](../../reference/installation/api.mdx#caliconetworkspec) field
+in the [`Installation`](../../reference/installation/api.mdx#installation) resource's `calicoNetwork` settings:
+
+```yaml
+kind: Installation
+apiVersion: operator.tigera.io/v1
+metadata:
+  name: default
+spec:
+  calicoNetwork:
+    linuxPolicySetupTimeoutSeconds: 10
+```
+
+For manifest-based installations, set `policy_setup_timeout_seconds` directly in
+the CNI network configuration (typically `/etc/cni/net.d/10-calico.conflist`):
 
 ```json
 {
@@ -187,20 +193,6 @@ update the `policy_setup_timeout_seconds` field:
     }
   ]
 }
-```
-
-If you installed $[prodname] using the operator, you can configure this through the
-[`linuxPolicySetupTimeoutSeconds`](../../reference/installation/api.mdx#caliconetworkspec) field
-in the [`Installation`](../../reference/installation/api.mdx#installation) resource's `calicoNetwork` settings:
-
-```yaml
-kind: Installation
-apiVersion: operator.tigera.io/v1
-metadata:
-  name: default
-spec:
-  calicoNetwork:
-    linuxPolicySetupTimeoutSeconds: 10
 ```
 
 ### Configure live migration route priority
