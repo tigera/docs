@@ -69,13 +69,20 @@ The `policy_setup_timeout_seconds` CNI configuration parameter interlocks the pr
 live migration with policy programming. The CNI plugin delays reporting success until network
 policy is in place on the destination, or until the timeout expires.
 
+### Limitations
+
+- **DNS policy is not supported with live migration.** DNS policy enforcement relies on
+  local conntrack state on the node. After a live migration, the conntrack state from the
+  source node is not transferred to the destination node, so DNS policy rules that depend
+  on connection tracking will not function correctly. Support for DNS policy with live
+  migration is planned for a future release.
+
 ## Before you begin
 
 - A working Kubernetes cluster with KubeVirt installed.
 - $[prodname] installed with BGP networking.
 - Access to `projectcalico.org/v3` resources using
   [calicoctl](../../operations/clis/calicoctl/install.mdx).
-
 ## How to
 
 ### Enable live migration on VMs with bridge binding
@@ -148,6 +155,17 @@ the CNI plugin rejects migration target pods.
 
 :::
 
+### Allow live migration ports through host endpoint policy
+
+If you use [host endpoint policies](../../reference/host-endpoints/failsafe.mdx), you must
+allow the KubeVirt live migration ports (TCP 49152 and 49153) between hosts. These ports are
+used by libvirt/QEMU to transfer VM memory and block storage directly between the source and
+destination nodes during live migration.
+
+Add them to the Felix `FailsafeInboundHostPorts` and `FailsafeOutboundHostPorts` configuration,
+or create appropriate host endpoint policies to allow this traffic. See
+[Failsafe rules](../../reference/host-endpoints/failsafe.mdx) for more details.
+
 ### Configure policy setup timeout for live migration
 
 To ensure network policy is programmed on the destination host before the VM starts receiving
@@ -164,15 +182,26 @@ update the `policy_setup_timeout_seconds` field:
   "plugins": [
     {
       "type": "calico",
-      "policy_setup_timeout_seconds": 30,
+      "policy_setup_timeout_seconds": 10,
       ...
     }
   ]
 }
 ```
 
-If you installed $[prodname] using the operator, you can configure this through the `Installation`
-resource's `calicoNetwork.cni` settings.
+If you installed $[prodname] using the operator, you can configure this through the
+[`linuxPolicySetupTimeoutSeconds`](../../reference/installation/api.mdx#caliconetworkspec) field
+in the [`Installation`](../../reference/installation/api.mdx#installation) resource's `calicoNetwork` settings:
+
+```yaml
+kind: Installation
+apiVersion: operator.tigera.io/v1
+metadata:
+  name: default
+spec:
+  calicoNetwork:
+    linuxPolicySetupTimeoutSeconds: 10
+```
 
 ### Configure live migration route priority
 
