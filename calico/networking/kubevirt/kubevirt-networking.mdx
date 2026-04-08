@@ -248,6 +248,35 @@ route selection during live migration.
 
 :::
 
+## Security considerations
+
+### VM identity verification
+
+$[prodname]'s CNI plugin verifies the identity of VM pods using Kubernetes `ownerReferences`.
+When a pod claims to be a KubeVirt VM (to receive a persistent IP), the CNI plugin checks that
+the pod's `ownerReferences` point to a valid `VirtualMachineInstance` resource. This prevents
+arbitrary pods from claiming VM IP addresses.
+
+### RBAC recommendations
+
+A user who can create pods and read `VirtualMachineInstance` resources could potentially forge
+`ownerReferences` to claim a VM's IP address. To mitigate this:
+
+- Restrict pod creation permissions in namespaces that run KubeVirt VMs.
+- Limit `get`/`list` access to `VirtualMachineInstance` resources to trusted users and service accounts.
+
+### Admission controllers
+
+For production deployments, consider using admission controllers such as
+[Kyverno](https://kyverno.io/) or [OPA/Gatekeeper](https://open-policy-agent.github.io/gatekeeper/)
+to enforce that only KubeVirt controllers can set `ownerReferences` pointing to
+`VirtualMachineInstance` resources on pods.
+
+### $[prodname] component permissions
+
+$[prodname] components (Felix, confd, the CNI plugin) require only **read** access to KubeVirt
+resources (`VirtualMachineInstance`). They do not create, modify, or delete any KubeVirt resources.
+
 ## Additional resources
 
 - [IPAMConfiguration reference](../../reference/resources/ipamconfig.mdx)
