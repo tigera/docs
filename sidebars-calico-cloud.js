@@ -358,6 +358,7 @@ module.exports = {
             'networking/configuring/advertise-service-ips',
             'networking/configuring/mtu',
             'networking/configuring/custom-bgp-config',
+            'networking/configuring/secure-bgp',
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/pod-mac-address',
             'networking/configuring/node-local-dns-cache',
@@ -418,12 +419,6 @@ module.exports = {
         'operations/cluster-management',
         'operations/disconnect',
         'operations/usage-metrics',
-        {
-          type: 'category',
-          label: 'Secure component communications',
-          link: { type: 'doc', id: 'operations/comms/index' },
-          items: ['operations/comms/secure-metrics', 'operations/comms/secure-bgp'],
-        },
         {
           type: 'category',
           label: 'Monitoring',
