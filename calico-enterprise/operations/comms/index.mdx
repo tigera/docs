@@ -75,6 +75,52 @@ Typha and Node use mutual TLS. If you replace `typha-certs`, `typha-certs-nonclu
 
 :::
 
+## Monitor certificates
+
+The operator labels and annotates every TLS secret it manages:
+
+- **Label** `certificates.operator.tigera.io/signer` — the signer that issued the certificate
+- **Annotation** `certificates.operator.tigera.io/issuer` — the issuer name
+- **Annotation** `certificates.operator.tigera.io/expiry` — certificate expiration timestamp
+
+List all managed certificates with their issuer and expiry:
+
+```bash
+kubectl get secrets -A -l certificates.operator.tigera.io/signer -o json | \
+  jq -r '.items[] | select(.metadata.namespace != "tigera-operator") |
+    [.metadata.namespace, .metadata.name,
+     .metadata.annotations["certificates.operator.tigera.io/issuer"],
+     .metadata.annotations["certificates.operator.tigera.io/expiry"]] | @tsv' | \
+  column -t -N NAMESPACE,NAME,ISSUER,EXPIRY
+```
+
+```
+NAMESPACE                   NAME                                       ISSUER                  EXPIRY
+calico-system               calico-apiserver-certs                     tigera-operator-signer  2028-07-12T17:59:28Z
+calico-system               calico-kube-controllers-metrics-tls        tigera-operator-signer  2028-07-12T17:59:27Z
+calico-system               calico-node-prometheus-server-tls          tigera-operator-signer  2028-07-12T17:59:27Z
+calico-system               internal-manager-tls                       tigera-operator-signer  2028-07-12T18:01:21Z
+calico-system               manager-tls                                tigera-operator-signer  2028-07-12T18:01:21Z
+calico-system               node-certs                                 tigera-operator-signer  2028-07-12T17:59:27Z
+calico-system               policy-recommendation-tls                  tigera-operator-signer  2028-07-12T18:01:05Z
+calico-system               typha-certs                                tigera-operator-signer  2028-07-12T17:59:27Z
+calico-system               typha-certs-noncluster-host                tigera-operator-signer  2028-07-12T17:59:27Z
+tigera-dpi                  deep-packet-inspection-tls                 tigera-operator-signer  2028-07-12T18:04:05Z
+tigera-dpi                  node-certs                                 tigera-operator-signer  2028-07-12T17:59:27Z
+tigera-elasticsearch        tigera-ee-elasticsearch-metrics-tls        tigera-operator-signer  2028-07-12T17:59:23Z
+tigera-elasticsearch        tigera-secure-elasticsearch-cert           tigera-operator-signer  2028-07-12T17:59:23Z
+tigera-elasticsearch        tigera-secure-internal-elasticsearch-cert  tigera-operator-signer  2028-07-12T17:59:22Z
+tigera-elasticsearch        tigera-secure-linseed-cert                 tigera-operator-signer  2028-07-12T17:59:23Z
+tigera-fluentd              tigera-fluentd-prometheus-tls              tigera-operator-signer  2028-07-12T18:01:09Z
+tigera-intrusion-detection  intrusion-detection-tls                    tigera-operator-signer  2028-07-12T18:04:05Z
+tigera-kibana               tigera-secure-kibana-cert                  tigera-operator-signer  2028-07-12T17:59:22Z
+tigera-prometheus           calico-node-prometheus-client-tls          tigera-operator-signer  2028-07-12T18:01:07Z
+tigera-prometheus           calico-node-prometheus-tls                 tigera-operator-signer  2028-07-12T18:01:05Z
+tigera-prometheus           tigera-operator-tls                        tigera-operator-signer  2028-07-12T18:01:07Z
+```
+
+The operator also exposes Prometheus metrics for certificate expiration. See [Operator metrics](../monitor/metrics/operator-metrics.mdx) to configure monitoring and alerts.
+
 ## Certificate management with Kubernetes CSR API
 
 Instead of providing certificates directly, you can configure $[prodname] to use the [Kubernetes Certificates API](https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/) for automated certificate issuance.
