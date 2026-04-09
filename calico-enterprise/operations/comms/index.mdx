@@ -17,18 +17,22 @@ To replace any certificate with your own, create a Kubernetes secret with the sa
 ## Create or update a secret
 
 ```bash
+SIGNER=tigera-operator-signer
 kubectl create secret generic <SECRET_NAME> -n tigera-operator \
   --from-file=tls.crt=</path/to/cert> \
-  --from-file=tls.key=</path/to/key>
+  --from-file=tls.key=</path/to/key> && \
+kubectl label secret <SECRET_NAME> -n tigera-operator operator.tigera.io/signer=$SIGNER
 ```
 
 To update an existing secret:
 
 ```bash
+SIGNER=tigera-operator-signer
 kubectl create secret generic <SECRET_NAME> -n tigera-operator \
   --from-file=tls.crt=</path/to/cert> \
   --from-file=tls.key=</path/to/key> \
-  --dry-run=client -o yaml | kubectl replace -f -
+  --dry-run=client -o yaml | kubectl replace -f - && \
+kubectl label secret <SECRET_NAME> -n tigera-operator operator.tigera.io/signer=$SIGNER --overwrite
 ```
 
 :::note
