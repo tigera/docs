@@ -325,6 +325,7 @@ module.exports = {
             'networking/openstack/service-ips',
             'networking/openstack/host-routes',
             'networking/openstack/multiple-regions',
+            'networking/openstack/live-migration',
             'networking/openstack/kuryr',
             'networking/openstack/neutron-api',
           ],
