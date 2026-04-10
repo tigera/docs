@@ -21,6 +21,7 @@ $[prodname] uses the Prometheus monitoring tool to scrape metrics from instrumen
 - kube-controllers
 - felix
 - typha (not enabled by default)
+- operator
 
 ## Before you begin
 
@@ -346,6 +347,47 @@ export NAMESPACE=<my-prometheus-namespace>
 
 ```bash
 kubectl apply -f  $[filesUrl]/manifests/prometheus/typha-metrics-service-monitor.yaml -n $NAMESPACE
+```
+
+The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
+
+</TabItem>
+<TabItem label="operator" value="operator-6">
+
+**Configure TLS certificates**
+
+1. Copy the required secret and configmap to your namespace.
+2. Save the manifest of the required TLS secret and CA configmap.
+
+   ```bash
+   kubectl get secret calico-node-prometheus-client-tls -n tigera-prometheus -o yaml >  calico-node-prometheus-client-tls.yaml
+   ```
+
+   ```bash
+   kubectl get configmap -n tigera-prometheus tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
+   ```
+
+3. Edit `calico-node-prometheus-client-tls.yaml` and `tigera-ca-bundle.yaml` by changing the namespace to the namespace where your prometheus instance is running.
+4. Apply the manifests to your cluster.
+
+   ```bash
+   kubectl apply -f calico-node-prometheus-client-tls.yaml
+   ```
+
+   ```bash
+   kubectl apply -f tigera-ca-bundle.yaml
+   ```
+
+**Create the service monitor**
+
+Apply the ServiceMonitor to the namespace where Prometheus is running.
+
+```bash
+export NAMESPACE=<my-prometheus-namespace>
+```
+
+```bash
+kubectl apply -f $[filesUrl]/manifests/prometheus/operator-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.

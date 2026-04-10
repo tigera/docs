@@ -10,10 +10,38 @@ import License from '@site/calico-enterprise/_includes/content/_license.mdx';
 
 Review options for tracking $[prodname] license expiration.
 
-## Concepts
-
-We highly recommend using the [license agent using Prometheus](monitor/metrics/license-agent.mdx) to get alerts on your $[prodname] license expiration day to avoid disruption to services. Regardless of whether you using the alerting feature, here are some things you should know.
-
 ### FAQ
 
 <License />
+
+## License metrics
+
+The $[prodname] operator automatically exposes license metrics through its Prometheus metrics endpoint. No additional components need to be installed. The following metrics are available:
+
+| Metric | Description |
+|---|---|
+| `tigera_operator_license_expiry_timestamp_seconds` | Unix timestamp of license expiration |
+| `tigera_operator_license_valid` | Whether the license is valid (`1`) or not (`0`) |
+
+These metrics are scraped by the built-in Prometheus instance via the `tigera-operator-metrics` ServiceMonitor.
+
+### Built-in alerts
+
+$[prodname] installs PrometheusRule resources with alerting rules for license expiration. You can view them with:
+
+```bash
+kubectl -n tigera-prometheus get prometheusrule calico-prometheus-dp-rate -o yaml
+```
+
+The built-in rules include:
+
+- **LicenseExpiringWarning**: fires when the license expires in less than 30 days
+- **LicenseExpiringCritical**: fires when the license expires in less than 7 days, or is invalid
+
+To route these alerts, see [Configure Alertmanager](monitor/prometheus/alertmanager.mdx).
+
+## Additional resources
+
+- [LicenseKey resource](../../reference/resources/licensekey.mdx)
+- [Configure Alertmanager](monitor/prometheus/alertmanager.mdx)
+- [Configure Prometheus](monitor/prometheus/configure-prometheus.mdx)

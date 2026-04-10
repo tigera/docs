@@ -1,0 +1,202 @@
+---
+description: Configure BGP routing to support KubeVirt live migration across racks and AS boundaries.
+---
+
+# BGP routing for KubeVirt live migration
+
+## Big picture
+
+When you live-migrate a KubeVirt VM to a new host, $[prodname] uses route priority to steer traffic to
+the new host. In single-rack deployments with iBGP, this works automatically. In multi-rack
+topologies or AS puddling setups where eBGP is used between racks, you must configure
+[BGPFilter](../../reference/resources/bgpfilter.mdx) resources to propagate route priority
+information across AS boundaries.
+
+## Value
+
+Without proper BGP route engineering, live migration across rack boundaries can cause traffic
+blackholing or split-brain routing. This guide explains how to configure BGP so that
+elevated-priority routes from the target host are correctly propagated to all nodes in the cluster,
+ensuring seamless live migration regardless of your BGP topology.
+
+## Concepts
+
+### Route priority and BGP
+
+During live migration, $[prodname] programs routes on the target host with an elevated priority
+(lower kernel metric, default 512) compared to the normal priority on the source host (default 1024).
+In the Linux kernel, a lower route metric means higher priority, so traffic is directed to the
+target host.
+
+For this to work cluster-wide, the route priority information must be propagated via BGP:
+
+- **Within an AS (iBGP):** $[prodname] automatically maps the kernel route metric (`krt_metric`)
+  to BGP `local_pref` using the formula `local_pref = 2147483647 - krt_metric`. This mapping is
+  hardcoded and works for both node-to-node mesh and explicit `BGPPeer` resources. No user
+  configuration is needed.
+
+- **Across AS boundaries (eBGP):** BGP `local_pref` is not carried across AS boundaries. You must
+  configure `BGPFilter` resources to encode priority information using BGP communities or other
+  attributes that cross AS boundaries.
+
+### Downward default model supported with exceptions
+
+The [downward default model](../../reference/architecture/design/l3-interconnect-fabric.mdx#the-downward-default-model)
+is supported for normal routes, but the ToR must also pass through elevated-priority /32 routes
+for live migration. Live migration requires specific /32 routes with elevated priority to be
+propagated across racks so that all nodes can route traffic to the new host. A pure downward
+default configuration where *only* a default route is advertised downward is not compatible
+with live migration.
+
+### Route aggregation
+
+Under normal conditions, $[prodname] aggregates individual /32 workload routes into larger CIDR
+blocks for BGP advertisement, reducing the number of routes in the network. During live migration,
+elevated-priority /32 routes **bypass aggregation** so that the per-route priority information is
+preserved. This is handled automatically by $[prodname].
+
+## Before you begin
+
+- KubeVirt VM IP address persistence is [enabled](./kubevirt-networking.mdx).
+- $[prodname] is configured with [BGP networking](../configuring/bgp.mdx).
+- You are familiar with [BGPFilter](../../reference/resources/bgpfilter.mdx) and
+  [BGPPeer](../../reference/resources/bgppeer.mdx) resources.
+
+## How to
+
+### Single-rack or iBGP mesh
+
+If all your nodes are within the same AS (using either node-to-node mesh or explicit iBGP peerings),
+**no additional configuration is needed**. $[prodname] automatically:
+
+1. Maps `krt_metric` to `bgp_local_pref` on export.
+2. Maps `bgp_local_pref` back to `krt_metric` on import.
+3. Bypasses route aggregation for elevated-priority /32 routes.
+4. Sets a higher BIRD route preference for imported elevated-priority routes so they override
+   existing kernel routes.
+
+### Multi-rack with eBGP to ToR
+
+In a multi-rack topology where compute nodes peer with their ToR switch over eBGP, you need to
+configure `BGPFilter` resources to carry route priority information across the AS boundary.
+
+#### Route priority signaling across AS boundaries
+
+There are two common techniques to carry route priority information across eBGP boundaries where
+`local_pref` is not available:
+
+- **BGP communities**: A community is a tag attached to a route that carries no inherent routing
+  meaning — its interpretation is defined by agreement between network operators. By assigning a
+  community value to represent elevated priority (e.g., `65000:100`), the exporting node marks
+  which routes are preferred. The receiving node matches on that community and restores the
+  appropriate kernel route metric. Communities are the most explicit and flexible approach because
+  they carry an arbitrary signal that both sides interpret identically.
+
+- **AS path prepending**: BGP's default best-path selection prefers routes with shorter AS paths.
+  By prepending extra AS numbers to lower-priority routes on export, you make those routes appear
+  longer and therefore less preferred. This technique works without any configuration on
+  intermediate routers — they naturally prefer the shorter path. However, it is less precise than
+  communities because it relies on the standard BGP decision process, which may be overridden by
+  other attributes (e.g., MED, weight).
+
+You can use either technique or combine them. The example below uses **communities only**, which
+is the recommended approach for most deployments.
+
+#### Step 1: Create a BGPFilter for the ToR peering
+
+Create a `BGPFilter` that uses the `priority` and `operations` fields to tag routes with
+BGP communities on export, and reconstruct priority from communities on import. The exact
+community values depend on your network infrastructure; coordinate with your network team.
+
+The following example uses community `65000:100` to mark elevated-priority routes (the migration
+target). Normal-priority routes are indicated by the absence of this community:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: BGPFilter
+metadata:
+  name: kubevirt-live-migration
+spec:
+  exportV4:
+    # Elevated-priority route (target pod): tag with community 65000:100
+    - action: Accept
+      peerType: eBGP
+      priority: 512
+      operations:
+        - addCommunity:
+            value: "65000:100"
+  importV4:
+    # Match elevated-priority community: restore priority 512
+    - action: Accept
+      communities:
+        values: ["65000:100"]
+      operations:
+        - setPriority:
+            value: 512
+  exportV6:
+    - action: Accept
+      peerType: eBGP
+      priority: 512
+      operations:
+        - addCommunity:
+            value: "65000:100"
+  importV6:
+    - action: Accept
+      communities:
+        values: ["65000:100"]
+      operations:
+        - setPriority:
+            value: 512
+```
+
+Key fields used in this filter:
+
+- **`priority`** (export rules): Matches routes by their kernel route metric. Only routes with the
+  specified priority value match this rule.
+- **`peerType: eBGP`** (export rules): Ensures the community tagging only applies to eBGP peers,
+  not iBGP peers (which use the automatic `local_pref` mapping).
+- **`communities`** (import rules): Matches routes carrying the specified BGP community.
+- **`operations`**: An ordered list of route modifications applied to matching routes:
+  - `addCommunity`: Adds a BGP community to the route.
+  - `setPriority`: Sets the route's kernel metric (priority).
+
+:::note
+
+The `priority` values in the BGPFilter (512) must match the `ipv4ElevatedRoutePriority`
+and `ipv4NormalRoutePriority` values in your `FelixConfiguration`. In case you customized those values,
+update the BGPFilter accordingly.
+
+:::
+
+#### Step 2: Attach the BGPFilter to the ToR BGPPeer
+
+Add the filter to your existing `BGPPeer` resource for the ToR:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: node-tor-peer
+spec:
+  peerIP: <ToR IP>
+  asNumber: <ToR AS number>
+  filters:
+    - kubevirt-live-migration
+```
+
+#### Step 3: Configure ToR to propagate routes with communities
+
+Ensure your ToR switches are configured to pass through the BGP communities used in the
+`BGPFilter` (e.g., `65000:100`). The ToR must re-advertise these /32 routes
+with their communities intact to compute nodes in other racks, so that the receiving nodes'
+import filters can reconstruct the correct route priority. This configuration is done on the
+ToR switch itself (outside of $[prodname]) and depends on your switch vendor and network OS.
+
+## Additional resources
+
+- [KubeVirt networking overview](./kubevirt-networking.mdx)
+- [Configure BGP peering](../configuring/bgp.mdx)
+- [BGP L3 interconnect fabric](../../reference/architecture/design/l3-interconnect-fabric.mdx)
+- [BGPFilter reference](../../reference/resources/bgpfilter.mdx)
+- [BGPPeer reference](../../reference/resources/bgppeer.mdx)
+- [Configure BGP peering with nested clusters on KubeVirt VMs](../configuring/bgp-to-workload.mdx)

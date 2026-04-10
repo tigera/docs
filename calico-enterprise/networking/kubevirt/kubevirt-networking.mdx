@@ -1,0 +1,227 @@
+---
+description: Configure Calico Enterprise to provide networking for KubeVirt virtual machines, including IP address persistence and live migration support.
+---
+
+# KubeVirt networking
+
+## Big picture
+
+$[prodname] provides networking for KubeVirt virtual machines (VMs) running on your Kubernetes cluster,
+including persistent IP addresses across VM lifecycle events and support for live migration.
+
+## Value
+
+KubeVirt runs VMs inside Kubernetes pods. When a VM reboots, is evicted, or live-migrates to
+another host, the underlying pod is destroyed and recreated. Without IP persistence, each new pod
+would receive a fresh IP address, which would break existing connections and change the VM's network identity.
+
+$[prodname]'s KubeVirt support ensures that:
+
+- A VM retains the same IP address across reboots, pod evictions, and live migrations.
+- Live migration completes without breaking TCP connections or changing the VM's network identity.
+- Network policy is correctly applied to the VM on the destination host before migration traffic is switched.
+
+## Concepts
+
+### Supported networking mode: bridge
+
+$[prodname] supports KubeVirt live migration using the **bridge** binding mode. In bridge mode,
+the VM is connected to the pod network through a Linux bridge, and the VM uses the same IP address
+that $[prodname] assigns to the pod. This is required because:
+
+- **IP address persistence** depends on the VM IP matching the pod IP. Bridge mode ensures
+  the VM sees and uses the pod IP directly.
+- **Network policy** in KubeVirt bridge mode is applied on the pod's veth interface, so
+  policy enforcement works correctly for VM traffic.
+- **Live migration** in KubeVirt bridge mode relies on detecting gratuitous ARP (GARP) packets
+  from the VM on the pod's veth interface to know when the VM has activated on the target host.
+
+Other KubeVirt networking modes (such as masquerade) are not supported for live migration
+because the VM would use a different IP than the pod IP, breaking IP persistence and
+policy enforcement.
+
+### BGP networking required
+
+Live migration currently requires BGP networking without overlay. Overlay networking (VXLAN, IP-in-IP)
+support is planned for a future release.
+
+### KubeVirt VM IP address persistence
+
+$[prodname] uses the VM's identity (rather than the pod's identity) as the IPAM allocation handle.
+When a VM's pod is recreated, the new pod is allocated the same IP address as the original.
+This is a cluster-wide setting controlled by the `IPAMConfiguration` resource.
+
+### Live migration
+
+When a KubeVirt VM live-migrates from one host to another, $[prodname] coordinates the network
+transition:
+
+1. The target pod is created on the destination host and assigned the same IP as the source pod.
+2. Network policy is programmed on the destination host before the VM becomes active.
+3. Once the VM activates on the target host, $[prodname] adjusts route priorities so that
+   traffic is steered to the new host.
+4. After a configurable convergence period (default 30 seconds), route priorities return to normal.
+
+### Policy setup timeout
+
+During live migration, KubeVirt needs to know when the destination host is ready for the VM.
+The `policy_setup_timeout_seconds` CNI configuration parameter interlocks the progress of the
+live migration with policy programming. The CNI plugin delays reporting success until network
+policy is in place on the destination, or until the timeout expires.
+
+### Limitations
+
+- **WireGuard** is not supported with live migration.
+- **DNS policy is not supported with live migration.** DNS policy enforcement relies on
+  local conntrack state on the node. After a live migration, the conntrack state from the
+  source node is not transferred to the destination node, so DNS policy rules that depend
+  on connection tracking will not function correctly. Support for DNS policy with live
+  migration is planned for a future release.
+
+## Before you begin
+
+- A working Kubernetes cluster with KubeVirt installed.
+- $[prodname] installed with BGP networking without overlay.
+- Access to `projectcalico.org/v3` resources using
+  [calicoctl](../../operations/clis/calicoctl/install.mdx).
+
+## How to
+
+### Enable live migration on VMs with bridge mode
+
+By default, KubeVirt does not allow [live migration](https://kubevirt.io/user-guide/compute/live_migration/)
+for VMs that use bridge binding on the pod network. To enable it, annotate your `VirtualMachine`
+template with `kubevirt.io/allow-pod-bridge-network-live-migration`:
+
+```yaml
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: my-vm
+spec:
+  template:
+    metadata:
+      annotations:
+        kubevirt.io/allow-pod-bridge-network-live-migration: ""
+    spec:
+      domain:
+        devices:
+          interfaces:
+            - name: default
+              bridge: {}
+      networks:
+        - name: default
+          pod: {}
+```
+
+The annotation must be placed in `spec.template.metadata.annotations` (the VMI template, not the
+VM itself). Without this annotation, KubeVirt rejects live migration attempts for VMs using
+bridge binding with an error like:
+`cannot migrate VMI which does not use masquerade to connect to the pod network`.
+
+### Enable KubeVirt VM IP address persistence
+
+IP address persistence is enabled by default. If it has been previously disabled, re-enable
+it by setting `kubeVirtVMAddressPersistence` to `Enabled` in the `IPAMConfiguration` resource:
+
+```bash
+kubectl patch ipamconfigurations default --type='merge' -p '{"spec": {"kubeVirtVMAddressPersistence": "Enabled"}}'
+```
+
+Or using `calicoctl`:
+
+```bash
+calicoctl ipam configure --kubevirt-ip-persistence=Enabled
+```
+
+:::note
+
+IP address persistence must be enabled for live migration to work. If persistence is disabled,
+the CNI plugin rejects migration target pods.
+
+:::
+
+### Allow live migration ports through host endpoint policy
+
+If you use [host endpoint policies](../../reference/host-endpoints/overview.mdx), you must
+allow the KubeVirt live migration ports (TCP 49152 and 49153) between hosts. These ports are
+used by libvirt/QEMU to transfer VM memory and block storage directly between the source and
+destination nodes during live migration.
+
+Add them to the Felix `FailsafeInboundHostPorts` and `FailsafeOutboundHostPorts` configuration,
+or create appropriate host endpoint policies to allow this traffic. See
+[Failsafe rules](../../reference/host-endpoints/failsafe.mdx) for more details.
+
+### Configure policy setup timeout for live migration
+
+To ensure network policy is programmed on the destination host before the VM starts receiving
+traffic, configure the policy setup timeout. This value specifies how long (in seconds) the
+CNI plugin waits for policy to be programmed before reporting success.
+
+If you installed $[prodname] using the operator, configure the
+[`linuxPolicySetupTimeoutSeconds`](../../reference/installation/api.mdx#caliconetworkspec) field
+in the [`Installation`](../../reference/installation/api.mdx#installation) resource's `calicoNetwork` settings:
+
+```yaml
+kind: Installation
+apiVersion: operator.tigera.io/v1
+metadata:
+  name: default
+spec:
+  calicoNetwork:
+    linuxPolicySetupTimeoutSeconds: 10
+```
+
+For manifest-based installations, set `policy_setup_timeout_seconds` directly in
+the CNI network configuration (typically `/etc/cni/net.d/10-calico.conflist`):
+
+```json
+{
+  "name": "k8s-pod-network",
+  "cniVersion": "0.3.1",
+  "plugins": [
+    {
+      "type": "calico",
+      "policy_setup_timeout_seconds": 10,
+      ...
+    }
+  ]
+}
+```
+
+## Security considerations
+
+### VM identity verification
+
+$[prodname]'s CNI plugin verifies the identity of VM pods using Kubernetes `ownerReferences`.
+When a pod claims to be a KubeVirt VM (to receive a persistent IP), the CNI plugin checks that
+the pod's `ownerReferences` point to a valid `VirtualMachineInstance` resource. This prevents
+arbitrary pods from claiming VM IP addresses.
+
+### RBAC recommendations
+
+A user who can create pods and read `VirtualMachineInstance` resources could potentially forge
+`ownerReferences` to claim a VM's IP address. To mitigate this:
+
+- Restrict pod creation permissions in namespaces that run KubeVirt VMs.
+- Limit `get`/`list` access to `VirtualMachineInstance` resources to trusted users and service accounts.
+
+### Admission controllers
+
+For production deployments, consider using admission controllers such as
+[Kyverno](https://kyverno.io/) or [OPA/Gatekeeper](https://open-policy-agent.github.io/gatekeeper/)
+to enforce that only KubeVirt controllers can set `ownerReferences` pointing to
+`VirtualMachineInstance` resources on pods.
+
+### $[prodname] component permissions
+
+$[prodname] components (Felix, confd, the CNI plugin) require only **read** access to KubeVirt
+resources (`VirtualMachineInstance`, `VirtualMachineInstanceMigration`, etc.). They do not create, modify, or delete any KubeVirt resources.
+
+## Additional resources
+
+- [`IPAMConfiguration` reference](../../reference/resources/ipamconfig.mdx)
+- [FelixConfiguration reference](../../reference/resources/felixconfig.mdx)
+- [BGPConfiguration reference](../../reference/resources/bgpconfig.mdx)
+- [BGP routing for KubeVirt live migration](./live-migration-bgp.mdx)
+- [Configure BGP peering](../configuring/bgp.mdx)

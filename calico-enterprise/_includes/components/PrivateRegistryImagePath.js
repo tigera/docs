@@ -138,7 +138,7 @@ kind: Installation
 metadata:
   name: default
 spec:
-  variant: TigeraSecureEnterprise
+  variant: CalicoEnterprise
   imagePullSecrets:
     - name: tigera-pull-secret
   // highlight-next-line

@@ -189,6 +189,15 @@ module.exports = {
         },
         {
           type: 'category',
+          label: 'Calico Enterprise networking for KubeVirt',
+          link: { type: 'doc', id: 'networking/kubevirt/index' },
+          items: [
+            'networking/kubevirt/kubevirt-networking',
+            'networking/kubevirt/live-migration-bgp',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Egress gateways',
           link: { type: 'doc', id: 'networking/egress/index' },
           items: [
@@ -590,7 +599,6 @@ module.exports = {
               items: [
                 'operations/monitor/metrics/recommended-metrics',
                 'operations/monitor/metrics/bgp-metrics',
-                'operations/monitor/metrics/license-agent',
                 'operations/monitor/metrics/policy-metrics',
                 'operations/monitor/metrics/elasticsearch-and-fluentd-metrics',
               ],
