@@ -71,7 +71,15 @@ The **Deployed to** column shows the namespace where the operator places the sec
 
 :::tip
 
-Typha and Node use mutual TLS. If you replace `typha-certs`, `typha-certs-noncluster-host`, or `node-certs`, ensure they are all signed by the same CA. Mismatched certificates will break Node-to-Typha communication.
+Typha and Node use mutual TLS. If you replace `typha-certs`, `typha-certs-noncluster-host`, or `node-certs`:
+- Ensure they are all signed by the same CA. Mismatched certificates will break Node-to-Typha communication.
+- These secrets require an additional `common-name` data field containing the CN. For example:
+  ```bash
+  kubectl create secret generic typha-certs -n tigera-operator \
+    --from-file=tls.crt=</path/to/cert> \
+    --from-file=tls.key=</path/to/key> \
+    --from-literal=common-name=typha-server
+  ```
 
 :::
 
