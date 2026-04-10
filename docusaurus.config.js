@@ -15,13 +15,21 @@ export default async function createAsyncConfig() {
   /** @type {import('@docusaurus/types').Config} */
   const config = {
     future: {
-      experimental_faster: {
+      v4: {
+        removeLegacyPostBuildHeadAttribute: true,
+        useCssCascadeLayers: true,
+        siteStorageNamespacing: true,
+        fasterByDefault: true,
+        mdx1CompatDisabledByDefault: true,
+      },
+      faster: {
         swcJsLoader: true,
         swcJsMinimizer: true,
         swcHtmlMinimizer: true,
         lightningCssMinimizer: true,
         rspackBundler: true,
         rspackPersistentCache: true,
+        ssgWorkerThreads: true,
         mdxCrossCompilerCache: true,
       },
     },
@@ -35,7 +43,7 @@ export default async function createAsyncConfig() {
     markdown: {
       hooks: {
         onBrokenMarkdownLinks: 'throw',
-      }
+      },
     },
 
     // Even if you don't use internalization, you can use this field to set useful
@@ -62,9 +70,9 @@ export default async function createAsyncConfig() {
         'data-modal-header-bg-color': '#FFFFFF',
         'data-user-analytics-fingerprint-enabled': 'true',
         'data-user-analytics-store-ip': 'true',
-        'data-mcp-enabled': "true",
-        'data-mcp-server-url': "https://calico-docs.mcp.kapa.ai",
-        'data-mcp-button-text': "MCP",
+        'data-mcp-enabled': 'true',
+        'data-mcp-server-url': 'https://calico-docs.mcp.kapa.ai',
+        'data-mcp-button-text': 'MCP',
         async: true,
       },
     ],
@@ -123,10 +131,11 @@ export default async function createAsyncConfig() {
           searchPagePath: '/search',
         },
         announcementBar: {
-          id: "calico_hackathon_deadline",
-          content: '🚀 Deadline Extended! (Ends April 30, 2026!) Finalize your GitHub repo and demo video to enter the <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon.</a>',
-          backgroundColor: "#FCE181",
-          textColor: "#000",
+          id: 'calico_hackathon_deadline',
+          content:
+            '🚀 Deadline Extended! (Ends April 30, 2026!) Finalize your GitHub repo and demo video to enter the <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon.</a>',
+          backgroundColor: '#FCE181',
+          textColor: '#000',
           isCloseable: true,
         },
         navbar: {
@@ -410,7 +419,7 @@ export default async function createAsyncConfig() {
           path: 'calico',
           routeBasePath: 'calico',
           editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.31','3.30','3.29'],
+          onlyIncludeVersions: [...nextVersion, '3.31', '3.30', '3.29'],
           lastVersion: '3.31',
           versions: {
             current: {
@@ -418,7 +427,7 @@ export default async function createAsyncConfig() {
               path: 'next',
               banner: 'unreleased',
             },
-            '3.31': {
+            3.31: {
               label: '3.31 (latest)',
               path: 'latest',
               banner: 'none',
@@ -447,7 +456,7 @@ export default async function createAsyncConfig() {
           path: 'calico-enterprise',
           routeBasePath: 'calico-enterprise',
           editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.23-1','3.22-2','3.21-2','3.20-2'],
+          onlyIncludeVersions: [...nextVersion, '3.23-1', '3.22-2', '3.21-2', '3.20-2'],
           lastVersion: '3.22-2',
           versions: {
             current: {
@@ -526,27 +535,31 @@ export default async function createAsyncConfig() {
           editUrl: generateEditUrl,
         },
       ],
-      ['./src/plugins/docusaurus-plugin-llms-txt', {
-        siteDescription: 'Calico documentation for networking, network security, and observability for Kubernetes, including Calico Open Source, Calico Enterprise, and Calico Cloud.',
-        productDescriptions: {
-          'calico': 'Open source networking and network security for containers and Kubernetes.',
-          'calico-enterprise': 'Enterprise-grade networking, security, and observability for Kubernetes.',
-          'calico-cloud': 'SaaS-based Kubernetes security and observability platform.',
+      [
+        './src/plugins/docusaurus-plugin-llms-txt',
+        {
+          siteDescription:
+            'Calico documentation for networking, network security, and observability for Kubernetes, including Calico Open Source, Calico Enterprise, and Calico Cloud.',
+          productDescriptions: {
+            calico: 'Open source networking and network security for containers and Kubernetes.',
+            'calico-enterprise': 'Enterprise-grade networking, security, and observability for Kubernetes.',
+            'calico-cloud': 'SaaS-based Kubernetes security and observability platform.',
+          },
+          topPages: [
+            '/calico/latest/getting-started/kubernetes/quickstart',
+            '/calico-enterprise/latest/getting-started/install-on-clusters/kubernetes/quickstart',
+            '/calico-cloud/get-started/connect-cluster',
+            '/calico/latest/networking/determine-best-networking',
+            '/calico/latest/network-policy/get-started/calico-policy/calico-network-policy',
+            '/calico-enterprise/latest/network-policy/policy-tiers/tiered-policy',
+            '/calico/latest/operations/ebpf/enabling-ebpf',
+            '/calico-enterprise/latest/observability',
+            '/calico/latest/networking/configuring/bgp',
+            '/calico-cloud/get-started/system-requirements',
+          ],
+          optionalSections: ['release notes'],
         },
-        topPages: [
-          '/calico/latest/getting-started/kubernetes/quickstart',
-          '/calico-enterprise/latest/getting-started/install-on-clusters/kubernetes/quickstart',
-          '/calico-cloud/get-started/connect-cluster',
-          '/calico/latest/networking/determine-best-networking',
-          '/calico/latest/network-policy/get-started/calico-policy/calico-network-policy',
-          '/calico-enterprise/latest/network-policy/policy-tiers/tiered-policy',
-          '/calico/latest/operations/ebpf/enabling-ebpf',
-          '/calico-enterprise/latest/observability',
-          '/calico/latest/networking/configuring/bgp',
-          '/calico-cloud/get-started/system-requirements',
-        ],
-        optionalSections: ['release notes'],
-      }],
+      ],
     ],
     customFields: {
       isTesting: process.env.TESTING || false,
