@@ -156,6 +156,13 @@ If you have provided a `calico-resources` configmap and the tigera-operator pod 
 check the output of the init-container with `oc logs -n tigera-operator -l k8s-app=tigera-operator -c create-initial-resources`.
 :::
 
+### Ensure encapsulated traffic is allowed on the hosting cluster
+
+By default, Calico drops encapsulated packets (IP-in-IP or VXLAN) originating from workloads. This can prevent communication between KubeVirt pods across nodes.
+If your hosted cluster uses encapsulation, you must allow this traffic on the hosting cluster.
+
+Set `allowIPIPPacketsFromWorkloads: true` or `allowVXLANPacketsFromWorkloads: true` in the [FelixConfiguration](../../../reference/resources/felixconfig.mdx) on the hosting cluster, depending on the encapsulation mode used by your hosted cluster.
+
 ### Apply the $[prodname] install manifests
 
 Apply the install manifests paying attention to the required order. First apply all necessary manifests to install the Tigera Operator:
