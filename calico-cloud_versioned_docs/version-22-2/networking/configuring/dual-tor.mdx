@@ -66,7 +66,7 @@ several things are needed.
 
 - Importantly, this includes connections that Kubernetes uses as part of its own control
   plane, such as between the Kubernetes API server and kubelet on each node. Ideally,
-  therefore, the stable IP address setup on each node should happen before Kubernetes
+  therefore, the stable IP address setup on each node should happen *before* Kubernetes
   starts running.
 
 - BGP is an exception to the previous points - in fact, the _only_ exception - because we
@@ -91,10 +91,10 @@ $[prodname]'s $[nodecontainer] image can be run in an "early networking" mode,
 on each node, to perform all of the above points that are needed before Kubernetes starts
 running. That means that it:
 
-- Provisions the stable IP address.
+- Provisions the stable IP address, and assigns it to the loopback interface.
 
-- Makes the changes needed to ensure that the stable address will be used as the source
-  IP for any outgoing connections from the node.
+- Ensures the stable address will be used as the source
+  IP for any outgoing connections, by adjusting the scope of interface addresses.
 
 - Starts running BGP, peering with the node's ToRs, to advertise the node's
   stable address to other nodes.
@@ -190,45 +190,6 @@ For a dual ToR setup, LLGR is helpful, as explained in more detail by [this blog
 - If a node is restarted, we still get the traditional Graceful Restart behaviour whereby
   routes to that node persist in the rest of the network.
 
-### Default routing and "nearly default" routes
-
-Calico's early networking architecture - and more generally, the considerations for dual
-ToR that are presented on this page - is compatible with many possible [L3 fabric designs](../../reference/architecture/design/l3-interconnect-fabric.mdx)
-. One of
-the options in such designs is "downward default", which means that each ToR only
-advertises the default route to its directly connected nodes, even when it has much more
-detailed routing information. "Downward default" works because the ToR should indeed be
-the node's next hop for all destinations, except for directly connected nodes in the same
-rack.
-
-In a dual ToR cluster, each node has two ToRs, and "downward default" should result in the
-node having an ECMP default route like this:
-
-```
-default proto bird
-        nexthop via 172.31.11.100 dev eth0
-        nexthop via 172.31.12.100 dev eth0
-```
-
-If one of the planes is broken, BGP detects and propagates the outage and that route
-automatically changes to a non-ECMP route via the working plane:
-
-```
-default via 172.31.12.100 dev eth0 proto bird
-```
-
-That is exactly the behaviour that is wanted in a dual ToR cluster. The snag with it is
-that there can be other procedures in the node's operating system that also update the
-default route - in particular, DHCP - and that can interfere with this desired behaviour.
-For example, if a DHCP lease renewal occurs for one of the node's interfaces, the node may
-then replace the default route as non-ECMP via that interface.
-
-A simple way to avoid such interference is to export the "nearly default" routes 0.0.0.0/1
-and 128.0.0.0/1 from the ToRs, instead of the true default route 0.0.0.0/0. 0.0.0.0/1 and
-128.0.0.0/1 together cover the entire IPv4 address space and so provide correct dual ToR
-routing for any destination outside the local rack. They also mask the true default route
-0.0.0.0/0, by virtue of having longer prefixes (1 bit instead of 0 bits), and so it no
-longer matters if there is any other programming of the true default route on the node.
 
 ## Before you begin
 
@@ -329,7 +290,7 @@ longer matters if there is any other programming of the true default route on th
 
       :::
 
-1.  Prepare this BGPConfiguration resource to [disable the full node-to-node     mesh](bgp.mdx#disable-the-default-bgp-node-to-node-mesh):
+1.  Prepare this BGPConfiguration resource to [disable the full node-to-node mesh](bgp.mdx#disable-the-default-bgp-node-to-node-mesh):
 
     ```yaml
     apiVersion: projectcalico.org/v3
@@ -675,3 +636,7 @@ path only, via the plane that is still unbroken; for example:
 ```
 
 When the connectivity break is repaired, those routes should change to become ECMP again.
+
+## Additional resources
+
+ - [L3 fabric designs](../../reference/architecture/design/l3-interconnect-fabric.mdx)
