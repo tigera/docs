@@ -136,6 +136,14 @@ To expose the web console using OpenShift routes, create the following route wit
 - name: `tigera-manager`
 - targetPort: `9443`
 
+Both `passthrough` and `reencrypt` TLS termination work, but we recommend `reencrypt` because `passthrough` can cause intermittent routing issues when wildcard certificates are in use.
+
+The route requires a `destinationCACertificate` so HAProxy can verify the backend connection. If you provided your own `manager-tls` secret, use your own root CA here. Otherwise, extract the operator's CA with:
+
+```bash
+kubectl get secret tigera-ca-private -n tigera-operator -o jsonpath='{.data.tls\.crt}' | base64 -d
+```
+
 **Example**
 
 ```yaml
@@ -153,14 +161,18 @@ spec:
   port:
     targetPort: 9443
   tls:
-    termination: passthrough
+    termination: reencrypt
     insecureEdgeTerminationPolicy: Redirect
+    destinationCACertificate: |
+      -----BEGIN CERTIFICATE-----
+      <CA certificate — see above>
+      -----END CERTIFICATE-----
   wildcardPolicy: None
 ```
 
 ### Log in to the $[prodname] web console
 
-Access the $[prodname] web console in your browser using the URL with clustername. For example: `https://manager.apps.demo-ocp.tigera-solutions.io:9443`
+Access the $[prodname] web console in your browser using the URL with clustername. For example: `https://manager.apps.demo-ocp.tigera-solutions.io`
 
 </TabItem>
 
