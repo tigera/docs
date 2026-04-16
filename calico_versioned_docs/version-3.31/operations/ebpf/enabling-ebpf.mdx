@@ -271,6 +271,12 @@ You should see the following log, with the correct `KUBERNETES_SERVICE_...` valu
 In eBPF mode $[prodname] replaces `kube-proxy` so it wastes resources (and reduces performance) to run both.
 This section explains how to disable `kube-proxy` in some common environments.
 
+:::caution
+
+If you are running `kube-proxy` in IPVS mode, you must switch it to iptables mode before disabling `kube-proxy` or enabling eBPF mode. This applies to all platforms and is required for a successful migration. After switching to iptables mode, restart or roll your nodes before proceeding.
+
+:::
+
 ##### Clusters that run `kube-proxy` with a `DaemonSet` (such as `kubeadm`)
 
 For a cluster that runs `kube-proxy` in a `DaemonSet` (such as a `kubeadm`-created cluster), you can disable `kube-proxy` reversibly by adding a node selector to `kube-proxy`'s `DaemonSet` that matches no nodes, for example:
@@ -310,11 +316,6 @@ If you are running MKE, you can disable `kube-proxy` as follows:
 Follow the step procedure in [Modify an existing MKE configuration](https://docs.mirantis.com/mke/current/ops/administer-cluster/configure-an-mke-cluster/use-an-mke-configuration-file.html#modify-an-existing-mke-configuration) to download, edit, and upload your MKE configuration. During the editing step, add the following configuration:
 `kube_proxy_mode=disabled` and `kube_default_drop_masq_bits=true`.
 
-:::note
-
-If you are running kube-proxy in IPVS mode, switch to iptables mode before disabling.
-
-:::
 
 #### Avoiding conflicts with kube-proxy
 

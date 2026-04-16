@@ -130,6 +130,12 @@ If you do not see the pods restart then it's possible that the `ConfigMap` wasn'
 In eBPF mode $[prodname] replaces `kube-proxy` so it wastes resources (and reduces performance) to run both.  
 This section explains how to disable `kube-proxy` in some common environments.
 
+:::caution
+
+If you are running `kube-proxy` in IPVS mode, you must switch it to iptables mode before disabling `kube-proxy` or enabling eBPF mode. This applies to all platforms and is required for a successful migration. After switching to iptables mode, restart or roll your nodes before proceeding.
+
+:::
+
 #### Clusters that run `kube-proxy` with a `DaemonSet` (such as `kubeadm`)
 
 For a cluster that runs `kube-proxy` in a `DaemonSet` (such as a `kubeadm`-created cluster), you can disable `kube-proxy` reversibly by adding a node selector to `kube-proxy`'s `DaemonSet` that matches no nodes, for example:
@@ -162,11 +168,6 @@ To re-enable it:
 kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": true}}'
 ```
 
-:::note
-
-If you are running kube-proxy in IPVS mode, switch to iptables mode before disabling.
-
-:::
 
 #### MKE
 
