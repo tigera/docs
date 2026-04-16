@@ -34,6 +34,54 @@ spec:
 
 - $[prodname] automatically creates a resource named `default` containing the global default configuration settings for Felix. You can use [calicoctl](../calicoctl/overview.mdx) to view and edit these settings
 - The resources with the name `node.<nodename>` contain the node-specific overrides, and will be applied to the node `<nodename>`. When deleting a node the FelixConfiguration resource associated with the node will also be deleted.
+- Resources with any other name can use the `nodeSelector` field to target a group of nodes by label (see [Selector-scoped configuration](#selector-scoped-configuration) below).
+
+### Selector-scoped configuration (tech preview) {#selector-scoped-configuration}
+
+:::note
+
+This feature is a **tech preview**. The behavior described here may change in future releases.
+
+:::
+
+FelixConfiguration resources whose name is not `default` and does not start with `node.` can include a `nodeSelector` field to restrict the configuration to nodes whose labels match the selector. This allows you to apply different Felix settings to groups of nodes without creating individual per-node resources.
+
+#### Example
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: FelixConfiguration
+metadata:
+  name: gpu-nodes
+spec:
+  nodeSelector: "role == 'gpu'"
+  logSeverityScreen: Debug
+  bpfEnabled: true
+```
+
+This resource applies `logSeverityScreen: Debug` and `bpfEnabled: true` only to nodes with the label `role=gpu`.
+
+#### Configuration precedence
+
+When a selector-scoped FelixConfiguration matches a node, its settings are applied between per-node and global configuration in the priority order:
+
+1. Environment variables (highest priority)
+2. Felix configuration file
+3. Host-specific `FelixConfiguration` resource (`node.<nodename>`)
+4. **Selector-scoped `FelixConfiguration` resources**
+5. Global `FelixConfiguration` resource (`default`)
+6. Built-in defaults (lowest priority)
+
+A selector-scoped setting overrides the same setting from the global `default` resource, but is itself overridden by a per-node `node.<nodename>` resource or environment variable.
+
+#### Overlapping selectors
+
+At most one selector-scoped FelixConfiguration should match any given node. If multiple selector-scoped resources match the same node, this is treated as a misconfiguration: the oldest resource by creation time is used and a warning is logged. This behavior may change in future releases.
+
+#### Restrictions
+
+- The `nodeSelector` field cannot be set on the `default` resource or on `node.<nodename>` resources. These names have fixed scoping semantics.
+- The `nodeSelector` field uses the same [selector syntax](../resources/networkpolicy.mdx#selectors) as other Calico resources.
 
 ### Spec
 
