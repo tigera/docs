@@ -25,11 +25,17 @@ Networks become aware of workload IP addresses through layer 3 routing technique
 
 ### Encapsulation types
 
-Calico supports two types of encapsulation: VXLAN and IP in IP. VXLAN is supported in some environments where IP in IP is not (for example, Azure). VXLAN has a slightly higher per-packet overhead because the header is larger, but unless you are running very network intensive workloads the difference is not something you would typically notice. The other small difference between the two types of encapsulation is that Calico's VXLAN implementation does not use BGP, whereas Calico's IP in IP implementation uses BGP between Calico nodes.
+Calico supports two types of encapsulation: VXLAN and IP in IP. VXLAN is supported in some environments where IP in IP is not (for example, Azure). VXLAN has a slightly higher per-packet overhead because the header is larger, but unless you are running very network intensive workloads the difference is not something you would typically notice.
 
 ### Cross-subnet
 
 Encapsulation of workload traffic is typically required only when traffic crosses a router that is unable to route workload IP addresses on its own. Calico can perform encapsulation on: all traffic, no traffic, or only on traffic that crosses a subnet boundary.
+
+### Cluster route programming
+
+Each Calico node needs routes to pods on other nodes; these are called _cluster routes_. By default, Felix programs cluster routes for VXLAN IP pools, while BGP distributes cluster routes for IP-in-IP pools and for pools with no encapsulation. You can configure Felix to program cluster routes in all cases by setting `programClusterRoutes` in `FelixConfiguration` to `Enabled` and `programClusterRoutes` in `BGPConfiguration` to `Disabled`. Alternatively, if you use the operator, set `clusterRoutingMode` in the `calicoNetwork` of the default installation resource to `Felix` instead of the default `BIRD` value.
+
+When Felix is programming cluster routes, BGP is not required for internal cluster routing. However, BGP is still required if cluster routes need to be advertised to external BGP peers. If you do not need to advertise routes externally, you can disable BGP to reduce the moving parts in your cluster by [Customizing the manifests](../../getting-started/kubernetes/self-managed-onprem/config-options.mdx).
 
 ## Before you begin
 
