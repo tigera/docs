@@ -305,6 +305,17 @@ show up in the `hostendpoint-isolation` tier and can be identified by the
 calicoctl get stagedglobalnetworkpolicies --show-policy-activities
 ```
 
+To scope the output directly to host-policy recommendations, use
+`kubectl get -o name` to resolve names in the tier and pass each one to
+`calicoctl get`:
+
+```bash
+kubectl get stagedglobalnetworkpolicies.projectcalico.org \
+  -l projectcalico.org/tier=hostendpoint-isolation -o name \
+  | sed 's|.*/||' \
+  | xargs -r -I{} calicoctl get stagedglobalnetworkpolicy {} --show-policy-activities
+```
+
 Example output:
 
 ```
