@@ -18,7 +18,7 @@ import Icmp from '../../_includes/content/_icmp.mdx';
 
 import Rule from '../../_includes/content/_rule.mdx';
 
-The policy recommendation scope is a collection of configuration options to control [policy recommendation](../../network-policy/recommendations/policy-recommendations.mdx) in the web console.
+The policy recommendation scope configures $[prodname]'s policy-recommendation engine. It controls both [namespace policy recommendations](../../network-policy/recommendations/policy-recommendations.mdx) (configured under `namespaceSpec`) and [host policy recommendations](../../network-policy/recommendations/hep-policy-recommendations.mdx) (configured under `hostEndpointSpec`). Namespace and host recommendations are enabled and scoped independently.
 
 To apply changes to this resource, use the following format:
 
@@ -41,16 +41,27 @@ $ kubectl patch policyrecommendationscope default -p '{"spec":{"<parameter>":"<v
 
 ### Spec
 
-| Field                  | Description                                                  | Accepted Values | Schema | Default        |
-| ---------------------- | ------------------------------------------------------------ | --------------- | ------ | -------------- |
-| Interval               | The frequency to create and refine policy recommendations.   |                 |        | 2.5m (minutes) |
-| InitialLookback        | Start time to look at flow logs when first creating a policy recommendation. |                 |        | 24h (hours)    |
-| StabilizationPeriod    | Time that a recommended policy should remain unchanged so it is stable and ready to be enforced. |                 |        | 10m (minutes)  |
+| Field                       | Description                                                  | Accepted Values | Schema | Default        |
+| --------------------------- | ------------------------------------------------------------ | --------------- | ------ | -------------- |
+| `interval`                  | The frequency to create and refine policy recommendations.   |                 |        | 2m30s          |
+| `initialLookback`           | Start time to look at flow logs when first creating a policy recommendation. |                 |        | 24h            |
+| `stabilizationPeriod`       | Time that a recommended policy should remain unchanged so it is stable and ready to be enforced. |                 |        | 10m            |
+| `maxRules`                  | Maximum number of rules permitted in the ingress or egress set of a generated policy. Public-domain ingress rules that exceed the limit are dropped, and a warning is recorded in the staged policy's status. | | integer | 20 |
+| `policiesLearningCutOff`    | Maximum number of staged policies that are actively learning at any one time. Once this limit is reached the engine stops adding new recommendations. | | integer | 20 |
 
 #### NamespaceSpec
 
-| Field                  | Description                                                  | Accepted Values | Schema | Default        |
-| ---------------------- | ------------------------------------------------------------ | --------------- | ------ | -------------- |
-| recStatus              | Defines the policy recommendation engine status.             | Enabled/Disabled |        | Disabled       |
-| selector               | Selects the namespaces for generating recommendations. |                 |        | `!(projectcalico.org/name starts with ''tigera-'') && !(projectcalico.org/name starts with ''calico-'') && !(projectcalico.org/name starts with ''kube-'')`    |
-| intraNamespacePassThroughTraffic               | When true, sets all intra-namespace traffic to Pass | true/false |        | false |
+| Field                              | Description                                                  | Accepted Values | Schema | Default        |
+| ---------------------------------- | ------------------------------------------------------------ | --------------- | ------ | -------------- |
+| `recStatus`                        | Defines the namespace policy recommendation engine status.   | Enabled/Disabled |        | Disabled       |
+| `selector`                         | Selects the namespaces for generating recommendations.       |                 |        | `!(projectcalico.org/name starts with ''tigera-'') && !(projectcalico.org/name starts with ''calico-'') && !(projectcalico.org/name starts with ''kube-'')` |
+| `intraNamespacePassThroughTraffic` | When true, sets all intra-namespace traffic to Pass          | true/false |        | false |
+| `tierName`                         | Tier where the generated staged network policies are created. The tier must already exist. | | string | `namespace-isolation` |
+
+#### HostEndpointSpec
+
+| Field                    | Description                                                  | Accepted Values  | Schema | Default                 |
+| ------------------------ | ------------------------------------------------------------ | ---------------- | ------ | ----------------------- |
+| `recommendationStatus`   | Defines the host policy recommendation engine status.        | Enabled/Disabled |        | Disabled                |
+| `selector`               | Selects which HostEndpoints the engine generates recommendations for. If omitted, every HostEndpoint is eligible. | | string | (all HostEndpoints)     |
+| `tierName`               | Tier where the generated staged global network policies are created. The tier must already exist. | | string | `hostendpoint-isolation` |

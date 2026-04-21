@@ -1,0 +1,396 @@
+---
+description: Automatically generate staged global network policies for hosts from observed flow logs.
+---
+
+# Recommend policies for hosts
+
+## Big picture
+
+Extend policy recommendations so $[prodname] automatically generates
+staged global network policies for hosts in your cluster, based on
+observed flow logs.
+
+## Value
+
+Implementing least-privileged network policy for hosts is time-consuming
+and error-prone to do by hand. $[prodname] analyzes flow logs from hosts
+and creates a staged global network policy per host that captures the
+traffic the host actually sends and receives. You can review the staged
+policies, confirm they match real traffic, and then promote them to
+enforced global network policies when you're ready.
+
+## Before you begin
+
+**Supported**
+
+- Standalone clusters with hosts registered as [HostEndpoints](../../reference/resources/hostendpoint.mdx).
+
+**Unsupported**
+
+- Management and managed-cluster topologies.
+- The web console. Enabling the feature, and accepting, dismissing, and
+  promoting the generated recommendations are done with `kubectl` and
+  `calicoctl`. Generated staged policies still appear in the **Policies**
+  board alongside other policies.
+
+**Required RBAC**
+
+To enable and use host-policy recommendations, you must have the
+`tigera-network-admin` role, or permissions to **update**, **patch**,
+**get**, **list**, **watch** the following `projectcalico.org` resources:
+
+- `policyrecommendationscopes`
+- `tiers`
+- `stagedglobalnetworkpolicies`
+- `tier.stagedglobalnetworkpolicies`
+- `globalnetworkpolicies`
+- `tier.globalnetworkpolicies`
+- `globalnetworksets`
+- `hostendpoints`
+
+In particular, you need access to the `hostendpoint-isolation` tier and
+to the staged and enforced global network policies in that tier.
+
+**Prerequisites**
+
+- Each host you want recommendations for must run `calico-node` and be
+  represented as a HostEndpoint.
+- For private-network and public-domain rule recommendations, Felix DNS
+  snooping must be able to resolve the host's active DNS servers so that
+  flow logs include `dest_domains`. If your hosts don't pick up the
+  cluster's default DNS resolver, set
+  [`dnsTrustedServers`](../../reference/component-resources/node/felix/configuration.mdx)
+  on `calico-node` accordingly.
+
+## How to
+
+- [Enable host-policy recommendations](#enable-host-policy-recommendations)
+- [View recommended policies](#view-recommended-policies)
+- [Tune global settings](#tune-global-settings)
+- [Manage the life cycle of recommendations](#manage-the-life-cycle-of-recommendations)
+- [Confirm a recommendation is matching real traffic](#confirm-a-recommendation-is-matching-real-traffic)
+- [Disable host-policy recommendations](#disable-host-policy-recommendations)
+
+### Enable host-policy recommendations
+
+Enable host-policy recommendations by setting `hostEndpointSpec.recommendationStatus`
+to `Enabled` on the [PolicyRecommendationScope](../../reference/resources/policyrecommendations.mdx)
+resource. When the selector is omitted, every HostEndpoint in the cluster
+is eligible.
+
+```bash
+kubectl patch policyrecommendationscope default --type=merge -p '{
+  "spec": {
+    "hostEndpointSpec": {
+      "recommendationStatus": "Enabled"
+    }
+  }
+}'
+```
+
+:::note
+
+Host recommendations and namespace recommendations are configured
+independently, through `hostEndpointSpec` and `namespaceSpec` respectively.
+Enabling one does not enable the other.
+
+:::
+
+By default, generated policies are placed in the `hostendpoint-isolation`
+tier. You can override the tier name with `hostEndpointSpec.tierName`,
+but the tier must already exist.
+
+### View recommended policies
+
+```bash
+kubectl get stagedglobalnetworkpolicies \
+  -l projectcalico.org/tier=hostendpoint-isolation
+```
+
+One staged global network policy is generated per HostEndpoint that
+matches the selector. Recommended policies move through a `Learn`,
+`Set`, and `Ignore` life cycle tracked by the
+`projectcalico.org/spec.stagedAction` label and `spec.stagedAction` field.
+See [Manage the life cycle of recommendations](#manage-the-life-cycle-of-recommendations).
+
+### Tune global settings
+
+Two top-level fields on the
+[PolicyRecommendationScope](../../reference/resources/policyrecommendations.mdx)
+are commonly adjusted to fit a cluster's traffic patterns:
+
+:::caution
+
+`stabilizationPeriod` and `interval` are top-level fields on the
+PolicyRecommendationScope, not scoped under `hostEndpointSpec`. Changes
+you make here apply to **both** namespace and host policy recommendations.
+If namespace recommendations are also enabled on this cluster, make sure
+the new values work for both.
+
+:::
+
+- `stabilizationPeriod` — how long a staged recommendation must remain
+  unchanged before it's considered stable and ready to enforce. The
+  default (`10m`) works for hosts with frequent, representative traffic.
+  For hosts whose normal traffic takes longer to exercise every path,
+  extend the period so the engine has time to observe a full cycle.
+- `interval` — how often the engine processes new flow logs and refines
+  recommendations. The default is `2m30s`.
+
+```bash
+# Extend the stabilization period to 30 minutes.
+kubectl patch policyrecommendationscope default --type=merge \
+  -p '{"spec":{"stabilizationPeriod":"30m"}}'
+
+# Refine recommendations less frequently.
+kubectl patch policyrecommendationscope default --type=merge \
+  -p '{"spec":{"interval":"5m"}}'
+```
+
+:::tip
+
+Review these settings soon after enabling host-policy recommendations
+and adjust them based on how quickly your hosts' traffic stabilizes.
+You can always revisit them later.
+
+:::
+
+Other recommendation parameters (`maxRules`, `policiesLearningCutOff`,
+and the per-spec `tierName` and `selector` fields) are also tuned
+through the same resource. See
+[PolicyRecommendationScope](../../reference/resources/policyrecommendations.mdx)
+for the full list.
+
+### Manage the life cycle of recommendations
+
+Staged global network policies generated by the engine move through a
+three-state life cycle tracked by the
+`projectcalico.org/spec.stagedAction` label and the `spec.stagedAction`
+field:
+
+| State    | Meaning                                                              |
+| -------- | -------------------------------------------------------------------- |
+| `Learn`  | Engine is actively refining the recommendation from new flow logs.   |
+| `Set`    | Recommendation has been accepted; the engine no longer modifies it.  |
+| `Ignore` | Recommendation is dismissed; the engine stops updating it.           |
+
+This section covers the transitions between those states and the
+operations most commonly performed on recommendations.
+
+#### Activate a recommendation
+
+Accepting a recommendation transitions it from `Learn` to `Set`, which
+stops the engine from further modifying it. This is the
+prerequisite for enforcing a recommendation.
+
+Accept a single recommendation:
+
+```bash
+kubectl patch stagedglobalnetworkpolicy.projectcalico.org <name> --type=merge \
+  -p '{"metadata":{"labels":{"projectcalico.org/spec.stagedAction":"Set"}},"spec":{"stagedAction":"Set"}}'
+```
+
+Accept every recommendation still in the learning stage:
+
+```bash
+kubectl get stagedglobalnetworkpolicies.crd.projectcalico.org \
+  -l projectcalico.org/tier=hostendpoint-isolation,projectcalico.org/spec.stagedAction=Learn \
+  -o name \
+  | xargs -r -n1 kubectl patch --type=merge \
+      -p '{"metadata":{"labels":{"projectcalico.org/spec.stagedAction":"Set"}},"spec":{"stagedAction":"Set"}}'
+```
+
+#### Enforce a recommendation
+
+Enforcing a recommendation converts an accepted staged global network
+policy into an enforced GlobalNetworkPolicy, which begins to affect
+traffic. Always
+[confirm the recommendation is matching real traffic](#confirm-a-recommendation-is-matching-real-traffic)
+before enforcing it.
+
+Enforce a single recommendation:
+
+```bash
+kubectl get stagedglobalnetworkpolicies.projectcalico.org <name> -o yaml \
+  | yq -y '
+      .apiVersion = "projectcalico.org/v3"
+      | .kind = "GlobalNetworkPolicy"
+      | .metadata = {"name": .metadata.name, "labels": {"projectcalico.org/tier": .metadata.labels."projectcalico.org/tier"}}
+      | del(.spec.stagedAction)
+      | del(.spec.ingress[]?.metadata, .spec.egress[]?.metadata)
+    ' \
+  | kubectl apply -f -
+```
+
+Enforce every accepted recommendation:
+
+```bash
+kubectl get stagedglobalnetworkpolicies.projectcalico.org \
+  -l projectcalico.org/tier=hostendpoint-isolation,projectcalico.org/spec.stagedAction=Set \
+  -o yaml \
+  | yq -y '
+      (.items[] |= (
+        .apiVersion = "projectcalico.org/v3"
+        | .kind = "GlobalNetworkPolicy"
+        | .metadata = {"name": .metadata.name, "labels": {"projectcalico.org/tier": .metadata.labels."projectcalico.org/tier"}}
+        | del(.spec.stagedAction)
+        | del(.spec.ingress[]?.metadata, .spec.egress[]?.metadata)
+      ))
+    ' \
+  | kubectl apply -f -
+```
+
+:::note
+
+Enforcing a recommendation does not delete the original staged policy.
+If you no longer need it, delete it explicitly after you've verified
+the enforced policy is working as expected.
+
+:::
+
+#### Stop policy recommendation updates for a HostEndpoint
+
+To stop updates for a host, dismiss the recommendation by setting its
+`stagedAction` to `Ignore`:
+
+```bash
+kubectl patch stagedglobalnetworkpolicy.projectcalico.org <name> --type=merge \
+  -p '{"metadata":{"labels":{"projectcalico.org/spec.stagedAction":"Ignore"}},"spec":{"stagedAction":"Ignore"}}'
+```
+
+#### Relearn an activated recommendation
+
+To have the engine regenerate a recommendation from scratch — useful
+when the host's traffic pattern has changed — transition the staged
+policy back to `Learn`. The engine re-evaluates flow logs and rebuilds
+the recommendation on the next processing cycle.
+
+```bash
+kubectl patch stagedglobalnetworkpolicy.projectcalico.org <name> --type=merge \
+  -p '{"metadata":{"labels":{"projectcalico.org/spec.stagedAction":"Learn"}},"spec":{"stagedAction":"Learn"}}'
+```
+
+#### Rerun policy recommendations for an enforced policy
+
+Once a recommendation has been enforced, the engine no longer refines
+it. To have the engine generate a new recommendation for a host that
+already has an enforced policy, delete the enforced GlobalNetworkPolicy:
+
+```bash
+kubectl delete globalnetworkpolicy.projectcalico.org <name>
+```
+
+On the next processing cycle, the engine creates a fresh staged
+recommendation in `Learn`.
+
+### Confirm a recommendation is matching real traffic
+
+Use `calicoctl get` with `--show-policy-activities` to check when the
+recommendation engine last evaluated each staged policy against live
+flow logs. Recent timestamps mean the policy is being actively
+exercised by observed traffic — useful reassurance before you enforce
+a recommendation.
+
+Query a single recommendation:
+
+```bash
+calicoctl get stagedglobalnetworkpolicy <name> --show-policy-activities
+```
+
+Or every host recommendation in the `hostendpoint-isolation` tier:
+
+```bash
+calicoctl get stagedglobalnetworkpolicies --show-policy-activities \
+  -l projectcalico.org/tier=hostendpoint-isolation
+```
+
+Example output:
+
+```
+NAME                                   TIER                     LAST EVALUATED              LAST EVALUATED (ANY GEN)    LAST EVALUATED GEN
+hostendpoint-isolation.host-a-vfzgh    hostendpoint-isolation   2026-04-20T14:32:01-07:00   2026-04-20T14:32:01-07:00   4
+hostendpoint-isolation.host-b-k9x2p    hostendpoint-isolation   NOT YET                     2026-04-20T14:20:15-07:00   2
+hostendpoint-isolation.host-c-pq4tm    hostendpoint-isolation   NOT YET                     NEVER                       N/A
+```
+
+The three extra columns mean:
+
+- **`LAST EVALUATED`** — the most recent time the **current** generation
+  of the policy was evaluated against a flow log. A recent timestamp
+  here is the strongest signal that the policy, as it currently stands,
+  is matching live traffic.
+- **`LAST EVALUATED (ANY GEN)`** — the most recent time **any**
+  generation (current or past) was evaluated. If `LAST EVALUATED` is
+  `NOT YET` but this column has a recent timestamp, a previous version
+  of the policy was matching traffic and the current version has not
+  been evaluated yet — typical right after the engine refines the
+  recommendation.
+- **`LAST EVALUATED GEN`** — which generation the timestamp in
+  `LAST EVALUATED (ANY GEN)` refers to. Compare it to `metadata.generation`
+  on the staged policy to know how recent that evaluation was.
+
+`NOT YET` means the current generation has not yet been evaluated;
+`NEVER` means no generation has ever been evaluated (likely indicating
+the host is not sending traffic that reaches the policy yet).
+
+### Disable host-policy recommendations
+
+```bash
+kubectl patch policyrecommendationscope default --type=merge \
+  -p '{"spec":{"hostEndpointSpec":{"recommendationStatus":"Disabled"}}}'
+```
+
+Disabling stops the engine from generating or refining host
+recommendations. Existing staged and enforced policies are not removed.
+
+## Limitations
+
+- Host-policy recommendations are only available on standalone clusters.
+- The feature has no web console surface for enabling, accepting,
+  dismissing, or promoting recommendations — all workflows are
+  CLI-driven.
+- The number of rules per generated policy is capped by `maxRules` on the
+  [PolicyRecommendationScope](../../reference/resources/policyrecommendations.mdx)
+  (default `20`). Public-domain ingress rules that exceed the cap are
+  dropped, and a warning is recorded in the staged policy's status.
+- Private-network and public-domain rule recommendations depend on DNS
+  snooping producing `dest_domains` in flow logs. If DNS trusted servers
+  aren't configured correctly on the host, those rules are not
+  generated.
+
+## Troubleshoot
+
+View policy-recommendation logs:
+
+```bash
+kubectl logs -n calico-system -l k8s-app=tigera-policy-recommendation
+```
+
+**Problem**: No private-network or public-domain rules are generated.
+
+**Solution**: Check that `dest_domains` is populated in flow logs.
+Missing `dest_domains` is usually caused by one of:
+
+- DNS trusted servers are not configured correctly on the host, so
+  Felix DNS snooping cannot observe name resolutions. See the DNS
+  prerequisite above.
+- The
+  [FelixConfiguration](../../reference/component-resources/node/felix/configuration.mdx)
+  field `flowLogsDestDomainsByClient` is set to `true`. When enabled,
+  `dest_domains` is attributed to the client flow only and is not
+  populated on the server-side flow log the recommendation engine
+  relies on. Set `flowLogsDestDomainsByClient` to `false` (the default)
+  if you need host-policy recommendations to generate private-network
+  and public-domain rules.
+
+**Problem**: No recommendations appear after enabling the feature.
+
+**Solution**: Confirm that your HostEndpoints match the selector (or
+that the selector is omitted so all hosts are eligible), and that flows
+for the host are visible in **Service Graph**.
+
+## Additional resources
+
+- [Policy recommendation scope resource](../../reference/resources/policyrecommendations.mdx)
+- [Protect hosts with host endpoints](../hosts/protect-hosts.mdx)
+- [Staged global network policies](../../reference/resources/stagedglobalnetworkpolicy.mdx)

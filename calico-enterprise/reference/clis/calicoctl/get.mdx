@@ -29,6 +29,7 @@ Usage:
   calicoctl get ( (<KIND> [<NAME...>]) |
                 --filename=<FILENAME>) [--recursive] [--skip-empty]
                 [--output=<OUTPUT>] [--config=<CONFIG>] [--namespace=<NS>] [--all-namespaces]
+                [--show-policy-activities]
 
 Examples:
   # List all policy in default output format.
@@ -61,6 +62,8 @@ Options:
                                cluster-specific information. This flag will be ignored
                                if <NAME> is not specified.
   --context=<context>          The name of the kubeconfig context to use.
+  --show-policy-activities     Show policy activity timestamps (only for policy
+                               resources, table output).
 
 Description:
   The get command is used to display a set of resources by filename or stdin,
@@ -150,6 +153,31 @@ Description:
 --export                     If present, returns the requested object(s) stripped of
                              cluster-specific information. This flag will be ignored
                              if the resource name is not specified.
+--show-policy-activities     Show policy activity timestamps (only for policy
+                             resources, table output).
+```
+
+### Showing policy activity
+
+Pass `--show-policy-activities` to display when each rule of a policy was
+last matched by live traffic. This is useful for reviewing which rules
+of a staged or enforced policy are actually exercised before you promote
+or clean up a policy.
+
+The flag:
+
+- Is only supported for policy kinds: `globalnetworkpolicy`,
+  `networkpolicy`, `stagedglobalnetworkpolicy`, `stagednetworkpolicy`.
+- Is only supported with the `ps` (default) and `wide` table output
+  formats. It is not supported with `yaml`, `json`, `custom-columns`,
+  or `go-template` output.
+
+Example — show activity for every host-policy recommendation in the
+`hostendpoint-isolation` tier:
+
+```bash
+calicoctl get stagedglobalnetworkpolicies --show-policy-activities \
+  -l projectcalico.org/tier=hostendpoint-isolation
 ```
 
 ### General options
