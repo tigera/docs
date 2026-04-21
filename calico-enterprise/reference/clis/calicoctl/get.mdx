@@ -159,10 +159,18 @@ Description:
 
 ### Showing policy activity
 
-Pass `--show-policy-activities` to display when each rule of a policy was
-last matched by live traffic. This is useful for reviewing which rules
-of a staged or enforced policy are actually exercised before you promote
-or clean up a policy.
+Pass `--show-policy-activities` to append policy-activity timestamps to
+the table output. For each listed policy, calicoctl adds three columns:
+
+- `LAST EVALUATED` — when the current generation of the policy was last
+  evaluated against live traffic.
+- `LAST EVALUATED (ANY GEN)` — when any generation of the policy (current
+  or previous) was last evaluated.
+- `LAST EVALUATED GEN` — which generation the `LAST EVALUATED (ANY GEN)`
+  timestamp refers to.
+
+This is useful for confirming that a staged or enforced policy is being
+exercised by live traffic before you promote or clean it up.
 
 The flag:
 
@@ -172,13 +180,25 @@ The flag:
   formats. It is not supported with `yaml`, `json`, `custom-columns`,
   or `go-template` output.
 
-Example — show activity for every host-policy recommendation in the
-`hostendpoint-isolation` tier:
+Example — show activity for all staged global network policies:
 
 ```bash
-calicoctl get stagedglobalnetworkpolicies --show-policy-activities \
-  -l projectcalico.org/tier=hostendpoint-isolation
+calicoctl get stagedglobalnetworkpolicies --show-policy-activities
 ```
+
+:::note
+
+`calicoctl get` does not support `-l` / `--selector`. To scope output to
+a specific tier or label set, pipe the names through kubectl:
+
+```bash
+kubectl get stagedglobalnetworkpolicies.projectcalico.org \
+  -l projectcalico.org/tier=hostendpoint-isolation -o name \
+  | sed 's|.*/||' \
+  | xargs -r -n1 -I{} calicoctl get stagedglobalnetworkpolicy {} --show-policy-activities
+```
+
+:::
 
 ### General options
 
