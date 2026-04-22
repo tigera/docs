@@ -718,6 +718,12 @@ module.exports = {
                 },
                 'reference/clis/calicoctl/patch',
                 'reference/clis/calicoctl/replace',
+                {
+                  type: 'category',
+                  label: 'calicoctl review',
+                  link: { type: 'doc', id: 'reference/clis/calicoctl/review/index' },
+                  items: ['reference/clis/calicoctl/review/unused-policies'],
+                },
                 'reference/clis/calicoctl/version',
               ],
             },
