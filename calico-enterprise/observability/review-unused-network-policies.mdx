@@ -13,8 +13,8 @@ As your cluster grows, stale or unnecessary network policies and rules can accum
 
 **Required**
 
-- Calico Enterprise v3.23 EP2 or later on both the management and managed clusters.
-- `calicoctl` v3.23 EP2 or later (for CLI access).
+- Calico Enterprise v3.23 or later on both the management and managed clusters.
+- `calicoctl` v3.23 or later (for CLI access).
 
 **Limitations**
 
@@ -90,6 +90,14 @@ NetworkPolicy  tigera-fluentd   calico-system.allow-fluentd-node  Egress     0
 - **Some unused policies have been recently edited** — Policies were edited within the query time window. If the edit resulted in a new generation, more time may be needed for the current generation to evaluate traffic before its "unused" status is reliable.
 
 :::
+
+#### Interpreting the output
+
+The `since <timestamp>` in each section header is the start of the query window — all listed policies have had no activity since that time.
+
+- **`PREV GENS EVALUATED = No` and `RECENTLY EDITED = No`** — The policy has no traffic history in any generation and has not been edited inside the window. These are the strongest candidates for removal.
+- **`PREV GENS EVALUATED = Yes`** — An earlier generation of the policy evaluated traffic, but the current one has not. The policy may have been changed in a way that no longer matches the same traffic, or the current generation may just need more time. Investigate before removing.
+- **`RECENTLY EDITED = Yes`** — The policy was updated inside the query window (that is, its `lastUpdate` falls after the `since` timestamp shown in the header). If the edit produced a new generation, the current generation may not yet have had time to match traffic. Re-run the query after the policy has been in place for longer before concluding it is unused.
 
 **JSON output**
 
