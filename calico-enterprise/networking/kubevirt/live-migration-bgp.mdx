@@ -184,13 +184,35 @@ spec:
     - kubevirt-live-migration
 ```
 
-#### Step 3: Configure ToR to propagate routes with communities
+#### Step 3: Configure the ToR to select elevated-priority routes
 
-Ensure your ToR switches are configured to pass through the BGP communities used in the
-`BGPFilter` (e.g., `65000:100`). The ToR must re-advertise these /32 routes
-with their communities intact to compute nodes in other racks, so that the receiving nodes'
-import filters can reconstruct the correct route priority. This configuration is done on the
-ToR switch itself (outside of $[prodname]) and depends on your switch vendor and network OS.
+The ToR must be configured to read the BGP community (`65000:100`) attached by $[prodname]'s
+BGPFilter and prefer those routes over normal-priority routes. Without this, the ToR may
+treat both the source and target routes as equal and install them as ECMP, causing
+split-brain routing during live migration.
+
+The following BIRD 1.x import filter example shows how to match the community and set a
+higher preference for elevated-priority routes:
+
+```
+filter import_community_priority {
+  if ((65000, 100) ~ bgp_community) then {
+    preference = 200;
+  }
+  accept;
+}
+```
+
+Routes carrying community `(65000, 100)` get BIRD `preference = 200` (default is 100),
+ensuring the target route is preferred over the source route during live migration.
+
+#### Step 3 (alternative): Configure hardware ToR to propagate routes with communities
+
+If your ToR is a hardware switch (not running BIRD), ensure it is configured to pass through
+the BGP communities used in the `BGPFilter` (e.g., `65000:100`). The ToR must re-advertise
+these /32 routes with their communities intact to compute nodes in other racks, so that the
+receiving nodes' import filters can reconstruct the correct route priority. This configuration
+depends on your switch vendor and network OS.
 
 ## Additional resources
 

@@ -137,6 +137,33 @@ the CNI plugin rejects migration target pods.
 
 :::
 
+### Disable NAT outgoing for VM IP pools
+
+If you want continuous connectivity from a migrating VM to any destination, the VM's IP address
+must not be SNATed anywhere on the path between the VM and that destination. You must disable
+`natOutgoing` on any IP pool used by KubeVirt VMs that will be live-migrated.
+
+Live migration relies on VM IP address persistence — SNAT defeats this purpose by rewriting
+the VM's source IP to the node's IP after migration.
+
+If $[prodname] was installed using the operator, disable `natOutgoing` through the
+`Installation` resource:
+
+```bash
+kubectl patch installation default --type=json \
+  -p '[{"op":"replace","path":"/spec/calicoNetwork/ipPools/0/natOutgoing","value":"Disabled"}]'
+```
+
+:::caution
+
+Do not patch the `IPPool` resource directly when using the operator — the operator reconciles
+`IPPool` resources from the `Installation` resource and will silently revert direct changes.
+
+:::
+
+For manifest-based installations, set `natOutgoing: false` on the
+[IPPool](../../reference/resources/ippool.mdx) resource directly.
+
 ### Allow live migration ports through host endpoint policy
 
 If you use [host endpoint policies](../../reference/host-endpoints/overview.mdx), you must
