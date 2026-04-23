@@ -97,8 +97,9 @@ Enabling one does not enable the other.
 :::
 
 By default, generated policies are placed in the `hostendpoint-isolation`
-tier. You can override the tier name with `hostEndpointSpec.tierName`,
-but the tier must already exist.
+tier. The engine creates this tier automatically if it doesn't exist.
+To use a different tier, set `hostEndpointSpec.tierName` to the name of
+a tier you have already created.
 
 ### View recommended policies
 
@@ -341,9 +342,13 @@ The three extra columns mean:
   `LAST EVALUATED (ANY GEN)` refers to. Compare it to `metadata.generation`
   on the staged policy to know how recent that evaluation was.
 
-`NOT YET` means the current generation has not yet been evaluated;
-`NEVER` means no generation has ever been evaluated (likely indicating
-the host is not sending traffic that reaches the policy yet).
+`NOT YET` means the current generation has not yet been evaluated.
+`NEVER` means no generation of this policy has been evaluated against
+traffic yet. `NEVER` is typically a transient state immediately after
+the engine first generates a recommendation, before the policy-activity
+pipeline has recorded any match. A host that has never sent traffic will
+not have a staged recommendation at all — the engine creates a staged
+policy only after observing the first flow that matches the HostEndpoint.
 
 ### Disable host-policy recommendations
 
