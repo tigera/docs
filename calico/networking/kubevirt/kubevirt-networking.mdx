@@ -115,6 +115,19 @@ VM itself). Without this annotation, KubeVirt rejects live migration attempts fo
 bridge binding with an error like:
 `cannot migrate VMI which does not use masquerade to connect to the pod network`.
 
+### Restart Typha after installing KubeVirt
+
+If $[prodname] was installed before the KubeVirt CRDs were available (the common bootstrap
+order on fresh clusters), you must restart Typha so it can discover KubeVirt CRDs
+(e.g. `VirtualMachineInstanceMigration`) needed for live migration support.
+
+```bash
+kubectl rollout restart deployment calico-typha -n calico-system
+kubectl rollout status deployment calico-typha -n calico-system --timeout=60s
+```
+
+If KubeVirt was installed before $[prodname], this step is not needed.
+
 ### Enable KubeVirt VM IP address persistence
 
 IP address persistence is enabled by default. If it has been previously disabled, re-enable
