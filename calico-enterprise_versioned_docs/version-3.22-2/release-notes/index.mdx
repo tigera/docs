@@ -284,8 +284,62 @@ To update an existing installation of Calico Enterprise 3.22, see [Install a pat
 
 April 24, 2026
 
+#### Enhancements
+
+* Display the `Degraded` condition's message when running `kubectl get tigerastatus`, making it easier to see error details at a glance without needing to describe the resource.
+
+  ```console
+  $ kubectl get tigerastatus
+  NAME                          AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
+  apiserver                     True        False         False      4m51s   All objects available
+  calico                        False       False         True       106s    Pod calico-system/calico-node-tjlnv failed to pull container image for: ebpf-bootstrap
+  intrusion-detection           False       False         True       11m     Error creating TLS certificate: secret tigera-operator/deep-packet-inspection-tls must specify ext key usages: ExtKeyUsageClientAuth, ExtKeyUsageServerAuth
+  log-storage-access            False       False         True       11m     Pod tigera-elasticsearch/tigera-linseed-58745b7574-p6zmx has crash looping container: tigera-linseed
+  manager                       True        False         False      6s      All objects available; Warning: user provided certificate "manager-tls" expires in 21 days
+  ...
+  ```
+
+* Surface certificate metadata (issuer, expiry, DNS SANs, IP SANs) as annotations and add filtering labels (`secret-type`, `signer`) on TLS secrets produced by `Secret()` and `CreateSelfSignedSecret()`.
+
+  ```console
+  $ kubectl get secrets -n tigera-operator -l operator.tigera.io/signer \
+      -o custom-columns='NAME:.metadata.name,EXPIRY:.metadata.annotations.operator\.tigera\.io/cert-expiry,SIGNER:.metadata.annotations.operator\.tigera\.io/cert-signer'
+  NAME                                        EXPIRY                 SIGNER
+  calico-apiserver-certs                      2028-05-28T23:56:09Z   tigera-operator-signer
+  calico-kube-controllers-metrics-tls         2028-05-28T23:56:09Z   tigera-operator-signer
+  calico-node-prometheus-client-tls           2028-05-29T18:28:09Z   tigera-operator-signer
+  ...
+  ```
+
 #### Bug fixes
 
-{/* Release notes to be provided by Rene */}
+* Fixed pod creation failures during manifest-to-operator migration caused by the calico-cni-plugin.
+* Dropped support for the non-privileged mode and deprecated the Installation.spec.nonPrivileged field. The Operator ignores this setting and will mark Calico as Degraded if it is set to Enabled.
+* Fixed ClusterRoleBinding losing its kube-system subject before all nodes are migrated.
+* Fixed calico-apiserver TLS errors on upgrade for long-lived clusters. The operator now correctly reissues certificates with updated SANs when the apiserver namespace changes, instead of treating legacy operator-signed certs as user-provided.
+* Added validation for logstorage node count and replicas setting.
+* ECK certificates are now rotated 30 days before expiry, just like all certificates that are managed by our operator.
+* Voltron's JWT authenticator now accepts a configurable CA signer name (CA_SIGNER_NAME) instead of hardcoding tigera-operator-signer, allowing custom operator signer names.
+* Fixed a Felix eBPF cleanup race condition that could cause a nil-pointer panic when an interface disappeared during TC qdisc cleanup.
+* Fixed a goroutine leak in Felix's interface monitor that could occur on netlink reconnect; fixed a goroutine leak after nflog reader restart; fixed a data race in Felix's BPF endpoint manager when comparing HostEndpoint protobuf messages, which could cause flaky race-detector failures or subtle logic errors under concurrent access.
+* Fixed eBPF conntrack counter accounting for NAT-outgoing flows where bytes_in and packets_in were always zero.
+* Fixed a bug in the eBPF dataplane where egress gateway pods' own outbound traffic (health probes, DNS) was not routed via ExternalNetwork routing tables, causing health probe failures and incorrect routing when using EgressGateway with ExternalNetwork resources.
+* Fixed an issue in the eBPF dataplane where link-local discovery packets were incorrectly dropped during strict reverse path forwarding (RPF) checks.
+* Multi-NIC support: fixed the projectcalico.org/network label; stripped the namespace prefix added by Multus in recent versions, since the prefix was undocumented and, due to using a / separator, could fail validation when the CNI plugin tried to read a multi-NIC endpoint after node reboot, causing pods to fail to come back up after reboot.
+* Fixed a bug where the CNI plugin installer generated a malformed URL for IPv4 addresses, exposed by a fix to the golang URL parser.
+* Increased the line-size limit for data ingestion so that threat feeds and compliance no longer fail on lines larger than 64K.
+* Changed PolicyMatch.Staged from bool to *bool so that queries for enforced (non-staged) policies no longer fail against Linseed's empty-PolicyMatch rejection.
+* Fixed an issue where pie charts became unreadable when there were too many namespaces to display, by aggregating overflow namespaces into an "Other" bucket so totals remain accurate.
+* Added OpenShift-only RBAC for the operator to manage NetworkAttachmentDefinition resources, required for Istio ambient mode with Multus CNI.
+* Added list and watch verbs to the operator's ClusterRole for network-attachment-definitions, so the operator's informer cache can start and kubectl delete Istio default no longer hangs on OpenShift.
+* Set correct CA_TRUSTED_NODE_ACCOUNTS namespace on OpenShift when using Istio ambient mode.
+* Fixed BGP advertisement to also check Service status ingress IPs (not only spec.LoadBalancerIP) when matching /32 and /128 entries in serviceLoadBalancerIPs, so LB IPs assigned from Calico IPPools are advertised.
+* Updated the LoadBalancer controller to not run unless explicitly configured via ENABLED_CONTROLLERS, and to warn only about Calico-managed services when no IP pool is present.
+* Fixed BGP advertisement so that externalIPs on ClusterIP-type services are no longer skipped by an earlier short-circuit in the advertisement logic.
+* Fixed the LoadBalancer controller to prevent a nil pointer dereference in handleBlockUpdate.
+* Fixed calicoctl cluster diags to use fully qualified `<plural>.<version>.<group>` resource identifiers so CRD and API resource collection is unambiguous on clusters (such as OpenShift) where multiple API groups share the same plural name.
+* Fixed l7-admission-controller webhook returning invalid response when pod has sidecar label but no feature annotations.
+* Fix Kibana crashloop when upgrading frrom Calico Enterprise 3.20 or earlier to 3.22. The orphan `ingest_manager_settings` saved object left by Fleet 7.17 is now discarded during Kibana 8.x saved-object migration.
+* Security updates.
 
 To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
