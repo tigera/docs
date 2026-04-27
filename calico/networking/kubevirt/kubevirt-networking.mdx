@@ -121,9 +121,11 @@ If $[prodname] was installed before the KubeVirt CRDs were available (the common
 order on fresh clusters), you must restart Typha so it can discover KubeVirt CRDs
 (e.g. `VirtualMachineInstanceMigration`) needed for live migration support.
 
+Adjust the namespace to match your installation (commonly `calico-system` or `kube-system`):
+
 ```bash
-kubectl rollout restart deployment calico-typha -n calico-system
-kubectl rollout status deployment calico-typha -n calico-system --timeout=60s
+kubectl rollout restart deployment calico-typha -n <namespace>
+kubectl rollout status deployment calico-typha -n <namespace> --timeout=60s
 ```
 
 If KubeVirt was installed before $[prodname], this step is not needed.
@@ -156,8 +158,11 @@ If you want continuous connectivity from a migrating VM to any destination, the 
 must not be SNATed anywhere on the path between the VM and that destination. You must disable
 `natOutgoing` on any IP pool used by KubeVirt VMs that will be live-migrated.
 
-Live migration relies on VM IP address persistence — SNAT defeats this purpose by rewriting
-the VM's source IP to the node's IP after migration.
+In a live migration, by definition the VM moves from one node to another.
+If `natOutgoing` is configured for the VM, and there is an ongoing connection
+between the VM and a server outside the cluster, that server will see the
+source IP for the connection change from the old node IP to the new node IP
+— which unfortunately means that the connection will break.
 
 If $[prodname] was installed using the operator, disable `natOutgoing` through the
 `Installation` resource:
@@ -166,6 +171,10 @@ If $[prodname] was installed using the operator, disable `natOutgoing` through t
 kubectl patch installation default --type=json \
   -p '[{"op":"replace","path":"/spec/calicoNetwork/ipPools/0/natOutgoing","value":"Disabled"}]'
 ```
+
+The path `/spec/calicoNetwork/ipPools/0` targets the first IP pool. If your cluster has
+multiple pools, identify the correct index for the pool used by your KubeVirt VMs and
+adjust the path accordingly.
 
 :::caution
 
