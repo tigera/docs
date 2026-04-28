@@ -260,7 +260,8 @@ module.exports = {
             'networking/ingress-gateway/about-calico-ingress-gateway',
             'networking/ingress-gateway/create-ingress-gateway',
             'networking/ingress-gateway/customize-ingress-gateway',
-            'networking/ingress-gateway/tutorial-ingress-gateway-canary'
+            'networking/ingress-gateway/tutorial-ingress-gateway-canary',
+            'networking/ingress-gateway/migrate-from-nginx'
           ],
         },
         {
