@@ -1,0 +1,110 @@
+---
+description: Calico automatic labels for use with resources.
+---
+
+# Calico automatic labels
+
+As a convenience, $[prodname] provides immutable labels that are used for specific resources when evaluating selectors in policies. The labels make it easier to match resources in common ways (such as matching a namespace by name).
+
+## Labels for matching namespaces
+
+The label `projectcalico.org/name` is set to the name of the namespace. This allows for matching namespaces by name when using a `namespaceSelector` field.
+
+For example, the following GlobalNetworkPolicy applies to workloads with label, `color: red` in namespaces named, `"foo"` and `"bar"`. The policy allows ingress traffic to port 8080 from all workloads in a third namespace named, `"baz"`:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: foo-and-bar
+spec:
+  namespaceSelector: projectcalico.org/name in {"foo", "bar"}
+  selector: color == "red"
+  types:
+  - Ingress
+  ingress:
+  - action: Allow
+    source:
+      namespaceSelector: projectcalico.org/name == "baz"
+    destination:
+      ports:
+      - 8080
+```
+
+Be aware that the default values for `namespaceSelector` for NetworkPolicy and GlobalNetworkPolicy are different. For example:
+
+**In a network policy**,
+
+   ```yaml
+   namespaceSelector:  <empty>
+   selector: foo == "bar"
+   ```
+means "resources in the same namespace as the network policy that matches foo == 'bar'".
+
+**In a global network policy**,
+
+   ```yaml
+   namespaceSelector:  <empty>
+   selector: foo == "bar"
+   ```
+means "resources in any namespace and non-namespaced resources that match foo == 'bar'".
+
+Further,
+
+   ```yaml
+   namespaceSelector: projectcalico.org/name == "some-namespace"
+   selector: foo == "bar"
+   ```
+is equivalent to:
+
+   ```yaml
+   namespaceSelector: <empty>
+   selector: (foo == "bar") && (projectcalico.org/namespace == "some-namespace")
+   ```
+
+### Labels for matching service accounts
+
+Similarly, the `projectcalico.org/name` label is applied to ServiceAccounts and allows for matching by name in a `serviceAccountSelector`.
+
+### Kubernetes labels for matching namespaces
+
+Kubernetes also has [automatic labeling](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#automatic-labelling), for example `kubernetes.io/metadata.name`. The Kubernetes namespace label serves the same purpose and can be used in the same way as the $[prodname] label. The `projectcalico.org/name` label predates the automatic Kubernetes label.
+
+## Labels for matching workload endpoints
+
+WorkloadEndpoints (which represent Pods in Kubernetes, or VM instances in OpenStack), receive several automatic labels:
+
+* `projectcalico.org/orchestrator` is applied to all WorkloadEndpoints and allows Kubernetes Pods to be distinguished from OpenStack VM instances, and from HostEndpoints (which do not have the label):
+
+* `has(projectcalico.org/orchestrator)` matches only WorkloadEndpoints
+* `projectcalico.org/orchestrator == "k8s"` matches only Kubernetes Pods
+
+* For WorkloadEndpoints that represent Kubernetes Pods, `projectcalico.org/namespace` contains the name of the pod's namespace. `projectcalico.org/namespace` predates the addition of `namespaceSelector` fields to GlobalNetworkPolicies; it serves the same purpose as the `projectcalico.org/name` label in a `namespaceSelector` field.  The following GlobalNetworkPolicy is exactly equivalent to the example shown in the Namespaces section:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: foo-and-bar
+spec:
+  selector: projectcalico.org/namespace in {"foo", "bar"} && color == "red"
+  types:
+  - Ingress
+  ingress:
+  - action: Allow
+    source:
+      selector: projectcalico.org/namespace == "baz"
+    destination:
+      ports:
+      - 8080
+```
+
+## Use the correct selector with labels in policies
+
+$[prodname] labels must be used with the correct selector or the policy will not work as designed (and there are no error messages in the web console or when applying the YAML).
+
+| Calico label         | Usage requirements                                              | Use in these resources...           |
+| --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `projectcalico.org/name`                                     | Use with a **namespaceSelector** or **serviceAccountSelector**. | - Network policy<br />- Staged network policy<br /><br />Namespaced resources that apply only to workload endpoint resources in the namespace.<br /> |
+| `projectcalico.org/namespace`                                | Use only with selectors. <br /><br />Use the label as the label name, and a namespace name as the value to compare against (for example projectcalico.org/namespace == "default"). | - Global network policy<br />- Staged global network policy<br /><br />Cluster-wide (non-namespaced) resources that apply to workload endpoint resources in all namespaces, and to host endpoint resources. |
+

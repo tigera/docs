@@ -1,0 +1,113 @@
+---
+description: Migrate NGINX Ingress resources to Calico Ingress Gateway with a step-by-step workflow and an optional conversion tool.
+title: Migrating from NGINX
+---
+
+# Migrating from NGINX Ingress
+
+Calico Ingress Gateway, powered by Envoy Gateway, is a replacement for NGINX Ingress on Kubernetes clusters. NGINX Ingress Controller [retired in March 2026](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/) and no longer receives releases, bug fixes, or security patches.
+
+This page covers the conceptual mapping from NGINX Ingress to Calico Ingress Gateway, a step-by-step migration workflow, and common problems to watch for.
+
+:::tip[Ready to migrate?]
+If you already understand how Gateway API differs from NGINX Ingress, jump ahead to the [migration workflow](#migration-workflow). We also provide an optional [conversion tool](#conversion-tool) for your convenience.
+:::
+
+## Why Gateway API
+
+NGINX Ingress encodes behavior in vendor-specific annotation strings on `Ingress` objects. Gateway API encodes the same behavior in typed CRDs that any conformant controller (such as Envoy Gateway, Istio, Cilium, and kgateway) can read. The mental shift:
+
+| NGINX Ingress | Gateway API + Calico Ingress Gateway |
+| --- | --- |
+| Annotation strings on `Ingress` | Typed fields on `HTTPRoute`, `SecurityPolicy`, `BackendTrafficPolicy`, `ClientTrafficPolicy` |
+| Behavior depends on which controller reads the annotation | Behavior depends on a policy's `targetRef` to a route or gateway |
+| Controller-specific snippets for advanced cases | `EnvoyPatchPolicy` or Lua filters for advanced cases |
+| Single resource owns routing, TLS, security, traffic shaping | Concerns split across `Gateway`, `HTTPRoute`, and policy CRDs |
+
+## Migration workflow
+
+### Step 1: Create an inventory
+
+Catalogue every `Ingress` resource and the annotations it uses. Note the annotation prefix (community NGINX uses `nginx.ingress.kubernetes.io/`; NGINX Inc / F5 uses `nginx.org/` and `nginx.com/`):
+
+```bash
+kubectl get ingress -A -o yaml
+```
+
+### Step 2: Back up your resources
+
+Export current `Ingress`, `Service`, and TLS `Secret` state to a file before changing anything:
+
+```bash
+kubectl get ingress,service,secret -A -o yaml > pre-migration.yaml
+```
+
+### Step 3: Author Gateway API resources
+
+Translate your `Ingress` resources into `Gateway`, `HTTPRoute`, `ReferenceGrant`, and any matching `SecurityPolicy`, `BackendTrafficPolicy`, or `ClientTrafficPolicy` resources. Compare each generated resource against the original `Ingress`.
+
+:::info
+We have a [conversion tool](#conversion-tool) provided to help you generate Gateway API resources from your existing `Ingress` YAML files.
+:::
+
+### Step 4: Validate the resources
+
+Run `egctl experimental translate` on the resources you authored in Step 3 to surface schema or semantic errors before applying anything to a cluster:
+
+```bash
+egctl experimental translate --type gateway-api --file gateway-api.yaml --output yaml
+```
+
+Replace `gateway-api.yaml` with the path to your authored (or generated) Gateway API manifest.
+
+### Step 5: Apply to a non-production cluster and test
+
+Apply to a non-production cluster running Calico Ingress Gateway. Exercise:
+
+- **TLS** — cert chain, SNI selection, redirect-to-HTTPS, HSTS
+- **Auth** — every protected route with valid and invalid credentials/tokens
+- **Rate limit** — confirm thresholds match expected behavior (note: NGINX uses leaky bucket, Envoy uses token bucket — same numeric limits, different burst semantics)
+- **Timeouts and retries** — under intentional upstream slowness or failures
+- **Session affinity** — repeated requests from the same client land on the same backend
+- **CORS** — preflight responses match NGINX's behavior on every protected origin
+
+### Step 6: Run in parallel in production
+
+Deploy Calico Ingress Gateway alongside the existing NGINX Ingress controller. Shift traffic gradually using one of:
+
+- DNS weighting between two LoadBalancer addresses
+- Header-based or query-param-based routing in front of both
+- Percentage canary at the edge load balancer
+
+Keep NGINX live and serving traffic until parity is proven under representative load. This is also your rollback path: if Calico Ingress Gateway misbehaves, shift traffic back to NGINX with a DNS change or by reversing the percentage shift.
+
+### Step 7: Remove NGINX
+
+Once parity is proven and traffic is fully on Calico Ingress Gateway, retire the NGINX Ingress controller and delete the `Ingress` resources.
+
+## Common problems
+
+- **Snippet annotations silently dropped.** ingress-nginx 1.15+ silently drops Ingresses that contain SSL variables in `configuration-snippet` or `server-snippet`. If your migration notes a bunch of "missing" routes after the switchover, check whether they relied on snippets.
+- **Annotation prefix detection.** The converter auto-detects `nginx.ingress.kubernetes.io/` vs `nginx.org/`/`nginx.com/`. Double-check on a representative sample before bulk-converting.
+- **Envoy Gateway version skew.** Some fields (e.g. `SecurityPolicy.spec.tls` vs `ClientTrafficPolicy.spec.tls`) moved between EG releases. Calico Ingress Gateway currently ships EG 1.5.x; verify the generated YAML against the version actually deployed in your cluster, not against EG documentation.
+- **Rate-limit semantics differ.** NGINX uses leaky bucket; Envoy uses token bucket. Same numeric limits will behave differently under burst traffic.
+- **`ReferenceGrant` is not optional.** Cross-namespace references (`HTTPRoute` → `Service`, `Gateway` → TLS `Secret`) require an explicit `ReferenceGrant`. The converter generates these, but if you hand-edit the output it's easy to drop one and end up with silently broken routing.
+
+## Conversion tool
+
+The [conversion tool](https://tigera.github.io/ing2gw/) drafts Gateway API resources from existing `Ingress` YAML files. Paste one or more `Ingress` objects into the input pane and the tool returns:
+
+- A multi-document YAML with `Gateway`, `HTTPRoute`, `ReferenceGrant`, and any matching `SecurityPolicy`, `BackendTrafficPolicy`, or `ClientTrafficPolicy` resources for the supported NGINX annotations.
+- A migration playbook in markdown describing what was converted, what was skipped, and any unsupported annotations alongside workarounds in Envoy terms.
+
+It auto-detects the annotation prefix (community NGINX vs NGINX Inc / F5) and supports both controllers. Everything runs in your browser — no YAML leaves your machine. The full annotation reference (which annotations convert cleanly and which need human judgment) lives [on the tool's site](https://tigera.github.io/ing2gw/#/reference).
+
+:::caution[Important]
+The output is a starting draft, not a finished migration.
+
+Every generated resource must be reviewed, validated with `egctl`, tested in a non-production cluster, and proven at parity with your existing NGINX setup before switching production traffic over. The tool may emit incorrect or incomplete output for edge cases — verify each resource against your live config and exercise it with representative traffic before taking it to production.
+:::
+
+## Need help?
+
+Ask on the [Calico Users Slack](https://calicousers.slack.com/) for community help. For complex migrations (hundreds of `Ingress` resources, custom NGINX snippets, mTLS, NGINX Plus features), [talk to a Tigera engineer](https://www.tigera.io/contact/).

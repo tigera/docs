@@ -1,0 +1,396 @@
+---
+description: Configure live migration support.
+---
+
+# Live migration for OpenStack VMs
+
+## Big picture
+
+$[prodname] supports live migration of OpenStack VMs with minimal network
+disruption.  During a live migration, $[prodname]'s Felix agent programs routes
+on the target node with elevated priority, ensuring that network traffic
+converges to the new node as quickly as possible.  For this to work optimally
+across a multi-node deployment, your BGP configuration must propagate route
+priority information between nodes.
+
+## Concepts
+
+### Route priority during live migration
+
+When Felix handles a live-migrating VM on the target (destination) node, it
+programs the VM's route with a higher-priority metric (lower value = higher
+priority).  By default:
+
+- **Normal priority** is metric value 1024
+- **Elevated priority** is metric value 512
+
+But these values can be changed, if needed, using the following
+settings in the `FelixConfiguration` resource or in `/etc/calico/felix.cfg`:
+
+| Setting                     | Default | Description                                           |
+|-----------------------------|---------|-------------------------------------------------------|
+| `IPv4NormalRoutePriority`   | 1024    | Kernel route metric for normal VM IPv4 routes         |
+| `IPv4ElevatedRoutePriority` | 512     | Kernel route metric for live-migrating VM IPv4 routes |
+| `IPv6NormalRoutePriority`   | 1024    | Kernel route metric for normal VM IPv6 routes         |
+| `IPv6ElevatedRoutePriority` | 512     | Kernel route metric for live-migrating VM IPv6 routes |
+
+If you change these from the defaults, adjust the corresponding values in the
+BIRD configuration examples below.
+
+During the overlap period when both the source and target nodes advertise
+routes to the migrating VM's IP, remote nodes (and intermediate routers) must
+prefer the route via the target node.  The elevated-priority metric achieves
+this, but only if your BGP configuration propagates priority information
+correctly between nodes.  The sections below provide examples of how to do this
+with BIRD configuration, for both iBGP and eBGP cases.
+
+:::note
+
+The same principles apply to live migration for KubeVirt VMs in a Kubernetes
+cluster, which is independently documented at [BGP routing for KubeVirt live
+migration](../kubevirt/live-migration-bgp.mdx).  The key differences between
+the considerations for OpenStack and for KubeVirt are as follows.
+
+- With OpenStack $[prodname] itself does not generate and maintain the BGP
+  configuration, so instead this is a customer responsibility.  Whereas with
+  Kubernetes $[prodname] does generate and maintain the BGP configuration.
+
+- The "route aggregation" detail mentioned in the KubeVirt doc does not apply
+  to OpenStack.  OpenStack IPAM does not use node-affinity, so VM routes are
+  always propagated as individual /32 (IPv4) or /128 (IPv6) routes.
+
+:::
+
+### BIRD attributes and filters
+
+Any BGP implementation may be used with $[prodname] for OpenStack to propagate
+VM routes between nodes - or even an alternative routing protocol - but BIRD is
+a widely used choice, and so we provide example BIRD configurations below for
+propagating route priorities to iBGP and eBGP peers.
+
+#### `krt_metric`
+
+In BIRD filters, the `krt_metric` attribute can be read, to see the metric
+value with which a route was programmed by Felix into the local Linux kernel,
+and set, to control the metric value which BIRD will use when programming an
+imported route into the local kernel.
+
+- Reading `krt_metric` makes sense when processing a route that was locally
+  programmed, and which BIRD is going to export to its BGP peers.  This is most
+  naturally done in a BGP export filter.
+
+- Setting `krt_metric` makes sense when processing a route received from a BGP
+  peer that is going to be programmed locally.  This unfortunately does not
+  work in a BGP import filter - arguably the most intuitive location - and must
+  instead be coded in a kernel export filter, gated on the route source being
+  `RTS_BGP`.
+
+#### Conversion to BGP protocol attributes
+
+The general approach is to convert from `krt_metric` to _some_ representation
+of priority in the BGP wire protocol, when exporting a route, and then to
+perform the inverse conversion - from the wire representation back to
+`krt_metric` - when importing a route.
+
+For iBGP peers the best option on the wire is the BGP LOCAL_PREF attribute.
+The `bgp_local_pref` attribute can be read and set, in BIRD filter code, to
+read and control this.  Higher LOCAL_PREF values are defined to mean higher
+priority - the opposite of Linux priority/metric values - so we need
+conversions between `krt_metric` and `bgp_local_pref` like:
+```
+bgp_local_pref = 2^31-1 - krt_metric
+krt_metric     = 2^31-1 - bgp_local_pref
+```
+$[prodname] restricts metric values to the range 1..2^31-2, so `bgp_local_pref`
+values will also be in that range.
+
+For eBGP peers the best options on the wire are
+1. using a BGP community value to indicate "high priority"
+2. adding to the BGP AS path to _lower_ the priority of all routes that are
+   _not_ high priority.
+
+(1) is preferred because it only requires a BGP modification on the wire for
+the specific high priority routes that are used during a live migration;
+whereas (2) would require a BGP modification for routes in normal operation.
+
+## How to
+
+- [Configure BIRD for route priority propagation (iBGP)](#configure-bird-for-route-priority-propagation-ibgp)
+- [Configure BIRD for route priority propagation (eBGP)](#configure-bird-for-route-priority-propagation-ebgp)
+- [Configure Nova option live_migration_wait_for_vif_plug = True](#configure-nova-option-live_migration_wait_for_vif_plug--true)
+- [Monitor live migration progress](#monitor-live-migration-progress)
+
+### Configure BIRD for route priority propagation (iBGP)
+
+When propagating routes within a contiguous AS, route priority is best
+represented using the BGP LOCAL_PREF attribute.
+
+Add filter code like the following to your BIRD configuration
+(`/etc/bird/bird.conf`):
+
+```
+filter export_bgp {
+  ...
+  if (!defined(krt_metric)) then { krt_metric = 1024; }
+  bgp_local_pref = 2147483647 - krt_metric;
+  ...
+}
+
+filter import_bgp {
+  ...
+  if (defined(bgp_local_pref)&&(bgp_local_pref > 2147482623)) then
+    preference = 200;
+  ...
+}
+
+filter export_kernel {
+  ...
+  if (defined(source) && (source = RTS_BGP) && !defined(krt_metric)) then {
+    krt_metric = 1024;
+    if (defined(bgp_local_pref)) then {
+      krt_metric = 2147483647 - bgp_local_pref;
+    }
+    if (krt_metric < 1024) then {
+      preference = 200;
+    }
+  }
+  ...
+}
+```
+
+This code works as follows:
+
+- **`export_bgp`**: When exporting a route to BGP peers,
+  converts the kernel route metric (`krt_metric`) to `bgp_local_pref`.
+  Routes with no metric default to 1024 (normal priority).
+
+- **`import_bgp`**: When importing a route from a BGP peer,
+  checks whether the route has elevated priority
+  (`bgp_local_pref > 2147482623`, corresponding to `krt_metric < 1024`).
+  If so, sets BIRD's `preference` to 200 so that BIRD prefers this remote route
+  over a local route for the same destination.
+  This matters when a VM is migrating away from a node that has an active connection to that VM.
+
+- **`export_kernel`**: When programming a BGP-learned route into the Linux kernel,
+  converts `bgp_local_pref` back to `krt_metric`.
+  Also sets `preference = 200` for elevated-priority routes, for the same reason as `import_bgp`.
+  This conversion is done here rather than in `import_bgp`
+  because setting `krt_metric` in a BGP import filter does not take effect.
+
+Update the kernel protocol block to use the `export_kernel` filter (if not already present):
+
+```
+protocol kernel {
+  ...
+  export filter export_kernel;
+  ...
+}
+```
+
+Use the `export_bgp` and `import_bgp` filters in the definition of each iBGP
+peer:
+
+```
+protocol bgp 'peer1' {
+  ...
+  import filter import_bgp;
+  export filter export_bgp;
+  ...
+}
+```
+
+For IPv6, make the same changes in your `bird6.conf`.
+
+### Configure BIRD for route priority propagation (eBGP)
+
+When propagating routes to an eBGP peer, route priority is best represented
+using a BGP community value.  BGP community values do not have standardized
+meanings, so the choice and interpretation of a value is a matter only for your
+local network.  For this example, we choose the value `(65000, 100)` to
+indicate a higher priority route.
+
+- Routes _with_ that community value are considered to be higher priority, and
+  will be mapped to `krt_metric 512`.
+
+- Routes _without_ that community value are considered to be normal priority,
+  and will be mapped to `krt_metric 1024`.
+
+Add filter code like the following to your BIRD configuration
+(`/etc/bird/bird.conf`):
+
+```
+filter export_bgp {
+  ...
+  if (!defined(krt_metric)) then { krt_metric = 1024; }
+  if (krt_metric < 1024) then {
+    bgp_community.add((65000, 100));
+  }
+  ...
+}
+
+filter import_bgp {
+  ...
+  if (((65000, 100) ~ bgp_community)) then
+    preference = 200;
+  ...
+}
+
+filter export_kernel {
+  ...
+  if (defined(source) && (source = RTS_BGP) && !defined(krt_metric)) then {
+    krt_metric = 1024;
+    if (((65000, 100) ~ bgp_community)) then {
+      krt_metric = 512;
+    }
+    if (krt_metric < 1024) then {
+      preference = 200;
+    }
+  }
+  ...
+}
+```
+
+These filters work as follows:
+
+- **`export_bgp`**: Tags higher priority routes with a community:
+  elevated-priority routes (metric < 1024) get community `(65000, 100)`.
+
+- **`import_bgp`**: Checks incoming routes for the elevated-priority community
+  and sets BIRD's `preference` to 200 if found.
+
+- **`export_kernel`**: When programming a BGP-learned route into the Linux kernel,
+  reads the community to determine the correct `krt_metric`.
+  Routes with the elevated-priority community get metric 512;
+  all others default to 1024.
+
+Update the kernel protocol block to use the `export_kernel` filter (if not already present):
+
+```
+protocol kernel {
+  ...
+  export filter export_kernel;
+  ...
+}
+```
+
+Use the `export_bgp` and `import_bgp` filters in the definition of each eBGP
+peer:
+
+```
+protocol bgp 'peer1' {
+  ...
+  import filter import_bgp;
+  export filter export_bgp;
+  ...
+}
+```
+
+For IPv6, make the same changes in your `bird6.conf`.
+
+### Configure Nova option `live_migration_wait_for_vif_plug = True`
+
+The Nova option `live_migration_wait_for_vif_plug` means "defer the compute
+side of live migration - i.e. copying a VM's state from the source to the
+target node - until Neutron and the network driver indicate that networking is
+ready for the VM on the target node".  We recommend setting this option to
+`True`.  `True` is also the default value, so an explicit setting should not be
+needed.  However some previous $[prodname] versions required this setting to be
+False, so if you have upgraded from a previous $[prodname] version, consider
+reviewing your `nova.conf` and either delete the old `False` setting, or change
+it to `True`.
+
+The $[prodname] network driver indicates readiness once all of the interface
+configuration, ipsets and iptables are in place for the VM on the target node.
+In clusters with complex network policy, ipset and iptables programming can
+take noticeable time; occasionally as much as tens of seconds.  With
+`live_migration_wait_for_vif_plug = True` the live migration timeline proceeds
+as follows:
+
+1. Live migration is requested for a VM.
+
+2. $[prodname] prepares networking on the target node.  VM is still live on the
+source node, and traffic is flowing to/from the source node.
+
+3. $[prodname] and Neutron indicate that networking is ready.  Nova begins the
+compute side of live migration.
+
+4. Compute transfer is complete and the VM becomes live on the target node.
+$[prodname] updates routing so that traffic now flows to/from the target node.
+
+Whereas, with `live_migration_wait_for_vif_plug = False`, (2) and (3) run in
+parallel and it is possible for the compute side (3) to complete before the
+networking side (2).  There can then be a situation where the VM is live on the
+target node, but it is not yet possible for traffic to flow correctly to and
+from the VM on that node.  Hence why we recommend the `True` setting.
+
+### Monitor live migration progress
+
+$[prodname] emits INFO-level log messages that you can use to track the
+detailed progress and timing of live migration operations.  These messages
+appear in the following components.
+
+In all of these logs, `<id>` uniquely identifies a given live migration
+operation, and can be used to correlate the logs from the Neutron driver with
+those from Felix on the source and target nodes.
+
+#### Neutron driver
+
+The $[prodname] Neutron driver (`networking_calico`) logs the following events:
+
+| Log message | Meaning |
+|-------------|---------|
+| `Live migration <id>: pre-migrate port <port> from <source> to <target>` | Nova has initiated live migration; $[prodname] is preparing networking on the target node. |
+| `Live migration <id>: destination port <port> active on <target>, notifying Nova` | Networking is ready on the target node; $[prodname] is signaling Nova to proceed. |
+| `Live migration <id>: succeeded, port <port> migrated from <source> to <target>` | Migration is complete; source-node networking has been cleaned up. |
+
+Example:
+
+```
+2026-03-27 13:31:11.386 INFO networking_calico [...] Live migration b7ce174c-...: pre-migrate port 480eb297-... from compute2 to compute3
+2026-03-27 13:31:13.600 INFO networking_calico [...] Live migration b7ce174c-...: destination port 480eb297-... active on compute3, notifying Nova
+2026-03-27 13:31:15.229 INFO networking_calico [...] Live migration b7ce174c-...: succeeded, port 480eb297-... migrated from compute2 to compute3
+```
+
+#### Felix on the source node
+
+Felix logs when it detects the migration and assumes the SOURCE role for the
+endpoint:
+
+```
+LiveMigrationCalculator: LiveMigration created/updated ... source=...compute2... target=...compute3... uid=<id>
+LiveMigrationCalculator: emitting role for WEP role=SOURCE uid=<id> ...
+```
+
+#### Felix on the target node
+
+Felix similarly logs when it detects the migration and assumes the TARGET role
+for the endpoint:
+
+```
+LiveMigrationCalculator: LiveMigration created/updated ... source=...compute2... target=...compute3... uid=<id>
+LiveMigrationCalculator: emitting role for WEP role=TARGET uid=<id> ...
+```
+
+In addition, Felix logs the state machine transitions involved in detailed live
+migration handling on the target node:
+
+| Transition | Meaning |
+|-----------|---------|
+| Base &rarr; Target | Felix starts setting up networking for the VM on the target node. |
+| Target &rarr; Live | Felix has detected a GARP (Gratuitous ARP) from the VM, confirming it is now live on the target node, and starts advertising a high priority route to the VM on this node. |
+| Live &rarr; TimeWait | OpenStack has indicated the migration is complete.  High priority route advertisement continues, to allow time for the nearby network to see the deletion of the VM from the source node. |
+| TimeWait &rarr; Base | Enough time has now passed.  Route advertisement for the VM reverts to normal priority. |
+
+For example:
+
+```
+13:31:11.393 [INFO] felix/live_migration.go: Live migration state transition from=Base ... input=Target migrationUid=<id> to=Target
+13:31:14.042 [INFO] felix/live_migration.go: Live migration state transition from=Target ... input=GARPDetected migrationUid=<id> to=Live
+13:31:15.229 [INFO] felix/live_migration.go: Live migration state transition from=Live ... input=NoRole migrationUid=<id> to=TimeWait
+13:31:24.607 [INFO] felix/live_migration.go: Live migration state transition from=TimeWait ... input=Deleted migrationUid=<id> to=Base
+```
+
+The timestamps on these transitions let you measure how long each phase takes.
+For example, the time between the Target and Live transitions (~2.6s in the above)
+indicates how long it took for the VM to begin running on the target node
+after networking was ready.
