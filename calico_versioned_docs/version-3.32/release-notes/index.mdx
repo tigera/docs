@@ -3,56 +3,113 @@ description: Release notes for Calico Open Source
 title: Release notes
 ---
 
-# Calico Open Source 3.30 release notes
+# Calico Open Source 3.32 release notes
 
 Learn about the new features, bug fixes, and other updates in this release of $[prodname].
 
 ## New features and enhancements
 
-## Technology preview features
+### Native v3 CRDs (tech preview)
 
-## Deprecated and removed features
+$[prodname] now supports installation with native `projectcalico.org/v3` CRDs as an alternative to the aggregated API server.
+The Tigera Operator registers `projectcalico.org/v3` resources directly as native Kubernetes CRDs — no host-network pods, no ordering dependencies between CRDs and the API server, and `kubectl` manages v3 resources without an extra install step.
+This removes a long-standing source of installation friction on managed Kubernetes platforms like EKS and AKS.
+For existing clusters, a new `DatastoreMigration` controller copies resources from the aggregated API server to native CRDs in place; the datastore is briefly locked but workload connectivity is preserved through the migration window.
+
+Native v3 CRDs require the Kubernetes `MutatingAdmissionPolicy` feature gate, which is beta and not enabled by default.
+
+For more information, see [Enable native v3 CRDs](../operations/native-v3-crds.mdx) and [Migrate from API server to native CRDs](../operations/crd-migration.mdx).
+
+### Kubernetes ClusterNetworkPolicy
+
+$[prodname] now implements the upstream Kubernetes SIG-Network `ClusterNetworkPolicy` resource (`policy.networking.k8s.io/v1alpha2`), giving cluster admins cluster-scoped `Accept`/`Deny`/`Pass` rules in two well-known tiers — `Admin` and `Baseline` — that namespace owners cannot override.
+This is how you enforce baseline guardrails and tenant isolation that namespace-scoped `NetworkPolicy` cannot express.
+`ClusterNetworkPolicy` composes with $[prodname]'s existing tiered policy: each upstream tier maps to a new auto-created $[prodname] tier (`kube-admin` and `kube-baseline`), and `priority` maps to `order`, so you can mix `ClusterNetworkPolicy`, `NetworkPolicy`, and `GlobalNetworkPolicy` resources in either tier.
+
+For more information, see [Get started with policy tiers](../network-policy/policy-tiers/tiered-policy.mdx).
+
+### Istio ambient mode (tech preview)
+
+$[prodname] now bundles Istio in ambient mode, a sidecarless service-mesh architecture that delivers mTLS encryption and mesh security at much lower resource cost than sidecar mesh.
+Existing $[prodname] and Kubernetes network policies continue to work unchanged: $[prodname] includes a modified zTunnel proxy that preserves the original destination port instead of rewriting it to the HBONE tunnel port (15008).
+The exception is Istio's Waypoint proxy: if you deploy Waypoint, traffic to it follows upstream Istio behavior and your policies must allow port 15008.
+
+For more information, see [Istio Ambient Mode](../operations/istio/about-istio-ambient.mdx).
+
+### Live migration of KubeVirt VMs over BGP
+
+$[prodname] now provides first-class networking for KubeVirt virtual machines in bridge mode, including live migration of running VMs between nodes without breaking established TCP connections.
+A migrating VM keeps its IP and has network policy programmed on the destination node before it goes live there.
+Felix re-advertises the VM's route from the new host through BGP as soon as the VM activates, so existing connections survive node maintenance and load rebalancing without reconnect storms.
+Live migration requires bridge binding mode and BGP networking (no overlay), and is not supported with WireGuard.
+
+For more information, see [KubeVirt networking](../networking/kubevirt/kubevirt-networking.mdx) and [BGP routing for KubeVirt live migration](../networking/kubevirt/live-migration-bgp.mdx).
+
+### OpenStack live migration improvements
+
+$[prodname] for OpenStack now coordinates live migration with the BGP routing layer so existing TCP connections to a migrating VM survive maintenance, load-rebalancing, and planned-reboot migrations.
+On the target compute node, Felix programs the migrating VM's route with elevated priority so the target route wins while both source and target advertise the VM.
+Example BIRD configurations for iBGP (using `LOCAL_PREF`) and eBGP (using BGP communities) show how to propagate that priority correctly between nodes.
+$[prodname] also recommends `live_migration_wait_for_vif_plug = True` in Nova so compute transfer waits until interface, `ipset`, and `iptables` programming is in place on the destination.
+A new state machine emits INFO-level logs in the Neutron driver and Felix so you can track each phase of a migration.
+
+For more information, see [Live migration for OpenStack VMs](../networking/openstack/live-migration.mdx).
+
+### Maglev consistent-hash service load balancing
+
+The eBPF data plane now supports Maglev consistent-hash load balancing for external traffic to a Service.
+When a backend is added or removed, Maglev only remaps a small fraction of flows — long-lived connections survive backend churn, and $[prodname] nodes can act as stable ECMP nexthops for advertised service IPs.
+Opt in per-Service with the `lb.projectcalico.org/external-traffic-strategy: "maglev"` annotation; the feature requires the eBPF data plane in direct server return mode and does not apply to pod-to-Service, NodePort, or Services that set Kubernetes External Traffic Policy.
+
+For more information, see [Add Maglev load balancing to a service](../networking/configuring/add-maglev-load-balancing.mdx).
+
+### Whisker policy filtering and UI improvements (tech preview)
+
+The Whisker web console gains additional filtering on the live flow-log stream — including by policy, namespace, pod, and verdict — so you can isolate the traffic you're investigating without leaving the console.
+This builds on the flow-logs API (Goldmane) and Whisker components introduced in earlier 3.x releases.
+
+For more information, see [View flow logs in the Calico Whisker web console](../observability/view-flow-logs.mdx).
+If you upgraded from 3.29 or earlier, see [Enable the flow logs API and Calico Whisker](../observability/enable-whisker.mdx) to turn the components on.
+
+### eBPF: TCP RST on backend pod failure
+
+When a backend pod for a Service goes away, the eBPF data plane now sends a TCP RST to clients with established connections to the failed backend.
+Applications fail immediately and reconnect to a healthy backend instead of hanging on a dead flow.
+
+### Kubernetes 1.36 support
+
+This release adds support for Kubernetes 1.36.
 
 ## Bug fixes
+
+{/* TODO: Pull final bug-fix list from the projectcalico/calico GitHub release notes draft once it's published. Until then, this section is a placeholder. */}
+
+The full list of bug fixes is published with the GA release notes.
 
 {/*
 ## Security fixes
 */}
-## Known issues
 
 ## Release details
 
-### Calico Open Source 3.30.0 general availability release
+### Calico Open Source 3.32.0 general availability release
 
-April DD, 2025
+DD MMMM 2026
 
-Calico Open Source release 3.3.30 is now generally available.
+Calico Open Source release 3.32.0 is now generally available.
 
 #### Updating
 
-:::info[Update note]
-
-Updating your cluster to Calico Open Source 3.30 will not automatically enable the flow logs API or the Calico Whisker web console.
-To enable these features, you must apply the `Goldmane` and `Whisker` custom resources.
-
-For more information, see [Enable flow logs](../observability/enable-whisker.mdx).
-
-:::
-
-To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx)
-
+To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx).
 
 {/*
-### Calico Open Source 3.28.1 bug fix update
+### Calico Open Source 3.32.1 bug fix release
 
-DD M YYYY
-
-#### Enhancements
+DD MMMM YYYY
 
 #### Bug fixes
 
-#### How to update
+#### Updating
 
-To update an existing installation of Calico Enterprise 3.18, see .
-
+To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx).
 */}
