@@ -1,0 +1,510 @@
+---
+description: Enforce network policy for Istio service mesh including matching on HTTP methods and paths.
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Enforce Calico network policy for Istio service mesh
+
+## Overview
+
+You can enforce $[prodname] network policy for Istio application layer policy using the Dikastes sidecar. Dikastes enables $[prodname] to integrate with Istio's Envoy proxy to enforce fine-grained Layer 7 (HTTP) policies.
+
+### Value
+
+- **Pod traffic controls for Istio-enabled apps**: Lets you restrict ingress traffic inside and outside pods and mitigate common threats to Istio-enabled apps.
+- **Security alignment with zero trust**: Supports zero-trust network models through traffic encryption, multiple enforcement points, and multiple identity criteria for authentication.
+- **Familiar policy language**: Apply Kubernetes network policies and $[prodname] network policies that you already know.
+
+## Before you begin
+
+**Required**
+
+- $[prodname] CNI is installed and configured
+- `kubectl` and `istioctl` CLI tools are installed
+- MutatingAdmissionWebhook admission controller is enabled
+
+**Supported Istio versions**
+
+- **Istio v1.28.1** (recommended)
+- **Istio v1.22+** (minimum required for Kubernetes native sidecar support)
+
+:::note
+
+This guide requires Istio 1.22+ with Kubernetes native sidecars. Traditional sidecar injection is not supported. For legacy Istio versions (v1.15.2, v1.10.2), see [Legacy Installation](#legacy-installation-configmap-patching).
+
+:::
+
+**Required Kubernetes versions**
+
+- **Kubernetes v1.29+**: Required for native sidecar support
+
+## How to
+
+This guide covers the usage of [IstioOperator](https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/)
+
+For the ConfigMap patching method, see [Legacy Installation](#legacy-installation-configmap-patching).
+
+### 1. Enable application layer policy
+
+Enable the Policy Sync API in Felix to allow Dikastes to query policy decisions.
+
+<Tabs>
+<TabItem label="kubectl" value="kubectl-0">
+
+```bash
+kubectl patch felixconfiguration default --type merge -p '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
+```
+
+</TabItem>
+<TabItem label="calicoctl" value="calicoctl-1">
+
+```bash
+calicoctl patch FelixConfiguration default --patch \
+  '{"spec": {"policySyncPathPrefix": "/var/run/nodeagent"}}'
+```
+
+</TabItem>
+</Tabs>
+
+**Optional**: If using the $[prodname] operator, disable deprecated Flex Volumes:
+
+```bash
+kubectl patch installation default --type=merge -p '{"spec": {"flexVolumePath": "None"}}'
+```
+
+### 2. Install Istio
+
+Follow the [upstream Istio installation documentation](https://istio.io/latest/docs/setup/getting-started/) to install Istio if not already installed.
+
+For testing, you can use:
+
+```bash
+curl -L https://istio.io/downloadIstio -o install-istio.sh
+# Review the script before running it, then install:
+ISTIO_VERSION=1.28.1 sh install-istio.sh
+cd istio-1.28.1
+export PATH=$PWD/bin:$PATH
+```
+
+:::note
+
+Do not run `istioctl install` yet if you want to configure Dikastes templates during installation. See the next step.
+
+:::
+
+### 3. Configure Istio with Dikastes injection templates
+
+#### Option A: use IstioOperator directly
+
+Create a file named `istio-operator-dikastes.yaml`:
+
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: istio-with-dikastes
+  namespace: istio-system
+spec:
+  profile: minimal  # or 'default' if you need gateways
+
+  values:
+    sidecarInjectorWebhook:
+      templates:
+        # Template for workload pods
+        dikastes: |
+          spec:
+            containers:
+            - name: dikastes
+              image: quay.io/calico/dikastes:$[version]
+              args:
+              - server
+              - -l
+              - /var/run/dikastes/dikastes.sock
+              - -d
+              - /var/run/felix/nodeagent/socket
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsGroup: 999
+                runAsNonRoot: true
+                runAsUser: 999
+              livenessProbe:
+                exec:
+                  command:
+                  - /healthz
+                  - liveness
+                initialDelaySeconds: 3
+                periodSeconds: 3
+              readinessProbe:
+                exec:
+                  command:
+                  - /healthz
+                  - readiness
+                initialDelaySeconds: 3
+                periodSeconds: 3
+              volumeMounts:
+              - mountPath: /var/run/dikastes
+                name: dikastes-sock
+              - mountPath: /var/run/felix
+                name: felix-sync
+            initContainers:
+            - name: istio-proxy
+              volumeMounts:
+              - mountPath: /var/run/dikastes
+                name: dikastes-sock
+            volumes:
+            - name: dikastes-sock
+              emptyDir:
+                medium: Memory
+            - name: felix-sync
+              csi:
+                driver: csi.tigera.io
+
+        # Template for gateway pods (runs as root)
+        dikastes-gateway: |
+          spec:
+            containers:
+            - name: dikastes
+              image: quay.io/calico/dikastes:$[version]
+              args:
+              - server
+              - -l
+              - /var/run/dikastes/dikastes.sock
+              - -d
+              - /var/run/felix/nodeagent/socket
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsGroup: 0
+                runAsNonRoot: false
+                runAsUser: 0
+              livenessProbe:
+                exec:
+                  command:
+                  - /healthz
+                  - liveness
+                initialDelaySeconds: 3
+                periodSeconds: 3
+              readinessProbe:
+                exec:
+                  command:
+                  - /healthz
+                  - readiness
+                initialDelaySeconds: 3
+                periodSeconds: 3
+              volumeMounts:
+              - mountPath: /var/run/dikastes
+                name: dikastes-sock
+              - mountPath: /var/run/felix
+                name: felix-sync
+            initContainers:
+            - name: istio-proxy
+              volumeMounts:
+              - mountPath: /var/run/dikastes
+                name: dikastes-sock
+            volumes:
+            - name: dikastes-sock
+              emptyDir:
+                medium: Memory
+            - name: felix-sync
+              csi:
+                driver: csi.tigera.io
+```
+
+**Install or update Istio** with the Dikastes templates:
+
+```bash
+istioctl install -f istio-operator-dikastes.yaml -y
+```
+
+This will:
+- Install Istio (if not already installed)
+- Update the `istio-sidecar-injector` ConfigMap with the Dikastes templates
+- Make the templates available for pod annotation-based injection
+
+**Verify the templates were loaded**:
+
+```bash
+kubectl get configmap -n istio-system istio-sidecar-injector -o yaml | grep "dikastes:" -A 5
+```
+
+You should see both `dikastes` and `dikastes-gateway` templates.
+
+#### Option B: Generate Manifests for GitOps
+
+If you prefer to generate Kubernetes manifests instead of applying directly:
+
+```bash
+istioctl manifest generate -f istio-operator-dikastes.yaml > istio-with-dikastes.yaml
+kubectl apply -f istio-with-dikastes.yaml
+```
+
+### 4. Add Envoy authorization services
+
+Configure Istio's Envoy proxies to use Dikastes as an external authorization service.
+
+```bash
+kubectl apply -f $[manifestsUrl]/manifests/alp/istio-app-layer-policy-envoy-v3.yaml
+```
+
+[View sample manifest]($[manifestsUrl]/manifests/alp/istio-app-layer-policy-envoy-v3.yaml)
+
+This manifest creates:
+- **ServiceEntry**: Defines `dikastes.calico.cluster.local` for Unix socket communication
+- **DestinationRule**: Disables mTLS for local socket communication
+- **EnvoyFilter**: Configures Envoy's External Authorization filter to call Dikastes
+
+### 5. Enable Istio injection for namespaces
+
+Label the namespace where you want to deploy Istio-enabled workloads:
+
+```bash
+kubectl label namespace <your-namespace> istio-injection=enabled
+```
+
+### 6. Annotate pods to inject Dikastes
+
+To inject the Dikastes sidecar into your pods, add the following annotation to your pod template:
+
+**For regular workloads**:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  template:
+    metadata:
+      annotations:
+        inject.istio.io/templates: sidecar,dikastes
+    spec:
+      # ... your pod spec
+```
+
+**For gateway workloads**:
+
+```yaml
+metadata:
+  annotations:
+    inject.istio.io/templates: sidecar,dikastes-gateway
+```
+
+The key difference:
+- `dikastes`: Runs as non-root user (999) - for application workloads
+- `dikastes-gateway`: Runs as root (0) - for ingress/egress gateways
+
+### 7. Verify Dikastes injection
+
+After deploying a workload with the annotation:
+
+```bash
+# Check that Dikastes container is present
+kubectl get pod -l app=<your-app> -n <your-namespace> -o jsonpath='{.items[0].spec.containers[*].name}'
+```
+
+You should see: `dikastes <your-app-container> ...`
+
+**Check pod status** (should show all containers ready):
+
+```bash
+kubectl get pods -n <your-namespace>
+```
+
+**Check Dikastes logs**:
+
+```bash
+kubectl logs -n <your-namespace> -l app=<your-app> -c dikastes
+```
+
+You should see:
+```
+Successfully connected to Policy Sync server
+Starting synchronization with Policy Sync server
+```
+
+### 8. (Optional) Enable strict mTLS
+
+For enhanced security, enable strict mutual TLS between services:
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default-strict-mode
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT
+```
+
+Apply:
+
+```bash
+kubectl apply -f <filename>.yaml
+```
+
+## Create Calico network policies
+
+With Dikastes deployed, you can now create $[prodname] network policies to enforce Layer 7 access control.
+
+:::note
+
+The specific policy Custom Resource Definitions available depend on your $[prodname] distribution (OSS vs Enterprise). Consult your $[prodname] documentation for policy syntax.
+
+:::
+
+Example conceptual policy (syntax may vary):
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-http-get
+  namespace: default
+spec:
+  selector: app == "myapp"
+  types:
+  - Ingress
+  ingress:
+  - action: Allow
+    protocol: TCP
+    destination:
+      ports:
+      - 80
+```
+
+### Default behavior
+
+Without explicit allow policies, Dikastes enforces a **default-deny** posture for security. All HTTP requests will receive a `403 Forbidden` response until you create policies that explicitly allow traffic.
+
+## Troubleshooting
+
+### Dikastes container not injected
+
+**Check namespace label**:
+
+```bash
+kubectl get namespace <your-namespace> -o jsonpath='{.metadata.labels.istio-injection}'
+```
+
+Should show: `enabled`
+
+**Check pod annotation**:
+
+```bash
+kubectl get pod <pod-name> -n <your-namespace> -o yaml | grep inject.istio.io/templates
+```
+
+Should show: `inject.istio.io/templates: sidecar,dikastes`
+
+**Verify templates in ConfigMap**:
+
+```bash
+kubectl get configmap -n istio-system istio-sidecar-injector -o jsonpath='{.data.values}' | grep -o "dikastes:" | wc -l
+```
+
+Should return `2` (one for each template).
+
+### Pod stuck in PodInitializing or CrashLoopBackOff
+
+**Check pod events**:
+
+```bash
+kubectl describe pod <pod-name> -n <your-namespace>
+```
+
+**Check Dikastes logs**:
+
+```bash
+kubectl logs <pod-name> -n <your-namespace> -c dikastes
+```
+
+**Check CSI driver** (automatically installed with $[prodname]):
+
+```bash
+kubectl get pods -n calico-system -l k8s-app=csi-node-driver
+```
+
+All CSI driver pods should be `Running`. The CSI driver is required for Dikastes to access the Felix Policy Sync API.
+
+**Verify Felix Policy Sync API**:
+
+```bash
+kubectl get felixconfiguration default -o yaml | grep policySyncPathPrefix
+```
+
+Should show: `policySyncPathPrefix: /var/run/nodeagent`
+
+### All requests returning 403
+
+This is **expected behavior** when no allow policies are configured. Dikastes enforces default-deny for security.
+
+To allow traffic, create $[prodname] network policies that explicitly permit the desired traffic.
+
+### Envoy cannot reach istio-pilot
+
+If you have egress policies applied to your pods, Envoy needs access to the Istio control plane.
+
+Apply the allow policy:
+
+```bash
+kubectl apply -f $[tutorialFilesURL]/allow-istio-pilot.yaml
+```
+
+### Warning about BPF load balancing
+
+If you see this warning during installation:
+
+```
+detected Calico CNI with 'bpfConnectTimeLoadBalancing=TCP';
+this must be set to 'bpfConnectTimeLoadBalancing=Disabled'
+```
+
+This may affect connection-level load balancing but does not prevent basic functionality. For production deployments, disable BPF connect-time load balancing:
+
+```bash
+kubectl patch felixconfiguration default --type merge -p '{"spec":{"bpfConnectTimeLoadBalancing":"Disabled"}}'
+```
+
+## Legacy Installation (ConfigMap Patching)
+
+:::note
+
+This method is supported but not recommended for new deployments. Use the IstioOperator method instead.
+
+:::
+
+If you need to use the legacy ConfigMap patching method for Istio 1.15 or 1.10:
+
+### For Istio v1.15.x:
+
+```bash
+curl $[manifestsUrl]/manifests/alp/istio-inject-configmap-1.15.yaml -o istio-inject-configmap.yaml
+kubectl patch configmap -n istio-system istio-sidecar-injector --patch "$(cat istio-inject-configmap.yaml)"
+```
+
+[View sample manifest]($[manifestsUrl]/manifests/alp/istio-inject-configmap-1.15.yaml)
+
+### For Istio v1.10.x:
+
+```bash
+curl $[manifestsUrl]/manifests/alp/istio-inject-configmap-1.10.yaml -o istio-inject-configmap.yaml
+kubectl patch configmap -n istio-system istio-sidecar-injector --patch "$(cat istio-inject-configmap.yaml)"
+```
+
+[View sample manifest]($[manifestsUrl]/manifests/alp/istio-inject-configmap-1.10.yaml)
+
+**Drawbacks of ConfigMap patching**:
+
+- Not declarative (imperative command)
+- Not version-controlled
+- Must be re-applied after Istio upgrades
+- Difficult to audit and review
+
+## Additional resources
+
+- [Enforce network policy using Istio tutorial](enforce-policy-istio.mdx)
+- [Use HTTP methods and paths in policy rules](http-methods.mdx)
+- [Istio Documentation](https://istio.io/latest/docs/)
+- [IstioOperator API Reference](https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/)
+- [Kubernetes Native Sidecars](https://kubernetes.io/blog/2023/08/25/native-sidecar-containers/)
