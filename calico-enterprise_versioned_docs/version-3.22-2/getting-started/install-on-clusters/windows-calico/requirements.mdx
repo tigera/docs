@@ -2,6 +2,9 @@
 description: Cluster and Windows host requirements you must meet before installing Calico Enterprise for Windows.
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Requirements
 
 ## What's supported in this release
@@ -50,11 +53,31 @@ When using Operator install and Windows hostprocess containers (HPC), see [here 
 
 - At least four Linux Kubernetes worker nodes to run $[prodname]'s cluster-wide components that meets [Linux system requirements](../requirements.mdx), and is installed with $[prodname] v3.5.0+
 - Must not be running in eBPF mode
-- VXLAN or BGP without encapsulation is supported if using $[prodname] CNI. IPIP ($[prodname]'s default encapsulation mode) is not supported. Use the following command to turn off IPIP.
+- VXLAN or BGP without encapsulation is supported if using $[prodname] CNI. IPIP ($[prodname]'s default encapsulation mode) is not supported. Turn off IPIP on the default IP pool.
+
+  <Tabs groupId="install-method">
+  <TabItem label="Operator" value="Operator-0">
+
+  Patch the `Installation` resource. The operator reconciles `IPPool` resources from the `Installation` and will silently revert direct edits to the `IPPool`.
+
+  ```bash
+  kubectl patch installation default --type=json \
+    -p '[{"op":"replace","path":"/spec/calicoNetwork/ipPools/0/encapsulation","value":"VXLAN"}]'
+  ```
+
+  The path `/spec/calicoNetwork/ipPools/0` targets the first IP pool. If your cluster has multiple pools, identify the correct index and adjust the path accordingly. Use `encapsulation: None` instead if you are running BGP without encapsulation.
+
+  </TabItem>
+  <TabItem label="Manifest" value="Manifest-1">
+
+  Disable IPIP through `FelixConfiguration`.
 
   ```bash
   kubectl patch felixconfiguration default -p '{"spec":{"ipipEnabled":false}}'
   ```
+
+  </TabItem>
+  </Tabs>
 
 - If using $[prodname] IPAM, strict affinity of IPAM configuration must be set to `true`.
 
