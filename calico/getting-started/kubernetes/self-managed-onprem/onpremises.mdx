@@ -153,11 +153,53 @@ Before installing, enable the `MutatingAdmissionPolicy` [feature gate](https://k
    kubectl apply -f calico-v3-crds.yaml
    ```
 
-1. Install the $[prodname] webhooks. These provide validating and mutating admission webhooks for Calico policy resources. The webhooks require TLS certificates - see the instructions at the top of the manifest for setup.
+1. Generate TLS certificates for the admission webhook.
+
+   The manifest applied above includes a `calico-webhooks` Deployment that serves a `ValidatingWebhookConfiguration` for tiered RBAC enforcement on `projectcalico.org/v3` policy resources, but no TLS material is provisioned by default. Until the certificates are in place, write operations on `projectcalico.org/v3` policy resources will fail closed.
+
+   The following commands create a self-signed CA and a server certificate valid for `calico-webhooks.kube-system.svc`. If you already manage TLS via cert-manager or an internal PKI, use that instead and skip ahead.
 
    ```bash
-   curl $[manifestsUrl]/manifests/webhooks.yaml -O
-   kubectl apply -f webhooks.yaml
+   # Self-signed CA.
+   openssl genrsa -out ca.key 2048
+   openssl req -x509 -new -nodes -key ca.key -days 3650 \
+       -subj "/CN=calico-webhooks-ca" -out ca.crt
+
+   # Server cert with SANs for the webhook service.
+   openssl genrsa -out tls.key 2048
+   cat > csr.conf <<'EOF'
+   [req]
+   distinguished_name = req_distinguished_name
+   req_extensions = v3_req
+   prompt = no
+   [req_distinguished_name]
+   CN = calico-webhooks.kube-system.svc
+   [v3_req]
+   keyUsage = digitalSignature, keyEncipherment
+   extendedKeyUsage = serverAuth
+   subjectAltName = @alt_names
+   [alt_names]
+   DNS.1 = calico-webhooks.kube-system.svc
+   DNS.2 = calico-webhooks.kube-system.svc.cluster.local
+   EOF
+   openssl req -new -key tls.key -out tls.csr -config csr.conf
+   openssl x509 -req -in tls.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+       -days 365 -extensions v3_req -extfile csr.conf -out tls.crt
+   ```
+
+1. Create the webhook TLS secret in the `kube-system` namespace.
+
+   ```bash
+   kubectl -n kube-system create secret tls calico-webhooks-tls \
+       --cert=tls.crt --key=tls.key
+   ```
+
+1. Patch the `ValidatingWebhookConfiguration` with the CA bundle so the API server trusts the webhook.
+
+   ```bash
+   kubectl patch validatingwebhookconfiguration calico-webhooks \
+       --type='json' \
+       -p="[{\"op\":\"replace\",\"path\":\"/webhooks/0/clientConfig/caBundle\",\"value\":\"$(base64 -w0 < ca.crt)\"}]"
    ```
 
 <GeekDetails
@@ -244,11 +286,61 @@ If you have an existing manifest-based $[prodname] install using the legacy `crd
 
    The finalizer on the resource deletes all `crd.projectcalico.org` CRDs before removing the resource.
 
-1. Install the $[prodname] webhooks. The webhooks require TLS certificates - see the instructions at the top of the manifest for setup.
+1. Install the admission webhook resources. The Deployment, Service, RBAC, `MutatingAdmissionPolicy` resources, and `ValidatingWebhookConfiguration` are bundled into `calico-v3-crds.yaml` alongside the CRDs and core $[prodname] components. Extract just the webhook resources with [`yq`](https://github.com/mikefarah/yq) and apply them, so the existing `calico-node` DaemonSet, `kube-controllers` Deployment, and `calico-typha` Deployment in your cluster (including the `CALICO_API_GROUP` env you set above) are not overwritten.
 
    ```bash
-   curl $[manifestsUrl]/manifests/webhooks.yaml -O
-   kubectl apply -f webhooks.yaml
+   curl $[manifestsUrl]/manifests/calico-v3-crds.yaml -O
+   yq 'select(.metadata.name == "calico-webhooks" or .kind == "MutatingAdmissionPolicy" or .kind == "MutatingAdmissionPolicyBinding")' \
+       calico-v3-crds.yaml | kubectl apply -f -
+   ```
+
+1. Generate TLS certificates for the admission webhook.
+
+   The `calico-webhooks` Deployment serves a `ValidatingWebhookConfiguration` for tiered RBAC enforcement on `projectcalico.org/v3` policy resources, but no TLS material is provisioned by default. Until the certificates are in place, write operations on `projectcalico.org/v3` policy resources will fail closed.
+
+   The following commands create a self-signed CA and a server certificate valid for `calico-webhooks.kube-system.svc`. If you already manage TLS via cert-manager or an internal PKI, use that instead and skip ahead.
+
+   ```bash
+   # Self-signed CA.
+   openssl genrsa -out ca.key 2048
+   openssl req -x509 -new -nodes -key ca.key -days 3650 \
+       -subj "/CN=calico-webhooks-ca" -out ca.crt
+
+   # Server cert with SANs for the webhook service.
+   openssl genrsa -out tls.key 2048
+   cat > csr.conf <<'EOF'
+   [req]
+   distinguished_name = req_distinguished_name
+   req_extensions = v3_req
+   prompt = no
+   [req_distinguished_name]
+   CN = calico-webhooks.kube-system.svc
+   [v3_req]
+   keyUsage = digitalSignature, keyEncipherment
+   extendedKeyUsage = serverAuth
+   subjectAltName = @alt_names
+   [alt_names]
+   DNS.1 = calico-webhooks.kube-system.svc
+   DNS.2 = calico-webhooks.kube-system.svc.cluster.local
+   EOF
+   openssl req -new -key tls.key -out tls.csr -config csr.conf
+   openssl x509 -req -in tls.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+       -days 365 -extensions v3_req -extfile csr.conf -out tls.crt
+   ```
+
+1. Create the webhook TLS secret in the `kube-system` namespace.
+
+   ```bash
+   kubectl -n kube-system create secret tls calico-webhooks-tls \
+       --cert=tls.crt --key=tls.key
+   ```
+
+1. Patch the `ValidatingWebhookConfiguration` with the CA bundle so the API server trusts the webhook.
+
+   ```bash
+   kubectl patch validatingwebhookconfiguration calico-webhooks \
+       --type='json' \
+       -p="[{\"op\":\"replace\",\"path\":\"/webhooks/0/clientConfig/caBundle\",\"value\":\"$(base64 -w0 < ca.crt)\"}]"
    ```
 
 </TabItem>
