@@ -32,6 +32,8 @@ const defaultSkipList = [
   'https://web.archive.org/web/20210204031636/https://cumulusnetworks.com/blog/celebrating-ecmp-part-two/',
   'http://ppa.launchpad.net/project-calico/calico-X.X/ubuntu',
   'https://kb.isc.org/docs/aa-01141',
+  'https://microk8s.io/docs/clustering',
+  'https://juju.is/docs'
 ];
 
 // Ignore patterns are skipped and ignored completely - no visibility whatsoever
