@@ -23,6 +23,8 @@ const defaultSkipList = [
   /^https?:\/\/auth\.calicocloud\.io/,
   /^https?:\/\/www\.calicocloud\.io/,
   /^https?:\/\/hypershift-docs\.netlify\.app/,
+  /^https?:\/\/(www\.)?ubuntu\.com\/.*/,
+  /^https?:\/\/docs\.tigera\.io\/calico\/latest\/networking\/kubevirt\/?$/,
   'https://en.wikipedia.org/wiki/Autonomous_System_(Internet',
   'https://github.com/dims/etcd3-gateway.git@5a3157a122368c2314c7a961f61722e47355f981',
   'https://installer.calicocloud.io:443/',
@@ -30,6 +32,8 @@ const defaultSkipList = [
   'https://web.archive.org/web/20210204031636/https://cumulusnetworks.com/blog/celebrating-ecmp-part-two/',
   'http://ppa.launchpad.net/project-calico/calico-X.X/ubuntu',
   'https://kb.isc.org/docs/aa-01141',
+  'https://microk8s.io/docs/clustering',
+  'https://juju.is/docs'
 ];
 
 // Ignore patterns are skipped and ignored completely - no visibility whatsoever
