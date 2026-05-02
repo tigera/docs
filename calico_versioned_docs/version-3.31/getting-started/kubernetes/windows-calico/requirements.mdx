@@ -62,14 +62,16 @@ Earlier versions may work, but we do not actively test $[prodnameWindows] agains
   <Tabs groupId="install-method">
   <TabItem label="Operator" value="Operator-0">
 
-  Patch the `Installation` resource. The operator reconciles `IPPool` resources from the `Installation` and will silently revert direct edits to the `IPPool`.
+  To turn off IPIP for the default IP pool, patch the `Installation` resource:
 
   ```bash
   kubectl patch installation default --type=json \
     -p '[{"op":"replace","path":"/spec/calicoNetwork/ipPools/0/encapsulation","value":"VXLAN"}]'
   ```
 
-  The path `/spec/calicoNetwork/ipPools/0` targets the first IP pool. If your cluster has multiple pools, identify the correct index and adjust the path accordingly. Use `encapsulation: None` instead if you are running BGP without encapsulation.
+  The operator reconciles `IPPool` resources from the `Installation`, so direct edits to the `IPPool` are silently reverted.
+
+  If your cluster has additional IP pools, repeat the command for each, replacing `0` in `/spec/calicoNetwork/ipPools/0` with the index of the pool. Use `"None"` instead of `"VXLAN"` for BGP without encapsulation.
 
   </TabItem>
   <TabItem label="Manifest" value="Manifest-1">
