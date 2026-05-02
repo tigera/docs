@@ -59,24 +59,22 @@ Earlier versions may work, but we do not actively test $[prodnameWindows] agains
 - At least one Linux Kubernetes worker node to run $[prodname]'s cluster-wide components that meets [Linux system requirements](../requirements.mdx), and is installed with $[prodname]. $[prodname] v3.27+ is required for Operator installs.
 - VXLAN or BGP without encapsulation is supported if using $[prodname] CNI. IPIP ($[prodname]'s default encapsulation mode) is not supported. Turn off IPIP on the default IP pool.
 
-  <Tabs groupId="install-method">
-  <TabItem label="Operator" value="Operator-0">
+  <Tabs groupId="ip-pool-management">
+  <TabItem label="Operator managed IP pools" value="operator-managed">
 
-  To turn off IPIP for the default IP pool, patch the `Installation` resource:
+  For IP pools managed through the `Installation` resource, patch the `Installation` to update the encapsulation. The operator reconciles these `IPPool` resources from the `Installation`, so direct edits to the `IPPool` are silently reverted.
 
   ```bash
   kubectl patch installation default --type=json \
     -p '[{"op":"replace","path":"/spec/calicoNetwork/ipPools/0/encapsulation","value":"VXLAN"}]'
   ```
 
-  The operator reconciles `IPPool` resources from the `Installation`, so direct edits to the `IPPool` are silently reverted.
-
-  If your cluster has additional IP pools, repeat the command for each, replacing `0` in `/spec/calicoNetwork/ipPools/0` with the index of the pool. Use `"None"` instead of `"VXLAN"` for BGP without encapsulation.
+  If your cluster has additional operator-managed IP pools, repeat the command for each, replacing `0` in `/spec/calicoNetwork/ipPools/0` with the index of the pool. Use `"None"` instead of `"VXLAN"` for BGP without encapsulation.
 
   </TabItem>
-  <TabItem label="Manifest" value="Manifest-1">
+  <TabItem label="User managed IP pools" value="user-managed">
 
-  Patch the `IPPool` resource directly.
+  For `IPPool` resources created directly (not through the `Installation`), patch the `IPPool`:
 
   ```bash
   kubectl patch ippool default-ipv4-ippool -p '{"spec":{"ipipMode":"Never","vxlanMode":"Always"}}'
