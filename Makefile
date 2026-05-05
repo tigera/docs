@@ -242,7 +242,7 @@ CRD_DOC_GENERATOR=.bin/crd-ref-docs.$(CRD_REF_DOCS_VER)
 $(CRD_DOC_GENERATOR):
 	@mkdir -p .bin
 	@curl -fsSL --retry 5 -o .bin/crd-ref-docs.$(CRD_REF_DOCS_VER).tar.gz https://github.com/elastic/crd-ref-docs/releases/download/v$(CRD_REF_DOCS_VER)/crd-ref-docs_$(CRD_REF_DOCS_VER)_$(BUILDOS)_$(BUILDARCH).tar.gz
-	@cd .bin && tar -xv --get crd-ref-docs -f crd-ref-docs.$(CRD_REF_DOCS_VER).tar.gz
+	@cd .bin && tar -xvf crd-ref-docs.$(CRD_REF_DOCS_VER).tar.gz crd-ref-docs
 	@mv .bin/crd-ref-docs $@
 
 .PHONY .SILENT: build-crd-reference-docs
