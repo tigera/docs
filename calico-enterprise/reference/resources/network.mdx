@@ -47,7 +47,7 @@ spec:
       staticRoutes:
       - destination: 0.0.0.0/0
         action:
-          nextHop: "10.100.0.1"
+          nextHop: "2.100.0.1"
 ```
 
 ## Definition
@@ -90,7 +90,9 @@ Exactly one of the network-type fields must be set. Currently only `vrf` is supp
 
 ### InterfaceMatch
 
-Identifies a network interface. Exactly one match criterion must be set.
+Identifies a network interface. Currently only `name` is supported; additional
+match types may be added in future, at which point exactly one match criterion
+will need to be set.
 
 | Field | Description                                                                                                                | Accepted Values        | Schema |
 | ----- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------ |
@@ -122,12 +124,12 @@ Pods are attached to a `Network` either through their primary CNI interface or
 through Multus secondary interfaces. See [Configure multi-VRF networking](../../networking/configuring/multi-vrf.mdx)
 for the full configuration.
 
-**Primary interface** — set an annotation on the pod (or its namespace) referencing the `Network` by name:
+**Primary interface** — set an annotation on the pod (or its namespace) referencing the `Network` by name. The annotation is plural for forward compatibility but currently accepts only a single network name:
 
 ```yaml
 metadata:
   annotations:
-    projectcalico.org/networks: "vrf1"
+    cni.projectcalico.org/networks: "vrf1"
 ```
 
 **Secondary interface (Multus)** — create a `NetworkAttachmentDefinition` whose
@@ -149,8 +151,8 @@ which prefixes are exported to and imported from each VRF's peers.
 ## Limitations (tech preview)
 
 - **Dataplane**: only the [nftables dataplane](../../operations/nftables.mdx) is supported. iptables and eBPF are not supported.
-- **kube-proxy**: must be in `nftables` mode. `ipvs` mode is **not** supported.
-- **NodePort services** are not supported on VRF networks; advertise services as `LoadBalancer` cluster IPs instead. If you do use NodePorts on a cluster that uses VRFs, set kube-proxy's `nodePortAddresses` to a CIDR that covers the relevant interface IPs.
+- **kube-proxy**: must be in `nftables` mode. `ipvs` mode is **never** supported (this is a permanent restriction, not a tech-preview limitation).
+- **NodePort services** are not supported on VRF networks; advertise services as `LoadBalancer` cluster IPs instead.
 - **Egress gateways** cannot be placed on a VRF network.
 - **ExternalNetworks** and `Network` resources cannot be used in the same cluster.
 - **Host endpoints** should not be applied to interfaces inside a VRF.
