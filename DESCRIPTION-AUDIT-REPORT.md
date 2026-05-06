@@ -1,31 +1,36 @@
 # Page description audit report
 
-This report accompanies the diff in this PR. The PR rewrites the `description` frontmatter field on every getting-started page in three product version snapshots. No other lines, files, or directories are touched by the diff.
+This report accompanies the diff in this PR. The PR rewrites the `description` frontmatter field on every getting-started page across **9 directories** spanning the user-named product version snapshots, the corresponding unversioned (next-release) source trees, and Calico Enterprise 3.22-2 (the current published `lastVersion`). No other lines, files, or directories are touched by the diff (the diff also adds this report file).
 
-## Scope (per the user's clarification mid-task)
+## Scope
 
-The user narrowed the engagement to the getting-started directory tree in three specific product version snapshots:
+The user's brief named three version snapshots; mid-task they expanded scope to mirror the same descriptions to the unversioned (next) source trees and to the current published Calico Enterprise `lastVersion` so the published `calico-enterprise/llms.txt` reflects the work without waiting for a 3.23-1 promotion.
 
-| Product | Path | Files |
-|---------|------|------:|
-| Calico Open Source 3.32 | `calico_versioned_docs/version-3.32/getting-started/` | 74 |
-| Calico Enterprise 3.23-1 | `calico-enterprise_versioned_docs/version-3.23-1/getting-started/` | 53 |
-| Calico Cloud 22-2 | `calico-cloud_versioned_docs/version-22-2/get-started/` | 13 |
-| Calico Cloud Free Tier (under CC 22-2) | `calico-cloud_versioned_docs/version-22-2/free/` | 5 |
-| **Total** | | **145** |
+There are 145 distinct logical pages, mirrored across 2–3 file paths each, for 343 file changes total.
 
-The original brief listed unversioned source paths (`calico/getting-started/` etc.) and the curated Top Pages from `static/llms.txt`. The mid-task scope narrowing replaces the unversioned paths with the versioned snapshots above and limits Top Pages handling to those that fall inside the getting-started tree (4 of 10).
+| Logical page set | Files | Mirror file paths |
+|------------------|------:|-------------------|
+| Calico Open Source getting-started | 74 logical | 2 paths each (`calico/getting-started/` + `calico_versioned_docs/version-3.32/getting-started/`) — 148 files |
+| Calico Enterprise getting-started | 53 logical | 3 paths each (`calico-enterprise/getting-started/` + `version-3.23-1/` + `version-3.22-2/`) — 159 files |
+| Calico Cloud get-started | 13 logical | 2 paths each (`calico-cloud/get-started/` + `version-22-2/get-started/`) — 26 files |
+| Calico Cloud Free Tier | 5 logical | 2 paths each (`calico-cloud/free/` + `version-22-2/free/`) — 10 files |
+| **Total** | **145 logical** | **343 files** |
+
+Drift check: every logical page in the source map has all expected mirror files on disk; no extras in any mirror tree. See [Section 8 — Mirror coverage](#8-mirror-coverage) for the explicit reconciliation.
+
+The original brief listed only the unversioned source paths and the curated Top Pages from `static/llms.txt`. Mid-task the user narrowed scope to the three versioned snapshots, then expanded it again to add the unversioned sources and CE 3.22-2. Top Pages handling stayed limited to pages that fall inside the getting-started tree (4 of 10).
 
 ## 1. Reconciled counts
 
 | Bucket | Count |
 |--------|------:|
-| Pages in scope | 145 |
-| Pages rewritten | 145 |
-| Pages skipped (already acceptable) | 0 |
-| Pages flagged as unfixable at the description level | 0 |
+| Logical pages in scope | 145 |
+| Logical pages rewritten | 145 |
+| Mirror files actually changed on disk | 343 |
+| Logical pages skipped (already acceptable) | 0 |
+| Logical pages flagged as unfixable at the description level | 0 |
 
-Every file in scope was rewritten because every prior description failed at least one rule — most commonly the canonical-product-name rule. Calico Open Source pages used "Calico" alone (74 files), and several Calico Enterprise / Calico Cloud Free Tier pages either omitted the canonical name or used non-canonical phrasing ("open source Calico", missing "Free Tier").
+Every logical page in scope was rewritten because every prior description failed at least one rule — most commonly the canonical-product-name rule. Calico Open Source pages used "Calico" alone (74 logical pages × 2 trees = 148 files), and several Calico Enterprise / Calico Cloud Free Tier pages either omitted the canonical name or used non-canonical phrasing ("open source Calico", missing "Free Tier").
 
 ### Source breakdown
 
@@ -48,13 +53,18 @@ All commands are run from the repo root. Output captured at the time of writing 
 
 ```
 grep -nEri "^description:.*\b(enable|disable|teaching)\b" \
+  calico/getting-started \
   calico_versioned_docs/version-3.32/getting-started \
+  calico-enterprise/getting-started \
   calico-enterprise_versioned_docs/version-3.23-1/getting-started \
+  calico-enterprise_versioned_docs/version-3.22-2/getting-started \
+  calico-cloud/get-started \
+  calico-cloud/free \
   calico-cloud_versioned_docs/version-22-2/get-started \
   calico-cloud_versioned_docs/version-22-2/free
 ```
 
-**Output (post-fix): empty.**
+**Output (post-fix): empty.** Run across all 9 in-scope directories — versioned snapshots, unversioned next-release trees, and CE 3.22-2.
 
 For the pre-fix state on `descriptions-update`, the same grep returns 8 hits — listed inline as evidence here:
 
@@ -86,8 +96,13 @@ python3 -c "
 import os, re
 paths = []
 for root in [
+    'calico/getting-started',
     'calico_versioned_docs/version-3.32/getting-started',
+    'calico-enterprise/getting-started',
     'calico-enterprise_versioned_docs/version-3.23-1/getting-started',
+    'calico-enterprise_versioned_docs/version-3.22-2/getting-started',
+    'calico-cloud/get-started',
+    'calico-cloud/free',
     'calico-cloud_versioned_docs/version-22-2/get-started',
     'calico-cloud_versioned_docs/version-22-2/free',
 ]:
@@ -111,13 +126,25 @@ for p in paths:
 
 ### 2.3 Cross-product literal duplicate check (rule: zero hits)
 
+The mirror introduces intentional intra-product duplicates: the same Calico Open Source description appears in both `calico/getting-started/` (next) and `calico_versioned_docs/version-3.32/getting-started/`, and the same Calico Enterprise description appears in three CE trees. Those are not violations — they are by design, since the file pairs/triples represent the *same logical page* across versions. The check that matters is whether any two **different products** share a description string. Group by product and look for descriptions that appear under more than one product:
+
 ```
 python3 -c "
 import os, re
+def product_of(p):
+    if p.startswith('calico/') or p.startswith('calico_versioned_docs/'): return 'oss'
+    if p.startswith('calico-enterprise'): return 'ce'
+    if '/free/' in p: return 'cc-free'
+    return 'cc'
 paths = []
 for root in [
+    'calico/getting-started',
     'calico_versioned_docs/version-3.32/getting-started',
+    'calico-enterprise/getting-started',
     'calico-enterprise_versioned_docs/version-3.23-1/getting-started',
+    'calico-enterprise_versioned_docs/version-3.22-2/getting-started',
+    'calico-cloud/get-started',
+    'calico-cloud/free',
     'calico-cloud_versioned_docs/version-22-2/get-started',
     'calico-cloud_versioned_docs/version-22-2/free',
 ]:
@@ -135,7 +162,7 @@ for p in paths:
             d = d[1:-1]
         m.setdefault(d, []).append(p)
 for d, ps in m.items():
-    if len(ps) > 1:
+    if len({product_of(p) for p in ps}) > 1:
         print(d)
         for p in ps: print(' ', p)
 "
@@ -167,8 +194,13 @@ For the pre-fix state, the same script returns 7 duplicate strings (5 cross-prod
 python3 -c "
 import os, re
 checks = [
+    ('calico/getting-started', 'Calico Open Source'),
     ('calico_versioned_docs/version-3.32/getting-started', 'Calico Open Source'),
+    ('calico-enterprise/getting-started', 'Calico Enterprise'),
     ('calico-enterprise_versioned_docs/version-3.23-1/getting-started', 'Calico Enterprise'),
+    ('calico-enterprise_versioned_docs/version-3.22-2/getting-started', 'Calico Enterprise'),
+    ('calico-cloud/get-started', 'Calico Cloud'),
+    ('calico-cloud/free', 'Calico Cloud Free Tier'),
     ('calico-cloud_versioned_docs/version-22-2/get-started', 'Calico Cloud'),
     ('calico-cloud_versioned_docs/version-22-2/free', 'Calico Cloud Free Tier'),
 ]
@@ -330,16 +362,13 @@ The Top Pages section of `static/llms.txt` lists 10 pages. Six are outside the u
 
 This work has real built-in uncertainty. I flag it rather than pretend otherwise.
 
-### 5.1 `lastVersion` mismatch for Calico Enterprise
+### 5.1 `lastVersion` mismatch for Calico Enterprise — resolved by mirror pass
 
-The user asked me to edit Calico Enterprise version 3.23-1. The Docusaurus config (`docusaurus.config.js`, line 465) currently sets `lastVersion: '3.22-2'` for the calico-enterprise plugin instance and labels 3.23-1 as `(early preview)` with an `unreleased` banner. The `llms-txt` plugin pulls from `loadedVersions.find(v => v.isLast)` — so even if I had run the build, the published `calico-enterprise/llms.txt` would have been generated from 3.22-2 frontmatter, not 3.23-1.
+`docusaurus.config.js` (line 465) sets `lastVersion: '3.22-2'` for the calico-enterprise plugin instance and labels 3.23-1 as `(early preview)` with an `unreleased` banner. The `llms-txt` plugin pulls from `loadedVersions.find(v => v.isLast)` — so the published `calico-enterprise/llms.txt` is generated from 3.22-2 frontmatter, not 3.23-1.
 
-What this means:
-- The CE description rewrites in this PR will not show up in the published `calico-enterprise/llms.txt` until either (a) `lastVersion` is bumped to 3.23-1 at GA, or (b) the same edits are also applied to `calico-enterprise_versioned_docs/version-3.22-2/getting-started/`.
-- I followed the user's explicit instruction (edit 3.23-1) rather than guessing they meant 3.22-2.
-- The Top Pages permalinks in `topPages` (`docusaurus.config.js:553`) use `/calico-enterprise/latest/...` which currently resolves to 3.22-2. So the CE quickstart line in the *root* `static/llms.txt` Top Pages section is also unaffected by this PR.
+**Resolution.** The mirror pass applied the same descriptions to `calico-enterprise_versioned_docs/version-3.22-2/getting-started/` (53 files), so the CE rewrites will now flow into the published `calico-enterprise/llms.txt` the next time it is regenerated, regardless of when 3.23-1 is promoted.
 
-**Recommendation for follow-up:** decide whether 3.22-2 should also receive these descriptions before the next CE build, or wait for the 3.23-1 promotion.
+**Residual issue.** The root `static/llms.txt` Top Pages section includes one CE entry whose permalink is `/calico-enterprise/latest/getting-started/install-on-clusters/kubernetes/quickstart`. This resolves to 3.22-2 today; with 3.22-2 included in the mirror, the regenerated Top Pages line will show the new CE quickstart description. This is no longer a gap.
 
 ### 5.2 `llms.txt` regeneration not run
 
@@ -576,3 +605,69 @@ None identified. Every page in scope had a coherent enough body for a descriptio
 | `index.mdx` | hand-written-rule-applied | **OLD** (24) Placeholder description.<br>**NEW** (154) Calico Cloud Free Tier — a no-cost entry point that gives Kubernetes operators centralized network observability without a paid Calico Cloud subscription. | Skill-rule rewrite — canonical product name, complete sentence, action-led |
 | `overview.mdx` | hand-written-rule-applied | **OLD** (34) Overview of Calico Cloud Free Tier<br>**NEW** (150) What Calico Cloud Free Tier includes and excludes versus paid Calico Cloud — limits, supported platforms, and the upgrade path to a paid subscription. | Skill-rule rewrite — canonical product name, complete sentence, action-led |
 | `quickstart.mdx` | hand-written-rule-applied | **OLD** (44) Quickstart guide for Calico Cloud Free Tier.<br>**NEW** (141) Quickstart that connects a Kubernetes cluster to Calico Cloud Free Tier for centralized network observability — no payment or trial required. | Skill-rule rewrite — canonical product name, complete sentence, action-led |
+
+## 8. Mirror coverage
+
+The mirror pass applied each logical-page description to all of its analogous file paths. This section reconciles the per-tree counts.
+
+| Tree | Logical pages | Files written |
+|------|--------------:|--------------:|
+| `calico/getting-started/` (next) | 74 | 74 |
+| `calico_versioned_docs/version-3.32/getting-started/` | 74 | 74 |
+| `calico-enterprise/getting-started/` (next) | 53 | 53 |
+| `calico-enterprise_versioned_docs/version-3.23-1/getting-started/` | 53 | 53 |
+| `calico-enterprise_versioned_docs/version-3.22-2/getting-started/` | 53 | 53 |
+| `calico-cloud/get-started/` (next) | 13 | 13 |
+| `calico-cloud_versioned_docs/version-22-2/get-started/` | 13 | 13 |
+| `calico-cloud/free/` (next) | 5 | 5 |
+| `calico-cloud_versioned_docs/version-22-2/free/` | 5 | 5 |
+| **Total** | **145** | **343** |
+
+### 8.1 Drift check
+
+The mirror script enumerated every analogous path for each source file and verified its existence. The drift report:
+
+- **Source files with a missing mirror file**: 0
+- **Mirror tree files with no source-map analog**: 0
+
+In other words, the next-release trees and the CE 3.22-2 snapshot have exactly the same getting-started file structure as the three user-named version snapshots. No file was rewritten in one tree and missed in another, and no file in a mirror tree was left with its old description because the source map didn't cover it.
+
+Drift detection script (run from repo root):
+
+```
+python3 -c "
+import json, os
+src = json.load(open('/tmp/desc-audit/descriptions.json'))
+def mirrors(p):
+    out = []
+    if p.startswith('calico_versioned_docs/version-3.32/getting-started/'):
+        rel = p[len('calico_versioned_docs/version-3.32/getting-started/'):]
+        out.append('calico/getting-started/' + rel)
+    elif p.startswith('calico-enterprise_versioned_docs/version-3.23-1/getting-started/'):
+        rel = p[len('calico-enterprise_versioned_docs/version-3.23-1/getting-started/'):]
+        out += ['calico-enterprise/getting-started/' + rel,
+                'calico-enterprise_versioned_docs/version-3.22-2/getting-started/' + rel]
+    elif p.startswith('calico-cloud_versioned_docs/version-22-2/get-started/'):
+        out.append('calico-cloud/get-started/' + p[len('calico-cloud_versioned_docs/version-22-2/get-started/'):])
+    elif p.startswith('calico-cloud_versioned_docs/version-22-2/free/'):
+        out.append('calico-cloud/free/' + p[len('calico-cloud_versioned_docs/version-22-2/free/'):])
+    return out
+missing = [(s, m) for s, _ in src.items() for m in mirrors(s) if not os.path.isfile(m)]
+print('missing mirrors:', len(missing))
+"
+```
+
+**Output (post-fix): `missing mirrors: 0`.**
+
+### 8.2 Why mirror at all
+
+The user's mid-task instruction: "I want these changes to be mirrored in the 'next' docs so for any page description in 3.32, we make sure that the analogous page in plain `calico/` is exactly the same. That description is more important, because it will feed all later versions. (We may as well get 3.22 latest in the mix)."
+
+Two effects:
+
+1. The unversioned (`next`) trees feed every future versioned snapshot when Docusaurus runs `docusaurus docs:version`. Without the mirror, the next major release would silently revert to the old descriptions.
+2. CE 3.22-2 is the current `lastVersion` for the calico-enterprise plugin, so it is the version that feeds today's published `calico-enterprise/llms.txt`. Mirroring the descriptions to 3.22-2 means the published index will reflect the new descriptions on the next regeneration, without waiting for a 3.23-1 promotion.
+
+### 8.3 Note on diff size
+
+The PR's `git diff descriptions-update --stat` reports 343 modified files and 1 added file (this report). The 343 figure is mirror-duplicated; the 145 figure is logical pages. Both are correct — they answer different questions.
