@@ -1,32 +1,43 @@
 import React from 'react';
-import { CE_VERSIONS, platforms } from '../../data/platformMatrixData';
+import Link from '@docusaurus/Link';
+import {
+  CE_VERSIONS,
+  VISIBLE_COLUMN_COUNT,
+  PLATFORMS,
+  getEntries,
+} from '../../data/platformMatrixData';
 
-function renderCell(platform, version) {
-  const entry = platform.data[version];
-  if (!entry) {
-    return '—';
+function Entry({ entry }) {
+  const { platformVersion, k8sVersions } = entry;
+  if (platformVersion && k8sVersions) {
+    return (
+      <>
+        {platformVersion}
+        <br />
+        <span style={{ fontSize: '0.9em', opacity: 0.75 }}>k8s {k8sVersions}</span>
+      </>
+    );
   }
+  return <>{platformVersion ?? k8sVersions ?? '—'}</>;
+}
 
-  switch (platform.displayType) {
-    case 'k8s-range':
-      return entry.k8sVersions;
-    case 'platform-and-k8s':
-      return (
-        <>
-          {entry.platformVersion}
-          <br />
-          <span style={{ fontSize: '0.9em', opacity: 0.8 }}>k8s {entry.k8sVersions}</span>
-        </>
-      );
-    case 'platform-only':
-      return entry.platformVersion;
-    default:
-      return '—';
-  }
+function Cell({ platform, version }) {
+  const entries = getEntries(platform, version);
+  if (entries.length === 0) return '—';
+  return (
+    <>
+      {entries.map((e, i) => (
+        <div key={i} style={{ marginTop: i === 0 ? 0 : '0.5em' }}>
+          <Entry entry={e} />
+        </div>
+      ))}
+    </>
+  );
 }
 
 export default function PlatformMatrix() {
-  const footnotes = platforms.filter((p) => p.footnote);
+  const columns = CE_VERSIONS.slice(-VISIBLE_COLUMN_COUNT).reverse();
+  const noted = PLATFORMS.filter((p) => p.notes);
 
   return (
     <>
@@ -34,30 +45,38 @@ export default function PlatformMatrix() {
         <thead>
           <tr>
             <th>Platform</th>
-            {CE_VERSIONS.map((v) => (
+            {columns.map((v) => (
               <th key={v}>CE {v}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {platforms.map((platform) => (
+          {PLATFORMS.map((platform) => (
             <tr key={platform.id}>
               <td>
-                <strong>{platform.label}</strong>
-                {platform.footnote && <sup>*</sup>}
+                {platform.installPath ? (
+                  <Link to={platform.installPath}>
+                    <strong>{platform.label}</strong>
+                  </Link>
+                ) : (
+                  <strong>{platform.label}</strong>
+                )}
+                {platform.notes && <sup>*</sup>}
               </td>
-              {CE_VERSIONS.map((v) => (
-                <td key={v}>{renderCell(platform, v)}</td>
+              {columns.map((v) => (
+                <td key={v}>
+                  <Cell platform={platform} version={v} />
+                </td>
               ))}
             </tr>
           ))}
         </tbody>
       </table>
-      {footnotes.length > 0 && (
+      {noted.length > 0 && (
         <p style={{ fontSize: '0.9em' }}>
-          {footnotes.map((p) => (
+          {noted.map((p) => (
             <span key={p.id}>
-              * {p.footnote}
+              * {p.notes}
               <br />
             </span>
           ))}

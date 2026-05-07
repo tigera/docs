@@ -20,7 +20,7 @@ export default function InstallOpenshiftBeforeYouBegin(props) {
       <ul>
         <li>
           <p>
-            A <Link href={`${baseUrl}/getting-started/compatibility#openshift`}>compatible OpenShift cluster</Link>
+            A <Link href={`${baseUrl}/getting-started/compatibility`}>compatible OpenShift cluster</Link>
           </p>
           <p>
             Your environment meets the {prodname}{' '}
