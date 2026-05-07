@@ -6,7 +6,13 @@ import Selectors from '@site/calico-enterprise/_includes/content/_selectors.mdx'
 
 # Kubernetes controllers configuration
 
-A $[prodname] [Kubernetes controllers](../component-resources/kube-controllers/configuration.mdx) configuration resource (`KubeControllersConfiguration`) represents configuration options for the $[prodname] Kubernetes controllers.
+A $[prodname] Kubernetes controllers configuration resource (`KubeControllersConfiguration`) configures the controllers that run inside the `$[imageNames.kubeControllers]` container. These controllers monitor the Kubernetes API and reconcile cluster state with the $[prodname] datastore.
+
+The `$[imageNames.kubeControllers]` container can run the following controllers; each is enabled by including a corresponding block under `spec.controllers`, and disabled by omitting the block.
+
+- **Node controller** — garbage collects IP addresses, cleans up $[prodname] node data when Kubernetes nodes are removed, and optionally creates and syncs host endpoints for each node.
+- **Federated services controller** — watches Kubernetes services and endpoints locally and across all remote clusters defined through [RemoteClusterConfigurations](remoteclusterconfiguration.mdx), and programs Kubernetes endpoints for any locally-configured service that specifies a federation selector annotation. See [Configuring federated services](../../multicluster/federation/services-controller.mdx) for the usage guide.
+- **Load balancer controller** — manages IPAM for Services of type `LoadBalancer`.
 
 ## Sample YAML
 
@@ -100,7 +106,7 @@ The node controller automatically cleans up configuration for nodes that no long
 
 ### FederatedServicesController
 
-The federated services controller syncs Kubernetes services from remote clusters defined through [RemoteClusterConfigurations](remoteclusterconfiguration.mdx).
+The federated services controller syncs Kubernetes services from remote clusters defined through [RemoteClusterConfigurations](remoteclusterconfiguration.mdx). It must have read access to the Kubernetes API to monitor `Service` and `Endpoints` events, and write access to update `Endpoints`. For the usage guide, see [Configuring federated services](../../multicluster/federation/services-controller.mdx).
 
 | Field            | Description                                                      | Schema                            | Default |
 | ---------------- | ---------------------------------------------------------------- | --------------------------------- | ------- |
