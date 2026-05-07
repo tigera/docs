@@ -70,10 +70,10 @@ To enable WAF on a Calico Ingress Gateway:
    To deploy a WAF on multiple gateways, you must create a separate `EnvoyExtensionPolicy` resource for each `Gateway` resource.
    Each `EnvoyExtensionPolicy` must reference the same `tigera-waf-backend` backend.
 
-1. To verify that the WAF is enabled for your gateway, you can simulate an SQL injection attack through your gateway and see whether it triggers a security event.
+1. To verify that the WAF is enabled for your gateway, you can simulate an SQL injection attack through your gateway and check that the WAF logs the request.
 
    :::note
-   The query string in this example has some SQL syntax embedded in the text. This is harmless and for demo purposes, but WAF will detect this pattern and create an WAF log for this HTTP request.
+   The query string in this example has some SQL syntax embedded in the text. This is harmless and for demo purposes, but WAF will detect this pattern and create a WAF log for this HTTP request. By design, Calico Ingress Gateway WAF emits WAF logs rather than security events.
    :::
 
    1. Get the service IP of your gateway:
@@ -81,12 +81,12 @@ To enable WAF on a Calico Ingress Gateway:
       ```bash
       export GATEWAY_HOST=$(kubectl get gateway/<gateway-name> -o jsonpath='{.status.addresses[0].value}')
       ```
-   1. Trigger a security event by simulating an SQL injection attack on that service IP:
+   1. Simulate an SQL injection attack on that service IP:
 
       ```bash
       curl --verbose --header "Host: www.example.com" http://$GATEWAY_HOST/?artist=0+div+1+union%23foo*%2F*bar%0D%0Aselect%23foo%0D%0A1%2C2%2Ccurrent_user
       ```
-   1. From the web console, go to **Threat > Security Events** and check for a security event with corresponds with this simulated SQL injection attack.
+   1. In Kibana, select the `tigera_secure_ee_waf*` index pattern and look for a WAF log that corresponds with this request. If blocking mode is enabled, the `curl` command also returns a `403 Forbidden` response.
 
 ## Customizing your WAF configuration for an ingress gateway
 
