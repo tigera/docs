@@ -220,9 +220,51 @@ To update an existing installation of Calico Enterprise 3.21, see [Install a pat
 
 May 5, 2026
 
+#### Enhancements
+
+* Display the `Degraded` condition's message when running `kubectl get tigerastatus`, making it easier to see error details at a glance without needing to describe the resource.
+
+  ```console
+  $ kubectl get tigerastatus
+  NAME                          AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
+  apiserver                     True        False         False      4m51s   All objects available
+  calico                        False       False         True       106s    Pod calico-system/calico-node-tjlnv failed to pull container image for: ebpf-bootstrap
+  intrusion-detection           False       False         True       11m     Error creating TLS certificate: secret tigera-operator/deep-packet-inspection-tls must specify ext key usages: ExtKeyUsageClientAuth, ExtKeyUsageServerAuth
+  log-storage-access            False       False         True       11m     Pod tigera-elasticsearch/tigera-linseed-58745b7574-p6zmx has crash looping container: tigera-linseed
+  manager                       True        False         False      6s      All objects available; Warning: user provided certificate "manager-tls" expires in 21 days
+  ...
+  ```
+
+* Surface certificate metadata (issuer, expiry, DNS SANs, IP SANs) as annotations and add filtering labels (`secret-type`, `signer`) on TLS secrets produced by `Secret()` and `CreateSelfSignedSecret()`.
+
+  ```console
+  $ kubectl get secrets -n tigera-operator -l operator.tigera.io/signer \
+      -o custom-columns='NAME:.metadata.name,EXPIRY:.metadata.annotations.operator\.tigera\.io/cert-expiry,SIGNER:.metadata.annotations.operator\.tigera\.io/cert-signer'
+  NAME                                        EXPIRY                 SIGNER
+  calico-apiserver-certs                      2028-05-28T23:56:09Z   tigera-operator-signer
+  calico-kube-controllers-metrics-tls         2028-05-28T23:56:09Z   tigera-operator-signer
+  calico-node-prometheus-client-tls           2028-05-29T18:28:09Z   tigera-operator-signer
+  ...
+  ```
+
+* Added a named "https" port on the calico-manager Service and, when the OpenShift IDP is configured, publish a tigera-ca-public Secret in calico-system so OpenShift's Ingress→Route conversion can produce a reencrypt Route fronting the manager.
+
 #### Bug fixes
 
-* TBD
+* Fixed Kibana crashloop when upgrading from Calico Enterprise 3.20 or earlier to 3.21. The orphan `ingest_manager_settings` saved object left by Fleet 7.17 is now discarded during Kibana 8.x saved-object migration.
+* ECK certificates are now rotated 30 days before expiry, just like all certificates that are managed by our operator.
+* Deprecated the Installation.spec.nonPrivileged field. The Operator ignores this setting and will mark Calico as Degraded if it is set to Enabled.
+* Fixed the rendering resource limits and requests for Egress Gateway.
+* Added validation for the logstorage node count and replicas settings.
+* Fixed flow logs not recording pass policies in transit_policies when all forward or pre-DNAT tiers pass without an explicit allow or deny verdict. Pass-only forward and pre-DNAT policies now appear in transit_policies on both iptables/nftables and BPF dataplanes.
+* Fixed flow log aggregation to preserve distinct transit policy traces instead of overwriting them, ensuring accurate policy trace reporting at all aggregation levels.
+* Fixed l7-admission-controller webhook returning an invalid response when a pod has the sidecar label but no feature annotations.
+* Fixed an issue in the eBPF dataplane where link-local discovery packets were incorrectly dropped during strict reverse path forwarding (RPF) checks.
+* Fixed eBPF dataplane to delete stale NAT conntrack entries from userspace.
+* Fixed a panic in Felix's NetworkSet processor on invalid CIDRs.
+* Fixed the LoadBalancer controller to prevent a nil pointer dereference in handleBlockUpdate.
+* Multi-NIC support: fix the projectcalico.org/network label; strip the namespace prefix added by Multus in recent versions. The prefix was not documented in our docs and, due to using a / separator, it could fail validation when CNI plugin tried to read a multi-NIC endpoint after node reboot causing pods to fail to come back up after reboot.
+* Security updates.
 
 To update an existing installation of Calico Enterprise 3.21, see [Install a patch release](../getting-started/manifest-archive.mdx).
 
