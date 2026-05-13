@@ -12,7 +12,7 @@ Use $[prodname] eBPF-based L7 observability to capture HTTP request/response and
 
 L7 logs give platform operators and development teams visibility into how applications talk to each other beyond what L3/4 flow logs show: HTTP method, URL, response code, and TLS SNI / version / cipher suite. They are also key for spotting anomalous behavior such as attempts to access restricted URLs or scans for particular paths.
 
-The eBPF-based collector delivers this visibility with no data-path proxy and no per-deployment opt-in: enable it once at the cluster level, and HTTP and TLS metadata is captured for every workload on the node. The feature is **dataplane-independent** and works with the eBPF, iptables, and nftables dataplanes alike.
+The eBPF-based collector delivers this visibility with no data-path proxy and no per-deployment opt-in: enable it once at the cluster level, and HTTP and TLS metadata is captured for every workload on the node. The feature is **data-plane-independent** and works with the eBPF, iptables, and nftables data planes alike.
 
 ## Concepts
 
@@ -24,14 +24,14 @@ Each L7 log entry carries a `protocol` field (`http` or `tls`) and a `collector_
 
 ### Comparison with the Istio Waypoint collector
 
-The [Istio Waypoint collector](configure-istio-waypoint.mdx) routes selected traffic through a per-namespace Envoy waypoint proxy and produces L7 logs from the proxy itself. The eBPF collector runs inside Felix on every node and captures HTTP and TLS metadata as traffic passes through the kernel TCP layer. The two collectors can coexist in the same cluster; both feed the same L7 log pipeline and entries are distinguished by the `collector_name` field.
+The [Istio Waypoint collector](configure-istio-waypoint.mdx) routes selected traffic through a per-namespace Envoy Waypoint proxy and produces L7 logs from the proxy itself. The eBPF collector runs inside Felix on every node and captures HTTP and TLS metadata as traffic passes through the kernel TCP layer. The two collectors can coexist in the same cluster; both feed the same L7 log pipeline and entries are distinguished by the `collector_name` field.
 
 | Aspect | Istio Waypoint collector | eBPF L7 collector |
 | --- | --- | --- |
 | Additional infrastructure | Waypoint Envoy pods per namespace/service | None — runs inside Felix |
-| L7 coverage | Only traffic routed through a waypoint | All TCP traffic on the node |
+| L7 coverage | Only traffic routed through a Waypoint | All TCP traffic on the node |
 | Network path overhead | Two extra proxy hops | None |
-| Plaintext access | Decrypted at the waypoint (mTLS terminated) | Captured at the kernel TCP layer, before TLS encryption |
+| Plain text access | Decrypted at the Waypoint (mTLS terminated) | Captured at the kernel TCP layer, before TLS encryption |
 | Protocol coverage | HTTP/1, HTTP/2, gRPC | HTTP/1.0, HTTP/1.1, TLS handshake metadata |
 | Opt-in granularity | Per namespace/service | Cluster-wide via FelixConfiguration |
 | L7 features beyond observability | Retries, traffic splitting, fault injection | Observability only |
@@ -41,8 +41,8 @@ The [Istio Waypoint collector](configure-istio-waypoint.mdx) routes selected tra
 ### Limitations
 
 * Requires Linux kernel 5.17 or later on every node.
-* HTTP parsing covers HTTP/1.0 and HTTP/1.1 only, because their requests and responses travel as plaintext on the wire. HTTP/2 and HTTP/3 are not captured as HTTP, and encrypted HTTP traffic surfaces only as TLS metadata.
-* HTTP captures only the most recent request per socket; rapidly pipelined requests on a single connection may be undercounted.
+* HTTP parsing covers HTTP/1.0 and HTTP/1.1 only, because their requests and responses travel as plain text on the wire. HTTP/2 and HTTP/3 are not captured as HTTP, and encrypted HTTP traffic surfaces only as TLS metadata.
+* HTTP capture tracks only the most recent request per socket; when a single connection carries multiple back-to-back requests, some may be missed.
 * TLS capture is limited to handshake metadata (SNI, version, cipher suite). The collector does not decrypt application traffic.
 
 :::note
@@ -53,7 +53,7 @@ L7 logs require a minimum of 1 additional GB of log storage per node, per one-da
 
 ## Configure L7 logs
 
-Enable the eBPF L7 collector by setting the [L7ObservabilityEnabled](../../../reference/component-resources/node/felix/configuration.mdx#L7ObservabilityEnabled) field to `true` on the default `FelixConfiguration`. The setting is independent of `bpfEnabled` — the collector works with any dataplane.
+Enable the eBPF L7 collector by setting the [L7ObservabilityEnabled](../../../reference/component-resources/node/felix/configuration.mdx#L7ObservabilityEnabled) field to `true` on the default `FelixConfiguration`. The setting is independent of `bpfEnabled` — the collector works with any data plane.
 
 ```bash
 kubectl patch felixconfiguration default --type=merge -p '{"spec":{"l7ObservabilityEnabled":true}}'
