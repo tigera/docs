@@ -202,6 +202,7 @@ module.exports = {
           link: { type: 'doc', id: 'networking/egress/index' },
           items: [
             'networking/egress/egress-gateway-on-prem',
+            'networking/egress/egress-gateway-host-ip',
             'networking/egress/egress-gateway-azure',
             'networking/egress/egress-gateway-aws',
             'networking/egress/egress-gateway-maintenance',

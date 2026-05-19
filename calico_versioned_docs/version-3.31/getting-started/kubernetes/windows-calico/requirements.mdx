@@ -2,6 +2,9 @@
 description: Review the requirements for Calico for Windows.
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Requirements
 
 ## What's supported in this release
@@ -54,11 +57,37 @@ Earlier versions may work, but we do not actively test $[prodnameWindows] agains
 ### Linux platform requirements
 
 - At least one Linux Kubernetes worker node to run $[prodname]'s cluster-wide components that meets [Linux system requirements](../requirements.mdx), and is installed with $[prodname]. $[prodname] v3.27+ is required for Operator installs.
-- VXLAN or BGP without encapsulation is supported if using $[prodname] CNI. IPIP ($[prodname]'s default encapsulation mode) is not supported. Use the following command to turn off IPIP on the default IP pool.
+- VXLAN or BGP without encapsulation is supported if using $[prodname] CNI. IPIP ($[prodname]'s default encapsulation mode) is not supported. Turn off IPIP on the default IP pool.
+
+  <Tabs groupId="ip-pool-management">
+  <TabItem label="Operator managed IP pools" value="operator-managed">
+
+  For IP pools managed through the `Installation` resource, patch the `Installation` to update the encapsulation. The operator reconciles these `IPPool` resources from the `Installation`, so direct edits to the `IPPool` are silently reverted.
+
+  ```bash
+  kubectl patch installation default --type=json \
+    -p '[{"op":"replace","path":"/spec/calicoNetwork/ipPools/0/encapsulation","value":"VXLAN"}]'
+  ```
+
+  If your cluster has additional operator-managed IP pools, repeat the command for each, replacing `0` in `/spec/calicoNetwork/ipPools/0` with the index of the pool. Use `"None"` instead of `"VXLAN"` for BGP without encapsulation.
+
+  </TabItem>
+  <TabItem label="User managed IP pools" value="user-managed">
+
+  For `IPPool` resources created directly (not through the `Installation`), patch the `IPPool`. For VXLAN:
 
   ```bash
   kubectl patch ippool default-ipv4-ippool -p '{"spec":{"ipipMode":"Never","vxlanMode":"Always"}}'
   ```
+
+  For BGP without encapsulation, set both modes to `Never`:
+
+  ```bash
+  kubectl patch ippool default-ipv4-ippool -p '{"spec":{"ipipMode":"Never","vxlanMode":"Never"}}'
+  ```
+
+  </TabItem>
+  </Tabs>
 
 - If using $[prodname] IPAM, strict affinity of IPAM configuration must be set to `true`.
 

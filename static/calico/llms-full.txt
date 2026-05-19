@@ -26,7 +26,7 @@ The Calico portfolio of products includes Calico Open Source, Calico Enterprise 
 
 ##### [Determine best networking option](https://docs.tigera.io/calico/latest/networking/determine-best-networking)
 
-[Learn about the different networking options Calico supports so you can choose the best option for your needs.](https://docs.tigera.io/calico/latest/networking/determine-best-networking)
+[Compare networking options in Calico Open Source — overlay versus non-overlay, BGP routing, CNI choices, and IPAM modes — to pick the right combination for your environment.](https://docs.tigera.io/calico/latest/networking/determine-best-networking)
 
 ##### [Ingress Gateway](https://docs.tigera.io/calico/latest/networking/ingress-gateway/about-calico-ingress-gateway)
 
@@ -469,27 +469,27 @@ Start a free trial or request a demo to see Calico in action.
 
 ## [📄️About Kubernetes Networking](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-k8s-networking)
 
-[Learn about Kubernetes networking!](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-k8s-networking)
+[Background on the Kubernetes network model, services, DNS, NAT outgoing, and dual-stack networking concepts that underpin Calico Open Source deployments.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-k8s-networking)
 
 ## [📄️About networking](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-networking)
 
-[Learn about networking!](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-networking)
+[Background on networking fundamentals such as OSI layers, IP addressing, subnets, routing, overlays, DNS, and NAT for newcomers to Calico Open Source.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-networking)
 
 ## [📄️What is network policy?](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-network-policy)
 
-[Learn the basics of Kubernetes and Calico Enterprise network policy](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-network-policy)
+[Background on Kubernetes and Calico Open Source network policy, comparing API capabilities and offering best practices for securing cluster workloads.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-network-policy)
 
 ## [📄️Kubernetes ingress](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-ingress)
 
-[Learn the different ingress implementations and how ingress and policy interact.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-ingress)
+[Background on Kubernetes ingress implementations, load balancing at L5-7, and how ingress controllers interact with network policy in Calico Open Source.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-ingress)
 
 ## [📄️Kubernetes egress](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-egress)
 
-[Learn why you should restrict egress traffic and how to do it.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-egress)
+[Background on Kubernetes egress traffic, including outgoing NAT, restricting outbound connections, and egress gateways for Calico Open Source clusters.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-egress)
 
 ## [📄️Kubernetes services](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-services)
 
-[Learn the three main service types and how to use them.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-services)
+[Background on Kubernetes service types (ClusterIP, NodePort, LoadBalancer) and how services interact with network policy in Calico Open Source clusters.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-kubernetes-services)
 
 ### About Kubernetes Networking
 
@@ -6928,11 +6928,37 @@ Earlier versions may work, but we do not actively test Calico for Windows agains
 
 - At least one Linux Kubernetes worker node to run Calico's cluster-wide components that meets [Linux system requirements](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements), and is installed with Calico. Calico v3.27+ is required for Operator installs.
 
-- VXLAN or BGP without encapsulation is supported if using Calico CNI. IPIP (Calico's default encapsulation mode) is not supported. Use the following command to turn off IPIP on the default IP pool.
+- VXLAN or BGP without encapsulation is supported if using Calico CNI. IPIP (Calico's default encapsulation mode) is not supported. Turn off IPIP on the default IP pool.
+
+  <!-- tabs -->
+
+  **Tab: Operator managed IP pools**
+
+  For IP pools managed through the `Installation` resource, patch the `Installation` to update the encapsulation. The operator reconciles these `IPPool` resources from the `Installation`, so direct edits to the `IPPool` are silently reverted.
+
+  ```bash
+  kubectl patch installation default --type=json \
+
+   -p '[{"op":"replace","path":"/spec/calicoNetwork/ipPools/0/encapsulation","value":"VXLAN"}]'
+  ```
+
+  If your cluster has additional operator-managed IP pools, repeat the command for each, replacing `0` in `/spec/calicoNetwork/ipPools/0` with the index of the pool. Use `"None"` instead of `"VXLAN"` for BGP without encapsulation.
+
+  **Tab: User managed IP pools**
+
+  For `IPPool` resources created directly (not through the `Installation`), patch the `IPPool`. For VXLAN:
 
   ```bash
   kubectl patch ippool default-ipv4-ippool -p '{"spec":{"ipipMode":"Never","vxlanMode":"Always"}}'
   ```
+
+  For BGP without encapsulation, set both modes to `Never`:
+
+  ```bash
+  kubectl patch ippool default-ipv4-ippool -p '{"spec":{"ipipMode":"Never","vxlanMode":"Never"}}'
+  ```
+
+  <!-- /tabs -->
 
 - If using Calico IPAM, strict affinity of IPAM configuration must be set to `true`.
 
@@ -12618,15 +12644,15 @@ You can test application layer policy by following the [Application Layer Policy
 
 ## [📄️Upgrade Calico on Kubernetes](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade)
 
-[Upgrade to a newer version of Calico for Kubernetes.](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade)
+[Upgrade Calico Open Source on Kubernetes from v3.15 or later for Helm, operator-managed, and manifest-based installs on both Kubernetes API and etcd datastores.](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade)
 
 ## [📄️Upgrade Calico on OpenShift 4](https://docs.tigera.io/calico/latest/operations/upgrading/openshift-upgrade)
 
-[Upgrade to a newer version of Calico for OpenShift.](https://docs.tigera.io/calico/latest/operations/upgrading/openshift-upgrade)
+[Upgrade Calico Open Source on OpenShift 4 by reapplying manifests and updating OwnerReferences for projectcalico.org/v3 resources.](https://docs.tigera.io/calico/latest/operations/upgrading/openshift-upgrade)
 
 ## [📄️Upgrade Calico on OpenStack](https://docs.tigera.io/calico/latest/operations/upgrading/openstack-upgrade)
 
-[Upgrade to a newer version of Calico for OpenStack.](https://docs.tigera.io/calico/latest/operations/upgrading/openstack-upgrade)
+[Upgrade Calico Open Source on OpenStack from v3.0 or later by updating system packages on CentOS or Ubuntu compute and control nodes.](https://docs.tigera.io/calico/latest/operations/upgrading/openstack-upgrade)
 
 ### Upgrade Calico on Kubernetes
 
@@ -13122,19 +13148,19 @@ This page describes how to upgrade to v3.32 from Calico v3.0 or later. The proce
 
 ## [📄️eBPF use cases](https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf)
 
-[Learn when to use eBPF, and when not to.](https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf)
+[Guidance on when the Calico Open Source eBPF data plane fits a workload compared to the standard iptables data plane, with trade-offs and feature comparisons.](https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf)
 
 ## [📄️Enabling the eBPF data plane](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
 
-[Step-by-step instructions for enabling the eBPF data plane.](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
+[Switch a running Calico Open Source cluster to the eBPF data plane through automatic Tigera Operator detection on kubeadm clusters or a manual configuration path.](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
 
 ## [📄️Install in eBPF mode](https://docs.tigera.io/calico/latest/operations/ebpf/install)
 
-[Install Calico in eBPF mode.](https://docs.tigera.io/calico/latest/operations/ebpf/install)
+[Install Calico Open Source with the eBPF data plane during initial cluster setup as an alternative to the iptables data plane.](https://docs.tigera.io/calico/latest/operations/ebpf/install)
 
 ## [📄️Troubleshoot eBPF mode](https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf)
 
-[How to troubleshoot when running in eBPF mode.](https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf)
+[Troubleshooting guide for the Calico Open Source eBPF data plane covering verification logs, service connectivity, BPF map inspection, and common failure modes.](https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf)
 
 ### eBPF use cases
 
@@ -15971,7 +15997,7 @@ There are two sections to the install: adding Calico to OpenStack control nodes,
 
 - Ensure that you meet the [requirements](https://docs.tigera.io/calico/latest/getting-started/openstack/requirements).
 - Confirm that you have SSH access to and root privileges on one or more Ubuntu hosts (your OpenStack compute or control nodes).
-- [Install OpenStack with Neutron and ML2 networking](http://docs.openstack.org) on the Ubuntu hosts.
+- [Install OpenStack](http://docs.openstack.org) on the Ubuntu hosts.
 
 ## Common steps[​](#common-steps)
 
@@ -16212,7 +16238,7 @@ There are two sections to the install: adding Calico to OpenStack control nodes,
 - Ensure that you meet the [requirements](https://docs.tigera.io/calico/latest/getting-started/openstack/requirements).
 - Confirm that you have SSH access to and root privileges on one or more Red Hat Enterprise Linux (RHEL) hosts.
 - Make sure you have working DNS between the RHEL hosts (use `/etc/hosts` if you don't have DNS on your network).
-- [Install OpenStack with Neutron and ML2 networking](http://docs.openstack.org) on the RHEL hosts.
+- [Install OpenStack](http://docs.openstack.org) on the RHEL hosts.
 
 ## Common steps[​](#common-steps)
 
@@ -16685,161 +16711,161 @@ The Calico network plugins provide a range of networking options to fit your imp
 
 ##### [Determine best networking option](https://docs.tigera.io/calico/latest/networking/determine-best-networking)
 
-[Learn about the different networking options Calico supports so you can choose the best option for your needs.](https://docs.tigera.io/calico/latest/networking/determine-best-networking)
+[Compare networking options in Calico Open Source — overlay versus non-overlay, BGP routing, CNI choices, and IPAM modes — to pick the right combination for your environment.](https://docs.tigera.io/calico/latest/networking/determine-best-networking)
 
 ##### [About networking](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-networking)
 
-[Learn about networking!](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-networking)
+[Background on networking fundamentals such as OSI layers, IP addressing, subnets, routing, overlays, DNS, and NAT for newcomers to Calico Open Source.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-networking)
 
 ##### [About Kubernetes Networking](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-k8s-networking)
 
-[Learn about Kubernetes networking!](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-k8s-networking)
+[Background on the Kubernetes network model, services, DNS, NAT outgoing, and dual-stack networking concepts that underpin Calico Open Source deployments.](https://docs.tigera.io/calico/latest/about/kubernetes-training/about-k8s-networking)
 
 ## Configuring networking[​](#configuring-networking)
 
 ##### [Configure BGP peering](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
 
-[Configure BGP peering with full mesh, node-specific peering, ToR, and/or Calico route reflectors.](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
+[Configure BGP peering for Calico Open Source — full mesh, node-specific peers, top-of-rack switches, and Calico route reflectors — using BGPPeer and BGPConfiguration resources.](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
 
 ##### [Overlay networking](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)
 
-[Configure Calico to use IP in IP or VXLAN overlay networking so the underlying network doesn’t need to understand pod addresses.](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)
+[Pick between VXLAN and IP-in-IP overlay modes in Calico Open Source so pod traffic crosses underlay networks that don't route pod CIDRs natively.](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)
 
 ##### [Advertise Kubernetes service IP addresses](https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips)
 
-[Configure Calico to advertise Kubernetes service cluster IPs and external IPs outside the cluster using BGP.](https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips)
+[Advertise Kubernetes service cluster IPs and external IPs out of the cluster over BGP with Calico Open Source so external clients can route to them directly.](https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips)
 
 ##### [Configure MTU to maximize network performance](https://docs.tigera.io/calico/latest/networking/configuring/mtu)
 
-[Optimize network performance for workloads by configuring the MTU in Calico to best suit your underlying network.](https://docs.tigera.io/calico/latest/networking/configuring/mtu)
+[Tune the Calico Open Source MTU on the FelixConfiguration resource so pod traffic matches the underlying network, including VXLAN, IP-in-IP, and WireGuard overheads.](https://docs.tigera.io/calico/latest/networking/configuring/mtu)
 
 ##### [Configure outgoing NAT](https://docs.tigera.io/calico/latest/networking/configuring/workloads-outside-cluster)
 
-[Configure networking to perform outbound NAT for connections from pods to outside of the cluster.](https://docs.tigera.io/calico/latest/networking/configuring/workloads-outside-cluster)
+[Set NAT outgoing on Calico Open Source IP pools so pod traffic to destinations outside the cluster is source-NATed to the node's IP.](https://docs.tigera.io/calico/latest/networking/configuring/workloads-outside-cluster)
 
 ##### [Use IPVS kube-proxy](https://docs.tigera.io/calico/latest/networking/configuring/use-ipvs)
 
-[Use IPVS kube-proxy for performance improvements.](https://docs.tigera.io/calico/latest/networking/configuring/use-ipvs)
+[Run kube-proxy in IPVS mode with Calico Open Source for constant-time service load balancing on clusters with thousands of services.](https://docs.tigera.io/calico/latest/networking/configuring/use-ipvs)
 
 ##### [Accelerate Istio network performance](https://docs.tigera.io/calico/latest/networking/configuring/sidecar-acceleration)
 
-[Use Calico to accelerate network performance of traffic through the Istio Envoy sidecar using eBPF.](https://docs.tigera.io/calico/latest/networking/configuring/sidecar-acceleration)
+[Accelerate Istio Envoy sidecar traffic on Calico Open Source by using eBPF SOCKMAP to bypass kernel networking layers between the sidecar and the application.](https://docs.tigera.io/calico/latest/networking/configuring/sidecar-acceleration)
 
 ##### [Use a specific MAC address for a pod](https://docs.tigera.io/calico/latest/networking/configuring/pod-mac-address)
 
-[Specify the MAC address for a pod instead of allowing the operating system to assign one](https://docs.tigera.io/calico/latest/networking/configuring/pod-mac-address)
+[Set a chosen MAC address on a Kubernetes pod interface with the Calico Open Source CNI plugin, useful for software licensing tied to MAC.](https://docs.tigera.io/calico/latest/networking/configuring/pod-mac-address)
 
 ##### [Use NodeLocal DNSCache in your cluster](https://docs.tigera.io/calico/latest/networking/configuring/node-local-dns-cache)
 
-[Install NodeLocal DNSCache](https://docs.tigera.io/calico/latest/networking/configuring/node-local-dns-cache)
+[Install NodeLocal DNSCache alongside Calico Open Source and configure network policy that lets pod DNS traffic reach the local cache.](https://docs.tigera.io/calico/latest/networking/configuring/node-local-dns-cache)
 
 ##### [Configure QoS Controls](https://docs.tigera.io/calico/latest/networking/configuring/qos-controls)
 
-[Configure QoS (Quality of Service) Controls to limit ingress and/or egress bandwidth, packet rate and number of connections of Calico workloads.](https://docs.tigera.io/calico/latest/networking/configuring/qos-controls)
+[Cap pod ingress and egress bandwidth, packet rate, and connection counts with Calico Open Source QoS controls, plus DiffServ marking on egress traffic.](https://docs.tigera.io/calico/latest/networking/configuring/qos-controls)
 
 ##### [Add Maglev load balancing to a service](https://docs.tigera.io/calico/latest/networking/configuring/add-maglev-load-balancing)
 
-[Add Maglev load balancing to a Kubernetes service.](https://docs.tigera.io/calico/latest/networking/configuring/add-maglev-load-balancing)
+[Switch a Kubernetes service to Maglev consistent-hash load balancing on the Calico Open Source eBPF data plane for resilient backend selection.](https://docs.tigera.io/calico/latest/networking/configuring/add-maglev-load-balancing)
 
 ## IP address management[​](#ip-address-management)
 
 ##### [Get started with IP address management](https://docs.tigera.io/calico/latest/networking/ipam/get-started-ip-addresses)
 
-[Configure Calico to use Calico IPAM or host-local IPAM, and when to use one or the other.](https://docs.tigera.io/calico/latest/networking/ipam/get-started-ip-addresses)
+[Decide between Calico Open Source IPAM and host-local IPAM, then configure IP pool allocation, NAT outgoing, and per-namespace assignment.](https://docs.tigera.io/calico/latest/networking/ipam/get-started-ip-addresses)
 
 ##### [Create multiple IP pools](https://docs.tigera.io/calico/latest/networking/ipam/ippools)
 
-[Create multiple IP pools](https://docs.tigera.io/calico/latest/networking/ipam/ippools)
+[Create additional Calico Open Source IPPool resources at install time or on a running cluster to serve disjoint ranges, IPv6, or per-topology pod address assignment.](https://docs.tigera.io/calico/latest/networking/ipam/ippools)
 
 ##### [Configure IP autodetection](https://docs.tigera.io/calico/latest/networking/ipam/ip-autodetection)
 
-[Calico IP autodetection ensures the correct IP address is used for routing. Learn how to customize it.](https://docs.tigera.io/calico/latest/networking/ipam/ip-autodetection)
+[Choose how Calico Open Source detects each node's primary IP address, with options for first-found, Kubernetes internal, interface regex, CIDR, and skip-interface.](https://docs.tigera.io/calico/latest/networking/ipam/ip-autodetection)
 
 ##### [Configure dual stack or IPv6 only](https://docs.tigera.io/calico/latest/networking/ipam/ipv6)
 
-[Configure dual stack or IPv6 only for workloads.](https://docs.tigera.io/calico/latest/networking/ipam/ipv6)
+[Set up dual-stack or IPv6-only pod networking on Calico Open Source by configuring IP pools, node IP autodetection, and the CNI plugin.](https://docs.tigera.io/calico/latest/networking/ipam/ipv6)
 
 ##### [Configure Kubernetes control plane to operate over IPv6](https://docs.tigera.io/calico/latest/networking/ipam/ipv6-control-plane)
 
-[Configure the Kubernetes control plane to operate over IPv6 for dual stack or IPv6 only.](https://docs.tigera.io/calico/latest/networking/ipam/ipv6-control-plane)
+[Run the Kubernetes control plane over IPv6 with Calico Open Source for dual-stack or IPv6-only clusters, including kubeadm flags and node configuration.](https://docs.tigera.io/calico/latest/networking/ipam/ipv6-control-plane)
 
 ##### [Add a floating IP to a pod](https://docs.tigera.io/calico/latest/networking/ipam/add-floating-ip)
 
-[Configure one or more floating IPs to use as additional IP addresses for reaching a Kubernetes pod.](https://docs.tigera.io/calico/latest/networking/ipam/add-floating-ip)
+[Attach one or more floating IPs to a Kubernetes pod with Calico Open Source IPAM so external clients can reach the workload over any IP protocol.](https://docs.tigera.io/calico/latest/networking/ipam/add-floating-ip)
 
 ##### [Use a specific IP address with a pod](https://docs.tigera.io/calico/latest/networking/ipam/use-specific-ip)
 
-[Specify the IP address for a pod instead of allowing Calico to automatically choose one.](https://docs.tigera.io/calico/latest/networking/ipam/use-specific-ip)
+[Pin a Kubernetes pod to a chosen IP address with Calico Open Source IPAM by setting a pod annotation that supplies the requested address.](https://docs.tigera.io/calico/latest/networking/ipam/use-specific-ip)
 
 ##### [Assign IP addresses based on topology](https://docs.tigera.io/calico/latest/networking/ipam/assign-ip-addresses-topology)
 
-[Configure Calico to use specific IP pools for different topologies including zone, rack, or region.](https://docs.tigera.io/calico/latest/networking/ipam/assign-ip-addresses-topology)
+[Bind Calico Open Source IP pools to specific zones, racks, or regions with node selectors so pods receive addresses that match the cluster topology.](https://docs.tigera.io/calico/latest/networking/ipam/assign-ip-addresses-topology)
 
 ##### [Migrate from one IP pool to another](https://docs.tigera.io/calico/latest/networking/ipam/migrate-pools)
 
-[Migrate pods from one IP pool to another on a running cluster without network disruption.](https://docs.tigera.io/calico/latest/networking/ipam/migrate-pools)
+[Migrate workloads from one Calico Open Source IPPool to another on a running cluster without disrupting existing pod connectivity.](https://docs.tigera.io/calico/latest/networking/ipam/migrate-pools)
 
 ##### [Change IP pool block size](https://docs.tigera.io/calico/latest/networking/ipam/change-block-size)
 
-[Expand or shrink the IP pool block size to efficiently manage IP pool addresses.](https://docs.tigera.io/calico/latest/networking/ipam/change-block-size)
+[Resize an IPPool block in Calico Open Source — by creating a replacement pool and migrating workloads — to use IP space more efficiently.](https://docs.tigera.io/calico/latest/networking/ipam/change-block-size)
 
 ##### [Restrict a pod to use an IP address in a specific range](https://docs.tigera.io/calico/latest/networking/ipam/legacy-firewalls)
 
-[Restrict the IP address chosen for a pod to a specific range of IP addresses.](https://docs.tigera.io/calico/latest/networking/ipam/legacy-firewalls)
+[Restrict pods to a defined IP address range with Calico Open Source so legacy firewalls and security appliances can recognize cluster workloads.](https://docs.tigera.io/calico/latest/networking/ipam/legacy-firewalls)
 
 ##### [LoadBalancer IP address management](https://docs.tigera.io/calico/latest/networking/ipam/service-loadbalancer)
 
-[LoadBalancer IP address management](https://docs.tigera.io/calico/latest/networking/ipam/service-loadbalancer)
+[Use the Calico Open Source LoadBalancer controller to allocate addresses to Kubernetes Service type LoadBalancer from configured IP pools.](https://docs.tigera.io/calico/latest/networking/ipam/service-loadbalancer)
 
 ## Networking for OpenStack[​](#networking-for-openstack)
 
 ##### [Set up a development machine](https://docs.tigera.io/calico/latest/networking/openstack/dev-machine-setup)
 
-[Configure Calico networking for OpenStack VMs.](https://docs.tigera.io/calico/latest/networking/openstack/dev-machine-setup)
+[Walk-through example of provisioning a developer VM on a Calico Open Source OpenStack cloud, with security groups, an external network attachment, and SSH access.](https://docs.tigera.io/calico/latest/networking/openstack/dev-machine-setup)
 
 ##### [Prepare a VM guest OS for IPv6](https://docs.tigera.io/calico/latest/networking/openstack/ipv6)
 
-[Prepare a VM guest OS for IPv6.](https://docs.tigera.io/calico/latest/networking/openstack/ipv6)
+[Prepare a guest OS image for IPv6 connectivity on Calico Open Source OpenStack VMs by configuring DHCPv6 client behavior and accepting router advertisements.](https://docs.tigera.io/calico/latest/networking/openstack/ipv6)
 
 ##### [IP addressing and connectivity](https://docs.tigera.io/calico/latest/networking/openstack/connectivity)
 
-[Configure OpenStack networking for Calico.](https://docs.tigera.io/calico/latest/networking/openstack/connectivity)
+[Plan IPv4 and IPv6 address ranges, gateway routing, and Neutron network setup to connect Calico Open Source OpenStack VMs with the data center fabric.](https://docs.tigera.io/calico/latest/networking/openstack/connectivity)
 
 ##### [Endpoint labels and operator policy](https://docs.tigera.io/calico/latest/networking/openstack/labels)
 
-[Use Calico labels to define policy for OpenStack VMs.](https://docs.tigera.io/calico/latest/networking/openstack/labels)
+[Reference for the project, network, security-group, and namespace labels that Calico Open Source places on WorkloadEndpoints for OpenStack VMs, plus how to use them in policy.](https://docs.tigera.io/calico/latest/networking/openstack/labels)
 
 ##### [Configure systems for use with Calico](https://docs.tigera.io/calico/latest/networking/openstack/configuration)
 
-[Configure OpenStack components for Calico.](https://docs.tigera.io/calico/latest/networking/openstack/configuration)
+[Configure Nova, Neutron, and DHCP agent settings on OpenStack compute hosts to run Calico Open Source as either a core plugin or an ML2 mechanism driver.](https://docs.tigera.io/calico/latest/networking/openstack/configuration)
 
 ##### [Detailed semantics](https://docs.tigera.io/calico/latest/networking/openstack/semantics)
 
-[Calico provides connectivity that is different from traditional Neutron API semantics.](https://docs.tigera.io/calico/latest/networking/openstack/semantics)
+[Reference for the IP-only connectivity model Calico Open Source provides between OpenStack instances, and how it differs from traditional Neutron L2 semantics.](https://docs.tigera.io/calico/latest/networking/openstack/semantics)
 
 ##### [Floating IPs](https://docs.tigera.io/calico/latest/networking/openstack/floating-ips)
 
-[Configure floating IPs in Calico for OpenStack.](https://docs.tigera.io/calico/latest/networking/openstack/floating-ips)
+[Allocate Neutron floating IPs against a Calico Open Source OpenStack tenant network, including router gateways, provider subnets, and core-plugin requirements.](https://docs.tigera.io/calico/latest/networking/openstack/floating-ips)
 
 ##### [Service IPs](https://docs.tigera.io/calico/latest/networking/openstack/service-ips)
 
-[Use a floating or fixed IP for a Calico-networked VM.](https://docs.tigera.io/calico/latest/networking/openstack/service-ips)
+[Assign a service IP to a Calico Open Source OpenStack VM by attaching either a Neutron floating IP or an additional fixed IP on the VM port.](https://docs.tigera.io/calico/latest/networking/openstack/service-ips)
 
 ##### [Host routes](https://docs.tigera.io/calico/latest/networking/openstack/host-routes)
 
-[Options for host routing with Calico.](https://docs.tigera.io/calico/latest/networking/openstack/host-routes)
+[Configure Neutron subnet host routes so the next-hop IP points at the local hypervisor in Calico Open Source OpenStack deployments and traffic flows correctly.](https://docs.tigera.io/calico/latest/networking/openstack/host-routes)
 
 ##### [Multiple regions](https://docs.tigera.io/calico/latest/networking/openstack/multiple-regions)
 
-[Install a multi-region OpenStack deployment with Calico.](https://docs.tigera.io/calico/latest/networking/openstack/multiple-regions)
+[Deploy Calico Open Source across multiple OpenStack regions sharing one etcd datastore, with per-region namespaces for inter-region policy.](https://docs.tigera.io/calico/latest/networking/openstack/multiple-regions)
 
 ##### [Kuryr](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
 
-[Use Kuryr with Calico networking.](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
+[Use Kuryr together with the networking-calico ML2 driver in Calico Open Source so Neutron provides networking for container workloads.](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
 
 ##### [Calico's interpretation of Neutron API calls](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api)
 
-[Effects of the Neutron API calls on the network.](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api)
+[Reference for how Calico Open Source interprets each Neutron API call — networks, subnets, ports, security groups, and Horizon actions — in an OpenStack deployment.](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api)
 
 ## Networking options with Calico Cloud[​](#networking-options-with-calico-cloud)
 
@@ -18527,51 +18553,51 @@ Ask on the [Calico Users Slack](https://calicousers.slack.com/) for community he
 
 ## [📄️Configure BGP peering](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
 
-[Configure BGP peering with full mesh, node-specific peering, ToR, and/or Calico route reflectors.](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
+[Configure BGP peering for Calico Open Source — full mesh, node-specific peers, top-of-rack switches, and Calico route reflectors — using BGPPeer and BGPConfiguration resources.](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
 
 ## [📄️Configure BGP peering with nested clusters running on KubeVirt VMs](https://docs.tigera.io/calico/latest/networking/configuring/bgp-to-workload)
 
-[Configure BGP peering with nested clusters running on KubeVirt VMs](https://docs.tigera.io/calico/latest/networking/configuring/bgp-to-workload)
+[Peer Calico Open Source nodes with BGP speakers running inside KubeVirt VMs to support nested clusters and route announcements from workloads.](https://docs.tigera.io/calico/latest/networking/configuring/bgp-to-workload)
 
 ## [📄️Overlay networking](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)
 
-[Configure Calico to use IP in IP or VXLAN overlay networking so the underlying network doesn’t need to understand pod addresses.](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)
+[Pick between VXLAN and IP-in-IP overlay modes in Calico Open Source so pod traffic crosses underlay networks that don't route pod CIDRs natively.](https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip)
 
 ## [📄️Advertise Kubernetes service IP addresses](https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips)
 
-[Configure Calico to advertise Kubernetes service cluster IPs and external IPs outside the cluster using BGP.](https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips)
+[Advertise Kubernetes service cluster IPs and external IPs out of the cluster over BGP with Calico Open Source so external clients can route to them directly.](https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips)
 
 ## [📄️Configure MTU to maximize network performance](https://docs.tigera.io/calico/latest/networking/configuring/mtu)
 
-[Optimize network performance for workloads by configuring the MTU in Calico to best suit your underlying network.](https://docs.tigera.io/calico/latest/networking/configuring/mtu)
+[Tune the Calico Open Source MTU on the FelixConfiguration resource so pod traffic matches the underlying network, including VXLAN, IP-in-IP, and WireGuard overheads.](https://docs.tigera.io/calico/latest/networking/configuring/mtu)
 
 ## [📄️Configure outgoing NAT](https://docs.tigera.io/calico/latest/networking/configuring/workloads-outside-cluster)
 
-[Configure networking to perform outbound NAT for connections from pods to outside of the cluster.](https://docs.tigera.io/calico/latest/networking/configuring/workloads-outside-cluster)
+[Set NAT outgoing on Calico Open Source IP pools so pod traffic to destinations outside the cluster is source-NATed to the node's IP.](https://docs.tigera.io/calico/latest/networking/configuring/workloads-outside-cluster)
 
 ## [📄️Use IPVS kube-proxy](https://docs.tigera.io/calico/latest/networking/configuring/use-ipvs)
 
-[Use IPVS kube-proxy for performance improvements.](https://docs.tigera.io/calico/latest/networking/configuring/use-ipvs)
+[Run kube-proxy in IPVS mode with Calico Open Source for constant-time service load balancing on clusters with thousands of services.](https://docs.tigera.io/calico/latest/networking/configuring/use-ipvs)
 
 ## [📄️Accelerate Istio network performance](https://docs.tigera.io/calico/latest/networking/configuring/sidecar-acceleration)
 
-[Use Calico to accelerate network performance of traffic through the Istio Envoy sidecar using eBPF.](https://docs.tigera.io/calico/latest/networking/configuring/sidecar-acceleration)
+[Accelerate Istio Envoy sidecar traffic on Calico Open Source by using eBPF SOCKMAP to bypass kernel networking layers between the sidecar and the application.](https://docs.tigera.io/calico/latest/networking/configuring/sidecar-acceleration)
 
 ## [📄️Use a specific MAC address for a pod](https://docs.tigera.io/calico/latest/networking/configuring/pod-mac-address)
 
-[Specify the MAC address for a pod instead of allowing the operating system to assign one](https://docs.tigera.io/calico/latest/networking/configuring/pod-mac-address)
+[Set a chosen MAC address on a Kubernetes pod interface with the Calico Open Source CNI plugin, useful for software licensing tied to MAC.](https://docs.tigera.io/calico/latest/networking/configuring/pod-mac-address)
 
 ## [📄️Use NodeLocal DNSCache in your cluster](https://docs.tigera.io/calico/latest/networking/configuring/node-local-dns-cache)
 
-[Install NodeLocal DNSCache](https://docs.tigera.io/calico/latest/networking/configuring/node-local-dns-cache)
+[Install NodeLocal DNSCache alongside Calico Open Source and configure network policy that lets pod DNS traffic reach the local cache.](https://docs.tigera.io/calico/latest/networking/configuring/node-local-dns-cache)
 
 ## [📄️Configure QoS Controls](https://docs.tigera.io/calico/latest/networking/configuring/qos-controls)
 
-[Configure QoS (Quality of Service) Controls to limit ingress and/or egress bandwidth, packet rate and number of connections of Calico workloads.](https://docs.tigera.io/calico/latest/networking/configuring/qos-controls)
+[Cap pod ingress and egress bandwidth, packet rate, and connection counts with Calico Open Source QoS controls, plus DiffServ marking on egress traffic.](https://docs.tigera.io/calico/latest/networking/configuring/qos-controls)
 
 ## [📄️Add Maglev load balancing to a service](https://docs.tigera.io/calico/latest/networking/configuring/add-maglev-load-balancing)
 
-[Add Maglev load balancing to a Kubernetes service.](https://docs.tigera.io/calico/latest/networking/configuring/add-maglev-load-balancing)
+[Switch a Kubernetes service to Maglev consistent-hash load balancing on the Calico Open Source eBPF data plane for resilient backend selection.](https://docs.tigera.io/calico/latest/networking/configuring/add-maglev-load-balancing)
 
 ### Configure BGP peering
 
@@ -20457,51 +20483,51 @@ In Calico, we program these LUTs to the eBPF data plane as maps which can grow u
 
 ## [📄️Get started with IP address management](https://docs.tigera.io/calico/latest/networking/ipam/get-started-ip-addresses)
 
-[Configure Calico to use Calico IPAM or host-local IPAM, and when to use one or the other.](https://docs.tigera.io/calico/latest/networking/ipam/get-started-ip-addresses)
+[Decide between Calico Open Source IPAM and host-local IPAM, then configure IP pool allocation, NAT outgoing, and per-namespace assignment.](https://docs.tigera.io/calico/latest/networking/ipam/get-started-ip-addresses)
 
 ## [📄️Create multiple IP pools](https://docs.tigera.io/calico/latest/networking/ipam/ippools)
 
-[Create multiple IP pools](https://docs.tigera.io/calico/latest/networking/ipam/ippools)
+[Create additional Calico Open Source IPPool resources at install time or on a running cluster to serve disjoint ranges, IPv6, or per-topology pod address assignment.](https://docs.tigera.io/calico/latest/networking/ipam/ippools)
 
 ## [📄️Configure IP autodetection](https://docs.tigera.io/calico/latest/networking/ipam/ip-autodetection)
 
-[Calico IP autodetection ensures the correct IP address is used for routing. Learn how to customize it.](https://docs.tigera.io/calico/latest/networking/ipam/ip-autodetection)
+[Choose how Calico Open Source detects each node's primary IP address, with options for first-found, Kubernetes internal, interface regex, CIDR, and skip-interface.](https://docs.tigera.io/calico/latest/networking/ipam/ip-autodetection)
 
 ## [📄️Configure dual stack or IPv6 only](https://docs.tigera.io/calico/latest/networking/ipam/ipv6)
 
-[Configure dual stack or IPv6 only for workloads.](https://docs.tigera.io/calico/latest/networking/ipam/ipv6)
+[Set up dual-stack or IPv6-only pod networking on Calico Open Source by configuring IP pools, node IP autodetection, and the CNI plugin.](https://docs.tigera.io/calico/latest/networking/ipam/ipv6)
 
 ## [📄️Configure Kubernetes control plane to operate over IPv6](https://docs.tigera.io/calico/latest/networking/ipam/ipv6-control-plane)
 
-[Configure the Kubernetes control plane to operate over IPv6 for dual stack or IPv6 only.](https://docs.tigera.io/calico/latest/networking/ipam/ipv6-control-plane)
+[Run the Kubernetes control plane over IPv6 with Calico Open Source for dual-stack or IPv6-only clusters, including kubeadm flags and node configuration.](https://docs.tigera.io/calico/latest/networking/ipam/ipv6-control-plane)
 
 ## [📄️Add a floating IP to a pod](https://docs.tigera.io/calico/latest/networking/ipam/add-floating-ip)
 
-[Configure one or more floating IPs to use as additional IP addresses for reaching a Kubernetes pod.](https://docs.tigera.io/calico/latest/networking/ipam/add-floating-ip)
+[Attach one or more floating IPs to a Kubernetes pod with Calico Open Source IPAM so external clients can reach the workload over any IP protocol.](https://docs.tigera.io/calico/latest/networking/ipam/add-floating-ip)
 
 ## [📄️Use a specific IP address with a pod](https://docs.tigera.io/calico/latest/networking/ipam/use-specific-ip)
 
-[Specify the IP address for a pod instead of allowing Calico to automatically choose one.](https://docs.tigera.io/calico/latest/networking/ipam/use-specific-ip)
+[Pin a Kubernetes pod to a chosen IP address with Calico Open Source IPAM by setting a pod annotation that supplies the requested address.](https://docs.tigera.io/calico/latest/networking/ipam/use-specific-ip)
 
 ## [📄️Assign IP addresses based on topology](https://docs.tigera.io/calico/latest/networking/ipam/assign-ip-addresses-topology)
 
-[Configure Calico to use specific IP pools for different topologies including zone, rack, or region.](https://docs.tigera.io/calico/latest/networking/ipam/assign-ip-addresses-topology)
+[Bind Calico Open Source IP pools to specific zones, racks, or regions with node selectors so pods receive addresses that match the cluster topology.](https://docs.tigera.io/calico/latest/networking/ipam/assign-ip-addresses-topology)
 
 ## [📄️Migrate from one IP pool to another](https://docs.tigera.io/calico/latest/networking/ipam/migrate-pools)
 
-[Migrate pods from one IP pool to another on a running cluster without network disruption.](https://docs.tigera.io/calico/latest/networking/ipam/migrate-pools)
+[Migrate workloads from one Calico Open Source IPPool to another on a running cluster without disrupting existing pod connectivity.](https://docs.tigera.io/calico/latest/networking/ipam/migrate-pools)
 
 ## [📄️Change IP pool block size](https://docs.tigera.io/calico/latest/networking/ipam/change-block-size)
 
-[Expand or shrink the IP pool block size to efficiently manage IP pool addresses.](https://docs.tigera.io/calico/latest/networking/ipam/change-block-size)
+[Resize an IPPool block in Calico Open Source — by creating a replacement pool and migrating workloads — to use IP space more efficiently.](https://docs.tigera.io/calico/latest/networking/ipam/change-block-size)
 
 ## [📄️Restrict a pod to use an IP address in a specific range](https://docs.tigera.io/calico/latest/networking/ipam/legacy-firewalls)
 
-[Restrict the IP address chosen for a pod to a specific range of IP addresses.](https://docs.tigera.io/calico/latest/networking/ipam/legacy-firewalls)
+[Restrict pods to a defined IP address range with Calico Open Source so legacy firewalls and security appliances can recognize cluster workloads.](https://docs.tigera.io/calico/latest/networking/ipam/legacy-firewalls)
 
 ## [📄️LoadBalancer IP address management](https://docs.tigera.io/calico/latest/networking/ipam/service-loadbalancer)
 
-[LoadBalancer IP address management](https://docs.tigera.io/calico/latest/networking/ipam/service-loadbalancer)
+[Use the Calico Open Source LoadBalancer controller to allocate addresses to Kubernetes Service type LoadBalancer from configured IP pools.](https://docs.tigera.io/calico/latest/networking/ipam/service-loadbalancer)
 
 ### Get started with IP address management
 
@@ -22765,55 +22791,55 @@ Calico LoadBalancer IP address management works in conjunction with other Calico
 
 ## [📄️Set up a development machine](https://docs.tigera.io/calico/latest/networking/openstack/dev-machine-setup)
 
-[Configure Calico networking for OpenStack VMs.](https://docs.tigera.io/calico/latest/networking/openstack/dev-machine-setup)
+[Walk-through example of provisioning a developer VM on a Calico Open Source OpenStack cloud, with security groups, an external network attachment, and SSH access.](https://docs.tigera.io/calico/latest/networking/openstack/dev-machine-setup)
 
 ## [📄️Prepare a VM guest OS for IPv6](https://docs.tigera.io/calico/latest/networking/openstack/ipv6)
 
-[Prepare a VM guest OS for IPv6.](https://docs.tigera.io/calico/latest/networking/openstack/ipv6)
+[Prepare a guest OS image for IPv6 connectivity on Calico Open Source OpenStack VMs by configuring DHCPv6 client behavior and accepting router advertisements.](https://docs.tigera.io/calico/latest/networking/openstack/ipv6)
 
 ## [📄️IP addressing and connectivity](https://docs.tigera.io/calico/latest/networking/openstack/connectivity)
 
-[Configure OpenStack networking for Calico.](https://docs.tigera.io/calico/latest/networking/openstack/connectivity)
+[Plan IPv4 and IPv6 address ranges, gateway routing, and Neutron network setup to connect Calico Open Source OpenStack VMs with the data center fabric.](https://docs.tigera.io/calico/latest/networking/openstack/connectivity)
 
 ## [📄️Endpoint labels and operator policy](https://docs.tigera.io/calico/latest/networking/openstack/labels)
 
-[Use Calico labels to define policy for OpenStack VMs.](https://docs.tigera.io/calico/latest/networking/openstack/labels)
+[Reference for the project, network, security-group, and namespace labels that Calico Open Source places on WorkloadEndpoints for OpenStack VMs, plus how to use them in policy.](https://docs.tigera.io/calico/latest/networking/openstack/labels)
 
 ## [📄️Configure systems for use with Calico](https://docs.tigera.io/calico/latest/networking/openstack/configuration)
 
-[Configure OpenStack components for Calico.](https://docs.tigera.io/calico/latest/networking/openstack/configuration)
+[Configure Nova, Neutron, and DHCP agent settings on OpenStack compute hosts to run Calico Open Source as either a core plugin or an ML2 mechanism driver.](https://docs.tigera.io/calico/latest/networking/openstack/configuration)
 
 ## [📄️Detailed semantics](https://docs.tigera.io/calico/latest/networking/openstack/semantics)
 
-[Calico provides connectivity that is different from traditional Neutron API semantics.](https://docs.tigera.io/calico/latest/networking/openstack/semantics)
+[Reference for the IP-only connectivity model Calico Open Source provides between OpenStack instances, and how it differs from traditional Neutron L2 semantics.](https://docs.tigera.io/calico/latest/networking/openstack/semantics)
 
 ## [📄️Floating IPs](https://docs.tigera.io/calico/latest/networking/openstack/floating-ips)
 
-[Configure floating IPs in Calico for OpenStack.](https://docs.tigera.io/calico/latest/networking/openstack/floating-ips)
+[Allocate Neutron floating IPs against a Calico Open Source OpenStack tenant network, including router gateways, provider subnets, and core-plugin requirements.](https://docs.tigera.io/calico/latest/networking/openstack/floating-ips)
 
 ## [📄️Service IPs](https://docs.tigera.io/calico/latest/networking/openstack/service-ips)
 
-[Use a floating or fixed IP for a Calico-networked VM.](https://docs.tigera.io/calico/latest/networking/openstack/service-ips)
+[Assign a service IP to a Calico Open Source OpenStack VM by attaching either a Neutron floating IP or an additional fixed IP on the VM port.](https://docs.tigera.io/calico/latest/networking/openstack/service-ips)
 
 ## [📄️Host routes](https://docs.tigera.io/calico/latest/networking/openstack/host-routes)
 
-[Options for host routing with Calico.](https://docs.tigera.io/calico/latest/networking/openstack/host-routes)
+[Configure Neutron subnet host routes so the next-hop IP points at the local hypervisor in Calico Open Source OpenStack deployments and traffic flows correctly.](https://docs.tigera.io/calico/latest/networking/openstack/host-routes)
 
 ## [📄️Multiple regions](https://docs.tigera.io/calico/latest/networking/openstack/multiple-regions)
 
-[Install a multi-region OpenStack deployment with Calico.](https://docs.tigera.io/calico/latest/networking/openstack/multiple-regions)
+[Deploy Calico Open Source across multiple OpenStack regions sharing one etcd datastore, with per-region namespaces for inter-region policy.](https://docs.tigera.io/calico/latest/networking/openstack/multiple-regions)
 
 ## [📄️Live migration for OpenStack VMs](https://docs.tigera.io/calico/latest/networking/openstack/live-migration)
 
-[Configure live migration support.](https://docs.tigera.io/calico/latest/networking/openstack/live-migration)
+[Tune route priority and BGP propagation so Calico Open Source converges OpenStack VM traffic to the destination host quickly during live migration.](https://docs.tigera.io/calico/latest/networking/openstack/live-migration)
 
 ## [📄️Kuryr](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
 
-[Use Kuryr with Calico networking.](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
+[Use Kuryr together with the networking-calico ML2 driver in Calico Open Source so Neutron provides networking for container workloads.](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
 
 ## [📄️Calico's interpretation of Neutron API calls](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api)
 
-[Effects of the Neutron API calls on the network.](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api)
+[Reference for how Calico Open Source interprets each Neutron API call — networks, subnets, ports, security groups, and Horizon actions — in an OpenStack deployment.](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api)
 
 ### Set up a development machine
 
@@ -23408,17 +23434,7 @@ In `/etc/neutron/neutron.conf` you need the following settings to configure the 
 | ------------ | ------ | -------------------------- |
 | core\_plugin | calico | Use the Calico core plugin |
 
-Calico can operate either as a core plugin or as an ML2 mechanism driver. The function is the same both ways, except that floating IPs are only supported when operating as a core plugin; hence the recommended setting here.
-
-However, if you don't need floating IPs and have other reasons for using ML2, you can, instead, set
-
-| Setting      | Value                                | Meaning        |
-| ------------ | ------------------------------------ | -------------- |
-| core\_plugin | neutron.plugins.ml2.plugin.ML2Plugin | Use ML2 plugin |
-
-and then the further ML2-specific configuration as covered below.
-
-The following options in the `[calico]` section of `/etc/neutron/neutron.conf` govern how the Calico plugin/driver and DHCP agent connect to the Calico etcd datastore. You should set `etcd_host` to the IP of your etcd server, and `etcd_port` if that server is using a non-standard port. If the etcd server is TLS-secured, also set:
+The following options in the `[calico]` section of `/etc/neutron/neutron.conf` govern how the Calico plugin and DHCP agent connect to the Calico etcd datastore. You should set `etcd_host` to the IP of your etcd server, and `etcd_port` if that server is using a non-standard port. If the etcd server is TLS-secured, also set:
 
 - `etcd_cert_file` to a client certificate, which must be signed by a Certificate Authority that the server trusts
 
@@ -23442,19 +23458,9 @@ In a [multi-region deployment](https://docs.tigera.io/calico/latest/networking/o
 
 When specified, the value of `openstack_region` must be a string of lower case alphanumeric characters or '-', starting and ending with an alphanumeric character, and must match the value of [`OpenStackRegion`](https://docs.tigera.io/calico/latest/reference/felix/configuration#openstack-specific-configuration) configured for the Felixes in the same region.
 
-## ML2 (.../ml2\_conf.ini)[​](#ml2-ml2_confini)
-
-In `/etc/neutron/plugins/ml2/ml2_conf.ini` you need the following settings to configure the ML2 plugin.
-
-| Setting                | Value       | Meaning                           |
-| ---------------------- | ----------- | --------------------------------- |
-| mechanism\_drivers     | calico      | Use Calico                        |
-| type\_drivers          | local, flat | Allow 'local' and 'flat' networks |
-| tenant\_network\_types | local, flat | Allow 'local' and 'flat' networks |
-
 ### Detailed semantics
 
-A Calico network is a Neutron network (either provider or tenant) whose connectivity is implemented, on every compute host with instances attached to that network, by the `calico` plugin or ML2 mechanism driver. There can be just one Calico network, or any number of them. This page describes the connectivity that Calico provides between instances attached to the same network, and between instances attached to different Calico networks, and between instances and the Internet; and explains how and why this connectivity is in some details different from traditional Neutron API semantics.
+A Calico network is a Neutron network (either provider or tenant) whose connectivity is implemented, on every compute host with instances attached to that network, by the `calico` plugin. There can be just one Calico network, or any number of them. This page describes the connectivity that Calico provides between instances attached to the same network, and between instances attached to different Calico networks, and between instances and the Internet; and explains how and why this connectivity is in some details different from traditional Neutron API semantics.
 
 ## Connectivity between instances on the same network[​](#connectivity-between-instances-on-the-same-network)
 
@@ -23506,9 +23512,7 @@ Subject to those restrictions and understandings, we believe that networking-cal
 
 ### Floating IPs
 
-networking-calico includes beta support for floating IPs. Currently this requires running Calico as a Neutron core plugin (i.e. `core_plugin = calico`) instead of as an ML2 mechanism driver.
-
-> **SECONDARY:** We would like it to work as an ML2 mechanism driver too—patches and/or advice welcome!
+networking-calico includes support for floating IPs.
 
 To set up a floating IP, you need the same pattern of Neutron data model objects as you do for Neutron in general, which means:
 
@@ -24878,7 +24882,7 @@ The timestamps on these transitions let you measure how long each phase takes. F
 
 ### Kuryr
 
-networking-calico works with Kuryr; this means using Neutron, with the Calico ML2 driver, to provide networking for container workloads.
+networking-calico works with Kuryr; this means using Neutron, with the Calico core plugin, to provide networking for container workloads.
 
 You can use DevStack to install a single node Calico/Kuryr system, with a `local.conf` file like this:
 
@@ -24992,7 +24996,7 @@ All the attributes of security groups remain unchanged in Calico.
 
 ## Floating IPs[​](#floating-ips)
 
-Floating IPs are supported at beta level. For more information, see [Floating IPs](https://docs.tigera.io/calico/latest/networking/openstack/floating-ips).
+Floating IPs are supported. For more information, see [Floating IPs](https://docs.tigera.io/calico/latest/networking/openstack/floating-ips).
 
 ## Neutron Routers[​](#neutron-routers)
 
@@ -25068,11 +25072,11 @@ Administrators should not create routers, as they serve no purpose in a Calico n
 
 ## [📄️KubeVirt networking](https://docs.tigera.io/calico/latest/networking/kubevirt/kubevirt-networking)
 
-[Configure Calico to provide networking for KubeVirt virtual machines, including IP address persistence and live migration support.](https://docs.tigera.io/calico/latest/networking/kubevirt/kubevirt-networking)
+[Configure Calico Open Source bridge-mode networking for KubeVirt VMs so each VM keeps the same IP across reboots, evictions, and live migrations.](https://docs.tigera.io/calico/latest/networking/kubevirt/kubevirt-networking)
 
 ## [📄️BGP routing for KubeVirt live migration](https://docs.tigera.io/calico/latest/networking/kubevirt/live-migration-bgp)
 
-[Configure BGP routing to support KubeVirt live migration across racks and AS boundaries.](https://docs.tigera.io/calico/latest/networking/kubevirt/live-migration-bgp)
+[Configure BGPFilter resources in Calico Open Source so elevated route priorities propagate across racks and AS boundaries during KubeVirt live migration.](https://docs.tigera.io/calico/latest/networking/kubevirt/live-migration-bgp)
 
 ### KubeVirt networking
 
@@ -33268,7 +33272,7 @@ If you are using the etcd datastore, we recommend enabling mutual TLS authentica
   - [Kubernetes controllers](https://docs.tigera.io/calico/latest/reference/kube-controllers/configuration#configuring-datastore-access) (Kubernetes and OpenShift only)
   - [Felix](https://docs.tigera.io/calico/latest/reference/felix/configuration#etcd-datastore-configuration)
   - [Typha](https://docs.tigera.io/calico/latest/reference/typha/configuration#etcd-datastore-configuration) (often deployed in larger Kubernetes deployments)
-  - [Neutron plugin or ML2 driver](https://docs.tigera.io/calico/latest/networking/openstack/configuration#neutron-server-etcneutronneutronconf) (OpenStack only)
+  - [Neutron plugin](https://docs.tigera.io/calico/latest/networking/openstack/configuration#neutron-server-etcneutronneutronconf) (OpenStack only)
   - [DHCP agent](https://docs.tigera.io/calico/latest/networking/openstack/configuration#neutron-server-etcneutronneutronconf) (OpenStack only)
 
 <!-- /tabs -->
@@ -34291,15 +34295,15 @@ View flow logs and policy metrics to better understand your network traffic.
 
 ##### [View flow logs](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
 
-[View flow logs in the Calico Whisker web console.](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
+[Inspect aggregated network flow logs in the Calico Whisker in-cluster web console for Calico Open Source. Filter by source, destination, and policy verdicts.](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
 
 ##### [Enable flow logs](https://docs.tigera.io/calico/latest/observability/enable-whisker)
 
-[Enable the flow logs API and Calico Whisker](https://docs.tigera.io/calico/latest/observability/enable-whisker)
+[Activate the Goldmane flow logs API and the Calico Whisker web console in Calico Open Source clusters that were upgraded from earlier versions.](https://docs.tigera.io/calico/latest/observability/enable-whisker)
 
 ##### [Flow logs API](https://docs.tigera.io/calico/latest/observability/flow-logs-api)
 
-[Learn about the flow logs API.](https://docs.tigera.io/calico/latest/observability/flow-logs-api)
+[Reference for the Goldmane flow logs API in Calico Open Source. Retrieve aggregated traffic data, policy hits, and packet and byte counts over gRPC.](https://docs.tigera.io/calico/latest/observability/flow-logs-api)
 
 ### View flow logs in the Calico Whisker web console
 
@@ -34489,115 +34493,115 @@ Post-installation tasks for managing Calico.
 
 ##### [Upgrade Calico on Kubernetes](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade)
 
-[Upgrade to a newer version of Calico for Kubernetes.](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade)
+[Upgrade Calico Open Source on Kubernetes from v3.15 or later for Helm, operator-managed, and manifest-based installs on both Kubernetes API and etcd datastores.](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade)
 
 ##### [Upgrade Calico on OpenShift 4](https://docs.tigera.io/calico/latest/operations/upgrading/openshift-upgrade)
 
-[Upgrade to a newer version of Calico for OpenShift.](https://docs.tigera.io/calico/latest/operations/upgrading/openshift-upgrade)
+[Upgrade Calico Open Source on OpenShift 4 by reapplying manifests and updating OwnerReferences for projectcalico.org/v3 resources.](https://docs.tigera.io/calico/latest/operations/upgrading/openshift-upgrade)
 
 ##### [Upgrade Calico on OpenStack](https://docs.tigera.io/calico/latest/operations/upgrading/openstack-upgrade)
 
-[Upgrade to a newer version of Calico for OpenStack.](https://docs.tigera.io/calico/latest/operations/upgrading/openstack-upgrade)
+[Upgrade Calico Open Source on OpenStack from v3.0 or later by updating system packages on CentOS or Ubuntu compute and control nodes.](https://docs.tigera.io/calico/latest/operations/upgrading/openstack-upgrade)
 
 ## calicoctl[​](#calicoctl)
 
 ##### [Install calicoctl](https://docs.tigera.io/calico/latest/operations/calicoctl/install)
 
-[Install the CLI for Calico.](https://docs.tigera.io/calico/latest/operations/calicoctl/install)
+[Install the calicoctl command-line tool as a binary, container, or kubectl plugin so administrators can manage Calico Open Source resources from any workstation.](https://docs.tigera.io/calico/latest/operations/calicoctl/install)
 
 ##### [Configure calicoctl](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/overview)
 
-[Configure calicoctl for datastore access.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/overview)
+[Overview reference for configuring calicoctl datastore access in Calico Open Source, comparing config-file, environment-variable, and kubeconfig credential methods.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/overview)
 
 ##### [Configure calicoctl to connect to an etcd datastore](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/etcd)
 
-[Sample configuration files etcd.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/etcd)
+[Sample calicoctl configuration files for connecting to an etcdv3 datastore in a Calico Open Source cluster, with TLS, endpoints, and authentication settings.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/etcd)
 
 ##### [Configure calicoctl to connect to the Kubernetes API datastore](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/kdd)
 
-[Sample configuration files for kdd.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/kdd)
+[Sample calicoctl configuration files for connecting to the Kubernetes API datastore in a Calico Open Source cluster using kubeconfig credentials.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/kdd)
 
 ## Deploy image options[​](#deploy-image-options)
 
 ##### [Install images by registry digest](https://docs.tigera.io/calico/latest/operations/image-options/imageset)
 
-[Specify the digests for operator to use to deploy images.](https://docs.tigera.io/calico/latest/operations/image-options/imageset)
+[Pin Calico Open Source operator deployments to immutable image digests with an ImageSet resource so security teams can review and verify each image.](https://docs.tigera.io/calico/latest/operations/image-options/imageset)
 
 ##### [Configure use of your image registry](https://docs.tigera.io/calico/latest/operations/image-options/alternate-registry)
 
-[Configure Calico to pull images from a public or private registry.](https://docs.tigera.io/calico/latest/operations/image-options/alternate-registry)
+[Configure Calico Open Source to pull operator and component images from a public or private container registry, including air-gapped and constrained networks.](https://docs.tigera.io/calico/latest/operations/image-options/alternate-registry)
 
 ## eBPF[​](#ebpf)
 
 ##### [eBPF use cases](https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf)
 
-[Learn when to use eBPF, and when not to.](https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf)
+[Guidance on when the Calico Open Source eBPF data plane fits a workload compared to the standard iptables data plane, with trade-offs and feature comparisons.](https://docs.tigera.io/calico/latest/operations/ebpf/use-cases-ebpf)
 
 ##### [Enabling the eBPF data plane](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
 
-[Step-by-step instructions for enabling the eBPF data plane.](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
+[Switch a running Calico Open Source cluster to the eBPF data plane through automatic Tigera Operator detection on kubeadm clusters or a manual configuration path.](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
 
 ##### [Install in eBPF mode](https://docs.tigera.io/calico/latest/operations/ebpf/install)
 
-[Install Calico in eBPF mode.](https://docs.tigera.io/calico/latest/operations/ebpf/install)
+[Install Calico Open Source with the eBPF data plane during initial cluster setup as an alternative to the iptables data plane.](https://docs.tigera.io/calico/latest/operations/ebpf/install)
 
 ##### [Troubleshoot eBPF mode](https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf)
 
-[How to troubleshoot when running in eBPF mode.](https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf)
+[Troubleshooting guide for the Calico Open Source eBPF data plane covering verification logs, service connectivity, BPF map inspection, and common failure modes.](https://docs.tigera.io/calico/latest/operations/ebpf/troubleshoot-ebpf)
 
 ## Monitoring[​](#monitoring)
 
 ##### [Monitor Calico component metrics](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)
 
-[Use open source Prometheus for monitoring and alerting on Calico components.](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)
+[Scrape Calico Open Source Felix, Typha, and kube-controllers metrics with open-source Prometheus and configure alerting rules from time-series data.](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)
 
 ##### [Visualizing metrics via Grafana](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-visual)
 
-[Use open source Grafana for visualizing Calico components.](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-visual)
+[Visualize Calico Open Source component metrics scraped by Prometheus on Grafana dashboards to spot anomalies in Felix, Typha, and node performance.](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-visual)
 
 ## Troubleshooting[​](#troubleshooting)
 
 ##### [Troubleshooting and diagnostics](https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting)
 
-[View logs and diagnostics, common issues, and where to report issues in github.](https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting)
+[Troubleshooting guide for Calico Open Source clusters covering diagnostics, common failure patterns, log severity tuning, and where to file upstream issues.](https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting)
 
 ##### [Troubleshooting commands](https://docs.tigera.io/calico/latest/operations/troubleshoot/commands)
 
-[Learn basic commands to verify cluster and components are working.](https://docs.tigera.io/calico/latest/operations/troubleshoot/commands)
+[Reference of command-line tools and kubectl invocations for verifying cluster, routing, and component health in a Calico Open Source installation.](https://docs.tigera.io/calico/latest/operations/troubleshoot/commands)
 
 ##### [Component logs](https://docs.tigera.io/calico/latest/operations/troubleshoot/component-logs)
 
-[Where to find component logs.](https://docs.tigera.io/calico/latest/operations/troubleshoot/component-logs)
+[Reference for locating and collecting Calico Open Source component logs including calico/node, Felix, Typha, kube-controllers, and CNI plugin output.](https://docs.tigera.io/calico/latest/operations/troubleshoot/component-logs)
 
 ##### [VPP data plane troubleshooting](https://docs.tigera.io/calico/latest/operations/troubleshoot/vpp)
 
-[Specific troubleshooting steps for the VPP data plane.](https://docs.tigera.io/calico/latest/operations/troubleshoot/vpp)
+[Troubleshooting guide for the Calico Open Source VPP data plane covering log collection, diagnostic helpers, and recovery from common VPP failure modes.](https://docs.tigera.io/calico/latest/operations/troubleshoot/vpp)
 
 ## Other operations tasks[​](#other-operations-tasks)
 
 ##### [Migrate Calico data from an etcdv3 datastore to a Kubernetes datastore](https://docs.tigera.io/calico/latest/operations/datastore-migration)
 
-[Migrate your cluster from using an etcdv3 datastore to a Kubernetes datastore.](https://docs.tigera.io/calico/latest/operations/datastore-migration)
+[Migrate a Calico Open Source cluster from the etcdv3 datastore to the Kubernetes API datastore with calicoctl, preserving network and policy state on a live cluster.](https://docs.tigera.io/calico/latest/operations/datastore-migration)
 
 ##### [Migrate Calico to an operator-managed installation](https://docs.tigera.io/calico/latest/operations/operator-migration)
 
-[Migrate Calico from manifest-based to operator-managed installation](https://docs.tigera.io/calico/latest/operations/operator-migration)
+[Migrate a Calico Open Source installation from manifest-based resources to an operator-managed install for automatic platform detection, simpler upgrades, and lifecycle management.](https://docs.tigera.io/calico/latest/operations/operator-migration)
 
 ##### [Enable kubectl to manage Calico APIs](https://docs.tigera.io/calico/latest/operations/install-apiserver)
 
-[Install the Calico API server on an existing Calico cluster](https://docs.tigera.io/calico/latest/operations/install-apiserver)
+[Install the Calico Open Source aggregated API server on an existing cluster so kubectl can manage projectcalico.org/v3 resources without calicoctl.](https://docs.tigera.io/calico/latest/operations/install-apiserver)
 
 ##### [Decommission a node](https://docs.tigera.io/calico/latest/operations/decommissioning-a-node)
 
-[Manually remove a node from a cluster that is installed with Calico.](https://docs.tigera.io/calico/latest/operations/decommissioning-a-node)
+[Manually decommission a node in a self-managed Calico Open Source cluster with calicoctl, releasing IP allocations and BGP peers from the datastore cleanly.](https://docs.tigera.io/calico/latest/operations/decommissioning-a-node)
 
 ##### [FIPS mode](https://docs.tigera.io/calico/latest/operations/fips)
 
-[Run Calico using FIPS validated cryptography.](https://docs.tigera.io/calico/latest/operations/fips)
+[Run Calico Open Source in FIPS 140-2 compliant mode using NIST-validated cryptographic modules and FIPS-approved algorithms across all data plane components.](https://docs.tigera.io/calico/latest/operations/fips)
 
 ##### [Manage TLS certificates used by Calico](https://docs.tigera.io/calico/latest/operations/certificate-management)
 
-[Control the issuer of certificates used by Calico](https://docs.tigera.io/calico/latest/operations/certificate-management)
+[Manage TLS certificates for Calico Open Source components by controlling the certificate issuer through the Kubernetes Certificates API and operator configuration.](https://docs.tigera.io/calico/latest/operations/certificate-management)
 
 ### Istio Ambient Mode
 
@@ -34800,7 +34804,7 @@ done
 
 ## [📄️Install calicoctl](https://docs.tigera.io/calico/latest/operations/calicoctl/install)
 
-[Install the CLI for Calico.](https://docs.tigera.io/calico/latest/operations/calicoctl/install)
+[Install the calicoctl command-line tool as a binary, container, or kubectl plugin so administrators can manage Calico Open Source resources from any workstation.](https://docs.tigera.io/calico/latest/operations/calicoctl/install)
 
 ## [🗃Configure calicoctl](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/)
 
@@ -35046,15 +35050,15 @@ docker pull calico/ctl:v3.32.0
 
 ## [📄️Configure calicoctl](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/overview)
 
-[Configure calicoctl for datastore access.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/overview)
+[Overview reference for configuring calicoctl datastore access in Calico Open Source, comparing config-file, environment-variable, and kubeconfig credential methods.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/overview)
 
 ## [📄️Configure calicoctl to connect to an etcd datastore](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/etcd)
 
-[Sample configuration files etcd.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/etcd)
+[Sample calicoctl configuration files for connecting to an etcdv3 datastore in a Calico Open Source cluster, with TLS, endpoints, and authentication settings.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/etcd)
 
 ## [📄️Configure calicoctl to connect to the Kubernetes API datastore](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/kdd)
 
-[Sample configuration files for kdd.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/kdd)
+[Sample calicoctl configuration files for connecting to the Kubernetes API datastore in a Calico Open Source cluster using kubeconfig credentials.](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/kdd)
 
 ### Configure calicoctl
 
@@ -35443,11 +35447,11 @@ The full list of resources that can be managed, including a description of each,
 
 ## [📄️Install images by registry digest](https://docs.tigera.io/calico/latest/operations/image-options/imageset)
 
-[Specify the digests for operator to use to deploy images.](https://docs.tigera.io/calico/latest/operations/image-options/imageset)
+[Pin Calico Open Source operator deployments to immutable image digests with an ImageSet resource so security teams can review and verify each image.](https://docs.tigera.io/calico/latest/operations/image-options/imageset)
 
 ## [📄️Configure use of your image registry](https://docs.tigera.io/calico/latest/operations/image-options/alternate-registry)
 
-[Configure Calico to pull images from a public or private registry.](https://docs.tigera.io/calico/latest/operations/image-options/alternate-registry)
+[Configure Calico Open Source to pull operator and component images from a public or private container registry, including air-gapped and constrained networks.](https://docs.tigera.io/calico/latest/operations/image-options/alternate-registry)
 
 ### Install images by registry digest
 
@@ -36673,11 +36677,11 @@ When using native `projectcalico.org/v3` CRDs, tier RBAC is enforced via the adm
 
 ## [📄️Monitor Calico component metrics](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)
 
-[Use open source Prometheus for monitoring and alerting on Calico components.](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)
+[Scrape Calico Open Source Felix, Typha, and kube-controllers metrics with open-source Prometheus and configure alerting rules from time-series data.](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)
 
 ## [📄️Visualizing metrics via Grafana](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-visual)
 
-[Use open source Grafana for visualizing Calico components.](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-visual)
+[Visualize Calico Open Source component metrics scraped by Prometheus on Grafana dashboards to spot anomalies in Felix, Typha, and node performance.](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-visual)
 
 ### Monitor Calico component metrics
 
@@ -38014,19 +38018,19 @@ After you apply the YAML, FIPS mode is fully operational.
 
 ## [📄️Troubleshooting and diagnostics](https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting)
 
-[View logs and diagnostics, common issues, and where to report issues in github.](https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting)
+[Troubleshooting guide for Calico Open Source clusters covering diagnostics, common failure patterns, log severity tuning, and where to file upstream issues.](https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting)
 
 ## [📄️Troubleshooting commands](https://docs.tigera.io/calico/latest/operations/troubleshoot/commands)
 
-[Learn basic commands to verify cluster and components are working.](https://docs.tigera.io/calico/latest/operations/troubleshoot/commands)
+[Reference of command-line tools and kubectl invocations for verifying cluster, routing, and component health in a Calico Open Source installation.](https://docs.tigera.io/calico/latest/operations/troubleshoot/commands)
 
 ## [📄️Component logs](https://docs.tigera.io/calico/latest/operations/troubleshoot/component-logs)
 
-[Where to find component logs.](https://docs.tigera.io/calico/latest/operations/troubleshoot/component-logs)
+[Reference for locating and collecting Calico Open Source component logs including calico/node, Felix, Typha, kube-controllers, and CNI plugin output.](https://docs.tigera.io/calico/latest/operations/troubleshoot/component-logs)
 
 ## [📄️VPP data plane troubleshooting](https://docs.tigera.io/calico/latest/operations/troubleshoot/vpp)
 
-[Specific troubleshooting steps for the VPP data plane.](https://docs.tigera.io/calico/latest/operations/troubleshoot/vpp)
+[Troubleshooting guide for the Calico Open Source VPP data plane covering log collection, diagnostic helpers, and recovery from common VPP failure modes.](https://docs.tigera.io/calico/latest/operations/troubleshoot/vpp)
 
 ### Troubleshooting and diagnostics
 
@@ -39484,367 +39488,367 @@ APIs, CLI, architecture and design, and FAQ.
 
 ##### [Calico Client library](https://docs.tigera.io/calico/latest/reference/api)
 
-[Learn about the Calico client library and how to use it.](https://docs.tigera.io/calico/latest/reference/api)
+[Calico Open Source Go client library reference for working with resources such as network policies programmatically against the Calico Open Source API.](https://docs.tigera.io/calico/latest/reference/api)
 
 ##### [Helm installation reference](https://docs.tigera.io/calico/latest/reference/installation/helm_customization)
 
-[Helm installation reference](https://docs.tigera.io/calico/latest/reference/installation/helm_customization)
+[Helm chart values reference for installing Calico Open Source covering supported overrides and operator configuration knobs.](https://docs.tigera.io/calico/latest/reference/installation/helm_customization)
 
 ##### [Installation reference](https://docs.tigera.io/calico/latest/reference/installation/api)
 
-[Installation API reference](https://docs.tigera.io/calico/latest/reference/installation/api)
+[Installation API reference for Calico Open Source listing the operator-managed custom resources used to configure cluster installation.](https://docs.tigera.io/calico/latest/reference/installation/api)
 
 ## calicoctl reference[​](#calicoctl-reference)
 
 ##### [calicoctl user reference](https://docs.tigera.io/calico/latest/reference/calicoctl/overview)
 
-[The command line interface tool (CLI) to manage Calico network and security policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/overview)
+[Reference overview of the calicoctl command-line tool for managing Calico Open Source network policy, BGP, IP address management, and node operations.](https://docs.tigera.io/calico/latest/reference/calicoctl/overview)
 
 ##### [calicoctl create](https://docs.tigera.io/calico/latest/reference/calicoctl/create)
 
-[Command to create a policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/create)
+[Reference for the calicoctl create command in Calico Open Source, used to create resources from a manifest file.](https://docs.tigera.io/calico/latest/reference/calicoctl/create)
 
 ##### [calicoctl replace](https://docs.tigera.io/calico/latest/reference/calicoctl/replace)
 
-[Command to replace an existing policy with a different one.](https://docs.tigera.io/calico/latest/reference/calicoctl/replace)
+[Reference for the calicoctl replace command in Calico Open Source, used to replace an existing resource with one defined in a manifest.](https://docs.tigera.io/calico/latest/reference/calicoctl/replace)
 
 ##### [calicoctl apply](https://docs.tigera.io/calico/latest/reference/calicoctl/apply)
 
-[Command to apply a policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/apply)
+[Reference for the calicoctl apply command in Calico Open Source, used to create or update resources from a manifest file.](https://docs.tigera.io/calico/latest/reference/calicoctl/apply)
 
 ##### [calicoctl delete](https://docs.tigera.io/calico/latest/reference/calicoctl/delete)
 
-[Command to delete a policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/delete)
+[Reference for the calicoctl delete command in Calico Open Source, used to remove resources by name or from a manifest file.](https://docs.tigera.io/calico/latest/reference/calicoctl/delete)
 
 ##### [calicoctl get](https://docs.tigera.io/calico/latest/reference/calicoctl/get)
 
-[Command to list policies in the default output format.](https://docs.tigera.io/calico/latest/reference/calicoctl/get)
+[Reference for the calicoctl get command in Calico Open Source, used to list resources in plain, YAML, JSON, or wide output formats.](https://docs.tigera.io/calico/latest/reference/calicoctl/get)
 
 ##### [calicoctl patch](https://docs.tigera.io/calico/latest/reference/calicoctl/patch)
 
-[Command to update a node with a patch.](https://docs.tigera.io/calico/latest/reference/calicoctl/patch)
+[Reference for the calicoctl patch command in Calico Open Source, used to apply a partial update to a resource.](https://docs.tigera.io/calico/latest/reference/calicoctl/patch)
 
 ##### [calicoctl label](https://docs.tigera.io/calico/latest/reference/calicoctl/label)
 
-[Command to change labels for workload endpoints or nodes.](https://docs.tigera.io/calico/latest/reference/calicoctl/label)
+[Reference for the calicoctl label command in Calico Open Source, used to add, change, or remove labels on workload endpoints and nodes.](https://docs.tigera.io/calico/latest/reference/calicoctl/label)
 
 ##### [calicoctl cluster](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/overview)
 
-[Commands for calicoctl cluster.](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/overview)
+[Reference overview of the calicoctl cluster subcommands in Calico Open Source for cluster-wide operations such as diagnostics collection.](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/overview)
 
 ##### [calicoctl cluster diags](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/diags)
 
-[Command to get diagnostics from a Calico cluster.](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/diags)
+[Reference for the calicoctl cluster diags command in Calico Open Source, used to collect diagnostics from all nodes in a cluster.](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/diags)
 
 ##### [calicoctl convert](https://docs.tigera.io/calico/latest/reference/calicoctl/convert)
 
-[Command to convert contents of policy.yaml to v3 policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/convert)
+[Reference for the calicoctl convert command in Calico Open Source, used to convert v1 resource manifests into v3 format.](https://docs.tigera.io/calico/latest/reference/calicoctl/convert)
 
 ##### [calicoctl ipam](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/overview)
 
-[Commands for calicoctl IP address management (IPAM).](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/overview)
+[Reference overview of the calicoctl IPAM subcommands in Calico Open Source for IP address management operations.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/overview)
 
 ##### [calicoctl ipam check](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/check)
 
-[Command to check IPAM status](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/check)
+[Reference for the calicoctl IPAM check command in Calico Open Source, used to audit IP address allocation consistency across the cluster.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/check)
 
 ##### [calicoctl ipam release](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/release)
 
-[Command to release an IP address from Calico IP management.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/release)
+[Reference for the calicoctl IPAM release command in Calico Open Source, used to release a leaked or stale IP address back to the pool.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/release)
 
 ##### [calicoctl ipam show](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/show)
 
-[Command to see if IP address is being used.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/show)
+[Reference for the calicoctl IPAM show command in Calico Open Source, used to display the owner and details of an allocated IP address.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/show)
 
 ##### [calicoctl ipam configure](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/configure)
 
-[Command to change IPAM configuration.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/configure)
+[Reference for the calicoctl IPAM configure command in Calico Open Source, used to set IP address management options such as strict affinity.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/configure)
 
 ##### [calicoctl ipam split](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/split)
 
-[Command and options for splitting an existing IP pool](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/split)
+[Reference for the calicoctl IPAM split command in Calico Open Source, used to split an existing IP pool into smaller pools.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/split)
 
 ##### [calicoctl node](https://docs.tigera.io/calico/latest/reference/calicoctl/node/overview)
 
-[Commands for calicoctl node.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/overview)
+[Reference overview of the calicoctl node subcommands in Calico Open Source for managing the calico/node container.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/overview)
 
 ##### [calicoctl node run](https://docs.tigera.io/calico/latest/reference/calicoctl/node/run)
 
-[Command and options for running a Calico node.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/run)
+[Reference for the calicoctl node run command in Calico Open Source, used to start a calico/node instance with the supplied options.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/run)
 
 ##### [calicoctl node status](https://docs.tigera.io/calico/latest/reference/calicoctl/node/status)
 
-[Command to check status of a Calico node instance.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/status)
+[Reference for the calicoctl node status command in Calico Open Source, used to display BGP peer state and node liveness.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/status)
 
 ##### [calicoctl node diags](https://docs.tigera.io/calico/latest/reference/calicoctl/node/diags)
 
-[Command to get diagnostics from a Calico node.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/diags)
+[Reference for the calicoctl node diags command in Calico Open Source, used to collect diagnostics from a single Calico node.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/diags)
 
 ##### [calicoctl node checksystem](https://docs.tigera.io/calico/latest/reference/calicoctl/node/checksystem)
 
-[Command to check compatibility of host to run a Calico node instance.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/checksystem)
+[Reference for the calicoctl node check-system command in Calico Open Source, used to verify host kernel support for Calico features.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/checksystem)
 
 ##### [calicoctl datastore](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/overview)
 
-[Commands for calicoctl datastore](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/overview)
+[Reference overview of the calicoctl datastore subcommands in Calico Open Source for migrating between etcdv3 and Kubernetes datastores.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/overview)
 
 ##### [calicoctl datastore migrate](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/overview)
 
-[Commands for calicoctl datastore migrate.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/overview)
+[Reference overview of the calicoctl datastore migrate subcommands in Calico Open Source for performing safe datastore migrations.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/overview)
 
 ##### [calicoctl datastore migrate export](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/export)
 
-[Command and options for exporting an etcdv3 datastore.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/export)
+[Reference for the calicoctl datastore migrate export command in Calico Open Source, used to export resources from an etcdv3 datastore.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/export)
 
 ##### [calicoctl datastore migrate import](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/import)
 
-[Command and options for importing exported data to a kubernetes datastore.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/import)
+[Reference for the calicoctl datastore migrate import command in Calico Open Source, used to import resources into a Kubernetes datastore.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/import)
 
 ##### [calicoctl datastore migrate lock](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/lock)
 
-[Command and options for locking a datastore for migration.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/lock)
+[Reference for the calicoctl datastore migrate lock command in Calico Open Source, used to lock a datastore during migration.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/lock)
 
 ##### [calicoctl datastore migrate unlock](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/unlock)
 
-[Command and options for unlocking a datastore after migration.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/unlock)
+[Reference for the calicoctl datastore migrate unlock command in Calico Open Source, used to unlock a datastore after migration completes.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/unlock)
 
 ##### [calicoctl version](https://docs.tigera.io/calico/latest/reference/calicoctl/version)
 
-[Command to display the calicoctl CLI version.](https://docs.tigera.io/calico/latest/reference/calicoctl/version)
+[Reference for the calicoctl version command in Calico Open Source, used to display client and cluster version information.](https://docs.tigera.io/calico/latest/reference/calicoctl/version)
 
 ## Resource definitions[​](#resource-definitions)
 
 ##### [Resource definitions](https://docs.tigera.io/calico/latest/reference/resources/overview)
 
-[Calico resources (APIs) that you can manage using calicoctl.](https://docs.tigera.io/calico/latest/reference/resources/overview)
+[Reference overview of the Calico Open Source API resources, including the manifest format and how calicoctl manages them.](https://docs.tigera.io/calico/latest/reference/resources/overview)
 
 ##### [BGP configuration](https://docs.tigera.io/calico/latest/reference/resources/bgpconfig)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/bgpconfig)
+[Reference for the BGPConfiguration resource in Calico Open Source that sets cluster-wide BGP options including the autonomous system number and route reflectors.](https://docs.tigera.io/calico/latest/reference/resources/bgpconfig)
 
 ##### [BGP peer](https://docs.tigera.io/calico/latest/reference/resources/bgppeer)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/bgppeer)
+[Reference for the BGPPeer resource in Calico Open Source that defines a BGP neighbor relationship between Calico nodes and external routers.](https://docs.tigera.io/calico/latest/reference/resources/bgppeer)
 
 ##### [BGP Filter](https://docs.tigera.io/calico/latest/reference/resources/bgpfilter)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/bgpfilter)
+[Reference for the BGPFilter resource in Calico Open Source that filters routes imported from or exported to BGP peers.](https://docs.tigera.io/calico/latest/reference/resources/bgpfilter)
 
 ##### [Block affinity](https://docs.tigera.io/calico/latest/reference/resources/blockaffinity)
 
-[IP address management block affinity](https://docs.tigera.io/calico/latest/reference/resources/blockaffinity)
+[Reference for the BlockAffinity resource in Calico Open Source that records which node owns each IP address management block.](https://docs.tigera.io/calico/latest/reference/resources/blockaffinity)
 
 ##### [Calico node status](https://docs.tigera.io/calico/latest/reference/resources/caliconodestatus)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/caliconodestatus)
+[Reference for the CalicoNodeStatus resource in Calico Open Source that exposes per-node agent, BGP, and routing state.](https://docs.tigera.io/calico/latest/reference/resources/caliconodestatus)
 
 ##### [Felix configuration](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
+[Reference for the FelixConfiguration resource in Calico Open Source that controls Felix data plane behavior across the cluster.](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
 
 ##### [Global network policy](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy)
+[Reference for the GlobalNetworkPolicy resource in Calico Open Source, a cluster-scoped policy that selects endpoints across all namespaces.](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy)
 
 ##### [Global network set](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkset)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkset)
+[Reference for the GlobalNetworkSet resource in Calico Open Source that defines a cluster-scoped set of CIDRs referenced by network policy.](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkset)
 
 ##### [Host endpoint](https://docs.tigera.io/calico/latest/reference/resources/hostendpoint)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/hostendpoint)
+[Reference for the HostEndpoint resource in Calico Open Source that represents a host network interface for policy enforcement.](https://docs.tigera.io/calico/latest/reference/resources/hostendpoint)
 
 ##### [IP pool](https://docs.tigera.io/calico/latest/reference/resources/ippool)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/ippool)
+[Reference for the IPPool resource in Calico Open Source that defines CIDRs available for pod IP address allocation.](https://docs.tigera.io/calico/latest/reference/resources/ippool)
 
 ##### [IP reservation](https://docs.tigera.io/calico/latest/reference/resources/ipreservation)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/ipreservation)
+[Reference for the IPReservation resource in Calico Open Source that excludes specific addresses or ranges from automatic allocation.](https://docs.tigera.io/calico/latest/reference/resources/ipreservation)
 
 ##### [IPAM configuration](https://docs.tigera.io/calico/latest/reference/resources/ipamconfig)
 
-[IP address management global configuration](https://docs.tigera.io/calico/latest/reference/resources/ipamconfig)
+[Reference for the IP address management configuration resource in Calico Open Source that sets cluster-wide options such as strict affinity.](https://docs.tigera.io/calico/latest/reference/resources/ipamconfig)
 
 ##### [Kubernetes controllers configuration](https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig)
 
-[API for KubeControllersConfiguration resource.](https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig)
+[Reference for the KubeControllersConfiguration resource in Calico Open Source that controls behavior of the kube-controllers component.](https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig)
 
 ##### [Network policy](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
+[Reference for the NetworkPolicy resource in Calico Open Source, a namespaced policy that selects pods within a single namespace.](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
 
 ##### [Network set](https://docs.tigera.io/calico/latest/reference/resources/networkset)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/networkset)
+[Reference for the NetworkSet resource in Calico Open Source that defines a namespaced set of CIDRs referenced by network policy.](https://docs.tigera.io/calico/latest/reference/resources/networkset)
 
 ##### [Node](https://docs.tigera.io/calico/latest/reference/resources/node)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/node)
+[Reference for the Node resource in Calico Open Source that represents a host running the calico/node agent.](https://docs.tigera.io/calico/latest/reference/resources/node)
 
 ##### [Profile](https://docs.tigera.io/calico/latest/reference/resources/profile)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/profile)
+[Reference for the Profile resource in Calico Open Source that groups labels and rules applied to endpoints.](https://docs.tigera.io/calico/latest/reference/resources/profile)
 
 ##### [Workload endpoint](https://docs.tigera.io/calico/latest/reference/resources/workloadendpoint)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/workloadendpoint)
+[Reference for the WorkloadEndpoint resource in Calico Open Source that represents a pod or VM interface for policy and IPAM.](https://docs.tigera.io/calico/latest/reference/resources/workloadendpoint)
 
 ## Configuring etcd RBAC[​](#configuring-etcd-rbac)
 
 ##### [Setting up etcd certificates for RBAC](https://docs.tigera.io/calico/latest/reference/etcd-rbac/overview)
 
-[Protect your etcd datastore by restricting operation permissions.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/overview)
+[Reference overview of role-based access control for the etcdv3 datastore used by Calico Open Source covering users, roles, and permission scopes.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/overview)
 
 ##### [Generating certificates](https://docs.tigera.io/calico/latest/reference/etcd-rbac/certificate-generation)
 
-[Generate Certificates of Authority (CA) to authenticate users with etcd datastore.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/certificate-generation)
+[Reference for generating Certificate Authority and client certificates that authenticate Calico Open Source components against the etcdv3 datastore.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/certificate-generation)
 
 ##### [Creating users and roles](https://docs.tigera.io/calico/latest/reference/etcd-rbac/users-and-roles)
 
-[Provide role-based access control to etcd datastore.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/users-and-roles)
+[Reference for defining etcdv3 users and roles that grant scoped access to Calico Open Source components.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/users-and-roles)
 
 ##### [Segmenting etcd on Kubernetes (basic)](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes)
 
-[Limit user access to Kubernetes and Calico components.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes)
+[Reference for restricting user access to Kubernetes and Calico Open Source resources using role-based access control.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes)
 
 ##### [Segmenting etcd on Kubernetes (advanced)](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes-advanced)
 
-[Limit user access to Calico components or calicoctl.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes-advanced)
+[Advanced reference for restricting user access to Calico Open Source components and calicoctl through Kubernetes role-based access control.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes-advanced)
 
 ##### [Calico key and path prefixes](https://docs.tigera.io/calico/latest/reference/etcd-rbac/calico-etcdv3-paths)
 
-[Prefixes to configure Calico components to access the etcd datastore.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/calico-etcdv3-paths)
+[Reference listing the etcdv3 key prefixes used by each Calico Open Source component for role-based access control configuration.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/calico-etcdv3-paths)
 
 ## Felix[​](#felix)
 
 ##### [Configuring Felix](https://docs.tigera.io/calico/latest/reference/felix/configuration)
 
-[Configure Felix, the daemon that runs on every machine that provides endpoints.](https://docs.tigera.io/calico/latest/reference/felix/configuration)
+[Reference for Felix configuration parameters in Calico Open Source covering environment variables, FelixConfiguration fields, and per-node overrides.](https://docs.tigera.io/calico/latest/reference/felix/configuration)
 
 ##### [Monitoring Felix with Prometheus](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
 
-[Review metrics for the Felix component if you are using Prometheus.](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
+[Prometheus metrics reference for Felix in Calico Open Source covering counters and gauges exposed for data plane health and policy evaluation.](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
 
 ## Typha[​](#typha)
 
 ##### [Typha overview](https://docs.tigera.io/calico/latest/reference/typha/overview)
 
-[Use the Calico Typha daemon to increase scale and reduce impact on the datastore.](https://docs.tigera.io/calico/latest/reference/typha/overview)
+[Reference overview of the Typha daemon in Calico Open Source explaining how it reduces datastore load and scales Felix to large clusters.](https://docs.tigera.io/calico/latest/reference/typha/overview)
 
 ##### [Configuring Typha](https://docs.tigera.io/calico/latest/reference/typha/configuration)
 
-[Configure Typha for scaling Kubernetes API datastore (kdd).](https://docs.tigera.io/calico/latest/reference/typha/configuration)
+[Reference for Typha configuration parameters in Calico Open Source covering environment variables and config file options for scaling the Kubernetes datastore.](https://docs.tigera.io/calico/latest/reference/typha/configuration)
 
 ##### [Monitoring Typha with Prometheus](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
 
-[Review metrics for the Typha component if you are using Prometheus.](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
+[Prometheus metrics reference for Typha in Calico Open Source covering connection counts, cache health, and fan-out metrics.](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
 
 ## Configuration on public clouds[​](#configuration-on-public-clouds)
 
 ##### [Amazon Web Services](https://docs.tigera.io/calico/latest/reference/public-cloud/aws)
 
-[Advantages of using Calico in AWS.](https://docs.tigera.io/calico/latest/reference/public-cloud/aws)
+[Reference for running Calico Open Source on Amazon Web Services covering supported networking modes, source/destination check requirements, and AWS-specific notes.](https://docs.tigera.io/calico/latest/reference/public-cloud/aws)
 
 ##### [Azure](https://docs.tigera.io/calico/latest/reference/public-cloud/azure)
 
-[Support for Calico in Azure.](https://docs.tigera.io/calico/latest/reference/public-cloud/azure)
+[Reference for running Calico Open Source on Microsoft Azure covering supported networking modes, user-defined routes, and Azure platform notes.](https://docs.tigera.io/calico/latest/reference/public-cloud/azure)
 
 ##### [Google Compute Engine](https://docs.tigera.io/calico/latest/reference/public-cloud/gce)
 
-[Methods to ensure that traffic between containers on different hosts is not dropped by GCE fabric.](https://docs.tigera.io/calico/latest/reference/public-cloud/gce)
+[Reference for running Calico Open Source on Google Compute Engine covering supported networking modes and platform-specific routing requirements.](https://docs.tigera.io/calico/latest/reference/public-cloud/gce)
 
 ##### [IBM Cloud](https://docs.tigera.io/calico/latest/reference/public-cloud/ibm)
 
-[Calico integration with IBM Cloud.](https://docs.tigera.io/calico/latest/reference/public-cloud/ibm)
+[Reference for running Calico Open Source on IBM Cloud covering supported networking modes and platform integration notes.](https://docs.tigera.io/calico/latest/reference/public-cloud/ibm)
 
 ## Host endpoints[​](#host-endpoints)
 
 ##### [Host endpoints](https://docs.tigera.io/calico/latest/reference/host-endpoints/overview)
 
-[Secure host network interfaces.](https://docs.tigera.io/calico/latest/reference/host-endpoints/overview)
+[Reference overview of host endpoint protection in Calico Open Source covering the model for securing host network interfaces with policy.](https://docs.tigera.io/calico/latest/reference/host-endpoints/overview)
 
 ##### [Creating policy for basic connectivity](https://docs.tigera.io/calico/latest/reference/host-endpoints/connectivity)
 
-[Customize the Calico failsafe policy to protect host endpoints.](https://docs.tigera.io/calico/latest/reference/host-endpoints/connectivity)
+[Reference for the Calico Open Source failsafe policy that protects host endpoints from being cut off when host network policy is misconfigured.](https://docs.tigera.io/calico/latest/reference/host-endpoints/connectivity)
 
 ##### [Creating host endpoint objects](https://docs.tigera.io/calico/latest/reference/host-endpoints/objects)
 
-[To protect a host interface, start by creating a host endpoint object in etcd.](https://docs.tigera.io/calico/latest/reference/host-endpoints/objects)
+[Reference for the HostEndpoint object in Calico Open Source describing how to represent a host network interface so policy can select it.](https://docs.tigera.io/calico/latest/reference/host-endpoints/objects)
 
 ##### [Selector-based policies](https://docs.tigera.io/calico/latest/reference/host-endpoints/selector)
 
-[Apply ordered policies to endpoints that match specific label selectors.](https://docs.tigera.io/calico/latest/reference/host-endpoints/selector)
+[Reference for ordered host endpoint policies in Calico Open Source that match interfaces using label selectors.](https://docs.tigera.io/calico/latest/reference/host-endpoints/selector)
 
 ##### [Failsafe rules](https://docs.tigera.io/calico/latest/reference/host-endpoints/failsafe)
 
-[Avoid cutting off connectivity to hosts because of incorrect network policies.](https://docs.tigera.io/calico/latest/reference/host-endpoints/failsafe)
+[Reference for the Calico Open Source failsafe inbound and outbound port lists that prevent host network policy from cutting off control-plane connectivity.](https://docs.tigera.io/calico/latest/reference/host-endpoints/failsafe)
 
 ##### [Pre-DNAT policy](https://docs.tigera.io/calico/latest/reference/host-endpoints/pre-dnat)
 
-[Apply rules in a host endpoint policy before any DNAT.](https://docs.tigera.io/calico/latest/reference/host-endpoints/pre-dnat)
+[Reference for pre-DNAT host endpoint policy in Calico Open Source that applies rules to ingress traffic before destination NAT rewrites the address.](https://docs.tigera.io/calico/latest/reference/host-endpoints/pre-dnat)
 
 ##### [Apply on forwarded traffic](https://docs.tigera.io/calico/latest/reference/host-endpoints/forwarded)
 
-[Learn the subtleties using the applyOnForward option in host endpoint policies.](https://docs.tigera.io/calico/latest/reference/host-endpoints/forwarded)
+[Reference for the applyOnForward field on Calico Open Source host endpoint policy that determines how rules apply to forwarded traffic versus local processes.](https://docs.tigera.io/calico/latest/reference/host-endpoints/forwarded)
 
 ##### [Summary of host endpoint policies](https://docs.tigera.io/calico/latest/reference/host-endpoints/summary)
 
-[How different host endpoint rules affect packet flows.](https://docs.tigera.io/calico/latest/reference/host-endpoints/summary)
+[Reference summary describing how the different Calico Open Source host endpoint policy types interact and affect packet flows.](https://docs.tigera.io/calico/latest/reference/host-endpoints/summary)
 
 ##### [Connection tracking](https://docs.tigera.io/calico/latest/reference/host-endpoints/conntrack)
 
-[Workaround for Linux conntrack if Calico policy is not working as it should.](https://docs.tigera.io/calico/latest/reference/host-endpoints/conntrack)
+[Reference covering Linux conntrack workarounds for Calico Open Source host endpoint policy when stateful tracking interferes with expected packet flow.](https://docs.tigera.io/calico/latest/reference/host-endpoints/conntrack)
 
 ## Architecture[​](#architecture)
 
 ##### [Component architecture](https://docs.tigera.io/calico/latest/reference/architecture/overview)
 
-[Learn the basic Calico components.](https://docs.tigera.io/calico/latest/reference/architecture/overview)
+[Architectural overview reference of the Calico Open Source components including Felix, BIRD, confd, Typha, and the kube-controllers.](https://docs.tigera.io/calico/latest/reference/architecture/overview)
 
 ##### ['The Calico data path: IP routing and iptables'](https://docs.tigera.io/calico/latest/reference/architecture/data-path)
 
-[Learn how packets flow between workloads in a datacenter, or between a workload and the internet.](https://docs.tigera.io/calico/latest/reference/architecture/data-path)
+[Reference covering the Calico Open Source data path explaining how packets flow between workloads and to external destinations across networking modes.](https://docs.tigera.io/calico/latest/reference/architecture/data-path)
 
 ## VPP data plane[​](#vpp-data-plane)
 
 ##### [Primary interface configuration](https://docs.tigera.io/calico/latest/reference/vpp/uplink-configuration)
 
-[Configuration parameters for the primary interface in VPP.](https://docs.tigera.io/calico/latest/reference/vpp/uplink-configuration)
+[Reference for primary interface configuration parameters in the Calico Open Source VPP data plane.](https://docs.tigera.io/calico/latest/reference/vpp/uplink-configuration)
 
 ##### [VPP data plane implementation details](https://docs.tigera.io/calico/latest/reference/vpp/technical-details)
 
-[Technical details on the VPP data plane integration.](https://docs.tigera.io/calico/latest/reference/vpp/technical-details)
+[Technical reference for the Calico Open Source VPP data plane integration covering packet processing, kernel offload, and graph nodes.](https://docs.tigera.io/calico/latest/reference/vpp/technical-details)
 
 ##### [Host network configuration](https://docs.tigera.io/calico/latest/reference/vpp/host-network)
 
-[Description of the host network configuration performed by VPP.](https://docs.tigera.io/calico/latest/reference/vpp/host-network)
+[Reference covering the host network configuration applied by the Calico Open Source VPP data plane during initialization.](https://docs.tigera.io/calico/latest/reference/vpp/host-network)
 
 ## Other reference topics[​](#other-reference-topics)
 
 ##### [Component versions](https://docs.tigera.io/calico/latest/reference/component-versions)
 
-[A list of component versions for Calico](https://docs.tigera.io/calico/latest/reference/component-versions)
+[Component version reference listing the upstream container images and binaries shipped with each Calico Open Source release.](https://docs.tigera.io/calico/latest/reference/component-versions)
 
 ##### [Frequently asked questions](https://docs.tigera.io/calico/latest/reference/faq)
 
-[Common questions that users ask about Calico.](https://docs.tigera.io/calico/latest/reference/faq)
+[Frequently asked questions about Calico Open Source covering networking modes, IP address management, BGP, policy behavior, and platform support.](https://docs.tigera.io/calico/latest/reference/faq)
 
 ##### [Getting involved](https://docs.tigera.io/calico/latest/reference/involved)
 
-[Contribute to Calico open source project.](https://docs.tigera.io/calico/latest/reference/involved)
+[Reference for getting involved with the Calico Open Source upstream project including source repositories, mailing lists, Slack, and contribution channels.](https://docs.tigera.io/calico/latest/reference/involved)
 
 ##### [Configuring calico/node](https://docs.tigera.io/calico/latest/reference/configure-calico-node)
 
-[Customize calico/node using environment variables.](https://docs.tigera.io/calico/latest/reference/configure-calico-node)
+[Reference for configuring the calico/node container in Calico Open Source through environment variables that control Felix, BIRD, and confd.](https://docs.tigera.io/calico/latest/reference/configure-calico-node)
 
 ##### [Configure resource requests and limits](https://docs.tigera.io/calico/latest/reference/configure-resources)
 
-[Configure Resource requests and limits.](https://docs.tigera.io/calico/latest/reference/configure-resources)
+[Reference for setting Kubernetes resource requests and limits on Calico Open Source components managed by the Tigera Operator.](https://docs.tigera.io/calico/latest/reference/configure-resources)
 
 ##### [Configure the Calico CNI plugins](https://docs.tigera.io/calico/latest/reference/configure-cni-plugins)
 
-[Details for configuring the Calico CNI plugins.](https://docs.tigera.io/calico/latest/reference/configure-cni-plugins)
+[Reference for configuring the Calico Open Source CNI plugin and IPAM plugin through CNI network configuration files.](https://docs.tigera.io/calico/latest/reference/configure-cni-plugins)
 
 ### Calico Client library
 
@@ -42365,39 +42369,39 @@ You can use kubectl to manage Calico resources instead by [installing the Calico
 
 ## [📄️calicoctl user reference](https://docs.tigera.io/calico/latest/reference/calicoctl/overview)
 
-[The command line interface tool (CLI) to manage Calico network and security policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/overview)
+[Reference overview of the calicoctl command-line tool for managing Calico Open Source network policy, BGP, IP address management, and node operations.](https://docs.tigera.io/calico/latest/reference/calicoctl/overview)
 
 ## [📄️calicoctl create](https://docs.tigera.io/calico/latest/reference/calicoctl/create)
 
-[Command to create a policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/create)
+[Reference for the calicoctl create command in Calico Open Source, used to create resources from a manifest file.](https://docs.tigera.io/calico/latest/reference/calicoctl/create)
 
 ## [📄️calicoctl replace](https://docs.tigera.io/calico/latest/reference/calicoctl/replace)
 
-[Command to replace an existing policy with a different one.](https://docs.tigera.io/calico/latest/reference/calicoctl/replace)
+[Reference for the calicoctl replace command in Calico Open Source, used to replace an existing resource with one defined in a manifest.](https://docs.tigera.io/calico/latest/reference/calicoctl/replace)
 
 ## [📄️calicoctl apply](https://docs.tigera.io/calico/latest/reference/calicoctl/apply)
 
-[Command to apply a policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/apply)
+[Reference for the calicoctl apply command in Calico Open Source, used to create or update resources from a manifest file.](https://docs.tigera.io/calico/latest/reference/calicoctl/apply)
 
 ## [📄️calicoctl delete](https://docs.tigera.io/calico/latest/reference/calicoctl/delete)
 
-[Command to delete a policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/delete)
+[Reference for the calicoctl delete command in Calico Open Source, used to remove resources by name or from a manifest file.](https://docs.tigera.io/calico/latest/reference/calicoctl/delete)
 
 ## [📄️calicoctl get](https://docs.tigera.io/calico/latest/reference/calicoctl/get)
 
-[Command to list policies in the default output format.](https://docs.tigera.io/calico/latest/reference/calicoctl/get)
+[Reference for the calicoctl get command in Calico Open Source, used to list resources in plain, YAML, JSON, or wide output formats.](https://docs.tigera.io/calico/latest/reference/calicoctl/get)
 
 ## [📄️calicoctl patch](https://docs.tigera.io/calico/latest/reference/calicoctl/patch)
 
-[Command to update a node with a patch.](https://docs.tigera.io/calico/latest/reference/calicoctl/patch)
+[Reference for the calicoctl patch command in Calico Open Source, used to apply a partial update to a resource.](https://docs.tigera.io/calico/latest/reference/calicoctl/patch)
 
 ## [📄️calicoctl label](https://docs.tigera.io/calico/latest/reference/calicoctl/label)
 
-[Command to change labels for workload endpoints or nodes.](https://docs.tigera.io/calico/latest/reference/calicoctl/label)
+[Reference for the calicoctl label command in Calico Open Source, used to add, change, or remove labels on workload endpoints and nodes.](https://docs.tigera.io/calico/latest/reference/calicoctl/label)
 
 ## [📄️calicoctl validate](https://docs.tigera.io/calico/latest/reference/calicoctl/validate)
 
-[Command to validate Calico resource files.](https://docs.tigera.io/calico/latest/reference/calicoctl/validate)
+[Reference for the calicoctl validate command in Calico Open Source, used to check resource manifests for syntax and schema errors.](https://docs.tigera.io/calico/latest/reference/calicoctl/validate)
 
 ## [🗃cluster](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/)
 
@@ -42405,7 +42409,7 @@ You can use kubectl to manage Calico resources instead by [installing the Calico
 
 ## [📄️calicoctl convert](https://docs.tigera.io/calico/latest/reference/calicoctl/convert)
 
-[Command to convert contents of policy.yaml to v3 policy.](https://docs.tigera.io/calico/latest/reference/calicoctl/convert)
+[Reference for the calicoctl convert command in Calico Open Source, used to convert v1 resource manifests into v3 format.](https://docs.tigera.io/calico/latest/reference/calicoctl/convert)
 
 ## [🗃ipam](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/)
 
@@ -42421,7 +42425,7 @@ You can use kubectl to manage Calico resources instead by [installing the Calico
 
 ## [📄️calicoctl version](https://docs.tigera.io/calico/latest/reference/calicoctl/version)
 
-[Command to display the calicoctl CLI version.](https://docs.tigera.io/calico/latest/reference/calicoctl/version)
+[Reference for the calicoctl version command in Calico Open Source, used to display client and cluster version information.](https://docs.tigera.io/calico/latest/reference/calicoctl/version)
 
 ### calicoctl user reference
 
@@ -44202,11 +44206,11 @@ Description:
 
 ## [📄️calicoctl cluster](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/overview)
 
-[Commands for calicoctl cluster.](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/overview)
+[Reference overview of the calicoctl cluster subcommands in Calico Open Source for cluster-wide operations such as diagnostics collection.](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/overview)
 
 ## [📄️calicoctl cluster diags](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/diags)
 
-[Command to get diagnostics from a Calico cluster.](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/diags)
+[Reference for the calicoctl cluster diags command in Calico Open Source, used to collect diagnostics from all nodes in a cluster.](https://docs.tigera.io/calico/latest/reference/calicoctl/cluster/diags)
 
 ### calicoctl cluster
 
@@ -45026,27 +45030,27 @@ Description:
 
 ## [📄️calicoctl ipam](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/overview)
 
-[Commands for calicoctl IP address management (IPAM).](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/overview)
+[Reference overview of the calicoctl IPAM subcommands in Calico Open Source for IP address management operations.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/overview)
 
 ## [📄️calicoctl ipam check](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/check)
 
-[Command to check IPAM status](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/check)
+[Reference for the calicoctl IPAM check command in Calico Open Source, used to audit IP address allocation consistency across the cluster.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/check)
 
 ## [📄️calicoctl ipam release](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/release)
 
-[Command to release an IP address from Calico IP management.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/release)
+[Reference for the calicoctl IPAM release command in Calico Open Source, used to release a leaked or stale IP address back to the pool.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/release)
 
 ## [📄️calicoctl ipam show](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/show)
 
-[Command to see if IP address is being used.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/show)
+[Reference for the calicoctl IPAM show command in Calico Open Source, used to display the owner and details of an allocated IP address.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/show)
 
 ## [📄️calicoctl ipam configure](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/configure)
 
-[Command to change IPAM configuration.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/configure)
+[Reference for the calicoctl IPAM configure command in Calico Open Source, used to set IP address management options such as strict affinity.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/configure)
 
 ## [📄️calicoctl ipam split](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/split)
 
-[Command and options for splitting an existing IP pool](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/split)
+[Reference for the calicoctl IPAM split command in Calico Open Source, used to split an existing IP pool into smaller pools.](https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/split)
 
 ### calicoctl ipam
 
@@ -45621,23 +45625,23 @@ calicoctl datastore migrate unlock
 
 ## [📄️calicoctl node](https://docs.tigera.io/calico/latest/reference/calicoctl/node/overview)
 
-[Commands for calicoctl node.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/overview)
+[Reference overview of the calicoctl node subcommands in Calico Open Source for managing the calico/node container.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/overview)
 
 ## [📄️calicoctl node run](https://docs.tigera.io/calico/latest/reference/calicoctl/node/run)
 
-[Command and options for running a Calico node.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/run)
+[Reference for the calicoctl node run command in Calico Open Source, used to start a calico/node instance with the supplied options.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/run)
 
 ## [📄️calicoctl node status](https://docs.tigera.io/calico/latest/reference/calicoctl/node/status)
 
-[Command to check status of a Calico node instance.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/status)
+[Reference for the calicoctl node status command in Calico Open Source, used to display BGP peer state and node liveness.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/status)
 
 ## [📄️calicoctl node diags](https://docs.tigera.io/calico/latest/reference/calicoctl/node/diags)
 
-[Command to get diagnostics from a Calico node.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/diags)
+[Reference for the calicoctl node diags command in Calico Open Source, used to collect diagnostics from a single Calico node.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/diags)
 
 ## [📄️calicoctl node checksystem](https://docs.tigera.io/calico/latest/reference/calicoctl/node/checksystem)
 
-[Command to check compatibility of host to run a Calico node instance.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/checksystem)
+[Reference for the calicoctl node check-system command in Calico Open Source, used to verify host kernel support for Calico features.](https://docs.tigera.io/calico/latest/reference/calicoctl/node/checksystem)
 
 ### calicoctl node
 
@@ -46447,7 +46451,7 @@ calicoctl node checksystem --kernel-config /root/MYKERNELFILE
 
 ## [📄️calicoctl datastore](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/overview)
 
-[Commands for calicoctl datastore](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/overview)
+[Reference overview of the calicoctl datastore subcommands in Calico Open Source for migrating between etcdv3 and Kubernetes datastores.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/overview)
 
 ## [🗃migrate](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/)
 
@@ -46493,23 +46497,23 @@ Details on the `calicoctl datastore` commands are described in the documents lin
 
 ## [📄️calicoctl datastore migrate](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/overview)
 
-[Commands for calicoctl datastore migrate.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/overview)
+[Reference overview of the calicoctl datastore migrate subcommands in Calico Open Source for performing safe datastore migrations.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/overview)
 
 ## [📄️calicoctl datastore migrate export](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/export)
 
-[Command and options for exporting an etcdv3 datastore.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/export)
+[Reference for the calicoctl datastore migrate export command in Calico Open Source, used to export resources from an etcdv3 datastore.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/export)
 
 ## [📄️calicoctl datastore migrate import](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/import)
 
-[Command and options for importing exported data to a kubernetes datastore.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/import)
+[Reference for the calicoctl datastore migrate import command in Calico Open Source, used to import resources into a Kubernetes datastore.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/import)
 
 ## [📄️calicoctl datastore migrate lock](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/lock)
 
-[Command and options for locking a datastore for migration.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/lock)
+[Reference for the calicoctl datastore migrate lock command in Calico Open Source, used to lock a datastore during migration.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/lock)
 
 ## [📄️calicoctl datastore migrate unlock](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/unlock)
 
-[Command and options for unlocking a datastore after migration.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/unlock)
+[Reference for the calicoctl datastore migrate unlock command in Calico Open Source, used to unlock a datastore after migration completes.](https://docs.tigera.io/calico/latest/reference/calicoctl/datastore/migrate/unlock)
 
 ### calicoctl datastore migrate
 
@@ -46907,95 +46911,95 @@ Use `calicoctl version` to obtain the following data.
 
 ## [📄️Resource definitions](https://docs.tigera.io/calico/latest/reference/resources/overview)
 
-[Calico resources (APIs) that you can manage using calicoctl.](https://docs.tigera.io/calico/latest/reference/resources/overview)
+[Reference overview of the Calico Open Source API resources, including the manifest format and how calicoctl manages them.](https://docs.tigera.io/calico/latest/reference/resources/overview)
 
 ## [📄️BGP configuration](https://docs.tigera.io/calico/latest/reference/resources/bgpconfig)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/bgpconfig)
+[Reference for the BGPConfiguration resource in Calico Open Source that sets cluster-wide BGP options including the autonomous system number and route reflectors.](https://docs.tigera.io/calico/latest/reference/resources/bgpconfig)
 
 ## [📄️BGP peer](https://docs.tigera.io/calico/latest/reference/resources/bgppeer)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/bgppeer)
+[Reference for the BGPPeer resource in Calico Open Source that defines a BGP neighbor relationship between Calico nodes and external routers.](https://docs.tigera.io/calico/latest/reference/resources/bgppeer)
 
 ## [📄️BGP Filter](https://docs.tigera.io/calico/latest/reference/resources/bgpfilter)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/bgpfilter)
+[Reference for the BGPFilter resource in Calico Open Source that filters routes imported from or exported to BGP peers.](https://docs.tigera.io/calico/latest/reference/resources/bgpfilter)
 
 ## [📄️Block affinity](https://docs.tigera.io/calico/latest/reference/resources/blockaffinity)
 
-[IP address management block affinity](https://docs.tigera.io/calico/latest/reference/resources/blockaffinity)
+[Reference for the BlockAffinity resource in Calico Open Source that records which node owns each IP address management block.](https://docs.tigera.io/calico/latest/reference/resources/blockaffinity)
 
 ## [📄️Calico node status](https://docs.tigera.io/calico/latest/reference/resources/caliconodestatus)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/caliconodestatus)
+[Reference for the CalicoNodeStatus resource in Calico Open Source that exposes per-node agent, BGP, and routing state.](https://docs.tigera.io/calico/latest/reference/resources/caliconodestatus)
 
 ## [📄️Felix configuration](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
+[Reference for the FelixConfiguration resource in Calico Open Source that controls Felix data plane behavior across the cluster.](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
 
 ## [📄️Global network policy](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy)
+[Reference for the GlobalNetworkPolicy resource in Calico Open Source, a cluster-scoped policy that selects endpoints across all namespaces.](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy)
 
 ## [📄️Global network set](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkset)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkset)
+[Reference for the GlobalNetworkSet resource in Calico Open Source that defines a cluster-scoped set of CIDRs referenced by network policy.](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkset)
 
 ## [📄️Host endpoint](https://docs.tigera.io/calico/latest/reference/resources/hostendpoint)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/hostendpoint)
+[Reference for the HostEndpoint resource in Calico Open Source that represents a host network interface for policy enforcement.](https://docs.tigera.io/calico/latest/reference/resources/hostendpoint)
 
 ## [📄️IP pool](https://docs.tigera.io/calico/latest/reference/resources/ippool)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/ippool)
+[Reference for the IPPool resource in Calico Open Source that defines CIDRs available for pod IP address allocation.](https://docs.tigera.io/calico/latest/reference/resources/ippool)
 
 ## [📄️IP reservation](https://docs.tigera.io/calico/latest/reference/resources/ipreservation)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/ipreservation)
+[Reference for the IPReservation resource in Calico Open Source that excludes specific addresses or ranges from automatic allocation.](https://docs.tigera.io/calico/latest/reference/resources/ipreservation)
 
 ## [📄️IPAM configuration](https://docs.tigera.io/calico/latest/reference/resources/ipamconfig)
 
-[IP address management global configuration](https://docs.tigera.io/calico/latest/reference/resources/ipamconfig)
+[Reference for the IP address management configuration resource in Calico Open Source that sets cluster-wide options such as strict affinity.](https://docs.tigera.io/calico/latest/reference/resources/ipamconfig)
 
 ## [📄️Kubernetes controllers configuration](https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig)
 
-[API for KubeControllersConfiguration resource.](https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig)
+[Reference for the KubeControllersConfiguration resource in Calico Open Source that controls behavior of the kube-controllers component.](https://docs.tigera.io/calico/latest/reference/resources/kubecontrollersconfig)
 
 ## [📄️Network policy](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
+[Reference for the NetworkPolicy resource in Calico Open Source, a namespaced policy that selects pods within a single namespace.](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
 
 ## [📄️Network set](https://docs.tigera.io/calico/latest/reference/resources/networkset)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/networkset)
+[Reference for the NetworkSet resource in Calico Open Source that defines a namespaced set of CIDRs referenced by network policy.](https://docs.tigera.io/calico/latest/reference/resources/networkset)
 
 ## [📄️Node](https://docs.tigera.io/calico/latest/reference/resources/node)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/node)
+[Reference for the Node resource in Calico Open Source that represents a host running the calico/node agent.](https://docs.tigera.io/calico/latest/reference/resources/node)
 
 ## [📄️Profile](https://docs.tigera.io/calico/latest/reference/resources/profile)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/profile)
+[Reference for the Profile resource in Calico Open Source that groups labels and rules applied to endpoints.](https://docs.tigera.io/calico/latest/reference/resources/profile)
 
 ## [📄️Staged global network policy](https://docs.tigera.io/calico/latest/reference/resources/stagedglobalnetworkpolicy)
 
-[API for this resource.](https://docs.tigera.io/calico/latest/reference/resources/stagedglobalnetworkpolicy)
+[Reference for the StagedGlobalNetworkPolicy resource in Calico Open Source that previews cluster-scoped policy without enforcing it.](https://docs.tigera.io/calico/latest/reference/resources/stagedglobalnetworkpolicy)
 
 ## [📄️Staged Kubernetes network policy](https://docs.tigera.io/calico/latest/reference/resources/stagedkubernetesnetworkpolicy)
 
-[API for this resource.](https://docs.tigera.io/calico/latest/reference/resources/stagedkubernetesnetworkpolicy)
+[Reference for the StagedKubernetesNetworkPolicy resource in Calico Open Source that previews Kubernetes network policy without enforcing it.](https://docs.tigera.io/calico/latest/reference/resources/stagedkubernetesnetworkpolicy)
 
 ## [📄️Staged network policy](https://docs.tigera.io/calico/latest/reference/resources/stagednetworkpolicy)
 
-[API for this resource.](https://docs.tigera.io/calico/latest/reference/resources/stagednetworkpolicy)
+[Reference for the StagedNetworkPolicy resource in Calico Open Source that previews namespaced policy without enforcing it.](https://docs.tigera.io/calico/latest/reference/resources/stagednetworkpolicy)
 
 ## [📄️Tier](https://docs.tigera.io/calico/latest/reference/resources/tier)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/tier)
+[Reference for the Tier resource in Calico Open Source that groups policies into ordered evaluation buckets.](https://docs.tigera.io/calico/latest/reference/resources/tier)
 
 ## [📄️Workload endpoint](https://docs.tigera.io/calico/latest/reference/resources/workloadendpoint)
 
-[API for this Calico resource.](https://docs.tigera.io/calico/latest/reference/resources/workloadendpoint)
+[Reference for the WorkloadEndpoint resource in Calico Open Source that represents a pod or VM interface for policy and IPAM.](https://docs.tigera.io/calico/latest/reference/resources/workloadendpoint)
 
 ### Resource definitions
 
@@ -51269,27 +51273,27 @@ A WorkloadEndpointPort associates a name with a particular TCP/UDP/SCTP port of 
 
 ## [📄️Setting up etcd certificates for RBAC](https://docs.tigera.io/calico/latest/reference/etcd-rbac/overview)
 
-[Protect your etcd datastore by restricting operation permissions.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/overview)
+[Reference overview of role-based access control for the etcdv3 datastore used by Calico Open Source covering users, roles, and permission scopes.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/overview)
 
 ## [📄️Generating certificates](https://docs.tigera.io/calico/latest/reference/etcd-rbac/certificate-generation)
 
-[Generate Certificates of Authority (CA) to authenticate users with etcd datastore.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/certificate-generation)
+[Reference for generating Certificate Authority and client certificates that authenticate Calico Open Source components against the etcdv3 datastore.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/certificate-generation)
 
 ## [📄️Creating users and roles](https://docs.tigera.io/calico/latest/reference/etcd-rbac/users-and-roles)
 
-[Provide role-based access control to etcd datastore.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/users-and-roles)
+[Reference for defining etcdv3 users and roles that grant scoped access to Calico Open Source components.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/users-and-roles)
 
 ## [📄️Segmenting etcd on Kubernetes (basic)](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes)
 
-[Limit user access to Kubernetes and Calico components.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes)
+[Reference for restricting user access to Kubernetes and Calico Open Source resources using role-based access control.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes)
 
 ## [📄️Segmenting etcd on Kubernetes (advanced)](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes-advanced)
 
-[Limit user access to Calico components or calicoctl.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes-advanced)
+[Advanced reference for restricting user access to Calico Open Source components and calicoctl through Kubernetes role-based access control.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes-advanced)
 
 ## [📄️Calico key and path prefixes](https://docs.tigera.io/calico/latest/reference/etcd-rbac/calico-etcdv3-paths)
 
-[Prefixes to configure Calico components to access the etcd datastore.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/calico-etcdv3-paths)
+[Reference listing the etcdv3 key prefixes used by each Calico Open Source component for role-based access control configuration.](https://docs.tigera.io/calico/latest/reference/etcd-rbac/calico-etcdv3-paths)
 
 ### Setting up etcd certificates for RBAC
 
@@ -52376,11 +52380,11 @@ kubectl get deployment.apps/calico-apiserver -n calico-system -o json | jq '.spe
 
 ## [📄️Configuring Felix](https://docs.tigera.io/calico/latest/reference/felix/configuration)
 
-[Configure Felix, the daemon that runs on every machine that provides endpoints.](https://docs.tigera.io/calico/latest/reference/felix/configuration)
+[Reference for Felix configuration parameters in Calico Open Source covering environment variables, FelixConfiguration fields, and per-node overrides.](https://docs.tigera.io/calico/latest/reference/felix/configuration)
 
 ## [📄️Monitoring Felix with Prometheus](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
 
-[Review metrics for the Felix component if you are using Prometheus.](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
+[Prometheus metrics reference for Felix in Calico Open Source covering counters and gauges exposed for data plane health and policy evaluation.](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
 
 ### Configuring Felix
 
@@ -57427,15 +57431,15 @@ Total number of Maglev entries in conntrack table broken down by IP version, and
 
 ## [📄️Typha overview](https://docs.tigera.io/calico/latest/reference/typha/overview)
 
-[Use the Calico Typha daemon to increase scale and reduce impact on the datastore.](https://docs.tigera.io/calico/latest/reference/typha/overview)
+[Reference overview of the Typha daemon in Calico Open Source explaining how it reduces datastore load and scales Felix to large clusters.](https://docs.tigera.io/calico/latest/reference/typha/overview)
 
 ## [📄️Configuring Typha](https://docs.tigera.io/calico/latest/reference/typha/configuration)
 
-[Configure Typha for scaling Kubernetes API datastore (kdd).](https://docs.tigera.io/calico/latest/reference/typha/configuration)
+[Reference for Typha configuration parameters in Calico Open Source covering environment variables and config file options for scaling the Kubernetes datastore.](https://docs.tigera.io/calico/latest/reference/typha/configuration)
 
 ## [📄️Monitoring Typha with Prometheus](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
 
-[Review metrics for the Typha component if you are using Prometheus.](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
+[Prometheus metrics reference for Typha in Calico Open Source covering connection counts, cache health, and fan-out metrics.](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
 
 ### Typha overview
 
@@ -58396,11 +58400,11 @@ For example:
 
 ## [📄️Configuring the Calico Kubernetes controllers](https://docs.tigera.io/calico/latest/reference/kube-controllers/configuration)
 
-[Calico Kubernetes controllers monitor the Kubernetes API and perform actions based on cluster state.](https://docs.tigera.io/calico/latest/reference/kube-controllers/configuration)
+[Reference for kube-controllers configuration in Calico Open Source covering environment variables and KubeControllersConfiguration options.](https://docs.tigera.io/calico/latest/reference/kube-controllers/configuration)
 
 ## [📄️Monitoring kube-controllers with Prometheus](https://docs.tigera.io/calico/latest/reference/kube-controllers/prometheus)
 
-[Review metrics for the kube-controllers component if you are using Prometheus.](https://docs.tigera.io/calico/latest/reference/kube-controllers/prometheus)
+[Prometheus metrics reference for the kube-controllers component in Calico Open Source covering reconcile latency and queue depth.](https://docs.tigera.io/calico/latest/reference/kube-controllers/prometheus)
 
 ### Configuring the Calico Kubernetes controllers
 
@@ -58634,19 +58638,19 @@ kube-controllers also exports the default set of metrics that Prometheus makes a
 
 ## [📄️Amazon Web Services](https://docs.tigera.io/calico/latest/reference/public-cloud/aws)
 
-[Advantages of using Calico in AWS.](https://docs.tigera.io/calico/latest/reference/public-cloud/aws)
+[Reference for running Calico Open Source on Amazon Web Services covering supported networking modes, source/destination check requirements, and AWS-specific notes.](https://docs.tigera.io/calico/latest/reference/public-cloud/aws)
 
 ## [📄️Azure](https://docs.tigera.io/calico/latest/reference/public-cloud/azure)
 
-[Support for Calico in Azure.](https://docs.tigera.io/calico/latest/reference/public-cloud/azure)
+[Reference for running Calico Open Source on Microsoft Azure covering supported networking modes, user-defined routes, and Azure platform notes.](https://docs.tigera.io/calico/latest/reference/public-cloud/azure)
 
 ## [📄️Google Compute Engine](https://docs.tigera.io/calico/latest/reference/public-cloud/gce)
 
-[Methods to ensure that traffic between containers on different hosts is not dropped by GCE fabric.](https://docs.tigera.io/calico/latest/reference/public-cloud/gce)
+[Reference for running Calico Open Source on Google Compute Engine covering supported networking modes and platform-specific routing requirements.](https://docs.tigera.io/calico/latest/reference/public-cloud/gce)
 
 ## [📄️IBM Cloud](https://docs.tigera.io/calico/latest/reference/public-cloud/ibm)
 
-[Calico integration with IBM Cloud.](https://docs.tigera.io/calico/latest/reference/public-cloud/ibm)
+[Reference for running Calico Open Source on IBM Cloud covering supported networking modes and platform integration notes.](https://docs.tigera.io/calico/latest/reference/public-cloud/ibm)
 
 ### Amazon Web Services
 
@@ -58794,39 +58798,39 @@ This is also handled automatically in the [IBM Cloud Kubernetes Service](https:/
 
 ## [📄️Host endpoints](https://docs.tigera.io/calico/latest/reference/host-endpoints/overview)
 
-[Secure host network interfaces.](https://docs.tigera.io/calico/latest/reference/host-endpoints/overview)
+[Reference overview of host endpoint protection in Calico Open Source covering the model for securing host network interfaces with policy.](https://docs.tigera.io/calico/latest/reference/host-endpoints/overview)
 
 ## [📄️Creating policy for basic connectivity](https://docs.tigera.io/calico/latest/reference/host-endpoints/connectivity)
 
-[Customize the Calico failsafe policy to protect host endpoints.](https://docs.tigera.io/calico/latest/reference/host-endpoints/connectivity)
+[Reference for the Calico Open Source failsafe policy that protects host endpoints from being cut off when host network policy is misconfigured.](https://docs.tigera.io/calico/latest/reference/host-endpoints/connectivity)
 
 ## [📄️Creating host endpoint objects](https://docs.tigera.io/calico/latest/reference/host-endpoints/objects)
 
-[To protect a host interface, start by creating a host endpoint object in etcd.](https://docs.tigera.io/calico/latest/reference/host-endpoints/objects)
+[Reference for the HostEndpoint object in Calico Open Source describing how to represent a host network interface so policy can select it.](https://docs.tigera.io/calico/latest/reference/host-endpoints/objects)
 
 ## [📄️Selector-based policies](https://docs.tigera.io/calico/latest/reference/host-endpoints/selector)
 
-[Apply ordered policies to endpoints that match specific label selectors.](https://docs.tigera.io/calico/latest/reference/host-endpoints/selector)
+[Reference for ordered host endpoint policies in Calico Open Source that match interfaces using label selectors.](https://docs.tigera.io/calico/latest/reference/host-endpoints/selector)
 
 ## [📄️Failsafe rules](https://docs.tigera.io/calico/latest/reference/host-endpoints/failsafe)
 
-[Avoid cutting off connectivity to hosts because of incorrect network policies.](https://docs.tigera.io/calico/latest/reference/host-endpoints/failsafe)
+[Reference for the Calico Open Source failsafe inbound and outbound port lists that prevent host network policy from cutting off control-plane connectivity.](https://docs.tigera.io/calico/latest/reference/host-endpoints/failsafe)
 
 ## [📄️Pre-DNAT policy](https://docs.tigera.io/calico/latest/reference/host-endpoints/pre-dnat)
 
-[Apply rules in a host endpoint policy before any DNAT.](https://docs.tigera.io/calico/latest/reference/host-endpoints/pre-dnat)
+[Reference for pre-DNAT host endpoint policy in Calico Open Source that applies rules to ingress traffic before destination NAT rewrites the address.](https://docs.tigera.io/calico/latest/reference/host-endpoints/pre-dnat)
 
 ## [📄️Apply on forwarded traffic](https://docs.tigera.io/calico/latest/reference/host-endpoints/forwarded)
 
-[Learn the subtleties using the applyOnForward option in host endpoint policies.](https://docs.tigera.io/calico/latest/reference/host-endpoints/forwarded)
+[Reference for the applyOnForward field on Calico Open Source host endpoint policy that determines how rules apply to forwarded traffic versus local processes.](https://docs.tigera.io/calico/latest/reference/host-endpoints/forwarded)
 
 ## [📄️Summary of host endpoint policies](https://docs.tigera.io/calico/latest/reference/host-endpoints/summary)
 
-[How different host endpoint rules affect packet flows.](https://docs.tigera.io/calico/latest/reference/host-endpoints/summary)
+[Reference summary describing how the different Calico Open Source host endpoint policy types interact and affect packet flows.](https://docs.tigera.io/calico/latest/reference/host-endpoints/summary)
 
 ## [📄️Connection tracking](https://docs.tigera.io/calico/latest/reference/host-endpoints/conntrack)
 
-[Workaround for Linux conntrack if Calico policy is not working as it should.](https://docs.tigera.io/calico/latest/reference/host-endpoints/conntrack)
+[Reference covering Linux conntrack workarounds for Calico Open Source host endpoint policy when stateful tracking interferes with expected packet flow.](https://docs.tigera.io/calico/latest/reference/host-endpoints/conntrack)
 
 ### Host endpoints
 
@@ -59256,11 +59260,11 @@ Then you should observe that the new Calico policy is enforced for new packets.
 
 ## [📄️Component architecture](https://docs.tigera.io/calico/latest/reference/architecture/overview)
 
-[Learn the basic Calico components.](https://docs.tigera.io/calico/latest/reference/architecture/overview)
+[Architectural overview reference of the Calico Open Source components including Felix, BIRD, confd, Typha, and the kube-controllers.](https://docs.tigera.io/calico/latest/reference/architecture/overview)
 
 ## [📄️'The Calico data path: IP routing and iptables'](https://docs.tigera.io/calico/latest/reference/architecture/data-path)
 
-[Learn how packets flow between workloads in a datacenter, or between a workload and the internet.](https://docs.tigera.io/calico/latest/reference/architecture/data-path)
+[Reference covering the Calico Open Source data path explaining how packets flow between workloads and to external destinations across networking modes.](https://docs.tigera.io/calico/latest/reference/architecture/data-path)
 
 ## [🗃Network design](https://docs.tigera.io/calico/latest/reference/architecture/design/)
 
@@ -59468,11 +59472,11 @@ As far as the static data path is concerned, yes. It’s just a combination of r
 
 ## [📄️Calico over Ethernet fabrics](https://docs.tigera.io/calico/latest/reference/architecture/design/l2-interconnect-fabric)
 
-[Understand the interconnect fabric options in a Calico network.](https://docs.tigera.io/calico/latest/reference/architecture/design/l2-interconnect-fabric)
+[Reference for using Calico Open Source over a layer-2 Ethernet interconnect fabric covering BGP peering and broadcast domain considerations.](https://docs.tigera.io/calico/latest/reference/architecture/design/l2-interconnect-fabric)
 
 ## [📄️Calico over IP fabrics](https://docs.tigera.io/calico/latest/reference/architecture/design/l3-interconnect-fabric)
 
-[Understand considerations for implementing interconnect fabrics with Calico.](https://docs.tigera.io/calico/latest/reference/architecture/design/l3-interconnect-fabric)
+[Reference for using Calico Open Source over a layer-3 IP interconnect fabric covering BGP topology choices and route propagation.](https://docs.tigera.io/calico/latest/reference/architecture/design/l3-interconnect-fabric)
 
 ### Calico over Ethernet fabrics
 
@@ -59844,15 +59848,15 @@ A route reflector may be a physical router, a software appliance, or simply a BG
 
 ## [📄️Primary interface configuration](https://docs.tigera.io/calico/latest/reference/vpp/uplink-configuration)
 
-[Configuration parameters for the primary interface in VPP.](https://docs.tigera.io/calico/latest/reference/vpp/uplink-configuration)
+[Reference for primary interface configuration parameters in the Calico Open Source VPP data plane.](https://docs.tigera.io/calico/latest/reference/vpp/uplink-configuration)
 
 ## [📄️VPP data plane implementation details](https://docs.tigera.io/calico/latest/reference/vpp/technical-details)
 
-[Technical details on the VPP data plane integration.](https://docs.tigera.io/calico/latest/reference/vpp/technical-details)
+[Technical reference for the Calico Open Source VPP data plane integration covering packet processing, kernel offload, and graph nodes.](https://docs.tigera.io/calico/latest/reference/vpp/technical-details)
 
 ## [📄️Host network configuration](https://docs.tigera.io/calico/latest/reference/vpp/host-network)
 
-[Description of the host network configuration performed by VPP.](https://docs.tigera.io/calico/latest/reference/vpp/host-network)
+[Reference covering the host network configuration applied by the Calico Open Source VPP data plane during initialization.](https://docs.tigera.io/calico/latest/reference/vpp/host-network)
 
 ### Primary interface configuration
 
@@ -60429,7 +60433,7 @@ If Felix is restarted, it learns current local state by interrogating the kernel
 
 The bulk of global state is mastered in whatever component hosts the plugin.
 
-- In the case of OpenStack, this means a Neutron database. Our OpenStack plugin (more strictly a Neutron ML2 driver) queries the Neutron database to find out state about the entire deployment. That state is then reflected to `etcd` and so to Felix.
+- In the case of OpenStack, this means a Neutron database. Our OpenStack plugin queries the Neutron database to find out state about the entire deployment. That state is then reflected to `etcd` and so to Felix.
 - In certain cases, `etcd` itself contains the master copy of the data. This is because some Docker deployments have an `etcd` cluster that has the required resiliency characteristics, used to store all system configuration and so `etcd` is configured so as to be a suitable store for critical data.
 - In other orchestration systems, it may be stored in distributed databases, either owned directly by the plugin or by the orchestrator itself.
 
