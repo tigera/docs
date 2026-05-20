@@ -33,7 +33,7 @@ const variables = {
   },
   componentImage: {
     cnxNode: componentImage('cnx-node', releases[0]),
-    calico: componentImage('calico', releases[0]),
+    calicoctl:componentImage('calicoctl', releases[0]), 
     calicoq: componentImage('calicoq', releases[0]),
   },
 };
