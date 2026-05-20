@@ -52,7 +52,7 @@ $ kubectl patch policyrecommendationscope default -p '{"spec":{"<parameter>":"<v
 | Field                              | Description                                                  | Accepted Values | Schema | Default        |
 | ---------------------------------- | ------------------------------------------------------------ | --------------- | ------ | -------------- |
 | `recStatus`                        | Defines the namespace policy recommendation engine status.   | Enabled/Disabled |        | Disabled       |
-| `selector`                         | Selects the namespaces for generating recommendations.       |                 |        | `!(projectcalico.org/name starts with ''tigera-'') && !(projectcalico.org/name starts with ''calico-'') && !(projectcalico.org/name starts with ''kube-'')` |
+| `selector`                         | Selects the namespaces for generating recommendations. Accepts any [label selector](#selectors) expression. |                 |        | `!(projectcalico.org/name starts with ''tigera-'') && !(projectcalico.org/name starts with ''calico-'') && !(projectcalico.org/name starts with ''kube-'')` |
 | `intraNamespacePassThroughTraffic` | When true, sets all intra-namespace traffic to Pass          | true/false |        | false |
 | `tierName`                         | Tier where the generated staged network policies are created. The tier must already exist. | | string | `namespace-isolation` |
 
@@ -74,7 +74,7 @@ without re-reading the spec. Annotations live under the
 | Annotation                                   | Description                                                                                                                                                                                                                                       |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `policyrecommendation.tigera.io/status`      | Engine's readiness signal for this recommendation. See [Recommendation status lifecycle](#recommendation-status-lifecycle) below.                                                                                                                |
-| `policyrecommendation.tigera.io/lastUpdated` | RFC 3339 timestamp of the engine's last modification to the recommendation's spec. Drives the `Learning → Stabilizing → Stable` transitions.                                                                                                      |
+| `policyrecommendation.tigera.io/lastUpdated` | RFC 3339 timestamp of the engine's last modification to the generated staged policy's spec (the recommendation itself, not the PolicyRecommendationScope spec). Drives the `Learning → Stabilizing → Stable` transitions.                          |
 | `policyrecommendation.tigera.io/scope`       | Scope the recommendation was generated for. One of `namespace` (namespace recommendations) or `hostEndpoint` (host recommendations). Individual rules can also carry per-rule `scope` annotations such as `Domains`, `Private`, `Public`, `Service`, `NetworkSet`. |
 | `policyrecommendation.tigera.io/name`        | Name of the source object (namespace for namespace recommendations, HostEndpoint for host recommendations).                                                                                                                                       |
 | `policyrecommendation.tigera.io/namespace`   | For namespace recommendations: the namespace the recommendation applies to.                                                                                                                                                                       |
@@ -83,8 +83,9 @@ without re-reading the spec. Annotations live under the
 
 The `policyrecommendation.tigera.io/status` annotation moves through
 the following values as the engine refines a recommendation. The
-transitions are driven by `lastUpdated`: the longer the spec has
-remained unchanged, the further the recommendation has progressed.
+transitions are driven by `lastUpdated`: the longer the generated
+staged policy's spec has remained unchanged, the further the
+recommendation has progressed.
 
 | Status        | When it is set                                                                                                                                  |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
