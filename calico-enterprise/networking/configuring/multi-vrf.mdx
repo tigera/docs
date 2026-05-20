@@ -111,23 +111,20 @@ interface — use exec probes for those pods.
 
 **Required**
 
-- $[prodname] installed with the **nftables dataplane** (`linuxDataplane: Nftables` in the [Installation](../../reference/installation/api.mdx) resource). The iptables and eBPF dataplanes are not supported in the tech preview.
-- **kube-proxy must also be in nftables mode**. If kube-proxy is in iptables or ipvs mode, multi-VRF will not work correctly. ipvs mode is **not** supported.
+- $[prodname] installed with the **nftables dataplane** (`linuxDataplane: Nftables` in the [Installation](../../reference/installation/api.mdx) resource).
+  The iptables and eBPF dataplanes are not supported in the tech preview, eBPF will be added before GA but iptables support is not planned.
+- **kube-proxy must also be in nftables mode**.
 - **Linux kernel 5.6 or later** on every node.
-- The **`vrf` kernel module** loaded on every node. On Ubuntu, this is shipped in `linux-modules-extra-$(uname -r)`. Confirm with:
+- The **`vrf` kernel module** must be available on every node. Confirm with:
 
   ```bash
   sudo modprobe vrf && lsmod | grep '^vrf '
   ```
 
   :::tip
-
-  On Ubuntu HWE kernels, install the HWE-tracking modules-extra package
-  (for example `linux-modules-extra-generic-hwe-24.04`) so that the VRF module
-  follows the kernel through HWE upgrades. Do **not** install the
-  non-HWE `linux-modules-extra-generic` / `linux-image-generic` metapackages
-  on an HWE kernel — they will pull in and pin the GA kernel.
-
+  On Ubuntu <= 25.04, `apt install linux-generic`.
+  On Ubuntu >= 25.10, the module is built in.
+  On RHEL, the module is built in.
   :::
 
 - BGP peering configured between each node and the upstream router on each VRF (see [Create BGPPeers and BGPFilters](#create-bgppeers-and-bgpfilters)).
@@ -357,7 +354,7 @@ kind: Pod
 metadata:
   name: app-on-vrf1
   annotations:
-    cni.projectcalico.org/networks: "vrf1"
+    cni.projectcalico.org/networks: '["vrf1"]'
     cni.projectcalico.org/ipv4pools: '["vrf1pool"]'
 spec:
   containers:
