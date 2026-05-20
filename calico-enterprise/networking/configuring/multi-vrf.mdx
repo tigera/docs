@@ -1,34 +1,37 @@
 ---
-description: Attach pods to one or more Linux VRFs to isolate routing between tenants and support overlapping external IPs.
+description: Attach pods to VRFs to isolate routing between different tenants.
 ---
 
 # Configure multi-VRF networking
 
 :::note
 
-Multi-VRF support is a tech preview feature. APIs and behaviour may change before GA.
+Multi-VRF support is a tech preview feature. APIs and behaviour may change before GA and seamless live upgrade is not guaranteed.
 
 :::
 
 ## Big picture
 
-Attach pods to one or more Linux Virtual Routing and Forwarding (VRF) domains
+Attach pods to one or more Virtual Routing and Forwarding (VRF) domains
 so that traffic from those pods is routed in a dedicated routing table, peered
 with a dedicated upstream fabric, and isolated from pods on other VRFs (and
 from the default flat pod network).
 
+Connectivity between VRFs is not provided directly, but a pod can be attached to
+multiple VRFs (and the default network) by using multiple Multus network attachments,
+and VRFs can be connected by routers outside the cluster.
+
 ## Value
 
-A VRF is a routing plane (hence "virtual routing and forwarding") with its own
-routing table. Attaching pods to VRFs lets you:
+A VRF is a routing plane with its own routing table. Attaching pods to VRFs lets you:
 
-- **Reach overlapping external IPs.** The same external IP address can be reused
+- **Reach and be reached from overlapping external IPs.** The same external IP address can be reused
   in multiple tenant networks outside the cluster. Pods on a VRF can reach the
   copy of that IP in their own tenant network, and responses come back in the
-  correct VRF.
+  correct VRF.  Services backed by VRF attached pods can also be exported to
+  the the tenant network, allowing only that tenant to access that service.
 - **Use VRFs as a routing security boundary.** Pods on different VRFs cannot
-  reach each other inside the cluster (unless an external router bridges the
-  two VRFs). Network policy still applies on top of this.
+  reach each other inside the cluster. Network policy still applies on top of this.
 - **Map workloads onto an existing multi-tenant fabric.** Each VRF on each node
   is connected to one of your tenant networks (typically over a VLAN
   subinterface) and exchanges routes with that tenant's BGP fabric.
@@ -38,27 +41,37 @@ routing table. Attaching pods to VRFs lets you:
 ### Networks and the default flat network
 
 A pod is attached to one or more **Networks** through one or more interfaces:
+- The default flat pod network (the existing $[prodname] pod network) remains
+  the default for pods that don't specify a network.
+- A `Network` of type `vrf` is isolated using a Linux VRF, with its own routing
+  table on each node.
+- A pod can be attached to the flat network, and/or up to nine VRF networks.
 
-- The default flat pod network (the existing $[prodname] pod network) is
-  always available; pods that don't opt in to a VRF use only this network.
-- A `Network` of type `vrf` represents a single Linux VRF, with its own
-  routing table on each node.
-- A pod can be attached to the flat network, a VRF, or both, and to up to nine
-  VRFs simultaneously through Multus secondary interfaces.
+A pod does not have to be attached to the default flat network (the primary
+interface can be attached to a VRF), but there are some important limitations:
+- kubelet is not aware of the VRF network, so network type health probes will
+  not be able to reach the pod.
+- Certain important services are hosted on the flat network only - notably
+  the Kubernetes API and `kube-dns`/`openshift-dns`.
+
+Typically the easiest way to use VRFs will be to attach pods to the flat network
+(with the primary interface), and then whichever VRF networks are required using
+Multus `NetworkAttachmentDefinition`s.  `multus-service` can then be used to
+create services referencing the VRF attached interfaces on the pods.
 
 ### Routing topology
 
 Each VRF has a routing table on every node where it is configured. Felix:
 
-- Creates a Linux VRF device on each node and enslaves the host interfaces
+- Creates a Linux VRF device on each node and attaches the host interfaces
   listed in `hostConfig.hostInterfaces` (typically a VLAN subinterface).
-- Programs `/32` routes for **local** pods on that VRF into the VRF's routing
+- Programs `/32` routes for local pods on that VRF into the VRF's routing
   table.
 - Programs static routes from `hostConfig.staticRoutes` (typically a default
   route to the upstream router).
 
 Routes to remote pods (on other nodes) are distributed by **BGP**: each node
-peers with its upstream router on the VRF, advertises its own pod `/32`s, and
+peers with its upstream router on the VRF, advertises its own pod routes, and
 imports the others. Pod-to-pod traffic on the same VRF crossing nodes therefore
 leaves the source node on the VRF's host interface, transits the upstream
 fabric, and returns to the destination node still on that VRF — it does **not**
@@ -71,13 +84,15 @@ before.
 
 Pods on different VRFs are isolated inside the cluster:
 
-- Their veths sit in different VRFs, so traffic from a VRF pod is consulted
-  against that VRF's routing table only.
+- Their veths sit in different VRFs, so traffic from a VRF pod consults that VRF'same
+  routing table.
 - Service traffic must terminate on a backend that is in the same VRF as the
-  source pod (kube-proxy programs DNAT in a VRF-agnostic way; if the chosen
-  backend is in a different VRF, the return path will not work).
+  source pod (kube-proxy programs DNAT in a VRF-agnostic way but connectivity
+  from the source to the backing pod cannot transit VRFs).
 
-If you need traffic between two VRFs, route them outside the cluster.
+If you need to send traffic between two VRFs, route them outside the cluster,
+use a pod as a gateway (doing both DNAT and SNAT) or give those pods interfaces
+onto a shared VRF (or the flat network).
 
 ### Required services on the default network
 
