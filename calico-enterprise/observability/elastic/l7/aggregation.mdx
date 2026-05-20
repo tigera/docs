@@ -1,0 +1,41 @@
+---
+description: Control how Calico Enterprise aggregates L7 log entries by selecting which fields participate in the aggregation key.
+---
+
+import L7AggregationSandbox from '../../../_includes/components/L7AggregationSandbox';
+
+# L7 log aggregation
+
+## Big picture
+
+$[prodname] aggregates L7 events before writing them to disk. Each row in the resulting log represents a unique combination of metadata fields and carries a `count` of how many requests matched that combination during the aggregation interval. Which fields participate in that combination — the aggregation key — is controlled by a set of fields on [Felix Configuration](../../../reference/component-resources/node/felix/configuration.mdx#l7-logs).
+
+Including a field makes the logs more granular (more rows, fewer requests per row). Excluding a field collapses requests that differ only in that field into a single row and increments its `count` for each merged request.
+
+## Aggregation playground
+
+The table below shows a small set of sample L7 events. Each visible row is what would be written to the L7 log, with `count` equal to the number of requests merged into it. Toggle the checkboxes to include or exclude each field from the aggregation key.
+
+<L7AggregationSandbox />
+
+## Aggregation fields
+
+The following `FelixConfiguration` fields control the L7 log aggregation key. For accepted values and defaults, follow the link to the [Felix Configuration reference](../../../reference/component-resources/node/felix/configuration.mdx#l7-logs).
+
+| Field | Effect when included | Effect when excluded |
+| --- | --- | --- |
+| [L7LogsFileAggregationSourceInfo](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationSourceInfo) | Source aggregated name, namespace, and type appear on each row. | Requests are merged across sources. |
+| [L7LogsFileAggregationDestinationInfo](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationDestinationInfo) | Destination aggregated name, namespace, and type appear on each row. | Requests are merged across destinations. |
+| [L7LogsFileAggregationServiceInfo](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationServiceInfo) | Destination service name, namespace, and port appear on each row. | Requests are merged across services. |
+| [L7LogsFileAggregationHTTPMethod](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationHTTPMethod) | HTTP method appears on each row. | Requests are merged across methods. |
+| [L7LogsFileAggregationTrimURL](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationTrimURL) | URL (or a trimmed prefix) appears on each row. Intermediate values trim the query string, then the path, before excluding the URL entirely. | Requests are merged across URLs. |
+| [L7LogsFileAggregationResponseCode](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationResponseCode) | Response code appears on each row. | Requests are merged across response codes. |
+| [L7LogsFileAggregationHTTPHeaderInfo](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationHTTPHeaderInfo) | User agent and request type appear on each row. | Requests are merged across user agents and types. |
+| [L7LogsFileAggregationTLSSNI](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationTLSSNI) | TLS Server Name Indication appears on each TLS row. | TLS flows to the same destination are merged regardless of SNI. |
+
+Two additional fields control how the URL is truncated before it enters the aggregation key, rather than whether the URL participates at all:
+
+| Field | Description |
+| --- | --- |
+| [L7LogsFileAggregationNumURLPath](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationNumURLPath) | Maximum number of URL path components retained. Default `5`. A negative value disables this truncation. |
+| [L7LogsFileAggregationURLCharLimit](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileAggregationURLCharLimit) | Maximum URL length in characters; longer URLs are sliced. Default `250`. |
