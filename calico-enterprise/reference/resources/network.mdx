@@ -1,0 +1,171 @@
+---
+description: API for this Calico Enterprise resource.
+---
+
+# Network
+
+:::note
+
+The `Network` resource is a tech preview feature. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+A `Network` resource represents a logical network within a $[prodname] cluster. Each
+`Network` has a type (currently `vrf`) that determines how pods on that network are
+isolated and how their traffic is routed.
+
+A `Network` of type `vrf` configures a Linux Virtual Routing and Forwarding (VRF)
+domain. $[prodname] creates a Linux VRF device on each selected node, moves the
+configured host interfaces into the VRF, and programs pod routes for workloads
+attached to the network into the VRF's routing table. Pods on a VRF network are
+isolated from pods on other networks (including the default flat pod network)
+unless they are explicitly bridged outside the cluster.
+
+For an end-to-end how-to, see [Configure multi-VRF networking](../../networking/configuring/multi-vrf.mdx).
+
+For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/),
+the following case-insensitive aliases may be used to specify the resource type
+on the CLI: `network.projectcalico.org`, `networks.projectcalico.org` and
+abbreviations such as `network.p` and `networks.p`.
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: Network
+metadata:
+  name: vrf1
+spec:
+  vrf:
+    routing:
+      inClusterMode: Local
+    hostConfig:
+    - nodeSelector: ""
+      routeTableIndex: 100
+      hostInterfaces:
+      - name: "eth1.100"
+      staticRoutes:
+      - destination: 0.0.0.0/0
+        action:
+          nextHop: "2.100.0.1"
+```
+
+## Definition
+
+### Metadata
+
+| Field | Description                                                        | Accepted Values                                     | Schema |
+| ----- | ------------------------------------------------------------------ | --------------------------------------------------- | ------ |
+| name  | Unique name to describe this resource instance. Must be specified. | Alphanumeric string with optional `.`, `_`, or `-`. | string |
+
+### Spec
+
+Exactly one of the network-type fields must be set. Currently only `vrf` is supported.
+
+| Field | Description                  | Schema                              |
+| ----- | ---------------------------- | ----------------------------------- |
+| vrf   | VRF network configuration.   | [VRFNetworkSpec](#vrfnetworkspec)   |
+
+### VRFNetworkSpec
+
+| Field      | Description                                                                                                                                                                                                                                                                                                                       | Schema                                       | Default |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------- |
+| routing    | Cluster-wide routing behaviour for this VRF network.                                                                                                                                                                                                                                                                              | [VRFRouting](#vrfrouting)                    |         |
+| hostConfig | Per-node configuration for this VRF network. At least one entry is required and at most 100 entries are allowed. When multiple entries are present (for example, one per rack), each node is matched against the entries in order and the **first matching entry wins** — all others are ignored for that node. | List of [VRFHostConfig](#vrfhostconfig) |         |
+
+### VRFRouting
+
+| Field         | Description                                                                                                                                                                                                                                                                                                                  | Accepted Values | Schema | Default |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------ | ------- |
+| inClusterMode | Controls how Felix programs routes to pods on remote nodes inside the VRF routing table. <br/><br/>**`Local`**: program routes only to VRF pods that are local to this node; routes to pods on other nodes must be distributed via BGP (a node-to-node mesh is **not** created for VRF networks). | `Local`         | string | `Local` |
+
+### VRFHostConfig
+
+| Field           | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Accepted Values                            | Schema                                          | Default |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------- | ------- |
+| nodeSelector    | $[prodname] selector expression that determines which nodes this configuration applies to. If omitted (or empty), the entry applies to all nodes. When multiple entries are present, the first entry whose selector matches a given node is applied and all others are ignored.                                                                                                                                                                                                                                                                                          |                                            | [selector](bgppeer.mdx#selector)                | `""`    |
+| routeTableIndex | Linux kernel routing table number to use for this VRF on the selected nodes. **Must be unique** across all VRF networks on a node, must not overlap with the `RouteTableRanges` field in [FelixConfiguration](felixconfig.mdx), and must not collide with tables used by other software on the node. Tables 253 (default), 254 (main), and 255 (local) are reserved by the kernel. **A conflict can result in network outages.** | 1 – 2147483647                             | int                                             |         |
+| hostInterfaces  | Interfaces on the node to attach to this VRF. The IP address(es) on the interface (and their local/connected routes) move into the VRF routing table when the interface is enslaved. At least one interface should be specified for pods in the VRF to communicate outside the node.                                                                                                                                                                                                                                                                                | List of [InterfaceMatch](#interfacematch) entries.   | list                                            |         |
+| staticRoutes    | Additional routes programmed into the VRF routing table, beyond the pod routes that Felix manages automatically and the routes derived from the VRF interface addresses. Typically used to add a default route via the upstream router.                                                                                                                                                                                                                                                                                                                                  |                                            | List of [VRFStaticRoute](#vrfstaticroute)       |         |
+
+### InterfaceMatch
+
+Identifies a network interface. Currently only `name` is supported; additional
+match types may be added in future, at which point exactly one match criterion
+will need to be set.
+
+| Field | Description                                                                                                                | Accepted Values        | Schema |
+| ----- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------ |
+| name  | Match a network interface by its exact device name (for example, `bond0`, `eth1`, `ens192`, `eth1.100`). | 1 – 15 characters      | string |
+
+### VRFStaticRoute
+
+| Field       | Description                                                                                              | Accepted Values | Schema                                  |
+| ----------- | -------------------------------------------------------------------------------------------------------- | --------------- | --------------------------------------- |
+| destination | CIDR prefix for this route. Use `0.0.0.0/0` or `::/0` for a default route.                               | A valid CIDR    | string                                  |
+| action      | Forwarding behaviour for traffic matching this route. Exactly one action field must be set.              |                 | [StaticRouteAction](#staticrouteaction) |
+
+### StaticRouteAction
+
+Exactly one field must be set.
+
+| Field   | Description                                                                                                                                              | Schema |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| nextHop | Forward matching traffic to the specified gateway IP. The address must be reachable on the subnet of one of the VRF host interfaces on the node. | string |
+
+### Status
+
+`Network.status.conditions` reports the observed state of the resource as a
+list of standard Kubernetes [conditions](https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/condition/).
+
+## Attaching pods to a Network
+
+Pods are attached to a `Network` either through their primary CNI interface or
+through Multus secondary interfaces. See [Configure multi-VRF networking](../../networking/configuring/multi-vrf.mdx)
+for the full configuration.
+
+**Primary interface** — set an annotation on the pod (or its namespace) referencing the `Network` by name. The annotation is plural for forward compatibility but currently accepts only a single network name:
+
+```yaml
+metadata:
+  annotations:
+    cni.projectcalico.org/networks: "vrf1"
+```
+
+**Secondary interface (Multus)** — create a `NetworkAttachmentDefinition` whose
+CNI configuration sets `"network": "<network-name>"`, and reference the NAD from
+the pod's `k8s.v1.cni.cncf.io/networks` annotation.
+
+The networks attached to a pod are **immutable**. To change them, the pod must
+be deleted and recreated.
+
+## BGP peering for VRFs
+
+To distribute pod and service routes between nodes inside a VRF — and between
+the cluster and the upstream fabric — create a [BGPPeer](bgppeer.mdx) for each
+upstream router and set its `network` field to the name of the corresponding
+`Network`. Routes received from that peer are programmed into the VRF's routing
+table (instead of the main table). Use [BGPFilter](bgpfilter.mdx) to constrain
+which prefixes are exported to and imported from each VRF's peers.
+
+## Limitations (tech preview)
+
+- **Dataplane**: only the [nftables dataplane](../../operations/nftables.mdx) is supported. iptables and eBPF are not supported.
+- **kube-proxy**: must be in `nftables` mode. `ipvs` mode is **never** supported (this is a permanent restriction, not a tech-preview limitation).
+- **NodePort services** are not supported on VRF networks; advertise services as `LoadBalancer` cluster IPs instead.
+- **Egress gateways** cannot be placed on a VRF network.
+- **ExternalNetworks** and `Network` resources cannot be used in the same cluster.
+- **Host endpoints** should not be applied to interfaces inside a VRF.
+- **IPv6** has not been verified in the tech preview.
+- A pod can be attached to at most **9** VRFs (the Multus secondary-interface limit).
+- Pod IPs must be unique across all VRFs and must not be used outside the cluster in any VRF.
+- Node IPs (including those on VRF subinterfaces) must be unique across all VRFs and nodes.
+- Networks attached to a pod cannot be changed without deleting and recreating the pod.
+- A `Network` must not be deleted while pods are still attached to it.
+
+## Requirements
+
+- Linux kernel **5.6 or later** (for the `meta sdifname` nftables match used by VRF policy dispatch).
+- The `vrf` kernel module must be loaded on every node. On Ubuntu this is part of `linux-modules-extra-$(uname -r)`. Confirm with `sudo modprobe vrf && lsmod | grep '^vrf '`.
+- $[prodname] must be installed with `linuxDataplane: Nftables` and kube-proxy must also be in nftables mode.
+- The cluster's [Installation](../installation/api.mdx) should pin `nodeAddressAutodetection` to a specific interface or to `kubernetes: NodeInternalIP`. The default "first found" autodetection can chase a VRF-attached interface and break the cluster when extra interfaces are added.
