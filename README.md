@@ -3,7 +3,11 @@
 </p>
 
 <p align="center">
+  <a href="https://docs.tigera.io">Prod:</a> 
   <a href="https://app.netlify.com/sites/tigera/deploys"><img src="https://api.netlify.com/api/v1/badges/58c3464e-f1ba-4a32-8c6e-0e41fe8e0f45/deploy-status" alt="Production build status"></a>
+</p>
+<p align="center">
+  <a href="https://calico-docs-preview-next.netify.app">Next:</a>
   <a href="https://app.netlify.com/sites/calico-docs-preview-next/deploys"><img src="https://api.netlify.com/api/v1/badges/b5b32cd6-5303-4d84-90e8-9379a961a5bf/deploy-status" alt="Next build status"></a>
 </p>
 
