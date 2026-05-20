@@ -66,8 +66,10 @@ to the staged and enforced global network policies in that tier.
 
 - [Enable host-policy recommendations](#enable-host-policy-recommendations)
 - [View recommended policies](#view-recommended-policies)
+- [Scope recommendations to specific hosts](#scope-recommendations-to-specific-hosts)
 - [Tune global settings](#tune-global-settings)
 - [Manage the life cycle of recommendations](#manage-the-life-cycle-of-recommendations)
+- [Track recommendation readiness](#track-recommendation-readiness)
 - [Confirm a recommendation is matching real traffic](#confirm-a-recommendation-is-matching-real-traffic)
 - [Disable host-policy recommendations](#disable-host-policy-recommendations)
 
@@ -113,6 +115,38 @@ matches the selector. Each recommended policy has one of three states
 you can set — `Learn`, `Set`, or `Ignore` — tracked by the
 `projectcalico.org/spec.stagedAction` label and `spec.stagedAction` field.
 See [Manage the life cycle of recommendations](#manage-the-life-cycle-of-recommendations).
+
+### Scope recommendations to specific hosts
+
+By default, every host endpoint in the cluster is eligible for
+recommendations. To restrict the engine to a subset, set
+`hostEndpointSpec.selector` to a Calico label-selector expression that
+matches the labels of the host endpoints you want to cover.
+
+```bash
+# Recommend policies only for host endpoints labelled environment=prod.
+kubectl patch policyrecommendationscope default --type=merge --patch-file=/dev/stdin <<'EOF'
+spec:
+  hostEndpointSpec:
+    recommendationStatus: Enabled
+    selector: environment == 'prod'
+EOF
+```
+
+This table shows common selector patterns for host endpoint policy
+recommendations:
+
+| Goal                                             | Expression                                                       |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| Match all host endpoints                         | `all()` (or omit `selector`)                                     |
+| Match a single label value                       | `role == 'edge'`                                                 |
+| Match any of several values                      | `role in { 'edge', 'gateway' }`                                  |
+| Match host endpoints that carry a given label    | `has(zone)`                                                      |
+| Combine conditions with boolean operators        | <code>environment == 'prod' && !has(quarantined)</code>          |
+
+For the full operator reference — comparison, set membership,
+substring, and boolean composition — see
+[label selectors](../../reference/resources/policyrecommendations.mdx#selectors).
 
 ### Tune global settings
 
@@ -282,6 +316,58 @@ kubectl delete globalnetworkpolicy.projectcalico.org <name>
 
 On the next processing cycle, the engine creates a fresh staged
 recommendation in `Learn`.
+
+### Track recommendation readiness
+
+In addition to the `stagedAction` lifecycle described above (which **you**
+control), the engine reports its own view of each recommendation through
+the `policyrecommendation.tigera.io/status` annotation on the staged
+global network policy. Use it to know when a recommendation has stopped
+changing long enough to be ready to enforce.
+
+This table describes the values the engine assigns to the
+`policyrecommendation.tigera.io/status` annotation:
+
+| Value         | Meaning                                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `Learning`    | Engine is still actively adding or modifying rules from flow logs. This is the initial value and is reset whenever the engine changes the recommendation. |
+| `Stabilizing` | Engine has not modified the recommendation for longer than `2 × interval`, but no more than `stabilizationPeriod`. Rules look settled but the engine is still watching. |
+| `Stable`      | Engine has not modified the recommendation for longer than `stabilizationPeriod`. The recommendation is considered ready to enforce. |
+
+The status transitions are driven by the time since the engine last
+modified the recommendation, not by elapsed time alone:
+
+- A host that suddenly sends new traffic during a `Stabilizing` period
+  returns to `Learning` while the engine incorporates the new rules.
+- The `stabilizationPeriod` and `interval` values in
+  [Tune global settings](#tune-global-settings) directly control how
+  quickly a recommendation can reach `Stable`.
+
+Read the annotation with `kubectl`:
+
+```bash
+kubectl get stagedglobalnetworkpolicy.projectcalico.org <name> \
+  -o jsonpath='{.metadata.annotations.policyrecommendation\.tigera\.io/status}{"\n"}'
+```
+
+List the status of every host-policy recommendation at once:
+
+```bash
+kubectl get stagedglobalnetworkpolicies.projectcalico.org \
+  -l projectcalico.org/tier=hostendpoint-isolation \
+  -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.annotations.policyrecommendation\.tigera\.io/status}{"\n"}{end}'
+```
+
+:::tip
+
+Wait for `Stable` before
+[accepting](#activate-a-recommendation) and
+[enforcing](#enforce-a-recommendation) a recommendation. Accepting a
+recommendation while it is still learning or stabilizing pins the
+current — possibly incomplete — set of rules and stops the engine from
+refining it further.
+
+:::
 
 ### Confirm a recommendation is matching real traffic
 
