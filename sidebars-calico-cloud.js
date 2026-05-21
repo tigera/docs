@@ -558,7 +558,6 @@ module.exports = {
               label: 'Calico Cloud Kubernetes controllers',
               link: { type: 'doc', id: 'reference/component-resources/kube-controllers/index' },
               items: [
-                'reference/component-resources/kube-controllers/configuration',
                 'reference/component-resources/kube-controllers/prometheus',
               ],
             },
