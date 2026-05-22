@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import styles from './styles.module.css';
 
 const SAMPLE = [
   { src: 'front',  dest: 'cart',   svc: 'cart-svc',   method: 'GET',  url: '/cart',   code: '200', ua: 'client', protocol: 'http', sni: null },
@@ -37,9 +38,14 @@ const COLUMNS = [
 ];
 
 const HIGHLIGHT_MS = 1500;
+const FADED_ROW_OPACITY = 0.7;
+const DATA_COL_WIDTH = `${90 / COLUMNS.length}%`;
+const COUNT_COL_WIDTH = '10%';
 
-export default function L7AggregationSandbox() {
-  const [checked, setChecked] = useState(
+const cx = (...names) => names.filter(Boolean).join(' ');
+
+export default function L7AggregationKeyDemo() {
+  const [checked, setChecked] = useState(() =>
     Object.fromEntries(AGGREGATORS.map((a) => [a.id, true])),
   );
 
@@ -107,8 +113,11 @@ export default function L7AggregationSandbox() {
     });
   };
 
-  const visibleRows = displayedRows.filter(
-    (row) => row.__primary || expanded.has(row.primaryOrigIdx),
+  const visibleRows = useMemo(
+    () => displayedRows.filter(
+      (row) => row.__primary || expanded.has(row.primaryOrigIdx),
+    ),
+    [displayedRows, expanded],
   );
 
   useEffect(() => {
@@ -133,72 +142,31 @@ export default function L7AggregationSandbox() {
       }
     }
     prevRef.current = displayedRows;
+    if (newHL.size === 0 && highlights.size === 0) return;
     setHighlights(newHL);
     if (newHL.size === 0) return;
     const t = setTimeout(() => setHighlights(new Map()), HIGHLIGHT_MS);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayedRows]);
 
   const toggle = (id) => setChecked((c) => ({ ...c, [id]: !c[id] }));
 
-  const ROW_HEIGHT = '3.2em';
-  const baseCellStyle = {
-    padding: '4px 8px',
-    fontFamily: 'var(--ifm-font-family-monospace)',
-    fontSize: '0.85em',
-    overflowWrap: 'anywhere',
-    verticalAlign: 'top',
-    transition: 'background-color 1s ease',
-    height: ROW_HEIGHT,
-    boxSizing: 'border-box',
-    backgroundColor: 'transparent',
-  };
-  const cellStyleFor = (rowIdx, key) => {
+  const cellClassFor = (rowIdx, key, extra) => {
     const direction = highlights.get(`${rowIdx}:${key}`);
-    if (direction === 'add') {
-      return {
-        ...baseCellStyle,
-        backgroundColor: 'var(--ifm-color-success-contrast-background)',
-      };
-    }
-    if (direction === 'remove') {
-      return {
-        ...baseCellStyle,
-        backgroundColor: 'var(--ifm-color-danger-contrast-background)',
-      };
-    }
-    return baseCellStyle;
-  };
-  const headerStyle = {
-    ...baseCellStyle,
-    whiteSpace: 'normal',
-    wordBreak: 'break-word',
-    transition: 'none',
+    return cx(
+      styles.cell,
+      direction === 'add' && styles.cellAdd,
+      direction === 'remove' && styles.cellRemove,
+      extra,
+    );
   };
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px 16px',
-          margin: '12px 0',
-          padding: '12px',
-          border: '1px solid var(--ifm-color-emphasis-300)',
-          borderRadius: '4px',
-        }}
-      >
+      <div className={styles.controls}>
         {AGGREGATORS.map((a) => (
-          <label
-            key={a.id}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              cursor: 'pointer',
-            }}
-          >
+          <label key={a.id} className={styles.controlLabel}>
             <input
               type="checkbox"
               checked={checked[a.id]}
@@ -208,55 +176,29 @@ export default function L7AggregationSandbox() {
           </label>
         ))}
       </div>
-      <div
-        style={{
-          display: 'flex',
-          gap: '16px',
-          margin: '8px 0',
-          fontSize: '0.85em',
-          opacity: 0.8,
-        }}
-      >
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <span
-            style={{
-              display: 'inline-block',
-              width: '0.9em',
-              height: '0.9em',
-              backgroundColor: 'var(--ifm-color-success-contrast-background)',
-              border: '1px solid var(--ifm-color-emphasis-300)',
-              borderRadius: '2px',
-            }}
-          />
+      <div className={styles.legend}>
+        <span className={styles.legendItem}>
+          <span className={cx(styles.legendSwatch, styles.legendSwatchAdd)} />
           added (value gained or count up)
         </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <span
-            style={{
-              display: 'inline-block',
-              width: '0.9em',
-              height: '0.9em',
-              backgroundColor: 'var(--ifm-color-danger-contrast-background)',
-              border: '1px solid var(--ifm-color-emphasis-300)',
-              borderRadius: '2px',
-            }}
-          />
+        <span className={styles.legendItem}>
+          <span className={cx(styles.legendSwatch, styles.legendSwatchRemove)} />
           removed (value lost or count down)
         </span>
       </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ tableLayout: 'fixed', width: '100%' }}>
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
           <colgroup>
-            <col style={{ width: '10%' }} />
+            <col style={{ width: COUNT_COL_WIDTH }} />
             {COLUMNS.map((c) => (
-              <col key={c.key} style={{ width: `${90 / COLUMNS.length}%` }} />
+              <col key={c.key} style={{ width: DATA_COL_WIDTH }} />
             ))}
           </colgroup>
           <thead>
             <tr>
-              <th style={headerStyle}>count</th>
+              <th className={cx(styles.cell, styles.header)}>count</th>
               {COLUMNS.map((c) => (
-                <th key={c.key} style={headerStyle}>{c.label}</th>
+                <th key={c.key} className={cx(styles.cell, styles.header)}>{c.label}</th>
               ))}
             </tr>
           </thead>
@@ -265,49 +207,26 @@ export default function L7AggregationSandbox() {
               const prevRow = visibleRows[displayIdx - 1];
               const isBucketStart =
                 !prevRow || prevRow.bucketIdx !== row.bucketIdx;
-              const borderTop = isBucketStart && displayIdx > 0
-                ? '2px solid var(--ifm-color-emphasis-300)'
-                : undefined;
-              const styleForCell = (key) => {
-                const base = cellStyleFor(row.originalIdx, key);
-                return borderTop ? { ...base, borderTop } : base;
-              };
-              const rowOpacity = row.__primary ? 1 : 0.7;
+              const bucketStartClass = isBucketStart && displayIdx > 0
+                ? styles.bucketStart
+                : null;
               const isExpandable = row.__primary && row.bucketSize > 1;
               const isOpen = expanded.has(row.originalIdx);
               return (
                 <tr
                   key={row.originalIdx}
-                  style={{
-                    height: ROW_HEIGHT,
-                    opacity: rowOpacity,
-                    transition: 'opacity 0.4s ease',
-                    backgroundColor: 'transparent',
-                  }}
+                  className={styles.row}
+                  style={{ opacity: row.__primary ? 1 : FADED_ROW_OPACITY }}
                 >
-                  <td style={{ ...styleForCell('count'), fontWeight: row.__primary ? 600 : 400 }}>
+                  <td
+                    className={cellClassFor(row.originalIdx, 'count', bucketStartClass)}
+                    style={{ fontWeight: row.__primary ? 600 : 400 }}
+                  >
                     {isExpandable ? (
                       <button
                         type="button"
                         onClick={() => toggleExpand(row.originalIdx)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '1.5em',
-                          height: '1.5em',
-                          marginRight: 6,
-                          padding: 0,
-                          background: 'var(--ifm-color-emphasis-100)',
-                          border: '1px solid var(--ifm-color-emphasis-400)',
-                          borderRadius: '3px',
-                          cursor: 'pointer',
-                          color: 'var(--ifm-color-emphasis-800)',
-                          fontFamily: 'inherit',
-                          fontSize: '1em',
-                          fontWeight: 700,
-                          lineHeight: 1,
-                        }}
+                        className={styles.expandBtn}
                         aria-label={isOpen ? 'Collapse group' : 'Expand group'}
                       >
                         {isOpen ? '−' : '+'}
@@ -316,7 +235,12 @@ export default function L7AggregationSandbox() {
                     {row.count}
                   </td>
                   {COLUMNS.map((c) => (
-                    <td key={c.key} style={styleForCell(c.key)}>{row[c.key]}</td>
+                    <td
+                      key={c.key}
+                      className={cellClassFor(row.originalIdx, c.key, bucketStartClass)}
+                    >
+                      {row[c.key]}
+                    </td>
                   ))}
                 </tr>
               );
