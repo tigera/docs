@@ -203,7 +203,9 @@ test('Crawl the docs and execute tests', async () => {
     'https://docs.tigera.io/img/calico-logo-2026-badge.png',
     'http://www.w3.org/2000/svg', // Appears in SVG file 'xmlns', doesn't need checking
     'https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html', // TEMP
-    'https://review.openstack.org/#/c/344008/' // TEMP: dead link (503)
+    'https://review.openstack.org/#/c/344008/',
+    'http://www.faqs.org/rfcs/rfc1966.html',
+    'http://www.faqs.org/rfcs/rfc4893.html'
   ];
 
   const lc = linkChecker();
