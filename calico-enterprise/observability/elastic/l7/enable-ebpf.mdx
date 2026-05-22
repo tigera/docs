@@ -1,0 +1,42 @@
+---
+description: Enable the kernel TCP-layer eBPF collector to capture HTTP and TLS L7 logs without a proxy or sidecar.
+---
+
+# Enable eBPF collector
+
+Enable the kernel TCP-layer eBPF collector to capture HTTP request/response and TLS handshake metadata without deploying a proxy or injecting sidecars. For background on what the collector does and how it compares to other options, see [L7 logs overview](overview.mdx).
+
+## Before you begin
+
+### Limitations
+
+* Requires Linux kernel 5.17 or later on every node.
+* HTTP parsing covers HTTP/1.0 and HTTP/1.1 only, because their requests and responses travel as plain text on the wire. HTTP/2 and HTTP/3 are not captured as HTTP, and encrypted HTTP traffic surfaces only as TLS metadata.
+* HTTP capture tracks only the most recent request per socket; when a single connection carries multiple back-to-back requests, some may be missed.
+* TLS capture is limited to handshake metadata (SNI, version, cipher suite). The collector does not decrypt application traffic.
+
+## Enable the collector
+
+Enable the eBPF L7 collector by setting the [L7ObservabilityEnabled](../../../reference/component-resources/node/felix/configuration.mdx#L7ObservabilityEnabled) field to `true` on the default `FelixConfiguration`. The setting is independent of `bpfEnabled` — the collector works with any data plane.
+
+```bash
+kubectl patch felixconfiguration default --type=merge -p '{"spec":{"l7ObservabilityEnabled":true}}'
+```
+
+To disable the collector, set the field back to `false`. Felix tears down its BPF programs and cleans up pinned maps; no node reboot is required.
+
+```bash
+kubectl patch felixconfiguration default --type=merge -p '{"spec":{"l7ObservabilityEnabled":false}}'
+```
+
+## View L7 logs
+
+The eBPF collector writes L7 events as JSON to a log file on each node. By default the file is at `/var/log/calico/l7logs/l7.log`. The directory is controlled by the [L7LogsFileDirectory](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileDirectory) field on `FelixConfiguration`.
+
+To tail the log on a node:
+
+```bash
+tail -f /var/log/calico/l7logs/l7.log
+```
+
+For the JSON schema, see [L7 log data types](datatypes.mdx).
