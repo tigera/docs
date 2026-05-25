@@ -464,6 +464,8 @@ module.exports = {
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
+        'operations/native-v3-crds',
+        'operations/crd-migration',
         'operations/component-logs',
       ],
     },
