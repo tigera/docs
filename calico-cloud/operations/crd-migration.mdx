@@ -1,0 +1,153 @@
+---
+description: Migrate Calico Cloud resources from the aggregated API server backing storage to native projectcalico.org/v3 CRDs so the API server component can be removed.
+---
+
+# Migrate from API server to native CRDs
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## Big picture
+
+Automatically migrate $[prodname] resources from the aggregated API server's `crd.projectcalico.org/v1` backing storage to native `projectcalico.org/v3` CRDs, allowing you to remove the API server component.
+
+## Value
+
+Newer $[prodname] installations use native `projectcalico.org/v3` CRDs directly, without the aggregated API server. This is simpler to operate, removes a component, and enables Kubernetes-native features like CEL validation rules. The `DatastoreMigration` controller provides an automated, in-place migration path for existing clusters that are still running the API server.
+
+## Concepts
+
+### How it works
+
+The migration controller copies all $[prodname] resources from the v1 CRDs (used as backing storage by the API server) to native v3 CRDs. During the migration window, the datastore is briefly locked (`DatastoreReady=false`) so components pause and retain their cached data plane state — existing workload connectivity is preserved throughout.
+
+The migration proceeds through these phases:
+
+| Phase | Description |
+|-------|-------------|
+| `Pending` | CR created, prerequisites are being validated |
+| `Migrating` | Datastore locked, resources being copied from v1 to v3 CRDs |
+| `WaitingForConflictResolution` | Conflicts found — user action needed (see [resolving conflicts](#resolve-conflicts)) |
+| `Converged` | All resources migrated, datastore unlocked, waiting for components to switch to v3 |
+| `Complete` | All components running against v3 CRDs |
+
+### What gets migrated
+
+All $[prodname] resource types are migrated: network policies, IP pools, BGP configuration, Felix configuration, IPAM blocks, and more. IPAM resources are migrated last to minimize the window where new IP allocations are blocked.
+
+The controller handles policy name migration (removing the legacy `default.` prefix) automatically during the copy.
+
+### What happens during the migration window
+
+- Components (Felix, Typha, kube-controllers) pause and retain cached data plane state
+- **Existing workload connectivity is preserved** — no packet loss expected
+- New pod scheduling and policy changes are blocked until migration completes
+- IPAM allocations are blocked during the final phase of the migration
+
+The locked window is typically short (seconds to a few minutes depending on cluster size), but you should plan for a maintenance window where no policy changes or new pod deployments are needed.
+
+## Before you begin
+
+- $[prodname] v3.32+ (or the release that includes the migration controller)
+- Cluster is currently running in API server mode (the aggregated API server is deployed)
+- **If using GitOps (ArgoCD, Flux):** pause sync before starting the migration. These tools may interfere with the API group switchover. You'll update your manifests to use `projectcalico.org/v3` after migration completes.
+
+## How to
+
+### Migrate to native CRDs
+
+1. **Install v3 CRDs.**
+
+   Apply the v3 CRD manifests from the $[prodname] release. While the aggregated API service is active, Kubernetes ignores these CRDs, so this is safe to do ahead of time.
+
+   ```bash
+   kubectl apply -f $[manifestsUrl]/manifests/v3_projectcalico_org.yaml
+   ```
+
+2. **Install the DatastoreMigration CRD.**
+
+   ```bash
+   kubectl apply -f $[manifestsUrl]/manifests/migration.projectcalico.org_datastoremigrations.yaml
+   ```
+
+3. **Create the DatastoreMigration CR.**
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: migration.projectcalico.org/v1beta1
+   kind: DatastoreMigration
+   metadata:
+     name: v1-to-v3
+   spec:
+     type: APIServerToCRDs
+   EOF
+   ```
+
+4. **Monitor progress.**
+
+   ```bash
+   kubectl get datastoremigration v1-to-v3 -w
+   ```
+
+   You'll see phase transitions: `Pending` → `Migrating` → `Converged` → `Complete`.
+
+   For more detail on per-resource-type progress:
+
+   ```bash
+   kubectl get datastoremigration v1-to-v3 -o yaml
+   ```
+
+5. **Wait for completion.**
+
+   **Operator-managed installs:** The operator automatically detects when migration reaches `Converged` and switches all components to v3 CRD mode. It sets `CALICO_API_GROUP=projectcalico.org/v3` on all components and triggers rolling updates. No manual action needed — just wait for the phase to reach `Complete`.
+
+   **Manifest-based installs:** When the migration reaches `Converged`, you need to manually set `CALICO_API_GROUP=projectcalico.org/v3` on all $[prodname] components (calico-node, typha, kube-controllers) and trigger rolling updates. Update your helm values or manifests to disable the API server.
+
+6. **Clean up v1 CRDs.**
+
+   Once you're confident everything is working on the new CRDs, delete the `DatastoreMigration` CR. The finalizer on the CR deletes all `crd.projectcalico.org` CRDs and their stored data.
+
+   ```bash
+   kubectl delete datastoremigration v1-to-v3
+   ```
+
+7. **Resume GitOps sync** (if applicable). Update your manifests to use `projectcalico.org/v3` API versions and resume sync.
+
+### Resolve conflicts
+
+If the migration encounters a v3 resource that already exists with a different spec than the v1 source, it reports a conflict. The phase changes to `WaitingForConflictResolution` and the migration pauses.
+
+To see which resources have conflicts:
+
+```bash
+kubectl get datastoremigration v1-to-v3 -o jsonpath='{.status.conditions}' | jq .
+```
+
+Each conflict condition includes the resource name and a description of the mismatch. To resolve:
+
+- **Delete the conflicting v3 resource** if it was created accidentally or is stale. The migration will recreate it from the v1 source on the next reconcile.
+- **Update the v3 resource** to match the v1 source if you want to keep the v3 version.
+
+After resolving all conflicts, the migration controller automatically resumes on its next reconcile cycle.
+
+### Abort a migration
+
+If something goes wrong, delete the `DatastoreMigration` CR before it reaches `Complete`:
+
+```bash
+kubectl delete datastoremigration v1-to-v3
+```
+
+The finalizer handles rollback:
+- Cleans up any partial v3 resources that were created during migration
+- Restores the aggregated APIService so components go back to reading v1 CRDs
+- Components resume normal operation as if the migration never happened
+
+The v1 data is never modified during migration, so it remains authoritative after an abort.
+
+### Known limitations
+
+**OwnerReferences from non-Calico resources.** The migration remaps OwnerReference UIDs on Calico resources, but does not scan non-Calico resources (ConfigMaps, Secrets, custom resources from other projects) for OwnerReferences pointing to Calico objects. If you have non-Calico resources with OwnerReferences to Calico resources, those references will become stale after migration because the Calico resource UIDs change. You'll need to update those references manually after migration completes. This is expected to be rare.
