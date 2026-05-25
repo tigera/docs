@@ -17274,7 +17274,9 @@ Creating an ingress gateway with Calico Ingress Gateway involves only a few step
 
 ## Create an ingress gateway[​](#create-an-ingress-gateway-1)
 
-1. To enable Gateway API support, create a `GatewayAPI` resource with the name `default`:
+1. If you are using a [global default deny policy](https://docs.tigera.io/calico/latest/network-policy/get-started/kubernetes-default-deny), allow traffic through the gateway by adding the `tigera-gateway` namespace to the list of excluded namespaces in the `namespaceSelector` field.
+
+2. To enable Gateway API support, create a `GatewayAPI` resource with the name `default`:
 
    ```bash
    kubectl apply -f - <<EOF
@@ -17308,7 +17310,7 @@ Creating an ingress gateway with Calico Ingress Gateway involves only a few step
 
    > **SUCCESS:** `tigera-gateway-class` is the name of the single default `GatewayClass` resource that is created when you enable Gateway API support. You can define [additional gateway classes](https://docs.tigera.io/calico/latest/networking/ingress-gateway/customize-ingress-gateway#configure-multiple-gateway-classes), along with other customizations, in the `GatewayAPI` resource.
 
-2. Create a `Gateway` resource that is linked to `tigera-gateway-class`.
+3. Create a `Gateway` resource that is linked to `tigera-gateway-class`.
 
    Example snippet of a Gateway resource with default gatewayClassName
 
@@ -17330,7 +17332,7 @@ Creating an ingress gateway with Calico Ingress Gateway involves only a few step
 
    Replace `<gateway-name>` with a name for your gateway. You will refer to this gateway name for all services you want to use the gateway.
 
-3. Create a gateway routing resource that refers to your `Gateway` resource as `.spec.parentRefs`:
+4. Create a gateway routing resource that refers to your `Gateway` resource as `.spec.parentRefs`:
 
    Example snippet of an HTTPRoute resource
 
@@ -19843,7 +19845,7 @@ The following table lists common MTU sizes for Calico environments. Because MTU 
 
 **Recommended MTU for overlay networking**
 
-The extra overlay header used in IP in IP, VXLAN and WireGuard protocols, reduces the minimum MTU by the size of the header. (IP in IP uses a 20-byte header, IPv4 VXLAN uses a 50-byte header, IPv6 VXLAN uses a 70-byte header, IPv4 WireGuard uses a [60-byte header](https://lists.zx2c4.com/pipermail/wireguard/2017-December/002201.html) and IPv6 WireGuard uses an 80-byte header).
+The extra overlay header used in IP in IP, VXLAN and WireGuard protocols, reduces the minimum MTU by the size of the header. (IP in IP uses a 20-byte header, IPv4 VXLAN uses a 50-byte header, IPv6 VXLAN uses a 70-byte header, IPv4 WireGuard uses a 60-byte header and IPv6 WireGuard uses an 80-byte header).
 
 When using AKS, the underlying network has an [MTU of 1400](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-tcpip-performance-tuning#azure-and-vm-mtu), even though the network interface will have an MTU of 1500. WireGuard sets the Don't Fragment (DF) bit on its packets, and so the MTU for WireGuard on AKS needs to be set to 60 bytes below (or 80 bytes for IPv6) the 1400 MTU of the underlying network to avoid dropped packets.
 
