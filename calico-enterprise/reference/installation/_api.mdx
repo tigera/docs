@@ -819,6 +819,7 @@ _Appears in:_
 | `hostPorts` _[HostPortsType](#hostportstype)_ | (Optional) HostPorts configures whether or not Calico will support Kubernetes HostPorts. Valid only when using the Calico CNI plugin.<br />Default: Enabled |
 | `multiInterfaceMode` _[MultiInterfaceMode](#multiinterfacemode)_ | (Optional) MultiInterfaceMode configures what will configure multiple interface per pod. Only valid for Calico Enterprise installations using the Calico CNI plugin.<br />Default: None |
 | `containerIPForwarding` _[ContainerIPForwardingType](#containeripforwardingtype)_ | (Optional) ContainerIPForwarding configures whether ip forwarding will be enabled for containers in the CNI configuration.<br />Default: Disabled |
+| `linuxPodInterfaceType` _[LinuxPodInterfaceType](#linuxpodinterfacetype)_ | (Optional) LinuxPodInterfaceType selects the virtual device type the Calico CNI plugin creates for each pod's interface on Linux nodes. When set to Netkit, the CNI plugin creates a netkit L2 pair on kernels that support it (Linux 6.7+) and falls back to a veth pair on older kernels. Netkit is recommended for the BPF dataplane, where it allows BPF programs to attach via BPF_NETKIT_PRIMARY for improved throughput and tail-latency under contention; for non-BPF dataplanes it is functionally equivalent to veth. Only valid when using the Calico CNI plugin.<br />Default: Veth |
 | `sysctl` _[Sysctl](#sysctl) array_ | (Optional) Sysctl configures sysctl parameters for tuning plugin |
 | `linuxPolicySetupTimeoutSeconds` _integer_ | (Optional) LinuxPolicySetupTimeoutSeconds delays new pods from running containers until their policy has been programmed in the dataplane. The specified delay defines the maximum amount of time that the Calico CNI plugin will wait for policy to be programmed. Only applies to pods created on Linux nodes. * A value of 0 disables pod startup delays.<br />Default: 0 |
 
@@ -3253,6 +3254,7 @@ _Appears in:_
 | `allocateLoadBalancerNodePorts` _boolean_ | (Optional)  |
 | `loadBalancerSourceRanges` _string array_ | (Optional)  |
 | `loadBalancerIP` _string_ | (Optional)  |
+| `patch` _[KubernetesPatchSpec](#kubernetespatchspec)_ | (Optional) Patch allows the Service for a gateway to be patched in ways that aren't more explicitly supported by the fields above.  For example, the following YAML could be used to set the Service's healthCheckNodePort:   patch:     type: StrategicMerge     value:       spec:         healthCheckNodePort: 12345 |
 
 
 ### Goldmane
@@ -3756,6 +3758,7 @@ _Appears in:_
 | `imagePath` _string_ | (Optional) ImagePath allows for the path part of an image to be specified. If specified then the specified value will be used as the image path for each image. If not specified or empty, the default for each image will be used. A special case value, UseDefault, is supported to explicitly specify the default image path will be used for each image. Image format:    `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>` This option allows configuring the `<imagePath>` portion of the above format. |
 | `imagePrefix` _string_ | (Optional) ImagePrefix allows for the prefix part of an image to be specified. If specified then the given value will be used as a prefix on each image. If not specified or empty, no prefix will be used. A special case value, UseDefault, is supported to explicitly specify the default image prefix will be used for each image. Image format:    `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>` This option allows configuring the `<imagePrefix>` portion of the above format. |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) array_ | (Optional) ImagePullSecrets is an array of references to container registry pull secrets to use. These are applied to all images to be pulled. |
+| `imagePullPolicy` _[PullPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#pullpolicy-v1-core)_ | (Optional) ImagePullPolicy is the pull policy applied to containers in pods rendered by the operator that do not explicitly set their own pull policy. If unset, defaults to IfNotPresent. This is useful in air-gapped environments where images are pre-loaded onto nodes and must not be re-pulled from a remote registry. |
 | `kubernetesProvider` _[Provider](#provider)_ | (Optional) KubernetesProvider specifies a particular provider of the Kubernetes platform and enables provider-specific configuration. If the specified value is empty, the Operator will attempt to automatically determine the current provider. If the specified value is not empty, the Operator will still attempt auto-detection, but will additionally compare the auto-detected value to the specified value to confirm they match. |
 | `cni` _[CNISpec](#cnispec)_ | (Optional) CNI specifies the CNI that will be used by this installation. |
 | `calicoNetwork` _[CalicoNetworkSpec](#caliconetworkspec)_ | (Optional) CalicoNetwork specifies networking configuration options for Calico. |
@@ -4455,6 +4458,28 @@ _Appears in:_
 | `BPF` |  |
 | `VPP` |  |
 | `Nftables` |  |
+
+
+### LinuxPodInterfaceType
+
+_Underlying type:_ _string_
+
+LinuxPodInterfaceType specifies the type of virtual device the Calico CNI plugin
+creates for the pod-side interface on Linux nodes.
+
+One of: Veth, Netkit
+
+_Validation:_
+- Enum: [Veth Netkit]
+
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Value | Description |
+| --- | --- |
+| `Veth` |  |
+| `Netkit` |  |
 
 
 ### LogCollectionSpec
