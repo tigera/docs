@@ -1,5 +1,5 @@
 ---
-description: Track Calico Enterprise license expiration through operator-exposed Prometheus metrics and renewal workflows to avoid unplanned cluster degradation.
+description: Track Calico Enterprise license expiration through tigerastatus and operator-exposed Prometheus metrics to keep observability and management features available.
 ---
 
 # License expiration and renewal
@@ -26,19 +26,35 @@ Yes. The license indicator in the web console (top right banner) turns red when 
 
 ### What happens when a license expires or is invalid?
 
-:::caution
+Data plane traffic continues to flow without interruption — policy enforcement, Egress Gateways, cluster mesh, Ingress Gateway, and Envoy keep running as configured. Observability and management features are degraded:
 
-$[prodname] stops reporting flow logs, DNS logs, and $[prodname] metrics, which affects other UI elements like Service Graph and dashboards. Although some elements in the UI may appear to work, actions are not saved. We recommend that you proactively manage your license to avoid disruption.
+| Area | Behavior after expiration |
+|---|---|
+| $[prodname] resources | Read-only. The Tigera API server rejects create and update requests; get, list, and delete on existing resources still succeed. |
+| Flow, DNS, and audit logs | Stopped. Fluentd is scaled down and logs are no longer forwarded to Elasticsearch. |
+| Prometheus metrics for $[prodname] components | Stopped. The Operator removes the $[prodname] ServiceMonitor so metrics are no longer scraped. |
+| Web console | Service Graph, Kibana, Alerts, and Compliance remain visible in read-only mode; attempts to create or modify resources are not saved. |
 
-:::
+We recommend that you proactively manage your license to avoid disruption to observability and management workflows.
 
 ### Do licenses cover free upgrades in $[prodname]?
 
 Yes.
 
+### How can I check license status from the command line?
+
+Run:
+
+```bash
+kubectl get tigerastatus
+```
+
+The Tigera Operator reports license condition in `tigerastatus`, including a warning while you are inside the 30-day grace period.
+
 ### How do I monitor my license?
 
 - [License metrics and alerts](#license-metrics)
+- Use `kubectl get tigerastatus` to view license condition reported by the Tigera Operator
 - Use `kubectl` to get [license key information](../reference/resources/licensekey.mdx#viewing-information-about-your-license-key)
 
 ## License metrics
