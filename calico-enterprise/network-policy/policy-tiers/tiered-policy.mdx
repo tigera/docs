@@ -62,23 +62,85 @@ The default tier is where:
 - Network and global network policies are placed when you upgrade from Project Calico to $[prodname]
 - Recommended policies are placed when you use the **Recommend a policy** feature
 
-## The admin network policy tier:
+## kube-admin tier:
 
-The `Tier` with name `adminnetworkpolicy` is where all [Kubernetes admin network policies](https://network-policy-api.sigs.k8s.io/reference/examples/) reside. It is automatically created
-during installation and has the order of 1,000 and a default action of `Pass`. This is fixed, and should not be changed.
+The `Tier` with name `kube-admin` is where all [Kubernetes ClusterNetworkPolicy](https://network-policy-api.sigs.k8s.io/reference/examples/) resources with Admin Tier reside.
+It is automatically created at startup and has the order of 1,000 and a default action of `Pass`. This is fixed, and cannot be changed.
 
-In addition to `AdminNetworkPolicy` resources, you can also add $[prodname] `NetworkPolicy`/`GlobalNetworkPolicy` resources
-to the admin network policy `Tier`. The `AdminNetworkPolicy` `priority` field maps to the `order` field in the $[prodname]
+```yaml
+apiVersion: policy.networking.k8s.io/v1alpha2
+kind: ClusterNetworkPolicy
+metadata:
+  name: accept-default
+spec:
+  tier: Admin
+  priority: 100
+  subject:
+    namespaces:
+      matchLabels:
+        kubernetes.io/metadata.name: default
+  ingress:
+  - name: accept-default-ingress
+    action: "Accept"
+    from:
+    - namespaces:
+        matchLabels:
+          kubernetes.io/metadata.name: default
+```
+
+$[prodname] enforces Kubernetes `ClusterNetworkPolicy` resources with `spec.tier: Admin` in the `kube-admin` tier.
+
+In addition to `ClusterNetworkPolicy` resources, you can also add $[prodname] `NetworkPolicy`/`GlobalNetworkPolicy` resources
+to the kube-admin `Tier`. The `ClusterNetworkPolicy` `priority` field maps to the `order` field in the $[prodname]
 `NetworkPolicy`/`GlobalNetworkPolicy` resources so that the two types of policy can be ordered together.
 
-## The baseline admin network policy tier:
+:::note
 
-The `Tier` with name `baselineadminnetworkpolicy` is where the singleton [Kubernetes baseline admin network policy](https://network-policy-api.sigs.k8s.io/reference/examples/) resides. It is automatically created
-during installation and has the order of 10,000,000 and a default action of `Pass`. This is fixed, and should not be changed.
+The `kube-admin` tier replaces the `adminnetworkpolicy` tier from earlier releases. Support for the
+upstream `AdminNetworkPolicy` (`policy.networking.k8s.io/v1alpha1`) resource is removed; existing
+`AdminNetworkPolicy` resources must be migrated to `ClusterNetworkPolicy` with `spec.tier: Admin`
+before upgrade.
 
-In addition to the `BaselineAdminNetworkPolicy` resource, you can also add $[prodname] `NetworkPolicy`/`GlobalNetworkPolicy` resources
-to the baseline admin network policy `Tier`. The `BaselineAdminNetworkPolicy` is treated as if it had an `order` of 1,000, allowing $[prodname]
-`NetworkPolicy`/`GlobalNetworkPolicy` resources to be inserted with higher/lower precedence than the `BaselineAdminNetworkPolicy`.
+:::
+
+## kube-baseline tier:
+
+The `Tier` with name `kube-baseline` is where all [Kubernetes ClusterNetworkPolicy](https://network-policy-api.sigs.k8s.io/reference/examples/) resources with Baseline tier reside.
+It is automatically created during startup and has the order of 10,000,000 and a default action of `Pass`. This is fixed, and cannot be changed.
+
+```yaml
+apiVersion: policy.networking.k8s.io/v1alpha2
+kind: ClusterNetworkPolicy
+metadata:
+  name: deny-all
+spec:
+  tier: Baseline
+  priority: 1
+  subject:
+    namespaces:
+      matchLabels: {}
+  ingress:
+  - name: deny-all-ingress
+    action: "Deny"
+    from:
+    - namespaces:
+        matchLabels: {}
+```
+
+$[prodname] places a Kubernetes `ClusterNetworkPolicy` with `spec.tier: Baseline`, like the one above, in the `kube-baseline` tier.
+
+In addition to the `ClusterNetworkPolicy` resource, you can also add $[prodname] `NetworkPolicy`/`GlobalNetworkPolicy` resources
+to the kube-baseline `Tier`. The `ClusterNetworkPolicy` `priority` field maps to the `order` field in the $[prodname]
+`NetworkPolicy`/`GlobalNetworkPolicy` resources so that the two types of policy can be ordered together.
+
+:::note
+
+The `kube-baseline` tier replaces the `baselineadminnetworkpolicy` tier from earlier releases.
+Support for the upstream `BaselineAdminNetworkPolicy` resource is removed; existing
+`BaselineAdminNetworkPolicy` resources must be migrated to `ClusterNetworkPolicy` with
+`spec.tier: Baseline` before upgrade.
+
+:::
 
 ## System tiers
 
