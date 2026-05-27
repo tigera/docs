@@ -129,7 +129,7 @@ module.exports = {
           items: [
             'network-policy/policy-tiers/tiered-policy',
             'network-policy/policy-tiers/policy-tutorial-ui',
-            'network-policy/policy-tiers/allow-tigera',
+            'network-policy/policy-tiers/calico-system',
             'network-policy/policy-tiers/rbac-tiered-policies',
           ],
         },
