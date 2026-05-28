@@ -1,0 +1,168 @@
+---
+description: Make pods and LoadBalancer service VIPs that share the host subnet reachable from the local L2 network without BGP, using Calico's userspace ARP/NDP responder.
+---
+
+# L2 reachability for pods and services without BGP
+
+## Big picture
+
+Make pods and LoadBalancer service IPs reachable from the local layer 2 (L2) network without configuring BGP, by having $[prodname] answer ARP and NDP requests for those IPs directly.
+
+## Value
+
+When a pod or LoadBalancer VIP is assigned an IP from the same subnet as a node's physical interface, external hosts on that L2 segment try to reach it with ARP (IPv4) or Neighbor Solicitation (IPv6). By default nobody answers: the pod IP lives in a network namespace behind a veth, and a LoadBalancer VIP does not exist on any interface.
+
+Traditionally the only way to make these IPs reachable is to [advertise them over BGP](advertise-service-ips.mdx), which requires peering with your network infrastructure. In flat L2 environments — bare-metal labs, edge deployments, `kind` clusters, or networks where you cannot configure the upstream router — BGP may not be an option.
+
+With `localSubnetL2Reachability` enabled, $[prodname] runs a userspace ARP/NDP responder on the relevant host interfaces and answers for local pod IPs and selected LoadBalancer VIPs that fall within the host subnet. No BGP, no overlay encapsulation, and no changes to your network infrastructure.
+
+## Concepts
+
+### Userspace ARP/NDP responder
+
+$[prodname] (Felix) opens a raw socket on each host physical interface that has at least one pod IP or LoadBalancer VIP within its subnet, and replies to ARP/NDP requests for those IPs. The reply carries the node's MAC address, so the external host sends the workload's traffic to that node. From there $[prodname]'s normal dataplane forwards it the rest of the way — directly to a local pod for a pod IP, or load-balanced to a service backend for a LoadBalancer VIP. The responder only answers ARP/NDP; it does not change how traffic is forwarded once it reaches the node.
+
+### One node answers per LoadBalancer VIP
+
+For a LoadBalancer VIP, exactly one node answers ARP. $[prodname] elects that node consistently across the cluster using a consistent-hash ring, so every node independently agrees on the owner without coordination. If the owning node's `Node` object is deleted, the VIP is reassigned to another node, which proactively updates external caches with a gratuitous ARP / unsolicited Neighbor Advertisement.
+
+### Only no-encapsulation IP pools are eligible
+
+$[prodname] answers only for IPs that belong to an IP pool with no encapsulation (`ipipMode` and `vxlanMode` both `Never`). Encapsulated pools are treated as private pod networks and are never advertised on the host L2 segment.
+
+## Before you begin...
+
+**Limitations**
+
+- **One node per LoadBalancer VIP.** There is no active-active high availability. If the owning node goes down, the VIP is unreachable until its `Node` object is removed and a new owner is elected.
+- **Cloud provider ARP filtering.** Some cloud networks (for example, AWS VPC) filter ARP at the hypervisor. The responder will not work unless the VIP/pod IPs are assigned to the node's cloud interface. This is an infrastructure constraint outside $[prodname]'s control.
+- **Heterogeneous subnets.** Node selection for LoadBalancer VIPs hashes over all nodes without checking whether a node has an interface on the VIP's subnet. This is only a concern when nodes do not share the same subnets.
+
+:::note
+
+The ARP/NDP responder runs inside Felix (`calico-node`). While a node's Felix is restarting it briefly does not answer ARP or NDP. Established connections keep working because the upstream router and switches still have the node's MAC cached for those IPs, but **a new connection to an IP that is not already cached upstream may fail until Felix finishes starting** and rebuilds its responder state (typically under a minute).
+
+To reduce the impact, increase the ARP/neighbor cache timeout (aging time) on your upstream router and switches so cached entries survive a Felix restart.
+
+:::
+
+## How to
+
+- [Enable local subnet L2 reachability](#enable-local-subnet-l2-reachability)
+- [Create a dedicated IP pool in the host subnet](#create-a-dedicated-ip-pool-in-the-host-subnet)
+- [Steer pods or services into the pool](#steer-pods-or-services-into-the-pool)
+- [Verify reachability](#verify-reachability)
+
+### Enable local subnet L2 reachability
+
+Set `localSubnetL2Reachability` to `PodsAndLoadBalancers` on the default `FelixConfiguration`:
+
+```bash
+calicoctl patch felixconfiguration default --patch \
+   '{"spec": {"localSubnetL2Reachability": "PodsAndLoadBalancers"}}'
+```
+
+The feature is `Disabled` by default. The setting is evaluated at dataplane startup, so **restart Felix (`calico-node`) for the change to take effect**. For the full field reference, see [Felix configuration resource](../../reference/resources/felixconfig.mdx).
+
+:::note
+
+Enabling the feature alone does nothing. $[prodname] only answers for IPs in a no-encapsulation IP pool that overlaps a host subnet, so you must also create that pool.
+
+:::
+
+### Create a dedicated IP pool in the host subnet
+
+Create an IP pool whose CIDR lies inside your host interface's subnet, with no encapsulation.
+
+:::caution
+
+Reserve a sub-range of the host subnet for this pool that does **not** overlap DHCP scopes, static host assignments, or infrastructure addresses (routers, switches, management interfaces). For example, for a host subnet of `10.0.0.0/23`, use `10.0.0.2–10.0.0.255` for hosts and a separate `10.0.1.0/24` for the pool.
+
+:::
+
+**For pods:**
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+  name: host-subnet-pod-pool
+spec:
+  cidr: 10.0.1.0/24
+  ipipMode: Never
+  vxlanMode: Never
+  natOutgoing: false
+  disabled: false
+  assignmentMode: Manual
+```
+
+`assignmentMode: Manual` keeps the pool opt-in: $[prodname] never assigns from it automatically, so only the workloads you explicitly steer into it get host-subnet IPs. Without this, $[prodname] could allocate IPs from the pool to arbitrary pods.
+
+**For LoadBalancer services**, add `allowedUses: [LoadBalancer]`:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+  name: host-subnet-lb-pool
+spec:
+  cidr: 10.0.2.0/24
+  ipipMode: Never
+  vxlanMode: Never
+  natOutgoing: false
+  disabled: false
+  assignmentMode: Manual
+  allowedUses:
+    - LoadBalancer
+```
+
+With `assignmentMode: Manual`, ordinary LoadBalancer services keep drawing VIPs from your existing automatic pools — you do not need to change the LoadBalancer kube-controller's `assignIPs` mode. Only services you annotate take a VIP from this host-subnet pool.
+
+Your cluster's default workload pool is unchanged, and workloads allocated from it behave exactly as before. For more on LoadBalancer IP pools, see [Configure LoadBalancer IP address management](../ipam/service-loadbalancer.mdx).
+
+### Steer pods or services into the pool
+
+Pods and services do not use the new pool automatically — direct the specific workloads you want reachable on the host L2 segment into it.
+
+**Pods:** annotate the pod or its namespace with the pool name:
+
+```yaml
+cni.projectcalico.org/ipv4pools: '["host-subnet-pod-pool"]'
+```
+
+**LoadBalancer services:** annotate the `Service` with the pool name:
+
+```yaml
+projectcalico.org/ipv4pools: '["host-subnet-lb-pool"]'
+```
+
+For IPv6, use `projectcalico.org/ipv6pools`. Services without this annotation continue to get VIPs from your automatic LoadBalancer pools as before. See [Configure LoadBalancer IP address management](../ipam/service-loadbalancer.mdx) for more options.
+
+### Verify reachability
+
+On the node, confirm ARP requests arrive and replies leave with the node's MAC:
+
+```bash
+tcpdump -i <iface> arp
+```
+
+For IPv6 NDP solicitations and advertisements:
+
+```bash
+tcpdump -i <iface> 'icmp6 and (icmp6.type == 135 or icmp6.type == 136)'
+```
+
+From an external host on the same L2 segment, confirm end-to-end resolution:
+
+```bash
+arping -I <client-iface> <pod-or-vip>
+```
+
+If there is no reply, check that the IP falls within both a host interface subnet and a no-encapsulation IP pool, that the feature is enabled, and that your network does not filter ARP (see Limitations).
+
+## Additional resources
+
+- [Advertise Kubernetes service IP addresses (over BGP)](advertise-service-ips.mdx)
+- [Configure LoadBalancer IP address management](../ipam/service-loadbalancer.mdx)
+- [Felix configuration resource](../../reference/resources/felixconfig.mdx)
+- [IP pool resource](../../reference/resources/ippool.mdx)

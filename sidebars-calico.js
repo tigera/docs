@@ -276,6 +276,7 @@ module.exports = {
             'networking/configuring/bgp-to-workload',
             'networking/configuring/vxlan-ipip',
             'networking/configuring/advertise-service-ips',
+            'networking/configuring/local-subnet-l2-reachability',
             'networking/configuring/mtu',
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/use-ipvs',
