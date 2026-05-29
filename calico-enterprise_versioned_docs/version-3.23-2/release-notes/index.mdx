@@ -18,11 +18,53 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
 
 ## New features and enhancements
 
-### Track unused policies with policy activity logs
+{/* Start 3.23.0-2.0 features */}
 
-New policy activity logs provide clear visibility into exactly when each security policy or rule was last used by network traffic.
-This makes it easy to identify and remove outdated rules that are no longer needed, ensuring your cluster remains lean and secure.
-By highlighting these unused policies, you can more effectively maintain a "least privilege" security posture and ensure that only necessary traffic is permitted in your environment.
+### Less disruptive license expiration
+
+When a $[prodname] license expires, dataplane traffic and existing policy enforcement now continue running uninterrupted.
+The consequences are limited to the management plane: $[prodname] resources become read-only, log forwarding and component metrics stop, and the web console becomes read-only.
+
+You can check license condition with `kubectl get tigerastatus`, which also reports a warning during the 30-day grace period before expiration.
+
+For more information, see [License expiration and renewal](../operations/license-options.mdx).
+
+### Host policy recommendations
+
+The policy recommendation engine now generates staged global network policies for hosts in your cluster, based on observed flow logs.
+$[prodname] analyzes each host's actual traffic and produces a staged `GlobalNetworkPolicy` you can review and promote to enforcement once you've confirmed it matches real traffic.
+
+For more information, see [Recommend policies for hosts](../network-policy/recommendations/hep-policy-recommendations.mdx).
+
+### Host IP support for egress gateways
+
+You can now configure egress gateways to SNAT outbound traffic to the host node's IP rather than the gateway's pod IP, giving external firewalls and services a stable, well-known set of source IPs to allow.
+Multiple application pods can multiplex outbound traffic through a small fixed set of gateways without each requiring its own routable IP.
+
+Host IP mode is most useful for on-premises clusters where pod IPs are not routable outside the cluster.
+On AWS and Azure, it replaces the gateway's native VPC/VNet IP with the host node address.
+
+For more information, see [Configure egress gateways with host IP support](../networking/egress/egress-gateway-host-ip.mdx).
+
+### Load balancer node maintenance
+
+When you put a node into maintenance, $[prodname]'s eBPF data plane can now stop sending new service traffic to the node's local backends while existing connections complete.
+This lets platform teams drain nodes for upgrades, repairs, or capacity changes without dropping mid-flight sessions or stateful workloads.
+
+For more information, see [Mark a load balancer node for maintenance](../networking/configuring/mark-lb-node-for-maintenance.mdx).
+
+{/* End 3.23.0-2.0 features */}
+
+{/* Start 3.23.0-1.0 features */}
+
+### Review unused network policies
+
+{/* Originally introduced in 3.23.0-1.0; expanded in 3.23.0-2.0 with the calicoctl CLI surface. */}
+
+Find network policies and rules that aren't matching traffic, so you can safely remove them and maintain a least-privilege security posture.
+
+In the web console, the policy edit page now shows a **Last Evaluated** timestamp on each policy and on each ingress and egress rule.
+The new `calicoctl review unused-policies` command lists policies and rules that haven't matched traffic within a time window you choose.
 
 For more information, see [Review unused network policies](../observability/review-unused-network-policies.mdx).
 
@@ -48,6 +90,8 @@ This is particularly useful when advertising service IPs as ECMP routes to your 
 Maglev is enabled per-service via annotation, keeping the memory footprint contained to only the services that need it.
 
 For more information, see [Add Maglev load balancing to a service](../networking/configuring/add-maglev-load-balancing.mdx).
+
+{/* End 3.23.0-1.0 features */}
 
 ### Enhancements
 
