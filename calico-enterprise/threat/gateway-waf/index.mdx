@@ -4,8 +4,6 @@ hide_table_of_contents: true
 ---
 
 import { DocCardLink, DocCardLinkLayout } from '/src/___new___/components';
-import BrowserOnly from '@docusaurus/BrowserOnly';
-import Mermaid from '@theme/Mermaid';
 
 # Gateway WAF
 
@@ -29,27 +27,10 @@ Gateway WAF runs the industry-standard [OWASP ModSecurity Core Rule Set v4](http
 
 Gateway WAF is configured entirely through Kubernetes resources. The controller merges every policy and plugin that applies to a target, generates an ordered list of ModSecurity directives, validates the result, and programs it into Envoy Gateway as an `EnvoyExtensionPolicy` that loads the Coraza WASM filter.
 
-<BrowserOnly>
-  {() => (
-    <Mermaid
-      value={`flowchart LR
-    subgraph wt["Write time"]
-        W["Admission webhook<br/>directive allowlist +<br/>per-namespace SecRule ID range"]
-    end
-    subgraph rt["Reconcile time"]
-        M["Merge policies + plugins"] --> DIR["Ordered SecLang directives"]
-        DIR --> VAL{"Rego validation"}
-    end
-    subgraph dp["Data plane"]
-        EEP["EnvoyExtensionPolicy<br/>Coraza WASM filter"] --> EG["Envoy Gateway"] --> REQ["Request inspected"]
-    end
-    W -->|apply accepted| M
-    VAL -->|pass| EEP
-    VAL -->|"Enforce + Critical: fail"| REJ["No filter programmed<br/>status reports the violation"]
-`}
-    />
-  )}
-</BrowserOnly>
+<img
+  src="/img/calico-enterprise/gateway-waf-architecture.svg"
+  alt="Gateway WAF request flow. GlobalWAFPolicy/WAFPolicy and GlobalWAFPlugin/WAFPlugin are merged into an ordered list of SecLang directives. Rego validation then either passes the result to an EnvoyExtensionPolicy that loads the Coraza WASM filter on Envoy Gateway, or, on an Enforce-mode Critical violation, programs no filter and reports the violation on status. The admission webhook validates submitted rules at apply time."
+/>
 
 The inputs to the merge are `GlobalWAFPolicy` + `WAFPolicy` and `GlobalWAFPlugin` + `WAFPlugin`. Two guardrails apply: the admission webhook (structural, at write time) and validation policies (compliance, after the merge).
 
