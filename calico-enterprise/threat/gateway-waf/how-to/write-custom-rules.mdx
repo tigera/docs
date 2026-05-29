@@ -10,7 +10,7 @@ This page is for **application operators** who manage WAF configuration within a
 
 :::
 
-A `WAFPlugin` (namespace-scoped) or `GlobalWAFPlugin` (cluster-scoped) holds custom [ModSecurity SecLang](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) directives organized into four lifecycle slots. The slots map to CRS 4's plugin file structure and determine when your directives run relative to the OWASP Core Rule Set.
+A `WAFPlugin` (namespace-scoped) or `GlobalWAFPlugin` (cluster-scoped) holds custom [ModSecurity SecLang](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) directives organized into four lifecycle slots. The slots map to Core Rule Set 4's plugin file structure and determine when your directives run relative to the OWASP Core Rule Set.
 
 ## The four slots
 
@@ -18,7 +18,7 @@ The merger assembles every plugin's slots into a fixed load order. Understanding
 
 ### `config` — variable setup
 
-**Runs before CRS setup.** Use `config` to set `tx.*` transaction variables that the CRS reads during its own initialization. Examples: tuning anomaly score thresholds, enabling optional CRS features, or setting application-specific flags.
+**Runs before Core Rule Set setup.** Use `config` to set `tx.*` transaction variables that the Core Rule Set reads during its own initialization. Examples: tuning anomaly score thresholds, enabling optional Core Rule Set features, or setting application-specific flags.
 
 ```yaml
 config: |
@@ -30,9 +30,9 @@ config: |
 
 If you write a rule in `config` that fires on a request variable (such as a request header), place it in `before` instead — at `config` time the request has not been read yet.
 
-### `before` — pre-CRS rules
+### `before` — pre-Core Rule Set rules
 
-**Runs after variable setup but before the CRS loads.** Use `before` for rules that should execute before CRS analysis: early-exit allowlisting for trusted paths, request normalization, or setting flags that later CRS rules or your own rules can read.
+**Runs after variable setup but before the Core Rule Set loads.** Use `before` for rules that should execute before Core Rule Set analysis: early-exit allowlisting for trusted paths, request normalization, or setting flags that later Core Rule Set rules or your own rules can read.
 
 ```yaml
 before: |
@@ -46,9 +46,9 @@ before: |
 
 :::
 
-### `rules` — custom rules alongside CRS
+### `rules` — custom rules alongside Core Rule Set
 
-**Runs after the full CRS has executed.** This is a Tigera extension to the CRS plugin model. Use `rules` for application-specific detections — rules that complement the CRS rather than pre-empting it. Because they run after the CRS, they can also read and act on anomaly scores.
+**Runs after the full Core Rule Set has executed.** This is a Tigera extension to the Core Rule Set plugin model. Use `rules` for application-specific detections — rules that complement the Core Rule Set rather than pre-empting it. Because they run after the Core Rule Set, they can also read and act on anomaly scores.
 
 ```yaml
 rules: |
@@ -58,7 +58,7 @@ rules: |
      logdata:'URI=%{REQUEST_URI}'"
 ```
 
-### `after` — post-CRS processing
+### `after` — post-Core Rule Set processing
 
 **Runs last.** Use `after` for false-positive suppression, response inspection, or logging augmentation. Because `GlobalWAFPlugin.after` runs *after* namespace `WAFPlugin.after`, the cluster operator has the final say on any post-processing — see [Merge order and enforcement](../concepts/merge-and-enforcement.mdx#the-merged-ruleset-load-order).
 
@@ -69,7 +69,7 @@ after: |
 
 :::note
 
-`SecRuleRemoveById` and `ctl:ruleRemoveById` in the `after` slot apply for the remainder of phase processing. Use them to suppress false positives your own rules produce. You cannot remove protected CRS baseline rules regardless of slot — the admission webhook will reject the attempt.
+`SecRuleRemoveById` and `ctl:ruleRemoveById` in the `after` slot apply for the remainder of phase processing. Use them to suppress false positives your own rules produce. You cannot remove protected Core Rule Set baseline rules regardless of slot — the admission webhook will reject the attempt.
 
 :::
 
@@ -88,7 +88,7 @@ Pick all your rule IDs from inside this range. The annotation is populated the f
 The admission webhook rejects resources with:
 
 - Rule IDs outside your allocated range (`IDOutsideRange`)
-- `SecRuleRemoveById` targeting a protected CRS baseline rule (`ProtectedIDRemoval`)
+- `SecRuleRemoveById` targeting a protected Core Rule Set baseline rule (`ProtectedIDRemoval`)
 - Directives not on the allowlist (`UnsafeDirective`)
 
 See [SecRule ID ranges](../reference/secrule-id-ranges.mdx) for protected ranges, the derivation algorithm, and the full allowlist.
@@ -170,9 +170,9 @@ spec:
 
 If your policy also references a `GlobalWAFPlugin`, the global plugin's slots load before the namespace plugin's slots at each position in the merge order. See [Attach WAF to a route](./attach-waf-to-a-route.mdx) for full `targetRefs` options.
 
-## CRS and SecLang references
+## Core Rule Set and SecLang references
 
-Gateway WAF runs the [OWASP Core Rule Set v4](https://coreruleset.org/docs/) via the [Coraza](https://coraza.io/) engine. The CRS documentation covers available `tx.*` variables, rule tag conventions, and anomaly scoring. The [ModSecurity reference manual](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) covers the full SecLang directive set.
+Gateway WAF runs the [OWASP Core Rule Set v4](https://coreruleset.org/docs/) via the [Coraza](https://coraza.io/) engine. The Core Rule Set documentation covers available `tx.*` variables, rule tag conventions, and anomaly scoring. The [ModSecurity reference manual](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) covers the full SecLang directive set.
 
 :::note
 

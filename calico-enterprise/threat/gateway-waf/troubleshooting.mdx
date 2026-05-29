@@ -36,7 +36,7 @@ Either delete the conflicting policy, or change one policy's `targetRefs` so the
 | :--- | :--- |
 | `UnsafeDirective` | The directive type is not on the allowlist (for example, a directive that reads from the filesystem) |
 | `IDOutsideRange` | A `SecRule` or `SecAction` ID falls outside the namespace's allocated 10,000-ID range |
-| `ProtectedIDRemoval` | A `SecRuleRemoveById` targets a protected ID — a CRS baseline rule or a Tigera-managed rule |
+| `ProtectedIDRemoval` | A `SecRuleRemoveById` targets a protected ID — a Core Rule Set baseline rule or a Tigera-managed rule |
 
 **Fix.** Read the rejection message on `status.conditions`:
 
@@ -117,8 +117,8 @@ Check that the `name`, `kind`, and `group` in `targetRefs` exactly match the res
 **Cause.** One or more of the following applies:
 
 - `action` is `Detect` (either explicitly or inherited from `GlobalWAFPolicy`) — traffic is inspected but not blocked.
-- `coreRuleSet.state` is `Disabled` — the OWASP CRS is not loaded.
-- `coreRuleSet.paranoiaLevel` is lower than the paranoia floor for the triggering CRS rule — the rule does not evaluate.
+- `coreRuleSet.state` is `Disabled` — the OWASP Core Rule Set is not loaded.
+- `coreRuleSet.paranoiaLevel` is lower than the paranoia floor for the triggering Core Rule Set rule — the rule does not evaluate.
 
 **Diagnostic.** Check the effective merged configuration. Start with the policy's conditions and spec:
 
@@ -126,7 +126,7 @@ Check that the `name`, `kind`, and `group` in `targetRefs` exactly match the res
 kubectl describe wafpolicy <name> -n <namespace>
 ```
 
-Confirm the action is `Block` and CRS is `Enabled`. If the paranoia level looks correct but the attack still passes, check whether the specific CRS rule has a higher paranoia floor than the configured level — some rules only activate at paranoia 2 or 3.
+Confirm the action is `Block` and Core Rule Set is `Enabled`. If the paranoia level looks correct but the attack still passes, check whether the specific Core Rule Set rule has a higher paranoia floor than the configured level — some rules only activate at paranoia 2 or 3.
 
 :::tip
 
@@ -146,7 +146,7 @@ See [Global vs. namespaced](./concepts/global-vs-namespaced.mdx) for field inher
 
 ## `403` on every request / false positives
 
-**Cause.** The paranoia level is too high for the traffic pattern, or a specific CRS rule is matching legitimate requests (a false positive).
+**Cause.** The paranoia level is too high for the traffic pattern, or a specific Core Rule Set rule is matching legitimate requests (a false positive).
 
 **Diagnostic.** Identify which rule is firing. Check the Envoy proxy access logs in the Gateway pod:
 
@@ -167,7 +167,7 @@ For how to write exception rules within your namespace's ID range, see [Write cu
 
 :::caution
 
-`SecRuleRemoveById` can only target rule IDs within your namespace's allocated range. You cannot remove CRS baseline rules (IDs `900000`–`999999`) or Tigera-managed rules — the admission webhook will reject the plugin with `ProtectedIDRemoval`.
+`SecRuleRemoveById` can only target rule IDs within your namespace's allocated range. You cannot remove Core Rule Set baseline rules (IDs `900000`–`999999`) or Tigera-managed rules — the admission webhook will reject the plugin with `ProtectedIDRemoval`.
 
 :::
 
