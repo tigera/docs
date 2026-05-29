@@ -1,0 +1,550 @@
+---
+description: Attach pods to VRFs to isolate routing between different tenants.
+---
+
+# Configure multi-VRF networking
+
+:::note
+
+Multi-VRF support is a tech preview feature. APIs and behaviour may change before GA and seamless live upgrade is not guaranteed.
+
+:::
+
+## Big picture
+
+Attach pods to one or more virtual routing and forwarding (VRF) domains
+so that traffic from those pods is routed in a dedicated routing table, peered
+with a dedicated upstream fabric, and isolated from pods on other VRFs (and
+from the default flat pod network).
+
+Connectivity between VRFs is not provided directly, but a pod can be attached to
+multiple VRFs (and the default network) by using multiple Multus network attachments,
+and VRFs can be connected by routers outside the cluster.
+
+## Value
+
+A VRF is a routing plane with its own routing table. Attaching pods to VRFs lets you:
+
+- **Reach and be reached from overlapping external IPs.** The same external IP address can be reused
+  in multiple tenant networks outside the cluster. Pods on a VRF can reach the
+  copy of that IP in their own tenant network, and responses come back in the
+  correct VRF. Services backed by VRF attached pods can also be exported to
+  the the tenant network, allowing only that tenant to access that service.
+- **Use VRFs as a routing security boundary.** Pods on different VRFs cannot
+  reach each other inside the cluster. Network policy still applies on top of this.
+- **Map workloads onto an existing multi-tenant fabric.** Each VRF on each node
+  is connected to one of your tenant networks (typically over a VLAN
+  subinterface) and exchanges routes with that tenant's BGP fabric.
+
+## Concepts
+
+### Networks and the default flat network
+
+A pod is attached to one or more **Networks** through one or more interfaces:
+- The default flat pod network (the existing $[prodname] pod network) remains
+  the default for pods that don't specify a network.
+- A `Network` of type `vrf` is isolated using a Linux VRF, with its own routing
+  table on each node.
+- A pod can be attached to the flat network, and/or up to nine VRF networks.
+
+A pod does not have to be attached to the default flat network (the primary
+interface can be attached to a VRF), but there are some important limitations:
+- kubelet is not aware of the VRF network, so network type health probes will
+  not be able to reach the pod.
+- Certain important services are hosted on the flat network only - notably
+  the Kubernetes API and `kube-dns`/`openshift-dns`.
+
+Typically the easiest way to use VRFs will be to attach pods to the flat network
+(with the primary interface), and then whichever VRF networks are required using
+Multus `NetworkAttachmentDefinition` resources. `multus-service` can then be used to
+create services referencing the VRF attached interfaces on the pods.
+
+### Routing topology
+
+Each VRF has a routing table on every node where it is configured. Felix:
+
+- Creates a Linux VRF device on each node and attaches the host interfaces
+  listed in `hostConfig.hostInterfaces` (typically a VLAN subinterface).
+- Programs `/32` routes for local pods on that VRF into the VRF's routing
+  table.
+- Programs static routes from `hostConfig.staticRoutes` (typically a default
+  route to the upstream router).
+
+Routes to remote pods (on other nodes) are distributed by **BGP**: each node
+peers with its upstream router on the VRF, advertises its own pod routes, and
+imports the others. Pod-to-pod traffic on the same VRF crossing nodes therefore
+leaves the source node on the VRF's host interface, transits the upstream
+fabric, and returns to the destination node still on that VRF — it does **not**
+use the default flat pod network.
+
+The default routing table on each node still handles the flat pod network as
+before.
+
+### VRF isolation
+
+Pods on different VRFs are isolated inside the cluster:
+
+- Their veths sit in different VRFs, so traffic from a VRF pod consults that VRF'same
+  routing table.
+- Service traffic must terminate on a backend that is in the same VRF as the
+  source pod (kube-proxy programs DNAT in a VRF-agnostic way but connectivity
+  from the source to the backing pod cannot transit VRFs).
+
+If you need to send traffic between two VRFs, route them outside the cluster,
+use a pod as a gateway (doing both DNAT and SNAT) or give those pods interfaces
+onto a shared VRF (or the flat network).
+
+### Required services on the default network
+
+Several core Kubernetes services live on the default flat network — most
+notably `kube-dns` and the Kubernetes API server. A pod attached **only** to
+a VRF cannot reach those services unless an external router bridges the VRF to
+the flat pod network. Most workloads should therefore have a primary interface
+on the flat network and an additional Multus interface for the VRF, unless the
+deployment can tolerate the loss of cluster DNS / API access.
+
+For the same reason, kubelet (which sits on the flat network) cannot perform
+network-type liveness / readiness probes against a pod that has no flat-network
+interface — use exec probes for those pods.
+
+## Before you begin
+
+**Required**
+
+- $[prodname] installed with the **nftables dataplane** (`linuxDataplane: Nftables` in the [Installation](../../reference/installation/api.mdx) resource), and kube-proxy must also be in `nftables` mode.
+- The **`vrf` kernel module** must be available on every node.
+- BGP peering configured between each node and the upstream router on each VRF (see [Create BGPPeers and BGPFilters](#create-bgppeers-and-bgpfilters)).
+- If you want to attach pods to a VRF using a secondary interface (the most common topology), you need to have [Multus](./multiple-networks.mdx) installed on your cluster.
+- `nodeAddressAutodetection` in the [Installation](../../reference/installation/api.mdx) pinned to a specific interface (for example `eth0`) or to `kubernetes: NodeInternalIP`. The default "first found" autodetection can chase a VRF-attached interface when additional interfaces are brought up, breaking the cluster.
+
+## How to
+
+1. [Plan the VRF topology](#plan-the-vrf-topology)
+1. [Bring the VRF interfaces onto the nodes](#bring-the-vrf-interfaces-onto-the-nodes)
+1. [Create per-VRF IP pools](#create-per-vrf-ip-pools)
+1. [Create the Network resources](#create-the-network-resources)
+1. [Create BGPPeers and BGPFilters](#create-bgppeers-and-bgpfilters)
+1. [Attach pods to a VRF](#attach-pods-to-a-vrf)
+1. [Advertise services scoped to a VRF](#advertise-services-scoped-to-a-vrf)
+1. [Verify](#verify)
+
+The example throughout this guide configures two VRFs (`vrf1` and `vrf2`),
+each carried over its own VLAN subinterface and peered with its own upstream
+router. The configuration shown matches the test topology shipped in
+`hack/test/kind/vrf/` in the $[prodname] source tree.
+
+### Plan the VRF topology
+
+For each VRF, decide:
+
+| Field             | Example value (`vrf1`) | Example value (`vrf2`) | Notes                                                                                                                                       |
+| ----------------- | ---------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Network name      | `vrf1`                 | `vrf2`                 | Name of the `Network` resource. Referenced from pod annotations and from `BGPPeer.network`.                                                  |
+| Host interface    | `eth1.100`             | `eth2.200`             | The interface (typically a VLAN subinterface) that connects the node to the tenant fabric. Must already exist on the node.                  |
+| Routing table     | `100`                  | `200`                  | Linux routing table number. Must be unique on each node and must not overlap with `RouteTableRanges` in [FelixConfiguration](../../reference/resources/felixconfig.mdx) or with tables used by other software. |
+| Pod IP pool CIDR  | `10.244.100.0/24`      | `10.244.200.0/24`      | Pod IPs must be unique across all VRFs **and** must not be used outside the cluster.                                                        |
+| Upstream router   | `2.100.0.1`            | `2.200.0.1`            | Reachable on the host interface above.                                                                                                       |
+| Upstream AS       | `65001`                | `65002`                | Used for the eBGP session to that VRF's router.                                                                                              |
+
+### Bring the VRF interfaces onto the nodes
+
+The host interfaces listed in `hostConfig.hostInterfaces` must already exist
+on each node before the VRF is created — $[prodname] does not create the
+underlying VLAN subinterfaces or physical links.
+
+For VLAN subinterfaces, configure them through your node provisioning tool
+(`netplan`, `NetworkManager`, `systemd-networkd`, etc.). When the `Network`
+is created, $[prodname] enslaves the interface into the VRF, which moves the
+interface's IP addresses (and their local/connected routes) into the VRF's
+routing table.
+
+### Create per-VRF IP pools
+
+IPAM is not VRF-aware in the tech preview, so the simplest way to keep pod IPs
+per-VRF is to create a dedicated `IPPool` for each VRF and pin it to pods using
+the `cni.projectcalico.org/ipv4pools` annotation.
+
+Use `nodeSelector: "!all()"` so that the pool is only used by pods that
+explicitly request it.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+  name: vrf1pool
+spec:
+  cidr: 10.244.100.0/24
+  blockSize: 29
+  nodeSelector: "!all()"
+  ipipMode: Never
+  vxlanMode: Never
+  natOutgoing: false
+  disabled: false
+---
+apiVersion: projectcalico.org/v3
+kind: IPPool
+metadata:
+  name: vrf2pool
+spec:
+  cidr: 10.244.200.0/24
+  blockSize: 29
+  nodeSelector: "!all()"
+  ipipMode: Never
+  vxlanMode: Never
+  natOutgoing: false
+  disabled: false
+```
+
+### Create the Network resources
+
+Create a [`Network`](../../reference/resources/network.mdx) for each VRF. In a
+homogeneous cluster, a single `hostConfig` entry with an empty `nodeSelector`
+applies the same configuration to every node:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: Network
+metadata:
+  name: vrf1
+spec:
+  vrf:
+    routing:
+      inClusterMode: Local
+    hostConfig:
+    - nodeSelector: ""
+      routeTableIndex: 100
+      hostInterfaces:
+      - name: "eth1.100"
+      staticRoutes:
+      - destination: 0.0.0.0/0
+        action:
+          nextHop: "2.100.0.1"
+---
+apiVersion: projectcalico.org/v3
+kind: Network
+metadata:
+  name: vrf2
+spec:
+  vrf:
+    routing:
+      inClusterMode: Local
+    hostConfig:
+    - nodeSelector: ""
+      routeTableIndex: 200
+      hostInterfaces:
+      - name: "eth2.200"
+      staticRoutes:
+      - destination: 0.0.0.0/0
+        action:
+          nextHop: "2.200.0.1"
+```
+
+For heterogeneous clusters (for example, different racks with different VLAN
+IDs or interface names), you can list multiple `hostConfig` entries with
+distinct `nodeSelector`s. Each node is matched against the entries in order
+and the **first match wins** — entries should have non-overlapping selectors.
+
+#### Setting per-VRF static routes
+
+`staticRoutes` are programmed into the VRF's routing table in addition to:
+
+- The local/connected routes derived from the IP addresses on `hostInterfaces`
+  (added automatically by the kernel when the interface is enslaved).
+- The pod `/32`s that Felix manages.
+- Any routes learned over BGP into this VRF.
+
+The most common static route is a default route to the upstream router so
+that pods on the VRF can reach external destinations. The next-hop must be
+reachable on the subnet of one of the VRF host interfaces on the node.
+
+### Create BGPPeers and BGPFilters
+
+Create one [`BGPPeer`](../../reference/resources/bgppeer.mdx) per upstream
+router per VRF, setting the `network` field to the matching `Network` name.
+This makes BIRD program the routes received from that peer into the VRF's
+routing table (instead of the main table).
+
+Use [`BGPFilter`](../../reference/resources/bgpfilter.mdx) to scope what is
+exported to and imported from each VRF's peers. The simplest pattern accepts
+the per-VRF pod CIDR and the per-VRF service CIDRs and rejects everything
+else, which keeps each VRF's prefixes from leaking into the other.
+
+In this example each VRF gets its own per-VRF service CIDR
+(`10.96.100.0/24` for `vrf1`, `10.96.200.0/24` for `vrf2`), declared in
+`BGPConfiguration.serviceClusterIPs` further down in
+[Advertise services scoped to a VRF](#advertise-services-scoped-to-a-vrf).
+Adding the per-VRF service CIDR to the per-VRF filter is what scopes service
+advertisement to the right peer.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: BGPFilter
+metadata:
+  name: vrf1-routes
+spec:
+  exportV4:
+  - cidr: 10.244.100.0/24    # VRF1 pod CIDR
+    matchOperator: In
+    action: Accept
+  - cidr: 10.96.100.0/24     # VRF1 service cluster IPs
+    matchOperator: In
+    action: Accept
+  - action: Reject
+  importV4:
+  - cidr: 10.244.100.0/24
+    matchOperator: In
+    action: Accept
+  - action: Reject
+---
+apiVersion: projectcalico.org/v3
+kind: BGPPeer
+metadata:
+  name: ext-router-1
+spec:
+  peerIP: 2.100.0.1
+  asNumber: 65001
+  network: vrf1
+  sourceAddress: None        # let BIRD pick the source from the VRF table
+  filters:
+  - vrf1-routes
+```
+
+:::note
+
+The `sourceAddress: None` setting prevents BIRD from forcing a node-IP source
+address that doesn't sit on the VRF interface; the kernel picks the correct
+source from the VRF routing table.
+
+:::
+
+Repeat for each VRF.
+
+### Attach pods to a VRF
+
+There are two ways to attach a pod to a `Network`:
+
+#### Option 1: Primary interface on the VRF
+
+Use this when the pod only needs the VRF (and you can live without cluster
+DNS / API on that pod, or you've bridged them in via an external router).
+
+Set the `cni.projectcalico.org/networks` annotation on the pod (or on its
+namespace, with pod-level annotations winning over namespace annotations):
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-on-vrf1
+  annotations:
+    cni.projectcalico.org/networks: '["vrf1"]'
+    cni.projectcalico.org/ipv4pools: '["vrf1pool"]'
+spec:
+  containers:
+  - name: app
+    image: my-app:latest
+```
+
+The annotation name is plural for forward compatibility, but currently only a
+single network can be listed.
+
+#### Option 2: Secondary interface via Multus
+
+Use this when the pod needs both the flat network (for `kube-dns`, the
+Kubernetes API, etc.) and a VRF.
+
+Create a Multus `NetworkAttachmentDefinition` whose CNI configuration sets
+`"network": "<network-name>"` and pins the IP pool to the VRF's pool:
+
+```yaml
+apiVersion: 'k8s.cni.cncf.io/v1'
+kind: NetworkAttachmentDefinition
+metadata:
+  name: vrf1-secondary
+spec:
+  config: '{
+    "cniVersion": "0.3.1",
+    "type": "calico",
+    "network": "vrf1",
+    "log_level": "info",
+    "datastore_type": "kubernetes",
+    "nodename_file_optional": false,
+    "ipam": {
+      "type": "calico-ipam",
+      "assign_ipv4": "true",
+      "assign_ipv6": "false",
+      "ipv4_pools": ["vrf1pool"]
+    },
+    "policy": {
+      "type": "k8s"
+    },
+    "kubernetes": {
+      "kubeconfig": "/etc/cni/net.d/calico-kubeconfig"
+    }
+    }'
+```
+
+Reference the NAD from the pod's `k8s.v1.cni.cncf.io/networks` annotation —
+the pod will get its primary interface on the flat pod network (using the
+default cluster pod CIDR) and a secondary interface on the VRF:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-vrf1
+  annotations:
+    k8s.v1.cni.cncf.io/networks: vrf1-secondary@vrf1eth
+spec:
+  containers:
+  - name: app
+    image: my-app:latest
+```
+
+The `@vrf1eth` suffix names the interface inside the pod (defaults to `net1`
+if omitted).
+
+:::note
+
+The set of networks attached to a pod is **immutable**. To change them, the pod
+must be deleted and recreated (which happens automatically when you edit a
+Deployment / DaemonSet / StatefulSet, but not for standalone pods). A `Network`
+must not be deleted while pods are still attached to it.
+
+:::
+
+#### Routing inside multi-interface pods
+
+For pods with both a flat-network interface and a VRF interface, $[prodname]
+programs source-based ip rules so that responses always go out the same
+interface they came in on.
+
+Outbound connections that the application doesn't bind to a specific interface
+or source IP follow the pod's default routing table — by default this means
+the flat-network interface. To direct specific outbound destinations down the
+VRF interface without changing the application, add a `routes` section to the
+secondary interface's IPAM block:
+
+```json
+"ipam": {
+    "type": "calico-ipam",
+    "assign_ipv4": "true",
+    "ipv4_pools": ["vrf1pool"],
+    "routes": [
+      {"dst": "10.0.0.0/8"}
+    ]
+}
+```
+
+With this configuration, traffic to `10.0.0.0/8` from the pod uses the
+secondary VRF interface, while everything else continues out the primary
+flat-network interface.
+
+### Advertise services scoped to a VRF
+
+Kubernetes services are not VRF-aware. To make a service usable on a VRF:
+
+- **Pick backends in a single VRF.** The pods selected by the service should
+  all be on the same VRF. If you mix VRFs, kube-proxy may DNAT to a backend
+  that the source cannot reach.
+- **Advertise the service CIDR only to that VRF's peers.** Add the service
+  CIDR to [BGPConfiguration](../../reference/resources/bgpconfig.mdx)'s
+  `serviceClusterIPs` (and/or `serviceExternalIPs` /
+  `serviceLoadBalancerIPs`), and add it to that VRF's `BGPFilter` so it is
+  only exported to that VRF's peer:
+
+  ```yaml
+  apiVersion: projectcalico.org/v3
+  kind: BGPConfiguration
+  metadata:
+    name: default
+  spec:
+    serviceClusterIPs:
+    - cidr: 10.96.100.0/24    # VRF1 service IPs
+    - cidr: 10.96.200.0/24    # VRF2 service IPs
+  ```
+
+- **Pin the service cluster IP into the right CIDR.** Either reserve cluster
+  IPs in the right CIDR for each VRF service, or use `LoadBalancer` services
+  with explicit `loadBalancerIP` values from the right per-VRF CIDR.
+
+For services backed by pods reached via Multus secondary interfaces, you will
+typically also need [multus-service](https://github.com/k8snetworkplumbingwg/multus-service)
+or an equivalent controller so that the service `Endpoints` use the secondary
+(VRF) IP rather than the primary (flat) IP.
+
+NodePort services are not supported in the tech preview; advertise services
+as `LoadBalancer` cluster IPs instead.
+
+### Verify
+
+Once the resources have been applied and at least one pod is attached to a VRF,
+you can spot-check the dataplane on a node:
+
+```bash
+# 1. The VRF device exists and the configured host interface is enslaved.
+ip -d link show eth1.100   # look for a "master calv-..." line in the output
+
+# 2. The VRF routing table contains the default route to the upstream router.
+ip route show table 100
+# Expect a "default via 2.100.0.1 ..." line, plus /32s for local pods on vrf1.
+
+# 3. List configured VRFs and their kernel routing table numbers.
+ip vrf show
+```
+
+Inside a VRF pod:
+
+```bash
+ip route        # the pod's own table; default route via the VRF interface
+ip rule         # source-based rules pinning each interface's source IP to its table
+```
+
+The VRF device on the node is named `calv-<suffix>`. To make debugging easier,
+network names of 10 characters or less that contain only lowercase
+letters, digits, and hyphens (no dots) are passed through directly — for
+example a `Network` named `vrf1` produces a VRF device named `calv-vrf1`.
+Longer names, or names containing a dot or other characters, are hashed (the
+suffix is then a base32-encoded digest of the network name). Either way,
+`ip vrf show` lists the VRF devices alongside their kernel routing table
+numbers, so you can match `routeTableIndex` from the `Network` spec to the
+device.
+
+## Limitations
+
+The current tech preview has the following limitations:
+
+- **Dataplane**: only the [nftables dataplane](../../operations/nftables.mdx) is supported. iptables and eBPF are not supported.
+- **kube-proxy**: must be in `nftables` mode. `ipvs` mode is **never** supported in a cluster that uses VRFs (this is a permanent restriction, not a tech-preview limitation).
+- **NodePort services** are not supported on VRF networks. Use `LoadBalancer` services advertised over BGP instead.
+- **Egress gateways** cannot be placed on a VRF network. Use [external networks](../egress/external-network.mdx) for that use case.
+- **ExternalNetworks** and `Network` resources cannot be used in the same cluster.
+- **Host endpoints** should not be applied to interfaces inside a VRF.
+- **Pods can be attached to at most 9 VRFs**, the Multus secondary-interface limit.
+- **Pod IPs must be unique** across all VRFs and must not be used outside the cluster in any VRF.
+- **Node IPs** (including those on VRF subinterfaces) must be unique across all VRFs and nodes.
+- **Networks attached to a pod are immutable** — change requires pod deletion and recreation.
+- **Networks must not be deleted** while any pod is still attached.
+- **Pods without a flat-network interface** cannot be reached by `kubelet` for HTTP/TCP liveness or readiness probes — use exec probes for those pods.
+- **IPv6** has not been verified in the tech preview.
+- IPAM is not VRF-aware. Use a dedicated `IPPool` per VRF and pin pods to it via `cni.projectcalico.org/ipv4pools`.
+
+## Troubleshooting
+
+| Symptom                                                                | Likely cause                                                                                                                                  | What to check                                                                                                                          |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Pod stuck `ContainerCreating`, CNI ADD failing for a VRF pod.          | The `Network` exists, but Felix has not yet created the VRF device on the node. The CNI plugin waits up to ~30s before failing.               | `kubectl describe network <name>`, then `ip vrf show` and `ip -d link show 'calv-*'` on the node. Check Felix logs for VRF errors.       |
+| Pod cannot reach the upstream router.                                  | The VRF host interface has no IP, or the static route's next-hop is not on its subnet, or `hostInterfaces` was left empty so no interface was enslaved into the VRF. | On the node: `ip addr show eth1.100`, `ip route show table 100`. Confirm the next-hop in `staticRoutes` is on the host interface's subnet, and that the `Network` lists at least one host interface. |
+| Cross-node pod-to-pod within the same VRF fails.                       | BGP is not established with the upstream router, or `BGPFilter` is blocking the per-VRF pod CIDR.                                              | `kubectl get caliconodestatus` for the BGP session state; check BGP filters' `exportV4` / `importV4` cover the pod CIDR.                |
+| Service cluster IP works on one VRF but not the other.                  | Service CIDR is missing from `BGPConfiguration.serviceClusterIPs` or from the per-VRF `BGPFilter` `exportV4`, so the route isn't advertised.    | Inspect both, then look for the `/32` on the upstream router.                                                                            |
+| `kube-dns` lookups fail from a VRF pod.                                | Pod has no flat-network interface. VRF-only pods can't reach in-cluster DNS unless an external router bridges the VRF to the flat network.    | Use a Multus secondary interface for the VRF and keep the primary interface on the flat network. Use exec probes if needed.             |
+| `vrf` module not loaded; Felix logs complain about VRF setup.           | The kernel `vrf` module is not loaded on the node.                                                                                            | `sudo modprobe vrf && lsmod \| grep '^vrf '`. Install `linux-modules-extra-$(uname -r)` if missing.                                        |
+
+## Additional resources
+
+- [`Network` resource reference](../../reference/resources/network.mdx)
+- [`BGPPeer` resource reference](../../reference/resources/bgppeer.mdx)
+- [`BGPFilter` resource reference](../../reference/resources/bgpfilter.mdx)
+- [`IPPool` resource reference](../../reference/resources/ippool.mdx)
+- [Configure multiple Calico Enterprise networks on a pod](./multiple-networks.mdx) (Multus setup)
+- [Install Calico Enterprise using the nftables data plane](../../operations/nftables.mdx)

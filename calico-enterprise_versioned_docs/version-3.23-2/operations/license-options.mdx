@@ -1,0 +1,90 @@
+---
+description: Track Calico Enterprise license expiration through tigerastatus and operator-exposed Prometheus metrics to keep observability and management features available.
+---
+
+# License expiration and renewal
+
+## Big picture
+
+Review options for tracking $[prodname] license expiration.
+
+### FAQ
+
+### How long does it take to get a new $[prodname] license?
+
+After you submit a sales purchase order to Tigera, 1-2 days.
+
+### Is there a grace period?
+
+Yes, there is a grace period of 30 days (as of April 2022).
+
+### Does the web console display license expiration?
+
+Yes. The license indicator in the web console (top right banner) turns red when the license expires.
+
+![expiration](/img/calico-enterprise/expiration.png)
+
+### What happens when a license expires or is invalid?
+
+Data plane traffic continues to flow without interruption — policy enforcement, Egress Gateways, cluster mesh, Ingress Gateway, and Envoy keep running as configured. Observability and management features are degraded:
+
+| Area | Behavior after expiration |
+|---|---|
+| $[prodname] resources | Read-only. The Tigera API server rejects create and update requests; get, list, and delete on existing resources still succeed. Calico Open Source resources are not affected. |
+| Flow, DNS, and audit logs | Stopped. Fluentd is scaled down and logs are no longer forwarded to Elasticsearch. |
+| Prometheus metrics for $[prodname] components | Stopped. The Operator removes the $[prodname] ServiceMonitor so metrics are no longer scraped. |
+| Web console | Service Graph, Kibana, Alerts, and Compliance remain visible in read-only mode; attempts to create or modify resources are not saved. |
+
+We recommend that you proactively manage your license to avoid disruption to observability and management workflows.
+
+### Do licenses cover free upgrades in $[prodname]?
+
+Yes.
+
+### How can I check license status from the command line?
+
+Run:
+
+```bash
+kubectl get tigerastatus
+```
+
+The Tigera Operator reports license condition in `tigerastatus`, including a warning while you are inside the 30-day grace period.
+
+### How do I monitor my license?
+
+- [License metrics and alerts](#license-metrics)
+- Use `kubectl get tigerastatus` to view license condition reported by the Tigera Operator
+- Use `kubectl` to get [license key information](../reference/resources/licensekey.mdx#viewing-information-about-your-license-key)
+
+## License metrics
+
+The $[prodname] operator automatically exposes license metrics through its Prometheus metrics endpoint. No additional components need to be installed. The following metrics are available:
+
+| Metric | Description |
+|---|---|
+| `tigera_operator_license_expiry_timestamp_seconds` | Unix timestamp of license expiration |
+| `tigera_operator_license_valid` | Whether the license is valid (`1`) or not (`0`) |
+
+These metrics are scraped by the built-in Prometheus instance via the `tigera-operator-metrics` ServiceMonitor.
+
+### Built-in alerts
+
+$[prodname] installs PrometheusRule resources with alerting rules for license expiration. You can view them with:
+
+```bash
+kubectl -n tigera-prometheus get prometheusrule calico-prometheus-dp-rate -o yaml
+```
+
+The built-in rules include:
+
+- **LicenseExpiringWarning**: fires when the license expires in less than 30 days
+- **LicenseExpiringCritical**: fires when the license expires in less than 7 days, or is invalid
+
+To route these alerts, see [Configure Alertmanager](monitor/prometheus/alertmanager.mdx).
+
+## Additional resources
+
+- [LicenseKey resource](../reference/resources/licensekey.mdx)
+- [Configure Alertmanager](monitor/prometheus/alertmanager.mdx)
+- [Configure Prometheus](monitor/prometheus/configure-prometheus.mdx)
