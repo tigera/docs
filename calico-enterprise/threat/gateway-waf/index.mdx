@@ -4,6 +4,8 @@ hide_table_of_contents: true
 ---
 
 import { DocCardLink, DocCardLinkLayout } from '/src/___new___/components';
+import BrowserOnly from '@docusaurus/BrowserOnly';
+import Mermaid from '@theme/Mermaid';
 
 # Gateway WAF
 
@@ -27,21 +29,29 @@ Gateway WAF runs the industry-standard [OWASP ModSecurity Core Rule Set v4](http
 
 Gateway WAF is configured entirely through Kubernetes resources. The controller merges every policy and plugin that applies to a target, generates an ordered list of ModSecurity directives, validates the result, and programs it into Envoy Gateway as an `EnvoyExtensionPolicy` that loads the Coraza WASM filter.
 
-```text
-        write time                         reconcile time                          data plane
-  ┌────────────────────┐         ┌─────────────────────────────────┐        ┌──────────────────────┐
-  │ admission webhook   │         │  merge  ─▶  ordered SecLang  ─▶  │  pass  │ EnvoyExtensionPolicy  │
-  │ (allowlist + per-ns │ ──apply─▶│         Rego validation         │ ─────▶ │  (Coraza WASM filter) │ ─▶ request
-  │  SecRule ID range)  │  ok     │                                 │        │   on Envoy Gateway    │
-  └────────────────────┘         └─────────────────────────────────┘        └──────────────────────┘
-                                                  │ fail (Enforce + Critical)
-                                                  ▼
-                                          no filter programmed
-                                       (status reports the violation)
+<BrowserOnly>
+  {() => (
+    <Mermaid
+      value={`flowchart LR
+    subgraph wt["Write time"]
+        W["Admission webhook<br/>directive allowlist +<br/>per-namespace SecRule ID range"]
+    end
+    subgraph rt["Reconcile time"]
+        M["Merge policies + plugins"] --> DIR["Ordered SecLang directives"]
+        DIR --> VAL{"Rego validation"}
+    end
+    subgraph dp["Data plane"]
+        EEP["EnvoyExtensionPolicy<br/>Coraza WASM filter"] --> EG["Envoy Gateway"] --> REQ["Request inspected"]
+    end
+    W -->|apply accepted| M
+    VAL -->|pass| EEP
+    VAL -->|"Enforce + Critical: fail"| REJ["No filter programmed<br/>status reports the violation"]
+`}
+    />
+  )}
+</BrowserOnly>
 
-  inputs to merge:  GlobalWAFPolicy + WAFPolicy  ·  GlobalWAFPlugin + WAFPlugin
-  guardrails:       admission webhook (structural)  ·  validation policies (compliance, Rego)
-```
+The inputs to the merge are `GlobalWAFPolicy` + `WAFPolicy` and `GlobalWAFPlugin` + `WAFPlugin`. Two guardrails apply: the admission webhook (structural, at write time) and validation policies (compliance, after the merge).
 
 ## Who does what
 
