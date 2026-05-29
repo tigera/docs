@@ -1,0 +1,70 @@
+---
+description: Protect Calico Ingress Gateway traffic with a per-route and per-namespace web application firewall, built on the OWASP Core Rule Set and delivered as a Coraza WebAssembly filter on Envoy Gateway.
+hide_table_of_contents: true
+---
+
+import { DocCardLink, DocCardLinkLayout } from '/src/___new___/components';
+
+# Gateway WAF
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## Big picture
+
+Protect the traffic entering your cluster through $[prodname] Ingress Gateway with a web application firewall (WAF) that you attach per Gateway or per route, and tune per namespace.
+
+## Value
+
+Edge WAFs traditionally apply one ruleset to everything behind the gateway. Gateway WAF takes a Kubernetes-native, multi-tenant approach: a cluster operator sets a security baseline once, and each application team layers its own rules and exceptions on top — scoped to their own Gateways and `HTTPRoute`s, within guardrails the cluster operator defines.
+
+Gateway WAF runs the industry-standard [OWASP ModSecurity Core Rule Set (CRS) v4](https://owasp.org/www-project-modsecurity-core-rule-set/) as a [Coraza](https://coraza.io/) WebAssembly filter inside Envoy Gateway — no sidecars, and no traffic ever leaves the proxy for inspection.
+
+## How it works
+
+Gateway WAF is configured entirely through Kubernetes resources. The controller merges every policy and plugin that applies to a target, generates an ordered list of ModSecurity directives, validates the result, and programs it into Envoy Gateway as an `EnvoyExtensionPolicy` that loads the Coraza WASM filter.
+
+```text
+        write time                         reconcile time                          data plane
+  ┌────────────────────┐         ┌─────────────────────────────────┐        ┌──────────────────────┐
+  │ admission webhook   │         │  merge  ─▶  ordered SecLang  ─▶  │  pass  │ EnvoyExtensionPolicy  │
+  │ (allowlist + per-ns │ ──apply─▶│         Rego validation         │ ─────▶ │  (Coraza WASM filter) │ ─▶ request
+  │  SecRule ID range)  │  ok     │                                 │        │   on Envoy Gateway    │
+  └────────────────────┘         └─────────────────────────────────┘        └──────────────────────┘
+                                                  │ fail (Enforce + Critical)
+                                                  ▼
+                                          no filter programmed
+                                       (status reports the violation)
+
+  inputs to merge:  GlobalWAFPolicy + WAFPolicy  ·  GlobalWAFPlugin + WAFPlugin
+  guardrails:       admission webhook (structural)  ·  validation policies (compliance, Rego)
+```
+
+## Who does what
+
+Gateway WAF splits cleanly across two personas. Cluster-scoped resources belong to the **cluster operator (CO)**; namespace-scoped resources belong to the **application operator (AO)**.
+
+| Task | Cluster operator (CO) | Application operator (AO) |
+| :--- | :--- | :--- |
+| Enable the feature (license + `GatewayAPI` gate) | ✓ | |
+| Cluster-wide baseline — action, CRS, paranoia | `GlobalWAFPolicy` (singleton) | |
+| Organization-wide custom rules | `GlobalWAFPlugin` | |
+| Compliance guardrails (audit or enforce) | `GlobalWAFValidationPolicy` | |
+| Attach WAF to a Gateway or `HTTPRoute` | | `WAFPolicy` (`targetRefs`) |
+| Per-namespace overrides (action, paranoia) | | `WAFPolicy` |
+| App-specific rules and false-positive exceptions | | `WAFPlugin` |
+| Self-check namespace config (advisory) | | `WAFValidationPolicy` |
+
+Each resource family — Policy, Plugin, and Validation — comes as a cluster-scoped/namespace-scoped pair. See [Policies, plugins, and validation](concepts/policies-plugins-validation.mdx) for when to reach for each.
+
+## Next steps
+
+<DocCardLinkLayout>
+  <DocCardLink docId='threat/gateway-waf/concepts/policies-plugins-validation' />
+  <DocCardLink docId='threat/gateway-waf/get-started/enable' />
+  <DocCardLink docId='threat/gateway-waf/get-started/quickstart' />
+  <DocCardLink docId='threat/gateway-waf/reference/crds' />
+</DocCardLinkLayout>

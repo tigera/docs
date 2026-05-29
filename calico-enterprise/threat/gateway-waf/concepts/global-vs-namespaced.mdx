@@ -1,0 +1,61 @@
+---
+description: How cluster-scoped and namespace-scoped Gateway WAF resources relate — ownership, the global singleton, and field inheritance.
+---
+
+# Global vs. namespaced
+
+Every Gateway WAF resource family has a cluster-scoped member and a namespace-scoped member. The split is deliberate: it maps the WAF configuration onto the two people who operate the cluster.
+
+| | Cluster-scoped | Namespace-scoped |
+| :--- | :--- | :--- |
+| Owner | Cluster operator (CO) | Application operator (AO) |
+| Resources | `GlobalWAFPolicy`, `GlobalWAFPlugin`, `GlobalWAFValidationPolicy` | `WAFPolicy`, `WAFPlugin`, `WAFValidationPolicy` |
+| Role | Set the baseline and the guardrails | Attach WAF to traffic and tune within the guardrails |
+
+The cluster operator *sets* the security posture; the application operator *tunes* it for their workloads. An AO can make their namespace stricter, and can be prevented from making it weaker through [validation policies](merge-and-enforcement.mdx#validation-and-enforcement).
+
+## The global policy is a singleton
+
+`GlobalWAFPolicy` is a cluster-wide singleton: it must be named `default`. It establishes the cluster baseline — default action, Core Rule Set state, and paranoia level — that every namespace inherits unless it overrides.
+
+`GlobalWAFPlugin` and `GlobalWAFValidationPolicy` are **not** singletons; you can create as many as you need.
+
+## Inheritance: namespaces override, they don't restart
+
+A `WAFPolicy` does not have to restate the whole baseline. Its `action` and `coreRuleSet` fields are optional — when unset, the namespace inherits the value from `GlobalWAFPolicy`.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPolicy
+metadata:
+  name: payments-waf
+  namespace: payments
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: payments-api
+  action: Block          # override the global default for this namespace
+  coreRuleSet:
+    paranoiaLevel: 2      # stricter than the baseline
+  # coreRuleSet.state is unset → inherited from GlobalWAFPolicy
+```
+
+| `WAFPolicy` field | When set | When unset |
+| :--- | :--- | :--- |
+| `action` | overrides the global `defaultAction` for this namespace | inherits `GlobalWAFPolicy.spec.defaultAction` |
+| `coreRuleSet.state` | overrides the global state | inherits the global state |
+| `coreRuleSet.paranoiaLevel` | overrides the global level | inherits the global level |
+
+## Plugins are additive, not overriding
+
+Plugins don't override each other — they stack. When a target is configured, the merger applies **all** referenced global plugins first (in `GlobalWAFPolicy.spec.plugins[]` order), then all referenced namespace plugins (in `WAFPolicy.spec.plugins[]` order). Order is array position; there is no priority field.
+
+This is what lets a cluster operator's baseline rules and an application operator's exceptions coexist in a single ruleset. The exact interleaving — and why the global `after` slot runs last — is covered in [Merge order and enforcement](merge-and-enforcement.mdx).
+
+## Validation differs by scope
+
+Validation is the one place where the two scopes behave differently rather than symmetrically:
+
+- `GlobalWAFValidationPolicy` can **enforce** (block a non-compliant configuration) or **audit** (warn only), and uses a `namespaceSelector` to choose which namespaces it governs.
+- `WAFValidationPolicy` is **advisory only**. It reports violations on the policy status so the AO can self-correct, but it never blocks. Enforcement is a cluster-operator responsibility.
