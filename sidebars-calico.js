@@ -571,7 +571,6 @@ module.exports = {
           ],
         },
         'operations/decommissioning-a-node',
-        'operations/fips',
         {
           type: 'category',
           label: 'Troubleshoot',
