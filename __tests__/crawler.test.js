@@ -116,6 +116,7 @@ test('Crawl the docs and execute tests', async () => {
     'http://www.iana.org/assignments/service-names', //==>Origin: https://downloads.tigera.io/ee/v3.14.4/manifests/tigera-operator.yaml
     'http://docs.openstack.org/',
     'http://docs.openstack.org', //This seems to be temporarily down.
+    'https://docs.openstack.org/install-guide/environment-etcd.html', // 403 from OpenStack docs WAF in Netlify build environment
     'https://tools.ietf.org/html/rfc5925',
     'https://datatracker.ietf.org/doc/html/rfc1149',
     'https://datatracker.ietf.org/doc/html/rfc7938',
