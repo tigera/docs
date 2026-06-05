@@ -92,6 +92,39 @@ There are two ways to switch your cluster to use $[prodname] networking. Both me
    kubectl delete -f $[manifestsUrl]/manifests/flannel-migration/migration-job.yaml
    ```
 
+1. Remove leftover flannel `iptables` rules from each node.
+
+   The migration controller removes the flannel daemonset and deletes the flannel
+   network devices (`flannel.<vni>` and `cni0`), but it does not remove the
+   `iptables` chains that flannel programs: `FLANNEL-POSTRTG` in the `nat` table and
+   `FLANNEL-FWD` in the `filter` table. These chains survive the migration.
+
+   This matters once you start using Kubernetes `NetworkPolicy`. The masquerade rule
+   in `FLANNEL-POSTRTG` keeps SNAT-ing cross-node pod-to-pod traffic to the node's
+   tunnel IP, so the source address no longer matches pod-selector rules and Calico
+   drops the traffic. The symptom is that cross-node connections to policy-selected
+   pods time out after an otherwise successful migration, while same-node traffic
+   keeps working. Remove the leftover chains so that Calico is the only owner of pod
+   masquerading.
+
+   Run the following on every node. It covers both the legacy and nft `iptables`
+   backends and is safe to re-run:
+
+   ```bash
+   for ipt in iptables-legacy iptables-nft ip6tables-legacy ip6tables-nft; do
+     command -v "$ipt" >/dev/null 2>&1 || continue
+     "$ipt" -w -t nat -D POSTROUTING -j FLANNEL-POSTRTG 2>/dev/null
+     "$ipt" -w -t nat -F FLANNEL-POSTRTG 2>/dev/null
+     "$ipt" -w -t nat -X FLANNEL-POSTRTG 2>/dev/null
+     "$ipt" -w -t filter -D FORWARD -j FLANNEL-FWD 2>/dev/null
+     "$ipt" -w -t filter -F FLANNEL-FWD 2>/dev/null
+     "$ipt" -w -t filter -X FLANNEL-FWD 2>/dev/null
+   done
+   ```
+
+   Alternatively, reboot each node during a drained maintenance window to clear the
+   leftover rules.
+
 ### Modify flannel configuration
 
 The migration controller autodetects your flannel configuration, and in most cases, does not require
