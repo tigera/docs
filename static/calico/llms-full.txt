@@ -1940,9 +1940,13 @@ You have now successfully implemented a default deny policy and then created tar
 
 - x86-64, arm64, ppc64le, or s390x processor
 
-- Calico must be able to manage `cali*` interfaces on the host. When IPIP is enabled (the default), Calico also needs to be able to manage `tunl*` interfaces. When VXLAN is enabled, Calico also needs to be able to manage the `vxlan.calico` interface.
+* Calico must be able to manage `cali*` interfaces on the host. When IPIP is enabled (the default), Calico also needs to be able to manage `tunl*` interfaces. When VXLAN is enabled, Calico also needs to be able to manage the `vxlan.calico` interface.
+
+<!-- -->
 
 - Linux kernel 5.10 or later with [required dependencies](#kernel-dependencies). The following distributions have the required kernel, its dependencies, and are known to work well with Calico.
+
+  <!-- -->
 
   - Ubuntu 20.04 or later
   - RHEL 8 or later
@@ -3978,7 +3982,7 @@ This manifest installs Calico using the native `projectcalico.org/v3` CRD API gr
 
 > **SECONDARY:** If you're setting up a new cluster and don't need to customize the underlying Kubernetes resources, we recommend using the operator instead. The operator automatically manages the lifecycle of Calico components, including upgrades and scaling.
 
-Before installing, enable the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) on the Kubernetes API server. Native `projectcalico.org/v3` CRDs rely on MutatingAdmissionPolicies for defaulting, which are currently a **beta** Kubernetes feature and are not enabled by default.
+Native `projectcalico.org/v3` CRDs rely on MutatingAdmissionPolicies for defaulting, which require the beta `admissionregistration.k8s.io/v1beta1` API. That API is available in **Kubernetes 1.34 and later**; on Kubernetes 1.33 and earlier, MutatingAdmissionPolicy is only available as an alpha API and is not supported. On Kubernetes 1.34 and 1.35, enable the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) on the Kubernetes API server before installing, as it is not enabled by default. On Kubernetes 1.36 and later, the feature is GA and enabled by default.
 
 1. Download the Calico v3 CRD manifest.
 
@@ -4087,7 +4091,7 @@ If you have an existing manifest-based Calico install using the legacy `crd.proj
 - Calico installed via `calico.yaml` manifest (not operator)
 - `kubectl` access to the cluster
 - A recent Calico version that includes the migration controller
-- The `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) must be enabled on the Kubernetes API server before starting the migration. Native `projectcalico.org/v3` CRDs rely on MutatingAdmissionPolicies for defaulting, which are currently a **beta** Kubernetes feature and are not enabled by default.
+- **Kubernetes 1.34 or later.** Native `projectcalico.org/v3` CRDs rely on MutatingAdmissionPolicies for defaulting, which require the beta `admissionregistration.k8s.io/v1beta1` API. That API is not available on Kubernetes 1.33 and earlier, where MutatingAdmissionPolicy is alpha only. On Kubernetes 1.34 and 1.35, the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) must be enabled on the Kubernetes API server before starting the migration, as it is not enabled by default. On Kubernetes 1.36 and later, the feature is GA and enabled by default.
 
 #### Migration steps[​](#migration-steps)
 
@@ -4836,9 +4840,13 @@ Select an install method.
 
 - x86-64, arm64, ppc64le, or s390x processor
 
-- Calico must be able to manage `cali*` interfaces on the host. When IPIP is enabled (the default), Calico also needs to be able to manage `tunl*` interfaces. When VXLAN is enabled, Calico also needs to be able to manage the `vxlan.calico` interface.
+* Calico must be able to manage `cali*` interfaces on the host. When IPIP is enabled (the default), Calico also needs to be able to manage `tunl*` interfaces. When VXLAN is enabled, Calico also needs to be able to manage the `vxlan.calico` interface.
+
+<!-- -->
 
 - Linux kernel 5.10 or later with [required dependencies](#kernel-dependencies). The following distributions have the required kernel, its dependencies, and are known to work well with Calico.
+
+  <!-- -->
 
   <!-- -->
 
@@ -5470,16 +5478,15 @@ The Felix logs should transition from periodic notifications that Felix is in th
 
 - x86-64, arm64, ppc64le, or s390x processor
 
-- Calico must be able to manage `cali*` interfaces on the host. When IPIP is enabled (the default), Calico also needs to be able to manage `tunl*` interfaces. When VXLAN is enabled, Calico also needs to be able to manage the `vxlan.calico` interface.
+* Calico must be able to manage `cali*` interfaces on the host. When IPIP is enabled (the default), Calico also needs to be able to manage `tunl*` interfaces. When VXLAN is enabled, Calico also needs to be able to manage the `vxlan.calico` interface.
+
+<!-- -->
 
 - Linux kernel 5.10 or later with [required dependencies](#kernel-dependencies). The following distributions have the required kernel, its dependencies, and are known to work well with Calico.
-
   <!-- -->
-
+  <!-- -->
   - RHEL 8 or later
-
   <!-- -->
-
   <!-- -->
 
 > **SECONDARY:** Many Linux distributions, such as most of the above, include NetworkManager. By default, NetworkManager does not allow Calico to manage interfaces. If your nodes have NetworkManager, complete the steps in [Preventing NetworkManager from controlling Calico interfaces](https://docs.tigera.io/calico/latest/operations/troubleshoot/troubleshooting#configure-networkmanager) before installing Calico.
@@ -15848,21 +15855,29 @@ After installing Calico VPP, you can benefit from the features of the VPP data p
 
 ### Calico for OpenStack
 
-Calico's integration with OpenStack consists of the following pieces.
+Calico's integration with OpenStack involves the following software components.
 
 - etcd, providing a distributed key/value database that is accessible from all compute hosts and Neutron servers.
 
 - Felix (the Calico agent) running on each compute host. Felix reads information from etcd that specifies workloads and their properties (IP addresses, security etc.), and implements that connectivity and security for them. Felix also reports its own agent status, and the programming status for each workload, through etcd.
 
-- BIRD, also running on each compute host, to propagate local workload routes to other compute hosts and infrastructure routers.
+- BIRD, or some equivalent routing daemon, also running on each compute host, to propagate local workload routes to other compute hosts and infrastructure routers.
 
 - The Calico driver for Neutron, that runs as part of the Neutron server on each machine where the Neutron server runs. (There can be just one Neutron server, but typically there are more, to provide higher availability.) This driver handles OpenStack network, subnet, instance and security operations and translates them into equivalent etcd data for Felix to implement. It also reads the agent and per-port status information that Felix writes into etcd, and reports this into the Neutron DB.
 
 - The Calico DHCP agent, running on each compute host, that configures and launches Dnsmasq instances to provide DHCP for the locally hosted workloads. Architecturally this fills the same role as the reference Neutron DHCP agent; the key difference is that it gets its information from Etcd instead of by RPC from the Neutron server, as we have found this to be more scalable.
 
-The Etcd, Felix and BIRD pieces are the same as in other Calico integrations, and so independent of OpenStack. The Calico Neutron driver and DHCP agent are specific to OpenStack, and are provided by the [networking-calico](https://github.com/projectcalico/networking-calico/) project.
+Some of these pieces are Calico deliverables. Others must be provisioned separately, as explained by the following table.
 
-From an OpenStack point of view, networking-calico is just one of many possible Neutron drivers that provide connectivity between instances (VMs) as specified by the Neutron API. Refer to [Calico's interpretation of Neutron API calls](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api) for more detail about the parts of the Neutron API that the networking-calico provides.
+| Component                 | Provisioning                                                                                                                                                                                                                                              |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| etcd                      | Must be provisioned by the user before installing Calico deliverables. Typically now covered by OpenStack install - see [https://docs.openstack.org/install-guide/environment-etcd.html](https://docs.openstack.org/install-guide/environment-etcd.html). |
+| Felix                     | Calico deliverable, provided by the `calico-felix` package.                                                                                                                                                                                               |
+| BIRD (or equivalent)      | Must be provisioned and configured by the user. See guidance on our [install pages](https://docs.tigera.io/calico/latest/getting-started/openstack/installation).                                                                                         |
+| Calico driver for Neutron | Calico deliverable, provided by the `calico-control` package.                                                                                                                                                                                             |
+| Calico DHCP agent         | Calico deliverable, provided by the `calico-dhcp-agent` package.                                                                                                                                                                                          |
+
+From an OpenStack point of view, Calico is just one of many possible Neutron drivers that provide connectivity between instances (VMs) as specified by the Neutron API. Refer to [Calico's interpretation of Neutron API calls](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api) for more detail about the parts of the Neutron API that Calico provides.
 
 ### System requirements for OpenStack
 
@@ -15870,9 +15885,13 @@ From an OpenStack point of view, networking-calico is just one of many possible 
 
 - x86-64, arm64, ppc64le, or s390x processor
 
-- Calico must be able to manage `cali*` interfaces on the host. When IPIP is enabled (the default), Calico also needs to be able to manage `tunl*` interfaces. When VXLAN is enabled, Calico also needs to be able to manage the `vxlan.calico` interface.
+<!-- -->
 
-- Linux kernel 5.10 or later with [required dependencies](#kernel-dependencies). The following distributions have the required kernel, its dependencies, and are known to work well with Calico.
+- Calico must be able to manage `tap*` interfaces on the host.
+
+* Linux kernel 5.10 or later with [required dependencies](#kernel-dependencies). The following distributions have the required kernel, its dependencies, and are known to work well with Calico.
+
+  <!-- -->
 
   <!-- -->
 
@@ -15921,9 +15940,9 @@ The simplest way to provide the necessary privilege is to run Calico as root or 
 
 ## OpenStack requirements[​](#openstack-requirements)
 
-The Calico Neutron driver is written in Python 3 and so requires an OpenStack release that runs with Python 3. Subject to that, we aim to develop and maintain the Neutron driver for Calico (networking-calico) so that its master code works with OpenStack master or any previous Python 3 release, on any operating system, independently of the deployment mechanism that is used to install it.
+The Calico Neutron driver is written in Python 3 and so requires an OpenStack release that runs with Python 3. Subject to that, we aim to develop and maintain the Neutron driver for Calico so that its master code works with OpenStack master or any previous Python 3 release, on any operating system, independently of the deployment mechanism that is used to install it.
 
-However, we recommend using OpenStack Caracal or later, and our active support and testing of Calico v3.30 with OpenStack is with Caracal.
+However, we recommend using OpenStack Caracal or later, and our active support and testing of Calico v3.32 with OpenStack is with Caracal.
 
 ## Kernel dependencies[​](#kernel-dependencies)
 
@@ -16492,9 +16511,9 @@ This table sets out where to configure each component of Calico for OpenStack, a
 
 ### DevStack
 
-The networking-calico project provides a DevStack plugin. The following instructions explain how to set up a single or multiple node DevStack/Calico system, and then how to see Calico connectivity in action.
+Calico provides a DevStack plugin. The following instructions explain how to set up a single or multiple node DevStack/Calico system, and then how to see Calico connectivity in action.
 
-> **SECONDARY:** networking-calico includes a [shell script](https://github.com/projectcalico/calico/blob/master/networking-calico/devstack/bootstrap.sh) that implements the following setup instructions. You are welcome to use it, but we recommend that you read the following description first anyway, and briefly review the script's code, so that you will understand what the script does.
+> **SECONDARY:** Calico includes a [shell script](https://github.com/projectcalico/calico/blob/master/networking-calico/devstack/bootstrap.sh) that implements the following setup instructions. You are welcome to use it, but we recommend that you read the following description first anyway, and briefly review the script's code, so that you will understand what the script does.
 
 ## Single (or first) node setup[​](#single-or-first-node-setup)
 
@@ -16505,7 +16524,7 @@ To prepare a single node DevStack/Calico system, that is with all controller and
 2. Add to your DevStack local.conf file:
 
    ```bash
-   enable_plugin networking-calico https://github.com/projectcalico/networking-calico
+   enable_plugin calico https://github.com/projectcalico/calico
    ```
 
 3. Run `stack.sh`.
@@ -16861,7 +16880,7 @@ The Calico network plugins provide a range of networking options to fit your imp
 
 ##### [Kuryr](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
 
-[Use Kuryr together with the networking-calico ML2 driver in Calico Open Source so Neutron provides networking for container workloads.](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
+[Use Kuryr together with the Calico ML2 driver in Calico Open Source so Neutron provides networking for container workloads.](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
 
 ##### [Calico's interpretation of Neutron API calls](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api)
 
@@ -22837,7 +22856,7 @@ Calico LoadBalancer IP address management works in conjunction with other Calico
 
 ## [📄️Kuryr](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
 
-[Use Kuryr together with the networking-calico ML2 driver in Calico Open Source so Neutron provides networking for container workloads.](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
+[Use Kuryr together with the Calico ML2 driver in Calico Open Source so Neutron provides networking for container workloads.](https://docs.tigera.io/calico/latest/networking/openstack/kuryr)
 
 ## [📄️Calico's interpretation of Neutron API calls](https://docs.tigera.io/calico/latest/networking/openstack/neutron-api)
 
@@ -23510,11 +23529,11 @@ However many Calico networks there are, all their IP addresses (in associated Ne
 
 Finally it must be understood that there is no L2 adjacency between any instances, even those that are attached to the same network. In a future OpenStack release, we hope to make this explicit, by arranging for Calico networks to report `l2_adjacency False`.
 
-Subject to those restrictions and understandings, we believe that networking-calico fully implements Neutron semantics, i.e. that it provides the connectivity that an operator would expect for a given sequence of Neutron API setup calls.
+Subject to those restrictions and understandings, we believe that Calico fully implements Neutron semantics, i.e. that it provides the connectivity that an operator would expect for a given sequence of Neutron API setup calls.
 
 ### Floating IPs
 
-networking-calico includes support for floating IPs.
+Calico includes support for floating IPs.
 
 To set up a floating IP, you need the same pattern of Neutron data model objects as you do for Neutron in general, which means:
 
@@ -24369,11 +24388,11 @@ When an instance is launched and gets an IP from that subnet, Neutron arranges, 
 
 ## With Calico, a host route's next hop IP should be the local host[​](#with-calico-a-host-routes-next-hop-ip-should-be-the-local-host)
 
-networking-calico supports host routes, but it's important to note that a host route is only consistent with Calico when its next hop IP represents the local hypervisor. This is because the local hypervisor, in a Calico setup, *always* routes all data from an instance and so is always the next hop IP for data to any destination. If the instance's routing table has a route with some other next hop IP, that next hop IP address will effectively be ignored, and the data will likely *not* pass through the implied router; instead the data will go first to the hypervisor, and then the hypervisor's routing table will determine its next IP hop from there.
+Calico supports host routes, but it's important to note that a host route is only consistent with Calico when its next hop IP represents the local hypervisor. This is because the local hypervisor, in a Calico setup, *always* routes all data from an instance and so is always the next hop IP for data to any destination. If the instance's routing table has a route with some other next hop IP, that next hop IP address will effectively be ignored, and the data will likely *not* pass through the implied router; instead the data will go first to the hypervisor, and then the hypervisor's routing table will determine its next IP hop from there.
 
-Specifically, each host route's next hop IP should be the gateway IP of the subnet that the desired instance NIC is attached to, and from which it got its IP address - where 'desired instance NIC' means the one that you want data for that host route to go through. In networking-calico's usage, subnet gateway IPs represent the local hypervisor, because data sent by an instance is always routed there.
+Specifically, each host route's next hop IP should be the gateway IP of the subnet that the desired instance NIC is attached to, and from which it got its IP address - where 'desired instance NIC' means the one that you want data for that host route to go through. In Calico's usage, subnet gateway IPs represent the local hypervisor, because data sent by an instance is always routed there.
 
-> **SECONDARY:** networking-calico avoids unnecessary IP usage by using the subnet gateway IP to represent the local compute host, on every compute host where that subnet is being used. Although that might initially sound odd, it works because no data is ever sent to or from the gateway IP address; the gateway IP is only used as the next hop address for the first IP hop from an instance to its compute host, and then the compute host routes the data again, according to its routing table, to wherever it needs to go. This also means that the gateway IP address really is functioning as each instance's default gateway, in the generally understood sense.
+> **SECONDARY:** Calico avoids unnecessary IP usage by using the subnet gateway IP to represent the local compute host, on every compute host where that subnet is being used. Although that might initially sound odd, it works because no data is ever sent to or from the gateway IP address; the gateway IP is only used as the next hop address for the first IP hop from an instance to its compute host, and then the compute host routes the data again, according to its routing table, to wherever it needs to go. This also means that the gateway IP address really is functioning as each instance's default gateway, in the generally understood sense.
 
 ## When are host routes useful with Calico?[​](#when-are-host-routes-useful-with-calico)
 
@@ -24884,7 +24903,7 @@ The timestamps on these transitions let you measure how long each phase takes. F
 
 ### Kuryr
 
-networking-calico works with Kuryr; this means using Neutron, with the Calico core plugin, to provide networking for container workloads.
+Calico works with Kuryr; this means using Neutron, with the Calico core plugin, to provide networking for container workloads.
 
 You can use DevStack to install a single node Calico/Kuryr system, with a `local.conf` file like this:
 
@@ -24901,7 +24920,7 @@ SERVICE_PASSWORD=91eb72bcafb4ddf246ab
 
 SERVICE_TOKEN=c5680feca5e2c9c8f820
 
-enable_plugin networking-calico git://git.openstack.org/openstack/networking-calico
+enable_plugin calico https://github.com/projectcalico/calico
 
 enable_plugin kuryr git://git.openstack.org/openstack/kuryr
 
@@ -35966,7 +35985,7 @@ The locked window is typically short (seconds to a few minutes depending on clus
 
 - Calico v3.32+ (or the release that includes the migration controller)
 - Cluster is currently running in API server mode (the aggregated API server is deployed)
-- The `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) must be enabled on the Kubernetes API server before starting the migration. Native `projectcalico.org/v3` CRDs rely on MutatingAdmissionPolicies for defaulting, which are currently a **beta** Kubernetes feature and are not enabled by default.
+- **Kubernetes 1.34 or later.** Native `projectcalico.org/v3` CRDs rely on MutatingAdmissionPolicies for defaulting, which require the beta `admissionregistration.k8s.io/v1beta1` API. That API is not available on Kubernetes 1.33 and earlier, where MutatingAdmissionPolicy is alpha only. On Kubernetes 1.34 and 1.35, the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) must be enabled on the Kubernetes API server before starting the migration, as it is not enabled by default. On Kubernetes 1.36 and later, the feature is GA and enabled by default.
 - **If using GitOps (ArgoCD, Flux):** pause sync before starting the migration. These tools may interfere with the API group switchover. You'll update your manifests to use `projectcalico.org/v3` after migration completes.
 
 ## How to[​](#how-to)
@@ -36517,12 +36536,12 @@ When using native `projectcalico.org/v3` CRDs:
 
 ### Validation and defaulting[​](#validation-and-defaulting)
 
-When using native `projectcalico.org/v3` CRDs, resource validation and defaulting are handled by native CRD validation and defaulting, as well as ValidatingAdmissionPolicies and MutatingAdmissionPolicies. Calico uses [MutatingAdmissionPolicies](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/) for defaulting, which are currently a **beta** Kubernetes feature. You must ensure that the `MutatingAdmissionPolicy` feature gate is enabled on your Kubernetes API server before using native `projectcalico.org/v3` CRDs.
+When using native `projectcalico.org/v3` CRDs, resource validation and defaulting are handled by native CRD validation and defaulting, as well as ValidatingAdmissionPolicies and MutatingAdmissionPolicies. Calico uses [MutatingAdmissionPolicies](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/) for defaulting, which require the beta `admissionregistration.k8s.io/v1beta1` API. That API is available in **Kubernetes 1.34 and later**. On Kubernetes 1.33 and earlier, MutatingAdmissionPolicy is only available as an alpha API (`v1alpha1`), which Calico does not support. On Kubernetes 1.34 and 1.35, you must enable the `MutatingAdmissionPolicy` feature gate on your Kubernetes API server before using native `projectcalico.org/v3` CRDs, as it is not enabled by default. On Kubernetes 1.36 and later, the feature is GA and enabled by default.
 
 ## Before you begin[​](#before-you-begin)
 
 - A Kubernetes cluster **without** Calico installed, or a cluster where you are performing a fresh install. To migrate an existing cluster from API server mode, see [Migrate from API server to native CRDs](https://docs.tigera.io/calico/latest/operations/crd-migration).
-- The `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) must be enabled on the Kubernetes API server. This feature is beta in Kubernetes and is not enabled by default.
+- **Kubernetes 1.34 or later.** Calico uses the beta `admissionregistration.k8s.io/v1beta1` MutatingAdmissionPolicy API for defaulting, which is not available on Kubernetes 1.33 and earlier (where MutatingAdmissionPolicy is alpha only). On Kubernetes 1.34 and 1.35, the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) must be enabled on the API server, as it is not enabled by default. On Kubernetes 1.36 and later, the feature is GA and enabled by default.
 
 <!-- -->
 
