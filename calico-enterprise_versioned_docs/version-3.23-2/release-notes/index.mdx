@@ -61,6 +61,19 @@ Use this to reach tenant networks that have overlapping external IPs, to enforce
 
 For more information, see [Configure multi-VRF networking](../networking/configuring/multi-vrf.mdx).
 
+### Native v3 CRDs (tech preview)
+
+$[prodname] now supports installation with native `projectcalico.org/v3` CRDs as an alternative to the aggregated API server.
+The Tigera Operator registers `projectcalico.org/v3` resources directly as native Kubernetes CRDs — no host-network pods, no ordering dependencies between CRDs and the API server, and `kubectl` manages v3 resources without an extra install step.
+This removes a long-standing source of installation friction on managed Kubernetes platforms like EKS and AKS.
+For existing clusters, a new `DatastoreMigration` controller copies resources from the aggregated API server to native CRDs in place; the datastore is briefly locked but workload connectivity is preserved through the migration window.
+
+Native v3 CRDs require Kubernetes 1.34 or later with the `MutatingAdmissionPolicy` feature gate enabled. The gate is GA and on by default in Kubernetes 1.36; on 1.34 and 1.35 it must be enabled explicitly on the API server.
+
+This is the first phase of phasing out the aggregated API server: in a future release, native v3 CRDs will become the default install mode, and in a later release the aggregated API server will be removed entirely.
+
+For more information, see [Enable native v3 CRDs](../operations/native-v3-crds.mdx) and [Migrate from API server to native CRDs](../operations/crd-migration.mdx).
+
 {/* End 3.23.0-2.0 features */}
 
 {/* Start 3.23.0-1.0 features */}
@@ -120,7 +133,7 @@ The following features are available as technology previews. Tech preview featur
 | [Calico Ingress Gateway](../networking/ingress-gateway/about-calico-ingress-gateway.mdx) | TP | GA | GA |
 | [KubeVirt live migration](../networking/kubevirt/index.mdx) | – | – | TP |
 | [Multi-VRF networking](../networking/configuring/multi-vrf.mdx) | – | – | TP |
-| [v3 native CRDs](../operations/native-v3-crds.mdx) | – | – | TP |
+| [Native v3 CRDs](../operations/native-v3-crds.mdx) | – | – | TP |
 
 Legend: **TP** = technology preview · **GA** = generally available · **–** = not yet introduced.
 
