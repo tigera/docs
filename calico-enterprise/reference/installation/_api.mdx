@@ -3779,14 +3779,16 @@ _Appears in:_
 | `csiNodeDriverDaemonSet` _[CSINodeDriverDaemonSet](#csinodedriverdaemonset)_ | (Optional) CSINodeDriverDaemonSet configures the csi-node-driver DaemonSet. |
 | `calicoKubeControllersDeployment` _[CalicoKubeControllersDeployment](#calicokubecontrollersdeployment)_ | (Optional) CalicoKubeControllersDeployment configures the calico-kube-controllers Deployment. If used in conjunction with the deprecated ComponentResources, then these overrides take precedence. |
 | `typhaDeployment` _[TyphaDeployment](#typhadeployment)_ | (Optional) TyphaDeployment configures the typha Deployment. If used in conjunction with the deprecated ComponentResources or TyphaAffinity, then these overrides take precedence. |
+| `typhaPodDisruptionBudget` _[PodDisruptionBudgetOverride](#poddisruptionbudgetoverride)_ | (Optional) TyphaPodDisruptionBudget configures the PodDisruptionBudget for the calico-typha Deployment. Fields left unset fall back to the operator's defaults. The PDB's selector is managed by the operator and cannot be overridden. |
 | `calicoWindowsUpgradeDaemonSet` _[CalicoWindowsUpgradeDaemonSet](#calicowindowsupgradedaemonset)_ | Deprecated. The CalicoWindowsUpgradeDaemonSet is deprecated and will be removed from the API in the future. CalicoWindowsUpgradeDaemonSet configures the calico-windows-upgrade DaemonSet. |
 | `calicoNodeWindowsDaemonSet` _[CalicoNodeWindowsDaemonSet](#caliconodewindowsdaemonset)_ | CalicoNodeWindowsDaemonSet configures the calico-node-windows DaemonSet. |
-| `fipsMode` _[FIPSMode](#fipsmode)_ | (Optional) FIPSMode uses images and features only that are using FIPS 140-2 validated cryptographic modules and standards. Only supported for Variant=Calico.<br />Default: Disabled |
+| `fipsMode` _[FIPSMode](#fipsmode)_ | (Optional) Deprecated. FIPS mode is no longer supported. Setting fipsMode to Enabled marks the installation degraded. |
 | `logging` _[Logging](#logging)_ | (Optional) Logging Configuration for Components |
 | `windowsNodes` _[WindowsNodeSpec](#windowsnodespec)_ | (Optional) Windows Configuration |
 | `serviceCIDRs` _string array_ | (Optional) Kubernetes Service CIDRs. Specifying this is required when using Calico for Windows. |
 | `azure` _[Azure](#azure)_ | (Optional) Azure is used to configure azure provider specific options. |
 | `proxy` _[Proxy](#proxy)_ | (Optional) Proxy is used to configure the HTTP(S) proxy settings that will be applied to Tigera containers that connect to destinations outside the cluster. It is expected that NO_PROXY is configured such that destinations within the cluster (including the API server) are exempt from proxying. |
+| `networkPolicy` _[NetworkPolicySpec](#networkpolicyspec)_ | (Optional) NetworkPolicy configures how the operator manages the NetworkPolicies and GlobalNetworkPolicies it installs to protect the Calico components it manages. |
 
 
 ### InstallationStatus
@@ -4970,6 +4972,7 @@ _Appears in:_
 - [GatewayService](#gatewayservice)
 - [GoldmaneDeployment](#goldmanedeployment)
 - [GoldmaneDeploymentPodTemplateSpec](#goldmanedeploymentpodtemplatespec)
+- [PodDisruptionBudgetOverride](#poddisruptionbudgetoverride)
 - [TyphaDeployment](#typhadeployment)
 - [TyphaDeploymentPodTemplateSpec](#typhadeploymentpodtemplatespec)
 - [WhiskerDeployment](#whiskerdeployment)
@@ -5092,6 +5095,40 @@ _Appears in:_
 | --- | --- |
 | `Enabled` |  |
 | `Disabled` |  |
+
+
+### NetworkPolicyManagement
+
+_Underlying type:_ _string_
+
+NetworkPolicyManagement specifies whether the operator manages the NetworkPolicies it installs to
+protect the Calico components it manages.
+
+_Validation:_
+- Enum: [Enabled Disabled]
+
+
+_Appears in:_
+- [NetworkPolicySpec](#networkpolicyspec)
+
+| Value | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
+
+
+### NetworkPolicySpec
+
+
+
+NetworkPolicySpec configures how the operator manages the NetworkPolicies it installs.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `managePolicies` _[NetworkPolicyManagement](#networkpolicymanagement)_ | (Optional) ManagePolicies controls whether the operator creates and reconciles the NetworkPolicies and GlobalNetworkPolicies it uses to protect the Calico components it installs. When set to Disabled, the operator stops creating or updating these policies and deletes any it has already created, leaving policy management to the user. Defaults to Enabled. |
 
 
 ### NodeAddressAutodetection
@@ -5408,6 +5445,39 @@ _Appears in:_
 | `path` _string_ | Path is the path portion of the URL based on which we proxy. |
 | `pathRegexp` _string_ | (Optional) PathRegexp, if not nil, checks if Regexp matches the path. |
 | `pathReplace` _string_ | (Optional) PathReplace if not nil will be used to replace PathRegexp matches. |
+
+
+### PodDisruptionBudgetOverride
+
+
+
+PodDisruptionBudgetOverride allows overriding select fields on an operator-managed
+PodDisruptionBudget. The PDB's selector, name, and namespace are managed by the
+operator and cannot be overridden.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[PodDisruptionBudgetOverrideSpec](#poddisruptionbudgetoverridespec)_ | (Optional) Spec is the specification of the PodDisruptionBudget. |
+
+
+### PodDisruptionBudgetOverrideSpec
+
+
+
+PodDisruptionBudgetOverrideSpec defines the desired state of an operator-managed PodDisruptionBudget.
+
+_Appears in:_
+- [PodDisruptionBudgetOverride](#poddisruptionbudgetoverride)
+
+| Field | Description |
+| --- | --- |
+| `minAvailable` _[IntOrString](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#intorstring-intstr-util)_ | (Optional) MinAvailable is the minimum number of pods (as an integer or percentage) that must remain available during a disruption. Mutually exclusive with MaxUnavailable. |
+| `maxUnavailable` _[IntOrString](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#intorstring-intstr-util)_ | (Optional) MaxUnavailable is the maximum number of pods (as an integer or percentage) that can be unavailable during a disruption. Mutually exclusive with MinAvailable. If neither MinAvailable nor MaxUnavailable is set, the operator applies its default (MaxUnavailable=1 for calico-typha). |
+| `unhealthyPodEvictionPolicy` _[UnhealthyPodEvictionPolicyType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#unhealthypodevictionpolicytype-v1-policy)_ | (Optional) UnhealthyPodEvictionPolicy defines when unhealthy pods should be considered for eviction. Defaults to IfHealthyBudget (the Kubernetes default) when unset. See https://kubernetes.io/docs/tasks/run-application/configure-pdb/#unhealthy-pod-eviction-policy. |
 
 
 ### PolicyMode
