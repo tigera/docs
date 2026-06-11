@@ -3,6 +3,7 @@ const componentImage = require('../src/components/utils/componentImage');
 
 const variables = {
   releaseTitle: 'master',
+  helmPre: 'master'.includes('-') ? ' --devel' : '',
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'master',
