@@ -3,6 +3,7 @@ const componentImage = require('../../src/components/utils/componentImage');
 
 const variables = {
   releaseTitle: 'v3.23.0-2.0',
+  helmPre: 'v3.23.0-2.0'.includes('-') ? ' --devel' : '',
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
   version: 'v3.23',
@@ -21,7 +22,7 @@ const variables = {
   rootDirWindows: 'C:\\TigeraCalico',
   registry: 'quay.io/',
   envoyVersion: '1.5.0',
-  chart_version_name: 'v3.23.0-2.0-1',
+  chart_version_name: 'v3.23.0-2.0-0',
   tigeraOperator: releases[0]['tigera-operator'],
   dikastesVersion: releases[0].components.dikastes.version,
   releases,
