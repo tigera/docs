@@ -391,4 +391,12 @@ June 17, 2026
 * Fixed an RBAC error that could prevent the operator from creating secrets in the `tigera-manager` namespace on fresh installs with the `Authentication` resource configured.
 * Security updates.
 
+#### Known issues
+
+* After an automatic Elasticsearch CA rotation, Elasticsearch nodes may fail to rejoin the cluster (and Kibana may fail to connect) with `PKIX path validation failed: Path does not chain with any of the trust anchors` errors in the logs.
+  This is caused by an upstream ECK issue where a renewed certificate authority is assigned a new Subject Key Identifier, breaking the certificate trust chain across pods that have not yet restarted.
+  To resolve or prevent the issue, delete the Elasticsearch transport (and, if Kibana is affected, HTTP) certificate secrets so that ECK regenerates all certificates under the current CA; Elasticsearch hot-reloads them without a pod restart.
+  For detection and exact remediation steps, see [this Elastic support article](https://support.elastic.co/knowledge/5198af8e).
+  A fix is included in Calico Enterprise 3.22.7.
+
 To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
