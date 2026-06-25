@@ -1,0 +1,171 @@
+---
+description: How Calico reconciles the Neutron database with its etcd datastore, including startup resync and the on-demand calico-resync command.
+---
+
+# Resync between Neutron and etcd
+
+## Big picture
+
+In a $[prodname] OpenStack deployment, the Neutron database is the source of
+truth for networking state, and the $[prodname] driver mirrors the parts that
+$[prodname] needs &mdash; ports, subnets, and security groups &mdash; into the
+$[prodname] etcd datastore as `WorkloadEndpoint`, `Subnet`, and `NetworkPolicy`
+resources (plus `LiveMigration` entries while an instance is migrating).
+
+In normal operation the driver keeps etcd up to date incrementally, writing to
+etcd from the Neutron post-commit hooks as ports and security groups change.  A
+_resync_ is a reconciliation pass that reads the current Neutron state and the
+current etcd state and corrects any difference between them &mdash; creating
+anything that is missing from etcd, updating anything that has drifted, and
+deleting anything in etcd that no longer corresponds to Neutron.  Its purpose
+is to recover from the rare cases where the incremental path can leave etcd out
+of date, for example if the Neutron server crashed part way through handling a
+request, or if etcd was briefly unreachable when an update happened.
+
+## When resync runs
+
+There are two ways a resync happens:
+
+- **Startup resync** &mdash; a one-shot resync that runs automatically when the
+  Neutron server starts or is restarted. This is the normal, hands-off
+  mechanism, and is enabled by default.
+
+- **On-demand resync** &mdash; run explicitly by an operator using the
+  [`calico-resync`](#the-calico-resync-command) command, optionally scoped to
+  particular networks, subnets, ports, or security groups.
+
+:::note
+
+In releases up to and including v3.32, the driver also ran a _periodic_ resync,
+repeating roughly every 30 seconds, governed by the `resync_interval_secs` and
+`resync_max_interval_secs` options.  That periodic resync has been removed
+because it was never needed for correct mainline operation, and it was
+misleading to retain it as though it was.  The related config options are now
+deprecated no-ops, retained only so that an existing `neutron.conf` does not
+break. See [Upgrade notes](#upgrade-notes-for-existing-deployments) below.
+
+:::
+
+## Startup resync
+
+When the Neutron server starts or restarts, the $[prodname] driver performs a
+single all-resource resync.  Running once on startup is sufficient because the
+incremental post-commit path keeps etcd current thereafter.
+
+The startup resync is controlled by the `startup_resync` option in the
+`[calico]` section of `/etc/neutron/neutron.conf`:
+
+| Setting        | Default | Meaning                                                          |
+| -------------- | ------- | ---------------------------------------------------------------- |
+| startup_resync | always  | Whether to run a full Neutron&nbsp;DB&nbsp;&rarr;&nbsp;etcd resync when the Neutron server starts. Set to `never` to suppress the startup resync worker entirely. |
+
+In almost all deployments you should leave `startup_resync = always`.  Setting
+it to `never` is intended for cases where you want full control over when
+resyncs run; for example:
+
+- a deployment where you prefer to trigger reconciliation manually with
+  `calico-resync` at a chosen time
+
+- a deployment with multiple Neutron servers, where you want to dictate that
+  only one of those performs startup resyncs; in this case you would configure
+  `always` on the chosen control node and `never` on the others.
+
+:::note
+
+Unlike the driver's other background jobs (etcd compaction, agent-status
+watching, and endpoint-status watching), which elect a single active worker
+dynamically through an etcd key so that the work fails over cleanly, the
+startup resync is governed by this static `startup_resync` config switch.  It
+runs once rather than continuously, so operator-level control over whether and
+where it runs is more useful than automatic failover.
+
+:::
+
+## The calico-resync command
+
+`calico-resync` is a console script, installed with the $[prodname] networking
+driver, that drives exactly the same resync logic as the startup resync but
+out-of-band, on demand.  Run it on a Neutron control node that has access to
+`/etc/neutron/neutron.conf` and to the Neutron database.
+
+With no scope flags, it performs a full resync of all resources:
+
+```bash
+calico-resync
+```
+
+By default it reads `/etc/neutron/neutron.conf`; use `--config-file`
+(repeatable, for layered config) to point at a different file.
+
+### Scoping a resync
+
+You can restrict a resync to specific resources, which is much faster than a
+full resync and useful when you know which objects need attention:
+
+| Flag                       | Effect                                                               |
+| -------------------------- | -------------------------------------------------------------------- |
+| `--network ID`             | Resync this network, and its subnets and ports. Repeatable.          |
+| `--subnet ID`              | Resync this subnet, and the ports on it. Repeatable.                 |
+| `--port ID`                | Resync this port. Repeatable.                                        |
+| `--security-group ID`      | Resync this security group's `NetworkPolicy`. Repeatable.            |
+| `--include-sgs-for-ports`  | When resyncing ports, also resync the security groups they belong to. Off by default, because the port&rarr;security-group binding is expressed through labels, so a port-only resync is usually sufficient. |
+
+For example, to reconcile a single port and the security groups it references:
+
+```bash
+calico-resync --port <port ID> --include-sgs-for-ports
+```
+
+### Output
+
+`calico-resync` prints a JSON `ResyncResult` to stdout, reporting an overall
+`ok` flag, per-phase timings, and per-kind counters of how many resources were
+found already correct, created, updated, and deleted (the endpoint phase
+additionally reports `LiveMigration` activity).  Use `-o PATH` / `--output
+PATH` to write the JSON to a file instead; this is convenient for tooling,
+since depending on your logging configuration oslo.log may also emit lines to
+stdout and make the JSON harder to parse.
+
+## Observability
+
+During a resync &mdash; whether startup or on-demand &mdash; the driver logs an
+`INFO`-level line for each resource that it has to reconcile, so you can see
+exactly what diverged and why resync intervened:
+
+```
+Resync creating <kind> <name> in etcd
+Resync updating <kind> <name> in etcd: old=<existing>, new=<replacement>
+Resync deleting <kind> <name> from etcd
+```
+
+Resources whose etcd data already matches Neutron are not enumerated at `INFO`
+(they are logged only at `DEBUG`); they are still counted in the per-kind
+summary totals.  Failures to write to or delete from etcd remain at `WARNING`,
+since those can indicate a genuine race rather than routine reconciliation.
+
+## Performance and concurrency
+
+The resync code reads Neutron state in bulk rather than issuing per-port and
+per-security-group queries, which makes a large-scale resync dramatically
+faster than in earlier releases (on the order of tens of times faster for a
+deployment with thousands of ports).  The driver also uses modern
+Neutron/SQLAlchemy database-access patterns, which avoids some connection-pool
+and event-loop problems that could previously occur during resync at scale.
+
+A resync runs in its own process, separate from the Neutron server processes
+that handle API requests and post-commit updates.  A long-running resync does
+not meaningfully block dynamic operations such as creating ports: you can run
+`calico-resync` on a busy deployment without stalling normal Neutron activity.
+
+## Upgrade notes for existing deployments
+
+If you are upgrading from v3.32 or earlier:
+
+- No configuration change is required.  The driver now runs a resync on Neutron
+  server startup by default, and no longer runs a periodic resync.
+
+- `resync_interval_secs` and `resync_max_interval_secs` are deprecated and have
+  no effect.  You can leave them in `neutron.conf` (they will not cause an
+  error), but you can also remove them.  If you previously relied on the
+  periodic resync to recover from drift, use the startup resync (the default)
+  and run `calico-resync` on demand when you need an immediate reconciliation.
