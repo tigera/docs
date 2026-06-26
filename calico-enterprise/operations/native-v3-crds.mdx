@@ -2,17 +2,11 @@
 description: Switch Calico Enterprise to native projectcalico.org/v3 CRDs so resources are stored directly as CRDs without the aggregated API server component.
 ---
 
-# Enable native v3 CRDs
-
-:::note
-
-This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
-
-:::
+# Native v3 CRDs
 
 ## Big picture
 
-Enable native `projectcalico.org/v3` CRDs so that Calico resources are backed directly by CRDs, eliminating the need for the Calico aggregation API server.
+New installs of $[prodname] use native `projectcalico.org/v3` CRDs by default: Calico resources are backed directly by CRDs, eliminating the need for the Calico aggregation API server. This page explains how the mode works and how to install with the aggregation API server instead.
 
 ## Value
 
@@ -36,12 +30,12 @@ When using native `projectcalico.org/v3` CRDs:
 
 ### Validation and defaulting
 
-When using native `projectcalico.org/v3` CRDs, resource validation and defaulting are handled by native CRD validation and defaulting, as well as ValidatingAdmissionPolicies and MutatingAdmissionPolicies. $[prodname] uses [MutatingAdmissionPolicies](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/) for defaulting, which require the beta `admissionregistration.k8s.io/v1beta1` API. That API is available in **Kubernetes 1.34 and later**. On Kubernetes 1.33 and earlier, MutatingAdmissionPolicy is only available as an alpha API (`v1alpha1`), which $[prodname] does not support. On Kubernetes 1.34 and 1.35, you must enable the `MutatingAdmissionPolicy` feature gate on your Kubernetes API server before using native `projectcalico.org/v3` CRDs, as it is not enabled by default. On Kubernetes 1.36 and later, the feature is GA and enabled by default.
+When using native `projectcalico.org/v3` CRDs, resource validation and defaulting are handled by native CRD validation and defaulting, as well as ValidatingAdmissionPolicies and MutatingAdmissionPolicies. $[prodname] uses [MutatingAdmissionPolicies](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/) for defaulting, which require **Kubernetes 1.32 or later**. On clusters where the `MutatingAdmissionPolicy` API is not enabled by default, you must enable the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) on the Kubernetes API server.
 
 ## Before you begin
 
 - A Kubernetes cluster **without** $[prodname] installed, or a cluster where you are performing a fresh install. To migrate an existing cluster from API server mode, see [Migrate from API server to native CRDs](crd-migration.mdx).
-- **Kubernetes 1.34 or later.** $[prodname] uses the beta `admissionregistration.k8s.io/v1beta1` MutatingAdmissionPolicy API for defaulting, which is not available on Kubernetes 1.33 and earlier (where MutatingAdmissionPolicy is alpha only). On Kubernetes 1.34 and 1.35, the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) must be enabled on the API server, as it is not enabled by default. On Kubernetes 1.36 and later, the feature is GA and enabled by default.
+- **Kubernetes 1.32 or later.** $[prodname] uses the `MutatingAdmissionPolicy` API for defaulting. On clusters where it is not enabled by default, enable the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) on the API server.
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -180,6 +174,33 @@ In both modes, tier-based RBAC uses the same `ClusterRole` and `RoleBinding` def
 In API server mode, tier RBAC is enforced for all operations (create, update, delete, get, list, watch) by the aggregation API server.
 
 When using native `projectcalico.org/v3` CRDs, tier RBAC is enforced via the admission webhook for **create, update, and delete** operations. However, **GET, LIST, and WATCH** operations on tiered policies are **not enforced** because admission webhooks cannot intercept read operations. This is a known limitation.
+
+## Install in API server mode (v1 CRDs)
+
+New installs default to v3 CRD mode. To install in the aggregation API-server mode instead, install the v1 CRDs before the operator decides the mode - the operator runs in API-server mode whenever the `crd.projectcalico.org/v1` CRDs are present.
+
+<Tabs>
+<TabItem label="Helm install" value="apiserver-helm">
+
+Install the v1 CRD chart before the Tigera Operator:
+
+```bash
+helm template calico-crds projectcalico/crd.projectcalico.org.v1 --version $[releaseTitle] | kubectl apply --server-side -f -
+```
+
+</TabItem>
+<TabItem label="Manifest install" value="apiserver-manifest">
+
+Apply the v1 CRDs before the Tigera Operator:
+
+```bash
+kubectl create -f $[filesUrl]/manifests/operator-crds.yaml
+```
+
+</TabItem>
+</Tabs>
+
+Then continue with your normal install. The aggregation API server is deployed automatically.
 
 ## Known limitations
 
