@@ -419,6 +419,7 @@ module.exports = {
         'operations/cluster-management',
         'operations/disconnect',
         'operations/usage-metrics',
+        'operations/comms/index',
         {
           type: 'category',
           label: 'Monitoring',
