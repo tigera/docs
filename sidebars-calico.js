@@ -328,6 +328,7 @@ module.exports = {
             'networking/openstack/host-routes',
             'networking/openstack/multiple-regions',
             'networking/openstack/live-migration',
+            'networking/openstack/resync',
             'networking/openstack/kuryr',
             'networking/openstack/neutron-api',
           ],
