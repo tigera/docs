@@ -1,5 +1,5 @@
 ---
-description: Switch Calico Enterprise to native projectcalico.org/v3 CRDs so resources are stored directly as CRDs without the aggregated API server component.
+description: New installs of Calico Enterprise use native projectcalico.org/v3 CRDs by default. This page explains how native v3 CRD mode works and how to install with the aggregation API server instead.
 ---
 
 # Native v3 CRDs
@@ -44,76 +44,7 @@ import TabItem from '@theme/TabItem';
 
 ### Install $[prodname] with native `projectcalico.org/v3` CRDs
 
-Select the method below based on your preferred installation method.
-
-<Tabs>
-<TabItem label="Helm install" value="Helm install-0">
-
-1. Add the $[prodname] Helm repo:
-
-   ```bash
-   helm repo add projectcalico https://docs.tigera.io/calico/charts
-   ```
-
-1. Create the `tigera-operator` namespace:
-
-   ```bash
-   kubectl create namespace tigera-operator
-   ```
-
-1. Install the v3 CRD chart instead of the default v1 CRD chart:
-
-   ```bash
-   helm template calico-crds projectcalico/projectcalico.org.v3 --version $[releaseTitle] | kubectl apply --server-side -f -
-   ```
-
-   :::note
-
-   This replaces the `crd.projectcalico.org.v1` chart used in the default installation. Do not install both CRD charts.
-
-   :::
-
-1. Install the Tigera Operator:
-
-   ```bash
-   helm install $[prodnamedash] projectcalico/tigera-operator --version $[releaseTitle] --namespace tigera-operator
-   ```
-
-   If you have a `values.yaml` with custom configuration:
-
-   ```bash
-   helm install $[prodnamedash] projectcalico/tigera-operator --version $[releaseTitle] -f values.yaml --namespace tigera-operator
-   ```
-
-</TabItem>
-<TabItem label="Manifest install" value="Manifest install-1">
-
-1. Install the v3 CRDs:
-
-   ```bash
-   kubectl create -f $[manifestsUrl]/manifests/v3_projectcalico_org.yaml
-   ```
-
-   :::note
-
-   This replaces the `v1_crd_projectcalico_org.yaml` manifest used in the default installation. Do not install both CRD manifests.
-
-   :::
-
-1. Install the Tigera Operator:
-
-   ```bash
-   kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
-   ```
-
-1. Install $[prodname] by creating the necessary custom resources:
-
-   ```bash
-   kubectl create -f $[manifestsUrl]/manifests/custom-resources.yaml
-   ```
-
-</TabItem>
-</Tabs>
+On $[prodname], the standard [Helm install](../getting-started/install-on-clusters/kubernetes/helm.mdx) defaults to native `projectcalico.org/v3` CRD mode, so follow that guide to install. Manifest install is not available for v3 on $[prodname].
 
 After installing, complete the following steps:
 
@@ -182,10 +113,11 @@ New installs default to v3 CRD mode. To install in the aggregation API-server mo
 <Tabs>
 <TabItem label="Helm install" value="apiserver-helm">
 
-Install the v1 CRD chart before the Tigera Operator:
+Pull and install the v1 CRD chart before the Tigera Operator:
 
 ```bash
-helm template calico-crds projectcalico/crd.projectcalico.org.v1 --version $[releaseTitle] | kubectl apply --server-side -f -
+helm pull tigera-ee/crd.projectcalico.org.v1 --version $[releaseTitle]$[helmPre]
+helm template calico-crds crd.projectcalico.org.v1-$[chart_version_name].tgz | kubectl apply --server-side -f -
 ```
 
 </TabItem>
