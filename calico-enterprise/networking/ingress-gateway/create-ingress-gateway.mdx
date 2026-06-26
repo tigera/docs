@@ -30,8 +30,11 @@ You need to do the following:
 ## Create an ingress gateway
 
 1. If you are using a [global default deny policy](../../network-policy/beginners/kubernetes-default-deny.mdx),
-   allow traffic through the gateway by adding the `tigera-gateway` namespace to the list of excluded namespaces in the
-   `namespaceSelector` field.
+   you do not need to allow the gateway proxy's own traffic. The Tigera Operator allows it through a
+   policy in the `calico-system` tier. You do need to allow the gateway proxy to reach your backend
+   workloads. The proxy pods carry the label `gateway.envoyproxy.io/owning-gateway-name`, so you can
+   select them in an egress rule. Without that rule, the gateway is reachable but returns `503` because
+   the proxy cannot connect to the backend.
 
 1. To enable Gateway API support, create a `GatewayAPI` resource with the name `tigera-secure`:
 
