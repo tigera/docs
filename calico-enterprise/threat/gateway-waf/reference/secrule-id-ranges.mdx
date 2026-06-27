@@ -1,0 +1,70 @@
+---
+description: How Gateway WAF assigns each namespace a SecRule ID range, which rule IDs are protected, and what the admission webhook rejects.
+---
+
+# SecRule ID ranges
+
+Every custom rule you write in a `WAFPlugin` carries a numeric ModSecurity ID. To keep one namespace from colliding with the IDs of another — or disabling the cluster's baseline rules — Gateway WAF assigns each namespace its own range of IDs and enforces it through an admission webhook.
+
+## How a namespace's range is derived
+
+Each namespace is allocated a contiguous block of 10,000 IDs, derived deterministically from the namespace name:
+
+```text
+prefix = first four hex digits of sha256(namespace name), modulo 10000
+range  = [ prefix * 10000 , prefix * 10000 + 9999 ]
+```
+
+Because the range is a pure function of the namespace name, it never changes and requires no cluster state. Across the ID space this gives up to 10,000 namespaces a private block of 10,000 IDs each.
+
+## Finding your range
+
+On the first time a namespace references a plugin, the controller stamps the range onto the namespace as an annotation:
+
+```bash
+kubectl get namespace payments \
+  -o jsonpath='{.metadata.annotations.applicationlayer\.projectcalico\.org/waf-id-range}'
+```
+
+Pick the IDs for your `WAFPlugin` rules from inside this range.
+
+## Protected ranges
+
+Some IDs are reserved and rejected for every namespace:
+
+- **`900000`–`999999`** — the OWASP Core Rule Set baseline.
+- **Tigera-shipped baseline rules** — the rules that implement the managed security baseline.
+
+A namespace can neither define rules with these IDs nor remove them with `SecRuleRemoveById`. This is what prevents a tenant from quietly disabling the cluster's protection.
+
+## What the admission webhook rejects
+
+When you apply a `WAFPlugin` or `WAFPolicy`, the webhook parses every directive and rejects the resource if any directive fails one of these checks. The reason appears on the resource's `Accepted` condition.
+
+| Check | Rejected with | Meaning |
+| :--- | :--- | :--- |
+| Directive not on the allowlist | `UnsafeDirective` | The directive type isn't permitted (for example, one that reads files or fetches remote rules) |
+| Rule ID outside your range | `IDOutsideRange` | A `SecRule`/`SecAction` ID falls outside the namespace's allocated range |
+| Removing a protected rule | `ProtectedIDRemoval` | A `SecRuleRemoveById` targets an ID outside the namespace's range (such as a Core Rule Set baseline rule) |
+
+The controller re-runs the same checks during reconciliation as a backstop; if a resource somehow reaches reconcile with a disallowed directive, it is marked `Accepted=False` with the matching reason rather than programmed.
+
+## Allowed directives
+
+The allowlist admits the directives needed to write and tune rules — among them `SecRule`, `SecAction`, `SecDefaultAction`, `SecRuleRemoveById`, `SecRuleRemoveByTag`, `SecRuleUpdateActionById`, `SecRuleUpdateTargetById`, `SecMarker`, and the request/response body and argument limits. Directives that read from the filesystem, write audit logs to arbitrary paths, or fetch remote rules are denied.
+
+## Example
+
+A namespace whose range is `420000`–`429999` writes rules using IDs from that block:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPlugin
+metadata:
+  name: api-exceptions
+  namespace: payments
+spec:
+  rules: |
+    SecRule REQUEST_BODY "@rx __schema" \
+      "id:420020,phase:2,deny,status:403,msg:'Introspection blocked'"
+```

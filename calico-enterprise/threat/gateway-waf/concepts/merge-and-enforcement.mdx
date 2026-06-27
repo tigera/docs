@@ -1,0 +1,75 @@
+---
+description: How Gateway WAF assembles the merged ruleset, the order rules load in, and the two layers that keep configurations safe — the admission webhook and validation policies.
+---
+
+# Merge order and enforcement
+
+When a `WAFPolicy` attaches to a target, the controller gathers every policy and plugin that applies, merges them into a single ordered list of ModSecurity directives, validates the result, and programs it into Envoy Gateway as an `EnvoyExtensionPolicy`. Each entry in `targetRefs[]` produces its own `EnvoyExtensionPolicy`, so a policy attached to three routes generates three filters.
+
+Three things govern the outcome: the **merge order** (how the ruleset is assembled), the **admission webhook** (what raw SecLang you're allowed to submit), and **validation policies** (whether the merged result is compliant).
+
+## The merged ruleset load order
+
+Directive order is not cosmetic — the Core Rule Set requires configuration variables to be set before the ruleset loads, and post-processing to run after. The merger assembles directives in this fixed order:
+
+**Engine setup**
+1. `SecRuleEngine On` / `DetectionOnly` — the effective action mode from the merged config.
+2. Engine settings — audit logging and request-body access.
+
+**Plugin `config` (variable setup)**
+3. Global plugin `config` blocks, in `GlobalWAFPolicy.spec.plugins[]` order.
+4. Namespace plugin `config` blocks, in `WAFPolicy.spec.plugins[]` order.
+
+**Core Rule Set setup**
+5. Core Rule Set setup — reads the `tx.*` variables set above.
+6. Blocking paranoia level, from the merged paranoia level.
+7. Detection paranoia level (always ≥ blocking level).
+
+**Pre-Core Rule Set rules (`before`)**
+8. Global plugin `before` rules.
+9. Namespace plugin `before` rules.
+
+**Core Rule Set**
+10. The full OWASP Core Rule Set.
+
+**Custom rules (`rules`)**
+11. Global plugin `rules`.
+12. Namespace plugin `rules`.
+
+**Post-processing (`after`)**
+13. Namespace plugin `after` rules.
+14. Global plugin `after` rules — **runs last, giving the cluster operator the final say** on anomaly scoring and logging.
+
+The pattern is global-before-namespace through the early slots, and namespace-before-global in the `after` slot. Within each plugin, its own slots always run in `config` → `before` → `rules` → `after` order.
+
+:::note
+
+When two `WAFPolicy` resources target the same route, $[prodname] follows the Gateway API [GEP-713](https://gateway-api.sigs.k8s.io/geps/gep-713/) default: the policy with the oldest `creationTimestamp` wins (ties broken by `namespace/name`). The loser is marked `Accepted=False` with reason `Conflicted`, and its directives are not merged.
+
+:::
+
+## Structural safety: the admission webhook
+
+Before any of the above runs, a validating admission webhook checks the raw SecLang in a `WAFPlugin` or `WAFPolicy` at the moment you apply it. It parses each directive and rejects the resource if any directive fails one of three checks:
+
+| Check | Passes when | Rejected with |
+| :--- | :--- | :--- |
+| Directive is allowed | the directive type is on the allowlist (`SecRule`, `SecAction`, `SecRuleRemoveById`, and other safe directives) | `UnsafeDirective` |
+| Rule ID is in range | a `SecRule`/`SecAction` ID falls inside the namespace's allocated ID range | `IDOutsideRange` |
+| Removal is permitted | a `SecRuleRemoveById` targets an ID inside the namespace's own range, not a protected baseline rule | `ProtectedIDRemoval` |
+
+This is what stops one namespace from colliding with the rule IDs of another, or disabling the cluster's baseline Core Rule Set rules. Each namespace is automatically assigned a 10,000-ID range; see [SecRule ID ranges](../reference/secrule-id-ranges.mdx) for how the range is derived and which rule IDs are protected.
+
+## Validation and enforcement
+
+The admission webhook checks *raw SecLang*. Validation policies check the *merged result* — and they run after the merge precisely because some problems are only visible there. Two innocent plugins can combine to disable all SQL-injection rules; no admission-time check can see that, but a Rego rule evaluated against the merged directive list can.
+
+Validation rules are [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) modules with a severity of `Info`, `Warning`, or `Critical`. What happens on a violation depends on the policy:
+
+| Validation policy | Mode | `Critical` violation | `Warning` / `Info` violation |
+| :--- | :--- | :--- | :--- |
+| `GlobalWAFValidationPolicy` | `Enforce` | **blocks** — no filter is programmed; status reports the rejection | warns on status; filter still programmed |
+| `GlobalWAFValidationPolicy` | `Audit` (default) | warns on status; filter still programmed | warns on status; filter still programmed |
+| `WAFValidationPolicy` | advisory only | surfaces on `WAFPolicy` status; never blocks | surfaces on status; never blocks |
+
+To write the rules themselves, see the [Rego validation reference](../reference/rego-validation.mdx). To read the outcome, see [Status conditions](../reference/status-conditions.mdx).

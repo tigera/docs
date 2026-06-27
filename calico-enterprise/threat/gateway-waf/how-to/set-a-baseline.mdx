@@ -1,0 +1,174 @@
+---
+description: Create a GlobalWAFPolicy and GlobalWAFPlugin to establish a cluster-wide WAF security baseline that every namespace inherits.
+---
+
+# Set a cluster-wide baseline
+
+:::note[Cluster operator task]
+
+This page is for cluster operators who own the `GlobalWAFPolicy` singleton and set the security posture that all namespaces inherit.
+
+:::
+
+Before any application operator can attach WAF to a route, you need a cluster baseline. The baseline defines the default action, Core Rule Set state, paranoia level, and any organization-wide custom rules. Application operators inherit these settings; they can tighten them, but a [validation policy](./validate-config.mdx) can prevent them from weakening them.
+
+## Prerequisites
+
+- The Gateway WAF feature gate is enabled on the `ApplicationLayer` resource. See [Enable Gateway WAF](../get-started/enable.mdx).
+- You have cluster-admin rights (the `GlobalWAFPolicy` API is cluster-scoped).
+
+## Step 1 — Create the GlobalWAFPolicy singleton
+
+`GlobalWAFPolicy` must be named `default`. Applying any other name is rejected by the admission webhook.
+
+Start in `Detect` mode. `Detect` logs matched requests but allows them through, giving you time to measure false positives before you switch to `Block`.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFPolicy
+metadata:
+  name: default
+spec:
+  defaultAction: Detect        # start here; promote to Block after validating false-positive rate
+  coreRuleSet:
+    state: Enabled
+    paranoiaLevel: 1
+```
+
+Apply it:
+
+```bash
+kubectl apply -f globalwafpolicy.yaml
+```
+
+### Paranoia levels
+
+The OWASP Core Rule Set defines four paranoia levels. Each higher level adds more detection rules and will catch more attacks — at the cost of more false positives. Choose based on your organization's risk tolerance and the sensitivity of the workloads you are protecting.
+
+| Level | Posture | Typical use |
+| :--- | :--- | :--- |
+| 1 | Balanced — low false-positive rate | General-purpose default; a safe starting point |
+| 2 | Moderate — catches common evasion patterns | APIs that handle sensitive data |
+| 3 | Strict — flags most suspicious patterns | High-value or compliance-regulated endpoints |
+| 4 | Paranoid — near-zero tolerance | Extremely high-security targets; expect false positives |
+
+:::tip
+
+Start at paranoia level 1 cluster-wide. Let application operators raise the level for their own namespaces if their traffic demands it. You can enforce a minimum level later with a [validation policy](./validate-config.mdx).
+
+:::
+
+### When to switch to Block
+
+Once you have confirmed the false-positive rate is acceptable, change `defaultAction` to `Block`:
+
+```yaml
+spec:
+  defaultAction: Block
+  coreRuleSet:
+    state: Enabled
+    paranoiaLevel: 1
+```
+
+In `Block` mode, $[prodname] returns HTTP 403 for any request that matches a WAF rule.
+
+## Step 2 — Add organization-wide rules with a GlobalWAFPlugin
+
+A `GlobalWAFPlugin` holds custom ModSecurity rules that apply to every namespace through the global policy's `plugins[]` list. Create the plugin first, then reference it from `GlobalWAFPolicy`.
+
+Rules are organized into four lifecycle slots — `config`, `before`, `rules`, and `after` — that map to distinct points in the load order. See [Write custom rules](./write-custom-rules.mdx) for slot semantics and ID-range requirements.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFPlugin
+metadata:
+  name: org-baseline
+spec:
+  description: "Organization-wide security baseline rules"
+  config: |
+    # Slot 1 — set tx.* variables before CRS loads
+    SecAction "id:800001,phase:1,pass,nolog,setvar:tx.enforce_https=1"
+  before: |
+    # Slot 2 — pre-CRS rules; run before the Core Rule Set
+    SecRule REQUEST_HEADERS:X-Forwarded-Proto "!@streq https" \
+      "id:800002,phase:1,deny,status:403,msg:'HTTPS required',chain"
+    SecRule TX:ENFORCE_HTTPS "@eq 1" ""
+  rules: |
+    # Slot 3 — custom rules that run alongside CRS
+    SecRule REQUEST_HEADERS:X-Request-ID "@rx ^$" \
+      "id:800003,phase:1,deny,status:400,msg:'Missing X-Request-ID header'"
+  after: |
+    # Slot 4 — post-CRS processing; cluster operator's after slot runs last
+    SecRule TX:BLOCKING_ANOMALY_SCORE "@gt 0" \
+      "id:800099,phase:5,pass,log,msg:'Request blocked by WAF'"
+```
+
+Apply the plugin:
+
+```bash
+kubectl apply -f globalwafplugin.yaml
+```
+
+Reference it from `GlobalWAFPolicy.spec.plugins[]`:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFPolicy
+metadata:
+  name: default
+spec:
+  defaultAction: Detect
+  coreRuleSet:
+    state: Enabled
+    paranoiaLevel: 1
+  plugins:
+    - kind: GlobalWAFPlugin
+      name: org-baseline
+```
+
+`plugins[]` is an ordered list. The merger processes plugins in array position order. Add more `GlobalWAFPlugin` entries to the array as your organization grows — up to 64 total.
+
+:::note
+
+You can add `WAFPlugin` entries to `GlobalWAFPolicy.spec.plugins[]` as well. For the complete merge order — including when global `after` slots run — see [Merge order and enforcement](../concepts/merge-and-enforcement.mdx).
+
+:::
+
+## Step 3 — Verify the baseline
+
+Check that the resource was accepted:
+
+```bash
+kubectl get globalwafpolicy default
+```
+
+```
+NAME      ACCEPTED   AGE
+default   True       30s
+```
+
+For detailed status — including any validation violations — inspect the status conditions:
+
+```bash
+kubectl get globalwafpolicy default -o yaml
+```
+
+Look at `.status.conditions`. An `Accepted=True` condition with reason `Reconciled` means the baseline is programmed. If a [validation policy](../reference/status-conditions.mdx) blocked the configuration, you will see `Accepted=False` with a `ValidationFailed` reason and a message describing the violation. See [Status conditions](../reference/status-conditions.mdx) for the full condition reference.
+
+## How namespace inheritance works
+
+Every namespace that has a `WAFPolicy` attached to a target inherits `defaultAction`, `coreRuleSet.state`, and `coreRuleSet.paranoiaLevel` from `GlobalWAFPolicy`. A `WAFPolicy` can override any of these fields for its namespace; unset fields fall back to the global value.
+
+```
+GlobalWAFPolicy (baseline)
+  └─ WAFPolicy in namespace payments  → overrides action: Block, paranoiaLevel: 2
+  └─ WAFPolicy in namespace team-a    → inherits everything from GlobalWAFPolicy
+```
+
+For a full account of which fields inherit and which override, see [Global vs. namespaced](../concepts/global-vs-namespaced.mdx).
+
+## Next steps
+
+- **Enforce compliance** — codify your requirements (minimum paranoia level, Block-only production) with a `GlobalWAFValidationPolicy`. See [Validate configuration](./validate-config.mdx).
+- **Let teams attach WAF** — share [Attach WAF to a Gateway or route](./attach-waf-to-a-route.mdx) with your application operators.
+- **Multi-tenant setup** — if you manage many teams, see [Multi-tenant setup](./multi-tenant-setup.mdx) for namespace selector patterns and ID-range allocation.

@@ -474,6 +474,52 @@ module.exports = {
         'threat/deeppacketinspection',
         'threat/web-application-firewall',
         'threat/deploying-waf-ingress-gateway',
+        {
+          type: 'category',
+          label: 'Gateway WAF',
+          link: { type: 'doc', id: 'threat/gateway-waf/index' },
+          items: [
+            {
+              type: 'category',
+              label: 'Concepts',
+              items: [
+                'threat/gateway-waf/concepts/policies-plugins-validation',
+                'threat/gateway-waf/concepts/global-vs-namespaced',
+                'threat/gateway-waf/concepts/merge-and-enforcement',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Get started',
+              items: [
+                'threat/gateway-waf/get-started/enable',
+                'threat/gateway-waf/get-started/quickstart',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'How to',
+              items: [
+                'threat/gateway-waf/how-to/set-a-baseline',
+                'threat/gateway-waf/how-to/attach-waf-to-a-route',
+                'threat/gateway-waf/how-to/write-custom-rules',
+                'threat/gateway-waf/how-to/validate-config',
+                'threat/gateway-waf/how-to/multi-tenant-setup',
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Reference',
+              items: [
+                'threat/gateway-waf/reference/crds',
+                'threat/gateway-waf/reference/rego-validation',
+                'threat/gateway-waf/reference/secrule-id-ranges',
+                'threat/gateway-waf/reference/status-conditions',
+              ],
+            },
+            'threat/gateway-waf/troubleshooting',
+          ],
+        },
       ],
     },
     {

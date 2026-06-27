@@ -1,0 +1,53 @@
+---
+description: Understand the three Gateway WAF resource families — policies, plugins, and validation policies — and when to use each.
+---
+
+# Policies, plugins, and validation
+
+Gateway WAF is configured through six custom resources in the `applicationlayer.projectcalico.org/v3` API group. They come as three families, and each family has a cluster-scoped resource (owned by the cluster operator) and a namespace-scoped resource (owned by the application operator).
+
+| Family | Cluster-scoped (CO) | Namespace-scoped (AO) | Answers the question |
+| :--- | :--- | :--- | :--- |
+| **Policy** | `GlobalWAFPolicy` | `WAFPolicy` | *What* to enforce — action, Core Rule Set state, paranoia, which plugins |
+| **Plugin** | `GlobalWAFPlugin` | `WAFPlugin` | *Which custom rules* to add, in ModSecurity SecLang |
+| **Validation** | `GlobalWAFValidationPolicy` | `WAFValidationPolicy` | *Whether a configuration is allowed* — compliance guardrails |
+
+## Policies — what to enforce
+
+A **policy** declares the high-level WAF configuration: the action mode (`Detect` or `Block`), whether the OWASP Core Rule Set is enabled, the paranoia level, and which plugins to load.
+
+- `GlobalWAFPolicy` is a cluster-wide singleton (`name: default`) that sets the baseline for every namespace.
+- `WAFPolicy` is namespace-scoped. It attaches WAF to a Gateway or `HTTPRoute` through `targetRefs`, and can override the baseline action and paranoia for that namespace.
+
+Reach for a policy when you want to **turn WAF on for some traffic** and set its overall posture. See [Attach WAF to a route](../how-to/attach-waf-to-a-route.mdx).
+
+## Plugins — custom rules
+
+A **plugin** is a container for custom ModSecurity rules, organized into four lifecycle slots — `config`, `before`, `rules`, and `after` — modeled on the [Core Rule Set 4 plugin system](https://coreruleset.org/docs/4-about-plugins/4-1-plugins/). Plugins are referenced from a policy's `spec.plugins[]` list; they do nothing on their own.
+
+- `GlobalWAFPlugin` holds organization-wide rules — security baselines, compliance rules.
+- `WAFPlugin` holds application-specific rules and false-positive exceptions.
+
+Reach for a plugin when the Core Rule Set isn't enough — you need a **custom detection rule, a pre-processing step, or an exception** for a known false positive. See [Write custom rules](../how-to/write-custom-rules.mdx).
+
+## Validation policies — guardrails
+
+A **validation policy** carries [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) rules that are evaluated against the *merged, effective* WAF configuration. They answer "is this configuration acceptable?" — for example, "the Core Rule Set must stay enabled" or "production namespaces must run in Block mode."
+
+- `GlobalWAFValidationPolicy` is enforced by the cluster operator. In `Enforce` mode a `Critical` violation blocks the configuration from being programmed; in `Audit` mode it only warns. A `namespaceSelector` scopes which namespaces it applies to.
+- `WAFValidationPolicy` is **advisory only** — it surfaces violations on the policy status for the application operator to act on, but never blocks. There is no enforce mode at namespace scope.
+
+Reach for a validation policy when you want to **codify a requirement** rather than a rule. See [Validate configuration](../how-to/validate-config.mdx) and the [Rego validation reference](../reference/rego-validation.mdx).
+
+:::note
+
+Validation policies are not the same as the admission webhook. The webhook checks the *raw SecLang* you submit (safe directives, allowed rule IDs) at write time; validation policies check the *merged result* for compliance. See [Merge order and enforcement](merge-and-enforcement.mdx).
+
+:::
+
+## How they fit together
+
+These resources combine before they reach the data plane: all applicable policies and plugins are merged into one ordered ruleset, validated, and programmed into Envoy Gateway. To understand precedence and inheritance, read:
+
+- [Global vs. namespaced](global-vs-namespaced.mdx) — scope, ownership, and inheritance.
+- [Merge order and enforcement](merge-and-enforcement.mdx) — how the merged ruleset is assembled and checked.

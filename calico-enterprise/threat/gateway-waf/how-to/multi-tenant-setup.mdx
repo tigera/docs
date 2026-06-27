@@ -1,0 +1,284 @@
+---
+description: Walk through an end-to-end Gateway WAF multi-tenant setup where a cluster operator sets a cluster-wide baseline and two application teams tune WAF independently within enforced guardrails.
+---
+
+# Multi-tenant setup
+
+:::note[Scenario]
+
+This guide walks you through a single cluster shared by two application teams — `team-a` and `payments` — and a cluster operator who sets the security baseline. You will see the full CO ↔ AO collaboration: a `GlobalWAFPolicy` baseline, an org-wide `GlobalWAFPlugin`, and a `GlobalWAFValidationPolicy` that prevents application teams from weakening protection. Each team then attaches WAF to their own Gateway and tunes it independently.
+
+Prerequisites: Gateway WAF is enabled and a valid license is in place. See [Enable Gateway WAF](../get-started/enable.mdx).
+
+:::
+
+---
+
+## Part 1: Cluster operator
+
+All resources in this section are created by the **cluster operator** using cluster-scoped credentials.
+
+### Set the baseline policy
+
+`GlobalWAFPolicy` is a singleton named `default`. It defines the security floor every namespace inherits.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFPolicy
+metadata:
+  name: default
+spec:
+  defaultAction: Block
+  coreRuleSet:
+    state: Enabled
+    paranoiaLevel: 1
+  plugins:
+    - name: org-security-baseline
+```
+
+This establishes Block mode and OWASP Core Rule Set at paranoia level 1 for every namespace. A `WAFPolicy` can raise the paranoia level or override the action, but the validation policy below prevents it from lowering either.
+
+### Add an org-wide plugin
+
+`GlobalWAFPlugin` resources carry custom rules that apply everywhere. The plugin referenced above adds a request-tracing requirement:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFPlugin
+metadata:
+  name: org-security-baseline
+spec:
+  description: "Org-wide rules — requires a correlation ID on every request"
+  rules: |
+    SecRule REQUEST_HEADERS:X-Request-ID "@rx ^$" \
+      "id:800010,phase:1,deny,status:400,msg:'Missing X-Request-ID header'"
+  after: |
+    SecRule TX:BLOCKING_ANOMALY_SCORE "@gt 0" \
+      "id:800099,phase:5,pass,log,msg:'WAF blocked request'"
+```
+
+The `after` slot runs last in the merge order, giving the cluster operator final control over anomaly scoring and audit logging. See [Merge order and enforcement](../concepts/merge-and-enforcement.mdx) for the full load sequence.
+
+### Enforce compliance guardrails
+
+`GlobalWAFValidationPolicy` uses Rego rules to evaluate every `WAFPolicy` after the merge. Setting `mode: Enforce` means a `Critical` violation blocks programming — no Coraza filter is loaded — until the namespace policy is corrected.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFValidationPolicy
+metadata:
+  name: production-requirements
+spec:
+  mode: Enforce
+  namespaceSelector:
+    matchLabels:
+      env: production
+  rules:
+    - name: must-use-block-mode
+      severity: Critical
+      rego: |
+        package waf.validation
+        violation[msg] {
+          input.config.action != "Block"
+          msg := "WAF policy must use Block mode in production namespaces"
+        }
+    - name: crs-must-be-enabled
+      severity: Critical
+      rego: |
+        package waf.validation
+        violation[msg] {
+          input.config.crsState != "Enabled"
+          msg := "OWASP CRS must be enabled in production namespaces"
+        }
+    - name: minimum-paranoia-level
+      severity: Warning
+      rego: |
+        package waf.validation
+        violation[msg] {
+          input.config.paranoiaLevel < 1
+          msg := "Paranoia level 1 is the recommended minimum"
+        }
+```
+
+The `namespaceSelector` targets only namespaces labelled `env: production`. The two `Critical` rules are hard gates; a `Warning` appears in `status.validation.failures` but does not block programming. For Rego variable reference, see [Rego validation](../reference/rego-validation.mdx).
+
+### Give application teams read access to global resources
+
+Application operators need to read `Global*` resources to understand what baseline they are inheriting. Grant read access with a `ClusterRole` and a per-namespace `RoleBinding`:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: waf-global-reader
+rules:
+  - apiGroups: ["applicationlayer.projectcalico.org"]
+    resources:
+      - globalwafpolicies
+      - globalwafplugins
+      - globalwafvalidationpolicies
+    verbs: ["get", "list", "watch"]
+```
+
+Bind it in each team's namespace:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: waf-global-reader
+  namespace: team-a          # repeat for payments
+subjects:
+  - kind: Group
+    name: team-a-operators
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: waf-global-reader
+  apiGroup: rbac.authorization.k8s.io
+```
+
+:::note
+
+This grants read on cluster-scoped resources via a namespace-scoped `RoleBinding`. Application operators can see the baseline and validation policy, but cannot create or edit `Global*` resources.
+
+:::
+
+---
+
+## Part 2: `team-a` operator
+
+The `team-a` operator attaches WAF to their Gateway and inherits the baseline. Because `coreRuleSet.state` is unset, it inherits `Enabled` from `GlobalWAFPolicy`. The operator raises paranoia to 2 but stays within the enforced guardrails.
+
+Label the namespace so the validation policy applies:
+
+```bash
+kubectl label namespace team-a env=production
+```
+
+Create the `WAFPolicy`:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPolicy
+metadata:
+  name: team-a-waf
+  namespace: team-a
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: team-a-gateway
+  action: Block
+  coreRuleSet:
+    paranoiaLevel: 2
+    # state is unset — inherited from GlobalWAFPolicy (Enabled)
+```
+
+After reconciliation the policy should reach `Ready=True`. The merged ruleset includes:
+1. The org-wide `X-Request-ID` requirement from `GlobalWAFPlugin/org-security-baseline`
+2. The OWASP Core Rule Set at paranoia level 2 (overriding the global level 1)
+3. The `after` audit rule from the global plugin
+
+Verify the conditions:
+
+```bash
+kubectl describe wafpolicy team-a-waf -n team-a
+```
+
+See [Status conditions](../reference/status-conditions.mdx) for what each condition means.
+
+---
+
+## Part 3: `payments` operator
+
+The `payments` team runs a stricter configuration. They raise paranoia to 3 and add a namespace plugin that blocks GraphQL introspection.
+
+Label the namespace:
+
+```bash
+kubectl label namespace payments env=production
+```
+
+First, find the namespace's allocated SecRule ID range so custom rule IDs land inside it:
+
+```bash
+kubectl get namespace payments \
+  -o jsonpath='{.metadata.annotations.applicationlayer\.projectcalico\.org/waf-id-range}'
+```
+
+The controller stamps this annotation on first use. All rule IDs in the plugin below must fall within this range. See [SecRule ID ranges](../reference/secrule-id-ranges.mdx) for how the range is derived.
+
+Create the namespace plugin:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPlugin
+metadata:
+  name: payments-app-rules
+  namespace: payments
+spec:
+  description: "Payments-specific rules — block GraphQL introspection"
+  rules: |
+    SecRule REQUEST_BODY "@rx (?i)__schema|__type" \
+      "id:420010,phase:2,deny,status:403,msg:'GraphQL introspection blocked'"
+```
+
+Replace `420010` with an ID from your namespace's actual allocated range.
+
+Create the `WAFPolicy` referencing the plugin:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPolicy
+metadata:
+  name: payments-waf
+  namespace: payments
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: payments-gateway
+  action: Block
+  coreRuleSet:
+    state: Enabled
+    paranoiaLevel: 3
+  plugins:
+    - name: payments-app-rules
+```
+
+### What happens if the payments team tries to weaken the baseline
+
+If the `payments` operator applies a policy with `action: Detect`, the `production-requirements` `GlobalWAFValidationPolicy` (in `Enforce` mode) fires the `must-use-block-mode` Critical rule. The controller marks the policy `Programmed=False, Reason=NotAttempted` and surfaces the violation in `status.validation.failures`:
+
+```bash
+kubectl get wafpolicy payments-waf -n payments \
+  -o jsonpath='{.status.validation.failures}' | jq
+```
+
+No `EnvoyExtensionPolicy` is generated until the policy is corrected. The `payments` operator must restore `action: Block` or request a policy exception from the cluster operator. See [Validate config](./validate-config.mdx) for how to read and act on validation failures.
+
+---
+
+## Result: isolation in practice
+
+Each team's WAF configuration is fully isolated by namespace:
+
+- **`team-a`** runs Core Rule Set at paranoia 2 with its own custom rules, scoped to its ID range.
+- **`payments`** runs Core Rule Set at paranoia 3 plus its GraphQL introspection block, scoped to a different ID range.
+- Neither team can disable the org-wide `X-Request-ID` rule or lower below Block mode.
+- The cluster operator sees all validation violations centrally on `GlobalWAFValidationPolicy/production-requirements` status — a single place to audit which namespaces are out of compliance.
+
+For the full ID-range isolation mechanism, see [SecRule ID ranges](../reference/secrule-id-ranges.mdx). For the cluster operator's cluster-wide violation view, see [Status conditions](../reference/status-conditions.mdx).
+
+## Related pages
+
+- [Concepts: Global vs. namespaced](../concepts/global-vs-namespaced.mdx)
+- [Concepts: Merge order and enforcement](../concepts/merge-and-enforcement.mdx)
+- [Reference: SecRule ID ranges](../reference/secrule-id-ranges.mdx)
+- [Reference: Status conditions](../reference/status-conditions.mdx)
+- [How-to: Attach WAF to a route](./attach-waf-to-a-route.mdx)
+- [How-to: Write custom rules](./write-custom-rules.mdx)
+- [How-to: Set a baseline](./set-a-baseline.mdx)
+- [How-to: Validate config](./validate-config.mdx)
+- [Troubleshooting](../troubleshooting.mdx)

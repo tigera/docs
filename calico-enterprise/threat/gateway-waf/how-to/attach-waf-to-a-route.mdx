@@ -1,0 +1,227 @@
+---
+description: Create a WAFPolicy with targetRefs to attach WAF inspection to a Gateway or HTTPRoute in your namespace.
+---
+
+# Attach WAF to a Gateway or route
+
+:::note[Application operator task]
+
+This page is for application operators who own namespace-scoped WAF resources and decide which of their Gateways and routes receive WAF inspection.
+
+:::
+
+WAF inspection does not start automatically when the cluster operator enables the feature. You activate it by creating a `WAFPolicy` in your namespace that points to one or more Gateway API targets. The policy inherits the cluster baseline and lets you layer namespace-specific overrides on top.
+
+## Prerequisites
+
+- The cluster operator has created a `GlobalWAFPolicy`. See [Set a cluster-wide baseline](./set-a-baseline.mdx).
+- You have write access to `WAFPolicy` resources in your namespace.
+- A `Gateway` or `HTTPRoute` in your namespace is already receiving traffic. See [About Calico Ingress Gateway](../../../networking/ingress-gateway/about-calico-ingress-gateway.mdx) if you have not set one up.
+
+## Understand the two attachment scopes
+
+`WAFPolicy.spec.targetRefs[]` accepts two kinds of targets.
+
+| `kind` in `targetRefs` | WAF covers | Use when |
+| :--- | :--- | :--- |
+| `Gateway` | Every `HTTPRoute` bound to that Gateway | You want uniform WAF across all routes on a Gateway |
+| `HTTPRoute` | Just that one route | You need per-route tuning — different paranoia level, different plugins |
+
+Each `targetRefs` entry generates a separate `EnvoyExtensionPolicy` on Envoy Gateway. A policy with two entries generates two filters — one per target.
+
+:::note
+
+`sectionName` (targeting a specific listener on a Gateway) is reserved for a future release. Omit it.
+
+:::
+
+## Step 1 — Create a WAFPolicy
+
+### Option A — Gateway-wide WAF
+
+This example attaches WAF to every route on the `team-gateway` Gateway. Because `action` and `coreRuleSet` are unset, both fields inherit the cluster baseline.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPolicy
+metadata:
+  name: team-gateway-waf
+  namespace: team-a
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: team-gateway
+```
+
+### Option B — Per-route WAF
+
+This example attaches WAF to a single `HTTPRoute` and overrides the action and paranoia level for this namespace. Unset fields (here, `coreRuleSet.state`) still inherit from the cluster baseline.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPolicy
+metadata:
+  name: payments-api-waf
+  namespace: payments
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: payments-api
+  action: Block              # override: Block even if global baseline is Detect
+  coreRuleSet:
+    paranoiaLevel: 2         # stricter than the cluster default
+  # coreRuleSet.state is unset → inherited from GlobalWAFPolicy
+```
+
+### Combining both scopes in one policy
+
+You can list both a Gateway and specific HTTPRoutes in a single `WAFPolicy`:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPolicy
+metadata:
+  name: mixed-targets
+  namespace: payments
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: payments-gateway
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: internal-api
+  action: Block
+```
+
+Up to 16 entries are allowed in `targetRefs`.
+
+Apply the policy:
+
+```bash
+kubectl apply -f wafpolicy.yaml
+```
+
+## Step 2 — Add a namespace plugin (optional)
+
+If you need rules beyond the cluster baseline — such as a custom detection rule or a false-positive exception — create a `WAFPlugin` and reference it from `WAFPolicy.spec.plugins[]`:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPlugin
+metadata:
+  name: payments-rules
+  namespace: payments
+spec:
+  description: "Payments-specific WAF rules"
+  rules: |
+    SecRule REQUEST_HEADERS:Content-Type "!@rx ^application/json" \
+      "id:5600001,phase:1,deny,status:415,msg:'Only JSON accepted on payments API'"
+---
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPolicy
+metadata:
+  name: payments-api-waf
+  namespace: payments
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: payments-api
+  action: Block
+  plugins:
+    - kind: WAFPlugin
+      name: payments-rules
+```
+
+Rule IDs must fall within the ID range allocated to your namespace. See [Write custom rules](./write-custom-rules.mdx) for how to find your range and how the four plugin slots work.
+
+## Inheritance and field overrides
+
+Fields you set in `WAFPolicy` override the corresponding field in `GlobalWAFPolicy`. Fields you leave unset are inherited.
+
+| `WAFPolicy` field | When set | When unset |
+| :--- | :--- | :--- |
+| `action` | overrides `GlobalWAFPolicy.spec.defaultAction` | inherits the global default |
+| `coreRuleSet.state` | overrides the global Core Rule Set state | inherits the global Core Rule Set state |
+| `coreRuleSet.paranoiaLevel` | overrides the global paranoia level | inherits the global paranoia level |
+
+For the complete picture, including how global and namespace plugins stack, see [Global vs. namespaced](../concepts/global-vs-namespaced.mdx).
+
+## Conflict resolution
+
+Only one `WAFPolicy` may be the active policy for any given target at a time. If two `WAFPolicy` resources in the same namespace both target the same Gateway or HTTPRoute, $[prodname] follows the [GEP-713](https://gateway-api.sigs.k8s.io/geps/gep-713/) tie-breaking rule:
+
+- The policy with the **oldest `creationTimestamp`** wins.
+- The newer policy is marked `Accepted=False` with reason `Conflicted`.
+- Only the winning policy's directives are merged and programmed.
+
+To resolve a conflict, delete the newer policy or update its `targetRefs` to point at a different target. See [Merge order and enforcement](../concepts/merge-and-enforcement.mdx) for the full conflict model.
+
+## Step 3 — Verify the policy
+
+Check that the policy was accepted and programmed:
+
+```bash
+kubectl get wafpolicy payments-api-waf -n payments
+```
+
+```
+NAME               ACCEPTED   PROGRAMMED   AGE
+payments-api-waf   True       True         45s
+```
+
+For detailed conditions — including validation violations or conflict reasons — inspect the full status:
+
+```bash
+kubectl get wafpolicy payments-api-waf -n payments -o yaml
+```
+
+The `.status.conditions` field reports `Accepted`, `Programmed`, and any validation findings. See [Status conditions](../reference/status-conditions.mdx) for the full condition reference.
+
+You can also confirm that Envoy Gateway received the filter:
+
+```bash
+kubectl get envoyextensionpolicies -n payments
+```
+
+Each `targetRefs` entry produces one `EnvoyExtensionPolicy`. A policy with two entries will show two resources.
+
+## Step 4 — Test the WAF
+
+Send a request that includes a classic SQL injection pattern. In `Block` mode this should return HTTP 403:
+
+```bash
+curl -si "https://<gateway-host>/api?id=1+OR+1%3D1"
+```
+
+```
+HTTP/1.1 403 Forbidden
+content-length: 11
+content-type: text/plain
+
+Access denied
+```
+
+:::tip
+
+If the Gateway is running in `Detect` mode (the cluster default until you upgrade to `Block`), the request will be allowed through but the WAF event will appear in the Envoy Gateway logs. Check with:
+
+```bash
+kubectl -n envoy-gateway-system logs deploy/envoy-gateway --tail=50 | grep -i "waf\|coraza\|modsec"
+```
+
+:::
+
+:::caution
+
+If you get `ACCEPTED=False` with reason `ValidationFailed`, a `GlobalWAFValidationPolicy` is blocking your configuration. The status message will identify which policy and rule triggered the violation. Contact your cluster operator or see [Validate configuration](./validate-config.mdx) for the self-check workflow.
+
+:::
+
+## Next steps
+
+- **Add app-specific rules or exceptions** — write custom ModSecurity rules or suppress false positives with a `WAFPlugin`. See [Write custom rules](./write-custom-rules.mdx).
+- **Self-validate your config** — check compliance against the cluster operator's requirements before they enforce it. See [Validate configuration](./validate-config.mdx).
