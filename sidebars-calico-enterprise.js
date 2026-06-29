@@ -184,6 +184,7 @@ module.exports = {
             'networking/configuring/secure-bgp',
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/pod-mac-address',
+            'networking/configuring/allowed-source-prefixes',
             'networking/configuring/node-local-dns-cache',
             'networking/configuring/qos-controls',
             'networking/configuring/add-maglev-load-balancing',
