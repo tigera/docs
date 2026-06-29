@@ -1,0 +1,47 @@
+---
+description: Overview of Calico Enterprise L7 logs, the available collectors, and how to choose between them.
+---
+
+# L7 logs
+
+$[prodname] L7 logs capture HTTP request/response and TLS handshake metadata for traffic between workloads in your cluster. They show what was actually sent (method, URL, response code, SNI, TLS version) between specific pods, going beyond the L3/4 flow log view of who-talked-to-whom.
+
+## Value
+
+Platform operators and development teams use L7 logs to:
+
+- See how applications interact, request by request.
+- Spot anomalous behavior — attempts to access restricted URLs, unexpected user agents, scans for particular paths.
+- Inspect TLS sessions by SNI, negotiated version, and cipher suite.
+
+L7 logs complement L3/4 flow logs, which expose only the source/destination pair without request-level detail.
+
+## Collectors
+
+A *collector* is the component that observes traffic in your cluster and emits L7 log entries. $[prodname] supports multiple collectors. They all feed the same aggregation and reporting pipeline; each entry on the log file is tagged with `collector_type` so consumers can filter or join sources as needed.
+
+- **eBPF collector** — kernel TCP-layer probes that capture HTTP and TLS metadata with no data path proxy or sidecar. Enable once at the cluster level. Data-plane-independent. See [Enable eBPF collector](enable-ebpf-collector.mdx).
+{/* TODO: re-add Istio Waypoint collector bullet when the Waypoint PR lands. */}
+- **Envoy collector** _(legacy, deprecated)_ — sidecar Envoy injected per workload. Being phased out. See [Enable Envoy collector](configure.mdx).
+
+### Why more than one collector?
+
+Each collector lives at a different point in the request path and exposes different trade-offs. Pick by where you need coverage and what infrastructure you're willing to run:
+
+{/* TODO: re-add the Istio Waypoint column when the Waypoint PR lands. */}
+
+| | eBPF | Envoy (legacy) |
+| --- | --- | --- |
+| Additional infrastructure | None — runs inside Felix | Sidecar Envoy per workload |
+| Protocol coverage | HTTP/1.x, TLS handshake | HTTP |
+| Opt-in granularity | Cluster-wide (FelixConfiguration) | Per workload (label + annotation) |
+| Service-mesh compatibility | Any data plane | Not compatible with Istio |
+
+Multiple collectors can coexist in the same cluster, with each L7 log entry tagged by `collector_type` so consumers can filter or join sources as needed.
+
+## Next steps
+
+- [Enable eBPF collector](enable-ebpf-collector.mdx)
+{/* TODO: re-add [Enable Waypoint collector](enable-waypoint-collector.mdx) when the Waypoint PR lands. */}
+- [L7 log aggregation](aggregation.mdx)
+- [L7 log data types](datatypes.mdx)

@@ -1,0 +1,40 @@
+---
+description: Enable the kernel TCP-layer eBPF collector to capture HTTP and TLS L7 logs without a proxy or sidecar.
+---
+
+# Collect L7 logs using the eBPF collector
+
+Enable the kernel TCP-layer eBPF collector to capture HTTP request/response and TLS handshake metadata without deploying a proxy or injecting sidecars. For background on what the collector does and how it compares to other options, see [L7 logs overview](overview.mdx).
+
+## Limitations
+
+* HTTP parsing covers HTTP/1.0 and HTTP/1.1 only, because their requests and responses travel as plain text on the wire. HTTP/2 and HTTP/3 are not captured as HTTP, and encrypted HTTP traffic surfaces only as TLS metadata.
+* HTTP capture tracks only the most recent request per socket; when a single connection carries multiple back-to-back requests, some may be missed.
+* TLS capture is limited to handshake metadata (SNI, version, cipher suite). The collector does not decrypt application traffic.
+
+## Prerequisites
+
+* Linux kernel 5.17 or later on every node.
+* Additional log storage for the L7 logs. L7 logs require a minimum of 1 additional GB of log storage per node, per one-day retention period. Adjust your [Log Storage](../../../operations/logstorage/adjust-log-storage-size.mdx) before enabling the collector. For example, to maintain a 7-day retention period on a three-node cluster, add at least 21 GB to your existing log storage.
+
+## Enable the collector
+
+* Enable the eBPF L7 collector by setting the [L7ObservabilityEnabled](../../../reference/component-resources/node/felix/configuration.mdx#L7ObservabilityEnabled) field to `true` on the default `FelixConfiguration`. The setting is independent of `bpfEnabled` — the collector works with any data plane.
+
+```bash
+kubectl patch felixconfiguration default --type=merge -p '{"spec":{"l7ObservabilityEnabled":true}}'
+```
+
+## Verify the collector
+
+1. To verify that L7 logs are being collected, look for output in the default log file location (`/var/log/calico/l7logs/l7.log`) on each node:
+
+   ```bash
+   tail -f /var/log/calico/l7logs/l7.log
+   ```
+
+   The log directory is controlled by the [L7LogsFileDirectory](../../../reference/component-resources/node/felix/configuration.mdx#L7LogsFileDirectory) field on `FelixConfiguration`.
+
+## Additional information
+
+* [L7 log data types](datatypes.mdx)

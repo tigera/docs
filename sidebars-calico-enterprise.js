@@ -381,6 +381,7 @@ module.exports = {
             'observability/elastic/retention',
             'observability/elastic/archive-storage',
             'observability/elastic/rbac-elasticsearch',
+            'observability/elastic/aggregation',
             {
               type: 'category',
               label: 'Flow logs',
@@ -406,7 +407,14 @@ module.exports = {
               type: 'category',
               label: 'L7 logs',
               link: { type: 'doc', id: 'observability/elastic/l7/index' },
-              items: ['observability/elastic/l7/configure', 'observability/elastic/l7/datatypes'],
+              items: [
+                { type: 'doc', id: 'observability/elastic/l7/overview', label: 'Overview' },
+                { type: 'doc', id: 'observability/elastic/l7/enable-ebpf-collector', label: 'Enable eBPF collector' },
+                { type: 'doc', id: 'observability/elastic/l7/enable-waypoint-collector', label: 'Enable Waypoint collector' },
+                { type: 'doc', id: 'observability/elastic/l7/configure', label: 'Enable Envoy collector' },
+                { type: 'doc', id: 'observability/elastic/l7/datatypes', label: 'Data types' },
+                { type: 'doc', id: 'observability/elastic/l7/aggregation', label: 'Aggregation' },
+              ],
             },
             'observability/elastic/troubleshoot',
           ],

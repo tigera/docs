@@ -1,0 +1,26 @@
+---
+description: Understand how Calico Enterprise aggregates log entries by selecting which fields participate in the aggregation key.
+---
+
+import AggregationKeyDemo from '../../_includes/components/AggregationKeyDemo';
+
+# Log aggregation
+
+## Big picture
+
+$[prodname] aggregates log entries before writing them to disk. Rather than emitting one record per event, it merges events that share the same values across a chosen set of fields — the *aggregation key* — into a single entry that carries a `count` of how many events were merged.
+
+Aggregation trades detail for volume:
+
+- **Including a field** makes the log more granular: more entries, fewer events per entry.
+- **Excluding a field** collapses events that differ only in that field into one entry and increments its `count` for each merged event.
+
+The same mechanism applies across $[prodname] log types (flow, DNS, L7); only the available fields differ. The example below uses L7 (HTTP) traffic to make the behavior concrete.
+
+## Aggregation playground
+
+<AggregationKeyDemo />
+
+## Aggregation fields
+
+The fields that control the aggregation key, including their accepted values and defaults, are documented in the [Felix Configuration reference](../../reference/component-resources/node/felix/configuration.mdx).
