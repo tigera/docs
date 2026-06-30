@@ -2,6 +2,9 @@
 description: Deploy a Calico Ingress Gateway in a Calico Enterprise cluster by applying GatewayAPI and Gateway resources tied to the Tigera-managed gateway class.
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Create an ingress gateway
 
 Create an ingress gateway to manage ingress traffic with the Kubernetes Gateway API.
@@ -33,7 +36,32 @@ You need to do the following:
    allow traffic through the gateway by adding the `tigera-gateway` namespace to the list of excluded namespaces in the
    `namespaceSelector` field.
 
-1. To enable Gateway API support, create a `GatewayAPI` resource with the name `tigera-secure`:
+1. Enable Gateway API support by creating a `GatewayAPI` resource named `tigera-secure`. You can enable it at install time with Helm, or at any time with `kubectl`. Both methods create the same `tigera-secure` resource and the default `tigera-gateway-class`.
+
+   <Tabs groupId="cig-enable">
+   <TabItem label="Helm (at install time)" value="helm" default>
+
+   When you [install $[prodname] with Helm](../../getting-started/install-on-clusters/kubernetes/helm.mdx), set `gatewayAPI.enabled` to `true` in your `values.yaml`:
+
+   ```yaml title='values.yaml'
+   gatewayAPI:
+     enabled: true
+   ```
+
+   The Tigera Operator creates the `tigera-secure` `GatewayAPI` resource as part of the installation. To customize the gateway, set any [`GatewayAPI` spec field](../../reference/installation/api.mdx#gatewayapispec) under `gatewayAPI:` — for example, to [define additional gateway classes](customize-ingress-gateway.mdx#configure-multiple-gateway-classes):
+
+   ```yaml title='values.yaml'
+   gatewayAPI:
+     enabled: true
+     gatewayClasses:
+       - name: tigera-gateway-class
+       - name: internal-gateway-class
+   ```
+
+   </TabItem>
+   <TabItem label="kubectl (after installation)" value="kubectl">
+
+   If $[prodname] is already installed, create the `GatewayAPI` resource directly:
 
    ```bash
    kubectl apply -f - <<EOF
@@ -43,6 +71,10 @@ You need to do the following:
      name: tigera-secure
    EOF
    ```
+
+   </TabItem>
+   </Tabs>
+
    The Tigera Operator pulls and sets up the hardened Envoy Gateway images.
    This gives you a set of Gateway API resources, including the `GatewayClass` resource you need to create your gateway.
 
