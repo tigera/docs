@@ -1,0 +1,101 @@
+---
+description: Release notes for the current Calico Enterprise release — new features, enhancements, technology previews, deprecations, and bug fixes.
+title: Release notes
+---
+
+# Calico Enterprise 3.23 release notes
+
+:::info[early preview release]
+
+Calico Enterprise 3.23 can be used for previewing and testing purposes only.
+It is not supported for use in production.
+
+:::
+
+Learn about the new features, bug fixes, and other updates in this release of $[prodname].
+
+This version of Calico Enterprise is based on [Calico Open Source $[openSourceVersion]](https://docs.tigera.io/calico/$[openSourceVersion]/release-notes).
+
+## New features and enhancements
+
+### Track unused policies with policy activity logs
+
+New policy activity logs provide clear visibility into exactly when each security policy or rule was last used by network traffic.
+This makes it easy to identify and remove outdated rules that are no longer needed, ensuring your cluster remains lean and secure.
+By highlighting these unused policies, you can more effectively maintain a "least privilege" security posture and ensure that only necessary traffic is permitted in your environment.
+
+For more information, see [Policy activity logs](../observability/elastic/policy-activity.mdx).
+
+### New Linux distros for non-cluster hosts and VMs
+
+This release adds support for Debian and Ubuntu for non-cluster hosts and VMs.
+
+For more information, see [Install Calico Enterprise on non-cluster hosts and VMs](../getting-started/bare-metal/about.mdx).
+
+### Ingress Gateway dashboard
+
+The Ingress Gateway L7 dashboard provides a clear view of how your gateways manage traffic, helping you track request speeds and resolve connection errors quickly to keep your applications running smoothly.
+
+For more information, see [Dashboards](../observability/dashboards.mdx#ingress-gateway-l7).
+
+### Maglev load balancing for services
+
+Calico Enterprise now supports Maglev consistent-hash load balancing for external traffic to services.
+Maglev enables Calico Enterprise nodes to act as a distributed, horizontally scalable load balancer.
+When a node goes down — for maintenance or otherwise — external connections can fail over to another node.
+This is particularly useful when advertising service IPs as ECMP routes to your broader network.
+
+Maglev is enabled per-service via annotation, keeping the memory footprint contained to only the services that need it.
+
+For more information, see [Add Maglev load balancing to a service](../networking/configuring/add-maglev-load-balancing.mdx).
+
+### Enhancements
+
+* Improved the deterministic selection logic for flow and L7 logs when multiple NetworkSets have overlapping CIDRs.
+  Logs and Service Graph now prioritize namespace-specific matches over GlobalNetworkSets and other namespace matches to ensure more accurate identity attribution.
+* User experience improvements to the Flow Summary card.
+
+## Breaking changes
+* The Manager UI deployment has been moved from the `tigera-manager` namespace to the `calico-system` namespace and is now called `calico-manager`.
+  If you expose the deployment via an ingress, load balancer or node port service, you need to remove these and recreate the resources in the new namespace.
+  This also applies to multi-cluster management users exposing the tunnel port. If you are overriding component resources and/or limits we suggest using the new
+  container name by replacing `tigera-` with `calico-`, even though we preserved backwards compatibility.
+  Please consult the following resources for exposing the Manager UI:
+    * [Access the Manager](../operations/cnx/access-the-manager.mdx).
+    * [Create a Management Cluster](../multicluster/set-up-multi-cluster-management/standard-install/create-a-management-cluster.mdx).
+
+
+## Deprecated and removed features
+
+The following features are deprecated and will be removed in an upcoming release:
+
+* Support for the following operating systems:
+  * RHEL 8
+  * Windows 1809
+* Support for the x86-64 v2 chip architecture.
+* Application-layer policy and L7 observability features based on Envoy as a daemonset.
+  (These are being replaced with similar functionality using Istio Ambient Mode.)
+
+## Known issues
+
+* In clusters using the eBPF data plane with strict reverse path forwarding (RPF) enabled, link-local discovery packets may be incorrectly dropped.
+  This can interfere with neighbor discovery and local network communication.
+  This issue will be resolved in the next release.
+* The combination of BPF data plane on EKS with Bottlerocket is currently not working, we are currently investigating the issue.
+* There is an issue loading the DNS parser on ARM64 with BPF data plane, which can result in timeouts.
+
+{/* ## Bug fixes */}
+
+## Release details
+
+### Calico Enterprise 3.23.0-1.0 (early preview)
+
+February 14, 2024
+
+Calico Enterprise 3.23.0-1.0 is now available as an early preview release.
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+
+{/*
+To update an existing installation of Calico Enterprise X.Y, see [Install a patch release](../getting-started/manifest-archive.mdx).
+*/}

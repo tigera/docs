@@ -1,0 +1,82 @@
+import DomainNames from '@site/calico-enterprise_versioned_docs/version-3.23-1/_includes/content/_domain-names.mdx';
+
+Entity rules specify the attributes of the source or destination of a packet that must match for the rule as a whole
+to match. Packets can be matched on combinations of:
+
+- Identity of the source/destination, by using [Selectors](#selectors) or by specifying a particular
+  Kubernetes `Service`. Selectors can match [workload endpoints](../../reference/resources/workloadendpoint.mdx),
+  [host endpoints](../../reference/resources/hostendpoint.mdx) and ([namespaced](../../reference/resources/networkset.mdx) or
+  [global](../../reference/resources/globalnetworkset.mdx)) network sets.
+- Source/destination IP address, protocol and port.
+
+If the rule contains multiple match criteria (for example, an IP and a port) then all match criteria must match
+for the rule as a whole to match a packet.
+
+| Field             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Accepted Values                                                                                           | Schema                                      | Default |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------- |
+| nets              | Match packets with IP in any of the listed CIDRs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | List of valid IPv4 CIDRs or list of valid IPv6 CIDRs (IPv4 and IPv6 CIDRs shouldn't be mixed in one rule) | list of cidrs                               |
+| notNets           | Negative match on CIDRs. Match packets with IP not in any of the listed CIDRs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | List of valid IPv4 CIDRs or list of valid IPv6 CIDRs (IPv4 and IPv6 CIDRs shouldn't be mixed in one rule) | list of cidrs                               |
+| selector          | Positive match on selected endpoints. If a `namespaceSelector` is also defined, the set of endpoints this applies to is limited to the endpoints in the selected namespaces.                                                                                                                                                                                                                                                                                                                                                                                | Valid selector                                                                                            | [selector](#selector)                       |         |
+| notSelector       | Negative match on selected endpoints. If a `namespaceSelector` is also defined, the set of endpoints this applies to is limited to the endpoints in the selected namespaces.                                                                                                                                                                                                                                                                                                                                                                                | Valid selector                                                                                            | [selector](#selector)                       |         |
+| namespaceSelector | Positive match on selected namespaces. If specified, only workload endpoints in the selected Kubernetes namespaces are matched. Matches namespaces based on the labels that have been applied to the namespaces. Defines the scope that selectors will apply to, if not defined then selectors apply to the NetworkPolicy's namespace. Match a specific namespace by name using the `projectcalico.org/name` label. Select the non-namespaced resources like GlobalNetworkSet(s), host endpoints to which this policy applies by using `global()` selector. | Valid selector                                                                                            | [selector](#selector)                       |         |
+| ports             | Positive match on the specified ports                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                                                                                                           | list of [ports](#ports)                     |         |
+| domains           | Positive match on [domain names](#exact-and-wildcard-domain-names).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | List of [exact or wildcard domain names](#exact-and-wildcard-domain-names)                                | list of strings                             |
+| notPorts          | Negative match on the specified ports                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                                                                                                           | list of [ports](#ports)                     |         |
+| serviceAccounts   | Match endpoints running under service accounts. If a `namespaceSelector` is also defined, the set of service accounts this applies to is limited to the service accounts in the selected namespaces.                                                                                                                                                                                                                                                                                                                                                        |                                                                                                           | [ServiceAccountMatch](#serviceaccountmatch) |         |
+| services          | Match the specified service(s). If specified on egress rule destinations, no other selection criteria can be set. If specified on ingress rule sources, only positive or negative matches on ports can be specified.                                                                                                                                                                                                                                                                                                                                        |                                                                                                           | [ServiceMatch](#servicematch)               |         |
+
+:::note
+
+You cannot mix IPv4 and IPv6 CIDRs in a single rule using `nets` or `notNets`. If you need to match both, create 2 rules.
+
+:::
+
+#### Selector performance in EntityRules
+
+When rendering policy into the data plane, $[prodname] must identify the endpoints that match the selectors
+in all active rules.  This calculation is optimized for certain common selector types.
+Using the optimized selector types reduces CPU usage (and policy rendering time) by orders of magnitude.
+This becomes important at high scale (hundreds of active rules, hundreds of thousands of endpoints).
+
+The optimized operators are as follows:
+
+- `label == "value"`
+- `label in { 'v1', 'v2' }`
+- `has(label)`
+- `<expression 1> && <expression 2>` is optimized if **either** `<expression 1>` or `<expression 2>` is
+  optimized.
+
+The following perform like `has(label)`.  All endpoints with the label will be scanned to find matches:
+
+- `label contains 's'`
+- `label starts with 's'`
+- `label ends with 's'`
+
+The other operators, and in particular, `all()`, `!`, `||` and `!=` are not optimized.
+
+Examples:
+
+- `a == 'b'` - optimized
+- `a == 'b' && has(c)` - optimized
+- `a == 'b' || has(c)` - **not** optimized due to use of `||`
+- `c != 'd'` - **not** optimized due to use of `!=`
+- `!has(a)` - **not** optimized due to use of `!`
+- `a == 'b' && c != 'd'` - optimized, `a =='b'` is optimized so `a == 'b' && <anything>` is optimized.
+- `c != 'd' && a == 'b'` - optimized, `a =='b'` is optimized so `<anything> && a == 'b'` is optimized.
+
+### Exact and wildcard domain names
+
+The `domains` field is only valid for egress Allow rules. It restricts the
+rule to apply only to traffic to one of the specified domains. If this field is specified, the
+parent [Rule](#rule)'s `action` must be `Allow`, and `nets` and `selector` must both be left empty.
+
+<DomainNames />
+
+:::note
+
+$[prodname] implements policy for domain names by learning the
+corresponding IPs from DNS, then programming rules to allow those IPs. This means that
+if multiple domain names A, B and C all map to the same IP, and there is domain-based
+policy to allow A, traffic to B and C will be allowed as well.
+
+:::
