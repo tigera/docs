@@ -54,6 +54,7 @@ module.exports = {
             'getting-started/install-on-clusters/rke2',
             'getting-started/install-on-clusters/rancher-ui',
             'getting-started/install-on-clusters/tkg',
+            'getting-started/install-on-clusters/vks',
             'getting-started/install-on-clusters/charmed-k8s',
             {
               type: 'category',

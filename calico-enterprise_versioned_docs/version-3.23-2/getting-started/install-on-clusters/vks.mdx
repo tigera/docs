@@ -1,0 +1,335 @@
+---
+description: Install Calico Enterprise as a Supervisor Service on VMware Kubernetes Service (VKS) and deploy it to guest clusters, with optional Windows node support.
+---
+
+# VMware Kubernetes Service (VKS)
+
+## Big picture
+
+Install $[prodname] as a Supervisor Service on VMware Kubernetes Service (VKS), and deploy it to guest clusters with optional Windows node support.
+
+## Before you begin
+
+This guide requires:
+
+- **VM Images**: Ubuntu (and optionally Windows) OVA images registered for a supported TKR version, with the TKR in a healthy state.
+- **vSphere Resources**: Sufficient capacity to provision guest clusters with at minimum:
+    - 1 control plane node
+    - 3 Linux worker nodes
+    - 1 Windows worker node (optional, if Windows workloads are required)
+- **OCI Registry**: An OCI-compliant registry configured in vSphere for storing package manifests and container images.
+
+### Networking
+
+| Configuration | Dataplane | Encapsulation | BGP |
+|---|---|---|---|
+| Linux only (default) | IPTables | IPIP | Enabled |
+| Linux + Windows | IPTables | VXLAN | Disabled |
+
+:::note
+
+When Windows nodes are enabled, the encapsulation is automatically set to VXLAN and BGP is disabled. This is handled internally when `calicoWindowsDataplane` is set to `true` in the AddonConfig.
+
+:::
+
+## How to
+
+Setting up $[prodname] on VKS has two main phases: package and publish it as a Supervisor Service (Part 1), then deploy it to a guest cluster (Part 2). Parts 3 and 4 apply only to air-gapped environments.
+
+### Part 1: Set up the Supervisor Service
+
+#### Supervisor Service prerequisites
+
+- `helm`, `kbld`, `ytt`, and `imgpkg` binaries available for the host OS architecture in a `./bin` directory.
+
+#### Configuration
+
+| Variable | Description |
+|---|---|
+| `CALICO_ENTERPRISE_VERSION` | $[prodname] version to package |
+| `CALICO_ENTERPRISE_SVS` | (Optional) Custom name for the Supervisor Service |
+| `ARTIFACTORY_WRITE` | OCI registry for pushing manifests and images |
+| `ARTIFACTORY_READ` | OCI registry from which manifests and images are pulled |
+| `REPO_VERSION` | Addon repository version |
+| `SERVICE_VERSION` | Addon service version |
+
+#### Build and publish
+
+1. Remove previously generated artifacts:
+   ```bash
+   make clean
+   ```
+
+1. Build the Carvel package and push to the OCI registry. This creates the Addon package and uploads the artifacts to the OCI registry, also creates the Package and PackageMetadata resources (`calico-svs.yaml`) to be uploaded to the vSphere Supervisor UI:
+   ```bash
+   make all
+   ```
+
+1. In the vSphere Supervisor UI:
+   - Create a new Supervisor Service (or add a new version to an existing one).
+   - Upload the generated `calico-svs.yaml` and complete the UI workflow.
+   - Navigate to the service management page and set `registryName` to match the registry name configured in the UI.
+
+#### What `make all` does
+
+- Packages the Carvel manifests (AddonConfigDefinition, Package, AddonInstall, etc.).
+- Pulls and bundles the Tigera Operator Helm chart.
+- Resolves and bundles all required container images (`tigera-operator`, `tigera-prometheus-operator`, etc.).
+- Renders the `crd.projectcalico.org.v1` chart and bundles the $[prodname] CRDs. As of $[prodname] v3.23.0-2.0 the CRDs ship as a separate chart (no longer inside `tigera-operator`); they are applied alongside the operator with the `kapp.k14s.io/disable-original` annotation so the large CRDs (e.g. `installations.operator.tigera.io`) clear kapp's annotation-size limit — the kapp equivalent of the upstream server-side apply step.
+- Includes the `tigera-operator` namespace and `tigera-elasticsearch` StorageClass in the bundle.
+
+### Part 2: Deploy to a guest cluster
+
+#### Guest cluster prerequisites
+
+- **Tigera pull secret** for accessing the Tigera container registry (contact the Tigera team).
+- **Cluster ResourceSet for tigera pull secret**: The tigera-pull-secret applied as CAPI Cluster ResourceSet in the Supervisor Cluster for all namespaces where guest clusters with $[prodname] will be provisioned. The `./sample-configs/cluster-resourceset-pull-secret.yaml` can be used for this, by replacing the `.dockerconfigjson` value with the value of the private/tigera registry.
+- **Tigera license file** (contact the Tigera team).
+- **Dynamic PV provisioning** via a StorageClass, required for Elasticsearch storage.
+
+#### Step 1: Apply the AddonConfig (from Supervisor)
+
+SSH into the Supervisor machine and apply the AddonConfig resource. A sample configuration is provided in `./sample-configs/addon_config.yaml`.
+
+:::info
+
+Update the following fields before applying:
+- `metadata.name` and `metadata.namespace`
+- `spec.addonConfigDefinitionRef` (name and namespace)
+- `spec.clusterName`
+- `spec.values.installation.calicoWindowsDataplane.enabled` (set to `true` for Windows support, `false` otherwise)
+- `spec.values.installation.registry` to use $[prodname] images from a private registry (for air-gapped installs). This should be the same registry where $[prodname] images are pushed to using [Part 4](#part-4-air-gapped-relocate-calico-enterprise-private-images-to-a-private-registry) of this doc. Optionally `spec.values.installation.imagePath` can be set if the $[prodname] images were pushed to a specific folder within the private registry.
+
+:::
+
+:::note
+
+All $[prodname] features (`logCollector`, `logStorage`, `manager`, `monitor`, `policyRecommendation`) are optional. Only `apiServer` is required. Set any unwanted features to `false`.
+
+:::
+
+```bash
+kubectl apply -f ./sample-configs/addon_config.yaml
+```
+
+#### Step 2: Apply the Cluster Resource (from Supervisor)
+
+While still on the Supervisor machine, apply the Cluster resource. A sample is provided in `./sample-configs/cluster.yaml`.
+
+Update the following fields before applying:
+- `metadata.name` and `metadata.namespace`
+- `spec.topology.variables[].value.cniRef` (name and namespace of the $[prodname] addon)
+- Add the label `tigera.io/pull-secret: required` to `metadata.labels` so that tigera-pull-secret will be created for the cluster.
+- Node pool configuration (VM class, storage class, replicas) as needed for your environment
+
+```bash
+kubectl apply -f ./sample-configs/cluster.yaml
+```
+
+#### Step 3: Retrieve the Guest Cluster Kubeconfig
+
+```bash
+kubectl -n <cluster-namespace> get secret <cluster-name> -o jsonpath='{.data.value}' | base64 --decode > kubeconfig
+```
+
+:::note
+
+From this point onwards, Supervisor SSH access is no longer required. All remaining steps can be performed from any machine with access to the guest cluster's API server.
+
+:::
+
+#### Step 4: Create the Tigera Pull Secret
+
+```bash
+kubectl create secret generic tigera-pull-secret \
+  --type=kubernetes.io/dockerconfigjson -n tigera-operator \
+  --from-file=.dockerconfigjson=<path/to/pull/secret>
+```
+
+#### Step 5: [Windows only] Apply IPAM Configuration
+
+Apply the strict affinity IPAM configuration, after Calico `apiserver` is `Available`.
+
+:::tip
+
+Status can be checked using `kubectl get tigerastatus`.
+
+:::
+
+```bash
+kubectl apply -f ./sample-configs/ipam_configuration.yaml
+```
+
+#### Step 6: [Windows only] Apply the kubernetes-services-endpoint ConfigMap
+
+```bash
+kubectl apply -f - << EOF
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kubernetes-services-endpoint
+  namespace: tigera-operator
+data:
+  KUBERNETES_SERVICE_HOST: "${APISERVER_ADDR}"
+  KUBERNETES_SERVICE_PORT: "${APISERVER_PORT}"
+EOF
+```
+
+:::tip
+
+The `APISERVER_ADDR` and `APISERVER_PORT` can be retrieved via `kubectl get endpoints kubernetes -o wide`.
+
+:::
+
+#### Step 7: [Windows only] Apply the kube-proxy on Windows nodes
+
+Apply the Windows kube-proxy:
+
+```bash
+curl -L  https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/calico/kube-proxy/kube-proxy.yml | sed "s/KUBE_PROXY_VERSION/<YOUR_KUBERNETES_VERSION>/g" | kubectl apply -f -
+```
+
+Replace `<YOUR_KUBERNETES_VERSION>` with the kube-proxy version, e.g. `v1.35.2`.
+
+:::tip
+
+The Kubernetes version can be retrieved with `kubectl version -o json | jq -r '.serverVersion.gitVersion'`.
+
+:::
+
+:::note
+
+If the version returned is of the form `v1.35.2+vmware.1`, strip the `+vmware.1` suffix unless a VMware-provided kube-proxy image exists in the `sigwindowstools/kube-proxy` repository.
+
+:::
+
+#### Step 8: Wait for Core Components
+
+Monitor the Tigera status until `calico` and `apiserver` report as `Available`:
+
+```bash
+kubectl get tigerastatus
+```
+
+At this point, all nodes should be in `Ready` state.
+
+#### Step 9: Apply the Tigera License
+
+```bash
+kubectl apply -f tigera-license.yaml
+```
+
+#### Step 10: Verify the Installation
+
+Wait for all remaining components to become available:
+
+```bash
+kubectl get tigerastatus
+kubectl get pods -A | grep -E 'tigera|calico'
+```
+
+Once all items in `tigerastatus` show `Available`, the installation is complete. You can now deploy workloads to validate networking.
+
+### Part 3 (air-gapped): Relocate bundles to a private registry
+
+If the published bundles need to be moved into a customer's private OCI registry (for example, an air-gapped install or a customer who cannot pull from your registry), follow these steps. `make all` produces three bundles and one customer-facing YAML; relocation moves the bundles and updates one reference in the YAML.
+
+#### Air-gapped relocation prerequisites
+
+- `imgpkg` and `yq` available locally.
+- Network access to the source registry (or a tarball produced from it) and to the customer registry.
+- Credentials to push to the customer registry (`imgpkg` will prompt or use the local docker config).
+
+#### Bundles to relocate
+
+The three bundles correspond to the three Make targets and use the registry paths configured in the Makefile:
+
+| Bundle | Source path | Default tag |
+|---|---|---|
+| Package bundle ($[prodname] chart + container images) | `${ARTIFACTORY_READ}/${CALICO_ENTERPRISE_SVS}` | `v${CALICO_ENTERPRISE_VERSION}` |
+| Repository bundle (Package + PackageMetadata for the package bundle) | `${ARTIFACTORY_READ}/${CALICO_ENTERPRISE_SVS}-repo` | `v${REPO_VERSION}` |
+| Service bundle (AddonInstall, AddonRepository, AddonRepositoryInstall) | `${ARTIFACTORY_READ}/${CALICO_ENTERPRISE_SVS}-svs` | `v${SERVICE_VERSION}` |
+
+Cross-bundle references (service → repository → package → container images) are stored as digests in each bundle's `.imgpkg/images.yml` lock file. `imgpkg copy` rewrites those lock files automatically when relocating, so no manifests inside the bundles need manual editing.
+
+#### Step 1: Copy the bundles to a tarball (source side)
+
+Run on a host that has access to the source registry:
+
+```bash
+imgpkg copy --bundle <source-registry>/calico-enterprise:v3.22.2     --to-tar calico-package.tar
+imgpkg copy --bundle <source-registry>/calico-enterprise-repo:v3.6.1 --to-tar calico-repo.tar
+imgpkg copy --bundle <source-registry>/calico-enterprise-svs:v3.6.1  --to-tar calico-svs.tar
+```
+
+Transfer the three tarballs along with `calico-svs.yaml` to the destination environment.
+
+:::tip
+
+Direct registry-to-registry relocation is also supported. Replace `--to-tar <file>.tar` with `--to-repo <customer-registry>/<path>` and skip Step 2.
+
+:::
+
+#### Step 2: Push the bundles into the customer registry (destination side)
+
+```bash
+imgpkg copy --tar calico-package.tar --to-repo <customer-registry>/calico-enterprise
+imgpkg copy --tar calico-repo.tar    --to-repo <customer-registry>/calico-enterprise-repo
+imgpkg copy --tar calico-svs.tar     --to-repo <customer-registry>/calico-enterprise-svs
+```
+
+After each `imgpkg copy --to-repo` finishes, the relocated bundle's `images.yml` references the customer registry by digest. Container images and cross-bundle references resolve to the customer registry automatically at deploy time.
+
+#### Step 3: Patch `calico-svs.yaml`
+
+The only registry reference outside the bundles is the service-bundle pointer in the `Package` CR inside `calico-svs.yaml`. Update it to the customer registry:
+
+```bash
+yq eval '
+  (select(.kind == "Package") | .spec.template.spec.fetch[0].imgpkgBundle.image)
+    = "<customer-registry>/calico-enterprise-svs:v3.6.1"
+' -i calico-svs.yaml
+```
+
+:::tip
+
+**Content-pin to digest (optional):** `imgpkg copy --to-repo` prints the destination digest of the relocated bundle on its last line. Substitute `:v3.6.1` with `@sha256:<that-digest>` in the `yq` command above to make the reference immutable.
+
+:::
+
+#### Step 4: Upload `calico-svs.yaml` to the Supervisor
+
+Follow the original [Part 1, Build and publish](#build-and-publish) workflow with the patched `calico-svs.yaml`. From here, [Part 2](#part-2-deploy-to-a-guest-cluster) proceeds unchanged.
+
+#### What does *not* work
+
+- `docker pull` / `docker push` on individual images. Re-tagging can change manifest digests, and the bundles' `images.yml` lock files are not rewritten — kapp-controller fetches will fail with `manifest unknown`.
+- Editing `addon_repository.yaml` or `package.yaml` directly. Those files live inside the relocated bundles; their image references are overridden at fetch time by the lock files that `imgpkg copy` already rewrote. Manual edits are unnecessary and won't take effect anyway.
+- Skipping any of the three `imgpkg copy` runs. All three bundles must be present in the customer registry — the service bundle references the repository bundle, which references the package bundle.
+
+### Part 4 (air-gapped): Relocate $[prodname] private images to a private registry
+
+Follow the steps in [Push $[prodname] images to your private registry](./private-registry/private-registry-regular.mdx#push-calico-enterprise-images-to-your-private-registry) to pull $[prodname] images from Tigera's private image registry to your private registry.
+
+:::note
+
+Only steps 1, 2, 3, 4 — i.e. `docker pull`, `docker tag` and `docker push` for Linux only; and the `crane cp` for Windows images — need to be performed.
+
+:::
+
+:::caution
+
+Do not push $[prodname] private images to a public registry.
+
+:::
+
+## Next steps
+
+**Recommended**
+
+- [Configure access to the $[prodname] web console](../../operations/cnx/access-the-manager.mdx)
+- [Get started with $[prodname] tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)
+
+**Recommended - Networking**
+
+- For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).
