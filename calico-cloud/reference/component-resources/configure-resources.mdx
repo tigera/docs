@@ -550,14 +550,14 @@ This command will output the configured resource requests and limits for the Int
 
 ## LogCollector custom resource
 
-The [LogCollector](../../reference/installation/api.mdx#logcollector) CR provides a way to configure resources for FluentdDaemonSet, EKSLogForwarderDeployment.
+The [LogCollector](../../reference/installation/api.mdx#logcollector) CR provides a way to configure resources for CalicoFluentBitDaemonSet, EKSLogForwarderDeployment.
 
-### FluentdDaemonSet.
+### CalicoFluentBitDaemonSet.
 
-To configure resource specification for the [FluentdDaemonSet](../../reference/installation/api.mdx#fluentddaemonset), patch the LogCollector CR using the below command:
+To configure resource specification for the [CalicoFluentBitDaemonSet](../../reference/installation/api.mdx#logcollector), patch the LogCollector CR using the below command:
 
 ```bash
-kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"fluentdDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"fluentd","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
+kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"calicoFluentBitDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"calico-fluent-bit","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
 ```
 This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
 
@@ -566,14 +566,14 @@ This command sets the CPU request to 100 milliCPU (mCPU) and the memory request 
 You can verify the configured resources using the following command:
 
 ```bash
-kubectl get daemonset.apps/fluentd-node -n tigera-fluentd -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
+kubectl get daemonset.apps/calico-fluent-bit -n calico-system -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
 ```
 
-This command will output the configured resource requests and limits for the FluentdDaemonSet in JSON format.
+This command will output the configured resource requests and limits for the CalicoFluentBitDaemonSet in JSON format.
 
 ```bash
 {
-  "name": "fluentd",
+  "name": "calico-fluent-bit",
   "resources": {
     "limits": {
       "cpu": "1",
@@ -602,7 +602,7 @@ This command sets the CPU request to 100 milliCPU (mCPU) and the memory request 
 You can verify the configured resources using the following command:
 
 ```bash
-kubectl get deployment.apps/eks-log-forwarder -n tigera-fluentd -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
+kubectl get deployment.apps/eks-log-forwarder -n calico-system -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
 ```
 
 This command will output the configured resource requests and limits for the EKSLogForwarderDeployment in JSON format.
