@@ -308,7 +308,7 @@ function NetworkRequirementsEnt(props) {
             <td>
               <strong>Logs and storage</strong>
             </td>
-            <td>Elasticsearch with fluentd datastore</td>
+            <td>Elasticsearch log storage</td>
             <td>TCP 9200 (default)</td>
           </tr>
           <tr className='odd'>
