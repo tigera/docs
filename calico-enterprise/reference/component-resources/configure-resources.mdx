@@ -583,14 +583,14 @@ This command will output the configured resource requests and limits for the Int
 
 ## LogCollector custom resource
 
-The [LogCollector](../../reference/installation/api.mdx#logcollector) CR provides a way to configure resources for FluentdDaemonSet, EKSLogForwarderDeployment.
+The [LogCollector](../../reference/installation/api.mdx#logcollector) CR provides a way to configure resources for CalicoFluentBitDaemonSet, EKSLogForwarderDeployment.
 
-### FluentdDaemonSet.
+### CalicoFluentBitDaemonSet.
 
-To configure resource specification for the [FluentdDaemonSet](../../reference/installation/api.mdx#fluentddaemonset), patch the LogCollector CR using the below command:
+To configure resource specification for the [CalicoFluentBitDaemonSet](../../reference/installation/api.mdx#logcollector), patch the LogCollector CR using the below command:
 
 ```bash
-kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"fluentdDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"fluentd","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
+kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"calicoFluentBitDaemonSet":{"spec": {"template": {"spec": {"containers":[{"name":"calico-fluent-bit","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
 ```
 This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
 
@@ -599,14 +599,14 @@ This command sets the CPU request to 100 milliCPU (mCPU) and the memory request 
 You can verify the configured resources using the following command:
 
 ```bash
-kubectl get daemonset.apps/fluentd-node -n tigera-fluentd -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
+kubectl get daemonset.apps/calico-fluent-bit -n calico-system -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
 ```
 
-This command will output the configured resource requests and limits for the FluentdDaemonSet in JSON format.
+This command will output the configured resource requests and limits for the CalicoFluentBitDaemonSet in JSON format.
 
 ```bash
 {
-  "name": "fluentd",
+  "name": "calico-fluent-bit",
   "resources": {
     "limits": {
       "cpu": "1",
@@ -634,7 +634,7 @@ This command sets the CPU request to 100 milliCPU (mCPU) and the memory request 
 You can verify the configured resources using the following command:
 
 ```bash
-kubectl get deployment.apps/eks-log-forwarder -n tigera-fluentd -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
+kubectl get deployment.apps/eks-log-forwarder -n calico-system -o json | jq '.spec.template.spec.containers[] | {name: .name, resources: .resources}'
 ```
 
 This command will output the configured resource requests and limits for the EKSLogForwarderDeployment in JSON format.
@@ -910,7 +910,7 @@ The [Monitor](../../reference/installation/api.mdx#monitor) CR provides a way to
 
 ### Prometheus
 
-To configure resource specification for the [Prometheus](../../reference/installation/api.mdx#prometheus), Resources for the default container "prometheus" can be configured using the "resources" field under "commonPrometheusFields". For all other injected containers, such as "authn-proxy", resource configuration can be set using the "containers" struct, as shown below in the patch command below.
+To configure resource specification for the [Prometheus](../../reference/installation/api.mdx#prometheus), Resources for the default container `prometheus` can be configured using the `resources` field under "commonPrometheusFields". For all other injected containers, such as "authn-proxy", resource configuration can be set using the "containers" struct, as shown below in the patch command below.
 
 ```bash
 kubectl patch monitor tigera-secure --type=merge --patch='{"spec": {"prometheus": {"spec":{ "commonPrometheusFields": {"resources": {"limits": {"cpu":"500m","memory":"500Mi"}, "requests": {"cpu":"50m", "memory":"50Mi"}}, "containers":[{"name":"authn-proxy","resources":{"limits": {"cpu":"250m","memory":"500Mi"},"requests": {"cpu":"25m","memory":"50Mi"}}}]}}}}}'
@@ -975,7 +975,7 @@ The "config-reloader" container has default resource values set based by the Pro
 
 ### Alertmanager
 
-To configure resource specification for the [Alertmanager](../../reference/installation/api.mdx#alertmanager),  you can set resources for the default container "prometheus" using the "resources" field under "commonPrometheusFields". For all other injected containers, like "authn-proxy", resource configuration can be set using the "containers" struct, as shown below in the patch command below.
+To configure resource specification for the [Alertmanager](../../reference/installation/api.mdx#alertmanager),  you can set resources for the default container `prometheus` using the `resources` field under "commonPrometheusFields". For all other injected containers, like "authn-proxy", resource configuration can be set using the "containers" struct, as shown below in the patch command below.
 
 ```bash
 kubectl patch monitor tigera-secure  --type=merge --patch='{"spec": {"alertManager": {"spec": {"resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}}}}'
@@ -1105,20 +1105,20 @@ This command will output the configured resource requests and limits for the Pol
 
 ## Update via Helm
 
-To update configurations during installation via the [Helm chart](../../getting-started/install-on-clusters/kubernetes/helm#install-calico-enterprise), modify the values.yaml with the necessary resource values for the components prior to executing the Helm install.
+To update configurations during installation via the [Helm chart](../../getting-started/install-on-clusters/kubernetes/helm#install-calico-enterprise), modify the `values.yaml` with the necessary resource values for the components prior to executing the Helm install.
 
 :::note
-The provided example illustrates configuring the apiserver component. Follow a similar approach for other components to update resource requests and limits during installation using the Helm chart.
+The provided example illustrates configuring the `apiserver` component. Follow a similar approach for other components to update resource requests and limits during installation using the Helm chart.
 :::
 
 
 ### APIServer custom resource
 
-The [APIServer](../../reference/installation/api.mdx#apiserver) CR provides a way to configure APIServerDeployment. The following sections provide example values.yaml for apiserver component.
+The [APIServer](../../reference/installation/api.mdx#apiserver) CR provides a way to configure APIServerDeployment. The following sections provide example `values.yaml` for the `apiserver` component.
 
 #### APIServerDeployment
 
-To configure resource specification for the [APIServerDeployment](../../reference/installation/api.mdx#apiserverdeployment), update values.yaml with the appropriate resource values.
+To configure resource specification for the [APIServerDeployment](../../reference/installation/api.mdx#apiserverdeployment), update `values.yaml` with the appropriate resource values.
 
 ```bash
 apiServer:
