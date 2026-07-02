@@ -15,13 +15,13 @@ Scrape $[prodname] metrics for Bring Your Own (BYO) Prometheus.
 
 $[prodname] uses the Prometheus monitoring tool to scrape metrics from instrumented jobs, and displays time-series data in a visualizer such as Grafana. You can scrape the following time-series metrics for $[prodname] components to your own Prometheus:
 
-- elasticsearch
-- fluentd
-- calico-node
-- kube-controllers
-- felix
-- typha (not enabled by default)
-- operator
+- `elasticsearch`
+- `fluent-bit`
+- `calico-node`
+- `kube-controllers`
+- `felix`
+- `typha` (not enabled by default)
+- `operator`
 
 ## Before you begin
 
@@ -42,7 +42,7 @@ For the supported version of Prometheus in this release, see the [Release Notes]
 In this section we create a service monitor that scrapes all enabled metrics. To enable metrics that
 are not enabled by default, please consult the [next section](#scrape-metrics-from-specific-components-directly).
 
-The following example shows a Prometheus server installed in namespace "external-prometheus" with a `serviceMonitorSelector` that selects all service monitors with the label `k8s-app=tigera-external-prometheus`.
+The following example shows a Prometheus server installed in namespace `external-prometheus` with a `serviceMonitorSelector` that selects all service monitors with the label `k8s-app=tigera-external-prometheus`.
 
 1. Save the following configuration in a file called `monitor.yaml`.
 
@@ -124,33 +124,12 @@ kubectl apply -f $[filesUrl]/manifests/prometheus/elasticsearch-metrics-service-
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
 
 </TabItem>
-<TabItem label="fluentd" value="fluentd-1">
-
-**Configure TLS certificates**
-
-1. Copy the required secret and configmap to your namespace.
-2. Save the manifest of the required TLS secret and CA configmap.
-
-   ```bash
-   kubectl get secret calico-node-prometheus-client-tls -n tigera-prometheus -o yaml >  calico-node-prometheus-client-tls.yaml
-   ```
-
-   ```bash
-   kubectl get configmap -n tigera-prometheus tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
-   ```
-
-3. Edit `calico-node-prometheus-client-tls.yaml` and `tigera-ca-bundle.yaml` and change the namespace to the namespace where your prometheus instance is running.
-4. Apply the manifests to your cluster.
-
-   ```bash
-   kubectl apply -f calico-node-prometheus-client-tls.yaml
-   ```
-
-   ```bash
-   kubectl apply -f tigera-ca-bundle.yaml
-   ```
+<TabItem label="fluent bit" value="fluent-bit-1">
 
 **Create the service monitor**
+
+Fluent Bit serves its metrics over plain HTTP (port 2020, path `/api/v2/metrics/prometheus`), so no TLS
+configuration is required.
 
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
@@ -159,10 +138,19 @@ export NAMESPACE=<my-prometheus-namespace>
 ```
 
 ```bash
-kubectl apply -f  $[filesUrl]/manifests/prometheus/fluentd-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  $[filesUrl]/manifests/prometheus/fluent-bit-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
+
+:::note
+
+Access to the Fluent Bit metrics port is restricted by the `calico-system.allow-calico-fluent-bit` network policy, which
+by default admits only the `tigera-prometheus` namespace. Create a policy that allows your BYO Prometheus
+namespace to reach port 2020 on the `calico-fluent-bit` pods (see
+[Create policy to secure traffic between pods](#create-policy-to-secure-traffic-between-pods)).
+
+:::
 
 </TabItem>
 <TabItem label="calico node" value="calico node-2">
@@ -403,7 +391,7 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
    kubectl port-forward pod/byo-prometheus-pod 9090:9090 -n $NAMESPACE
    ```
 
-1. Browse to the Prometheus dashboard: http://localhost:9090.
+1. Browse to the Prometheus dashboard: `http://localhost:9090`.
 
 1. In the Expression text box, enter your metric name and click the **Execute** button.
 
