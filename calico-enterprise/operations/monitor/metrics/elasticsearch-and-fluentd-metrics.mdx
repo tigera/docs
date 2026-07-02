@@ -1,12 +1,12 @@
 ---
-description: Track Calico Enterprise Elasticsearch and Fluentd metrics in Prometheus to alert on flow, DNS, audit, and compliance log collection or storage disruptions.
+description: Track Calico Enterprise Elasticsearch and Fluent Bit metrics in Prometheus to alert on flow, DNS, audit, and compliance log collection or storage disruptions.
 ---
 
-# Elasticsearch and Fluentd metrics
+# Elasticsearch and Fluent Bit metrics
 
 ## Big picture
 
-Use the Prometheus monitoring and alerting tool for Fluentd and Elasticsearch metrics to ensure continuous network visibility.
+Use the Prometheus monitoring and alerting tool for Fluent Bit and Elasticsearch metrics to ensure continuous network visibility.
 
 ## Value
 
@@ -16,16 +16,16 @@ Platform engineering teams rely on logs, such as flow logs and DNS logs, for vis
 
 | Component     | Description                                                                                                                                                                                                                                      |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Prometheus    | Monitoring tool that scrapes metrics from instrumented jobs and displays time series data in a visualizer (such as Grafana). For $[prodname], the “jobs” that Prometheus can harvest metrics from are the Elasticsearch and Fluentd components. |
+| Prometheus    | Monitoring tool that scrapes metrics from instrumented jobs and displays time series data in a visualizer (such as Grafana). For $[prodname], the “jobs” that Prometheus can harvest metrics from are the Elasticsearch and Fluent Bit components. |
 | Elasticsearch | Stores $[prodname] logs.                                                                                                                                                                                                                        |
-| Fluentd       | Sends $[prodname] logs to Elasticsearch for storage.                                                                                                                                                                                            |
+| Fluent Bit    | Ships $[prodname] logs to the log storage backend.                                                                                                                                                                                              |
 
-**Multi-cluster management users**: Elasticsearch metrics are collected only from the management cluster. Because managed clusters do not have Elasticsearch clusters, do not monitor Elasticsearch for managed clusters. However, managed clusters do feed Fluentd logs to Elasticsearch, so you should monitor fluentd for managed clusters.
+**Multi-cluster management users**: Elasticsearch metrics are collected only from the management cluster. Because managed clusters do not have Elasticsearch clusters, do not monitor Elasticsearch for managed clusters. However, managed clusters do ship logs to the management cluster, so you should monitor Fluent Bit for managed clusters.
 
 ## How to
 
 - [Create Prometheus alerts for Elasticsearch](#create-prometheus-alerts-for-elasticsearch)
-- [Create Prometheus alerts for Fluentd](#create-prometheus-alerts-for-elasticsearch)
+- [Create Prometheus alerts for Fluent Bit](#create-prometheus-alerts-for-fluent-bit)
 
 ### Create Prometheus alerts for Elasticsearch
 
@@ -123,9 +123,9 @@ LogStorage resource limits."
 | ElasticsearchPodConsistentlyHighCPUUsage    | Non-critical, warning |                                                                       | An Elasticsearch pod is averaging above 90% of its CPU over the last 10 minutes.                                                                                                            |
 | ElasticsearchPodConsistentlyHighMemoryUsage | Non-critical, warning |                                                                       | An Elasticsearch pod is averaging above the set memory threshold over the last 10 minutes.                                                                                                  |
 
-### Create Prometheus alerts for Fluentd
+### Create Prometheus alerts for Fluent Bit
 
-The following example creates a Prometheus a rule to monitor some important Fluentd metrics, and alert when they
+The following example creates a Prometheus rule to monitor some important Fluent Bit metrics, and alert when they
 have crossed certain thresholds:
 
 ```yaml noValidation
@@ -141,18 +141,28 @@ spec:
   groups:
   - name: tigera-log-collection.rules
     rules:
-    - alert: FluentdPodConsistentlyLowBufferSpace
-      expr: avg_over_time(fluentd_output_status_buffer_available_space_ratio[5m]) < 75
+    - alert: FluentBitPodConsistentlyLowBufferSpace
+      expr: avg_over_time(fluentbit_output_chunk_available_capacity_percent[5m]) < 75
       labels:
         severity: Warning
       annotations:
-        summary: "Fluentd pod {{$labels.pod}}'s buffer space is consistently below 75 percent capacity."
-        description: "Fluentd pod {{$labels.pod}} has very low buffer space. There may be connection issues between Elasticsearch
-and Fluentd or there are too many logs to write out, check the logs for the Fluentd pod."
+        summary: "Fluent Bit pod {{$labels.pod}}'s output buffer space is consistently below 75 percent capacity."
+        description: "Fluent Bit pod {{$labels.pod}} has very low buffer space for output {{$labels.name}}. There may be
+connection issues between Fluent Bit and the log destination, or there are too many logs to write out; check the logs
+for the Fluent Bit pod."
+    - alert: FluentBitPodDroppingLogs
+      expr: rate(fluentbit_output_retries_failed_total[5m]) > 0
+      labels:
+        severity: Warning
+      annotations:
+        summary: "Fluent Bit pod {{$labels.pod}} is dropping log chunks."
+        description: "Fluent Bit pod {{$labels.pod}} gave up retrying to deliver log chunks for output {{$labels.name}}.
+Logs are being lost; check the logs for the Fluent Bit pod and the health of the log destination."
 ```
 
 #### The alerts created in the example are described as follows:
 
-| Alert                                    | Severity              | Requires                                                             | Issue/reason                                                                                                                                                                                                                                                                  |
-| ---------------------------------------- | --------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **FluentdPodConsistentlyLowBufferSpace** | Non-critical, warning | Immediate investigation to ensure logs are being gathered correctly. | A Fluentd pod’s available buffer size has averaged less than 75% over the last 5 minutes.<br /><br />This could mean Fluentd is having trouble communicating with the Elasticsearch cluster, the Elasticsearch cluster is down, or there are simply too many logs to process. |
+| Alert                                      | Severity              | Requires                                                             | Issue/reason                                                                                                                                                                                                                                                                              |
+| ------------------------------------------ | --------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **FluentBitPodConsistentlyLowBufferSpace** | Non-critical, warning | Immediate investigation to ensure logs are being gathered correctly. | A Fluent Bit pod’s available output buffer capacity has averaged less than 75% over the last 5 minutes.<br /><br />This could mean Fluent Bit is having trouble communicating with a log destination, the destination is down, or there are simply too many logs to process.              |
+| **FluentBitPodDroppingLogs**               | Non-critical, warning | Immediate investigation to ensure logs are not being lost.           | A Fluent Bit pod exhausted the retries for one or more log chunks and dropped them.                                                                                                                                                                                                       |
