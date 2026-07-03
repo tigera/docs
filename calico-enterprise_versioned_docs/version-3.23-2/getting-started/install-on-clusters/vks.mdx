@@ -29,7 +29,7 @@ This guide requires:
 
 :::note
 
-When Windows nodes are enabled, the encapsulation is automatically set to VXLAN and BGP is disabled. This is handled internally when `calicoWindowsDataplane` is set to `true` in the AddonConfig.
+When Windows nodes are enabled, the encapsulation is automatically set to VXLAN and BGP is disabled. This is handled internally when `calicoWindowsDataplane.enabled` is set to `true` in the AddonConfig.
 
 :::
 
@@ -88,7 +88,7 @@ kubectl apply -n <cluster-namespace> -f <clusterresourceset-file-below>.yaml
 
 ```yaml
 # Apply this on the Supervisor cluster for the namespaces where guest clusters will be provisioned with Calico Enterprise.
-# The source Secret containing the manifests CRS will mirror
+# Source Secret containing the CRS manifests
 apiVersion: v1
 kind: Secret
 metadata:
@@ -413,8 +413,9 @@ spec:
 
 #### Step 3: Retrieve the Guest Cluster Kubeconfig
 
+Can be copied from the Supervisor.
 
-#### Step 5: [Windows only] Apply IPAM Configuration
+#### Step 4: [Windows only] Apply IPAM Configuration
 
 Apply the strict affinity IPAM configuration, after Calico `apiserver` is `Available`.
 
@@ -440,9 +441,12 @@ spec:
   strictAffinity: true
 ```
 
-#### Step 6: [Windows only] Apply the kubernetes-services-endpoint ConfigMap
+#### Step 5: [Windows only] Apply the kubernetes-services-endpoint ConfigMap
 
 ```bash
+ export APISERVER_ADDR=<kubernetes-service-host>
+ export APISERVER_PORT=<kubernetes-service-port>
+
 kubectl apply -f - << EOF
 kind: ConfigMap
 apiVersion: v1
@@ -461,7 +465,7 @@ The `APISERVER_ADDR` and `APISERVER_PORT` can be retrieved via `kubectl get endp
 
 :::
 
-#### Step 7: [Windows only] Apply the kube-proxy on Windows nodes
+#### Step 6: [Windows only] Apply the kube-proxy on Windows nodes
 
 Apply the Windows kube-proxy:
 
@@ -483,7 +487,7 @@ If the version returned is of the form `v1.35.2+vmware.1`, strip the `+vmware.1`
 
 :::
 
-#### Step 8: Wait for Core Components
+#### Step 7: Wait for Core Components
 
 Monitor the Tigera status until `calico` and `apiserver` report as `Available`:
 
@@ -493,13 +497,13 @@ kubectl get tigerastatus
 
 At this point, all nodes should be in `Ready` state.
 
-#### Step 9: Apply the Tigera License
+#### Step 8: Apply the Tigera License
 
 ```bash
 kubectl apply -f tigera-license.yaml
 ```
 
-#### Step 10: Verify the Installation
+#### Step 9: Verify the Installation
 
 Wait for all remaining components to become available:
 
@@ -510,7 +514,7 @@ kubectl get pods -A | grep -E 'tigera|calico'
 
 Once all items in `tigerastatus` show `Available`, the installation is complete. You can now deploy workloads to validate networking.
 
-### Part 3: Airgapped package registry
+### Part 3: Air-gapped package registry
 
 If the published bundles need to be moved into a private OCI registry (for example, an air-gapped install), follow these steps.
 
@@ -548,7 +552,7 @@ The only registry reference outside the bundles is the service-bundle pointer in
 yq eval '
   (select(.kind == "Package") | .spec.template.spec.fetch[0].imgpkgBundle.image)
     = "<private-registry>/calico-enterprise-svs:v3.23.1"
-' -i calico-svs.yaml
+' -i calico-enterprise-svs.yaml
 ```
 
 :::tip
