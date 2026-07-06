@@ -25,6 +25,9 @@ const defaultSkipList = [
   /^https?:\/\/hypershift-docs\.netlify\.app/,
   /^https?:\/\/(www\.)?ubuntu\.com\/.*/,
   /^https?:\/\/docs\.tigera\.io\/calico\/latest\/networking\/kubevirt\/?$/,
+  // Category-index breadcrumb URLs for pages new in CE 3.23; live once 3.23.1 publishes.
+  /^https?:\/\/docs\.tigera\.io\/calico-enterprise\/latest\/networking\/kubevirt\/?$/,
+  /^https?:\/\/docs\.tigera\.io\/calico-enterprise\/latest\/reference\/clis\/calicoctl\/review\/?$/,
   /^https?:\/\/docs\.openshift\.com\/.*/,
   /^https?:\/\/docs\.redhat\.com\/.*/,
   /^https?:\/\/access\.redhat\.com\/.*/,
