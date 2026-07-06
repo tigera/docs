@@ -26,6 +26,8 @@ const defaultSkipList = [
   /^https?:\/\/(www\.)?ubuntu\.com\/.*/,
   // debs directory listing 403s (index forbidden) even when the packages exist.
   /^https?:\/\/downloads\.tigera\.io\/ee\/debs\/v3\.23\/?$/,
+  // VERY TEMPORARY: remove once the 3.23.1 artifact is published to the download server.
+  /^https?:\/\/downloads\.tigera\.io\/ee\/v3\.23\.1\/manifests\/prometheus\/operator-metrics-service-monitor\.yaml$/,
   /^https?:\/\/docs\.tigera\.io\/calico\/latest\/networking\/kubevirt\/?$/,
   /^https?:\/\/docs\.openshift\.com\/.*/,
   /^https?:\/\/docs\.redhat\.com\/.*/,
