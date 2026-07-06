@@ -4,7 +4,7 @@ description: How Gateway WAF assigns each namespace a SecRule ID range, which ru
 
 # SecRule ID ranges
 
-Every custom rule you write in a `WAFPlugin` carries a numeric ModSecurity ID. To keep one namespace from colliding with the IDs of another — or disabling the cluster's baseline rules — Gateway WAF assigns each namespace its own range of IDs and enforces it through an admission webhook.
+Every custom rule you write in a `WAFPlugin` carries a numeric ModSecurity ID. Gateway WAF gives each namespace a defined range of IDs to use, and stops any namespace from disabling the cluster's baseline rules. Both are enforced through an admission webhook.
 
 ## How a namespace's range is derived
 
@@ -15,7 +15,7 @@ prefix = first four hex digits of sha256(namespace name), modulo 10000
 range  = [ prefix * 10000 , prefix * 10000 + 9999 ]
 ```
 
-Because the range is a pure function of the namespace name, it never changes and requires no cluster state. Across the ID space this gives up to 10,000 namespaces a private block of 10,000 IDs each.
+Because the range is a pure function of the namespace name, it never changes and requires no cluster state. This range is the set of IDs your rules may use. It isn't a globally unique reservation: with 10,000 possible blocks, two namespaces can map to the same one, which is harmless. Tenants stay isolated because each namespace's rules run in their own WAF engine, and no namespace can touch the protected ranges below.
 
 ## Finding your range
 
