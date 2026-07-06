@@ -24,6 +24,8 @@ const defaultSkipList = [
   /^https?:\/\/www\.calicocloud\.io/,
   /^https?:\/\/hypershift-docs\.netlify\.app/,
   /^https?:\/\/(www\.)?ubuntu\.com\/.*/,
+  // debs directory listing 403s (index forbidden) even when the packages exist.
+  /^https?:\/\/downloads\.tigera\.io\/ee\/debs\/v3\.23\/?$/,
   /^https?:\/\/docs\.tigera\.io\/calico\/latest\/networking\/kubevirt\/?$/,
   /^https?:\/\/docs\.openshift\.com\/.*/,
   /^https?:\/\/docs\.redhat\.com\/.*/,
