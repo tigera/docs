@@ -1,24 +1,85 @@
 const PASSWORD = Netlify.env.get('LYNX_PASSWORD');
+const SIGNING_KEY = Netlify.env.get('PROXY_SECRET');
+
+const COOKIE_NAME = 'lynx_auth';
+const COOKIE_PATH = '/lynx';
+const SESSION_TTL = 86400; // seconds
+
+const encoder = new TextEncoder();
+
+// HMAC-SHA256 the message with SIGNING_KEY, returned as hex.
+async function sign(message) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(SIGNING_KEY),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const mac = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
+  return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Issue a session token of the form `<expiry>.<hmac(expiry)>`.
+async function issueToken() {
+  const expiry = Math.floor(Date.now() / 1000) + SESSION_TTL;
+  return `${expiry}.${await sign(String(expiry))}`;
+}
+
+// Constant-time comparison to avoid leaking the signature via timing.
+function timingSafeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// Parse a Cookie header into exact name/value pairs.
+function parseCookies(header) {
+  const jar = {};
+  for (const pair of header.split(';')) {
+    const eq = pair.indexOf('=');
+    if (eq === -1) continue;
+    const name = pair.slice(0, eq).trim();
+    if (name) jar[name] = pair.slice(eq + 1).trim();
+  }
+  return jar;
+}
+
+// Validate a session token: signature must verify and it must not be expired.
+async function isAuthenticated(token) {
+  if (!token) return false;
+  const dot = token.indexOf('.');
+  if (dot === -1) return false;
+  const expiry = token.slice(0, dot);
+  const mac = token.slice(dot + 1);
+  if (!/^\d+$/.test(expiry) || Number(expiry) < Math.floor(Date.now() / 1000)) return false;
+  return timingSafeEqual(mac, await sign(expiry));
+}
 
 export default async (request, context) => {
-  if (!PASSWORD) {
-    return new Response('Server configuration error: LYNX_PASSWORD is not set.', {
+  if (!PASSWORD || !SIGNING_KEY) {
+    return new Response('Server configuration error: LYNX_PASSWORD or PROXY_SECRET is not set.', {
       status: 500,
       headers: { 'Content-Type': 'text/plain' },
     });
   }
 
-  const cookie = request.headers.get('cookie') || '';
+  const cookies = parseCookies(request.headers.get('cookie') || '');
 
   // Already authenticated — proxy to the private site with shared secret
-  if (cookie.includes('lynx_auth=authorized')) {
+  if (await isAuthenticated(cookies[COOKIE_NAME])) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/^\/lynx/, '') || '/';
     const target = `https://lynx-docs-tigera.netlify.app/lynx${path}${url.search}`;
     const proxyHeaders = new Headers(request.headers);
-    proxyHeaders.set('x-proxy-secret', Netlify.env.get('PROXY_SECRET'));
+    proxyHeaders.delete('cookie'); // don't leak the auth cookie to the upstream site
+    proxyHeaders.set('x-proxy-secret', SIGNING_KEY);
+    const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
     return fetch(target, {
+      method: request.method,
       headers: proxyHeaders,
+      ...(hasBody ? { body: request.body, duplex: 'half' } : {}),
     });
   }
 
@@ -31,7 +92,7 @@ export default async (request, context) => {
         status: 302,
         headers: {
           'Location': url.pathname + url.search,
-          'Set-Cookie': 'lynx_auth=authorized; Path=/lynx; HttpOnly; Secure; SameSite=Lax; Max-Age=86400',
+          'Set-Cookie': `${COOKIE_NAME}=${await issueToken()}; Path=${COOKIE_PATH}; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL}`,
         },
       });
     }
