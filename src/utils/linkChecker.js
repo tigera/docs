@@ -24,7 +24,14 @@ const defaultSkipList = [
   /^https?:\/\/www\.calicocloud\.io/,
   /^https?:\/\/hypershift-docs\.netlify\.app/,
   /^https?:\/\/(www\.)?ubuntu\.com\/.*/,
+  // debs directory listing 403s (index forbidden) even when the packages exist.
+  /^https?:\/\/downloads\.tigera\.io\/ee\/debs\/v3\.23\/?$/,
+  // VERY TEMPORARY: remove once the 3.23.1 artifact is published to the download server.
+  /^https?:\/\/downloads\.tigera\.io\/ee\/v3\.23\.1\/manifests\/prometheus\/operator-metrics-service-monitor\.yaml$/,
   /^https?:\/\/docs\.tigera\.io\/calico\/latest\/networking\/kubevirt\/?$/,
+  // Category-index breadcrumb URLs for pages new in CE 3.23; live once 3.23.1 publishes.
+  /^https?:\/\/docs\.tigera\.io\/calico-enterprise\/latest\/networking\/kubevirt\/?$/,
+  /^https?:\/\/docs\.tigera\.io\/calico-enterprise\/latest\/reference\/clis\/calicoctl\/review\/?$/,
   /^https?:\/\/docs\.openshift\.com\/.*/,
   /^https?:\/\/docs\.redhat\.com\/.*/,
   /^https?:\/\/access\.redhat\.com\/.*/,
