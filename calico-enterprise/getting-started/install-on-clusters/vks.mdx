@@ -1,22 +1,21 @@
 ---
-description: Install Calico Enterprise as a Supervisor Service on vSphere Kubernetes Service (VKS) and deploy it to guest clusters, with optional Windows node support.
+description: Install Calico Enterprise as a Supervisor Service on vSphere Kubernetes Service (VKS) and deploy it to guest clusters.
 ---
 
 # vSphere Kubernetes Service (VKS)
 
 ## Big picture
 
-Install $[prodname] as a Supervisor Service on vSphere Kubernetes Service (VKS), and deploy it to guest clusters with optional Windows node support.
+Install $[prodname] as a Supervisor Service on vSphere Kubernetes Service (VKS), and deploy it to guest clusters.
 
 ## Before you begin
 
 This guide requires:
 
-- **VM Images**: Ubuntu or Photon (and optionally Windows) OVA images registered for a supported TKR version, with TKR in a healthy state.
+- **VM Images**: Ubuntu or Photon OVA images registered for a supported TKR version, with TKR in a healthy state.
 - **vSphere Resources**: Sufficient capacity to provision guest clusters with at minimum:
     - 1 control plane node
     - 3 Linux worker nodes
-    - 1 Windows worker node (optional, if Windows workloads are required)
 - **OCI Registry**: An OCI-compliant registry configured in vSphere for storing package manifests and container images.
 - **Tigera pull secret** for accessing the Tigera container registry (contact the Tigera team).
 
@@ -25,13 +24,6 @@ This guide requires:
 | Configuration | Dataplane | Encapsulation | BGP |
 |---|---|---|---|
 | Linux only (default) | IPTables | IPIP | Enabled |
-| Linux + Windows | IPTables | VXLAN | Disabled |
-
-:::note
-
-When Windows nodes are enabled, the encapsulation is automatically set to VXLAN and BGP is disabled. This is handled internally when `calicoWindowsDataplane.enabled` is set to `true` in the AddonConfig.
-
-:::
 
 ## How to
 
@@ -146,7 +138,6 @@ Update the following fields before applying:
 - `metadata.name` and `metadata.namespace`
 - `spec.addonConfigDefinitionRef` (name and namespace)
 - `spec.clusterName`
-- `spec.values.installation.calicoWindowsDataplane.enabled` (set to `true` for Windows support, `false` otherwise)
 - `spec.values.installation.registry` to use $[prodname] images from a private registry (for air-gapped installs). This should be the same registry where $[prodname] images are pushed to using [Part 4](#part-4-air-gapped-relocate-calico-enterprise-private-images-to-a-private-registry) of this doc. Optionally `spec.values.installation.imagePath` can be set if the $[prodname] images were pushed to a specific folder within the private registry.
 
 :::
@@ -180,8 +171,6 @@ spec:
       enabled: true
       imagePullSecrets:
       - name: tigera-pull-secret
-      calicoWindowsDataplane:
-        enabled: false
       # registry: quay.io/
       # imagePath: ""
       # controlPlaneReplicas: 3
@@ -358,136 +347,13 @@ spec:
                   - protocol: tcp
                     fromPort: 8444
                     toPort: 8444
-      - class: node-pool
-        metadata:
-          annotations:
-            run.tanzu.vmware.com/resolve-os-image: os-name=windows,os-version=2022
-        name: win-node-pool-1
-        # if Windows nodes needed
-        replicas: 0
-        variables:
-          overrides:
-          - name: vmClass
-            value: best-effort-large
-          - name: node
-            value:
-              firewall:
-                inboundRules:
-                  # BGP
-                  - protocol: tcp
-                    fromPort: 179
-                    toPort: 179
-                  # VXLAN
-                  - protocol: udp
-                    fromPort: 4789
-                    toPort: 4789
-                  # Typha
-                  - protocol: tcp
-                    fromPort: 5473
-                    toPort: 5473
-                  # Wireguard
-                  - protocol: udp
-                    fromPort: 51820
-                    toPort: 51820
-                  # Elasticsearch
-                  - protocol: tcp
-                    fromPort: 9200
-                    toPort: 9200
-                  # Elasticsearch transport
-                  - protocol: tcp
-                    fromPort: 9300
-                    toPort: 9300
-                  # Tigera Manager UI
-                  - protocol: tcp
-                    fromPort: 9443
-                    toPort: 9443
-                  # Prometheus
-                  - protocol: tcp
-                    fromPort: 9090
-                    toPort: 9090
-                  # Linseed
-                  - protocol: tcp
-                    fromPort: 8444
-                    toPort: 8444
 ```
 
 #### Step 3: Retrieve the Guest Cluster Kubeconfig
 
 Can be copied from the Supervisor.
 
-#### Step 4: [Windows only] Apply IPAM Configuration
-
-Apply the strict affinity IPAM configuration, after Calico `apiserver` is `Available`.
-
-:::tip
-
-Status can be checked using `kubectl get tigerastatus`.
-
-:::
-
-```bash
-kubectl apply -f ./ipam_configuration.yaml
-```
-
-```yaml
-# Required for Windows nodes - ensures IPAM blocks are strictly
-# affinitive to their assigned nodes.
-# Apply this after calico-node pods are running.
-apiVersion: projectcalico.org/v3
-kind: IPAMConfiguration
-metadata:
-  name: default
-spec:
-  strictAffinity: true
-```
-
-#### Step 5: [Windows only] Apply the kubernetes-services-endpoint ConfigMap
-
-```bash
- export APISERVER_ADDR=<kubernetes-service-host>
- export APISERVER_PORT=<kubernetes-service-port>
-
-kubectl apply -f - << EOF
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: kubernetes-services-endpoint
-  namespace: tigera-operator
-data:
-  KUBERNETES_SERVICE_HOST: "${APISERVER_ADDR}"
-  KUBERNETES_SERVICE_PORT: "${APISERVER_PORT}"
-EOF
-```
-
-:::tip
-
-The `APISERVER_ADDR` and `APISERVER_PORT` can be retrieved via `kubectl get endpoints kubernetes -o wide`.
-
-:::
-
-#### Step 6: [Windows only] Apply the kube-proxy on Windows nodes
-
-Apply the Windows kube-proxy:
-
-```bash
-curl -L  https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/calico/kube-proxy/kube-proxy.yml | sed "s/KUBE_PROXY_VERSION/<YOUR_KUBERNETES_VERSION>/g" | kubectl apply -f -
-```
-
-Replace `<YOUR_KUBERNETES_VERSION>` with the kube-proxy version, e.g. `v1.35.2`.
-
-:::tip
-
-The Kubernetes version can be retrieved with `kubectl version -o json | jq -r '.serverVersion.gitVersion'`.
-
-:::
-
-:::note
-
-If the version returned is of the form `v1.35.2+vmware.1`, strip the `+vmware.1` suffix unless a VMware-provided kube-proxy image exists in the `sigwindowstools/kube-proxy` repository.
-
-:::
-
-#### Step 7: Wait for Core Components
+#### Step 4: Wait for Core Components
 
 Monitor the Tigera status until `calico` and `apiserver` report as `Available`:
 
@@ -497,13 +363,13 @@ kubectl get tigerastatus
 
 At this point, all nodes should be in `Ready` state.
 
-#### Step 8: Apply the Tigera License
+#### Step 5: Apply the Tigera License
 
 ```bash
 kubectl apply -f tigera-license.yaml
 ```
 
-#### Step 9: Verify the Installation
+#### Step 6: Verify the Installation
 
 Wait for all remaining components to become available:
 
@@ -575,7 +441,7 @@ Follow the steps in [Push $[prodname] images to your private registry](./private
 
 :::note
 
-Only steps 1, 2, 3, 4 — i.e. `docker pull`, `docker tag` and `docker push` for Linux only; and the `crane cp` for Windows images — need to be performed.
+Only steps 1, 2, 3, 4 — i.e. `docker pull`, `docker tag` and `docker push` for Linux only need to be performed.
 
 :::
 
