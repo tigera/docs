@@ -53,7 +53,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          node scripts/changed-pages.js "$BASE_SHA" build/link-check-routes.json > pages.txt || true
+          node scripts/changed-pages.js "$BASE_SHA" build/link-check-routes.json > pages.txt
           COUNT=$(grep -c . pages.txt || true)
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
           echo "Changed pages ($COUNT):"
@@ -68,7 +68,8 @@ jobs:
         env:
           CI: 'true'
         run: |
-          export PAGES_TO_CHECK="$(cat pages.txt)"
+          # Join with commas so the list survives as one env var; the crawler splits on commas/newlines.
+          export PAGES_TO_CHECK="$(tr '\n' ',' < pages.txt)"
           make test 2>&1 | tee link-check.log
 
       - name: Upload the link-check log
