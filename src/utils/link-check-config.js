@@ -1,7 +1,7 @@
 /**
  * Central config for the link checker.
  *
- * This file holds the skip and allow lists that the link checker uses. They used to live inside
+ * This file holds the skip and ignore lists that the link checker uses. They used to live inside
  * `src/utils/linkChecker.js` and `__tests__/crawler.test.js`. Keeping them here means one place to
  * edit, review, and comment.
  *
