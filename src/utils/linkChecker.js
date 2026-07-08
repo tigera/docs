@@ -1,4 +1,5 @@
 const urlCheck = require('./urlCheck');
+const { defaultSkipList, defaultIgnoreList } = require('./link-check-config');
 const LC = 'LINK-CHECK', DEAD = 'dead', SKIPPED = 'skipped', ALIVE = 'alive',
   ERROR = 'error', INVALID = 'invalid', WARN = 'warn', INFO = 'info',
   CHECKING = 'checking';
@@ -6,53 +7,7 @@ const defaultLinkRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+/gi;
 const validURLRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/;
 const trimUrlChars = /(\)|\)\.|\.)$/;
 
-// Skip patterns are skipped, but remain in the reporting for visibility
-const defaultSkipList = [
-  /^https?:\/\/\d+\.\d+\.\d+\.\d+/,
-  /^https?:\/\/transfer\.sh/,
-  /^https?:\/\/example.com/,
-  /^https?:\/\/an\.example\.threat\.feed/,
-  /^https?:\/\/my\.threatfeed\.com/,
-  /^https?:\/\/mycalicocl-calicodemorg-03a087-36558dbb\.hcp\.canadaeast\.azmk8s\.io/,
-  /^https?:\/\/60F939227672BC3D5A1B3EC9744B2B21\.gr7\.us-west-2\.eks\.amazonaws\.com/,
-  /^https?:\/\/prometheus-dashboard-svc\.calico-monitoring\.svc/,
-  /^https?:\/\/manager\.apps\.demo-ocp\.tigera-solutions\.io/,
-  /^https?:\/\/d881b853ae9313e00302a84f1e346a77\.gr7\.us-west-2\.eks\.amazonaws\.com/,
-  /^https?:\/\/api\.my-ocp-domain\.com/,
-  /\/manifests\/alp\/istio-inject-configmap-$/,
-  /^https?:\/\/auth\.calicocloud\.io/,
-  /^https?:\/\/www\.calicocloud\.io/,
-  /^https?:\/\/hypershift-docs\.netlify\.app/,
-  /^https?:\/\/(www\.)?ubuntu\.com\/.*/,
-  // debs directory listing 403s (index forbidden) even when the packages exist.
-  /^https?:\/\/downloads\.tigera\.io\/ee\/debs\/v3\.23\/?$/,
-  // VERY TEMPORARY: remove once the 3.23.1 artifact is published to the download server.
-  /^https?:\/\/downloads\.tigera\.io\/ee\/v3\.23\.1\/manifests\/prometheus\/operator-metrics-service-monitor\.yaml$/,
-  /^https?:\/\/docs\.tigera\.io\/calico\/latest\/networking\/kubevirt\/?$/,
-  // Category-index breadcrumb URLs for pages new in CE 3.23; live once 3.23.1 publishes.
-  /^https?:\/\/docs\.tigera\.io\/calico-enterprise\/latest\/networking\/kubevirt\/?$/,
-  /^https?:\/\/docs\.tigera\.io\/calico-enterprise\/latest\/reference\/clis\/calicoctl\/review\/?$/,
-  /^https?:\/\/docs\.openshift\.com\/.*/,
-  /^https?:\/\/docs\.redhat\.com\/.*/,
-  /^https?:\/\/access\.redhat\.com\/.*/,
-  /^https?:\/\/docs\.mirantis\.com\/.*/,
-  'https://en.wikipedia.org/wiki/Autonomous_System_(Internet',
-  'https://github.com/dims/etcd3-gateway.git@5a3157a122368c2314c7a961f61722e47355f981',
-  'https://installer.calicocloud.io:443/',
-  'https://web.archive.org/web/20150923231827/https://www.cisco.com/web/about/ac123/ac147/archived_issues/ipj_14-3/143_trill.html',
-  'https://web.archive.org/web/20210204031636/https://cumulusnetworks.com/blog/celebrating-ecmp-part-two/',
-  'http://ppa.launchpad.net/project-calico/calico-X.X/ubuntu',
-  'https://kb.isc.org/docs/aa-01141',
-  'https://microk8s.io/docs/clustering',
-  'https://juju.is/docs'
-];
-
-// Ignore patterns are skipped and ignored completely - no visibility whatsoever
-const defaultIgnoreList = [
-  /^https:\/\/github\.com\/tigera\/docs\/edit\//i,
-  /^https:\/\/github\.com\/projectcalico\/calico\/pull\/\d+$/i,
-  /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+?\.md$/i,
-];
+// Skip and ignore lists live in ./link-check-config.js.
 
 function linkChecker() {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
