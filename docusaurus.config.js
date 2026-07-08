@@ -411,6 +411,8 @@ export default async function createAsyncConfig() {
       },
     plugins: [
       'docusaurus-plugin-sass',
+      // Writes build/link-check-routes.json when LINK_CHECK_ROUTES=true. Used by the PR link check.
+      './src/plugins/docusaurus-plugin-link-check-routes',
       [
         '@docusaurus/plugin-content-docs',
         /** @type {import('@docusaurus/plugin-content-docs').Options} */

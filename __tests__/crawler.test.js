@@ -17,6 +17,17 @@ test('Crawl the docs and execute tests', async () => {
   const validityTest = process.env.VALIDITY_TEST ? process.env.VALIDITY_TEST.split(',') : [];
   const validityTestFiles = process.env.VALIDITY_TEST_FILES ? process.env.VALIDITY_TEST_FILES.split(',') : [];
   const isDeepCrawl = process.env.DEEP_CRAWL ? process.env.DEEP_CRAWL === 'true' : false;
+  // PR-scoped mode: when PAGES_TO_CHECK is set, crawl only those pages and do not follow links.
+  // URLS_TO_CHECK optionally narrows checking to specific links (line-level); empty means check all.
+  const parseScopeList = (v) => (v ? v.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) : []);
+  const toPageUrl = (p) => {
+    let u = /^https?:\/\//i.test(p) ? p : `${DOCS}${p.startsWith('/') ? '' : '/'}${p}`;
+    if (isLocalHost) u = u.replace(PROD_REGEX, DOCS);
+    return u;
+  };
+  const pagesToCheck = parseScopeList(process.env.PAGES_TO_CHECK).map(toPageUrl);
+  const urlsToCheck = new Set(parseScopeList(process.env.URLS_TO_CHECK));
+  const isScoped = pagesToCheck.length > 0;
   const fileRegex = /https?:\/\/[-a-zA-Z0-9()@:%._+~#?&/=]+?\.(ya?ml|zip|ps1|tgz|sh|exe|bat|json)/gi;
   const varRegex = /\{\{[ \t]*[-\w\[\]]+[ \t]*}}/g;
   const varSkipList = ['{{end}}'];
@@ -249,6 +260,7 @@ test('Crawl the docs and execute tests', async () => {
             const testUrl = url.replace(PROD_REGEX, DOCS);
             if (request.url === testUrl) url = testUrl;
           }
+          if (urlsToCheck.size > 0 && !urlsToCheck.has(url)) continue;
           checkAndUseLinkChecker(request.url, url);
         }
 
@@ -258,11 +270,14 @@ test('Crawl the docs and execute tests', async () => {
 
         testLiquid(allText, request.url);
 
-        await enqueueLinks({
-          strategy: EnqueueStrategy.All,
-          transformRequestFunction: transformRequest,
-          userData: { origin: request.url },
-        });
+        // In PR-scoped mode, do not follow links: check only the seeded pages.
+        if (!isScoped) {
+          await enqueueLinks({
+            strategy: EnqueueStrategy.All,
+            transformRequestFunction: transformRequest,
+            userData: { origin: request.url },
+          });
+        }
       },
     });
   }
@@ -599,10 +614,15 @@ test('Crawl the docs and execute tests', async () => {
   }
 
   const crawler = getCrawler();
-  await processSiteMap(SITEMAP_URL);
-  const urls = [...urlCache.keys()].filter((url) => !url.endsWith(SITEMAP));
-  await crawler.addRequests([DOCS]);
-  await crawler.addRequests(urls);
+  if (isScoped) {
+    console.log(`PR-scoped mode: checking ${pagesToCheck.length} page(s) only.`);
+    await crawler.addRequests(pagesToCheck);
+  } else {
+    await processSiteMap(SITEMAP_URL);
+    const urls = [...urlCache.keys()].filter((url) => !url.endsWith(SITEMAP));
+    await crawler.addRequests([DOCS]);
+    await crawler.addRequests(urls);
+  }
 
   console.log(`Crawling the docs (${DOCS}) and executing tests.`);
   console.log(`Localhost mode is ${isLocalHost ? 'ON' : 'OFF'}.`);
