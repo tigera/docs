@@ -69,7 +69,7 @@ spec:
 | `coreRuleSet.state` | `Enabled` \| `Disabled` | both | Defaults to `Enabled`; nil on WAFPolicy = inherit |
 | `coreRuleSet.paranoiaLevel` | integer 1–4 | both | Defaults to `1`; nil on WAFPolicy = inherit |
 | `plugins[]` | list of `{kind, name}` | both | `kind`: `WAFPlugin` \| `GlobalWAFPlugin`; order = array position; max 64 |
-| `targetRefs[]` | Gateway API target refs | **WAFPolicy only** | `kind`: `Gateway` \| `HTTPRoute`; min 1, max 16. `sectionName` is reserved for a future release |
+| `targetRefs[]` | Gateway API target refs | **WAFPolicy only** | `kind`: `Gateway` \| `HTTPRoute`; min 1, max 16. `sectionName` optionally scopes a ref to a specific listener/section |
 
 ### Plugin family
 
@@ -308,7 +308,7 @@ Gateway WAF is a $[prodname] feature and requires a valid license.
 | Reason | Meaning |
 | :--- | :--- |
 | `LicenseValid` | The license entitles this feature |
-| `LicenseBlocked` | No valid entitlement; the policy is not programmed |
+| `LicenseRequired` | No valid entitlement; the policy is not programmed |
 
 ### Accepted
 
@@ -317,13 +317,13 @@ Whether the resource is structurally valid and admitted. Several reasons come st
 | Reason | Meaning |
 | :--- | :--- |
 | `Accepted` | The resource is valid and admitted |
+| `Invalid` | The spec or a directive is invalid (the message says which) |
+| `ValidationFailed` | A `GlobalWAFValidationPolicy` in `Enforce` mode reported a `Critical` violation |
 | `Conflicted` | Another policy already targets this route; the older one wins (the message names it) |
-| `TargetNotFound` | The referenced `Gateway`/`HTTPRoute` does not exist |
-| `UnsupportedTarget` | The `targetRefs` kind is not supported |
+| `PluginNotFound` | A referenced `WAFPlugin`/`GlobalWAFPlugin` does not exist |
 | `UnsafeDirective` | A directive is not on the allowlist |
 | `IDOutsideRange` | A rule ID is outside the namespace's allocated range |
 | `ProtectedIDRemoval` | A `SecRuleRemoveById` targets a protected baseline rule |
-| `SectionNameNotYetSupported` | `sectionName` was set; per-rule attachment is reserved for a future release |
 
 ### Validated
 
@@ -342,6 +342,8 @@ Whether the Coraza WASM filter was programmed into Envoy Gateway.
 | Reason | Meaning |
 | :--- | :--- |
 | `ConfigurationApplied` | The `EnvoyExtensionPolicy` was generated and the filter is active |
+| `TargetNotFound` | No valid `targetRefs`, or a referenced `Gateway`/`HTTPRoute` does not exist |
+| `RenderTooLarge` | The merged ruleset exceeds the render size limit |
 | `WASMUnavailable` | The Coraza WASM image could not be pulled |
 | `NotAttempted` | A `Critical` violation under `Enforce` blocked programming |
 
@@ -353,7 +355,6 @@ A roll-up of the conditions above.
 | :--- | :--- |
 | `Ready` | The policy is active on the data plane |
 | `NotReady` | One of the conditions above is not satisfied |
-| `LicenseBlocked` | Blocked on licensing |
 
 ### Validation summary
 

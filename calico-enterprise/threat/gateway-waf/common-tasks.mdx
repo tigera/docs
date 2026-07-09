@@ -88,7 +88,7 @@ NAME      ACCEPTED   AGE
 default   True       30s
 ```
 
-Detail lives in `.status.conditions` (`kubectl get globalwafpolicy default -o yaml`): `Accepted=True` reason `Reconciled` = programmed; `Accepted=False` reason `ValidationFailed` = a validation policy blocked it (message describes the violation). See [Status conditions](./reference.mdx#status-conditions).
+Detail lives in `.status.conditions` (`kubectl get globalwafpolicy default -o yaml`): `Accepted=True` reason `Accepted` = programmed; `Accepted=False` reason `ValidationFailed` = a validation policy blocked it (message describes the violation). See [Status conditions](./reference.mdx#status-conditions).
 
 Every namespace with a `WAFPolicy` inherits `defaultAction`, `coreRuleSet.state`, and `coreRuleSet.paranoiaLevel` from `GlobalWAFPolicy` unless it overrides them:
 
@@ -123,7 +123,7 @@ Each `targetRefs` entry generates a separate `EnvoyExtensionPolicy` (max 16 entr
 
 :::note
 
-`sectionName` (targeting a specific listener on a Gateway) is reserved for a future release. Omit it.
+`sectionName` scopes a `targetRefs` entry to a specific listener on a `Gateway` (or a named section), so WAF applies to just that listener rather than the whole Gateway.
 
 :::
 
@@ -181,11 +181,7 @@ Access denied
 
 :::tip
 
-In `Detect` mode the request is allowed but the WAF event appears in the Envoy Gateway logs:
-
-```bash
-kubectl -n envoy-gateway-system logs deploy/envoy-gateway --tail=50 | grep -i "waf\|coraza\|modsec"
-```
+In `Detect` mode the request is allowed (200), but the WAF hit is still recorded in the `tigera_secure_ee_waf` log index (carrying `gateway_name`/`gateway_namespace`). On this release, gateway-WAF hits are not raised as Security Events — see [Observing WAF activity](./troubleshooting.mdx#observing-waf-activity).
 
 :::
 

@@ -12,6 +12,12 @@ kubectl describe wafpolicy <name> -n <namespace>
 
 A healthy policy has `Licensed=True`, `Accepted=True`, `Validated=True`, `Programmed=True`, `Ready=True` — evaluated roughly in order, so an early failure explains later absences. See [Status conditions](./reference.mdx#status-conditions) for reason meanings.
 
+## Observing WAF activity
+
+WAF hits (both `Block` and `Detect`/`would_block`) are recorded in the `tigera_secure_ee_waf` log index, carrying `gateway_name`/`gateway_namespace` for the originating Gateway. On this release they are **not** raised as Security Events: the intrusion-detection controller excludes WAF logs that carry a gateway name, so gateway-WAF activity is observed through the WAF log index rather than the Security Events view. Re-surfacing gateway WAF as Security Events (or on a dedicated dashboard) is planned for a later release.
+
+Raw Envoy proxy logs are a last-resort diagnostic when a hit is missing from the index.
+
 ---
 
 ## `Accepted=False, Reason=Conflicted`
@@ -148,15 +154,13 @@ See [How it works](./how-it-works.mdx#inheritance-namespaces-override-they-dont-
 
 **Cause.** The paranoia level is too high for the traffic pattern, or a specific Core Rule Set rule is matching legitimate requests (a false positive).
 
-**Diagnostic.** Check the Envoy proxy access logs in the Gateway pod for the firing rule:
+**Diagnostic.** The firing rule ID and message are in the `tigera_secure_ee_waf` log index for the hit. As a last resort, the Envoy proxy access logs in the Gateway pod also carry them:
 
 ```bash
 kubectl logs -n tigera-gateway \
   -l gateway.envoyproxy.io/owning-gateway-namespace=<namespace> \
   -c envoy | grep -i "waf\|403" | tail -30
 ```
-
-The log lines include the rule ID and message that triggered the block.
 
 **Fix.** Two options:
 
