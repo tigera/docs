@@ -414,7 +414,6 @@ module.exports = {
                 { type: 'doc', id: 'observability/elastic/l7/enable-waypoint-collector', label: 'Enable Waypoint collector' },
                 { type: 'doc', id: 'observability/elastic/l7/configure', label: 'Enable Envoy collector' },
                 { type: 'doc', id: 'observability/elastic/l7/datatypes', label: 'Data types' },
-                { type: 'doc', id: 'observability/elastic/l7/aggregation', label: 'Aggregation' },
               ],
             },
             'observability/elastic/troubleshoot',
