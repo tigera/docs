@@ -1,0 +1,369 @@
+---
+description: Field reference for the six Gateway WAF custom resources, the Rego validation input schema, SecRule ID range allocation, and status conditions.
+---
+
+# Reference
+
+## CRDs
+
+Gateway WAF defines six custom resources in the `applicationlayer.projectcalico.org/v3` API group. Each family has a cluster-scoped resource and a namespace-scoped resource that share almost all of their fields.
+
+| Resource | Scope | Short name | Persona | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| `GlobalWAFPolicy` | Cluster | `gwafp` | CO | Cluster-wide baseline (singleton, `name: default`) |
+| `WAFPolicy` | Namespace | `wafp` | AO | Attach WAF to a target; per-namespace overrides |
+| `GlobalWAFPlugin` | Cluster | `gwafplugin` | CO | Organization-wide custom rules |
+| `WAFPlugin` | Namespace | `wafplugin` | AO | App-specific rules and exceptions |
+| `GlobalWAFValidationPolicy` | Cluster | `gwafvp` | CO | Compliance guardrails (enforce or audit) |
+| `WAFValidationPolicy` | Namespace | `wafvp` | AO | Advisory self-validation |
+
+### Policy family
+
+`GlobalWAFPolicy` sets the cluster baseline; `WAFPolicy` attaches WAF to a target and overrides the baseline for its namespace.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFPolicy
+metadata:
+  name: default                 # singleton: name MUST be "default"
+spec:
+  defaultAction: Block          # Detect | Block
+  coreRuleSet:
+    state: Enabled              # Enabled | Disabled
+    paranoiaLevel: 1            # 1 (balanced) to 4 (paranoid)
+  plugins:                       # order = array position
+    - kind: GlobalWAFPlugin
+      name: security-baseline
+```
+
+`WAFPolicy` is namespace-scoped, adds `targetRefs` to attach to a `Gateway` and/or `HTTPRoute`, and its `action` and `coreRuleSet` fields are optional overrides of the global defaults:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPolicy
+metadata:
+  name: payments-waf
+  namespace: payments
+spec:
+  targetRefs:                    # attach to a Gateway and/or HTTPRoute
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: payments-api
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: team-gateway
+  action: Block                  # optional; nil = inherit global defaultAction
+  coreRuleSet:
+    paranoiaLevel: 2             # optional; nil = inherit
+  plugins:
+    - kind: WAFPlugin
+      name: api-exceptions
+```
+
+**Field reference — Policy family**
+
+| Field | Type | Resource | Notes |
+| :--- | :--- | :--- | :--- |
+| `defaultAction` | `Detect` \| `Block` | GlobalWAFPolicy | Cluster default; defaults to `Detect` |
+| `action` | `Detect` \| `Block` | WAFPolicy | Optional; **nil = inherit** the global default |
+| `coreRuleSet.state` | `Enabled` \| `Disabled` | both | Defaults to `Enabled`; nil on WAFPolicy = inherit |
+| `coreRuleSet.paranoiaLevel` | integer 1–4 | both | Defaults to `1`; nil on WAFPolicy = inherit |
+| `plugins[]` | list of `{kind, name}` | both | `kind`: `WAFPlugin` \| `GlobalWAFPlugin`; order = array position; max 64 |
+| `targetRefs[]` | Gateway API target refs | **WAFPolicy only** | `kind`: `Gateway` \| `HTTPRoute`; min 1, max 16. `sectionName` is reserved for a future release |
+
+### Plugin family
+
+`GlobalWAFPlugin` and `WAFPlugin` have identical specs. Each holds custom ModSecurity rules in four lifecycle slots — see [Write custom rules](./common-tasks.mdx#write-custom-rules-with-plugins) for slot semantics.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFPlugin
+metadata:
+  name: security-baseline
+spec:
+  description: "Cluster security baseline"
+  config: |                      # 1. set tx.* variables
+    SecAction "id:1234001,phase:1,pass,nolog,setvar:tx.enforce_https=1"
+  before: |                      # 2. pre-CRS processing
+    SecRule REQUEST_URI "@beginsWith /webhooks/" \
+      "id:1234010,phase:1,pass,nolog,ctl:ruleRemoveById=942200"
+  rules: |                       # 3. custom rules alongside CRS
+    SecRule REQUEST_HEADERS:User-Agent "@pmFromFile bad-bots.data" \
+      "id:1234020,phase:1,deny,status:403,msg:'Blocked bot'"
+  after: |                       # 4. post-CRS processing
+    SecAction "id:1234030,phase:5,pass,nolog,log"
+```
+
+`WAFPlugin` uses the identical spec at namespace scope — only `metadata.namespace` and the persona differ.
+
+**Field reference — Plugin family**
+
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `description` | string | Human-readable purpose; max 1024 chars |
+| `config` | string (SecLang) | Slot 1 — `tx.*` variable setup, runs before Core Rule Set setup; max 65536 chars |
+| `before` | string (SecLang) | Slot 2 — pre-Core Rule Set rules; max 65536 chars |
+| `rules` | string (SecLang) | Slot 3 — custom rules alongside Core Rule Set (Tigera extension); max 65536 chars |
+| `after` | string (SecLang) | Slot 4 — post-Core Rule Set rules; max 65536 chars |
+
+Rule IDs must fall in your namespace's allocated range — see [SecRule ID ranges](#secrule-id-ranges).
+
+### Validation family
+
+`GlobalWAFValidationPolicy` can enforce; `WAFValidationPolicy` is advisory only. Both carry a list of Rego rules — see [Rego validation](#rego-validation) to author the rules.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFValidationPolicy
+metadata:
+  name: security-requirements
+spec:
+  enforcementMode: Enforce       # Enforce | Audit (default Audit)
+  namespaceSelector:             # optional; empty = all namespaces
+    matchLabels:
+      env: production
+  rules:
+    - name: crs-must-be-enabled
+      severity: Critical
+      rego: |
+        package waf
+        violations[{"msg": "OWASP CRS must be enabled"}] {
+          input.config.crsState != "Enabled"
+        }
+```
+
+`WAFValidationPolicy` is namespace-scoped and advisory only — it has no `enforcementMode` and no `namespaceSelector`; every rule is evaluated as if in `Audit` mode.
+
+**Field reference — Validation family**
+
+| Field | Type | Resource | Notes |
+| :--- | :--- | :--- | :--- |
+| `enforcementMode` | `Audit` \| `Enforce` | **GlobalWAFValidationPolicy only** | Defaults to `Audit`. `Enforce` blocks on a `Critical` violation |
+| `namespaceSelector` | label selector | **GlobalWAFValidationPolicy only** | Empty = all namespaces |
+| `rules[]` | list of `ValidationRule` | both | At least one required |
+| `rules[].name` | string | both | 1–253 chars |
+| `rules[].rego` | string (Rego module) | both | Must declare `package waf` and a `violations` rule; max 16384 chars |
+| `rules[].severity` | `Info` \| `Warning` \| `Critical` | both | Defaults to `Warning` |
+
+---
+
+## Rego validation
+
+A validation policy carries one or more rules written in [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), the Open Policy Agent language. Each rule is evaluated **after** the WAF configuration is merged, against the effective result — so a rule can reason about the final action, the final paranoia level, and the complete list of merged directives, regardless of which policy or plugin contributed them.
+
+### The input document
+
+Every rule is evaluated against the same `input` document, which describes the merged configuration and its provenance:
+
+| Path | Type | Meaning |
+| :--- | :--- | :--- |
+| `input.config.action` | string | Effective action after merge — `Detect` or `Block` |
+| `input.config.crsState` | string | Core Rule Set state — `Enabled` or `Disabled` |
+| `input.config.paranoiaLevel` | integer | Effective paranoia level, 1–4 |
+| `input.directives` | array of string | The complete, ordered list of merged ModSecurity directives |
+| `input.source.globalPolicy` | string | Name of the global policy applied (always `default`) |
+| `input.source.namespacePolicy` | string | Name of the `WAFPolicy`, if any |
+| `input.source.globalPlugins` | array of string | Global plugin names, in load order |
+| `input.source.namespacePlugins` | array of string | Namespace plugin names, in load order |
+
+### The violations contract
+
+A rule's `rego` field must declare `package waf` and define a `violations` rule that produces a set of objects, each with at least a `msg` field. A namespace with **no** violations is compliant. Any object added to `violations` is a finding; its `msg` is surfaced on the policy status, and any extra fields you include are passed through alongside it.
+
+```rego
+package waf                                  # required — the engine evaluates this package
+
+# Each block that adds to `violations` is one check.
+violations[{"msg": msg}] {                   # a violation is an object with a msg field
+  input.config.crsState != "Enabled"         # the condition that is NOT allowed
+  msg := "OWASP CRS must be enabled"
+}
+
+violations[{"msg": msg}] {
+  input.config.paranoiaLevel < 2             # body lines are ANDed; all must hold
+  msg := sprintf("paranoia level %d is below the minimum of 2", [input.config.paranoiaLevel])
+}
+```
+
+You can also inspect the merged directive list directly — useful for catching a plugin that removes a baseline rule:
+
+```rego
+package waf
+
+violations[{"msg": msg}] {
+  d := input.directives[_]                   # iterate the merged directives
+  startswith(d, "SecRuleRemoveById")
+  re_match(`94[0-9]{4}`, d)                  # a CRS SQL-injection rule (942xxx)
+  msg := sprintf("removes a baseline SQLi rule: %s", [d])
+}
+```
+
+### Worked examples
+
+Given the rules above, here is how different merged configurations evaluate:
+
+| Effective configuration | `violations` |
+| :--- | :--- |
+| `crsState: Enabled`, `paranoiaLevel: 2` | empty — compliant |
+| `crsState: Disabled` | `"OWASP CRS must be enabled"` |
+| `paranoiaLevel: 1` | `"paranoia level 1 is below the minimum of 2"` |
+| a plugin with `SecRuleRemoveById 942100` | `"removes a baseline SQLi rule: ..."` |
+
+### Severity
+
+Each rule has a `severity` of `Info`, `Warning`, or `Critical` (default `Warning`). Severity decides the consequence of a violation, not whether it fires:
+
+- In a `GlobalWAFValidationPolicy` set to `Enforce`, a `Critical` violation blocks the configuration from being programmed.
+- In `Audit` mode — and in any `WAFValidationPolicy` — violations are reported on status but never block.
+
+See the enforcement table in [How it works](./how-it-works.mdx#validation-and-enforcement) for the full matrix.
+
+---
+
+## SecRule ID ranges
+
+Every custom rule you write in a `WAFPlugin` carries a numeric ModSecurity ID. Gateway WAF gives each namespace a defined range of IDs to use, and stops any namespace from disabling the cluster's baseline rules. Both are enforced through an admission webhook.
+
+### How a namespace's range is derived
+
+Each namespace is allocated a contiguous block of 10,000 IDs, derived deterministically from the namespace name:
+
+```text
+prefix = first four hex digits of sha256(namespace name), modulo 10000
+range  = [ prefix * 10000 , prefix * 10000 + 9999 ]
+```
+
+Because the range is a pure function of the namespace name, it never changes and requires no cluster state. This range is the set of IDs your rules may use. It isn't a globally unique reservation: with 10,000 possible blocks, two namespaces can map to the same one, which is harmless. Tenants stay isolated because each namespace's rules run in their own WAF engine, and no namespace can touch the protected ranges below.
+
+### Finding your range
+
+On the first time a namespace references a plugin, the controller stamps the range onto the namespace as an annotation:
+
+```bash
+kubectl get namespace payments \
+  -o jsonpath='{.metadata.annotations.applicationlayer\.projectcalico\.org/waf-id-range}'
+```
+
+Pick the IDs for your `WAFPlugin` rules from inside this range.
+
+### Protected ranges
+
+Some IDs are reserved and rejected for every namespace:
+
+- **`900000`–`999999`** — the OWASP Core Rule Set baseline.
+- **Tigera-shipped baseline rules** — the rules that implement the managed security baseline.
+
+A namespace can neither define rules with these IDs nor remove them with `SecRuleRemoveById`. This is what prevents a tenant from quietly disabling the cluster's protection.
+
+### What the admission webhook rejects
+
+When you apply a `WAFPlugin` or `WAFPolicy`, the webhook parses every directive and rejects the resource if any directive fails one of these checks. The reason appears on the resource's `Accepted` condition.
+
+| Check | Rejected with | Meaning |
+| :--- | :--- | :--- |
+| Directive not on the allowlist | `UnsafeDirective` | The directive type isn't permitted (for example, one that reads files or fetches remote rules) |
+| Rule ID outside your range | `IDOutsideRange` | A `SecRule`/`SecAction` ID falls outside the namespace's allocated range |
+| Removing a protected rule | `ProtectedIDRemoval` | A `SecRuleRemoveById` targets an ID outside the namespace's range (such as a Core Rule Set baseline rule) |
+
+The controller re-runs the same checks during reconciliation as a backstop; if a resource somehow reaches reconcile with a disallowed directive, it is marked `Accepted=False` with the matching reason rather than programmed.
+
+### Allowed directives
+
+The allowlist admits the directives needed to write and tune rules — among them `SecRule`, `SecAction`, `SecDefaultAction`, `SecRuleRemoveById`, `SecRuleRemoveByTag`, `SecRuleUpdateActionById`, `SecRuleUpdateTargetById`, `SecMarker`, and the request/response body and argument limits. Directives that read from the filesystem, write audit logs to arbitrary paths, or fetch remote rules are denied.
+
+### Example
+
+A namespace whose range is `420000`–`429999` writes rules using IDs from that block:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPlugin
+metadata:
+  name: api-exceptions
+  namespace: payments
+spec:
+  rules: |
+    SecRule REQUEST_BODY "@rx __schema" \
+      "id:420020,phase:2,deny,status:403,msg:'Introspection blocked'"
+```
+
+---
+
+## Status conditions
+
+Gateway WAF reports the state of each policy through standard Kubernetes status conditions. Read them with `kubectl`:
+
+```bash
+kubectl describe wafpolicy payments-waf -n payments
+# or
+kubectl get wafpolicy payments-waf -n payments -o jsonpath='{.status.conditions}' | jq
+```
+
+A healthy policy has `Licensed=True`, `Accepted=True`, `Validated=True`, `Programmed=True`, and `Ready=True`. The conditions are evaluated roughly in that order — a failure early on explains why later conditions are absent or `False`.
+
+### Licensed
+
+Gateway WAF is a $[prodname] feature and requires a valid license.
+
+| Reason | Meaning |
+| :--- | :--- |
+| `LicenseValid` | The license entitles this feature |
+| `LicenseBlocked` | No valid entitlement; the policy is not programmed |
+
+### Accepted
+
+Whether the resource is structurally valid and admitted. Several reasons come straight from the [admission webhook](#what-the-admission-webhook-rejects).
+
+| Reason | Meaning |
+| :--- | :--- |
+| `Accepted` | The resource is valid and admitted |
+| `Conflicted` | Another policy already targets this route; the older one wins (the message names it) |
+| `TargetNotFound` | The referenced `Gateway`/`HTTPRoute` does not exist |
+| `UnsupportedTarget` | The `targetRefs` kind is not supported |
+| `UnsafeDirective` | A directive is not on the allowlist |
+| `IDOutsideRange` | A rule ID is outside the namespace's allocated range |
+| `ProtectedIDRemoval` | A `SecRuleRemoveById` targets a protected baseline rule |
+| `SectionNameNotYetSupported` | `sectionName` was set; per-rule attachment is reserved for a future release |
+
+### Validated
+
+The result of evaluating [validation policies](#rego-validation) against the merged configuration.
+
+| Reason | Meaning |
+| :--- | :--- |
+| `Compliant` | No violations |
+| `ViolationsFound` | One or more rules reported a violation (see `status.validation.failures`) |
+| `NotEvaluated` | No validation policy applies to this resource |
+
+### Programmed
+
+Whether the Coraza WASM filter was successfully programmed into Envoy Gateway.
+
+| Reason | Meaning |
+| :--- | :--- |
+| `ConfigurationApplied` | The `EnvoyExtensionPolicy` was generated and the filter is active |
+| `WASMUnavailable` | The Coraza WASM image could not be pulled |
+| `NotAttempted` | A `Critical` violation under `Enforce` blocked programming |
+
+### Ready
+
+A roll-up of the conditions above.
+
+| Reason | Meaning |
+| :--- | :--- |
+| `Ready` | The policy is active on the data plane |
+| `NotReady` | One of the conditions above is not satisfied |
+| `LicenseBlocked` | Blocked on licensing |
+
+### Validation summary
+
+For convenience, `WAFPolicy.status.validation` summarizes the outcome of validation without having to read individual conditions:
+
+| Field | Meaning |
+| :--- | :--- |
+| `status` | `Valid`, `Audited`, or `Rejected` |
+| `securityPosture` | `Compliant`, `Warning`, `Degraded`, or `Critical` |
+| `failures[]` | Per-rule failures — policy name, rule, severity, and message |
+| `lastEvaluated` | When validation last ran |
+
+A `GlobalWAFValidationPolicy`'s own status aggregates the violating namespaces cluster-wide, giving the cluster operator a single place to see which namespaces are out of compliance.

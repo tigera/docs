@@ -10,7 +10,7 @@ Most Gateway WAF problems surface directly on the policy's status conditions. St
 kubectl describe wafpolicy <name> -n <namespace>
 ```
 
-A healthy policy has `Licensed=True`, `Accepted=True`, `Validated=True`, `Programmed=True`, and `Ready=True`. The conditions are evaluated in roughly that order — a failure early on explains why later conditions are absent or `False`. For the full meaning of each condition and reason, see [Status conditions](./reference/status-conditions.mdx).
+A healthy policy has `Licensed=True`, `Accepted=True`, `Validated=True`, `Programmed=True`, and `Ready=True`. The conditions are evaluated in roughly that order — a failure early on explains why later conditions are absent or `False`. For the full meaning of each condition and reason, see [Status conditions](./reference.mdx#status-conditions).
 
 ---
 
@@ -24,7 +24,7 @@ A healthy policy has `Licensed=True`, `Accepted=True`, `Validated=True`, `Progra
 kubectl get wafpolicy -n <namespace> -o wide
 ```
 
-Either delete the conflicting policy, or change one policy's `targetRefs` so they no longer point at the same target. To understand why only one policy can own a target, see [Merge order and enforcement](./concepts/merge-and-enforcement.mdx).
+Either delete the conflicting policy, or change one policy's `targetRefs` so they no longer point at the same target. To understand why only one policy can own a target, see [How it works](./how-it-works.mdx#merge-order-and-enforcement).
 
 ---
 
@@ -52,7 +52,7 @@ kubectl get namespace <namespace> \
   -o jsonpath='{.metadata.annotations.applicationlayer\.projectcalico\.org/waf-id-range}'
 ```
 
-For `UnsafeDirective`: remove or replace the disallowed directive. See [SecRule ID ranges](./reference/secrule-id-ranges.mdx) for the full allowlist and protected range details.
+For `UnsafeDirective`: remove or replace the disallowed directive. See [SecRule ID ranges](./reference.mdx#secrule-id-ranges) for the full allowlist and protected range details.
 
 ---
 
@@ -94,7 +94,7 @@ kubectl get wafpolicy <name> -n <namespace> \
 
 The `failures[]` array shows which `GlobalWAFValidationPolicy` rule failed, with its severity and message. The `status.validation.status` field will be `Rejected`.
 
-**Fix.** Correct the `WAFPolicy` to satisfy the failing rule — for example, change `action: Detect` back to `action: Block` if the validation policy requires Block mode. If you believe the policy should be an exception, ask the cluster operator to adjust the `GlobalWAFValidationPolicy`. For how to read and act on validation output, see [Validate config](./how-to/validate-config.mdx) and [Status conditions](./reference/status-conditions.mdx).
+**Fix.** Correct the `WAFPolicy` to satisfy the failing rule — for example, change `action: Detect` back to `action: Block` if the validation policy requires Block mode. If you believe the policy should be an exception, ask the cluster operator to adjust the `GlobalWAFValidationPolicy`. For how to read and act on validation output, see [Validate configuration with Rego](./common-tasks.mdx#validate-configuration-with-rego) and [Status conditions](./reference.mdx#status-conditions).
 
 ---
 
@@ -140,7 +140,7 @@ Also verify the `GlobalWAFPolicy` default action — a namespace `WAFPolicy` tha
 kubectl get globalwafpolicy default -o jsonpath='{.spec.defaultAction}'
 ```
 
-See [Global vs. namespaced](./concepts/global-vs-namespaced.mdx) for field inheritance rules.
+See [How it works](./how-it-works.mdx#inheritance-namespaces-override-they-dont-restart) for field inheritance rules.
 
 ---
 
@@ -163,7 +163,7 @@ The log lines will include the rule ID and message that triggered the block.
 1. **Lower the paranoia level** if the false positives come from a large class of higher-paranoia rules and your threat model allows it.
 2. **Add a plugin exception** to suppress the specific rule ID using `SecRuleRemoveById` or to skip the rule for a known-safe target using `SecRuleUpdateTargetById`. This is the preferred approach for surgical tuning without weakening the overall posture.
 
-For how to write exception rules within your namespace's ID range, see [Write custom rules](./how-to/write-custom-rules.mdx).
+For how to write exception rules within your namespace's ID range, see [Write custom rules with plugins](./common-tasks.mdx#write-custom-rules-with-plugins).
 
 :::caution
 
@@ -182,20 +182,8 @@ kubectl get wafpolicy <name> -n <namespace> \
   -o jsonpath='{range .status.conditions[*]}{.type}={.status} ({.reason}): {.message}{"\n"}{end}'
 ```
 
-1. `Licensed=False` → The license is missing or does not entitle Gateway WAF. Check [Enable Gateway WAF](./get-started/enable.mdx).
+1. `Licensed=False` → The license is missing or does not entitle Gateway WAF. Check [Get started](./get-started.mdx).
 2. `Accepted=False` → The policy spec is rejected. Read the `Reason` and `message` — see the sections above.
 3. `Validated=False` → A validation rule fired. Read `status.validation.failures`.
 4. `Programmed=False` → The filter was not loaded into Envoy. Read the `Reason` — see `WASMUnavailable` and `NotAttempted` above.
 5. All conditions `True` but WAF not blocking → Allow a few seconds for Envoy to load the WASM module after `EnvoyExtensionPolicy` creation. If it still does not block, the effective action is likely `Detect` — see [Attacks not blocked](#attacks-not-blocked) above.
-
-## Related pages
-
-- [Reference: Status conditions](./reference/status-conditions.mdx)
-- [Reference: SecRule ID ranges](./reference/secrule-id-ranges.mdx)
-- [Reference: Rego validation](./reference/rego-validation.mdx)
-- [Reference: CRDs](./reference/crds.mdx)
-- [Concepts: Merge order and enforcement](./concepts/merge-and-enforcement.mdx)
-- [Concepts: Global vs. namespaced](./concepts/global-vs-namespaced.mdx)
-- [How-to: Attach WAF to a route](./how-to/attach-waf-to-a-route.mdx)
-- [How-to: Write custom rules](./how-to/write-custom-rules.mdx)
-- [How-to: Validate config](./how-to/validate-config.mdx)
