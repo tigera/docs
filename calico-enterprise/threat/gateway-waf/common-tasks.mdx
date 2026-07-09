@@ -8,19 +8,15 @@ description: Set a cluster-wide WAF baseline, attach WAF to a Gateway or route, 
 
 :::note[Cluster operator task]
 
-This task is for cluster operators who own the `GlobalWAFPolicy` singleton and set the security posture that all namespaces inherit.
+Owns the `GlobalWAFPolicy` singleton and sets the baseline every namespace inherits.
 
 :::
 
-Before any application operator can attach WAF to a route, you need a cluster baseline. The baseline defines the default action, Core Rule Set state, paranoia level, and any organization-wide custom rules. Application operators inherit these settings; they can tighten them, but a [validation policy](#validate-configuration-with-rego) can prevent them from weakening them.
-
-**Prerequisites:** the Gateway WAF feature gate is enabled on the `ApplicationLayer` resource (see [Get started](./get-started.mdx)), and you have cluster-admin rights — the `GlobalWAFPolicy` API is cluster-scoped.
+**Prerequisites:** the Gateway WAF feature gate is enabled on `ApplicationLayer` (see [Get started](./get-started.mdx)); cluster-admin rights — `GlobalWAFPolicy` is cluster-scoped.
 
 ### Create the GlobalWAFPolicy singleton
 
-`GlobalWAFPolicy` must be named `default`. Applying any other name is rejected by the admission webhook.
-
-Start in `Detect` mode. `Detect` logs matched requests but allows them through, giving you time to measure false positives before you switch to `Block`.
+Must be named `default` — other names are rejected by the admission webhook. Start in `Detect` mode: it logs matches without blocking, so you can measure false positives before switching to `Block`.
 
 ```yaml
 apiVersion: applicationlayer.projectcalico.org/v3
@@ -34,9 +30,9 @@ spec:
     paranoiaLevel: 1
 ```
 
-Apply it with `kubectl apply -f globalwafpolicy.yaml`.
+Apply with `kubectl apply -f globalwafpolicy.yaml`.
 
-The OWASP Core Rule Set defines four paranoia levels. Each higher level adds more detection rules and catches more attacks, at the cost of more false positives:
+Four paranoia levels; higher catches more attacks at the cost of more false positives:
 
 | Level | Posture | Typical use |
 | :--- | :--- | :--- |
@@ -47,15 +43,15 @@ The OWASP Core Rule Set defines four paranoia levels. Each higher level adds mor
 
 :::tip
 
-Start at paranoia level 1 cluster-wide. Let application operators raise the level for their own namespaces if their traffic demands it. You can enforce a minimum level later with a validation policy.
+Start at level 1 cluster-wide; let application operators raise it per namespace, and enforce a minimum later via a validation policy.
 
 :::
 
-Once you've confirmed the false-positive rate is acceptable, change `defaultAction` to `Block`. In `Block` mode, $[prodname] returns HTTP 403 for any request that matches a WAF rule.
+Once satisfied, set `defaultAction: Block` — $[prodname] then returns HTTP 403 for matching requests.
 
 ### Add organization-wide rules with a GlobalWAFPlugin
 
-A `GlobalWAFPlugin` holds custom ModSecurity rules that apply to every namespace through the global policy's `plugins[]` list. Create the plugin first, then reference it from `GlobalWAFPolicy`. Rules are organized into the four lifecycle slots described in [Write custom rules](#write-custom-rules-with-plugins).
+A `GlobalWAFPlugin` holds custom ModSecurity rules applied cluster-wide via the global policy's `plugins[]` list. Create it, then reference it — rules use the four lifecycle slots in [Write custom rules](#write-custom-rules-with-plugins).
 
 ```yaml
 apiVersion: applicationlayer.projectcalico.org/v3
@@ -79,16 +75,7 @@ spec:
       "id:800099,phase:5,pass,log,msg:'Request blocked by WAF'"
 ```
 
-Reference it from `GlobalWAFPolicy.spec.plugins[]`:
-
-```yaml
-spec:
-  plugins:
-    - kind: GlobalWAFPlugin
-      name: org-baseline
-```
-
-`plugins[]` is an ordered list; the merger processes plugins in array position order. Add more `GlobalWAFPlugin` entries as your organization grows — up to 64 total. You can add `WAFPlugin` entries to `GlobalWAFPolicy.spec.plugins[]` as well.
+Reference it from `GlobalWAFPolicy.spec.plugins[]` (`plugins: [{kind: GlobalWAFPlugin, name: org-baseline}]`). `plugins[]` is ordered by array position, up to 64 entries; `WAFPlugin` entries can be added here too.
 
 ### Verify the baseline
 
@@ -101,9 +88,9 @@ NAME      ACCEPTED   AGE
 default   True       30s
 ```
 
-For detailed status, inspect `.status.conditions` with `kubectl get globalwafpolicy default -o yaml`. An `Accepted=True` condition with reason `Reconciled` means the baseline is programmed. If a validation policy blocked the configuration, you will see `Accepted=False` with a `ValidationFailed` reason and a message describing the violation. See [Status conditions](./reference.mdx#status-conditions) for the full condition reference.
+Detail lives in `.status.conditions` (`kubectl get globalwafpolicy default -o yaml`): `Accepted=True` reason `Reconciled` = programmed; `Accepted=False` reason `ValidationFailed` = a validation policy blocked it (message describes the violation). See [Status conditions](./reference.mdx#status-conditions).
 
-Every namespace that has a `WAFPolicy` attached to a target inherits `defaultAction`, `coreRuleSet.state`, and `coreRuleSet.paranoiaLevel` from `GlobalWAFPolicy`. A `WAFPolicy` can override any of these fields for its namespace; unset fields fall back to the global value:
+Every namespace with a `WAFPolicy` inherits `defaultAction`, `coreRuleSet.state`, and `coreRuleSet.paranoiaLevel` from `GlobalWAFPolicy` unless it overrides them:
 
 ```
 GlobalWAFPolicy (baseline)
@@ -117,13 +104,13 @@ GlobalWAFPolicy (baseline)
 
 :::note[Application operator task]
 
-This task is for application operators who own namespace-scoped WAF resources and decide which of their Gateways and routes receive WAF inspection.
+Owns namespace-scoped WAF resources and decides which of their Gateways and routes get WAF inspection.
 
 :::
 
-WAF inspection does not start automatically when the cluster operator enables the feature. You activate it by creating a `WAFPolicy` in your namespace that points to one or more Gateway API targets. The policy inherits the cluster baseline and lets you layer namespace-specific overrides on top.
+Create a `WAFPolicy` in your namespace pointing at Gateway API targets — WAF inspection doesn't start automatically when the feature is enabled. It inherits the cluster baseline with namespace overrides layered on top.
 
-**Prerequisites:** the cluster operator has created a `GlobalWAFPolicy` (see above), you have write access to `WAFPolicy` resources in your namespace, and a `Gateway` or `HTTPRoute` in your namespace is already receiving traffic.
+**Prerequisites:** the cluster operator has created a `GlobalWAFPolicy`; you have write access to `WAFPolicy` in your namespace; a `Gateway`/`HTTPRoute` is already receiving traffic.
 
 `WAFPolicy.spec.targetRefs[]` accepts two kinds of targets:
 
@@ -132,7 +119,7 @@ WAF inspection does not start automatically when the cluster operator enables th
 | `Gateway` | Every `HTTPRoute` bound to that Gateway | You want uniform WAF across all routes on a Gateway |
 | `HTTPRoute` | Just that one route | You need per-route tuning — different paranoia level, different plugins |
 
-Each `targetRefs` entry generates a separate `EnvoyExtensionPolicy` on Envoy Gateway. A policy with two entries generates two filters — one per target. Up to 16 entries are allowed in `targetRefs`.
+Each `targetRefs` entry generates a separate `EnvoyExtensionPolicy` (max 16 entries).
 
 :::note
 
@@ -140,7 +127,7 @@ Each `targetRefs` entry generates a separate `EnvoyExtensionPolicy` on Envoy Gat
 
 :::
 
-This example attaches WAF to a single `HTTPRoute` and overrides the action and paranoia level for this namespace. Unset fields (here, `coreRuleSet.state`) still inherit from the cluster baseline.
+Attaching WAF to one `HTTPRoute`, overriding action and paranoia; the unset `coreRuleSet.state` still inherits from the baseline:
 
 ```yaml
 apiVersion: applicationlayer.projectcalico.org/v3
@@ -159,17 +146,11 @@ spec:
   # coreRuleSet.state is unset → inherited from GlobalWAFPolicy
 ```
 
-Apply it with `kubectl apply -f wafpolicy.yaml`.
-
-To add rules beyond the cluster baseline, create a `WAFPlugin` and reference it from `WAFPolicy.spec.plugins[]` — see [Write custom rules](#write-custom-rules-with-plugins).
-
-For how `action` and `coreRuleSet` fields inherit from `GlobalWAFPolicy`, see [How it works](./how-it-works.mdx#inheritance-namespaces-override-they-dont-restart).
+Apply with `kubectl apply -f wafpolicy.yaml`. For custom rules beyond the baseline, see [Write custom rules](#write-custom-rules-with-plugins); for inheritance details, see [How it works](./how-it-works.mdx#inheritance-namespaces-override-they-dont-restart).
 
 ### Conflict resolution
 
-Only one `WAFPolicy` may be the active policy for any given target at a time. If two `WAFPolicy` resources in the same namespace both target the same Gateway or HTTPRoute, $[prodname] follows the [GEP-713](https://gateway-api.sigs.k8s.io/geps/gep-713/) tie-breaking rule: the policy with the oldest `creationTimestamp` wins, and the newer policy is marked `Accepted=False` with reason `Conflicted`. Only the winning policy's directives are merged and programmed.
-
-To resolve a conflict, delete the newer policy or update its `targetRefs` to point at a different target.
+Only one `WAFPolicy` may be active per target. If two in the same namespace target the same Gateway/HTTPRoute, $[prodname] follows [GEP-713](https://gateway-api.sigs.k8s.io/geps/gep-713/): oldest `creationTimestamp` wins; the newer is marked `Accepted=False` reason `Conflicted`, and only the winner's directives are merged. Fix by deleting the newer policy or repointing its `targetRefs`.
 
 ### Verify the policy
 
@@ -182,11 +163,9 @@ NAME               ACCEPTED   PROGRAMMED   AGE
 payments-api-waf   True       True         45s
 ```
 
-The `.status.conditions` field reports `Accepted`, `Programmed`, and any validation findings — see [Status conditions](./reference.mdx#status-conditions). To confirm Envoy Gateway received the filter, run `kubectl get envoyextensionpolicies -n payments`. Each `targetRefs` entry produces one `EnvoyExtensionPolicy`.
+`.status.conditions` reports `Accepted`, `Programmed`, and validation findings. Confirm Envoy Gateway received the filter with `kubectl get envoyextensionpolicies -n payments` (one per `targetRefs` entry).
 
 ### Test the WAF
-
-Send a request that includes a classic SQL injection pattern. In `Block` mode this should return HTTP 403:
 
 ```bash
 curl -si "https://<gateway-host>/api?id=1+OR+1%3D1"
@@ -202,7 +181,7 @@ Access denied
 
 :::tip
 
-If the Gateway is running in `Detect` mode (the cluster default until you upgrade to `Block`), the request will be allowed through but the WAF event will appear in the Envoy Gateway logs. Check with:
+In `Detect` mode the request is allowed but the WAF event appears in the Envoy Gateway logs:
 
 ```bash
 kubectl -n envoy-gateway-system logs deploy/envoy-gateway --tail=50 | grep -i "waf\|coraza\|modsec"
@@ -212,7 +191,7 @@ kubectl -n envoy-gateway-system logs deploy/envoy-gateway --tail=50 | grep -i "w
 
 :::caution
 
-If you get `ACCEPTED=False` with reason `ValidationFailed`, a `GlobalWAFValidationPolicy` is blocking your configuration. The status message identifies which policy and rule triggered the violation. Contact your cluster operator or see [Validate configuration with Rego](#validate-configuration-with-rego) for the self-check workflow.
+`ACCEPTED=False` reason `ValidationFailed` means a `GlobalWAFValidationPolicy` is blocking your config — the status message names the policy and rule. Contact your cluster operator or see [Validate configuration with Rego](#validate-configuration-with-rego).
 
 :::
 
@@ -222,32 +201,34 @@ If you get `ACCEPTED=False` with reason `ValidationFailed`, a `GlobalWAFValidati
 
 :::note[Application operator task]
 
-This task is for application operators who manage WAF configuration within a namespace. Cluster operators who want organization-wide rules create a `GlobalWAFPlugin` instead and reference it from `GlobalWAFPolicy.spec.plugins[]` — the CRD fields are identical; only scope differs.
+Cluster operators wanting org-wide rules use `GlobalWAFPlugin` instead, referenced from `GlobalWAFPolicy.spec.plugins[]` — same fields, different scope.
 
 :::
 
-A `WAFPlugin` (namespace-scoped) or `GlobalWAFPlugin` (cluster-scoped) holds custom [ModSecurity SecLang](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) directives organized into four lifecycle slots, modeled on the Core Rule Set 4 plugin file structure. Understanding the load order (see [How it works](./how-it-works.mdx#the-merged-ruleset-load-order)) is the key to knowing which slot to use:
+A `WAFPlugin` (namespace) or `GlobalWAFPlugin` (cluster) holds custom [ModSecurity SecLang](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) directives in four lifecycle slots, modeled on the Core Rule Set 4 plugin structure. Slot choice follows [load order](./how-it-works.mdx#the-merged-ruleset-load-order):
 
-- **`config`** — variable setup. Runs before Core Rule Set setup. Use it to set `tx.*` transaction variables the Core Rule Set reads during its own initialization: tuning anomaly score thresholds, enabling optional Core Rule Set features, or setting application-specific flags. If a rule fires on a request variable (such as a request header), it belongs in `before` instead — at `config` time the request has not been read yet.
-- **`before`** — pre-Core Rule Set rules. Runs after variable setup but before the Core Rule Set loads. Use it for early-exit allowlisting of trusted paths, request normalization, or setting flags that later rules can read.
-- **`rules`** — custom rules alongside Core Rule Set. Runs after the full Core Rule Set has executed. This is a Tigera extension to the Core Rule Set plugin model. Use it for application-specific detections that complement the Core Rule Set rather than pre-empting it; because these run after the Core Rule Set, they can also read and act on anomaly scores.
-- **`after`** — post-Core Rule Set processing. Runs last. Use it for false-positive suppression, response inspection, or logging augmentation. Because `GlobalWAFPlugin.after` runs *after* namespace `WAFPlugin.after`, the cluster operator has the final say on any post-processing.
+| Slot | Runs | Use for |
+| :--- | :--- | :--- |
+| `config` | Before Core Rule Set setup | `tx.*` variable setup (anomaly thresholds, optional features, app flags). Rules on request variables belong in `before` instead — the request isn't read yet |
+| `before` | After variable setup, before Core Rule Set loads | Early-exit allowlisting of trusted paths, request normalization, flags for later rules |
+| `rules` | Alongside Core Rule Set, after it (Tigera extension) | App-specific detections that complement rather than pre-empt the Core Rule Set; can act on anomaly scores |
+| `after` | Last | False-positive suppression, response inspection, logging. `GlobalWAFPlugin.after` runs *after* namespace `WAFPlugin.after`, so the cluster operator has final say |
 
 :::caution
 
-`ctl:ruleEngine=Off` inside a chained rule or as a per-request action disables the engine for that transaction only. Disabling it globally via a top-level `SecRuleEngine Off` directive is not permitted and will be rejected by the admission webhook.
+`ctl:ruleEngine=Off` inside a chained rule or per-request disables the engine for that transaction only. A top-level `SecRuleEngine Off` is rejected by the admission webhook.
 
 :::
 
 :::note
 
-`SecRuleRemoveById` and `ctl:ruleRemoveById` in the `after` slot apply for the remainder of phase processing. Use them to suppress false positives your own rules produce. You cannot remove protected Core Rule Set baseline rules regardless of slot — the admission webhook will reject the attempt.
+`SecRuleRemoveById`/`ctl:ruleRemoveById` in `after` apply for the rest of phase processing — use to suppress your own false positives. Protected Core Rule Set baseline rules can't be removed from any slot; the webhook rejects the attempt.
 
 :::
 
 ### Rule IDs and your namespace's range
 
-Every `SecRule` and `SecAction` must have an ID. Gateway WAF assigns each namespace a contiguous block of 10,000 IDs and enforces it at admission time. Find your range before writing any rule:
+Every `SecRule`/`SecAction` needs an ID. Each namespace gets a 10,000-ID block, enforced at admission. Find your range first:
 
 ```bash
 kubectl get namespace <your-namespace> \
@@ -255,11 +236,11 @@ kubectl get namespace <your-namespace> \
 # example output: 420000-429999
 ```
 
-Pick all your rule IDs from inside this range. The annotation is populated the first time any plugin is referenced in your namespace. See [SecRule ID ranges](./reference.mdx#secrule-id-ranges) for protected ranges and the full directive allowlist.
+Populated the first time a plugin is referenced in your namespace. See [SecRule ID ranges](./reference.mdx#secrule-id-ranges) for protected ranges and the allowlist.
 
 ### Worked example
 
-The following `WAFPlugin` uses all four slots to protect a GraphQL API:
+This `WAFPlugin` uses all four slots to protect a GraphQL API:
 
 ```yaml
 apiVersion: applicationlayer.projectcalico.org/v3
@@ -307,11 +288,11 @@ spec:
 
 :::tip
 
-The `@pmf` operator loads a data file. Data files must be bundled into the Coraza WASM filter image. Ask your cluster operator whether a custom data file is available, or use `@pm` (phrase match inline) for a small list of strings instead.
+`@pmf` loads a data file, which must be bundled into the Coraza WASM filter image — ask your cluster operator, or use `@pm` (inline phrase match) for a short string list.
 
 :::
 
-A plugin has no effect until a `WAFPolicy` references it. Add it to `spec.plugins[]`; load order is array position:
+A plugin has no effect until a `WAFPolicy` references it, in `spec.plugins[]` (load order = array position):
 
 ```yaml
 apiVersion: applicationlayer.projectcalico.org/v3
@@ -330,42 +311,42 @@ spec:
       name: graphql-waf        # ← your plugin above
 ```
 
-If your policy also references a `GlobalWAFPlugin`, the global plugin's slots load before the namespace plugin's slots at each position in the merge order.
+If the policy also references a `GlobalWAFPlugin`, its slots load before the namespace plugin's slots at each position.
 
-Gateway WAF runs the [OWASP Core Rule Set v4](https://coreruleset.org/docs/) via the [Coraza](https://coraza.io/) engine. The Core Rule Set documentation covers available `tx.*` variables, rule tag conventions, and anomaly scoring. The [ModSecurity reference manual](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) covers the full SecLang directive set.
+Gateway WAF runs the [OWASP Core Rule Set v4](https://coreruleset.org/docs/) via [Coraza](https://coraza.io/); the [ModSecurity reference manual](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) covers the full SecLang directive set.
 
 :::note
 
-Not all SecLang directives are permitted. Directives that read from the filesystem, fetch remote rules, or write to arbitrary audit log paths are rejected. See [SecRule ID ranges](./reference.mdx#secrule-id-ranges) for the allowlist.
+Not all SecLang directives are permitted — directives that read the filesystem, fetch remote rules, or write to arbitrary audit log paths are rejected. See [SecRule ID ranges](./reference.mdx#secrule-id-ranges) for the allowlist.
 
 :::
 
-After applying, check that the plugin was accepted and that the generated `WAFPolicy` reconciled without errors:
+Confirm acceptance and reconciliation:
 
 ```bash
 kubectl get wafplugin graphql-waf -n platform -o yaml | grep -A10 "conditions:"
 kubectl get wafpolicy platform-api-waf -n platform -o yaml | grep -A20 "conditions:"
 ```
 
-A `Ready=True` condition on the `WAFPolicy` confirms the merged ruleset passed validation and the `EnvoyExtensionPolicy` was programmed in Envoy Gateway.
+`Ready=True` on the `WAFPolicy` confirms the merged ruleset passed validation and the `EnvoyExtensionPolicy` was programmed.
 
 ---
 
 ## Validate configuration with Rego
 
-Gateway WAF has two guardrail layers. The admission webhook checks raw SecLang at apply time (structural safety). Validation policies check the **merged result** at reconcile time — after all policies and plugins have been combined — so they can catch problems that are only visible in the assembled directive list. For the full enforcement matrix, see [How it works](./how-it-works.mdx#validation-and-enforcement); for the input schema and authoring contract, see [Rego validation](./reference.mdx#rego-validation).
+Gateway WAF has two guardrail layers: the admission webhook checks raw SecLang at apply time (structural safety); validation policies check the **merged result** at reconcile time, catching problems only visible once everything's merged. See [Validation and enforcement](./how-it-works.mdx#validation-and-enforcement) for the matrix and [Rego validation](./reference.mdx#rego-validation) for the input schema.
 
 ### Cluster operator: GlobalWAFValidationPolicy
 
 :::note[Cluster operator]
 
-`GlobalWAFValidationPolicy` is a cluster-scoped resource. Only cluster operators can create or modify it. It applies to every namespace, or to a label-selected subset via `namespaceSelector`.
+Cluster-scoped; applies to every namespace or a label-selected subset via `namespaceSelector`.
 
 :::
 
-A `GlobalWAFValidationPolicy` carries a list of Rego rules and an `enforcementMode`: `Audit` (default) records violations on status while the WAF filter is still programmed; `Enforce` blocks the filter from being programmed on a `Critical` violation. `Warning` and `Info` violations are recorded on status regardless of mode.
+Carries Rego rules and an `enforcementMode`: `Audit` (default) records violations while the filter stays programmed; `Enforce` blocks programming on a `Critical` violation. `Warning`/`Info` violations are always recorded.
 
-The following policy enforces three requirements for all namespaces labeled `env: production`, and audits a fourth:
+This policy enforces three requirements for namespaces labeled `env: production`, and audits a fourth:
 
 ```yaml
 apiVersion: applicationlayer.projectcalico.org/v3
@@ -425,26 +406,17 @@ spec:
 
 :::tip
 
-Start every new `GlobalWAFValidationPolicy` in `Audit` mode. Review the violations that appear on existing `WAFPolicy` status before switching to `Enforce`. This avoids blocking teams whose configurations predate the new policy.
+Start new policies in `Audit` mode; review violations on existing `WAFPolicy` status before switching to `Enforce`, so you don't block teams whose config predates the policy.
 
 :::
 
-Leave `namespaceSelector` empty (or omit it) to apply the policy to every namespace, or scope it to a subset:
-
-```yaml
-spec:
-  namespaceSelector:
-    matchLabels:
-      compliance: pci-dss   # only namespaces with this label
-```
-
-Multiple `GlobalWAFValidationPolicy` objects can coexist. Every matching policy's rules are evaluated; a single `Critical` violation from any of them (when in `Enforce` mode) is enough to block programming.
+Leave `namespaceSelector` empty for cluster-wide, or scope with `matchLabels`. Multiple policies can coexist — every matching rule is evaluated, and one `Critical` violation (in `Enforce`) blocks programming.
 
 ### Application operator: WAFValidationPolicy
 
 :::note[Application operator]
 
-`WAFValidationPolicy` is namespace-scoped. It is advisory only — violations appear on status but never block the WAF filter from being programmed. Use it as a self-check for your namespace's configuration.
+Namespace-scoped and advisory only — violations appear on status but never block programming. Use as a self-check.
 
 :::
 
@@ -466,13 +438,11 @@ spec:
         }
 ```
 
-Because `WAFValidationPolicy` is advisory, it is safe to define your own standards here that are stricter than the cluster baseline — for example, requiring a minimum paranoia level higher than the global default. Violations surface on the `WAFPolicy` status and prompt the author to fix the config, but they do not interrupt traffic.
+Being advisory, it's safe to hold yourself to a stricter standard than the baseline — e.g. a higher minimum paranoia level. Violations surface on `WAFPolicy` status without interrupting traffic.
 
 ### Reading violation results
 
-Violations from all matching validation policies appear in the status conditions of the affected `WAFPolicy`. Check them with `kubectl get wafpolicy <name> -n <namespace> -o yaml`.
-
-A blocked policy looks like:
+Violations from matching policies appear in the affected `WAFPolicy`'s status conditions. Check with `kubectl get wafpolicy <name> -n <namespace> -o yaml`. A blocked policy:
 
 ```yaml
 status:
@@ -487,26 +457,11 @@ status:
       status: "True"
 ```
 
-An audit violation (filter still programmed) looks like:
-
-```yaml
-status:
-  conditions:
-    - type: Ready
-      status: "True"
-    - type: ValidationWarning
-      status: "True"
-      reason: AuditViolation
-      message: >
-        GlobalWAFValidationPolicy/production-requirements rule "rce-rules-intact" [Warning]:
-        RCE rule removal detected in merged config: SecRuleRemoveById 932100
-```
-
-See [Status conditions](./reference.mdx#status-conditions) for the complete condition type reference.
+An audit violation instead leaves `Ready=True` and adds a `ValidationWarning=True` condition, reason `AuditViolation`, with a message like `rce-rules-intact" [Warning]: RCE rule removal detected in merged config: SecRuleRemoveById 932100` (filter stays programmed). See [Status conditions](./reference.mdx#status-conditions) for the full reference.
 
 :::tip
 
-Write your Rego rules against the input schema in [Rego validation](./reference.mdx#rego-validation) and test them locally with `opa eval` before applying to the cluster. A syntax error in a rule causes the entire policy to be marked invalid; the status reports which rule failed to parse.
+Write Rego against the schema in [Rego validation](./reference.mdx#rego-validation); test locally with `opa eval` first. A syntax error invalidates the whole policy — status reports which rule failed to parse.
 
 :::
 
@@ -516,13 +471,13 @@ Write your Rego rules against the input schema in [Rego validation](./reference.
 
 :::note[Scenario]
 
-A single cluster shared by two application teams — `team-a` and `payments` — and a cluster operator who sets the security baseline. This walks through the full CO ↔ AO collaboration: a `GlobalWAFPolicy` baseline, an org-wide `GlobalWAFPlugin`, and a `GlobalWAFValidationPolicy` that prevents application teams from weakening protection. Each team then attaches WAF to their own Gateway and tunes it independently.
+A cluster shared by `team-a` and `payments`, with a cluster operator setting the baseline via a `GlobalWAFPolicy`, an org-wide `GlobalWAFPlugin`, and a `GlobalWAFValidationPolicy` that stops teams weakening protection. Each team attaches WAF to its own Gateway and tunes independently.
 
-**Prerequisites:** Gateway WAF is enabled and a valid license is in place.
+**Prerequisites:** Gateway WAF enabled; valid license.
 
 :::
 
-The cluster operator creates the `default` `GlobalWAFPolicy`, the `org-security-baseline` `GlobalWAFPlugin`, and a `production-requirements` `GlobalWAFValidationPolicy` in `Enforce` mode scoped to namespaces labeled `env: production` — following the patterns above. Application operators need to read `Global*` resources to understand what baseline they are inheriting. Grant read access with a `ClusterRole` and a per-namespace `RoleBinding`:
+The cluster operator creates the `default` `GlobalWAFPolicy`, `org-security-baseline` `GlobalWAFPlugin`, and a `production-requirements` `GlobalWAFValidationPolicy` (`Enforce`, scoped to `env: production`) — per the patterns above. Application operators need read access to `Global*` resources to see what they're inheriting:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -554,26 +509,26 @@ roleRef:
 
 :::note
 
-This grants read on cluster-scoped resources via a namespace-scoped `RoleBinding`. Application operators can see the baseline and validation policy, but cannot create or edit `Global*` resources.
+Grants read on cluster-scoped resources via a namespace-scoped `RoleBinding` — application operators can see but not edit `Global*` resources.
 
 :::
 
-Each team labels its namespace (`kubectl label namespace team-a env=production`, and the same for `payments`) so the validation policy applies, then creates a `WAFPolicy` targeting its own Gateway. The `team-a` operator raises paranoia to 2 and inherits `coreRuleSet.state: Enabled` from the baseline. The `payments` operator runs stricter still: paranoia 3, plus a namespace `WAFPlugin` that blocks GraphQL introspection using an ID from its own allocated [SecRule ID range](./reference.mdx#secrule-id-ranges).
+Each team labels its namespace (`kubectl label namespace team-a env=production`, same for `payments`) so the validation policy applies, then creates a `WAFPolicy` targeting its own Gateway. `team-a` raises paranoia to 2, inheriting `coreRuleSet.state: Enabled`; `payments` runs paranoia 3 plus a namespace `WAFPlugin` blocking GraphQL introspection, using an ID from its own [SecRule ID range](./reference.mdx#secrule-id-ranges).
 
 ### What happens if a team tries to weaken the baseline
 
-If the `payments` operator applies a policy with `action: Detect`, the `production-requirements` `GlobalWAFValidationPolicy` (in `Enforce` mode) fires the `must-use-block-mode` Critical rule. The controller marks the policy `Programmed=False, Reason=NotAttempted` and surfaces the violation in `status.validation.failures`:
+If `payments` applies `action: Detect`, `production-requirements` (`Enforce`) fires its `must-use-block-mode` Critical rule — the controller marks the policy `Programmed=False, Reason=NotAttempted` and surfaces the violation:
 
 ```bash
 kubectl get wafpolicy payments-waf -n payments \
   -o jsonpath='{.status.validation.failures}' | jq
 ```
 
-No `EnvoyExtensionPolicy` is generated until the policy is corrected. The operator must restore `action: Block` or request a policy exception from the cluster operator.
+No `EnvoyExtensionPolicy` is generated until corrected — restore `action: Block` or request an exception from the cluster operator.
 
 ### Result: isolation in practice
 
-- **`team-a`** runs Core Rule Set at paranoia 2 with its own custom rules, scoped to its ID range.
-- **`payments`** runs Core Rule Set at paranoia 3 plus its GraphQL introspection block, scoped to a different ID range.
-- Neither team can disable the org-wide rule from `GlobalWAFPlugin` or lower below Block mode.
-- The cluster operator sees all validation violations centrally on `GlobalWAFValidationPolicy/production-requirements` status — a single place to audit which namespaces are out of compliance.
+- **`team-a`** — Core Rule Set at paranoia 2, own custom rules, own ID range.
+- **`payments`** — Core Rule Set at paranoia 3, GraphQL introspection block, a different ID range.
+- Neither team can disable the org-wide rule from `GlobalWAFPlugin` or drop below Block mode.
+- The cluster operator sees all violations centrally on `GlobalWAFValidationPolicy/production-requirements` status — one place to see which namespaces are non-compliant.

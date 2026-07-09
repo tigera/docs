@@ -6,7 +6,7 @@ description: Field reference for the six Gateway WAF custom resources, the Rego 
 
 ## CRDs
 
-Gateway WAF defines six custom resources in the `applicationlayer.projectcalico.org/v3` API group. Each family has a cluster-scoped resource and a namespace-scoped resource that share almost all of their fields.
+Six custom resources in the `applicationlayer.projectcalico.org/v3` API group, in three families; each has a cluster-scoped and namespace-scoped resource sharing almost all fields.
 
 | Resource | Scope | Short name | Persona | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
@@ -36,7 +36,7 @@ spec:
       name: security-baseline
 ```
 
-`WAFPolicy` is namespace-scoped, adds `targetRefs` to attach to a `Gateway` and/or `HTTPRoute`, and its `action` and `coreRuleSet` fields are optional overrides of the global defaults:
+`WAFPolicy` adds `targetRefs` (`Gateway`/`HTTPRoute`); `action` and `coreRuleSet` are optional overrides of the global defaults:
 
 ```yaml
 apiVersion: applicationlayer.projectcalico.org/v3
@@ -73,7 +73,7 @@ spec:
 
 ### Plugin family
 
-`GlobalWAFPlugin` and `WAFPlugin` have identical specs. Each holds custom ModSecurity rules in four lifecycle slots — see [Write custom rules](./common-tasks.mdx#write-custom-rules-with-plugins) for slot semantics.
+`GlobalWAFPlugin`/`WAFPlugin` share an identical spec: custom ModSecurity rules in four lifecycle slots — see [Write custom rules](./common-tasks.mdx#write-custom-rules-with-plugins).
 
 ```yaml
 apiVersion: applicationlayer.projectcalico.org/v3
@@ -110,7 +110,7 @@ Rule IDs must fall in your namespace's allocated range — see [SecRule ID range
 
 ### Validation family
 
-`GlobalWAFValidationPolicy` can enforce; `WAFValidationPolicy` is advisory only. Both carry a list of Rego rules — see [Rego validation](#rego-validation) to author the rules.
+`GlobalWAFValidationPolicy` can enforce; `WAFValidationPolicy` is advisory only. Both carry Rego rules — see [Rego validation](#rego-validation).
 
 ```yaml
 apiVersion: applicationlayer.projectcalico.org/v3
@@ -132,7 +132,7 @@ spec:
         }
 ```
 
-`WAFValidationPolicy` is namespace-scoped and advisory only — it has no `enforcementMode` and no `namespaceSelector`; every rule is evaluated as if in `Audit` mode.
+`WAFValidationPolicy` is namespace-scoped, advisory only — no `enforcementMode`, no `namespaceSelector`; every rule runs as if in `Audit` mode.
 
 **Field reference — Validation family**
 
@@ -149,11 +149,11 @@ spec:
 
 ## Rego validation
 
-A validation policy carries one or more rules written in [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), the Open Policy Agent language. Each rule is evaluated **after** the WAF configuration is merged, against the effective result — so a rule can reason about the final action, the final paranoia level, and the complete list of merged directives, regardless of which policy or plugin contributed them.
+A validation policy carries [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) rules evaluated after the configuration is merged — so a rule can reason about the final action, paranoia level, and merged directive list, regardless of which policy or plugin contributed them.
 
 ### The input document
 
-Every rule is evaluated against the same `input` document, which describes the merged configuration and its provenance:
+Every rule evaluates against the same `input` document — the merged configuration and its provenance:
 
 | Path | Type | Meaning |
 | :--- | :--- | :--- |
@@ -168,7 +168,7 @@ Every rule is evaluated against the same `input` document, which describes the m
 
 ### The violations contract
 
-A rule's `rego` field must declare `package waf` and define a `violations` rule that produces a set of objects, each with at least a `msg` field. A namespace with **no** violations is compliant. Any object added to `violations` is a finding; its `msg` is surfaced on the policy status, and any extra fields you include are passed through alongside it.
+A rule's `rego` field must declare `package waf` and a `violations` rule producing objects with at least a `msg` field. No violations means compliant; each object is a finding, surfaced on status, with any extra fields passed through.
 
 ```rego
 package waf                                  # required — the engine evaluates this package
@@ -185,7 +185,7 @@ violations[{"msg": msg}] {
 }
 ```
 
-You can also inspect the merged directive list directly — useful for catching a plugin that removes a baseline rule:
+Or inspect the merged directive list directly — useful for catching a plugin that removes a baseline rule:
 
 ```rego
 package waf
@@ -200,7 +200,7 @@ violations[{"msg": msg}] {
 
 ### Worked examples
 
-Given the rules above, here is how different merged configurations evaluate:
+How different merged configurations evaluate against the rules above:
 
 | Effective configuration | `violations` |
 | :--- | :--- |
@@ -211,9 +211,9 @@ Given the rules above, here is how different merged configurations evaluate:
 
 ### Severity
 
-Each rule has a `severity` of `Info`, `Warning`, or `Critical` (default `Warning`). Severity decides the consequence of a violation, not whether it fires:
+Each rule has a `severity` — `Info`, `Warning`, `Critical` (default `Warning`) — deciding the consequence, not whether it fires:
 
-- In a `GlobalWAFValidationPolicy` set to `Enforce`, a `Critical` violation blocks the configuration from being programmed.
+- In `Enforce` mode, a `Critical` violation blocks the configuration from being programmed.
 - In `Audit` mode — and in any `WAFValidationPolicy` — violations are reported on status but never block.
 
 See the enforcement table in [How it works](./how-it-works.mdx#validation-and-enforcement) for the full matrix.
@@ -222,7 +222,7 @@ See the enforcement table in [How it works](./how-it-works.mdx#validation-and-en
 
 ## SecRule ID ranges
 
-Every custom rule you write in a `WAFPlugin` carries a numeric ModSecurity ID. Gateway WAF gives each namespace a defined range of IDs to use, and stops any namespace from disabling the cluster's baseline rules. Both are enforced through an admission webhook.
+Every custom rule in a `WAFPlugin` carries a numeric ModSecurity ID. Gateway WAF allocates each namespace a fixed ID range and blocks any namespace from disabling baseline rules — both enforced by the admission webhook.
 
 ### How a namespace's range is derived
 
@@ -233,11 +233,11 @@ prefix = first four hex digits of sha256(namespace name), modulo 10000
 range  = [ prefix * 10000 , prefix * 10000 + 9999 ]
 ```
 
-Because the range is a pure function of the namespace name, it never changes and requires no cluster state. This range is the set of IDs your rules may use. It isn't a globally unique reservation: with 10,000 possible blocks, two namespaces can map to the same one, which is harmless. Tenants stay isolated because each namespace's rules run in their own WAF engine, and no namespace can touch the protected ranges below.
+The range is a pure function of the namespace name — it never changes and needs no cluster state. It isn't a globally unique reservation: two namespaces can map to the same block, harmlessly, since each runs its own WAF engine and neither can touch the protected ranges below.
 
 ### Finding your range
 
-On the first time a namespace references a plugin, the controller stamps the range onto the namespace as an annotation:
+The first time a namespace references a plugin, the controller stamps the range onto it as an annotation:
 
 ```bash
 kubectl get namespace payments \
@@ -253,11 +253,11 @@ Some IDs are reserved and rejected for every namespace:
 - **`900000`–`999999`** — the OWASP Core Rule Set baseline.
 - **Tigera-shipped baseline rules** — the rules that implement the managed security baseline.
 
-A namespace can neither define rules with these IDs nor remove them with `SecRuleRemoveById`. This is what prevents a tenant from quietly disabling the cluster's protection.
+A namespace can neither define rules with these IDs nor remove them with `SecRuleRemoveById` — stopping a tenant from quietly disabling cluster protection.
 
 ### What the admission webhook rejects
 
-When you apply a `WAFPlugin` or `WAFPolicy`, the webhook parses every directive and rejects the resource if any directive fails one of these checks. The reason appears on the resource's `Accepted` condition.
+Applying a `WAFPlugin`/`WAFPolicy` triggers the webhook to parse every directive; failing any check below rejects the resource, with the reason on its `Accepted` condition.
 
 | Check | Rejected with | Meaning |
 | :--- | :--- | :--- |
@@ -265,11 +265,11 @@ When you apply a `WAFPlugin` or `WAFPolicy`, the webhook parses every directive 
 | Rule ID outside your range | `IDOutsideRange` | A `SecRule`/`SecAction` ID falls outside the namespace's allocated range |
 | Removing a protected rule | `ProtectedIDRemoval` | A `SecRuleRemoveById` targets an ID outside the namespace's range (such as a Core Rule Set baseline rule) |
 
-The controller re-runs the same checks during reconciliation as a backstop; if a resource somehow reaches reconcile with a disallowed directive, it is marked `Accepted=False` with the matching reason rather than programmed.
+The controller re-runs these checks at reconcile as a backstop, marking `Accepted=False` with the matching reason instead of programming.
 
 ### Allowed directives
 
-The allowlist admits the directives needed to write and tune rules — among them `SecRule`, `SecAction`, `SecDefaultAction`, `SecRuleRemoveById`, `SecRuleRemoveByTag`, `SecRuleUpdateActionById`, `SecRuleUpdateTargetById`, `SecMarker`, and the request/response body and argument limits. Directives that read from the filesystem, write audit logs to arbitrary paths, or fetch remote rules are denied.
+Allowed: `SecRule`, `SecAction`, `SecDefaultAction`, `SecRuleRemoveById`, `SecRuleRemoveByTag`, `SecRuleUpdateActionById`, `SecRuleUpdateTargetById`, `SecMarker`, and request/response body and argument limits. Denied: directives that read the filesystem, write audit logs to arbitrary paths, or fetch remote rules.
 
 ### Example
 
@@ -291,7 +291,7 @@ spec:
 
 ## Status conditions
 
-Gateway WAF reports the state of each policy through standard Kubernetes status conditions. Read them with `kubectl`:
+Gateway WAF reports policy state through standard Kubernetes status conditions:
 
 ```bash
 kubectl describe wafpolicy payments-waf -n payments
@@ -299,7 +299,7 @@ kubectl describe wafpolicy payments-waf -n payments
 kubectl get wafpolicy payments-waf -n payments -o jsonpath='{.status.conditions}' | jq
 ```
 
-A healthy policy has `Licensed=True`, `Accepted=True`, `Validated=True`, `Programmed=True`, and `Ready=True`. The conditions are evaluated roughly in that order — a failure early on explains why later conditions are absent or `False`.
+A healthy policy has `Licensed=True`, `Accepted=True`, `Validated=True`, `Programmed=True`, `Ready=True`, evaluated roughly in that order — an early failure explains why later conditions are absent or `False`.
 
 ### Licensed
 
@@ -337,7 +337,7 @@ The result of evaluating [validation policies](#rego-validation) against the mer
 
 ### Programmed
 
-Whether the Coraza WASM filter was successfully programmed into Envoy Gateway.
+Whether the Coraza WASM filter was programmed into Envoy Gateway.
 
 | Reason | Meaning |
 | :--- | :--- |
@@ -357,7 +357,7 @@ A roll-up of the conditions above.
 
 ### Validation summary
 
-For convenience, `WAFPolicy.status.validation` summarizes the outcome of validation without having to read individual conditions:
+`WAFPolicy.status.validation` summarizes validation without reading individual conditions:
 
 | Field | Meaning |
 | :--- | :--- |
@@ -366,4 +366,4 @@ For convenience, `WAFPolicy.status.validation` summarizes the outcome of validat
 | `failures[]` | Per-rule failures — policy name, rule, severity, and message |
 | `lastEvaluated` | When validation last ran |
 
-A `GlobalWAFValidationPolicy`'s own status aggregates the violating namespaces cluster-wide, giving the cluster operator a single place to see which namespaces are out of compliance.
+A `GlobalWAFValidationPolicy`'s own status aggregates violating namespaces cluster-wide — one place to see who's out of compliance.
