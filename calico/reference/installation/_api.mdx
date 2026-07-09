@@ -559,6 +559,7 @@ _Appears in:_
 | `hostPorts` _[HostPortsType](#hostportstype)_ | (Optional) HostPorts configures whether or not Calico will support Kubernetes HostPorts. Valid only when using the Calico CNI plugin.<br />Default: Enabled |
 | `multiInterfaceMode` _[MultiInterfaceMode](#multiinterfacemode)_ | (Optional) MultiInterfaceMode configures what will configure multiple interface per pod. Only valid for Calico Enterprise installations using the Calico CNI plugin.<br />Default: None |
 | `containerIPForwarding` _[ContainerIPForwardingType](#containeripforwardingtype)_ | (Optional) ContainerIPForwarding configures whether ip forwarding will be enabled for containers in the CNI configuration.<br />Default: Disabled |
+| `linuxPodInterfaceType` _[LinuxPodInterfaceType](#linuxpodinterfacetype)_ | (Optional) LinuxPodInterfaceType selects the virtual device type the Calico CNI plugin creates for each pod's interface on Linux nodes. When set to Netkit, the CNI plugin creates a netkit L2 pair on kernels that support it (Linux 6.7+) and falls back to a veth pair on older kernels. Netkit is recommended for the BPF dataplane, where it allows BPF programs to attach via BPF_NETKIT_PRIMARY for improved throughput and tail-latency under contention; for non-BPF dataplanes it is functionally equivalent to veth. Only valid when using the Calico CNI plugin.<br />Default: Veth |
 | `sysctl` _[Sysctl](#sysctl) array_ | (Optional) Sysctl configures sysctl parameters for tuning plugin |
 | `linuxPolicySetupTimeoutSeconds` _integer_ | (Optional) LinuxPolicySetupTimeoutSeconds delays new pods from running containers until their policy has been programmed in the dataplane. The specified delay defines the maximum amount of time that the Calico CNI plugin will wait for policy to be programmed. Only applies to pods created on Linux nodes. * A value of 0 disables pod startup delays.<br />Default: 0 |
 
@@ -1534,6 +1535,7 @@ _Appears in:_
 | `allocateLoadBalancerNodePorts` _boolean_ | (Optional)  |
 | `loadBalancerSourceRanges` _string array_ | (Optional)  |
 | `loadBalancerIP` _string_ | (Optional)  |
+| `patch` _[KubernetesPatchSpec](#kubernetespatchspec)_ | (Optional) Patch allows the Service for a gateway to be patched in ways that aren't more explicitly supported by the fields above.  For example, the following YAML could be used to set the Service's healthCheckNodePort:   patch:     type: StrategicMerge     value:       spec:         healthCheckNodePort: 12345 |
 
 
 ### Goldmane
@@ -1751,7 +1753,7 @@ _Appears in:_
 | `disableBGPExport` _boolean_ | (Optional) DisableBGPExport specifies whether routes from this IP pool's CIDR are exported over BGP.<br />Default: false |
 | `disableNewAllocations` _boolean_ | DisableNewAllocations specifies whether or not new IP allocations are allowed from this pool. This is useful when you want to prevent new pods from receiving IP addresses from this pool, without impacting any existing pods that have already been assigned addresses from this pool. |
 | `allowedUses` _[IPPoolAllowedUse](#ippoolalloweduse) array_ | AllowedUse controls what the IP pool will be used for.  If not specified or empty, defaults to ["Tunnel", "Workload"] for back-compatibility |
-| `assignmentMode` _[AssignmentMode](#assignmentmode)_ | AssignmentMode determines if IP addresses from this pool should be  assigned automatically or on request only |
+| `assignmentMode` _AssignmentMode_ | AssignmentMode determines if IP addresses from this pool should be  assigned automatically or on request only |
 
 
 ### IPPoolAllowedUse
@@ -1854,6 +1856,7 @@ _Appears in:_
 | `imagePath` _string_ | (Optional) ImagePath allows for the path part of an image to be specified. If specified then the specified value will be used as the image path for each image. If not specified or empty, the default for each image will be used. A special case value, UseDefault, is supported to explicitly specify the default image path will be used for each image. Image format:    `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>` This option allows configuring the `<imagePath>` portion of the above format. |
 | `imagePrefix` _string_ | (Optional) ImagePrefix allows for the prefix part of an image to be specified. If specified then the given value will be used as a prefix on each image. If not specified or empty, no prefix will be used. A special case value, UseDefault, is supported to explicitly specify the default image prefix will be used for each image. Image format:    `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>` This option allows configuring the `<imagePrefix>` portion of the above format. |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) array_ | (Optional) ImagePullSecrets is an array of references to container registry pull secrets to use. These are applied to all images to be pulled. |
+| `imagePullPolicy` _[PullPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#pullpolicy-v1-core)_ | (Optional) ImagePullPolicy is the pull policy applied to containers in pods rendered by the operator that do not explicitly set their own pull policy. If unset, defaults to IfNotPresent. This is useful in air-gapped environments where images are pre-loaded onto nodes and must not be re-pulled from a remote registry. |
 | `kubernetesProvider` _[Provider](#provider)_ | (Optional) KubernetesProvider specifies a particular provider of the Kubernetes platform and enables provider-specific configuration. If the specified value is empty, the Operator will attempt to automatically determine the current provider. If the specified value is not empty, the Operator will still attempt auto-detection, but will additionally compare the auto-detected value to the specified value to confirm they match. |
 | `cni` _[CNISpec](#cnispec)_ | (Optional) CNI specifies the CNI that will be used by this installation. |
 | `calicoNetwork` _[CalicoNetworkSpec](#caliconetworkspec)_ | (Optional) CalicoNetwork specifies networking configuration options for Calico. |
@@ -1874,14 +1877,16 @@ _Appears in:_
 | `csiNodeDriverDaemonSet` _[CSINodeDriverDaemonSet](#csinodedriverdaemonset)_ | (Optional) CSINodeDriverDaemonSet configures the csi-node-driver DaemonSet. |
 | `calicoKubeControllersDeployment` _[CalicoKubeControllersDeployment](#calicokubecontrollersdeployment)_ | (Optional) CalicoKubeControllersDeployment configures the calico-kube-controllers Deployment. If used in conjunction with the deprecated ComponentResources, then these overrides take precedence. |
 | `typhaDeployment` _[TyphaDeployment](#typhadeployment)_ | (Optional) TyphaDeployment configures the typha Deployment. If used in conjunction with the deprecated ComponentResources or TyphaAffinity, then these overrides take precedence. |
+| `typhaPodDisruptionBudget` _[PodDisruptionBudgetOverride](#poddisruptionbudgetoverride)_ | (Optional) TyphaPodDisruptionBudget configures the PodDisruptionBudget for the calico-typha Deployment. Fields left unset fall back to the operator's defaults. The PDB's selector is managed by the operator and cannot be overridden. |
 | `calicoWindowsUpgradeDaemonSet` _[CalicoWindowsUpgradeDaemonSet](#calicowindowsupgradedaemonset)_ | Deprecated. The CalicoWindowsUpgradeDaemonSet is deprecated and will be removed from the API in the future. CalicoWindowsUpgradeDaemonSet configures the calico-windows-upgrade DaemonSet. |
 | `calicoNodeWindowsDaemonSet` _[CalicoNodeWindowsDaemonSet](#caliconodewindowsdaemonset)_ | CalicoNodeWindowsDaemonSet configures the calico-node-windows DaemonSet. |
-| `fipsMode` _[FIPSMode](#fipsmode)_ | (Optional) FIPSMode uses images and features only that are using FIPS 140-2 validated cryptographic modules and standards. Only supported for Variant=Calico.<br />Default: Disabled |
+| `fipsMode` _[FIPSMode](#fipsmode)_ | (Optional) Deprecated. FIPS mode is no longer supported. Setting fipsMode to Enabled marks the installation degraded. |
 | `logging` _[Logging](#logging)_ | (Optional) Logging Configuration for Components |
 | `windowsNodes` _[WindowsNodeSpec](#windowsnodespec)_ | (Optional) Windows Configuration |
 | `serviceCIDRs` _string array_ | (Optional) Kubernetes Service CIDRs. Specifying this is required when using Calico for Windows. |
 | `azure` _[Azure](#azure)_ | (Optional) Azure is used to configure azure provider specific options. |
 | `proxy` _[Proxy](#proxy)_ | (Optional) Proxy is used to configure the HTTP(S) proxy settings that will be applied to Tigera containers that connect to destinations outside the cluster. It is expected that NO_PROXY is configured such that destinations within the cluster (including the API server) are exempt from proxying. |
+| `networkPolicy` _[NetworkPolicySpec](#networkpolicyspec)_ | (Optional) NetworkPolicy configures how the operator manages the NetworkPolicies and GlobalNetworkPolicies it installs to protect the Calico components it manages. |
 
 
 ### InstallationStatus
@@ -1991,7 +1996,7 @@ _Appears in:_
 | `istiod` _[IstiodDeployment](#istioddeployment)_ | (Optional) IstiodDeployment defines the resource requirements and node selector for the Istio deployment. |
 | `istioCNI` _[IstioCNIDaemonset](#istiocnidaemonset)_ | (Optional) IstioCNIDaemonset defines the resource requirements for the Istio CNI plugin. |
 | `ztunnel` _[ZTunnelDaemonset](#ztunneldaemonset)_ | (Optional) ZTunnelDaemonset defines the resource requirements for the ZTunnelDaemonset component. |
-| `dscpMark` _[DSCP](#dscp)_ | (Optional) DSCPMark define the value of the DSCP mark done by Felix and recognised by Istio CNI for Transparent NetworkPolicies. |
+| `dscpMark` _DSCP_ | (Optional) DSCPMark define the value of the DSCP mark done by Felix and recognised by Istio CNI for Transparent NetworkPolicies. |
 
 
 ### IstioStatus
@@ -2121,6 +2126,28 @@ _Appears in:_
 | `Nftables` |  |
 
 
+### LinuxPodInterfaceType
+
+_Underlying type:_ _string_
+
+LinuxPodInterfaceType specifies the type of virtual device the Calico CNI plugin
+creates for the pod-side interface on Linux nodes.
+
+One of: Veth, Netkit
+
+_Validation:_
+- Enum: [Veth Netkit]
+
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Value | Description |
+| --- | --- |
+| `Veth` |  |
+| `Netkit` |  |
+
+
 ### LogLevel
 
 _Underlying type:_ _string_
@@ -2210,6 +2237,7 @@ _Appears in:_
 - [GatewayService](#gatewayservice)
 - [GoldmaneDeployment](#goldmanedeployment)
 - [GoldmaneDeploymentPodTemplateSpec](#goldmanedeploymentpodtemplatespec)
+- [PodDisruptionBudgetOverride](#poddisruptionbudgetoverride)
 - [TyphaDeployment](#typhadeployment)
 - [TyphaDeploymentPodTemplateSpec](#typhadeploymentpodtemplatespec)
 - [WhiskerDeployment](#whiskerdeployment)
@@ -2275,6 +2303,40 @@ _Appears in:_
 | `name` _string_ |  |
 
 
+
+
+### NetworkPolicyManagement
+
+_Underlying type:_ _string_
+
+NetworkPolicyManagement specifies whether the operator manages the NetworkPolicies it installs to
+protect the Calico components it manages.
+
+_Validation:_
+- Enum: [Enabled Disabled]
+
+
+_Appears in:_
+- [NetworkPolicySpec](#networkpolicyspec)
+
+| Value | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
+
+
+### NetworkPolicySpec
+
+
+
+NetworkPolicySpec configures how the operator manages the NetworkPolicies it installs.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `managePolicies` _[NetworkPolicyManagement](#networkpolicymanagement)_ | (Optional) ManagePolicies controls whether the operator creates and reconciles the NetworkPolicies and GlobalNetworkPolicies it uses to protect the Calico components it installs. When set to Disabled, the operator stops creating or updating these policies and deletes any it has already created, leaving policy management to the user. Defaults to Enabled. |
 
 
 ### NodeAddressAutodetection
@@ -2347,6 +2409,39 @@ _Appears in:_
 
 
 
+
+
+### PodDisruptionBudgetOverride
+
+
+
+PodDisruptionBudgetOverride allows overriding select fields on an operator-managed
+PodDisruptionBudget. The PDB's selector, name, and namespace are managed by the
+operator and cannot be overridden.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[PodDisruptionBudgetOverrideSpec](#poddisruptionbudgetoverridespec)_ | (Optional) Spec is the specification of the PodDisruptionBudget. |
+
+
+### PodDisruptionBudgetOverrideSpec
+
+
+
+PodDisruptionBudgetOverrideSpec defines the desired state of an operator-managed PodDisruptionBudget.
+
+_Appears in:_
+- [PodDisruptionBudgetOverride](#poddisruptionbudgetoverride)
+
+| Field | Description |
+| --- | --- |
+| `minAvailable` _[IntOrString](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#intorstring-intstr-util)_ | (Optional) MinAvailable is the minimum number of pods (as an integer or percentage) that must remain available during a disruption. Mutually exclusive with MaxUnavailable. |
+| `maxUnavailable` _[IntOrString](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#intorstring-intstr-util)_ | (Optional) MaxUnavailable is the maximum number of pods (as an integer or percentage) that can be unavailable during a disruption. Mutually exclusive with MinAvailable. If neither MinAvailable nor MaxUnavailable is set, the operator applies its default (MaxUnavailable=1 for calico-typha). |
+| `unhealthyPodEvictionPolicy` _[UnhealthyPodEvictionPolicyType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#unhealthypodevictionpolicytype-v1-policy)_ | (Optional) UnhealthyPodEvictionPolicy defines when unhealthy pods should be considered for eviction. Defaults to IfHealthyBudget (the Kubernetes default) when unset. See https://kubernetes.io/docs/tasks/run-application/configure-pdb/#unhealthy-pod-eviction-policy. |
 
 
 ### PolicyMode

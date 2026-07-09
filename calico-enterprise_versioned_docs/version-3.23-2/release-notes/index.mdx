@@ -1,0 +1,226 @@
+---
+description: Release notes for the current Calico Enterprise release — new features, enhancements, technology previews, deprecations, upgrade notes, and bug fixes.
+title: Release notes
+---
+
+# Calico Enterprise 3.23 release notes
+
+Learn about the new features, bug fixes, and other updates in this release of $[prodname].
+
+This version of Calico Enterprise is based on [Calico Open Source $[openSourceVersion]](https://docs.tigera.io/calico/$[openSourceVersion]/release-notes).
+
+## New features and enhancements
+
+{/* Start 3.23.0-2.0 features */}
+
+### Less disruptive license expiration
+
+When a $[prodname] license expires, dataplane traffic and existing policy enforcement now continue running uninterrupted.
+The consequences are limited to the management plane: $[prodname] resources become read-only, log forwarding and component metrics stop, and the web console becomes read-only.
+
+You can check license condition with `kubectl get tigerastatus`, which also reports a warning during the 30-day grace period before expiration.
+
+For more information, see [License expiration and renewal](../operations/license-options.mdx).
+
+### Host policy recommendations
+
+The policy recommendation engine now generates staged global network policies for hosts in your cluster, based on observed flow logs.
+$[prodname] analyzes each host's actual traffic and produces a staged `GlobalNetworkPolicy` you can review and promote to enforcement once you've confirmed it matches real traffic.
+
+For more information, see [Recommend policies for hosts](../network-policy/recommendations/hep-policy-recommendations.mdx).
+
+### Host IP support for egress gateways
+
+You can now configure egress gateways to SNAT outbound traffic to the host node's IP rather than the gateway's pod IP, giving external firewalls and services a stable, well-known set of source IPs to allow.
+Multiple application pods can multiplex outbound traffic through a small fixed set of gateways without each requiring its own routable IP.
+
+Host IP mode is most useful for on-premises clusters where pod IPs are not routable outside the cluster.
+On AWS and Azure, it replaces the gateway's native VPC/VNet IP with the host node address.
+
+For more information, see [Configure egress gateways with host IP support](../networking/egress/egress-gateway-host-ip.mdx).
+
+### Load balancer node maintenance
+
+When you put a node into maintenance, $[prodname]'s eBPF data plane can now stop sending new service traffic to the node's local backends while existing connections complete.
+This lets platform teams drain nodes for upgrades, repairs, or capacity changes without dropping mid-flight sessions or stateful workloads.
+
+For more information, see [Mark a load balancer node for maintenance](../networking/configuring/mark-lb-node-for-maintenance.mdx).
+
+### Multi-VRF networking (tech preview)
+
+You can now attach pods to one or more virtual routing and forwarding (VRF) domains. Traffic from a VRF-attached pod is routed in a dedicated routing table on the node, peered with a dedicated upstream fabric over BGP, and isolated from pods on other VRFs and from the default flat pod network.
+
+Use this to reach tenant networks that have overlapping external IPs, to enforce an in-cluster routing boundary between tenants, or to map workloads onto an existing multi-tenant fabric. The nftables data plane is required, and a pod can be attached to up to nine VRFs.
+
+For more information, see [Configure multi-VRF networking](../networking/configuring/multi-vrf.mdx).
+
+### Native v3 CRDs (tech preview)
+
+$[prodname] now supports installation with native `projectcalico.org/v3` CRDs as an alternative to the aggregated API server.
+The Tigera Operator registers `projectcalico.org/v3` resources directly as native Kubernetes CRDs — no host-network pods, no ordering dependencies between CRDs and the API server, and `kubectl` manages v3 resources without an extra install step.
+This removes a long-standing source of installation friction on managed Kubernetes platforms like EKS and AKS.
+For existing clusters, a new `DatastoreMigration` controller copies resources from the aggregated API server to native CRDs in place; the datastore is briefly locked but workload connectivity is preserved through the migration window.
+
+Native v3 CRDs require Kubernetes 1.34 or later with the `MutatingAdmissionPolicy` feature gate enabled. The gate is GA and on by default in Kubernetes 1.36; on 1.34 and 1.35 it must be enabled explicitly on the API server.
+
+This is the first phase of phasing out the aggregated API server: in a future release, native v3 CRDs will become the default install mode, and in a later release the aggregated API server will be removed entirely.
+
+For more information, see [Enable native v3 CRDs](../operations/native-v3-crds.mdx) and [Migrate from API server to native CRDs](../operations/crd-migration.mdx).
+
+{/* End 3.23.0-2.0 features */}
+
+{/* Start 3.23.0-1.0 features */}
+
+### Review unused network policies
+
+{/* Originally introduced in 3.23.0-1.0; expanded in 3.23.0-2.0 with the calicoctl CLI surface. */}
+
+Find network policies and rules that aren't matching traffic, so you can safely remove them and maintain a least-privilege security posture.
+
+In the web console, the policy edit page now shows a **Last Evaluated** timestamp on each policy and on each ingress and egress rule.
+The new `calicoctl review unused-policies` command lists policies and rules that haven't matched traffic within a time window you choose.
+
+For more information, see [Review unused network policies](../observability/review-unused-network-policies.mdx).
+
+### New Linux distros for non-cluster hosts and VMs
+
+This release adds support for Debian and Ubuntu for non-cluster hosts and VMs.
+
+For more information, see [Install Calico Enterprise on non-cluster hosts and VMs](../getting-started/bare-metal/about.mdx).
+
+### Ingress Gateway dashboard
+
+The Ingress Gateway L7 dashboard provides a clear view of how your gateways manage traffic, helping you track request speeds and resolve connection errors quickly to keep your applications running smoothly.
+
+For more information, see [Dashboards](../observability/dashboards.mdx#ingress-gateway-l7).
+
+### Maglev load balancing for services
+
+Calico Enterprise now supports Maglev consistent-hash load balancing for external traffic to services.
+Maglev enables Calico Enterprise nodes to act as a distributed, horizontally scalable load balancer.
+When a node goes down — for maintenance or otherwise — external connections can fail over to another node.
+This is particularly useful when advertising service IPs as ECMP routes to your broader network.
+
+Maglev is enabled per-service via annotation, keeping the memory footprint contained to only the services that need it.
+
+For more information, see [Add Maglev load balancing to a service](../networking/configuring/add-maglev-load-balancing.mdx).
+
+{/* End 3.23.0-1.0 features */}
+
+{/* Start 3.23.1 features */}
+
+### Install on vSphere Kubernetes Service (VKS)
+
+You can now install $[prodname] on vSphere Kubernetes Service (VKS). You deploy it as an Addon to your guest clusters.
+Air-gapped installs also work, including relocating the bundle and images to a local registry.
+
+For more information, see [vSphere Kubernetes Service (VKS)](../getting-started/install-on-clusters/vks.mdx).
+
+{/* End 3.23.1 features */}
+
+### Enhancements
+
+* Improved the deterministic selection logic for flow and L7 logs when multiple NetworkSets have overlapping CIDRs.
+  Logs and Service Graph now prioritize namespace-specific matches over GlobalNetworkSets and other namespace matches to ensure more accurate identity attribution.
+* User experience improvements to the Flow Summary card.
+
+## Deprecated and removed features
+
+* Support for RHEL 8 and Windows 1809 has been removed in this release.
+* Support for the x86-64 v2 chip architecture is deprecated and scheduled for removal in an upcoming release.
+* Application-layer policy and L7 observability features based on Envoy as a daemonset are deprecated and scheduled for removal in an upcoming release. These are being replaced with similar functionality using Istio Ambient Mode.
+
+## Known issues
+
+* In clusters using the eBPF data plane with strict reverse path forwarding (RPF) enabled, link-local discovery packets may be incorrectly dropped. This can interfere with neighbor discovery and local network communication. A fix is planned for an upcoming release.
+* The eBPF data plane on EKS with Kubernetes 1.36 is currently not working, including in combination with Bottlerocket; the issue is under investigation.
+* On ARM64 with the eBPF data plane, the DNS parser can fail to load, which can result in timeouts.
+
+## Upgrading
+
+Before upgrading to Calico Enterprise 3.23, review [Upgrade notes](#upgrade-notes), [Deprecated and removed features](#deprecated-and-removed-features), and [Known issues](#known-issues).
+
+### Upgrade from a previous minor
+
+Calico Enterprise 3.23 supports a direct upgrade from version 3.22 and 3.21. To upgrade from an earlier version, plan an intermediate upgrade.
+
+For upgrade instructions, see [Upgrade Calico Enterprise](../getting-started/upgrading/upgrading-enterprise/index.mdx).
+
+### Install a patch release
+
+To install a patch release of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
+
+### Upgrade notes
+
+* *Breaking change:* The Manager UI deployment has been moved from the `tigera-manager` namespace to the `calico-system` namespace and is now called `calico-manager`. If you expose the deployment via an ingress, load balancer, or node port service, you need to remove those resources and recreate them in the new namespace. The same applies to multi-cluster management users who expose the tunnel port. If you override component resources or limits, we suggest using the new container name by replacing `tigera-` with `calico-`, even though backwards compatibility is preserved. For details, see [Access the Manager](../operations/cnx/access-the-manager.mdx) and [Create a Management Cluster](../multicluster/set-up-multi-cluster-management/standard-install/create-a-management-cluster.mdx).
+
+## Release details
+
+### Calico Enterprise 3.23.0-2.0 (early preview)
+
+June 5, 2026
+
+:::info[Early preview — not for production]
+This release is for previewing and testing purposes only. It is not supported for use in production.
+:::
+
+
+{/* TODO: fill in subsections for 3.23.0-2.0 — #### Upgrade notes, #### Enhancements, #### Bug fixes, #### Known issues. Omit any subsection with no items. */}
+
+#### Bug fixes
+
+* Fixed an issue where the non-cluster host Typha deployment could crashloop on clusters where the host-network Kubernetes API server endpoint is not reachable from pod-networked pods (for example, MKE's `proxy.local`). The pod-network endpoint from the `kubernetes-service-endpoint` ConfigMap is now used when set.
+
+#### Known issues
+
+* `clusterinformation` will incorrectly state `calicoVersion` as `v3.31.0`; The correct Calico open-source version this Calico Enterprise release is based on is `v3.32.0`. This is a purely a cosmetic bug with no user impact and can be ignored.
+
+### Calico Enterprise 3.23.0-1.0 (early preview)
+
+February 14, 2026
+
+:::info[Early preview — not for production]
+This release is for previewing and testing purposes only. It is not supported for use in production.
+:::
+
+#### Upgrade notes
+
+* *Breaking change:* The Manager UI deployment has been moved from the `tigera-manager` namespace to the `calico-system` namespace and is now called `calico-manager`. If you expose the deployment via an ingress, load balancer, or node port service, you need to remove those resources and recreate them in the new namespace. The same applies to multi-cluster management users who expose the tunnel port. If you override component resources or limits, we suggest using the new container name by replacing `tigera-` with `calico-`, even though backwards compatibility is preserved. For details, see [Access the Manager](../operations/cnx/access-the-manager.mdx) and [Create a Management Cluster](../multicluster/set-up-multi-cluster-management/standard-install/create-a-management-cluster.mdx).
+
+#### Enhancements
+
+* Improved the deterministic selection logic for flow and L7 logs when multiple NetworkSets have overlapping CIDRs. Logs and Service Graph now prioritize namespace-specific matches over GlobalNetworkSets and other namespace matches to ensure more accurate identity attribution.
+* User experience improvements to the Flow Summary card.
+
+#### Known issues
+
+* In clusters using the eBPF data plane with strict reverse path forwarding (RPF) enabled, link-local discovery packets may be incorrectly dropped. This can interfere with neighbor discovery and local network communication.
+* The combination of the eBPF data plane on EKS with Bottlerocket is currently not working; the issue is under investigation.
+* On ARM64 with the eBPF data plane, the DNS parser can fail to load, which can result in timeouts.
+
+### Calico Enterprise 3.23.1 general availability release
+
+July 6, 2026
+
+Calico Enterprise 3.23.1 is now available as a general availability release.
+
+This release is supported for use in production.
+
+{/* TODO (fill after): add #### Breaking changes, #### Bug fixes, #### Known issues — omit any subsection with no items. */}
+
+#### Bug fixes
+
+* Fixed an issue where non-cluster hosts could inherit an unsupported data plane mode from the cluster's global FelixConfiguration. The eBPF data plane is now disabled on all non-cluster host packages, and RHEL 8 hosts are forced to use the iptables data plane (its 4.18 kernel does not reliably support nftables). RHEL 9, Debian, and Ubuntu continue to inherit the cluster's data plane choice.
+* Fixed an issue where DNS-policy trusted servers (including `k8s-service:` references such as the default `kube-dns`) were resolved only once at startup and never refreshed. They are now kept up to date as the backing Service changes.
+* Fixed a bug where Felix could permanently lose its DNS-policy NFQUEUE listener after a transient queue reconnect, causing domain-based policy to stop being enforced until Felix restarted.
+
+#### Known issues
+
+* On clusters using the eBPF data plane, a `HostEndpoint` policy can block UDP return traffic for pod-originated egress that uses NAT-outgoing (SNAT). TCP and ICMP traffic is unaffected. A fix is planned for an upcoming patch release.
+* If the cluster's Kubernetes service account issuer changes (for example, during platform maintenance), $[prodname] components that validate bearer tokens keep using the previous issuer until restarted and reject service account tokens with `bearer token was not issued by a trusted issuer`. Manager UI observability pages (Service Graph, dashboard traffic stats, process info, L7 logs), license details, and log ingestion can fail while `tigerastatuses` still report Available. As a workaround, restart the token-validating components (`tigera-linseed`, `calico-apiserver`, `tigera-manager`, and `compliance-server`) so they re-read the current issuer, then re-create any long-lived Manager login tokens minted before the change. A fix is planned for an upcoming patch release.
+* Windows nodes on VKS are not currently supported due to a known issue where nodes may restart during VKS controller reconciliation. Support will be introduced once an upstream VKS fix is available.
+
+
+#### Upgrading
+
+To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).

@@ -421,24 +421,8 @@ interface they came in on.
 
 Outbound connections that the application doesn't bind to a specific interface
 or source IP follow the pod's default routing table — by default this means
-the flat-network interface. To direct specific outbound destinations down the
-VRF interface without changing the application, add a `routes` section to the
-secondary interface's IPAM block:
-
-```json
-"ipam": {
-    "type": "calico-ipam",
-    "assign_ipv4": "true",
-    "ipv4_pools": ["vrf1pool"],
-    "routes": [
-      {"dst": "10.0.0.0/8"}
-    ]
-}
-```
-
-With this configuration, traffic to `10.0.0.0/8` from the pod uses the
-secondary VRF interface, while everything else continues out the primary
-flat-network interface.
+the flat-network interface. This can be controlled by using, for example,
+the [`route-override` CNI plugin](https://github.com/redhat-nfvpe/cni-route-override).
 
 ### Advertise services scoped to a VRF
 
@@ -473,8 +457,9 @@ typically also need [multus-service](https://github.com/k8snetworkplumbingwg/mul
 or an equivalent controller so that the service `Endpoints` use the secondary
 (VRF) IP rather than the primary (flat) IP.
 
-NodePort services are not supported in the tech preview; advertise services
-as `LoadBalancer` cluster IPs instead.
+To use NodePort services kube-proxy's `nodePortAddresses` option must be set to
+CIDR(s) that cover the node IPs on the VRF interfaces.  The default detection
+of local addresses only considers IPs in the default VRF.
 
 ### Verify
 
@@ -496,7 +481,7 @@ ip vrf show
 Inside a VRF pod:
 
 ```bash
-ip route        # the pod's own table; default route via the VRF interface
+ip route        # the pod's own table; default route via the primary interface
 ip rule         # source-based rules pinning each interface's source IP to its table
 ```
 
@@ -515,10 +500,9 @@ device.
 The current tech preview has the following limitations:
 
 - **Dataplane**: only the [nftables dataplane](../../operations/nftables.mdx) is supported. iptables and eBPF are not supported.
-- **kube-proxy**: must be in `nftables` mode. `ipvs` mode is **never** supported in a cluster that uses VRFs (this is a permanent restriction, not a tech-preview limitation).
-- **NodePort services** are not supported on VRF networks. Use `LoadBalancer` services advertised over BGP instead.
+- **kube-proxy**: must be in `nftables` mode.
 - **Egress gateways** cannot be placed on a VRF network. Use [external networks](../egress/external-network.mdx) for that use case.
-- **ExternalNetworks** and `Network` resources cannot be used in the same cluster.
+- **ExternalNetworks** and `Network` resources cannot share the same `routeTableIndex`.
 - **Host endpoints** should not be applied to interfaces inside a VRF.
 - **Pods can be attached to at most 9 VRFs**, the Multus secondary-interface limit.
 - **Pod IPs must be unique** across all VRFs and must not be used outside the cluster in any VRF.

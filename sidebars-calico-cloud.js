@@ -63,7 +63,6 @@ module.exports = {
             'tutorials/calico-cloud-features/service-graph',
             'tutorials/calico-cloud-features/networksets',
             'tutorials/calico-cloud-features/projects',
-            'tutorials/calico-cloud-features/mylo-ai',
           ],
         },
         {
@@ -221,7 +220,6 @@ module.exports = {
         'observability/alerts',
         'observability/dashboards',
         'observability/create-custom-dashboard',
-        'observability/kibana',
         'observability/packetcapture',
         'observability/visualize-traffic',
         {
@@ -275,32 +273,8 @@ module.exports = {
         'threat/suspicious-domains',
         'threat/tor-vpn-feed-and-dashboard',
         'threat/deeppacketinspection',
-        'threat/container-threat-detection',
         'threat/web-application-firewall',
         'threat/deploying-waf-ingress-gateway',
-        {
-          type: 'category',
-          label: 'Image Assurance (deprecated)',
-          link: { type: 'doc', id: 'image-assurance/index' },
-          items: [
-            {
-              type: 'category',
-              label: 'Scan images for vulnerabilities',
-              link: { type: 'doc', id: 'image-assurance/scanners/index' },
-              items: [
-                'image-assurance/scanners/overview',
-                'image-assurance/scanners/cluster-scanner',
-                'image-assurance/scanners/pipeline-scanner',
-                'image-assurance/scanners/registry-scanner',
-              ],
-            },
-            'image-assurance/understanding-scan-results',
-            'image-assurance/exclude-vulnerabilities-from-scan-results',
-            'image-assurance/set-up-alerts',
-            'image-assurance/install-the-admission-controller',
-            'image-assurance/creating-jira-issues-for-scan-results',
-          ],
-        },
       ],
     },
     {
@@ -359,6 +333,7 @@ module.exports = {
             'networking/configuring/advertise-service-ips',
             'networking/configuring/mtu',
             'networking/configuring/custom-bgp-config',
+            'networking/configuring/secure-bgp',
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/pod-mac-address',
             'networking/configuring/node-local-dns-cache',
@@ -419,12 +394,7 @@ module.exports = {
         'operations/cluster-management',
         'operations/disconnect',
         'operations/usage-metrics',
-        {
-          type: 'category',
-          label: 'Secure component communications',
-          link: { type: 'doc', id: 'operations/comms/index' },
-          items: ['operations/comms/secure-metrics', 'operations/comms/secure-bgp'],
-        },
+        'operations/comms/index',
         {
           type: 'category',
           label: 'Monitoring',
@@ -474,7 +444,6 @@ module.exports = {
       items: [
         'reference/api',
         'reference/installation/api',
-        'reference/installation/ia-api',
         {
           type: 'category',
           label: 'Resource definitions',
@@ -487,7 +456,6 @@ module.exports = {
             'reference/resources/bgpfilter',
             'reference/resources/blockaffinity',
             'reference/resources/caliconodestatus',
-            'reference/resources/containeradmissionpolicy',
             {
               type: 'category',
               label: 'Compliance reports',
@@ -520,7 +488,6 @@ module.exports = {
             'reference/resources/node',
             'reference/resources/packetcapture',
             'reference/resources/remoteclusterconfiguration',
-            'reference/resources/runtimesecurity',
             'reference/resources/securityeventwebhook',
             'reference/resources/stagedglobalnetworkpolicy',
             'reference/resources/stagedkubernetesnetworkpolicy',

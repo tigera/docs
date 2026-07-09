@@ -1,0 +1,81 @@
+name: Weekly link check
+
+on:
+  # Weekly schedule: Monday at 07:00 UTC (after the llms.txt job at 06:00).
+  schedule:
+    - cron: '0 7 * * 1'
+
+  # Manual trigger via GitHub UI
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  link-check:
+    name: Build, serve, and crawl the docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Build the site
+        run: make build
+        env:
+          NODE_OPTIONS: '--max-old-space-size=6000'
+          DOCUSAURUS_IGNORE_SSG_WARNINGS: 'true'
+
+      - name: Install Playwright Chrome
+        run: yarn playwright install --with-deps chrome
+
+      - name: Serve the site and run the link check
+        run: make test 2>&1 | tee link-check.log
+        env:
+          CI: 'true'
+
+      - name: Upload the link-check log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-check-log
+          path: link-check.log
+          if-no-files-found: ignore
+
+      - name: Open or update an issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="Weekly link check failed"
+          BODY_FILE=issue-body.md
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          {
+            echo "The weekly link check found broken links or errors."
+            echo ""
+            echo "Run: ${RUN_URL}"
+            echo ""
+            echo "Last lines of the report (full log is in the run artifact \"link-check-log\"):"
+            echo ""
+            echo '```'
+            tail -n 200 link-check.log 2>/dev/null || echo "(no log captured)"
+            echo '```'
+          } > "$BODY_FILE"
+          NUM=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$NUM" ]; then
+            gh issue comment "$NUM" --repo "$GITHUB_REPOSITORY" --body-file "$BODY_FILE"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body-file "$BODY_FILE"
+          fi

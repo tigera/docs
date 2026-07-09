@@ -28,7 +28,7 @@ For more information, see [Deploying WAF with an ingress gateway](../threat/depl
 
 This release adds customization options for specifying external load balancers for `Gateway` resources in your cluster.
 
-For more information, see [Customize gateway deployment and features](../networking/ingress-gateway/customize-ingress-gateway.mdx#customize-gateway-deployment-and-features).
+For more information, see [Customize gateway deployment and features](../networking/ingress-gateway/customize-ingress-gateway.mdx).
 
 ### Istio Ambient Mode (tech preview)
 
@@ -365,7 +365,7 @@ May 6, 2026
 
 To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
 
-### Calico Enterprise 3.22.5
+### Calico Enterprise 3.22.5 bug fix release
 
 May 20, 2026
 
@@ -379,5 +379,25 @@ May 20, 2026
 * Updated the Envoy Gateway CRDs in the operator project to v1.7.2 to match the images which are already at v1.7.2, so that all available features are configurable.
 * Security updates for Golang and `golang.org/x/` dependencies.
 * Fixes an issue where Felix makes unnecessary calls to nft when running in iptables mode.
+
+To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
+
+### Calico Enterprise 3.22.6 bug fix release
+
+June 17, 2026
+
+#### Bug fixes
+
+* Fixed an RBAC error that could prevent the operator from creating secrets in the `tigera-manager` namespace on fresh installs with the `Authentication` resource configured.
+* Fixed an issue where the non-cluster host Typha deployment could crashloop on clusters where the host-network Kubernetes API server endpoint is not reachable from pod-networked pods (for example, MKE's `proxy.local`). The pod-network endpoint from the `kubernetes-service-endpoint` ConfigMap is now used when set.
+* Security updates.
+
+#### Known issues
+
+* After an automatic Elasticsearch CA rotation, Elasticsearch nodes may fail to rejoin the cluster (and Kibana may fail to connect) with `PKIX path validation failed: Path does not chain with any of the trust anchors` errors in the logs.
+  This is caused by an upstream ECK issue where a renewed certificate authority is assigned a new Subject Key Identifier, breaking the certificate trust chain across pods that have not yet restarted.
+  To resolve or prevent the issue, delete the Elasticsearch transport (and, if Kibana is affected, HTTP) certificate secrets so that ECK regenerates all certificates under the current CA; Elasticsearch hot-reloads them without a pod restart.
+  For detection and exact remediation steps, see [this Elastic support article](https://support.elastic.co/knowledge/5198af8e).
+  A fix is included in Calico Enterprise 3.22.7.
 
 To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).

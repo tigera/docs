@@ -1,0 +1,463 @@
+---
+description: Install Calico Enterprise as a Supervisor Service on vSphere Kubernetes Service (VKS) and deploy it to guest clusters.
+---
+
+# vSphere Kubernetes Service (VKS)
+
+## Big picture
+
+Install $[prodname] as a Supervisor Service on vSphere Kubernetes Service (VKS), and deploy it to guest clusters.
+
+## Before you begin
+
+This guide requires:
+
+- **VM Images**: Ubuntu or Photon OVA images registered for a supported TKR version, with TKR in a healthy state.
+- **vSphere Resources**: Sufficient capacity to provision guest clusters with at minimum:
+    - 1 control plane node
+    - 3 Linux worker nodes
+- **OCI Registry**: An OCI-compliant registry configured in vSphere for storing package manifests and container images.
+- **Tigera pull secret** for accessing the Tigera container registry (contact the Tigera team).
+
+### Networking
+
+| Configuration | Dataplane | Encapsulation | BGP |
+|---|---|---|---|
+| Linux only (default) | IPTables | IPIP | Enabled |
+
+## How to
+
+Setting up $[prodname] on VKS has two main phases: set it as a Supervisor Service (Part 1) in vSphere (one time), then deploy it to a guest cluster (Part 2). Parts 3 and 4 apply only to air-gapped environments.
+
+### Part 1: Set up the Supervisor Service (one time cluster admin setup)
+
+1. In the vSphere Supervisor UI:
+   - Create a new Supervisor Service (or add a new version to an existing one).
+   - Upload Supervisor service Package and PackageMetadata (example below) resources and complete the UI workflow.
+   - Register the Supervisor Service and set `registryName` to match the registry name configured in the UI (if needed).
+
+```yaml
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: Package
+metadata:
+  name: calico-enterprise-svs.tigera.io.3.23.1
+spec:
+  refName: calico-enterprise-svs.tigera.io
+  version: 3.23.1
+  template:
+    spec:
+      fetch:
+      - imgpkgBundle:
+          image: quay.io/tigera/calico-enterprise-svs:v3.23.1   #Change this to the registry where the carvel package is getting picked up
+      template:
+      - ytt:
+          paths:
+          - service
+          - kapp
+      - kbld:
+          paths:
+          - "-"
+          - .imgpkg/images.yml
+          - kbld/
+      deploy:
+      - kapp: {}
+---
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: calico-enterprise-svs.tigera.io
+spec:
+  displayName: "Calico Enterprise SVS"
+  shortDescription: "Manages Calico Enterprise Addon Repository and Installation"
+```
+
+2. Add the tigera-pull-secret ClusterResourceSet to the Supervisor namespace where auto tigera-pull-secret application is desired
+
+```sh
+kubectl apply -n <cluster-namespace> -f <clusterresourceset-file-below>.yaml
+```
+
+```yaml
+# Apply this on the Supervisor cluster for the namespaces where guest clusters will be provisioned with Calico Enterprise.
+# Source Secret containing the CRS manifests
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tigera-pull-secret-bootstrap
+type: addons.cluster.x-k8s.io/resource-set   # CRS-specific type
+stringData:
+  resources.yaml: |
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: tigera-operator
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: tigera-pull-secret
+      namespace: tigera-operator
+    type: kubernetes.io/dockerconfigjson
+    data:
+      .dockerconfigjson: <PASTE-BASE64-DOCKERCONFIGJSON-HERE>
+---
+# The CRS that selects clusters and points at the source
+apiVersion: addons.cluster.x-k8s.io/v1beta2
+kind: ClusterResourceSet
+metadata:
+  name: tigera-pull-secret-bootstrap
+spec:
+  strategy: Reconcile
+  clusterSelector:
+    matchLabels:
+      tigera.io/pull-secret: required
+  resources:
+  - name: tigera-pull-secret-bootstrap
+    kind: Secret
+
+```
+
+### Part 2: Deploy to a guest cluster
+
+#### Guest cluster prerequisites
+
+- **Cluster ResourceSet for tigera pull secret**: The tigera-pull-secret applied as CAPI Cluster ResourceSet in the Supervisor Cluster for all namespaces where guest clusters with $[prodname] will be provisioned. 
+- **Tigera license file** (contact the Tigera team).
+- **Dynamic PV provisioning** via a StorageClass, required for Elasticsearch storage.
+
+#### Step 1: Apply the AddonConfig
+
+:::info
+
+Update the following fields before applying:
+- `metadata.name` and `metadata.namespace`
+- `spec.addonConfigDefinitionRef` (name and namespace)
+- `spec.clusterName`
+- `spec.values.installation.registry` to use $[prodname] images from a private registry (for air-gapped installs). This should be the same registry where $[prodname] images are pushed to using [Part 4](#part-4-air-gapped-relocate-calico-enterprise-private-images-to-a-private-registry) of this doc. Optionally `spec.values.installation.imagePath` can be set if the $[prodname] images were pushed to a specific folder within the private registry.
+
+:::
+
+:::note
+
+All $[prodname] features (`logCollector`, `logStorage`, `manager`, `monitor`, `policyRecommendation`) are optional. Only `apiServer` is required. Set any unwanted features to `false`.
+
+:::
+
+```bash
+kubectl apply -f ./addon_config.yaml
+```
+
+```yaml
+apiVersion: addons.kubernetes.vmware.com/v1alpha1
+kind: AddonConfig
+metadata:
+  name: <addon-config-name>
+  namespace: <cluster-namespace>
+spec:
+  addonConfigDefinitionRef:
+    name: calico-enterprise.tigera.io.3.23.1
+    namespace: vmware-system-vks-public
+  clusterName: <cluster-name>
+  values:
+    # Every option from tigera-helm-charts/tigera-operator/values.yaml may be
+    # set here. Anything not specified falls back to the default declared in
+    # the AddonConfigDefinition schema. The fields below are illustrative;
+    installation:
+      enabled: true
+      imagePullSecrets:
+      - name: tigera-pull-secret
+      # registry: quay.io/
+      # imagePath: ""
+      # controlPlaneReplicas: 3
+    apiServer:
+      enabled: true
+    # Calico deploys its own bundled Prometheus Operator by default (enabled: true).
+    # Set this to false ONLY if you run your own external Prometheus Operator -- in
+    # that case Calico's Monitor still creates its Prometheus/Alertmanager CRs for
+    # your operator to reconcile. If you want no Prometheus at all, also set
+    # monitor.enabled: false.
+    # tigeraPrometheusOperator:
+    #   enabled: false
+    logCollector:
+      enabled: true
+    logStorage:
+      enabled: true
+      nodes:
+        count: 1
+    manager:
+      enabled: true
+    monitor:
+      enabled: true
+    policyRecommendation:
+      enabled: true
+```
+
+#### Step 2: Apply the Cluster Resource
+
+Update the following fields before applying:
+- `metadata.name` and `metadata.namespace`
+- `spec.topology.variables[].value.cniRef` (name and namespace of the $[prodname] addon)
+- Add the label `tigera.io/pull-secret: required` to `metadata.labels` so that tigera-pull-secret will be created automatically for the cluster.
+- Node pool configuration (VM class, storage class, replicas) as needed for your environment
+
+```bash
+kubectl apply -f ./cluster.yaml
+```
+
+```yaml
+apiVersion: cluster.x-k8s.io/v1beta2
+kind: Cluster
+metadata:
+  name: <cluster-name>
+  namespace: <cluster-namespace>
+  labels:
+    tigera.io/pull-secret: required
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 100.96.0.0/11
+    serviceDomain: cluster.local
+    services:
+      cidrBlocks:
+      - 100.64.0.0/13
+  topology:
+    classRef:
+      name: builtin-generic-v3.7.0 
+      namespace: vmware-system-vks-public
+    controlPlane:
+      metadata:
+        annotations:
+          run.tanzu.vmware.com/resolve-os-image: os-name=ubuntu,os-version=24.04
+      replicas: 1
+    variables:
+    - name: node
+      value: 
+        firewall:
+          inboundRules:
+            # BGP
+            - protocol: tcp
+              fromPort: 179
+              toPort: 179
+            # VXLAN
+            - protocol: udp
+              fromPort: 4789
+              toPort: 4789
+            # Typha
+            - protocol: tcp
+              fromPort: 5473
+              toPort: 5473
+            # Wireguard
+            - protocol: udp
+              fromPort: 51820
+              toPort: 51820
+            # Elasticsearch
+            - protocol: tcp
+              fromPort: 9200
+              toPort: 9200
+            # Elasticsearch transport
+            - protocol: tcp
+              fromPort: 9300
+              toPort: 9300
+            # Tigera Manager UI
+            - protocol: tcp
+              fromPort: 9443
+              toPort: 9443
+            # Prometheus
+            - protocol: tcp
+              fromPort: 9090
+              toPort: 9090
+            # Linseed
+            - protocol: tcp
+              fromPort: 8444
+              toPort: 8444
+    - name: bootstrapAddons
+      value:
+        cniRef:
+          name: calico-enterprise
+          namespace: svc-calico-enterprise-svs-domain-c10
+    - name: vmClass
+      value: best-effort-xlarge
+    - name: storageClass
+      value: vsan-esa-default-policy-raid5
+    - name: kubernetes
+      value:
+        certificateRotation:
+          enabled: true
+          renewalDaysBeforeExpiry: 90
+    - name: vsphereOptions
+      value:
+        persistentVolumes:
+          defaultStorageClass: vsan-esa-default-policy-raid5
+    version: v1.35.0+vmware.2-vkr.4
+    workers:
+      machineDeployments:
+      - class: node-pool
+        metadata:
+          annotations:
+            run.tanzu.vmware.com/resolve-os-image: os-name=ubuntu,os-version=24.04
+        name: node-pool-1
+        replicas: 3
+        variables:
+          overrides:
+          - name: vmClass
+            value: best-effort-large
+          - name: node
+            value: 
+              firewall:
+                inboundRules:
+                  # BGP
+                  - protocol: tcp
+                    fromPort: 179
+                    toPort: 179
+                  # VXLAN
+                  - protocol: udp
+                    fromPort: 4789
+                    toPort: 4789
+                  # Typha
+                  - protocol: tcp
+                    fromPort: 5473
+                    toPort: 5473
+                  # Wireguard
+                  - protocol: udp
+                    fromPort: 51820
+                    toPort: 51820
+                  # Elasticsearch
+                  - protocol: tcp
+                    fromPort: 9200
+                    toPort: 9200
+                  # Elasticsearch transport
+                  - protocol: tcp
+                    fromPort: 9300
+                    toPort: 9300
+                  # Tigera Manager UI
+                  - protocol: tcp
+                    fromPort: 9443
+                    toPort: 9443
+                  # Prometheus
+                  - protocol: tcp
+                    fromPort: 9090
+                    toPort: 9090
+                  # Linseed
+                  - protocol: tcp
+                    fromPort: 8444
+                    toPort: 8444
+```
+
+#### Step 3: Retrieve the Guest Cluster Kubeconfig
+
+Can be copied from the Supervisor.
+
+#### Step 4: Wait for Core Components
+
+Monitor the Tigera status until `calico` and `apiserver` report as `Available`:
+
+```bash
+kubectl get tigerastatus
+```
+
+At this point, all nodes should be in `Ready` state.
+
+#### Step 5: Apply the Tigera License
+
+```bash
+kubectl apply -f tigera-license.yaml
+```
+
+#### Step 6: Verify the Installation
+
+Wait for all remaining components to become available:
+
+```bash
+kubectl get tigerastatus
+kubectl get pods -A | grep -E 'tigera|calico'
+```
+
+Once all items in `tigerastatus` show `Available`, the installation is complete. You can now deploy workloads to validate networking.
+
+### Part 3: Air-gapped package registry
+
+If the published bundles need to be moved into a private OCI registry (for example, an air-gapped install), follow these steps.
+
+#### Air-gapped relocation prerequisites
+
+- `imgpkg` and `yq` available locally.
+- Network access to the source registry (or a tarball produced from it) and to the private registry.
+- Credentials to push to the private registry (`imgpkg` will prompt or use the local docker config).
+
+#### Step 1: Copy the Supervisor Service (SVS) bundles to a tarball (source side)
+
+Run on a host that has access to the source registry:
+
+```bash
+imgpkg copy --bundle <source-registry>/calico-enterprise-svs:v3.23.1  --to-tar calico-enterprise-svs.tar
+```
+
+:::tip
+
+Direct registry-to-registry relocation is also supported. Replace `--to-tar <file>.tar` with `--to-repo <private-registry>/<path>` and skip Step 2.
+
+:::
+
+#### Step 2: Push the SVS bundle into the private registry (destination side)
+
+```bash
+imgpkg copy --tar calico-enterprise-svs.tar --to-repo <customer-registry>/calico-enterprise-svs
+```
+
+#### Step 3: Patch Package Resource in `calico-enterprise-svs.yaml`
+
+The only registry reference outside the bundles is the service-bundle pointer in the `Package` CR inside `calico-enterprise-svs.yaml`. This needs to be updated to the private registry:
+
+```bash
+yq eval '
+  (select(.kind == "Package") | .spec.template.spec.fetch[0].imgpkgBundle.image)
+    = "<private-registry>/calico-enterprise-svs:v3.23.1"
+' -i calico-enterprise-svs.yaml
+```
+
+:::tip
+
+**Content-pin to digest (optional):** `imgpkg copy --to-repo` prints the destination digest of the relocated bundle on its last line. Substituting `:v3.23.1` with `@sha256:<that-digest>` in the `yq` command above will make the reference immutable.
+
+:::
+
+#### Step 4: Upload `calico-enterprise-svs.yaml` i.e. Package and PackageMetadata resource to the Supervisor
+
+
+#### What does *not* work
+
+- `docker pull` / `docker push` on individual images. Re-tagging can change manifest digests, and the bundles' `images.yml` lock files are not rewritten — kapp-controller fetches will fail with `manifest unknown`.
+- Not Copying the svs bundle during `imgpkg copy` run. The other 2 bundles are pulled by the svs package.
+
+### Part 4 (air-gapped): Relocate $[prodname] private images to a private registry
+
+Follow the steps in [Push $[prodname] images to your private registry](./private-registry/private-registry-regular.mdx#push-calico-enterprise-images-to-your-private-registry) to pull $[prodname] images from Tigera's private image registry to your private registry.
+
+:::note
+
+Only steps 1, 2, 3, 4 — i.e. `docker pull`, `docker tag` and `docker push` for Linux only need to be performed.
+
+:::
+
+:::caution
+
+Do not push $[prodname] private images to a public registry.
+
+:::
+
+## Next steps
+
+**Recommended**
+
+- [Configure access to the $[prodname] web console](../../operations/cnx/access-the-manager.mdx)
+- [Get started with $[prodname] tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)
+
+**Recommended - Networking**
+
+- For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).

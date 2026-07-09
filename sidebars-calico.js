@@ -276,6 +276,7 @@ module.exports = {
             'networking/configuring/bgp-to-workload',
             'networking/configuring/vxlan-ipip',
             'networking/configuring/advertise-service-ips',
+            'networking/configuring/local-subnet-l2-reachability',
             'networking/configuring/mtu',
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/use-ipvs',
@@ -327,6 +328,7 @@ module.exports = {
             'networking/openstack/host-routes',
             'networking/openstack/multiple-regions',
             'networking/openstack/live-migration',
+            'networking/openstack/resync',
             'networking/openstack/kuryr',
             'networking/openstack/neutron-api',
           ],
@@ -571,7 +573,6 @@ module.exports = {
           ],
         },
         'operations/decommissioning-a-node',
-        'operations/fips',
         {
           type: 'category',
           label: 'Troubleshoot',

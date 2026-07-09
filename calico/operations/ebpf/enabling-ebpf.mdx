@@ -64,8 +64,8 @@ This section explains how to enable the eBPF data plane on all compatible cluste
   - OpenShift
   - EKS
   - AKS with limitations:
-    - [AKS with Azure CNI and Calico network policy](../../getting-started/kubernetes/managed-public-cloud/aks.mdx#install-aks-with-calico-for-network-policy) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
-    - [AKS with $[prodname] networking](../../getting-started/kubernetes/managed-public-cloud/aks.mdx#install-aks-with-calico-networking) is in testing with the eBPF data plane. This should be a better solution overall but, at time of writing, the testing was not complete.
+    - [AKS with Azure CNI and Calico network policy](../../getting-started/kubernetes/managed-public-cloud/aks.mdx#install-aks-with-azure-cni-for-networking-and-self-managed-calico-for-network-policy) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
+    - [AKS with $[prodname] networking](../../getting-started/kubernetes/managed-public-cloud/aks.mdx#install-aks-with-self-managed-calico-for-networking-and-network-policy) is in testing with the eBPF data plane. This should be a better solution overall but, at time of writing, the testing was not complete.
   - RKE (RKE2 recommended because it supports disabling `kube-proxy`)
   - MKE
 - Linux distribution/kernel:
@@ -419,6 +419,47 @@ calicoctl patch felixconfiguration default --patch='{"spec": {"bpfExternalServic
 ```
 
 Switching external traffic mode can disrupt in-progress connections.
+
+## Use netkit pod interfaces (tech preview)
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+By default, the Calico CNI plugin creates a veth pair for each pod's network interface.
+On Linux 6.7 and later, you can opt the CNI plugin into creating a [netkit](https://docs.kernel.org/networking/netkit.html) L2 pair instead.
+With netkit, the eBPF data plane attaches its policy and forwarding programs via `BPF_NETKIT_PRIMARY` inside `ndo_start_xmit()`, which improves throughput and tail latency under contention compared to attaching via TC/TCX on a veth.
+
+Netkit is recommended for the eBPF data plane.
+For the iptables and nftables data planes it is functionally equivalent to veth.
+
+***Prerequisites***
+
+* Kernel 6.7 or later on every node where you want netkit interfaces.
+  Older kernels silently fall back to veth, so it is safe to set the field on heterogeneous clusters — but only nodes on a 6.7+ kernel will see the performance benefit.
+* You are using the Calico CNI plugin (`spec.cni.type: Calico`).
+
+***Procedure***
+
+Set `spec.calicoNetwork.linuxPodInterfaceType` to `Netkit` on the operator's `Installation` resource:
+
+```bash
+kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxPodInterfaceType":"Netkit"}}}'
+```
+
+The operator updates the CNI configuration on each node.
+Existing pods keep their veth interfaces; new pods (and pods that are restarted) get netkit interfaces on nodes that support them.
+
+To revert to veth, set the field back to `Veth` (or remove it):
+
+```bash
+kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxPodInterfaceType":"Veth"}}}'
+```
+
+Existing pods keep their netkit interfaces, but the eBPF data plane treats those as veth (programs attach via TC/TCX, the same path used for actual veth interfaces).
+Only newly created pods get veth interfaces.
 
 ## Reversing the process
 

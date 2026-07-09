@@ -1,11 +1,158 @@
 ---
-description: Secure communications between Calico Enterprise components with mutual TLS, including API server, log storage, web console, BGP, and observability stack endpoints.
-hide_table_of_contents: true
+description: Provide custom TLS certificates for Calico components.
+slug: /operations/comms/index
 ---
 
-# Secure Calico component communications
+# Provide TLS certificates for Calico components
 
-import DocCardList from '@theme/DocCardList';
-import { useCurrentSidebarCategory } from '@docusaurus/theme-common';
+$[prodname] uses TLS certificates for mutual authentication between components. The operator automatically generates and manages these certificates using a self-signed CA (`tigera-operator-signer`).
 
-<DocCardList items={useCurrentSidebarCategory().items} />
+To replace any certificate with your own, create a Kubernetes secret with the same name in the `tigera-operator` namespace. The operator will detect it and use your certificate instead of the auto-generated one.
+
+## Certificate requirements
+
+- **Extended Key Usages**: include both `TLS Web Server Authentication` and `TLS Web Client Authentication`
+- **Common Name (CN)**: must match the first DNS name listed in the table below. Note that `node-certs` and `typha-certs` use `typha-client` and `typha-server` respectively (not the component name).
+- **Subject Alternative Names (SANs)**: include all DNS names listed for the secret
+
+## Create or update a secret
+
+```bash
+SIGNER=my-ca-signer
+kubectl create secret generic <SECRET_NAME> -n tigera-operator \
+  --from-file=tls.crt=</path/to/cert> \
+  --from-file=tls.key=</path/to/key> && \
+kubectl label secret <SECRET_NAME> -n tigera-operator operator.tigera.io/signer=$SIGNER
+```
+
+To update an existing secret:
+
+```bash
+SIGNER=my-ca-signer
+kubectl create secret generic <SECRET_NAME> -n tigera-operator \
+  --from-file=tls.crt=</path/to/cert> \
+  --from-file=tls.key=</path/to/key> \
+  --dry-run=client -o yaml | kubectl replace -f - && \
+kubectl label secret <SECRET_NAME> -n tigera-operator operator.tigera.io/signer=$SIGNER --overwrite
+```
+
+:::note
+
+Updating a certificate causes the affected components to restart. Expect brief unavailability during the rollout.
+
+:::
+
+## TLS certificate reference
+
+The **Deployed to** column shows the namespace where the operator places the secret at runtime. To override, always create your secret in `tigera-operator`.
+
+| Secret name | DNS name(s) | Deployed to | Owner resource |
+|---|---|---|---|
+| `calico-apiserver-certs` | `calico-api` | `calico-system` | APIServer/tigera-secure |
+| `calico-kube-controllers-metrics-tls` | `calico-kube-controllers-metrics` | `calico-system` | Installation/default |
+| `calico-node-prometheus-client-tls` | `calico-node-prometheus-client-tls` | `tigera-prometheus` | Monitor/tigera-secure |
+| `calico-node-prometheus-server-tls` | `calico-node-metrics` | `calico-system` | Installation/default |
+| `calico-node-prometheus-tls` | `prometheus-http-api` | `tigera-prometheus` | Monitor/tigera-secure |
+| `deep-packet-inspection-tls` | `intrusion-detection-tls` | `tigera-dpi` | IntrusionDetection/tigera-secure |
+| `internal-manager-tls` | `calico-manager` | `calico-system` | Manager/tigera-secure |
+| `intrusion-detection-tls` | `intrusion-detection-tls` | `tigera-intrusion-detection` | IntrusionDetection/tigera-secure |
+| `manager-tls` | `calico-manager` | `calico-system` | Manager/tigera-secure |
+| `node-certs` | `typha-client` | `calico-system` | Installation/default |
+| `node-certs` | `typha-client` | `tigera-dpi` | IntrusionDetection/tigera-secure |
+| `policy-recommendation-tls` | `policy-recommendation-tls` | `calico-system` | PolicyRecommendation/tigera-secure |
+| `tigera-ee-elasticsearch-metrics-tls` | `tigera-elasticsearch-metrics` | `tigera-elasticsearch` | LogStorage/tigera-secure |
+| `tigera-fluentd-prometheus-tls` | `fluentd-http-input` | `tigera-fluentd` | LogCollector/tigera-secure |
+| `tigera-operator-tls` | `tigera-operator-metrics` | `tigera-prometheus` | Monitor/tigera-secure |
+| `tigera-secure-elasticsearch-cert` | `tigera-secure-es-gateway-http` | `tigera-elasticsearch` | LogStorage/tigera-secure |
+| `tigera-secure-internal-elasticsearch-cert` | `tigera-secure-es-http` | `tigera-elasticsearch` | LogStorage/tigera-secure |
+| `tigera-secure-kibana-cert` | `tigera-secure-kb-http` | `tigera-kibana` | LogStorage/tigera-secure |
+| `tigera-secure-linseed-cert` | `tigera-linseed` | `tigera-elasticsearch` | LogStorage/tigera-secure |
+| `typha-certs` | `typha-server` | `calico-system` | Installation/default |
+| `typha-certs-noncluster-host` | `typha-server-noncluster-host` | `calico-system` | Installation/default |
+
+:::tip
+
+Typha and Node use mutual TLS. If you replace `typha-certs`, `typha-certs-noncluster-host`, or `node-certs`:
+- Ensure they are all signed by the same CA. Mismatched certificates will break Node-to-Typha communication.
+- These secrets require an additional `common-name` data field containing the CN. For example:
+  ```bash
+  kubectl create secret generic typha-certs -n tigera-operator \
+    --from-file=tls.crt=</path/to/cert> \
+    --from-file=tls.key=</path/to/key> \
+    --from-literal=common-name=typha-server
+  ```
+
+:::
+
+## Monitor certificates
+
+The operator labels and annotates every TLS secret it manages:
+
+- **Label** `certificates.operator.tigera.io/signer` — the signer that issued the certificate
+- **Annotation** `certificates.operator.tigera.io/issuer` — the issuer name
+- **Annotation** `certificates.operator.tigera.io/expiry` — certificate expiration timestamp
+
+List all managed certificates with their issuer and expiry:
+
+```bash
+kubectl get secrets -A -l certificates.operator.tigera.io/signer -o json | \
+  jq -r '.items[] | select(.metadata.namespace != "tigera-operator") |
+    [.metadata.namespace, .metadata.name,
+     .metadata.annotations["certificates.operator.tigera.io/issuer"],
+     .metadata.annotations["certificates.operator.tigera.io/expiry"]] | @tsv' | \
+  column -t -N NAMESPACE,NAME,ISSUER,EXPIRY
+```
+
+```
+NAMESPACE             NAME                                 ISSUER                  EXPIRY
+calico-system         calico-apiserver-certs                tigera-operator-signer  2028-07-12T17:59:28Z
+calico-system         manager-tls                          tigera-operator-signer  2028-07-12T18:01:21Z
+calico-system         node-certs                           tigera-operator-signer  2028-07-12T17:59:27Z
+calico-system         typha-certs                          tigera-operator-signer  2028-07-12T17:59:27Z
+tigera-elasticsearch  tigera-secure-linseed-cert           tigera-operator-signer  2028-07-12T17:59:23Z
+...
+```
+
+The operator also exposes Prometheus metrics for certificate expiration. See [Operator metrics](../monitor/metrics/operator-metrics.mdx) to configure monitoring and alerts.
+
+## Certificate management with Kubernetes CSR API
+
+Instead of providing certificates directly, you can configure $[prodname] to use the [Kubernetes Certificates API](https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/) for automated certificate issuance.
+
+### Enable certificate management
+
+Add the `certificateManagement` section to your Installation resource:
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  certificateManagement:
+    caCert: <your CA cert in PEM format>
+    signerName: <your-domain>/<signer-name>
+    signatureAlgorithm: SHA512WithRSA
+    keyAlgorithm: RSAWithSize4096
+```
+
+**Supported algorithms:**
+- Private key: RSA (2048, 4096, 8192), ECDSA (256, 384, 521)
+- Signature: RSA-SHA (256, 384, 512), ECDSA-SHA (256, 384, 512)
+
+### How it works
+
+Pods use an init container to create a CertificateSigningRequest (CSR). The pod remains in `Init` state until the CSR is approved and signed by your certificate authority.
+
+Monitor CSRs:
+
+```bash
+kubectl get csr -w
+```
+
+CSR names follow the pattern: `<namespace>:<pod-name>:<uid-prefix>`.
+
+### Limitations
+
+- If enabling on an existing cluster, you must temporarily remove the [LogStorage resource](../../reference/installation/api.mdx#logstorage) and re-apply it after enabling certificate management. See [how to create a new cluster](../../observability/elastic/troubleshoot.mdx#how-to-create-a-new-cluster).
+- Not supported with [multi-cluster management](../../multicluster/set-up-multi-cluster-management/standard-install/create-a-management-cluster.mdx).

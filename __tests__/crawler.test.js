@@ -100,6 +100,7 @@ test('Crawl the docs and execute tests', async () => {
     'http://dpdk.org/git/dpdk-kmods', //==>Origin: https://raw.githubusercontent.com/projectcalico/vpp-dataplane/master/scripts/init_eks.sh
     //For frustrating 503 errors:
     'https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator',
+    /^https:\/\/amd64\.ocp\.releases\.ci\.openshift\.org\/?$/, //==>Origin: http://localhost:4242/calico-enterprise/latest/getting-started/install-on-clusters/openshift/hostedcontrolplanes
     //temp
     /^https:\/\/v1-21\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.21\//,
     'https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm',
@@ -116,6 +117,7 @@ test('Crawl the docs and execute tests', async () => {
     'http://www.iana.org/assignments/service-names', //==>Origin: https://downloads.tigera.io/ee/v3.14.4/manifests/tigera-operator.yaml
     'http://docs.openstack.org/',
     'http://docs.openstack.org', //This seems to be temporarily down.
+    'https://docs.openstack.org/install-guide/environment-etcd.html', // 403 from OpenStack docs WAF in Netlify build environment
     'https://tools.ietf.org/html/rfc5925',
     'https://datatracker.ietf.org/doc/html/rfc1149',
     'https://datatracker.ietf.org/doc/html/rfc7938',
