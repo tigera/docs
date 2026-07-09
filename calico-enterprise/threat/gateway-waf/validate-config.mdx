@@ -1,0 +1,126 @@
+---
+description: Write Rego validation rules with GlobalWAFValidationPolicy and WAFValidationPolicy to enforce or audit compliance guardrails on the merged WAF configuration.
+---
+
+# Validate configuration with Rego
+
+Gateway WAF has two guardrail layers: the admission webhook checks raw SecLang at apply time (structural safety); validation policies check the **merged result** at reconcile time, catching problems only visible once everything's merged. See [Validation and enforcement](./index.mdx#validation-and-enforcement) for the matrix and [Rego validation](./reference.mdx#rego-validation) for the input schema.
+
+## Cluster operator: GlobalWAFValidationPolicy
+
+`GlobalWAFValidationPolicy` is cluster-scoped, applying to every namespace or a label-selected subset via `namespaceSelector`. It carries Rego rules and an `enforcementMode`: `Audit` (default) records violations while the filter stays programmed; `Enforce` blocks programming on a `Critical` violation. `Warning`/`Info` violations are always recorded.
+
+This policy enforces three requirements for namespaces labeled `env: production`, and audits a fourth:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFValidationPolicy
+metadata:
+  name: production-requirements
+spec:
+  enforcementMode: Enforce
+  namespaceSelector:
+    matchLabels:
+      env: production
+  rules:
+
+    # Critical: CRS must be enabled
+    - name: crs-must-be-enabled
+      severity: Critical
+      rego: |
+        package waf
+        violations[{"msg": "OWASP CRS must be enabled"}] {
+          input.config.crsState != "Enabled"
+        }
+
+    # Critical: production namespaces must use Block mode
+    - name: block-mode-required
+      severity: Critical
+      rego: |
+        package waf
+        violations[{"msg": "WAF must be in Block mode for production"}] {
+          input.config.action != "Block"
+        }
+
+    # Critical: minimum paranoia level
+    - name: min-paranoia-level
+      severity: Critical
+      rego: |
+        package waf
+        violations[{"msg": msg}] {
+          input.config.paranoiaLevel < 2
+          msg := sprintf(
+            "paranoia level %d is below the production minimum of 2",
+            [input.config.paranoiaLevel]
+          )
+        }
+
+    # Warning: advise against disabling RCE rules (does not block)
+    - name: rce-rules-intact
+      severity: Warning
+      rego: |
+        package waf
+        violations[{"msg": msg}] {
+          d := input.directives[_]
+          startswith(d, "SecRuleRemoveById")
+          re_match(`93[0-9]{4}`, d)
+          msg := sprintf("RCE rule removal detected in merged config: %s", [d])
+        }
+```
+
+:::tip
+
+Start new policies in `Audit` mode; review violations on existing `WAFPolicy` status before switching to `Enforce`, so you don't block teams whose config predates the policy.
+
+:::
+
+Leave `namespaceSelector` empty for cluster-wide, or scope with `matchLabels`. Multiple policies can coexist — every matching rule is evaluated, and one `Critical` violation (in `Enforce`) blocks programming.
+
+## Application operator: WAFValidationPolicy
+
+`WAFValidationPolicy` is namespace-scoped and advisory only — violations appear on status but never block programming. Use it as a self-check.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFValidationPolicy
+metadata:
+  name: team-self-check
+  namespace: platform
+spec:
+  rules:
+
+    - name: graphql-plugin-active
+      severity: Warning
+      rego: |
+        package waf
+        violations[{"msg": "graphql-waf plugin is not loaded — introspection unguarded"}] {
+          not "graphql-waf" in input.source.namespacePlugins
+        }
+```
+
+Being advisory, it's safe to hold yourself to a stricter standard than the baseline — e.g. a higher minimum paranoia level. Violations surface on `WAFPolicy` status without interrupting traffic.
+
+## Reading violation results
+
+Violations from matching policies appear in the affected `WAFPolicy`'s status conditions. Check with `kubectl get wafpolicy <name> -n <namespace> -o yaml`. A blocked policy:
+
+```yaml
+status:
+  conditions:
+    - type: Ready
+      status: "False"
+      reason: ValidationFailed
+      message: >
+        GlobalWAFValidationPolicy/production-requirements rule "block-mode-required":
+        WAF must be in Block mode for production
+    - type: Accepted
+      status: "True"
+```
+
+An audit violation instead leaves `Ready=True` and adds a `ValidationWarning=True` condition, reason `AuditViolation`, with a message like `rce-rules-intact" [Warning]: RCE rule removal detected in merged config: SecRuleRemoveById 932100` (filter stays programmed). See [Status conditions](./reference.mdx#status-conditions) for the full reference.
+
+:::tip
+
+Write Rego against the schema in [Rego validation](./reference.mdx#rego-validation); test locally with `opa eval` first. A syntax error invalidates the whole policy — status reports which rule failed to parse.
+
+:::

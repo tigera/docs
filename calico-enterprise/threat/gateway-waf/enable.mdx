@@ -1,0 +1,83 @@
+---
+description: Turn Gateway WAF on or off by setting the operator GatewayAPI CR's extensions.waf.state field.
+---
+
+# Enable Gateway WAF
+
+Gateway WAF is off by default. Turning it on is a one-line change to the operator's `GatewayAPI` CR — no new workload is deployed, so there's no extra resource footprint to plan for.
+
+## Enable Gateway WAF
+
+Edit the operator `GatewayAPI` CR named `default` and set `spec.extensions.waf.state` to `Enabled`. The default value is `Disabled`.
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: default
+spec:
+  extensions:
+    waf:
+      state: Enabled   # default is Disabled
+```
+
+Apply it:
+
+```bash
+kubectl apply -f - <<'EOF'
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: default
+spec:
+  extensions:
+    waf:
+      state: Enabled
+EOF
+```
+
+The operator installs the six WAF CRDs and the validating admission webhook, and wires the WAF reconcilers into the existing `calico-kube-controllers` pod in `calico-system`. No new workload is deployed.
+
+Confirm the six CRDs are installed:
+
+```bash
+kubectl get crd | grep applicationlayer.projectcalico.org
+```
+
+```text
+globalwafplugins.applicationlayer.projectcalico.org
+globalwafpolicies.applicationlayer.projectcalico.org
+globalwafvalidationpolicies.applicationlayer.projectcalico.org
+wafplugins.applicationlayer.projectcalico.org
+wafpolicies.applicationlayer.projectcalico.org
+wafvalidationpolicies.applicationlayer.projectcalico.org
+```
+
+All six CRDs must be present before you create any WAF resources.
+
+:::tip
+
+To confirm the admission webhook is active, run `kubectl get validatingwebhookconfigurations | grep waf`. You should see one entry. If it is absent, check the `calico-kube-controllers` pod logs in the `calico-system` namespace.
+
+:::
+
+## Disable Gateway WAF
+
+Set `spec.extensions.waf.state` back to `Disabled` on the same `GatewayAPI` CR to turn the feature off:
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: GatewayAPI
+metadata:
+  name: default
+spec:
+  extensions:
+    waf:
+      state: Disabled
+```
+
+The operator removes the admission webhook and stops the WAF reconcilers; existing `WAFPolicy`, `GlobalWAFPolicy`, and other WAF resources stay on the cluster but are no longer reconciled or enforced until you re-enable the feature.
+
+## Next steps
+
+- [Tutorial](./tutorial.mdx) — deploy a test app and block your first attack.

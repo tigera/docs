@@ -1,0 +1,71 @@
+---
+description: Run a full multi-tenant Gateway WAF setup — a cluster baseline, org-wide plugin, and validation policy that stops teams weakening protection while each team tunes independently.
+---
+
+# Multi-tenant setup
+
+Multi-tenant setup ties the baseline, plugins, and validation guardrails together so a shared cluster stays safe by default while each team still controls its own Gateway.
+
+:::note[Scenario]
+
+A cluster shared by `team-a` and `payments`, with a cluster operator setting the baseline via a `GlobalWAFPolicy`, an org-wide `GlobalWAFPlugin`, and a `GlobalWAFValidationPolicy` that stops teams weakening protection. Each team attaches WAF to its own Gateway and tunes independently.
+
+**Prerequisites:** Gateway WAF enabled; valid license.
+
+:::
+
+The cluster operator creates the `default` `GlobalWAFPolicy`, `org-security-baseline` `GlobalWAFPlugin`, and a `production-requirements` `GlobalWAFValidationPolicy` (`Enforce`, scoped to `env: production`) — per the patterns above. Application operators need read access to `Global*` resources to see what they're inheriting:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: waf-global-reader
+rules:
+  - apiGroups: ["applicationlayer.projectcalico.org"]
+    resources:
+      - globalwafpolicies
+      - globalwafplugins
+      - globalwafvalidationpolicies
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: waf-global-reader
+  namespace: team-a          # repeat for payments
+subjects:
+  - kind: Group
+    name: team-a-operators
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: waf-global-reader
+  apiGroup: rbac.authorization.k8s.io
+```
+
+:::note
+
+Grants read on cluster-scoped resources via a namespace-scoped `RoleBinding` — application operators can see but not edit `Global*` resources.
+
+:::
+
+Each team labels its namespace (`kubectl label namespace team-a env=production`, same for `payments`) so the validation policy applies, then creates a `WAFPolicy` targeting its own Gateway. `team-a` raises paranoia to 2, inheriting `coreRuleSet.state: Enabled`; `payments` runs paranoia 3 plus a namespace `WAFPlugin` blocking GraphQL introspection, using an ID from its own [SecRule ID range](./reference.mdx#secrule-id-ranges).
+
+## What happens if a team tries to weaken the baseline
+
+If `payments` applies `action: Detect`, `production-requirements` (`Enforce`) fires its `must-use-block-mode` Critical rule — the controller marks the policy `Programmed=False, Reason=NotAttempted` and surfaces the violation:
+
+```bash
+kubectl get wafpolicy payments-waf -n payments \
+  -o jsonpath='{.status.validation.failures}' | jq
+```
+
+No `EnvoyExtensionPolicy` is generated until corrected — restore `action: Block` or request an exception from the cluster operator.
+
+## Result: isolation in practice
+
+- **`team-a`** — Core Rule Set at paranoia 2, own custom rules, own ID range.
+- **`payments`** — Core Rule Set at paranoia 3, GraphQL introspection block, a different ID range.
+- Neither team can disable the org-wide rule from `GlobalWAFPlugin` or drop below Block mode.
+- The cluster operator sees all violations centrally on `GlobalWAFValidationPolicy/production-requirements` status — one place to see which namespaces are non-compliant.
