@@ -20,7 +20,7 @@ With `localSubnetL2Reachability` enabled, $[prodname] runs a userspace ARP/NDP r
 
 ### Userspace ARP/NDP responder
 
-$[prodname] opens a raw socket on each host physical interface that has at least one pod IP or LoadBalancer VIP within its subnet, and replies to ARP/NDP requests for those IPs. The reply carries the node's MAC address, so the external host sends the workload's traffic to that node. From there $[prodname]'s normal dataplane forwards it the rest of the way — directly to a local pod for a pod IP, or load-balanced to a service backend for a LoadBalancer VIP. The responder only answers ARP/NDP; it does not change how traffic is forwarded once it reaches the node.
+$[prodname] opens a raw socket on each host physical interface that has at least one pod IP or LoadBalancer VIP within its subnet, and replies to ARP/NDP requests for those IPs. The reply carries the node's MAC address, so the external host sends the workload's traffic to that node. From there $[prodname]'s normal data plane forwards it the rest of the way — directly to a local pod for a pod IP, or load-balanced to a service backend for a LoadBalancer VIP. The responder only answers ARP/NDP; it does not change how traffic is forwarded once it reaches the node.
 
 ### One node answers per LoadBalancer VIP
 
@@ -38,7 +38,7 @@ $[prodname] answers only for IPs that belong to an IP pool with no encapsulation
 - **Cloud provider ARP filtering.** Some cloud networks (for example, AWS VPC) filter ARP at the hypervisor. The responder will not work unless the VIP/pod IPs are assigned to the node's cloud interface. This is an infrastructure constraint outside $[prodname]'s control.
 - **Heterogeneous subnets.** Node selection for LoadBalancer VIPs hashes over all nodes without checking whether a node has an interface on the VIP's subnet. This is only a concern when nodes do not share the same subnets.
 - **Only `externalTrafficPolicy: Cluster` is supported for LoadBalancer services.** $[prodname] elects the node that answers for a VIP with a consistent hash over all nodes, independent of where the service's backends run. Under `externalTrafficPolicy: Local` the elected node may have no local backend, so traffic that reaches it is dropped. Leave `externalTrafficPolicy` at its default of `Cluster`.
-- **kube-proxy in IPVS mode requires `strictARP`.** In IPVS mode, kube-proxy binds every LoadBalancer VIP to the `kube-ipvs0` dummy interface on *all* nodes. Because the Linux kernel answers ARP for any IP configured on the host by default, every node replies for the VIP — not just the one $[prodname] elected — so external hosts receive conflicting replies from several MAC addresses. Either run kube-proxy in `iptables` or `nftables` mode, or keep IPVS mode and set `strictARP: true` (the `ipvs.strictARP` field of the kube-proxy `ConfigMap`) so the kernel stops answering ARP for the dummy-interface VIPs and leaves it to $[prodname]'s responder.
+- **kube-proxy in IPVS mode requires `strictARP`.** In IPVS mode, kube-proxy binds every LoadBalancer VIP to the `kube-ipvs0` dummy interface on *all* nodes. Because the Linux kernel answers ARP for any IP configured on the host by default, every node replies for the VIP — not just the one $[prodname] elected — so external hosts receive conflicting replies from several MAC addresses. Either run kube-proxy in `iptables` or `nftables` mode, or keep IPVS mode and set `strictARP: true` in kube-proxy's configuration (the `ipvs.strictARP` field of the `KubeProxyConfiguration`, which is stored as YAML inside the `kube-proxy` `ConfigMap`) so the kernel stops answering ARP for the dummy-interface VIPs and leaves it to $[prodname]'s responder.
 
 :::note
 
@@ -64,7 +64,7 @@ kubectl patch felixconfiguration default --type='merge' \
    -p '{"spec": {"localSubnetL2Reachability": "PodsAndLoadBalancers"}}'
 ```
 
-The feature is `Disabled` by default. This setting is read when the dataplane starts, so changing it makes Felix (`calico-node`) **restart automatically** to pick up the new value — no manual restart is required. The feature takes effect once Felix finishes restarting. For the full field reference, see [Felix configuration resource](../../reference/resources/felixconfig.mdx).
+The feature is `Disabled` by default. This setting is read when the data plane starts, so changing it makes Felix (`calico-node`) **restart automatically** to pick up the new value — no manual restart is required. The feature takes effect once Felix finishes restarting. For the full field reference, see [Felix configuration resource](../../reference/resources/felixconfig.mdx).
 
 :::note
 
