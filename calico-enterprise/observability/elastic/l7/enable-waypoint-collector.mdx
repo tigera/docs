@@ -1,20 +1,75 @@
 ---
 description: Enable the Istio Ambient Mode Waypoint-based L7 collector.
-draft: true
 ---
 
 # Collect L7 logs using the Waypoint collector
 
-Enable the Istio Ambient Mode Waypoint-based L7 collector to capture HTTP/1, HTTP/2, and gRPC traffic routed through a Waypoint proxy. For background on what the collector does and how it compares to other options, see [L7 logs overview](overview.mdx).
+Enable the Istio Ambient Mode Waypoint-based L7 collector to capture HTTP traffic.
 
-:::note
+## Prerequisites
 
-This page is a placeholder. Content for L7 log collection via Istio Ambient Mode Waypoint proxies is pending.
-
-:::
-
-## Before you begin
+- A workload running in an [Istio Service Mesh](../../../compliance/istio/deploy-istio-ambient.mdx).
 
 ## Enable the collector
 
+Once a workload is set up to be in the service mesh, L7 collection is enabled
+by adding a [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/),
+and labeling the workload to use it.
+
+This will create an Istio Waypoint proxy that includes a sidecar container to
+capture the L7 logs.
+
+```bash
+cat << EOF | kubectl apply -n <namespace> -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: <waypoint-name>
+  labels:
+    istio.io/waypoint-for: all
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+    - name: mesh
+      port: 15008
+      protocol: HBONE
+EOF
+```
+
+```bash
+kubectl label namespace <namespace> istio.io/use-waypoint=<waypoint-name>
+```
+
+Replace the following:
+
+- `<namespace>`: The namespace your workload is in.
+- `<waypoint-name>`: What you want your waypoint proxy gateway to be called.
+
+## Removing the L7 Ambient Mode Collector
+
+```bash
+kubectl label namespace <namespace> istio.io/use-waypoint- 2>/dev/null
+kubectl delete gateway -n <namespace> <waypoint-name>
+```
+
+## Disabling the L7 Ambient Mode Collector
+
+If you are running waypoint proxies but you don't want the sidecar added, the
+L7 Ambient Mode Collector sidecar can be disabled:
+
+```bash
+kubectl patch istio default --type=merge -p '{"spec":{"waypointLogging":"Disabled"}}'
+```
+
 ## View L7 logs
+
+L7 Ambient Mode logs are viewed in the [UI for L7
+logs](configure.mdx#view-l7-logs-in-the-web-console) along
+with the other types of L7 logs.
+
+They will be labeled with the `collector_type`: `envoy-access-log` and the
+`collector_name`: `waypoint`.
+
+## Additional information
+
+* [L7 log data types](datatypes.mdx)
