@@ -21,19 +21,19 @@ L7 logs complement L3/4 flow logs, which expose only the source/destination pair
 A _collector_ is the component that observes traffic in your cluster and emits L7 log entries. $[prodname] supports multiple collectors. They all feed the same aggregation and reporting pipeline; each entry on the log file is tagged with `collector_type` so consumers can filter or join sources as needed.
 
 - **eBPF collector** — kernel TCP-layer probes that capture HTTP and TLS metadata with no data path proxy or sidecar. Enable once at the cluster level. Works with any data plane — you do not need the eBPF data plane to use it. See [Enable eBPF collector](enable-ebpf-collector.mdx).
-- **Waypoint collector** - Waypoint Proxy based Envoy sidecar. See [Enable Waypoint collector](enable-waypoint-collector.mdx)
+- **Waypoint collector** — Waypoint proxy based Envoy sidecar. See [Enable Waypoint collector](enable-waypoint-collector.mdx).
 - **Envoy collector** _(legacy, deprecated)_ — sidecar Envoy injected per workload. Being phased out. See [Enable Envoy collector](configure.mdx).
 
 ### Why more than one collector?
 
 Each collector lives at a different point in the request path and exposes different trade-offs. Pick by where you need coverage and what infrastructure you're willing to run:
 
-|                            | eBPF                              | Envoy (legacy)                    | Waypoint                           |
-| -------------------------- | --------------------------------- | --------------------------------- | ---------------------------------- |
-| Additional infrastructure  | None — runs inside Felix          | Sidecar Envoy per workload        | Sidecar Envoy per Waypoint proxy   |
-| Protocol coverage          | HTTP/1.x, TLS handshake           | HTTP                              | HTTP                               |
-| Opt-in granularity         | Cluster-wide (FelixConfiguration) | Per workload (label + annotation) | Per workload (label + annotiation) |
-| Service-mesh compatibility | Any data plane                    | Not compatible with Istio         | Istio Ambient Mode only            |
+|                            | eBPF                              | Envoy (legacy)                    | Waypoint                         |
+| -------------------------- | --------------------------------- | --------------------------------- | -------------------------------- |
+| Additional infrastructure  | None — runs inside Felix          | Sidecar Envoy per workload        | Sidecar Envoy per Waypoint proxy |
+| Protocol coverage          | HTTP/1.x, TLS handshake           | HTTP                              | HTTP/1, HTTP/2, gRPC             |
+| Opt-in granularity         | Cluster-wide (FelixConfiguration) | Per workload (label + annotation) | Per namespace (label)            |
+| Service-mesh compatibility | Any data plane                    | Not compatible with Istio         | Istio Ambient Mode only          |
 
 Multiple collectors can coexist in the same cluster, with each L7 log entry tagged by `collector_type` so consumers can filter or join sources as needed.
 
