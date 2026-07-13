@@ -59,6 +59,17 @@ A **plugin** holds custom ModSecurity rules in four lifecycle slots — `config`
 - `GlobalWAFPlugin` — organization-wide rules: security baselines, compliance rules.
 - `WAFPlugin` — application-specific rules and false-positive exceptions.
 
+Each slot runs at a fixed point in the merge, so slot choice decides when your rules fire:
+
+| Slot | Runs | Use for |
+| :--- | :--- | :--- |
+| `config` | Before Core Rule Set setup | `tx.*` variable setup (anomaly thresholds, optional features, app flags). Rules on request variables belong in `before` instead — the request isn't read yet |
+| `before` | After variable setup, before Core Rule Set loads | Early-exit allowlisting of trusted paths, request normalization, flags for later rules |
+| `rules` | Alongside Core Rule Set, after it (Tigera extension) | App-specific detections that complement rather than pre-empt the Core Rule Set; can act on anomaly scores |
+| `after` | Last | False-positive suppression, response inspection, logging. `GlobalWAFPlugin.after` runs *after* namespace `WAFPlugin.after`, so the cluster operator has final say |
+
+For the full merge sequence across every policy and plugin, see [merged ruleset load order](#the-merged-ruleset-load-order); to write plugin rules, see [Write custom rules](./write-custom-rules.mdx).
+
 ## Validation policies — guardrails
 
 A **validation policy** carries [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) rules evaluated against the *merged, effective* configuration — answering "is this acceptable?", e.g. "Core Rule Set must stay enabled" or "production must run in Block mode."
@@ -182,7 +193,6 @@ To write the rules, see [Rego validation](./reference.mdx#rego-validation). To r
 ## Next steps
 
 - [Enable the feature](./enable.mdx) — turn on Gateway WAF and verify the CRDs and webhook.
-- [Get started](./get-started.mdx) — prerequisites and the path to production.
 - [Tutorial](./tutorial.mdx) — deploy a test app and block your first attack.
 - [Set a baseline](./set-a-baseline.mdx), [Attach WAF](./attach-waf-to-a-route.mdx), [Write custom rules](./write-custom-rules.mdx), [Validate config](./validate-config.mdx), [Multi-tenant setup](./multi-tenant-setup.mdx) — production tasks.
 - [Reference](./reference.mdx) — CRDs, Rego validation, SecRule ID ranges, and status conditions.

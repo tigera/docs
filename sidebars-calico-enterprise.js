@@ -478,9 +478,8 @@ module.exports = {
         {
           type: 'category',
           label: 'Gateway WAF',
-          link: { type: 'doc', id: 'threat/gateway-waf/index' },
           items: [
-            'threat/gateway-waf/get-started',
+            'threat/gateway-waf/overview',
             'threat/gateway-waf/tutorial',
             'threat/gateway-waf/enable',
             'threat/gateway-waf/set-a-baseline',

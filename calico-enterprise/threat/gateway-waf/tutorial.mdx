@@ -4,230 +4,211 @@ description: Deploy a test app behind Calico Ingress Gateway, set a WAF baseline
 
 # Tutorial
 
-This tutorial takes you from a running Ingress Gateway to a blocked attack in about five minutes. It assumes Gateway WAF is already enabled — see [Enable the feature](./enable.mdx) if you haven't, and [Before you begin](./get-started.mdx#before-you-begin) for the rest of the prerequisites.
-
-## Step 1: Deploy a test application
-
-Create an `httpbin` namespace with a deployment and service to act as the backend.
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: httpbin
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: httpbin
-  namespace: httpbin
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: httpbin
-  template:
-    metadata:
-      labels:
-        app: httpbin
-    spec:
-      containers:
-        - name: httpbin
-          image: kong/httpbin:0.1.0
-          ports:
-            - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: httpbin
-  namespace: httpbin
-spec:
-  selector:
-    app: httpbin
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-```
-
-Apply it, then wait for the pod to be ready:
-
-```bash
-kubectl wait --for=condition=Ready pod -l app=httpbin -n httpbin --timeout=60s
-```
-
-## Step 2: Create a Gateway and HTTPRoute
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: httpbin-gateway
-  namespace: httpbin
-spec:
-  gatewayClassName: tigera-gateway-class
-  listeners:
-    - name: http
-      protocol: HTTP
-      port: 9080
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: httpbin-route
-  namespace: httpbin
-spec:
-  parentRefs:
-    - name: httpbin-gateway
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - name: httpbin
-          port: 80
-```
-
 :::note
 
-Use port 9080, not 8080. Port 8080 is reserved by the Calico L7 log collector inside the Envoy proxy pod.
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
 
 :::
 
-Apply it, then wait for the Gateway to be accepted:
+This tutorial takes you from a running Ingress Gateway to a blocked attack in about five minutes.
 
-```bash
-kubectl wait --for=condition=Accepted gateway/httpbin-gateway -n httpbin --timeout=60s
-```
+## Prerequisites
 
-## Step 3: Confirm traffic flows
+- Gateway WAF is enabled. See [Enable Gateway WAF](./enable.mdx).
+- $[prodname] Ingress Gateway is set up. See [About Calico Ingress Gateway](../../networking/ingress-gateway/about-calico-ingress-gateway.mdx).
+- A namespace where you can deploy a test app — this tutorial creates one called `httpbin`.
 
-Find the Envoy service that the Ingress Gateway created for this Gateway. Services are created in the `tigera-gateway` namespace.
+## Block an attack in five minutes
 
-```bash
-export GATEWAY_SVC=$(kubectl get svc -n tigera-gateway \
-  -o jsonpath='{.items[?(@.metadata.labels.gateway\.envoyproxy\.io/owning-gateway-name=="httpbin-gateway")].metadata.name}')
-```
+1. Deploy a test application. Create an `httpbin` namespace with a deployment and service to act as the backend:
 
-Send a test request from inside the cluster:
+   ```yaml
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: httpbin
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: httpbin
+     namespace: httpbin
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: httpbin
+     template:
+       metadata:
+         labels:
+           app: httpbin
+       spec:
+         containers:
+           - name: httpbin
+             image: kong/httpbin:0.1.0
+             ports:
+               - containerPort: 80
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: httpbin
+     namespace: httpbin
+   spec:
+     selector:
+       app: httpbin
+     ports:
+       - protocol: TCP
+         port: 80
+         targetPort: 80
+   ```
 
-```bash
-kubectl run curl-test -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
-  curl -s -o /dev/null -w "%{http_code}" \
-  http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get
-```
+   Apply it, then wait for the pod to be ready:
 
-```text
-200
-```
+   ```bash
+   kubectl wait --for=condition=Ready pod -l app=httpbin -n httpbin --timeout=60s
+   ```
 
-Traffic is flowing through the Gateway with no WAF protection yet.
+1. Create a Gateway and HTTPRoute:
 
-## Step 4: Apply a GlobalWAFPolicy
+   ```yaml
+   apiVersion: gateway.networking.k8s.io/v1
+   kind: Gateway
+   metadata:
+     name: httpbin-gateway
+     namespace: httpbin
+   spec:
+     gatewayClassName: tigera-gateway-class
+     listeners:
+       - name: http
+         protocol: HTTP
+         port: 9080
+   ---
+   apiVersion: gateway.networking.k8s.io/v1
+   kind: HTTPRoute
+   metadata:
+     name: httpbin-route
+     namespace: httpbin
+   spec:
+     parentRefs:
+       - name: httpbin-gateway
+     rules:
+       - matches:
+           - path:
+               type: PathPrefix
+               value: /
+         backendRefs:
+           - name: httpbin
+             port: 80
+   ```
 
-:::tip
+   :::note
 
-This tutorial uses `Block` mode immediately so you can see blocking in action. Most production rollouts start in `Detect` mode to baseline traffic before switching. See [Merge order and enforcement](./index.mdx#merge-order-and-enforcement) for the tradeoffs.
+   Use port 9080, not 8080. Port 8080 is reserved by the Calico L7 log collector inside the Envoy proxy pod.
 
-:::
+   :::
 
-`GlobalWAFPolicy` sets the cluster-wide baseline. Create the singleton `default` policy with the OWASP Core Rule Set enabled in `Block` mode.
+   Apply it, then wait for the Gateway to be accepted:
 
-```yaml
-apiVersion: applicationlayer.projectcalico.org/v3
-kind: GlobalWAFPolicy
-metadata:
-  name: default
-spec:
-  defaultAction: Block
-  coreRuleSet:
-    state: Enabled
-    paranoiaLevel: 1
-```
+   ```bash
+   kubectl wait --for=condition=Accepted gateway/httpbin-gateway -n httpbin --timeout=60s
+   ```
 
-This defines the global posture. It does not attach WAF to any traffic yet — that requires a namespace-scoped `WAFPolicy` with `targetRefs`.
+1. Confirm traffic flows. Find the Envoy service the Ingress Gateway created for this Gateway (services are created in the `tigera-gateway` namespace):
 
-## Step 5: Attach WAF to the Gateway
+   ```bash
+   export GATEWAY_SVC=$(kubectl get svc -n tigera-gateway \
+     -o jsonpath='{.items[?(@.metadata.labels.gateway\.envoyproxy\.io/owning-gateway-name=="httpbin-gateway")].metadata.name}')
+   ```
 
-Create a `WAFPolicy` in the `httpbin` namespace targeting the Gateway.
+   Send a test request from inside the cluster:
 
-```yaml
-apiVersion: applicationlayer.projectcalico.org/v3
-kind: WAFPolicy
-metadata:
-  name: httpbin-waf
-  namespace: httpbin
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: httpbin-gateway
-```
+   ```bash
+   kubectl run curl-test -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
+     curl -s -o /dev/null -w "%{http_code}" \
+     http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get
+   ```
 
-The reconciler merges the `GlobalWAFPolicy` baseline with this `WAFPolicy`, generates an ordered ModSecurity ruleset, and programs it into Envoy Gateway as an `EnvoyExtensionPolicy`.
+   ```text
+   200
+   ```
 
-Check that the policy was accepted and programmed:
+   Traffic is flowing through the Gateway with no WAF protection yet.
 
-```bash
-kubectl get wafpolicy httpbin-waf -n httpbin \
-  -o jsonpath='{range .status.conditions[*]}{.type}={.status} ({.reason}){"\n"}{end}'
-```
+1. Apply a `GlobalWAFPolicy` to set the cluster-wide baseline. Create the singleton `default` policy with the OWASP Core Rule Set enabled in `Block` mode:
 
-```text
-Licensed=True (LicenseValid)
-Accepted=True (Accepted)
-Validated=Unknown (NotEvaluated)
-Programmed=True (Programmed)
-Ready=True (Ready)
-```
+   :::tip
 
-All four executable conditions (`Licensed`, `Accepted`, `Programmed`, `Ready`) must be `True` before WAF is active. `Validated=Unknown (NotEvaluated)` is expected when no `WAFValidationPolicy` is in scope.
+   This tutorial uses `Block` mode immediately so you can see blocking in action. Most production rollouts start in `Detect` mode to baseline traffic before switching. See [Merge order and enforcement](./overview.mdx#merge-order-and-enforcement) for the tradeoffs.
 
-If `Programmed=False`, check the condition message for the reason. A common cause is the WASM image not being reachable — see [Troubleshooting](./troubleshooting.mdx).
+   :::
 
-Allow a few seconds for Envoy to load the WASM filter before running the tests below.
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: GlobalWAFPolicy
+   metadata:
+     name: default
+   spec:
+     defaultAction: Block
+     coreRuleSet:
+       state: Enabled
+       paranoiaLevel: 1
+   ```
 
-## Step 6: Test WAF blocking
+   This defines the global posture. It does not attach WAF to any traffic yet — that requires a namespace-scoped `WAFPolicy` with `targetRefs`.
 
-**Normal request — expect 200:**
+1. Attach WAF to the Gateway. Create a `WAFPolicy` in the `httpbin` namespace targeting the Gateway:
 
-```bash
-kubectl run curl-ok -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
-  curl -s -o /dev/null -w "%{http_code}" \
-  http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get
-```
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: WAFPolicy
+   metadata:
+     name: httpbin-waf
+     namespace: httpbin
+   spec:
+     targetRefs:
+       - group: gateway.networking.k8s.io
+         kind: Gateway
+         name: httpbin-gateway
+   ```
 
-```text
-200
-```
+   The reconciler merges the `GlobalWAFPolicy` baseline with this `WAFPolicy`, generates an ordered ModSecurity ruleset, and programs it into Envoy Gateway as an `EnvoyExtensionPolicy`. Check that the policy was accepted and programmed:
 
-**SQL injection probe — expect 403:**
+   ```bash
+   kubectl get wafpolicy httpbin-waf -n httpbin \
+     -o jsonpath='{range .status.conditions[*]}{.type}={.status} ({.reason}){"\n"}{end}'
+   ```
 
-```bash
-kubectl run curl-sqli -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
-  curl -s -o /dev/null -w "%{http_code}" \
-  "http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get?id=1%27%20OR%20%271%27%3D%271"
-```
+   ```text
+   Licensed=True (LicenseValid)
+   Accepted=True (Accepted)
+   Validated=Unknown (NotEvaluated)
+   Programmed=True (Programmed)
+   Ready=True (Ready)
+   ```
 
-```text
-403
-```
+   All four executable conditions (`Licensed`, `Accepted`, `Programmed`, `Ready`) must be `True` before WAF is active. `Validated=Unknown (NotEvaluated)` is expected when no `WAFValidationPolicy` is in scope. If `Programmed=False`, check the condition message — a common cause is the WASM image not being reachable (see [Troubleshooting](./troubleshooting.mdx)). Allow a few seconds for Envoy to load the WASM filter before running the tests below.
 
-**XSS probe — expect 403:**
+1. Test WAF blocking. A normal request still passes, but a SQL injection probe and an XSS probe are both blocked:
 
-```bash
-kubectl run curl-xss -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
-  curl -s -o /dev/null -w "%{http_code}" \
-  "http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
-```
+   ```bash
+   # Normal request — expect 200
+   kubectl run curl-ok -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
+     curl -s -o /dev/null -w "%{http_code}" \
+     http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get
 
-```text
-403
-```
+   # SQL injection probe — expect 403
+   kubectl run curl-sqli -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
+     curl -s -o /dev/null -w "%{http_code}" \
+     "http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get?id=1%27%20OR%20%271%27%3D%271"
 
-The Coraza WASM filter, running inside Envoy, evaluated each request against the OWASP Core Rule Set. Core Rule Set rule group 942xxx detects SQL injection; group 941xxx detects cross-site scripting. Both attacks are blocked before the request reaches the application.
+   # XSS probe — expect 403
+   kubectl run curl-xss -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
+     curl -s -o /dev/null -w "%{http_code}" \
+     "http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+   ```
+
+   The Coraza WASM filter, running inside Envoy, evaluated each request against the OWASP Core Rule Set. Core Rule Set rule group 942xxx detects SQL injection; group 941xxx detects cross-site scripting. Both attacks are blocked before the request reaches the application.
 
 ## Clean up
 
@@ -242,5 +223,5 @@ If a `WAFPolicy` you attach to a route later shows `Programmed=False` with reaso
 
 ## Next steps
 
-- [Set a baseline](./set-a-baseline.mdx) — start production configuration in `Detect` mode.
+- [Set a cluster-wide baseline for Gateway WAF](./set-a-baseline.mdx) — start production configuration in `Detect` mode.
 - [Reference](./reference.mdx) — CRDs, Rego validation, SecRule ID ranges, and status conditions.

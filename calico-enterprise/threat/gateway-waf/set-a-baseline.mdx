@@ -2,87 +2,100 @@
 description: Set the cluster-wide WAF baseline every namespace inherits — action mode, Core Rule Set state, and paranoia level.
 ---
 
-# Set a cluster-wide baseline
+# Set a cluster-wide baseline for Gateway WAF
 
-The baseline is the cluster-wide default every namespace inherits — action mode, Core Rule Set, and paranoia level. Set it once so every Gateway starts protected and teams tune from a known-safe starting point.
+:::note
 
-**Prerequisites:** Gateway WAF is enabled (see [Enable Gateway WAF](./enable.mdx)); cluster-admin rights — `GlobalWAFPolicy` is cluster-scoped.
-
-## Create the GlobalWAFPolicy singleton
-
-Must be named `default` — other names are rejected by the admission webhook. Start in `Detect` mode: it logs matches without blocking, so you can measure false positives before switching to `Block`.
-
-```yaml
-apiVersion: applicationlayer.projectcalico.org/v3
-kind: GlobalWAFPolicy
-metadata:
-  name: default
-spec:
-  defaultAction: Detect        # start here; promote to Block after validating false-positive rate
-  coreRuleSet:
-    state: Enabled
-    paranoiaLevel: 1
-```
-
-Apply with `kubectl apply -f globalwafpolicy.yaml`.
-
-Four paranoia levels; higher catches more attacks at the cost of more false positives:
-
-| Level | Posture | Typical use |
-| :--- | :--- | :--- |
-| 1 | Balanced — low false-positive rate | General-purpose default; a safe starting point |
-| 2 | Moderate — catches common evasion patterns | APIs that handle sensitive data |
-| 3 | Strict — flags most suspicious patterns | High-value or compliance-regulated endpoints |
-| 4 | Paranoid — near-zero tolerance | Extremely high-security targets; expect false positives |
-
-:::tip
-
-Start at level 1 cluster-wide; let application operators raise it per namespace, and enforce a minimum later via a validation policy.
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
 
 :::
 
-Once satisfied, set `defaultAction: Block` — $[prodname] then returns HTTP 403 for matching requests.
+The baseline is the cluster-wide default every namespace inherits — action mode, Core Rule Set, and paranoia level. Set it once so every Gateway starts protected and teams tune from a known-safe starting point.
 
-## Add organization-wide rules with a GlobalWAFPlugin
+## Prerequisites
 
-A `GlobalWAFPlugin` holds custom ModSecurity rules applied cluster-wide via the global policy's `plugins[]` list. Create it, then reference it — rules use the four lifecycle slots in [Write custom rules](./write-custom-rules.mdx).
+- Gateway WAF is enabled. See [Enable Gateway WAF](./enable.mdx).
+- Cluster-admin rights — `GlobalWAFPolicy` is cluster-scoped.
 
-```yaml
-apiVersion: applicationlayer.projectcalico.org/v3
-kind: GlobalWAFPlugin
-metadata:
-  name: org-baseline
-spec:
-  description: "Organization-wide security baseline rules"
-  config: |
-    SecAction "id:800001,phase:1,pass,nolog,setvar:tx.enforce_https=1"
-  before: |
-    SecRule REQUEST_HEADERS:X-Forwarded-Proto "!@streq https" \
-      "id:800002,phase:1,deny,status:403,msg:'HTTPS required',chain"
-    SecRule TX:ENFORCE_HTTPS "@eq 1" ""
-  rules: |
-    SecRule REQUEST_HEADERS:X-Request-ID "@rx ^$" \
-      "id:800003,phase:1,deny,status:400,msg:'Missing X-Request-ID header'"
-  after: |
-    # Cluster operator's after slot runs last in the merge order.
-    SecRule TX:BLOCKING_ANOMALY_SCORE "@gt 0" \
-      "id:800099,phase:5,pass,log,msg:'Request blocked by WAF'"
-```
+## Set the baseline
 
-Reference it from `GlobalWAFPolicy.spec.plugins[]` (`plugins: [{kind: GlobalWAFPlugin, name: org-baseline}]`). `plugins[]` is ordered by array position, up to 64 entries; `WAFPlugin` entries can be added here too.
+1. Create the singleton `GlobalWAFPolicy`. It must be named `default` — other names are rejected by the admission webhook. Start in `Detect` mode: it logs matches without blocking, so you can measure false positives before switching to `Block`:
+
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: GlobalWAFPolicy
+   metadata:
+     name: default
+   spec:
+     defaultAction: Detect        # start here; promote to Block after validating false-positive rate
+     coreRuleSet:
+       state: Enabled
+       paranoiaLevel: 1
+   ```
+
+   Apply it with `kubectl apply -f globalwafpolicy.yaml`.
+
+1. Pick a paranoia level. Higher catches more attacks at the cost of more false positives:
+
+   | Level | Posture | Typical use |
+   | :--- | :--- | :--- |
+   | 1 | Balanced — low false-positive rate | General-purpose default; a safe starting point |
+   | 2 | Moderate — catches common evasion patterns | APIs that handle sensitive data |
+   | 3 | Strict — flags most suspicious patterns | High-value or compliance-regulated endpoints |
+   | 4 | Paranoid — near-zero tolerance | Extremely high-security targets; expect false positives |
+
+   :::tip
+
+   Start at level 1 cluster-wide; let application operators raise it per namespace, and enforce a minimum later via a validation policy.
+
+   :::
+
+1. Once you've validated the false-positive rate, set `defaultAction: Block`. $[prodname] then returns HTTP 403 for matching requests.
+
+## Add organization-wide rules with a GlobalWAFPlugin (optional)
+
+A `GlobalWAFPlugin` holds custom ModSecurity rules applied cluster-wide via the global policy's `plugins[]` list — for a security baseline every namespace inherits.
+
+1. Create the `GlobalWAFPlugin`. Rules use the four lifecycle slots described in [Write custom rules](./write-custom-rules.mdx):
+
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: GlobalWAFPlugin
+   metadata:
+     name: org-baseline
+   spec:
+     description: "Organization-wide security baseline rules"
+     config: |
+       SecAction "id:800001,phase:1,pass,nolog,setvar:tx.enforce_https=1"
+     before: |
+       SecRule REQUEST_HEADERS:X-Forwarded-Proto "!@streq https" \
+         "id:800002,phase:1,deny,status:403,msg:'HTTPS required',chain"
+       SecRule TX:ENFORCE_HTTPS "@eq 1" ""
+     rules: |
+       SecRule REQUEST_HEADERS:X-Request-ID "@rx ^$" \
+         "id:800003,phase:1,deny,status:400,msg:'Missing X-Request-ID header'"
+     after: |
+       # Cluster operator's after slot runs last in the merge order.
+       SecRule TX:BLOCKING_ANOMALY_SCORE "@gt 0" \
+         "id:800099,phase:5,pass,log,msg:'Request blocked by WAF'"
+   ```
+
+1. Reference it from `GlobalWAFPolicy.spec.plugins[]` — for example `plugins: [{kind: GlobalWAFPlugin, name: org-baseline}]`. `plugins[]` is ordered by array position, up to 64 entries; `WAFPlugin` entries can be added here too.
 
 ## Verify the baseline
 
-```bash
-kubectl get globalwafpolicy default
-```
+1. Confirm the policy is accepted:
 
-```
-NAME      ACCEPTED   AGE
-default   True       30s
-```
+   ```bash
+   kubectl get globalwafpolicy default
+   ```
 
-Detail lives in `.status.conditions` (`kubectl get globalwafpolicy default -o yaml`): `Accepted=True` reason `Accepted` = programmed; `Accepted=False` reason `ValidationFailed` = a validation policy blocked it (message describes the violation). See [Status conditions](./reference.mdx#status-conditions).
+   ```
+   NAME      ACCEPTED   AGE
+   default   True       30s
+   ```
+
+Detail lives in `.status.conditions` (`kubectl get globalwafpolicy default -o yaml`): `Accepted=True` reason `Accepted` = programmed; `Accepted=False` reason `ValidationFailed` = a validation policy blocked it (the message describes the violation). See [Status conditions](./reference.mdx#status-conditions).
 
 Every namespace with a `WAFPolicy` inherits `defaultAction`, `coreRuleSet.state`, and `coreRuleSet.paranoiaLevel` from `GlobalWAFPolicy` unless it overrides them:
 
@@ -91,3 +104,9 @@ GlobalWAFPolicy (baseline)
   └─ WAFPolicy in namespace payments  → overrides action: Block, paranoiaLevel: 2
   └─ WAFPolicy in namespace team-a    → inherits everything from GlobalWAFPolicy
 ```
+
+## Next steps
+
+- [Attach WAF to a Gateway or route](./attach-waf-to-a-route.mdx) — turn on inspection for a target.
+- [Write custom rules with plugins](./write-custom-rules.mdx) — add app-specific detections and exceptions.
+- [Validate configuration with Rego](./validate-config.mdx) — enforce compliance guardrails on the merged config.

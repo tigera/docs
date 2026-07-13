@@ -4,9 +4,21 @@ description: Attach a WAFPolicy to a Gateway or HTTPRoute to turn on WAF inspect
 
 # Attach WAF to a Gateway or route
 
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
 Create a `WAFPolicy` in your namespace pointing at Gateway API targets — WAF inspection doesn't start automatically when the feature is enabled. It inherits the cluster baseline with namespace overrides layered on top.
 
-**Prerequisites:** the cluster operator has created a `GlobalWAFPolicy`; you have write access to `WAFPolicy` in your namespace; a `Gateway`/`HTTPRoute` is already receiving traffic.
+## Prerequisites
+
+- The cluster operator has created the `GlobalWAFPolicy` baseline. See [Set a cluster-wide baseline for Gateway WAF](./set-a-baseline.mdx).
+- You have write access to `WAFPolicy` in your namespace.
+- A `Gateway` or `HTTPRoute` in your namespace is already receiving traffic.
+
+## Choose a target
 
 `WAFPolicy.spec.targetRefs[]` accepts two kinds of targets:
 
@@ -23,66 +35,74 @@ Each `targetRefs` entry generates a separate `EnvoyExtensionPolicy` (max 16 entr
 
 :::
 
-Attaching WAF to one `HTTPRoute`, overriding action and paranoia; the unset `coreRuleSet.state` still inherits from the baseline:
+## Attach a WAFPolicy
 
-```yaml
-apiVersion: applicationlayer.projectcalico.org/v3
-kind: WAFPolicy
-metadata:
-  name: payments-api-waf
-  namespace: payments
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      name: payments-api
-  action: Block              # override: Block even if global baseline is Detect
-  coreRuleSet:
-    paranoiaLevel: 2         # stricter than the cluster default
-  # coreRuleSet.state is unset → inherited from GlobalWAFPolicy
-```
+1. Create a `WAFPolicy` in your namespace pointing at the target. This example attaches to one `HTTPRoute`, overriding action and paranoia; the unset `coreRuleSet.state` still inherits from the baseline:
 
-Apply with `kubectl apply -f wafpolicy.yaml`. For custom rules beyond the baseline, see [Write custom rules](./write-custom-rules.mdx); for inheritance details, see the [Overview](./index.mdx#inheritance-namespaces-override-they-dont-restart).
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: WAFPolicy
+   metadata:
+     name: payments-api-waf
+     namespace: payments
+   spec:
+     targetRefs:
+       - group: gateway.networking.k8s.io
+         kind: HTTPRoute
+         name: payments-api
+     action: Block              # override: Block even if global baseline is Detect
+     coreRuleSet:
+       paranoiaLevel: 2         # stricter than the cluster default
+     # coreRuleSet.state is unset → inherited from GlobalWAFPolicy
+   ```
+
+   Apply it with `kubectl apply -f wafpolicy.yaml`. For inheritance details, see the [Overview](./overview.mdx#inheritance-namespaces-override-they-dont-restart).
+
+1. Verify the policy was accepted and programmed:
+
+   ```bash
+   kubectl get wafpolicy payments-api-waf -n payments
+   ```
+
+   ```
+   NAME               ACCEPTED   PROGRAMMED   AGE
+   payments-api-waf   True       True         45s
+   ```
+
+   `.status.conditions` reports `Accepted`, `Programmed`, and validation findings. Confirm Envoy Gateway received the filter with `kubectl get envoyextensionpolicies -n payments` (one per `targetRefs` entry).
+
+1. Test that the WAF blocks an attack:
+
+   ```bash
+   curl -si "https://<gateway-host>/api?id=1+OR+1%3D1"
+   ```
+
+   ```
+   HTTP/1.1 403 Forbidden
+   content-length: 11
+   content-type: text/plain
+
+   Access denied
+   ```
+
+   :::tip
+
+   In `Detect` mode the request is allowed (200), but the WAF hit is still recorded in the `tigera_secure_ee_waf` log index (carrying `gateway_name`/`gateway_namespace`). On this release, gateway-WAF hits are not raised as Security Events — see [Observing WAF activity](./troubleshooting.mdx#observing-waf-activity).
+
+   :::
+
+   :::caution
+
+   `ACCEPTED=False` reason `ValidationFailed` means a `GlobalWAFValidationPolicy` is blocking your config — the status message names the policy and rule. Contact your cluster operator or see [Validate configuration with Rego](./validate-config.mdx).
+
+   :::
 
 ## Conflict resolution
 
 Only one `WAFPolicy` may be active per target. If two in the same namespace target the same Gateway/HTTPRoute, $[prodname] follows [GEP-713](https://gateway-api.sigs.k8s.io/geps/gep-713/): oldest `creationTimestamp` wins; the newer is marked `Accepted=False` reason `Conflicted`, and only the winner's directives are merged. Fix by deleting the newer policy or repointing its `targetRefs`.
 
-## Verify the policy
+## Next steps
 
-```bash
-kubectl get wafpolicy payments-api-waf -n payments
-```
-
-```
-NAME               ACCEPTED   PROGRAMMED   AGE
-payments-api-waf   True       True         45s
-```
-
-`.status.conditions` reports `Accepted`, `Programmed`, and validation findings. Confirm Envoy Gateway received the filter with `kubectl get envoyextensionpolicies -n payments` (one per `targetRefs` entry).
-
-## Test the WAF
-
-```bash
-curl -si "https://<gateway-host>/api?id=1+OR+1%3D1"
-```
-
-```
-HTTP/1.1 403 Forbidden
-content-length: 11
-content-type: text/plain
-
-Access denied
-```
-
-:::tip
-
-In `Detect` mode the request is allowed (200), but the WAF hit is still recorded in the `tigera_secure_ee_waf` log index (carrying `gateway_name`/`gateway_namespace`). On this release, gateway-WAF hits are not raised as Security Events — see [Observing WAF activity](./troubleshooting.mdx#observing-waf-activity).
-
-:::
-
-:::caution
-
-`ACCEPTED=False` reason `ValidationFailed` means a `GlobalWAFValidationPolicy` is blocking your config — the status message names the policy and rule. Contact your cluster operator or see [Validate configuration with Rego](./validate-config.mdx).
-
-:::
+- [Write custom rules with plugins](./write-custom-rules.mdx) — add app-specific detections beyond the baseline.
+- [Validate configuration with Rego](./validate-config.mdx) — check the merged config against compliance guardrails.
+- [Troubleshooting](./troubleshooting.mdx) — diagnose a policy that won't accept or program.
