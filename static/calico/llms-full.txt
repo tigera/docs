@@ -1037,7 +1037,7 @@ As part of this process [NAT](https://docs.tigera.io/calico/latest/about/kuberne
 
 ![kube-proxy node port](https://docs.tigera.io/assets/images/kube-proxy-node-port-b8daa0296e4e25f65be4892bc45c7fae.svg)
 
-Note that because the connection source IP address is SNATed to the node IP address, ingress network policy for the service backing pod does not see the original client IP address. Typically this means that any such policy is limited to restricting the destination protocol and port, and cannot restrict based on the client / source IP. This limitation can be circumvented in some scenarios by using [externalTrafficPolicy](#externaltrafficpolicylocal) or by using Calico's eBPF data plane [native service handling](#calico-ebpf-native-service-handling) (rather than kube-proxy) which preserves source IP address.
+Note that because the connection source IP address is SNATed to the node IP address, ingress network policy for the service backing pod does not see the original client IP address. Typically this means that any such policy is limited to restricting the destination protocol and port, and cannot restrict based on the client / source IP. This limitation can be circumvented in some scenarios by using [externalTrafficPolicy](#externaltrafficpolicy) or by using Calico's eBPF data plane [native service handling](#calico-ebpf-native-service-handling) (rather than kube-proxy) which preserves source IP address.
 
 ## Load balancer services[​](#load-balancer-services)
 
@@ -1047,7 +1047,7 @@ The service can be accessed from outside of the cluster via a specific IP addres
 
 ![kube-proxy load balancer](https://docs.tigera.io/assets/images/kube-proxy-load-balancer-07d81e8c44b28b285157e15f8a75f2b4.svg)
 
-Most network load balancers preserve the client source IP address, but because the service then goes via a node port, the backing pods themselves do not see the client IP, with the same implications for network policy. As with node ports, this limitation can be circumvented in some scenarios by using [externalTrafficPolicy](#externaltrafficpolicylocal) or by using Calico's eBPF data plane [native service handling](#calico-ebpf-native-service-handling) (rather than kube-proxy) which preserves source IP address.
+Most network load balancers preserve the client source IP address, but because the service then goes via a node port, the backing pods themselves do not see the client IP, with the same implications for network policy. As with node ports, this limitation can be circumvented in some scenarios by using [externalTrafficPolicy](#externaltrafficpolicy) or by using Calico's eBPF data plane [native service handling](#calico-ebpf-native-service-handling) (rather than kube-proxy) which preserves source IP address.
 
 ## Advertising service IPs[​](#advertising-service-ips)
 
@@ -8484,7 +8484,7 @@ items:
 
 ### Felix starts, but does not output logs[​](#felix-starts-but-does-not-output-logs)
 
-By default, Felix waits to connect to the datastore before logging (in case the datastore configuration intentionally disables logging). To start logging at startup, update the [FELIX\_LOGSEVERITYSCREEN environment variable](https://docs.tigera.io/calico/latest/reference/felix/configuration#general-configuration) to "info" or "debug" level.
+By default, Felix waits to connect to the datastore before logging (in case the datastore configuration intentionally disables logging). To start logging at startup, update the [FELIX\_LOGSEVERITYSCREEN environment variable](https://docs.tigera.io/calico/latest/reference/felix/configuration) to "info" or "debug" level.
 
 ### Calico BGP mode: connectivity issues, Linux calico/node pods report unready[​](#calico-bgp-mode-connectivity-issues-linux-caliconode-pods-report-unready)
 
@@ -8861,7 +8861,7 @@ K3s stores a kubeconfig file in your server at `/etc/rancher/k3s/k3s.yaml`, copy
 To add additional nodes to your cluster you need two piece of information.
 
 - `K3S_URL` which is going to be your main node ip address.
-- `K3S_TOKEN` which is stored in `/var/lib/rancher/k3s/server/node-token` file in main Node [(Step 1)](#initializing-master-instance). Execute following command in your node instance and join it to the cluster.
+- `K3S_TOKEN` which is stored in `/var/lib/rancher/k3s/server/node-token` file in main Node [(Step 1)](#initializing-control-plane-instance). Execute following command in your node instance and join it to the cluster.
 
 > **SECONDARY:** Remember to change `serverip` and `mytoken`.
 
@@ -13310,8 +13310,8 @@ This section explains how to enable the eBPF data plane on all compatible cluste
 
     <!-- -->
 
-    - [AKS with Azure CNI and Calico network policy](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/aks#install-aks-with-calico-for-network-policy) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
-    - [AKS with Calico networking](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/aks#install-aks-with-calico-networking) is in testing with the eBPF data plane. This should be a better solution overall but, at time of writing, the testing was not complete.
+    - [AKS with Azure CNI and Calico network policy](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/aks) works, but it is not possible to disable kube-proxy resulting in wasted resources and suboptimal performance.
+    - [AKS with Calico networking](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/aks#install-aks-with-self-managed-calico-for-networking-and-network-policy) is in testing with the eBPF data plane. This should be a better solution overall but, at time of writing, the testing was not complete.
 
   - RKE (RKE2 recommended because it supports disabling `kube-proxy`)
 
@@ -15352,7 +15352,7 @@ To enable IPsec encryption, you will need a Kubernetes cluster with:
 ## How to[​](#how-to)
 
 - [Create the IKEv2 PSK](#create-the-ikev2-psk)
-- [Configure the VPP data plane](#configure-the-vpp-dataplane)
+- [Configure the VPP data plane](#configure-the-vpp-data-plane)
 
 ### Create the IKEv2 PSK[​](#create-the-ikev2-psk)
 
@@ -19052,7 +19052,7 @@ Ensure you can access `projectcalico.org/v3` resources, either by installing the
 ## How to[​](#how-to)
 
 - [Configure global BGP settings](#configure-global-bgp-settings)
-- [Create BGPFilter resources](#configure-bgpfilter-resources)
+- [Create BGPFilter resources](#create-bgpfilter-resources)
 - [Configure parent cluster BGP topology](#configure-parent-cluster-bgp-topology)
 - [Configure BGP peering with workloads](#configure-bgp-peering-with-workloads)
 - [Configure more than one nested cluster](#configure-more-than-one-nested-cluster)
@@ -20022,7 +20022,7 @@ Kube-proxy IPVS mode supports NodePort services and cluster IPs. Calico also use
 
 ### iptables: when to change mark bits[​](#iptables-when-to-change-mark-bits)
 
-To police traffic in IPVS mode, Calico uses additional iptables mark bits to store an ID for each local Calico endpoint. If you are planning to run more than 1,022 pods per host with IPVS enabled, you may need to adjust the mark bit size using the `IptablesMarkMask` parameter in Calico [FelixConfiguration](https://docs.tigera.io/calico/latest/reference/felix/configuration#ipvs-bits).
+To police traffic in IPVS mode, Calico uses additional iptables mark bits to store an ID for each local Calico endpoint. If you are planning to run more than 1,022 pods per host with IPVS enabled, you may need to adjust the mark bit size using the `IptablesMarkMask` parameter in Calico [FelixConfiguration](https://docs.tigera.io/calico/latest/reference/felix/configuration).
 
 ### Calico auto detects ipvs mode[​](#calico-auto-detects-ipvs-mode)
 
@@ -23456,7 +23456,7 @@ In a [multi-region deployment](https://docs.tigera.io/calico/latest/networking/o
 | ----------------- | ------------- | ---------------------------------------------------------------------------- |
 | openstack\_region | none          | The name of the region that the local compute of controller node belongs to. |
 
-When specified, the value of `openstack_region` must be a string of lower case alphanumeric characters or '-', starting and ending with an alphanumeric character, and must match the value of [`OpenStackRegion`](https://docs.tigera.io/calico/latest/reference/felix/configuration#openstack-specific-configuration) configured for the Felixes in the same region.
+When specified, the value of `openstack_region` must be a string of lower case alphanumeric characters or '-', starting and ending with an alphanumeric character, and must match the value of [`OpenStackRegion`](https://docs.tigera.io/calico/latest/reference/felix/configuration#data-plane-openstack-support) configured for the Felixes in the same region.
 
 ### Detailed semantics
 
@@ -24936,7 +24936,7 @@ In vanilla Neutron, these can map to the underlay network in various ways, eithe
 
 Generally speaking, Neutron networks can be created by all tenants. The administrator tenant will generally create some public Neutron networks that map to the underlay physical network directly for providing floating IPs: other tenants will create their own private Neutron networks as necessary.
 
-In Calico, because all traffic is L3 and routed, the role of Neutron network as L2 connectivity domain is not helpful. Therefore, in Calico, Neutron networks are simply containers for subnets. Best practices for operators configuring Neutron networks in Calico deployments can be found in [Set up OpenStack](https://docs.tigera.io/calico/latest/networking/openstack/connectivity#opens-external-conn-setup).
+In Calico, because all traffic is L3 and routed, the role of Neutron network as L2 connectivity domain is not helpful. Therefore, in Calico, Neutron networks are simply containers for subnets. Best practices for operators configuring Neutron networks in Calico deployments can be found in [Set up OpenStack](https://docs.tigera.io/calico/latest/networking/openstack/connectivity#part-2-set-up-openstack).
 
 It is not useful for non-administrator tenants to create their own Neutron networks. Although Calico will allow non-administrator tenants to create Neutron networks, generally speaking administrators should use Neutron quotas to prevent non-administrator tenants from doing this.
 
@@ -24950,7 +24950,7 @@ Neutron Provider networks are not used in Calico deployments. Setting provider n
 
 Neutron subnets are child objects of Neutron networks. In vanilla Neutron, a subnet is a collection of IP addresses and other network configuration (e.g. DNS servers) that is associated with a single Neutron network. A single Neutron network may have multiple Neutron subnets associated with it. Each Neutron subnet represents either an IPv4 or IPv6 block of addresses.
 
-Best practices for configuring Neutron subnets in Calico deployments can be found in [Set up OpenStack](https://docs.tigera.io/calico/latest/networking/openstack/connectivity#opens-external-conn-setup).
+Best practices for configuring Neutron subnets in Calico deployments can be found in [Set up OpenStack](https://docs.tigera.io/calico/latest/networking/openstack/connectivity#part-2-set-up-openstack).
 
 In Calico, these roles for the Neutron subnet are preserved in their entirety. All properties associated with these Neutron subnets are preserved and remain meaningful except for:
 
@@ -24984,7 +24984,7 @@ The `binding:host-id` attribute works as normal. The following notes apply to th
 
 Neutron quotas function unchanged.
 
-In most deployments we recommend setting non-administrator tenant quotas for almost all Neutron objects to zero. For more information, see [Set up OpenStack](https://docs.tigera.io/calico/latest/networking/openstack/connectivity#opens-external-conn-setup).
+In most deployments we recommend setting non-administrator tenant quotas for almost all Neutron objects to zero. For more information, see [Set up OpenStack](https://docs.tigera.io/calico/latest/networking/openstack/connectivity#part-2-set-up-openstack).
 
 ## Security Groups[​](#security-groups)
 
@@ -25046,7 +25046,7 @@ As noted above, tenants should ensure they configure their security groups to se
 
 #### Tab: Network -> Network Topology[​](#tab-network---network-topology)
 
-For the 'Create Network' button, see the [Networks](#networks) section. For the 'Create Router' button, see the [Layer 3 Routing](#routers) section.
+For the 'Create Network' button, see the [Networks](#networks) section. For the 'Create Router' button, see the [Layer 3 Routing](#neutron-routers) section.
 
 #### Tab: Network -> Networks[​](#tab-network---networks)
 
@@ -25054,7 +25054,7 @@ For networks and subnets, see the sections on [Networks](#networks) and [Subnets
 
 #### Tab: Network -> Routers[​](#tab-network---routers)
 
-Tenants should be prevented from creating routers, as they serve no purpose in a Calico network. See [Layer 3 Routing](#routers) for more.
+Tenants should be prevented from creating routers, as they serve no purpose in a Calico network. See [Layer 3 Routing](#neutron-routers) for more.
 
 ### Section: Admin[​](#section-admin)
 
@@ -25064,7 +25064,7 @@ In the course of general operation administrators are not expected to make chang
 
 #### Tab: System Panel -> Routers[​](#tab-system-panel---routers)
 
-Administrators should not create routers, as they serve no purpose in a Calico network. See [Layer 3 Routing](#routers) for more.
+Administrators should not create routers, as they serve no purpose in a Calico network. See [Layer 3 Routing](#neutron-routers) for more.
 
 ### Calico networking for KubeVirt
 
@@ -27971,8 +27971,8 @@ To apply the sample Calico network policies in the following section, [install c
 
 ## How to[​](#how-to)
 
-- [Create a default deny network policy](#crate-a-default-deny-network-policy)
-- [Create a global default deny network policy](#create-a-global-default-deny-network-policy)
+- [Create a default deny network policy](#create-a-default-deny-network-policy)
+- [Create a global default deny network policy](#create-a-global-default-deny-policy)
 
 ### Create a default deny network policy[​](#create-a-default-deny-network-policy)
 
@@ -29977,7 +29977,7 @@ For details, see [ICMP type and code](https://en.wikipedia.org/wiki/Internet_Con
 
 - [Deny all ICMP, all workloads and host endpoints](#deny-all-icmp-all-workloads-and-host-endpoints)
 - [Allow ICMP ping, all workloads and host endpoints](#allow-icmp-ping-all-workloads-and-host-endpoints)
-- [Allow ICMP matching protocol type and code, all Kubernetes pods](#allow-icmp-matching-protocol-type-and-code-all-Kubernetes-pods)
+- [Allow ICMP matching protocol type and code, all Kubernetes pods](#allow-icmp-matching-protocol-type-and-code-all-kubernetes-pods)
 
 ### Deny all ICMP, all workloads and host endpoints[​](#deny-all-icmp-all-workloads-and-host-endpoints)
 
@@ -33270,7 +33270,7 @@ If you are using the etcd datastore, we recommend enabling mutual TLS authentica
   - [`calicoctl`](https://docs.tigera.io/calico/latest/operations/calicoctl/configure/etcd)
   - [CNI plugin](https://docs.tigera.io/calico/latest/reference/configure-cni-plugins#etcd-location) (Kubernetes and OpenShift only)
   - [Kubernetes controllers](https://docs.tigera.io/calico/latest/reference/kube-controllers/configuration#configuring-datastore-access) (Kubernetes and OpenShift only)
-  - [Felix](https://docs.tigera.io/calico/latest/reference/felix/configuration#etcd-datastore-configuration)
+  - [Felix](https://docs.tigera.io/calico/latest/reference/felix/configuration)
   - [Typha](https://docs.tigera.io/calico/latest/reference/typha/configuration#etcd-datastore-configuration) (often deployed in larger Kubernetes deployments)
   - [Neutron plugin](https://docs.tigera.io/calico/latest/networking/openstack/configuration#neutron-server-etcneutronneutronconf) (OpenStack only)
   - [DHCP agent](https://docs.tigera.io/calico/latest/networking/openstack/configuration#neutron-server-etcneutronneutronconf) (OpenStack only)
@@ -33351,7 +33351,7 @@ For detailed reference information on these parameters, refer to:
 
 - **Typha**: [Felix-Typha TLS configuration](https://docs.tigera.io/calico/latest/reference/typha/configuration#felix-typha-tls-configuration)
 
-- **Felix**: [Felix-Typha TLS configuration](https://docs.tigera.io/calico/latest/reference/felix/configuration#felix-typha-tls-configuration)
+- **Felix**: [Felix-Typha TLS configuration](https://docs.tigera.io/calico/latest/reference/felix/configuration)
 
 <!-- /tabs -->
 
@@ -47223,7 +47223,7 @@ spec:
 
 | Field   | Description                                                                                                                                  | Accepted Values                                                                                                                                                                                                                                                                      | Schema |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| `name`  | Name or identifier for the community. This should be used in [prefixAdvertisements](#prefixAdvertisements) to advertise the community value. |                                                                                                                                                                                                                                                                                      | string |
+| `name`  | Name or identifier for the community. This should be used in [prefixAdvertisements](#prefixadvertisements) to advertise the community value. |                                                                                                                                                                                                                                                                                      | string |
 | `value` | Standard or large BGP community value.                                                                                                       | For standard community, value should be in `aa:nn` format, where both `aa` and `nn` are 16 bit integers. For large community, value should be `aa:nn:mm` format, where `aa`, `nn` and `mm` are all 32 bit integers. Where `aa` is an AS Number, `nn` and `mm` are per-AS identifier. | string |
 
 ### prefixAdvertisements[​](#prefixadvertisements)
@@ -49972,7 +49972,7 @@ A single rule matches a set of packets and applies some action to them. When mul
 | ipVersion   | Positive IP version match.                                                                 | `4`, `6`                                                     | integer                       |         |
 | source      | Source match parameters.                                                                   |                                                              | [EntityRule](#entityrule)     |         |
 | destination | Destination match parameters.                                                              |                                                              | [EntityRule](#entityrule)     |         |
-| http        | Match HTTP request parameters. Application layer policy must be enabled to use this field. |                                                              | [HTTPMatch](#httpmatch)       |         |
+| http        | Match HTTP request parameters. Application layer policy must be enabled to use this field. |                                                              | HTTPMatch                     |         |
 
 After a `Log` action, processing continues with the next rule; `Allow` and `Deny` are immediate and final and no further rules are processed.
 
@@ -51011,7 +51011,7 @@ A single rule matches a set of packets and applies some action to them. When mul
 | ipVersion   | Positive IP version match.                                                                 | `4`, `6`                                                     | integer                       |         |
 | source      | Source match parameters.                                                                   |                                                              | [EntityRule](#entityrule)     |         |
 | destination | Destination match parameters.                                                              |                                                              | [EntityRule](#entityrule)     |         |
-| http        | Match HTTP request parameters. Application layer policy must be enabled to use this field. |                                                              | [HTTPMatch](#httpmatch)       |         |
+| http        | Match HTTP request parameters. Application layer policy must be enabled to use this field. |                                                              | HTTPMatch                     |         |
 
 After a `Log` action, processing continues with the next rule; `Allow` and `Deny` are immediate and final and no further rules are processed.
 
@@ -51367,7 +51367,7 @@ spec:
 | vxlanTunnelMACAddr   | MAC address of the IPv4 VXLAN tunnel. This is system configured and should not be updated manually.                                                                                    |                 | string                       |         |
 | ipv6VXLANTunnelAddr  | IPv6 address of the VXLAN tunnel. This is system configured and should not be updated manually.                                                                                        |                 | string                       |         |
 | vxlanTunnelMACAddrV6 | MAC address of the IPv6 VXLAN tunnel. This is system configured and should not be updated manually.                                                                                    |                 | string                       |         |
-| orchRefs             | Correlates this node to a node in another orchestrator.                                                                                                                                |                 | list of [OrchRefs](#OrchRef) |         |
+| orchRefs             | Correlates this node to a node in another orchestrator.                                                                                                                                |                 | list of [OrchRefs](#orchref) |         |
 | wireguard            | WireGuard configuration for this node. This is applicable only if WireGuard is enabled in [Felix Configuration](https://docs.tigera.io/calico/latest/reference/resources/felixconfig). |                 | [WireGuard](#wireguard)      |         |
 
 ### OrchRef[​](#orchref)
@@ -51568,7 +51568,7 @@ A single rule matches a set of packets and applies some action to them. When mul
 | ipVersion   | Positive IP version match.                                                                 | `4`, `6`                                                     | integer                       |         |
 | source      | Source match parameters.                                                                   |                                                              | [EntityRule](#entityrule)     |         |
 | destination | Destination match parameters.                                                              |                                                              | [EntityRule](#entityrule)     |         |
-| http        | Match HTTP request parameters. Application layer policy must be enabled to use this field. |                                                              | [HTTPMatch](#httpmatch)       |         |
+| http        | Match HTTP request parameters. Application layer policy must be enabled to use this field. |                                                              | HTTPMatch                     |         |
 
 After a `Log` action, processing continues with the next rule; `Allow` and `Deny` are immediate and final and no further rules are processed.
 
@@ -52004,7 +52004,7 @@ A single rule matches a set of packets and applies some action to them. When mul
 | ipVersion   | Positive IP version match.                                                                 | `4`, `6`                                                     | integer                       |         |
 | source      | Source match parameters.                                                                   |                                                              | [EntityRule](#entityrule)     |         |
 | destination | Destination match parameters.                                                              |                                                              | [EntityRule](#entityrule)     |         |
-| http        | Match HTTP request parameters. Application layer policy must be enabled to use this field. |                                                              | [HTTPMatch](#httpmatch)       |         |
+| http        | Match HTTP request parameters. Application layer policy must be enabled to use this field. |                                                              | HTTPMatch                     |         |
 
 After a `Log` action, processing continues with the next rule; `Allow` and `Deny` are immediate and final and no further rules are processed.
 
@@ -52521,8 +52521,8 @@ The directories of interest in tls-setup are `config` and `certs`. As indicated 
 
 Generating certificates with hack/tls-setup:
 
-1. Edit the [etcd certificate config](#configuration-for-the-etcd-certificates).
-2. Add the [per-user/per-component configuration files](#configuration-for-per-userper-components-etcd-certificates)
+1. Edit the etcd certificate config.
+2. Add the per-user/per-component configuration files
 3. Run `make`. (Re-running `make` will regenerate the CA and all certificates.)
 
 Generating the certificates creates:
@@ -52750,7 +52750,7 @@ Below are examples and suggestions when using a hosted Calico install where the 
 
 A setup that needs a certificate for each component is possible while using a hosted manifest. This setup requires a certificate for each different Calico component type listed above (cni-plugin, Calico Kubernetes controllers, and `calico/node`).
 
-This setup needs similar updates to the manifest like what is described in [Using etcd RBAC to segment Kubernetes and Calico: Updating a hosted Calico manifest](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes#updating-a-hosted-Calico-manifest), with the in addition to those updates a separate Secret for *each* component must be created which holds the CA, certificate, and key data base64 encoded. Then the specific Secret for each component must be in the `volumes` list for the correct pod and the `volumeMounts` for the appropriate container must reference the volume for the `/calico-secrets` mountPath.
+This setup needs similar updates to the manifest like what is described in [Using etcd RBAC to segment Kubernetes and Calico: Updating a hosted Calico manifest](https://docs.tigera.io/calico/latest/reference/etcd-rbac/kubernetes#updating-a-hosted-calico-manifest), with the in addition to those updates a separate Secret for *each* component must be created which holds the CA, certificate, and key data base64 encoded. Then the specific Secret for each component must be in the `volumes` list for the correct pod and the `volumeMounts` for the appropriate container must reference the volume for the `/calico-secrets` mountPath.
 
 ### Per node per component certificate setup[​](#per-node-per-component-certificate-setup)
 
@@ -60482,7 +60482,7 @@ Depending on the specific orchestrator environment, Felix is responsible for:
 
 ## BIRD[​](#bird)
 
-**Main task**: Gets routes from Felix and distributes to BGP peers on the network for inter-host routing. Runs on each node that hosts a Felix agent. Open source, internet routing daemon. [BIRD](https://docs.tigera.io/calico/latest/reference/configure-calico-node#content-main).
+**Main task**: Gets routes from Felix and distributes to BGP peers on the network for inter-host routing. Runs on each node that hosts a Felix agent. Open source, internet routing daemon. [BIRD](https://docs.tigera.io/calico/latest/reference/configure-calico-node).
 
 The BGP client is responsible for:
 
@@ -60506,7 +60506,7 @@ The BGP client is responsible for:
 
 Open source, lightweight configuration management tool.
 
-Confd dynamically generates BIRD configuration files based on the updates to data in the datastore. When the configuration file changes, confd triggers BIRD to load the new files. [Configure confd](https://docs.tigera.io/calico/latest/reference/configure-calico-node#content-main), and [confd project](https://github.com/kelseyhightower/confd).
+Confd dynamically generates BIRD configuration files based on the updates to data in the datastore. When the configuration file changes, confd triggers BIRD to load the new files. [Configure confd](https://docs.tigera.io/calico/latest/reference/configure-calico-node), and [confd project](https://github.com/kelseyhightower/confd).
 
 ## Dikastes[​](#dikastes)
 
