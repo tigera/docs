@@ -4,7 +4,7 @@ description: Enable the Istio Ambient Mode Waypoint-based L7 collector.
 
 # Collect L7 logs using the Waypoint collector
 
-Enable the Istio Ambient Mode Waypoint-based L7 collector to capture HTTP traffic.
+Enable the Istio Ambient Mode Waypoint-based L7 collector to capture HTTP/1, HTTP/2, and gRPC traffic.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ Enable the Istio Ambient Mode Waypoint-based L7 collector to capture HTTP traffi
 
 Once a workload is set up to be in the service mesh, L7 collection is enabled
 by adding a [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/),
-and labeling the workload to use it.
+and labeling the namespace to use it.
 
 This will create an Istio Waypoint proxy that includes a sidecar container to
 capture the L7 logs.
@@ -48,18 +48,19 @@ Replace the following:
 ## Removing the L7 Ambient Mode Collector
 
 ```bash
-kubectl label namespace <namespace> istio.io/use-waypoint- 2>/dev/null
-kubectl delete gateway -n <namespace> <waypoint-name>
+kubectl label namespace <namespace> istio.io/use-waypoint-
 ```
 
 ## Disabling the L7 Ambient Mode Collector
 
-If you are running waypoint proxies but you don't want the sidecar added, the
+If you are running waypoint proxies but you don't want sidecars added, the
 L7 Ambient Mode Collector sidecar can be disabled:
 
 ```bash
 kubectl patch istio default --type=merge -p '{"spec":{"waypointLogging":"Disabled"}}'
 ```
+
+Note that this applies to all waypoint proxies in the cluster.
 
 ## View L7 logs
 
@@ -72,4 +73,4 @@ They will be labeled with the `collector_type`: `envoy-access-log` and the
 
 ## Additional information
 
-* [L7 log data types](datatypes.mdx)
+- [L7 log data types](datatypes.mdx)
