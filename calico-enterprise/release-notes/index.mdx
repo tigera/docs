@@ -18,9 +18,30 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
 
 ## New features and enhancements
 
-### Deprecated and removed features
+### Fluent Bit log collector
+
+$[prodname] now collects logs with Fluent Bit in place of Fluentd. The operator deploys `calico-fluent-bit` in the `calico-system` namespace with operator-rendered configuration and migrates Fluentd tail positions during upgrade, so logs are not re-shipped. Log buffering moves to on-disk filesystem storage, so buffered chunks now survive pod restarts.
+
+For more information, see [Filter flow logs](../observability/elastic/flow/filtering.mdx) and [Elasticsearch and Fluent Bit metrics](../operations/monitor/metrics/elasticsearch-and-fluentd-metrics.mdx).
 
 ## Technology Preview features
+
+## Deprecated and removed features
+
+* The `fluentdDaemonSet` field in the LogCollector resource is deprecated in favor of `calicoFluentBitDaemonSet` and is scheduled for removal in a future release. Existing overrides, including legacy container names, continue to apply for one release; migrate to `calicoFluentBitDaemonSet`.
+
+## Upgrading
+
+Before upgrading to Calico Enterprise X.Y, review [Upgrade notes](#upgrade-notes) and [Deprecated and removed features](#deprecated-and-removed-features).
+
+### Upgrade notes
+
+* *Breaking change:* The `tigera-fluentd` namespace is removed. All log-collector resources are renamed and moved to `calico-system` (DaemonSet and container `calico-fluent-bit`, TLS secret `calico-fluent-bit-tls`). Update any tooling that references the old names, such as `kubectl logs -c fluentd`.
+* *Breaking change:* Flow and DNS log filters are no longer read from the `fluentd-filters` ConfigMap. Recreate your filters in a `fluent-bit-filters` ConfigMap using Fluent Bit YAML filter lists; Fluentd filter syntax is not translated automatically. Unparseable filter keys are skipped with a warning on the `tigera status` output while log shipping continues. See [Filter flow logs](../observability/elastic/flow/filtering.mdx) and [Filter DNS logs](../observability/elastic/dns/filtering-dns.mdx).
+* *Breaking change:* Log-collector metrics are now Fluent Bit's native Prometheus metrics (`fluentbit_*` metric names, served over plain HTTP on port 2020 at `/api/v2/metrics/prometheus` and guarded by network policy). Update dashboards and alerts that reference `fluentd_*` metric names or the port 9081 mTLS endpoint. See [Elasticsearch and Fluent Bit metrics](../operations/monitor/metrics/elasticsearch-and-fluentd-metrics.mdx).
+* *Breaking change:* S3 archive object keys change from Fluentd's flat layout (`<bucketPath>/flows20260101_<n>.gz`) to directory-style keys (`<bucketPath>/flows/20260101_<uuid>.gz`), and non-cluster-host flows are archived under a separate `non_cluster_flows/` directory. Update downstream tooling that relies on the old key patterns.
+* Log buffering moves from Fluentd's in-memory buffers to Fluent Bit filesystem storage under `/var/log/calico/calico-fluent-bit/` on each node. Buffered-but-unsent chunks now survive pod restarts, and node disk usage grows accordingly (capped per output by `storage.total_limit_size`).
+* Syslog forwarding no longer applies Fluentd's 1024-byte packet-size default. When `spec.additionalStores.syslog.packetSize` is unset, Fluent Bit uses a 2048-byte default for the RFC5424 messages the operator renders, which reduces truncation of longer log lines. Set `packetSize` to cap the message size explicitly; messages larger than the cap are truncated.
 
 ## Release details
 
