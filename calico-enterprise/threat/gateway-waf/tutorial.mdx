@@ -114,10 +114,10 @@ This tutorial takes you from a running Ingress Gateway to a blocked attack in ab
    kubectl wait --for=condition=Accepted gateway/httpbin-gateway -n httpbin --timeout=60s
    ```
 
-1. Confirm traffic flows. Find the Envoy service the Ingress Gateway created for this Gateway (services are created in the `tigera-gateway` namespace):
+1. Confirm traffic flows. Find the Envoy service the Ingress Gateway created for this Gateway (the service lands in the Gateway's own namespace, `httpbin`):
 
    ```bash
-   export GATEWAY_SVC=$(kubectl get svc -n tigera-gateway \
+   export GATEWAY_SVC=$(kubectl get svc -n httpbin \
      -o jsonpath='{.items[?(@.metadata.labels.gateway\.envoyproxy\.io/owning-gateway-name=="httpbin-gateway")].metadata.name}')
    ```
 
@@ -126,7 +126,7 @@ This tutorial takes you from a running Ingress Gateway to a blocked attack in ab
    ```bash
    kubectl run curl-test -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
      curl -s -o /dev/null -w "%{http_code}" \
-     http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get
+     http://$GATEWAY_SVC.httpbin.svc.cluster.local:9080/get
    ```
 
    ```text
@@ -183,7 +183,7 @@ This tutorial takes you from a running Ingress Gateway to a blocked attack in ab
    Licensed=True (LicenseValid)
    Accepted=True (Accepted)
    Validated=Unknown (NotEvaluated)
-   Programmed=True (Programmed)
+   Programmed=True (ConfigurationApplied)
    Ready=True (Ready)
    ```
 
@@ -195,17 +195,17 @@ This tutorial takes you from a running Ingress Gateway to a blocked attack in ab
    # Normal request — expect 200
    kubectl run curl-ok -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
      curl -s -o /dev/null -w "%{http_code}" \
-     http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get
+     http://$GATEWAY_SVC.httpbin.svc.cluster.local:9080/get
 
    # SQL injection probe — expect 403
    kubectl run curl-sqli -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
      curl -s -o /dev/null -w "%{http_code}" \
-     "http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get?id=1%27%20OR%20%271%27%3D%271"
+     "http://$GATEWAY_SVC.httpbin.svc.cluster.local:9080/get?id=1%27%20OR%20%271%27%3D%271"
 
    # XSS probe — expect 403
    kubectl run curl-xss -n httpbin --rm -it --restart=Never --image=curlimages/curl -- \
      curl -s -o /dev/null -w "%{http_code}" \
-     "http://$GATEWAY_SVC.tigera-gateway.svc.cluster.local:9080/get?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+     "http://$GATEWAY_SVC.httpbin.svc.cluster.local:9080/get?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
    ```
 
    The Coraza WASM filter, running inside Envoy, evaluated each request against the OWASP Core Rule Set. Core Rule Set rule group 942xxx detects SQL injection; group 941xxx detects cross-site scripting. Both attacks are blocked before the request reaches the application.

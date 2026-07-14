@@ -130,7 +130,7 @@ spec:
       env: production
   rules:
     - name: crs-must-be-enabled
-      severity: Critical
+      severity: critical
       rego: |
         package waf
         violations[{"msg": "OWASP CRS must be enabled"}] {
@@ -144,12 +144,12 @@ spec:
 
 | Field | Type | Resource | Notes |
 | :--- | :--- | :--- | :--- |
-| `enforcementMode` | `Audit` \| `Enforce` | **GlobalWAFValidationPolicy only** | Defaults to `Audit`. `Enforce` blocks on a `Critical` violation |
+| `enforcementMode` | `Audit` \| `Enforce` | **GlobalWAFValidationPolicy only** | Defaults to `Audit`. `Enforce` blocks on a `critical` violation |
 | `namespaceSelector` | label selector | **GlobalWAFValidationPolicy only** | Empty = all namespaces |
 | `rules[]` | list of `ValidationRule` | both | At least one required |
 | `rules[].name` | string | both | 1–253 chars |
 | `rules[].rego` | string (Rego module) | both | Must declare `package waf` and a `violations` rule; max 16384 chars |
-| `rules[].severity` | `Info` \| `Warning` \| `Critical` | both | Defaults to `Warning` |
+| `rules[].severity` | `info` \| `warning` \| `critical` | both | Defaults to `warning` |
 
 ---
 
@@ -217,9 +217,9 @@ How different merged configurations evaluate against the rules above:
 
 ### Severity
 
-Each rule has a `severity` — `Info`, `Warning`, `Critical` (default `Warning`) — deciding the consequence, not whether it fires:
+Each rule has a `severity` — `info`, `warning`, `critical` (default `warning`) — deciding the consequence, not whether it fires:
 
-- In `Enforce` mode, a `Critical` violation blocks the configuration from being programmed.
+- In `Enforce` mode, a `critical` violation blocks the configuration from being programmed.
 - In `Audit` mode — and in any `WAFValidationPolicy` — violations are reported on status but never block.
 
 See the enforcement table in [How it works](./overview.mdx#validation-and-enforcement) for the full matrix.
@@ -324,7 +324,7 @@ Whether the resource is structurally valid and admitted. Several reasons come st
 | :--- | :--- |
 | `Accepted` | The resource is valid and admitted |
 | `Invalid` | The spec or a directive is invalid (the message says which) |
-| `ValidationFailed` | A `GlobalWAFValidationPolicy` in `Enforce` mode reported a `Critical` violation |
+| `ValidationFailed` | A `GlobalWAFValidationPolicy` in `Enforce` mode reported a `critical` violation |
 | `Conflicted` | Another policy already targets this route; the older one wins (the message names it) |
 | `PluginNotFound` | A referenced `WAFPlugin`/`GlobalWAFPlugin` does not exist |
 | `UnsafeDirective` | A directive is not on the allowlist |
@@ -351,7 +351,7 @@ Whether the Coraza WASM filter was programmed into Envoy Gateway.
 | `TargetNotFound` | No valid `targetRefs`, or a referenced `Gateway`/`HTTPRoute` does not exist |
 | `RenderTooLarge` | The merged ruleset exceeds the render size limit |
 | `WASMUnavailable` | The Coraza WASM image could not be pulled |
-| `NotAttempted` | A `Critical` violation under `Enforce` blocked programming |
+| `NotAttempted` | A `critical` violation under `Enforce` blocked programming |
 
 ### Ready
 

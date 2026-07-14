@@ -26,7 +26,7 @@ Gateway WAF is configured entirely through Kubernetes resources. The controller 
 
 <img
   src="/img/calico-enterprise/gateway-waf-architecture.svg"
-  alt="Gateway WAF request flow. GlobalWAFPolicy/WAFPolicy and GlobalWAFPlugin/WAFPlugin are merged into an ordered list of SecLang directives. Rego validation then either passes the result to an EnvoyExtensionPolicy that loads the Coraza WASM filter on Envoy Gateway, or, on an Enforce-mode Critical violation, programs no filter and reports the violation on status. The admission webhook validates submitted rules at apply time."
+  alt="Gateway WAF request flow. GlobalWAFPolicy/WAFPolicy and GlobalWAFPlugin/WAFPlugin are merged into an ordered list of SecLang directives. Rego validation then either passes the result to an EnvoyExtensionPolicy that loads the Coraza WASM filter on Envoy Gateway, or, on an Enforce-mode critical violation, programs no filter and reports the violation on status. The admission webhook validates submitted rules at apply time."
 />
 
 The inputs to the merge are `GlobalWAFPolicy` + `WAFPolicy` and `GlobalWAFPlugin` + `WAFPlugin`. Two guardrails apply: the admission webhook (structural, at write time) and validation policies (compliance, after the merge).
@@ -74,7 +74,7 @@ For the full merge sequence across every policy and plugin, see [merged ruleset 
 
 A **validation policy** carries [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) rules evaluated against the *merged, effective* configuration — answering "is this acceptable?", e.g. "Core Rule Set must stay enabled" or "production must run in Block mode."
 
-- `GlobalWAFValidationPolicy` — enforced by the cluster operator: `Enforce` mode blocks programming on a `Critical` violation, `Audit` mode only warns. `namespaceSelector` scopes which namespaces it applies to.
+- `GlobalWAFValidationPolicy` — enforced by the cluster operator: `Enforce` mode blocks programming on a `critical` violation, `Audit` mode only warns. `namespaceSelector` scopes which namespaces it applies to.
 - `WAFValidationPolicy` — advisory only, surfaces violations on status for the application operator to act on, never blocks. No enforce mode at namespace scope.
 
 (Validation policies aren't the admission webhook — see [Validation and enforcement](#validation-and-enforcement) for the distinction.)
@@ -180,9 +180,9 @@ This stops one namespace colliding with another's rule IDs, or disabling the clu
 
 The admission webhook checks *raw SecLang*; validation policies check the *merged result*, running after the merge because some problems only show up there. Two innocent plugins can combine to disable all SQL-injection rules — invisible to admission-time checks, but visible to a Rego rule against the merged directive list.
 
-Validation rules are [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) modules with severity `Info`, `Warning`, or `Critical`. What happens on a violation depends on the policy:
+Validation rules are [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) modules with severity `info`, `warning`, or `critical`. What happens on a violation depends on the policy:
 
-| Validation policy | Mode | `Critical` violation | `Warning` / `Info` violation |
+| Validation policy | Mode | `critical` violation | `warning` / `info` violation |
 | :--- | :--- | :--- | :--- |
 | `GlobalWAFValidationPolicy` | `Enforce` | **blocks** — no filter is programmed; status reports the rejection | warns on status; filter still programmed |
 | `GlobalWAFValidationPolicy` | `Audit` (default) | warns on status; filter still programmed | warns on status; filter still programmed |
