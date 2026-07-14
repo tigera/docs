@@ -13,6 +13,11 @@ varies by Linux distribution.
 
 - [Upgrading an OpenStack cluster based on Ubuntu](#upgrading-an-openstack-cluster-based-on-ubuntu)
 
+If you are upgrading from a version earlier than v3.32, you must also run a
+one-time policy data migration after the package upgrade; see
+[Migrating policy data](#migrating-policy-data-when-upgrading-from-earlier-than-v332)
+below.
+
 :::note
 
 Do not use older versions of `calicoctl` after the upgrade.
@@ -99,6 +104,9 @@ This may result in unexpected behavior and data.
 
 1. Remove any existing `calicoctl` instances and [install the new `calicoctl`](../calicoctl/install.mdx).
 
+1. If you are upgrading from a version earlier than v3.32, run the
+   [policy data migration](#migrating-policy-data-when-upgrading-from-earlier-than-v332).
+
 1. Congratulations! You have upgraded to $[prodname] $[version].
 
 ## Upgrading an OpenStack cluster based on Ubuntu
@@ -163,4 +171,153 @@ This may result in unexpected behavior and data.
 
 1. Remove any existing `calicoctl` instances and [install the new `calicoctl`](../calicoctl/install.mdx).
 
+1. If you are upgrading from a version earlier than v3.32, run the
+   [policy data migration](#migrating-policy-data-when-upgrading-from-earlier-than-v332).
+
 1. Congratulations! You have upgraded to $[prodname] $[version].
+
+## Migrating policy data when upgrading from earlier than v3.32
+
+In $[prodname] v3.32, the naming convention for policies stored in the etcd
+datastore changed: policies in the default tier are now stored under their
+plain name, whereas $[prodname] v3.29.4 through v3.31.x stored them under a
+tier-prefixed name such as `default.my-policy`.  On Kubernetes clusters this
+data is migrated automatically by kube-controllers.  OpenStack clusters do not
+run kube-controllers as a service, so the same migration must be run once, by
+hand, after upgrading.
+
+If you skip this step, policies created before the upgrade misbehave in the
+following ways, until each one is migrated or recreated:
+
+- `calicoctl get`, `calicoctl delete`, and similar commands only find such a
+  policy under its stored name, e.g.
+  `calicoctl get globalnetworkpolicy default.my-policy`; using the plain name
+  reports that the resource does not exist.
+
+- Re-applying such a policy under its plain name creates a second, independent
+  policy object instead of updating the existing one.  Both objects are then
+  live policy until one of them is deleted.
+
+- The `%n` and `%p` specifiers in Felix's `LogPrefix` configuration expand to
+  the stored name, so log entries for pre-upgrade policies include the
+  `default.` prefix while entries for newly written policies do not.
+
+### Before you begin
+
+- **Upgrade every node first.**  All Felix instances (compute nodes) and all
+  neutron-server instances (control nodes) must be running $[prodname] v3.32
+  or later before you run the migration.  On a Kubernetes cluster this
+  ordering is verified automatically; on OpenStack it is your responsibility.
+
+- **Resolve any duplicate policies.**  If policies have already been
+  re-applied since the upgrade, you may have duplicate pairs - the same policy
+  name listed twice by `calicoctl get globalnetworkpolicy`, one showing the
+  tier `default` and one with an empty tier column.  For each pair, compare
+  the two objects:
+
+  ```
+  calicoctl get globalnetworkpolicy default.my-policy -o yaml
+  calicoctl get globalnetworkpolicy my-policy -o yaml
+  ```
+
+  and, once you have confirmed that the plain-named object has the spec you
+  want, delete the legacy one:
+
+  ```
+  calicoctl delete globalnetworkpolicy default.my-policy
+  ```
+
+  If you don't resolve a duplicate pair yourself, the migration keeps the
+  plain-named object and deletes the legacy one.
+
+### Run the migration
+
+:::note
+
+The `openstackmigrations` mode requires the v3.32.2 (or later) image; it is
+not present in v3.32.0 or v3.32.1.
+
+:::
+
+Run the following on any machine that has Docker and can reach your etcd
+cluster (for example, a control node).  Adjust `ETCD_ENDPOINTS` for your
+deployment:
+
+```bash
+docker run --rm --net=host \
+    -e DATASTORE_TYPE=etcdv3 \
+    -e ETCD_ENDPOINTS=http://127.0.0.1:2379 \
+    -e ENABLED_CONTROLLERS=openstackmigrations \
+    $[registry]$[imageNames.calico/kube-controllers]:$[releaseTitle]
+```
+
+If your etcd requires TLS, also mount the certificates and pass the usual
+etcd TLS environment variables:
+
+```bash
+docker run --rm --net=host \
+    -v /etc/calico/certs:/etc/calico/certs:ro \
+    -e DATASTORE_TYPE=etcdv3 \
+    -e ETCD_ENDPOINTS=https://etcd1:2379,https://etcd2:2379 \
+    -e ETCD_CA_CERT_FILE=/etc/calico/certs/ca.pem \
+    -e ETCD_CERT_FILE=/etc/calico/certs/client.pem \
+    -e ETCD_KEY_FILE=/etc/calico/certs/client-key.pem \
+    -e ENABLED_CONTROLLERS=openstackmigrations \
+    $[registry]$[imageNames.calico/kube-controllers]:$[releaseTitle]
+```
+
+If your etcd requires username/password authentication, add the credentials
+to either of the above commands with two further environment variables:
+
+```bash
+    -e ETCD_USERNAME=<username> \
+    -e ETCD_PASSWORD=<password> \
+```
+
+(To keep the password out of your shell history and the process's visible
+environment, you can put the `ETCD_PASSWORD=...` line in a root-readable file
+and pass it with `--env-file` instead.)
+
+The command migrates each affected policy by writing it back under its plain
+name and removing the legacy entry, logging a line per policy.  When
+everything is migrated it logs
+
+```
+Policy name migration complete; no further work pending
+```
+
+followed by
+
+```
+All OpenStack datastore migrations are complete
+```
+
+and exits with status 0.  The migration only rewrites policies that need it,
+so it is safe to run again; a second run completes immediately, reporting
+zero migrated policies.
+
+:::note
+
+Each migrated policy briefly exists under both its old and new names, and its
+object UID changes.  The policy's rules are unchanged and remain enforced
+throughout, though Felix's log prefixes and chain names for the policy switch
+to the plain-name form as the migration lands on each compute node.
+
+:::
+
+### Verify
+
+Pick a policy that was created before the upgrade and confirm that it is now
+accessible by its plain name:
+
+```
+calicoctl get globalnetworkpolicy my-policy
+```
+
+and that the legacy name is gone:
+
+```
+calicoctl get globalnetworkpolicy default.my-policy
+```
+
+The second command should report that the resource does not exist.
