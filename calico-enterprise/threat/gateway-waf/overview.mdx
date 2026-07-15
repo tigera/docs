@@ -1,0 +1,199 @@
+---
+description: Protect Calico Ingress Gateway traffic with a per-route and per-namespace web application firewall built on the OWASP Core Rule Set — how the resource families, merge order, and enforcement guardrails fit together.
+---
+
+# Gateway WAF
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+## Big picture
+
+Protect the traffic entering your cluster through $[prodname] Ingress Gateway with a web application firewall (WAF) that you attach per Gateway or per route, and tune per namespace.
+
+## Value
+
+Edge WAFs traditionally apply one ruleset to everything behind the gateway. Gateway WAF takes a Kubernetes-native, multi-tenant approach: a cluster operator sets a security baseline once, and each application team layers its own rules and exceptions on top — scoped to their own Gateways and `HTTPRoute`s, within guardrails the cluster operator defines.
+
+Gateway WAF runs the industry-standard [OWASP ModSecurity Core Rule Set v4](https://owasp.org/www-project-modsecurity-core-rule-set/) as a [Coraza](https://coraza.io/) WebAssembly filter inside Envoy Gateway — no sidecars, and no traffic ever leaves the proxy for inspection.
+
+## How it works
+
+Gateway WAF is configured entirely through Kubernetes resources. The controller merges every policy and plugin that applies to a target, generates an ordered list of ModSecurity directives, validates the result, and programs it into Envoy Gateway as an `EnvoyExtensionPolicy` that loads the Coraza WASM filter.
+
+<img
+  src="/img/calico-enterprise/gateway-waf-architecture.svg"
+  alt="Gateway WAF request flow. GlobalWAFPolicy/WAFPolicy and GlobalWAFPlugin/WAFPlugin are merged into an ordered list of SecLang directives. Rego validation then either passes the result to an EnvoyExtensionPolicy that loads the Coraza WASM filter on Envoy Gateway, or, on an Enforce-mode critical violation, programs no filter and reports the violation on status. The admission webhook validates submitted rules at apply time."
+/>
+
+The inputs to the merge are `GlobalWAFPolicy` + `WAFPolicy` and `GlobalWAFPlugin` + `WAFPlugin`. Two guardrails apply: the admission webhook (structural, at write time) and validation policies (compliance, after the merge).
+
+## Who does what
+
+Gateway WAF is configured through six custom resources in the `applicationlayer.projectcalico.org/v3` API group, in three families. Each family splits cleanly across two personas: a cluster-scoped resource owned by the **cluster operator (CO)**, and a namespace-scoped resource owned by the **application operator (AO)**.
+
+| Family | Cluster operator (CO) | Application operator (AO) | Answers the question |
+| :--- | :--- | :--- | :--- |
+| **Policy** | `GlobalWAFPolicy` — cluster-wide baseline (singleton, `name: default`) | `WAFPolicy` — attach WAF to a Gateway/`HTTPRoute` (`targetRefs`); per-namespace overrides | *What* to enforce — action, Core Rule Set state, paranoia, which plugins |
+| **Plugin** | `GlobalWAFPlugin` — organization-wide custom rules | `WAFPlugin` — app-specific rules and false-positive exceptions | *Which custom rules* to add, in ModSecurity SecLang |
+| **Validation** | `GlobalWAFValidationPolicy` — compliance guardrails (`Enforce`/`Audit`) | `WAFValidationPolicy` — advisory self-check, never blocks | *Whether a configuration is allowed* — compliance guardrails |
+
+Enabling the feature itself (license plus the `GatewayAPI` gate) is a one-time cluster operator step — see [Enable the feature](./enable.mdx) — everything above is ongoing configuration once it's on.
+
+The cluster operator *sets* the posture; the application operator *tunes* it — can go stricter, but can be stopped from going weaker (see [Validation and enforcement](#validation-and-enforcement)).
+
+## Policies — what to enforce
+
+A **policy** declares the action mode (`Detect`/`Block`), whether the Core Rule Set is enabled, the paranoia level, and which plugins to load.
+
+- `GlobalWAFPolicy` — cluster-wide singleton (`name: default`), sets the baseline for every namespace.
+- `WAFPolicy` — namespace-scoped, attaches WAF to a Gateway/`HTTPRoute` via `targetRefs`, can override the baseline action and paranoia.
+
+## Plugins — custom rules
+
+A **plugin** holds custom ModSecurity rules in four lifecycle slots — `config`, `before`, `rules`, `after` — modeled on the [Core Rule Set 4 plugin system](https://coreruleset.org/docs/4-about-plugins/4-1-plugins/). Referenced from a policy's `spec.plugins[]`; does nothing on its own.
+
+- `GlobalWAFPlugin` — organization-wide rules: security baselines, compliance rules.
+- `WAFPlugin` — application-specific rules and false-positive exceptions.
+
+Each slot runs at a fixed point in the merge, so slot choice decides when your rules fire:
+
+| Slot | Runs | Use for |
+| :--- | :--- | :--- |
+| `config` | Before Core Rule Set setup | `tx.*` variable setup (anomaly thresholds, optional features, app flags). Rules on request variables belong in `before` instead — the request isn't read yet |
+| `before` | After variable setup, before Core Rule Set loads | Early-exit allowlisting of trusted paths, request normalization, flags for later rules |
+| `rules` | Alongside Core Rule Set, after it (Tigera extension) | App-specific detections that complement rather than pre-empt the Core Rule Set; can act on anomaly scores |
+| `after` | Last | False-positive suppression, response inspection, logging. `GlobalWAFPlugin.after` runs *after* namespace `WAFPlugin.after`, so the cluster operator has final say |
+
+For the full merge sequence across every policy and plugin, see [merged ruleset load order](#the-merged-ruleset-load-order); to write plugin rules, see [Write custom rules](./write-custom-rules.mdx).
+
+## Validation policies — guardrails
+
+A **validation policy** carries [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) rules evaluated against the *merged, effective* configuration — answering "is this acceptable?", e.g. "Core Rule Set must stay enabled" or "production must run in Block mode."
+
+- `GlobalWAFValidationPolicy` — enforced by the cluster operator: `Enforce` mode blocks programming on a `critical` violation, `Audit` mode only warns. `namespaceSelector` scopes which namespaces it applies to.
+- `WAFValidationPolicy` — advisory only, surfaces violations on status for the application operator to act on, never blocks. No enforce mode at namespace scope.
+
+(Validation policies aren't the admission webhook — see [Validation and enforcement](#validation-and-enforcement) for the distinction.)
+
+## The global policy is a singleton
+
+`GlobalWAFPolicy` is a cluster-wide singleton — must be named `default`. It sets the baseline (default action, Core Rule Set state, paranoia level) every namespace inherits unless it overrides.
+
+`GlobalWAFPlugin` and `GlobalWAFValidationPolicy` are **not** singletons — create as many as needed.
+
+## Inheritance: namespaces override, they don't restart
+
+A `WAFPolicy` doesn't have to restate the whole baseline — its `action` and `coreRuleSet` fields are optional; unset fields inherit from `GlobalWAFPolicy`.
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: WAFPolicy
+metadata:
+  name: payments-waf
+  namespace: payments
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: payments-api
+  action: Block          # override the global default for this namespace
+  coreRuleSet:
+    paranoiaLevel: 2      # stricter than the baseline
+  # coreRuleSet.state is unset → inherited from GlobalWAFPolicy
+```
+
+| `WAFPolicy` field | When set | When unset |
+| :--- | :--- | :--- |
+| `action` | overrides the global `defaultAction` for this namespace | inherits `GlobalWAFPolicy.spec.defaultAction` |
+| `coreRuleSet.state` | overrides the global state | inherits the global state |
+| `coreRuleSet.paranoiaLevel` | overrides the global level | inherits the global level |
+
+## Plugins are additive, not overriding
+
+Plugins stack rather than override. The merger applies all referenced global plugins first (`GlobalWAFPolicy.spec.plugins[]` order), then all namespace plugins (`WAFPolicy.spec.plugins[]` order) — order is array position; there's no priority field.
+
+This lets baseline rules and application exceptions coexist in one ruleset — the interleaving, and why global `after` runs last, is covered below.
+
+## Merge order and enforcement
+
+When a `WAFPolicy` attaches to a target, the controller gathers every applicable policy and plugin, merges them into one ordered list of ModSecurity directives, validates the result, and programs it into Envoy Gateway as an `EnvoyExtensionPolicy`. Each `targetRefs[]` entry produces its own `EnvoyExtensionPolicy` — three routes means three filters.
+
+Three things govern the outcome: **merge order**, the **admission webhook**, and **validation policies**.
+
+### The merged ruleset load order
+
+Directive order isn't cosmetic: the Core Rule Set needs variables set before loading, and post-processing after. Fixed order:
+
+**Engine setup**
+1. `SecRuleEngine On` / `DetectionOnly` — the effective action mode from the merged config.
+2. Engine settings — audit logging and request-body access.
+
+**Plugin `config` (variable setup)**
+3. Global plugin `config` blocks, in `GlobalWAFPolicy.spec.plugins[]` order.
+4. Namespace plugin `config` blocks, in `WAFPolicy.spec.plugins[]` order.
+
+**Core Rule Set setup**
+5. Core Rule Set setup — reads the `tx.*` variables set above.
+6. Blocking paranoia level, from the merged paranoia level.
+7. Detection paranoia level (always ≥ blocking level).
+
+**Pre-Core Rule Set rules (`before`)**
+8. Global plugin `before` rules.
+9. Namespace plugin `before` rules.
+
+**Core Rule Set**
+10. The full OWASP Core Rule Set.
+
+**Custom rules (`rules`)**
+11. Global plugin `rules`.
+12. Namespace plugin `rules`.
+
+**Post-processing (`after`)**
+13. Namespace plugin `after` rules.
+14. Global plugin `after` rules — **runs last, giving the cluster operator the final say** on anomaly scoring and logging.
+
+Pattern: global-before-namespace in the early slots, namespace-before-global in `after`. Within a plugin, its own slots always run `config` → `before` → `rules` → `after`.
+
+:::note
+
+When two `WAFPolicy` resources target the same route, $[prodname] follows Gateway API [GEP-713](https://gateway-api.sigs.k8s.io/geps/gep-713/): oldest `creationTimestamp` wins (ties by `namespace/name`). The loser is marked `Accepted=False` reason `Conflicted`, directives not merged.
+
+:::
+
+### Structural safety: the admission webhook
+
+Before any of the above runs, a validating admission webhook checks the raw SecLang in a `WAFPlugin` or `WAFPolicy` at apply time, rejecting the resource if any directive fails one of three checks:
+
+| Check | Passes when | Rejected with |
+| :--- | :--- | :--- |
+| Directive is allowed | the directive type is on the allowlist (`SecRule`, `SecAction`, `SecRuleRemoveById`, and other safe directives) | `UnsafeDirective` |
+| Rule ID is in range | a `SecRule`/`SecAction` ID falls inside the namespace's allocated ID range | `IDOutsideRange` |
+| Removal is permitted | a `SecRuleRemoveById` targets an ID inside the namespace's own range, not a protected baseline rule | `ProtectedIDRemoval` |
+
+This stops one namespace colliding with another's rule IDs, or disabling the cluster's baseline Core Rule Set rules. Each namespace gets an automatic 10,000-ID range; see [SecRule ID ranges](./reference.mdx#secrule-id-ranges) for how it's derived and which IDs are protected.
+
+### Validation and enforcement
+
+The admission webhook checks *raw SecLang*; validation policies check the *merged result*, running after the merge because some problems only show up there. Two innocent plugins can combine to disable all SQL-injection rules — invisible to admission-time checks, but visible to a Rego rule against the merged directive list.
+
+Validation rules are [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/) modules with severity `info`, `warning`, or `critical`. What happens on a violation depends on the policy:
+
+| Validation policy | Mode | `critical` violation | `warning` / `info` violation |
+| :--- | :--- | :--- | :--- |
+| `GlobalWAFValidationPolicy` | `Enforce` | **blocks** — no filter is programmed; status reports the rejection | warns on status; filter still programmed |
+| `GlobalWAFValidationPolicy` | `Audit` (default) | warns on status; filter still programmed | warns on status; filter still programmed |
+| `WAFValidationPolicy` | advisory only | surfaces on `WAFPolicy` status; never blocks | surfaces on status; never blocks |
+
+To write the rules, see [Rego validation](./reference.mdx#rego-validation). To read the outcome, see [Status conditions](./reference.mdx#status-conditions).
+
+## Next steps
+
+- [Enable the feature](./enable.mdx) — turn on Gateway WAF and verify the CRDs and webhook.
+- [Tutorial](./tutorial.mdx) — deploy a test app and block your first attack.
+- [Set a baseline](./set-a-baseline.mdx), [Attach WAF](./attach-waf-to-a-route.mdx), [Write custom rules](./write-custom-rules.mdx), [Validate config](./validate-config.mdx), [Multi-tenant setup](./multi-tenant-setup.mdx) — production tasks.
+- [Reference](./reference.mdx) — CRDs, Rego validation, SecRule ID ranges, and status conditions.
+- [Troubleshooting](./troubleshooting.mdx) — diagnose common failure modes.

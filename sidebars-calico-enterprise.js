@@ -482,6 +482,22 @@ module.exports = {
         'threat/deeppacketinspection',
         'threat/web-application-firewall',
         'threat/deploying-waf-ingress-gateway',
+        {
+          type: 'category',
+          label: 'Gateway WAF',
+          items: [
+            'threat/gateway-waf/overview',
+            'threat/gateway-waf/tutorial',
+            'threat/gateway-waf/enable',
+            'threat/gateway-waf/set-a-baseline',
+            'threat/gateway-waf/attach-waf-to-a-route',
+            'threat/gateway-waf/write-custom-rules',
+            'threat/gateway-waf/validate-config',
+            'threat/gateway-waf/multi-tenant-setup',
+            'threat/gateway-waf/troubleshooting',
+            'threat/gateway-waf/reference',
+          ],
+        },
       ],
     },
     {

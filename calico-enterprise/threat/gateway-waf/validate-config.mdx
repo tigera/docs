@@ -1,0 +1,127 @@
+---
+description: Write Rego validation rules with GlobalWAFValidationPolicy and WAFValidationPolicy to enforce or audit compliance guardrails on the merged WAF configuration.
+---
+
+# Validate configuration with Rego
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+Gateway WAF has two guardrail layers: the admission webhook checks raw SecLang at apply time (structural safety); validation policies check the **merged result** at reconcile time, catching problems only visible once everything's merged. See [Validation and enforcement](./overview.mdx#validation-and-enforcement) for the matrix and [Rego validation](./reference.mdx#rego-validation) for the input schema.
+
+## Prerequisites
+
+- Gateway WAF is enabled. See [Enable Gateway WAF](./enable.mdx).
+- Cluster-admin rights to create a `GlobalWAFValidationPolicy` (it's cluster-scoped). A `WAFValidationPolicy` only needs namespace write access.
+- Rego rules evaluate against the merged config — see [Rego validation](./reference.mdx#rego-validation) for the input schema and worked examples.
+
+## Enforce guardrails cluster-wide with GlobalWAFValidationPolicy
+
+`GlobalWAFValidationPolicy` is cluster-scoped, applying to every namespace or a label-selected subset via `namespaceSelector`. It carries Rego rules and an `enforcementMode`: `Audit` (default) records violations while the filter stays programmed; `Enforce` blocks programming on a `critical` violation. `warning`/`info` violations are always recorded.
+
+1. Write the policy with Rego rules and an `enforcementMode`. This one requires the Core Rule Set enabled and `Block` mode for namespaces labeled `env: production`:
+
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: GlobalWAFValidationPolicy
+   metadata:
+     name: production-requirements
+   spec:
+     enforcementMode: Enforce
+     namespaceSelector:
+       matchLabels:
+         env: production
+     rules:
+
+       # critical: CRS must be enabled
+       - name: crs-must-be-enabled
+         severity: critical
+         rego: |
+           package waf
+           violations[{"msg": "OWASP CRS must be enabled"}] {
+             input.config.crsState != "Enabled"
+           }
+
+       # critical: production namespaces must use Block mode
+       - name: block-mode-required
+         severity: critical
+         rego: |
+           package waf
+           violations[{"msg": "WAF must be in Block mode for production"}] {
+             input.config.action != "Block"
+           }
+   ```
+
+   For more rule patterns — a minimum paranoia level, or inspecting the merged directive list to catch a plugin removing a baseline rule — see [Rego validation](./reference.mdx#rego-validation).
+
+1. Start in `Audit` mode, review violations on existing `WAFPolicy` status, then switch to `Enforce` — so you don't block teams whose config predates the policy.
+
+   Leave `namespaceSelector` empty for cluster-wide, or scope with `matchLabels`. Multiple policies can coexist — every matching rule is evaluated, and one `critical` violation (in `Enforce`) blocks programming.
+
+## Self-check your config with WAFValidationPolicy
+
+`WAFValidationPolicy` is namespace-scoped and advisory only — violations appear on status but never block programming. Use it as a self-check.
+
+1. Write a `WAFValidationPolicy` in your namespace:
+
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: WAFValidationPolicy
+   metadata:
+     name: team-self-check
+     namespace: platform
+   spec:
+     rules:
+
+       - name: graphql-plugin-active
+         severity: warning
+         rego: |
+           package waf
+           violations[{"msg": "graphql-waf plugin is not loaded — introspection unguarded"}] {
+             not "graphql-waf" in input.source.namespacePlugins
+           }
+   ```
+
+   Being advisory, it's safe to hold yourself to a stricter standard than the baseline — e.g. a higher minimum paranoia level. Violations surface on `WAFPolicy` status without interrupting traffic.
+
+## Read violation results
+
+Violations from matching policies appear in the affected `WAFPolicy`'s status conditions.
+
+1. Check the policy status:
+
+   ```bash
+   kubectl get wafpolicy <name> -n <namespace> -o yaml
+   ```
+
+   A blocked policy shows the failing rule:
+
+   ```yaml
+   status:
+     conditions:
+       - type: Ready
+         status: "False"
+         reason: ValidationFailed
+         message: >
+           GlobalWAFValidationPolicy/production-requirements rule "block-mode-required":
+           WAF must be in Block mode for production
+       - type: Accepted
+         status: "True"
+   ```
+
+An audit violation instead leaves `Ready=True` and adds a `ValidationWarning=True` condition, reason `AuditViolation`, with a message like `rce-rules-intact" [warning]: RCE rule removal detected in merged config: SecRuleRemoveById 932100` (the filter stays programmed). See [Status conditions](./reference.mdx#status-conditions) for the full reference.
+
+:::tip
+
+Write Rego against the schema in [Rego validation](./reference.mdx#rego-validation); test locally with `opa eval` first. A syntax error invalidates the whole policy — status reports which rule failed to parse.
+
+:::
+
+## Next steps
+
+- [Multi-tenant setup](./multi-tenant-setup.mdx) — baseline, plugins, and guardrails working together on a shared cluster.
+- [Reference](./reference.mdx) — the Rego input schema, worked examples, and status conditions.
+- [Troubleshooting](./troubleshooting.mdx) — diagnose a policy blocked by validation.
