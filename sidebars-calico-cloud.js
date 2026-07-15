@@ -331,6 +331,7 @@ module.exports = {
             'networking/configuring/multiple-networks',
             'networking/configuring/vxlan-ipip',
             'networking/configuring/advertise-service-ips',
+            'networking/configuring/local-subnet-l2-reachability',
             'networking/configuring/mtu',
             'networking/configuring/custom-bgp-config',
             'networking/configuring/secure-bgp',
