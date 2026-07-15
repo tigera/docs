@@ -37,7 +37,7 @@ export default async function createAsyncConfig() {
     tagline: 'Unified network security and observability for Kubernetes',
     url: 'https://docs.tigera.io',
     baseUrl: '/',
-    onBrokenAnchors: 'ignore',
+    onBrokenAnchors: 'warn',
     onBrokenLinks: 'throw',
     favicon: 'img/calico-logo-2026-badge.png',
     markdown: {
