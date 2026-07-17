@@ -280,6 +280,12 @@ To update a previous version of Calico, see [our upgrade guides](../operations/u
 
 To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx).
 
+If you use Calico Ingress Gateway, this release bumps the bundled Envoy Gateway to v1.8.0, which requires the Gateway API v1.5 CRDs. Envoy Gateway v1.8 watches `TLSRoute`, `ListenerSet`, and `BackendTLSPolicy` at `gateway.networking.k8s.io/v1`. If those CRDs are still served only at an older version, for example `v1alpha2`, the `envoy-gateway` pod fails to start with `no matches for kind "TLSRoute" in version "gateway.networking.k8s.io/v1"`.
+
+If the Tigera Operator manages your Gateway API CRDs (the default), set `crdManagement: Reconcile` on the `GatewayAPI` resource so the operator upgrades the CRDs during the upgrade. If a `safe-upgrades.gateway.networking.k8s.io` ValidatingAdmissionPolicy blocks the upgrade with `Installing experimental CRDs on top of standard channel CRDs is prohibited`, delete that policy and its binding, then let the operator reconcile. The operator recreates the policy afterward.
+
+If you manage the Gateway API CRDs yourself, install the Gateway API v1.5.1 CRDs before upgrading.
+
 {/*
 ### Calico Open Source 3.32.2 bug fix release
 
