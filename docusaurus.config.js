@@ -131,14 +131,14 @@ export default async function createAsyncConfig() {
           contextualSearch: true,
           searchPagePath: '/search',
         },
-        //announcementBar: {
-        //  id: 'calico_hackathon_deadline',
-        //  content:
-        //    '🚀 Deadline Extended! (Ends April 30, 2026!) Finalize your GitHub repo and demo video to enter the <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon.</a>',
-        //  backgroundColor: '#FCE181',
-        //  textColor: '#000',
-        //  isCloseable: true,
-        //},
+        announcementBar: {
+         id: 'calico_survey_2026',
+         content:
+           '<a href="https://forms.gle/V89eyYDD1QteD8c97"><strong>Take our Cluster Network Policy survey</strong> and <strong>claim a free Calico t-shirt! 👕</strong></a>',
+         backgroundColor: '#FCE181',
+         textColor: '#000',
+         isCloseable: true,
+        },
         navbar: {
           logo: {
             src: 'img/tigera-logo-2026-black-text.svg',
