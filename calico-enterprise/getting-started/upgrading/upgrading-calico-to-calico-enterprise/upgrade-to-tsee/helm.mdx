@@ -5,6 +5,8 @@ description: Upgrade from a Helm-installed Calico Open Source cluster to Calico 
 # Upgrade Calico to Calico Enterprise installed with Helm
 
 import CodeBlock from '@theme/CodeBlock';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 :::note
 
@@ -45,17 +47,34 @@ The following steps assume the Calico deployment is installed on `tigera-operato
 
 1. Install the $[prodname] custom resource definitions.
 
-   :::note[CRD mode]
+   Upgrading does not change your cluster's CRD mode, so install the CRDs for the mode your cluster already uses. To check which mode you have, run:
 
-   These steps apply to clusters using the aggregation API server, the default for existing and upgraded $[prodname] clusters. Upgrading does not change your cluster's CRD mode. If your cluster uses native v3 CRDs, apply `v3_projectcalico_org.yaml` in place of `operator-crds.yaml` below. See [Native v3 CRDs](../../../../operations/native-v3-crds.mdx).
+   ```bash
+   kubectl api-versions | grep crd.projectcalico.org
+   ```
 
-   :::
+   Output means your cluster uses the aggregation API server. No output means it uses native v3 CRDs. See [Native v3 CRDs](../../../../operations/native-v3-crds.mdx) for background on the two modes.
+
+   <Tabs>
+   <TabItem label="Aggregation API server" value="apiserver">
 
    ```bash
    kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/operator-crds.yaml
    kubectl create -f $[filesUrl]/manifests/prometheus-operator-crds.yaml
    kubectl create -f $[filesUrl]/manifests/eck-operator-crds.yaml
    ```
+
+   </TabItem>
+   <TabItem label="Native v3 CRDs" value="native-v3">
+
+   ```bash
+   kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/v3_projectcalico_org.yaml
+   kubectl create -f $[filesUrl]/manifests/prometheus-operator-crds.yaml
+   kubectl create -f $[filesUrl]/manifests/eck-operator-crds.yaml
+   ```
+
+   </TabItem>
+   </Tabs>
 
 1. [Configure a storage class for $[prodname]](../../../../operations/logstorage/create-storage.mdx)
 
