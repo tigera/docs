@@ -23,6 +23,26 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
 
 ## Technology Preview features
 
+## Upgrade notes
+
+{/* Add breaking changes and required upgrade steps here, one subsection per feature. */}
+
+### Calico Ingress Gateway
+
+:::warning[Breaking change]
+
+Calico Ingress Gateway now runs each gateway's proxy in the same namespace as its `Gateway`, and the controller moves to `calico-system`.
+On upgrade, existing proxies move out of the `tigera-gateway` namespace into each Gateway's namespace, so anything pinned to `tigera-gateway` — network policy, monitoring, RBAC, and external DNS — must move with them.
+Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway gets its own load balancer.
+
+Migrate in this order:
+
+1. **Before you upgrade**, if you run a global default deny policy, create a network policy in each Gateway's namespace that allows the proxy pods, so they can start as soon as they move. For the policy, see [Create an ingress gateway](../networking/ingress-gateway/create-ingress-gateway.mdx).
+2. Upgrade $[prodname].
+3. After the upgrade, re-point monitoring, RBAC, and external DNS from `tigera-gateway` to each Gateway's namespace. If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
+
+:::
+
 ## Release details
 
 ### Calico Enterprise X.Y.Z (early preview)
