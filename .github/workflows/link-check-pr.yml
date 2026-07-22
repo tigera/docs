@@ -1,0 +1,106 @@
+name: PR link check
+
+on:
+  pull_request:
+    paths:
+      - 'calico/**'
+      - 'calico-enterprise/**'
+      - 'calico-cloud/**'
+      - 'use-cases/**'
+      - 'calico_versioned_docs/**'
+      - 'calico-enterprise_versioned_docs/**'
+      - 'calico-cloud_versioned_docs/**'
+
+# Cancel an older run when the PR gets a new push.
+concurrency:
+  group: pr-link-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  link-check:
+    name: Check links on changed pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Build the site and the route map
+        run: make build
+        env:
+          LINK_CHECK_ROUTES: 'true'
+          NODE_OPTIONS: '--max-old-space-size=6000'
+          DOCUSAURUS_IGNORE_SSG_WARNINGS: 'true'
+
+      - name: Find the changed pages
+        id: pages
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          node scripts/changed-pages.js "$BASE_SHA" build/link-check-routes.json > pages.txt
+          COUNT=$(grep -c . pages.txt || true)
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Changed pages ($COUNT):"
+          cat pages.txt
+
+      - name: Install Playwright Chrome
+        if: steps.pages.outputs.count != '0'
+        run: yarn playwright install --with-deps chrome
+
+      - name: Serve the site and check the changed pages
+        if: steps.pages.outputs.count != '0'
+        env:
+          CI: 'true'
+        run: |
+          # Join with commas so the list survives as one env var; the crawler splits on commas/newlines.
+          export PAGES_TO_CHECK="$(tr '\n' ',' < pages.txt)"
+          make test 2>&1 | tee link-check.log
+
+      - name: Upload the link-check log
+        if: always() && steps.pages.outputs.count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-check-log
+          path: link-check.log
+          if-no-files-found: ignore
+
+      - name: Comment on the PR when the check fails
+        if: failure() && steps.pages.outputs.count != '0'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          BODY=comment.md
+          {
+            echo "## Link check failed"
+            echo ""
+            echo "The link check found broken links on the pages this PR changes."
+            echo ""
+            echo "Pages checked:"
+            echo '```'
+            cat pages.txt
+            echo '```'
+            echo ""
+            echo "Report (last 200 lines, full log is in the run artifact \"link-check-log\"):"
+            echo '```'
+            tail -n 200 link-check.log 2>/dev/null || echo "(no log captured)"
+            echo '```'
+          } > "$BODY"
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file "$BODY"
