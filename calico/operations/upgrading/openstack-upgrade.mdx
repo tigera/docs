@@ -209,6 +209,10 @@ following ways, until each one is migrated or recreated:
   or later before you run the migration.  On a Kubernetes cluster this
   ordering is verified automatically; on OpenStack it is your responsibility.
 
+- **Install and configure `calicoctl`.**  You need to be able to run
+  [`calicoctl`](../../operations/calicoctl/index.mdx) successfully on at least
+  one cluster node.
+
 - **Resolve any duplicate policies.**  If policies have already been
   re-applied since the upgrade, you may have duplicate pairs - the same policy
   name listed twice by `calicoctl get globalnetworkpolicy`, one showing the
@@ -232,71 +236,12 @@ following ways, until each one is migrated or recreated:
 
 ### Run the migration
 
-Run the following on any machine that has Docker and can reach your etcd
-cluster (for example, a control node).  Adjust `ETCD_ENDPOINTS` for your
-deployment:
+Run the following on any machine where calicoctl is installed and configured to
+reach your etcd datastore:
 
 ```bash
-docker run --rm --net=host \
-    -e DATASTORE_TYPE=etcdv3 \
-    -e ETCD_ENDPOINTS=http://127.0.0.1:2379 \
-    -e ENABLED_CONTROLLERS=openstackmigrations \
-    $[registry]$[imageNames.calico/calico]:$[releaseTitle] component kube-controllers
+calicoctl datastore migrate-policy-names
 ```
-
-If your etcd requires TLS, also mount the certificates and pass the usual
-etcd TLS environment variables:
-
-```bash
-docker run --rm --net=host \
-    -v /etc/calico/certs:/etc/calico/certs:ro \
-    -e DATASTORE_TYPE=etcdv3 \
-    -e ETCD_ENDPOINTS=https://etcd1:2379,https://etcd2:2379 \
-    -e ETCD_CA_CERT_FILE=/etc/calico/certs/ca.pem \
-    -e ETCD_CERT_FILE=/etc/calico/certs/client.pem \
-    -e ETCD_KEY_FILE=/etc/calico/certs/client-key.pem \
-    -e ENABLED_CONTROLLERS=openstackmigrations \
-    $[registry]$[imageNames.calico/calico]:$[releaseTitle] component kube-controllers
-```
-
-If your etcd requires username/password authentication, add the credentials
-to either of the above commands with two further environment variables:
-
-```bash
-    -e ETCD_USERNAME=<username> \
-    -e ETCD_PASSWORD=<password> \
-```
-
-(To keep the password out of your shell history and the process's visible
-environment, you can put the `ETCD_PASSWORD=...` line in a root-readable file
-and pass it with `--env-file` instead.)
-
-The command migrates each affected policy by writing it back under its plain
-name and removing the legacy entry, logging a line per policy.  When
-everything is migrated it logs
-
-```
-Policy name migration complete; no further work pending
-```
-
-followed by
-
-```
-All OpenStack datastore migrations are complete
-```
-
-and exits with status 0.  The migration only rewrites policies that need it,
-so it is safe to run again; a second run completes immediately, reporting
-zero migrated policies.
-
-:::note
-
-Each migrated policy briefly exists under both its old and new names, and its
-object UID changes.  The policy's rules are unchanged and remain enforced
-throughout, though Felix's log prefixes and chain names for the policy switch
-to the plain-name form as the migration lands on each compute node.
-
-:::
 
 ### Verify
 
