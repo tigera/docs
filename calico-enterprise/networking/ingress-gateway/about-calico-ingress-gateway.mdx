@@ -47,6 +47,25 @@ Administrators provision the gateway environment simply by defining a standard G
 For commercial deployments, Calico Ingress Gateway extends functionality by integrating directly with the Web Application Firewall (WAF).
 This feature allows operators to secure their ingress points against the OWASP Top 10 and other common vulnerabilities through simple configuration within the Calico management plane.
 
+## Where Calico Ingress Gateway runs
+
+Calico Ingress Gateway uses a namespaced deployment model.
+The Tigera Operator runs a single Envoy Gateway controller in the `calico-system` namespace.
+When you create a `Gateway` resource, its proxy, `Service`, and load balancer are created in the **same namespace as the `Gateway`**.
+
+This model lets the owner of a namespace apply their own network policy and RBAC to the gateway's proxy pods.
+Teams do not have to share a namespace, and they do not have to ask a cluster administrator to change a shared namespace on their behalf.
+You can deploy a gateway in each namespace that needs one, so multiple teams each run and own a gateway in their own namespace.
+
+The operator also creates supporting resources in each namespace that holds a `Gateway`:
+
+- A `tigera-ca-bundle` ConfigMap, which the proxy mounts so that it trusts cluster and public certificate authorities. The proxy does not start until this ConfigMap is present.
+- A copy of the `tigera-pull-secret`, so the namespace can pull the hardened gateway images.
+- A `waf-http-filter` ServiceAccount and RoleBinding, used by the Web Application Firewall and Layer 7 log collector sidecars.
+
+Each `Gateway` gets its own load balancer.
+Calico Ingress Gateway does not place more than one gateway behind a single load balancer.
+
 ## Supported Gateway API resources
 
 Calico Ingress Gateway supports the following Gateway API resources.
