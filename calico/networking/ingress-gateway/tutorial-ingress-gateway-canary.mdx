@@ -48,7 +48,7 @@ You'll need to install a few tools to complete this tutorial:
 
 ## Step 1: Set up your environment
 
-For this tutorial, you need access to a cluster with Calico Open Source 3.30 or later installed.
+For this tutorial, you need access to a cluster with Calico Open Source 3.33 or later installed.
 
 We'll use `kind` to create this environment, but you can use any other supported Kubernetes distribution with a compatible version of $[prodname].
 If you've already got a suitable environment, start the tutorial at [Step 2: Create the ingress gateway](#step-2-create-an-ingress-gateway).
@@ -176,12 +176,19 @@ Once that is set up, you can create supported Gateway API resources, such as the
      "parametersRef": {
        "group": "gateway.envoyproxy.io",
        "kind": "EnvoyProxy",
-       "name": "envoy-proxy-config",
-       "namespace": "tigera-gateway"
+       "name": "tigera-gateway-class",
+       "namespace": "calico-system"
      }
    }
    ```
-1. Create a `Gateway` resource that is linked to the `tigera-gateway-class`.
+1. Create a namespace to hold your gateway and application:
+
+   ```bash
+   kubectl create namespace ingress-gateway-demo
+   ```
+
+1. Create a `Gateway` resource in that namespace, linked to the `tigera-gateway-class`.
+   Its proxy runs in the same namespace as the `Gateway`.
 
    ```bash
    kubectl apply -f - <<EOF
@@ -189,6 +196,7 @@ Once that is set up, you can create supported Gateway API resources, such as the
    kind: Gateway
    metadata:
      name: canary-deployment-gateway
+     namespace: ingress-gateway-demo
    spec:
      gatewayClassName: tigera-gateway-class
      listeners:
@@ -205,17 +213,6 @@ Once that is set up, you can create supported Gateway API resources, such as the
 To demonstrate traffic splitting, you need two services.
 You'll create two versions of the `ingress-gateway-demo` application: v1 (stable) and v2 (the canary build).
 The app is a simple web server that serves a single line of HTML.
-
-1. Create a namespace for the `ingress-gateway-demo` application:
-
-   ```bash
-   cat << EOF | kubectl create -f -
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: ingress-gateway-demo
-   EOF
-   ```
 
 1. Deploy the stable version of the `ingress-gateway-demo` app.
    This set of manifests includes:
@@ -358,10 +355,10 @@ The `HTTPRoute` below routes 80% of requests to app-v1 and 20% to app-v2
   kind: HTTPRoute
   metadata:
     name: traffic-splitting
+    namespace: ingress-gateway-demo
   spec:
     parentRefs:
       - name: canary-deployment-gateway
-        namespace: default
     rules:
       - matches:
           - path:
@@ -369,60 +366,23 @@ The `HTTPRoute` below routes 80% of requests to app-v1 and 20% to app-v2
               value: /
         backendRefs:
           - name: app-v1
-            namespace: ingress-gateway-demo
             port: 80
             weight: 80
           - name: app-v2
-            namespace: ingress-gateway-demo
             port: 80
             weight: 20
   EOF
   ```
 
-## Step 5. Allow ingress traffic from the gateway to reach services in the `ingress-gateway-demo` namespace
-
-You can permit traffic to be routed from the gateway to your app by adding definitions to a `ReferenceGrant` resource.
-
-  ```bash
-  kubectl apply -f - <<EOF
-  apiVersion: gateway.networking.k8s.io/v1beta1
-  kind: ReferenceGrant
-  metadata:
-    name: ingress-gateway-demo
-    namespace: ingress-gateway-demo
-  spec:
-    from:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: default
-    to:
-    - group: ""
-      kind: Service
-  EOF
-  ```
-  After a minute your gateway and services should be ready.
-
-
-
-## Step 6. Test the canary deployment
+## Step 5. Test the canary deployment
 
 For this tutorial, we'll try accessing the app through the gateway by port-forwarding to your local workstation.
 In a real-world scenario, you'd set up a load balancer to direct external traffic.
 
-1. Get the service name for your ingress gateway:
+1. Set up port forwarding to the gateway's service, which runs in the `ingress-gateway-demo` namespace:
 
    ```bash
-   CANARY_DEMO=$(kubectl get svc -n tigera-gateway -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep canary)
-   echo "CANARY_DEMO is: $CANARY_DEMO"
-   ```
-
-   ```bash title='Example output'
-   CANARY_DEMO is: envoy-default-canary-deployment-gateway-c84e1eb6
-   ```
-1. Set up port forwarding for the service:
-
-   ```bash
-   kubectl port-forward -n tigera-gateway svc/$CANARY_DEMO 30135:80
+   kubectl port-forward -n ingress-gateway-demo svc/canary-deployment-gateway 30135:80
    ```
    Now you can access the app in your web browser at http://localhost:30135.
 
@@ -446,7 +406,7 @@ In a real-world scenario, you'd set up a load balancer to direct external traffi
    Version 2: 39 (19.5%)
    ```
 
-## Step 7. Clean up your environment
+## Step 6. Clean up your environment
 
 * To clean up your tutorial environment, run the following command:
 
