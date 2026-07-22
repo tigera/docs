@@ -248,21 +248,13 @@ Typha uses **port 9091** TCP by default to publish its metrics. However, if $[pr
 <Tabs>
 <TabItem label="Operator" value="Operator-8">
 
+When you set `spec.typhaMetricsPort`, the operator automatically creates the `calico-typha-metrics` service in the
+`calico-system` namespace. You do not need to create another service.
+
+Verify the operator-managed service:
+
 ```bash
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Service
-metadata:
-  name: typha-metrics-svc
-  namespace: calico-system
-spec:
-  clusterIP: None
-  selector:
-    k8s-app: calico-typha
-  ports:
-  - port: 9093
-    targetPort: 9093
-EOF
+kubectl get service calico-typha-metrics -n calico-system
 ```
 
 </TabItem>
@@ -491,7 +483,7 @@ data:
       - role: endpoints
       relabel_configs:
       - source_labels: [__meta_kubernetes_service_name]
-        regex: typha-metrics-svc
+        regex: calico-typha-metrics
         replacement: $1
         action: keep
       - source_labels: [__meta_kubernetes_pod_container_port_name]
@@ -656,7 +648,6 @@ First remove the services by executing the following command:
 
 ```bash
 kubectl delete service felix-metrics-svc -n calico-system
-kubectl delete service typha-metrics-svc -n calico-system
 ```
 
 If running $[prodnameWindows], also clean up the Windows nodes service:
