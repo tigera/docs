@@ -1,5 +1,5 @@
 ---
-description: Suppress low-value Calico Cloud DNS log entries with Fluentd filters configured through a ConfigMap in the operator namespace of connected clusters.
+description: Suppress low-value Calico Cloud DNS log entries with Fluent Bit filters configured through a ConfigMap in the operator namespace of connected clusters.
 ---
 
 # Filter DNS logs
@@ -18,46 +18,53 @@ To enable DNS log filtering, follow these steps:
    your desired filter using [Filter configuration files](#filter-configuration-files).
    If you are also adding [flow filters](../flow/filtering.mdx) also add the `flow` file
    to the directory.
-1. Create the `fluentd-filters` ConfigMap in the `tigera-operator` namespace
+1. Create the `fluent-bit-filters` ConfigMap in the `tigera-operator` namespace
    with the following command.
    ```bash
-   kubectl create configmap fluentd-filters -n tigera-operator --from-file=filters
+   kubectl create configmap fluent-bit-filters -n tigera-operator --from-file=filters
    ```
+
+The operator inserts the filters inline into the log collector configuration and rolls the
+`calico-fluent-bit` daemonset automatically.
 
 ## Filter configuration files
 
-The filters defined by the ConfigMap are inserted into the fluentd configuration file.
-The [upstream fluentd documentation](https://docs.fluentd.org/filter/grep)
-describes how to write fluentd filters. The [DNS log schema](dns-logs.mdx) can be referred to
-for the specification of the various fields you can filter based on. Remember to ensure
-that the config file is properly indented in the ConfigMap.
+Each file holds a YAML list of Fluent Bit filter entries. The
+[upstream Fluent Bit documentation](https://docs.fluentbit.io/manual/data-pipeline/filters/grep)
+describes how to write the `grep` filter used in the examples below; the
+`calico-fluent-bit` log collector also ships the `record_modifier`, `parser`, and
+`lua` filters. Filters in the `dns` file are applied to DNS logs automatically;
+you do not need to set a `match` on each entry. The [DNS log schema](dns-logs.mdx)
+can be referred to for the specification of the various fields you can filter based on.
+
+:::note Upgrading from a release that used Fluentd
+
+Earlier releases collected logs with Fluentd and read filters in Fluentd `<filter>`
+syntax from a ConfigMap named `fluentd-filters`. That ConfigMap is no longer read,
+and Fluentd filter syntax cannot be translated automatically. Recreate your filters
+as Fluent Bit YAML filter lists under the new `fluent-bit-filters` name. If a filter
+key does not parse as Fluent Bit YAML, the operator skips that filter, reports a
+warning on the `tigera status` output naming the offending key, and continues to
+ship unfiltered logs.
+
+:::
 
 ## Example 1: filter out cluster-internal lookups
 
 This example filters out lookups for domain names ending with ".cluster.local". More
-logs could be filtered by adjusting the regular expression "pattern", or by adding
-additional `exclude` blocks.
+logs could be filtered by adjusting the regular expression, or by adding
+additional `exclude` rules.
 
-```
-<filter dns>
-  @type grep
-  <exclude>
-    key qname
-    pattern /\.cluster\.local$/
-  </exclude>
-</filter>
+```yaml
+- name: grep
+  exclude: qname \.cluster\.local$
 ```
 
 ## Example 2: keep logs only for particular domain names
 
 This example will filter out all logs _except_ those for domain names ending `.co.uk`.
 
-```
-<filter dns>
-  @type grep
-  <regexp>
-      key qname
-      pattern /\.co\.uk$/
-  </regexp>
-</filter>
+```yaml
+- name: grep
+  regex: qname \.co\.uk$
 ```
