@@ -636,7 +636,6 @@ module.exports = {
                 'reference/calicoctl/cluster/diags',
               ],
             },
-            'reference/calicoctl/convert',
             {
               type: 'category',
               label: 'ipam',
