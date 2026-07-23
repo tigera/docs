@@ -1,0 +1,53 @@
+---
+description: Allow pods to send traffic with a source IP address outside their own using the allowedSourcePrefixes annotation.
+---
+
+# Allow pods to use additional source IP prefixes
+
+## Big picture
+
+Allow pods to send egress traffic using source IP addresses outside their own pod IP, by specifying allowed source prefixes.
+
+## Value
+
+By default, Calico blocks egress traffic from a pod when the source IP does not match the pod's IP. This prevents IP spoofing. Some workloads, such as a pod that acts as a transparent proxy and preserves the original client source IP, need to send traffic with a different source address. The `allowedSourcePrefixes` annotation relaxes the spoofing check for the prefixes you list on a specific pod.
+
+## Concepts
+
+### Source IP spoofing protection
+
+Calico programs dataplane rules that drop egress packets from a pod when the source IP does not match the pod's own IP. The `allowedSourcePrefixes` annotation relaxes this restriction for specific IP prefixes on a per-pod basis. It works with both the iptables/nftables and the eBPF dataplanes.
+
+### FelixConfiguration prerequisite
+
+Allowing non-pod source IPs is security-sensitive, so Felix rejects the annotation by default. You must opt in by setting `workloadSourceSpoofing` to `Any` in the FelixConfiguration resource. Until you do, a pod that requests source prefixes is not programmed into the dataplane.
+
+## Before you begin...
+
+- Your cluster must be using Calico CNI to use this feature. See [Configuring the Calico CNI Plugins](../../reference/configure-cni-plugins.mdx).
+- Enable `workloadSourceSpoofing` in the FelixConfiguration resource:
+
+  ```yaml
+  apiVersion: projectcalico.org/v3
+  kind: FelixConfiguration
+  metadata:
+    name: default
+  spec:
+    workloadSourceSpoofing: Any
+  ```
+
+:::caution
+
+Setting `workloadSourceSpoofing` to `Any` lets any pod that carries the annotation send traffic with arbitrary source IPs. Use admission control to restrict which pods can set the annotation.
+
+:::
+
+## How to
+
+Annotate the pod with `cni.projectcalico.org/allowedSourcePrefixes` set to a JSON list of CIDRs. For example:
+
+```yaml
+  cni.projectcalico.org/allowedSourcePrefixes: '["192.168.10.0/24"]'
+```
+
+The annotation must be present when the pod is created; adding it later has no effect.
