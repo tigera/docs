@@ -692,6 +692,7 @@ module.exports = {
                     'reference/calicoctl/datastore/migrate/unlock',
                   ],
                 },
+                'reference/calicoctl/datastore/migrate-policy-names',
               ],
             },
             'reference/calicoctl/version',
