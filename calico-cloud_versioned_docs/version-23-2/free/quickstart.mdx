@@ -1,0 +1,174 @@
+---
+description: Quickstart that connects a Kubernetes cluster to Calico Cloud Free Tier for centralized network observability — no payment or trial required.
+title: Quickstart
+---
+
+import Screenshot from '/src/___new___/components/Screenshot';
+export let figCount = 1;
+
+# Calico Cloud Free Tier quickstart guide
+
+Get Calico Cloud running on a local Kind cluster, deploy a realistic microservices app, and explore your live Service Graph — all in a few minutes.
+
+## Before you begin
+
+* [Sign up for a Calico Cloud Free Tier account](https://calicocloud.io/?code=free).
+* Install [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/), [Docker](https://docs.docker.com/desktop/), and [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl).
+
+## Step 1: Create a Kind cluster
+
+1. Create a file called `kind-config.yaml`:
+
+   ```yaml
+   kind: Cluster
+   apiVersion: kind.x-k8s.io/v1alpha4
+   nodes:
+     - role: control-plane
+     - role: worker
+     - role: worker
+   networking:
+     disableDefaultCNI: true
+     podSubnet: 192.168.0.0/16
+   ```
+
+   This tells Kind to create a three-node cluster without a default CNI, so you can install Calico in the next step.
+
+1. Create the cluster:
+
+   ```bash
+   kind create cluster --name=calico-cluster --config=kind-config.yaml
+   ```
+
+1. Verify the nodes are up (they'll show `NotReady` until Calico is installed):
+
+   ```bash
+   kubectl get nodes
+   ```
+
+   ```bash title="Expected output"
+   NAME                           STATUS     ROLES           AGE   VERSION
+   calico-cluster-control-plane   NotReady   control-plane   60s   v1.29.2
+   calico-cluster-worker          NotReady   <none>          40s   v1.29.2
+   calico-cluster-worker2         NotReady   <none>          40s   v1.29.2
+   ```
+
+## Step 2: Install Calico
+
+1. Install the Tigera operator and custom resource definitions:
+
+   ```bash
+   kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+   ```
+
+1. Install $[prodname] by creating the necessary custom resources:
+
+   ```bash
+   kubectl create -f $[manifestsUrl]/manifests/custom-resources.yaml
+   ```
+
+1. Wait for all components to become available:
+
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+
+   After a few minutes, all components should show `True` in the `AVAILABLE` column.
+
+   ```bash title="Expected output"
+   NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver                       True        False         False      4m9s
+   calico                          True        False         False      3m29s
+   goldmane                        True        False         False      3m39s
+   ippools                         True        False         False      6m4s
+   whisker                         True        False         False      3m19s
+   ```
+
+## Step 3: Connect to Calico Cloud Free Tier
+
+1. In the Calico Cloud web console, click **Connect a cluster**.
+1. Follow the prompts to name your cluster (for example, `quickstart-cluster`) and copy the generated `kubectl` command.
+
+    <details>
+     <summary>What's happening in this command?</summary>
+
+   This command creates three resources in your cluster:
+   * **A `ManagementClusterConnection` resource**.
+     This resource specifies the address of the Calico Cloud management cluster.
+   * **A `Secret` resource (`tigera-managed-cluster-connection`)**.
+     This resource provides certificates for secure communication between your cluster and the Calico Cloud management cluster.
+   * **A `Secret` resource (`tigera-voltron-linseed-certs-public`)**.
+     This resource provides certificates for secure communications for the specific components that Calico Cloud uses for log data and observability.
+   </details>
+
+1. Run the `kubectl` command in your terminal.
+1. Back in the console, click **I applied the manifest**.
+   When the **Managed Clusters** page shows your cluster as **Connected**, move to the next step.
+
+## Step 4: Deploy the demo app
+
+This step deploys [Google's Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo), a microservices demo with 12 services.
+Each service is deployed in its own namespace so that Service Graph displays a rich cross-namespace topology with realistic traffic patterns.
+
+1. Deploy the application:
+
+   ```bash
+   kubectl apply -f $[tutorialFilesURL]/online-boutique-namespaced.yaml
+   ```
+
+   :::note
+
+   The manifest includes a load generator that automatically drives traffic between all services.
+   No manual traffic generation is needed.
+
+   :::
+
+1. Wait for all pods to reach `Running` status:
+
+   ```bash
+   watch "kubectl get pods -A | grep -v Running | grep -v Completed"
+   ```
+
+   This may take 2–3 minutes. When the only output is the header line, all pods are ready.
+
+   <details>
+    <summary>What's in the demo app?</summary>
+
+   The Online Boutique is a cloud-native e-commerce app made up of 12 microservices:
+   `adservice`, `cartservice`, `checkoutservice`, `currencyservice`, `emailservice`, `frontend`, `loadgenerator`, `paymentservice`, `productcatalogservice`, `recommendationservice`, `redis-cart`, and `shippingservice`.
+
+   Each service runs in its own namespace.
+   A built-in load generator continuously sends requests through the frontend, creating realistic traffic across all services.
+   </details>
+
+## Step 5: Explore Service Graph
+
+In the Calico Cloud web console, go to **Service Graph**.
+Within a minute or two you'll see every service and namespace mapped as a live node, with directional traffic flows between them.
+
+Try clicking on a service — for example, `cartservice`. You'll see:
+* Which services send traffic to it (such as `checkoutservice` and `frontend`)
+* Which services it connects to (such as `redis-cart`)
+* Flow logs with details on allowed and denied connections
+
+<Screenshot src="/img/calico-cloud/cc-free-quickstart-service-graph.png" alt="Service Graph showing cross-namespace traffic flows between the 12 Online Boutique microservices." />
+*Figure {figCount++}: Service Graph showing cross-namespace traffic flows between the Online Boutique microservices.*
+
+## Step 6: Clean up
+
+1. Delete the Kind cluster:
+
+   ```bash
+   kind delete cluster --name=calico-cluster
+   ```
+
+1. In the Calico Cloud web console, go to **Managed Clusters**, click **Actions > Disconnect**, and then click **I ran the commands**.
+   (Because you already deleted the cluster, you don't need to run the disconnect commands.)
+
+1. Click **Actions > Remove** to fully remove the cluster from Calico Cloud.
+
+## Next steps
+
+* [Write a network policy](/calico-cloud/network-policy/beginners/calico-network-policy) to restrict traffic between services — for example, allow only `cartservice` to reach `redis-cart`.
+* [Set up alerts](/calico-cloud/observability/alerts) for unexpected traffic patterns.
+* [Explore the full feature set](/calico-cloud/free/overview) available on the Free Tier.
+* [Connect another cluster](/calico-cloud/free/connect-cluster-free) to Calico Cloud Free Tier.
