@@ -395,6 +395,7 @@ module.exports = {
         'operations/cluster-management',
         'operations/disconnect',
         'operations/usage-metrics',
+        'operations/usage-api',
         'operations/comms/index',
         {
           type: 'category',
