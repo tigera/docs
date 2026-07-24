@@ -32,7 +32,15 @@ const FelixConfig = ({ configType, name }) => {
   // Debugging logs
 
   if (!matchedGroup) {
-    return <p>No matching group found for '{name}'.</p>;
+    // Fail the build loudly rather than silently dropping the group's fields.
+    // `name` must exactly match a group Name in config-params.json, which is
+    // auto-synced from the Felix source repos. A prose/casing sweep once
+    // restyled these lookup keys and silently dropped fields (DOCS-2970).
+    throw new Error(
+      `FelixConfig: no group named '${name}' in config-params.json. The 'name' `
+      + `prop must exactly match a group Name in config-params.json; do not `
+      + `restyle it as prose.`
+    );
   }
 
   let content;

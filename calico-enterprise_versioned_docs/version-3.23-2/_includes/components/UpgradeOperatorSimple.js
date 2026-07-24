@@ -251,7 +251,7 @@ EOF`}
             <li>
               <p>
                 If your cluster includes egress gateways, follow the{' '}
-                <Link href={`${baseUrl}/networking/egress/egress-gateway-on-prem#upgrading-egress-gateways`}>
+                <Link href={`${baseUrl}/networking/egress/egress-gateway-on-prem#upgrade-egress-gateways`}>
                   egress gateway upgrade instructions
                 </Link>
                 .

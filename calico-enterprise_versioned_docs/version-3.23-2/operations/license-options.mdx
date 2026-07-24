@@ -1,5 +1,5 @@
 ---
-description: Track Calico Enterprise license expiration through tigerastatus and operator-exposed Prometheus metrics to keep observability and management features available.
+description: Track Calico Enterprise license expiration through tigerastatus and license agent Prometheus metrics to keep observability and management features available.
 ---
 
 # License expiration and renewal
@@ -59,29 +59,9 @@ The Tigera Operator reports license condition in `tigerastatus`, including a war
 
 ## License metrics
 
-The $[prodname] operator automatically exposes license metrics through its Prometheus metrics endpoint. No additional components need to be installed. The following metrics are available:
+$[prodname] provides license metrics, such as the number of days until license expiration, through the **License Agent** component and Prometheus. For details on deploying the license agent and creating expiration alerts, see [License metrics](monitor/metrics/license-agent.mdx).
 
-| Metric | Description |
-|---|---|
-| `tigera_operator_license_expiry_timestamp_seconds` | Unix timestamp of license expiration |
-| `tigera_operator_license_valid` | Whether the license is valid (`1`) or not (`0`) |
-
-These metrics are scraped by the built-in Prometheus instance via the `tigera-operator-metrics` ServiceMonitor.
-
-### Built-in alerts
-
-$[prodname] installs PrometheusRule resources with alerting rules for license expiration. You can view them with:
-
-```bash
-kubectl -n tigera-prometheus get prometheusrule calico -o yaml
-```
-
-The built-in rules include:
-
-- **LicenseExpiringWarning**: fires when the license expires in less than 30 days
-- **LicenseExpiringCritical**: fires when the license expires in less than 7 days, or is invalid
-
-To route these alerts, see [Configure Alertmanager](monitor/prometheus/alertmanager.mdx).
+To route license alerts, see [Configure Alertmanager](monitor/prometheus/alertmanager.mdx).
 
 ## Additional resources
 

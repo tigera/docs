@@ -1,0 +1,199 @@
+---
+description: Diagnose and fix common Gateway WAF problems by reading policy status conditions and working through symptom-to-fix guidance for each failure mode.
+---
+
+# Troubleshooting
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+Most problems surface on the policy's status conditions:
+
+```bash
+kubectl describe wafpolicy <name> -n <namespace>
+```
+
+A healthy policy has `Licensed=True`, `Accepted=True`, `Validated=True`, `Programmed=True`, `Ready=True` — evaluated roughly in order, so an early failure explains later absences. See [Status conditions](./reference.mdx#status-conditions) for reason meanings.
+
+## Observing WAF activity
+
+WAF hits (both `Block` and `Detect`/`would_block`) are recorded in the `tigera_secure_ee_waf` log index, carrying `gateway_name`/`gateway_namespace` for the originating Gateway. On this release they are **not** raised as Security Events: the intrusion-detection controller excludes WAF logs that carry a gateway name, so gateway-WAF activity is observed through the WAF log index rather than the Security Events view. Re-surfacing gateway WAF as Security Events (or on a dedicated dashboard) is planned for a later release.
+
+Raw Envoy proxy logs are a last-resort diagnostic when a hit is missing from the index.
+
+---
+
+## `Accepted=False, Reason=Conflicted`
+
+**Cause.** Two `WAFPolicy` resources in the same namespace target the same Gateway/HTTPRoute. Per [GEP-713](https://gateway-api.sigs.k8s.io/geps/gep-713/), oldest `creationTimestamp` wins; the newer is marked `Conflicted`, directives never merged.
+
+**Fix.** Identify the competing policies:
+
+```bash
+kubectl get wafpolicy -n <namespace> -o wide
+```
+
+Delete one, or repoint its `targetRefs` — see [How it works](./overview.mdx#merge-order-and-enforcement) for why only one policy owns a target.
+
+---
+
+## `Accepted=False, Reason=UnsafeDirective | IDOutsideRange | ProtectedIDRemoval`
+
+**Cause.** The admission webhook rejected the SecLang in a `WAFPlugin` or `WAFPolicy` at apply time, before the resource reached the controller.
+
+| Reason | Meaning |
+| :--- | :--- |
+| `UnsafeDirective` | The directive type is not on the allowlist (for example, a directive that reads from the filesystem) |
+| `IDOutsideRange` | A `SecRule` or `SecAction` ID falls outside the namespace's allocated 10,000-ID range |
+| `ProtectedIDRemoval` | A `SecRuleRemoveById` targets a protected ID — a Core Rule Set baseline rule or a Tigera-managed rule |
+
+**Fix.** Read the rejection message on `status.conditions`:
+
+```bash
+kubectl get wafpolicy <name> -n <namespace> \
+  -o jsonpath='{.status.conditions[?(@.type=="Accepted")].message}'
+```
+
+For `IDOutsideRange`/`ProtectedIDRemoval`: use only IDs from your namespace's range:
+
+```bash
+kubectl get namespace <namespace> \
+  -o jsonpath='{.metadata.annotations.applicationlayer\.projectcalico\.org/waf-id-range}'
+```
+
+For `UnsafeDirective`: remove or replace the directive. See [SecRule ID ranges](./reference.mdx#secrule-id-ranges) for the allowlist.
+
+---
+
+## `Programmed=False, Reason=WASMUnavailable`
+
+**Cause.** The Envoy proxy couldn't pull the Coraza WASM image — usually a registry issue: an unreachable reference, or a missing pull secret.
+
+**Diagnostic.** Check the `EnvoyExtensionPolicy` status the controller generated:
+
+```bash
+kubectl get envoyextensionpolicy \
+  -n <namespace> \
+  -l applicationlayer.projectcalico.org/waf-policy=<policy-name> \
+  -o jsonpath='{.items[*].status}'  | jq
+```
+
+Check Envoy proxy logs for `could not fetch Wasm OCI image`:
+
+```bash
+kubectl logs -n <namespace> \
+  -l gateway.envoyproxy.io/owning-gateway-namespace=<namespace> \
+  -c envoy | grep -i wasm
+```
+
+**Fix.** The operator manages the image reference. In a private registry, wire in the pull secret via operator configuration, and confirm the node can reach the registry with the secret attached to the Envoy proxy pods.
+
+---
+
+## `Programmed=False, Reason=NotAttempted`
+
+**Cause.** A `GlobalWAFValidationPolicy` in `Enforce` mode found a `critical` violation, so the controller never programmed the Coraza filter.
+
+**Diagnostic.** Read the validation failures:
+
+```bash
+kubectl get wafpolicy <name> -n <namespace> \
+  -o jsonpath='{.status.validation}' | jq
+```
+
+`failures[]` names the failed rule, with severity and message; `status.validation.status` is `Rejected`.
+
+**Fix.** Satisfy the failing rule — e.g. restore `action: Block` if the policy requires it — or ask the cluster operator for an exception. See [Validate configuration with Rego](./validate-config.mdx) and [Status conditions](./reference.mdx#status-conditions).
+
+---
+
+## `Accepted=False, Reason=TargetNotFound`
+
+**Cause.** `targetRefs` references a `Gateway`/`HTTPRoute` that doesn't exist in the namespace.
+
+**Fix.** Verify the target exists:
+
+```bash
+kubectl get gateway,httproute -n <namespace>
+```
+
+Check `name`, `kind`, `group` in `targetRefs` match the resource, then create it and re-apply, or fix the reference — reconciliation is automatic once it exists.
+
+---
+
+## Attacks not blocked
+
+**Cause.** One or more of:
+
+- `action` is `Detect` (explicit or inherited from `GlobalWAFPolicy`) — inspected, not blocked.
+- `coreRuleSet.state` is `Disabled` — Core Rule Set isn't loaded.
+- `coreRuleSet.paranoiaLevel` is below the triggering rule's paranoia floor — the rule doesn't evaluate.
+
+**Diagnostic.** Check the policy's conditions and spec:
+
+```bash
+kubectl describe wafpolicy <name> -n <namespace>
+```
+
+Confirm action is `Block` and Core Rule Set `Enabled`. If paranoia looks right but the attack still passes, check whether that rule's floor is higher than configured — some only activate at paranoia 2 or 3.
+
+:::tip
+
+`kubectl waf` (coming in a future release) will render the full merged directive list so you can inspect the effective `SecRuleEngine` line and paranoia settings directly.
+
+:::
+
+Also check the `GlobalWAFPolicy` default action, inherited when a namespace `action` is unset:
+
+```bash
+kubectl get globalwafpolicy default -o jsonpath='{.spec.defaultAction}'
+```
+
+See [How it works](./overview.mdx#inheritance-namespaces-override-they-dont-restart) for field inheritance rules.
+
+---
+
+## `403` on every request / false positives
+
+**Cause.** The paranoia level is too high for the traffic pattern, or a specific Core Rule Set rule is matching legitimate requests (a false positive).
+
+**Diagnostic.** The firing rule ID and message are in the `tigera_secure_ee_waf` log index for the hit. As a last resort, the Envoy proxy access logs in the Gateway pod also carry them:
+
+```bash
+kubectl logs -n <namespace> \
+  -l gateway.envoyproxy.io/owning-gateway-namespace=<namespace> \
+  -c envoy | grep -i "waf\|403" | tail -30
+```
+
+**Fix.** Two options:
+
+1. **Lower the paranoia level**, if false positives come from a broad class of higher-paranoia rules and your threat model allows it.
+2. **Add a plugin exception** — suppress via `SecRuleRemoveById`, or skip a known-safe target via `SecRuleUpdateTargetById`. Preferred for surgical tuning without weakening the overall posture.
+
+For how to write exception rules within your namespace's ID range, see [Write custom rules with plugins](./write-custom-rules.mdx).
+
+:::caution
+
+`SecRuleRemoveById` can only target rule IDs within your namespace's allocated range. You cannot remove Core Rule Set baseline rules (IDs `900000`–`999999`) or Tigera-managed rules — the admission webhook will reject the plugin with `ProtectedIDRemoval`.
+
+:::
+
+---
+
+## General diagnostic sequence
+
+If no specific symptom matches above, walk the condition chain in order:
+
+```bash
+kubectl get wafpolicy <name> -n <namespace> \
+  -o jsonpath='{range .status.conditions[*]}{.type}={.status} ({.reason}): {.message}{"\n"}{end}'
+```
+
+1. `Licensed=False` → license missing or doesn't entitle Gateway WAF. Check the [Enable Gateway WAF](./enable.mdx#prerequisites) prerequisites.
+2. `Accepted=False` → spec rejected. Read the `Reason`/`message` — see the sections above.
+3. `Validated=False` → a validation rule fired. Read `status.validation.failures`.
+4. `Programmed=False` → filter not loaded into Envoy. Read the `Reason` — see `WASMUnavailable`/`NotAttempted` above.
+5. All conditions `True` but not blocking → give Envoy a few seconds to load the WASM module after `EnvoyExtensionPolicy` creation; if it still doesn't block, the effective action is likely `Detect` — see [Attacks not blocked](#attacks-not-blocked) above.

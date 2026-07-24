@@ -1,0 +1,128 @@
+---
+description: Configure egress gateways to use the host node IP as the source address for traffic leaving the cluster.
+---
+
+# Configure egress gateways with host IP support
+
+## Big picture
+
+Configure an existing egress gateway deployment so that traffic exiting through it appears to come
+from the **host address** of the host running the gateway pod, rather than the gateway's pod IP.
+
+## Value
+
+External firewalls and services often allowlist traffic by source IP. When egress gateway pod IPs
+are not routable outside the cluster or simply not convenient to manage using the gateway's
+**host address** as the source address gives external systems a stable, well-known set of IPs to
+allowlist.
+
+Any number of application pods can multiplex their outbound traffic through a small fixed set of
+egress gateways, and all of those connections will appear to come from the gateways' host address.
+
+:::note
+
+Host IP mode is most commonly used with the [on-premises setup](egress-gateway-on-prem.mdx), where
+the alternative source IP would be a non-routable pod IP. On [AWS](egress-gateway-aws.mdx) and
+[Azure](egress-gateway-azure.mdx) setups, gateways already use native VPC/VNet IPs that are
+routable on the underlying network - enabling host IP mode there replaces those native IPs with
+the host address.
+
+:::
+
+## Concepts
+
+### Source IP and `natOutgoing`
+
+When an outbound application flow leaves the cluster through an egress gateway, the source IP seen
+by external services depends on the `natOutgoing` setting of the egress gateway's
+[IP pool](../../reference/resources/ippool.mdx):
+
+- `natOutgoing: false` - the flow's source IP is the egress gateway's **pod IP**. This
+  is the default for all egress gateway setup guides.
+- `natOutgoing: true` - the flow's source IP is the **host address** of the node where the egress
+  gateway pod is running.
+
+## Before you begin
+
+These instructions require a functioning egress gateway deployment.
+For setup, see [our egress gateway guides](index.mdx).
+
+## How to
+
+- [Enable natOutgoing on the egress IP pool](#enable-host-ip-mode-on-the-egress-ip-pool)
+- [Pin egress gateways to specific nodes](#pin-egress-gateways-to-specific-nodes)
+- [Affine client pods to a specific node](#affine-client-pods-to-a-specific-node)
+- [Verify the source IP](#verify-the-source-ip)
+
+### Enable natOutgoing on the egress IP pool
+
+Set `natOutgoing: true` on the IP pool used by your egress gateways:
+
+```bash
+kubectl patch ippool egress-ippool-1 --type='merge' -p '{"spec":{"natOutgoing":true}}'
+```
+
+Outbound traffic leaving the cluster through a gateway in this pool will now be SNAT'd to the node
+IP of the gateway's host, instead of the gateway's pod IP.
+
+### Pin egress gateways to specific nodes
+
+The source IP that external services see depends on which node the gateway pod is
+scheduled to. To make this deterministic, set a `nodeSelector` on the gateway template:
+
+```bash
+kubectl patch egressgateway egress-gateway -n default --type='merge' -p \
+    '{"spec":{"template":{"spec":{"nodeSelector":{"kubernetes.io/hostname":"<egress-gateway-node>"}}}}}'
+```
+
+Traffic passing through this gateway will exit the cluster with that node's IP as the
+source address.
+
+Without pinning, the source IP will still be a node IP, but it could be any node the gateway
+happens to land on.
+
+### Affine client pods to a specific node
+
+This step is optional. If you want a particular client's traffic to deterministically exit through
+a particular node's IP, schedule the client to the same node as a gateway and apply an
+[EgressGatewayPolicy](egress-gateway-on-prem.mdx#configure-a-namespace-or-pod-to-use-an-egress-gateway-egress-gateway-policy-method)
+with `gatewayPreference: PreferNodeLocal`. The client will then prefer the gateway on its own node,
+ensuring traffic exits with that node's IP.
+
+For example, to pin a workload to a specific node, add a `nodeSelector` to its pod spec:
+
+```yaml
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: <client-node>
+```
+
+### Verify the source IP
+
+Identify the node hosting the egress gateway:
+
+```bash
+kubectl get pod -l egress-code=red -o wide
+```
+
+Note the value in the `NODE` column, then look up that node's InternalIP:
+
+```bash
+kubectl get node <node-name> -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}'
+```
+
+Initiate an outbound connection from one of your client pods to a server outside the cluster, and
+observe the source IP on the server. With host IP mode, it should match the node's InternalIP
+above -- not the egress gateway's pod IP or any IP from the egress IP pool.
+
+:::note
+
+For return traffic to reach the gateway, the external server must know how to route to the egress
+gateway's node IP.
+
+:::
+
+## Additional resources
+
+- [Egress gateway maintenance](egress-gateway-maintenance.mdx)
+- [FelixConfiguration `egressIP...` fields](../../reference/resources/felixconfig.mdx#spec)

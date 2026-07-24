@@ -328,6 +328,7 @@ module.exports = {
             'networking/openstack/host-routes',
             'networking/openstack/multiple-regions',
             'networking/openstack/live-migration',
+            'networking/openstack/resync',
             'networking/openstack/kuryr',
             'networking/openstack/neutron-api',
           ],
@@ -635,7 +636,6 @@ module.exports = {
                 'reference/calicoctl/cluster/diags',
               ],
             },
-            'reference/calicoctl/convert',
             {
               type: 'category',
               label: 'ipam',
@@ -691,6 +691,7 @@ module.exports = {
                     'reference/calicoctl/datastore/migrate/unlock',
                   ],
                 },
+                'reference/calicoctl/datastore/migrate-policy-names',
               ],
             },
             'reference/calicoctl/version',
