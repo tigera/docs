@@ -22,6 +22,13 @@ For example:
 
 For full details, see [the `GatewayAPI` reference documentation](../../reference/installation/api.mdx#gatewayapi).
 
+:::note
+
+Merged gateways are not supported.
+If a custom `EnvoyProxy` sets `mergeGateways: true`, the operator ignores that setting and uses `false` instead, so each `Gateway` gets its own proxy and load balancer.
+
+:::
+
 To make use of these customization fields, use `kubectl edit gatewayapi tigera-secure` to edit the YAML for the `GatewayAPI` resource, and add or modify the customization fields that you require.
 
 ### Customization examples
@@ -112,7 +119,7 @@ To use a custom Envoy configuration, you can modify and apply a copy of the defa
 
 1. Save a copy of the default Envoy configuration file:
    ```bash
-   kubectl get configmap envoy-gateway-config -n tigera-gateway -o yaml > <custom-envoy-configuration>.yaml
+   kubectl get configmap envoy-gateway-config -n calico-system -o yaml > <custom-envoy-configuration>.yaml
    ```
    Replace `<custom-envoy-configuration>` with a name for your custom configuration.
    ```yaml title='Example of a default Envoy configuration'
@@ -157,7 +164,7 @@ To use a custom Envoy configuration, you can modify and apply a copy of the defa
        app.kubernetes.io/version: v1.5.0
        helm.sh/chart: gateway-helm-v1.5.0
      name: envoy-gateway-config
-     namespace: tigera-gateway
+     namespace: calico-system
      ownerReferences:
      - apiVersion: operator.tigera.io/v1
        blockOwnerDeletion: true
@@ -227,7 +234,7 @@ To use a custom Envoy configuration, you can modify and apply a copy of the defa
        helm.sh/chart: gateway-helm-v1.5.0
    // highlight-next-line
      name: custom-envoy-gateway-config
-     namespace: tigera-gateway
+     namespace: calico-system
    ```
 
 1. Apply the customized Envoy configuration:
@@ -236,7 +243,7 @@ To use a custom Envoy configuration, you can modify and apply a copy of the defa
    ```
 1. Patch the `GatewayAPI` resource to include the path of the custom Envoy configuration:
    ```bash
-   kubectl patch gatewayapi tigera-secure --type='json' -p='[{"op": "replace", "path": "/spec/envoyGatewayConfigRef", "value": {"name": "custom-envoy-config", "namespace": "tigera-gateway"}}]'
+   kubectl patch gatewayapi tigera-secure --type='json' -p='[{"op": "replace", "path": "/spec/envoyGatewayConfigRef", "value": {"name": "custom-envoy-config", "namespace": "calico-system"}}]'
    ```
 
 ## Additional resources
