@@ -12,7 +12,52 @@ import IconUser from '/img/icons/user-icon.svg';
 
 ### New features and enhancements
 
-* TBD
+#### Maglev load balancing for services
+
+$[prodname] now supports Maglev consistent-hash load balancing for external traffic to services.
+Maglev lets your nodes act as a distributed, horizontally scalable load balancer, so external connections can fail over to another node when a node goes down.
+This is useful when you advertise service IPs to your network as ECMP routes.
+You enable Maglev per service with an annotation.
+
+For more information, see [Add Maglev load balancing to a service](../networking/configuring/add-maglev-load-balancing.mdx).
+
+#### L2 reachability for pods and services without BGP
+
+You can now make pod IPs and LoadBalancer service VIPs reachable on a flat layer 2 network without BGP or an overlay.
+When you enable `localSubnetL2Reachability`, $[prodname] runs a userspace ARP/NDP responder that answers for local pod IPs and LoadBalancer VIPs that share the host subnet.
+This is useful for on-premises, edge, and other environments where you can't configure the upstream router.
+
+For more information, see [L2 reachability for pods and services without BGP](../networking/configuring/local-subnet-l2-reachability.mdx).
+
+#### Host IP support for egress gateways
+
+You can now configure egress gateways to use the host node's IP as the source address for outbound traffic, instead of the gateway's pod IP.
+This gives external firewalls and services a stable, well-known set of source IPs to allowlist, and lets many application pods share a small fixed set of gateways.
+Host IP mode is most useful for on-premises clusters where pod IPs aren't routable outside the cluster.
+
+For more information, see [Configure egress gateways with host IP support](../networking/egress/egress-gateway-host-ip.mdx).
+
+#### Load balancer node maintenance
+
+You can now mark a node for maintenance so the eBPF data plane stops sending new service traffic to its pods while existing connections finish.
+This lets you drain nodes for upgrades, repairs, or capacity changes without dropping in-flight sessions or stateful workloads.
+This feature is supported on the eBPF data plane only.
+
+For more information, see [Mark a load balancer node for maintenance](../networking/configuring/mark-lb-node-for-maintenance.mdx).
+
+#### Programmatic access to usage data
+
+You can now create a read-only API key in the web console and use it to call the $[prodname] Usage API.
+The API returns the same vCPU usage and managed cluster data shown on the Usage Metrics page, so you can pull it into your own capacity planning, FinOps, and license-compliance workflows.
+
+For more information, see [Access usage data programmatically](../operations/usage-api.mdx).
+
+### Deprecated and removed features
+
+* Image Assurance, Container Threat Detection, and Kibana are removed in this release.
+  These features were previously deprecated and are no longer available in $[prodname] 23.
+* L7 logging with Envoy is deprecated and will be removed in an upcoming release.
+  For L7 observability, $[prodname] is moving to [Istio Ambient Mode](../compliance/istio/about-istio-ambient.mdx).
 
 <h2 id="june-15-2026">June 22, 2026 (version 22.5.0)</h2>
 
@@ -550,14 +595,10 @@ We've provided better access to the detectors we use as part of our Container Th
 You can now view the complete list of detectors and turn them on or off as you see fit.
 Detectors can also be configured as part of a new RuntimeSecurity custom resource.
 
-For more information, see [Update detector settings](../threat/container-threat-detection.mdx#update-detectors-settings).
-
 #### Create Security Event exceptions for known processes
 
 We added a way to create Security Event exceptions for processes in your cluster that you know to be safe.
 This can be a helpful way to eliminate noise and false positives in your alerts.
-
-For more information, see [Exclude a process from Security Events alerts](../threat/container-threat-detection.mdx).
 
 #### Added EPSS data to Image Assurance results
 
@@ -636,8 +677,6 @@ For information about upgrading, see [Upgrade Calico Cloud](../get-started/upgra
 We added a way to efficiently add large numbers of vulnerability exceptions to your Image Assurance scan results.
 Instead of creating exceptions one by one, you can add them all at once by uploading a CSV file with the vulnerability definitions.
 
-For more information, see [Exclude vulnerabilities from scan results](../image-assurance/exclude-vulnerabilities-from-scan-results.mdx).
-
 ### Bug fixes
 
 * Previously, defining new values for the crawdad daemon by using the ImageAssurance custom resource had no effect, and the default values remained in place.
@@ -653,9 +692,6 @@ For more information, see [Exclude vulnerabilities from scan results](../image-a
 We added a way to create and assign Jira issues directly from your Image Assurance scan results page.
 You can filter and prioritize vulnerabilities, and then assign the remediation work to members of your team.
 Calico Cloud populates the information you need, including a CSV file with detailed information about the vulnerabilities in your packages.
-
-For more information, see [Creating Jira issues for scan results](../image-assurance/creating-jira-issues-for-scan-results.mdx)
-
 #### Security events dashboard
 
 A new dashboard summarizes security events and helps practitioners easily understand how events map across namespaces, MITRE techniques, event types, and attack phases. This allows first responders to quickly make sense of potential threats, engage the right stakeholders, and start the incident response and investigation process.
@@ -723,9 +759,6 @@ For more information, see [Connect a cluster to Calico Cloud](../get-started/ins
 
 We added the ability to exclude namespaces from image scanning and runtime view.
 By excluding certain namespaces, you can reduce noise in your scan results and focus attention on higher priority workloads.
-
-For more information, see [Configure exclusions for image scanning](../image-assurance/scanners/cluster-scanner.mdx#configure-exclusions-for-image-scanning).
-
 ## April 2, 2024 (version 19.1.0)
 
 ### Bug fixes
@@ -867,9 +900,6 @@ This failed installation message can be disregarded.
 #### Image Assurance registry scanner
 
 The Image Assurance feature adds the ability to scan images in container registries at any time, on any infrastructure, including Kubernetes. This is ideal protection for images that don’t go through a pipeline (for example, third-party images), but are published to a registry. If CVEs are missed in your build pipeline, you can catch them before they are deployed.
-
-For more information, see [Scan images in container registries](../image-assurance/scanners/registry-scanner.mdx).
-
 #### Security event management
 
 We've added a new Security event management dashboard for threat detection.
@@ -1173,9 +1203,6 @@ New CLI will now check that it is compatible with the latest Image Assurance API
 Release of Container Threat Detection
 
 With Container Threat Detection, you can monitor container activity using eBPF. Enable this feature to receive alerts based on file and process activity for known malicious and suspicious behavior. Alert events can be viewed on the Alerts page in the web console.
-
-To get started, see [Container Threat Detection](../threat/container-threat-detection.mdx)
-
 ## September 26, 2022
 
 ### New feature: Helm
@@ -1214,8 +1241,6 @@ We've made it easier for platform operators to share Image Assurance scan result
 * Export one row per image or one row per image and CVE.
 * Export CSV or JSON files.
 
-To get started, see [Image Assurance](../image-assurance).
-
 ### Malware detection is GA
 
 Malware detection is now released for general availability.
@@ -1224,9 +1249,6 @@ Calico Cloud's malware detection identifies malicious files in your cluster and 
 Calico Cloud uses eBPF-based monitoring to log file hashes of programs running in your cluster.
 If there's a match to known malware from our threat intelligence library, you receive an alert.
 You can view your alerts on the _Alerts_ page on the web console.
-
-To get started, see [Malware Detection](../threat/container-threat-detection.mdx))
-
 ## July 27, 2022
 
 Improvement: Export logs to a SIEM
@@ -1308,5 +1330,3 @@ The $[prodname] installation process will now require running a `kubectl apply` 
 ![tech-preview](/img/calico-cloud/tech-preview.svg)
 
 $[prodname] introduces Image Assurance in tech preview, enabling DevOps and platform teams to scan images in public and private registries, and images that are automatically discovered in connected clusters. Image Assurance provides a runtime view into risk, based on discovered vulnerabilities. It also offers admission controller policies to enforce how vulnerable images are used to create resources within Kubernetes.
-
-To get started, see [Image Assurance](../image-assurance).
