@@ -107,8 +107,22 @@ There are two ways to switch your cluster to use $[prodname] networking. Both me
    keeps working. Remove the leftover chains so that Calico is the only owner of pod
    masquerading.
 
-   Run the following on every node. It covers both the legacy and nft `iptables`
-   backends and is safe to re-run:
+   Because flannel is no longer running, nothing re-creates these chains, so you only
+   need to clear them once. Choose whichever of the following approaches fits your
+   cluster.
+
+   **If you can reboot or replace nodes**
+
+   Perform a rolling reboot of the cluster nodes (drain, reboot, uncordon each node
+   in turn), or replace the nodes entirely if you use immutable or managed node
+   pools. The leftover rules do not persist across a reboot, so no manual work on
+   the nodes is needed.
+
+   **If rebooting nodes is undesirable**
+
+   Remove the chains in place by running the following on every node. It takes
+   effect immediately without disrupting workloads, covers both the legacy and nft
+   `iptables` backends, and is safe to re-run:
 
    ```bash
    for ipt in iptables-legacy iptables-nft ip6tables-legacy ip6tables-nft; do
@@ -121,9 +135,6 @@ There are two ways to switch your cluster to use $[prodname] networking. Both me
      "$ipt" -w -t filter -X FLANNEL-FWD 2>/dev/null
    done
    ```
-
-   Alternatively, reboot each node during a drained maintenance window to clear the
-   leftover rules.
 
 ### Modify flannel configuration
 
