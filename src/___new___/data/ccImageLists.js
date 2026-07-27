@@ -57,7 +57,7 @@ quay.io/tigera/prometheus-operator:v3.23.1
 quay.io/tigera/prometheus-config-reloader:v3.23.1
 quay.io/tigera/cc-cni-config-scanner:v0.7.3`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.6-0/image-list
-  'v22.5.0 (latest)': `quay.io/tigera/apiserver:v3.22.6
+  'v22.5.0': `quay.io/tigera/apiserver:v3.22.6
 quay.io/tigera/compliance-benchmarker:v3.22.6
 quay.io/tigera/compliance-controller:v3.22.6
 quay.io/tigera/compliance-reporter:v3.22.6
