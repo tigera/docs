@@ -1,5 +1,5 @@
 const ccImageLists = {
-  // curl -0 https://installer.calicocloud.io/manifests/v3.23.1-1/image-list
+  // curl -0 https://installer.calicocloud.io/manifests/v3.23.1-4/image-list
   'v23.0.0 (latest)': `quay.io/calico/istio-pilot:v3.32.1
 quay.io/calico/istio-install-cni:v3.32.1
 quay.io/calico/istio-ztunnel:v3.32.1
@@ -52,16 +52,10 @@ quay.io/tigera/istio-ztunnel:v3.23.1
 quay.io/tigera/istio-proxyv2:v3.23.1
 quay.io/tigera/webhooks:v3.23.1
 quay.io/tigera/operator:v1.42.4
-quay.io/tigera/image-assurance-admission-controller:v1.22.9
-quay.io/tigera/image-assurance-operator:v1.22.9
-quay.io/tigera/image-assurance-container-runtime-adaptor:v1.22.9
-quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
-quay.io/tigera/runtime-security-operator:v1.23.2
-quay.io/tigera/skimble:v1.23.2
-quay.io/tigera/cc-core:v0.3.6
+quay.io/tigera/cc-core:v0.3.8
 quay.io/tigera/prometheus-operator:v3.23.1
 quay.io/tigera/prometheus-config-reloader:v3.23.1
-quay.io/tigera/cc-cni-config-scanner:v0.7.2`,
+quay.io/tigera/cc-cni-config-scanner:v0.7.3`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.6-0/image-list
   'v22.5.0 (latest)': `quay.io/tigera/apiserver:v3.22.6
 quay.io/tigera/compliance-benchmarker:v3.22.6
