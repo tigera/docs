@@ -2789,7 +2789,7 @@ The geeky details of what you get:
 
 - User account has IAM permissions
 
-  Verify your user account has IAM permissions to create Kubernetes ClusterRoles, ClusterRoleBindings, Deployments, Service Accounts, and Custom Resource Definitions. The easiest way to grant permissions is to assign the "Kubernetes Service Cluster Admin Role” to your user account. For help, see [GKE access control](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control).
+  Verify your user account has IAM permissions to create Kubernetes ClusterRoles, ClusterRoleBindings, Deployments, Service Accounts, and Custom Resource Definitions. The easiest way to grant permissions is to assign the "Kubernetes Service Cluster Admin Role” to your user account. For help, see [GKE access control](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control).
 
   > **SECONDARY:** By default, GCP users often have permissions to create basic Kubernetes resources (such as Pods and Services) but lack the permissions to create ClusterRoles and other admin resources. Even if you can create basic resources, it's worth verifying that you can create admin resources before continuing.
 
@@ -3642,7 +3642,7 @@ The geeky details of what you get:
 
 ### Prepare a Calico Open Source cluster[​](#prepare-a-calico-open-source-cluster)
 
-1. [Provision an RKE2 cluster using Calico as the CNI and default config options](https://ranchermanager.docs.rancher.com/pages-for-subheaders/launch-kubernetes-with-rancher).
+1. [Provision an RKE2 cluster using Calico as the CNI and default config options](https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/launch-kubernetes-with-rancher).
 
 2. Validate that the RKE2 cluster is set up and running.
 
@@ -13475,8 +13475,9 @@ You install Multus on a cluster, then simply enable Multus in the Calico Enterpr
 
 When you set the `MultiInterfaceMode` field to `Multus` in the Installation resource, the following network and network interface labels are automatically added to new workload endpoints.
 
-- `projectcalico.org/network`
-- `projectcalico.org/network-namespace`
+- `projectcalico.org/network` (if the endpoint is attached to a Calico Network)
+- `projectcalico.org/network-attachment`
+- `projectcalico.org/network-attachment-namespace`
 - `projectcalico.org/network-interface`
 
 You can then create Calico Enterprise policies using these label selectors to target specific networks or network interfaces.
@@ -13635,8 +13636,9 @@ Although not required, you may want to assign IPs from specific pools to specifi
 
 When MultiInterfaceMode is set to Multus, WorkloadEndpoints are created with these labels:
 
-- `projectcalico.org/network`
-- `projectcalico.org/network-namespace`
+- `projectcalico.org/network` (if the endpoint is attached to a Calico Network)
+- `projectcalico.org/network-attachment`
+- `projectcalico.org/network-attachment-namespace`
 - `projectcalico.org/network-interface`
 
 You can use these labels to enforce policies on specific interfaces and networks using policy label selectors.
@@ -13740,11 +13742,11 @@ metadata:
 
  projectcalico.org/namespace: default
 
- projectcalico.org/network: calico
+ projectcalico.org/network-attachment: calico
+
+ projectcalico.org/network-attachment-namespace: default
 
  projectcalico.org/network-interface: net1
-
- projectcalico.org/network-namespace: default
 
  projectcalico.org/orchestrator: k8s
 
@@ -25984,8 +25986,9 @@ spec:
 
 If you enable [multiple networks](https://docs.tigera.io/calico-enterprise/latest/networking/configuring/multiple-networks), the following automatic labels are available:
 
-- `projectcalico.org/network` - Name of the network specified in the NetworkAttachmentDefinition
-- `projectcalico.org/network-namespace` - Namespace of the network
+- `projectcalico.org/network` - Name of the Calico `Network` the WorkloadEndpoint is attached to, if any (for example, a VRF network)
+- `projectcalico.org/network-attachment` - Name of the NetworkAttachmentDefinition the WorkloadEndpoint belongs to
+- `projectcalico.org/network-attachment-namespace` - Namespace of the NetworkAttachmentDefinition
 - `projectcalico.org/network-interface` - Network interface for the WorkloadEndpoint
 
 ## Labels for matching host endpoints[​](#labels-for-matching-host-endpoints)
@@ -70728,8 +70731,9 @@ This resource is not supported in `kubectl`.
 
 If multiple networks are enabled, workload endpoints will have additional labels which can be used in network policy selectors:
 
-- `projectcalico.org/network`: The name of the network specified in the NetworkAttachmentDefinition.
-- `projectcalico.org/network-namespace`: This namespace the network is in.
+- `projectcalico.org/network`: The name of the Calico `Network` the workload endpoint is attached to, if any (for example, a VRF network).
+- `projectcalico.org/network-attachment`: The name of the NetworkAttachmentDefinition the workload endpoint belongs to.
+- `projectcalico.org/network-attachment-namespace`: The namespace of the NetworkAttachmentDefinition.
 - `projectcalico.org/network-interface`: The network interface for the workload endpoint.
 
 For more information, see the [multiple-networks how-to guide](https://docs.tigera.io/calico-enterprise/latest/networking/configuring/multiple-networks).
@@ -84166,7 +84170,7 @@ Calico Enterprise supports the latest version of EKS at time of Calico Enterpris
 
 ## Google Kubernetes Engine (GKE)[​](#google-kubernetes-engine-gke)
 
-Calico Enterprise supports the latest version of [GKE regular channel](https://cloud.google.com/kubernetes-engine/docs/concepts/release-channels) at time of Calico Enterprise release, as stated in the system requirements.
+Calico Enterprise supports the latest version of [GKE regular channel](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/release-channels) at time of Calico Enterprise release, as stated in the system requirements.
 
 ## Mirantis Kubernetes Engine (MKE)[​](#mirantis-kubernetes-engine-mke)
 
