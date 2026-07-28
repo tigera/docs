@@ -29,13 +29,12 @@ const variables = {
   manifestsUrl: 'https://docs.tigera.io/master',
   releases,
   imageNames: {
-    node: 'tigera/cnx-node',
-    kubeControllers: 'tigera/kube-controllers',
+    node: 'tigera/node',
   },
   componentImage: {
-    cnxNode: componentImage('cnx-node', releases[0]),
-    calicoctl:componentImage('calicoctl', releases[0]), 
+    cnxNode: componentImage('node', releases[0]),
     calicoq: componentImage('calicoq', releases[0]),
+    // 3.24 dropped the calicoctl image; calicoctl ships as binaries only.
   },
 };
 
