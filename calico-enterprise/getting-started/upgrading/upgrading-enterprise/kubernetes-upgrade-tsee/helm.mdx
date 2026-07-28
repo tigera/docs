@@ -5,6 +5,8 @@ description: Upgrade a Helm-installed Calico Enterprise cluster on Kubernetes to
 # Upgrade Calico Enterprise installed with Helm
 
 import CodeBlock from '@theme/CodeBlock';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 :::note
 
@@ -71,11 +73,34 @@ These steps differ based on your cluster type. If you are unsure of your cluster
 
 1. Install the $[prodname] custom resource definitions.
 
+   Upgrading does not change your cluster's CRD mode, so install the CRDs for the mode your cluster already uses. To check which mode you have, run:
+
+   ```bash
+   kubectl api-versions | grep crd.projectcalico.org
+   ```
+
+   Output means your cluster uses the aggregation API server. No output means it uses native v3 CRDs. See [Native v3 CRDs](../../../../operations/native-v3-crds.mdx) for background on the two modes.
+
+   <Tabs>
+   <TabItem label="Aggregation API server" value="apiserver">
+
    ```bash
    kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/operator-crds.yaml
    kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/prometheus-operator-crds.yaml
    kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/eck-operator-crds.yaml
    ```
+
+   </TabItem>
+   <TabItem label="Native v3 CRDs" value="native-v3">
+
+   ```bash
+   kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/v3_projectcalico_org.yaml
+   kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/prometheus-operator-crds.yaml
+   kubectl apply --server-side --force-conflicts -f $[filesUrl]/manifests/eck-operator-crds.yaml
+   ```
+
+   </TabItem>
+   </Tabs>
 
 1. If your cluster is v3.19 or older, update `values.yaml` with `packetCaptureAPI` enabled to true.
 
