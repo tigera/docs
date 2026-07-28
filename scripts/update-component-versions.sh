@@ -4,7 +4,6 @@ set -eu
 : ${VERSION:?"Product version not specified, set using 'VERSION' e.g. VERSION=3.15.4"}
 : ${PRODUCT:?"Product not specified, set using 'PRODUCT'"}
 : ${GITHUB_TOKEN:?"GitHub API token not specified, set using 'GITHUB_TOKEN'"}
-: ${IS_LATEST:=false}:?"Set \"true\" if this is the latest version for the product"
 
 declare -A products=(
   "calico-enterprise"
@@ -66,94 +65,7 @@ update_calico_enterprise_version() {
   # add new version as first item in array
   releases_json=$(cat $releases_json_file | jq --argjson newVersion "$(echo $new_version)" '. = [$newVersion] + .')
   jq '.' <(echo $releases_json) >$releases_json_file
-  # update variables.js
-  local helm_version=$(yq ".helmRelease" <(echo "$product_version_info") || echo "")
-  if [ -z "$helm_version" -a "$helm_version" != " " ]; then
-    helm_version=""
-  else
-    helm_version="-${helm_version}"
-  fi
-  local release_title=v${VERSION}
-  local release_stream=$(echo ${VERSION} | cut -d. -f1,2)
-  local release_stream_minor=${release_stream#3.}
-  local docs_base_url="/calico-enterprise/${release_stream}"
-
-  latest_count=$(grep -F "/calico-enterprise/latest" calico-enterprise_versioned_docs/version-*/variables.js | wc -l)
-
-  # None of the current versions are set as latest, so we should make sure the user sets one
-  if [ ${latest_count} -eq 0 ] && [ "${IS_LATEST}" != "true" ]; then
-    echo >&2 "No versions are set as latest; please run one of the version/autogen targets with IS_LATEST=true"
-    exit 1
-  fi
-
-  # There's more than one 'latest', this is one of them, and we've *not* specified
-  # this one should be latest, so we're fixing the problem.
-  if [ ${latest_count} -gt 1 ] && \
-    grep -F -q "/calico-enterprise/latest" "${docs_folder_path}/variables.js" && \
-    [ "${IS_LATEST}" != "true" ]; then
-    echo >&2 "[warn] More than one version is set as latest, including this one, but we're unsetting this one"
-
-  # Otherwise, bail out and force the user to fix the invalid one(s) first.
-  elif [ ${latest_count} -gt 1 ]; then
-    echo >&2 "Currently ${latest_count} versions are set as latest. Please regenerate any which are incorrect first:"
-    grep -F --files-with-matches "/calico-enterprise/latest" calico-enterprise_versioned_docs/version-*/variables.js | sed 's/^/    /'
-    exit 1
-  fi
-
-  if [ ${latest_count} -eq 1 ] && grep -F -q "/calico-enterprise/latest" "${docs_folder_path}/variables.js"; then
-    echo "[info] Release ${release_stream} is set as latest in docs, keeping it as latest for now"
-    IS_LATEST=true
-  fi
-
-  if [ "${IS_LATEST}" == "true" ]; then
-    docs_base_url="/calico-enterprise/latest"
-  fi
-
-  if [ ${release_stream_minor} -ge 20 ]; then
-    rpmsUrl="rpmsUrl: 'https://downloads.tigera.io/ee/rpms/v${release_stream}',"
-  else
-    rpmsUrl="// No rpmsUrl for this release"
-  fi
-
-  cat <<EOF >${docs_folder_path}/variables.js
-const releases = require('./releases.json');
-const componentImage = require('../../src/components/utils/componentImage');
-
-const variables = {
-  releaseTitle: '${release_title}',
-  prodname: 'Calico Enterprise',
-  prodnamedash: 'calico-enterprise',
-  version: 'v${release_stream}',
-  openSourceVersion: releases[0].calico.minor_version.slice(1),
-  baseUrl: '${docs_base_url}',
-  filesUrl: 'https://downloads.tigera.io/ee/${release_title}',
-  ${rpmsUrl}
-  tutorialFilesURL: 'https://docs.tigera.io/files',
-  tmpScriptsURL: 'https://docs.tigera.io/calico-enterprise/${release_stream}',
-  windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
-  prodnameWindows: 'Calico Enterprise for Windows',
-  downloadsurl: 'https://downloads.tigera.io',
-  nodecontainer: 'cnx-node',
-  noderunning: 'calico-node',
-  rootDirWindows: 'C:\\\\TigeraCalico',
-  registry: 'quay.io/',
-  chart_version_name: 'v${VERSION}${helm_version}',
-  tigeraOperator: releases[0]['tigera-operator'],
-  dikastesVersion: releases[0].components.dikastes.version,
-  releases,
-  imageNames: {
-    node: 'tigera/cnx-node',
-    kubeControllers: 'tigera/kube-controllers',
-  },
-  componentImage: {
-    cnxNode: componentImage('cnx-node', releases[0]),
-    calicoctl: componentImage('calicoctl', releases[0]),
-    calicoq: componentImage('calicoq', releases[0]),
-  },
-};
-
-module.exports = variables;
-EOF
+  echo "[info] ${releases_json_file} updated; review ${docs_folder_path}/variables.js by hand (this script no longer writes it)"
 }
 
 if ! is_valid_product "$PRODUCT"; then
