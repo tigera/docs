@@ -20,7 +20,7 @@ export default function InstallAKS(props) {
       <ol>
         <li>
           <p>Install the Tigera Operator and custom resource definitions.</p>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/operator-crds.yaml</CodeBlock>
+          <CodeBlock>kubectl create -f {filesUrl}/manifests/v1_crd_projectcalico_org.yaml</CodeBlock>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
         </li>
         <li>
@@ -131,7 +131,7 @@ spec:
         </li>
         <li>
           <p>Install the Tigera Operator and custom resource definitions.</p>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/operator-crds.yaml</CodeBlock>
+          <CodeBlock>kubectl create -f {filesUrl}/manifests/v1_crd_projectcalico_org.yaml</CodeBlock>
           <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-operator.yaml</CodeBlock>
         </li>
         <li>
