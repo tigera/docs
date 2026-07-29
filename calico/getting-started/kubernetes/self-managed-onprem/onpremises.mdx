@@ -241,14 +241,30 @@ If you have an existing manifest-based $[prodname] install using the legacy `crd
 1. Install the DatastoreMigration CRD.
 
    ```bash
-   kubectl apply --server-side -f $[manifestsUrl]/kube-controllers/pkg/controllers/migration/crd/migration.projectcalico.org_datastoremigrations.yaml
+   kubectl apply --server-side -f $[manifestsUrl]/manifests/migration.projectcalico.org_datastoremigrations.yaml
    ```
+
+   :::note
+
+   If you installed the DatastoreMigration CRD on an earlier release, delete it before
+   applying this one:
+
+   ```bash
+   kubectl delete crd datastoremigrations.migration.projectcalico.org
+   ```
+
+   The CRD moved from `v1beta1` to `v1`. Kubernetes rejects an update that drops a
+   version still listed in the CRD's `status.storedVersions`, so `kubectl apply` fails
+   with a confusing error otherwise. Deleting the CRD also deletes any DatastoreMigration
+   resource, so only do this if no migration is in progress.
+
+   :::
 
 1. Create a DatastoreMigration resource to start the migration. The migration controller copies all Calico resources from v1 CRDs to v3 CRDs.
 
    ```bash
    kubectl apply -f - <<EOF
-   apiVersion: migration.projectcalico.org/v1beta1
+   apiVersion: migration.projectcalico.org/v1
    kind: DatastoreMigration
    metadata:
      name: v1-to-v3
