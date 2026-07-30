@@ -282,6 +282,7 @@ module.exports = {
             'networking/configuring/use-ipvs',
             'networking/configuring/sidecar-acceleration',
             'networking/configuring/pod-mac-address',
+            'networking/configuring/allowed-source-prefixes',
             'networking/configuring/node-local-dns-cache',
             'networking/configuring/qos-controls',
             'networking/configuring/add-maglev-load-balancing',
@@ -636,7 +637,6 @@ module.exports = {
                 'reference/calicoctl/cluster/diags',
               ],
             },
-            'reference/calicoctl/convert',
             {
               type: 'category',
               label: 'ipam',
@@ -692,6 +692,7 @@ module.exports = {
                     'reference/calicoctl/datastore/migrate/unlock',
                   ],
                 },
+                'reference/calicoctl/datastore/migrate-policy-names',
               ],
             },
             'reference/calicoctl/version',

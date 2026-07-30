@@ -274,7 +274,7 @@ spec:
       </p>
 
       <p>(Optional) Apply the full CRDs including descriptions.</p>
-      <CodeBlock language='bash'>oc apply --server-side --force-conflicts -f {filesUrl}/manifests/operator-crds.yaml</CodeBlock>
+      <CodeBlock language='bash'>oc apply --server-side --force-conflicts -f {filesUrl}/manifests/v1_crd_projectcalico_org.yaml</CodeBlock>
 
       <When condition={props.clusterType === 'management'}>
         <>

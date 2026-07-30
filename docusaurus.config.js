@@ -87,6 +87,7 @@ export default async function createAsyncConfig() {
             sidebarPath: false,
           },
           sitemap: {
+            lastmod: 'date',
             ignorePatterns: ['/calico/[0-9]*.[0-9]*/**', '/calico-enterprise/[0-9]*.[0-9]*/**'],
           },
           googleTagManager: {
@@ -130,14 +131,14 @@ export default async function createAsyncConfig() {
           contextualSearch: true,
           searchPagePath: '/search',
         },
-        //announcementBar: {
-        //  id: 'calico_hackathon_deadline',
-        //  content:
-        //    '🚀 Deadline Extended! (Ends April 30, 2026!) Finalize your GitHub repo and demo video to enter the <a href="https://www.tigera.io/lp/project-calico-hackathon?utm_source=website&utm_medium=docs_site&utm_campaign=Hackathon2026">Calico 3.30+ Hackathon.</a>',
-        //  backgroundColor: '#FCE181',
-        //  textColor: '#000',
-        //  isCloseable: true,
-        //},
+        announcementBar: {
+         id: 'calico_survey_2026',
+         content:
+           '<a href="https://forms.gle/V89eyYDD1QteD8c97"><strong>Take our Cluster Network Policy survey</strong> and <strong>claim a free Calico t-shirt! 👕</strong></a>',
+         backgroundColor: '#FCE181',
+         textColor: '#000',
+         isCloseable: true,
+        },
         navbar: {
           logo: {
             src: 'img/tigera-logo-2026-black-text.svg',
@@ -499,14 +500,14 @@ export default async function createAsyncConfig() {
           routeBasePath: 'calico-cloud',
           editCurrentVersion: true,
           //To see builds for unreleased versions, remove comments in the next line.
-          onlyIncludeVersions: [...nextVersion, '22-2'],
+          onlyIncludeVersions: [...nextVersion, '23-2'],
           versions: {
             current: {
               label: 'Next',
               path: 'next',
               banner: 'unreleased',
             },
-            '22-2': {
+            '23-2': {
               path: '/',
               banner: 'none',
             },

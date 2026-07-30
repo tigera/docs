@@ -287,8 +287,7 @@ run-update-cloud-image-list:
 # 	e.g. for new versions of v3.18.0-1, GIT_VERSION_REF=3.18-1
 # If you want to use a different doc folder from the default, specify DOCS_VERSION_STREAM
 # 	e.g. for new versions of v3.18.0-2, DOCS_VERSION_STREAM=3.18-2
-# If the version to updates is the latest version for the product, specify IS_LATEST=true
-# 	e.g. if 3,18,1 is the latest version, IS_LATEST=true
+# NOTE: this only updates releases.json; update the folder's variables.js by hand
 
 VERSION_ALL_VERSIONS=$(foreach version,$(wildcard calico-enterprise_versioned_docs/*),version/autogen/$(version:calico-enterprise_versioned_docs/version-%=%))
 

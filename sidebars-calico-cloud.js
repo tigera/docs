@@ -337,6 +337,7 @@ module.exports = {
             'networking/configuring/secure-bgp',
             'networking/configuring/workloads-outside-cluster',
             'networking/configuring/pod-mac-address',
+            'networking/configuring/allowed-source-prefixes',
             'networking/configuring/node-local-dns-cache',
             'networking/configuring/qos-controls',
             'networking/configuring/add-maglev-load-balancing',
@@ -395,6 +396,7 @@ module.exports = {
         'operations/cluster-management',
         'operations/disconnect',
         'operations/usage-metrics',
+        'operations/usage-api',
         'operations/comms/index',
         {
           type: 'category',

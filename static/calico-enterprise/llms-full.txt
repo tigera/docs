@@ -2789,7 +2789,7 @@ The geeky details of what you get:
 
 - User account has IAM permissions
 
-  Verify your user account has IAM permissions to create Kubernetes ClusterRoles, ClusterRoleBindings, Deployments, Service Accounts, and Custom Resource Definitions. The easiest way to grant permissions is to assign the "Kubernetes Service Cluster Admin Role” to your user account. For help, see [GKE access control](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control).
+  Verify your user account has IAM permissions to create Kubernetes ClusterRoles, ClusterRoleBindings, Deployments, Service Accounts, and Custom Resource Definitions. The easiest way to grant permissions is to assign the "Kubernetes Service Cluster Admin Role” to your user account. For help, see [GKE access control](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control).
 
   > **SECONDARY:** By default, GCP users often have permissions to create basic Kubernetes resources (such as Pods and Services) but lack the permissions to create ClusterRoles and other admin resources. Even if you can create basic resources, it's worth verifying that you can create admin resources before continuing.
 
@@ -3642,7 +3642,7 @@ The geeky details of what you get:
 
 ### Prepare a Calico Open Source cluster[​](#prepare-a-calico-open-source-cluster)
 
-1. [Provision an RKE2 cluster using Calico as the CNI and default config options](https://ranchermanager.docs.rancher.com/pages-for-subheaders/launch-kubernetes-with-rancher).
+1. [Provision an RKE2 cluster using Calico as the CNI and default config options](https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/launch-kubernetes-with-rancher).
 
 2. Validate that the RKE2 cluster is set up and running.
 
@@ -13475,8 +13475,9 @@ You install Multus on a cluster, then simply enable Multus in the Calico Enterpr
 
 When you set the `MultiInterfaceMode` field to `Multus` in the Installation resource, the following network and network interface labels are automatically added to new workload endpoints.
 
-- `projectcalico.org/network`
-- `projectcalico.org/network-namespace`
+- `projectcalico.org/network` (if the endpoint is attached to a Calico Network)
+- `projectcalico.org/network-attachment`
+- `projectcalico.org/network-attachment-namespace`
 - `projectcalico.org/network-interface`
 
 You can then create Calico Enterprise policies using these label selectors to target specific networks or network interfaces.
@@ -13635,8 +13636,9 @@ Although not required, you may want to assign IPs from specific pools to specifi
 
 When MultiInterfaceMode is set to Multus, WorkloadEndpoints are created with these labels:
 
-- `projectcalico.org/network`
-- `projectcalico.org/network-namespace`
+- `projectcalico.org/network` (if the endpoint is attached to a Calico Network)
+- `projectcalico.org/network-attachment`
+- `projectcalico.org/network-attachment-namespace`
 - `projectcalico.org/network-interface`
 
 You can use these labels to enforce policies on specific interfaces and networks using policy label selectors.
@@ -13740,11 +13742,11 @@ metadata:
 
  projectcalico.org/namespace: default
 
- projectcalico.org/network: calico
+ projectcalico.org/network-attachment: calico
+
+ projectcalico.org/network-attachment-namespace: default
 
  projectcalico.org/network-interface: net1
-
- projectcalico.org/network-namespace: default
 
  projectcalico.org/orchestrator: k8s
 
@@ -25984,8 +25986,9 @@ spec:
 
 If you enable [multiple networks](https://docs.tigera.io/calico-enterprise/latest/networking/configuring/multiple-networks), the following automatic labels are available:
 
-- `projectcalico.org/network` - Name of the network specified in the NetworkAttachmentDefinition
-- `projectcalico.org/network-namespace` - Namespace of the network
+- `projectcalico.org/network` - Name of the Calico `Network` the WorkloadEndpoint is attached to, if any (for example, a VRF network)
+- `projectcalico.org/network-attachment` - Name of the NetworkAttachmentDefinition the WorkloadEndpoint belongs to
+- `projectcalico.org/network-attachment-namespace` - Namespace of the NetworkAttachmentDefinition
 - `projectcalico.org/network-interface` - Network interface for the WorkloadEndpoint
 
 ## Labels for matching host endpoints[​](#labels-for-matching-host-endpoints)
@@ -42244,6 +42247,10 @@ See [Provide TLS certificates for Calico Enterprise components](https://docs.tig
 
 [Track Calico Enterprise Elasticsearch and Fluentd metrics in Prometheus to alert on flow, DNS, audit, and compliance log collection or storage disruptions.](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/elasticsearch-and-fluentd-metrics)
 
+##### [License metrics](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/license-agent)
+
+[Monitor Calico Enterprise license metrics such as how many days until license expires.](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/license-agent)
+
 ## eBPF[​](#ebpf)
 
 ##### [eBPF use cases](https://docs.tigera.io/calico-enterprise/latest/operations/ebpf/use-cases-ebpf)
@@ -42284,7 +42291,7 @@ See [Provide TLS certificates for Calico Enterprise components](https://docs.tig
 
 ##### [License expiration and renewal](https://docs.tigera.io/calico-enterprise/latest/operations/license-options)
 
-[Track Calico Enterprise license expiration through tigerastatus and operator-exposed Prometheus metrics to keep observability and management features available.](https://docs.tigera.io/calico-enterprise/latest/operations/license-options)
+[Track Calico Enterprise license expiration through tigerastatus and license agent Prometheus metrics to keep observability and management features available.](https://docs.tigera.io/calico-enterprise/latest/operations/license-options)
 
 ### The Calico Enterprise web console
 
@@ -43378,8 +43385,6 @@ tigera-elasticsearch tigera-secure-linseed-cert tigera-operator-signer 2028-07-1
 
 ...
 ```
-
-The operator also exposes Prometheus metrics for certificate expiration. See [Operator metrics](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/operator-metrics) to configure monitoring and alerts.
 
 ## Certificate management with Kubernetes CSR API[​](#certificate-management-with-kubernetes-csr-api)
 
@@ -44633,29 +44638,9 @@ The Tigera Operator reports license condition in `tigerastatus`, including a war
 
 ## License metrics[​](#license-metrics)
 
-The Calico Enterprise operator automatically exposes license metrics through its Prometheus metrics endpoint. No additional components need to be installed. The following metrics are available:
+Calico Enterprise provides license metrics, such as the number of days until license expiration, through the **License Agent** component and Prometheus. For details on deploying the license agent and creating expiration alerts, see [License metrics](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/license-agent).
 
-| Metric                                             | Description                                     |
-| -------------------------------------------------- | ----------------------------------------------- |
-| `tigera_operator_license_expiry_timestamp_seconds` | Unix timestamp of license expiration            |
-| `tigera_operator_license_valid`                    | Whether the license is valid (`1`) or not (`0`) |
-
-These metrics are scraped by the built-in Prometheus instance via the `tigera-operator-metrics` ServiceMonitor.
-
-### Built-in alerts[​](#built-in-alerts)
-
-Calico Enterprise installs PrometheusRule resources with alerting rules for license expiration. You can view them with:
-
-```bash
-kubectl -n tigera-prometheus get prometheusrule calico -o yaml
-```
-
-The built-in rules include:
-
-- **LicenseExpiringWarning**: fires when the license expires in less than 30 days
-- **LicenseExpiringCritical**: fires when the license expires in less than 7 days, or is invalid
-
-To route these alerts, see [Configure Alertmanager](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/prometheus/alertmanager).
+To route license alerts, see [Configure Alertmanager](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/prometheus/alertmanager).
 
 ## Additional resources[​](#additional-resources)
 
@@ -44741,7 +44726,6 @@ Calico Enterprise uses the Prometheus monitoring tool to scrape metrics from ins
 - kube-controllers
 - felix
 - typha (not enabled by default)
-- operator
 
 ## Before you begin[​](#before-you-begin)
 
@@ -45101,48 +45085,6 @@ export NAMESPACE=<my-prometheus-namespace>
 
 ```bash
 kubectl apply -f https://downloads.tigera.io/ee/v3.23.1/manifests/prometheus/typha-metrics-service-monitor.yaml -n $NAMESPACE
-```
-
-The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
-
-**Tab: operator**
-
-**Configure TLS certificates**
-
-1. Copy the required secret and configmap to your namespace.
-
-2. Save the manifest of the required TLS secret and CA configmap.
-
-   ```bash
-   kubectl get secret calico-node-prometheus-client-tls -n tigera-prometheus -o yaml > calico-node-prometheus-client-tls.yaml
-   ```
-
-   ```bash
-   kubectl get configmap -n tigera-prometheus tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
-   ```
-
-3. Edit `calico-node-prometheus-client-tls.yaml` and `tigera-ca-bundle.yaml` by changing the namespace to the namespace where your prometheus instance is running.
-
-4. Apply the manifests to your cluster.
-
-   ```bash
-   kubectl apply -f calico-node-prometheus-client-tls.yaml
-   ```
-
-   ```bash
-   kubectl apply -f tigera-ca-bundle.yaml
-   ```
-
-**Create the service monitor**
-
-Apply the ServiceMonitor to the namespace where Prometheus is running.
-
-```bash
-export NAMESPACE=<my-prometheus-namespace>
-```
-
-```bash
-kubectl apply -f https://downloads.tigera.io/ee/v3.23.1/manifests/prometheus/operator-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -45705,9 +45647,9 @@ More information, including descriptions of the various options can be found und
 
 <!-- -->
 
-## [📄️Operator metrics](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/operator-metrics)
+## [📄️License metrics](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/license-agent)
 
-[Monitor the Calico Enterprise operator with Prometheus metrics for component health, TLS certificate expiry, and license status.](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/operator-metrics)
+[Monitor Calico Enterprise license metrics such as how many days until license expires.](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/license-agent)
 
 ## [📄️Recommended Prometheus metrics](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/recommended-metrics)
 
@@ -45725,139 +45667,107 @@ More information, including descriptions of the various options can be found und
 
 [Track Calico Enterprise Elasticsearch and Fluentd metrics in Prometheus to alert on flow, DNS, audit, and compliance log collection or storage disruptions.](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/metrics/elasticsearch-and-fluentd-metrics)
 
-### Operator metrics
+### License metrics
 
 ## Big picture[​](#big-picture)
 
-Use Prometheus to monitor the Calico Enterprise operator.
+Use the Prometheus monitoring and alerting tool to get Calico Enterprise license metrics.
 
 ## Value[​](#value)
 
-The Calico Enterprise operator exposes Prometheus metrics that give you visibility into the overall health of your Calico Enterprise installation. These metrics let you set up alerts for degraded components, expiring TLS certificates, and license issues before they impact operations.
+Platform engineering teams need to report licensing usage on third-party software (like Calico Enterprise) for their CaaS/Kubernetes platforms. This is often driven by compliance, but also to mitigate risks from license expiration or usage that may impact operations. For teams to easily access these vital metrics, Calico Enterprise provides license metrics using the Prometheus monitoring and alerting tool.
 
-## Before you begin[​](#before-you-begin)
+## Concepts[​](#concepts)
 
-Operator metrics are enabled by default. The `tigera-operator` deployment ships with the following environment variables already set:
+### About Prometheus[​](#about-prometheus)
 
-- `METRICS_ENABLED=true`
-- `METRICS_SCHEME=https`
+The Prometheus monitoring tool scrapes metrics from instrumented jobs and displays time series data in a visualizer (such as Grafana). For Calico Enterprise, the “jobs” that Prometheus can harvest metrics from the License Agent component.
 
-Metrics are served on port **9484** over HTTPS and scraped by the built-in Prometheus instance via the `tigera-operator-metrics` ServiceMonitor.
+### About License Agent[​](#about-license-agent)
 
-## Metrics reference[​](#metrics-reference)
+The **License Agent** is a containerized application that monitors the following Calico Enterprise licensing information from the Kubernetes cluster, and exports the metrics through the Prometheus server:
 
-### Component status[​](#component-status)
+- Days till expiration
 
-The `tigera_operator_component_status` metric reports the status of each Calico Enterprise component as managed by the operator. This mirrors the information available through `kubectl get tigerastatus`.
+## How to[​](#how-to)
 
-| Metric                             | Labels                   | Description                                                |
-| ---------------------------------- | ------------------------ | ---------------------------------------------------------- |
-| `tigera_operator_component_status` | `component`, `condition` | Status of a component. Value is `1` (true) or `0` (false). |
+- [Add license agent in your Kubernetes cluster](#add-license-agent-in-your-kubernetes-cluster)
+- [Create alerts using Prometheus metrics](#create-alerts-using-prometheus-metrics)
 
-**Labels:**
+### Add license agent in your Kubernetes cluster[​](#add-license-agent-in-your-kubernetes-cluster)
 
-- `component` — The Calico Enterprise component (e.g. `calico`, `apiserver`, `monitor`, `log-storage`, `manager`)
+To add the license-agent component in a Kubernetes cluster for license metrics, install the pull secret and apply the license-agent manifest.
 
-- `condition` — One of:
+1. Create a namespace for the license-agent.
+   <!-- -->
+   ```text
+    kubectl create namespace tigera-license-agent
+   ```
+2. Install your pull secret.
+   <!-- -->
+   ```text
+    kubectl create secret generic tigera-pull-secret \
 
-  <!-- -->
+    --type=kubernetes.io/dockerconfigjson -n tigera-license-agent \
 
-  - `available` — The component is running and healthy
-  - `degraded` — The component is in an error state
-  - `progressing` — The component is being updated or is starting up
+    --from-file=.dockerconfigjson=<path/to/pull/secret>
+   ```
+3. Apply the manifest.
+   <!-- -->
+   ```text
+    kubectl apply -f https://downloads.tigera.io/ee/v3.23.1/manifests/licenseagent.yaml
+   ```
 
-**Example queries:**
+### Create alerts using Prometheus metrics[​](#create-alerts-using-prometheus-metrics)
 
-- Find all degraded components:
+In the following example, an alert is configured when the license expiry is fewer than 15 days.
 
-  ```text
-  tigera_operator_component_status{condition="degraded"} == 1
-  ```
+```yaml
+apiVersion: monitoring.coreos.com/v1
 
-- Check if a specific component is available:
+kind: PrometheusRule
 
-  ```text
-  tigera_operator_component_status{component="calico", condition="available"}
-  ```
+metadata:
 
-### TLS certificate expiry[​](#tls-certificate-expiry)
+ name: calico-prometheus-license
 
-The `tigera_operator_tls_certificate_expiry_timestamp_seconds` metric reports the expiry time of each TLS certificate managed by the operator.
+ namespace: tigera-prometheus
 
-| Metric                                                     | Labels                        | Description                                  |
-| ---------------------------------------------------------- | ----------------------------- | -------------------------------------------- |
-| `tigera_operator_tls_certificate_expiry_timestamp_seconds` | `name`, `namespace`, `issuer` | Unix timestamp when the certificate expires. |
+ labels:
 
-**Labels:**
+ role: tigera-prometheus-rules
 
-- `name` — The Secret name containing the certificate
-- `namespace` — The namespace of the Secret
-- `issuer` — The certificate issuer (e.g. `tigera-operator-signer`)
+ prometheus: calico-node-prometheus
 
-**Example queries:**
+spec:
 
-- Certificates expiring within 30 days:
+ groups:
 
-  ```text
-  tigera_operator_tls_certificate_expiry_timestamp_seconds - time() < 30 * 24 * 3600
-  ```
+ - name: tigera-license.rules
 
-- Certificates expiring within 7 days:
+ rules:
 
-  ```text
-  tigera_operator_tls_certificate_expiry_timestamp_seconds - time() < 7 * 24 * 3600
-  ```
+ - alert: CriticalLicenseExpiry
 
-### License[​](#license)
+ expr: license_number_of_days < 15
 
-| Metric                                             | Labels | Description                                      |
-| -------------------------------------------------- | ------ | ------------------------------------------------ |
-| `tigera_operator_license_valid`                    | —      | Whether the license is valid (`1`) or not (`0`). |
-| `tigera_operator_license_expiry_timestamp_seconds` | —      | Unix timestamp when the license expires.         |
+ labels:
 
-**Example queries:**
+ severity: Warning
 
-- License expires within 30 days:
+ annotations:
 
-  ```text
-  tigera_operator_license_expiry_timestamp_seconds - time() < 30 * 24 * 3600
-  ```
+ summary: 'Calico Enterprise License expires in less than 15 days'
 
-- License is invalid:
-
-  ```text
-  tigera_operator_license_valid == 0
-  ```
-
-## Built-in alerts[​](#built-in-alerts)
-
-Calico Enterprise installs a PrometheusRule resource named `calico` with alerting rules that use these metrics. You can view it with:
-
-```bash
-kubectl -n tigera-prometheus get prometheusrule calico -o yaml
+ description: 'Calico Enterprise License expires in less than 15 days'
 ```
 
-The built-in rules include:
-
-| Alert                          | Condition                                 | Severity |
-| ------------------------------ | ----------------------------------------- | -------- |
-| `DeniedPacketsRate`            | Denied packets rate > 50/s                | info     |
-| `TLSCertExpiringWarning`       | Certificate expires in < 30 days          | warning  |
-| `TLSCertExpiringCritical`      | Certificate expires in < 7 days           | critical |
-| `LicenseExpiringWarning`       | License expires in < 30 days              | warning  |
-| `LicenseExpiringCritical`      | License expires in < 7 days or is invalid | critical |
-| `ComponentDegradedWarning`     | Component degraded for > 15m              | warning  |
-| `ComponentDegradedCritical`    | Component degraded for > 30m              | critical |
-| `ComponentProgressingWarning`  | Component progressing for > 15m           | warning  |
-| `ComponentProgressingCritical` | Component progressing for > 30m           | critical |
-
-To route these alerts, see [Configure Alertmanager](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/prometheus/alertmanager).
+> **SECONDARY:** If the Kubernetes api-server serves on any port other than 6443 or 443, add that port in the Egress policy of the license agent manifest.
 
 ## Additional resources[​](#additional-resources)
 
-- [License expiration and renewal](https://docs.tigera.io/calico-enterprise/latest/operations/license-options)
-- [Configure Prometheus](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/prometheus/configure-prometheus)
-- [BYO Prometheus](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/prometheus/byo-prometheus)
+- [LicenseKey resource](https://docs.tigera.io/calico-enterprise/latest/reference/resources/licensekey)
+- [Configure Alertmanager](https://docs.tigera.io/calico-enterprise/latest/operations/monitor/prometheus/alertmanager)
 
 ### Recommended Prometheus metrics
 
@@ -70821,8 +70731,9 @@ This resource is not supported in `kubectl`.
 
 If multiple networks are enabled, workload endpoints will have additional labels which can be used in network policy selectors:
 
-- `projectcalico.org/network`: The name of the network specified in the NetworkAttachmentDefinition.
-- `projectcalico.org/network-namespace`: This namespace the network is in.
+- `projectcalico.org/network`: The name of the Calico `Network` the workload endpoint is attached to, if any (for example, a VRF network).
+- `projectcalico.org/network-attachment`: The name of the NetworkAttachmentDefinition the workload endpoint belongs to.
+- `projectcalico.org/network-attachment-namespace`: The namespace of the NetworkAttachmentDefinition.
 - `projectcalico.org/network-interface`: The network interface for the workload endpoint.
 
 For more information, see the [multiple-networks how-to guide](https://docs.tigera.io/calico-enterprise/latest/networking/configuring/multiple-networks).
@@ -84259,7 +84170,7 @@ Calico Enterprise supports the latest version of EKS at time of Calico Enterpris
 
 ## Google Kubernetes Engine (GKE)[​](#google-kubernetes-engine-gke)
 
-Calico Enterprise supports the latest version of [GKE regular channel](https://cloud.google.com/kubernetes-engine/docs/concepts/release-channels) at time of Calico Enterprise release, as stated in the system requirements.
+Calico Enterprise supports the latest version of [GKE regular channel](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/release-channels) at time of Calico Enterprise release, as stated in the system requirements.
 
 ## Mirantis Kubernetes Engine (MKE)[​](#mirantis-kubernetes-engine-mke)
 
@@ -84344,6 +84255,12 @@ Native v3 CRDs require Kubernetes 1.34 or later with the `MutatingAdmissionPolic
 This is the first phase of phasing out the aggregated API server: in a future release, native v3 CRDs will become the default install mode, and in a later release the aggregated API server will be removed entirely.
 
 For more information, see [Enable native v3 CRDs](https://docs.tigera.io/calico-enterprise/latest/operations/native-v3-crds) and [Migrate from API server to native CRDs](https://docs.tigera.io/calico-enterprise/latest/operations/crd-migration).
+
+### Live migration for KubeVirt VMs[​](#live-migration-for-kubevirt-vms)
+
+Calico Enterprise now provides first-class networking for KubeVirt virtual machines, including persistent IP addresses and BGP-aware live migration. A VM keeps the same IP address across reboots, pod evictions, and live migrations, and Calico Enterprise uses route priority to steer traffic to the new host as a running VM migrates between nodes without breaking established connections. In single-rack iBGP deployments this works automatically; in multi-rack or eBGP topologies, you configure `BGPFilter` resources to propagate route priority across AS boundaries.
+
+For more information, see [Calico Enterprise networking for KubeVirt](https://docs.tigera.io/calico-enterprise/latest/networking/kubevirt/kubevirt-networking) and [BGP routing for KubeVirt live migration](https://docs.tigera.io/calico-enterprise/latest/networking/kubevirt/live-migration-bgp).
 
 <!-- -->
 
