@@ -1,0 +1,178 @@
+---
+description: Find unused Calico Enterprise network policies and rules with Last Evaluated timestamps in the Manager UI or with calicoctl to maintain least privilege.
+---
+
+# Review unused network policies
+
+As your cluster grows, stale or unnecessary network policies and rules can accumulate — increasing your attack surface and making audits harder. This page shows you two ways to find unused policies so you can safely clean them up:
+
+- **In the Manager UI** — check the **Last Evaluated** timestamp on any policy to see when it last matched traffic.
+- **Using `calicoctl`** — run a single command to list every policy and rule that has not matched traffic within a time window you choose (for example, the last 90 days). The output is suitable for scripting and scheduled audits.
+
+## Before you begin
+
+**Required**
+
+- Calico Enterprise v3.23 or later on both the management and managed clusters.
+- `calicoctl` v3.23 or later (for CLI access).
+
+**Limitations**
+
+- Policy activity data is not displayed for managed clusters running a version older than this release.
+- Rules with `action: Log` are not tracked by policy activity. The `Log` action is a diagnostic tool that writes to the kernel log (iptables) or trace pipe (eBPF); it is not part of the policy evaluation scope. Only terminal actions (`Allow`, `Deny`, `Pass`) and their associated rules appear in policy activity data.
+
+## View policy activity in the Manager UI
+
+The policy edit page shows the **Last Evaluated** timestamp for both the overall policy and each individual ingress and egress rule.
+
+1. In Manager UI, click **Policies** and select a policy to open its edit page.
+2. View the **Last Evaluated** timestamp at the policy level.
+3. Check the ingress and egress rule sections to see per-rule timestamps.
+
+This helps you identify not just unused policies, but also specific unused rules within an otherwise active policy.
+
+## Review unused policies with `calicoctl`
+
+The `calicoctl review unused-policies` command returns a list of policies and rules that have not evaluated any traffic within a specified time window. This is useful for users who manage many policies but don't frequently check the Manager UI, and for integrating policy hygiene into command-line workflows.
+
+### Command reference
+
+```
+calicoctl review unused-policies [-t <duration>] [-o ps|json]
+```
+
+| Flag | Description | Default |
+| :---- | :---- | :---- |
+| `-t <duration>` | Time window to check for activity. Format: `<number>d` (e.g., `30d`, `90d`). | `90d` |
+| `-o ps\|json` | Output format. | `ps` |
+
+The command also accepts the standard `calicoctl` connection flags (`--server`, `--token`, `--token-file`). See [Configure calicoctl](../reference/clis/calicoctl/overview.mdx) for details.
+
+### Examples
+
+**ps output**
+
+```bash
+$ calicoctl review unused-policies
+```
+
+```
+WARNING: Some unused policies have usage in previous generations!
+  This could mean that the new generation needs more time to evaluate
+  traffic, or that the new generation of policy no longer evaluates
+  traffic that previous generations did.
+
+WARNING: Some unused policies have been recently edited!
+  If the edit resulted in a new generation for the policy, more
+  time may be needed for the current generation of the policy to
+  evaluate traffic.
+
+
+Unused Policies since 2026-01-14T00:00:00Z (7)
+KIND                           NAMESPACE          NAME                        PREV GENS EVALUATED  RECENTLY EDITED
+NetworkPolicy                  calico-system      calico-system.default-deny  Yes                  No
+NetworkPolicy                  tigera-prometheus  calico-system.default-deny  No                   No
+GlobalNetworkPolicy            N/A                anp-v2                      No                   No
+KubernetesNetworkPolicy        test-policies      k8snp-v2                    Yes                  Yes
+StagedKubernetesNetworkPolicy  test-policies      sknp-v2                     Yes                  No
+StagedGlobalNetworkPolicy      N/A                default.sgnp-v2             Yes                  No
+StagedNetworkPolicy            test-policies      default.snp-v2              Yes                  No
+
+
+Unused Rules since 2026-01-14T00:00:00Z (2)
+KIND           NAMESPACE        NAME                              DIRECTION  INDEX
+NetworkPolicy  tigera-fluentd   calico-system.allow-fluentd-node  Egress     0
+...
+```
+
+:::note
+
+- **Some unused policies have usage in previous generations** — The current generation of a policy has no activity, but a previous generation did. The new generation may need more time to evaluate traffic, or may no longer be evaluating traffic that previous generations did.
+- **Some unused policies have been recently edited** — Policies were edited within the query time window. If the edit resulted in a new generation, more time may be needed for the current generation to evaluate traffic before its "unused" status is reliable.
+
+:::
+
+#### Interpreting the output
+
+The `since <timestamp>` in each section header is the start of the query window — all listed policies have had no activity since that time.
+
+- **`PREV GENS EVALUATED = No` and `RECENTLY EDITED = No`** — The policy has no traffic history in any generation and has not been edited inside the window. These are the strongest candidates for removal.
+- **`PREV GENS EVALUATED = Yes`** — An earlier generation of the policy evaluated traffic, but the current one has not. The policy may have been changed in a way that no longer matches the same traffic, or the current generation may just need more time. Investigate before removing.
+- **`RECENTLY EDITED = Yes`** — The policy was updated inside the query window (that is, its `lastUpdate` falls after the `since` timestamp shown in the header). If the edit produced a new generation, the current generation may not yet have had time to match traffic. Re-run the query after the policy has been in place for longer before concluding it is unused.
+
+**JSON output**
+
+```bash
+$ calicoctl review unused-policies -o json
+```
+
+```json
+{
+  "policies": [
+    {
+      "kind": "NetworkPolicy",
+      "name": "calico-system.elasticsearch-internal",
+      "namespace": "tigera-elasticsearch",
+      "generation": 1,
+      "creationTimestamp": "2026-04-21T16:25:59Z",
+      "lastUpdate": "2026-04-21T16:25:59Z",
+      "evaluatedAtPreviousGeneration": false
+    },
+    {
+      "kind": "NetworkPolicy",
+      "name": "calico-system.default-deny",
+      "namespace": "tigera-prometheus",
+      "generation": 1,
+      "creationTimestamp": "2026-04-21T16:26:00Z",
+      "lastUpdate": "2026-04-21T16:26:00Z",
+      "evaluatedAtPreviousGeneration": false
+    }
+  ],
+  "rules": [
+    {
+      "policyKind": "NetworkPolicy",
+      "policyNamespace": "tigera-fluentd",
+      "policyName": "calico-system.allow-fluentd-node",
+      "policyGeneration": 1,
+      "creationTimestamp": "2026-04-21T16:26:00Z",
+      "lastUpdate": "2026-04-21T16:26:00Z",
+      "unusedRules": [
+        {
+          "direction": "egress",
+          "index": "0"
+        },
+        {
+          "direction": "egress",
+          "index": "1"
+        }
+      ]
+    },
+    {
+      "policyKind": "NetworkPolicy",
+      "policyNamespace": "tigera-intrusion-detection",
+      "policyName": "calico-system.intrusion-detection-controller",
+      "policyGeneration": 2,
+      "creationTimestamp": "2026-04-21T16:28:08Z",
+      "lastUpdate": "2026-04-21T16:29:34Z",
+      "unusedRules": [
+        {
+          "direction": "ingress",
+          "index": "0"
+        },
+        {
+          "direction": "egress",
+          "index": "0"
+        }
+      ]
+    }
+  ]
+}
+```
+
+The JSON output exposes the underlying fields that the ps output summarizes, so you can apply your own filtering or thresholds in automation:
+
+| ps column | JSON field | Notes |
+| :---- | :---- | :---- |
+| `PREV GENS EVALUATED` | `evaluatedAtPreviousGeneration` | `true` if an earlier generation of the policy evaluated traffic, even though the current generation has not. |
+| `RECENTLY EDITED` | Derived from `creationTimestamp` and `lastUpdate` | `Yes` in ps when `lastUpdate` differs from `creationTimestamp` and falls within the query time window, indicating the current generation may not have had time to evaluate traffic. |
+| `DIRECTION` | `direction` | The ps column is capitalized (`Ingress` / `Egress`) for readability; the JSON field is lowercase (`ingress` / `egress`). |
