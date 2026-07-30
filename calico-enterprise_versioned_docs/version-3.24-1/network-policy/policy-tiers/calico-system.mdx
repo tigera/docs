@@ -1,0 +1,75 @@
+---
+description: Customize the behavior of the calico-system tier that Calico Enterprise installs by default to keep its own components reachable.
+---
+
+# Change calico-system tier behavior
+
+:::warning
+The `calico-system` tier contains policies that secure $[prodname] components and is critical to cluster integrity. It is controlled by the Tigera Operator, and policies in the tier should not be edited, and the tier should not be moved. Although you can change the behavior of calico-system using adjacent tiers, you can inadvertently break critical cluster traffic. We highly recommend that you work with Support to implement changes around `calico-system` to prevent service disruption.
+
+:::
+
+## Big picture
+
+Change traffic behavior of the tier that secures $[prodname] components.
+
+## Value
+
+Although the tier that secures $[prodname] components cannot be changed, you can create policies in adjacent tiers to change its behavior.
+
+## Concepts
+
+$[prodname] automatically creates the `calico-system` tier during installation with network policies that select traffic to and from Tigera components. These policies ensure that traffic required for $[prodname] operation is allowed, and that any unnecessary traffic involving Tigera components is denied. This tier prevents disruption of $[prodname] functionality in case of network policy misconfiguration impacting Tigera components, and denies unexpected traffic in case of defect or compromise.
+
+### Ownership and management of calico-system
+
+Tigera defines the `calico-system` tier and manages the policies within it. The Tigera Operator installs and monitors these policies, ensuring they always match the state defined by Tigera. Management by the Operator also ensures integrity for upgrades.
+
+:::note
+
+The `calico-system` tier and its policies should not be edited, and the tier should not be moved. However, if you inadvertently make changes they are automatically reverted by the Operator to ensure your cluster is always protected.
+
+:::
+
+## Tutorial
+
+### Change behavior of calico-system
+
+If you want to change the way traffic is enforced by the `calico-system` tier, you must create policy in an adjacent tier to meet your needs. For example, if a policy in the `calico-system` tier allows or denies traffic, and you want to change how that traffic is enforced, you can create a policy in a tier before `calico-system` that selects the same traffic to make your desired changes. Similarly, if a policy in the `calico-system` tier passes or does not select traffic that you want to enforce, you can create a policy in a tier after `calico-system` to select this traffic to meet the desired behavior.
+
+### Example: use preceding tier to tighten security
+
+Let's say an `calico-system` policy allows ingress traffic from a $[prodname] component that you do not use, and you want to tighten enforcement to not allow this traffic.
+
+Within a tier that comes before `calico-system`, you can create a policy that selects the same endpoint and contains ingress rules that deny traffic from that component and pass to `calico-system` for traffic from other components.
+
+```yaml
+# calico-system.es-gateway-access allows ingress from deep packet inspection, a feature not utilized for the purpose of this example.
+# This policy tightens the scope of allowed ingress to es-gateway without modifying the calico-system policy directly.
+
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: preceding-tier.es-gateway-access
+  namespace: tigera-elasticsearch
+spec:
+   # Place in a tier prior to calico-system.
+  tier: preceding-tier
+
+   # Select the same endpoint as the original policy.
+  selector: k8s-app == 'tigera-secure-es-gateway'
+  ingress:
+     # Select the same component ingress.
+    - source:
+        selector: k8s-app == 'tigera-dpi'
+        namespaceSelector: name == 'tigera-dpi'
+       # Enact different behavior (originally: Allow)
+      action: Deny
+
+     # Defer to calico-system for other ingress/egress decisions for this endpoint.
+    - action: Pass
+```
+
+This example shows how you can change the impact of the `calico-system` tier on traffic without modifying the tier itself. This makes your changes more maintainable, and allows the calico-system tier to continue to receive updates as $[prodname] evolves without you needing to reconcile your changes each release.
+
+For help to manage or change the behavior of the `calico-system` tier, contact Tigera Support.
