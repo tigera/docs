@@ -565,6 +565,21 @@ _Appears in:_
 | `Public` |  |
 
 
+### CNIInstallMode
+
+_Underlying type:_ _string_
+
+CNIInstallMode controls which CNI plugin binaries the operator installs onto the host.
+
+_Appears in:_
+- [CNISpec](#cnispec)
+
+| Value | Description |
+| --- | --- |
+| `All` | CNIInstallModeAll installs Calico's own CNI binaries plus the upstream plugin set (host-local, portmap, loopback, tuning, flannel) via a dedicated init container.  |
+| `CalicoOnly` | CNIInstallModeCalicoOnly installs only Calico's own CNI binaries; the host is expected to provide any required upstream plugins.  |
+
+
 ### CNILogging
 
 
@@ -616,6 +631,7 @@ _Appears in:_
 | `ipam` _[IPAMSpec](#ipamspec)_ | (Optional) IPAM specifies the pod IP address management that will be used in the Calico or Calico Enterprise installation. |
 | `binDir` _string_ | (Optional) BinDir is the path to the CNI binaries directory. If you have changed the installation directory for CNI binaries in the container runtime configuration, please ensure that this field points to the same directory as specified in the container runtime settings. Default directory depends on the KubernetesProvider. * For KubernetesProvider GKE, this field defaults to "/home/kubernetes/bin". * For KubernetesProvider OpenShift, this field defaults to "/var/lib/cni/bin". * Otherwise, this field defaults to "/opt/cni/bin". |
 | `confDir` _string_ | (Optional) ConfDir is the path to the CNI config directory. If you have changed the installation directory for CNI configuration in the container runtime configuration, please ensure that this field points to the same directory as specified in the container runtime settings. Default directory depends on the KubernetesProvider. * For KubernetesProvider GKE, this field defaults to "/etc/cni/net.d". * For KubernetesProvider OpenShift, this field defaults to "/var/run/multus/cni/net.d". * Otherwise, this field defaults to "/etc/cni/net.d". |
+| `installMode` _[CNIInstallMode](#cniinstallmode)_ | (Optional) InstallMode controls which CNI plugin binaries the operator installs onto each node when CNI.Type is Calico. * All (default): the operator runs a cni-plugins init container that stages upstream   CNI plugin binaries (host-local, portmap, loopback, tuning, flannel) into a shared   volume, and the install-cni init container copies them onto the host alongside   Calico's own binaries. * CalicoOnly: skip the cni-plugins init container. Only Calico's own binaries are   installed. Use this when the host already provides the upstream plugins (e.g. kind,   certain managed node images).<br />Default: All |
 
 
 ### CRDManagement
@@ -867,7 +883,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the calico-node DaemonSet init container by name.<br />Supported values are: install-cni, hostpath-init, flexvol-driver, ebpf-bootstrap, node-certs-key-cert-provisioner, calico-node-prometheus-server-tls-key-cert-provisioner, mount-bpffs (deprecated, replaced by ebpf-bootstrap) |
+| `name` _string_ | Name is an enum which identifies the calico-node DaemonSet init container by name.<br />Supported values are: install-cni, cni-plugins, hostpath-init, flexvol-driver, ebpf-bootstrap, node-certs-key-cert-provisioner, calico-node-prometheus-server-tls-key-cert-provisioner, mount-bpffs (deprecated, replaced by ebpf-bootstrap) |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node DaemonSet init container's resources. If omitted, the calico-node DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
 
 
@@ -1920,7 +1936,7 @@ _Appears in:_
 DashboardsJobSpec defines configuration for the Dashboards job.
 
 _Appears in:_
-- DashboardsJob
+- [DashboardsJob](#dashboardsjob)
 
 | Field | Description |
 | --- | --- |
@@ -1938,7 +1954,7 @@ _Validation:_
 
 
 _Appears in:_
-- Index
+- [Index](#index)
 
 | Value | Description |
 | --- | --- |
@@ -2664,8 +2680,8 @@ _Appears in:_
 | --- | --- |
 | `params` _object (keys:string, values:string array)_ | Optional HTTP URL parameters<br />Default: scrape all metrics. |
 | `bearerTokenSecret` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#secretkeyselector-v1-core)_ | Secret to mount to read bearer token for scraping targets. Recommended: when unset, the operator will create a Secret, a ClusterRole and a ClusterRoleBinding. |
-| `interval` _Duration_ | Interval at which metrics should be scraped. If not specified Prometheus' global scrape interval is used. |
-| `scrapeTimeout` _Duration_ | Timeout after which the scrape is ended. If not specified, the Prometheus global scrape timeout is used unless it is less than `Interval` in which the latter is used. |
+| `interval` _[Duration](#duration)_ | Interval at which metrics should be scraped. If not specified Prometheus' global scrape interval is used. |
+| `scrapeTimeout` _[Duration](#duration)_ | Timeout after which the scrape is ended. If not specified, the Prometheus global scrape timeout is used unless it is less than `Interval` in which the latter is used. |
 | `honorLabels` _boolean_ | HonorLabels chooses the metric's labels on collisions with target labels. |
 | `honorTimestamps` _boolean_ | HonorTimestamps controls whether Prometheus respects the timestamps present in scraped data. |
 | `metricRelabelings` _RelabelConfig array_ | MetricRelabelConfigs to apply to samples before ingestion. |
@@ -2820,6 +2836,20 @@ _Appears in:_
 | `spec` _[GatewayAPISpec](#gatewayapispec)_ |  |
 
 
+### GatewayAPIExtensions
+
+
+
+GatewayAPIExtensions enables and configures Tigera-built Gateway API add-ons.
+
+_Appears in:_
+- [GatewayAPISpec](#gatewayapispec)
+
+| Field | Description |
+| --- | --- |
+| `waf` _[WAFExtensionSpec](#wafextensionspec)_ | (Optional) WAF enables and configures the Tigera Web Application Firewall (Coraza WASM when WAF.State is nil, and when WAF.State is "Disabled", the operator does not render the WAF env vars or RBAC on calico-kube-controllers.  Set WAF.State = "Enabled" to turn the feature on.  See design `tigera/designs#25` (PMREQ-384) for the full surface. |
+
+
 ### GatewayAPISpec
 
 
@@ -2836,6 +2866,7 @@ _Appears in:_
 | `gatewayControllerDeployment` _[GatewayControllerDeployment](#gatewaycontrollerdeployment)_ | (Optional) Allows customization of the gateway controller deployment. |
 | `gatewayCertgenJob` _[GatewayCertgenJob](#gatewaycertgenjob)_ | (Optional) Allows customization of the gateway certgen job. |
 | `crdManagement` _[CRDManagement](#crdmanagement)_ | (Optional) Configures how to manage and update Gateway API CRDs.  The default behaviour - which is used when this field is not set, or is set to "PreferExisting" - is that the Tigera operator will create the Gateway API CRDs if they do not already exist, but will not overwrite any existing Gateway API CRDs.  This setting may be preferable if the customer is using other implementations of the Gateway API concurrently with the Gateway API support in Calico Enterprise.  It is then the customer's responsibility to ensure that CRDs are installed that meet the needs of all the Gateway API implementations in their cluster. Alternatively, if this field is set to "Reconcile", the Tigera operator will keep the cluster's Gateway API CRDs aligned with those that it would install on a cluster that does not yet have any version of those CRDs. |
+| `extensions` _[GatewayAPIExtensions](#gatewayapiextensions)_ | (Optional) Extensions enables and configures Tigera-built add-ons that sit on top of the Gateway API data plane.  Each add-on is opt-in: an unset Extensions, an unset add-on field, and an empty add-on object all leave the add-on disabled. |
 
 
 ### GatewayCertgenJob
@@ -3625,7 +3656,7 @@ _Appears in:_
 | `disableBGPExport` _boolean_ | (Optional) DisableBGPExport specifies whether routes from this IP pool's CIDR are exported over BGP.<br />Default: false |
 | `disableNewAllocations` _boolean_ | DisableNewAllocations specifies whether or not new IP allocations are allowed from this pool. This is useful when you want to prevent new pods from receiving IP addresses from this pool, without impacting any existing pods that have already been assigned addresses from this pool. |
 | `allowedUses` _[IPPoolAllowedUse](#ippoolalloweduse) array_ | AllowedUse controls what the IP pool will be used for.  If not specified or empty, defaults to ["Tunnel", "Workload"] for back-compatibility |
-| `assignmentMode` _AssignmentMode_ | AssignmentMode determines if IP addresses from this pool should be  assigned automatically or on request only |
+| `assignmentMode` _[AssignmentMode](#assignmentmode)_ | AssignmentMode determines if IP addresses from this pool should be  assigned automatically or on request only |
 
 
 ### IPPoolAllowedUse
@@ -4064,7 +4095,8 @@ _Appears in:_
 | `istiod` _[IstiodDeployment](#istioddeployment)_ | (Optional) IstiodDeployment defines the resource requirements and node selector for the Istio deployment. |
 | `istioCNI` _[IstioCNIDaemonset](#istiocnidaemonset)_ | (Optional) IstioCNIDaemonset defines the resource requirements for the Istio CNI plugin. |
 | `ztunnel` _[ZTunnelDaemonset](#ztunneldaemonset)_ | (Optional) ZTunnelDaemonset defines the resource requirements for the ZTunnelDaemonset component. |
-| `dscpMark` _DSCP_ | (Optional) DSCPMark define the value of the DSCP mark done by Felix and recognised by Istio CNI for Transparent NetworkPolicies. |
+| `waypointLogging` _[LogCollectionStatusType](#logcollectionstatustype)_ | (Optional) WaypointLogging controls whether L7 logging is enabled on every Gateway using the istio-waypoint GatewayClass. When Enabled (the default), the operator injects an l7-collector sidecar into each waypoint pod via class-level defaults. When Disabled, no sidecar is injected and the associated EnvoyFilters are not created. Allowed values are Enabled or Disabled. |
+| `dscpMark` _[DSCP](#dscp)_ | (Optional) DSCPMark define the value of the DSCP mark done by Felix and recognised by Istio CNI for Transparent NetworkPolicies. |
 
 
 ### IstioStatus
@@ -4511,6 +4543,7 @@ _Validation:_
 
 
 _Appears in:_
+- [IstioSpec](#istiospec)
 - [LogCollectionSpec](#logcollectionspec)
 
 | Value | Description |
@@ -5013,7 +5046,7 @@ _Appears in:_
 | --- | --- |
 | `externalPrometheus` _[ExternalPrometheus](#externalprometheus)_ | ExternalPrometheus optionally configures integration with an external Prometheus for scraping Calico metrics. When specified, the operator will render resources in the defined namespace. This option can be useful for configuring scraping from git-ops tools without the need of post-installation steps. |
 | `prometheus` _[Prometheus](#prometheus)_ | (Optional) Prometheus is the configuration for the Prometheus. |
-| `alertmanager` _[Alertmanager](#alertmanager)_ | (Optional) Alertmanager is the configuration for the Alertmanager. |
+| `alertManager` _[Alertmanager](#alertmanager)_ | (Optional) Alertmanager is the configuration for the Alertmanager. |
 
 
 ### MonitorStatus
@@ -6084,7 +6117,7 @@ _Appears in:_
 
 
 _Appears in:_
-- TLSPassThroughRoute
+- [TLSPassThroughRoute](#tlspassthroughroute)
 
 | Field | Description |
 | --- | --- |
@@ -6102,7 +6135,7 @@ _Appears in:_
 
 
 _Appears in:_
-- TLSTerminatedRoute
+- [TLSTerminatedRoute](#tlsterminatedroute)
 
 | Field | Description |
 | --- | --- |
@@ -6349,6 +6382,39 @@ _Appears in:_
 | `baseDN` _string_ | BaseDN to start the search from. For example "cn=users,dc=example,dc=com" |
 | `filter` _string_ | (Optional) Optional filter to apply when searching the directory. For example "(objectClass=person)" |
 | `nameAttribute` _string_ | (Optional) A mapping of the attribute that is used as the username. This attribute can be used to apply RBAC to a user.<br />Default: uid |
+
+
+### WAFExtensionSpec
+
+
+
+WAFExtensionSpec configures the WAF Gateway API add-on.
+
+_Appears in:_
+- [GatewayAPIExtensions](#gatewayapiextensions)
+
+| Field | Description |
+| --- | --- |
+| `state` _[WAFExtensionState](#wafextensionstate)_ | (Optional) State turns the WAF Gateway API add-on on or off.  Default (nil or "Disabled") means the operator does not render the WAF surface on calico-kube-controllers.  Set to "Enabled" to opt in. |
+
+
+### WAFExtensionState
+
+_Underlying type:_ _string_
+
+WAFExtensionState is the on/off enum for the WAF Gateway API add-on.
+
+_Validation:_
+- Enum: [Enabled Disabled]
+
+
+_Appears in:_
+- [WAFExtensionSpec](#wafextensionspec)
+
+| Value | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
 
 
 ### WAFStatusType
