@@ -34,6 +34,8 @@ const defaultSkipList = [
   /^https?:\/\/docs\.redhat\.com\/.*/,
   /^https?:\/\/access\.redhat\.com\/.*/,
   /^https?:\/\/docs\.mirantis\.com\/.*/,
+  // VMware Tanzu docs 502 the crawler (post-Broadcom migration); linked from the TKG install page.
+  /^https?:\/\/docs\.vmware\.com\/.*/,
   'https://en.wikipedia.org/wiki/Autonomous_System_(Internet',
   'https://github.com/dims/etcd3-gateway.git@5a3157a122368c2314c7a961f61722e47355f981',
   'https://installer.calicocloud.io:443/',
