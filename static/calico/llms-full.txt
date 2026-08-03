@@ -17218,24 +17218,24 @@ For commercial deployments, Calico Ingress Gateway extends functionality by inte
 
 Calico Ingress Gateway supports the following Gateway API resources.
 
-| Resource         | Versions          |
-| ---------------- | ----------------- |
-| BackendLBPolicy  | v1alpha2          |
-| BackendTLSPolicy | v1alpha3          |
-| GatewayClass     | v1, v1beta1       |
-| Gateway          | v1, v1beta1       |
-| GRPCRoute        | v1, v1alpha2      |
-| HTTPRoute        | v1, v1beta1       |
-| ReferenceGrant   | v1beta1, v1alpha2 |
-| TCPRoute         | v1alpha2          |
-| TLSRoute         | v1alpha2          |
-| UDPRoute         | v1alpha2          |
+| Resource         | Versions               |
+| ---------------- | ---------------------- |
+| BackendTLSPolicy | v1, v1alpha3           |
+| GatewayClass     | v1, v1beta1            |
+| Gateway          | v1, v1beta1            |
+| GRPCRoute        | v1                     |
+| HTTPRoute        | v1, v1beta1            |
+| ListenerSet      | v1                     |
+| ReferenceGrant   | v1, v1beta1            |
+| TCPRoute         | v1alpha2               |
+| TLSRoute         | v1, v1alpha2, v1alpha3 |
+| UDPRoute         | v1alpha2               |
 
 > **SECONDARY:** OpenShift 4.19 introduced [restrictions](https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html-single/ingress_and_load_balancing/index#nw-ingress-gateway-api-overview_ingress-gateway-api) on which Gateway API CRDs can be installed.
 >
 > - The available Gateway API resources in OpenShift 4.19 are: `GatewayClass`, `Gateway`, `GRPCRoute`, `HTTPRoute` and `ReferenceGrant`.
 >
-> - Other Gateway API resources, namely `BackendLBPolicy`, `BackendTLSPolicy`, `TCPRoute`, `TLSRoute` and `UDPRoute`, are not available in OpenShift 4.19.
+> - Other Gateway API resources, namely `BackendTLSPolicy`, `ListenerSet`, `TCPRoute`, `TLSRoute` and `UDPRoute`, are not available in OpenShift 4.19.
 
 ## Next steps[​](#next-steps)
 
@@ -36287,13 +36287,13 @@ For existing clusters using the `calico.yaml` manifest to install Calico, upon i
 
 <!-- -->
 
-> **INFO:** The aggregated API server (`calico-apiserver`) is deprecated and will be removed in a future release. For new installations, use [native v3 CRDs](https://docs.tigera.io/calico/latest/operations/native-v3-crds). For existing clusters, see [Migrate from API server to native CRDs](https://docs.tigera.io/calico/latest/operations/crd-migration).
-
 ## Big picture[​](#big-picture)
 
 Install the Calico API server on an existing cluster to enable management of Calico APIs using kubectl.
 
 > **SUCCESS:** You can use [native v3 CRDs](https://docs.tigera.io/calico/latest/operations/native-v3-crds) to manage `projectcalico.org/v3` resources directly with `kubectl` without installing the aggregation API server. If you are setting up a new cluster and want a simpler architecture, consider native v3 CRDs instead.
+>
+> Native v3 CRDs are the successor to the aggregation API server. The aggregation API server will continue to be supported until native v3 CRDs are fully supported on all platforms, and will be removed in a future release.
 
 ## Value[​](#value)
 
@@ -36488,6 +36488,8 @@ Once removed, you will need to use calicoctl to manage projectcalico.org/v3 APIs
 ## Big picture[​](#big-picture)
 
 Enable native `projectcalico.org/v3` CRDs so that Calico resources are backed directly by CRDs, eliminating the need for the Calico aggregation API server.
+
+Native `projectcalico.org/v3` CRDs are the successor to the Calico aggregation API server. The aggregation API server remains supported for now but will be removed in a future release.
 
 ## Value[​](#value)
 
@@ -61766,7 +61768,7 @@ Calico now supports installation with native `projectcalico.org/v3` CRDs as an a
 
 Native v3 CRDs require the Kubernetes `MutatingAdmissionPolicy` feature gate, which is beta and not enabled by default.
 
-This is the first phase of phasing out the aggregated API server: in a future release, native v3 CRDs will become the default install mode, and in a later release the aggregated API server will be removed entirely.
+Native v3 CRDs are the successor to the aggregated API server, and will become the default install mode in a future release.
 
 For more information, see [Enable native v3 CRDs](https://docs.tigera.io/calico/latest/operations/native-v3-crds) and [Migrate from API server to native CRDs](https://docs.tigera.io/calico/latest/operations/crd-migration).
 
@@ -61814,9 +61816,9 @@ When a backend pod for a Service goes away, the eBPF data plane now sends a TCP 
 
 This release adds support for Kubernetes 1.36.
 
-## Deprecations[​](#deprecations)
+## Deprecated and removed features[​](#deprecated-and-removed-features)
 
-- The aggregated API server (`calico-apiserver`) is deprecated and will be removed in a future release. See [Native v3 CRDs](https://docs.tigera.io/calico/latest/operations/native-v3-crds) for the recommended replacement.
+- Calico is moving the `projectcalico.org/v3` API from the aggregated API server to native Kubernetes CRDs. Both mechanisms will be supported until native v3 CRDs are compatible with all supported platforms, after which the aggregated API server will be removed.
 
 ## Bug fixes[​](#bug-fixes)
 
@@ -62017,6 +62019,12 @@ To update a previous version of Calico, see [our upgrade guides](https://docs.ti
 #### Updating[​](#updating-1)
 
 To update a previous version of Calico, see [our upgrade guides](https://docs.tigera.io/calico/latest/operations/upgrading/).
+
+If you use Calico Ingress Gateway, this release bumps the bundled Envoy Gateway to v1.8.0, which requires the Gateway API v1.5.1 CRDs. Envoy Gateway v1.8 watches `TLSRoute`, `ListenerSet`, and `BackendTLSPolicy` at `gateway.networking.k8s.io/v1`. If those CRDs are still served only at an older version, for example `v1alpha2`, the `envoy-gateway` pod fails to start with `no matches for kind "TLSRoute" in version "gateway.networking.k8s.io/v1"`.
+
+If the Tigera Operator manages your Gateway API CRDs (the default), set `crdManagement: Reconcile` on the `GatewayAPI` resource so the operator upgrades the CRDs during the upgrade. If a `safe-upgrades.gateway.networking.k8s.io` ValidatingAdmissionPolicy blocks the upgrade with `Installing experimental CRDs on top of standard channel CRDs is prohibited`, delete that policy and its binding, then let the operator reconcile. The operator recreates the policy afterward.
+
+If you manage the Gateway API CRDs yourself, install the Gateway API v1.5.1 CRDs before upgrading.
 
 ---
 
