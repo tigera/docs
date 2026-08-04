@@ -90,6 +90,7 @@ module.exports = {
           link: { type: 'doc', id: 'getting-started/bare-metal/index' },
           items: [
             'getting-started/bare-metal/about',
+            'getting-started/bare-metal/boot-protection',
             'getting-started/bare-metal/typha-node-tls',
             'getting-started/bare-metal/troubleshoot',
           ],
