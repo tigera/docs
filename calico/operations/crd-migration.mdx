@@ -50,6 +50,14 @@ The locked window is typically short (seconds to a few minutes depending on clus
 - **Kubernetes 1.32 or later.** $[prodname] uses the `MutatingAdmissionPolicy` API for defaulting. On clusters where it is not enabled by default, enable the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) on the API server.
 - **If using GitOps (ArgoCD, Flux):** pause sync before starting the migration. These tools may interfere with the API group switchover. You'll update your manifests to use `projectcalico.org/v3` after migration completes.
 
+:::warning
+
+Never delete the `DatastoreMigration` CRD while a `DatastoreMigration` CR still exists.
+
+Deleting a CRD deletes every custom resource of that type, which runs the finalizer on the CR. If the CR is in `Complete`, that deletes all of your `crd.projectcalico.org` CRDs and the data stored in them. In any other phase, it rolls the migration back. Always delete the CR first, confirm that it is gone, and only then delete the CRD.
+
+:::
+
 ## How to
 
 ### Migrate to native CRDs
@@ -72,7 +80,7 @@ The locked window is typically short (seconds to a few minutes depending on clus
 
    ```bash
    kubectl apply -f - <<EOF
-   apiVersion: migration.projectcalico.org/v1beta1
+   apiVersion: migration.projectcalico.org/v1
    kind: DatastoreMigration
    metadata:
      name: v1-to-v3
@@ -109,7 +117,16 @@ The locked window is typically short (seconds to a few minutes depending on clus
    kubectl delete datastoremigration v1-to-v3
    ```
 
-7. **Resume GitOps sync** (if applicable). Update your manifests to use `projectcalico.org/v3` API versions and resume sync.
+7. **Delete the DatastoreMigration CRD.**
+
+   Only after the CR from the previous step is gone. The CRD is not part of a $[prodname] install and has no reason to outlive the migration. Removing it also means a future release can drop the deprecated `v1beta1` version without you having to run a storage version migration.
+
+   ```bash
+   kubectl get datastoremigration
+   kubectl delete crd datastoremigrations.migration.projectcalico.org
+   ```
+
+8. **Resume GitOps sync** (if applicable). Update your manifests to use `projectcalico.org/v3` API versions and resume sync.
 
 ### Resolve conflicts
 
@@ -130,7 +147,7 @@ After resolving all conflicts, the migration controller automatically resumes on
 
 ### Abort a migration
 
-If something goes wrong, delete the `DatastoreMigration` CR before it reaches `Complete`:
+If something goes wrong, delete the `DatastoreMigration` CR before the migration reaches `Converged`:
 
 ```bash
 kubectl delete datastoremigration v1-to-v3
@@ -142,6 +159,26 @@ The finalizer handles rollback:
 - Components resume normal operation as if the migration never happened
 
 The v1 data is never modified during migration, so it remains authoritative after an abort.
+
+Aborting is only possible up to `Converged`. From `Converged` onwards the resources are already in the v3 CRDs and the components are switching over to them, so let the migration run through to `Complete`.
+
+On a cluster that has already completed a migration there is nothing to abort back to, and once the v1 CRDs are deleted the v1 data is gone. Do not create a second `DatastoreMigration` CR on such a cluster.
+
+### Upgrade from v3.32 to v3.33
+
+In v3.33, the `DatastoreMigration` CRD moves from `migration.projectcalico.org/v1beta1` to `v1`. The CRD serves both versions, with `v1beta1` deprecated, so applying the v3.33 CRD over the v3.32 one is a plain update. Do not delete the old CRD to make room for it.
+
+The migration CRD is not part of a $[prodname] install, so for most clusters there is nothing to do here. If you did install it on v3.32, what to do depends on the state of the `DatastoreMigration` CR:
+
+| State on v3.32 | Before you upgrade |
+|---|---|
+| Migration CRD never installed | Nothing. Upgrade normally. |
+| CRD installed, no CR left | Nothing required. Deleting the CRD is optional tidy-up, and only once you have confirmed that no CR exists. |
+| CR in `Complete`, still present | Run the cleanup steps from [Migrate to native CRDs](#migrate-to-native-crds): delete the CR, then the CRD. Then upgrade. |
+| CR in `Pending`, `Migrating`, or `WaitingForConflictResolution` | Do not upgrade. Finish or abort the migration first. |
+| CR in `Converged` | Do not upgrade. Wait for `Complete`; abort is not available from this phase. |
+| CR in `Failed` | Delete the CR to roll back, confirm that the cluster is healthy on v1, then upgrade. |
+| Migration finished and the v1 CRDs already deleted | Nothing to do, and never create another `DatastoreMigration` CR on this cluster. |
 
 ### Known limitations
 
