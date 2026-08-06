@@ -248,7 +248,7 @@ If you have an existing manifest-based $[prodname] install using the legacy `crd
 
    ```bash
    kubectl apply -f - <<EOF
-   apiVersion: migration.projectcalico.org/v1beta1
+   apiVersion: migration.projectcalico.org/v1
    kind: DatastoreMigration
    metadata:
      name: v1-to-v3
@@ -290,6 +290,15 @@ If you have an existing manifest-based $[prodname] install using the legacy `crd
    ```
 
    The finalizer on the resource deletes all `crd.projectcalico.org` CRDs before removing the resource.
+
+1. Once the DatastoreMigration resource is gone, delete the DatastoreMigration CRD.
+
+   ```bash
+   kubectl get datastoremigration
+   kubectl delete crd datastoremigrations.migration.projectcalico.org
+   ```
+
+   Never delete the CRD while a DatastoreMigration resource still exists. That deletes the resource too, which runs its finalizer and either deletes your `crd.projectcalico.org` CRDs or rolls the migration back, depending on the phase.
 
 1. Install the admission webhook resources. The Deployment, Service, RBAC, `MutatingAdmissionPolicy` resources, and `ValidatingWebhookConfiguration` are bundled into `calico-v3-crds.yaml` alongside the CRDs and core $[prodname] components. Extract just the webhook resources with [`yq`](https://github.com/mikefarah/yq) and apply them, so the existing `calico-node` DaemonSet, `kube-controllers` Deployment, and `calico-typha` Deployment in your cluster (including the `CALICO_API_GROUP` env you set above) are not overwritten.
 
