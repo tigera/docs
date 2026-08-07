@@ -62,6 +62,11 @@ These steps differ based on your cluster type. If you are unsure of your cluster
 
 :::
 
+The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm does not upgrade CRDs on `helm upgrade`. There are two ways to get the $[version] `projectcalico.org` and `operator.tigera.io` CRDs into your cluster:
+
+- **Apply the CRDs yourself before running `helm upgrade`.** This is the recommended option, and the one the steps below follow. The new CRDs are in place before the new operator starts, so you can configure any new fields ahead of the upgrade, and the CRDs are managed by whatever tooling you already use for the rest of your manifests.
+- **Let the operator apply them.** With `manageCRDs: true` in your `values.yaml` (the default), the operator applies them itself when the new pod starts. The new CRDs only exist once the new operator is running, so new configuration cannot be applied until after the upgrade. The Prometheus and ECK operator CRDs are not covered by this setting and still need to be applied by hand.
+
 1. Get the Helm chart
 
    <CodeBlock language='bash'>
