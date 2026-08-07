@@ -1,0 +1,224 @@
+---
+description: Protect a non-cluster host from the moment its network stack starts until Calico Enterprise applies network policy.
+---
+
+# Boot-time network protection
+
+## Big picture
+
+Block inbound traffic to a non-cluster host from the start of boot until $[prodname] applies network policy.
+
+## Value
+
+On a non-cluster host, $[prodname] cannot enforce policy right away.
+The Calico Node service (the agent) must start, connect to Typha, and sync the datastore first.
+Until it does, no policy is in force and nothing blocks inbound traffic.
+
+On a healthy boot this takes a few seconds, but there is no time limit on it.
+If Typha is unreachable, if the certificate cannot be renewed, or if the agent keeps restarting, the host stays unprotected until you fix the problem.
+
+Boot-time network protection closes this gap.
+A small ruleset that denies inbound traffic goes into the kernel before any network interface is configured.
+The agent then replaces it with your policy.
+If the agent never gets that far, the ruleset stays in place, so a broken host stays protected instead of open.
+
+## Concepts
+
+### When protection is active
+
+A systemd unit, `calico-node-boot-protection.service`, runs before `network-pre.target`.
+That is the point in boot where firewalls are set up, and it comes before any network interface is configured.
+The unit is pulled in by `calico-node.service`, so it runs on every host where the Calico Node service is enabled.
+
+```
+boot
+  └─ calico-node-boot-protection.service   boot ruleset applied
+       └─ network interfaces configured
+            └─ calico-node.service          agent starts, connects to Typha
+                 └─ first policy apply      boot ruleset replaced by your policy
+```
+
+The switch at the end is atomic.
+The agent removes the boot ruleset and installs your policy in one data plane update, so there is never a moment when neither is in force.
+
+Protection covers boot only.
+If the agent restarts without a reboot, its rules stay in the kernel and keep enforcing, so there is no gap to cover.
+
+### What the boot ruleset allows
+
+The boot ruleset accepts inbound traffic to these ports by default:
+
+| Port | Protocol | Purpose                                         |
+| ---- | -------- | ----------------------------------------------- |
+| 22   | TCP      | SSH access, so you can reach a locked-down host |
+| 68   | UDP      | DHCPv4 client                                   |
+| 546  | UDP      | DHCPv6 client                                   |
+
+The DHCP ports are needed because a DHCP offer does not match a connection the host already opened, so a host that uses DHCP cannot get a lease without them.
+
+The ruleset also allows three kinds of traffic that are not ports:
+
+- **Loopback traffic**, so local processes can reach each other.
+- **Established and related connections**, which are replies to connections the host opened itself. This covers DNS, NTP, cloud-init, and the agent's own connection to the cluster.
+- **ICMPv6 neighbor discovery**: router advertisements, neighbor solicitations, and neighbor advertisements. IPv6 does not work without them. They are accepted only at hop limit 255, which blocks forgeries from outside the local link.
+
+All other inbound traffic and all forwarded traffic are dropped.
+Outbound traffic is not restricted.
+
+This list is shorter than the $[prodname] [failsafe ports](../../reference/host-endpoints/failsafe.mdx) defaults.
+Those defaults also open ports for services a cluster node might run, such as BGP, etcd, Typha, and the Kubernetes API server.
+A non-cluster host runs none of them.
+
+### Data plane
+
+The boot ruleset uses the same data plane as the agent on that host, either nftables or iptables.
+It follows the `NFTablesMode` setting in the host's local configuration file.
+See [Supported data planes](about.mdx#supported-data-planes).
+
+## How to
+
+- [Verify that protection is active](#verify-that-protection-is-active)
+- [Change the allowed ports](#change-the-allowed-ports)
+- [Turn off boot-time protection](#turn-off-boot-time-protection)
+- [Recover a host that is locked down](#recover-a-host-that-is-locked-down)
+- [Recover a host that will not finish booting](#recover-a-host-that-will-not-finish-booting)
+
+### Verify that protection is active
+
+Protection is on by default on every host where `calico-node.service` is enabled.
+There is no step to enable it and nothing to configure.
+
+To see the current state:
+
+```bash
+calico component node boot-protection status
+```
+
+On a healthy host that has finished booting, the boot ruleset is gone, because the agent has replaced it with your policy:
+
+```
+Selected backend: nftables
+nftables ruleset (table calico, cali-boot-* chains): not present
+iptables ruleset (cali-boot-* chains): not present
+Boot protection: removed
+```
+
+While the boot ruleset is still in force, because the agent has not applied policy yet, the ruleset shows as `live` and the last line reads `Boot protection: applied` instead.
+
+To confirm that the ruleset was applied early enough during the last boot, check that it came before the network was set up:
+
+```bash
+journalctl -b -o short-monotonic | grep -E "boot-protection|Preparation for Network"
+```
+
+The boot-protection messages should appear before the `Preparation for Network` line.
+
+### Change the allowed ports
+
+The boot ruleset takes its port list from the `FailsafeInboundHostPorts` setting in the host's local configuration.
+If you leave that setting alone, the boot ruleset uses the default list in [What the boot ruleset allows](#what-the-boot-ruleset-allows).
+If you set it, the boot ruleset uses your list instead, exactly as written.
+
+For example, to open TCP 22 and TCP 443 during boot, add this to `/etc/calico/calico-node/calico-node.conf`:
+
+```conf
+FailsafeInboundHostPorts=tcp:22,tcp:443
+```
+
+Or set the matching environment variable in `/etc/calico/calico-node/calico-node.env`:
+
+```bash
+FELIX_FAILSAFEINBOUNDHOSTPORTS=tcp:22,tcp:443
+```
+
+To open no ports at all, set the value to `none`.
+The setting controls only the port list: loopback traffic, replies, and IPv6 neighbor discovery are always allowed.
+
+:::caution
+
+This setting also controls the agent's failsafe ports while it runs, not just during boot.
+If you set it to `none`, you cannot reach a host over the network when its agent is not ready, and that includes SSH.
+Recovery then needs console or BMC access.
+
+:::
+
+The boot ruleset reads the setting at boot, so the new list takes effect at the next boot.
+To update the running agent's failsafe ports now, restart it:
+
+```bash
+systemctl restart calico-node.service
+```
+
+### Turn off boot-time protection
+
+Mask the unit.
+A mask lasts across reboots and package upgrades.
+
+```bash
+systemctl mask calico-node-boot-protection.service
+```
+
+The agent still starts normally on a host with the unit masked.
+Only the boot ruleset is skipped.
+
+To turn protection back on:
+
+```bash
+systemctl unmask calico-node-boot-protection.service
+```
+
+### Recover a host that is locked down
+
+If the agent never becomes ready, the boot ruleset stays in force.
+This is intended: the host stays protected instead of falling back to open.
+SSH is open by default, so you can log in and look at why the agent is not ready:
+
+```bash
+systemctl status calico-node.service
+journalctl -xue calico-node.service
+```
+
+The causes are the same ones that keep the agent from starting at any other time, such as an unreachable Typha endpoint or a certificate that cannot be renewed.
+See [Troubleshoot non-cluster hosts and VMs setup](troubleshoot.mdx).
+
+Once the agent connects and applies policy, it removes the boot ruleset on its own.
+
+### Recover a host that will not finish booting
+
+Sometimes the ruleset cannot be programmed at all, for example when the `nft` or `iptables` binaries are missing or broken.
+The unit keeps retrying, and boot stops at `network-pre.target`.
+The host never reaches the network, so you cannot log in over SSH.
+You cannot log in on the console either, because console logins are not available until the network stage finishes.
+The reason for the hold is printed on the console.
+
+To recover, use the machine's console or BMC.
+At the boot menu, add this to the kernel command line for one boot:
+
+```
+systemd.mask=calico-node-boot-protection.service
+```
+
+The host then boots without boot-time protection.
+Fix the underlying problem.
+If protection should stay off, mask the unit as described in [Turn off boot-time protection](#turn-off-boot-time-protection).
+
+If you would rather have a host boot unprotected than stall, put a time limit on the attempt:
+
+```bash
+systemctl edit calico-node-boot-protection.service
+```
+
+```ini
+[Service]
+TimeoutStartSec=120
+```
+
+The unit then fails after two minutes and boot continues.
+Any rules that were programmed before the deadline stay in force.
+
+## Additional resources
+
+- [Install Calico on non-cluster hosts and VMs](about.mdx)
+- [Troubleshoot non-cluster hosts and VMs setup](troubleshoot.mdx)
+- [Failsafe ports](../../reference/host-endpoints/failsafe.mdx)
+- [Protect hosts and VMs](../../network-policy/hosts/protect-hosts.mdx)

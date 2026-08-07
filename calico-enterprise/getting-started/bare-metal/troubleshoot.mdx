@@ -106,6 +106,30 @@ On the cluster side (`calico-system/calico-typha-noncluster-host` deployment):
 
 ### Certificate is not renewed or updated
 
-The `calico-noncluster-host-init` process runs before the main `calico-node` service is responsible for renewing certificates that are expired or near expiry. Certificates are renewed automatically within 90 days of expiry.
+The `calico component node noncluster-host-init` process runs before the main `calico-node` service and is responsible for renewing certificates that are expired or near expiry. Certificates are renewed automatically within 90 days of expiry.
 
 If you need to force immediate renewal, manually delete the existing certificate (`calico-node.crt`) and private key (`calico-node.key`) under the `/etc/calico/calico-node` folder and restart the service.
+
+### Host is only reachable over SSH after a reboot
+
+This is [boot-time network protection](boot-protection.mdx) working as designed.
+The boot ruleset stays in force until the agent applies policy for the first time, so a host whose agent cannot start remains locked down to SSH and the other default allowances.
+
+Check why the agent is not ready:
+
+```bash
+calico component node boot-protection status
+systemctl status calico-node.service
+journalctl -xue calico-node.service
+```
+
+Once the agent connects and applies policy, it removes the boot ruleset.
+See [Recover a host that is locked down](boot-protection.mdx#recover-a-host-that-is-locked-down).
+
+### Host does not come up on the network after a reboot
+
+If a host stops during boot and never reaches the network, boot-time protection may be unable to program the firewall — for example because the `nft` or `iptables` binaries are missing or broken.
+The unit retries and holds boot at `network-pre.target`, and the reason is printed on the console.
+
+Recover from the console or BMC by adding `systemd.mask=calico-node-boot-protection.service` to the kernel command line for one boot.
+See [Recover a host that will not finish booting](boot-protection.mdx#recover-a-host-that-will-not-finish-booting).
