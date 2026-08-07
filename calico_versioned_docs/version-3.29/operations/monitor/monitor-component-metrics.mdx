@@ -248,21 +248,19 @@ Typha uses **port 9091** TCP by default to publish its metrics. However, if $[pr
 <Tabs>
 <TabItem label="Operator" value="Operator-8">
 
+When you set `typhaMetricsPort`, the operator automatically creates a service that exposes these metrics. You do not need to create one yourself.
+
+You can use the following command to verify it.
+
 ```bash
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Service
-metadata:
-  name: typha-metrics-svc
-  namespace: calico-system
-spec:
-  clusterIP: None
-  selector:
-    k8s-app: calico-typha
-  ports:
-  - port: 9093
-    targetPort: 9093
-EOF
+kubectl get svc -n calico-system calico-typha-metrics
+```
+
+You should see a result similar to:
+
+```bash
+NAME                   TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+calico-typha-metrics   ClusterIP   10.43.164.10   <none>        9093/TCP   39d
 ```
 
 </TabItem>
@@ -491,12 +489,9 @@ data:
       - role: endpoints
       relabel_configs:
       - source_labels: [__meta_kubernetes_service_name]
-        regex: typha-metrics-svc
+        regex: calico-typha-metrics
         replacement: $1
         action: keep
-      - source_labels: [__meta_kubernetes_pod_container_port_name]
-        regex: calico-typha
-        action: drop
     - job_name: 'kube_controllers_metrics'
       scrape_interval: 5s
       scheme: http
@@ -656,7 +651,6 @@ First remove the services by executing the following command:
 
 ```bash
 kubectl delete service felix-metrics-svc -n calico-system
-kubectl delete service typha-metrics-svc -n calico-system
 ```
 
 If running $[prodnameWindows], also clean up the Windows nodes service:
