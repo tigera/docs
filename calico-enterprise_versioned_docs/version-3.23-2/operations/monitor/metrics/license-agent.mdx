@@ -27,6 +27,7 @@ The **License Agent** is a containerized application that monitors the following
 ## How to
 
 - [Add license agent in your Kubernetes cluster](#add-license-agent-in-your-kubernetes-cluster)
+- [Upgrade the license agent](#upgrade-the-license-agent)
 - [Create alerts using Prometheus metrics](#create-alerts-using-prometheus-metrics)
 
 ### Add license agent in your Kubernetes cluster
@@ -47,6 +48,24 @@ To add the license-agent component in a Kubernetes cluster for license metrics, 
    ```
     kubectl apply -f $[filesUrl]/manifests/licenseagent.yaml
    ```
+
+### Upgrade the license agent
+
+The license agent is installed from a manifest and is not managed by the $[prodname] operator. Upgrading $[prodname] leaves the license agent running the image from the manifest you last applied, so you must upgrade the license agent yourself after every $[prodname] upgrade. Until you do, license metrics come from the old version of the agent.
+
+1. Apply the manifest for the version of $[prodname] you upgraded to.
+   ```
+    kubectl apply -f $[filesUrl]/manifests/licenseagent.yaml
+   ```
+1. If you upgraded from a version earlier than $[prodname] v3.23, delete the license agent's network policy from the `allow-tigera` tier. From v3.23 the manifest creates this policy in the `calico-system` tier instead, and because the name of a policy includes the name of its tier, applying the new manifest adds a second policy rather than replacing the first: the same rule ends up in both tiers.
+   ```
+    kubectl delete networkpolicies.projectcalico.org allow-tigera.tigera-license-agent-access -n tigera-license-agent
+   ```
+1. Check whether any policy is left in the `allow-tigera` tier.
+   ```
+    kubectl get networkpolicies.projectcalico.org,globalnetworkpolicies.projectcalico.org -A | grep allow-tigera
+   ```
+   The operator removes the deprecated `allow-tigera` tier once no policy is left in it. While any policy remains, the tier stays and the operator logs `Cannot delete a non-empty tier` on every reconcile. So deleting the license agent's policy is enough only if nothing else is left: if the command above still lists policies, expect the tier to remain until those are removed as well. Contact Support if you are unsure what created a policy that is still listed.
 
 ### Create alerts using Prometheus metrics
 
