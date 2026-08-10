@@ -22,7 +22,10 @@ test('Crawl the docs and execute tests', async () => {
   const varSkipList = ['{{end}}'];
   const liquidRegex = /\{%.*?%}/gs;
   const liquidSkipList = [];
-  const SITEMAP = 'sitemap.xml';
+  // FULL_COVERAGE seeds the crawl from the all-versions sitemap (sitemap-full.xml) instead of the
+  // latest-only sitemap.xml. Used by the weekly job; leave off for PR CI until the backlog is fixed.
+  const fullCoverage = process.env.FULL_COVERAGE === 'true';
+  const SITEMAP = fullCoverage ? 'sitemap-full.xml' : 'sitemap.xml';
   const SITEMAP_URL = `${DOCS}/${SITEMAP}`;
   const USE_LC = [
     { regex: inspectFilesRegExp(), processContent: true },
@@ -612,6 +615,7 @@ test('Crawl the docs and execute tests', async () => {
   await crawler.addRequests(urls);
 
   console.log(`Crawling the docs (${DOCS}) and executing tests.`);
+  console.log(`Coverage: ${fullCoverage ? 'FULL (all versions)' : 'latest only'} via ${SITEMAP}.`);
   console.log(`Localhost mode is ${isLocalHost ? 'ON' : 'OFF'}.`);
   console.log(`Validity tests on code blocks: ${validityTest.length ? validityTest.join(',') : 'none'}`);
   console.log(`Validity tests on files: ${validityTestFiles.length ? validityTestFiles.join(',') : 'none'}`);

@@ -411,6 +411,19 @@ export default async function createAsyncConfig() {
         },
       },
     plugins: [
+      // Second sitemap instance for the internal link checker only. The preset sitemap above
+      // stays latest-only for SEO (sitemap.xml, the one advertised in robots.txt). This one has
+      // no version ignorePatterns, so it lists every built version at sitemap-full.xml. The
+      // crawler seeds from it when FULL_COVERAGE=true; it is not referenced in robots.txt.
+      [
+        '@docusaurus/plugin-sitemap',
+        {
+          id: 'full',
+          filename: 'sitemap-full.xml',
+          lastmod: 'date',
+          ignorePatterns: [],
+        },
+      ],
       'docusaurus-plugin-sass',
       [
         '@docusaurus/plugin-content-docs',
