@@ -70,6 +70,10 @@ test('Crawl the docs and execute tests', async () => {
     `https://installer.calicocloud.io/charts`,
     `https://docs.tigera.io/calico/charts`,
     'https://downloads.tigera.io/ee/charts',
+    // The DatastoreMigration CRD manifest is referenced by the CRD migration page but is not yet
+    // published to downloads.tigera.io for any released version; it ships once the publish step
+    // (calico-private master) is cut into a release. Live then; tracked in DOCS-2995.
+    /^https:\/\/downloads\.tigera\.io\/ee\/[\w.-]+\/manifests\/migration\.projectcalico\.org_datastoremigrations\.yaml$/,
     'https://Q4GSZWRKBA-dsn.algolia.net',
     'http://backend.stars:6379/status',
     'http://client.client:9000/status',
