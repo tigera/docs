@@ -52,6 +52,9 @@ test('Crawl the docs and execute tests', async () => {
     /^https:\/\/v1-(15|16|17|18)\.docs\.kubernetes\.io\/docs\/reference\/generated\/kubernetes-api\/v1\.(15|16|17|18)/i,
     /^https:\/\/github\.com\/projectcalico\/calico\/tree\/master\/[\w/.-]+\.md$/i,
     /^https:\/\/www\.linkedin\.com\/company\/tigera\/?$/,
+    // LinkedIn returns 999 to datacenter crawlers; the company page is fine in a browser. Same
+    // treatment as the tigera page above. Linked from the "about" / product-editions pages.
+    /^https:\/\/www\.linkedin\.com\/company\/project-calico\/?$/,
     /^https:\/\/installer\.calicocloud\.io\/manifests\/.+\/manifests/,
     'http://etcd.co',
     'https://www.tigera.io/project-calico/community',
