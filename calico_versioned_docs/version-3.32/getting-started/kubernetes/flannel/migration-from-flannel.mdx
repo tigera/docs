@@ -92,6 +92,30 @@ There are two ways to switch your cluster to use $[prodname] networking. Both me
    kubectl delete -f $[manifestsUrl]/manifests/flannel-migration/migration-job.yaml
    ```
 
+1. Remove leftover flannel `iptables` rules from each node.
+
+   The migration controller deletes the flannel network devices but leaves flannel's `iptables` chains (`FLANNEL-POSTRTG` in `nat`, `FLANNEL-FWD` in `filter`) in place. Their masquerade rule SNATs cross-node pod traffic, which breaks Kubernetes `NetworkPolicy` for policy-selected pods. Because flannel is no longer running, you only need to clear the chains once. Use either method:
+
+   **Method 1: Reboot or replace nodes**
+
+   Perform a rolling reboot (drain, reboot, uncordon each node in turn), or replace the nodes if you use immutable or managed node pools. The rules do not persist across a reboot, so no work on the nodes is needed.
+
+   **Method 2: Remove the chains in place**
+
+   Run the following on every node. It takes effect immediately without disrupting workloads, covers both the legacy and nft backends, and is safe to re-run:
+
+   ```bash
+   for ipt in iptables-legacy iptables-nft ip6tables-legacy ip6tables-nft; do
+     command -v "$ipt" >/dev/null 2>&1 || continue
+     "$ipt" -w -t nat -D POSTROUTING -j FLANNEL-POSTRTG 2>/dev/null
+     "$ipt" -w -t nat -F FLANNEL-POSTRTG 2>/dev/null
+     "$ipt" -w -t nat -X FLANNEL-POSTRTG 2>/dev/null
+     "$ipt" -w -t filter -D FORWARD -j FLANNEL-FWD 2>/dev/null
+     "$ipt" -w -t filter -F FLANNEL-FWD 2>/dev/null
+     "$ipt" -w -t filter -X FLANNEL-FWD 2>/dev/null
+   done
+   ```
+
 ### Modify flannel configuration
 
 The migration controller autodetects your flannel configuration, and in most cases, does not require
