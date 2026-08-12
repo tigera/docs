@@ -94,35 +94,15 @@ There are two ways to switch your cluster to use $[prodname] networking. Both me
 
 1. Remove leftover flannel `iptables` rules from each node.
 
-   The migration controller removes the flannel daemonset and deletes the flannel
-   network devices (`flannel.<vni>` and `cni0`), but it does not remove the
-   `iptables` chains that flannel programs: `FLANNEL-POSTRTG` in the `nat` table and
-   `FLANNEL-FWD` in the `filter` table. These chains survive the migration.
+   The migration controller deletes the flannel network devices but leaves flannel's `iptables` chains (`FLANNEL-POSTRTG` in `nat`, `FLANNEL-FWD` in `filter`) in place. Their masquerade rule SNATs cross-node pod traffic, which breaks Kubernetes `NetworkPolicy` for policy-selected pods. Because flannel is no longer running, you only need to clear the chains once. Use either method:
 
-   This matters once you start using Kubernetes `NetworkPolicy`. The masquerade rule
-   in `FLANNEL-POSTRTG` keeps SNAT-ing cross-node pod-to-pod traffic to the node's
-   tunnel IP, so the source address no longer matches pod-selector rules and Calico
-   drops the traffic. The symptom is that cross-node connections to policy-selected
-   pods time out after an otherwise successful migration, while same-node traffic
-   keeps working. Remove the leftover chains so that Calico is the only owner of pod
-   masquerading.
+   **Method 1: Reboot or replace nodes**
 
-   Because flannel is no longer running, nothing re-creates these chains, so you only
-   need to clear them once. Choose whichever of the following approaches fits your
-   cluster.
+   Perform a rolling reboot (drain, reboot, uncordon each node in turn), or replace the nodes if you use immutable or managed node pools. The rules do not persist across a reboot, so no work on the nodes is needed.
 
-   **If you can reboot or replace nodes**
+   **Method 2: Remove the chains in place**
 
-   Perform a rolling reboot of the cluster nodes (drain, reboot, uncordon each node
-   in turn), or replace the nodes entirely if you use immutable or managed node
-   pools. The leftover rules do not persist across a reboot, so no manual work on
-   the nodes is needed.
-
-   **If rebooting nodes is undesirable**
-
-   Remove the chains in place by running the following on every node. It takes
-   effect immediately without disrupting workloads, covers both the legacy and nft
-   `iptables` backends, and is safe to re-run:
+   Run the following on every node. It takes effect immediately without disrupting workloads, covers both the legacy and nft backends, and is safe to re-run:
 
    ```bash
    for ipt in iptables-legacy iptables-nft ip6tables-legacy ip6tables-nft; do
