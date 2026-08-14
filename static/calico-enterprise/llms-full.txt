@@ -7442,8 +7442,6 @@ In order to install images from your private registry, you must first pull the i
 
    docker pull quay.io/tigera/manager:v3.23.1
 
-   docker pull quay.io/tigera/manager-proxy:v3.23.1
-
    docker pull quay.io/tigera/node:v3.23.1
 
    docker pull quay.io/tigera/packetcapture:v3.23.1
@@ -7568,8 +7566,6 @@ In order to install images from your private registry, you must first pull the i
 
    docker tag quay.io/tigera/manager:v3.23.1 $PRIVATE_REGISTRY/tigera/manager:v3.23.1
 
-   docker tag quay.io/tigera/manager-proxy:v3.23.1 $PRIVATE_REGISTRY/tigera/manager-proxy:v3.23.1
-
    docker tag quay.io/tigera/node:v3.23.1 $PRIVATE_REGISTRY/tigera/node:v3.23.1
 
    docker tag quay.io/tigera/packetcapture:v3.23.1 $PRIVATE_REGISTRY/tigera/packetcapture:v3.23.1
@@ -7693,8 +7689,6 @@ In order to install images from your private registry, you must first pull the i
    docker push $PRIVATE_REGISTRY/tigera/linseed:v3.23.1
 
    docker push $PRIVATE_REGISTRY/tigera/manager:v3.23.1
-
-   docker push $PRIVATE_REGISTRY/tigera/manager-proxy:v3.23.1
 
    docker push $PRIVATE_REGISTRY/tigera/node:v3.23.1
 
@@ -7950,8 +7944,6 @@ In order to install images from your private registry, you must first pull the i
 
    docker pull quay.io/tigera/manager:v3.23.1
 
-   docker pull quay.io/tigera/manager-proxy:v3.23.1
-
    docker pull quay.io/tigera/node:v3.23.1
 
    docker pull quay.io/tigera/packetcapture:v3.23.1
@@ -8076,8 +8068,6 @@ In order to install images from your private registry, you must first pull the i
 
    docker tag quay.io/tigera/manager:v3.23.1 $PRIVATE_REGISTRY/$IMAGE_PATH/manager:v3.23.1
 
-   docker tag quay.io/tigera/manager-proxy:v3.23.1 $PRIVATE_REGISTRY/$IMAGE_PATH/manager-proxy:v3.23.1
-
    docker tag quay.io/tigera/node:v3.23.1 $PRIVATE_REGISTRY/$IMAGE_PATH/node:v3.23.1
 
    docker tag quay.io/tigera/packetcapture:v3.23.1 $PRIVATE_REGISTRY/$IMAGE_PATH/packetcapture:v3.23.1
@@ -8199,8 +8189,6 @@ In order to install images from your private registry, you must first pull the i
    docker push $PRIVATE_REGISTRY/$IMAGE_PATH/linseed:v3.23.1
 
    docker push $PRIVATE_REGISTRY/$IMAGE_PATH/manager:v3.23.1
-
-   docker push $PRIVATE_REGISTRY/$IMAGE_PATH/manager-proxy:v3.23.1
 
    docker push $PRIVATE_REGISTRY/$IMAGE_PATH/node:v3.23.1
 
@@ -48261,7 +48249,7 @@ Select the method below based on your preferred installation method.
 1. Install the v3 CRDs:
 
    ```bash
-   kubectl create -f $[manifestsUrl]/manifests/v3_projectcalico_org.yaml
+   kubectl create -f https://downloads.tigera.io/ee/v3.23.1/manifests/v3_projectcalico_org.yaml
    ```
 
    > **SECONDARY:** This replaces the `v1_crd_projectcalico_org.yaml` manifest used in the default installation. Do not install both CRD manifests.
@@ -48269,13 +48257,13 @@ Select the method below based on your preferred installation method.
 2. Install the Tigera Operator:
 
    ```bash
-   kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+   kubectl create -f https://downloads.tigera.io/ee/v3.23.1/manifests/tigera-operator.yaml
    ```
 
 3. Install Calico Enterprise by creating the necessary custom resources:
 
    ```bash
-   kubectl create -f $[manifestsUrl]/manifests/custom-resources.yaml
+   kubectl create -f https://downloads.tigera.io/ee/v3.23.1/manifests/custom-resources.yaml
    ```
 
 <!-- /tabs -->
@@ -48397,7 +48385,7 @@ The locked window is typically short (seconds to a few minutes depending on clus
 
 ## Before you begin[​](#before-you-begin)
 
-- Calico Enterprise v3.32+ (or the release that includes the migration controller)
+- Calico Enterprise v3.23+ (or the release that includes the migration controller)
 - Cluster is currently running in API server mode (the aggregated API server is deployed)
 - **If using GitOps (ArgoCD, Flux):** pause sync before starting the migration. These tools may interfere with the API group switchover. You'll update your manifests to use `projectcalico.org/v3` after migration completes.
 
@@ -48410,13 +48398,15 @@ The locked window is typically short (seconds to a few minutes depending on clus
    Apply the v3 CRD manifests from the Calico Enterprise release. While the aggregated API service is active, Kubernetes ignores these CRDs, so this is safe to do ahead of time.
 
    ```bash
-   kubectl apply -f $[manifestsUrl]/manifests/v3_projectcalico_org.yaml
+   kubectl apply -f https://downloads.tigera.io/ee/v3.23.1/manifests/v3_projectcalico_org.yaml
    ```
 
 2. **Install the DatastoreMigration CRD.**
 
+   <!-- -->
+
    ```bash
-   kubectl apply -f $[manifestsUrl]/manifests/migration.projectcalico.org_datastoremigrations.yaml
+   kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.1/kube-controllers/pkg/controllers/migration/crd/migration.projectcalico.org_datastoremigrations.yaml
    ```
 
 3. **Create the DatastoreMigration CR.**
@@ -71119,7 +71109,7 @@ Depending on the specific orchestrator environment, Felix is responsible for:
 
 **Main task**: Increases scale by reducing each node’s impact on the datastore. Runs as a daemon between the datastore and instances of Felix. Installed by default, but not configured. [Typha description](https://github.com/projectcalico/typha), and [Typha component](https://docs.tigera.io/calico-enterprise/latest/reference/component-resources/typha/).
 
-Typha maintains a single datastore connection on behalf of all of its clients like Felix and confd. It caches the datastore state and deduplicates events so that they can be fanned out to many listeners. Because one Typha instance can support hundreds of Felix instances, it reduces the load on the datastore by a large factor. And because Typha can filter out updates that are not relevant to Felix, it also reduces Felix’s CPU usage. In a high-scale (100+ node) Kubernetes cluster, this is essential because the number of updates generated by the API server scales with the number of nodes.
+Typha maintains a single datastore connection on behalf of all of its clients like Felix and confd. It caches the datastore state and deduplicates events so that they can be fanned out to many listeners. Because one Typha instance can support hundreds of Felix instances, it reduces the load on the datastore by a large factor. And because Typha can filter out updates that are not relevant to Felix, it also reduces Felix’s CPU usage. In a high-scale Kubernetes cluster, this is essential because the number of updates generated by the API server scales with the number of nodes.
 
 ## Kubernetes components[​](#kubernetes-components-1)
 
@@ -82655,7 +82645,7 @@ The Typha daemon sits between the datastore (such as the Kubernetes API server) 
 ## Advantages[​](#advantages)
 
 - Since one Typha instance can support hundreds of Felix instances, it reduces the load on the datastore by a large factor.
-- Since Typha can filter out updates that are not relevant to Felix, it also reduces Felix's CPU usage. In a high-scale (100+ node) Kubernetes cluster, this is essential because the number of updates generated by the API server scales with the number of nodes.
+- Since Typha can filter out updates that are not relevant to Felix, it also reduces Felix's CPU usage. In a high-scale Kubernetes cluster, this is essential because the number of updates generated by the API server scales with the number of nodes.
 
 ### Configuring Typha
 
@@ -83646,7 +83636,6 @@ This release comprises the following components, and can be installed using
 | license-agent                  | v3.23.1 |
 | linseed                        | v3.23.1 |
 | manager                        | v3.23.1 |
-| manager-proxy                  | v3.23.1 |
 | node                           | v3.23.1 |
 | node-windows                   | v3.23.1 |
 | packetcapture                  | v3.23.1 |
@@ -83732,7 +83721,6 @@ This release comprises the following components, and can be installed using
 | license-agent                  | v3.23.0-2.0 |
 | linseed                        | v3.23.0-2.0 |
 | manager                        | v3.23.0-2.0 |
-| manager-proxy                  | v3.23.0-2.0 |
 | node                           | v3.23.0-2.0 |
 | node-windows                   | v3.23.0-2.0 |
 | packetcapture                  | v3.23.0-2.0 |
