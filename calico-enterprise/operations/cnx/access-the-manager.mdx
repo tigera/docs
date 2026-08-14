@@ -28,6 +28,7 @@ For security, the $[prodname] web console is not exposed outside of the cluster 
 | Load balancer      | Configure your cluster with a service load balancer controller to implement the external load balancer. See [Kubernetes loadbalancer](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/)                                                      | Ensure the $[prodname] web console receives a HTTPS (TLS) connection (not unencrypted HTTP). If you require TLS termination at your load balancer, you must use a load balancer that supports transparent HTTP/2 proxying, or re-originate a TLS connection from your load balancer to the $[prodname] web console. If you do not require TLS termination, configure your proxy to “pass thru” the TLS to the $[prodname] web console. |
 | Port forwarding    | Forward traffic from a local port to the Kubernetes API server, where it is proxied to the web console. This approach is **not recommended for production**, but is useful if you do not have a load balancer or ingress infrastructure configured, or you need to get started quickly. | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | OpenShift routes   | Use OpenShift routes to expose a service by giving it an externally-reachable hostname (for example, `www.example.com`) .                                                                                                                                                              | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| $[prodname] Ingress Gateway | Expose the web console through $[prodname] Ingress Gateway by setting `spec.ingressGateway` on the `Manager` resource. The operator creates and manages the Gateway, route, and TLS certificate for you. | Requires the `GatewayAPI` resource to be installed. If your cluster uses OIDC, the `Authentication` resource's `managerDomain` must match the hostname you choose. |
 
 ## How to
 
@@ -176,6 +177,71 @@ Access the $[prodname] web console in your browser using the URL with clusternam
 
 </TabItem>
 
+<TabItem label="$[prodname] Ingress Gateway" value="Calico Ingress Gateway-4">
+
+Instead of creating an ingress or load balancer yourself, you can let the operator expose the web console through [$[prodname] Ingress Gateway](../../networking/ingress-gateway/about-calico-ingress-gateway.mdx). The operator creates the Gateway, the route to the web console, and a TLS certificate for the hostname you choose, and it removes them again when you turn the feature off.
+
+**Before you start**
+
+- Install $[prodname] Ingress Gateway by applying a `GatewayAPI` resource. See [Create an ingress gateway](../../networking/ingress-gateway/create-ingress-gateway.mdx).
+- On bare metal clusters, make sure an IP pool is available for the gateway's load balancer address.
+
+1. Set a hostname on the `Manager` resource:
+
+   ```bash
+   kubectl patch manager tigera-secure --type merge \
+     -p '{"spec":{"ingressGateway":{"hostname":"manager.example.com"}}}'
+   ```
+
+   To place the Gateway in a namespace of your choosing, add `gatewayNamespace`. The operator creates the namespace if it does not exist:
+
+   ```yaml
+   spec:
+     ingressGateway:
+       hostname: manager.example.com
+       gatewayNamespace: my-gateway-namespace
+   ```
+
+   If your `GatewayAPI` resource defines more than one gateway class, also set `gatewayClassName` to choose one.
+
+1. Wait for the Gateway to be programmed and read its address:
+
+   ```bash
+   kubectl get gateway -n calico-system calico-manager-gateway
+   ```
+
+   ```bash title="Expected output"
+   NAME                     CLASS                  ADDRESS                          PROGRAMMED
+   calico-manager-gateway   tigera-gateway-class   198.51.100.10                    True
+   ```
+
+1. Point your hostname at that address in DNS.
+
+:::note
+
+If your cluster uses OIDC, set the `Authentication` resource's `managerDomain` to the same hostname. The two must match, or the operator reports the $[prodname] web console as degraded:
+
+```bash
+kubectl patch authentication tigera-secure --type merge \
+  -p '{"spec":{"managerDomain":"https://manager.example.com"}}'
+```
+
+Your identity provider also needs to accept `https://<hostname>/dex/callback` and `https://<hostname>/login/oidc/callback` as redirect URLs.
+
+:::
+
+### Log in to the $[prodname] web console
+
+Access the $[prodname] web console in your browser at the hostname you configured. For example: `https://manager.example.com`.
+
+To stop using the gateway, remove the field. The operator deletes everything it created for it:
+
+```bash
+kubectl patch manager tigera-secure --type json \
+  -p '[{"op":"remove","path":"/spec/ingressGateway"}]'
+```
+
+</TabItem>
 </Tabs>
 
 ## Additional resources

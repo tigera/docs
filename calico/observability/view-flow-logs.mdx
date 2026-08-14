@@ -122,6 +122,63 @@ Port forwarding the Whisker service is a simple and secure method to view your f
    You may not see any flows at the beginning.
    But in a few moments, as the console receives data, you'll begin to see a list of flow logs.
 
+### Expose the web console with Calico Ingress Gateway
+
+Port forwarding is fine for a quick look, but it only works from a workstation with `kubectl` access. To give a team a stable URL, expose Whisker through [Calico Ingress Gateway](../networking/ingress-gateway/about-calico-ingress-gateway.mdx). The operator creates the Gateway, the route to Whisker, and a TLS certificate for the hostname you choose, and it removes them again when you turn the feature off.
+
+***Prerequisites***
+
+* Calico Ingress Gateway is installed, meaning a `GatewayAPI` resource exists on the cluster. See [Create an ingress gateway](../networking/ingress-gateway/create-ingress-gateway.mdx).
+* On bare metal clusters, an IP pool is available for the gateway's load balancer address.
+
+***Procedure***
+
+1. Set a hostname on the `Whisker` resource:
+
+   ```bash
+   kubectl patch whisker default --type merge \
+     -p '{"spec":{"ingressGateway":{"hostname":"whisker.example.com"}}}'
+   ```
+
+   To place the Gateway in a namespace of your choosing, add `gatewayNamespace`. The operator creates the namespace if it does not exist:
+
+   ```yaml
+   spec:
+     ingressGateway:
+       hostname: whisker.example.com
+       gatewayNamespace: my-gateway-namespace
+   ```
+
+   If your `GatewayAPI` resource defines more than one gateway class, also set `gatewayClassName` to choose one.
+
+1. Wait for the Gateway to be programmed and read its address:
+
+   ```bash
+   kubectl get gateway -n calico-system calico-whisker-gateway
+   ```
+
+   ```bash title="Expected output"
+   NAME                     CLASS                  ADDRESS         PROGRAMMED
+   calico-whisker-gateway   tigera-gateway-class   198.51.100.10   True
+   ```
+
+1. Point your hostname at that address in DNS, then open `https://whisker.example.com` in your browser.
+   The gateway serves a self-signed certificate, so your browser shows a security warning the first time.
+   Accept the warning to continue.
+
+:::note
+
+Whisker has no built-in authentication. Anyone who can reach the hostname can read your flow logs, so expose it only on a network you trust, or put your own authentication in front of it.
+
+:::
+
+While `spec.ingressGateway` is set, Calico restricts which pods may reach Whisker: only this gateway's proxy pods are allowed in. Removing the field deletes everything the operator created for the gateway:
+
+```bash
+kubectl patch whisker default --type json \
+  -p '[{"op":"remove","path":"/spec/ingressGateway"}]'
+```
+
 ## Additional resources
 
 * To use flow logs in your own scripts or applications, see [Flow logs API](../observability/flow-logs-api.mdx).
