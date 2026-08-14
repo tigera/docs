@@ -10,13 +10,11 @@ import IconUser from '/img/icons/user-icon.svg';
 
 <h2 id="23.0.1">August 14, 2026 (version 23.0.1)</h2>
 
-Version 23.0.1 replaces version 23.0.0, which is no longer available to install.
-If a cluster runs version 23.0.0, upgrade it to version 23.0.1.
-
 ### Bug fixes
 
-* Fixed a problem that denied cluster DNS traffic when a cluster upgraded from version 22 to version 23.0.0.
-  The Tigera Operator now adds the cluster DNS policy to the `calico-system` tier before it removes the policy from the `allow-tigera` tier, so $[prodname] components can resolve names for the whole upgrade.
+* Fixed a problem introduced in version 23.0.0 that denied cluster DNS traffic when a cluster upgraded from version 22.
+  The Tigera Operator now adds the cluster DNS policy to the `calico-system` tier before it removes the policy from the `allow-tigera` tier.
+  $[prodname] components keep resolving names for the whole upgrade, Guardian connects without crash looping, and the upgrade finishes.
 
 <h2 id="july-28-2026">July 28, 2026 (version 23.0.0)</h2>
 
@@ -73,16 +71,11 @@ This release adds support for Kubernetes 1.36.
 
 ### Known issues
 
-:::warning[version 23.0.0 is no longer available to install]
-Upgrading a cluster to version 23.0.0 can deny cluster DNS traffic and leave the upgrade unfinished.
-When the Tigera Operator moves the cluster DNS policy to the new `calico-system` tier, the `allow-tigera` tier remains in place with the same order and a default action of `Deny`, so DNS requests to `kube-dns` hit the implicit deny in `allow-tigera`.
-Guardian cannot resolve the address of $[prodname], so its pod enters `CrashLoopBackOff` and the upgrade does not finish.
-If `calico-node` reaches the Kubernetes API server by domain name, `calico-node`, `calico-apiserver`, and `calico-kube-controllers` can fail for the same reason.
+Upgrading from version 22 to version 23.0.0 can deny cluster DNS traffic and leave the upgrade unfinished.
+The Tigera Operator moves the cluster DNS policy into the new `calico-system` tier while the `allow-tigera` tier is still in place, so $[prodname] components lose name resolution partway through the upgrade.
 
 Version 23.0.0 is no longer available to install.
-Upgrade to [version 23.0.1](#23.0.1) instead, which fixes the problem.
-If a cluster already runs version 23.0.0, upgrade it to version 23.0.1.
-:::
+Upgrade to [version 23.0.1](#23.0.1), which fixes the problem.
 
 <h2 id="june-22-2026">June 22, 2026 (version 22.5.0)</h2>
 
