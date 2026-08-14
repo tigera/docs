@@ -50,15 +50,28 @@ owned resources being garbage collected by Kubernetes.
 
 ## Upgrading an installation that was installed using Helm
 
+The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm does not upgrade CRDs on `helm upgrade`. There are two ways to get the $[version] CRDs into your cluster:
+
+- **Apply the CRDs yourself before running `helm upgrade`.** This is the recommended option. The new CRDs are in place before the new operator starts, so you can configure any new fields ahead of the upgrade, and the CRDs are managed by whatever tooling you already use for the rest of your manifests.
+- **Let the operator apply them.** With `manageCRDs: true` in your `values.yaml` (the default), the operator applies the CRDs itself when the new pod starts. You do not need a separate step, but the new CRDs only exist once the new operator is running, so new configuration cannot be applied until after the upgrade.
+
+To apply the CRDs yourself:
+
 1. Apply the $[version] CRDs:
 
    ```bash
    kubectl apply --server-side --force-conflicts -f $[manifestsUrl]/manifests/v1_crd_projectcalico_org.yaml
    ```
 
+   Or, using the CRD chart:
+
+   ```bash
+   helm template calico-crds projectcalico/crd.projectcalico.org.v1 --version $[releaseTitle] | kubectl apply --server-side --force-conflicts -f -
+   ```
+
    :::note
 
-   The command above applies the v1 CRDs, which is correct for clusters using the aggregation API server (the common case). If your cluster uses native v3 CRDs, substitute `v3_projectcalico_org.yaml` for `v1_crd_projectcalico_org.yaml` in the command above.
+   The commands above apply the v1 CRDs, which is correct for clusters using the aggregation API server (the common case). If your cluster uses native v3 CRDs, substitute `v3_projectcalico_org.yaml` for `v1_crd_projectcalico_org.yaml`, or the `projectcalico/projectcalico.org.v3` chart for `projectcalico/crd.projectcalico.org.v1`.
 
    :::
 
