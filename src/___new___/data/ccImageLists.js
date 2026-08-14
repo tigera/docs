@@ -1,6 +1,8 @@
 const ccImageLists = {
-  // curl -0 https://installer.calicocloud.io/manifests/v3.23.1-4/image-list
-  'v23.0.0 (latest)': `quay.io/calico/istio-pilot:v3.32.1
+  // TODO(DOCS-3008): placeholder copied from the v23.0.0 list. Replace it with
+  // the v23.0.1 list once the release is in staging:
+  // curl -0 https://installer.calicocloud.io/manifests/<v23.0.1 manifest>/image-list
+  'v23.0.1 (latest)': `quay.io/calico/istio-pilot:v3.32.1
 quay.io/calico/istio-install-cni:v3.32.1
 quay.io/calico/istio-ztunnel:v3.32.1
 quay.io/calico/istio-proxyv2:v3.32.1
