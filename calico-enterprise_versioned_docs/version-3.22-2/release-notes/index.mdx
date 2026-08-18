@@ -407,8 +407,31 @@ To update an existing installation of Calico Enterprise 3.22, see [Install a pat
 
 August 13, 2026
 
+#### Enhancements
+
+* The operator-generated CNI config now declares `cniVersion` 1.0.0, as Multus requires on OpenShift 4.23 and later. The new `spec.cni.specVersion` field pins a different version or leaves it operator-managed (`Auto`).
+
 #### Bug fixes
 
-* TBD
+* Fixed Linseed rejecting valid service account tokens after a cluster's service account issuer changed, which broke the Manager UI observability pages until Linseed was restarted. Unrecognized issuers are now validated via TokenReview.
+* Fixed Felix splitting a flow or DNS log record across a rotation boundary, causing downstream consumers to drop one record per rotation.
+* Fixed a window in the eBPF dataplane where a new connection could skip a local workload's ingress policy while that workload's route was still being programmed.
+* Fixed several issues that could stop an egress gateway becoming or staying ready: incorrect egress selector reference counting, the gateway's own health probes and DNS not using its ExternalNetwork in the eBPF dataplane, and ExternalNetwork exit device state being pruned on Felix restart.
+* Fixed the eBPF dataplane losing connectivity to the Kubernetes API server service after an API server outage when using `bpfNetworkBootstrap`. It now recovers without a calico-node restart.
+* Fixed stalled connections in the eBPF dataplane between a client pod and a VM workload on the same node.
+* Fixed a BPF program leak in the iptables dataplane with `flowLogsCollectTcpStats` enabled: on kernels without TCX support, each endpoint update stacked a duplicate `calico_tcp_stats` filter, eventually degrading node performance and Felix startup. Existing duplicates are cleaned up.
+* Fixed Felix permanently losing its DNS policy NFQUEUE listener after a transient reconnect, which stopped domain-based policy being enforced until Felix restarted.
+* Fixed DNS policy trusted servers, including `k8s-service:` references such as `kube-dns`, being resolved only at startup instead of refreshed when the backing Service changed.
+* Fixed Felix's periodic route resync not repairing Calico-owned routes modified in place by another process, unnecessary reprogramming of unchanged IPv6 multi-path routes, and a spurious conntrack cleanup when removing an IPAM block route.
+* Fixed Calico advertising a Service IP over BGP from a node whose only local endpoint was not Ready, black-holing traffic for services using `externalTrafficPolicy: Local`.
+* Fixed restarting the `calico-early` container while calico-node was running causing a transient BGP flap that briefly withdrew pod and egress gateway routes.
+* Fixed the Calico Ingress Gateway control plane crash-looping on clusters whose Gateway API CRD set omits `ListenerSet`, `TLSRoute`, or `BackendTLSPolicy`, such as OpenShift. The bundled Envoy Gateway is updated to v1.8.2.
+* Fixed staged policies whose selectors match NetworkSets with `AllowedEgressDomains` incorrectly reporting deny in flow log pending policies.
+* Fixed misleading deny verdicts in flow log pending policies when an endpoint was deleted mid-flow.
+* Fixed Felix dataplane delays under load that could hold up policy programming for new pods: IP set resyncs are now incremental, and the flow log collector's policy re-evaluation is time-boxed so it no longer blocks conntrack and NFLOG processing.
+* Reduced Dikastes CPU and allocation overhead when many policies apply to an endpoint.
+* Non-cluster hosts no longer inherit `bpfEnabled` and `nftablesMode` from the cluster-wide FelixConfiguration; the packages force a supported dataplane and disable nftables on RHEL 8.
+* Updated the ECK operator to 3.4.1, fixing Elasticsearch nodes failing to rejoin after a transport CA rotation, which could stall an upgrade.
+* Security updates.
 
 To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
