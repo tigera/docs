@@ -21,8 +21,8 @@ export default function OpenShiftPrometheusOperator(props) {
         <Link href={`${baseUrl}/operations/monitor/prometheus/support`}>BYO Prometheus</Link> that you manage yourself.
       </Admonition>
         {props.operation === 'install'
-            ? <CodeBlock language='bash'>oc create -f {filesUrl}/manifests/ocp/tigera-pickle-operator.yaml</CodeBlock>
-            : <CodeBlock language='bash'>oc apply -f {filesUrl}/manifests/ocp/tigera-pickle-operator.yaml</CodeBlock>}
+            ? <CodeBlock language='bash'>oc create -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>
+            : <CodeBlock language='bash'>oc apply -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>}
     </>
   );
 }

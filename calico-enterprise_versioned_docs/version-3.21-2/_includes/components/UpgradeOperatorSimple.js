@@ -40,7 +40,7 @@ export default function UpgradeOperatorSimple(props) {
             If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work
             with Calico Enterprise, your Prometheus operator must be v0.40.0 or higher.
           </Admonition>
-          <CodeBlock language='bash'>curl -L -O {filesUrl}/manifests/tigera-pickle-operator.yaml</CodeBlock>
+          <CodeBlock language='bash'>curl -L -O {filesUrl}/manifests/tigera-prometheus-operator.yaml</CodeBlock>
         </li>
 
         <li>
