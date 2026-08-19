@@ -758,7 +758,7 @@ module.exports = {
           },
           items: [
             'reference/felix/configuration',
-            'reference/felix/pickle',
+            'reference/felix/prometheus',
           ],
         },
         {
@@ -771,7 +771,7 @@ module.exports = {
           items: [
             'reference/typha/overview',
             'reference/typha/configuration',
-            'reference/typha/pickle',
+            'reference/typha/prometheus',
           ],
         },
         'reference/configure-cni-plugins',
@@ -784,7 +784,7 @@ module.exports = {
           },
           items: [
             'reference/kube-controllers/configuration',
-            'reference/kube-controllers/pickle',
+            'reference/kube-controllers/prometheus',
           ],
         },
         {

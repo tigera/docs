@@ -595,12 +595,12 @@ module.exports = {
             {
               type: 'category',
               label: 'Prometheus',
-              link: { type: 'doc', id: 'operations/monitor/pickle/index' },
+              link: { type: 'doc', id: 'operations/monitor/prometheus/index' },
               items: [
-                'operations/monitor/pickle/support',
-                'operations/monitor/pickle/byo-pickle',
-                'operations/monitor/pickle/configure-pickle',
-                'operations/monitor/pickle/alertmanager',
+                'operations/monitor/prometheus/support',
+                'operations/monitor/prometheus/byo-prometheus',
+                'operations/monitor/prometheus/configure-prometheus',
+                'operations/monitor/prometheus/alertmanager',
               ],
             },
             {
@@ -828,7 +828,7 @@ module.exports = {
               label: 'Calico Enterprise Kubernetes controllers',
               link: { type: 'doc', id: 'reference/component-resources/kube-controllers/index' },
               items: [
-                'reference/component-resources/kube-controllers/pickle',
+                'reference/component-resources/kube-controllers/prometheus',
               ],
             },
             {
@@ -843,7 +843,7 @@ module.exports = {
                   link: { type: 'doc', id: 'reference/component-resources/node/felix/index' },
                   items: [
                     'reference/component-resources/node/felix/configuration',
-                    'reference/component-resources/node/felix/pickle',
+                    'reference/component-resources/node/felix/prometheus',
                   ],
                 },
               ],
@@ -855,7 +855,7 @@ module.exports = {
               items: [
                 'reference/component-resources/typha/overview',
                 'reference/component-resources/typha/configuration',
-                'reference/component-resources/typha/pickle',
+                'reference/component-resources/typha/prometheus',
               ],
             },
           ],
