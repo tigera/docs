@@ -139,8 +139,10 @@ test('Crawl the docs and execute tests', async () => {
     'https://downloads.tigera.io/ee/archives/release-master-master.tgz', //==> This started after redesigning the archive procedure.
     'http://nginx-svc.curl-ns.svc.cluster.local:80',
     'http://nginx-svc.service-ns.svc.cluster.local:80',
-    'https://calicousers.slack.com/',
-    'https://calicousers.slack.com/archives/C017220EXU1',
+    // Slack workspace URLs return 403 to datacenter crawlers; the links are fine in a browser.
+    // Matched as a pattern so the bare host, the trailing-slash form and channel links are all
+    // covered. The bare host is linked from /calico/latest/reference/involved.
+    /^https:\/\/calicousers\.slack\.com/,
     'https://tigera-manager.mycompany.com',
     'https://kb.isc.org/article/AA-01141/31/How-to-workaround-IPv6-prefix-length-issues-with-ISC-DHCP-clients.html',
     'https://www.snort.org/documents',
