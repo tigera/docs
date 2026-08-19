@@ -135,7 +135,7 @@ test('Crawl the docs and execute tests', async () => {
     'https://tools.ietf.org/html/rfc1123',
     'http://cr.yp.to/libtai/tai64.html#tai64n',
     'https://thenewstack.io/faster-troubleshooting-with-dynamic-packet-capture/', //==>Origin: http://localhost:4242/calico-cloud/visibility/packetcapture
-    'https://golang.org/pkg/crypto/tls/#ClientAuthType', //==>Origin: https://downloads.tigera.io/ee/v3.17.0/manifests/tigera-pickle-operator.yaml. The dead link is automatically redirected to a working page, so no fix needed in the origin.
+    'https://golang.org/pkg/crypto/tls/#ClientAuthType', //==>Origin: https://downloads.tigera.io/ee/v3.17.0/manifests/tigera-prometheus-operator.yaml. The dead link is automatically redirected to a working page, so no fix needed in the origin.
     'https://downloads.tigera.io/ee/archives/release-master-master.tgz', //==> This started after redesigning the archive procedure.
     'http://nginx-svc.curl-ns.svc.cluster.local:80',
     'http://nginx-svc.service-ns.svc.cluster.local:80',
@@ -188,8 +188,8 @@ test('Crawl the docs and execute tests', async () => {
     'https://www.tigera.io/blog/why-bgp/',
     'https://docs.nginx.com/nginx-ingress-controller/configuration/',
     'https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource',
-    'https://pickle.io/docs/pickle/latest/disabled_features/', // ==>Origin: https://downloads.tigera.io/ee/v3.17.4/manifests/tigera-pickle-operator.yaml
-    'https://pickle.io/docs/pickle/latest/feature_flags/', // ==>Origin: https://downloads.tigera.io/ee/v3.20.0-1.0/manifests/tigera-pickle-operator.yaml
+    'https://prometheus.io/docs/prometheus/latest/disabled_features/', // ==>Origin: https://downloads.tigera.io/ee/v3.17.4/manifests/tigera-prometheus-operator.yaml
+    'https://prometheus.io/docs/prometheus/latest/feature_flags/', // ==>Origin: https://downloads.tigera.io/ee/v3.20.0-1.0/manifests/tigera-prometheus-operator.yaml
     'https://docs.fluentd.org/filter/grep',
     'https://techcommunity.microsoft.com/t5/networking-blog/direct-server-return-dsr-in-a-nutshell/ba-p/693710',
     'https://www.f5.com/glossary/cookie-poisoning', //TEMPORARY
