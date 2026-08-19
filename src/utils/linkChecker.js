@@ -15,7 +15,7 @@ const defaultSkipList = [
   /^https?:\/\/my\.threatfeed\.com/,
   /^https?:\/\/mycalicocl-calicodemorg-03a087-36558dbb\.hcp\.canadaeast\.azmk8s\.io/,
   /^https?:\/\/60F939227672BC3D5A1B3EC9744B2B21\.gr7\.us-west-2\.eks\.amazonaws\.com/,
-  /^https?:\/\/prometheus-dashboard-svc\.calico-monitoring\.svc/,
+  /^https?:\/\/pickle-dashboard-svc\.calico-monitoring\.svc/,
   /^https?:\/\/manager\.apps\.demo-ocp\.tigera-solutions\.io/,
   /^https?:\/\/d881b853ae9313e00302a84f1e346a77\.gr7\.us-west-2\.eks\.amazonaws\.com/,
   /^https?:\/\/api\.my-ocp-domain\.com/,

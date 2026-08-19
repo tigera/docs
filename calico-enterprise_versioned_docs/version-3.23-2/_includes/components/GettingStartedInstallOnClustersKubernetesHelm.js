@@ -149,7 +149,7 @@ EOF`}
         <>
           <CodeBlock language='bash'>
             {`helm install calico-enterprise tigera/tigera-operator --version v0.0 \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
+--set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-pickle-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}
           </CodeBlock>
           <p>
@@ -157,7 +157,7 @@ EOF`}
           </p>
           <CodeBlock language='bash'>
             {`helm install calico-enterprise tigera/tigera-operator --version v0.0 -f values.yaml \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
+--set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-pickle-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}
           </CodeBlock>
         </>
@@ -168,7 +168,7 @@ EOF`}
       <>
         <CodeBlock language='bash'>
           {`helm install calico-enterprise tigera-operator-${chart_version_name}.tgz \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
+--set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-pickle-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}
         </CodeBlock>
         <p>
@@ -176,7 +176,7 @@ EOF`}
         </p>
         <CodeBlock language='bash'>
           {`helm install calico-enterprise tigera-operator-${chart_version_name}.tgz -f values.yaml \\
---set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
+--set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-pickle-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}
         </CodeBlock>
       </>

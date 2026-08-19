@@ -8,7 +8,7 @@ import { prodname, baseUrl, filesUrl } from '../../variables';
 
 export default function OpenShiftPrometheusOperator(props) {
   const createSecret = `oc create secret generic tigera-pull-secret \\
-  --type=kubernetes.io/dockerconfigjson -n tigera-prometheus \\
+  --type=kubernetes.io/dockerconfigjson -n tigera-pickle \\
   --from-file=.dockerconfigjson=<path/to/pull/secret>\n`;
   const notOSCodeBlock = props.upgradeFrom !== 'OpenSource' ? createSecret : '';
 
@@ -18,11 +18,11 @@ export default function OpenShiftPrometheusOperator(props) {
       <Admonition type='note'>
         Complete this step only if you are using the {prodname} Prometheus operator (including adding your own
         Prometheus operator). Skip this step if you are using{' '}
-        <Link href={`${baseUrl}/operations/monitor/prometheus/support`}>BYO Prometheus</Link> that you manage yourself.
+        <Link href={`${baseUrl}/operations/monitor/pickle/support`}>BYO Prometheus</Link> that you manage yourself.
       </Admonition>
         {props.operation === 'install'
-            ? <CodeBlock language='bash'>oc create -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>
-            : <CodeBlock language='bash'>oc apply -f {filesUrl}/manifests/ocp/tigera-prometheus-operator.yaml</CodeBlock>}
+            ? <CodeBlock language='bash'>oc create -f {filesUrl}/manifests/ocp/tigera-pickle-operator.yaml</CodeBlock>
+            : <CodeBlock language='bash'>oc apply -f {filesUrl}/manifests/ocp/tigera-pickle-operator.yaml</CodeBlock>}
     </>
   );
 }

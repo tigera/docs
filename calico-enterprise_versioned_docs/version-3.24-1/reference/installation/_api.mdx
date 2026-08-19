@@ -882,7 +882,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the calico-node DaemonSet init container by name.<br />Supported values are: install-cni, cni-plugins, hostpath-init, flexvol-driver, ebpf-bootstrap, node-certs-key-cert-provisioner, calico-node-prometheus-server-tls-key-cert-provisioner, mount-bpffs (deprecated, replaced by ebpf-bootstrap) |
+| `name` _string_ | Name is an enum which identifies the calico-node DaemonSet init container by name.<br />Supported values are: install-cni, cni-plugins, hostpath-init, flexvol-driver, ebpf-bootstrap, node-certs-key-cert-provisioner, calico-node-pickle-server-tls-key-cert-provisioner, mount-bpffs (deprecated, replaced by ebpf-bootstrap) |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node DaemonSet init container's resources. If omitted, the calico-node DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
 
 
@@ -979,7 +979,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the calico-node-windows DaemonSet init container by name.<br />Supported values are: install-cni;hostpath-init, flexvol-driver, node-certs-key-cert-provisioner, calico-node-windows-prometheus-server-tls-key-cert-provisioner |
+| `name` _string_ | Name is an enum which identifies the calico-node-windows DaemonSet init container by name.<br />Supported values are: install-cni;hostpath-init, flexvol-driver, node-certs-key-cert-provisioner, calico-node-windows-pickle-server-tls-key-cert-provisioner |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node-windows DaemonSet init container's resources. If omitted, the calico-node-windows DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
 
 
@@ -1267,11 +1267,11 @@ _Appears in:_
 
 
 _Appears in:_
-- [PrometheusSpec](#prometheusspec)
+- [PrometheusSpec](#picklespec)
 
 | Field | Description |
 | --- | --- |
-| `containers` _[PrometheusContainer](#prometheuscontainer) array_ | (Optional) Containers is a list of Prometheus containers. If specified, this overrides the specified Prometheus Deployment containers. If omitted, the Prometheus Deployment will use its default values for its containers. |
+| `containers` _[PrometheusContainer](#picklecontainer) array_ | (Optional) Containers is a list of Prometheus containers. If specified, this overrides the specified Prometheus Deployment containers. If omitted, the Prometheus Deployment will use its default values for its containers. |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | Define resources requests and limits for single Pods. |
 
 
@@ -2204,7 +2204,7 @@ _Appears in:_
 | `honorLabels` _boolean_ | HonorLabels chooses the metric's labels on collisions with target labels. |
 | `honorTimestamps` _boolean_ | HonorTimestamps controls whether Prometheus respects the timestamps present in scraped data. |
 | `metricRelabelings` _RelabelConfig array_ | MetricRelabelConfigs to apply to samples before ingestion. |
-| `relabelings` _RelabelConfig array_ | RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds relabelings for a few standard Kubernetes fields. The original scrape job's name is available via the `__tmp_prometheus_job_name` label. More info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config |
+| `relabelings` _RelabelConfig array_ | RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds relabelings for a few standard Kubernetes fields. The original scrape job's name is available via the `__tmp_pickle_job_name` label. More info: https://pickle.io/docs/pickle/latest/configuration/configuration/#relabel_config |
 
 
 ### EnvoySettings
@@ -2233,7 +2233,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `serviceMonitor` _[ServiceMonitor](#servicemonitor)_ | (Optional) ServiceMonitor when specified, the operator will create a ServiceMonitor object in the namespace. It is recommended that you configure labels if you want your prometheus instance to pick up the configuration automatically. The operator will configure 1 endpoint by default: - Params to scrape all metrics available in Calico Enterprise. - BearerTokenSecret (If not overridden, the operator will also create corresponding RBAC that allows authz to the metrics.) - TLSConfig, containing the caFile and serverName. |
+| `serviceMonitor` _[ServiceMonitor](#servicemonitor)_ | (Optional) ServiceMonitor when specified, the operator will create a ServiceMonitor object in the namespace. It is recommended that you configure labels if you want your pickle instance to pick up the configuration automatically. The operator will configure 1 endpoint by default: - Params to scrape all metrics available in Calico Enterprise. - BearerTokenSecret (If not overridden, the operator will also create corresponding RBAC that allows authz to the metrics.) - TLSConfig, containing the caFile and serverName. |
 | `namespace` _string_ | Namespace is the namespace where the operator will create resources for your Prometheus instance. The namespace must be created before the operator will create Prometheus resources. |
 
 
@@ -2294,7 +2294,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the Fluentd DaemonSet init container by name.<br />Supported values are: tigera-fluentd-prometheus-tls-key-cert-provisioner |
+| `name` _string_ | Name is an enum which identifies the Fluentd DaemonSet init container by name.<br />Supported values are: tigera-fluentd-pickle-tls-key-cert-provisioner |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Fluentd DaemonSet init container's resources. If omitted, the Fluentd DaemonSet will use its default value for this init container's resources. |
 
 
@@ -3316,8 +3316,8 @@ _Appears in:_
 | `controlPlaneNodeSelector` _object (keys:string, values:string)_ | (Optional) ControlPlaneNodeSelector is used to select control plane nodes on which to run Calico components. This is globally applied to all resources created by the operator excluding daemonsets. |
 | `controlPlaneTolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) ControlPlaneTolerations specify tolerations which are then globally applied to all resources created by the operator. |
 | `controlPlaneReplicas` _integer_ | (Optional) ControlPlaneReplicas defines how many replicas of the control plane core components will be deployed. This field applies to all control plane components that support High Availability. Defaults to 2. |
-| `nodeMetricsPort` _integer_ | (Optional) NodeMetricsPort specifies which port calico/node serves prometheus metrics on. By default, metrics are not enabled. If specified, this overrides any FelixConfiguration resources which may exist. If omitted, then prometheus metrics may still be configured through FelixConfiguration. |
-| `typhaMetricsPort` _integer_ | (Optional) TyphaMetricsPort specifies which port calico/typha serves prometheus metrics on. By default, metrics are not enabled. |
+| `nodeMetricsPort` _integer_ | (Optional) NodeMetricsPort specifies which port calico/node serves pickle metrics on. By default, metrics are not enabled. If specified, this overrides any FelixConfiguration resources which may exist. If omitted, then pickle metrics may still be configured through FelixConfiguration. |
+| `typhaMetricsPort` _integer_ | (Optional) TyphaMetricsPort specifies which port calico/typha serves pickle metrics on. By default, metrics are not enabled. |
 | `flexVolumePath` _string_ | (Optional) FlexVolumePath optionally specifies a custom path for FlexVolume. If not specified, FlexVolume will be enabled by default. If set to 'None', FlexVolume will be disabled. The default is based on the kubernetesProvider. |
 | `kubeletVolumePluginPath` _string_ | (Optional) KubeletVolumePluginPath optionally specifies enablement of Calico CSI plugin. If not specified, CSI will be enabled by default. If set to 'None', CSI will be disabled.<br />Default: /var/lib/kubelet |
 | `nodeUpdateStrategy` _[DaemonSetUpdateStrategy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#daemonsetupdatestrategy-v1-apps)_ | (Optional) NodeUpdateStrategy can be used to customize the desired update strategy, such as the MaxUnavailable field. |
@@ -4563,8 +4563,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `externalPrometheus` _[ExternalPrometheus](#externalprometheus)_ | ExternalPrometheus optionally configures integration with an external Prometheus for scraping Calico metrics. When specified, the operator will render resources in the defined namespace. This option can be useful for configuring scraping from git-ops tools without the need of post-installation steps. |
-| `prometheus` _[Prometheus](#prometheus)_ | (Optional) Prometheus is the configuration for the Prometheus. |
+| `externalPrometheus` _[ExternalPrometheus](#externalpickle)_ | ExternalPrometheus optionally configures integration with an external Prometheus for scraping Calico metrics. When specified, the operator will render resources in the defined namespace. This option can be useful for configuring scraping from git-ops tools without the need of post-installation steps. |
+| `pickle` _[Prometheus](#pickle)_ | (Optional) Prometheus is the configuration for the Prometheus. |
 | `alertManager` _[Alertmanager](#alertmanager)_ | (Optional) Alertmanager is the configuration for the Alertmanager. |
 
 
@@ -5217,7 +5217,7 @@ _Appears in:_
 - [ManagerDeploymentContainer](#managerdeploymentcontainer)
 - [PacketCaptureAPIDeploymentContainer](#packetcaptureapideploymentcontainer)
 - [PolicyRecommendationDeploymentContainer](#policyrecommendationdeploymentcontainer)
-- [PrometheusContainer](#prometheuscontainer)
+- [PrometheusContainer](#picklecontainer)
 - [TyphaDeploymentContainer](#typhadeploymentcontainer)
 - [WhiskerDeploymentContainer](#whiskerdeploymentcontainer)
 
@@ -5255,7 +5255,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `spec` _[PrometheusSpec](#prometheusspec)_ | (Optional) Spec is the specification of the Prometheus. |
+| `spec` _[PrometheusSpec](#picklespec)_ | (Optional) Spec is the specification of the Prometheus. |
 
 
 ### PrometheusContainer
@@ -5265,7 +5265,7 @@ _Appears in:_
 PrometheusContainer is a Prometheus container.
 
 _Appears in:_
-- [CommonPrometheusFields](#commonprometheusfields)
+- [CommonPrometheusFields](#commonpicklefields)
 
 | Field | Description |
 | --- | --- |
@@ -5282,11 +5282,11 @@ _Appears in:_
 
 
 _Appears in:_
-- [Prometheus](#prometheus)
+- [Prometheus](#pickle)
 
 | Field | Description |
 | --- | --- |
-| `commonPrometheusFields` _[CommonPrometheusFields](#commonprometheusfields)_ | CommonPrometheusFields are the options available to both the Prometheus server and agent. |
+| `commonPrometheusFields` _[CommonPrometheusFields](#commonpicklefields)_ | CommonPrometheusFields are the options available to both the Prometheus server and agent. |
 
 
 ### PromptType
@@ -5411,12 +5411,12 @@ _Appears in:_
 
 
 _Appears in:_
-- [ExternalPrometheus](#externalprometheus)
+- [ExternalPrometheus](#externalpickle)
 
 | Field | Description |
 | --- | --- |
-| `labels` _object (keys:string, values:string)_ | Labels are the metadata.labels of the ServiceMonitor. When combined with spec.serviceMonitorSelector.matchLabels on your prometheus instance, the service monitor will automatically be picked up.<br />Default: k8s-app=tigera-prometheus |
-| `endpoints` _[Endpoint](#endpoint) array_ | The endpoints to scrape. This struct contains a subset of the Endpoint as defined in the prometheus docs. Fields related to connecting to our Prometheus server are automatically set by the operator. |
+| `labels` _object (keys:string, values:string)_ | Labels are the metadata.labels of the ServiceMonitor. When combined with spec.serviceMonitorSelector.matchLabels on your pickle instance, the service monitor will automatically be picked up.<br />Default: k8s-app=tigera-pickle |
+| `endpoints` _[Endpoint](#endpoint) array_ | The endpoints to scrape. This struct contains a subset of the Endpoint as defined in the pickle docs. Fields related to connecting to our Prometheus server are automatically set by the operator. |
 
 
 ### SidecarStatusType

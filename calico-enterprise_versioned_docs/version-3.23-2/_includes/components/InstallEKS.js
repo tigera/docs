@@ -34,7 +34,7 @@ export default function InstallEKS(props) {
             If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work
             with {prodname}, your Prometheus operator must be v0.40.0 or higher.
           </Admonition>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-prometheus-operator.yaml</CodeBlock>
+          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-pickle-operator.yaml</CodeBlock>
         </li>
         <li>
           <p>Install your pull secret.</p>
@@ -194,7 +194,7 @@ spec:
             If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work
             with {prodname}, your Prometheus operator must be v0.40.0 or higher.
           </Admonition>
-          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-prometheus-operator.yaml</CodeBlock>
+          <CodeBlock>kubectl create -f {filesUrl}/manifests/tigera-pickle-operator.yaml</CodeBlock>
         </li>
         <li>
           <p>Install your pull secret.</p>

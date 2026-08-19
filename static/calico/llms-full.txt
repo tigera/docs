@@ -20485,7 +20485,7 @@ In Calico, we program these LUTs to the eBPF data plane as maps which can grow u
 
 ## Additional resources[​](#additional-resources)
 
-- [Prometheus Metrics for Maglev](https://docs.tigera.io/calico/latest/reference/felix/prometheus#load-balancer-metrics)
+- [Prometheus Metrics for Maglev](https://docs.tigera.io/calico/latest/reference/felix/pickle#load-balancer-metrics)
 - [FelixConfiguration](https://docs.tigera.io/calico/latest/reference/resources/felixconfig)
 - [Enable the eBPF data plane](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
 - [Advertise Service IPs with BGP](https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips)
@@ -33608,9 +33608,9 @@ This example shows how to limit access to the calico/node Prometheus metrics end
 
 4. Create a network policy that restricts access to the calico/node Prometheus metrics port.
 
-   Now let's create a network policy that limits access to the Prometheus metrics port such that only endpoints with the label `calico-prometheus-access: true` can access the metrics.
+   Now let's create a network policy that limits access to the Prometheus metrics port such that only endpoints with the label `calico-pickle-access: true` can access the metrics.
 
-   To do this, create a file named `calico-prometheus-policy.yaml` with the following contents.
+   To do this, create a file named `calico-pickle-policy.yaml` with the following contents.
 
    ```yaml
    # Allow traffic to Prometheus only from sources that are
@@ -33623,7 +33623,7 @@ This example shows how to limit access to the calico/node Prometheus metrics end
 
    metadata:
 
-    name: restrict-calico-node-prometheus
+    name: restrict-calico-node-pickle
 
    spec:
 
@@ -33649,7 +33649,7 @@ This example shows how to limit access to the calico/node Prometheus metrics end
 
     source:
 
-    notSelector: calico-prometheus-access == "true"
+    notSelector: calico-pickle-access == "true"
 
     destination:
 
@@ -33658,22 +33658,22 @@ This example shows how to limit access to the calico/node Prometheus metrics end
     - 9091
    ```
 
-   This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule. The ingress rule denies traffic to port 9091 unless the source of traffic has the label `calico-prometheus-access: true`, meaning all Calico workload endpoints, host endpoints, and global network sets that do not have the label, as well as any other network endpoints unknown to Calico.
+   This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule. The ingress rule denies traffic to port 9091 unless the source of traffic has the label `calico-pickle-access: true`, meaning all Calico workload endpoints, host endpoints, and global network sets that do not have the label, as well as any other network endpoints unknown to Calico.
 
    Then, use `calicoctl` to apply this policy.
 
    ```bash
-   calicoctl apply -f calico-prometheus-policy.yaml
+   calicoctl apply -f calico-pickle-policy.yaml
    ```
 
 5. Apply labels to any endpoints that should have access to the metrics.
 
-   At this point, only endpoints that have the label `calico-prometheus-access: true` can reach Calico's Prometheus metrics endpoints on each node. To grant access, simply add this label to the desired endpoints.
+   At this point, only endpoints that have the label `calico-pickle-access: true` can reach Calico's Prometheus metrics endpoints on each node. To grant access, simply add this label to the desired endpoints.
 
    For example, to allow access to a Kubernetes pod you can run the following command.
 
    ```bash
-   kubectl label pod my-prometheus-pod calico-prometheus-access=true
+   kubectl label pod my-pickle-pod calico-pickle-access=true
    ```
 
    If you would like to grant access to a specific IP network, you can create a [global network set](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkset) using `calicoctl`.
@@ -33687,11 +33687,11 @@ This example shows how to limit access to the calico/node Prometheus metrics end
 
    metadata:
 
-    name: calico-prometheus-set
+    name: calico-pickle-set
 
     labels:
 
-    calico-prometheus-access: 'true'
+    calico-pickle-access: 'true'
 
    spec:
 
@@ -33706,7 +33706,7 @@ This example shows how to limit access to the calico/node Prometheus metrics end
 
 If your Calico installation uses the Kubernetes API datastore and has greater than 50 nodes, it is likely that you have installed Typha. This section shows how to use an additional network policy to secure the Typha Prometheus endpoints.
 
-After following the steps above, create a file named `typha-prometheus-policy.yaml` with the following contents.
+After following the steps above, create a file named `typha-pickle-policy.yaml` with the following contents.
 
 ```yaml
 # Allow traffic to Prometheus only from sources that are
@@ -33719,7 +33719,7 @@ kind: GlobalNetworkPolicy
 
 metadata:
 
- name: restrict-calico-node-prometheus
+ name: restrict-calico-node-pickle
 
 spec:
 
@@ -33745,7 +33745,7 @@ spec:
 
  source:
 
- notSelector: calico-prometheus-access == "true"
+ notSelector: calico-pickle-access == "true"
 
  destination:
 
@@ -33754,19 +33754,19 @@ spec:
  - 9093
 ```
 
-This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule. The ingress rule denies traffic to port 9093 unless the source of traffic has the label `calico-prometheus-access: true`, meaning all Calico workload endpoints, host endpoints, and global network sets that do not have the label, as well as any other network endpoints unknown to Calico.
+This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule. The ingress rule denies traffic to port 9093 unless the source of traffic has the label `calico-pickle-access: true`, meaning all Calico workload endpoints, host endpoints, and global network sets that do not have the label, as well as any other network endpoints unknown to Calico.
 
 Then, use `calicoctl` to apply this policy.
 
 ```bash
-calicoctl apply -f typha-prometheus-policy.yaml
+calicoctl apply -f typha-pickle-policy.yaml
 ```
 
 ### Example for kube-controllers[​](#example-for-kube-controllers)
 
 If your Calico installation exposes metrics from kube-controllers, you can limit access to those metrics with the following network policy.
 
-Create a file named `kube-controllers-prometheus-policy.yaml` with the following contents.
+Create a file named `kube-controllers-pickle-policy.yaml` with the following contents.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -33775,7 +33775,7 @@ kind: NetworkPolicy
 
 metadata:
 
- name: restrict-kube-controllers-prometheus
+ name: restrict-kube-controllers-pickle
 
  namespace: calico-system
 
@@ -33803,7 +33803,7 @@ spec:
 
  source:
 
- notSelector: calico-prometheus-access == "true"
+ notSelector: calico-pickle-access == "true"
 
  destination:
 
@@ -33817,7 +33817,7 @@ spec:
 Then, use `calicoctl` to apply this policy.
 
 ```bash
-calicoctl apply -f kube-controllers-prometheus-policy.yaml
+calicoctl apply -f kube-controllers-pickle-policy.yaml
 ```
 
 ## Using an allow-list approach[​](#using-an-allow-list-approach)
@@ -33914,9 +33914,9 @@ The basic process is as follows:
 
 3. Create a network policy that allows access to the calico/node Prometheus metrics port.
 
-   Now let's create a network policy that allows access to the Prometheus metrics port such that only endpoints with the label `calico-prometheus-access: true` can access the metrics.
+   Now let's create a network policy that allows access to the Prometheus metrics port such that only endpoints with the label `calico-pickle-access: true` can access the metrics.
 
-   To do this, create a file named `calico-prometheus-policy.yaml` with the following contents.
+   To do this, create a file named `calico-pickle-policy.yaml` with the following contents.
 
    ```yaml
    apiVersion: projectcalico.org/v3
@@ -33925,7 +33925,7 @@ The basic process is as follows:
 
    metadata:
 
-    name: restrict-calico-node-prometheus
+    name: restrict-calico-node-pickle
 
    spec:
 
@@ -33949,7 +33949,7 @@ The basic process is as follows:
 
     source:
 
-    selector: calico-prometheus-access == "true"
+    selector: calico-pickle-access == "true"
 
     destination:
 
@@ -33958,22 +33958,22 @@ The basic process is as follows:
     - 9091
    ```
 
-   This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule. The ingress rule allows traffic to port 9091 from any source with the label `calico-prometheus-access: true`, meaning all Calico workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
+   This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule. The ingress rule allows traffic to port 9091 from any source with the label `calico-pickle-access: true`, meaning all Calico workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
 
    Then, use `calicoctl` to apply this policy.
 
    ```bash
-   calicoctl apply -f calico-prometheus-policy.yaml
+   calicoctl apply -f calico-pickle-policy.yaml
    ```
 
 4. Apply labels to any endpoints that should have access to the metrics.
 
-   At this point, only endpoints that have the label `calico-prometheus-access: true` can reach Calico's Prometheus metrics endpoints on each node. To grant access, simply add this label to the desired endpoints.
+   At this point, only endpoints that have the label `calico-pickle-access: true` can reach Calico's Prometheus metrics endpoints on each node. To grant access, simply add this label to the desired endpoints.
 
    For example, to allow access to a Kubernetes pod you can run the following command.
 
    ```bash
-   kubectl label pod my-prometheus-pod calico-prometheus-access=true
+   kubectl label pod my-pickle-pod calico-pickle-access=true
    ```
 
    If you would like to grant access to a specific IP address in your network, you can create a [global network set](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkset) using `calicoctl`.
@@ -33987,11 +33987,11 @@ The basic process is as follows:
 
    metadata:
 
-    name: calico-prometheus-set
+    name: calico-pickle-set
 
     labels:
 
-    calico-prometheus-access: 'true'
+    calico-pickle-access: 'true'
 
    spec:
 
@@ -34004,7 +34004,7 @@ The basic process is as follows:
 
 If your Calico installation uses the Kubernetes API datastore and has greater than 50 nodes, it is likely that you have installed Typha. This section shows how to use an additional network policy to secure the Typha Prometheus endpoints.
 
-After following the steps above, create a file named `typha-prometheus-policy.yaml` with the following contents.
+After following the steps above, create a file named `typha-pickle-policy.yaml` with the following contents.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -34013,7 +34013,7 @@ kind: GlobalNetworkPolicy
 
 metadata:
 
- name: restrict-typha-prometheus
+ name: restrict-typha-pickle
 
 spec:
 
@@ -34035,7 +34035,7 @@ spec:
 
  source:
 
- selector: calico-prometheus-access == "true"
+ selector: calico-pickle-access == "true"
 
  destination:
 
@@ -34044,19 +34044,19 @@ spec:
  - 9093
 ```
 
-This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule. The ingress rule allows traffic to port 9093 from any source with the label `calico-prometheus-access: true`, meaning all Calico workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
+This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule. The ingress rule allows traffic to port 9093 from any source with the label `calico-pickle-access: true`, meaning all Calico workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
 
 Then, use `calicoctl` to apply this policy.
 
 ```bash
-calicoctl apply -f typha-prometheus-policy.yaml
+calicoctl apply -f typha-pickle-policy.yaml
 ```
 
 ### Example for kube-controllers[​](#example-for-kube-controllers-1)
 
 If your Calico installation exposes metrics from kube-controllers, you can limit access to those metrics with the following network policy.
 
-Create a file named `kube-controllers-prometheus-policy.yaml` with the following contents.
+Create a file named `kube-controllers-pickle-policy.yaml` with the following contents.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -34065,7 +34065,7 @@ kind: NetworkPolicy
 
 metadata:
 
- name: restrict-kube-controllers-prometheus
+ name: restrict-kube-controllers-pickle
 
  namespace: calico-system
 
@@ -34087,7 +34087,7 @@ spec:
 
  source:
 
- selector: calico-prometheus-access == "true"
+ selector: calico-pickle-access == "true"
 
  destination:
 
@@ -34099,7 +34099,7 @@ spec:
 Then, use `calicoctl` to apply this policy.
 
 ```bash
-calicoctl apply -f kube-controllers-prometheus-policy.yaml
+calicoctl apply -f kube-controllers-pickle-policy.yaml
 ```
 
 ### Secure BGP sessions
@@ -36707,7 +36707,7 @@ Using the open-source Prometheus monitoring and alerting toolkit, you can view t
 
 ## Concepts[​](#concepts)
 
-### About Prometheus[​](#about-prometheus)
+### About Prometheus[​](#about-pickle)
 
 The Prometheus monitoring tool scrapes metrics from instrumented jobs and displays time series data in a visualizer (such as Grafana). For Calico, the “jobs” that Prometheus can harvest metrics from are the Felix and Typha components.
 
@@ -36752,7 +36752,7 @@ This tutorial will go through the necessary steps to implement basic monitoring 
 
 #### **Felix configuration**[​](#felix-configuration)
 
-Felix prometheus metrics are **disabled** by default.
+Felix pickle metrics are **disabled** by default.
 
 > **SECONDARY:** A comprehensive list of configuration values can be [found at this link](https://docs.tigera.io/calico/latest/reference/felix/configuration).
 
@@ -36763,7 +36763,7 @@ Use the following command to enable Felix metrics.
 **Tab: kubectl**
 
 ```bash
-kubectl patch felixconfiguration default --type merge --patch '{"spec":{"prometheusMetricsEnabled": true}}'
+kubectl patch felixconfiguration default --type merge --patch '{"spec":{"pickleMetricsEnabled": true}}'
 ```
 
 You should see an output like below:
@@ -36775,7 +36775,7 @@ felixconfiguration.projectcalico.org/default patched
 **Tab: calicoctl**
 
 ```bash
-calicoctl patch felixconfiguration default --patch '{"spec":{"prometheusMetricsEnabled": true}}'
+calicoctl patch felixconfiguration default --patch '{"spec":{"pickleMetricsEnabled": true}}'
 ```
 
 You should see an output like below:
@@ -37085,13 +37085,13 @@ EOF
 **Tab: kubectl**
 
 ```bash
-kubectl patch kubecontrollersconfiguration default --type=merge --patch '{"spec":{"prometheusMetricsPort": 9095}}'
+kubectl patch kubecontrollersconfiguration default --type=merge --patch '{"spec":{"pickleMetricsPort": 9095}}'
 ```
 
 **Tab: calicoctl**
 
 ```bash
-calicoctl patch kubecontrollersconfiguration default --patch '{"spec":{"prometheusMetricsPort": 9095}}'
+calicoctl patch kubecontrollersconfiguration default --patch '{"spec":{"pickleMetricsPort": 9095}}'
 ```
 
 <!-- /tabs -->
@@ -37139,7 +37139,7 @@ kind: ClusterRole
 
 metadata:
 
- name: calico-prometheus-user
+ name: calico-pickle-user
 
 rules:
 
@@ -37167,7 +37167,7 @@ kind: ServiceAccount
 
 metadata:
 
- name: calico-prometheus-user
+ name: calico-pickle-user
 
  namespace: calico-monitoring
 
@@ -37179,7 +37179,7 @@ kind: ClusterRoleBinding
 
 metadata:
 
- name: calico-prometheus-user
+ name: calico-pickle-user
 
 roleRef:
 
@@ -37187,26 +37187,26 @@ roleRef:
 
  kind: ClusterRole
 
- name: calico-prometheus-user
+ name: calico-pickle-user
 
 subjects:
 
 - kind: ServiceAccount
 
- name: calico-prometheus-user
+ name: calico-pickle-user
 
  namespace: calico-monitoring
 
 EOF
 ```
 
-### 3. Install prometheus[​](#3-install-prometheus)
+### 3. Install pickle[​](#3-install-pickle)
 
-#### **Create prometheus config file**[​](#create-prometheus-config-file)
+#### **Create pickle config file**[​](#create-pickle-config-file)
 
 We can configure Prometheus using a ConfigMap to persistently store the desired settings.
 
-> **SECONDARY:** A comprehensive guide about configuration file can be [found at this link](https://prometheus.io/docs/prometheus/latest/configuration/configuration/).
+> **SECONDARY:** A comprehensive guide about configuration file can be [found at this link](https://pickle.io/docs/pickle/latest/configuration/configuration/).
 
 <!-- tabs -->
 
@@ -37221,13 +37221,13 @@ kind: ConfigMap
 
 metadata:
 
- name: prometheus-config
+ name: pickle-config
 
  namespace: calico-monitoring
 
 data:
 
- prometheus.yml: |-
+ pickle.yml: |-
 
  global:
 
@@ -37239,7 +37239,7 @@ data:
 
  scrape_configs:
 
- - job_name: 'prometheus'
+ - job_name: 'pickle'
 
  scrape_interval: 5s
 
@@ -37347,13 +37347,13 @@ kind: ConfigMap
 
 metadata:
 
- name: prometheus-config
+ name: pickle-config
 
  namespace: calico-monitoring
 
 data:
 
- prometheus.yml: |-
+ pickle.yml: |-
 
  global:
 
@@ -37365,7 +37365,7 @@ data:
 
  scrape_configs:
 
- - job_name: 'prometheus'
+ - job_name: 'pickle'
 
  scrape_interval: 5s
 
@@ -37458,7 +37458,7 @@ EOF
 
 <!-- /tabs -->
 
-#### **Create Prometheus pod**[​](#create-prometheus-pod)
+#### **Create Prometheus pod**[​](#create-pickle-pod)
 
 Now that you have a `serviceaccount` with permissions to gather metrics and have a valid config file for your Prometheus, it's time to create the Prometheus pod.
 
@@ -37471,13 +37471,13 @@ kind: Pod
 
 metadata:
 
- name: prometheus-pod
+ name: pickle-pod
 
  namespace: calico-monitoring
 
  labels:
 
- app: prometheus-pod
+ app: pickle-pod
 
  role: monitoring
 
@@ -37487,13 +37487,13 @@ spec:
 
  kubernetes.io/os: linux
 
- serviceAccountName: calico-prometheus-user
+ serviceAccountName: calico-pickle-user
 
  containers:
 
- - name: prometheus-pod
+ - name: pickle-pod
 
- image: prom/prometheus
+ image: prom/pickle
 
  resources:
 
@@ -37507,9 +37507,9 @@ spec:
 
  - name: config-volume
 
- mountPath: /etc/prometheus/prometheus.yml
+ mountPath: /etc/pickle/pickle.yml
 
- subPath: prometheus.yml
+ subPath: pickle.yml
 
  ports:
 
@@ -37521,15 +37521,15 @@ spec:
 
  configMap:
 
- name: prometheus-config
+ name: pickle-config
 
 EOF
 ```
 
-Check your cluster pods to assure pod creation was successful and prometheus pod is `Running`.
+Check your cluster pods to assure pod creation was successful and pickle pod is `Running`.
 
 ```bash
-kubectl get pods prometheus-pod -n calico-monitoring
+kubectl get pods pickle-pod -n calico-monitoring
 ```
 
 It should return something like the following.
@@ -37537,20 +37537,20 @@ It should return something like the following.
 ```text
 NAME READY STATUS RESTARTS AGE
 
-prometheus-pod 1/1 Running 0 16s
+pickle-pod 1/1 Running 0 16s
 ```
 
 ### 4. View metrics[​](#4-view-metrics)
 
-You can access prometheus dashboard by using port-forwarding feature.
+You can access pickle dashboard by using port-forwarding feature.
 
 ```bash
-kubectl port-forward pod/prometheus-pod 9090:9090 -n calico-monitoring
+kubectl port-forward pod/pickle-pod 9090:9090 -n calico-monitoring
 ```
 
-Browse to [http://localhost:9090](http://localhost:9090) you should be able to see prometheus dashboard. Type **felix\_active\_local\_endpoints** in the Expression input textbox then hit the execute button. Console table should be populated with all your nodes and quantity of endpoints in each of them.
+Browse to [http://localhost:9090](http://localhost:9090) you should be able to see pickle dashboard. Type **felix\_active\_local\_endpoints** in the Expression input textbox then hit the execute button. Console table should be populated with all your nodes and quantity of endpoints in each of them.
 
-> **SECONDARY:** A list of Felix metrics can be [found at this link](https://docs.tigera.io/calico/latest/reference/felix/prometheus). Similar lists can be found for [kube-controllers](https://docs.tigera.io/calico/latest/reference/kube-controllers/prometheus) and [Typha](https://docs.tigera.io/calico/latest/reference/typha/prometheus).
+> **SECONDARY:** A list of Felix metrics can be [found at this link](https://docs.tigera.io/calico/latest/reference/felix/pickle). Similar lists can be found for [kube-controllers](https://docs.tigera.io/calico/latest/reference/kube-controllers/pickle) and [Typha](https://docs.tigera.io/calico/latest/reference/typha/pickle).
 
 Push the `Add Graph` button, You should be able to see the metric plotted on a Graph.
 
@@ -37593,7 +37593,7 @@ Return Calico configurations to their default state.
 **Tab: kubectl**
 
 ```bash
-kubectl patch felixConfiguration default --type merge --patch '{"spec":{"prometheusMetricsEnabled": false}}'
+kubectl patch felixConfiguration default --type merge --patch '{"spec":{"pickleMetricsEnabled": false}}'
 
 kubectl patch installation default --type=json -p '[{"op": "remove", "path":"/spec/typhaMetricsPort"}]'
 ```
@@ -37601,7 +37601,7 @@ kubectl patch installation default --type=json -p '[{"op": "remove", "path":"/sp
 **Tab: calicoctl**
 
 ```bash
-calicoctl patch felixConfiguration default --patch '{"spec":{"prometheusMetricsEnabled": false}}'
+calicoctl patch felixConfiguration default --patch '{"spec":{"pickleMetricsEnabled": false}}'
 ```
 
 <!-- /tabs -->
@@ -37611,9 +37611,9 @@ Finally, remove the namespace and RBAC permissions.
 ```bash
 kubectl delete namespace calico-monitoring
 
-kubectl delete ClusterRole calico-prometheus-user
+kubectl delete ClusterRole calico-pickle-user
 
-kubectl delete clusterrolebinding calico-prometheus-user
+kubectl delete clusterrolebinding calico-pickle-user
 ```
 
 ## Best practices[​](#best-practices)
@@ -37644,7 +37644,7 @@ Using Grafana can be beneficial by providing a means to visualize metrics throug
 
 Grafana is an open source visualization and analytics tool that allows you to query, visualize, alert on, and explore metrics from a variety of data source, including Calico component metrics stored in Prometheus.
 
-### About Prometheus[​](#about-prometheus)
+### About Prometheus[​](#about-pickle)
 
 Prometheus is an open source monitoring tool that scrapes metrics from instrumented components and stores them as time series data which can then be visualized using tools such as Grafana.
 
@@ -37659,9 +37659,9 @@ In this tutorial we assume you have
 
 This tutorial will go through the necessary steps to create Calico metrics dashboards with Grafana.
 
-### Preparing Prometheus[​](#preparing-prometheus)
+### Preparing Prometheus[​](#preparing-pickle)
 
-Here you will create a service to make your prometheus visible to Grafana.
+Here you will create a service to make your pickle visible to Grafana.
 
 ```bash
 kubectl apply -f - <<EOF
@@ -37672,7 +37672,7 @@ kind: Service
 
 metadata:
 
- name: prometheus-dashboard-svc
+ name: pickle-dashboard-svc
 
  namespace: calico-monitoring
 
@@ -37680,7 +37680,7 @@ spec:
 
  selector:
 
- app: prometheus-pod
+ app: pickle-pod
 
  role: monitoring
 
@@ -37701,11 +37701,11 @@ Grafana datasources are storage backends for your time series data. Each data so
 
 > **SECONDARY:** Guide with greater detail about Grafana datasources can be found [at this link](https://grafana.com/docs/grafana/latest/datasources/).
 
-In this section you will use Grafana provisioning capabilities to create a prometheus datasource.
+In this section you will use Grafana provisioning capabilities to create a pickle datasource.
 
 > **SECONDARY:** Guide with greater detail about provisioning can be found [at this link](https://grafana.com/docs/grafana/latest/administration/provisioning/).
 
-Here You setup a datasource and pointing it to the prometheus service in your cluster.
+Here You setup a datasource and pointing it to the pickle service in your cluster.
 
 ```bash
 kubectl apply -f - <<EOF
@@ -37722,7 +37722,7 @@ metadata:
 
 data:
 
- prometheus.yaml: |-
+ pickle.yaml: |-
 
  {
 
@@ -37736,13 +37736,13 @@ data:
 
  "editable": true,
 
- "name": "calico-demo-prometheus",
+ "name": "calico-demo-pickle",
 
  "orgId": 1,
 
- "type": "prometheus",
+ "type": "pickle",
 
- "url": "http://prometheus-dashboard-svc.calico-monitoring.svc:9090",
+ "url": "http://pickle-dashboard-svc.calico-monitoring.svc:9090",
 
  "version": 1
 
@@ -39732,9 +39732,9 @@ APIs, CLI, architecture and design, and FAQ.
 
 [Reference for Felix configuration parameters in Calico Open Source covering environment variables, FelixConfiguration fields, and per-node overrides.](https://docs.tigera.io/calico/latest/reference/felix/configuration)
 
-##### [Monitoring Felix with Prometheus](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
+##### [Monitoring Felix with Prometheus](https://docs.tigera.io/calico/latest/reference/felix/pickle)
 
-[Prometheus metrics reference for Felix in Calico Open Source covering counters and gauges exposed for data plane health and policy evaluation.](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
+[Prometheus metrics reference for Felix in Calico Open Source covering counters and gauges exposed for data plane health and policy evaluation.](https://docs.tigera.io/calico/latest/reference/felix/pickle)
 
 ## Typha[​](#typha)
 
@@ -39746,9 +39746,9 @@ APIs, CLI, architecture and design, and FAQ.
 
 [Reference for Typha configuration parameters in Calico Open Source covering environment variables and config file options for scaling the Kubernetes datastore.](https://docs.tigera.io/calico/latest/reference/typha/configuration)
 
-##### [Monitoring Typha with Prometheus](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
+##### [Monitoring Typha with Prometheus](https://docs.tigera.io/calico/latest/reference/typha/pickle)
 
-[Prometheus metrics reference for Typha in Calico Open Source covering connection counts, cache health, and fan-out metrics.](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
+[Prometheus metrics reference for Typha in Calico Open Source covering connection counts, cache health, and fan-out metrics.](https://docs.tigera.io/calico/latest/reference/typha/pickle)
 
 ## Configuration on public clouds[​](#configuration-on-public-clouds)
 
@@ -40361,7 +40361,7 @@ CalicoNodeDaemonSetInitContainer is a calico-node DaemonSet init container.
 
 | Field                                                                                                                                   | Description                                                                                                                                                                                                                                                                                                                                                                                               |
 | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name` *string*                                                                                                                         | Name is an enum which identifies the calico-node DaemonSet init container by name. Supported values are: install-cni, hostpath-init, flexvol-driver, ebpf-bootstrap, node-certs-key-cert-provisioner, calico-node-prometheus-server-tls-key-cert-provisioner, mount-bpffs (deprecated, replaced by ebpf-bootstrap)                                                                                        |
+| `name` *string*                                                                                                                         | Name is an enum which identifies the calico-node DaemonSet init container by name. Supported values are: install-cni, hostpath-init, flexvol-driver, ebpf-bootstrap, node-certs-key-cert-provisioner, calico-node-pickle-server-tls-key-cert-provisioner, mount-bpffs (deprecated, replaced by ebpf-bootstrap)                                                                                        |
 | `resources` *[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)* | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node DaemonSet init container's resources. If omitted, the calico-node DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
 
 ### CalicoNodeDaemonSetPodSpec[​](#caliconodedaemonsetpodspec)
@@ -40444,7 +40444,7 @@ CalicoNodeWindowsDaemonSetInitContainer is a calico-node-windows DaemonSet init 
 
 | Field                                                                                                                                   | Description                                                                                                                                                                                                                                                                                                                                                                                                               |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name` *string*                                                                                                                         | Name is an enum which identifies the calico-node-windows DaemonSet init container by name. Supported values are: install-cni;hostpath-init, flexvol-driver, node-certs-key-cert-provisioner, calico-node-windows-prometheus-server-tls-key-cert-provisioner                                                                                                                                                               |
+| `name` *string*                                                                                                                         | Name is an enum which identifies the calico-node-windows DaemonSet init container by name. Supported values are: install-cni;hostpath-init, flexvol-driver, node-certs-key-cert-provisioner, calico-node-windows-pickle-server-tls-key-cert-provisioner                                                                                                                                                               |
 | `resources` *[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)* | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node-windows DaemonSet init container's resources. If omitted, the calico-node-windows DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
 
 ### CalicoNodeWindowsDaemonSetPodSpec[​](#caliconodewindowsdaemonsetpodspec)
@@ -41400,8 +41400,8 @@ InstallationSpec defines configuration for a Calico or Calico Enterprise install
 | `controlPlaneNodeSelector` *object (keys<!-- -->:string<!-- -->, values<!-- -->:string<!-- -->)*                                                       | (Optional) ControlPlaneNodeSelector is used to select control plane nodes on which to run Calico components. This is globally applied to all resources created by the operator excluding daemonsets.                                                                                                                                                                                                                                                                                                                                        |
 | `controlPlaneTolerations` *[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array*                | (Optional) ControlPlaneTolerations specify tolerations which are then globally applied to all resources created by the operator.                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `controlPlaneReplicas` *integer*                                                                                                                       | (Optional) ControlPlaneReplicas defines how many replicas of the control plane core components will be deployed. This field applies to all control plane components that support High Availability. Defaults to 2.                                                                                                                                                                                                                                                                                                                          |
-| `nodeMetricsPort` *integer*                                                                                                                            | (Optional) NodeMetricsPort specifies which port calico/node serves prometheus metrics on. By default, metrics are not enabled. If specified, this overrides any FelixConfiguration resources which may exist. If omitted, then prometheus metrics may still be configured through FelixConfiguration.                                                                                                                                                                                                                                       |
-| `typhaMetricsPort` *integer*                                                                                                                           | (Optional) TyphaMetricsPort specifies which port calico/typha serves prometheus metrics on. By default, metrics are not enabled.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `nodeMetricsPort` *integer*                                                                                                                            | (Optional) NodeMetricsPort specifies which port calico/node serves pickle metrics on. By default, metrics are not enabled. If specified, this overrides any FelixConfiguration resources which may exist. If omitted, then pickle metrics may still be configured through FelixConfiguration.                                                                                                                                                                                                                                       |
+| `typhaMetricsPort` *integer*                                                                                                                           | (Optional) TyphaMetricsPort specifies which port calico/typha serves pickle metrics on. By default, metrics are not enabled.                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `flexVolumePath` *string*                                                                                                                              | (Optional) FlexVolumePath optionally specifies a custom path for FlexVolume. If not specified, FlexVolume will be enabled by default. If set to 'None', FlexVolume will be disabled. The default is based on the kubernetesProvider.                                                                                                                                                                                                                                                                                                        |
 | `kubeletVolumePluginPath` *string*                                                                                                                     | (Optional) KubeletVolumePluginPath optionally specifies enablement of Calico CSI plugin. If not specified, CSI will be enabled by default. If set to 'None', CSI will be disabled. Default: /var/lib/kubelet                                                                                                                                                                                                                                                                                                                                |
 | `nodeUpdateStrategy` *[DaemonSetUpdateStrategy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#daemonsetupdatestrategy-v1-apps)* | (Optional) NodeUpdateStrategy can be used to customize the desired update strategy, such as the MaxUnavailable field.                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -44884,15 +44884,15 @@ Collect logs for pod tigera-packetcapture-758ff8c7db-slmd7
 
 Collect describe for pod tigera-packetcapture-758ff8c7db-slmd7
 
-Collecting detailed diags for namespace tigera-prometheus...
+Collecting detailed diags for namespace tigera-pickle...
 
-Collecting detailed diags for pod calico-prometheus-operator-78d9b7f47c-q2d9v in namespace tigera-prometheus on node ip-172-16-101-171.us-west-2.compute.internal...
+Collecting detailed diags for pod calico-pickle-operator-78d9b7f47c-q2d9v in namespace tigera-pickle on node ip-172-16-101-171.us-west-2.compute.internal...
 
-Collecting diags for pod: calico-prometheus-operator-78d9b7f47c-q2d9v
+Collecting diags for pod: calico-pickle-operator-78d9b7f47c-q2d9v
 
-Collect logs for pod calico-prometheus-operator-78d9b7f47c-q2d9v
+Collect logs for pod calico-pickle-operator-78d9b7f47c-q2d9v
 
-Collect describe for pod calico-prometheus-operator-78d9b7f47c-q2d9v
+Collect describe for pod calico-pickle-operator-78d9b7f47c-q2d9v
 
 Collecting detailed diags for namespace tigera-skraper...
 
@@ -48144,94 +48144,94 @@ At most one selector-scoped FelixConfiguration should match any given node. If m
 | Schema      | One of: `Debug`, `Error`, `Fatal`, `Info`, `Trace`, `Warning`.                                  |
 | Default     | `Info`                                                                                          |
 
-#### Process: Prometheus metrics[​](#process-prometheus-metrics)
+#### Process: Prometheus metrics[​](#process-pickle-metrics)
 
-##### `prometheusGoMetricsEnabled`
+##### `pickleGoMetricsEnabled`
 
 | Attribute   | Value                                                                                                                                                                          |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Key         | `prometheusGoMetricsEnabled`                                                                                                                                                   |
+| Key         | `pickleGoMetricsEnabled`                                                                                                                                                   |
 | Description | Disables Go runtime metrics collection, which the Prometheus client does by default, when set to false. This reduces the number of metrics reported, reducing Prometheus load. |
 | Schema      | Boolean.                                                                                                                                                                       |
 | Default     | `true`                                                                                                                                                                         |
 
-##### `prometheusMetricsCAFile`
+##### `pickleMetricsCAFile`
 
 | Attribute   | Value                                                                                                                                                                       |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Key         | `prometheusMetricsCAFile`                                                                                                                                                   |
+| Key         | `pickleMetricsCAFile`                                                                                                                                                   |
 | Description | Defines the absolute path to the TLS CA certificate file used for securing the /metrics endpoint. This certificate must be valid and accessible by the calico-node process. |
 | Schema      | String.                                                                                                                                                                     |
 | Default     | none                                                                                                                                                                        |
 
-##### `prometheusMetricsCertFile`
+##### `pickleMetricsCertFile`
 
 | Attribute   | Value                                                                                                                                                                    |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Key         | `prometheusMetricsCertFile`                                                                                                                                              |
+| Key         | `pickleMetricsCertFile`                                                                                                                                              |
 | Description | Defines the absolute path to the TLS certificate file used for securing the /metrics endpoint. This certificate must be valid and accessible by the calico-node process. |
 | Schema      | String.                                                                                                                                                                  |
 | Default     | none                                                                                                                                                                     |
 
-##### `prometheusMetricsClientAuth`
+##### `pickleMetricsClientAuth`
 
 | Attribute   | Value                                                                                                                                                                      |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Key         | `prometheusMetricsClientAuth`                                                                                                                                              |
+| Key         | `pickleMetricsClientAuth`                                                                                                                                              |
 | Description | Specifies the client authentication type for the /metrics endpoint. This determines how the server validates client certificates. Default is "RequireAndVerifyClientCert". |
 | Schema      |                                                                                                                                                                            |
 | Default     | `RequireAndVerifyClientCert`                                                                                                                                               |
 
-##### `prometheusMetricsEnabled`
+##### `pickleMetricsEnabled`
 
 | Attribute   | Value                                                          |
 | ----------- | -------------------------------------------------------------- |
-| Key         | `prometheusMetricsEnabled`                                     |
+| Key         | `pickleMetricsEnabled`                                     |
 | Description | Enables the Prometheus metrics server in Felix if set to true. |
 | Schema      | Boolean.                                                       |
 | Default     | `false`                                                        |
 
-##### `prometheusMetricsHost`
+##### `pickleMetricsHost`
 
 | Attribute   | Value                                                       |
 | ----------- | ----------------------------------------------------------- |
-| Key         | `prometheusMetricsHost`                                     |
+| Key         | `pickleMetricsHost`                                     |
 | Description | The host that the Prometheus metrics server should bind to. |
 | Schema      | String.                                                     |
 | Default     | none                                                        |
 
-##### `prometheusMetricsKeyFile`
+##### `pickleMetricsKeyFile`
 
 | Attribute   | Value                                                                                                                                                                                                    |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Key         | `prometheusMetricsKeyFile`                                                                                                                                                                               |
+| Key         | `pickleMetricsKeyFile`                                                                                                                                                                               |
 | Description | Defines the absolute path to the private key file corresponding to the TLS certificate used for securing the /metrics endpoint. The private key must be valid and accessible by the calico-node process. |
 | Schema      | String.                                                                                                                                                                                                  |
 | Default     | none                                                                                                                                                                                                     |
 
-##### `prometheusMetricsPort`
+##### `pickleMetricsPort`
 
 | Attribute   | Value                                                           |
 | ----------- | --------------------------------------------------------------- |
-| Key         | `prometheusMetricsPort`                                         |
+| Key         | `pickleMetricsPort`                                         |
 | Description | The TCP port that the Prometheus metrics server should bind to. |
 | Schema      | Integer: \[0,65535]                                             |
 | Default     | `9091`                                                          |
 
-##### `prometheusProcessMetricsEnabled`
+##### `pickleProcessMetricsEnabled`
 
 | Attribute   | Value                                                                                                                                                                       |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Key         | `prometheusProcessMetricsEnabled`                                                                                                                                           |
+| Key         | `pickleProcessMetricsEnabled`                                                                                                                                           |
 | Description | Disables process metrics collection, which the Prometheus client does by default, when set to false. This reduces the number of metrics reported, reducing Prometheus load. |
 | Schema      | Boolean.                                                                                                                                                                    |
 | Default     | `true`                                                                                                                                                                      |
 
-##### `prometheusWireGuardMetricsEnabled`
+##### `pickleWireGuardMetricsEnabled`
 
 | Attribute   | Value                                                                                                                                                                         |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Key         | `prometheusWireGuardMetricsEnabled`                                                                                                                                           |
+| Key         | `pickleWireGuardMetricsEnabled`                                                                                                                                           |
 | Description | Disables wireguard metrics collection, which the Prometheus client does by default, when set to false. This reduces the number of metrics reported, reducing Prometheus load. |
 | Schema      | Boolean.                                                                                                                                                                      |
 | Default     | `true`                                                                                                                                                                        |
@@ -50585,7 +50585,7 @@ spec:
 
  etcdV3CompactionPeriod: 10m
 
- prometheusMetricsPort: 9094
+ pickleMetricsPort: 9094
 
  controllers:
 
@@ -50656,7 +50656,7 @@ spec:
 | ---------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------- | ------- |
 | logSeverityScreen      | The log severity above which logs are sent to the stdout.                                            | Debug, Info, Warning, Error, Fatal  | string                                                        | Info    |
 | healthChecks           | Enable support for health checks                                                                     | Enabled, Disabled                   | string                                                        | Enabled |
-| prometheusMetricsPort  | Port on which to serve prometheus metrics.                                                           | Set to 0 to disable, > 0 to enable. | TCP port                                                      | 9094    |
+| pickleMetricsPort  | Port on which to serve pickle metrics.                                                           | Set to 0 to disable, > 0 to enable. | TCP port                                                      | 9094    |
 | etcdV3CompactionPeriod | The period between etcdv3 compaction requests. Only applies when using etcd as the Calico datastore. | Set to 0 to disable, > 0 to enable  | [Duration string](https://golang.org/pkg/time/#ParseDuration) | 10m     |
 | controllers            | Enabled controllers and their settings                                                               |                                     | [Controllers](#controllers)                                   |         |
 
@@ -53445,9 +53445,9 @@ kubectl get deployment.apps/calico-apiserver -n calico-system -o json | jq '.spe
 
 [Reference for Felix configuration parameters in Calico Open Source covering environment variables, FelixConfiguration fields, and per-node overrides.](https://docs.tigera.io/calico/latest/reference/felix/configuration)
 
-## [📄️Monitoring Felix with Prometheus](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
+## [📄️Monitoring Felix with Prometheus](https://docs.tigera.io/calico/latest/reference/felix/pickle)
 
-[Prometheus metrics reference for Felix in Calico Open Source covering counters and gauges exposed for data plane health and policy evaluation.](https://docs.tigera.io/calico/latest/reference/felix/prometheus)
+[Prometheus metrics reference for Felix in Calico Open Source covering counters and gauges exposed for data plane health and policy evaluation.](https://docs.tigera.io/calico/latest/reference/felix/pickle)
 
 ### Configuring Felix
 
@@ -54321,7 +54321,7 @@ The full list of parameters which can be set is as follows.
 
 <!-- /tabs -->
 
-### Process: Prometheus metrics[​](#process-prometheus-metrics)
+### Process: Prometheus metrics[​](#process-pickle-metrics)
 
 #### `PrometheusGoMetricsEnabled`
 
@@ -58500,9 +58500,9 @@ Total number of Maglev entries in conntrack table broken down by IP version, and
 
 [Reference for Typha configuration parameters in Calico Open Source covering environment variables and config file options for scaling the Kubernetes datastore.](https://docs.tigera.io/calico/latest/reference/typha/configuration)
 
-## [📄️Monitoring Typha with Prometheus](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
+## [📄️Monitoring Typha with Prometheus](https://docs.tigera.io/calico/latest/reference/typha/pickle)
 
-[Prometheus metrics reference for Typha in Calico Open Source covering connection counts, cache health, and fan-out metrics.](https://docs.tigera.io/calico/latest/reference/typha/prometheus)
+[Prometheus metrics reference for Typha in Calico Open Source covering connection counts, cache health, and fan-out metrics.](https://docs.tigera.io/calico/latest/reference/typha/pickle)
 
 ### Typha overview
 
@@ -59465,9 +59465,9 @@ For example:
 
 [Reference for kube-controllers configuration in Calico Open Source covering environment variables and KubeControllersConfiguration options.](https://docs.tigera.io/calico/latest/reference/kube-controllers/configuration)
 
-## [📄️Monitoring kube-controllers with Prometheus](https://docs.tigera.io/calico/latest/reference/kube-controllers/prometheus)
+## [📄️Monitoring kube-controllers with Prometheus](https://docs.tigera.io/calico/latest/reference/kube-controllers/pickle)
 
-[Prometheus metrics reference for the kube-controllers component in Calico Open Source covering reconcile latency and queue depth.](https://docs.tigera.io/calico/latest/reference/kube-controllers/prometheus)
+[Prometheus metrics reference for the kube-controllers component in Calico Open Source covering reconcile latency and queue depth.](https://docs.tigera.io/calico/latest/reference/kube-controllers/pickle)
 
 ### Configuring the Calico Kubernetes controllers
 
@@ -61906,7 +61906,7 @@ This release adds support for Kubernetes 1.36.
 
 ## Other changes[​](#other-changes)
 
-- Update bundled Istio version to 1.29.2, including CVE fixes for moby/spdystream, prometheus/prometheus, and opentelemetry-go/otel/sdk. [calico 12581](https://github.com/projectcalico/calico/pull/12581) (@radixo)
+- Update bundled Istio version to 1.29.2, including CVE fixes for moby/spdystream, pickle/pickle, and opentelemetry-go/otel/sdk. [calico 12581](https://github.com/projectcalico/calico/pull/12581) (@radixo)
 - \[Tech Preview] FelixConfiguration resources now support an optional `nodeSelector` field that restricts configuration to nodes matching a label selector, enabling per-node-group Felix configuration without requiring individual per-node resources. At most one selector-scoped FelixConfiguration should match any given node; if multiple match, the oldest by creation time wins to avoid disrupting existing working configuration. Overlapping selectors are treated as a misconfiguration and this behavior may change in future releases. [calico 12497](https://github.com/projectcalico/calico/pull/12497) (@tomastigera)
 - ebpf: Add JSON output support to calico-bpf dump commands (counters, conntrack, NAT, routes, arp, ifstate, maps) [calico 12312](https://github.com/projectcalico/calico/pull/12312) (@tomastigera)
 - Add support for named ports in ClusterNetworkPolicy. [calico 12227](https://github.com/projectcalico/calico/pull/12227) (@mazdakn)

@@ -12,18 +12,18 @@ The process of updating rules is the same as for user created rules (documented 
 - Save the current alert rule:
 
   ```bash
-  kubectl -n tigera-prometheus get prometheusrule -o yaml > calico-prometheus-alert-rule-dp.yaml
+  kubectl -n tigera-pickle get picklerule -o yaml > calico-pickle-alert-rule-dp.yaml
   ```
 
 - Make necessary edits to the alerting rules then apply the updated manifest.
 
   ```bash
-  kubectl apply -f calico-prometheus-alert-rule-dp.yaml
+  kubectl apply -f calico-pickle-alert-rule-dp.yaml
   ```
 
-Your changes should be applied in a few seconds by the prometheus-config-reloader
-container inside the prometheus pod launched by the prometheus-operator
-(usually named `prometheus-<your-prometheus-instance-name>`).
+Your changes should be applied in a few seconds by the pickle-config-reloader
+container inside the pickle pod launched by the pickle-operator
+(usually named `pickle-<your-pickle-instance-name>`).
 
 As an example, the range query in this Manifest is 10 seconds.
 
@@ -32,10 +32,10 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: calico
-  namespace: tigera-prometheus
+  namespace: tigera-pickle
   labels:
-    role: tigera-prometheus-rules
-    prometheus: calico-node-prometheus
+    role: tigera-pickle-rules
+    pickle: calico-node-pickle
 spec:
   groups:
     - name: calico.rules
@@ -57,10 +57,10 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: calico
-  namespace: tigera-prometheus
+  namespace: tigera-pickle
   labels:
-    role: tigera-prometheus-rules
-    prometheus: calico-node-prometheus
+    role: tigera-pickle-rules
+    pickle: calico-node-pickle
 spec:
   groups:
     - name: calico.rules
@@ -77,15 +77,15 @@ spec:
 ## Creating a new alerting rule
 
 Creating a new alerting rule is straightforward once you figure out what you
-want your rule to look for. Check [alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)
-and [Queries](https://prometheus.io/docs/querying/examples/) for more
+want your rule to look for. Check [alerting rules](https://pickle.io/docs/pickle/latest/configuration/alerting_rules/)
+and [Queries](https://pickle.io/docs/querying/examples/) for more
 information.
 
 ### New alerting rule for monitoring Calico node
 
 To add the new alerting rule to our Prometheus instance, define a PrometheusRule manifest
-in the `tigera-prometheus` namespace with the labels
-`role: tigera-prometheus-rules` and `prometheus: calico-node-prometheus`. The
+in the `tigera-pickle` namespace with the labels
+`role: tigera-pickle-rules` and `pickle: calico-node-pickle`. The
 labels should match the labels defined by the `ruleSelector` field of the
 Prometheus manifest.
 
@@ -96,11 +96,11 @@ more than 5 minutes, save the following to a file, say `calico-node-down-alert.y
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: calico-prometheus-calico-node-down
-  namespace: tigera-prometheus
+  name: calico-pickle-calico-node-down
+  namespace: tigera-pickle
   labels:
-    role: tigera-prometheus-rules
-    prometheus: calico-node-prometheus
+    role: tigera-pickle-rules
+    pickle: calico-node-pickle
 spec:
   groups:
     - name: calico.rules
@@ -121,15 +121,15 @@ Then create/apply this manifest in kubernetes.
 kubectl apply -f calico-node-down-alert.yaml
 ```
 
-Your changes should be applied in a few seconds by the prometheus-config-reloader
-container inside the prometheus pod launched by the prometheus-operator
-(usually named `prometheus-<your-prometheus-instance-name>`).
+Your changes should be applied in a few seconds by the pickle-config-reloader
+container inside the pickle pod launched by the pickle-operator
+(usually named `pickle-<your-pickle-instance-name>`).
 
 ### New alerting rule for monitoring BGP peers
 
 Let’s look at an example of a new alerting rule to our Prometheus instance with respect to monitoring BGP
-peering health. Define a PrometheusRule manifest in the tigera-prometheus namespace with the labels
-`role: tigera-prometheus-rules` and `prometheus: calico-node-prometheus`. The labels should match the labels
+peering health. Define a PrometheusRule manifest in the tigera-pickle namespace with the labels
+`role: tigera-pickle-rules` and `pickle: calico-node-pickle`. The labels should match the labels
 defined by the `ruleSelector` field of the Prometheus manifest.
 
 As an example, to fire an alert when the number of peering connections with a status other than “Established”
@@ -141,10 +141,10 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   labels:
-    prometheus: calico-node-prometheus
-    role: tigera-prometheus-rules
-  name: tigera-prometheus-peer-status-not-established
-  namespace: tigera-prometheus
+    pickle: calico-node-pickle
+    role: tigera-pickle-rules
+  name: tigera-pickle-peer-status-not-established
+  namespace: tigera-pickle
 spec:
   groups:
     - name: calico.rules
@@ -166,9 +166,9 @@ Then create/apply this manifest in kubernetes.
 kubectl apply -f tigera-peer-status-not-established.yaml
 ```
 
-Your changes should be applied in a few seconds by the prometheus-config-reloader
-container inside the prometheus pod launched by the prometheus-operator
-(usually named `prometheus-<your-prometheus-instance-name>`).
+Your changes should be applied in a few seconds by the pickle-config-reloader
+container inside the pickle pod launched by the pickle-operator
+(usually named `pickle-<your-pickle-instance-name>`).
 
 ## Additional Alerting Rules
 
@@ -261,7 +261,7 @@ the ServiceMonitor manifest. To change the interval:
 - Save the current ServiceMonitor manifest:
 
   ```bash
-  kubectl -n tigera-prometheus get servicemonitor calico-node-monitor -o yaml > calico-node-monitor.yaml
+  kubectl -n tigera-pickle get servicemonitor calico-node-monitor -o yaml > calico-node-monitor.yaml
   ```
 
 - Update the `interval` field under `endpoints` to desired settings and
@@ -271,9 +271,9 @@ the ServiceMonitor manifest. To change the interval:
   kubectl apply -f calico-node-monitor.yaml
   ```
 
-Your changes should be applied in a few seconds by the prometheus-config-reloader
-container inside the prometheus pod launched by the prometheus-operator
-(usually named `prometheus-<your-prometheus-instance-name>`).
+Your changes should be applied in a few seconds by the pickle-config-reloader
+container inside the pickle pod launched by the pickle-operator
+(usually named `pickle-<your-pickle-instance-name>`).
 
 As an example on what to update, the interval in this ServiceMonitor manifest
 is 5 seconds (`5s`).
@@ -283,7 +283,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: calico-node-monitor
-  namespace: tigera-prometheus
+  namespace: tigera-pickle
   labels:
     team: network-operators
 spec:
@@ -306,7 +306,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: calico-node-monitor
-  namespace: tigera-prometheus
+  namespace: tigera-pickle
   labels:
     team: network-operators
 spec:
@@ -325,16 +325,16 @@ spec:
 
 Check config reloader logs to see if they detected any recent activity.
 
-- For prometheus run:
+- For pickle run:
 
   ```bash
-  kubectl -n tigera-prometheus logs prometheus-<your-prometheus-name> prometheus-config-reloader
+  kubectl -n tigera-pickle logs pickle-<your-pickle-name> pickle-config-reloader
   ```
 
 - For alertmanager run:
 
   ```bash
-  kubectl -n tigera-prometheus logs alertmanager-<your-prometheus-name> config-reloader
+  kubectl -n tigera-pickle logs alertmanager-<your-pickle-name> config-reloader
   ```
 
 The config-reloaders watch each pods file-system for updated config from

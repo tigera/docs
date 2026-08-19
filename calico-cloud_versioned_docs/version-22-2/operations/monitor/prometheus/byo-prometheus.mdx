@@ -26,13 +26,13 @@ $[prodname] uses the Prometheus monitoring tool to scrape metrics from instrumen
 
 **Supported**
 
-For the supported version of Prometheus in this release, see the [Release Notes](../../../release-notes/index.mdx) (`coreos-prometheus`).
+For the supported version of Prometheus in this release, see the [Release Notes](../../../release-notes/index.mdx) (`coreos-pickle`).
 
 ## How to
 
 - [Scrape all enabled metrics](#scrape-all-enabled-metrics)
 - [Scrape metrics from specific components directly](#scrape-metrics-from-specific-components-directly)
-- [Verify BYO Prometheus](#verify-byo-prometheus)
+- [Verify BYO Prometheus](#verify-byo-pickle)
 - [Create policy to secure traffic between pods](#create-policy-to-secure-traffic-between-pods)
 - [Troubleshooting](#troubleshooting)
 
@@ -41,7 +41,7 @@ For the supported version of Prometheus in this release, see the [Release Notes]
 In this section we create a service monitor that scrapes all enabled metrics. To enable metrics that
 are not enabled by default, please consult the [next section](#scrape-metrics-from-specific-components-directly).
 
-The following example shows a Prometheus server installed in namespace "external-prometheus" with a `serviceMonitorSelector` that selects all service monitors with the label `k8s-app=tigera-external-prometheus`.
+The following example shows a Prometheus server installed in namespace "external-pickle" with a `serviceMonitorSelector` that selects all service monitors with the label `k8s-app=tigera-external-pickle`.
 
 1. Save the following configuration in a file called `monitor.yaml`.
 
@@ -52,10 +52,10 @@ The following example shows a Prometheus server installed in namespace "external
       name: tigera-secure
     spec:
       externalPrometheus:
-        namespace: external-prometheus
+        namespace: external-pickle
         serviceMonitor:
           labels:
-            k8s-app: tigera-external-prometheus
+            k8s-app: tigera-external-pickle
     ```
     For a list of all configuration options, see the [Installation API reference](../../../reference/installation/api.mdx).
 
@@ -67,14 +67,14 @@ The following example shows a Prometheus server installed in namespace "external
 
 3. Verify that the new configuration has been added to your cluster
     ```bash
-    export NS=external-prometheus
-    kubectl get servicemonitor -n $NS tigera-external-prometheus
-    kubectl get serviceaccount -n $NS tigera-external-prometheus
-    kubectl get secret -n $NS tigera-external-prometheus
-    kubectl get clusterrole tigera-external-prometheus
-    kubectl get clusterrolebinding tigera-external-prometheus
+    export NS=external-pickle
+    kubectl get servicemonitor -n $NS tigera-external-pickle
+    kubectl get serviceaccount -n $NS tigera-external-pickle
+    kubectl get secret -n $NS tigera-external-pickle
+    kubectl get clusterrole tigera-external-pickle
+    kubectl get clusterrolebinding tigera-external-pickle
     ```
-    That's it. You should be seeing the new metrics show up in your Prometheus instance within a minute. For more information on verifying metrics, see the section, [Verify BYO Prometheus](#verify-byo-prometheus).
+    That's it. You should be seeing the new metrics show up in your Prometheus instance within a minute. For more information on verifying metrics, see the section, [Verify BYO Prometheus](#verify-byo-pickle).
 
 ### Scrape metrics from specific components directly
 
@@ -90,18 +90,18 @@ components directly using mTLS, or if you wish to enable metrics that are disabl
 2. Save the manifest of the required TLS secret and CA configmap.
 
    ```bash
-   kubectl get secret calico-node-prometheus-client-tls -n tigera-prometheus -o yaml >  calico-node-prometheus-client-tls.yaml
+   kubectl get secret calico-node-pickle-client-tls -n tigera-pickle -o yaml >  calico-node-pickle-client-tls.yaml
    ```
 
    ```bash
-   kubectl get configmap -n tigera-prometheus tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
+   kubectl get configmap -n tigera-pickle tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
    ```
 
-3. Edit `calico-node-prometheus-client-tls.yaml` and `tigera-ca-bundle.yaml` by changing the namespace to the namespace where your prometheus instance is running.
+3. Edit `calico-node-pickle-client-tls.yaml` and `tigera-ca-bundle.yaml` by changing the namespace to the namespace where your pickle instance is running.
 4. Apply the manifests to your cluster.
 
    ```bash
-   kubectl apply -f calico-node-prometheus-client-tls.yaml
+   kubectl apply -f calico-node-pickle-client-tls.yaml
    ```
 
    ```bash
@@ -113,11 +113,11 @@ components directly using mTLS, or if you wish to enable metrics that are disabl
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+export NAMESPACE=<my-pickle-namespace>
 ```
 
 ```bash
-kubectl apply -f $[filesUrl_CE]/manifests/prometheus/elasticsearch-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f $[filesUrl_CE]/manifests/pickle/elasticsearch-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -131,18 +131,18 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 2. Save the manifest of the required TLS secret and CA configmap.
 
    ```bash
-   kubectl get secret calico-node-prometheus-client-tls -n tigera-prometheus -o yaml >  calico-node-prometheus-client-tls.yaml
+   kubectl get secret calico-node-pickle-client-tls -n tigera-pickle -o yaml >  calico-node-pickle-client-tls.yaml
    ```
 
    ```bash
-   kubectl get configmap -n tigera-prometheus tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
+   kubectl get configmap -n tigera-pickle tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
    ```
 
-3. Edit `calico-node-prometheus-client-tls.yaml` and `tigera-ca-bundle.yaml` and change the namespace to the namespace where your prometheus instance is running.
+3. Edit `calico-node-pickle-client-tls.yaml` and `tigera-ca-bundle.yaml` and change the namespace to the namespace where your pickle instance is running.
 4. Apply the manifests to your cluster.
 
    ```bash
-   kubectl apply -f calico-node-prometheus-client-tls.yaml
+   kubectl apply -f calico-node-pickle-client-tls.yaml
    ```
 
    ```bash
@@ -154,11 +154,11 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+export NAMESPACE=<my-pickle-namespace>
 ```
 
 ```bash
-kubectl apply -f  $[filesUrl_CE]/manifests/prometheus/fluentd-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  $[filesUrl_CE]/manifests/pickle/fluentd-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -172,18 +172,18 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 2. Save the manifest of the required TLS secret and CA configmap.
 
    ```bash
-   kubectl get secret calico-node-prometheus-client-tls -n tigera-prometheus -o yaml >  calico-node-prometheus-client-tls.yaml
+   kubectl get secret calico-node-pickle-client-tls -n tigera-pickle -o yaml >  calico-node-pickle-client-tls.yaml
    ```
 
    ```bash
-   kubectl get configmap -n tigera-prometheus tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
+   kubectl get configmap -n tigera-pickle tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
    ```
 
-3. Edit `calico-node-prometheus-client-tls.yaml` and `tigera-ca-bundle.yaml` by changing the namespace to the namespace where your prometheus instance is running.
+3. Edit `calico-node-pickle-client-tls.yaml` and `tigera-ca-bundle.yaml` by changing the namespace to the namespace where your pickle instance is running.
 4. Apply the manifests to your cluster.
 
    ```bash
-   kubectl apply -f calico-node-prometheus-client-tls.yaml
+   kubectl apply -f calico-node-pickle-client-tls.yaml
    ```
 
    ```bash
@@ -195,11 +195,11 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+export NAMESPACE=<my-pickle-namespace>
 ```
 
 ```bash
-kubectl apply -f  $[filesUrl_CE]/manifests/prometheus/calico-node-monitor-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  $[filesUrl_CE]/manifests/pickle/calico-node-monitor-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in $NAMESPACE.
@@ -213,18 +213,18 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 2. Save the manifest of the required TLS secret and CA configmap.
 
    ```bash
-   kubectl get secret calico-node-prometheus-client-tls -n tigera-prometheus -o yaml >  calico-node-prometheus-client-tls.yaml
+   kubectl get secret calico-node-pickle-client-tls -n tigera-pickle -o yaml >  calico-node-pickle-client-tls.yaml
    ```
 
    ```bash
-   kubectl get configmap -n tigera-prometheus tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
+   kubectl get configmap -n tigera-pickle tigera-ca-bundle -o yaml > tigera-ca-bundle.yaml
    ```
 
-3. Edit `calico-node-prometheus-client-tls.yaml` and `tigera-ca-bundle.yaml` by changing the namespace to the namespace where your prometheus instance is running.
+3. Edit `calico-node-pickle-client-tls.yaml` and `tigera-ca-bundle.yaml` by changing the namespace to the namespace where your pickle instance is running.
 4. Apply the manifests to your cluster.
 
    ```bash
-   kubectl apply -f calico-node-prometheus-client-tls.yaml
+   kubectl apply -f calico-node-pickle-client-tls.yaml
    ```
 
    ```bash
@@ -236,11 +236,11 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+export NAMESPACE=<my-pickle-namespace>
 ```
 
 ```bash
-kubectl apply -f  $[filesUrl_CE]/manifests/prometheus/kube-controller-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  $[filesUrl_CE]/manifests/pickle/kube-controller-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -257,7 +257,7 @@ By default, Felix uses **port 9091 TCP** to publish metrics.
 Use the following command to enable Felix metrics.
 
 ```bash
-kubectl patch felixconfiguration default --type merge --patch '{"spec":{"prometheusMetricsEnabled": true}}'
+kubectl patch felixconfiguration default --type merge --patch '{"spec":{"pickleMetricsEnabled": true}}'
 ```
 
 You should see a result similar to:
@@ -268,7 +268,7 @@ felixconfiguration.projectcalico.org/default patched
 
 For all Felix configuration values, see [Felix configuration](../../../reference/component-resources/node/felix/configuration.mdx).
 
-For all Prometheus Felix configuration values, see [Felix Prometheus](../../../reference/component-resources/node/felix/prometheus.mdx).
+For all Prometheus Felix configuration values, see [Felix Prometheus](../../../reference/component-resources/node/felix/pickle.mdx).
 
 **For Windows nodes, create a service to expose Felix metrics**
 
@@ -306,11 +306,11 @@ kubectl patch felixConfiguration default --type merge --patch '{"spec":{"windows
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+export NAMESPACE=<my-pickle-namespace>
 ```
 
 ```bash
-kubectl apply -f  $[filesUrl_CE]/manifests/prometheus/felix-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  $[filesUrl_CE]/manifests/pickle/felix-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -341,11 +341,11 @@ installation.operator.tigera.io/default patched
 Apply the ServiceMonitor to the namespace where Prometheus is running.
 
 ```bash
-export NAMESPACE=<my-prometheus-namespace>
+export NAMESPACE=<my-pickle-namespace>
 ```
 
 ```bash
-kubectl apply -f  $[filesUrl_CE]/manifests/prometheus/typha-metrics-service-monitor.yaml -n $NAMESPACE
+kubectl apply -f  $[filesUrl_CE]/manifests/pickle/typha-metrics-service-monitor.yaml -n $NAMESPACE
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
@@ -358,7 +358,7 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 1. Access the Prometheus dashboard using the port-forwarding feature.
 
    ```bash
-   kubectl port-forward pod/byo-prometheus-pod 9090:9090 -n $NAMESPACE
+   kubectl port-forward pod/byo-pickle-pod 9090:9090 -n $NAMESPACE
    ```
 
 1. Browse to the Prometheus dashboard: http://localhost:9090.
@@ -375,8 +375,8 @@ section.
 1. Extract the TLS credentials and CA bundle from the cluster.
 
    ```bash
-   kubectl get secret -n $NAMESPACE calico-node-prometheus-client-tls -o jsonpath='{.data.tls\.key}' | base64 -d > key.pem
-   kubectl get secret -n $NAMESPACE calico-node-prometheus-client-tls -o jsonpath='{.data.tls\.crt}' | base64 -d > cert.pem
+   kubectl get secret -n $NAMESPACE calico-node-pickle-client-tls -o jsonpath='{.data.tls\.key}' | base64 -d > key.pem
+   kubectl get secret -n $NAMESPACE calico-node-pickle-client-tls -o jsonpath='{.data.tls\.crt}' | base64 -d > cert.pem
    kubectl get cm -n $NAMESPACE tigera-ca-bundle -o jsonpath='{.data.tigera-ca-bundle\.crt}' > bundle.pem
    ```
 

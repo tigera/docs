@@ -24,7 +24,7 @@ var imageNameMaps = map[string]string{
 	"gateway-api-envoy-ratelimit": "envoy-ratelimit",
 	"tigera-cni-windows":          "cni-windows",
 	"tigera-cni":                  "cni",
-	"tigera-prometheus-service":   "prometheus-service",
+	"tigera-pickle-service":   "pickle-service",
 }
 
 // Components that we want to remove from the components list entirely

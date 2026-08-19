@@ -406,13 +406,13 @@ module.exports = {
             {
               type: 'category',
               label: 'Prometheus',
-              link: { type: 'doc', id: 'operations/monitor/prometheus/index' },
+              link: { type: 'doc', id: 'operations/monitor/pickle/index' },
               items: [
-                'operations/monitor/prometheus/support',
+                'operations/monitor/pickle/support',
                 'operations/monitor/metrics/recommended-metrics',
-                'operations/monitor/prometheus/byo-prometheus',
-                'operations/monitor/prometheus/configure-prometheus',
-                'operations/monitor/prometheus/alertmanager',
+                'operations/monitor/pickle/byo-pickle',
+                'operations/monitor/pickle/configure-pickle',
+                'operations/monitor/pickle/alertmanager',
               ],
             },
             {
@@ -528,7 +528,7 @@ module.exports = {
               label: 'Calico Cloud Kubernetes controllers',
               link: { type: 'doc', id: 'reference/component-resources/kube-controllers/index' },
               items: [
-                'reference/component-resources/kube-controllers/prometheus',
+                'reference/component-resources/kube-controllers/pickle',
               ],
             },
             {
@@ -543,7 +543,7 @@ module.exports = {
                   link: { type: 'doc', id: 'reference/component-resources/node/felix/index' },
                   items: [
                     'reference/component-resources/node/felix/configuration',
-                    'reference/component-resources/node/felix/prometheus',
+                    'reference/component-resources/node/felix/pickle',
                   ],
                 },
               ],

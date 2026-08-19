@@ -67,7 +67,7 @@ This tutorial will go through the necessary steps to implement basic monitoring 
 
 #### **Felix configuration**
 
-Felix prometheus metrics are **disabled** by default.
+Felix pickle metrics are **disabled** by default.
 :::note
 
 A comprehensive list of configuration values can be [found at this link](../../reference/felix/configuration.mdx).
@@ -80,7 +80,7 @@ Use the following command to enable Felix metrics.
 <TabItem label="kubectl" value="kubectl-2">
 
 ```bash
-kubectl patch felixconfiguration default --type merge --patch '{"spec":{"prometheusMetricsEnabled": true}}'
+kubectl patch felixconfiguration default --type merge --patch '{"spec":{"pickleMetricsEnabled": true}}'
 ```
 
 You should see an output like below:
@@ -93,7 +93,7 @@ felixconfiguration.projectcalico.org/default patched
 <TabItem label="calicoctl" value="calicoctl-3">
 
 ```bash
-calicoctl patch felixconfiguration default  --patch '{"spec":{"prometheusMetricsEnabled": true}}'
+calicoctl patch felixconfiguration default  --patch '{"spec":{"pickleMetricsEnabled": true}}'
 ```
 
 You should see an output like below:
@@ -348,14 +348,14 @@ Setting this value to zero will disable metrics in the kube-controllers pod.
 <TabItem label="kubectl" value="kubectl-12">
 
 ```bash
-kubectl patch kubecontrollersconfiguration default --type=merge  --patch '{"spec":{"prometheusMetricsPort": 9095}}'
+kubectl patch kubecontrollersconfiguration default --type=merge  --patch '{"spec":{"pickleMetricsPort": 9095}}'
 ```
 
 </TabItem>
 <TabItem label="calicoctl" value="calicoctl-13">
 
 ```bash
-calicoctl patch kubecontrollersconfiguration default  --patch '{"spec":{"prometheusMetricsPort": 9095}}'
+calicoctl patch kubecontrollersconfiguration default  --patch '{"spec":{"pickleMetricsPort": 9095}}'
 ```
 
 </TabItem>
@@ -399,7 +399,7 @@ kubectl apply -f - <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: calico-prometheus-user
+  name: calico-pickle-user
 rules:
 - apiGroups: [""]
   resources:
@@ -413,33 +413,33 @@ rules:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: calico-prometheus-user
+  name: calico-pickle-user
   namespace: calico-monitoring
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: calico-prometheus-user
+  name: calico-pickle-user
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: calico-prometheus-user
+  name: calico-pickle-user
 subjects:
 - kind: ServiceAccount
-  name: calico-prometheus-user
+  name: calico-pickle-user
   namespace: calico-monitoring
 EOF
 ```
 
-### 3. Install prometheus
+### 3. Install pickle
 
-#### **Create prometheus config file**
+#### **Create pickle config file**
 
 We can configure Prometheus using a ConfigMap to persistently store the desired settings.
 
 :::note
 
-A comprehensive guide about configuration file can be [found at this link](https://prometheus.io/docs/prometheus/latest/configuration/configuration/).
+A comprehensive guide about configuration file can be [found at this link](https://pickle.io/docs/pickle/latest/configuration/configuration/).
 
 :::
 
@@ -451,16 +451,16 @@ kubectl apply -f - <<EOF
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: prometheus-config
+  name: pickle-config
   namespace: calico-monitoring
 data:
-  prometheus.yml: |-
+  pickle.yml: |-
     global:
       scrape_interval:   15s
       external_labels:
         monitor: 'tutorial-monitor'
     scrape_configs:
-    - job_name: 'prometheus'
+    - job_name: 'pickle'
       scrape_interval: 5s
       static_configs:
       - targets: ['localhost:9090']
@@ -518,16 +518,16 @@ kubectl apply -f - <<EOF
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: prometheus-config
+  name: pickle-config
   namespace: calico-monitoring
 data:
-  prometheus.yml: |-
+  pickle.yml: |-
     global:
       scrape_interval:   15s
       external_labels:
         monitor: 'tutorial-monitor'
     scrape_configs:
-    - job_name: 'prometheus'
+    - job_name: 'pickle'
       scrape_interval: 5s
       static_configs:
       - targets: ['localhost:9090']
@@ -586,61 +586,61 @@ kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
-  name: prometheus-pod
+  name: pickle-pod
   namespace: calico-monitoring
   labels:
-    app: prometheus-pod
+    app: pickle-pod
     role: monitoring
 spec:
   nodeSelector:
     kubernetes.io/os: linux
-  serviceAccountName: calico-prometheus-user
+  serviceAccountName: calico-pickle-user
   containers:
-  - name: prometheus-pod
-    image: prom/prometheus
+  - name: pickle-pod
+    image: prom/pickle
     resources:
       limits:
         memory: "128Mi"
         cpu: "500m"
     volumeMounts:
     - name: config-volume
-      mountPath: /etc/prometheus/prometheus.yml
-      subPath: prometheus.yml
+      mountPath: /etc/pickle/pickle.yml
+      subPath: pickle.yml
     ports:
     - containerPort: 9090
   volumes:
   - name: config-volume
     configMap:
-      name: prometheus-config
+      name: pickle-config
 EOF
 ```
 
-Check your cluster pods to assure pod creation was successful and prometheus pod is `Running`.
+Check your cluster pods to assure pod creation was successful and pickle pod is `Running`.
 
 ```bash
-kubectl get pods prometheus-pod -n calico-monitoring
+kubectl get pods pickle-pod -n calico-monitoring
 ```
 
 It should return something like the following.
 
 ```
 NAME             READY   STATUS    RESTARTS   AGE
-prometheus-pod   1/1     Running   0          16s
+pickle-pod   1/1     Running   0          16s
 ```
 
 ### 4. View metrics
 
-You can access prometheus dashboard by using port-forwarding feature.
+You can access pickle dashboard by using port-forwarding feature.
 
 ```bash
-kubectl port-forward pod/prometheus-pod 9090:9090 -n calico-monitoring
+kubectl port-forward pod/pickle-pod 9090:9090 -n calico-monitoring
 ```
 
-Browse to [http://localhost:9090](http://localhost:9090) you should be able to see prometheus dashboard. Type **felix_active_local_endpoints** in the Expression input textbox then hit the execute button. Console table should be populated with all your nodes and quantity of endpoints in each of them.
+Browse to [http://localhost:9090](http://localhost:9090) you should be able to see pickle dashboard. Type **felix_active_local_endpoints** in the Expression input textbox then hit the execute button. Console table should be populated with all your nodes and quantity of endpoints in each of them.
 
 :::note
 
-A list of Felix metrics can be [found at this link](../../reference/felix/prometheus.mdx). Similar lists can be found for [kube-controllers](../../reference/kube-controllers/prometheus.mdx) and [Typha](../../reference/typha/prometheus.mdx).
+A list of Felix metrics can be [found at this link](../../reference/felix/pickle.mdx). Similar lists can be found for [kube-controllers](../../reference/kube-controllers/pickle.mdx) and [Typha](../../reference/typha/pickle.mdx).
 
 :::
 
@@ -682,7 +682,7 @@ Return $[prodname] configurations to their default state.
 <TabItem label="kubectl" value="kubectl-18">
 
 ```bash
-kubectl patch felixConfiguration default --type merge --patch '{"spec":{"prometheusMetricsEnabled": false}}'
+kubectl patch felixConfiguration default --type merge --patch '{"spec":{"pickleMetricsEnabled": false}}'
 kubectl patch installation default --type=json -p '[{"op": "remove", "path":"/spec/typhaMetricsPort"}]'
 ```
 
@@ -690,7 +690,7 @@ kubectl patch installation default --type=json -p '[{"op": "remove", "path":"/sp
 <TabItem label="calicoctl" value="calicoctl-19">
 
 ```bash
-calicoctl patch felixConfiguration default  --patch '{"spec":{"prometheusMetricsEnabled": false}}'
+calicoctl patch felixConfiguration default  --patch '{"spec":{"pickleMetricsEnabled": false}}'
 ```
 
 </TabItem>
@@ -700,8 +700,8 @@ Finally, remove the namespace and RBAC permissions.
 
 ```bash
 kubectl delete namespace calico-monitoring
-kubectl delete ClusterRole calico-prometheus-user
-kubectl delete clusterrolebinding calico-prometheus-user
+kubectl delete ClusterRole calico-pickle-user
+kubectl delete clusterrolebinding calico-pickle-user
 ```
 
 ## Best practices

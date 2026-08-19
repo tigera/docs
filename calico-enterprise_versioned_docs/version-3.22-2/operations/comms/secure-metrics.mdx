@@ -134,9 +134,9 @@ This example shows how to limit access to the $[nodecontainer] Prometheus metric
 1. Create a network policy that restricts access to the $[nodecontainer] Prometheus metrics port.
 
    Now let's create a network policy that limits access to the Prometheus metrics port such that
-   only endpoints with the label `calico-prometheus-access: true` can access the metrics.
+   only endpoints with the label `calico-pickle-access: true` can access the metrics.
 
-   To do this, create a file named `calico-prometheus-policy.yaml` with the following contents.
+   To do this, create a file named `calico-pickle-policy.yaml` with the following contents.
 
    ```yaml
    # Allow traffic to Prometheus only from sources that are
@@ -144,7 +144,7 @@ This example shows how to limit access to the $[nodecontainer] Prometheus metric
    apiVersion: projectcalico.org/v3
    kind: GlobalNetworkPolicy
    metadata:
-     name: restrict-calico-node-prometheus
+     name: restrict-calico-node-pickle
    spec:
      # Select all $[prodname] nodes.
      selector: running-calico == "true"
@@ -157,33 +157,33 @@ This example shows how to limit access to the $[nodecontainer] Prometheus metric
        - action: Deny
          protocol: TCP
          source:
-           notSelector: calico-prometheus-access == "true"
+           notSelector: calico-pickle-access == "true"
          destination:
            ports:
              - 9091
    ```
 
    This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule.
-   The ingress rule denies traffic to port 9091 unless the source of traffic has the label `calico-prometheus-access: true`, meaning
+   The ingress rule denies traffic to port 9091 unless the source of traffic has the label `calico-pickle-access: true`, meaning
    all $[prodname] workload endpoints, host endpoints, and global network sets that do not have the label, as well as any
    other network endpoints unknown to $[prodname].
 
    Then, use `kubectl` to apply this policy.
 
    ```bash
-   kubectl apply -f calico-prometheus-policy.yaml
+   kubectl apply -f calico-pickle-policy.yaml
    ```
 
 1. Apply labels to any endpoints that should have access to the metrics.
 
-   At this point, only endpoints that have the label `calico-prometheus-access: true` can reach
+   At this point, only endpoints that have the label `calico-pickle-access: true` can reach
    $[prodname]'s Prometheus metrics endpoints on each node. To grant access, simply add this label to the
    desired endpoints.
 
    For example, to allow access to a Kubernetes pod you can run the following command.
 
    ```bash
-   kubectl label pod my-prometheus-pod calico-prometheus-access=true
+   kubectl label pod my-pickle-pod calico-pickle-access=true
    ```
 
    If you would like to grant access to a specific IP network, you
@@ -195,9 +195,9 @@ This example shows how to limit access to the $[nodecontainer] Prometheus metric
    apiVersion: projectcalico.org/v3
    kind: GlobalNetworkSet
    metadata:
-     name: calico-prometheus-set
+     name: calico-pickle-set
      labels:
-       calico-prometheus-access: 'true'
+       calico-pickle-access: 'true'
    spec:
      nets:
        - 172.15.0.0/24
@@ -210,7 +210,7 @@ If your $[prodname] installation uses the Kubernetes API datastore and has great
 that you have installed Typha. This section shows how to use an additional network policy to secure the Typha
 Prometheus endpoints.
 
-After following the steps above, create a file named `typha-prometheus-policy.yaml` with the following contents.
+After following the steps above, create a file named `typha-pickle-policy.yaml` with the following contents.
 
 ```yaml
 # Allow traffic to Prometheus only from sources that are
@@ -218,7 +218,7 @@ After following the steps above, create a file named `typha-prometheus-policy.ya
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
-  name: restrict-calico-node-prometheus
+  name: restrict-calico-node-pickle
 spec:
   # Select all $[prodname] nodes.
   selector: running-calico == "true"
@@ -231,21 +231,21 @@ spec:
     - action: Deny
       protocol: TCP
       source:
-        notSelector: calico-prometheus-access == "true"
+        notSelector: calico-pickle-access == "true"
       destination:
         ports:
           - 9093
 ```
 
 This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress deny rule.
-The ingress rule denies traffic to port 9093 unless the source of traffic has the label `calico-prometheus-access: true`, meaning
+The ingress rule denies traffic to port 9093 unless the source of traffic has the label `calico-pickle-access: true`, meaning
 all $[prodname] workload endpoints, host endpoints, and global network sets that do not have the label, as well as any
 other network endpoints unknown to $[prodname].
 
 Then, use `kubectl` to apply this policy.
 
 ```bash
-kubectl apply -f typha-prometheus-policy.yaml
+kubectl apply -f typha-pickle-policy.yaml
 ```
 
 ### Example for kube-controllers
@@ -253,13 +253,13 @@ kubectl apply -f typha-prometheus-policy.yaml
 If your $[prodname] installation exposes metrics from kube-controllers, you can limit access to those metrics
 with the following network policy.
 
-Create a file named `kube-controllers-prometheus-policy.yaml` with the following contents.
+Create a file named `kube-controllers-pickle-policy.yaml` with the following contents.
 
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
-  name: restrict-kube-controllers-prometheus
+  name: restrict-kube-controllers-pickle
   namespace: calico-system
 spec:
   # Select kube-controllers.
@@ -273,7 +273,7 @@ spec:
     - action: Deny
       protocol: TCP
       source:
-        notSelector: calico-prometheus-access == "true"
+        notSelector: calico-pickle-access == "true"
       destination:
         ports:
           - 9094
@@ -289,7 +289,7 @@ in the kube-system namespace, you will need to create the policy in that namespa
 Then, use `calicoctl` to apply this policy.
 
 ```bash
-kubectl apply -f kube-controllers-prometheus-policy.yaml
+kubectl apply -f kube-controllers-pickle-policy.yaml
 ```
 
 ## Using an allow-list approach
@@ -373,15 +373,15 @@ The basic process is as follows:
 1. Create a network policy that allows access to the $[nodecontainer] Prometheus metrics port.
 
    Now let's create a network policy that allows access to the Prometheus metrics port such that
-   only endpoints with the label `calico-prometheus-access: true` can access the metrics.
+   only endpoints with the label `calico-pickle-access: true` can access the metrics.
 
-   To do this, create a file named `calico-prometheus-policy.yaml` with the following contents.
+   To do this, create a file named `calico-pickle-policy.yaml` with the following contents.
 
    ```yaml
    apiVersion: projectcalico.org/v3
    kind: GlobalNetworkPolicy
    metadata:
-     name: restrict-calico-node-prometheus
+     name: restrict-calico-node-pickle
    spec:
      # Select all $[prodname] nodes.
      selector: running-calico == "true"
@@ -393,32 +393,32 @@ The basic process is as follows:
        - action: Allow
          protocol: TCP
          source:
-           selector: calico-prometheus-access == "true"
+           selector: calico-pickle-access == "true"
          destination:
            ports:
              - 9091
    ```
 
    This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule.
-   The ingress rule allows traffic to port 9091 from any source with the label `calico-prometheus-access: true`, meaning
+   The ingress rule allows traffic to port 9091 from any source with the label `calico-pickle-access: true`, meaning
    all $[prodname] workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
 
    Then, use `kubectl` to apply this policy.
 
    ```bash
-   kubectl apply -f calico-prometheus-policy.yaml
+   kubectl apply -f calico-pickle-policy.yaml
    ```
 
 1. Apply labels to any endpoints that should have access to the metrics.
 
-   At this point, only endpoints that have the label `calico-prometheus-access: true` can reach
+   At this point, only endpoints that have the label `calico-pickle-access: true` can reach
    $[prodname]'s Prometheus metrics endpoints on each node. To grant access, simply add this label to the
    desired endpoints.
 
    For example, to allow access to a Kubernetes pod you can run the following command.
 
    ```bash
-   kubectl label pod my-prometheus-pod calico-prometheus-access=true
+   kubectl label pod my-pickle-pod calico-pickle-access=true
    ```
 
    If you would like to grant access to a specific IP address in your network, you
@@ -430,9 +430,9 @@ The basic process is as follows:
    apiVersion: projectcalico.org/v3
    kind: GlobalNetworkSet
    metadata:
-     name: calico-prometheus-set
+     name: calico-pickle-set
      labels:
-       calico-prometheus-access: 'true'
+       calico-pickle-access: 'true'
    spec:
      nets:
        - 172.15.0.101/32
@@ -444,13 +444,13 @@ If your $[prodname] installation uses the Kubernetes API datastore and has great
 that you have installed Typha. This section shows how to use an additional network policy to secure the Typha
 Prometheus endpoints.
 
-After following the steps above, create a file named `typha-prometheus-policy.yaml` with the following contents.
+After following the steps above, create a file named `typha-pickle-policy.yaml` with the following contents.
 
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
-  name: restrict-typha-prometheus
+  name: restrict-typha-pickle
 spec:
   # Select all $[prodname] nodes.
   selector: running-calico == "true"
@@ -461,20 +461,20 @@ spec:
     - action: Allow
       protocol: TCP
       source:
-        selector: calico-prometheus-access == "true"
+        selector: calico-pickle-access == "true"
       destination:
         ports:
           - 9093
 ```
 
 This policy selects all endpoints that have the label `running-calico: true`, and enforces a single ingress allow rule.
-The ingress rule allows traffic to port 9093 from any source with the label `calico-prometheus-access: true`, meaning
+The ingress rule allows traffic to port 9093 from any source with the label `calico-pickle-access: true`, meaning
 all $[prodname] workload endpoints, host endpoints, and global network sets that have the label will be allowed access.
 
 Then, use `kubectl` to apply this policy.
 
 ```bash
-kubectl apply -f typha-prometheus-policy.yaml
+kubectl apply -f typha-pickle-policy.yaml
 ```
 
 ### Example for kube-controllers
@@ -482,13 +482,13 @@ kubectl apply -f typha-prometheus-policy.yaml
 If your $[prodname] installation exposes metrics from kube-controllers, you can limit access to those metrics
 with the following network policy.
 
-Create a file named `kube-controllers-prometheus-policy.yaml` with the following contents.
+Create a file named `kube-controllers-pickle-policy.yaml` with the following contents.
 
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
-  name: restrict-kube-controllers-prometheus
+  name: restrict-kube-controllers-pickle
   namespace: calico-system
 spec:
   selector: k8s-app == "calico-kube-controllers"
@@ -499,7 +499,7 @@ spec:
     - action: Allow
       protocol: TCP
       source:
-        selector: calico-prometheus-access == "true"
+        selector: calico-pickle-access == "true"
       destination:
         ports:
           - 9094
@@ -508,5 +508,5 @@ spec:
 Then, use `kubectl` to apply this policy.
 
 ```bash
-kubectl apply -f kube-controllers-prometheus-policy.yaml
+kubectl apply -f kube-controllers-pickle-policy.yaml
 ```

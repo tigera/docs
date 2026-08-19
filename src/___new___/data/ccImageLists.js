@@ -28,8 +28,8 @@ quay.io/tigera/egress-gateway:v3.23.1
 quay.io/tigera/l7-collector:v3.23.1
 quay.io/tigera/gateway-l7-collector:v3.23.1
 quay.io/tigera/envoy:v3.23.1
-quay.io/tigera/prometheus:v3.23.1
-quay.io/tigera/prometheus-service:v3.23.1
+quay.io/tigera/pickle:v3.23.1
+quay.io/tigera/pickle-service:v3.23.1
 quay.io/tigera/alertmanager:v3.23.1
 quay.io/tigera/queryserver:v3.23.1
 quay.io/tigera/kube-controllers:v3.23.1
@@ -55,8 +55,8 @@ quay.io/tigera/istio-proxyv2:v3.23.1
 quay.io/tigera/webhooks:v3.23.1
 quay.io/tigera/operator:v1.42.4
 quay.io/tigera/cc-core:v0.3.8
-quay.io/tigera/prometheus-operator:v3.23.1
-quay.io/tigera/prometheus-config-reloader:v3.23.1
+quay.io/tigera/pickle-operator:v3.23.1
+quay.io/tigera/pickle-config-reloader:v3.23.1
 quay.io/tigera/cc-cni-config-scanner:v0.7.3`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.6-0/image-list
   'v22.5.0': `quay.io/tigera/apiserver:v3.22.6
@@ -80,8 +80,8 @@ quay.io/tigera/egress-gateway:v3.22.6
 quay.io/tigera/l7-collector:v3.22.6
 quay.io/tigera/gateway-l7-collector:v3.22.6
 quay.io/tigera/envoy:v3.22.6
-quay.io/tigera/prometheus:v3.22.6
-quay.io/tigera/prometheus-service:v3.22.6
+quay.io/tigera/pickle:v3.22.6
+quay.io/tigera/pickle-service:v3.22.6
 quay.io/tigera/alertmanager:v3.22.6
 quay.io/tigera/queryserver:v3.22.6
 quay.io/tigera/kube-controllers:v3.22.6
@@ -112,8 +112,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
 quay.io/tigera/runtime-security-operator:v1.23.2
 quay.io/tigera/skimble:v1.23.2
 quay.io/tigera/cc-core:v0.3.6
-quay.io/tigera/prometheus-operator:v3.22.6
-quay.io/tigera/prometheus-config-reloader:v3.22.6
+quay.io/tigera/pickle-operator:v3.22.6
+quay.io/tigera/pickle-config-reloader:v3.22.6
 quay.io/tigera/cc-cni-config-scanner:v0.7.2`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.4-1/image-list
   'v22.4.1': `quay.io/tigera/apiserver:v3.22.4
@@ -137,8 +137,8 @@ quay.io/tigera/egress-gateway:v3.22.4
 quay.io/tigera/l7-collector:v3.22.4
 quay.io/tigera/gateway-l7-collector:v3.22.4
 quay.io/tigera/envoy:v3.22.4
-quay.io/tigera/prometheus:v3.22.4
-quay.io/tigera/prometheus-service:v3.22.4
+quay.io/tigera/pickle:v3.22.4
+quay.io/tigera/pickle-service:v3.22.4
 quay.io/tigera/alertmanager:v3.22.4
 quay.io/tigera/queryserver:v3.22.4
 quay.io/tigera/kube-controllers:v3.22.4
@@ -169,8 +169,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
 quay.io/tigera/runtime-security-operator:v1.23.2
 quay.io/tigera/skimble:v1.23.2
 quay.io/tigera/cc-core:v0.3.5
-quay.io/tigera/prometheus-operator:v3.22.4
-quay.io/tigera/prometheus-config-reloader:v3.22.4
+quay.io/tigera/pickle-operator:v3.22.4
+quay.io/tigera/pickle-config-reloader:v3.22.4
 quay.io/tigera/cc-cni-config-scanner:v0.7.1`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.4-1/image-list
   'v22.4.0': `quay.io/tigera/apiserver:v3.22.4
@@ -194,8 +194,8 @@ quay.io/tigera/egress-gateway:v3.22.4
 quay.io/tigera/l7-collector:v3.22.4
 quay.io/tigera/gateway-l7-collector:v3.22.4
 quay.io/tigera/envoy:v3.22.4
-quay.io/tigera/prometheus:v3.22.4
-quay.io/tigera/prometheus-service:v3.22.4
+quay.io/tigera/pickle:v3.22.4
+quay.io/tigera/pickle-service:v3.22.4
 quay.io/tigera/alertmanager:v3.22.4
 quay.io/tigera/queryserver:v3.22.4
 quay.io/tigera/kube-controllers:v3.22.4
@@ -226,8 +226,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
 quay.io/tigera/runtime-security-operator:v1.23.2
 quay.io/tigera/skimble:v1.23.2
 quay.io/tigera/cc-core:v0.3.5
-quay.io/tigera/prometheus-operator:v3.22.4
-quay.io/tigera/prometheus-config-reloader:v3.22.4
+quay.io/tigera/pickle-operator:v3.22.4
+quay.io/tigera/pickle-config-reloader:v3.22.4
 quay.io/tigera/cc-cni-config-scanner:v0.7.1`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.1-2/image-list
   'v22.3.0': `quay.io/tigera/apiserver:v3.22.1
@@ -251,8 +251,8 @@ quay.io/tigera/egress-gateway:v3.22.1
 quay.io/tigera/l7-collector:v3.22.1
 quay.io/tigera/gateway-l7-collector:v3.22.1
 quay.io/tigera/envoy:v3.22.1
-quay.io/tigera/prometheus:v3.22.1
-quay.io/tigera/prometheus-service:v3.22.1
+quay.io/tigera/pickle:v3.22.1
+quay.io/tigera/pickle-service:v3.22.1
 quay.io/tigera/alertmanager:v3.22.1
 quay.io/tigera/queryserver:v3.22.1
 quay.io/tigera/kube-controllers:v3.22.1
@@ -283,8 +283,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
 quay.io/tigera/runtime-security-operator:v1.23.2
 quay.io/tigera/skimble:v1.23.2
 quay.io/tigera/cc-core:v0.3.5
-quay.io/tigera/prometheus-operator:v3.22.1
-quay.io/tigera/prometheus-config-reloader:v3.22.1
+quay.io/tigera/pickle-operator:v3.22.1
+quay.io/tigera/pickle-config-reloader:v3.22.1
 quay.io/tigera/cc-cni-config-scanner:v0.7.1`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.1-1/image-list
   'v22.2.0': `quay.io/tigera/apiserver:v3.22.1
@@ -308,8 +308,8 @@ quay.io/tigera/egress-gateway:v3.22.1
 quay.io/tigera/l7-collector:v3.22.1
 quay.io/tigera/gateway-l7-collector:v3.22.1
 quay.io/tigera/envoy:v3.22.1
-quay.io/tigera/prometheus:v3.22.1
-quay.io/tigera/prometheus-service:v3.22.1
+quay.io/tigera/pickle:v3.22.1
+quay.io/tigera/pickle-service:v3.22.1
 quay.io/tigera/alertmanager:v3.22.1
 quay.io/tigera/queryserver:v3.22.1
 quay.io/tigera/kube-controllers:v3.22.1
@@ -340,8 +340,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
 quay.io/tigera/runtime-security-operator:v1.23.2
 quay.io/tigera/skimble:v1.23.2
 quay.io/tigera/cc-core:v0.3.4
-quay.io/tigera/prometheus-operator:v3.22.1
-quay.io/tigera/prometheus-config-reloader:v3.22.1
+quay.io/tigera/pickle-operator:v3.22.1
+quay.io/tigera/pickle-config-reloader:v3.22.1
 quay.io/tigera/cc-cni-config-scanner:v0.7.1`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.0-2.0-7/image-list
   'v22.1.0': `quay.io/tigera/apiserver:v3.22.0-2.0
@@ -365,8 +365,8 @@ quay.io/tigera/egress-gateway:v3.22.0-2.0
 quay.io/tigera/l7-collector:v3.22.0-2.0
 quay.io/tigera/gateway-l7-collector:v3.22.0-2.0
 quay.io/tigera/envoy:v3.22.0-2.0
-quay.io/tigera/prometheus:v3.22.0-2.0
-quay.io/tigera/prometheus-service:v3.22.0-2.0
+quay.io/tigera/pickle:v3.22.0-2.0
+quay.io/tigera/pickle-service:v3.22.0-2.0
 quay.io/tigera/alertmanager:v3.22.0-2.0
 quay.io/tigera/queryserver:v3.22.0-2.0
 quay.io/tigera/kube-controllers:v3.22.0-2.0
@@ -393,8 +393,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
 quay.io/tigera/runtime-security-operator:v1.23.2
 quay.io/tigera/skimble:v1.23.2
 quay.io/tigera/cc-core:v0.3.3
-quay.io/tigera/prometheus-operator:v3.22.0-2.0
-quay.io/tigera/prometheus-config-reloader:v3.22.0-2.0
+quay.io/tigera/pickle-operator:v3.22.0-2.0
+quay.io/tigera/pickle-config-reloader:v3.22.0-2.0
 quay.io/tigera/cc-cni-config-scanner:v0.7`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.0-1.0-11/image-list
   'v22.0.1': `quay.io/tigera/cnx-apiserver:v3.22.0-1.0
@@ -415,8 +415,8 @@ quay.io/tigera/policy-recommendation:v3.22.0-1.0
 quay.io/tigera/egress-gateway:v3.22.0-1.0
 quay.io/tigera/l7-collector:v3.22.0-1.0
 quay.io/tigera/envoy:v3.22.0-1.0
-quay.io/tigera/prometheus:v3.22.0-1.0
-quay.io/tigera/prometheus-service:v3.22.0-1.0
+quay.io/tigera/pickle:v3.22.0-1.0
+quay.io/tigera/pickle-service:v3.22.0-1.0
 quay.io/tigera/alertmanager:v3.22.0-1.0
 quay.io/tigera/cnx-queryserver:v3.22.0-1.0
 quay.io/tigera/kube-controllers:v3.22.0-1.0
@@ -443,8 +443,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
 quay.io/tigera/runtime-security-operator:v1.23.2
 quay.io/tigera/skimble:v1.23.2
 quay.io/tigera/cc-core:v0.3.2
-quay.io/tigera/prometheus-operator:v3.22.0-1.0
-quay.io/tigera/prometheus-config-reloader:v3.22.0-1.0
+quay.io/tigera/pickle-operator:v3.22.0-1.0
+quay.io/tigera/pickle-config-reloader:v3.22.0-1.0
 quay.io/tigera/cc-cni-config-scanner:v0.6`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.0-1.0-8/image-list
   'v22.0.0': `quay.io/tigera/cnx-apiserver:v3.22.0-1.0
@@ -465,8 +465,8 @@ quay.io/tigera/policy-recommendation:v3.22.0-1.0
 quay.io/tigera/egress-gateway:v3.22.0-1.0
 quay.io/tigera/l7-collector:v3.22.0-1.0
 quay.io/tigera/envoy:v3.22.0-1.0
-quay.io/tigera/prometheus:v3.22.0-1.0
-quay.io/tigera/prometheus-service:v3.22.0-1.0
+quay.io/tigera/pickle:v3.22.0-1.0
+quay.io/tigera/pickle-service:v3.22.0-1.0
 quay.io/tigera/alertmanager:v3.22.0-1.0
 quay.io/tigera/cnx-queryserver:v3.22.0-1.0
 quay.io/tigera/kube-controllers:v3.22.0-1.0
@@ -493,8 +493,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.9
 quay.io/tigera/runtime-security-operator:v1.23.2
 quay.io/tigera/skimble:v1.23.2
 quay.io/tigera/cc-core:v0.3.1
-quay.io/tigera/prometheus-operator:v3.22.0-1.0
-quay.io/tigera/prometheus-config-reloader:v3.22.0-1.0
+quay.io/tigera/pickle-operator:v3.22.0-1.0
+quay.io/tigera/pickle-config-reloader:v3.22.0-1.0
 quay.io/tigera/cc-cni-config-scanner:v0.6`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.21.0-2.0-12/image-list
   'v21.3.0': `quay.io/tigera/cnx-apiserver:v3.21.0-2.0
@@ -515,8 +515,8 @@ quay.io/tigera/policy-recommendation:v3.21.0-2.0
 quay.io/tigera/egress-gateway:v3.21.0-2.0
 quay.io/tigera/l7-collector:v3.21.0-2.0
 quay.io/tigera/envoy:v3.21.0-2.0
-quay.io/tigera/prometheus:v3.21.0-2.0
-quay.io/tigera/prometheus-service:v3.21.0-2.0
+quay.io/tigera/pickle:v3.21.0-2.0
+quay.io/tigera/pickle-service:v3.21.0-2.0
 quay.io/tigera/alertmanager:v3.21.0-2.0
 quay.io/tigera/cnx-queryserver:v3.21.0-2.0
 quay.io/tigera/kube-controllers:v3.21.0-2.0
@@ -543,8 +543,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.7
 quay.io/tigera/runtime-security-operator:v1.23.0
 quay.io/tigera/skimble:v1.23.0
 quay.io/tigera/cc-core:v0.2.19
-quay.io/tigera/prometheus-operator:v3.21.0-2.0
-quay.io/tigera/prometheus-config-reloader:v3.21.0-2.0
+quay.io/tigera/pickle-operator:v3.21.0-2.0
+quay.io/tigera/pickle-config-reloader:v3.21.0-2.0
 quay.io/tigera/cc-cni-config-scanner:v0.5`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.21.0-1.0-5/image-list
   'v21.2.0': `quay.io/tigera/cnx-apiserver:v3.21.0-1.0
@@ -565,8 +565,8 @@ quay.io/tigera/policy-recommendation:v3.21.0-1.0
 quay.io/tigera/egress-gateway:v3.21.0-1.0
 quay.io/tigera/l7-collector:v3.21.0-1.0
 quay.io/tigera/envoy:v3.21.0-1.0
-quay.io/tigera/prometheus:v3.21.0-1.0
-quay.io/tigera/prometheus-service:v3.21.0-1.0
+quay.io/tigera/pickle:v3.21.0-1.0
+quay.io/tigera/pickle-service:v3.21.0-1.0
 quay.io/tigera/alertmanager:v3.21.0-1.0
 quay.io/tigera/cnx-queryserver:v3.21.0-1.0
 quay.io/tigera/kube-controllers:v3.21.0-1.0
@@ -593,8 +593,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.6
 quay.io/tigera/runtime-security-operator:v1.23.0
 quay.io/tigera/skimble:v1.23.0
 quay.io/tigera/cc-core:v0.2.18
-quay.io/tigera/prometheus-operator:v3.21.0-1.0
-quay.io/tigera/prometheus-config-reloader:v3.21.0-1.0
+quay.io/tigera/pickle-operator:v3.21.0-1.0
+quay.io/tigera/pickle-config-reloader:v3.21.0-1.0
 quay.io/tigera/cc-cni-config-scanner:v0.4`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.21.0-1.0-5/image-list
   'v21.1.0': `quay.io/tigera/cnx-apiserver:v3.21.0-1.0
@@ -615,8 +615,8 @@ quay.io/tigera/policy-recommendation:v3.21.0-1.0
 quay.io/tigera/egress-gateway:v3.21.0-1.0
 quay.io/tigera/l7-collector:v3.21.0-1.0
 quay.io/tigera/envoy:v3.21.0-1.0
-quay.io/tigera/prometheus:v3.21.0-1.0
-quay.io/tigera/prometheus-service:v3.21.0-1.0
+quay.io/tigera/pickle:v3.21.0-1.0
+quay.io/tigera/pickle-service:v3.21.0-1.0
 quay.io/tigera/alertmanager:v3.21.0-1.0
 quay.io/tigera/cnx-queryserver:v3.21.0-1.0
 quay.io/tigera/kube-controllers:v3.21.0-1.0
@@ -643,8 +643,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.6
 quay.io/tigera/runtime-security-operator:v1.23.0
 quay.io/tigera/skimble:v1.23.0
 quay.io/tigera/cc-core:v0.2.18
-quay.io/tigera/prometheus-operator:v3.21.0-1.0
-quay.io/tigera/prometheus-config-reloader:v3.21.0-1.0
+quay.io/tigera/pickle-operator:v3.21.0-1.0
+quay.io/tigera/pickle-config-reloader:v3.21.0-1.0
 quay.io/tigera/cc-cni-config-scanner:v0.4`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.21.0-1.0-4/image-list
   'v21.0.0': `quay.io/tigera/cnx-apiserver:v3.21.0-1.0
@@ -665,8 +665,8 @@ quay.io/tigera/policy-recommendation:v3.21.0-1.0
 quay.io/tigera/egress-gateway:v3.21.0-1.0
 quay.io/tigera/l7-collector:v3.21.0-1.0
 quay.io/tigera/envoy:v3.21.0-1.0
-quay.io/tigera/prometheus:v3.21.0-1.0
-quay.io/tigera/prometheus-service:v3.21.0-1.0
+quay.io/tigera/pickle:v3.21.0-1.0
+quay.io/tigera/pickle-service:v3.21.0-1.0
 quay.io/tigera/alertmanager:v3.21.0-1.0
 quay.io/tigera/cnx-queryserver:v3.21.0-1.0
 quay.io/tigera/kube-controllers:v3.21.0-1.0
@@ -693,8 +693,8 @@ quay.io/tigera/image-assurance-cluster-scanner:v1.22.6
 quay.io/tigera/runtime-security-operator:v1.23.0
 quay.io/tigera/skimble:v1.23.0
 quay.io/tigera/cc-core:v0.2.16
-quay.io/tigera/prometheus-operator:v3.21.0-1.0
-quay.io/tigera/prometheus-config-reloader:v3.21.0-1.0
+quay.io/tigera/pickle-operator:v3.21.0-1.0
+quay.io/tigera/pickle-config-reloader:v3.21.0-1.0
 quay.io/tigera/cc-cni-config-scanner:v0.3`,
 };
 

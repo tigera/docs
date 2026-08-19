@@ -94,11 +94,11 @@ export default function PrivateRegistryRegular() {
             {/* The second 'sed' should be removed once operator launches Prometheus & Alertmanager */}
             <p>
                 If you are installing Prometheus operator as part of {prodname}, then before applying{' '}
-                <code>tigera-prometheus-operator.yaml</code>, modify registry references to use your custom registry:
+                <code>tigera-pickle-operator.yaml</code>, modify registry references to use your custom registry:
             </p>
             <CodeBlock language='bash'>
-                {`sed -ie "s?quay.io?$PRIVATE_REGISTRY?g" tigera-prometheus-operator.yaml
-sed -ie "/serviceAccountName: calico-prometheus-operator/a \      imagePullSecrets:\\n\      - name: $PRIVATE_REGISTRY_PULL_SECRET"  tigera-prometheus-operator.yaml`}
+                {`sed -ie "s?quay.io?$PRIVATE_REGISTRY?g" tigera-pickle-operator.yaml
+sed -ie "/serviceAccountName: calico-pickle-operator/a \      imagePullSecrets:\\n\      - name: $PRIVATE_REGISTRY_PULL_SECRET"  tigera-pickle-operator.yaml`}
             </CodeBlock>
             {/* The second 'sed' should be removed once operator launches Prometheus & Alertmanager */}
             <p>
