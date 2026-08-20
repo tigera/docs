@@ -205,6 +205,7 @@ _Appears in:_
 | --- | --- |
 | `logging` _[APIServerPodLogging](#apiserverpodlogging)_ | (Optional)  |
 | `apiServerDeployment` _[APIServerDeployment](#apiserverdeployment)_ | APIServerDeployment configures the calico-apiserver Deployment. If used in conjunction with ControlPlaneNodeSelector or ControlPlaneTolerations, then these overrides take precedence. |
+| `calicoWebhooksDeployment` _[CalicoWebhooksDeployment](#calicowebhooksdeployment)_ | (Optional) CalicoWebhooksDeployment configures the calico-webhooks Deployment. |
 
 
 ### APIServerStatus
@@ -803,6 +804,7 @@ _Appears in:_
 | `bpfNetworkBootstrap` _[BPFNetworkBootstrapType](#bpfnetworkbootstraptype)_ | (Optional) BPFNetworkBootstrap manages the initial networking setup required to configure the BPF dataplane. When enabled, the operator tries to bootstraps access to the Kubernetes API Server by using the Kubernetes service and its associated endpoints. This field should be enabled only if linuxDataplane is set to "BPF". If another dataplane is selected, this field must be omitted or explicitly set to Disabled. When disabled and linuxDataplane is BPF, you must manually provide the Kubernetes API Server information via the "kubernetes-service-endpoint" ConfigMap. It is invalid to use both the ConfigMap and have this field set to true at the same time.<br />Default: Disabled |
 | `kubeProxyManagement` _[KubeProxyManagementType](#kubeproxymanagementtype)_ | (Optional) KubeProxyManagement controls whether the operator manages the kube-proxy DaemonSet. When enabled, the operator will manage the DaemonSet by patching it: it disables kube-proxy if the dataplane is BPF, or enables it otherwise.<br />Default: Disabled |
 | `bgp` _[BGPOption](#bgpoption)_ | (Optional) BGP configures whether or not to enable Calico's BGP capabilities. |
+| `clusterRoutingMode` _[ClusterRoutingMode](#clusterroutingmode)_ | (Optional) ClusterRoutingMode controls how nodes get a route to a workload on another node, when that workload's IP comes from an IP Pool with vxlanMode: Never. When ClusterRoutingMode is BIRD, confd and BIRD program that route. When ClusterRoutingMode is Felix, it is expected that Felix will program that route. Felix always programs such routes for IP Pools with vxlanMode: Always or vxlanMode: CrossSubnet. [Default: BIRD] |
 | `ipPools` _[IPPool](#ippool) array_ | (Optional) IPPools contains a list of IP pools to manage. If nil, a single IPv4 IP pool will be created by the operator. If an empty list is provided, the operator will not create any IP pools and will instead wait for IP pools to be created out-of-band. IP pools in this list will be reconciled by the operator and should not be modified out-of-band. |
 | `mtu` _integer_ | (Optional) MTU specifies the maximum transmission unit to use on the pod network. If not specified, Calico will perform MTU auto-detection based on the cluster network. |
 | `nodeAddressAutodetectionV4` _[NodeAddressAutodetection](#nodeaddressautodetection)_ | (Optional) NodeAddressAutodetectionV4 specifies an approach to automatically detect node IPv4 addresses. If not specified, will use default auto-detection settings to acquire an IPv4 address for each node. |
@@ -935,8 +937,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the calico-node-windows DaemonSet container by name.<br />Supported values are: calico-node-windows |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node-windows DaemonSet container's resources. If omitted, the calico-node-windows DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+| `name` _string_ | Name is an enum which identifies the calico-node-windows DaemonSet container by name.<br />Supported values are: node, felix, confd calico-node-windows is allowed because it was previously allowed. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named DaemonSet container's resources. If omitted, the DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
 
 
 ### CalicoNodeWindowsDaemonSetInitContainer
@@ -1000,6 +1002,100 @@ _Appears in:_
 | --- | --- |
 | `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created DaemonSet pod should be ready without any of its container crashing, for it to be considered available. If specified, this overrides any minReadySeconds value that may be set on the calico-node-windows DaemonSet. If omitted, the calico-node-windows DaemonSet will use its default value for minReadySeconds. |
 | `template` _[CalicoNodeWindowsDaemonSetPodTemplateSpec](#caliconodewindowsdaemonsetpodtemplatespec)_ | (Optional) Template describes the calico-node-windows DaemonSet pod that will be created. |
+
+
+### CalicoWebhooksDeployment
+
+
+
+CalicoWebhooksDeployment is the configuration for the calico-webhooks Deployment.
+
+_Appears in:_
+- [APIServerSpec](#apiserverspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoWebhooksDeploymentSpec](#calicowebhooksdeploymentspec)_ | (Optional) Spec is the specification of the calico-webhooks Deployment. |
+
+
+### CalicoWebhooksDeploymentContainer
+
+
+
+CalicoWebhooksDeploymentContainer is a calico-webhooks Deployment container.
+
+_Appears in:_
+- [CalicoWebhooksDeploymentPodSpec](#calicowebhooksdeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-webhooks Deployment container by name.<br />Supported values are: calico-webhooks |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-webhooks Deployment container's resources. If omitted, the calico-webhooks Deployment will use its default value for this container's resources. |
+| `ports` _[CalicoWebhooksDeploymentContainerPort](#calicowebhooksdeploymentcontainerport) array_ | (Optional) Ports allows customization of the calico-webhooks container's ports. If specified, this overrides the default container port configuration. If omitted, the calico-webhooks Deployment will use its default port (6443). |
+
+
+### CalicoWebhooksDeploymentContainerPort
+
+
+
+CalicoWebhooksDeploymentContainerPort defines a port override for a calico-webhooks container.
+
+_Appears in:_
+- [CalicoWebhooksDeploymentContainer](#calicowebhooksdeploymentcontainer)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-webhooks Deployment container port by name.<br />Supported values are: calico-webhooks |
+| `containerPort` _integer_ | Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536. |
+
+
+### CalicoWebhooksDeploymentPodSpec
+
+
+
+CalicoWebhooksDeploymentPodSpec is the calico-webhooks Deployment's PodSpec.
+
+_Appears in:_
+- [CalicoWebhooksDeploymentPodTemplateSpec](#calicowebhooksdeploymentpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `containers` _[CalicoWebhooksDeploymentContainer](#calicowebhooksdeploymentcontainer) array_ | (Optional) Containers is a list of calico-webhooks containers. If specified, this overrides the specified calico-webhooks Deployment containers. If omitted, the calico-webhooks Deployment will use its default values for its containers. |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the calico-webhooks pods. If specified, this overrides any affinity that may be set on the calico-webhooks Deployment. If omitted, the calico-webhooks Deployment will use its default value for affinity.<br />WARNING: Please note that this field will override the default calico-webhooks Deployment affinity. |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is the calico-webhooks pod's scheduling constraints. If specified, each of the key/value pairs are added to the calico-webhooks Deployment nodeSelector provided the key does not already exist in the object's nodeSelector. If used in conjunction with ControlPlaneNodeSelector, that nodeSelector is set on the calico-webhooks Deployment and each of this field's key/value pairs are added to the calico-webhooks Deployment nodeSelector provided the key does not already exist in the object's nodeSelector. If omitted, the calico-webhooks Deployment will use its default value for nodeSelector.<br />WARNING: Please note that this field will modify the default calico-webhooks Deployment nodeSelector. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the calico-webhooks pod's tolerations. If specified, this overrides any tolerations that may be set on the calico-webhooks Deployment. If omitted, the calico-webhooks Deployment will use its default value for tolerations.<br />WARNING: Please note that this field will override the default calico-webhooks Deployment tolerations. |
+| `hostNetwork` _boolean_ | (Optional) HostNetwork forces the webhook pod to use the host's network namespace. When true, the webhook pod will run with hostNetwork=true and DNSPolicy=ClusterFirstWithHostNet. When nil or omitted, the operator auto-detects whether host networking is required (e.g., for EKS/TKG with Calico CNI). |
+
+
+### CalicoWebhooksDeploymentPodTemplateSpec
+
+
+
+CalicoWebhooksDeploymentPodTemplateSpec is the calico-webhooks Deployment's PodTemplateSpec
+
+_Appears in:_
+- [CalicoWebhooksDeploymentSpec](#calicowebhooksdeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoWebhooksDeploymentPodSpec](#calicowebhooksdeploymentpodspec)_ | (Optional) Spec is the calico-webhooks Deployment's PodSpec. |
+
+
+### CalicoWebhooksDeploymentSpec
+
+
+
+CalicoWebhooksDeploymentSpec defines configuration for the calico-webhooks Deployment.
+
+_Appears in:_
+- [CalicoWebhooksDeployment](#calicowebhooksdeployment)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created Deployment pod should be ready without any of its container crashing, for it to be considered available. If specified, this overrides any minReadySeconds value that may be set on the calico-webhooks Deployment. If omitted, the calico-webhooks Deployment will use its default value for minReadySeconds. |
+| `template` _[CalicoWebhooksDeploymentPodTemplateSpec](#calicowebhooksdeploymentpodtemplatespec)_ | (Optional) Template describes the calico-webhooks Deployment pod that will be created. |
 
 
 ### CalicoWindowsUpgradeDaemonSet
@@ -1097,6 +1193,25 @@ _Appears in:_
 | `signerName` _string_ | When a CSR is issued to the certificates.k8s.io API, the signerName is added to the request in order to accommodate for clusters with multiple signers. Must be formatted as: `<my-domain>/<my-signername>`. |
 | `keyAlgorithm` _string_ | (Optional) Specify the algorithm used by pods to generate a key pair that is associated with the X.509 certificate request.<br />Default: RSAWithSize2048 |
 | `signatureAlgorithm` _string_ | (Optional) Specify the algorithm used for the signature of the X.509 certificate request.<br />Default: SHA256WithRSA |
+
+
+### ClusterRoutingMode
+
+_Underlying type:_ _string_
+
+ClusterRoutingMode describes the mode of cluster routing.
+
+_Validation:_
+- Enum: [BIRD Felix]
+
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Value | Description |
+| --- | --- |
+| `BIRD` |  |
+| `Felix` |  |
 
 
 ### CollectProcessPathOption
@@ -1777,7 +1892,7 @@ _Appears in:_
 DashboardsJobSpec defines configuration for the Dashboards job.
 
 _Appears in:_
-- DashboardsJob
+- [DashboardsJob](#dashboardsjob)
 
 | Field | Description |
 | --- | --- |
@@ -1795,7 +1910,7 @@ _Validation:_
 
 
 _Appears in:_
-- Index
+- [Index](#index)
 
 | Value | Description |
 | --- | --- |
@@ -2014,7 +2129,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the EGW Deployment container by name.<br />Supported values are: calico-egw |
+| `name` _string_ | Name is an enum which identifies the EGW Deployment container by name.<br />Supported values are: egress-gateway |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named EGW Deployment container's resources. If omitted, the EGW Deployment will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
 
 
@@ -2509,8 +2624,8 @@ _Appears in:_
 | --- | --- |
 | `params` _object (keys:string, values:string array)_ | Optional HTTP URL parameters<br />Default: scrape all metrics. |
 | `bearerTokenSecret` _[SecretKeySelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#secretkeyselector-v1-core)_ | Secret to mount to read bearer token for scraping targets. Recommended: when unset, the operator will create a Secret, a ClusterRole and a ClusterRoleBinding. |
-| `interval` _Duration_ | Interval at which metrics should be scraped. If not specified Prometheus' global scrape interval is used. |
-| `scrapeTimeout` _Duration_ | Timeout after which the scrape is ended. If not specified, the Prometheus global scrape timeout is used unless it is less than `Interval` in which the latter is used. |
+| `interval` _[Duration](#duration)_ | Interval at which metrics should be scraped. If not specified Prometheus' global scrape interval is used. |
+| `scrapeTimeout` _[Duration](#duration)_ | Timeout after which the scrape is ended. If not specified, the Prometheus global scrape timeout is used unless it is less than `Interval` in which the latter is used. |
 | `honorLabels` _boolean_ | HonorLabels chooses the metric's labels on collisions with target labels. |
 | `honorTimestamps` _boolean_ | HonorTimestamps controls whether Prometheus respects the timestamps present in scraped data. |
 | `metricRelabelings` _RelabelConfig array_ | MetricRelabelConfigs to apply to samples before ingestion. |
@@ -3213,6 +3328,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `goldmaneDeployment` _[GoldmaneDeployment](#goldmanedeployment)_ |  |
+| `metricsPort` _integer_ | (Optional) MetricsPort configures the port that Goldmane uses to serve Prometheus metrics. When set to a non-zero value, Goldmane will expose a /metrics endpoint on the given port. Set to zero to disable metrics. If omitted, metrics are disabled. |
 
 
 ### GoldmaneStatus
@@ -3602,7 +3718,7 @@ _Appears in:_
 | `componentResources` _[ComponentResource](#componentresource) array_ | (Optional) Deprecated. Please use CalicoNodeDaemonSet, TyphaDeployment, and KubeControllersDeployment. ComponentResources can be used to customize the resource requirements for each component. Node, Typha, and KubeControllers are supported for installations. |
 | `certificateManagement` _[CertificateManagement](#certificatemanagement)_ | (Optional) CertificateManagement configures pods to submit a CertificateSigningRequest to the certificates.k8s.io/v1 API in order to obtain TLS certificates. This feature requires that you bring your own CSR signing and approval process, otherwise pods will be stuck during initialization. |
 | `tlsCipherSuites` _[TLSCipherSuites](#tlsciphersuites)_ | (Optional) TLSCipherSuites defines the cipher suite list that the TLS protocol should use during secure communication. |
-| `nonPrivileged` _[NonPrivilegedType](#nonprivilegedtype)_ | (Optional) NonPrivileged configures Calico to be run in non-privileged containers as non-root users where possible. |
+| `nonPrivileged` _[NonPrivilegedType](#nonprivilegedtype)_ | (Optional) Deprecated. NonPrivileged is deprecated and will be removed from the API in a future release. Enabling this field is not supported and will cause errors. NonPrivileged configures Calico to be run in non-privileged containers as non-root users where possible. |
 | `calicoNodeDaemonSet` _[CalicoNodeDaemonSet](#caliconodedaemonset)_ | (Optional) CalicoNodeDaemonSet configures the calico-node DaemonSet. If used in conjunction with the deprecated ComponentResources, then these overrides take precedence. |
 | `csiNodeDriverDaemonSet` _[CSINodeDriverDaemonSet](#csinodedriverdaemonset)_ | (Optional) CSINodeDriverDaemonSet configures the csi-node-driver DaemonSet. |
 | `calicoKubeControllersDeployment` _[CalicoKubeControllersDeployment](#calicokubecontrollersdeployment)_ | (Optional) CalicoKubeControllersDeployment configures the calico-kube-controllers Deployment. If used in conjunction with the deprecated ComponentResources, then these overrides take precedence. |
@@ -3888,7 +4004,7 @@ _Appears in:_
 | `istiod` _[IstiodDeployment](#istioddeployment)_ | (Optional) IstiodDeployment defines the resource requirements and node selector for the Istio deployment. |
 | `istioCNI` _[IstioCNIDaemonset](#istiocnidaemonset)_ | (Optional) IstioCNIDaemonset defines the resource requirements for the Istio CNI plugin. |
 | `ztunnel` _[ZTunnelDaemonset](#ztunneldaemonset)_ | (Optional) ZTunnelDaemonset defines the resource requirements for the ZTunnelDaemonset component. |
-| `dscpMark` _DSCP_ | (Optional) DSCPMark define the value of the DSCP mark done by Felix and recognised by Istio CNI for Transparent NetworkPolicies. |
+| `dscpMark` _[DSCP](#dscp)_ | (Optional) DSCPMark define the value of the DSCP mark done by Felix and recognised by Istio CNI for Transparent NetworkPolicies. |
 
 
 ### IstioStatus
@@ -4644,7 +4760,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the Manager Deployment container by name.<br />Supported values are: calico-voltron, calico-manager, calico-ui-apis, tigera-voltron (deprecated), tigera-manager (deprecated), tigera-ui-apis (deprecated), tigera-es-proxy (deprecated) |
+| `name` _string_ | Name is an enum which identifies the Manager Deployment container by name.<br />Supported values are: calico-voltron, calico-manager, calico-ui-apis, calico-dashboard-api, tigera-voltron (deprecated), tigera-manager (deprecated), tigera-ui-apis (deprecated), tigera-es-proxy (deprecated) |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Manager Deployment container's resources. If omitted, the Manager Deployment will use its default value for this container's resources. |
 
 
@@ -4752,6 +4868,8 @@ _Appears in:_
 - [CalicoNodeDaemonSetPodTemplateSpec](#caliconodedaemonsetpodtemplatespec)
 - [CalicoNodeWindowsDaemonSet](#caliconodewindowsdaemonset)
 - [CalicoNodeWindowsDaemonSetPodTemplateSpec](#caliconodewindowsdaemonsetpodtemplatespec)
+- [CalicoWebhooksDeployment](#calicowebhooksdeployment)
+- [CalicoWebhooksDeploymentPodTemplateSpec](#calicowebhooksdeploymentpodtemplatespec)
 - [CalicoWindowsUpgradeDaemonSet](#calicowindowsupgradedaemonset)
 - [CalicoWindowsUpgradeDaemonSetPodTemplateSpec](#calicowindowsupgradedaemonsetpodtemplatespec)
 - [GatewayCertgenJob](#gatewaycertgenjob)
@@ -5747,7 +5865,7 @@ _Appears in:_
 
 
 _Appears in:_
-- TLSPassThroughRoute
+- [TLSPassThroughRoute](#tlspassthroughroute)
 
 | Field | Description |
 | --- | --- |
@@ -5765,7 +5883,7 @@ _Appears in:_
 
 
 _Appears in:_
-- TLSTerminatedRoute
+- [TLSTerminatedRoute](#tlsterminatedroute)
 
 | Field | Description |
 | --- | --- |
