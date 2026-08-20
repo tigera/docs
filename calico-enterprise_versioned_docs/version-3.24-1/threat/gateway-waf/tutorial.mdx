@@ -114,6 +114,15 @@ This tutorial takes you from a running Ingress Gateway to a blocked attack in ab
    kubectl wait --for=condition=Accepted gateway/httpbin-gateway -n httpbin --timeout=60s
    ```
 
+   At this point `Accepted` only means Gateway passed validation. Let's now wait for the Envoy proxy
+   Deployment that Ingress Gateway creates:
+
+   ```bash
+   kubectl wait --for=condition=Available deployment \
+     -l gateway.envoyproxy.io/owning-gateway-name=httpbin-gateway \
+     -n httpbin --timeout=180s
+   ```
+
 1. Confirm traffic flows. Find the Envoy service the Ingress Gateway created for this Gateway (the service lands in the Gateway's own namespace, `httpbin`):
 
    ```bash
