@@ -1,5 +1,5 @@
 ---
-description: Filter Calico Enterprise flow logs through Fluentd to drop low-significance traffic and reduce in-cluster Elasticsearch volume and cost.
+description: Filter Calico Enterprise flow logs through Fluent Bit to drop low-significance traffic and reduce in-cluster Elasticsearch volume and cost.
 ---
 
 # Filter flow logs
@@ -53,55 +53,48 @@ reporter packetsIn packetsOut bytesIn bytesOut action
 
 ### Create flow log filters
 
-Create your [fluentd filters](https://docs.fluentd.org/filter/grep).
+Filters are written as a YAML list of [Fluent Bit filter](https://docs.fluentbit.io/manual/data-pipeline/filters/grep) entries. The `calico-fluent-bit` log collector ships the `grep`, `record_modifier`, `parser`, and `lua` filters. Filters you add under the `flow` key are applied to flow logs automatically; you do not need to set a `match` on each entry.
 
 **Example: filter out a specific namespace**
 
-This example filters out all flow logs whose source or destination namespace is "dev". Additional namespaces could be filtered by adjusting the regular expression "pattern"s, or by adding additional `exclude` blocks.
+This example filters out all flow logs whose source or destination namespace is `dev`. A record is dropped when it matches any of the `exclude` rules; additional namespaces could be filtered by adjusting the regular expressions, or by adding more `exclude` rules.
 
-```
-<filter flows>
-  @type grep
-  <exclude>
-    key source_namespace
-    pattern dev
-  </exclude>
-  <exclude>
-    key dest_namespace
-    pattern dev
-  </exclude>
-</filter>
+```yaml
+- name: grep
+  exclude:
+    - source_namespace dev
+    - dest_namespace dev
 ```
 
 **Example: filter out internet traffic to a specific deployment**
 
-This example filters inbound internet traffic to the deployment with pods named, `nginx-internet-*`. Note the use of the `and` directive to filter out traffic that is both to the deployment, and from the internet (source `pub`).
+This example filters inbound internet traffic to the deployment with pods named, `nginx-internet-*`. Note the use of `logical_op: and` to filter out only the traffic that is both to the deployment, and from the internet (source `pub`).
 
-```
-<filter flows>
-  @type grep
-  <and>
-    <exclude>
-        key dest_name_aggr
-        pattern ^nginx-internet
-    </exclude>
-    <exclude>
-        key source_name_aggr
-        pattern pub
-    </exclude>
-  </and>
-</filter>
+```yaml
+- name: grep
+  logical_op: and
+  exclude:
+    - dest_name_aggr ^nginx-internet
+    - source_name_aggr pub
 ```
 
 ### Add filters to ConfigMap file
 
-1. Create a `filters` directory with a file called `flow` with your desired filters. If you are also adding [dns filters](../dns/filtering-dns.mdx), add the `dns` file to the directory.
+1. Create a `filters` directory with a file called `flow` with your desired filters. If you are also adding [DNS filters](../dns/filtering-dns.mdx), add the `dns` file to the directory.
 
-1. Create the `fluentd-filters` ConfigMap in the `tigera-operator` namespace with the following command.
+1. Create the `fluent-bit-filters` ConfigMap in the `tigera-operator` namespace with the following command.
 
    ```bash
-   kubectl create configmap fluentd-filters -n tigera-operator --from-file=filters
+   kubectl create configmap fluent-bit-filters -n tigera-operator --from-file=filters
    ```
+
+The operator inserts the filters inline into the log collector configuration and rolls the `calico-fluent-bit` DaemonSet automatically.
+
+:::note Upgrading from a release that used Fluentd
+
+Earlier releases collected logs with Fluentd and read filters in Fluentd `<filter>` syntax from a ConfigMap named `fluentd-filters`. That ConfigMap is no longer read, and Fluentd filter syntax cannot be translated automatically. Recreate your filters as Fluent Bit YAML filter lists under the new `fluent-bit-filters` name. If a filter key does not parse as Fluent Bit YAML, the operator skips that filter, reports a warning on the `tigera status` output naming the offending key, and continues to ship unfiltered logs.
+
+:::
 
 ## Additional resources
 
