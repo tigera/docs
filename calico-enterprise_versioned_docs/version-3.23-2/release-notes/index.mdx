@@ -273,8 +273,35 @@ To update an existing installation of Calico Enterprise 3.23, see [Install a pat
 
 August 20, 2026
 
+#### Enhancements
+
+* Reduced the time the Manager UI takes to calculate a user's permissions. AuthorizationReview now resolves role bindings from one cluster-wide list instead of one list per namespace, which cuts latency on clusters with many namespaces. {/* 12646 */}
+* The DatastoreMigration CRD is now published to the release manifests directory, so it can be installed with `kubectl apply -f .../manifests/migration.projectcalico.org_datastoremigrations.yaml` instead of a path into the source tree. {/* 13002 */}
+* The ECK (Elastic Cloud on Kubernetes) operator is updated to v3.4.1. {/* 12443 13153 */}
+
 #### Bug fixes
 
-* TBD
+* Fixed components (notably Linseed) rejecting valid service-account tokens with `bearer token was not issued by a trusted issuer` after the cluster's service-account issuer changes; unrecognized token issuers are now validated via Kubernetes TokenReview. {/* 12554 */}
+* Fixed HostEndpoint policy blocking UDP return traffic for SNAT'd pod egress. {/* 12574 */}
+* Fixed a regression in the eBPF data plane where ordinary pod egress carried the ext-to-service connmark into the FIB lookup, breaking cross-node connectivity (including DNS) on nodes that use source-based routing such as AWS VPC CNI. {/* 12803 */}
+* Fixed incorrect reference counting of egress gateway selectors, which could stop a workload being treated as an egress gateway while clients were still using it, or keep treating it as one after its last client was removed. Affects both data planes: a gateway can lose its reverse-path-filtering exemptions and its VXLAN and health-port auto-allows, a former gateway can keep its ingress locked down, and in the eBPF data plane a gateway's own outbound traffic stops being marked for ExternalNetwork routing, so its health probes fail and it never becomes ready. {/* 12947 */}
+* Fixed an egress gateway in eBPF mode not routing its own traffic (health probes, DNS) via its ExternalNetwork until a client was already using it, which prevented the gateway from ever becoming ready. {/* 13021 */}
+* Fixed a slow memory leak in the eBPF data plane: interface state for deleted egress gateway and egress client pods was retained indefinitely. {/* 13351 */}
+* Fixed a window in which a new connection to a local workload could skip that workload's ingress policy, when the connection was started while the workload's route was still being programmed. {/* 13024 */}
+* Fixed a stalled-connection bug in the eBPF data plane where a client pod could not exchange data with a VM workload on the same node, because established-flow packets bypassed the destination MAC rewrite. {/* 12985 */}
+* Fixed a BPF program leak in the iptables data plane when flow log TCP stats collection is enabled: on kernels without TCX support, every workload endpoint update stacked a duplicate `calico_tcp_stats` tc filter, eventually degrading node performance and Felix startup. Felix now replaces the filter in place and cleans up previously accumulated duplicates. {/* 12923 */}
+* Felix periodic IP set resyncs are now incremental, avoiding data plane stalls on nodes with many IP sets. {/* 12769 */}
+* Fixed head-of-line blocking in the Felix flow-log collector by processing continuous policy re-evaluation in time-boxed batches, keeping conntrack, NFLOG, and data plane stats processing responsive. {/* 12982 */}
+* Felix no longer splits log lines (flow, DNS, and so on) when rotating to a new file. {/* 12840 */}
+* Fixed a bug where $[prodname] could advertise a Service IP over BGP from a node whose local endpoint was not Ready, causing connection failures. {/* 12785 */}
+* Fixed a bug where restarting the early-networking (`calico-early`) container while calico-node was still running could cause a transient BGP flap toward the top-of-rack switches, briefly withdrawing pod and egress-gateway routes. Early BGP is now started only when calico-node's BGP is not already established. {/* 12759 */}
+* Fixed the Calico Ingress Gateway control plane crash-looping on clusters whose Gateway API CRD set omits `ListenerSet`, `TLSRoute` or `BackendTLSPolicy`, such as OpenShift. {/* 12959 */}
+* The license agent now serves its Prometheus `/metrics` endpoint over HTTP when no certificate and key are configured, instead of failing to bind the port. {/* 12972 */}
+* Fixed the license agent network policy in `licenseagent.yaml`, which selected Prometheus by a label its pods do not carry and so denied the license metrics scrape. {/* 12975 */}
+* Fixed a 403 error when users with custom roles queried Dashboards on a managed cluster. {/* 12707 */}
+* Fixed managed cluster connection status showing "Disconnected" instead of "Not connected yet" before a cluster has connected for the first time. {/* 12942 */}
+* Fixed policy activity logs being silently rejected by Elasticsearch in environments where the policy activity index is renamed, leaving all policies showing "Last Evaluated: never". {/* 12668 */}
+* Fixed VKS guest cluster installations failing to complete. {/* 12529 */}
+* Security updates. {/* 12583 12628 12661 12780 12821 12848 12849 12850 12851 12862 12901 12902 12978 13096 13129 13130 13131 13132 13133 13153 13185 13214 13236 13239 13264 13288 13290 13327 13335 */}
 
 To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
