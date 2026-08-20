@@ -87,11 +87,11 @@ All commands support `CONTAINERIZED=true` for Docker-based builds (e.g., `make b
 ```
 docs/
 ├── calico/                              # Calico OSS — next (unreleased) version
-├── calico_versioned_docs/               # Calico OSS — released versions (3.29, 3.30, 3.31)
+├── calico_versioned_docs/               # Calico OSS — released versions (3.29 through 3.32)
 ├── calico-enterprise/                   # Enterprise — next (unreleased) version
-├── calico-enterprise_versioned_docs/    # Enterprise — released versions (3.20-2 through 3.23-1)
+├── calico-enterprise_versioned_docs/    # Enterprise — released versions (3.21-2 through 3.24-1)
 ├── calico-cloud/                        # Cloud — next (unreleased) version
-├── calico-cloud_versioned_docs/         # Cloud — released versions (22-2)
+├── calico-cloud_versioned_docs/         # Cloud — released versions (23-2)
 ├── src/
 │   ├── components/                      # Shared React components
 │   ├── theme/                           # Docusaurus theme overrides
@@ -240,17 +240,18 @@ make show_current_branches
 # * calico_versioned_docs/version-3.29__operator_reference
 # * calico_versioned_docs/version-3.30__operator_reference
 # * calico_versioned_docs/version-3.31__operator_reference
+# * calico_versioned_docs/version-3.32__operator_reference
 #
 # Calico enterprise branch targets:
 # * calico-enterprise__operator_reference
-# * calico-enterprise_versioned_docs/version-3.20-2__operator_reference
 # * calico-enterprise_versioned_docs/version-3.21-2__operator_reference
 # * calico-enterprise_versioned_docs/version-3.22-2__operator_reference
-# * calico-enterprise_versioned_docs/version-3.23-1__operator_reference
+# * calico-enterprise_versioned_docs/version-3.23-2__operator_reference
+# * calico-enterprise_versioned_docs/version-3.24-1__operator_reference
 #
 # Calico cloud branch targets:
 # * calico-cloud__operator_reference
-# * calico-cloud_versioned_docs/version-22-2__operator_reference
+# * calico-cloud_versioned_docs/version-23-2__operator_reference
 
 # Then run a specific target:
 make calico-enterprise_versioned_docs/version-3.22-2__operator_reference

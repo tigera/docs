@@ -131,11 +131,6 @@ update_versions_CE() {
         LOCAL_PATH="calico-enterprise_versioned_docs/version-${VERSION}/_includes/components/FelixConfig/config-params.json"
         REMOTE_URL="https://api.github.com/repos/tigera/calico-private/contents/felix/docs/config-params.json?ref=${branch}"
 
-        if [[ "$VERSION" == "3.20-2" ]]; then
-            echo "Skipping ${VERSION}: No action required."
-            continue
-        fi
-
         update_felix_config
     done
 }
