@@ -2,70 +2,322 @@
 description: Configure a Linux bridge on your nodes so Calico Enterprise can use it, for nodes whose only uplink also carries the node's own IP address.
 ---
 
+{/*
+  User story, primary
+  S5: As a network engineer whose nodes have a single uplink that already carries the host's own IP address, I want to prepare a bridge Calico can use, so that VMs can share that uplink without handing Calico control of my host networking.
+
+  User stories, subsidiary
+  S4: hands the reader to the setup guide once the bridge is ready, so the two pages complete one path together.
+
+  Story ladder and page plan: DOCS-2997.
+*/}
+
 # Prepare an existing bridge for $[prodname]
 
 :::note
 
-L2 bridge networking is a tech preview feature. APIs and behavior may change before GA.
+L2 bridge networking is a tech preview feature.
+APIs and behavior may change before GA.
 
 :::
 
-Use this guide when the uplink that must carry your VLANs is also the one your node's IP address depends on. $[prodname] cannot take that interface over on its own, so you build the bridge and $[prodname] uses it.
+Use this guide when the interface that must carry your VLANs is also the one your node's IP address depends on.
+$[prodname] cannot take that interface over on its own, so you build the bridge and $[prodname] uses it.
+For why, see [Who owns the host network configuration](about-l2-bridge.mdx#who-owns-the-host-network-configuration).
 
-The goal is not to move a running address onto a bridge. It is to have the host bring the bridge up correctly at boot, so the node's address arrives in the right place the first time.
+If $[prodname] can have an interface of its own, you do not need this guide.
+Use [Connect workloads to an existing VLAN](connect-vlan.mdx) instead.
+
+:::note
+
+The goal is not to move a running IP address onto a bridge.
+It is to have the host bring the bridge up correctly at boot, so the node's address arrives on the right device the first time.
+Configure this the way you configure the rest of your host networking, and verify it survives a reboot.
+
+:::
 
 ## Before you begin
 
-This procedure changes how your nodes get their IP addresses. Read this section before you start.
+This procedure changes how your nodes obtain their IP addresses.
+A mistake takes the node off the network, and you will not be able to fix it over the network.
+
+You need:
+
+- Root access to the node, and ownership of its network configuration.
+- Out-of-band access to the node, such as a console, or a tested way to roll the configuration back.
+- The name of the interface that will become the trunk.
+- The VLAN your host's own traffic uses, or confirmation that it is untagged.
+- The VLAN IDs your workloads will use.
+- The node's IP address, prefix length, and default gateway.
+
+Work on one non-critical node first, confirm it, and only then apply the same configuration to the rest of the cluster.
 
 ## What you are building
 
-Before and after, so the configuration further down makes sense.
+Today, your node's IP address sits directly on a physical interface, and that interface carries the node's traffic.
+
+Afterwards, that interface is a port on a bridge and carries no address of its own.
+The bridge carries your workload VLANs, and the node's address sits either on the bridge or on a VLAN device layered on top of it.
+$[prodname] attaches workloads to the same bridge as access ports.
 
 ## What $[prodname] requires
 
-Three settings on the bridge. $[prodname] checks all three and will not use a bridge that is missing any of them.
+$[prodname] checks three properties of the bridge and refuses to use it if any are missing.
+It does not set them for you, because your host network configuration owns them and would undo the change.
+
+| Requirement | Setting | Why |
+| ----------- | ------- | --- |
+| VLAN filtering enabled | `vlan_filtering=1` | Without it the bridge ignores VLAN tags entirely, so segments are not isolated from each other. |
+| An explicitly set MAC address | Any address, set deliberately | Stops the bridge's address changing as workloads come and go. See below. |
+| The 802.1Q tag protocol | `vlan_protocol=802.1Q` | $[prodname] programs 802.1Q VLAN membership and creates 802.1Q sub-devices. On an 802.1ad bridge none of it matches. |
+
+:::caution
+
+Enable VLAN filtering **before** you put the node's address on the bridge, or as part of the same configuration change.
+Turning it on makes the kernel start enforcing VLAN membership immediately, and an address on a bridge with no VLAN membership stops receiving and sending traffic the moment filtering comes on.
+
+:::
 
 ### Why the MAC address must be pinned, and must not be the trunk's
 
-Two separate failures, both avoided by the same setting.
+A Linux bridge has no MAC address of its own.
+By default the kernel borrows one from whichever attached port has the numerically lowest address, and it re-runs that choice every time a port is added or removed.
+
+On an L2 bridge the ports are workload interfaces, which appear and disappear constantly.
+Left to itself, the bridge's address changes under your node, and if the node's IP address is on that bridge, its traffic stops being delivered.
+
+Setting an address explicitly stops the kernel from ever reconsidering it.
+
+Do not use the trunk interface's own MAC address for the bridge.
+When two devices in the same path present the same address, some network card drivers reject the second programming attempt and the bridge is left non-functional.
+Use a distinct address.
+
+A locally administered address is a good choice, because it cannot collide with a real card.
+Set the second least significant bit of the first byte: `02:00:00:00:00:01` and `0a:1b:2c:3d:4e:5f` are both locally administered.
 
 ### What $[prodname] does not require
 
-Just as useful as the required list, and it keeps the required list credible.
+Just as useful as the list above, and it keeps that list credible.
+
+- **Enslaving the trunk.**
+  $[prodname] adds the trunk interface to the bridge itself.
+  The interface only has to exist and be named in the `Network`.
+- **A particular default PVID.**
+  $[prodname] does not read or change the bridge's default PVID.
+- **Removing an existing VLAN device.**
+  If you already have a VLAN sub-device on the bridge, $[prodname] reuses it rather than failing.
+- **Bringing the bridge up.**
+  $[prodname] brings up a bridge that is administratively down.
+- **Self VLAN memberships.**
+  $[prodname] never adds or removes the bridge device's own VLAN memberships, or their PVID and untagged flags.
+  They are yours to manage.
 
 ### Two hazards that are not settings
 
-A naming collision that deletes your bridge, and an option that quietly slows workload startup.
+**Do not name the bridge with a `calb-` prefix.**
+$[prodname] treats that prefix as meaning it owns the bridge, and it deletes bridges it owns when they are no longer needed.
+A bridge of your own named that way can be deleted from under you.
+Nothing rejects the name when you create the `Network`, so this is on you to avoid.
+
+**Spanning Tree Protocol is allowed, but it costs workload startup time.**
+Every new access port waits out a forwarding delay before it passes traffic, which delays every workload attaching to the bridge.
+$[prodname] warns once and leaves STP alone on a bridge it did not create.
+Turn it off unless you need it.
 
 ## Configure the host
 
-Write this as persistent configuration. A change that does not survive a reboot is a trap.
+Write this as persistent configuration, using whatever manages networking on your nodes.
+A change made with `ip` commands alone disappears at the next reboot, and the node comes back with its address on an interface that is now a bridge port.
+
+The steps below describe what the configuration has to achieve.
+The example that follows shows one way to express it.
+
+1. Create a bridge, with VLAN filtering enabled, the 802.1Q tag protocol, STP disabled, and an explicitly set MAC address that is not the trunk's.
+2. Add the trunk interface to the bridge as a port, and give that port membership of every VLAN it must carry, including the VLAN your host traffic uses.
+3. Give the bridge device itself membership of the VLAN your host traffic uses.
+   See [Self VLAN membership](#self-vlan-membership).
+4. Remove the IP configuration from the physical interface, so it carries no address.
+5. Put the node's IP address, prefix, and default gateway on the bridge or on a VLAN device above it, depending on whether your host traffic is tagged.
+   See [Where the host's address goes](#where-the-hosts-address-goes).
+6. Apply the configuration and confirm the node is still reachable.
+7. Reboot the node and confirm it comes back with the same addressing.
 
 ### Where the host's address goes
 
-Two shapes, depending on whether your host's own traffic is tagged.
+Two shapes, depending on your host's own traffic.
+
+**Untagged host traffic.**
+Put the node's address directly on the bridge device.
+The bridge port facing the trunk needs the host's traffic to arrive untagged, which means setting a native VLAN on the `Network` later so $[prodname] knows which VLAN untagged traffic belongs to.
+
+**Host traffic on its own VLAN.**
+Create a VLAN device on top of the bridge for that VLAN — for example, VLAN 100 on `br-l2` gives `br-l2.100` — and put the node's address on the VLAN device.
+The bridge itself carries no address.
+
+The distinction matters and is easy to invert.
+A VLAN device **above** the bridge, holding the host's address, is the supported arrangement.
+A VLAN device **below** the bridge, standing in for the trunk, is not supported.
 
 ### Self VLAN membership
 
-The step that is easiest to miss, and the one most likely to take a node off the network.
+For the host to receive traffic on a VLAN through the bridge, the bridge device needs membership of that VLAN in its own right.
+This is separate from the membership you give the trunk port, and it is the step most likely to be missed.
+
+Without it, the bridge forwards that VLAN's traffic between its ports but never delivers any of it to the host, so a node whose address depends on that VLAN goes dark.
+
+$[prodname] does not add this membership and does not remove one you have added.
+
+Some configuration tools have no field for it.
+Where that is the case, set it with a hook that runs when the bridge comes up:
+
+```bash
+bridge vlan add dev br-l2 vid 100 self
+```
+
+Confirm it with `bridge vlan show`, where the bridge device appears in the list alongside its ports.
 
 ### An annotated example
 
-A complete configuration with every line explained.
+This example uses NetworkManager keyfiles, for a node whose management traffic is on VLAN 100 and whose workloads will use VLANs 10 and 20.
+The trunk is `eno1`.
+
+```ini
+# /etc/NetworkManager/system-connections/br-l2.nmconnection
+[connection]
+id=br-l2
+type=bridge
+interface-name=br-l2
+
+[bridge]
+# Required. Without this the bridge ignores VLAN tags.
+vlan-filtering=true
+# Required. Calico programs 802.1Q membership and sub-devices.
+vlan-protocol=802.1Q
+# Not required, but STP delays every workload that attaches.
+stp=false
+
+[ethernet]
+# Required. A locally administered address, deliberately not eno1's.
+cloned-mac-address=02:00:00:5e:00:64
+
+[ipv4]
+# The bridge carries no address of its own. The VLAN device above it does.
+method=disabled
+
+[ipv6]
+method=disabled
+```
+
+```ini
+# /etc/NetworkManager/system-connections/br-l2-port-eno1.nmconnection
+[connection]
+id=br-l2-port-eno1
+type=ethernet
+interface-name=eno1
+master=br-l2
+slave-type=bridge
+
+[bridge-port]
+# The trunk carries every VLAN the bridge serves, including management.
+vlans=10,20,100
+```
+
+```ini
+# /etc/NetworkManager/system-connections/br-l2.100.nmconnection
+[connection]
+id=br-l2.100
+type=vlan
+interface-name=br-l2.100
+
+[vlan]
+# A VLAN device above the bridge. This is where the node's address lives.
+parent=br-l2
+id=100
+
+[ipv4]
+method=manual
+address1=10.10.100.11/24,10.10.100.1
+```
+
+The bridge device's own membership of VLAN 100 is not expressible here, so add it with a dispatcher script:
+
+```bash
+# /etc/NetworkManager/dispatcher.d/50-br-l2-self-vlan
+#!/bin/sh
+[ "$1" = "br-l2" ] && [ "$2" = "up" ] && bridge vlan add dev br-l2 vid 100 self
+exit 0
+```
+
+Make it executable and owned by root, or NetworkManager ignores it.
+
+:::caution
+
+Validate this in a lab before you apply it to a cluster you care about.
+Host network configuration varies with distribution and with whatever manages it, and the failure mode is a node you cannot reach.
+
+:::
 
 ## Point Felix at the right L3 device
 
-Once the node's address lives on the bridge, $[prodname] needs to be told where to find it.
+Once the node's address is on the bridge or on a VLAN device above it, $[prodname] has to be told where to find it.
+Otherwise it attaches its programs to the physical interface, which no longer has an address, and traffic between workloads on different nodes fails.
+
+1. Find the current value of `bpfDataIfacePattern` in the default [FelixConfiguration](../../reference/resources/felixconfig.mdx).
+2. Add a pattern that matches the device holding the node's address.
+   For a node whose address is on `br-l2.100`, `br-l2.*` matches it.
+3. Apply the change and confirm `calico-node` restarts cleanly.
+
+You do not need to add the trunk interface to this pattern.
+$[prodname] attaches to the trunk as part of setting up the L2 network.
 
 ## Verify before handing the bridge over
 
-Two rounds of checks. Some failures only appear when the first workload attaches.
+Check in two rounds.
+Some problems only appear when the first workload attaches, so the first round is not sufficient on its own.
+
+Before you create a `Network`:
+
+1. Confirm the node is reachable on its own address, and that its default route is intact.
+2. Run `ip -br addr show` and confirm the address is on the device you intended and the physical interface has none.
+3. Run `bridge link show` and confirm the trunk is a port of the bridge.
+4. Run `bridge vlan show` and confirm the trunk port carries every VLAN you expect, and that the bridge device itself appears with the host VLAN.
+5. Reboot the node.
+   Repeat steps 1 to 4.
+
+After you create a `Network` and attach the first workload:
+
+1. Confirm the node is still reachable.
+   A bridge MAC that was not pinned changes at this point.
+2. Run `bridge link show` again and confirm the workload's interface joined the bridge.
+3. Confirm the workload can reach its gateway.
 
 ## Reference the bridge from a Network
 
+1. Set the bridge in the `Network`'s host configuration:
+
+   ```yaml
+   bridge:
+     existingBridge:
+       name: br-l2
+   ```
+
+2. Name the trunk interface in the same host configuration entry.
+   Omitting it leaves the node unable to route workload traffic.
+3. Continue with [Connect workloads to an existing VLAN](connect-vlan.mdx) to create the IP pools, the attachment definitions, and your first workload.
+
 ## If $[prodname] will not use your bridge
 
-What the refusal looks like, and where to look first.
+$[prodname] fails closed.
+If the bridge does not meet all three requirements, nothing is programmed and workloads on that `Network` stay administratively down rather than attaching to a bridge that cannot isolate them.
+
+The only signal is the Felix log in `calico-node`, which names the bridge, the `Network`, and the command that fixes it, and repeats every few seconds until you do.
+There is no Kubernetes event and no status on the workload.
+
+See [Troubleshoot L2 network connectivity](troubleshoot.mdx).
 
 ## Additional resources
+
+- [About L2 bridge networking](about-l2-bridge.mdx)
+- [Connect workloads to an existing VLAN](connect-vlan.mdx)
+- [L2 bridge support and limitations](../../reference/l2-bridge-support.mdx)
+- [Network resource](../../reference/resources/network.mdx)
