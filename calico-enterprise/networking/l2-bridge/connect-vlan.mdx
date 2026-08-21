@@ -1,0 +1,65 @@
+---
+description: Expose one of your existing VLANs to the cluster with a Calico-managed bridge, then attach a KubeVirt VM or a pod to it.
+---
+
+# Connect workloads to an existing VLAN
+
+:::note
+
+L2 bridge networking is a tech preview feature. APIs and behavior may change before GA.
+
+:::
+
+Use this guide when $[prodname] can take over an uplink of its own. If the only uplink on your nodes also carries the node's own IP address, start with [Prepare an existing bridge](byo-bridge.mdx) and return here afterwards.
+
+## Before you begin
+
+Check all of these before you start. Each one is a hard requirement, and the failures they cause are easier to avoid than to diagnose.
+
+## Set the multi-interface mode
+
+$[prodname] needs to know that Multus is in use. Nothing warns you if this is missed, so do it before anything else.
+
+## Gather your network details
+
+Collect these values first. Getting the subnet or the interface name wrong surfaces later as a workload that will not start.
+
+## Create an IP pool for each workload VLAN
+
+The pool must exist before the `Network`, and its CIDR must line up with the VLAN's subnet.
+
+## Create the Network resource
+
+One `Network` describes the whole L2 network: its VLANs, and how each node reaches them.
+
+### Tagged trunk
+
+### Untagged traffic and the native VLAN
+
+For a segment your switch presents untagged.
+
+### Nodes with different interface names
+
+When the trunk interface is not called the same thing on every node.
+
+## Create a NetworkAttachmentDefinition for each VLAN
+
+Multus needs one attachment definition per VLAN you want workloads on.
+
+## Attach a VM
+
+For a VM, declare the interface in the VM specification. Do not edit the launcher pod's annotations.
+
+### Attaching a pod instead
+
+### Attaching a workload to more than one VLAN
+
+### Using an L2 network as the primary interface
+
+Possible for both VMs and pods, with a significant trade-off.
+
+## Verify
+
+Work outwards from the node to the fabric, so a failure tells you where to look.
+
+## Additional resources
