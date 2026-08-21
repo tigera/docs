@@ -41,10 +41,12 @@ export default async function createAsyncConfig() {
     onBrokenLinks: 'throw',
     favicon: 'img/calico-logo-2026-badge.png',
     markdown: {
+      mermaid: true,
       hooks: {
         onBrokenMarkdownLinks: 'throw',
       },
     },
+    themes: ['@docusaurus/theme-mermaid'],
 
     // Even if you don't use internalization, you can use this field to set useful
     // metadata like html lang. For example, if your site is Chinese, you may want
