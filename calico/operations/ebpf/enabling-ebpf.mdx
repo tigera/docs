@@ -458,8 +458,39 @@ To revert to veth, set the field back to `Veth` (or remove it):
 kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxPodInterfaceType":"Veth"}}}'
 ```
 
-Existing pods keep their netkit interfaces, but the eBPF data plane treats those as veth (programs attach via TC/TCX, the same path used for actual veth interfaces).
+Existing pods keep their netkit interfaces, and the eBPF data plane keeps driving those through netkit attachment unless `bpfAttachType` says otherwise (see below).
 Only newly created pods get veth interfaces.
+
+***Attach mechanism***
+
+The `bpfAttachType` field of the `FelixConfiguration` selects how the eBPF data plane attaches its programs:
+
+* `Netkit` (default) — netkit attachment on netkit interfaces, TCX on every other interface.
+* `TCX` — TCX on every interface, including netkit interfaces.
+* `TC` — the legacy qdisc-based attachment on every interface. Pod bandwidth QoS annotations are not supported with `TC`.
+
+Setting `TCX` or `TC` also moves existing netkit interfaces onto that mechanism.
+The interfaces stay netkit and no pod is recreated; only the attachment changes.
+Changing the field restarts Felix on every node.
+
+***Downgrading to a release without netkit support***
+
+A release that has no concept of netkit attachment cannot remove netkit programs.
+If you downgrade such a node directly, its pods keep the netkit programs attached — still enforcing the policy that was in force at downgrade time — while the downgraded Felix programs the same interfaces through TC/TCX, leaving two data planes on one interface.
+
+Move the interfaces off netkit attachment before you downgrade:
+
+```bash
+kubectl patch felixconfiguration default --type merge -p '{"spec":{"bpfAttachType":"TCX"}}'
+```
+
+Felix restarts on each node and re-attaches its programs, removing the netkit links.
+
+After upgrading again, remove the field to return to the default:
+
+```bash
+kubectl patch felixconfiguration default --type json -p '[{"op":"remove","path":"/spec/bpfAttachType"}]'
+```
 
 ## Reversing the process
 
