@@ -2,48 +2,236 @@
 description: Diagnose connectivity problems on Calico Enterprise L2 bridge networks, from bridge prerequisites to VLAN and trunk misconfiguration.
 ---
 
+{/*
+  User story, primary
+  S8: As an operator, I want to find out why a workload on an L2 network cannot reach its gateway, so that I can fix it without opening a support case.
+
+  Story ladder and page plan: DOCS-2997.
+*/}
+
 # Troubleshoot L2 network connectivity
 
 :::note
 
-L2 bridge networking is a tech preview feature. APIs and behavior may change before GA.
+L2 bridge networking is a tech preview feature.
+APIs and behavior may change before GA.
 
 :::
 
-Most L2 problems fall into a handful of shapes. Find your symptom below.
+Most problems on an L2 network fall into a handful of shapes.
+Find your symptom below.
 
 ## Where the signals are
 
-Read this first. L2 bridge problems report themselves in an unusual place, and looking anywhere else wastes time.
+Read this first.
+L2 problems report themselves somewhere unusual, and looking in the obvious places wastes time.
+
+Problems with the **bridge itself** appear only in the Felix log inside `calico-node`.
+There is no Kubernetes event, no condition on the `Network`, no status on the workload, and no metric.
+The messages are good — each names the bridge, the `Network`, and the command that fixes the problem — but you have to read the log to see them.
+
+```bash
+kubectl logs -n calico-system -l k8s-app=calico-node --tail=200 | grep -i bridge
+```
+
+Problems **attaching a workload** appear in the workload's own status, and in the CNI and Multus logs on the node that was scheduled to run it.
+
+```bash
+kubectl describe pod <pod>
+```
+
+On the node, CNI and Multus write to `/var/log/calico/cni/` and the container runtime's log.
 
 ## Collect diagnostic information
 
-What to gather before opening a support case, including the bridge state that the standard bundle does not capture.
+Gather this before opening a support case, because one part of it is not collected automatically.
+
+1. Run the standard diagnostics bundle:
+
+   ```bash
+   kubectl exec -n calico-system <calico-node-pod> -- calicoctl cluster diags
+   ```
+
+2. Collect the bridge state by hand on each affected node.
+   The bundle does not include it:
+
+   ```bash
+   ip -d link show type bridge
+   bridge link show
+   bridge vlan show
+   bridge fdb show
+   ```
+
+3. If the problem is not obvious, raise Felix's log level and reproduce it:
+
+   ```bash
+   kubectl patch felixconfiguration default --type=merge \
+     -p '{"spec":{"logSeverityScreen":"Debug"}}'
+   ```
+
+Set it back to `Info` afterwards.
 
 ## $[prodname] will not use the bridge I prepared
 
+Workloads on the `Network` stay administratively down and never get connectivity, and the Felix log repeats a warning every few seconds.
+
+$[prodname] fails closed here by design.
+Rather than attaching workloads to a bridge that cannot isolate them, it programs nothing at all.
+That means no trunk enslavement, no VLAN membership, and no workload interfaces.
+
+Check the three properties $[prodname] requires:
+
+1. VLAN filtering is enabled:
+
+   ```bash
+   ip -d link show <bridge> | grep vlan_filtering
+   ```
+
+2. The MAC address was set explicitly rather than inherited from a port.
+   If it was not, setting it to its current value is enough:
+
+   ```bash
+   ip link set dev <bridge> address <current-address>
+   ```
+
+3. The tag protocol is 802.1Q rather than 802.1ad:
+
+   ```bash
+   ip -d link show <bridge> | grep vlan_protocol
+   ```
+
+The warning in the log names which of these failed and the command to fix it.
+See [Prepare an existing bridge](byo-bridge.mdx) for the full requirements.
+
+Two side effects are worth knowing about.
+A single broken bridge can intermittently delay unrelated `Network` resources, because $[prodname] stops processing on the first failure each cycle.
+And the failure is per-node, so a `Network` that works on most nodes and fails on one reads like flakiness rather than a configuration error.
+
 ## A workload came up with two eth0 interfaces and no connectivity
+
+The multi-interface mode is not set.
+Multus being installed is not sufficient on its own, and nothing reports the omission until this happens.
+
+```bash
+kubectl get installation default -o jsonpath='{.spec.calicoNetwork.multiInterfaceMode}'
+```
+
+If the value is not `Multus`, set it as described in [Set the multi-interface mode](connect-vlan.mdx#set-the-multi-interface-mode), then delete and recreate the affected workloads.
 
 ## The workload has no IP address, or will not start
 
+The workload stays pending or failing, and the CNI log reports an address assignment failure.
+
+Check these in order:
+
+1. **No IP pool matches the VLAN's subnet.**
+   $[prodname] chooses a pool by checking which pools fall inside the subnet on the VLAN.
+   Nothing matching means no address, and $[prodname] fails rather than assigning an address from the wrong subnet.
+2. **The pool is not marked for L2 use.**
+   A pool without `allowedUses: L2Workload` is not a candidate for an L2 interface.
+3. **A requested address is already assigned.**
+   If you asked for a specific address with `ipAddrs`, and something already holds it, the request fails rather than duplicating it.
+4. **A requested address is reserved.**
+   $[prodname] does not assign the first or last address of a subnet, or the gateway address.
+
 ## The bridge was never created on this node
+
+Other nodes have the bridge and this one does not.
+
+1. Check that a host configuration entry matches this node.
+   Remember that entries are evaluated in order and the first match wins — a broad entry earlier in the list shadows a more specific one after it.
+2. Check that the trunk interface named in the matching entry actually exists on this node, with that exact name.
+
+Nothing validates interface names when you create the `Network`, because the API server cannot see the interfaces on your nodes.
+A name that is wrong for one node shows up only in that node's Felix log.
 
 ## The node lost connectivity while I was configuring the bridge
 
+This is the failure that takes a node off the network, and it has three usual causes.
+
+- **VLAN filtering was enabled before VLAN membership existed.**
+  Turning filtering on makes the kernel enforce membership immediately, so an address on a bridge with no membership stops sending and receiving at that moment.
+- **The bridge device has no membership of the host's VLAN in its own right.**
+  The bridge forwards that VLAN between its ports but delivers none of it to the host.
+  Add it with `bridge vlan add dev <bridge> vid <id> self`.
+- **The bridge's MAC address changed.**
+  If it was never pinned, attaching the first workload can change it, and traffic to the old address stops being delivered.
+
+Recover from the console, not over the network.
+See [Prepare an existing bridge](byo-bridge.mdx).
+
 ## The workload cannot reach its gateway
+
+The workload has an address but nothing beyond the node answers.
+
+1. Confirm the VLAN is listed in the `Network`.
+2. Confirm the trunk port carries that VLAN, with `bridge vlan show`.
+3. Confirm the switch port facing the node is configured as a trunk carrying that VLAN.
+4. If the segment is presented untagged, confirm the native VLAN in the `Network` matches the switch's native VLAN.
+   A mismatch here silently puts traffic on the wrong VLAN.
 
 ## Traffic works on one node but not across the fabric
 
+Two workloads on the same node reach each other, and nothing off the node responds.
+This points at the trunk and the physical path rather than at $[prodname].
+
+Check the switch configuration first.
+Then, on a bridge you prepared yourself, confirm the trunk interface is named in the `Network`.
+Omitting it leaves the node unable to route workload traffic, because the reverse path check has no interface to validate against.
+
 ## Source IP policy is not matching
+
+Policy written against a workload's source address does not match traffic that came from it.
+
+Traffic between the $[prodname] pod network and an L2 network is routed through your external router, including when both workloads are on the same node.
+If that router source-NATs between the two networks, policy on the L2 side sees the router's address instead of the workload's.
+
+Check for NAT on the inter-VLAN path.
+This is a router configuration issue rather than something $[prodname] can work around.
 
 ## A pod on an L2 network cannot reach cluster IP addresses
 
+Connections from the pod to a Service address are dropped.
+
+Connect-time load balancing is a host-wide setting and cannot be turned off for one interface.
+A Service address gets resolved and translated on the way out of the pod's primary interface, then dropped by reverse path filtering.
+
+VMs are unaffected, because they resolve Services inside their own kernel.
+For a pod that needs both cluster Services and an L2 network, keep its primary interface on the $[prodname] pod network and attach the L2 network as an additional interface.
+
 ## The MAC address is not what I asked for
+
+1. **The VM does not start at all, and the CNI log reports a conflict.**
+   KubeVirt's `macAddress` field and the `hwAddr` annotation are both set, to different values.
+   $[prodname] rejects the interface rather than choosing.
+   Make them agree, or remove one.
+2. **The address is not the one you asked for.**
+   Check the `network-status` annotation to see what $[prodname] actually applied, and confirm the annotation you set is scoped to the right interface name.
+3. **The bridge's address changed rather than the workload's.**
+   On a bridge you prepared, an unpinned bridge MAC address changes when ports are added.
 
 ## Capturing traffic hides the problem
 
-On some network cards, the act of capturing changes the behavior you are trying to observe.
+You capture on the trunk interface to investigate a connectivity problem, and the problem disappears while you are capturing.
+
+Putting an interface into promiscuous mode changes how some network cards filter incoming traffic, which can mask a hardware filtering problem for exactly as long as the capture runs.
+
+Capture without promiscuous mode, or capture from a different interface in the path:
+
+```bash
+tcpdump -p -i <interface>
+```
 
 ## Workloads lost connectivity after a Network was deleted
 
+Deleting a `Network` is not blocked while workloads are still attached to it, and doing so removes the bridge from under them.
+
+Recreate the `Network` with the same configuration, then delete and recreate the affected workloads so their interfaces are rebuilt.
+Delete workloads before their `Network` in future.
+
 ## Additional resources
+
+- [Prepare an existing bridge](byo-bridge.mdx)
+- [Connect workloads to an existing VLAN](connect-vlan.mdx)
+- [About L2 bridge networking](about-l2-bridge.mdx)
+- [L2 bridge support and limitations](../../reference/l2-bridge-support.mdx)
