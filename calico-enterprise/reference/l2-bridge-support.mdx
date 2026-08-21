@@ -6,36 +6,155 @@ description: What Calico Enterprise L2 bridge networking supports and does not s
 
 :::note
 
-L2 bridge networking is a tech preview feature. APIs and behavior may change before GA.
+L2 bridge networking is a tech preview feature.
+APIs and behavior may change before GA.
 
 :::
 
-Check this page before you design around L2 bridge networking. The constraints are narrower than the rest of $[prodname] networking.
+Read this page before you design around L2 bridge networking.
+Its requirements are narrower than the rest of $[prodname] networking, and several of them cannot be changed after a cluster is built.
 
 ## Status
 
+L2 bridge networking is a tech preview feature in $[prodname] 3.24.
+The API may change in response to feedback from tech preview users.
+
+There is nothing extra to install.
+The `Network` resource and the components that act on it ship with the $[prodname] operator.
+
 ## Data plane support
+
+The eBPF data plane is required, and it is the only data plane that will support this feature.
+
+| Data plane | Supported |
+| ---------- | --------- |
+| eBPF | Yes. Required. |
+| iptables | No, and not planned. |
+| nftables | No. Deferred to a later release. |
+| Windows HNS | No. Out of scope. |
+
+For why the feature is tied to eBPF, see [About L2 bridge networking](../networking/l2-bridge/about-l2-bridge.mdx).
 
 ## Platform requirements
 
+Linux nodes only, on a recent kernel.
+
+| Requirement | Value |
+| ----------- | ----- |
+| Operating system | Linux |
+| Kernel | 5.18 or later |
+
+The kernel requirement is specific to this feature.
+It is higher than the floor for the eBPF data plane on its own, because $[prodname] uses a bridge option that older kernels do not provide.
+
 ## Prerequisites
+
+All of these must be in place before you create a `Network`.
+
+- An active $[prodname] license.
+  Creating a `Network` resource is license-gated.
+  Existing `Network` resources keep working if a license lapses.
+- The eBPF data plane, enabled cluster-wide.
+- [Multus](../networking/configuring/multiple-networks.mdx), for attaching workloads to a network as an additional interface.
+  Multus is not shipped by $[prodname].
+- `multiInterfaceMode: Multus` set in the `calicoNetwork` section of the [Installation](installation/api.mdx) resource.
+  Installing Multus is not enough on its own, and nothing reports the omission until a workload fails to get connectivity.
 
 ## Bridge and topology support
 
+There is one supported topology: a VLAN-aware bridge with a trunk uplink.
+
+| Arrangement | Supported |
+| ----------- | --------- |
+| VLAN-aware bridge, trunk uplink | Yes |
+| VLAN sub-device as the bridge uplink | No |
+| One bridge per VLAN, each fed by a VLAN sub-device | No |
+| More than one trunk on a node | No |
+
+A bridge you prepare yourself must meet three requirements, which $[prodname] checks and will not correct for you: VLAN filtering enabled, an explicitly set MAC address that is not the trunk's own, and the 802.1Q tag protocol rather than 802.1ad.
+For the full contract, including what $[prodname] does not require, see the [Network resource](resources/network.mdx).
+For the procedure, see [Prepare an existing bridge](../networking/l2-bridge/byo-bridge.mdx).
+
 ## Addressing
+
+IPv4 only, and $[prodname] must be the source of the address.
+
+- IPv6 is not supported.
+  The data plane drops IPv6 traffic on L2 interfaces.
+- At most one address per address family, per interface.
+- Addresses cannot be added to or removed from an interface after it is set up.
+- An external DHCP server on the VLAN cannot assign workload addresses.
+  $[prodname] IPAM must be authoritative, because policy and reverse path filtering depend on $[prodname] knowing the address.
+- KubeVirt's own in-pod DHCP service is fully supported, and is the normal way a VM receives the address $[prodname] assigned to it.
 
 ## Traffic types
 
+Two categories of traffic are handled differently from the pod network.
+
+- Broadcast and multicast traffic is dropped, in both directions.
+- Reverse path filtering on pod traffic is strictly enforced.
+
 ## Kubernetes integration
+
+Several Kubernetes networking features do not extend to L2 interfaces.
+
+| Feature | On an L2 interface |
+| ------- | ------------------ |
+| Kubernetes Services | Not available |
+| NAT | Not available |
+| Maglev load balancing | Not available |
+| Nested BGP to local workloads | Not supported |
+| Service mesh | Not supported |
+
+Connect-time load balancing is a host-wide setting and cannot be disabled for one interface.
+This does not affect VMs, which resolve Services inside their own kernel.
+It does affect a pod on an L2 network: a cluster IP address can be resolved and translated on the way out of the pod's primary interface, then dropped by reverse path filtering.
 
 ## Primary and secondary interfaces
 
+An L2 network is normally an additional interface, but it can be a workload's primary interface instead.
+
+Setting it as the primary interface means the workload has no route to or from the Kubernetes network, unless your own network routes back into the cluster.
+For a pod that usually rules it out, because kubelet cannot reach the pod for readiness and liveness checks.
+For a VM behaving like a traditional server on a VLAN, it is often the intended configuration.
+
 ## Observability
+
+Network policy and flow logs work on L2 interfaces, which is the main reason to use this feature rather than a bridge you manage yourself.
+
+One caveat applies in this release.
+A flow that crosses two L2 segments on the same node, leaving to your router and returning, is recorded once per segment.
+Such flows can be double-counted in flow log totals, and a flow log record can close while the flow is still running.
+Flows that stay within one segment are unaffected.
 
 ## Sizing guidance
 
+Prefer one `Network` with several VLANs over several Networks with one VLAN each.
+Every `Network` adds per-node work, so consolidating VLANs into one Network costs less.
+
+Concrete scale limits have not been established for this release.
+Treat the tech preview as suitable for evaluation and pilot workloads rather than for sizing a production estate.
+
 ## Lifecycle
+
+Two operations to plan for, because neither is guarded.
+
+- Deleting a `Network` while workloads are still attached to it removes the bridge from under them.
+  Delete the workloads first.
+- A `Network` cannot be changed from one type to another.
+  An L2 network cannot become a VRF network, or the reverse.
+
+Downgrading $[prodname] after `Network` resources are in use is not supported.
 
 ## Not in this release
 
-Features that are planned or under consideration, with no committed timing.
+These are known gaps rather than permanent limitations.
+No timing is committed for any of them.
+
+- VXLAN interconnect between L2 segments, and to nodes outside the cluster.
+- eBPF-accelerated forwarding within the bridge.
+- Protection against deleting a `Network` that is still in use, and status reporting on the `Network` resource.
+- Broadcast and ARP traffic in flow logs.
+- $[prodname] acting as the layer 3 gateway for a new segment.
+- EVPN.
+  This is planned as separate work.
