@@ -11,8 +11,12 @@ The `Network` resource is a tech preview feature. Tech preview features may be s
 :::
 
 A `Network` resource represents a logical network within a $[prodname] cluster. Each
-`Network` has a type (currently `vrf`) that determines how pods on that network are
-isolated and how their traffic is routed.
+`Network` has a type — either `l2Bridge` or `vrf` — that determines how workloads on that network are isolated and how their traffic is routed.
+Exactly one type must be set, and a `Network` cannot be changed from one type to the other.
+
+A `Network` of type `l2Bridge` puts workloads directly onto 802.1Q VLANs on your existing network.
+$[prodname] creates or uses a VLAN-aware Linux bridge on each selected node, attaches the trunk interface that carries those VLANs to your fabric, and attaches each workload as an access port on a single VLAN.
+Workloads keep their own IP and MAC addresses and share a broadcast domain with machines outside the cluster, while still being subject to $[prodname] network policy.
 
 A `Network` of type `vrf` configures a Linux Virtual Routing and Forwarding (VRF)
 domain. $[prodname] creates a Linux VRF device on each selected node, moves the
@@ -21,7 +25,7 @@ attached to the network into the VRF's routing table. Pods on a VRF network are
 isolated from pods on other networks (including the default flat pod network)
 unless they are explicitly bridged outside the cluster.
 
-For an end-to-end how-to, see [Configure multi-VRF networking](../../networking/configuring/multi-vrf.mdx).
+For end-to-end how-tos, see [Connect workloads to an existing VLAN](../../networking/l2-bridge/connect-vlan.mdx) and [Prepare an existing bridge](../../networking/l2-bridge/byo-bridge.mdx) for `l2Bridge` networks, and [Configure multi-VRF networking](../../networking/configuring/multi-vrf.mdx) for `vrf` networks.
 
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/),
 the following case-insensitive aliases may be used to specify the resource type
@@ -29,6 +33,74 @@ on the CLI: `network.projectcalico.org`, `networks.projectcalico.org` and
 abbreviations such as `network.p` and `networks.p`.
 
 ## Sample YAML
+
+### L2 bridge network, $[prodname]-managed bridge
+
+A single VLAN, with $[prodname] creating and owning the bridge on every node.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: Network
+metadata:
+  name: vlan-trunk
+spec:
+  l2Bridge:
+    hostConfig:
+      - nodeSelector: ''
+        bridge:
+          managedBridge: {}
+        hostConnections:
+          - trunkPort:
+              interface:
+                name: eno2
+    vlans:
+      - vlan: { id: 10 }
+        subnets:
+          - cidr: 10.10.0.0/24
+```
+
+### L2 bridge network, bridge prepared by the user
+
+Several VLANs on a bridge the user built, with different trunk interface names on different nodes.
+The node's own address lives on this bridge, which is why $[prodname] does not own it.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: Network
+metadata:
+  name: vlan-trunk
+spec:
+  l2Bridge:
+    hostConfig:
+      - nodeSelector: kubernetes.io/hostname == "node-1"
+        bridge:
+          existingBridge:
+            name: br-l2
+        hostConnections:
+          - trunkPort:
+              interface:
+                name: enp8s0f1
+      - nodeSelector: ''
+        bridge:
+          existingBridge:
+            name: br-l2
+        hostConnections:
+          - trunkPort:
+              interface:
+                name: enp2s0f1np1
+    vlans:
+      - vlan: { id: 10 }
+        subnets:
+          - cidr: 10.10.0.0/24
+      - vlan: { id: 20 }
+        subnets:
+          - cidr: 10.20.0.0/24
+      - vlan: { id: 100 }
+        subnets:
+          - cidr: 10.10.100.0/24
+```
+
+### VRF network
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -60,11 +132,163 @@ spec:
 
 ### Spec
 
-Exactly one of the network-type fields must be set. Currently only `vrf` is supported.
+Exactly one of the network-type fields must be set.
+The choice is fixed for the life of the resource.
 
-| Field | Description                  | Schema                              |
-| ----- | ---------------------------- | ----------------------------------- |
-| vrf   | VRF network configuration.   | [VRFNetworkSpec](#vrfnetworkspec)   |
+| Field    | Description                     | Schema                                  |
+| -------- | ------------------------------- | --------------------------------------- |
+| l2Bridge | L2 bridge network configuration. | [L2BridgeSpec](#l2bridgespec)          |
+| vrf      | VRF network configuration.       | [VRFNetworkSpec](#vrfnetworkspec)      |
+
+### L2BridgeSpec
+
+| Field      | Description                                                                                                                                                                                                                                              | Schema                                    |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| vlans      | The VLANs this network carries, and the subnets on each. At least one entry is required. Overlapping or duplicated VLAN entries are accepted and combined rather than rejected.                                                                          | List of [L2VLANSpec](#l2vlanspec)         |
+| hostConfig | Per-node bridge and trunk configuration. At least one entry is required. When several entries are present, each node is matched against them in order and the **first matching entry wins** — all others are ignored for that node. Entries are not merged. | List of [L2HostConfig](#l2hostconfig)     |
+
+### L2VLANSpec
+
+| Field   | Description                                                                                                                                                          | Schema                                |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| vlan    | The VLAN or range of VLANs this entry describes. Must be specified.                                                                                                  | [L2VLANMatch](#l2vlanmatch)           |
+| subnets | The subnets present on this VLAN. $[prodname] uses these to choose an IP pool for a workload, and to decide which addresses are reserved.                             | List of [L2Subnet](#l2subnet)         |
+
+### L2VLANMatch
+
+Identifies a VLAN, or a contiguous range of them.
+Exactly one field must be set.
+
+| Field | Description                          | Accepted Values | Schema                          |
+| ----- | ------------------------------------ | --------------- | ------------------------------- |
+| id    | A single 802.1Q VLAN ID.             | 1 – 4094        | int                             |
+| range | A contiguous range of VLAN IDs.      |                 | [L2VLANRange](#l2vlanrange)     |
+
+### L2VLANRange
+
+A contiguous, inclusive range of VLAN IDs.
+
+| Field | Description                                        | Accepted Values | Schema |
+| ----- | -------------------------------------------------- | --------------- | ------ |
+| start | First VLAN ID in the range.                        | 1 – 4094        | int    |
+| end   | Last VLAN ID in the range. Must not be less than `start`. | 1 – 4094  | int    |
+
+### L2Subnet
+
+| Field  | Description                                                                                                                                                                                                        | Accepted Values | Schema                          |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ------------------------------- |
+| cidr   | The subnet present on this VLAN. An IP pool is a candidate for a workload on this VLAN only if the pool's CIDR falls inside this one.                                                                              | A valid CIDR    | string                          |
+| routes | Additional routes to program into the workload's routing table for this interface, beyond the connected route for the subnet.                                                                                       |                 | List of [L2Route](#l2route)     |
+
+$[prodname] does not assign the network address, the broadcast address, or the gateway address of a subnet.
+On a `/31` or `/32` no addresses are reserved, because those prefixes have no network or broadcast address to withhold.
+
+### L2Route
+
+| Field       | Description                                                                    | Accepted Values | Schema                                    |
+| ----------- | ------------------------------------------------------------------------------ | --------------- | ----------------------------------------- |
+| destination | CIDR prefix for this route. Use `0.0.0.0/0` for a default route.                | A valid CIDR    | string                                    |
+| action      | What to do with traffic matching this route. Exactly one action must be set.    |                 | [L2RouteAction](#l2routeaction)           |
+
+### L2RouteAction
+
+Exactly one field must be set.
+Only `nextHop` is available in this release.
+
+| Field   | Description                                                                                          | Schema |
+| ------- | ---------------------------------------------------------------------------------------------------- | ------ |
+| nextHop | Forward matching traffic to this gateway address. The address must be reachable on the workload's VLAN. | string |
+
+### L2HostConfig
+
+Describes the bridge and the uplink on a set of nodes.
+
+| Field           | Description                                                                                                                                                                                                                                            | Schema                                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| nodeSelector    | $[prodname] selector expression choosing the nodes this entry applies to. An empty selector applies to all nodes. **The first entry whose selector matches a node is applied and all others are ignored for that node**, so place specific selectors before general ones. | [selector](bgppeer.mdx#selector)                  |
+| bridge          | The bridge to use on the selected nodes. Must be specified.                                                                                                                                                                                            | [L2BridgeDevice](#l2bridgedevice)                 |
+| hostConnections | How the bridge reaches the rest of the network on the selected nodes. Must be specified.                                                                                                                                                                | List of [L2HostConnection](#l2hostconnection)     |
+
+### L2BridgeDevice
+
+Exactly one field must be set.
+
+| Field          | Description                                                                                          | Schema                                        |
+| -------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| managedBridge  | $[prodname] creates the bridge and owns it. Use this when $[prodname] can take over an interface of its own. | [L2ManagedBridge](#l2managedbridge)   |
+| existingBridge | Use a bridge that already exists on the node. Required when the node's own IP address depends on the interface that must carry the VLANs. | [L2ExistingBridge](#l2existingbridge) |
+
+### L2ManagedBridge
+
+| Field | Description                                                                                                                             | Accepted Values | Schema | Default |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------ | ------- |
+| stp   | Enable Spanning Tree Protocol on the bridge. Every access port waits out a forwarding delay before passing traffic, which delays workload startup. | true, false     | bool   | `false` |
+
+$[prodname] derives the bridge name per node, so it is not something you choose.
+It also assigns the bridge its own MAC address, so the address does not change as workloads attach and detach.
+
+### L2ExistingBridge
+
+| Field | Description                                                            | Accepted Values   | Schema |
+| ----- | ---------------------------------------------------------------------- | ----------------- | ------ |
+| name  | Name of the existing bridge device on the node.                        | 1 – 15 characters | string |
+
+#### Bridge configuration requirements
+
+$[prodname] checks the following on a bridge it did not create, and **refuses to use the bridge** if any of them is not met.
+It does not set them for you, because your host network configuration owns these properties and would undo the change.
+
+| Property         | Required value            | Why                                                                                                                                    |
+| ---------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| VLAN filtering   | Enabled                   | Without it the bridge ignores VLAN tags, so segments are not isolated from one another.                                                 |
+| MAC address      | Explicitly set, and not the trunk's | Otherwise the kernel borrows a port's address and re-chooses on every port change. Reusing the trunk's address can leave the bridge non-functional on some network card drivers. |
+| VLAN tag protocol | 802.1Q                   | $[prodname] programs 802.1Q membership and creates 802.1Q sub-devices. Nothing matches on an 802.1ad bridge.                            |
+
+$[prodname] reads two of these from sysfs.
+A value it cannot read is treated as "cannot determine" and allowed, rather than stranding the network on that node.
+
+The following are **not** required, and $[prodname] handles them itself:
+
+- Enslaving the trunk interface.
+  It only has to exist and be named in `trunkPort`.
+- Any particular default PVID on the bridge.
+  $[prodname] neither reads nor changes it.
+- Removing an existing VLAN sub-device on the bridge.
+  $[prodname] reuses one that is already present.
+- Bringing up a bridge that is administratively down.
+- The bridge device's own VLAN memberships, and their PVID and untagged flags.
+  $[prodname] never adds or removes these.
+
+:::caution
+
+Do not give an existing bridge a name beginning with `calb-`.
+$[prodname] treats that prefix as indicating a bridge it owns, and deletes such bridges when they are no longer needed.
+This is not validated when the `Network` is created.
+
+:::
+
+When a requirement is not met, $[prodname] programs nothing for that `Network` on that node: no trunk enslavement, no VLAN membership, and no workload interfaces.
+Workloads stay administratively down rather than attaching to a bridge that cannot isolate them.
+The condition is reported in the Felix log in `calico-node`, naming the bridge, the `Network`, and the command that resolves it, and is retried indefinitely.
+
+### L2HostConnection
+
+Exactly one field must be set.
+Only `trunkPort` is available in this release.
+
+| Field     | Description                                                        | Schema                                    |
+| --------- | ------------------------------------------------------------------ | ----------------------------------------- |
+| trunkPort | An interface carrying tagged VLANs between the bridge and your fabric. | [L2HostTrunkPort](#l2hosttrunkport)   |
+
+### L2HostTrunkPort
+
+| Field      | Description                                                                                                                                                                                            | Accepted Values | Schema                                    |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ----------------------------------------- |
+| interface  | The interface to use as the trunk. Must be specified. Must be the trunk interface itself; a VLAN sub-device is not supported here.                                                                      |                 | [InterfaceMatch](#interfacematch)         |
+| vlans      | Restrict the trunk to a subset of the network's VLANs. If omitted, the trunk carries every VLAN the network defines.                                                                                    |                 | List of [L2VLANMatch](#l2vlanmatch)       |
+| nativeVLAN | The VLAN to assign to untagged traffic arriving on this interface. Must name a VLAN this network defines, which is enforced when the resource is created.                                                | 1 – 4094        | int                                       |
+
+A node supports one trunk in this release.
 
 ### VRFNetworkSpec
 
@@ -150,6 +374,10 @@ which prefixes are exported to and imported from each VRF's peers.
 
 ## Limitations (tech preview)
 
+The limitations below apply to `vrf` networks.
+For `l2Bridge` networks, see [L2 bridge support and limitations](../l2-bridge-support.mdx).
+
+
 - **Dataplane**: only the [nftables dataplane](../../operations/nftables.mdx) is supported. iptables and eBPF are not supported.
 - **NodePort services** are not supported on VRF networks; advertise services as `LoadBalancer` cluster IPs instead.
 - **Egress gateways** cannot be placed on a VRF network.
@@ -163,6 +391,10 @@ which prefixes are exported to and imported from each VRF's peers.
 - A `Network` must not be deleted while pods are still attached to it.
 
 ## Requirements
+
+The requirements below apply to `vrf` networks.
+`l2Bridge` networks have different requirements, including the eBPF data plane and a newer kernel — see [L2 bridge support and limitations](../l2-bridge-support.mdx).
+
 
 - Linux kernel **5.6 or later** (for the `meta sdifname` nftables match used by VRF policy dispatch).
 - The `vrf` kernel module must be loaded on every node. On Ubuntu this is part of `linux-modules-extra-$(uname -r)`. Confirm with `sudo modprobe vrf && lsmod | grep '^vrf '`.
