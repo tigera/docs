@@ -2,64 +2,375 @@
 description: Expose one of your existing VLANs to the cluster with a Calico-managed bridge, then attach a KubeVirt VM or a pod to it.
 ---
 
+{/*
+  User story, primary
+  S4: As a network engineer, I want to expose one of my existing VLANs to the cluster and put a VM on it, so that cluster workloads share a broadcast domain with my existing servers.
+
+  User stories, subsidiary
+  S5: completes the prepared-bridge path, for readers who arrive here from that guide.
+
+  Story ladder and page plan: DOCS-2997.
+*/}
+
 # Connect workloads to an existing VLAN
 
 :::note
 
-L2 bridge networking is a tech preview feature. APIs and behavior may change before GA.
+L2 bridge networking is a tech preview feature.
+APIs and behavior may change before GA.
 
 :::
 
-Use this guide when $[prodname] can take over an uplink of its own. If the only uplink on your nodes also carries the node's own IP address, start with [Prepare an existing bridge](byo-bridge.mdx) and return here afterwards.
+Use this guide when $[prodname] can take over an interface of its own.
+$[prodname] creates the bridge, enslaves that interface as the trunk, and attaches your workloads to it.
+
+If the only uplink on your nodes also carries the node's own IP address, $[prodname] cannot create the bridge.
+Start with [Prepare an existing bridge](byo-bridge.mdx), then return here from step 3 onwards.
 
 ## Before you begin
 
-Check all of these before you start. Each one is a hard requirement, and the failures they cause are easier to avoid than to diagnose.
+Every item here is a hard requirement.
+The failures they cause are cheaper to avoid than to diagnose.
+
+- $[prodname] running the eBPF data plane.
+- Linux kernel 5.18 or later on every node that will carry the network.
+- An active $[prodname] license.
+- [Multus](../configuring/multiple-networks.mdx) installed.
+  Multus is a third-party component and $[prodname] does not ship it.
+- KubeVirt installed, if you are attaching VMs.
+- An interface on each node that $[prodname] can take over, carrying your VLANs as a trunk, and **not** carrying the node's own IP address.
+
+For the full set of constraints, see [L2 bridge support and limitations](../../reference/l2-bridge-support.mdx).
 
 ## Set the multi-interface mode
 
-$[prodname] needs to know that Multus is in use. Nothing warns you if this is missed, so do it before anything else.
+$[prodname] has to be told that Multus is in use.
+This is a separate setting from installing Multus itself, and nothing reports its absence.
+The symptom appears much later, as a workload that comes up with two interfaces called `eth0` and no connectivity at all.
+
+1. Check the current value:
+
+   ```bash
+   kubectl get installation default -o jsonpath='{.spec.calicoNetwork.multiInterfaceMode}'
+   ```
+
+2. If it is not `Multus`, set it:
+
+   ```bash
+   kubectl patch installation default --type=merge \
+     -p '{"spec":{"calicoNetwork":{"multiInterfaceMode":"Multus"}}}'
+   ```
+
+3. Wait for `tigerastatus` to report all components as available:
+
+   ```bash
+   kubectl get tigerastatus
+   ```
 
 ## Gather your network details
 
-Collect these values first. Getting the subnet or the interface name wrong surfaces later as a workload that will not start.
+Collect these before you write any manifests.
+A subnet or interface name that does not match reality surfaces later as a workload that will not start.
+
+For each VLAN you intend to use:
+
+- The VLAN ID.
+- The subnet on that VLAN, in CIDR notation.
+- The default gateway on that subnet.
+- The range of addresses you are willing to let $[prodname] assign.
+
+And for the nodes:
+
+- The name of the trunk interface.
+- Whether that name is the same on every node.
+  If it is not, you need one host configuration entry per naming scheme.
 
 ## Create an IP pool for each workload VLAN
 
-The pool must exist before the `Network`, and its CIDR must line up with the VLAN's subnet.
+The pool has to exist before the `Network`.
+$[prodname] IPAM chooses a pool by checking which pools fall inside the VLAN's subnet, so a pool that does not match fails at workload creation with an error that does not obviously point back here.
+
+A VLAN that carries only host traffic does not need a pool.
+Create pools only for the VLANs your workloads will use.
+
+1. Create a pool whose CIDR sits inside the VLAN's subnet:
+
+   ```yaml
+   apiVersion: projectcalico.org/v3
+   kind: IPPool
+   metadata:
+     name: vlan-10-pool
+   spec:
+     cidr: 10.10.0.0/24
+     allowedUses:
+       - L2Workload
+     disableBGPExport: true
+   ```
+
+2. Apply it, and repeat for each workload VLAN.
+
+`allowedUses: L2Workload` marks the pool as belonging to an L2 network.
+Without it, $[prodname] treats the block as part of the routed pod network: it programs a blackhole route for it and advertises it over BGP, neither of which is correct for addresses that live on your VLAN.
+
+$[prodname] does not assign the first and last addresses of a subnet, or the gateway address.
+Size the pool with that in mind.
 
 ## Create the Network resource
 
-One `Network` describes the whole L2 network: its VLANs, and how each node reaches them.
+One `Network` describes the whole L2 network: the VLANs it carries, and how each node reaches them.
+
+Prefer one `Network` carrying several VLANs over several Networks carrying one each.
+Every `Network` adds work for $[prodname] on each node it selects.
+
+1. Write the `Network`, listing each VLAN with its subnet, and one host configuration entry describing the bridge and the trunk:
+
+   ```yaml
+   apiVersion: projectcalico.org/v3
+   kind: Network
+   metadata:
+     name: vlan-trunk
+   spec:
+     l2Bridge:
+       hostConfig:
+         - nodeSelector: ''
+           bridge:
+             managedBridge: {}
+           hostConnections:
+             - trunkPort:
+                 interface:
+                   name: eno2
+       vlans:
+         - vlan: { id: 10 }
+           subnets:
+             - cidr: 10.10.0.0/24
+         - vlan: { id: 20 }
+           subnets:
+             - cidr: 10.20.0.0/24
+   ```
+
+2. Apply it.
+3. Confirm $[prodname] created the bridge on a node that the selector matches:
+
+   ```bash
+   ip -br link show type bridge
+   ```
+
+`managedBridge: {}` tells $[prodname] to create and own the bridge.
+It derives the bridge name per node, so do not expect a name you chose.
+An empty `nodeSelector` applies the entry to every node.
 
 ### Tagged trunk
 
+The configuration above is the strict case: every VLAN is tagged on the wire, and the switch port facing the node is configured as a trunk carrying VLANs 10 and 20.
+
+This is the arrangement to prefer.
+Tagging is explicit in both directions, so there is no ambiguity about which VLAN a frame belongs to.
+
 ### Untagged traffic and the native VLAN
 
-For a segment your switch presents untagged.
+If your switch presents one segment untagged, set a native VLAN on the trunk port.
+It tells $[prodname] which VLAN untagged traffic arriving on that interface belongs to.
+
+```yaml
+hostConnections:
+  - trunkPort:
+      interface:
+        name: eno2
+      nativeVLAN: 10
+```
+
+The native VLAN must be one the `Network` defines.
+$[prodname] rejects a `Network` that names a native VLAN not present in its `vlans` list.
 
 ### Nodes with different interface names
 
-When the trunk interface is not called the same thing on every node.
+If the trunk is not called the same thing on every node, add one host configuration entry per naming scheme and select nodes with `nodeSelector`.
+
+```yaml
+hostConfig:
+  - nodeSelector: has(hardware) && hardware == "gen2"
+    bridge:
+      managedBridge: {}
+    hostConnections:
+      - trunkPort:
+          interface:
+            name: eno2
+  - nodeSelector: ''
+    bridge:
+      managedBridge: {}
+    hostConnections:
+      - trunkPort:
+          interface:
+            name: ens1f1
+```
+
+Entries are evaluated in order and **the first match wins**.
+Everything after it is ignored for that node — entries are not merged.
+Put your most specific selectors first and a catch-all last.
 
 ## Create a NetworkAttachmentDefinition for each VLAN
 
 Multus needs one attachment definition per VLAN you want workloads on.
+The definition names the `Network` and the VLAN within it.
+
+1. Create the definition:
+
+   ```yaml
+   apiVersion: 'k8s.cni.cncf.io/v1'
+   kind: NetworkAttachmentDefinition
+   metadata:
+     name: vlan-10
+   spec:
+     config: '{
+       "cniVersion": "0.3.1",
+       "type": "calico",
+       "network": "vlan-trunk",
+       "vlan": 10,
+       "log_level": "info",
+       "datastore_type": "kubernetes",
+       "nodename_file_optional": false,
+       "ipam": {
+         "type": "calico-ipam",
+         "assign_ipv4": "true",
+         "assign_ipv6": "false",
+         "ipv4_pools": ["vlan-10-pool"]
+       },
+       "policy": {
+         "type": "k8s"
+       },
+       "kubernetes": {
+         "kubeconfig": "/etc/cni/net.d/calico-kubeconfig"
+       }
+       }'
+   ```
+
+2. Apply it in the namespace where your workloads will run, and repeat for each VLAN.
+
+Set `vlan` explicitly.
+Create the definition in the same namespace as the workloads that reference it, or reference it across namespaces with the `namespace/name` form.
 
 ## Attach a VM
 
-For a VM, declare the interface in the VM specification. Do not edit the launcher pod's annotations.
+This is the main path for the feature.
+For a VM you declare the interface in the VM specification, alongside the VM's other devices.
+Do not annotate the launcher pod that KubeVirt creates — KubeVirt builds it from the specification below.
+
+1. Add an interface to the VM's device list, and a matching network referencing the attachment definition:
+
+   ```yaml
+   apiVersion: kubevirt.io/v1
+   kind: VirtualMachine
+   metadata:
+     name: app-server
+   spec:
+     template:
+       spec:
+         domain:
+           devices:
+             interfaces:
+               - name: vlan10
+                 bridge: {}
+         networks:
+           - name: vlan10
+             multus:
+               networkName: vlan-10
+   ```
+
+2. Start the VM and confirm it received an address from the pool:
+
+   ```bash
+   kubectl get vmi app-server -o jsonpath='{.status.interfaces}'
+   ```
+
+3. From inside the VM, confirm the interface is up and the address is configured.
+   KubeVirt serves the address over DHCP inside the VM, so the guest configures itself as it would on any network.
+
+The `bridge: {}` here is KubeVirt's own interface binding, which attaches the VM to the interface $[prodname] built.
+It is unrelated to the $[prodname] L2 bridge — the two uses of the word are unfortunate but distinct.
+
+To give the VM a specific address and MAC address rather than whatever the pool offers, see [Bring a VM over with its IP and MAC](vm-identity.mdx).
 
 ### Attaching a pod instead
 
+A pod references the attachment definition through an annotation, giving the interface a name inside the pod.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-vlan10
+  annotations:
+    k8s.v1.cni.cncf.io/networks: vlan-10@vlan10
+spec:
+  containers:
+    - name: app
+      image: nginx
+```
+
+The name after `@` is the interface name inside the pod.
+It is also the name that scopes per-interface annotations, such as a requested address, so choose it deliberately.
+
 ### Attaching a workload to more than one VLAN
+
+List one attachment definition per VLAN, each with its own interface name.
+A workload gets one access port per VLAN, and each port belongs to exactly one VLAN.
+
+```yaml
+annotations:
+  k8s.v1.cni.cncf.io/networks: vlan-10@vlan10,vlan-20@vlan20
+```
+
+For a VM, add a second interface and network pair to the specification in the same way.
 
 ### Using an L2 network as the primary interface
 
-Possible for both VMs and pods, with a significant trade-off.
+A workload can take an L2 network as its primary interface instead of an additional one, set with annotations rather than through Multus.
+See the [Network resource](../../reference/resources/network.mdx) for the annotations.
+
+Understand the trade-off before you do this.
+The workload has no route to or from the Kubernetes network.
+For a pod that is normally unacceptable, because kubelet cannot reach it for readiness and liveness checks.
+For a VM meant to behave like a traditional server on a VLAN, it is often what you want.
 
 ## Verify
 
-Work outwards from the node to the fabric, so a failure tells you where to look.
+Work outward from the node to your fabric, so that a failure tells you where to look.
+
+1. Confirm the `Network` exists and $[prodname] accepted it:
+
+   ```bash
+   kubectl get network vlan-trunk -o yaml
+   ```
+
+2. On a node running one of your workloads, confirm the trunk is enslaved to the bridge:
+
+   ```bash
+   ip link show master <bridge-name>
+   ```
+
+3. Confirm VLAN membership on the trunk port and on the workload's port:
+
+   ```bash
+   bridge vlan show
+   ```
+
+4. Confirm the bridge has learned the workload's MAC address:
+
+   ```bash
+   bridge fdb show
+   ```
+
+5. From the workload, ping its default gateway.
+   This proves the path out through the trunk to your fabric.
+6. From an existing machine on the same VLAN, outside the cluster, ping the workload.
+   This proves the return path, which is the half that fabric misconfiguration breaks.
+
+If any step fails, see [Troubleshoot L2 network connectivity](troubleshoot.mdx).
 
 ## Additional resources
+
+- [About L2 bridge networking](about-l2-bridge.mdx)
+- [Prepare an existing bridge](byo-bridge.mdx)
+- [Bring a VM over with its IP and MAC](vm-identity.mdx)
+- [L2 bridge support and limitations](../../reference/l2-bridge-support.mdx)
+- [Network resource](../../reference/resources/network.mdx)
