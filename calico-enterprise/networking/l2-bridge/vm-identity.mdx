@@ -6,42 +6,173 @@ description: Bring a KubeVirt VM onto an L2 network holding its original IP addr
 
 :::note
 
-L2 bridge networking is a tech preview feature. APIs and behavior may change before GA.
+L2 bridge networking is a tech preview feature.
+APIs and behavior may change before GA.
 
 :::
 
-A VM that keeps its address and MAC keeps its identity: DNS entries, firewall rules, license servers, and monitoring all continue to work without being updated.
+A VM that keeps its IP address and MAC address keeps its identity.
+DNS entries still resolve to it, firewall rules still match it, license servers still recognise it, and monitoring still charts it — none of which has to be updated as part of the move.
+
+This guide covers a VM you are bringing onto an L2 network for the first time.
 
 ## Before you begin
 
+- An L2 network already created and verified.
+  See [Connect workloads to an existing VLAN](connect-vlan.mdx).
+- KubeVirt installed.
+- The VM's current IP address, prefix length, and MAC address, recorded from wherever it runs now.
+- Confirmation that the target VLAN's subnet contains that IP address.
+  $[prodname] assigns the address from an IP pool inside that subnet, so an address outside it cannot be assigned.
+- Confirmation that the address is not already in use.
+  $[prodname] fails the request rather than issuing a duplicate.
+
 ## How identity is preserved
 
-The address and MAC are declared before the VM starts. Nothing is renumbered afterwards.
+The order matters, so it is worth being explicit about it.
+
+The address and the MAC address are declared **on the VM before it starts**.
+$[prodname] assigns exactly those values when the interface is created, and the VM comes up already holding them.
+
+Nothing is renumbered afterwards.
+Do not start the VM, observe what it got, and then move it to the address you wanted: that sequence breaks every connection the VM makes in between, and defeats the point of preserving the address at all.
 
 ## Set the MAC address
 
-Two mechanisms, either of which works. Setting both to conflicting values is rejected.
+There are two ways to specify a MAC address, and either is sufficient.
+
+KubeVirt's own `macAddress` field on the interface is honored by $[prodname]:
+
+```yaml
+domain:
+  devices:
+    interfaces:
+      - name: vlan10
+        bridge: {}
+        macAddress: '52:54:00:3a:1c:04'
+```
+
+The `hwAddr` annotation is the other, scoped to the interface name:
+
+```yaml
+metadata:
+  annotations:
+    cni.projectcalico.org/vlan10.hwAddr: '52:54:00:3a:1c:04'
+```
+
+Use whichever fits how you generate the VM.
+The KubeVirt field is usually the better choice, because it lives with the rest of the interface configuration.
+
+:::caution
+
+If you set both, they must agree.
+When they conflict, $[prodname] rejects the interface rather than guessing which one you meant, and the VM does not start.
+
+On OpenShift this is easy to hit by accident.
+OpenShift ships a MAC address allocator that fills in the `macAddress` field on newly created VMs, so a VM may already carry a value before you add an annotation.
+Check the specification before you annotate.
+
+:::
 
 ## Set the IP address
 
+The address is requested with the `ipAddrs` annotation, scoped to the same interface name you gave the interface.
+
+```yaml
+metadata:
+  annotations:
+    cni.projectcalico.org/vlan10.ipAddrs: '["10.10.0.42"]'
+```
+
+The value is a JSON array, and the annotation prefix is the interface name followed by a dot.
+An annotation with no interface name applies to the primary interface.
+
+$[prodname] takes the address from the pool covering that VLAN and records the assignment, so the address is reserved for as long as the VM exists.
+
 ### Use ipAddrs rather than ipAddrsNoIpam
 
-Both request a specific address. Only one leaves $[prodname] able to enforce policy on it.
+Both request a specific address.
+Only one leaves $[prodname] able to enforce policy on it.
+
+`ipAddrsNoIpam` configures the address on the interface but bypasses IPAM entirely, so $[prodname] holds no record of it.
+On an L2 network that matters more than it does on the pod network: $[prodname] uses its knowledge of a workload's address to make policy decisions and to distinguish legitimate traffic from spoofed traffic.
+An address it does not know about cannot be protected.
+
+Use `ipAddrs`.
 
 ### One address per family
 
+An interface takes at most one IPv4 address.
+IPv6 is not supported on L2 networks in this release.
+
+Addresses cannot be added to or removed from an interface after it is set up.
+To change them, delete the VM and recreate it with the values you want.
+
 ## Confirm what was configured
 
-$[prodname] writes back what it actually applied. This is the authoritative record.
+$[prodname] writes back what it actually applied, which is the authoritative record of what the VM got.
+
+1. Read the status annotation from the VM's launcher pod:
+
+   ```bash
+   kubectl get pod -l vm.kubevirt.io/name=app-server \
+     -o jsonpath='{.items[0].metadata.annotations.cni\.projectcalico\.org/vlan10\.network-status}'
+   ```
+
+2. Check the reported `ipv4`, `mac`, `network`, and `vlan` against what you asked for.
+
+An admission policy restricts this annotation so that only the CNI plugin can write it.
+If it disagrees with your request, the request was not honored — it does not mean somebody edited the record.
 
 ## Verify from the network
 
-Check from outside the cluster, because that is what the VM's identity is for.
+Check from outside the cluster.
+The point of preserving an address is that other systems reach the VM at it, so that is what to test.
+
+1. From an existing machine on the same VLAN, ping the VM at its original address.
+2. On that machine, confirm the ARP entry for the address shows the original MAC address:
+
+   ```bash
+   ip neigh show 10.10.0.42
+   ```
+
+3. Confirm the workload endpoint carries the network and VLAN you expect:
+
+   ```bash
+   kubectl get workloadendpoints -o wide
+   ```
+
+4. If the VM is registered in DNS, confirm the name still resolves to the same address and that traffic to the name reaches the VM.
 
 ## Using Forklift
 
-Where a migration tool sets these values for you.
+Forklift copies a VM's configuration to the target KubeVirt VM as part of a migration, including the values this guide sets by hand.
+Where you use it, you are unlikely to be writing these annotations yourself.
+
+:::caution
+
+$[prodname] support for L2 networks is being contributed to Forklift and is not in a released version.
+Do not expect a stock Forklift installation to preserve addresses onto an L2 network.
+If you want to try this now, talk to your support contact rather than working from the upstream documentation.
+
+:::
 
 ## What to expect during migration
 
+What follows describes what this release implements.
+It is not a statement about what a particular migration will feel like, and it has not been through a full test cycle.
+
+$[prodname] preserves the address and the MAC address across a live migration between KubeVirt nodes, and announces the VM's new location with a gratuitous ARP so the fabric updates its forwarding.
+Established TCP connections are admitted on arrival rather than dropped for want of a handshake, which is intended to let sessions continue.
+
+Bringing a VM in from outside the cluster is a different matter.
+That is an offline operation: the VM is shut down while its disks are copied, so connections in progress do not survive, and clients reconnect once it starts.
+
+Plan for a disruption window and confirm the behavior you need in your own environment before you rely on it.
+
 ## Additional resources
+
+- [Connect workloads to an existing VLAN](connect-vlan.mdx)
+- [About L2 bridge networking](about-l2-bridge.mdx)
+- [Troubleshoot L2 network connectivity](troubleshoot.mdx)
+- [L2 bridge support and limitations](../../reference/l2-bridge-support.mdx)
