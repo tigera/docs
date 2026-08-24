@@ -8,6 +8,56 @@
  */
 
 /**
+ * Shift every ATX heading in a Markdown body down by `delta` levels, capped at h6.
+ *
+ * Page bodies come out of the converter with `##` as their top level, because the
+ * page <h1> lives in the `<header>` we strip and is carried as metadata instead.
+ * Nesting such a body under a doc-title heading inverts the hierarchy unless the
+ * body is shifted to match.
+ *
+ * Fenced code is skipped — `#` starts a comment in most of the shell and YAML
+ * samples in these docs.
+ *
+ * @param {string} markdown
+ * @param {number} delta
+ * @returns {string}
+ */
+export function shiftHeadings(markdown, delta) {
+  if (delta <= 0) {
+    return markdown;
+  }
+
+  const lines = markdown.split('\n');
+  let openFence = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const fenceMatch = lines[i].match(/^\s*(`{3,}|~{3,})/);
+
+    if (fenceMatch) {
+      const marker = fenceMatch[1];
+      if (openFence === null) {
+        openFence = marker[0];
+      } else if (marker[0] === openFence) {
+        openFence = null;
+      }
+      continue;
+    }
+
+    if (openFence !== null) {
+      continue;
+    }
+
+    const headingMatch = lines[i].match(/^(#{1,6})(\s)/);
+    if (headingMatch) {
+      const level = Math.min(6, headingMatch[1].length + delta);
+      lines[i] = '#'.repeat(level) + lines[i].slice(headingMatch[1].length);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+/**
  * Group docs by their section label, preserving insertion order.
  *
  * @param {ProcessedDoc[]} docs
@@ -91,28 +141,29 @@ export function generateProductIndex(productName, description, docs, siteUrl, op
  * @param {string} description - Blockquote description
  * @param {string} versionLabel - Version string (e.g., "3.31")
  * @param {ProcessedDoc[]} docs - All processed docs with markdown content
+ * @param {string} siteUrl - Site base URL, for the per-doc Source line
  * @returns {string}
  */
-export function generateProductFull(productName, description, versionLabel, docs) {
-  const sections = groupBySection(docs);
+export function generateProductFull(productName, description, versionLabel, docs, siteUrl) {
   const lines = [];
 
   lines.push(`# ${productName} - Full Documentation`);
   lines.push('');
   lines.push(`> Complete documentation for ${productName} (version ${versionLabel}).`);
 
-  for (const [sectionLabel, sectionDocs] of sections) {
+  for (const doc of docs) {
     lines.push('');
     lines.push('---');
     lines.push('');
-    lines.push(`## ${sectionLabel}`);
-
-    for (const doc of sectionDocs) {
-      lines.push('');
-      lines.push(`### ${doc.title}`);
-      lines.push('');
-      lines.push(doc.markdown);
+    lines.push(`## ${doc.title}`);
+    lines.push('');
+    lines.push(`Source: ${siteUrl}${doc.permalink}`);
+    if (doc.sectionLabel) {
+      lines.push(`Section: ${doc.sectionLabel}`);
     }
+    lines.push('');
+    // Body headings start at h2; nest them one level under the h2 doc title.
+    lines.push(shiftHeadings(doc.markdown, 1));
   }
 
   lines.push('');

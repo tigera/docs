@@ -125,7 +125,13 @@ function createHandlers(siteUrl) {
         if (codeLangMatch) lang = codeLangMatch[1];
       }
 
-      const value = codeNode ? toText(codeNode) : toText(node);
+      // Prism renders each source line as a block-level `token-line` div that also
+      // ends in a <br>. Without `whitespace: 'pre'`, to-text adds a newline for the
+      // block boundary on top of the one from the <br>, double-spacing every fence
+      // and collapsing leading indentation.
+      const value = codeNode
+        ? toText(codeNode, { whitespace: 'pre' })
+        : toText(node, { whitespace: 'pre' });
 
       return {
         type: 'code',

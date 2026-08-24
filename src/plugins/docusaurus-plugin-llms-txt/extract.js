@@ -23,6 +23,7 @@ const REMOVE_SELECTORS = [
   '.theme-doc-breadcrumbs',
   '.pagination-nav',
   'button[class*="copyButton"]',
+  'a.hash-link',
   'svg.iconExternalLink',
   '.table-of-contents',
   'nav.navbar',
@@ -30,6 +31,25 @@ const REMOVE_SELECTORS = [
   'footer.footer',
   'header',
 ];
+
+/**
+ * Preprocess Prism code blocks: demote each `token-line` from a block-level div
+ * to an inline span.
+ *
+ * Prism emits every source line as `<div class="token-line">…<br/></div>`, so the
+ * line break is represented twice — once by the block boundary and once by the
+ * <br>. hast-util-to-text honours both, double-spacing every fence. Demoting the
+ * div to a span leaves the <br> as the only line break. Doing it this way (rather
+ * than dropping the <br>) keeps genuinely blank source lines, which are empty
+ * divs whose only content is the <br>.
+ *
+ * @param {cheerio.CheerioAPI} $
+ */
+function preprocessCodeBlocks($) {
+  $('pre .token-line').each(function () {
+    this.tagName = 'span';
+  });
+}
 
 /**
  * Preprocess tab containers: expand all panels and annotate with group info.
@@ -93,6 +113,16 @@ export async function extractFromHtml(htmlPath) {
     return null;
   }
 
+  return extractFromHtmlString(rawHtml);
+}
+
+/**
+ * Extract content and metadata from a rendered Docusaurus page.
+ *
+ * @param {string} rawHtml - Full page HTML
+ * @returns {{ html: string, title: string, description: string } | null}
+ */
+export function extractFromHtmlString(rawHtml) {
   const $ = cheerio.load(rawHtml);
 
   // Extract metadata before stripping elements
@@ -109,7 +139,8 @@ export async function extractFromHtml(htmlPath) {
     $(selector).remove();
   }
 
-  // Preprocess tabs before extraction
+  // Preprocess code blocks and tabs before extraction
+  preprocessCodeBlocks($);
   preprocessTabs($);
 
   // Extract content using priority selectors
