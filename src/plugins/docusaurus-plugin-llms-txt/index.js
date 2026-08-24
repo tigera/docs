@@ -197,7 +197,8 @@ export default function llmsTxtPlugin(context, options) {
             productName,
             description,
             result.versionLabel,
-            result.docs
+            result.docs,
+            siteUrl
           );
           const fullPath = path.join(outDir, instanceId, 'llms-full.txt');
           await fs.writeFile(fullPath, fullContent);

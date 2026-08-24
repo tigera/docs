@@ -37,5 +37,10 @@ export default {
     moduleNameMapper: {
       '^@docusaurus/Link$': '<rootDir>/jest/mockComponent.js',
     },
+    // The llms-txt plugin's dependencies (cheerio, unified, rehype, remark) ship as
+    // ESM only, and Jest does not transform node_modules by default. Transforming
+    // everything costs about two seconds on the full suite and avoids maintaining a
+    // brittle allowlist of the whole unified ecosystem.
+    transformIgnorePatterns: [],
     roots: ['<rootDir>/src'],
 };
