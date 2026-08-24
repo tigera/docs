@@ -579,6 +579,9 @@ export default async function createAsyncConfig() {
             '/calico-cloud/get-started/system-requirements',
           ],
           optionalSections: ['release notes'],
+          // 'last' covers only the version served at /latest; 'all' covers every
+          // built version, at roughly three times the generation cost.
+          versions: 'last',
         },
       ],
     ],

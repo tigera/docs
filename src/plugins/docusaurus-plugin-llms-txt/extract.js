@@ -5,7 +5,6 @@
  */
 
 import * as cheerio from 'cheerio';
-import fs from 'fs/promises';
 
 const CONTENT_SELECTORS = [
   '.theme-doc-markdown',
@@ -31,6 +30,25 @@ const REMOVE_SELECTORS = [
   'footer.footer',
   'header',
 ];
+
+/**
+ * Strip HTML comment nodes.
+ *
+ * React's server renderer emits `<!-- -->` as a separator between adjacent text
+ * nodes, and rehype-remark carries those through into the Markdown. They are pure
+ * noise. The tab markers the converter emits are built during conversion, not read
+ * from the page, so they are unaffected.
+ *
+ * @param {cheerio.CheerioAPI} $
+ */
+function removeComments($) {
+  $('*')
+    .contents()
+    .filter(function () {
+      return this.type === 'comment';
+    })
+    .remove();
+}
 
 /**
  * Preprocess Prism code blocks: demote each `token-line` from a block-level div
@@ -100,23 +118,6 @@ function preprocessTabs($) {
 }
 
 /**
- * Extract content and metadata from a Docusaurus HTML file.
- *
- * @param {string} htmlPath - Absolute path to the HTML file
- * @returns {Promise<{ html: string, title: string, description: string } | null>}
- */
-export async function extractFromHtml(htmlPath) {
-  let rawHtml;
-  try {
-    rawHtml = await fs.readFile(htmlPath, 'utf-8');
-  } catch {
-    return null;
-  }
-
-  return extractFromHtmlString(rawHtml);
-}
-
-/**
  * Extract content and metadata from a rendered Docusaurus page.
  *
  * @param {string} rawHtml - Full page HTML
@@ -140,20 +141,46 @@ export function extractFromHtmlString(rawHtml) {
   }
 
   // Preprocess code blocks and tabs before extraction
+  removeComments($);
   preprocessCodeBlocks($);
   preprocessTabs($);
 
-  // Extract content using priority selectors
-  let contentHtml = '';
+  // Extract content using priority selectors.
+  //
+  // Prefer the first selector that yields actual content, not merely the first that
+  // matches an element. The fallbacks exist for pages whose content sits somewhere
+  // other than .theme-doc-markdown, and breaking on a matched-but-empty container
+  // made them inert in exactly that case — the content was discarded even though a
+  // later selector would have found it.
+  let contentHtml = null;
+  let firstMatch = null;
+
   for (const selector of CONTENT_SELECTORS) {
     const el = $(selector).first();
-    if (el.length) {
-      contentHtml = el.html();
+    if (!el.length) {
+      continue;
+    }
+
+    const html = el.html() || '';
+    if (firstMatch === null) {
+      firstMatch = html;
+    }
+
+    if (html.trim()) {
+      contentHtml = html;
       break;
     }
   }
 
-  if (!contentHtml) {
+  // Every container that matched was empty: an ordinary stub, or a page that renders
+  // client-side. Report the empty body so the caller skips publishing a twin.
+  if (contentHtml === null) {
+    contentHtml = firstMatch;
+  }
+
+  // Nothing matched at all, which means the page is not shaped the way we expect —
+  // a renamed theme class, a moved output path. That is structural, and fatal.
+  if (contentHtml === null) {
     return null;
   }
 
