@@ -58,6 +58,23 @@ export function shiftHeadings(markdown, delta) {
 }
 
 /**
+ * Whether a doc converted to anything worth publishing.
+ *
+ * This is the single predicate that decides a page's fate across every output, so
+ * that they cannot drift apart: pages/writePageMarkdown declines to write a twin,
+ * and llms-full.txt omits the section. llms.txt deliberately still lists these
+ * pages, because they exist and their HTML is reachable — but any caller that
+ * rewrites index links to .md must consult this first, or it will advertise a URL
+ * that does not exist.
+ *
+ * @param {{ markdown: string }} doc
+ * @returns {boolean}
+ */
+export function hasContent(doc) {
+  return Boolean(doc.markdown && doc.markdown.trim());
+}
+
+/**
  * Group docs by their section label, preserving insertion order.
  *
  * @param {ProcessedDoc[]} docs
@@ -102,6 +119,8 @@ function isOptionalSection(sectionLabel, optionalSections) {
  * @returns {string}
  */
 export function generateProductIndex(productName, description, docs, siteUrl, optionalSections) {
+  // Note: unlike llms-full.txt, this lists every doc including those with no twin.
+  // These links point at HTML pages, which exist. See hasContent.
   const sections = groupBySection(docs);
   const lines = [];
   const optionalLines = [];
@@ -147,11 +166,16 @@ export function generateProductIndex(productName, description, docs, siteUrl, op
 export function generateProductFull(productName, description, versionLabel, docs, siteUrl) {
   const lines = [];
 
+  // Pages that convert to an empty body get no twin, so they should not appear here
+  // either — an empty section under a heading and a Source line reads as "this page
+  // has no content" rather than "this page could not be converted".
+  const withContent = docs.filter(hasContent);
+
   lines.push(`# ${productName} - Full Documentation`);
   lines.push('');
   lines.push(`> Complete documentation for ${productName} (version ${versionLabel}).`);
 
-  for (const doc of docs) {
+  for (const doc of withContent) {
     lines.push('');
     lines.push('---');
     lines.push('');
