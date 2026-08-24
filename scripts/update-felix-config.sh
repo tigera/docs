@@ -92,11 +92,6 @@ update_versions_OSS () {
         LOCAL_PATH="calico_versioned_docs/version-${VERSION}/_includes/components/FelixConfig/config-params.json"
         REMOTE_URL="https://raw.githubusercontent.com/projectcalico/calico/refs/heads/release-v${VERSION}/felix/docs/config-params.json"
 
-        if [[ "$VERSION" == "3.29" ]]; then
-            echo "Skipping ${VERSION}: No action required."
-            continue
-        fi
-
         update_felix_config
     done
 }
