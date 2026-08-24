@@ -6536,6 +6536,38 @@ There are two ways to switch your cluster to use Calico networking. Both methods
    kubectl delete -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.1/manifests/flannel-migration/migration-job.yaml
    ```
 
+5. Remove leftover flannel `iptables` rules from each node.
+
+   The migration controller deletes the flannel network devices but leaves flannel's `iptables` chains (`FLANNEL-POSTRTG` in `nat`, `FLANNEL-FWD` in `filter`) in place. Their masquerade rule SNATs cross-node pod traffic, which breaks Kubernetes `NetworkPolicy` for policy-selected pods. Because flannel is no longer running, you only need to clear the chains once. Use either method:
+
+   **Method 1: Reboot or replace nodes**
+
+   Perform a rolling reboot (drain, reboot, uncordon each node in turn), or replace the nodes if you use immutable or managed node pools. The rules do not persist across a reboot, so no work on the nodes is needed.
+
+   **Method 2: Remove the chains in place**
+
+   Run the following on every node. It takes effect immediately without disrupting workloads, covers both the legacy and nft backends, and is safe to re-run:
+
+   ```bash
+   for ipt in iptables-legacy iptables-nft ip6tables-legacy ip6tables-nft; do
+
+    command -v "$ipt" >/dev/null 2>&1 || continue
+
+    "$ipt" -w -t nat -D POSTROUTING -j FLANNEL-POSTRTG 2>/dev/null
+
+    "$ipt" -w -t nat -F FLANNEL-POSTRTG 2>/dev/null
+
+    "$ipt" -w -t nat -X FLANNEL-POSTRTG 2>/dev/null
+
+    "$ipt" -w -t filter -D FORWARD -j FLANNEL-FWD 2>/dev/null
+
+    "$ipt" -w -t filter -F FLANNEL-FWD 2>/dev/null
+
+    "$ipt" -w -t filter -X FLANNEL-FWD 2>/dev/null
+
+   done
+   ```
+
 ### Modify flannel configuration[​](#modify-flannel-configuration)
 
 The migration controller autodetects your flannel configuration, and in most cases, does not require additional configuration. If you require special configuration, the migration tool provides the following options, which can be set as environment variables within the pod.
@@ -61829,9 +61861,35 @@ When a backend pod for a Service goes away, the eBPF data plane now sends a TCP 
 
 This release adds support for Kubernetes 1.36.
 
+## Technology preview features[​](#technology-preview-features)
+
+This table shows the status of features that were in technology preview at any point in the releases covered here. Technology preview features are for evaluation and feedback only and are **not supported for production use**. Behavior, APIs, and configuration may change before a feature reaches general availability.
+
+| Feature                             | 3.30 | 3.31 | 3.32 |
+| ----------------------------------- | ---- | ---- | ---- |
+| Flow logs API and Whisker           | TP   | TP   | TP   |
+| Calico Ingress Gateway              | TP   | GA   | GA   |
+| nftables data plane                 | TP   | GA   | GA   |
+| Native v3 CRDs                      | –    | –    | TP   |
+| Istio ambient mode                  | –    | –    | TP   |
+| Selector-scoped Felix configuration | –    | –    | TP   |
+
+TP = technology preview, GA = generally available, – = not available in that release.
+
 ## Deprecated and removed features[​](#deprecated-and-removed-features)
 
-- Calico is moving the `projectcalico.org/v3` API from the aggregated API server to native Kubernetes CRDs. Both mechanisms will be supported until native v3 CRDs are compatible with all supported platforms, after which the aggregated API server will be removed.
+Review the following table to see what features have recently been deprecated or removed. Deprecated features are still present and supported, but they are scheduled for removal. You should consider migrating away from a deprecated feature before it is removed.
+
+| Feature                | 3.30       | 3.31       | 3.32       |
+| ---------------------- | ---------- | ---------- | ---------- |
+| Aggregation API server | GA         | GA         | Deprecated |
+| FIPS mode              | Deprecated | Deprecated | Deprecated |
+
+GA = generally available, Deprecated = scheduled for removal, Removed = no longer present.
+
+### Deprecated and removed features in this release[​](#deprecated-and-removed-features-in-this-release)
+
+- Support for the aggregation API server is deprecated and scheduled for removal in an upcoming release. Calico is moving the `projectcalico.org/v3` API to native Kubernetes CRDs. Both mechanisms are supported until native v3 CRDs are compatible with all supported platforms. Migrate to native v3 CRDs; see [Enable native v3 CRDs](https://docs.tigera.io/calico/latest/operations/native-v3-crds).
 
 ## Bug fixes[​](#bug-fixes)
 
