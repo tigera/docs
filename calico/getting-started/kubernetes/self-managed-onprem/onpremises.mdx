@@ -7,8 +7,6 @@ title: Installing on on-premises deployments
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import V3CRDMapVersion from '@site/calico/_includes/content/_v3-crd-map-version.mdx';
-import CalicoV3CRDsMapVersion from '@site/calico/_includes/content/_calico-v3-crds-map-version.mdx';
 
 ## Big picture
 
@@ -45,11 +43,17 @@ $[prodname] can also be installed using raw manifests as an alternative to the o
 
 1. Install the $[prodname] custom resource definitions.
 
+   If your cluster is based on Kubernetes 1.36 or later:
+
    ```
    kubectl create -f $[manifestsUrl]/manifests/v3_projectcalico_org.yaml
    ```
 
-   <V3CRDMapVersion />
+   If your cluster is based on Kubernetes 1.34 or 1.35:
+
+   ```
+   kubectl create -f $[manifestsUrl]/manifests/v3_projectcalico_org-v1beta1.yaml
+   ```
 
 1. Install the Tigera Operator.
 
@@ -148,11 +152,17 @@ Native `projectcalico.org/v3` CRDs rely on MutatingAdmissionPolicies for default
 
 1. Download the $[prodname] v3 CRD manifest.
 
+   If your cluster is based on Kubernetes 1.36 or later:
+
    ```bash
    curl $[manifestsUrl]/manifests/calico-v3-crds.yaml -O
    ```
 
-   <CalicoV3CRDsMapVersion />
+   If your cluster is based on Kubernetes 1.34 or 1.35:
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico-v3-crds-v1beta1.yaml -o calico-v3-crds.yaml
+   ```
 
 1. If you are using pod CIDR `192.168.0.0/16`, skip to the next step.
    If you are using a different pod CIDR with kubeadm, no changes are required - Calico will automatically detect the CIDR based on the running configuration.
@@ -308,13 +318,21 @@ If you have an existing manifest-based $[prodname] install using the legacy `crd
 
 1. Install the admission webhook resources. The Deployment, Service, RBAC, `MutatingAdmissionPolicy` resources, and `ValidatingWebhookConfiguration` are bundled into `calico-v3-crds.yaml` alongside the CRDs and core $[prodname] components. Extract just the webhook resources with [`yq`](https://github.com/mikefarah/yq) and apply them, so the existing `calico-node` DaemonSet, `kube-controllers` Deployment, and `calico-typha` Deployment in your cluster (including the `CALICO_API_GROUP` env you set above) are not overwritten.
 
+   If your cluster is based on Kubernetes 1.36 or later:
+
    ```bash
    curl $[manifestsUrl]/manifests/calico-v3-crds.yaml -O
    yq 'select(.metadata.name == "calico-webhooks" or .kind == "MutatingAdmissionPolicy" or .kind == "MutatingAdmissionPolicyBinding")' \
        calico-v3-crds.yaml | kubectl apply -f -
    ```
 
-   <CalicoV3CRDsMapVersion />
+   If your cluster is based on Kubernetes 1.34 or 1.35:
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico-v3-crds-v1beta1.yaml -o calico-v3-crds.yaml
+   yq 'select(.metadata.name == "calico-webhooks" or .kind == "MutatingAdmissionPolicy" or .kind == "MutatingAdmissionPolicyBinding")' \
+       calico-v3-crds.yaml | kubectl apply -f -
+   ```
 
 1. Generate TLS certificates for the admission webhook.
 
