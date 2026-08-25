@@ -1,0 +1,139 @@
+---
+description: Write custom ModSecurity rules in a WAFPlugin or GlobalWAFPlugin, using the four lifecycle slots and your namespace's SecRule ID range.
+---
+
+# Write custom rules with plugins
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+A `WAFPlugin` (namespace) or `GlobalWAFPlugin` (cluster) holds custom [ModSecurity SecLang](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) directives in four lifecycle slots — `config`, `before`, `rules`, `after` — for app-specific detections and false-positive exceptions the Core Rule Set doesn't cover on its own. Cluster operators wanting the same rules org-wide use `GlobalWAFPlugin` instead — same fields, different scope. For what each slot does and when it runs, see [Plugins — custom rules](./overview.mdx#plugins--custom-rules).
+
+:::caution
+
+`ctl:ruleEngine=Off` inside a chained rule or per-request disables the engine for that transaction only. A top-level `SecRuleEngine Off` is rejected by the admission webhook.
+
+:::
+
+:::note
+
+`SecRuleRemoveById`/`ctl:ruleRemoveById` in `after` apply for the rest of phase processing — use to suppress your own false positives. Protected Core Rule Set baseline rules can't be removed from any slot; the webhook rejects the attempt.
+
+:::
+
+## Prerequisites
+
+- Gateway WAF is enabled. See [Enable Gateway WAF](./enable.mdx).
+- You have write access to `WAFPlugin` in your namespace (or `GlobalWAFPlugin` at cluster scope).
+- A `WAFPolicy` or `GlobalWAFPolicy` exists to reference the plugin from — a plugin does nothing until a policy loads it. See [Attach WAF to a Gateway or route](./attach-waf-to-a-route.mdx).
+
+## Write a plugin
+
+1. Find your namespace's SecRule ID range. Every `SecRule`/`SecAction` needs an ID, and each namespace gets a 10,000-ID block enforced at admission:
+
+   ```bash
+   kubectl get namespace <your-namespace> \
+     -o jsonpath='{.metadata.annotations.applicationlayer\.projectcalico\.org/waf-id-range}'
+   # example output: 420000-429999
+   ```
+
+   The range is populated the first time a plugin is referenced in your namespace. See [SecRule ID ranges](./reference.mdx#secrule-id-ranges) for protected ranges and the allowlist.
+
+1. Write the `WAFPlugin`, placing each rule in the slot that matches when it should fire. This example uses all four slots to protect a GraphQL API. The `4200xx` IDs below assume the `420000-429999` example range from the previous step — swap in IDs from your own namespace's range, or the admission webhook rejects the plugin with `IDOutsideRange`:
+
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: WAFPlugin
+   metadata:
+     name: graphql-waf
+     namespace: platform
+   spec:
+     description: "GraphQL introspection guard and false-positive exceptions"
+
+     config: |
+       # Flag the application type so later rules can branch on it.
+       SecAction \
+         "id:420001,phase:1,pass,nolog,\
+          setvar:tx.is_graphql=1"
+
+     before: |
+       # Allowlist the schema endpoint used by the internal schema registry —
+       # skip WAF analysis entirely for that specific path.
+       SecRule REQUEST_URI "@streq /graphql/schema-registry" \
+         "id:420010,phase:1,pass,nolog,\
+          ctl:ruleEngine=Off,\
+          tag:allowlist"
+
+     rules: |
+       # Block introspection queries (production guard).
+       SecRule TX:IS_GRAPHQL "@eq 1" \
+         "id:420020,phase:2,deny,status:403,\
+          msg:'GraphQL introspection blocked',\
+          logdata:'body_snippet=%{MATCHED_VAR}',\
+          chain"
+       SecRule REQUEST_BODY "@rx __schema|__type" ""
+
+       # Block suspicious user-agents known to scan GraphQL APIs.
+       SecRule REQUEST_HEADERS:User-Agent "@pmf graphql-scanners.dat" \
+         "id:420021,phase:1,deny,status:403,\
+          msg:'Known GraphQL scanner blocked',\
+          logdata:'ua=%{MATCHED_VAR}'"
+
+     after: |
+       # Remove a false positive: CRS rule 941130 fires on a legitimate
+       # Content-Type value used by our GraphQL client library.
+       SecRuleRemoveById 941130
+   ```
+
+   :::tip
+
+   `@pmf` loads a data file, which must be bundled into the Coraza WASM filter image — ask your cluster operator, or use `@pm` (inline phrase match) for a short string list.
+
+   :::
+
+1. Reference the plugin from a `WAFPolicy`, in `spec.plugins[]` (load order = array position):
+
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: WAFPolicy
+   metadata:
+     name: platform-api-waf
+     namespace: platform
+   spec:
+     targetRefs:
+       - group: gateway.networking.k8s.io
+         kind: HTTPRoute
+         name: graphql-api
+     action: Block
+     plugins:
+       - kind: WAFPlugin
+         name: graphql-waf        # ← your plugin above
+   ```
+
+   If the policy also references a `GlobalWAFPlugin`, its slots load before the namespace plugin's slots at each position.
+
+   :::note
+
+   Not all SecLang directives are permitted — directives that read the filesystem, fetch remote rules, or write to arbitrary audit log paths are rejected. See [SecRule ID ranges](./reference.mdx#secrule-id-ranges) for the allowlist.
+
+   :::
+
+1. Confirm acceptance and reconciliation:
+
+   ```bash
+   kubectl get wafplugin graphql-waf -n platform -o yaml | grep -A10 "conditions:"
+   kubectl get wafpolicy platform-api-waf -n platform -o yaml | grep -A20 "conditions:"
+   ```
+
+   `Ready=True` on the `WAFPolicy` confirms the merged ruleset passed validation and the `EnvoyExtensionPolicy` was programmed.
+
+Gateway WAF runs the [OWASP Core Rule Set v4](https://coreruleset.org/docs/) via [Coraza](https://coraza.io/); the [ModSecurity reference manual](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) covers the full SecLang directive set.
+
+## Next steps
+
+- [Validate configuration with Rego](./validate-config.mdx) — enforce guardrails on the merged ruleset.
+- [Reference](./reference.mdx) — SecRule ID ranges, allowed directives, and status conditions.
+- [Troubleshooting](./troubleshooting.mdx) — diagnose a plugin that won't accept or program.

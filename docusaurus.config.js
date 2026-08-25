@@ -133,14 +133,6 @@ export default async function createAsyncConfig() {
           contextualSearch: true,
           searchPagePath: '/search',
         },
-        announcementBar: {
-         id: 'calico_survey_2026',
-         content:
-           '<a href="https://forms.gle/V89eyYDD1QteD8c97"><strong>Take our Cluster Network Policy survey</strong> and <strong>claim a free Calico t-shirt! 👕</strong></a>',
-         backgroundColor: '#FCE181',
-         textColor: '#000',
-         isCloseable: true,
-        },
         navbar: {
           logo: {
             src: 'img/tigera-logo-2026-black-text.svg',
@@ -435,7 +427,7 @@ export default async function createAsyncConfig() {
           path: 'calico',
           routeBasePath: 'calico',
           editCurrentVersion: true,
-          onlyIncludeVersions: [...nextVersion, '3.32', '3.31', '3.30', '3.29'],
+          onlyIncludeVersions: [...nextVersion, '3.32', '3.31', '3.30'],
           lastVersion: '3.32',
           versions: {
             current: {
@@ -458,11 +450,6 @@ export default async function createAsyncConfig() {
               path: '3.30',
               banner: 'none',
             },
-            3.29: {
-              label: '3.29',
-              path: '3.29',
-              banner: 'none',
-            },
           },
           sidebarPath: './sidebars-calico.js',
           beforeDefaultRemarkPlugins: [variablesPlugin],
@@ -483,6 +470,11 @@ export default async function createAsyncConfig() {
             current: {
               label: 'Next',
               path: 'next',
+              banner: 'unreleased',
+            },
+            '3.24-2': {
+              label: '3.24 (early preview)',
+              path: '3.24',
               banner: 'unreleased',
             },
             '3.24-1': {
@@ -579,6 +571,16 @@ export default async function createAsyncConfig() {
             '/calico-cloud/get-started/system-requirements',
           ],
           optionalSections: ['release notes'],
+          // 'last' covers only the version served at /latest; 'all' covers every
+          // built version, at roughly three times the generation cost.
+          versions: 'all',
+          // Docusaurus version names are navigation labels. Where a product has a
+          // user-facing version that differs, name the variables.js key holding it
+          // so frontmatter reports something a reader can corroborate. Calico Cloud's
+          // Docusaurus label is "23-2", which appears in no URL and no dropdown.
+          versionVariables: {
+            'calico-cloud': 'cloudUserVersion',
+          },
         },
       ],
     ],

@@ -87,7 +87,7 @@ All commands support `CONTAINERIZED=true` for Docker-based builds (e.g., `make b
 ```
 docs/
 ├── calico/                              # Calico OSS — next (unreleased) version
-├── calico_versioned_docs/               # Calico OSS — released versions (3.29 through 3.32)
+├── calico_versioned_docs/               # Calico OSS — released versions (3.30 through 3.32)
 ├── calico-enterprise/                   # Enterprise — next (unreleased) version
 ├── calico-enterprise_versioned_docs/    # Enterprise — released versions (3.21-2 through 3.24-1)
 ├── calico-cloud/                        # Cloud — next (unreleased) version
@@ -237,7 +237,6 @@ make show_current_branches
 # Example output:
 # Calico branch targets:
 # * calico__operator_reference
-# * calico_versioned_docs/version-3.29__operator_reference
 # * calico_versioned_docs/version-3.30__operator_reference
 # * calico_versioned_docs/version-3.31__operator_reference
 # * calico_versioned_docs/version-3.32__operator_reference

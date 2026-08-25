@@ -1,6 +1,7 @@
 import { extractFromHtmlString } from '../extract.js';
 import { convertToMarkdown } from '../convert.js';
-import { shiftHeadings } from '../generate.js';
+import { shiftHeadings } from '../markdown.js';
+import { contentOnly } from '../cache.js';
 
 const SITE_URL = 'https://docs.tigera.io';
 
@@ -14,6 +15,18 @@ function page(body) {
     <body><nav class="navbar">nav</nav><main><article><div class="theme-doc-markdown markdown">
     <header><h1>Page title</h1></header>${body}
     </div></article></main><footer class="footer">footer</footer></body></html>`;
+}
+
+/**
+ * The same page with no whitespace inside the content container, which is what
+ * Docusaurus's server renderer actually emits. The indented helper above leaves
+ * whitespace that reads as truthy content, which is enough to mask a regression in
+ * how an empty container is detected.
+ */
+function compactPage(body) {
+  return `<!DOCTYPE html><html><head><meta name="description" content="A description."></head>` +
+    `<body><main><article><div class="theme-doc-markdown markdown">` +
+    `<header><h1>Page title</h1></header>${body}</div></article></main></body></html>`;
 }
 
 function codeBlock(lines, lang = 'yaml') {
@@ -47,8 +60,36 @@ describe('extractFromHtmlString', () => {
     expect(extracted.html).not.toContain('footer');
   });
 
-  it('returns null for HTML with no doc content', () => {
+  it('returns null when no content container matches at all', () => {
+    // Structural: a renamed theme class or a moved output path. Callers treat this
+    // as fatal, because it means twins are silently missing site-wide.
     expect(extractFromHtmlString('<html><body></body></html>')).toBeNull();
+  });
+
+  it('returns an empty body, not null, for a page that has no content', async () => {
+    // A stub page — valid frontmatter, no body — renders a container holding only
+    // the <header><h1> that extraction strips. That is ordinary authoring, not a
+    // structural fault, and conflating the two turned a stub into a failed build.
+    const extracted = extractFromHtmlString(compactPage(''));
+
+    expect(extracted).not.toBeNull();
+    expect(extracted.title).toBe('Page title');
+    // What matters downstream is that it converts to nothing, so no twin is written.
+    await expect(convertToMarkdown(extracted.html, SITE_URL)).resolves.toBe('');
+  });
+
+  it('falls through to a later selector when the first container is empty', async () => {
+    // The fallback selectors exist for pages whose content is not in
+    // .theme-doc-markdown. Breaking on the first *matching* selector rather than the
+    // first non-empty one made them inert exactly then, silently dropping the page.
+    const moved =
+      `<!DOCTYPE html><html><head><meta name="description" content="A description."></head>` +
+      `<body><main><article><div class="theme-doc-markdown markdown">` +
+      `<header><h1>Page title</h1></header></div><p>Real content.</p></article></main></body></html>`;
+
+    const extracted = extractFromHtmlString(moved);
+
+    await expect(convertToMarkdown(extracted.html, SITE_URL)).resolves.toBe('Real content.');
   });
 });
 
@@ -129,5 +170,75 @@ describe('shiftHeadings', () => {
 
   it('ignores a hash run with no following space', () => {
     expect(shiftHeadings('##NotAHeading\n## Yes', 2)).toBe('##NotAHeading\n#### Yes');
+  });
+});
+
+describe('cache key safety', () => {
+  // The cache keys on contentOnly(html), so two pages that differ only in what
+  // contentOnly strips share an entry. That is only safe if stripping cannot change
+  // the Markdown. It is NOT true that stripped tags never reach the extracted
+  // fragment — the Swagger pages carry a <link rel="stylesheet"> inside their content
+  // — so the property to hold is the weaker, sufficient one: identical Markdown.
+  const cases = {
+    'scripts and links in head': page('<p>Body text.</p>'),
+    'a stylesheet link inside the content, as the Swagger pages have': page(
+      '<link rel="stylesheet" href="/css/swagger-ui.css"><div id="swagger-ui"></div>'
+    ),
+    'an inline script inside the content': page('<p>Before.</p><script>var x = 1;</script><p>After.</p>'),
+    'a JSON data script inside the content': page(
+      '<p>Text.</p><script type="application/json">{"a":1}</script>'
+    ),
+    'a code sample that mentions a script tag': page(
+      '<pre class="prism-code language-html"><code><span class="token">&lt;script src="x.js"&gt;&lt;/script&gt;</span><br/></code></pre>'
+    ),
+  };
+
+  for (const [name, html] of Object.entries(cases)) {
+    it(`converts identically with and without stripped markup: ${name}`, async () => {
+      const full = extractFromHtmlString(html);
+      const stripped = extractFromHtmlString(contentOnly(html));
+
+      const fromFull = full ? await convertToMarkdown(full.html, SITE_URL) : null;
+      const fromStripped = stripped ? await convertToMarkdown(stripped.html, SITE_URL) : null;
+
+      expect(fromStripped).toEqual(fromFull);
+    });
+  }
+
+  it('keeps a code sample mentioning a script tag, rather than stripping through it', async () => {
+    const extracted = extractFromHtmlString(cases['a code sample that mentions a script tag']);
+    const markdown = await convertToMarkdown(extracted.html, SITE_URL);
+
+    expect(markdown).toContain('<script src="x.js"></script>');
+  });
+});
+
+describe('fence tracking', () => {
+  // A fence line carrying an info string cannot close a block (CommonMark). Treating
+  // it as a close desynchronises the tracker for the rest of the document, silently
+  // skipping every heading and link after it. Real pages hit this: a code sample
+  // containing the literal text ```bash.
+  it('treats an info-string fence inside a block as content, not a close', () => {
+    const md = ['```', 'literal text', '```bash', 'still inside', '```', '', '## After'].join('\n');
+
+    expect(shiftHeadings(md, 1)).toBe(
+      ['```', 'literal text', '```bash', 'still inside', '```', '', '### After'].join('\n')
+    );
+  });
+
+  it('requires a closing fence to be at least as long as the opener', () => {
+    const md = ['````', '```', 'still inside', '````', '', '## After'].join('\n');
+
+    expect(shiftHeadings(md, 1)).toBe(
+      ['````', '```', 'still inside', '````', '', '### After'].join('\n')
+    );
+  });
+
+  it('does not let a tilde fence close a backtick fence', () => {
+    const md = ['```', '~~~', 'still inside', '```', '', '## After'].join('\n');
+
+    expect(shiftHeadings(md, 1)).toBe(
+      ['```', '~~~', 'still inside', '```', '', '### After'].join('\n')
+    );
   });
 });

@@ -7,54 +7,24 @@
  * @typedef {{ title: string, description: string, permalink: string, markdown: string, sectionLabel: string }} ProcessedDoc
  */
 
+import { shiftHeadings } from './markdown.js';
+import { docUrl } from './links.js';
+
 /**
- * Shift every ATX heading in a Markdown body down by `delta` levels, capped at h6.
+ * Whether a doc converted to anything worth publishing.
  *
- * Page bodies come out of the converter with `##` as their top level, because the
- * page <h1> lives in the `<header>` we strip and is carried as metadata instead.
- * Nesting such a body under a doc-title heading inverts the hierarchy unless the
- * body is shifted to match.
+ * This is the single predicate that decides a page's fate across every output, so
+ * that they cannot drift apart: pages/writePageMarkdown declines to write a twin,
+ * and llms-full.txt omits the section. llms.txt deliberately still lists these
+ * pages, because they exist and their HTML is reachable — but any caller that
+ * rewrites index links to .md must consult this first, or it will advertise a URL
+ * that does not exist.
  *
- * Fenced code is skipped — `#` starts a comment in most of the shell and YAML
- * samples in these docs.
- *
- * @param {string} markdown
- * @param {number} delta
- * @returns {string}
+ * @param {{ markdown: string }} doc
+ * @returns {boolean}
  */
-export function shiftHeadings(markdown, delta) {
-  if (delta <= 0) {
-    return markdown;
-  }
-
-  const lines = markdown.split('\n');
-  let openFence = null;
-
-  for (let i = 0; i < lines.length; i++) {
-    const fenceMatch = lines[i].match(/^\s*(`{3,}|~{3,})/);
-
-    if (fenceMatch) {
-      const marker = fenceMatch[1];
-      if (openFence === null) {
-        openFence = marker[0];
-      } else if (marker[0] === openFence) {
-        openFence = null;
-      }
-      continue;
-    }
-
-    if (openFence !== null) {
-      continue;
-    }
-
-    const headingMatch = lines[i].match(/^(#{1,6})(\s)/);
-    if (headingMatch) {
-      const level = Math.min(6, headingMatch[1].length + delta);
-      lines[i] = '#'.repeat(level) + lines[i].slice(headingMatch[1].length);
-    }
-  }
-
-  return lines.join('\n');
+export function hasContent(doc) {
+  return Boolean(doc.markdown && doc.markdown.trim());
 }
 
 /**
@@ -76,9 +46,13 @@ function groupBySection(docs) {
 
 /**
  * Format a link entry for llms.txt.
+ *
+ * Points at the Markdown twin where one exists, per llmstxt.org, so an agent working
+ * from the index never has to fetch HTML. The pages that produce no twin keep their
+ * HTML link: the page is real, only its Markdown is not.
  */
 function formatLink(doc, siteUrl) {
-  const url = `${siteUrl}${doc.permalink}`;
+  const url = docUrl(doc, siteUrl, hasContent(doc));
   const desc = doc.description ? `: ${doc.description}` : '';
   return `- [${doc.title}](${url})${desc}`;
 }
@@ -102,6 +76,8 @@ function isOptionalSection(sectionLabel, optionalSections) {
  * @returns {string}
  */
 export function generateProductIndex(productName, description, docs, siteUrl, optionalSections) {
+  // Unlike llms-full.txt this lists every doc, including those with no twin; those
+  // entries link to HTML rather than to a .md that does not exist. See formatLink.
   const sections = groupBySection(docs);
   const lines = [];
   const optionalLines = [];
@@ -147,11 +123,16 @@ export function generateProductIndex(productName, description, docs, siteUrl, op
 export function generateProductFull(productName, description, versionLabel, docs, siteUrl) {
   const lines = [];
 
+  // Pages that convert to an empty body get no twin, so they should not appear here
+  // either — an empty section under a heading and a Source line reads as "this page
+  // has no content" rather than "this page could not be converted".
+  const withContent = docs.filter(hasContent);
+
   lines.push(`# ${productName} - Full Documentation`);
   lines.push('');
   lines.push(`> Complete documentation for ${productName} (version ${versionLabel}).`);
 
-  for (const doc of docs) {
+  for (const doc of withContent) {
     lines.push('');
     lines.push('---');
     lines.push('');
