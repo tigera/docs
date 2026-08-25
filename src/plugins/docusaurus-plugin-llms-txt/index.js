@@ -23,6 +23,7 @@ import {
 } from './generate.js';
 import { writePageMarkdown } from './pages.js';
 import { createCache, fingerprintConverter } from './cache.js';
+import { rewriteDocLinks, normalisePermalink } from './links.js';
 
 const PLUGIN_NAME = 'docusaurus-plugin-llms-txt';
 const LOG_PREFIX = '[llms-txt]';
@@ -344,6 +345,27 @@ function assertProductProduced(result, productName, written) {
  *
  * @returns {Promise<number>} Number of pages written
  */
+/**
+ * Report every rejected instance together.
+ *
+ * Instances run concurrently, so a sibling failing does not stop the others, and
+ * Promise.all would surface only whichever rejected first.
+ *
+ * @param {PromiseSettledResult<unknown>[]} outcomes
+ * @param {string} phase
+ */
+function throwOnFailures(outcomes, phase) {
+  const failures = outcomes
+    .filter((o) => o.status === 'rejected')
+    .map((o) => (o.reason instanceof Error ? o.reason.message : String(o.reason)));
+
+  if (failures.length > 0) {
+    throw new Error(
+      `${PLUGIN_NAME}: ${failures.length} product(s) failed to ${phase}:\n  - ${failures.join('\n  - ')}`
+    );
+  }
+}
+
 async function writeProductPages(result, outDir, productName, siteUrl) {
   let count = 0;
 
@@ -474,25 +496,65 @@ export default function llmsTxtPlugin(context, options) {
       const allProcessedDocs = new Map(); // instanceId → processedDocs[]
       const productMeta = []; // for root index linking
 
-      const outcomes = await Promise.allSettled(
-        instances.map(async ({ plugin, instanceId, productName, description, isProduct, unversioned }) => {
-          console.log(`${LOG_PREFIX} Processing ${productName}...`);
+      // Phase 1 — convert every instance. Nothing is written yet: the link
+      // rewriting below has to know which pages produced twins, and that is only
+      // knowable once all of them have been converted.
+      const converted = await Promise.allSettled(
+        instances.map(async (instance) => {
+          console.log(`${LOG_PREFIX} Processing ${instance.productName}...`);
           const result = await processProduct(
-            plugin,
+            instance.plugin,
             outDir,
             siteUrl,
             {
               ...options,
               versions,
-              unversioned,
+              unversioned: instance.unversioned,
               siteDir,
-              versionVariable: versionVariables[instanceId],
+              versionVariable: versionVariables[instance.instanceId],
             },
             cache
           );
 
-          // Resolve first, then add: `x += await f()` reads x before awaiting, so
-          // concurrent products would clobber each other's count.
+          return { instance, result };
+        })
+      );
+
+      throwOnFailures(converted, 'convert');
+      const instanceResults = converted.map((o) => o.value);
+
+      // Phase 2 — point internal links at twins, so an agent following one stays in
+      // Markdown instead of landing on a 110 KB page. Roughly 8% of these links
+      // cross a product boundary, which is where an agent most easily conflates Open
+      // Source with Enterprise, so the set has to span the whole corpus rather than
+      // one product's view of it.
+      const twins = new Set();
+      for (const { result } of instanceResults) {
+        for (const version of result?.versions ?? []) {
+          for (const doc of version.allDocs) {
+            if (hasContent(doc)) {
+              twins.add(normalisePermalink(doc.permalink));
+            }
+          }
+        }
+      }
+
+      const hasTwin = (permalink) => twins.has(permalink);
+      for (const { result } of instanceResults) {
+        for (const version of result?.versions ?? []) {
+          // sidebarDocs holds these same objects, so llms.txt and llms-full.txt pick
+          // the rewrite up from here too.
+          for (const doc of version.allDocs) {
+            doc.markdown = rewriteDocLinks(doc.markdown, siteUrl, hasTwin);
+          }
+        }
+      }
+
+      // Phase 3 — write the twins and the per-product indexes.
+      const emitted = await Promise.allSettled(
+        instanceResults.map(async ({ instance, result }) => {
+          const { instanceId, productName, description, isProduct } = instance;
+
           const written = result
             ? await writeProductPages(result, outDir, productName, siteUrl)
             : 0;
@@ -510,7 +572,6 @@ export default function llmsTxtPlugin(context, options) {
             return;
           }
 
-          // Generate per-product llms.txt
           const indexContent = generateProductIndex(
             productName,
             description,
@@ -523,7 +584,6 @@ export default function llmsTxtPlugin(context, options) {
           await fs.writeFile(indexPath, indexContent);
           console.log(`${LOG_PREFIX} Wrote ${indexPath} (${formatSize(Buffer.byteLength(indexContent))})`);
 
-          // Generate per-product llms-full.txt
           const fullContent = generateProductFull(
             productName,
             description,
@@ -539,17 +599,7 @@ export default function llmsTxtPlugin(context, options) {
         })
       );
 
-      // Products run concurrently, so a sibling failing does not stop the others and
-      // Promise.all would surface only whichever rejected first. Report them all.
-      const failures = outcomes
-        .filter((o) => o.status === 'rejected')
-        .map((o) => (o.reason instanceof Error ? o.reason.message : String(o.reason)));
-
-      if (failures.length > 0) {
-        throw new Error(
-          `${PLUGIN_NAME}: ${failures.length} product(s) failed:\n  - ${failures.join('\n  - ')}`
-        );
-      }
+      throwOnFailures(emitted, 'emit');
 
       // Use-cases was processed in the set above; pull its docs out for the root index.
       const useCaseResult = allProcessedDocs.get('use-cases');

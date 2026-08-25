@@ -1,6 +1,6 @@
 import { extractFromHtmlString } from '../extract.js';
 import { convertToMarkdown } from '../convert.js';
-import { shiftHeadings } from '../generate.js';
+import { shiftHeadings } from '../markdown.js';
 import { contentOnly } from '../cache.js';
 
 const SITE_URL = 'https://docs.tigera.io';
@@ -210,5 +210,35 @@ describe('cache key safety', () => {
     const markdown = await convertToMarkdown(extracted.html, SITE_URL);
 
     expect(markdown).toContain('<script src="x.js"></script>');
+  });
+});
+
+describe('fence tracking', () => {
+  // A fence line carrying an info string cannot close a block (CommonMark). Treating
+  // it as a close desynchronises the tracker for the rest of the document, silently
+  // skipping every heading and link after it. Real pages hit this: a code sample
+  // containing the literal text ```bash.
+  it('treats an info-string fence inside a block as content, not a close', () => {
+    const md = ['```', 'literal text', '```bash', 'still inside', '```', '', '## After'].join('\n');
+
+    expect(shiftHeadings(md, 1)).toBe(
+      ['```', 'literal text', '```bash', 'still inside', '```', '', '### After'].join('\n')
+    );
+  });
+
+  it('requires a closing fence to be at least as long as the opener', () => {
+    const md = ['````', '```', 'still inside', '````', '', '## After'].join('\n');
+
+    expect(shiftHeadings(md, 1)).toBe(
+      ['````', '```', 'still inside', '````', '', '### After'].join('\n')
+    );
+  });
+
+  it('does not let a tilde fence close a backtick fence', () => {
+    const md = ['```', '~~~', 'still inside', '```', '', '## After'].join('\n');
+
+    expect(shiftHeadings(md, 1)).toBe(
+      ['```', '~~~', 'still inside', '```', '', '### After'].join('\n')
+    );
   });
 });
