@@ -156,7 +156,7 @@ kubectl apply -f ./addon_config.yaml
 apiVersion: addons.kubernetes.vmware.com/v1alpha1
 kind: AddonConfig
 metadata:
-  name: <addon-config-name>
+  name: <cluster-name>-<addon-name>    # The AddonConfig name has to be in this format eg. cluster1-calico-enterprise
   namespace: <cluster-namespace>
 spec:
   addonConfigDefinitionRef:
@@ -196,8 +196,47 @@ spec:
     policyRecommendation:
       enabled: true
 ```
+:::note
 
-#### Step 2: Apply the Cluster Resource
+The Addon framework expects the `AddonConfig` name to be in the format - <cluster-name>-<addon-name>, if not it creates a new `AddonConfig` with default values.
+
+:::
+
+#### Step 2: Apply the Custom AddonInstall resource
+
+A custom AddonInstall resource lets you upgrade clusters selectively. Use spec.clusters.selector.matchLabels to specify the labels that a cluster must have, and then add those labels to the Cluster resources you want to upgrade.
+
+```bash
+kubectl apply -f ./addoninstall.yaml
+```
+
+```yaml
+apiVersion: addons.kubernetes.vmware.com/v1alpha1
+kind: AddonInstall 
+metadata: 
+  labels:
+    addon.kubernetes.vmware.com/addon-name: calico-enterprise 
+    addon.kubernetes.vmware.com/addon-namespace: vmware-system-vks-public
+    addons.kubernetes.vmware.com/category: cni
+  name: <addon-install-name>
+  namespace: <cluster-namespace>
+spec: 
+  addonRef:
+    name: calico-enterprise
+    namespace: vmware-system-vks-public 
+  clusters:
+  - selector: 
+      matchLabels:
+        <AddonInstallLabelKey>: <AddonInstallLabelValue>      # Eg. cluster-group: calico-group-1
+    constraints:
+      expression: cluster.ciRefName() = "calico-enterprise' && cluster.kubeProxyConfiguration().enabled == true
+  releaseFilter:
+    ref:
+      name: calico-enterprise.tigera.io.3.23.1
+  stopMatchingBehavior: Retain
+```
+
+#### Step 3: Apply the Cluster Resource
 
 Update the following fields before applying:
 - `metadata.name` and `metadata.namespace`
@@ -217,6 +256,7 @@ metadata:
   namespace: <cluster-namespace>
   labels:
     tigera.io/pull-secret: required
+    <AddonInstallLabelKey>: <AddonInstallLabelValue>
 spec:
   clusterNetwork:
     pods:
@@ -349,11 +389,11 @@ spec:
                     toPort: 8444
 ```
 
-#### Step 3: Retrieve the Guest Cluster Kubeconfig
+#### Step 4: Retrieve the Guest Cluster Kubeconfig
 
 Can be copied from the Supervisor.
 
-#### Step 4: Wait for Core Components
+#### Step 5: Wait for Core Components
 
 Monitor the Tigera status until `calico` and `apiserver` report as `Available`:
 
@@ -363,13 +403,13 @@ kubectl get tigerastatus
 
 At this point, all nodes should be in `Ready` state.
 
-#### Step 5: Apply the Tigera License
+#### Step 6: Apply the Tigera License
 
 ```bash
 kubectl apply -f tigera-license.yaml
 ```
 
-#### Step 6: Verify the Installation
+#### Step 7: Verify the Installation
 
 Wait for all remaining components to become available:
 
