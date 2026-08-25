@@ -11,6 +11,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import { walkSidebar } from './sidebar-utils.js';
 import { extractFromHtmlString } from './extract.js';
 import { convertToMarkdown } from './convert.js';
@@ -38,11 +39,64 @@ const USE_CASES_NAME = 'Calico use cases';
  * guards exist to prevent. A proportion catches that while leaving room for stubs.
  *
  * The real figure today is 3 of 1,043 pages, or 0.3%, so this has ample headroom.
- * The absolute minimum keeps small versions from tripping on one or two stubs.
+ * The absolute minimum keeps small versions from tripping on a single stub, but it
+ * must stay below the size of the smallest instance or the guard cannot fire there
+ * at all: use-cases has five docs, so a minimum of five made it dead exactly where
+ * a proportion is least meaningful.
  */
-const EMPTY_PAGE_LIMIT = { rate: 0.05, minimum: 5 };
+const EMPTY_PAGE_LIMIT = { rate: 0.05, minimum: 2 };
+
+/**
+ * How many empty pages a version of this size may have before the build fails.
+ *
+ * Exported so the arithmetic is testable: the previous minimum exceeded the size of
+ * the smallest instance, which made the guard silently unable to fire there, and no
+ * test would have noticed.
+ *
+ * @param {number} docCount
+ * @returns {number}
+ */
+export function emptyPageAllowance(docCount) {
+  return Math.max(EMPTY_PAGE_LIMIT.minimum, Math.ceil(docCount * EMPTY_PAGE_LIMIT.rate));
+}
 
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
+const requireFromHere = createRequire(import.meta.url);
+
+/**
+ * Read a display version out of a docs version's variables.js.
+ *
+ * Docusaurus version names are navigation labels, not product versions. Calico
+ * Cloud's is "23-2", which appears in no URL and no version dropdown, so an agent
+ * has nothing to corroborate it against. The docs themselves render $[cloudUserVersion],
+ * and that is the string a reader would recognise.
+ *
+ * The location mirrors src/utils/getVariableByFilePath.js, which resolves the same
+ * files for the remark plugin.
+ *
+ * @returns {string | null}
+ */
+function versionLabelFromVariables(variableName, docsPath, version, siteDir) {
+  const versionDir =
+    version.versionName === 'current'
+      ? path.join(siteDir, docsPath)
+      : path.join(siteDir, `${docsPath}_versioned_docs`, `version-${version.versionName}`);
+  const variablesPath = path.join(versionDir, 'variables.js');
+
+  try {
+    const value = requireFromHere(variablesPath)[variableName];
+    if (typeof value === 'string' && value) {
+      return value;
+    }
+    console.warn(`${LOG_PREFIX} ${variablesPath} has no string "${variableName}"`);
+  } catch (error) {
+    console.warn(`${LOG_PREFIX} Could not read ${variablesPath}: ${error.message}`);
+  }
+
+  // Fall back to the Docusaurus label rather than failing; a display string is not
+  // worth a red build.
+  return null;
+}
 
 /**
  * Modules whose contents determine the *cached* value.
@@ -183,7 +237,7 @@ async function processVersion(version, outDir, siteUrl, cache) {
   // three quarters of its twins would still pass while llms-full.txt quietly shrank
   // by the same amount.
   const empty = [...processedById.values()].filter((doc) => !hasContent(doc)).length;
-  const allowed = Math.max(EMPTY_PAGE_LIMIT.minimum, Math.ceil(version.docs.length * EMPTY_PAGE_LIMIT.rate));
+  const allowed = emptyPageAllowance(version.docs.length);
 
   if (empty > allowed) {
     throw new Error(
@@ -222,6 +276,7 @@ async function processVersion(version, outDir, siteUrl, cache) {
  */
 async function processProduct(docsPlugin, outDir, siteUrl, options, cache) {
   const content = docsPlugin.content;
+  const docsPath = docsPlugin.options?.path;
   if (!content?.loadedVersions?.length) {
     console.warn(`${LOG_PREFIX} No loaded versions for plugin instance`);
     return null;
@@ -240,11 +295,17 @@ async function processProduct(docsPlugin, outDir, siteUrl, options, cache) {
   const versions = [];
   for (const version of selected) {
     const result = await processVersion(version, outDir, siteUrl, cache);
-    versions.push({
-      ...result,
-      versionLabel: options.unversioned ? '' : result.versionLabel,
-      isLast: Boolean(version.isLast),
-    });
+    // Precedence: unversioned wins, then a variables.js label, then Docusaurus's own.
+    let versionLabel = result.versionLabel;
+    if (options.unversioned) {
+      versionLabel = '';
+    } else if (options.versionVariable && docsPath && options.siteDir) {
+      versionLabel =
+        versionLabelFromVariables(options.versionVariable, docsPath, version, options.siteDir) ??
+        result.versionLabel;
+    }
+
+    versions.push({ ...result, versionLabel, isLast: Boolean(version.isLast) });
   }
 
   const lastVersion = versions.find((v) => v.isLast) || versions[0];
@@ -349,6 +410,7 @@ export default function llmsTxtPlugin(context, options) {
         topPages = [],
         optionalSections = [],
         versions = 'last',
+        versionVariables = {},
       } = options;
 
       // Find all docs plugin instances
@@ -419,7 +481,13 @@ export default function llmsTxtPlugin(context, options) {
             plugin,
             outDir,
             siteUrl,
-            { ...options, versions, unversioned },
+            {
+              ...options,
+              versions,
+              unversioned,
+              siteDir,
+              versionVariable: versionVariables[instanceId],
+            },
             cache
           );
 

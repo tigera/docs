@@ -574,6 +574,13 @@ export default async function createAsyncConfig() {
           // 'last' covers only the version served at /latest; 'all' covers every
           // built version, at roughly three times the generation cost.
           versions: 'last',
+          // Docusaurus version names are navigation labels. Where a product has a
+          // user-facing version that differs, name the variables.js key holding it
+          // so frontmatter reports something a reader can corroborate. Calico Cloud's
+          // Docusaurus label is "23-2", which appears in no URL and no dropdown.
+          versionVariables: {
+            'calico-cloud': 'cloudUserVersion',
+          },
         },
       ],
     ],
