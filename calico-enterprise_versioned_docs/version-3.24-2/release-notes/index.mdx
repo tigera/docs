@@ -1,0 +1,143 @@
+---
+description: Release notes for the current Calico Enterprise release — new features, enhancements, technology previews, deprecations, and bug fixes.
+title: Calico Enterprise release notes
+sidebar_label: Release notes
+---
+
+# Calico Enterprise 3.24 release notes
+
+:::info[early preview release]
+
+Calico Enterprise 3.24 can be used for previewing and testing purposes only.
+It is not supported for use in production.
+
+:::
+
+Learn about the new features, bug fixes, and other updates in this release of $[prodname].
+
+This version of Calico Enterprise is based on [Calico Open Source $[openSourceVersion]](https://docs.tigera.io/calico/$[openSourceVersion]/release-notes).
+
+## New features and enhancements
+
+{/* Start 3.24.0-1.0 features */}
+
+### Per-namespace deployment for Calico Ingress Gateway
+
+Calico Ingress Gateway runs each gateway's proxy, `Service`, and load balancer in the same namespace as its `Gateway`, rather than in a single shared namespace.
+Application teams can deploy and operate their own gateways alongside their workloads, scope network policy and RBAC to a single namespace, and attribute the gateway's resource usage to the team that owns it.
+You can run multiple independent gateway instances across different namespaces.
+
+For more information, see [Create an ingress gateway](../networking/ingress-gateway/create-ingress-gateway.mdx).
+
+### Web application firewall for ingress gateways (tech preview)
+
+You can attach a web application firewall (WAF) to Calico Ingress Gateway traffic per `Gateway` and per route, and tune it per namespace, instead of applying a single ruleset to everything behind the gateway.
+A cluster operator sets a security baseline once from the OWASP Core Rule Set, and each application team layers its own rules and exceptions on top — scoped to their own gateways and `HTTPRoute` resources, within guardrails the operator defines.
+
+For more information, see [Gateway WAF](../threat/gateway-waf/overview.mdx).
+
+### Layer 7 logs from a kernel eBPF collector
+
+A new kernel TCP-layer eBPF collector captures Layer 7 (HTTP and TLS) logs with no data path proxy and no per-workload sidecars.
+You enable it once at the cluster level, and it works with any $[prodname] data plane — iptables, nftables, or eBPF.
+The collected HTTP request/response and TLS handshake metadata feeds the same L7 log pipeline that powers Service Graph, HTTP logs, and the L7 dashboards.
+
+For more information, see [L7 logs overview](../observability/elastic/l7/overview.mdx) and [Collect L7 logs using the eBPF collector](../observability/elastic/l7/enable-ebpf-collector.mdx).
+
+### L2 reachability for pods and services without BGP
+
+$[prodname] can make pods and LoadBalancer service IPs that share a node's subnet reachable from the local Layer 2 network without configuring BGP.
+With `localSubnetL2Reachability` enabled, $[prodname] runs a userspace ARP/NDP responder on the relevant host interfaces and answers for local pod IPs and LoadBalancer VIPs within the host subnet, so external hosts on the same segment can reach them with no overlay encapsulation and no changes to your network infrastructure.
+This is useful for on-premises, edge, and other flat L2 environments where BGP peering is not an option.
+
+For more information, see [L2 reachability for pods and services without BGP](../networking/configuring/local-subnet-l2-reachability.mdx).
+
+{/* End 3.24.0-1.0 features */}
+
+### Enhancements
+
+* You can now enable Calico Ingress Gateway when you install $[prodname] with Helm, by setting `gatewayAPI.enabled: true` in your `values.yaml`.
+  For more information, see the [Helm installation reference](../reference/installation/helm_customization.mdx).
+
+## Technology preview features
+
+This table shows the status of features that were in technology preview at any point in the releases covered here.
+Technology preview features are for evaluation and feedback only and are **not supported for production use**. Behavior, APIs, and configuration may change before a feature reaches general availability.
+
+| Feature | 3.22 | 3.23 | 3.24 |
+| --- | --- | --- | --- |
+| Workload WAF | TP | TP | TP |
+| DNS policy for Windows | TP | TP | TP |
+| Gateway WAF | TP | TP | TP |
+| Istio ambient mode | TP | TP | TP |
+| Multi-VRF networking | – | TP | TP |
+| Native v3 CRDs | – | TP | GA |
+| Live migration for KubeVirt VMs | – | TP | TP |
+| Selector-scoped Felix configuration | – | – | TP |
+
+TP = technology preview, GA = generally available, – = not available in that release.
+
+## Deprecated and removed features
+
+Review the following table to see what features have recently been deprecated or removed.
+Deprecated features are still present and supported, but they are scheduled for removal.
+You should consider migrating away from a deprecated feature before it is removed.
+
+| Feature | 3.22 | 3.23 | 3.24 |
+| --- | --- | --- | --- |
+| Compliance reporting | Deprecated | Deprecated | Removed |
+| Aggregation API server | GA | Deprecated | Deprecated |
+| Application layer policy based on Envoy | GA | Deprecated | Deprecated |
+| L7 logging with Envoy | GA | Deprecated | Deprecated |
+| Fortinet integration | Deprecated | Deprecated | Deprecated |
+
+GA = generally available, Deprecated = scheduled for removal, Removed = no longer present.
+
+### Deprecated and removed features in this release
+
+* The compliance reporting feature has been removed from the $[prodname] web console.
+* $[prodname] is moving the `projectcalico.org/v3` API from the aggregated API server to native Kubernetes CRDs.
+  Both mechanisms will be supported until native v3 CRDs are compatible with all supported platforms, after which the aggregated API server will be removed.
+
+{/* ### Known issues */}
+
+## Upgrading
+
+Before upgrading to Calico Enterprise 3.24, review [Upgrade notes](#upgrade-notes), [Deprecated and removed features](#deprecated-and-removed-features), and Known issues.
+
+### Upgrade from a previous minor
+
+Calico Enterprise 3.24 supports a direct upgrade from versions 3.23 and 3.22.
+To upgrade from an earlier version, plan an intermediate upgrade.
+
+For upgrade instructions, see [Upgrade Calico Enterprise](../getting-started/upgrading/upgrading-enterprise/index.mdx).
+
+### Upgrade notes
+
+{/* Add breaking changes and required upgrade steps here, one subsection per feature. */}
+
+#### Breaking changes for Calico Ingress Gateway
+
+Calico Ingress Gateway now runs each gateway's proxy in the same namespace as its `Gateway`, and the controller moves to `calico-system`.
+On upgrade, existing proxies move out of the `tigera-gateway` namespace into each Gateway's namespace, so anything pinned to `tigera-gateway` — network policy, monitoring, RBAC, and external DNS — must move with them.
+Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway gets its own load balancer.
+
+Migrate in this order:
+
+1. Before you upgrade, if you run a global default deny policy, create a network policy in each Gateway's namespace that allows the proxy pods, so they can start as soon as they move. For the policy, see [Create an ingress gateway](../networking/ingress-gateway/create-ingress-gateway.mdx).
+2. Upgrade $[prodname].
+3. After the upgrade, re-point monitoring, RBAC, and external DNS from `tigera-gateway` to each Gateway's namespace. If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
+
+## Release details
+
+### Calico Enterprise 3.24.0-1.0 (early preview)
+
+July 31, 2026
+
+Calico Enterprise 3.24.0-1.0 is now available as an early preview release.
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+
+{/*
+To update an existing installation of Calico Enterprise 3.24, see [Install a patch release](../getting-started/manifest-archive.mdx).
+*/}

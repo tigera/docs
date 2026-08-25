@@ -1,0 +1,148 @@
+---
+description: Deploy a Calico Ingress Gateway in a Calico Enterprise cluster by applying GatewayAPI and Gateway resources tied to the Tigera-managed gateway class.
+---
+
+# Create an ingress gateway
+
+Create an ingress gateway to manage ingress traffic with the Kubernetes Gateway API.
+
+## Creating an ingress gateway with Calico Ingress Gateway
+
+Calico Ingress Gateway is based on Envoy Gateway, an open-source implementation of the Gateway API.
+Calico provides a simple, convenient way to deploy and manage this implementation.
+
+Creating an ingress gateway with Calico Ingress Gateway involves only a few steps.
+You need to do the following:
+* Enable Calico Ingress Gateway by creating a `GatewayAPI` resource.
+* Create a `Gateway` resource that references `tigera-gateway-class`, the name of the `GatewayClass` resource created by the Tigera Operator.
+* When you create your gateway routing resources, you refer to this `Gateway` resource.
+
+## Limitations
+
+* Calico Ingress Gateway is not supported on Windows nodes.
+
+## Prerequisites
+
+* You have an understanding of the [Kubernetes Gateway API](https://gateway-api.sigs.k8s.io/) and know how you want to configure it for your system.
+* $[prodname] was installed on your cluster using the Tigera Operator.
+* Your cluster is provisioned to support services of type `LoadBalancer`.
+
+## Create an ingress gateway
+
+1. To enable Gateway API support, create a `GatewayAPI` resource with the name `tigera-secure`:
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: operator.tigera.io/v1
+   kind: GatewayAPI
+   metadata:
+     name: tigera-secure
+   EOF
+   ```
+
+   :::tip
+   If you install $[prodname] with Helm, you can enable Gateway API support at install time by setting `gatewayAPI.enabled: true` in your `values.yaml`.
+   For more information, see the [Helm installation reference](../../reference/installation/helm_customization.mdx).
+   :::
+
+   The Tigera Operator pulls and sets up the hardened Envoy Gateway images.
+   This gives you a set of Gateway API resources, including the `GatewayClass` resource you need to create your gateway.
+
+   To verify, you can check to see if the `GatewayClass` resource is available:
+
+   ```bash
+   kubectl get gatewayclass
+   ```
+   ```bash title='Expected output'
+   NAME                   CONTROLLER                                      ACCEPTED   AGE
+   tigera-gateway-class   gateway.envoyproxy.io/gatewayclass-controller   True       4m
+   ```
+   :::tip
+   `tigera-gateway-class` is the name of the single default `GatewayClass` resource that is created when you enable Gateway API support.
+   You can define [additional gateway classes](customize-ingress-gateway.mdx#configure-multiple-gateway-classes), along with other customizations, in the `GatewayAPI` resource.
+   :::
+
+1. Create a `Gateway` resource that is linked to `tigera-gateway-class`, in the namespace where you want its proxy to run.
+
+   ```yaml title='Example snippet of a Gateway resource with default gatewayClassName'
+   apiVersion: gateway.networking.k8s.io/v1
+   kind: Gateway
+   metadata:
+   // highlight-start
+     name: <gateway-name>
+     namespace: <gateway-namespace>
+   // highlight-end
+   spec:
+   // highlight-next-line
+     gatewayClassName: tigera-gateway-class
+     ...
+   ```
+   Replace `<gateway-name>` with a name for your gateway, and `<gateway-namespace>` with the namespace where you want the gateway to run.
+   You will refer to this gateway name for all services you want to use the gateway.
+
+   The proxy, its `Service`, and its load balancer are created in the same namespace as this `Gateway`.
+   To check that the proxy is running, list the pods in that namespace:
+
+   ```bash
+   kubectl get pods -n <gateway-namespace>
+   ```
+
+1. If your cluster enforces a [global default deny policy](../../network-policy/beginners/kubernetes-default-deny.mdx), apply a network policy in the `Gateway` namespace that lets the proxy pods reach the gateway controller, the Kubernetes API server, and DNS.
+   Without it, the proxy cannot start.
+
+   ```yaml
+   apiVersion: projectcalico.org/v3
+   kind: NetworkPolicy
+   metadata:
+     name: allow-tigera-gateway-proxy
+     namespace: <gateway-namespace>
+   spec:
+     selector: 'app.kubernetes.io/name == "envoy"'
+     types: [Ingress, Egress]
+     ingress:
+       - action: Allow
+     egress:
+       - action: Allow # DNS
+         protocol: UDP
+         destination:
+           namespaceSelector: 'projectcalico.org/name == "kube-system"'
+           selector: 'k8s-app == "kube-dns"'
+           ports: [53]
+       - action: Allow # configuration from the gateway controller
+         protocol: TCP
+         destination:
+           namespaceSelector: 'projectcalico.org/name == "calico-system"'
+           selector: 'app.kubernetes.io/name == "gateway-helm"'
+           ports: [18000]
+       - action: Allow # Kubernetes API server
+         protocol: TCP
+         destination:
+           services:
+             name: kubernetes
+             namespace: default
+   ```
+   Replace `<gateway-namespace>` with the namespace where you created the `Gateway`.
+   Add egress rules for your own backends as needed.
+
+1. Create a gateway routing resource that refers to your `Gateway` resource as `.spec.parentRefs`:
+
+    ```yaml title='Example snippet of an HTTPRoute resource'
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: example-httproute
+    spec:
+    // highlight-start
+      parentRefs:
+        - name: <gateway-name>
+    // highlight-end
+      ...
+    ```
+    Replace `<gateway-name>` with the name of your `Gateway` resource.
+
+## Additional resources
+
+* [Kubernetes Gateway API documentation](https://gateway-api.sigs.k8s.io/)
+* [Envoy Gateway documentation](https://gateway.envoyproxy.io/docs/)
+* [Multi-tenant WAF setup](../../threat/gateway-waf/multi-tenant-setup.mdx)
+* [Tutorial: Launch a canary deployment](tutorial-ingress-gateway-canary.mdx)
