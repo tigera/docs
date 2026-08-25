@@ -25,8 +25,14 @@ const LINK_TAGS = /<link\b[^>]*>/gi;
  * Webpack fingerprints its bundles, so `runtime~main.<hash>.js` differs after any
  * edit anywhere on the site, and every page references it in <head>. Hashing raw
  * HTML would therefore invalidate the entire cache whenever a single page changed,
- * which defeats the point. Script and link tags never contribute to the extracted
- * content, so removing them before hashing is safe.
+ * which defeats the point.
+ *
+ * This is safe, but not for the obvious reason. Stripped tags *can* reach the
+ * extracted fragment — the Swagger pages carry a <link rel="stylesheet"> inside
+ * their content — so the property that holds is the weaker, sufficient one: removing
+ * them cannot change the resulting Markdown. That is asserted directly, over a set of
+ * fixtures including a stylesheet link in content, in __test__/conversion.test.js.
+ * Check those still pass before changing anything here.
  *
  * @param {string} html
  * @returns {string}
@@ -40,6 +46,7 @@ export function contentOnly(html) {
  */
 export function createCache({ cacheDir, fingerprint }) {
   const used = new Set();
+  let warnedAboutWrites = false;
   let hits = 0;
   let misses = 0;
 
@@ -82,8 +89,23 @@ export function createCache({ cacheDir, fingerprint }) {
      */
     async set(key, value) {
       used.add(key);
-      await fs.mkdir(cacheDir, { recursive: true });
-      await fs.writeFile(path.join(cacheDir, `${key}.json`), JSON.stringify(value));
+
+      // The cache only ever saves work; nothing downstream reads it for correctness.
+      // A read-only directory or a stray file where the cache belongs should cost a
+      // slow build, not a failed one. Contrast fingerprintConverter, which must fail
+      // closed because a fingerprint it cannot compute would let stale entries serve.
+      try {
+        await fs.mkdir(cacheDir, { recursive: true });
+        await fs.writeFile(path.join(cacheDir, `${key}.json`), JSON.stringify(value));
+      } catch (error) {
+        if (!warnedAboutWrites) {
+          warnedAboutWrites = true;
+          console.warn(
+            `[llms-txt] Could not write to the conversion cache at ${cacheDir}, so every ` +
+              `build will reconvert every page: ${error.message}`
+          );
+        }
+      }
     },
 
     /**
@@ -106,8 +128,13 @@ export function createCache({ cacheDir, fingerprint }) {
         if (!entry.endsWith('.json') || used.has(entry.slice(0, -'.json'.length))) {
           continue;
         }
-        await fs.rm(path.join(cacheDir, entry), { force: true });
-        removed++;
+
+        try {
+          await fs.rm(path.join(cacheDir, entry), { force: true });
+          removed++;
+        } catch {
+          // Same reasoning as set(): an unprunable entry wastes disk, nothing more.
+        }
       }
 
       return removed;
