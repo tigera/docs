@@ -539,6 +539,41 @@ export default function llmsTxtPlugin(context, options) {
         }
       }
 
+      // Keep customFields.markdownTwinExclusions honest. The theme uses that list
+      // to decide where to advertise a twin and cannot know which pages produced
+      // one, so a disagreement either links to a 404 or hides a real twin. Checks
+      // every docs instance, not just the ones generated for: the theme renders on
+      // all of them, including the 'default' placeholder this plugin skips.
+      const withoutTwin = [];
+      for (const docsPlugin of docsPlugins) {
+        for (const version of docsPlugin.content?.loadedVersions ?? []) {
+          for (const doc of version.docs) {
+            const permalink = normalisePermalink(doc.permalink);
+            if (permalink && !twins.has(permalink)) {
+              withoutTwin.push(permalink);
+            }
+          }
+        }
+      }
+
+      const exclusions = siteConfig.customFields?.markdownTwinExclusions ?? [];
+      const matches = (permalink) => exclusions.some((suffix) => permalink.endsWith(suffix));
+      const unlisted = withoutTwin.filter((permalink) => !matches(permalink));
+      const unused = exclusions.filter((suffix) => !withoutTwin.some((p) => p.endsWith(suffix)));
+
+      if (unlisted.length > 0) {
+        console.warn(
+          `${LOG_PREFIX} ${unlisted.length} page(s) have no twin and are not excluded, ` +
+            `so each will link to a .md that 404s: ${unlisted.slice(0, 5).join(', ')}`
+        );
+      }
+      if (unused.length > 0) {
+        console.warn(
+          `${LOG_PREFIX} These exclusions matched no twinless page and now suppress the ` +
+            `Markdown link on pages that have one: ${unused.join(', ')}`
+        );
+      }
+
       const hasTwin = (permalink) => twins.has(permalink);
       for (const { result } of instanceResults) {
         for (const version of result?.versions ?? []) {
