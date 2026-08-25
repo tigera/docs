@@ -13,6 +13,7 @@ import DocItemContent from '@theme/DocItem/Content';
 import DocBreadcrumbs from '@theme/DocBreadcrumbs';
 
 import useToc from '@site/src/utils/useToc';
+import MarkdownActions from '@site/src/components/MarkdownActions';
 
 import styles from './styles.module.css';
 /**
@@ -41,8 +42,18 @@ export default function DocItemLayout({ children }) {
         <div className={styles.docItemContainer}>
           <article>
             <DocBreadcrumbs />
-            <DocVersionBadge />
+            {/* The badge renders an inline span; wrapping it closes that line so the
+                floated control below aligns with the page title rather than joining
+                the badge's line. */}
+            <div>
+              <DocVersionBadge />
+            </div>
             {docTOC.mobile}
+            {/* Before the content, and floated, so the page title flows alongside it
+                rather than the control taking a row of its own. The title lives
+                inside DocItemContent, so this is the only way to share its line
+                without swizzling the content component too. */}
+            <MarkdownActions />
             <DocItemContent>{children}</DocItemContent>
             <DocItemFooter />
           </article>

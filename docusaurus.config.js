@@ -586,6 +586,18 @@ export default async function createAsyncConfig() {
     ],
     customFields: {
       isTesting: process.env.TESTING || false,
+      // Doc routes that render entirely client-side, so the generator produces no
+      // Markdown twin for them and nothing should link to one. Matched as path
+      // suffixes, so a single entry covers the page across every product and
+      // version. The llms-txt plugin checks this against the pages it actually
+      // skipped and warns on drift, so the list cannot silently go stale.
+      markdownTwinExclusions: [
+        // Swagger API browsers: rendered client-side, so they convert to nothing.
+        '/reference/rest-api-reference',
+        // The placeholder page the multi-instance 'default' docs instance requires.
+        // No Markdown is generated for that instance at all.
+        '/docs',
+      ],
     },
   };
 
