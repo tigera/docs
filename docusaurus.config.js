@@ -548,6 +548,7 @@ export default async function createAsyncConfig() {
           editUrl: generateEditUrl,
         },
       ],
+      './src/plugins/docusaurus-plugin-feature-status',
       [
         './src/plugins/docusaurus-plugin-llms-txt',
         {
