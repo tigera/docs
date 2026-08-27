@@ -137,6 +137,14 @@ Check these in order:
    If you asked for a specific address with `ipAddrs`, and something already holds it, the request fails rather than duplicating it.
 4. **A requested address is reserved.**
    $[prodname] does not assign the first or last address of a subnet, or the gateway address.
+5. **The attachment definition names a `Network` that does not exist.**
+   The workload never gets an interface.
+   A VM shows this as `Starting` indefinitely, with its launcher pod at `Init:0/3`, no restarts, and no address.
+   Neither the VM nor the VMI says why: the error is in the launcher pod's events, as `failed to get Network`, naming the `Network` it could not find.
+   Check the events on the pod rather than the VM.
+6. **The attachment definition declares an unsupported `cniVersion`.**
+   The $[prodname] CNI plugin supports up to 1.0.0.
+   A definition declaring a later version fails when the interface is created, the workload stays in `ContainerCreating`, and the pod's events report incompatible CNI versions.
 
 ## The bridge was never created on this node
 
@@ -211,6 +219,7 @@ For a pod that needs both cluster Services and an L2 network, keep its primary i
    Make them agree, or remove one.
 2. **The address is not the one you asked for.**
    Check the `network-status` annotation to see what $[prodname] actually applied, and confirm the annotation you set is scoped to the right interface name.
+   Nothing restricts writes to that annotation in this release, so a disagreement between what you asked for and what it reports can also mean something else wrote to it.
 3. **The bridge's address changed rather than the workload's.**
    On a bridge you prepared, an unpinned bridge MAC address changes when ports are added.
 
@@ -232,6 +241,9 @@ Deleting a `Network` is not blocked while workloads are still attached to it, an
 
 Recreate the `Network` with the same configuration, then delete and recreate the affected workloads so their interfaces are rebuilt.
 Delete workloads before their `Network` in future.
+
+A workload created *after* the `Network` is gone behaves differently: it never gets an interface at all, rather than losing one.
+See [The workload has no IP address, or will not start](#the-workload-has-no-ip-address-or-will-not-start).
 
 ## Additional resources
 
