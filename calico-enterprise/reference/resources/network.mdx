@@ -191,6 +191,7 @@ A contiguous, inclusive range of VLAN IDs.
 | routes | Additional routes to program into the workload's routing table for this interface, beyond the connected route for the subnet.                                                                                       |                 | List of [L2Route](#l2route)     |
 
 $[prodname] does not assign the network address, the broadcast address, or the gateway address of a subnet.
+The gateway address is the `nextHop` of a route declared on that subnet, so a subnet with no routes has no reserved gateway address.
 On a `/31` or `/32` no addresses are reserved, because those prefixes have no network or broadcast address to withhold.
 
 ### L2Route
@@ -251,7 +252,7 @@ It does not set them for you, because your host network configuration owns these
 | Property         | Required value            | Why                                                                                                                                    |
 | ---------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | VLAN filtering   | Enabled                   | Without it the bridge ignores VLAN tags, so segments are not isolated from one another.                                                 |
-| MAC address      | Explicitly set, and not the trunk's | Otherwise the kernel borrows a port's address and re-chooses on every port change. Reusing the trunk's address can leave the bridge non-functional on some network card drivers. |
+| MAC address      | Explicitly set                   | Otherwise the kernel borrows a port's address and re-chooses it on every port change. Any address will do, as long as it does not change. |
 | VLAN tag protocol | 802.1Q                   | $[prodname] programs 802.1Q membership and creates 802.1Q sub-devices. Nothing matches on an 802.1ad bridge.                            |
 
 $[prodname] reads two of these from sysfs.
