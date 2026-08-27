@@ -29,8 +29,8 @@ Its requirements are narrower than the rest of $[prodname] networking, and sever
 L2 bridge networking is a tech preview feature in $[prodname] 3.24.
 The API may change in response to feedback from tech preview users.
 
-There is nothing extra to install.
-The `Network` resource and the components that act on it ship with the $[prodname] operator.
+The `Network` resource and the components that act on it ship with the $[prodname] operator, so there is nothing extra to install from $[prodname].
+Multus is a separate requirement, covered under [Prerequisites](#prerequisites).
 
 ## Data plane support
 
@@ -69,6 +69,12 @@ All of these must be in place before you create a `Network`.
   See [Primary and secondary interfaces](#primary-and-secondary-interfaces).
 - `multiInterfaceMode: Multus` set in the `calicoNetwork` section of the [Installation](installation/api.mdx) resource, for the same case.
   Installing Multus is not enough on its own, and nothing reports the omission until a workload fails to get connectivity.
+- A `NetworkAttachmentDefinition` that delegates to $[prodname] must declare `cniVersion` 1.0.0 or lower.
+  The $[prodname] CNI plugin supports up to 1.0.0, and a definition declaring a later version fails when the interface is created, leaving the workload in `ContainerCreating`.
+  This bites anyone hand-authoring a definition rather than copying one from these pages.
+- Multus needs the API server's real address on a cluster running the eBPF data plane.
+  With `kube-proxy` disabled, which eBPF mode requires, the cluster IP address of the API server does not resolve until the data plane is programmed, so Multus cannot reach the API server on a freshly booted node and every pod sandbox on that node fails until it can.
+  Set `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` on the Multus daemon set, in the same way as the `kubernetes-services-endpoint` ConfigMap described in [Enable eBPF](../operations/ebpf/enabling-ebpf.mdx).
 
 ## Bridge and topology support
 
@@ -103,6 +109,18 @@ $[prodname] IPAM is the authority for workload addresses, but the guest does not
   See [Set a VM's IP and MAC address](../networking/l2-bridge/vm-identity.mdx).
 - Addresses already in use on the VLAN by machines outside the cluster are not known to $[prodname] IPAM.
   Declare them with an [IPReservation](resources/ipreservation.mdx), or $[prodname] can assign one of them to a workload.
+
+## MTU
+
+$[prodname] attaches workload interfaces at the cluster-wide MTU, which the operator detects automatically.
+A Linux bridge takes the lowest MTU of its ports, so the bridge drops to that value when the first workload attaches, and any VLAN device above the bridge drops with it.
+
+Two consequences on an L2 network:
+
+- A workload can end up on a smaller MTU than the machines it shares the VLAN with, which were not changed.
+- On a bridge you prepared, a VLAN device carrying the node's own address drops too.
+
+Set `mtu` in the `calicoNetwork` section of the [Installation](installation/api.mdx) resource to match your network, and pin the MTU on a bridge you manage yourself.
 
 ## Traffic types
 
