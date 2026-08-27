@@ -52,8 +52,8 @@ Gather this before opening a support case, because one part of it is not collect
    kubectl exec -n calico-system <calico-node-pod> -- calicoctl cluster diags
    ```
 
-2. Collect the bridge state by hand on each affected node.
-   The bundle does not include it:
+2. Collect the bridge state separately, on the node the workload is scheduled on and on any other node whose bridge belongs to the same `Network`.
+   The bundle does not collect bridge state:
 
    ```bash
    ip -d link show type bridge
@@ -62,14 +62,18 @@ Gather this before opening a support case, because one part of it is not collect
    bridge fdb show
    ```
 
-3. If the problem is not obvious, raise Felix's log level and reproduce it:
+3. If the problem is not obvious, raise Felix's log level for the bridge code and reproduce it:
 
    ```bash
    kubectl patch felixconfiguration default --type=merge \
-     -p '{"spec":{"logSeverityScreen":"Debug"}}'
+     -p '{"spec":{"logSeverityScreen":"Debug","logDebugFilenameRegex":"bridge"}}'
    ```
 
-Set it back to `Info` afterwards.
+`logDebugFilenameRegex` limits debug output to Felix source files whose names match it.
+Set it whenever you raise the log level: debug logging across the whole of Felix is expensive, and on a cluster that is already unhealthy it makes things worse.
+Narrow it further to `bridge_network_mgr.go` if you want only the bridge programming path.
+
+Set `logSeverityScreen` back to `Info` and clear `logDebugFilenameRegex` afterwards.
 
 ## $[prodname] will not use the bridge I prepared
 
