@@ -1,8 +1,8 @@
 const ccImageLists = {
-  // TODO(DOCS-3008): placeholder copied from the v23.0.0 list. Replace it with
-  // the v23.0.1 list once the release is in staging:
-  // curl -0 https://installer.calicocloud.io/manifests/<v23.0.1 manifest>/image-list
-  'v23.0.1 (latest)': `quay.io/calico/istio-pilot:v3.32.1
+  // curl -0 https://installer.calicocloud.io/manifests/v3.23.1-5/image-list
+  'v23.0.2 (latest)': `<placeholder>`,
+  // curl -0 https://installer.calicocloud.io/manifests/v3.23.1-4/image-list
+  'v23.0.1': `quay.io/calico/istio-pilot:v3.32.1
 quay.io/calico/istio-install-cni:v3.32.1
 quay.io/calico/istio-ztunnel:v3.32.1
 quay.io/calico/istio-proxyv2:v3.32.1
@@ -58,6 +58,8 @@ quay.io/tigera/cc-core:v0.3.8
 quay.io/tigera/prometheus-operator:v3.23.1
 quay.io/tigera/prometheus-config-reloader:v3.23.1
 quay.io/tigera/cc-cni-config-scanner:v0.7.3`,
+  // curl -0 https://installer.calicocloud.io/manifests/v3.22.6-1/image-list
+  'v22.5.1': `<placeholder>`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.22.6-0/image-list
   'v22.5.0': `quay.io/tigera/apiserver:v3.22.6
 quay.io/tigera/compliance-benchmarker:v3.22.6
