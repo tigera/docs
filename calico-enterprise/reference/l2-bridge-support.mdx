@@ -62,12 +62,12 @@ It is higher than the floor for the eBPF data plane on its own, because $[prodna
 All of these must be in place before you create a `Network`.
 
 - An active $[prodname] license.
-  Creating a `Network` resource is license-gated.
-  Existing `Network` resources keep working if a license lapses.
 - The eBPF data plane, enabled cluster-wide.
-- [Multus](../networking/configuring/multiple-networks.mdx), for attaching workloads to a network as an additional interface.
-  Multus is not shipped by $[prodname].
-- `multiInterfaceMode: Multus` set in the `calicoNetwork` section of the [Installation](installation/api.mdx) resource.
+- [Multus](../networking/configuring/multiple-networks.mdx), for attaching an L2 network to a workload as an additional interface.
+  OpenShift includes Multus by default; on other platforms it is a third-party component that $[prodname] does not ship.
+  A workload that takes an L2 network as its primary interface does not use Multus.
+  See [Primary and secondary interfaces](#primary-and-secondary-interfaces).
+- `multiInterfaceMode: Multus` set in the `calicoNetwork` section of the [Installation](installation/api.mdx) resource, for the same case.
   Installing Multus is not enough on its own, and nothing reports the omission until a workload fails to get connectivity.
 
 ## Bridge and topology support
@@ -81,13 +81,14 @@ There is one supported topology: a VLAN-aware bridge with a trunk uplink.
 | One bridge per VLAN, each fed by a VLAN sub-device | No |
 | More than one trunk on a node | No |
 
-A bridge you prepare yourself must meet three requirements, which $[prodname] checks and will not correct for you: VLAN filtering enabled, an explicitly set MAC address that is not the trunk's own, and the 802.1Q tag protocol rather than 802.1ad.
+A bridge you prepare yourself must meet three requirements, which $[prodname] checks and will not correct for you: VLAN filtering enabled, an explicitly set MAC address, and the 802.1Q tag protocol rather than 802.1ad.
 For the full contract, including what $[prodname] does not require, see the [Network resource](resources/network.mdx).
 For the procedure, see [Prepare an existing bridge](../networking/l2-bridge/byo-bridge.mdx).
 
 ## Addressing
 
-IPv4 only, and $[prodname] must be the source of the address.
+IPv4 only.
+$[prodname] IPAM is the authority for workload addresses, but the guest does not have to know that: a VM can still receive its address over DHCP, from KubeVirt's DHCP service inside the pod.
 
 - IPv6 is not supported.
   The data plane drops IPv6 traffic on L2 interfaces.
@@ -95,7 +96,13 @@ IPv4 only, and $[prodname] must be the source of the address.
 - Addresses cannot be added to or removed from an interface after it is set up.
 - An external DHCP server on the VLAN cannot assign workload addresses.
   $[prodname] IPAM must be authoritative, because policy and reverse path filtering depend on $[prodname] knowing the address.
+  The guest still gets its address over DHCP; the server answering is KubeVirt's, inside the pod.
 - KubeVirt's own in-pod DHCP service is fully supported, and is the normal way a VM receives the address $[prodname] assigned to it.
+- A VM that used DHCP before it moved keeps its address.
+  The address is recorded in $[prodname] IPAM as part of bringing the VM in, and KubeVirt then serves that same address to the guest.
+  See [Set a VM's IP and MAC address](../networking/l2-bridge/vm-identity.mdx).
+- Addresses already in use on the VLAN by machines outside the cluster are not known to $[prodname] IPAM.
+  Declare them with an [IPReservation](resources/ipreservation.mdx), or $[prodname] can assign one of them to a workload.
 
 ## Traffic types
 
