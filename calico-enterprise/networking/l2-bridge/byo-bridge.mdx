@@ -21,20 +21,21 @@ APIs and behavior may change before GA.
 
 :::
 
-Use this guide when the interface that must carry your VLANs is also the one your node's IP address depends on.
-$[prodname] cannot take that interface over on its own, so you build the bridge and $[prodname] uses it.
+L2 bridge networking puts VMs and pods directly onto the VLANs your existing network already carries, so a workload keeps the address and MAC address other systems know it by.
+To do that, $[prodname] needs a VLAN-aware bridge on each node, with the trunk that carries those VLANs attached to it.
+
+This guide is for the case where $[prodname] cannot build that bridge for you, because the interface carrying your VLANs is also the one your node's IP address depends on — a node whose primary NIC is `eth0` and whose L2 trunk is also `eth0`.
+Moving a node's address onto a bridge means reconfiguring whatever owns that address, NetworkManager or systemd-networkd, and getting it wrong takes the node off the network with no way back in.
+So you build the bridge as part of your host network configuration, and $[prodname] uses it.
 For why, see [Who owns the host network configuration](about-l2-bridge.mdx#who-owns-the-host-network-configuration).
 
-If $[prodname] can have an interface of its own, you do not need this guide.
+You do not need this guide if your L2 trunk is separate from your host's primary NIC — the primary NIC is `eth0` and the trunk is `eth1`.
+$[prodname] can take that trunk over and build the bridge itself.
 Use [Connect workloads to an existing VLAN](connect-vlan.mdx) instead.
 
-:::note
-
-The goal is not to move a running IP address onto a bridge.
+The goal here is not to move a running IP address onto a bridge.
 It is to have the host bring the bridge up correctly at boot, so the node's address arrives on the right device the first time.
 Configure this the way you configure the rest of your host networking, and verify it survives a reboot.
-
-:::
 
 ## Before you begin
 
