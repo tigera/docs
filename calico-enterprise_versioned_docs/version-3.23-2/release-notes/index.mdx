@@ -179,6 +179,7 @@ GA = generally available, Deprecated = scheduled for removal, Removed = no longe
 * In clusters using the eBPF data plane with strict reverse path forwarding (RPF) enabled, link-local discovery packets may be incorrectly dropped. This can interfere with neighbor discovery and local network communication. A fix is planned for an upcoming release.
 * The eBPF data plane on EKS with Kubernetes 1.36 is currently not working, including in combination with Bottlerocket; the issue is under investigation.
 * On ARM64 with the eBPF data plane, the DNS parser can fail to load, which can result in timeouts.
+* On clusters where the Kubernetes API server is reachable only by DNS name and cluster DNS is not yet running — most commonly EKS with the eBPF data plane and `kube-proxy` disabled — an install or upgrade can deadlock, because calico-node inherits the operator's `ClusterFirstWithHostNet` DNS policy. As a workaround, set `dnsPolicy` and `dnsConfig` in the `tigera-operator` Helm chart values; calico-node inherits them. A fix is planned for an upcoming release.
 
 ## Upgrading
 
@@ -266,5 +267,44 @@ This release is supported for use in production.
 
 
 #### Upgrading
+
+To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
+
+### Calico Enterprise 3.23.2 bug fix release
+
+August 20, 2026
+
+#### Enhancements
+
+* The operator-generated CNI config now declares `cniVersion` 1.0.0, as Multus requires on OpenShift 4.23 and later. The new `spec.cni.specVersion` field pins a different version or leaves it operator-managed (`Auto`).
+* Added a startup probe to the calico-node DaemonSet, shortening calico-node rolling updates on large clusters.
+* The DatastoreMigration CRD is now published to the release manifests directory, so it can be installed with `kubectl apply` instead of a path into the source tree.
+
+#### Bug fixes
+
+* Fixed an upgrade failure on eBPF clusters where ordinary pod egress carried the ext-to-service connmark into the FIB lookup, breaking cross-node connectivity including DNS on nodes that use source-based routing.
+* Fixed a deadlock on upgrade where the Calico API server was moved before a deprecated policy blocking it was removed, leaving the `projectcalico.org/v3` API permanently unavailable.
+* Fixed license-agent failing to serve its Prometheus `/metrics` endpoint when no certificate and key are configured, and fixed the shipped network policy selecting Prometheus by a label its pods do not carry.
+* Fixed Felix splitting a flow or DNS log record across a rotation boundary, causing downstream consumers to drop one record per rotation.
+* Fixed Felix dataplane delays under load that could hold up policy programming for new pods: IP set resyncs are now incremental, and the flow log collector's policy re-evaluation is time-boxed so it no longer blocks conntrack and NFLOG processing.
+* Fixed eBPF nodes running a kernel with `lockdown=confidentiality`, such as Talos, spewing `could not enable bpf_trace_printk events` into dmesg on every BPF program load.
+* Fixed HostEndpoint policy blocking UDP return traffic for SNAT'd pod egress in the eBPF dataplane.
+* Fixed Linseed rejecting valid service account tokens after a cluster's service account issuer changed. Unrecognized issuers are now validated via TokenReview.
+* Fixed a BPF program leak in the iptables dataplane with `flowLogsCollectTcpStats` enabled: on kernels without TCX support, each endpoint update stacked a duplicate `calico_tcp_stats` filter, eventually degrading node performance and Felix startup. Existing duplicates are cleaned up.
+* Fixed the Calico Ingress Gateway control plane crash-looping on clusters whose Gateway API CRD set omits `ListenerSet`, `TLSRoute`, or `BackendTLSPolicy`, such as OpenShift. The bundled Envoy Gateway is updated to v1.8.2.
+* Fixed several issues that could stop an egress gateway becoming or staying ready: incorrect egress selector reference counting, the gateway's own health probes and DNS not using its ExternalNetwork in the eBPF dataplane, and ExternalNetwork exit device state being pruned on Felix restart.
+* Fixed a slow memory leak in the eBPF dataplane, where interface state for deleted egress gateway and egress client pods was retained indefinitely.
+* Fixed a window in the eBPF dataplane where a new connection could skip a local workload's ingress policy while that workload's route was still being programmed.
+* Fixed stalled connections in the eBPF dataplane between a client pod and a VM workload on the same node.
+* Fixed Calico advertising a Service IP over BGP from a node whose only local endpoint was not Ready, black-holing traffic for services using `externalTrafficPolicy: Local`.
+* Fixed restarting the `calico-early` container while calico-node was running causing a transient BGP flap that briefly withdrew pod and egress gateway routes.
+* Fixed managed cluster connection status showing "Disconnected" rather than "Not connected yet" before a cluster has connected for the first time.
+* Fixed an Elasticsearch NodeSet being renamed on every reconcile when the LogStorage CR used a non-canonical storage quantity such as `1024Gi`, which repeatedly recreated the Elasticsearch StatefulSet and its PVCs.
+* Fixed a non-deterministic key and certificate pair selection when a secret holds more than one recognized pair, such as during a certificate-rotation overlap.
+* Fixed an "unrecognized format" warning printed by Kubernetes 1.36 when applying the IPReservation CRD.
+* Fixed installing $[prodname] as a Supervisor Service on vSphere Kubernetes Service (VKS), which could fail to deploy to guest clusters. Relocated bundles now install end to end, including in air-gapped registries.
+* Reduced Dikastes CPU and allocation overhead when many policies apply to an endpoint.
+* Updated the ECK operator to 3.4.1, fixing Elasticsearch nodes failing to rejoin after a transport CA rotation, which could stall an upgrade.
+* Security updates.
 
 To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
