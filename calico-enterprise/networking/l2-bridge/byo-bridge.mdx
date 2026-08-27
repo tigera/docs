@@ -69,7 +69,7 @@ It does not set them for you, because your host network configuration owns them 
 | Requirement | Setting | Why |
 | ----------- | ------- | --- |
 | VLAN filtering enabled | `vlan_filtering=1` | Without it the bridge ignores VLAN tags entirely, so segments are not isolated from each other. |
-| An explicitly set MAC address | Any address, set deliberately | Stops the bridge's address changing as workloads come and go. See below. |
+| An explicitly set MAC address | Any address, set deliberately | Stops the bridge's address changing as workloads come and go. On an Intel `ice` NIC it must also differ from the card's own address. See below. |
 | The 802.1Q tag protocol | `vlan_protocol=802.1Q` | $[prodname] programs 802.1Q VLAN membership and creates 802.1Q sub-devices. On an 802.1ad bridge none of it matches. |
 
 :::caution
@@ -115,6 +115,10 @@ Capture from another interface instead.
 
 Just as useful as the list above, and it keeps that list credible.
 
+- **A particular MTU.**
+  $[prodname] does not read or set the bridge's MTU, but it does change it in practice.
+  Workload interfaces are attached at the cluster-wide MTU, and a Linux bridge takes the lowest MTU of its ports, so the bridge drops to that value when the first workload attaches — and any VLAN device above it, including the one holding the node's address, drops with it.
+  Pin the MTU on the bridge and its VLAN devices, or set `mtu` in the `calicoNetwork` section of the `Installation` to match your network.
 - **A particular default PVID.**
   $[prodname] does not read or change the bridge's default PVID.
 - **Removing an existing VLAN device.**
