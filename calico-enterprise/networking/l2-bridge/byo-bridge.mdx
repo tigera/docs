@@ -285,9 +285,24 @@ Host network configuration varies with distribution and with whatever manages it
 Once the node's address is on the bridge or on a VLAN device above it, $[prodname] has to be told where to find it.
 Otherwise it attaches its programs to the physical interface, which no longer has an address, and traffic between workloads on different nodes fails.
 
-1. Find the current value of `bpfDataIfacePattern` in the default [FelixConfiguration](../../reference/resources/felixconfig.mdx).
-2. Add a pattern that matches the device holding the node's address.
-   For a node whose address is on `br-l2.100`, `br-l2.*` matches it.
+`bpfDataIfacePattern` is a single regular expression, not a list, so extend the existing value rather than replacing it.
+Removing the alternatives already there stops $[prodname] attaching its programs to your other data interfaces.
+
+1. Read the current value from the default [FelixConfiguration](../../reference/resources/felixconfig.mdx):
+
+   ```bash
+   kubectl get felixconfiguration default -o jsonpath='{.spec.bpfDataIfacePattern}'
+   ```
+
+   If nothing is set, the default is `^((en|wl|ww|sl|ib)[Popsx].*|(eth|wlan|wwan|bond).*)`.
+
+2. Add an alternative matching the device that holds the node's address, keeping everything already in the expression.
+   For a node whose address is on `br-l2.100`:
+
+   ```
+   ^((en|wl|ww|sl|ib)[Popsx].*|(eth|wlan|wwan|bond).*|br-l2.*)
+   ```
+
 3. Apply the change and confirm `calico-node` restarts cleanly.
 
 You do not need to add the trunk interface to this pattern.
