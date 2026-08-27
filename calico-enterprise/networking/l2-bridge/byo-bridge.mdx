@@ -245,6 +245,36 @@ slave-type=bridge
 vlans=10,20,100
 ```
 
+:::caution
+
+Keep this list in step with the `Network`.
+Every VLAN the `Network` uses must appear in `vlans=` here, on every node.
+
+Your host configuration and the `Network` are two sources of truth, and nothing keeps them in sync.
+Add a VLAN to the `Network` without adding it here and that VLAN keeps working until the next time this connection is reactivated, or your configuration management reapplies it.
+It then stops, silently: the node stays `Ready`, workloads stay `Running`, and the `Network` reports nothing.
+It does not recover on its own — only restarting `calico-node` brings it back.
+
+The same applies to a native VLAN, where the PVID and untagged flags revert too, so the host's own untagged path breaks with it.
+
+:::
+
+On OpenShift, where the same configuration is usually written as a `NodeNetworkConfigurationPolicy`, the trunk port takes the same list:
+
+```yaml
+port:
+  - name: eno1
+    vlan:
+      mode: trunk
+      trunk-tags:
+        - id: 10
+        - id: 20
+        - id: 100
+```
+
+Set `vlan-default-pvid: 0` on the bridge as well.
+Without it the default PVID of 1 leaves stray `1 PVID Egress Untagged` entries on the bridge and its ports, which are harmless but confusing when you are reading `bridge vlan show` to diagnose something else.
+
 ```ini
 # /etc/NetworkManager/system-connections/br-l2.100.nmconnection
 [connection]
@@ -328,6 +358,18 @@ After you create a `Network` and attach the first workload:
    A bridge MAC that was not pinned changes at this point.
 2. Run `bridge link show` again and confirm the workload's interface joined the bridge.
 3. Confirm the workload can reach its gateway.
+
+After any later change to the host's network configuration:
+
+1. Run `bridge vlan show` and confirm the trunk still carries every VLAN the `Network` uses.
+   A change that reapplies the bridge or trunk configuration can remove VLAN memberships $[prodname] added, and nothing reports it: the node stays `Ready`, workloads stay `Running`, and only traffic on the affected VLAN stops.
+2. If a VLAN is missing, add it to your host configuration so it survives the next reapply, then restart `calico-node` on that node.
+
+This is the check worth building a habit around.
+The other rounds catch mistakes made while setting the bridge up; this one catches the change made weeks later, which is the failure that bites in production.
+
+A bridge $[prodname] owns is not exposed to this.
+NetworkManager leaves it alone, and the VLAN list on the trunk cannot drift from the `Network`, because nothing else is managing it.
 
 ## Reference the bridge from a Network
 
