@@ -32,12 +32,14 @@ The configuration is the same either way.
 - An L2 network already created and verified.
   See [Connect workloads to an existing VLAN](connect-vlan.mdx).
 - KubeVirt installed.
-- The VM's current IP address, prefix length, and MAC address, recorded from wherever it runs now.
+- The VM's current IP address and MAC address, recorded from wherever it runs now.
+  The prefix length comes from the VLAN's subnet in the `Network`, so you do not supply it here.
 - Confirmation that the address falls inside an `IPPool` on the target VLAN.
   $[prodname] assigns the address from a pool covering that VLAN, so an address outside every pool cannot be assigned.
   See [Create an IP pool for each workload VLAN](connect-vlan.mdx#create-an-ip-pool-for-each-workload-vlan).
-- Confirmation that the address is not already in use.
+- Confirmation that the address is not already in use by another workload.
   $[prodname] fails the request rather than issuing a duplicate.
+  There is one exception, described under [Recreating a VM with the same name](#recreating-a-vm-with-the-same-name).
 
 ## How identity is preserved
 
@@ -69,13 +71,16 @@ KubeVirt does not know about the annotation, so it is not carried to the target 
 
 :::
 
-The `hwAddr` annotation sets the same value for a workload that is not a VM, or a VM that will never migrate:
+The `hwAddr` annotation sets the same value for a workload that is not a VM, or a VM that will never migrate.
+Scope it to the interface it applies to, using the name that interface has inside the pod — for a pod, the name you chose after `@` in the `k8s.v1.cni.cncf.io/networks` annotation:
 
 ```yaml
 metadata:
   annotations:
-    cni.projectcalico.org/net-0.hwAddr: '52:54:00:3a:1c:04'
+    cni.projectcalico.org/vlan10.hwAddr: '52:54:00:3a:1c:04'
 ```
+
+Without an interface name, the annotation applies to the workload's primary interface.
 
 If you set both, they must agree.
 When they conflict, $[prodname] rejects the interface rather than guessing which one you meant, and the VM does not start.
@@ -116,6 +121,19 @@ See [Attaching a pod instead](connect-vlan.mdx#attaching-a-pod-instead).
 
 $[prodname] takes the address from the pool covering that VLAN and records the assignment, so the address is reserved for as long as the VM exists.
 
+### Recreating a VM with the same name
+
+The reservation outlives the VM.
+A VM's IPAM handle survives deletion of the VM, and of its namespace, until kube-controllers reclaims it, which takes around 15 minutes.
+
+:::caution
+
+Recreate a VM with the same name inside that window and $[prodname] reuses the old handle's address, ignoring the `ipAddrs` annotation without reporting an error.
+The VM comes up holding the address it had before, not the one you asked for.
+Either wait for the reclaim, or recreate the VM under a different name.
+
+:::
+
 ### Use ipAddrs rather than ipAddrsNoIpam
 
 Both request a specific address.
@@ -137,7 +155,8 @@ To change them, delete the VM and recreate it with the values you want.
 
 ## Confirm what was configured
 
-Three sources answer different questions, so check the one that reports the value you care about.
+Two sources answer different questions here, and a third, the workload endpoint, is in [Verify from the network](#verify-from-the-network).
+Check the one that reports the value you care about.
 
 1. Read the address KubeVirt reports for the VM:
 
