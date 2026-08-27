@@ -78,7 +78,7 @@ Turning it on makes the kernel start enforcing VLAN membership immediately, and 
 
 :::
 
-### Why the MAC address must be pinned, and must not be the trunk's
+### Why the MAC address must be pinned
 
 A Linux bridge has no MAC address of its own.
 By default the kernel borrows one from whichever attached port has the numerically lowest address, and it re-runs that choice every time a port is added or removed.
@@ -87,42 +87,54 @@ On an L2 bridge the ports are workload interfaces, which appear and disappear co
 Left to itself, the bridge's address changes under your node, and if the node's IP address is on that bridge, its traffic stops being delivered.
 
 Setting an address explicitly stops the kernel from ever reconsidering it.
-
-Do not use the trunk interface's own MAC address for the bridge.
-When two devices in the same path present the same address, some network card drivers reject the second programming attempt and the bridge is left non-functional.
-Use a distinct address.
+Any address will do, as long as it is set deliberately and does not change.
 
 A locally administered address is a good choice, because it cannot collide with a real card.
 Set the second least significant bit of the first byte: `02:00:00:00:00:01` and `0a:1b:2c:3d:4e:5f` are both locally administered.
+
+#### Intel ice NICs
+
+On a network card driven by Intel's `ice` driver, enslaving the card to a VLAN-filtering bridge breaks MAC filtering in hardware.
+The kernel builds a list of MAC addresses to admit, and the physical card's own address in that list makes filter programming stop early.
+Workload and management addresses are dropped from the hardware filter and their inbound traffic is discarded, with no counter and no log to show it.
+
+To avoid it, remove the physical card's MAC address from the bridge's forwarding database when the bridge comes up.
+That requires the bridge and any VLAN devices above it to carry MAC addresses of their own, distinct from the card's, so nothing else depends on the entry you are removing.
+Set this up the same way as the self VLAN membership below, with a hook that fires when the bridge comes up.
+
+:::caution
+
+Do not run `tcpdump` on an `ice` trunk interface to investigate this.
+Capturing puts the card into promiscuous mode, which masks the fault while you are looking at it and heals it until you stop.
+Capture from another interface instead.
+
+:::
 
 ### What $[prodname] does not require
 
 Just as useful as the list above, and it keeps that list credible.
 
-- **Enslaving the trunk.**
-  $[prodname] adds the trunk interface to the bridge itself.
-  The interface only has to exist and be named in the `Network`.
 - **A particular default PVID.**
   $[prodname] does not read or change the bridge's default PVID.
 - **Removing an existing VLAN device.**
   If you already have a VLAN sub-device on the bridge, $[prodname] reuses it rather than failing.
 - **Bringing the bridge up.**
   $[prodname] brings up a bridge that is administratively down.
-- **Self VLAN memberships.**
-  $[prodname] never adds or removes the bridge device's own VLAN memberships, or their PVID and untagged flags.
-  They are yours to manage.
 
 ### Two hazards that are not settings
 
 **Do not name the bridge with a `calb-` prefix.**
-$[prodname] treats that prefix as meaning it owns the bridge, and it deletes bridges it owns when they are no longer needed.
+$[prodname] names the bridges it creates after the `Network` they belong to, as `calb-<network name>`, and treats that prefix as meaning it owns the bridge.
+It deletes bridges it owns when they are no longer needed.
 A bridge of your own named that way can be deleted from under you.
 Nothing rejects the name when you create the `Network`, so this is on you to avoid.
 
 **Spanning Tree Protocol is allowed, but it costs workload startup time.**
-Every new access port waits out a forwarding delay before it passes traffic, which delays every workload attaching to the bridge.
+With STP enabled, every new access port passes through the listening and learning states before it forwards, waiting a full forwarding delay in each.
+At the kernel default of 15 seconds that is around 30 seconds before a workload has connectivity, every time one starts.
 $[prodname] warns once and leaves STP alone on a bridge it did not create.
-Turn it off unless you need it.
+Turn STP off unless you need it.
+If you do need it, lower the bridge's `forward_delay` so the wait is tolerable.
 
 ## Configure the host
 
@@ -132,8 +144,9 @@ A change made with `ip` commands alone disappears at the next reboot, and the no
 The steps below describe what the configuration has to achieve.
 The example that follows shows one way to express it.
 
-1. Create a bridge, with VLAN filtering enabled, the 802.1Q tag protocol, STP disabled, and an explicitly set MAC address that is not the trunk's.
+1. Create a bridge, with VLAN filtering enabled, the 802.1Q tag protocol, STP disabled, and an explicitly set MAC address.
 2. Add the trunk interface to the bridge as a port, and give that port membership of every VLAN it must carry, including the VLAN your host traffic uses.
+   Attach the trunk as part of this configuration, so it is already a bridge port before $[prodname] starts.
 3. Give the bridge device itself membership of the VLAN your host traffic uses.
    See [Self VLAN membership](#self-vlan-membership).
 4. Remove the IP configuration from the physical interface, so it carries no address.
@@ -165,7 +178,12 @@ This is separate from the membership you give the trunk port, and it is the step
 
 Without it, the bridge forwards that VLAN's traffic between its ports but never delivers any of it to the host, so a node whose address depends on that VLAN goes dark.
 
-$[prodname] does not add this membership and does not remove one you have added.
+$[prodname] adds this membership for the VLANs named in the `Network`, and never removes a membership once it exists — including one you added yourself.
+Your host's own VLAN is not named in the `Network`, so that membership is yours to add, and it persists.
+
+Because memberships are never removed, they accumulate.
+Deleting a `Network`, or taking a node out of one by changing its labels, leaves the bridge holding the VLAN memberships it was given, including on the trunk port.
+Remove them yourself on a node that should no longer carry those VLANs.
 
 Some configuration tools have no field for it.
 Where that is the case, set it with a hook that runs when the bridge comes up:
@@ -302,7 +320,13 @@ After you create a `Network` and attach the first workload:
    ```
 
 2. Name the trunk interface in the same host configuration entry.
-   Omitting it leaves the node unable to route workload traffic.
+
+   :::caution
+
+   Name the trunk in the `Network`.
+   A trunk that $[prodname] uses but that is not named in the `Network` fails the eBPF reverse path filter check, and the node loses network access.
+
+   :::
 3. Continue with [Connect workloads to an existing VLAN](connect-vlan.mdx) to create the IP pools, the attachment definitions, and your first workload.
 
 ## If $[prodname] will not use your bridge
