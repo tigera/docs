@@ -213,6 +213,8 @@ module.exports = {
           items: [
             'networking/kubevirt/kubevirt-networking',
             'networking/kubevirt/live-migration-bgp',
+            'networking/kubevirt/install-forklift-openshift',
+            'networking/kubevirt/install-forklift-kubernetes',
           ],
         },
         {
