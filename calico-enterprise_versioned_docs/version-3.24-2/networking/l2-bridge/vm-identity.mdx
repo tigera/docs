@@ -21,11 +21,8 @@ APIs and behavior may change before GA.
 
 :::
 
-A VM that keeps its IP address and MAC address keeps its identity.
-DNS entries still resolve to it, firewall rules still match it, license servers still recognise it, and monitoring still charts it — none of which has to be updated as part of the move.
-
-This guide covers both cases: a VM arriving on an L2 network with an address it already had, and a new VM that needs a fixed address from the start.
-The configuration is the same either way.
+A VM can arrive on an L2 network already holding a specific IP address and MAC address, declared in the VM specification rather than assigned and then corrected.
+The configuration is the same for a VM migrating with an address it already had and for a new VM that needs a fixed one.
 
 ## Before you begin
 
@@ -49,7 +46,8 @@ The address and the MAC address are declared **on the VM before it starts**.
 $[prodname] assigns exactly those values when the interface is created, and the VM comes up already holding them.
 
 Nothing is renumbered afterwards.
-Do not start the VM, observe what it got, and then move it to the address you wanted: that sequence breaks every connection the VM makes in between, and defeats the point of preserving the address at all.
+Do not start the VM, observe what it got, and then move it to the address you wanted.
+That sequence breaks every connection the VM makes in between, and defeats the point of preserving the address at all.
 
 ## Set the MAC address
 
@@ -72,7 +70,9 @@ KubeVirt does not know about the annotation, so it is not carried to the target 
 :::
 
 The `hwAddr` annotation sets the same value for a workload that is not a VM, or a VM that will never migrate.
-Scope it to the name the interface has inside the pod, which differs by workload type: for a pod, the name you chose after `@` in the `k8s.v1.cni.cncf.io/networks` annotation; for a VM, the name KubeVirt generates, as described in [Which interface name to use](#which-interface-name-to-use).
+Scope it to the name the interface has inside the pod, which differs by workload type.
+For a pod, that is the name you chose after `@` in the `k8s.v1.cni.cncf.io/networks` annotation.
+For a VM, it is the name KubeVirt generates, as described in [Which interface name to use](#which-interface-name-to-use).
 
 ```yaml
 metadata:
@@ -87,7 +87,8 @@ If you set both, they must agree.
 When they conflict, $[prodname] rejects the interface rather than guessing which one you meant, and the VM does not start.
 
 Keeping a MAC address across a live migration also needs a MAC address allocator in the cluster.
-OpenShift ships one, which fills in `macAddress` on newly created VMs — so on OpenShift a VM may already carry a value before you set one, and you should check the specification first.
+OpenShift ships one, which fills in `macAddress` on newly created VMs.
+A VM there may already carry a value before you set one, so check the specification first.
 On other platforms you need to provide one yourself; the upstream project is [kubemacpool](https://github.com/k8snetworkplumbingwg/kubemacpool), which has not been verified with this feature outside OpenShift.
 
 ## Set the IP address
@@ -141,7 +142,8 @@ Both request a specific address.
 Only one leaves $[prodname] able to enforce policy on it.
 
 `ipAddrsNoIpam` configures the address on the interface but bypasses IPAM entirely, so $[prodname] holds no record of it.
-On an L2 network that matters more than it does on the pod network: $[prodname] uses its knowledge of a workload's address to make policy decisions and to distinguish legitimate traffic from spoofed traffic.
+On an L2 network that matters more than it does on the pod network.
+$[prodname] uses its knowledge of a workload's address to make policy decisions, and to distinguish legitimate traffic from spoofed traffic.
 An address it does not know about cannot be protected.
 
 Use `ipAddrs`.
@@ -220,7 +222,8 @@ If you want to try this now, talk to your support contact rather than working fr
 What follows describes what this release implements.
 It is not a statement about what a particular migration will feel like, and it has not been through a full test cycle.
 
-$[prodname] preserves the address and the MAC address across a live migration between KubeVirt nodes, and announces the VM's new location with a gratuitous ARP so the fabric updates its forwarding.
+$[prodname] preserves the address and the MAC address across a live migration between KubeVirt nodes.
+It announces the VM's new location with a gratuitous ARP, so the fabric updates its forwarding.
 Established TCP connections are admitted on arrival rather than dropped for want of a handshake, which is intended to let sessions continue.
 
 Bringing a VM in from outside the cluster is a different matter.

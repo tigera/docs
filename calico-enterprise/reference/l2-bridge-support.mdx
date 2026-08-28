@@ -78,7 +78,8 @@ All of these must be in place before you create a `Network`.
   The $[prodname] CNI plugin supports up to 1.0.0, and a definition declaring a later version fails when the interface is created, leaving the workload in `ContainerCreating`.
   This bites anyone hand-authoring a definition rather than copying one from these pages.
 - Multus needs the API server's real address on a cluster running the eBPF data plane.
-  With `kube-proxy` disabled, which eBPF mode requires, the cluster IP address of the API server does not resolve until the data plane is programmed, so Multus cannot reach the API server on a freshly booted node and every pod sandbox on that node fails until it can.
+  With `kube-proxy` disabled, which eBPF mode requires, the cluster IP address of the API server does not resolve until the data plane is programmed.
+  Multus therefore cannot reach the API server on a freshly booted node, and every pod sandbox on that node fails until it can.
   Set `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` on the Multus daemon set, in the same way as the `kubernetes-services-endpoint` ConfigMap described in [Enable eBPF](../operations/ebpf/enabling-ebpf.mdx).
 
 ## Bridge and topology support
@@ -92,14 +93,16 @@ There is one supported topology: a VLAN-aware bridge with a trunk uplink.
 | One bridge per VLAN, each fed by a VLAN sub-device | No |
 | More than one trunk on a node | No |
 
-A bridge you prepare yourself must meet three requirements, which $[prodname] checks and will not correct for you: VLAN filtering enabled, an explicitly set MAC address, and the 802.1Q tag protocol rather than 802.1ad.
+A bridge you prepare yourself must meet three requirements, which $[prodname] checks and will not correct for you.
+Those are VLAN filtering enabled, an explicitly set MAC address, and the 802.1Q tag protocol rather than 802.1ad.
 For the full contract, including what $[prodname] does not require, see the [Network resource](resources/network.mdx).
-For the procedure, see [Prepare an existing bridge](../networking/l2-bridge/byo-bridge.mdx).
+For the procedure, see [Prepare a bridge on single-uplink nodes](../networking/l2-bridge/byo-bridge.mdx).
 
 ## Addressing
 
 IPv4 only.
-$[prodname] IPAM is the authority for workload addresses, but the guest does not have to know that: a VM can still receive its address over DHCP, from KubeVirt's DHCP service inside the pod.
+$[prodname] IPAM is the authority for workload addresses, but the guest does not have to know that.
+A VM can still receive its address over DHCP, from KubeVirt's DHCP service inside the pod.
 
 - IPv6 is not supported.
   The data plane drops IPv6 traffic on L2 interfaces.
@@ -118,7 +121,8 @@ $[prodname] IPAM is the authority for workload addresses, but the guest does not
 ## MTU
 
 $[prodname] attaches workload interfaces at the cluster-wide MTU, which the operator detects automatically.
-A Linux bridge takes the lowest MTU of its ports, so the bridge drops to that value when the first workload attaches, and any VLAN device above the bridge drops with it.
+A Linux bridge takes the lowest MTU of its ports, so the bridge drops to that value when the first workload attaches.
+Any VLAN device above the bridge drops with it.
 
 Two consequences on an L2 network:
 
@@ -148,7 +152,8 @@ Several Kubernetes networking features do not extend to L2 interfaces.
 
 Connect-time load balancing is a host-wide setting and cannot be disabled for one interface.
 This does not affect VMs, which resolve Services inside their own kernel.
-It does affect a pod on an L2 network: a cluster IP address can be resolved and translated on the way out of the pod's primary interface, then dropped by reverse path filtering.
+It does affect a pod on an L2 network.
+A cluster IP address can be resolved and translated on the way out of the pod's primary interface, then dropped by reverse path filtering.
 
 ## Primary and secondary interfaces
 

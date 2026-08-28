@@ -2,7 +2,7 @@
 description: Configure a Linux bridge on your nodes so Calico Enterprise can use it, for nodes whose only uplink also carries the node's own IP address.
 ---
 
-# Prepare an existing bridge for $[prodname]
+# Prepare a bridge on single-uplink nodes
 
 {/*
   User story, primary
@@ -21,12 +21,13 @@ APIs and behavior may change before GA.
 
 :::
 
-L2 bridge networking puts VMs and pods directly onto the VLANs your existing network already carries, so a workload keeps the address and MAC address other systems know it by.
-To do that, $[prodname] needs a VLAN-aware bridge on each node, with the trunk that carries those VLANs attached to it.
+$[prodname] needs a VLAN-aware bridge on each node, and normally it builds that bridge itself.
+It cannot when the interface carrying your VLANs is also the one your node's IP address depends on.
+That is a node whose primary NIC is `eth0` and whose L2 trunk is also `eth0`.
+Moving a node's address onto a bridge means reconfiguring whatever owns that address, NetworkManager or systemd-networkd.
+Getting that wrong takes the node off the network with no way back in.
 
-This guide is for the case where $[prodname] cannot build that bridge for you, because the interface carrying your VLANs is also the one your node's IP address depends on — a node whose primary NIC is `eth0` and whose L2 trunk is also `eth0`.
-Moving a node's address onto a bridge means reconfiguring whatever owns that address, NetworkManager or systemd-networkd, and getting it wrong takes the node off the network with no way back in.
-So you build the bridge as part of your host network configuration, and $[prodname] uses it.
+So on those nodes you build the bridge as part of your host network configuration, and $[prodname] uses it.
 For why, see [Who owns the host network configuration](about-l2-bridge.mdx#who-owns-the-host-network-configuration).
 
 You do not need this guide if your L2 trunk is separate from your host's primary NIC — the primary NIC is `eth0` and the trunk is `eth1`.
@@ -75,7 +76,8 @@ It does not set them for you, because your host network configuration owns them 
 :::caution
 
 Enable VLAN filtering **before** you put the node's address on the bridge, or as part of the same configuration change.
-Turning it on makes the kernel start enforcing VLAN membership immediately, and an address on a bridge with no VLAN membership stops receiving and sending traffic the moment filtering comes on.
+Turning it on makes the kernel start enforcing VLAN membership immediately.
+An address on a bridge with no VLAN membership then stops sending and receiving traffic the moment filtering comes on.
 
 :::
 
@@ -100,7 +102,8 @@ The kernel builds a list of MAC addresses to admit, and the physical card's own 
 Workload and management addresses are dropped from the hardware filter and their inbound traffic is discarded, with no counter and no log to show it.
 
 To avoid it, remove the physical card's MAC address from the bridge's forwarding database when the bridge comes up.
-That requires the bridge and any VLAN devices above it to carry MAC addresses of their own, distinct from the card's, so nothing else depends on the entry you are removing.
+That requires the bridge and any VLAN devices above it to carry MAC addresses of their own, distinct from the card's.
+Nothing else then depends on the entry you are removing.
 Set this up the same way as the self VLAN membership below, with a hook that fires when the bridge comes up.
 
 :::caution
@@ -117,7 +120,9 @@ Just as useful as the list above, and it keeps that list credible.
 
 - **A particular MTU.**
   $[prodname] does not read or set the bridge's MTU, but it does change it in practice.
-  Workload interfaces are attached at the cluster-wide MTU, and a Linux bridge takes the lowest MTU of its ports, so the bridge drops to that value when the first workload attaches — and any VLAN device above it, including the one holding the node's address, drops with it.
+  Workload interfaces are attached at the cluster-wide MTU, and a Linux bridge takes the lowest MTU of its ports.
+  The bridge therefore drops to that value when the first workload attaches.
+  Any VLAN device above it drops with it, including the one holding the node's address.
   Pin the MTU on the bridge and its VLAN devices, or set `mtu` in the `calicoNetwork` section of the `Installation` to match your network.
 - **A particular default PVID.**
   $[prodname] does not read or change the bridge's default PVID.
@@ -166,7 +171,8 @@ Two shapes, depending on your host's own traffic.
 
 **Untagged host traffic.**
 Put the node's address directly on the bridge device.
-The bridge port facing the trunk needs the host's traffic to arrive untagged, which means setting a native VLAN on the `Network` later so $[prodname] knows which VLAN untagged traffic belongs to.
+The bridge port facing the trunk needs the host's traffic to arrive untagged.
+That means setting a native VLAN on the `Network` later, so $[prodname] knows which VLAN untagged traffic belongs to.
 
 **Host traffic on its own VLAN.**
 Create a VLAN device on top of the bridge for that VLAN — for example, VLAN 100 on `br-l2` gives `br-l2.100` — and put the node's address on the VLAN device.
@@ -181,7 +187,8 @@ A VLAN device **below** the bridge, standing in for the trunk, is not supported.
 For the host to receive traffic on a VLAN through the bridge, the bridge device needs membership of that VLAN in its own right.
 This is separate from the membership you give the trunk port, and it is the step most likely to be missed.
 
-Without it, the bridge forwards that VLAN's traffic between its ports but never delivers any of it to the host, so a node whose address depends on that VLAN goes dark.
+Without it, the bridge forwards that VLAN's traffic between its ports but never delivers any of it to the host.
+A node whose address depends on that VLAN then goes dark.
 
 $[prodname] adds this membership for the VLANs named in the `Network`, and never removes a membership once it exists — including one you added yourself.
 Your host's own VLAN is not named in the `Network`, so that membership is yours to add, and it persists.
@@ -273,7 +280,8 @@ port:
 ```
 
 Set `vlan-default-pvid: 0` on the bridge as well.
-Without it the default PVID of 1 leaves stray `1 PVID Egress Untagged` entries on the bridge and its ports, which are harmless but confusing when you are reading `bridge vlan show` to diagnose something else.
+Without it, the default PVID of 1 leaves stray `1 PVID Egress Untagged` entries on the bridge and its ports.
+They are harmless, but confusing when you are reading `bridge vlan show` to diagnose something else.
 
 ```ini
 # /etc/NetworkManager/system-connections/br-l2.100.nmconnection
@@ -362,7 +370,8 @@ After you create a `Network` and attach the first workload:
 After any later change to the host's network configuration:
 
 1. Run `bridge vlan show` and confirm the trunk still carries every VLAN the `Network` uses.
-   A change that reapplies the bridge or trunk configuration can remove VLAN memberships $[prodname] added, and nothing reports it: the node stays `Ready`, workloads stay `Running`, and only traffic on the affected VLAN stops.
+   A change that reapplies the bridge or trunk configuration can remove VLAN memberships $[prodname] added, and nothing reports it.
+   The node stays `Ready`, workloads stay `Running`, and only traffic on the affected VLAN stops.
 2. If a VLAN is missing, add it to your host configuration so it survives the next reapply, then restart `calico-node` on that node.
 
 This is the check worth building a habit around.

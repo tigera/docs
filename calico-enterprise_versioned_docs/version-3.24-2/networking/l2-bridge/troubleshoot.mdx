@@ -18,12 +18,11 @@ APIs and behavior may change before GA.
 
 :::
 
-Most problems on an L2 network fall into a handful of shapes.
-Find your symptom below.
+Most problems on an L2 network fall into a handful of shapes, but they report themselves in unusual places.
+Read [Where the signals are](#where-the-signals-are) first, then find your symptom.
 
 ## Where the signals are
 
-Read this first.
 L2 problems report themselves somewhere unusual, and looking in the obvious places wastes time.
 
 Problems with the **bridge itself** appear only in the Felix log inside `calico-node`.
@@ -80,8 +79,7 @@ Set `logSeverityScreen` back to `Info` and clear `logDebugFilenameRegex` afterwa
 Workloads on the `Network` stay administratively down and never get connectivity, and the Felix log repeats a warning every few seconds.
 
 $[prodname] fails closed here by design.
-Rather than attaching workloads to a bridge that cannot isolate them, it programs nothing at all.
-That means no trunk enslavement, no VLAN membership, and no workload interfaces.
+Rather than attaching workloads to a bridge that cannot isolate them, it programs nothing at all: no trunk enslavement, no VLAN membership, and no workload interfaces.
 
 Check the three properties $[prodname] requires:
 
@@ -105,7 +103,7 @@ Check the three properties $[prodname] requires:
    ```
 
 The warning in the log names which of these failed and the command to fix it.
-See [Prepare an existing bridge](byo-bridge.mdx) for the full requirements.
+See [Prepare a bridge on single-uplink nodes](byo-bridge.mdx) for the full requirements.
 
 Two side effects are worth knowing about.
 A single broken bridge can intermittently delay unrelated `Network` resources, because $[prodname] stops processing on the first failure each cycle.
@@ -170,7 +168,7 @@ This is the failure that takes a node off the network, and it has three usual ca
   If it was never pinned, attaching the first workload can change it, and traffic to the old address stops being delivered.
 
 Recover from the console, not over the network.
-See [Prepare an existing bridge](byo-bridge.mdx).
+See [Prepare a bridge on single-uplink nodes](byo-bridge.mdx).
 
 ## The workload cannot reach its gateway
 
@@ -209,14 +207,13 @@ Connect-time load balancing is a host-wide setting and cannot be turned off for 
 A Service address gets resolved and translated on the way out of the pod's primary interface, then dropped by reverse path filtering.
 
 VMs are unaffected, because they resolve Services inside their own kernel.
-For a pod that needs both cluster Services and an L2 network, keep its primary interface on the $[prodname] pod network and attach the L2 network as an additional interface.
+For a pod that needs both cluster Services and an L2 network, keep its primary interface on the pod network and attach the L2 network as an additional interface.
 
 ## The MAC address is not what I asked for
 
 1. **The VM does not start at all, and the CNI log reports a conflict.**
    KubeVirt's `macAddress` field and the `hwAddr` annotation are both set, to different values.
-   $[prodname] rejects the interface rather than choosing.
-   Make them agree, or remove one.
+   $[prodname] rejects the interface rather than choosing, so make them agree or remove one.
 2. **The address is not the one you asked for.**
    Check the `network-status` annotation to see what $[prodname] actually applied, and confirm the annotation you set is scoped to the right interface name.
    Nothing restricts writes to that annotation in this release, so a disagreement between what you asked for and what it reports can also mean something else wrote to it.
@@ -247,7 +244,7 @@ See [The workload has no IP address, or will not start](#the-workload-has-no-ip-
 
 ## Additional resources
 
-- [Prepare an existing bridge](byo-bridge.mdx)
+- [Prepare a bridge on single-uplink nodes](byo-bridge.mdx)
 - [Connect workloads to an existing VLAN](connect-vlan.mdx)
 - [About L2 bridge networking](about-l2-bridge.mdx)
 - [L2 bridge support and limitations](../../reference/l2-bridge-support.mdx)
