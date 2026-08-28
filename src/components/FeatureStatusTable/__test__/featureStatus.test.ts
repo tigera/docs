@@ -66,17 +66,19 @@ describe('buildRows', () => {
     expect(names('calico', window)).not.toContain('Workload WAF');
   });
 
-  it('orders rows by the release the feature first appeared in', () => {
-    expect(names('calico-enterprise', ['3.22', '3.23', '3.24'])).toEqual([
-      'DNS policy for Windows',
-      'Workload WAF',
-      'Gateway WAF',
-      'Istio ambient mode',
-      'Live migration for KubeVirt VMs',
-      'Multi-VRF networking',
-      'Native v3 CRDs',
-      'L2 bridge networking',
-      'Selector-scoped Felix configuration',
+  it('reproduces the Calico Enterprise 3.24 technology preview table', () => {
+    // The widest table there is: features arriving in four different releases, a
+    // status that has moved on to GA, and rows that never existed in the first column.
+    expect(asMarkdown('calico-enterprise', ['3.22', '3.23', '3.24'])).toEqual([
+      '| DNS policy for Windows | TP | TP | TP |',
+      '| Workload WAF | TP | TP | TP |',
+      '| Gateway WAF | TP | TP | TP |',
+      '| Istio ambient mode | TP | TP | TP |',
+      '| Live migration for KubeVirt VMs | – | TP | TP |',
+      '| Multi-VRF networking | – | TP | TP |',
+      '| Native v3 CRDs | – | TP | GA |',
+      '| L2 bridge networking | – | – | TP |',
+      '| Selector-scoped Felix configuration | – | – | TP |',
     ]);
   });
 
