@@ -2,7 +2,7 @@ import React from 'react';
 import { usePluginData } from '@docusaurus/useGlobalData';
 import { useDocsVersion } from '@docusaurus/plugin-content-docs/client';
 
-import { buildLegend, buildRows, cellLabel, releaseWindow } from './featureStatus';
+import { buildLegend, buildRows, cellLabel, PREVIEW_LEGEND, releaseWindow } from './featureStatus';
 import type { Feature } from './featureStatus';
 
 const PLUGIN_NAME = 'docusaurus-plugin-feature-status';
@@ -54,7 +54,7 @@ const TechPreviewTable: React.FC = () => {
           ))}
         </tbody>
       </table>
-      <p>{buildLegend(rows)}</p>
+      <p>{buildLegend(PREVIEW_LEGEND)}</p>
     </>
   );
 };
