@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import TechPreviewTable from '../index';
+import { DeprecatedFeaturesTable, TechPreviewTable } from '../index';
 import type { Feature } from '../featureStatus';
 
 const features: Feature[] = [
@@ -92,6 +92,27 @@ describe('<TechPreviewTable/>', () => {
   it('renders nothing when no feature was in preview during the window', () => {
     docsVersion.version = '3.28';
     const { container } = render(<TechPreviewTable />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe('<DeprecatedFeaturesTable/>', () => {
+  beforeEach(() => {
+    docsVersion.pluginId = 'calico';
+    docsVersion.version = '3.32';
+  });
+
+  it('selects on deprecated and removed rather than preview', () => {
+    render(<DeprecatedFeaturesTable />);
+
+    expect(columns()).toEqual(['Feature', '3.30', '3.31', '3.32']);
+    expect(rows()).toEqual([['FIPS mode', 'Deprecated', 'Deprecated', 'Deprecated']]);
+  });
+
+  it('shares the empty and legend behaviour of the preview table', () => {
+    docsVersion.version = '3.29';
+    const { container } = render(<DeprecatedFeaturesTable />);
 
     expect(container).toBeEmptyDOMElement();
   });
