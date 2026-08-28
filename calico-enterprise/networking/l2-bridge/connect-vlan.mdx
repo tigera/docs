@@ -25,7 +25,7 @@ Use this guide when your L2 trunk is separate from your host's primary NIC — f
 $[prodname] creates the bridge, enslaves that interface as the trunk, and attaches your workloads to it.
 
 If the only uplink on your nodes also carries the node's own IP address, $[prodname] cannot create the bridge.
-Start with [Prepare an existing bridge](byo-bridge.mdx), which covers building the bridge and writing the `Network` for it.
+Start with [Prepare a bridge on single-uplink nodes](byo-bridge.mdx), which covers building the bridge and writing the `Network` for it.
 Come back here for the IP pools, the reserved addresses, the attachment definitions, and attaching your first workload.
 Skip [Create the Network resource](#create-the-network-resource): the examples in it use `managedBridge`, which is the case where $[prodname] builds the bridge, not yours.
 
@@ -48,7 +48,7 @@ The failures they cause are cheaper to avoid than to diagnose.
 - On each node, an interface cabled to a switch port configured as a trunk carrying your workload VLANs.
   $[prodname] attaches to the trunk you already have: it does not configure the switch, and it cannot turn an access port into a trunk.
 - That interface must not carry the node's own IP address.
-  If your only uplink does, use [Prepare an existing bridge](byo-bridge.mdx) instead.
+  If your only uplink does, use [Prepare a bridge on single-uplink nodes](byo-bridge.mdx) instead.
 
 For the full set of constraints, see [L2 bridge support and limitations](../../reference/l2-bridge-support.mdx).
 
@@ -99,7 +99,8 @@ And for the nodes:
 ## Create an IP pool for each workload VLAN
 
 The pool and the `Network` can be created in either order, but both must exist before a workload attaches to the VLAN.
-$[prodname] IPAM chooses a pool by checking which pools fall inside the VLAN's subnet, so a pool that does not match fails at workload creation with an error that does not obviously point back here.
+$[prodname] IPAM chooses a pool by checking which pools fall inside the VLAN's subnet.
+A pool that does not match fails at workload creation, with an error that does not obviously point back here.
 
 A VLAN that carries only host traffic does not need a pool.
 Create pools only for the VLANs your workloads will use.
@@ -122,7 +123,8 @@ Create pools only for the VLANs your workloads will use.
 2. Apply it, and repeat for each workload VLAN.
 
 `allowedUses: L2Workload` marks the pool as belonging to an L2 network.
-Without it, $[prodname] treats the block as part of the routed pod network: it programs a blackhole route for it and advertises it over BGP, neither of which is correct for addresses that live on your VLAN.
+Without it, $[prodname] treats the block as part of the routed pod network.
+It programs a blackhole route for the block and advertises it over BGP, neither of which is correct for addresses that live on your VLAN.
 
 :::caution
 
@@ -217,9 +219,11 @@ An empty `nodeSelector` applies the entry to every node.
 
 Declare the VLAN's gateway as a route on the subnet.
 A workload whose only interface is on this VLAN needs a default route, as above.
-A workload that also has a primary interface on the pod network already has a default route, so give it specific routes to the destinations it needs instead, or its cluster networking breaks.
+A workload that also has a primary interface on the pod network already has a default route.
+Give that one specific routes to the destinations it needs instead, or its cluster networking breaks.
 
-$[prodname] also uses a route's `nextHop` address to reserve the gateway, so a subnet with no routes has no reserved gateway and the address can be assigned to a workload.
+$[prodname] also uses a route's `nextHop` address to reserve the gateway.
+A subnet with no routes therefore has no reserved gateway, and the address can be assigned to a workload.
 
 ### Tagged trunk
 
@@ -267,11 +271,11 @@ hostConfig:
 ```
 
 Entries are evaluated in order and **the first matching `nodeSelector` wins**.
-Everything after it is ignored for that node — entries are not merged.
-Put your most specific selectors first.
+Everything after it is ignored for that node, because entries are not merged, so put your most specific selectors first.
 
 End with a catch-all if every node should carry the network.
-Leave it out to confine the network to the nodes you select: a node that matches no entry ignores the `Network` entirely, which is how you limit L2 to a specific pool of hardware.
+Leave it out to confine the network to the nodes you select.
+A node that matches no entry ignores the `Network` entirely, which is how you limit L2 to a specific pool of hardware.
 
 :::caution
 
@@ -368,7 +372,9 @@ See [Attaching a workload to more than one VLAN](#attaching-a-workload-to-more-t
 The `bridge: {}` here is KubeVirt's own interface binding, which attaches the VM to the interface $[prodname] built.
 It is unrelated to the $[prodname] L2 bridge — the two uses of the word are unfortunate but distinct.
 
-To give the VM a specific address and MAC address rather than letting $[prodname] assign them — either because it is migrating in with an identity it already has, or because it needs a fixed one — see [Set a VM's IP and MAC address](vm-identity.mdx).
+You can also give the VM a specific address and MAC address rather than letting $[prodname] assign them.
+That applies whether it is migrating in with an identity it already has, or simply needs a fixed one.
+See [Set a VM's IP and MAC address](vm-identity.mdx).
 
 ### Attaching a pod instead
 
@@ -475,7 +481,7 @@ If any step fails, see [Troubleshoot L2 network connectivity](troubleshoot.mdx).
 ## Additional resources
 
 - [About L2 bridge networking](about-l2-bridge.mdx)
-- [Prepare an existing bridge](byo-bridge.mdx)
+- [Prepare a bridge on single-uplink nodes](byo-bridge.mdx)
 - [Set a VM's IP and MAC address](vm-identity.mdx)
 - [L2 bridge support and limitations](../../reference/l2-bridge-support.mdx)
 - [Network resource](../../reference/resources/network.mdx)

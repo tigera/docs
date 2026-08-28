@@ -21,12 +21,13 @@ APIs and behavior may change before GA.
 
 :::
 
+L2 bridge networking attaches KubeVirt VMs and pods to a VLAN your physical network already carries, using a VLAN-aware Linux bridge on each node.
+This page covers why you would do that, how the pieces fit together, and which decisions you cannot change after the cluster is built.
+
 ## Why L2 networking in $[prodname]
 
 A virtual machine moving onto Kubernetes usually arrives with an identity that other systems already depend on.
-Its IP address is in DNS.
-Firewall rules name it.
-License servers are bound to it, monitoring dashboards chart it, and other applications hold its address in their own configuration.
+Its address is in DNS and named in firewall rules, license servers are bound to it, monitoring dashboards chart it, and other applications hold it in their own configuration.
 
 Re-addressing that machine means changing all of those things too.
 For a handful of VMs that is an afternoon.
@@ -80,7 +81,7 @@ It lists the 802.1Q VLANs that make it up, the subnets on each of those VLANs, a
 One object describes the whole network — not one per node, and not one per workload.
 
 A single `Network` can carry several VLANs, and that is usually the right shape.
-Each `Network` you create adds work for $[prodname] on every node it selects, so a handful of Networks each carrying one VLAN costs more than one Network carrying a handful of VLANs.
+Each one you create adds work for $[prodname] on every node it selects, so several Networks carrying one VLAN each cost more than one Network carrying several VLANs.
 Reach for additional Networks when you need genuinely separate bridges, not as a way to organize VLANs.
 
 ### Bridges, trunk ports, and access ports
@@ -97,7 +98,7 @@ A workload that needs to be on two VLANs gets two interfaces, each an access por
 ### How tagging works
 
 The bridge is VLAN-aware, and traffic on it is explicitly tagged.
-Tags are added and removed at the edges, so the workload never sees them: $[prodname] tags a frame on its way in from the workload, and strips the tag on its way out to it.
+Tags are added and removed at the edges, so the workload never sees them: $[prodname] tags a frame on its way in, and strips the tag on its way out.
 Inside the workload the interface is ordinary Ethernet, with no VLAN device to configure.
 
 Traffic that arrives on the trunk without a tag is handled by the **native VLAN**, if you set one.
@@ -122,7 +123,7 @@ It is a question of whether $[prodname] can have an uplink of its own.
 
 ### $[prodname] can have its own uplink
 
-If there is an interface on the node that $[prodname] can take over — one that is not carrying the node's own IP address — then $[prodname] creates and owns the bridge.
+If the node has an interface $[prodname] can take over, one that is not carrying the node's own IP address, then $[prodname] creates and owns the bridge.
 
 This is the simpler option wherever it applies.
 There is nothing for you to configure correctly on the host, and your node's own address never moves.
@@ -130,19 +131,22 @@ $[prodname] creates the bridge, enslaves the trunk, sets every option it needs, 
 
 There is also nothing to keep in step.
 With a bridge $[prodname] owns, the VLAN list on the trunk cannot drift from the `Network`, because nothing else is managing it.
-On a bridge you built, those are two sources of truth: if they diverge, the next time your host configuration is reapplied it can strip a VLAN $[prodname] added, and traffic on that VLAN stops without anything reporting it.
-See [Prepare an existing bridge](byo-bridge.mdx).
+On a bridge you built, those become two sources of truth.
+If they diverge, the next time your host configuration is reapplied it can strip a VLAN $[prodname] added, and traffic on that VLAN stops without anything reporting it.
+See [Prepare a bridge on single-uplink nodes](byo-bridge.mdx).
 
 ### The uplink is shared with the host
 
 If the interface that must carry your VLANs is also the one your node's IP address depends on, $[prodname] cannot take it over.
 You build the bridge, put the node's address on it, and tell $[prodname] to use it.
-See [Prepare an existing bridge](byo-bridge.mdx).
+See [Prepare a bridge on single-uplink nodes](byo-bridge.mdx).
 
 Managed mode is not an alternative in this situation.
 $[prodname] has no way to move the node's address onto a bridge as part of creating one, and no way to make the host's own network configuration follow it there.
 
-Nodes commonly end up in this situation for reasons that have nothing to do with $[prodname]: a physical server with a fixed set of cards, a bonded uplink kept for redundancy, a standardized node image that cannot be varied, or a deliberate decision to put the host itself on one of the L2 VLANs.
+Nodes commonly end up this way for reasons that have nothing to do with $[prodname].
+The node may be a physical server with a fixed set of cards, or carry a bonded uplink kept for redundancy.
+It may run a standardized image that cannot be varied, or sit on one of the L2 VLANs by deliberate choice.
 
 ## Who owns the host network configuration
 
@@ -150,7 +154,8 @@ The reason $[prodname] refuses to build the bridge for you in that case is worth
 
 Your node's IP address does not belong to $[prodname].
 It belongs to whatever configures the host's network — systemd-networkd, NetworkManager, or something your provisioning system drives.
-Moving that address onto a bridge is not a single operation: afterwards, the component that manages it has to be doing DHCP or static addressing on the *new* interface, or the address does not come back after a reboot.
+Moving that address onto a bridge is not a single operation.
+Afterwards, the component that manages it has to be doing DHCP or static addressing on the *new* interface, or the address does not come back after a reboot.
 
 $[prodname] will not reconfigure or disable those components.
 If it tried and got it wrong, the result is a node that has lost its own network with nothing left to fix it from.
@@ -160,8 +165,9 @@ On a bridge you built, $[prodname] still does everything else it would otherwise
 It does not reconfigure the parts your host configuration owns.
 
 One thing does cross that line today.
-Workload interfaces are attached at the cluster-wide MTU, and because a Linux bridge takes the lowest MTU of its ports, attaching the first workload can lower the MTU of a bridge you built, and of any VLAN device above it.
-See [Prepare an existing bridge](byo-bridge.mdx) for how to pin it.
+Workload interfaces are attached at the cluster-wide MTU, and a Linux bridge takes the lowest MTU of its ports.
+Attaching the first workload can therefore lower the MTU of a bridge you built, and of any VLAN device above it.
+See [Prepare a bridge on single-uplink nodes](byo-bridge.mdx) for how to pin it.
 
 ### How the host shares the bridge
 
@@ -169,7 +175,8 @@ When the bridge carries both host traffic and workload traffic, the node's own a
 
 If your host's traffic is **untagged**, the address goes directly on the bridge device.
 
-If your host is on its **own VLAN** while workloads are on others, the address goes on a VLAN sub-device of the bridge — a device layered on top of the bridge that strips that one VLAN's tag.
+If your host is on its **own VLAN** while workloads are on others, the address goes on a VLAN sub-device of the bridge.
+That is a device layered on top of the bridge, stripping the tag for that one VLAN.
 
 Note the asymmetry, because it is easy to get backwards.
 A VLAN sub-device *above* the bridge, holding the host's address, is how this is meant to work.
@@ -184,7 +191,8 @@ An L2 workload gets an ordinary $[prodname] virtual interface, carrying the same
 Bridging and VLAN isolation are added *around* that enforcement point, not in place of it.
 Every packet in and out of the workload is still evaluated against your policy.
 
-Workloads on an L2 network also carry labels identifying the network they are on, so policy can select a specific interface of a workload that is attached to more than one network.
+Workloads on an L2 network also carry labels identifying the network they are on.
+Policy can therefore select a specific interface of a workload attached to more than one network.
 
 None of this differs between the two bridge modes.
 A workload on a bridge you built is enforced exactly like a workload on a bridge $[prodname] built.
@@ -196,7 +204,8 @@ If a workload's interface were live on that segment before its policy was in pla
 
 $[prodname] closes that window by splitting the work.
 The CNI plugin does the pod-side setup only.
-Felix does everything on the host side, in a fixed order: it installs the policy program, programs the forwarding and neighbor entries, and locks the port down *before* the interface joins the bridge.
+Felix does everything on the host side, in a fixed order.
+It installs the policy program, programs the forwarding and neighbor entries, and locks the port down *before* the interface joins the bridge.
 The interface is not even brought up until that is done.
 
 The consequence for you is that an L2 workload is never briefly unprotected.
@@ -208,10 +217,12 @@ A shared L2 segment reintroduces problems that a routed network does not have.
 A workload could claim an address that is not its own, forge a MAC address, answer ARP for its neighbors, or flood the segment with broadcast traffic.
 
 $[prodname] locks each access port down against those.
-It validates the source MAC and source IP address of everything a workload sends, checks the destination address of what it receives, validates the sender fields in ARP, filters unexpected Ethernet types, and drops broadcast and multicast traffic.
+It validates the source MAC and source IP address of everything a workload sends, and checks the destination address of what it receives.
+It also validates the sender fields in ARP, filters unexpected Ethernet types, and drops broadcast and multicast traffic.
 Reverse path filtering on pod traffic is strictly enforced.
 
-The goal is a plain one: a workload on an L2 network should be at least as safe as a virtual machine on a traditional VLAN, and rather safer than one, because its traffic is also subject to your network policy.
+The goal is a plain one: a workload on an L2 network should be at least as safe as a virtual machine on a traditional VLAN.
+It should in fact be safer, because its traffic is also subject to your network policy.
 
 ## How traffic flows
 
@@ -232,7 +243,7 @@ If the VLAN is not carried between two points on your fabric, $[prodname] cannot
 
 ### Between an L2 network and the pod network
 
-Traffic between a workload on the $[prodname] pod network and a workload on an L2 network goes out to your external router and back — **including when both are on the same node**.
+Traffic between a workload on the pod network and a workload on an L2 network goes out to your external router and back — **including when both are on the same node**.
 
 That is deliberate.
 Routing it through the fabric means the inter-VLAN policy on your router still applies to it, rather than being silently bypassed because two workloads happened to be scheduled together.
@@ -251,12 +262,13 @@ Both are on their way out of the kernel's tooling, and building a new feature on
 nftables, their replacement, has a subtler problem: it presents VLAN headers inconsistently depending on the direction traffic is moving through the bridge.
 Writing policy against that would mean maintaining a duplicated rule set, with a VLAN match bolted onto every rule, and reconciling the two halves forever.
 
-The eBPF data plane sees the frame the same way in both directions, so one implementation covers every case — and it opens the door to bypassing parts of the bridge path entirely in a later release.
+The eBPF data plane sees the frame the same way in both directions, so one implementation covers every case.
+It also opens the door to bypassing parts of the bridge path entirely in a later release.
 
 ## What $[prodname] must own
 
-$[prodname] has to know each workload's IP address.
-Policy decisions and reverse path filtering both depend on it: an address $[prodname] does not know about is an address it cannot enforce, and cannot distinguish from a spoofed one.
+$[prodname] has to know each workload's IP address, because policy decisions and reverse path filtering both depend on it.
+An address $[prodname] does not know about is one it cannot enforce, and cannot tell apart from a spoofed one.
 
 That is why addressing on an L2 network runs through $[prodname] IPAM rather than an external DHCP server on the VLAN.
 You still choose the address — including keeping the one a VM already had — but $[prodname] is the one that assigns it.
@@ -274,7 +286,7 @@ For the full list, and the platform and kernel requirements, see [L2 bridge supp
 ## Additional resources
 
 - [Connect workloads to an existing VLAN](connect-vlan.mdx)
-- [Prepare an existing bridge](byo-bridge.mdx)
+- [Prepare a bridge on single-uplink nodes](byo-bridge.mdx)
 - [Set a VM's IP and MAC address](vm-identity.mdx)
 - [Troubleshoot L2 network connectivity](troubleshoot.mdx)
 - [L2 bridge support and limitations](../../reference/l2-bridge-support.mdx)
