@@ -1,0 +1,162 @@
+---
+description: Install the Tigera fork of Forklift on an OpenShift cluster to migrate vSphere virtual machines onto Calico Enterprise networking.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Install Forklift on OpenShift
+
+## Big picture
+
+Install the Tigera fork of Forklift on an OpenShift cluster and connect it to a **vSphere** source, so that migrated virtual machines (VMs) keep the IP and MAC addresses they had on vSphere, and can attach to $[prodname] L2 networks.
+
+## Before you begin
+
+**Required**
+
+- Cluster admin access, and `kubectl` or `oc`.
+- A cluster running $[prodname] as the CNI, and Multus for secondary-NIC attachments, with your Installation's [`spec.calicoNetwork.multiInterfaceMode`](../l2-bridge/connect-vlan.mdx) set to `Multus`.
+- The BPF data plane enabled: `bpfEnabled: true` in the default `FelixConfiguration`. See [Enable eBPF on an existing cluster](../../operations/ebpf/enabling-ebpf.mdx).
+- OpenShift Virtualization (KubeVirt and CDI) installed, with `HyperConverged` Available.
+- A StorageClass for the migrated VM disks.
+- IP pools covering the VM addresses. The pod network uses an ordinary pool; each L2 VLAN needs its own pool with `allowedUses: [L2Workload]` and `disableBGPExport: true`. A VM keeps its address only if that address falls inside a pool. See [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx).
+
+## How to
+
+### 1. Check your OpenShift version
+
+The Forklift UI plugin is built against the console it runs on, so this decides which manifest to apply.
+
+```bash
+kubectl get clusterversion version -o jsonpath='{.status.desired.version}'
+```
+
+### 2. Install the operator
+
+<Tabs>
+<TabItem value="ocp421" label="OpenShift 4.21 and earlier" default>
+
+```bash
+kubectl apply -f $[tutorialFilesURL]/forklift/forklift-operator-ocp421.yaml
+```
+
+</TabItem>
+<TabItem value="ocp422" label="OpenShift 4.22 and later">
+
+```bash
+kubectl apply -f $[tutorialFilesURL]/forklift/forklift-operator-ocp422.yaml
+```
+
+</TabItem>
+</Tabs>
+
+This creates the `konveyor-forklift` namespace, the Forklift custom resource definitions, the RBAC they need, and the operator.
+
+```bash
+kubectl -n konveyor-forklift rollout status deploy/forklift-operator --timeout=300s
+```
+
+### 3. Create the ForkliftController
+
+<Tabs>
+<TabItem value="ocp421" label="OpenShift 4.21 and earlier" default>
+
+```bash
+kubectl apply -f $[tutorialFilesURL]/forklift/forklift-controller-ocp421.yaml
+```
+
+</TabItem>
+<TabItem value="ocp422" label="OpenShift 4.22 and later">
+
+```bash
+kubectl apply -f $[tutorialFilesURL]/forklift/forklift-controller-ocp422.yaml
+```
+
+</TabItem>
+</Tabs>
+
+The operator expands this into the full set of Forklift deployments.
+
+```bash
+kubectl -n konveyor-forklift wait --for=condition=Successful \
+  forkliftcontroller/forklift-controller
+```
+
+### 4. Verify the install
+
+```bash
+kubectl -n konveyor-forklift wait --for=condition=Available deploy --all
+```
+
+Eight deployments should become Ready:
+ - `forklift-operator`,
+ - `forklift-controller`,
+ - `forklift-api`,
+ - `forklift-validation`,
+ - `forklift-ova-proxy`,
+ - `forklift-ui-plugin`,
+ - `forklift-cli-download`,
+ - `forklift-volume-populator-controller`.
+ 
+
+### 5. Map a VM's networks to $[prodname]
+
+Configure your `Provider` and its `Secrets`, the `Plan`, `StorageMap` and `NetworkMap` as normal.
+
+$[prodname]'s Forklift fork detects when a `NetworkMap` item references a $[prodname]-backed `NetworkAttachmentDefinition`.
+This leads to $[prodname] address-preservation annotations getting stamped on the migrated VM's `virt-launcher` pod.
+If the NAD also references a Calico `Network`, $[prodname] Forklift will validate that the necessary `IPPools` exist
+in the destination cluster to facilitate address preservation, and the VM's secondary NICs will get attached to
+the Calico L2 bridge.
+
+In the case of `NetworkMap` items of `type: pod`, which do not have a NAD reference, a `calico{}` struct
+can be included to flag that the primary network should also receive address-preservation treatment.
+To additionally force the primary NIC to get attached to a pre-configured Calico `Network`, the struct has
+fields `network` and `vlan` which target the Calico `Network` to use.
+
+```yaml
+      calico:
+        network: mock-l2-net   # cluster-scoped projectcalico.org/v3 Network CR
+        vlan: 100              # must match a vlan.id entry in that Network
+```
+
+| Field | Effect |
+| --- | --- |
+| `calico: {}` | Keep the pod-network NIC on the routed pod network, preserve addresses, using $[prodname]'s default IPAM. The presence of this field also switches KubeVirt networking to bridge mode. |
+| `network` | Name a cluster-scoped `projectcalico.org/v3` `Network` to attach the NIC to an L2 network instead. |
+| `vlan` | The 802.1Q VLAN within that `Network`. Required once `network` is set, and must match one of its VLAN IDs. |
+
+
+Note: The MAC is always carried over; the addresses follow when the `Plan` sets `preserveStaticIPs`. Definitions that use another CNI are left untouched. The values are set before the VM starts, so each interface is created already holding them.
+
+```yaml
+  map:
+  - source:
+      id: <secondary-portgroup-id>
+    destination:
+      type: multus
+      name: my-network-vlan10
+      namespace: vms
+```
+
+
+### Verify address preservation worked
+
+Inspect the `virt-launcher` pod, or the VM template created post-migration.
+It should contain annotations for Calico address preservation, for each NIC
+in the NetworkMap:
+
+```yaml
+cni.projectcalico.org/<interface>.hwAddr: ...
+cni.projectcalico.org/<interface>.ipAddrs: ...
+```
+
+
+See [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx) for the `Network`, IP pool and attachment definition, and [Set a VM's IP and MAC address](../l2-bridge/vm-identity.mdx) for the annotations themselves.
+
+## Next steps
+
+- [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx)
+- [Set a VM's IP and MAC address](../l2-bridge/vm-identity.mdx)
+- [KubeVirt networking](./kubevirt-networking.mdx)
