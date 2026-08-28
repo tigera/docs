@@ -80,6 +80,22 @@ describe('buildRows', () => {
     ]);
   });
 
+  it('reproduces the Calico Open Source 3.30 technology preview table', () => {
+    expect(asMarkdown('calico', ['3.28', '3.29', '3.30'])).toEqual([
+      '| nftables data plane | – | TP | TP |',
+      '| Calico Ingress Gateway | – | – | TP |',
+      '| Flow logs API and Whisker | – | – | TP |',
+    ]);
+  });
+
+  it('reproduces the Calico Open Source 3.31 technology preview table', () => {
+    expect(asMarkdown('calico', ['3.29', '3.30', '3.31'])).toEqual([
+      '| nftables data plane | TP | TP | GA |',
+      '| Calico Ingress Gateway | – | TP | GA |',
+      '| Flow logs API and Whisker | – | TP | TP |',
+    ]);
+  });
+
   it('reproduces the Calico Open Source 3.32 technology preview table', () => {
     expect(asMarkdown('calico', window)).toEqual([
       '| nftables data plane | TP | GA | GA |',
