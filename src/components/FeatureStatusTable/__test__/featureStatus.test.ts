@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { parse } from 'yaml';
 
-import { buildLegend, buildRows, cellLabel, releaseWindow } from '../featureStatus';
+import { buildLegend, buildRows, cellLabel, PREVIEW_LEGEND, releaseWindow } from '../featureStatus';
 import type { Feature } from '../featureStatus';
 
 const features: Feature[] = parse(
@@ -111,21 +111,15 @@ describe('buildRows', () => {
 });
 
 describe('buildLegend', () => {
-  const legend = (product: string, versions: string[]) => buildLegend(buildRows(features, product, versions));
-
-  it('glosses only the statuses the table actually uses', () => {
-    expect(legend('calico', ['3.30', '3.31', '3.32'])).toBe(
+  it('names every status the preview table tracks, reached or not', () => {
+    expect(buildLegend(PREVIEW_LEGEND)).toBe(
       'TP = technology preview, GA = generally available, – = not available in that release.'
     );
   });
 
-  it('omits GA when no feature in the window reached it', () => {
-    expect(legend('calico-enterprise', ['3.19', '3.20', '3.21'])).toBe(
-      'TP = technology preview, – = not available in that release.'
+  it('glosses in progression order and puts the dash last', () => {
+    expect(buildLegend(['removed', 'tech-preview'])).toBe(
+      'TP = technology preview, Removed = no longer present, – = not available in that release.'
     );
-  });
-
-  it('omits the dash when every feature existed throughout the window', () => {
-    expect(legend('calico-enterprise', ['3.19', '3.20'])).toBe('TP = technology preview.');
   });
 });

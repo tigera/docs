@@ -124,16 +124,28 @@ export function buildRows(features: Feature[], product: string, versions: string
 }
 
 /**
- * The legend sentence for a set of rows.
+ * The statuses the technology preview legend names.
  *
- * Only statuses that actually appear are glossed, so a table with no GA cells does not
- * explain what GA means.
+ * Wider than the rows on purpose: GA is here because a preview feature graduating to GA
+ * is the outcome the table exists to track, so the reader needs it explained even in a
+ * release where nothing has got there yet.
  */
-export function buildLegend(rows: FeatureRow[]): string {
-  const present = new Set<CellStatus>(rows.flatMap((row) => row.cells));
+export const PREVIEW_LEGEND: readonly FeatureStatus[] = ['tech-preview', 'ga'];
 
-  const parts = STATUSES.filter((entry) => present.has(entry.status)).map((entry) => `${entry.label} = ${entry.gloss}`);
-  if (present.has(null)) parts.push(`${NOT_AVAILABLE} = not available in that release`);
+/**
+ * The legend sentence for a table.
+ *
+ * The set is fixed per table rather than derived from the cells on screen. A legend
+ * shows the whole progression a feature travels through, so it has to name the statuses
+ * a release has not reached as well as the ones it has. Trimming it to whatever happens
+ * to be in the table makes the same table read differently from one release to the next.
+ *
+ * Statuses are glossed in progression order, and the dash always comes last.
+ */
+export function buildLegend(statuses: readonly FeatureStatus[]): string {
+  const parts = STATUSES.filter((entry) => statuses.includes(entry.status)).map(
+    (entry) => `${entry.label} = ${entry.gloss}`
+  );
 
-  return `${parts.join(', ')}.`;
+  return `${[...parts, `${NOT_AVAILABLE} = not available in that release`].join(', ')}.`;
 }
