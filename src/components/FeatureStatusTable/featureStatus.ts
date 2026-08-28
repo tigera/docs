@@ -93,14 +93,19 @@ function statusAt(changes: ReturnType<typeof statusChanges>, version: string): C
 }
 
 /**
- * The rows of the technology preview table: every feature that was in preview at some
+ * The rows of one table: every feature that held one of the `include` statuses at some
  * point in the window.
  *
  * Rows are ordered by the release a feature first appeared in, oldest first, so the
  * table reads as the order features arrived. Features that arrived in the same release
  * keep their data-file order, which is alphabetical by id.
  */
-export function buildRows(features: Feature[], product: string, versions: string[]): FeatureRow[] {
+export function buildRows(
+  features: Feature[],
+  product: string,
+  versions: string[],
+  include: readonly FeatureStatus[]
+): FeatureRow[] {
   const rows: (FeatureRow & { since: string; order: number })[] = [];
 
   features.forEach((feature, order) => {
@@ -113,7 +118,7 @@ export function buildRows(features: Feature[], product: string, versions: string
     if (!changes.length) return;
 
     const cells = versions.map((version) => statusAt(changes, version));
-    if (!cells.includes('tech-preview')) return;
+    if (!include.some((status) => cells.includes(status))) return;
 
     rows.push({ name: feature.name, cells, since: changes[0].version, order });
   });
@@ -123,14 +128,30 @@ export function buildRows(features: Feature[], product: string, versions: string
     .map(({ name, cells }) => ({ name, cells }));
 }
 
+export interface TableKind {
+  /** A feature appears as a row when it held one of these somewhere in the window. */
+  include: readonly FeatureStatus[];
+  /** The statuses the legend names, whether or not the table uses them. */
+  legend: readonly FeatureStatus[];
+}
+
 /**
- * The statuses the technology preview legend names.
+ * What each table selects for, and what its legend names.
  *
- * Wider than the rows on purpose: GA is here because a preview feature graduating to GA
- * is the outcome the table exists to track, so the reader needs it explained even in a
- * release where nothing has got there yet.
+ * Each legend is wider than the rows it sits under, on purpose. The preview table names
+ * GA because a preview feature graduating is the outcome that table exists to track,
+ * and the deprecation table names Removed because removal is where a deprecation ends.
+ * A reader needs both explained in a release that has not got there yet.
  */
-export const PREVIEW_LEGEND: readonly FeatureStatus[] = ['tech-preview', 'ga'];
+export const PREVIEW_TABLE: TableKind = {
+  include: ['tech-preview'],
+  legend: ['tech-preview', 'ga'],
+};
+
+export const DEPRECATION_TABLE: TableKind = {
+  include: ['deprecated', 'removed'],
+  legend: ['ga', 'deprecated', 'removed'],
+};
 
 /**
  * The legend sentence for a table.

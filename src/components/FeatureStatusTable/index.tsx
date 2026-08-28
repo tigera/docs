@@ -2,20 +2,23 @@ import React from 'react';
 import { usePluginData } from '@docusaurus/useGlobalData';
 import { useDocsVersion } from '@docusaurus/plugin-content-docs/client';
 
-import { buildLegend, buildRows, cellLabel, PREVIEW_LEGEND, releaseWindow } from './featureStatus';
-import type { Feature } from './featureStatus';
+import { buildLegend, buildRows, cellLabel, DEPRECATION_TABLE, PREVIEW_TABLE, releaseWindow } from './featureStatus';
+import type { Feature, TableKind } from './featureStatus';
 
 const PLUGIN_NAME = 'docusaurus-plugin-feature-status';
 
 /**
- * The technology preview table for a release-notes page.
+ * A feature status table for a release-notes page.
  *
  * The product and the three-release window both come from the page's own docs context:
  * the product is the docs plugin id, which is already the data file's product key, and
  * the window ends at the page's own version. A versioned snapshot therefore keeps the
  * window it was cut with, and no version numbers are written into the page.
+ *
+ * The TableKind is the only thing separating the two tables. Everything else — the
+ * window, the product, carry-forward, ordering, rendering — is shared.
  */
-const TechPreviewTable: React.FC = () => {
+const FeatureStatusTable: React.FC<TableKind> = ({ include, legend }) => {
   const { features } = usePluginData(PLUGIN_NAME) as { features: Feature[] };
   const { pluginId, version } = useDocsVersion();
 
@@ -29,7 +32,7 @@ const TechPreviewTable: React.FC = () => {
     return null;
   }
 
-  const rows = buildRows(features, pluginId, versions);
+  const rows = buildRows(features, pluginId, versions, include);
   if (!rows.length) return null;
 
   return (
@@ -54,9 +57,18 @@ const TechPreviewTable: React.FC = () => {
           ))}
         </tbody>
       </table>
-      <p>{buildLegend(PREVIEW_LEGEND)}</p>
+      <p>{buildLegend(legend)}</p>
     </>
   );
 };
 
-export default TechPreviewTable;
+/** Features that were in technology preview at some point in the window. */
+export const TechPreviewTable: React.FC = () => <FeatureStatusTable {...PREVIEW_TABLE} />;
+
+/**
+ * Features that were deprecated or removed at some point in the window.
+ *
+ * Both statuses select a row, so a feature that was deprecated earlier and removed
+ * inside the window stays visible through the release that removed it.
+ */
+export const DeprecatedFeaturesTable: React.FC = () => <FeatureStatusTable {...DEPRECATION_TABLE} />;

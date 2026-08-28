@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { parse } from 'yaml';
 
-import { buildLegend, buildRows, cellLabel, PREVIEW_LEGEND, releaseWindow } from '../featureStatus';
+import { buildLegend, buildRows, cellLabel, DEPRECATION_TABLE, PREVIEW_TABLE, releaseWindow } from '../featureStatus';
 import type { Feature } from '../featureStatus';
 
 const features: Feature[] = parse(
@@ -10,8 +10,10 @@ const features: Feature[] = parse(
 ).features;
 
 /** Render rows the way the Markdown tables they replace were written. */
-const asMarkdown = (product: string, versions: string[]) =>
-  buildRows(features, product, versions).map((row) => `| ${row.name} | ${row.cells.map(cellLabel).join(' | ')} |`);
+const asMarkdown = (product: string, versions: string[], include = PREVIEW_TABLE.include) =>
+  buildRows(features, product, versions, include).map(
+    (row) => `| ${row.name} | ${row.cells.map(cellLabel).join(' | ')} |`
+  );
 
 describe('releaseWindow', () => {
   it('returns the three releases ending at the given version, oldest first', () => {
@@ -34,16 +36,21 @@ describe('releaseWindow', () => {
 
 describe('buildRows', () => {
   const window = ['3.30', '3.31', '3.32'];
-  const names = (product: string, versions: string[]) => buildRows(features, product, versions).map((row) => row.name);
+  const names = (product: string, versions: string[]) =>
+    buildRows(features, product, versions, PREVIEW_TABLE.include).map((row) => row.name);
 
   it('carries a status forward until the next recorded change', () => {
     // nftables is recorded as tech preview in 3.29 and GA in 3.31, and nothing else.
-    const [row] = buildRows(features, 'calico', window).filter((r) => r.name === 'nftables data plane');
+    const [row] = buildRows(features, 'calico', window, PREVIEW_TABLE.include).filter(
+      (r) => r.name === 'nftables data plane'
+    );
     expect(row.cells).toEqual(['tech-preview', 'ga', 'ga']);
   });
 
   it('reports no status before a feature first appears', () => {
-    const [row] = buildRows(features, 'calico', window).filter((r) => r.name === 'Native v3 CRDs');
+    const [row] = buildRows(features, 'calico', window, PREVIEW_TABLE.include).filter(
+      (r) => r.name === 'Native v3 CRDs'
+    );
     expect(row.cells).toEqual([null, null, 'tech-preview']);
   });
 
@@ -112,14 +119,55 @@ describe('buildRows', () => {
 
 describe('buildLegend', () => {
   it('names every status the preview table tracks, reached or not', () => {
-    expect(buildLegend(PREVIEW_LEGEND)).toBe(
+    expect(buildLegend(PREVIEW_TABLE.legend)).toBe(
       'TP = technology preview, GA = generally available, – = not available in that release.'
+    );
+  });
+
+  it('names every status the deprecation table tracks, reached or not', () => {
+    expect(buildLegend(DEPRECATION_TABLE.legend)).toBe(
+      'GA = generally available, Deprecated = scheduled for removal, Removed = no longer present, ' +
+        '– = not available in that release.'
     );
   });
 
   it('glosses in progression order and puts the dash last', () => {
     expect(buildLegend(['removed', 'tech-preview'])).toBe(
       'TP = technology preview, Removed = no longer present, – = not available in that release.'
+    );
+  });
+});
+
+describe('buildRows for the deprecated and removed table', () => {
+  it('reproduces the Calico Open Source 3.32 table', () => {
+    expect(asMarkdown('calico', ['3.30', '3.31', '3.32'], DEPRECATION_TABLE.include)).toEqual([
+      '| Aggregation API server | GA | GA | Deprecated |',
+      '| FIPS mode | Deprecated | Deprecated | Deprecated |',
+    ]);
+  });
+
+  it('reproduces the Calico Enterprise 3.24 table, where a feature is removed inside the window', () => {
+    expect(asMarkdown('calico-enterprise', ['3.22', '3.23', '3.24'], DEPRECATION_TABLE.include)).toEqual([
+      '| Fortinet integration | Deprecated | Deprecated | Deprecated |',
+      '| Aggregation API server | GA | Deprecated | Deprecated |',
+      '| Application layer policy based on Envoy | GA | Deprecated | Deprecated |',
+      '| Compliance reporting | Deprecated | Deprecated | Removed |',
+      '| L7 logging with Envoy | GA | Deprecated | Deprecated |',
+    ]);
+  });
+
+  it('drops a feature that is only ever GA or in preview', () => {
+    const names = buildRows(features, 'calico', ['3.30', '3.31', '3.32'], DEPRECATION_TABLE.include).map(
+      (row) => row.name
+    );
+    expect(names).not.toContain('nftables data plane');
+    expect(names).not.toContain('Flow logs API and Whisker');
+  });
+
+  it('keeps a feature deprecated before the window and still deprecated in it', () => {
+    // Fortinet was deprecated in 3.18, before any window rendered today reaches.
+    expect(asMarkdown('calico-enterprise', ['3.19', '3.20', '3.21'], DEPRECATION_TABLE.include)).toContainEqual(
+      '| Fortinet integration | Deprecated | Deprecated | Deprecated |'
     );
   });
 });
