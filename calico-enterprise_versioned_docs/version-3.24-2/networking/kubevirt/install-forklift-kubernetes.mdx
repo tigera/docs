@@ -1,0 +1,177 @@
+---
+description: Install the Tigera fork of Forklift on a Kubernetes cluster to migrate vSphere virtual machines onto Calico Enterprise networking.
+---
+
+# Install Forklift on Kubernetes
+
+## Big picture
+
+Install the Tigera fork of Forklift on a Kubernetes cluster and connect it to a vSphere source, so that migrated virtual machines (VMs) keep the IP and MAC addresses they had on vSphere, and can attach to $[prodname] L2 networks.
+
+For OpenShift, see [Install Forklift on OpenShift](./install-forklift-openshift.mdx).
+
+:::note
+
+Upstream Forklift's guest conversion fails on clusters whose nodes carry the runtime default seccomp and AppArmor profiles. This fork can work around it. OpenShift is unaffected. See [Fix guest conversion permissions](#4-fix-guest-conversion-permissions).
+
+:::
+
+## Before you begin
+
+**Required**
+
+- Cluster admin access, and `kubectl`.
+- A cluster running $[prodname] as the CNI, with your Installation's [`spec.calicoNetwork.multiInterfaceMode`](../l2-bridge/connect-vlan.mdx) set to `Multus`.
+- The BPF data plane enabled: `bpfEnabled: true` in the default `FelixConfiguration`. See [Enable eBPF on an existing cluster](../../operations/ebpf/enabling-ebpf.mdx).
+- KubeVirt.
+- IP pools covering the VM addresses. The pod network uses an ordinary pool; each L2 VLAN needs its own pool with `allowedUses: [L2Workload]` and `disableBGPExport: true`. A VM keeps its address only if that address falls inside a pool. See [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx).
+- Multus, for secondary-NIC attachments and for the auto-created `host` provider, whose connection test queries `NetworkAttachmentDefinition` and reports `ConnectionFailed` without that CRD. Verified with the thick DaemonSet v4.3.0. Pin the daemon container and the `install-multus-binary` init container to the same tag, and raise the daemon memory limit from 50Mi to 512Mi to stop it being OOM-killed.
+- cert-manager, which issues the serving certificates. Without it the `forklift-api`, `forklift-validation`, and `forklift-inventory` pods stay NotReady. OpenShift needs nothing here; its service-ca operator issues the same certificates. No `Issuer` or `ClusterIssuer` setup is needed: the operator creates its own in `konveyor-forklift`, which you can check with `kubectl -n konveyor-forklift get issuers,certificates`.
+
+  ```bash
+  kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.1/cert-manager.yaml
+
+  kubectl -n cert-manager wait --for=condition=Available \
+    deploy/cert-manager deploy/cert-manager-webhook deploy/cert-manager-cainjector --timeout=300s
+  ```
+
+- CDI and a default StorageClass, for migrations that import disks. Neither is needed to install Forklift.
+
+## How to
+
+### 1. Install the operator
+
+```bash
+kubectl apply -f $[tutorialFilesURL]/forklift/forklift-operator-kubernetes.yaml
+```
+
+This creates the `konveyor-forklift` namespace, the Forklift custom resource definitions, the RBAC they need, and the operator. Every component image is pinned in the operator's environment, so nothing downstream names an image.
+
+```bash
+kubectl -n konveyor-forklift rollout status deploy/forklift-operator --timeout=300s
+```
+
+### 2. Create the ForkliftController
+
+```bash
+kubectl apply -f $[tutorialFilesURL]/forklift/forklift-controller-kubernetes.yaml
+```
+
+The operator expands this into the full set of Forklift deployments. The console plugin and the CLI download are turned off, because both need the OpenShift console.
+
+```bash
+kubectl -n konveyor-forklift wait --for=condition=Successful \
+  forkliftcontroller/forklift-controller --timeout=300s
+```
+
+### 3. Verify the install
+
+```bash
+kubectl -n konveyor-forklift wait --for=condition=Available deploy --all --timeout=300s
+```
+
+Six deployments become Ready: `forklift-operator`, `forklift-controller`, `forklift-api`, `forklift-validation`, `forklift-ova-proxy`, and `forklift-volume-populator-controller`. The inventory service runs as a second container in `forklift-controller`.
+
+### 4. Fix guest conversion permissions
+
+Upstream Forklift's guest conversion fails on clusters whose nodes confine containers with the runtime default seccomp and AppArmor profiles. Tigera's fork adds four `ForkliftController` fields, naming the seccomp and AppArmor profiles the conversion pods run under, which work around the permissions problem behind that failure.
+
+Every migration from a vSphere source converts its guests, unless the `Plan` sets `skipGuestConversion: true`.
+
+Conversion launches a libguestfs appliance, which networks itself with `passt`. `passt` sandboxes itself by creating a user namespace and remounting `/`, and two node defaults deny that:
+
+| Barrier | Rule | Symptom |
+| --- | --- | --- |
+| seccomp | The runtime default profile allows `unshare(2)` only under `CAP_SYS_ADMIN`. | `Couldn't create user namespace: Operation not permitted` |
+| AppArmor | The runtime default profile carries `deny mount,`. | `Failed to remount /: Permission denied` |
+
+OpenShift hits neither: its nodes permit `unshare` and confine containers with SELinux. Raising the pod's privileges does not help, because `passt` drops root before it sandboxes itself.
+
+Put the profiles on every node that can run a conversion. Use the Security Profiles Operator if you already run it; otherwise you may apply the ConfigMap and DaemonSet patch below, after inspection.
+
+**Note** This is a privileged DaemonSet. It writes both profiles under the kubelet's seccomp directory, and loads the AppArmor one on nodes that have `apparmor_parser`. Its log says which it did on each node:
+
+
+```bash
+kubectl apply -f $[tutorialFilesURL]/forklift/forklift-virt-v2v-profiles.yaml
+
+kubectl -n konveyor-forklift rollout status ds/forklift-virt-v2v-profile-installer
+```
+
+```bash
+kubectl -n konveyor-forklift logs -l service=forklift-virt-v2v-profile-installer -c install
+```
+
+Then name the profiles on the `ForkliftController`:
+
+```bash
+kubectl -n konveyor-forklift patch forkliftcontroller forklift-controller \
+  --type merge -p '{"spec":{
+    "virt_v2v_seccomp_profile_type": "Localhost",
+    "virt_v2v_seccomp_profile_path": "profiles/unshare.json",
+    "virt_v2v_apparmor_profile_type": "Localhost",
+    "virt_v2v_apparmor_profile_path": "forklift-virt-v2v-unshare"}}'
+```
+
+All four fields are unset by default, which leaves every cluster on its runtime default: naming a profile that a node does not carry makes the kubelet refuse the pod outright. A path given without its type is rejected as the CR is saved. On nodes that do not enforce AppArmor, set only the seccomp pair.
+
+### 5. Map a VM's networks to $[prodname]
+
+Configure your `Provider` and its `Secrets`, the `Plan`, `StorageMap` and `NetworkMap` as normal.
+
+$[prodname]'s Forklift fork detects when a `NetworkMap` item references a $[prodname]-backed `NetworkAttachmentDefinition`.
+This leads to $[prodname] address-preservation annotations getting stamped on the migrated VM's `virt-launcher` pod.
+If the NAD also references a Calico `Network`, $[prodname] Forklift will validate that the necessary `IPPools` exist
+in the destination cluster to facilitate address preservation, and the VM's secondary NICs will get attached to
+the Calico L2 bridge.
+
+In the case of `NetworkMap` items of `type: pod`, which do not have a NAD reference, a `calico{}` struct
+can be included to flag that the primary network should also receive address-preservation treatment.
+To additionally force the primary NIC to get attached to a pre-configured Calico `Network`, the struct has
+fields `network` and `vlan` which target the Calico `Network` to use.
+
+```yaml
+      calico:
+        network: mock-l2-net   # cluster-scoped projectcalico.org/v3 Network CR
+        vlan: 100              # must match a vlan.id entry in that Network
+```
+
+| Field | Effect |
+| --- | --- |
+| `calico: {}` | Keep the pod-network NIC on the routed pod network, preserve addresses, using $[prodname]'s default IPAM. The presence of this field also switches KubeVirt networking to bridge mode. |
+| `network` | Name a cluster-scoped `projectcalico.org/v3` `Network` to attach the NIC to an L2 network instead. |
+| `vlan` | The 802.1Q VLAN within that `Network`. Required once `network` is set, and must match one of its VLAN IDs. |
+
+
+Note: The MAC is always carried over; the addresses follow when the `Plan` sets `preserveStaticIPs`. Definitions that use another CNI are left untouched. The values are set before the VM starts, so each interface is created already holding them.
+
+```yaml
+  map:
+  - source:
+      id: <secondary-portgroup-id>
+    destination:
+      type: multus
+      name: my-network-vlan10
+      namespace: vms
+```
+
+
+### Verify address preservation worked
+
+Inspect the `virt-launcher` pod, or the VM template created post-migration.
+It should contain annotations for Calico address preservation, for each NIC
+in the NetworkMap:
+
+```yaml
+cni.projectcalico.org/<interface>.hwAddr: ...
+cni.projectcalico.org/<interface>.ipAddrs: ...
+```
+
+
+See [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx) for the `Network`, IP pool and attachment definition, and [Set a VM's IP and MAC address](../l2-bridge/vm-identity.mdx) for the annotations themselves.
+
+## Next steps
+
+- [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx)
+- [Set a VM's IP and MAC address](../l2-bridge/vm-identity.mdx)
+- [KubeVirt networking](./kubevirt-networking.mdx)
