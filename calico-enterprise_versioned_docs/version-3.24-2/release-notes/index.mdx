@@ -25,13 +25,33 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
 
 ### L2 bridge networking (tech preview)
 
-$[prodname] can attach KubeVirt VMs and pods to a VLAN your physical network already carries, using a VLAN-aware Linux bridge on each node.
-A workload keeps the IP address and MAC address it arrives with, and shares a broadcast domain with the machines already on that VLAN, so DNS entries, firewall rules, and licenses bound to its address keep working.
-Because the workload's interface is a $[prodname] interface, it still gets network policy and flow visibility on that L2 link.
+You can now put KubeVirt VMs and pods directly on the VLANs your physical network already carries.
+$[prodname] builds a VLAN-aware Linux bridge on each node, and attaches the workload to it on the VLAN you choose.
 
-To migrate VMs from vSphere with their addresses intact, install the Tigera fork of Forklift and map the VM's networks to $[prodname].
+This is for teams moving virtual machines onto Kubernetes that cannot be re-addressed.
+A VM keeps its IP address, its MAC address, and its place on the same broadcast domain as the servers it already talks to, so the DNS records, firewall rules, and licenses tied to that address keep working.
+It also suits flat on-premises and edge networks, where a workload has to be reachable from the local segment.
 
-For more information, see [L2 bridge networking](../networking/l2-bridge/index.mdx), [Install Forklift on OpenShift](../networking/kubevirt/install-forklift-openshift.mdx), and [Install Forklift on Kubernetes](../networking/kubevirt/install-forklift-kubernetes.mdx).
+You could build a bridge like this yourself. What you would lose is policy.
+Because the workload's interface is still a $[prodname] interface, it gets the same network policy and flow visibility as a pod on the $[prodname] pod network.
+
+The feature is additive and opt-in: a cluster that creates no `Network` resources behaves exactly as it did before.
+It requires the eBPF data plane, and Multus where an L2 network is an additional interface.
+
+For more information, see [L2 bridge networking](../networking/l2-bridge/index.mdx) and [L2 bridge support and limitations](../reference/l2-bridge-support.mdx).
+
+### Forklift, for migrating VMs onto $[prodname]
+
+$[prodname] now publishes a fork of Forklift, the tool that migrates virtual machines from an existing virtualization platform onto KubeVirt.
+Forklift reads from several source platforms, vSphere among them.
+
+The fork adds address preservation.
+When a migration maps a VM's network to a $[prodname]-backed network attachment, the VM arrives holding the IP and MAC addresses it had before, and can attach to a $[prodname] L2 network.
+Without that, a migrated VM comes up on a new address, and everything bound to the old one has to change with it.
+
+Install it from the manifests in the guides below. It does not ship with the $[prodname] operator.
+
+For more information, see [Install Forklift on OpenShift](../networking/kubevirt/install-forklift-openshift.mdx) and [Install Forklift on Kubernetes](../networking/kubevirt/install-forklift-kubernetes.mdx).
 
 {/* TODO: add the remaining 3.24.0-2.0 features here, one ### subsection each. */}
 
