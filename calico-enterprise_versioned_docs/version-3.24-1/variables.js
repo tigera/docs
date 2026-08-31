@@ -8,7 +8,7 @@ const variables = {
   prodnamedash: 'calico-enterprise',
   version: 'v3.24',
   openSourceVersion: releases[0].calico.minor_version.slice(1),
-  baseUrl: '/calico-enterprise/latest',
+  baseUrl: '/calico-enterprise/3.24',
   filesUrl: 'https://downloads.tigera.io/ee/v3.24.0-1.0',
   rhelPkgUrl: 'https://downloads.tigera.io/ee/rpms/' + releases[0].title.slice(0, 5),
   debPkgUrl: 'https://downloads.tigera.io/ee/debs/' + releases[0].title.slice(0, 5),
