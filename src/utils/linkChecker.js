@@ -27,6 +27,9 @@ const defaultSkipList = [
   // debs directory listing 403s (index forbidden) even when the packages exist.
   /^https?:\/\/downloads\.tigera\.io\/ee\/debs\/v3\.23\/?$/,
   /^https?:\/\/docs\.tigera\.io\/calico\/latest\/networking\/kubevirt\/?$/,
+  // Forklift manifests: filesUrl on main points at ee/master, which the release
+  // process only populates when a version is cut. Live in the versioned docs.
+  /^https?:\/\/downloads\.tigera\.io\/ee\/master\/forklift\/.*/,
   // Category-index breadcrumb URLs for pages new in CE 3.23; live once 3.23.1 publishes.
   /^https?:\/\/docs\.tigera\.io\/calico-enterprise\/latest\/networking\/kubevirt\/?$/,
   /^https?:\/\/docs\.tigera\.io\/calico-enterprise\/latest\/reference\/clis\/calicoctl\/review\/?$/,
