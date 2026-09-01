@@ -31,6 +31,17 @@ You cannot mix IPv4 and IPv6 CIDRs in a single rule using `nets` or `notNets`. I
 
 :::
 
+#### Empty match fields
+
+An empty value in a match field is treated as if the field were not set at all, not as an empty set that matches nothing.
+For example, `nets: []` does not stop the rule from matching.
+It leaves the rule unconstrained by IP address, so the rule matches any source or destination address.
+The same is true of `notNets`, `ports`, and `notPorts`, and of an empty string in `selector`, `notSelector`, and `namespaceSelector`.
+$[prodname] drops the empty value when it stores the resource, so the field is absent when you read the policy back.
+
+To block traffic, write an explicit `Deny` rule.
+Rules are evaluated in order, so a `Deny` rule states the intent directly instead of relying on an `Allow` rule that you expect not to match.
+
 #### Selector performance in EntityRules
 
 When rendering policy into the data plane, $[prodname] must identify the endpoints that match the selectors
