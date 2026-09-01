@@ -26,6 +26,17 @@ When using selectors in network policy, remember that selectors only match (know
 packets. A rule with a selector `all()` won't match "all packets", it will match "packets from all in-scope
 endpoints and network sets". To match all packets, do not include a selector in the rule at all.
 
+#### Empty match fields
+
+An empty value in a match field is treated as if the field were not set at all, not as an empty set that matches nothing.
+For example, `nets: []` does not stop the rule from matching.
+It leaves the rule unconstrained by IP address, so the rule matches any source or destination address.
+The same is true of `notNets`, `ports`, and `notPorts`, and of an empty string in `selector`, `notSelector`, and `namespaceSelector`.
+$[prodname] drops the empty value when it stores the resource, so the field is absent when you read the policy back.
+
+To block traffic, write an explicit `Deny` rule.
+Rules are evaluated in order, so a `Deny` rule states the intent directly instead of relying on an `Allow` rule that you expect not to match.
+
 #### Understanding `notSelector`
 
 `notSelector` is somewhat subtle because the `not` in `notSelector` negates the packet match
