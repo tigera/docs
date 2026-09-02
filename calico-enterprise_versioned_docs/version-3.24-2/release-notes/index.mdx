@@ -179,10 +179,10 @@ The issues below are the ones we know about. For what the L2 bridge feature does
 
 ##### L2 bridge networking: bring-your-own bridge
 
-- {/* CORE-13089 */} If the trunk device is not named correctly under `hostConnections` in the `Network` resource and the trunk device matches the "BPF data interface regex" then it will lose connectivity.  This is because it will be treated as an L3 device and RPF checks will fail. Always name the trunk under `hostConnections`.
-- {/* CORE-13462 */} Calico only checks the settings on the bridge at bring-up, if the configuration is changed after Felix first examines the bridge, it will not detect the configuration drift. Pin the bridge's settings in your node configuration so nothing rewrites them.
+- {/* CORE-13089 */} If the trunk device is not named correctly under `hostConnections` in the `Network` resource, and it matches `bpfDataIfacePattern`, the node loses connectivity. $[prodname] treats the device as an L3 device, so its reverse path forwarding checks fail. Always name the trunk under `hostConnections`.
+- {/* CORE-13462 */} $[prodname] checks the bridge's settings only at bring-up. If the configuration changes after Felix first examines the bridge, the drift goes undetected. Pin the bridge's settings in your node configuration so nothing rewrites them.
 - {/* CORE-13475 */} Trunk VLAN membership is programmed once and not reconciled. If the node's network configuration later diverges, that VLAN stops carrying traffic and does not recover on its own. Confirm membership with `bridge vlan show` after any change to the node's network configuration.
-- {/* CORE-13456 */} When a `Network` is deleted, or it no longer applies to a node due to label changes, Felix fails to clean up all the state that it added to the bridge.  Remove the VLANs from the bridge yourself after deleting a `Network` or changing node labels.
+- {/* CORE-13456 */} When you delete a `Network`, or a label change means it no longer applies to a node, Felix does not clean up all the state it added to the bridge. Remove the VLANs from the bridge yourself afterwards.
 - {/* CORE-13428 */} The first workload to attach lowers the MTU of the bridge, and of any VLAN device above it, from 1500 to 1480. This follows from how a Linux bridge takes the lowest MTU of its ports, but nothing tells you it happened. Set the MTU as described in [MTU](../reference/l2-bridge-support.mdx#mtu) and check it once the first workload is up.
 - {/* CORE-13399 */} Removing Calico resources can cut a node off the network if a `Network` includes the host's own management VLAN. Keep the management VLAN out of every `Network`.
 
