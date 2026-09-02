@@ -157,7 +157,53 @@ Calico Enterprise 3.24.0-2.0 is now available as an early preview release.
 This release is for previewing and testing purposes only.
 It is not supported for use in production.
 
-{/* TODO: fill in subsections for 3.24.0-2.0 — #### Upgrade notes, #### Enhancements, #### Bug fixes, #### Known issues. Omit any subsection with no items. */ }
+{/* TODO: fill in subsections for 3.24.0-2.0 — #### Upgrade notes, #### Enhancements, #### Bug fixes. Omit any subsection with no items. */ }
+
+#### Known issues
+
+Both L2 bridge networking and Forklift are tech preview features in this release.
+The issues below are the ones we know about. For what the L2 bridge feature does not do at all, see [L2 bridge support and limitations](../reference/l2-bridge-support.mdx).
+
+##### L2 bridge networking: data plane and Installation
+
+- {/* CORE-13458 */} Setting `multiInterfaceMode: None` on the Installation stops traffic for every L2 workload, new and existing. Nothing reports it: `tigerastatus` stays available, pods stay ready, and IPAM keeps handing out addresses to workloads that cannot pass traffic. Set the field back to `Multus`. Workloads created while it was `None` stay broken and have to be recreated.
+- {/* CORE-13460 */} L2 bridge networking needs the eBPF data plane, but nothing stops you moving `linuxDataplane` off `BPF` while `Network` resources exist. The change is accepted, every L2 workload goes dark, and the health indicators stay green. Leave the data plane on `BPF` for as long as any `Network` exists.
+- {/* CORE-13459 */} Moving `linuxDataplane` from `BPF` to `Iptables` can panic `calico-node`. The rollout replaces the crashed pods, so the stack trace is gone unless you were already capturing logs. The opposite direction shuts down cleanly. Avoid this change on a running cluster; there is no workaround once it happens.
+
+##### L2 bridge networking: Networks and IP pools
+
+- {/* CORE-13455 */} Some `Network` and `IPPool` values are accepted even though they cannot work, because the validation is missing rather than wrong. An `mtu` of -1, 0, or 65536 is allowed. A repeated VLAN ID quietly discards the second subnet. IPv6 subnets and IPv6 `L2Workload` pools are accepted, although IPv6 is not supported. So are `0.0.0.0/0` and a `/32` as an L2 subnet. Check these values yourself before you apply them.
+- {/* CORE-13454 */} An IPv6 `IPPool` on an IPv4-only cluster puts `calico-node` into a crash loop, and deleting the pool afterwards does not recover it. Do not create IPv6 pools on an IPv4-only cluster. If you already have, contact Support.
+- {/* CORE-13350 */} Two `IPPool` resources that share a CIDR collapse into a single entry in the route resolver. Whichever was updated last decides how that CIDR routes. Give every pool its own CIDR.
+- {/* CORE-13417 */} Two `Network` resources that name the same bridge compete for it, and the winner depends on which reconciles last. Point each `Network` at a bridge of its own.
+- {/* CORE-13457 */} Two L2 workloads can claim the same MAC address. Both start, both get their own IP, and both answer `arping`, but the bridge keeps one forwarding entry, so only one of them is reachable. A MAC you set by hand bypasses kubemacpool, so kubemacpool does not prevent it. Keep hand-assigned MAC addresses unique.
+- {/* CORE-13452 */} A Multus secondary interface that fails to attach retries about once a second and never backs off. Calico IPAM assigns and releases an address on every attempt, for as long as the pod exists. Delete the pod rather than leaving it to retry.
+- {/* CORE-13440 */} A workload on the pod network cannot reach an L2 workload by way of an upstream router, because Felix declines to program the route imported for the `L2Workload` pool. There is no workaround in this release.
+
+##### L2 bridge networking: bring-your-own bridge
+
+- {/* CORE-13089 */} Leave the trunk interface out of the `Network` and the node loses its network, because the eBPF reverse path forwarding check drops traffic that arrives on an interface it has not been told about. Always name the trunk under `hostConnections`.
+- {/* CORE-13462 */} Your bridge is checked when Felix first programs it and never again. Change `vlan_protocol` to 802.1ad afterwards and all L2 traffic stops, while pods stay ready and every status stays green; change it back and traffic returns. Because the bridge belongs to you, an nmstate or NetworkManager reconcile can do this at any time. Pin the bridge's settings in your node configuration so nothing rewrites them.
+- {/* CORE-13475 */} Trunk VLAN membership is programmed once and not reconciled. If the node's network configuration later diverges, that VLAN stops carrying traffic and does not recover on its own. Confirm membership with `bridge vlan show` after any change to the node's network configuration.
+- {/* CORE-13456 */} Deleting a `Network` leaves the bridge's own VLAN behind, and a full Felix resync does not clear it. A node dropped from a `Network` by a label change is worse: it keeps its whole VLAN membership, trunk included, which leaves a live path for another tenant's frames. Remove the VLAN from the bridge yourself after deleting a `Network` or changing node labels.
+- {/* CORE-13428 */} The first workload to attach lowers the MTU of the bridge, and of any VLAN device above it, from 1500 to 1480. This follows from how a Linux bridge takes the lowest MTU of its ports, but nothing tells you it happened. Set the MTU as described in [MTU](../reference/l2-bridge-support.mdx#mtu) and check it once the first workload is up.
+- {/* CORE-13399 */} Removing Calico resources can cut a node off the network if a `Network` includes the host's own management VLAN. Keep the management VLAN out of every `Network`.
+
+##### L2 bridge networking: live migration
+
+- {/* CORE-13418 */} A VM that live-migrates without `macAddress` set on its interface loses L2 connectivity, because KubeVirt has to be told the MAC address in order to keep it across the move. OpenShift handles this for you. Elsewhere, set `macAddress` on every VM interface, or install a MAC allocation controller. See [Set a VM's IP and MAC address](../networking/l2-bridge/vm-identity.mdx#set-the-mac-address).
+- {/* CORE-13427 */} TCP sessions survive the live-migration cut-over, then drop 12 to 20 seconds later, when Felix on the source node removes the VM's old endpoint. Applications that reconnect recover by themselves; long-lived sessions do not. Both OpenShift Virtualization and upstream KubeVirt are affected.
+
+##### L2 bridge networking: policy, flow logs, and diagnostics
+
+- {/* CORE-13372 */} A flow that leaves one L2 segment, passes through your router, and returns to a second segment on the same node is recorded once per segment. Totals for those flows are doubled, and a record can close while the flow is still running. Flows that stay inside one segment are counted correctly.
+- {/* CORE-13288 */} The pod `network-status` annotation is not protected from edits. Anyone who can patch pod annotations can rewrite it, which is enough to spoof a MAC address on an L2 network. Restrict who can patch pod annotations until the admission policy that guards this field ships.
+- {/* CORE-13463 */} The `Network` CRD declares `status.conditions`, but nothing writes to it. `Network.status` is empty whether the network is healthy or entirely blackholed, so it cannot tell you which. Read the `calico-node` log on the affected node instead.
+- {/* CORE-13422 */} `calicoctl cluster diags` does not collect bridge state, so a support bundle from an L2 cluster arrives without it. Run `bridge vlan show`, `bridge fdb show`, and `ip -d link show` on the affected nodes and attach the output yourself.
+
+##### Forklift VM migration
+
+- {/* CORE-13467 */} Guest conversion fails on nodes that run the runtime default seccomp and AppArmor profiles, which covers most clusters other than OpenShift. The conversion appliance has to create a user namespace and remount `/`, and both defaults refuse it. Raising the pod's privileges does not help, because the appliance drops root before it does either. Install the profiles and name them on the `ForkliftController`, as described in [Fix guest conversion permissions](../networking/kubevirt/install-forklift-kubernetes.mdx#4-fix-guest-conversion-permissions).
 
 ### Calico Enterprise 3.24.0-1.0 (early preview)
 
