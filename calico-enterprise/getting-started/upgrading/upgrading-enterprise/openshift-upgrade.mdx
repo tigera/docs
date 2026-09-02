@@ -87,6 +87,28 @@ pod-security.kubernetes.io/enforce-version: latest
 security.openshift.io/scc.podSecurityLabelSync: "false"
 ```
 
+### License agent removed
+
+The license agent has been removed in $[prodname] v3.24.0-3. If you previously installed
+it, uninstall it using the manifest from the version you are upgrading
+**from** — it is still available at its versioned URL. For example, if upgrading from v3.23.2:
+
+   ```bash
+   kubectl delete -f https://downloads.tigera.io/ee/v3.23.2/manifests/licenseagent.yaml
+   ```
+
+If you no longer have that manifest:
+
+   ```bash
+   kubectl delete servicemonitor calico-lic-monitor -n tigera-prometheus --ignore-not-found
+   kubectl delete networkpolicies.projectcalico.org calico-system.tigera-license-agent-access -n tigera-license-agent --ignore-not-found
+   kubectl delete networkpolicies.projectcalico.org allow-tigera.tigera-license-agent-access -n tigera-license-agent --ignore-not-found
+   kubectl delete clusterrole,clusterrolebinding tigera-license-agent --ignore-not-found
+   kubectl delete namespace tigera-license-agent --ignore-not-found
+   ```
+
+To learn about the license metrics, see [Operator metrics](../../../operations/monitor/metrics/operator-metrics.mdx).
+
 ## Download the new manifests
 
 Make a manifests directory.
