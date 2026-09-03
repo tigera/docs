@@ -28,7 +28,7 @@ For security, the $[prodname] web console is not exposed outside of the cluster 
 | Load balancer      | Configure your cluster with a service load balancer controller to implement the external load balancer. See [Kubernetes loadbalancer](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/)                                                      | Ensure the $[prodname] web console receives a HTTPS (TLS) connection (not unencrypted HTTP). If you require TLS termination at your load balancer, you must use a load balancer that supports transparent HTTP/2 proxying, or re-originate a TLS connection from your load balancer to the $[prodname] web console. If you do not require TLS termination, configure your proxy to “pass thru” the TLS to the $[prodname] web console. |
 | Port forwarding    | Forward traffic from a local port to the Kubernetes API server, where it is proxied to the web console. This approach is **not recommended for production**, but is useful if you do not have a load balancer or ingress infrastructure configured, or you need to get started quickly. | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | OpenShift routes   | Use OpenShift routes to expose a service by giving it an externally-reachable hostname (for example, `www.example.com`) .                                                                                                                                                              | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Calico Ingress Gateway | Expose the web console through Calico Ingress Gateway by setting `spec.ingressGateway` on the `Manager` resource. The operator creates and manages the Gateway, route, and TLS certificate for you. | Requires a `GatewayAPI` resource on the cluster. If your cluster uses OIDC, the `Authentication` resource's `managerDomain` must match the hostname you choose. |
+| Calico Ingress Gateway | Expose the web console through Calico Ingress Gateway by setting `spec.ingressGateway` on the `Manager` resource. The operator creates and manages the Gateway, route, and TLS certificate for you. | Requires a `GatewayAPI` resource on the cluster. If your cluster uses OIDC, set the `Authentication` resource's `managerDomain` to `https://` followed by the hostname you choose (for example, `https://manager.example.com`). |
 
 ## How to
 
@@ -204,7 +204,7 @@ Instead of creating an ingress or load balancer yourself, you can let the operat
 
    If your `GatewayAPI` resource defines more than one gateway class, also set `gatewayClassName` to choose one.
 
-1. Wait for the Gateway to be programmed and read its address:
+1. Wait for the Gateway to be programmed and read its address. The Gateway is in `calico-system` unless you set `gatewayNamespace`:
 
    ```bash
    kubectl get gateway -n calico-system calico-manager-gateway
@@ -219,7 +219,7 @@ Instead of creating an ingress or load balancer yourself, you can let the operat
 
 :::note
 
-If your cluster uses OIDC, set the `Authentication` resource's `managerDomain` to the same hostname. The two must match, or the operator reports the $[prodname] web console as degraded:
+If your cluster uses OIDC, set the `Authentication` resource's `managerDomain` to `https://` plus that hostname (as in the example below). The host must match `spec.ingressGateway.hostname`, or the operator reports the $[prodname] web console as degraded:
 
 ```bash
 kubectl patch authentication tigera-secure --type merge \
