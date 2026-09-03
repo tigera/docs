@@ -561,6 +561,12 @@ kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"calic
 ```
 This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
 
+:::note
+
+`fluentdDaemonSet` is a deprecated alias for `calicoFluentBitDaemonSet`, retained for one release so that overrides written for the Fluentd log collector keep working. Over the same period, the container name `fluentd` is accepted as an alias for `calico-fluent-bit`, and `tigera-fluentd-prometheus-tls-key-cert-provisioner` for `calico-fluent-bit-tls-key-cert-provisioner`. If you set both fields, `calicoFluentBitDaemonSet` takes precedence. Move your overrides to the new field and container names.
+
+:::
+
 #### Verification
 
 You can verify the configured resources using the following command:
@@ -596,6 +602,12 @@ To configure resource specification for the [EKSLogForwarderDeployment](../../re
 kubectl patch logcollector tigera-secure  --type=merge --patch='{"spec": {"eksLogForwarderDeployment": {"spec": {"template": {"spec": {"containers":[{"name":"eks-log-forwarder","resources":{"limits":{"cpu":"1", "memory":"1000Mi"},"requests":{"cpu":"100m", "memory":"100Mi"}}}]}}}}}}'
 ```
 This command sets the CPU request to 100 milliCPU (mCPU) and the memory request is set to 100 Mebibytes (MiB) while the CPU limit is set to 1 CPU and the memory limit is set to 1000 Mebibytes (MiB).
+
+:::note
+
+The deployment runs a single container, `eks-log-forwarder`. Releases that collected logs with Fluentd also ran an `eks-log-forwarder-startup` init container; overrides that target that init container by name no longer apply.
+
+:::
 
 #### Verification
 

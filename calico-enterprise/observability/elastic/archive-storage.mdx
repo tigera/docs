@@ -78,6 +78,29 @@ Because $[prodname] and Kubernetes logs are integral to $[prodname] diagnostics,
    kubectl edit logcollector tigera-secure
    ```
 
+   $[prodname] writes one directory per log type under `bucketPath`, and names each object
+   for the UTC day it covers:
+
+   ```
+   <bucketPath>/flows/20260101_<uuid>.gz
+   <bucketPath>/dns/20260101_<uuid>.gz
+   <bucketPath>/l7/20260101_<uuid>.gz
+   <bucketPath>/audit_kube/20260101_<uuid>.gz
+   <bucketPath>/audit_tsee/20260101_<uuid>.gz
+   ```
+
+   Flow logs from non-cluster hosts are archived under `non_cluster_flows/` instead of
+   being mixed into `flows/`.
+
+   :::note
+
+   If you are upgrading from a release that collected logs with Fluentd, these keys have
+   changed. Fluentd wrote flat keys with the date concatenated onto the log type, as in
+   `<bucketPath>/flows20260101_1.gz`. Update any downstream tooling that matches the old
+   pattern.
+
+   :::
+
 </TabItem>
 <TabItem label="Syslog" value="Syslog-1">
 
@@ -95,8 +118,8 @@ Because $[prodname] and Kubernetes logs are integral to $[prodname] diagnostics,
        syslog:
          # (Required) Syslog endpoint, in the format protocol://host:port
          endpoint: tcp://1.2.3.4:514
-         # (Optional) If messages are being truncated set this field
-         packetSize: 1024
+         # (Optional) Maximum message size in bytes. Defaults to 2048.
+         packetSize: 2048
          # (Required) Types of logs to forward to Syslog (must specify at least one option)
          logTypes:
          - Audit
@@ -142,8 +165,8 @@ Because $[prodname] and Kubernetes logs are integral to $[prodname] diagnostics,
        syslog:
          # (Required) Syslog endpoint, in the format protocol://host:port
          endpoint: tcp://1.2.3.4:514
-         # (Optional) If messages are being truncated set this field
-         packetSize: 1024
+         # (Optional) Maximum message size in bytes. Defaults to 2048.
+         packetSize: 2048
          # (Optional) To Configure TLS mode
          encryption: TLS
          # (Required) Types of logs to forward to Syslog (must specify at least one option)
