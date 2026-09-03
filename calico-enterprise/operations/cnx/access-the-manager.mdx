@@ -28,7 +28,7 @@ For security, the $[prodname] web console is not exposed outside of the cluster 
 | Load balancer      | Configure your cluster with a service load balancer controller to implement the external load balancer. See [Kubernetes loadbalancer](https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/)                                                      | Ensure the $[prodname] web console receives a HTTPS (TLS) connection (not unencrypted HTTP). If you require TLS termination at your load balancer, you must use a load balancer that supports transparent HTTP/2 proxying, or re-originate a TLS connection from your load balancer to the $[prodname] web console. If you do not require TLS termination, configure your proxy to “pass thru” the TLS to the $[prodname] web console. |
 | Port forwarding    | Forward traffic from a local port to the Kubernetes API server, where it is proxied to the web console. This approach is **not recommended for production**, but is useful if you do not have a load balancer or ingress infrastructure configured, or you need to get started quickly. | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | OpenShift routes   | Use OpenShift routes to expose a service by giving it an externally-reachable hostname (for example, `www.example.com`) .                                                                                                                                                              | n/a                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| $[prodname] Ingress Gateway | Expose the web console through $[prodname] Ingress Gateway by setting `spec.ingressGateway` on the `Manager` resource. The operator creates and manages the Gateway, route, and TLS certificate for you. | Requires the `GatewayAPI` resource to be installed. If your cluster uses OIDC, the `Authentication` resource's `managerDomain` must match the hostname you choose. |
+| Calico Ingress Gateway | Expose the web console through Calico Ingress Gateway by setting `spec.ingressGateway` on the `Manager` resource. The operator creates and manages the Gateway, route, and TLS certificate for you. | Requires a `GatewayAPI` resource on the cluster. If your cluster uses OIDC, the `Authentication` resource's `managerDomain` must match the hostname you choose. |
 
 ## How to
 
@@ -177,13 +177,13 @@ Access the $[prodname] web console in your browser using the URL with clusternam
 
 </TabItem>
 
-<TabItem label="$[prodname] Ingress Gateway" value="Calico Ingress Gateway-4">
+<TabItem label="Calico Ingress Gateway" value="Calico Ingress Gateway-4">
 
-Instead of creating an ingress or load balancer yourself, you can let the operator expose the web console through [$[prodname] Ingress Gateway](../../networking/ingress-gateway/about-calico-ingress-gateway.mdx). The operator creates the Gateway, the route to the web console, and a TLS certificate for the hostname you choose, and it removes them again when you turn the feature off.
+Instead of creating an ingress or load balancer yourself, you can let the operator expose the web console through [Calico Ingress Gateway](../../networking/ingress-gateway/about-calico-ingress-gateway.mdx). The operator creates the Gateway, the route to the web console, and a TLS certificate for the hostname you choose, and it removes them again when you turn the feature off.
 
 **Before you start**
 
-- Install $[prodname] Ingress Gateway by applying a `GatewayAPI` resource. See [Create an ingress gateway](../../networking/ingress-gateway/create-ingress-gateway.mdx).
+- Enable Calico Ingress Gateway by creating a `GatewayAPI` resource. See [Create an ingress gateway](../../networking/ingress-gateway/create-ingress-gateway.mdx).
 - On bare metal clusters, make sure an IP pool is available for the gateway's load balancer address.
 
 1. Set a hostname on the `Manager` resource:
@@ -212,7 +212,7 @@ Instead of creating an ingress or load balancer yourself, you can let the operat
 
    ```bash title="Expected output"
    NAME                     CLASS                  ADDRESS                          PROGRAMMED
-   calico-manager-gateway   tigera-gateway-class   198.51.100.10                    True
+   calico-manager-gateway   tigera-gateway-class   <IP Address>                    True
    ```
 
 1. Point your hostname at that address in DNS.
