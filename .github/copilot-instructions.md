@@ -219,7 +219,6 @@ scripts/                          # Build and automation scripts
 1. **Vale linting** (`.github/workflows/vale.yml`)
    - Lints all markdown/MDX content  
    - Uses ripgrep to preprocess variable substitutions
-   - Requires `mdx2vast` global npm package
 2. **React validation** (`.github/workflows/validate.yml`)
    - Runs Jest unit tests with `yarn test:components:ci`
 
