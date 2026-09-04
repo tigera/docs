@@ -453,6 +453,7 @@ module.exports = {
           link: { type: 'doc', id: 'reference/resources/index' },
           items: [
             'reference/resources/overview',
+            'reference/resources/alertexception',
             'reference/resources/bfdconfig',
             'reference/resources/bgpconfig',
             'reference/resources/bgppeer',
