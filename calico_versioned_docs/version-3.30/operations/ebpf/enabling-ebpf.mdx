@@ -358,8 +358,17 @@ calicoctl patch felixconfiguration default --patch='{"spec": {"bpfEnabled": true
 
 </Tabs>
 
-When enabling eBPF mode, preexisting connections continue to use the non-BPF datapath; such connections should
-not be disrupted, but they do not benefit from eBPF mode’s advantages.
+When enabling eBPF mode, preexisting connections keep using the non-eBPF datapath. They do not benefit from
+eBPF mode’s advantages, and whether they survive the switch depends on the protocol:
+
+- **TCP connections continue to work**, including any address translation applied to them. The translation
+  lives in the Linux conntrack entry rather than in the `kube-proxy` rules that $[prodname] removes, so a
+  connection through a service keeps reaching the backend it was already using.
+- **Traffic that is not TCP is treated as new.** eBPF mode cannot tell a packet from an established UDP flow
+  apart from a fresh one, so it applies policy and picks a service backend again. A UDP flow to a service
+  with several backends can move to a different backend.
+- **Connections over a VXLAN overlay do not survive.** $[prodname] recreates the VXLAN device when it
+  switches to eBPF mode, and the kernel drops the conntrack state for the flows through it.
 
 ### Try out direct server return mode
 
