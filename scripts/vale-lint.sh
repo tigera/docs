@@ -3,13 +3,12 @@
 # Vale wrapper that handles the $[variable] syntax used in these docs.
 #
 # MDX files use $[prodname], $[manifestsUrl], etc. for Docusaurus variable
-# interpolation. mdx2vast (Vale's MDX parser) uses acorn which crashes on
-# this non-standard JS syntax. This script temporarily replaces $[...] with
+# interpolation. Vale's spell checker flags the interpolated names (e.g.
+# "prodname") as misspellings. This script temporarily replaces $[...] with
 # a placeholder before running Vale, then restores the original files.
 #
 # Prerequisites:
 #   brew install vale ripgrep
-#   npm install -g mdx2vast
 #   vale sync
 #
 # Usage:
@@ -32,7 +31,7 @@ if ! mkdir "$LOCKDIR" 2>/dev/null; then
 fi
 
 # Check dependencies
-for cmd in vale mdx2vast rg perl; do
+for cmd in vale rg perl; do
   if ! command -v "$cmd" &>/dev/null; then
     echo "Error: $cmd is not installed." >&2
     rm -rf "$LOCKDIR"
