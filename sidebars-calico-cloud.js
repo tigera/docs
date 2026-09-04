@@ -490,6 +490,7 @@ module.exports = {
             'reference/resources/networkset',
             'reference/resources/node',
             'reference/resources/packetcapture',
+            'reference/resources/policyrecommendations',
             'reference/resources/remoteclusterconfiguration',
             'reference/resources/securityeventwebhook',
             'reference/resources/stagedglobalnetworkpolicy',
