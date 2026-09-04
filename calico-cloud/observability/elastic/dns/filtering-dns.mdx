@@ -1,11 +1,27 @@
 ---
-description: Suppress low-value Calico Cloud DNS log entries with Fluentd filters configured through a ConfigMap in the operator namespace of connected clusters.
+description: Suppress low-value Calico Cloud DNS log entries with Fluent Bit filters configured through a ConfigMap in the operator namespace of connected clusters.
 ---
 
 # Filter DNS logs
 
 $[prodname] supports filtering out DNS logs based on user provided
 configuration. Use filtering to suppress logs of low significance.
+
+## Before you begin
+
+**Required**
+
+If you already filter DNS logs, migrate your filters before you upgrade. Earlier releases collected logs with Fluentd and read filters written in Fluentd `<filter>` syntax from a ConfigMap named `fluentd-filters`. $[prodname] now collects logs with Fluent Bit, which does not read that ConfigMap and cannot translate Fluentd syntax. Rewrite each filter as a Fluent Bit filter list using the steps on this page, and create it in a ConfigMap named `fluent-bit-filters`.
+
+Until you do, $[prodname] ships DNS logs unfiltered, which increases your log volume and storage costs. If a key in `fluent-bit-filters` is not valid Fluent Bit YAML, $[prodname] skips that key, keeps shipping unfiltered logs, and reports a warning naming the key:
+
+```bash
+kubectl get tigerastatus log-collector -o yaml
+```
+
+**Limitations**
+
+Filters apply to logs collected from Linux nodes. The Windows log collector does not read them.
 
 ## Configure DNS filtering
 
@@ -18,46 +34,35 @@ To enable DNS log filtering, follow these steps:
    your desired filter using [Filter configuration files](#filter-configuration-files).
    If you are also adding [flow filters](../flow/filtering.mdx) also add the `flow` file
    to the directory.
-1. Create the `fluentd-filters` ConfigMap in the `tigera-operator` namespace
+1. Create the `fluent-bit-filters` ConfigMap in the `tigera-operator` namespace
    with the following command.
    ```bash
-   kubectl create configmap fluentd-filters -n tigera-operator --from-file=filters
+   kubectl create configmap fluent-bit-filters -n tigera-operator --from-file=filters
    ```
+
+The operator inserts the filters inline into the log collector configuration and rolls the
+`calico-fluent-bit` DaemonSet automatically.
 
 ## Filter configuration files
 
-The filters defined by the ConfigMap are inserted into the fluentd configuration file.
-The [upstream fluentd documentation](https://docs.fluentd.org/filter/grep)
-describes how to write fluentd filters. The [DNS log schema](dns-logs.mdx) can be referred to
-for the specification of the various fields you can filter based on. Remember to ensure
-that the config file is properly indented in the ConfigMap.
+Each file holds a YAML list of [Fluent Bit filter](https://docs.fluentbit.io/manual/data-pipeline/filters/) entries. The `calico-fluent-bit` log collector ships four Fluent Bit filters — [`grep`](https://docs.fluentbit.io/manual/data-pipeline/filters/grep), [`record_modifier`](https://docs.fluentbit.io/manual/data-pipeline/filters/record-modifier), [`parser`](https://docs.fluentbit.io/manual/data-pipeline/filters/parser), and [`lua`](https://docs.fluentbit.io/manual/data-pipeline/filters/lua) — and no others. The examples below use `grep`. Filters in the `dns` file are applied to DNS logs automatically; you do not need to set a `match` on each entry. For the fields you can filter on, see the [DNS log schema](dns-logs.mdx).
 
 ## Example 1: filter out cluster-internal lookups
 
 This example filters out lookups for domain names ending with ".cluster.local". More
-logs could be filtered by adjusting the regular expression "pattern", or by adding
-additional `exclude` blocks.
+logs could be filtered by adjusting the regular expression, or by adding
+additional `exclude` rules.
 
-```
-<filter dns>
-  @type grep
-  <exclude>
-    key qname
-    pattern /\.cluster\.local$/
-  </exclude>
-</filter>
+```yaml
+- name: grep
+  exclude: qname \.cluster\.local$
 ```
 
 ## Example 2: keep logs only for particular domain names
 
 This example will filter out all logs _except_ those for domain names ending `.co.uk`.
 
-```
-<filter dns>
-  @type grep
-  <regexp>
-      key qname
-      pattern /\.co\.uk$/
-  </regexp>
-</filter>
+```yaml
+- name: grep
+  regex: qname \.co\.uk$
 ```
