@@ -225,7 +225,7 @@ spec:
         <>
           <p>
             Download the Tigera custom resources. For more information on configuration options available in this
-            manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
+            manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the Tigera Operator API reference</Link>.
           </p>
           <CodeBlock language='bash'>curl -O -L {filesUrl}/manifests/ocp/tigera-enterprise-resources.yaml</CodeBlock>
           <p>
