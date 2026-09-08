@@ -126,7 +126,7 @@ export default function UpgradeOperatorSimple(props) {
               <li>
                 <p>
                   Apply the Tigera custom resources manifest. For more information on configuration options available in this
-                  manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
+                  manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the Tigera Operator API reference</Link>.
                 </p>
                 <CodeBlock language='bash'>kubectl apply -f custom-resources.yaml</CodeBlock>
               </li>
@@ -135,7 +135,7 @@ export default function UpgradeOperatorSimple(props) {
               <li>
                 <p>
                   Install the Tigera custom resources. For more information on configuration options available in this
-                  manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
+                  manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the Tigera Operator API reference</Link>.
                 </p>
                 <CodeBlock language='bash'>
                   {props.provider === 'EKS'

@@ -27,7 +27,7 @@ export default function GettingStartedInstallOnClustersKubernetesHelm() {
           <p>
             If you are installing on a cluster installed by EKS, GKE, AKS or Mirantis Kubernetes Engine (MKE), set the{' '}
             <code>kubernetesProvider</code> as described in the{' '}
-            <a href='../../../reference/installation/api#operator.tigera.io/v1.Provider'>Installation reference</a>. For
+            <a href='../../../reference/installation/api#operator.tigera.io/v1.Provider'>Tigera Operator API reference</a>. For
             example:
           </p>
         </li>

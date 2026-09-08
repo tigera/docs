@@ -604,7 +604,7 @@ module.exports = {
         {
           type: 'doc',
           id: 'reference/installation/api',
-          label: 'Installation API',
+          label: 'Tigera Operator API reference',
         },
         'reference/installation/helm_customization',
         // TODO: 'Installation' category needs to be collapsed into single Operator API page

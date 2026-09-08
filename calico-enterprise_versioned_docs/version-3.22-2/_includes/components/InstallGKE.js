@@ -59,7 +59,7 @@ export default function InstallGKE(props) {
             <li>
               <p>
                 Download the Tigera custom resources. For more information on configuration options available in this
-                manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
+                manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the Tigera Operator API reference</Link>.
               </p>
               <CodeBlock language='bash'>curl -O -L {filesUrl}/manifests/custom-resources.yaml</CodeBlock>
               <p>
@@ -102,7 +102,7 @@ spec:
             <li>
               <p>
                 Install the Tigera custom resources. For more information on configuration options available in this
-                manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the installation reference</Link>.
+                manifest, see <Link href={`${baseUrl}/reference/installation/api`}>the Tigera Operator API reference</Link>.
               </p>
               <CodeBlock>kubectl create -f {filesUrl}/manifests/custom-resources.yaml</CodeBlock>
               <p>You can now monitor progress with the following command:</p>
