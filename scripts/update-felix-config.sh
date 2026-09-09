@@ -69,6 +69,8 @@ update_felix_config() {
         exit "$E_INVALID_JSON"
     fi
 
+    "$(dirname "${BASH_SOURCE[0]}")/patch-felix-config-overrides.sh" "$tmpfile"
+
     mv "$tmpfile" "$LOCAL_PATH"
     echo -e "Finished processing ${VERSION}.\n\n"
 }
