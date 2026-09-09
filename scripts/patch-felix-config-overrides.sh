@@ -46,7 +46,31 @@ if ! jq -e . "$OVERRIDES_FILE" >/dev/null 2>&1; then
     exit 1
 fi
 
+# --- Decide every patch's status against the ORIGINAL document, once, then apply exactly
+# those decisions. The notices and the applied document come from the same "ops" list
+# inside a single jq invocation, so they cannot disagree with each other, and the
+# (multi-thousand-line) target file is only parsed once. ---
+result=$(jq --slurpfile overrides "$OVERRIDES_FILE" '
+    ($overrides[0]) as $ovs
+    | . as $orig
+    | [ .Groups | to_entries[] as {key: $gi, value: $g}
+        | $g.Fields | to_entries[] as {key: $fi, value: $f}
+        | $ovs[] as $ov
+        | select($ov.field == $f.NameConfigFile)
+        | $ov.patches[] as $p
+        | ($f[$p.key]) as $cur
+        | { path: ["Groups", $gi, "Fields", $fi, $p.key],
+            status: (if $cur == $p.expected then "patched"
+                     elif $cur == $p.value then "already-correct"
+                     else "stale" end),
+            field: $ov.field, key: $p.key, reason: $ov.reason, value: $p.value }
+      ] as $ops
+    | { doc: (reduce $ops[] as $o ($orig; if $o.status == "patched" then setpath($o.path; $o.value) else . end)),
+        notices: ($ops | map({status, field, key, reason})) }
+' "$target")
+
 # --- Report what each override did: applied, already unnecessary, or no longer matches ---
+notices=$(jq -r '.notices[] | [.status, .field, .key, .reason] | @tsv' <<< "$result")
 while IFS=$'\t' read -r status field key reason; do
     case "$status" in
         patched)
@@ -59,36 +83,10 @@ while IFS=$'\t' read -r status field key reason; do
             echo "WARNING: override for ${field}.${key} did not apply -- upstream text matches neither the known-buggy nor the corrected value. Needs review in ${OVERRIDES_FILE}. (${reason})" >&2
             ;;
     esac
-done < <(jq -r --slurpfile overrides "$OVERRIDES_FILE" '
-    $overrides[0] as $ovs
-    | [ .Groups[].Fields[] as $f
-        | $ovs[] as $ov
-        | select($ov.field == $f.NameConfigFile)
-        | $ov.patches[] as $p
-        | ($f[$p.key]) as $cur
-        | { status: (if $cur == $p.expected then "patched"
-                     elif $cur == $p.value then "already-correct"
-                     else "stale" end),
-            field: $ov.field, key: $p.key, reason: $ov.reason }
-      ]
-    | .[]
-    | [.status, .field, .key, .reason] | @tsv
-' "$target")
+done <<< "$notices"
 
-# --- Apply the patches: field-scoped by NameConfigFile, key-scoped by an expected-value guard ---
+# --- Write the patched document ---
 patched=$(mktemp -t felix-config-patched.XXXXXX)
-jq --slurpfile overrides "$OVERRIDES_FILE" '
-    $overrides[0] as $ovs
-    | .Groups |= map(.Fields |= map(
-        . as $f
-        | reduce ($ovs[] | select(.field == $f.NameConfigFile)) as $ov
-            ( $f
-            ; reduce ($ov.patches[]) as $p
-                ( .
-                ; if (.[$p.key] == $p.expected) then .[$p.key] = $p.value else . end
-                )
-            )
-      ))
-' "$target" > "$patched"
+jq '.doc' <<< "$result" > "$patched"
 
 mv "$patched" "$target"
