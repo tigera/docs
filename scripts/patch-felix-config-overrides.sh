@@ -13,6 +13,11 @@ set -euo pipefail
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly OVERRIDES_FILE="${SCRIPT_DIR}/felix-config-overrides.json"
 
+if [[ $# -ne 1 ]]; then
+    echo "Usage: $(basename "${BASH_SOURCE[0]}") <target-json-file>" >&2
+    exit 1
+fi
+
 target=$1
 patched=""
 
@@ -20,6 +25,16 @@ cleanup() {
     [[ -n "$patched" && -f "$patched" ]] && rm -f "$patched"
 }
 trap cleanup EXIT
+
+if [[ ! -f "$target" ]]; then
+    echo "Error: target file not found: $target" >&2
+    exit 1
+fi
+
+if ! jq -e . "$target" >/dev/null 2>&1; then
+    echo "Error: $target is not valid JSON." >&2
+    exit 1
+fi
 
 if [[ ! -f "$OVERRIDES_FILE" ]]; then
     echo "Error: overrides file not found: $OVERRIDES_FILE" >&2
