@@ -19,6 +19,14 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
 
 ## New features and enhancements
 
+### Fluent Bit log collector
+
+$[prodname] now collects logs with Fluent Bit in place of Fluentd. The log collector runs as `calico-fluent-bit` in the `calico-system` namespace, and buffers logs on each node's filesystem, so logs that have not been delivered yet survive a restart of the collector. Your tail positions are migrated during the upgrade, so no logs are shipped twice.
+
+This is a breaking change for anyone who filters logs, scrapes log collector metrics, or reads archived logs from S3. See the upgrade notes below.
+
+Splunk log archiving now supports HTTP Event Collector endpoints whose certificate is signed by a private CA. Create a `splunk-ca` ConfigMap in the `tigera-operator` namespace, the same way `syslog-ca` works for syslog. For more information, see [Archive logs](../observability/elastic/archive-storage.mdx).
+
 ### Enhancements
 
 * **Enable Calico Ingress Gateway during Helm installation:**
@@ -30,6 +38,7 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
 
 - The compliance reporting feature has been removed from the $[prodname] web console.
 - $[prodname] is moving the `projectcalico.org/v3` API from the aggregated API server to native Kubernetes CRDs. Both mechanisms will be supported until native v3 CRDs are compatible with all supported platforms, after which the aggregated API server will be removed.
+- The `fluentdDaemonSet` field in the LogCollector resource is deprecated in favor of `calicoFluentBitDaemonSet`, and is scheduled for removal in a future release. Existing overrides, including the legacy container names, continue to apply for one release. See [Configure resource requests and limits](../reference/component-resources/configure-resources.mdx).
 
 ## Technology Preview features
 
@@ -52,6 +61,25 @@ Migrate in this order:
 3. After the upgrade, re-point monitoring, RBAC, and external DNS from `tigera-gateway` to each Gateway's namespace. If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
 
 :::
+
+### Fluent Bit log collector
+
+:::warning[Breaking change]
+
+The log collector changes from Fluentd to Fluent Bit. The `tigera-fluentd` namespace is removed, and each item below needs action:
+
+- **Rewrite your log filters before you upgrade.** Flow and DNS log filters are no longer read from the `fluentd-filters` ConfigMap, and Fluentd filter syntax is not translated for you. Recreate your filters as Fluent Bit filter lists in a `fluent-bit-filters` ConfigMap. Until you do, logs ship unfiltered. See [Filter flow logs](../observability/elastic/flow/filtering.mdx) and [Filter DNS logs](../observability/elastic/dns/filtering-dns.mdx).
+- **Update anything that names the old resources.** Log collector resources move to `calico-system` and are renamed: the DaemonSet and container become `calico-fluent-bit`, or `calico-fluent-bit-windows` on Windows nodes, and the TLS secret becomes `calico-fluent-bit-tls`. Commands such as `kubectl logs -c fluentd` no longer work.
+- **Re-point your dashboards, alerts, and scrape configuration.** Log collector metrics are now Fluent Bit's own Prometheus metrics, with `fluentbit_` names on plain HTTP port 2020, in place of `fluentd_` names on the mTLS endpoint on port 9081. The metrics services are renamed to `calico-fluent-bit-metrics` and `calico-fluent-bit-metrics-windows`, and the pod label is now `k8s-app: calico-fluent-bit`. See [Elasticsearch and Fluent Bit metrics](../operations/monitor/metrics/elasticsearch-and-fluentd-metrics.mdx) and [Bring your own Prometheus](../operations/monitor/prometheus/byo-prometheus.mdx).
+- **Update tooling that reads archived logs from S3.** The object keys change from a flat layout to one directory per log type, and flows from non-cluster hosts get their own directory. See [Archive logs](../observability/elastic/archive-storage.mdx).
+- **Check your EKS log forwarder overrides.** The deployment no longer runs an `eks-log-forwarder-startup` init container, so overrides that target it by name no longer apply. See [Configure resource requests and limits](../reference/component-resources/configure-resources.mdx).
+
+:::
+
+Two defaults also change:
+
+- Logs are buffered on each node's filesystem instead of in memory. Logs that have not been delivered yet survive a restart of the collector, and node disk usage grows accordingly. See [Log collection overview](../observability/elastic/overview.mdx).
+- When `spec.additionalStores.syslog.packetSize` is unset, the maximum syslog message size is 2048 bytes rather than Fluentd's 1024, so fewer long log lines are truncated. See [Archive logs](../observability/elastic/archive-storage.mdx).
 
 ## Release details
 
