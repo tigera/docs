@@ -87,42 +87,55 @@ You need to do the following:
    kubectl get pods -n <gateway-namespace>
    ```
 
-1. If your cluster enforces a [global default deny policy](../../network-policy/beginners/kubernetes-default-deny.mdx), apply a network policy in the `Gateway` namespace that lets the proxy pods reach the gateway controller, the Kubernetes API server, and DNS.
-   Without it, the proxy cannot start.
+1. If your cluster enforces a [global default deny policy](../../network-policy/beginners/kubernetes-default-deny.mdx), you do not need to allow the proxy's own traffic to the gateway controller or to DNS.
+   The Tigera Operator creates a `GlobalNetworkPolicy` named `calico-system.envoy-gateway-proxy` that lets clients reach the proxy, and lets the proxy reach DNS and the gateway controller.
+
+   You do still need two things.
+   First, the proxy pod runs a log collector that talks to the Kubernetes API server.
+   Second, the proxy needs to reach your backend workloads.
+   Until you allow the backend hop, the gateway accepts the request and then returns `503`, because the proxy cannot open a connection to the backend.
+
+   Apply a network policy in the `Gateway` namespace:
 
    ```yaml
    apiVersion: projectcalico.org/v3
    kind: NetworkPolicy
    metadata:
-     name: allow-tigera-gateway-proxy
+     name: default.allow-gateway-proxy-egress
      namespace: <gateway-namespace>
    spec:
-     selector: 'app.kubernetes.io/name == "envoy"'
-     types: [Ingress, Egress]
-     ingress:
-       - action: Allow
+     tier: default
+     order: 10
+     selector: 'k8s-app == "calico-gateway-api-proxy"'
+     types: [Egress]
      egress:
-       - action: Allow # DNS
-         protocol: UDP
-         destination:
-           namespaceSelector: 'projectcalico.org/name == "kube-system"'
-           selector: 'k8s-app == "kube-dns"'
-           ports: [53]
-       - action: Allow # configuration from the gateway controller
-         protocol: TCP
-         destination:
-           namespaceSelector: 'projectcalico.org/name == "calico-system"'
-           selector: 'app.kubernetes.io/name == "gateway-helm"'
-           ports: [18000]
        - action: Allow # Kubernetes API server
          protocol: TCP
          destination:
            services:
              name: kubernetes
              namespace: default
+       - action: Allow # your backend workloads
+         destination:
+           selector: '<your-backend-selector>'
+   ---
+   apiVersion: projectcalico.org/v3
+   kind: NetworkPolicy
+   metadata:
+     name: default.allow-backend-from-gateway-proxy
+     namespace: <gateway-namespace>
+   spec:
+     tier: default
+     order: 10
+     selector: '<your-backend-selector>'
+     types: [Ingress]
+     ingress:
+       - action: Allow
+         source:
+           selector: 'k8s-app == "calico-gateway-api-proxy"'
    ```
-   Replace `<gateway-namespace>` with the namespace where you created the `Gateway`.
-   Add egress rules for your own backends as needed.
+   Replace `<gateway-namespace>` with the namespace where you created the `Gateway`, and `<your-backend-selector>` with a selector that matches your backend pods.
+   Put these policies in a tier that comes after `calico-system`, at an `order` lower than your default-deny policy.
 
 1. Create a gateway routing resource that refers to your `Gateway` resource as `.spec.parentRefs`:
 
