@@ -577,6 +577,7 @@ module.exports = {
         'reference/attribution',
         'reference/rest-api-reference',
         'reference/faq',
+        'reference/feature-status',
       ],
     },
     'get-help/support',
