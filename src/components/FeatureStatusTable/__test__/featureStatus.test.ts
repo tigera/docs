@@ -2,7 +2,15 @@ import fs from 'fs';
 import path from 'path';
 import { parse } from 'yaml';
 
-import { buildLegend, buildRows, cellLabel, DEPRECATION_TABLE, PREVIEW_TABLE, releaseWindow } from '../featureStatus';
+import {
+  buildLegend,
+  buildRows,
+  ceVersionFromCloudversion,
+  cellLabel,
+  DEPRECATION_TABLE,
+  PREVIEW_TABLE,
+  releaseWindow,
+} from '../featureStatus';
 import type { Feature } from '../featureStatus';
 
 const features: Feature[] = parse(
@@ -31,6 +39,24 @@ describe('releaseWindow', () => {
 
   it('returns null for the Calico Cloud scheme, which has no minor to step back through', () => {
     expect(releaseWindow('23-2')).toBeNull();
+  });
+});
+
+describe('ceVersionFromCloudversion', () => {
+  it('extracts the CE major.minor from a raw cloudversion string', () => {
+    expect(ceVersionFromCloudversion('v3.23.1-4')).toBe('3.23');
+  });
+
+  it('accepts a bare major.minor with no leading "v"', () => {
+    expect(ceVersionFromCloudversion('3.23')).toBe('3.23');
+  });
+
+  it('discards a patch version with no build suffix', () => {
+    expect(ceVersionFromCloudversion('v3.21.0')).toBe('3.21');
+  });
+
+  it('returns null for a string with no version to find', () => {
+    expect(ceVersionFromCloudversion('unknown')).toBeNull();
   });
 });
 

@@ -59,6 +59,19 @@ function compare(a: string, b: string): number {
 }
 
 /**
+ * The CE major.minor a Calico Cloud release is built on, from its `cloudversion` variable.
+ *
+ * `cloudversion` values look like "v3.23.1-4": an optional leading "v", then CE's own
+ * major.minor.patch, then a Calico Cloud build suffix. Only the major.minor matters here —
+ * it's what `releaseWindow`/`compare` expect — so the rest is discarded. Returns null if the
+ * string doesn't start with a version at all.
+ */
+export function ceVersionFromCloudversion(cloudversion: string): string | null {
+  const match = /^v?(\d+\.\d+)/.exec(cloudversion);
+  return match ? match[1] : null;
+}
+
+/**
  * The three release lines ending at the given docs version, oldest first.
  *
  * The leading match also strips the Docusaurus suffix that Enterprise versions carry,
