@@ -15,6 +15,7 @@ const features: Feature[] = [
     products: {
       calico: { '3.32': 'tech-preview' },
       'calico-enterprise': { '3.22': 'tech-preview' },
+      'calico-cloud': { '3.22': 'tech-preview' },
     },
   },
   {
@@ -94,6 +95,24 @@ describe('<TechPreviewTable/>', () => {
     const { container } = render(<TechPreviewTable />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('uses the version prop instead of the docs version when given, for a product with no release line of its own', () => {
+    docsVersion.pluginId = 'calico-cloud';
+    docsVersion.version = '23-2';
+    render(<TechPreviewTable version="3.22" />);
+
+    expect(columns()).toEqual(['Feature', '3.20', '3.21', '3.22']);
+    expect(rows()).toEqual([['Istio ambient mode', '–', '–', 'TP']]);
+  });
+
+  it('accepts a raw cloudversion string and extracts the CE major.minor', () => {
+    docsVersion.pluginId = 'calico-cloud';
+    docsVersion.version = '23-2';
+    render(<TechPreviewTable version="v3.22.6-0" />);
+
+    expect(columns()).toEqual(['Feature', '3.20', '3.21', '3.22']);
+    expect(rows()).toEqual([['Istio ambient mode', '–', '–', 'TP']]);
   });
 });
 
