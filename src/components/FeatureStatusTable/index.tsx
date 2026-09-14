@@ -5,6 +5,7 @@ import { useDocsVersion } from '@docusaurus/plugin-content-docs/client';
 import {
   buildLegend,
   buildRows,
+  ccVersionLabel,
   ceVersionFromCloudversion,
   cellLabel,
   DEPRECATION_TABLE,
@@ -64,7 +65,10 @@ const FeatureStatusTable: React.FC<FeatureStatusTableProps> = ({ include, legend
           <tr>
             <th>Feature</th>
             {versions.map((column) => (
-              <th key={column}>{column}</th>
+              // Calico Cloud's own pages pass version, so relabel the CE column headers in
+              // Calico Cloud's own version scheme. CE and OSS pages show the raw CE version,
+              // since they don't pass an override.
+              <th key={column}>{versionOverride ? ccVersionLabel(column) : column}</th>
             ))}
           </tr>
         </thead>

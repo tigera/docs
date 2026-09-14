@@ -5,6 +5,7 @@ import { parse } from 'yaml';
 import {
   buildLegend,
   buildRows,
+  ccVersionLabel,
   ceVersionFromCloudversion,
   cellLabel,
   DEPRECATION_TABLE,
@@ -57,6 +58,17 @@ describe('ceVersionFromCloudversion', () => {
 
   it('returns null for a string with no version to find', () => {
     expect(ceVersionFromCloudversion('unknown')).toBeNull();
+  });
+});
+
+describe('ccVersionLabel', () => {
+  it('strips the leading "3." so CE 3.NN reads as Calico Cloud NN', () => {
+    expect(ccVersionLabel('3.23')).toBe('23');
+    expect(ccVersionLabel('3.22')).toBe('22');
+  });
+
+  it('leaves a version with no leading "3." unchanged', () => {
+    expect(ccVersionLabel('4.1')).toBe('4.1');
   });
 });
 
