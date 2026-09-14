@@ -72,6 +72,18 @@ export function ceVersionFromCloudversion(cloudversion: string): string | null {
 }
 
 /**
+ * Calico Cloud's own version label for a CE release line, e.g. "3.23" → "23".
+ *
+ * A Calico Cloud release built on CE 3.NN is itself called Calico Cloud NN — CE's minor
+ * number is Calico Cloud's major number. The data file still keys everything by the CE
+ * version, since that's what carries the status history; this only relabels a column for
+ * display on a Calico Cloud page.
+ */
+export function ccVersionLabel(ceVersion: string): string {
+  return ceVersion.replace(/^3\./, '');
+}
+
+/**
  * The three release lines ending at the given docs version, oldest first.
  *
  * The leading match also strips the Docusaurus suffix that Enterprise versions carry,

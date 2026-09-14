@@ -102,7 +102,7 @@ describe('<TechPreviewTable/>', () => {
     docsVersion.version = '23-2';
     render(<TechPreviewTable version="3.22" />);
 
-    expect(columns()).toEqual(['Feature', '3.20', '3.21', '3.22']);
+    expect(columns()).toEqual(['Feature', '20', '21', '22']);
     expect(rows()).toEqual([['Istio ambient mode', '–', '–', 'TP']]);
   });
 
@@ -111,7 +111,7 @@ describe('<TechPreviewTable/>', () => {
     docsVersion.version = '23-2';
     render(<TechPreviewTable version="v3.22.6-0" />);
 
-    expect(columns()).toEqual(['Feature', '3.20', '3.21', '3.22']);
+    expect(columns()).toEqual(['Feature', '20', '21', '22']);
     expect(rows()).toEqual([['Istio ambient mode', '–', '–', 'TP']]);
   });
 });
