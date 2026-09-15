@@ -1,0 +1,432 @@
+---
+description: Migrate an existing Istio sidecar mesh to the Calico-managed Istio Ambient Mode service mesh, one namespace at a time, without rewriting your network policies.
+---
+
+# Migrate from Istio sidecar mode to Istio Ambient Mode
+
+If you already run Istio in sidecar mode, you can move to the version of Istio that $[prodname] bundles and manages, which runs in ambient mode.
+This page describes the supported migration path: what to check before you start, how the cutover is sequenced, how to verify each namespace, and how to roll back.
+
+:::note
+
+Istio Ambient Mode is a tech preview feature.
+Tech preview features are subject to significant changes before they become GA.
+
+:::
+
+## Why migrate
+
+Sidecar meshes put an Envoy proxy next to every pod. That proxy consumes memory and CPU per workload, has to be restarted with the application to pick up new configuration, and it terminates connections in a way that hides the original destination port from the host network.
+
+Istio Ambient Mode replaces per-pod sidecars with a per-node zTunnel proxy for Layer 4 mTLS, and optional Waypoint proxies for Layer 7 features.
+On $[prodname], that comes with three additional benefits:
+
+* **Your network policies keep working.** $[prodname] ships an [enhanced zTunnel](about-istio-ambient.mdx#the-enhanced-ztunnel-proxy) that preserves the original destination port, so existing $[prodname] and Kubernetes network policies continue to match traffic exactly as they did before the traffic was encrypted. In upstream Istio Ambient Mode, all mesh traffic appears as port 15008 and policies have to be rewritten.
+* **The mesh lifecycle is managed for you.** The Tigera Operator installs and upgrades istiod, the Istio CNI plugin, and zTunnel, and CVEs are addressed on the regular $[prodname] patch release cadence.
+* **Flow visibility is unchanged.** Because ports and workload identity are preserved, $[prodname] flow logs and the flow visualizations in the web console keep showing service-to-service traffic the way they did before you enabled mTLS.
+
+## What changes when you migrate
+
+| Sidecar mode | After migrating to Istio Ambient Mode |
+| --- | --- |
+| Envoy sidecar in every pod | zTunnel DaemonSet in `calico-system`, one proxy per node |
+| Istio control plane in `istio-system`, self-managed | istiod in `calico-system`, installed and upgraded by the Tigera Operator |
+| `VirtualService` | `HTTPRoute` (Gateway API), attached to a Waypoint |
+| `DestinationRule` | No change. Traffic policies are applied by the Waypoint |
+| `AuthorizationPolicy` with L4 rules only | No change. zTunnel enforces these directly |
+| `AuthorizationPolicy` with L7 rules | Must target a Waypoint with `targetRefs` instead of selecting pods |
+| `RequestAuthentication` | Must target a Waypoint with `targetRefs` |
+| `EnvoyFilter` | Not supported on Waypoints |
+| `Gateway` (ingress) | No change |
+| `PeerAuthentication` with `mode: DISABLE` | Not supported. Remove before migrating |
+| $[prodname] network policy | No change, as long as you do not deploy Waypoints. See [Network policy during and after migration](#network-policy-during-and-after-migration) |
+
+## Before you begin
+
+### Supported starting point
+
+This procedure assumes:
+
+* $[prodname] is installed and managed by the Tigera Operator.
+* Istio is installed in sidecar mode and you manage it yourself, with Helm or `istioctl`.
+* Your workloads are pods. Virtual machine workloads cannot join an ambient mesh.
+
+### Unsupported configurations
+
+Migration is blocked if your mesh uses any of the following. Resolve these before you start.
+
+* Virtual machine workloads in the mesh.
+* SPIRE as the certificate provider.
+* `PeerAuthentication` resources with `mode: DISABLE`.
+* Primary-remote multicluster topologies.
+
+Istio Ambient Mode on $[prodname] also has its own limitations, which apply after migration:
+
+* [Application layer network policies](../../network-policy/application-layer-policies/alp.mdx) are not compatible with the Istio service mesh.
+* [Workload-based web application firewalls](../../threat/web-application-firewall.mdx) are not compatible with Istio Ambient Mode.
+* Clusters that are part of a [cluster mesh](../../multicluster/index.mdx) are not supported.
+* Connect-time load balancing is not compatible with Istio Ambient Mode.
+* Destination ports are preserved only when Istio is deployed without Waypoint. If you deploy Waypoint, traffic through the Waypoint shows port 15008 as its destination port.
+
+<!-- ENG REVIEW: confirm eBPF dataplane + ambient status for the shipping version. Fixes for the host-probe/SNAT issue landed in projectcalico/calico#9159 and #9192; confirm whether eBPF mode is a supported configuration for the bundled Istio, and whether Waypoint on eBPF is supported (see istio/istio#55481). If it is not, it belongs in this list. -->
+
+### Layer 7 policy causes a gap in enforcement
+
+:::warning
+
+If your mesh enforces Layer 7 `AuthorizationPolicy` rules, there is no zero-downtime migration path.
+
+While a namespace is partly migrated, traffic that originates from a workload that still has a sidecar is sent straight to the destination zTunnel and bypasses the Waypoint, so Layer 7 rules attached to that Waypoint are not enforced for it.
+If you need continuous Layer 7 enforcement, migrate the affected namespaces inside a maintenance window.
+
+:::
+
+Layer 4 enforcement is not affected. zTunnel enforces L4 `AuthorizationPolicy` rules for every migrated workload, and $[prodname] network policy is enforced throughout.
+
+### Inventory your mesh
+
+1. Record the Istio version and the namespaces that have injection enabled:
+
+   ```bash
+   istioctl version
+   kubectl get namespace -L istio-injection -L istio.io/rev
+   ```
+
+1. Back up every Istio resource you have. You need this to roll back.
+
+   ```bash
+   kubectl get virtualservice,destinationrule,authorizationpolicy,requestauthentication,peerauthentication,sidecar,envoyfilter,wasmplugin,gateway,serviceentry \
+     --all-namespaces -o yaml > istio-config-backup.yaml
+   ```
+
+1. Find the policies that need a Waypoint. Any `AuthorizationPolicy` that matches on `paths`, `methods`, `headers`, `hosts`, or uses JWT claims is a Layer 7 policy:
+
+   ```bash
+   kubectl get authorizationpolicy --all-namespaces -o yaml | grep -E 'paths|methods|headers|hosts|when'
+   ```
+
+1. Confirm that no `PeerAuthentication` resource disables mTLS:
+
+   ```bash
+   kubectl get peerauthentication --all-namespaces -o yaml | grep -B5 'mode: DISABLE'
+   ```
+
+1. Install the Gateway API CRDs if you plan to use Waypoints or `HTTPRoute`. Most clusters do not have them by default.
+
+   ```bash
+   kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+     kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/experimental-install.yaml
+   ```
+
+<!-- ENG REVIEW: pin the Gateway API version we test against, and state whether the operator installs the Gateway API CRDs itself when Waypoint logging is enabled. -->
+
+## Plan your cutover
+
+The Tigera Operator installs istiod, the Istio CNI plugin, and zTunnel into the `calico-system` namespace, and it manages the Istio webhooks and CRDs.
+It cannot run alongside a self-managed Istio control plane, because both installations claim the same cluster-scoped resources and both install an Istio CNI plugin on every node.
+
+**You must remove your self-managed Istio control plane before you create the `Istio` custom resource.**
+
+<!-- ENG REVIEW: this is the crux of the topic and needs to be confirmed or corrected before publication.
+     1. Can the operator-managed Istio coexist with a self-managed istiod in istio-system for the duration of a phased migration (CRD ownership, validating/mutating webhooks, two istio-cni plugins on one node)? If yes, this whole section changes and a phased path becomes the recommendation.
+     2. Can the operator-managed istiod use an existing root CA (a cacerts secret), so that workloads that still have sidecars can complete mTLS with workloads that zTunnel now handles? The IstioSpec API currently exposes istiod, istioCNI, ztunnel, waypointLogging, and dscpMark only.
+     3. What is the tested cert lifetime for sidecars that keep running after their control plane is removed? The 24-hour figure below is the Istio default, not a Tigera-tested number. -->
+
+That constraint shapes the two supported cutover patterns.
+
+### Pattern 1: single maintenance window (recommended)
+
+Remove the self-managed control plane, install the $[prodname]-managed one, and migrate every namespace in one window.
+This is the recommended pattern for most clusters, because at no point do you have workloads that are trying to establish mTLS with two different root certificate authorities.
+
+Choose this pattern if your cluster has a small number of meshed namespaces, or if you enforce Layer 7 policy.
+
+### Pattern 2: phased, namespace by namespace
+
+Remove the self-managed control plane, install the $[prodname]-managed one, then migrate namespaces in batches over a longer period.
+
+Pods that still have sidecars keep forwarding traffic using their cached configuration, but be aware of two constraints:
+
+* **Certificates are not rotated.** After the self-managed istiod is gone, sidecars can no longer refresh their workload certificates. Istio's default certificate lifetime is 24 hours, so plan to finish the migration well inside that window.
+* **mTLS between sidecar and migrated workloads fails.** Sidecars trust the root CA of your old control plane, and zTunnel presents a certificate from the new one. Traffic between a not-yet-migrated workload and a migrated workload fails TLS verification unless you temporarily disable mTLS for those service pairs with a `DestinationRule`.
+
+Choose this pattern only if you can group namespaces so that services that talk to each other migrate together.
+
+## Network policy during and after migration
+
+This is the part of the migration that does not change, and it is worth verifying rather than assuming.
+
+* **Without Waypoints**, the enhanced zTunnel preserves the original destination port. Your existing $[prodname] and Kubernetes network policies match the same traffic before and after migration. No rewrite, no exception for port 15008.
+* **With Waypoints**, traffic that goes through a Waypoint reports port 15008 as its destination port. Policies that select those workloads by destination port need to be updated to allow 15008.
+* **Do not label $[prodname] namespaces or pods into the mesh.** Labeling $[prodname] components can interrupt cluster networking. To secure $[prodname] components, see [Secure Calico component communications](../../operations/comms/index.mdx).
+
+Before you start, snapshot the policies that apply to a representative workload so you can compare after the cutover:
+
+```bash
+kubectl get networkpolicies.projectcalico.org,globalnetworkpolicies.projectcalico.org \
+  --all-namespaces -o yaml > calico-policy-snapshot.yaml
+```
+
+## Step 1: Remove the self-managed Istio control plane
+
+Remove the control plane components only. Leave the injected sidecars and your Istio configuration resources (`VirtualService`, `AuthorizationPolicy`, and so on) in place for now: existing pods continue to serve traffic with their cached configuration, and you still need those resources for rollback.
+
+1. Remove sidecar injection from the namespaces you are about to migrate, so that no new pod comes up with a sidecar:
+
+   ```bash
+   kubectl label namespace <namespace> istio-injection-
+   ```
+
+   If you use revision labels:
+
+   ```bash
+   kubectl label namespace <namespace> istio.io/rev-
+   ```
+
+1. Uninstall the self-managed control plane, including the Istio CNI plugin:
+
+   ```bash
+   istioctl uninstall --purge
+   ```
+
+   With Helm:
+
+   ```bash
+   helm uninstall istio-cni -n istio-system
+   helm uninstall istiod -n istio-system
+   helm uninstall istio-base -n istio-system
+   ```
+
+   :::note
+   `istioctl uninstall --purge` also removes the Istio CRDs. The Tigera Operator installs the CRDs that the bundled Istio needs, but your backed-up `VirtualService`, `AuthorizationPolicy`, and other resources are deleted with them. Confirm that `istio-config-backup.yaml` is complete before you run this command.
+   :::
+
+1. Confirm that no Istio control plane components or CNI plugin remain:
+
+   ```bash
+   kubectl get pods -n istio-system
+   kubectl get daemonset --all-namespaces | grep istio
+   ```
+
+## Step 2: Install the $[prodname]-managed Istio
+
+1. Apply the `Istio` custom resource:
+
+   ```bash
+   cat <<EOF | kubectl apply -f -
+   apiVersion: operator.tigera.io/v1
+   kind: Istio
+   metadata:
+     name: default
+   EOF
+   ```
+
+   :::note
+   To customize resource requirements for your Istio deployment, see the options available in the [installation API documentation](../../reference/installation/api.mdx).
+   :::
+
+1. Verify that the operator reports the component as available:
+
+   ```bash
+   kubectl get tigerastatus
+   ```
+
+   ```shell title='Example output'
+   NAME        AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver   True        False         False      4m9s
+   calico      True        False         False      3m29s
+   // highlight-next-line
+   istio       True        False         False      19s
+   ```
+
+1. Verify that istiod and zTunnel are running in `calico-system`:
+
+   ```bash
+   kubectl get pods -n calico-system | grep 'istio\|ztunnel'
+   ```
+
+## Step 3: Deploy Waypoints, if you need Layer 7
+
+Skip this step if all of your `AuthorizationPolicy` resources are Layer 4 only and you do not use `VirtualService` for routing, retries, fault injection, or header manipulation.
+
+Deploy a Waypoint before you enable ambient mode for the namespace, but do not attach workloads to it until the sidecars are gone. A workload that has both a sidecar and a Waypoint processes traffic twice.
+
+1. Deploy a Waypoint in the namespace:
+
+   ```bash
+   istioctl waypoint apply -n <namespace>
+   ```
+
+1. Verify that it is ready:
+
+   ```bash
+   kubectl get gateway waypoint -n <namespace>
+   ```
+
+   The `READY` column must show `True`.
+
+1. Update your $[prodname] network policies to allow traffic to port 15008 for the workloads behind the Waypoint. See [Network policy during and after migration](#network-policy-during-and-after-migration).
+
+<!-- ENG REVIEW: IstioSpec exposes waypointLogging, which injects an l7-collector sidecar into Waypoint pods to produce L7 logs. If that is a supported, documented capability in this release, it belongs here as a Calico-specific benefit of running Waypoints, with a link to the L7 logs topic. Today the L7 logs page says L7 log collection is not compatible with a service mesh, which reads as a contradiction for customers who deploy Waypoints. -->
+
+## Step 4: Enable ambient mode, namespace by namespace
+
+Follow this order. Doing it out of order can leave traffic handled by neither a sidecar nor zTunnel.
+
+1. **Attach workloads to the Waypoint**, if you deployed one:
+
+   ```bash
+   kubectl label namespace <namespace> istio.io/use-waypoint=waypoint
+   ```
+
+   To scope a Waypoint to a single service instead:
+
+   ```bash
+   kubectl label service <service-name> -n <namespace> istio.io/use-waypoint=waypoint
+   ```
+
+1. **Add the namespace to the mesh**:
+
+   ```bash
+   kubectl label namespace <namespace> istio.io/dataplane-mode=ambient
+   ```
+
+   The Istio CNI plugin redirects new and restarted pods in this namespace through zTunnel. Pods that still have a sidecar continue to use it: a sidecar takes precedence over ambient mode.
+
+1. **Confirm that sidecar injection is off** for the namespace. You did this in Step 1, but verify, because a re-injected sidecar silently keeps the workload out of ambient mode:
+
+   ```bash
+   kubectl get namespace <namespace> -L istio-injection -L istio.io/rev
+   ```
+
+1. **Restart the workloads** to drop the sidecars:
+
+   ```bash
+   kubectl rollout restart deployment -n <namespace>
+   kubectl rollout status deployment -n <namespace>
+   ```
+
+1. **Remove the Layer 7 policies that only a sidecar could enforce.** Do this immediately after the restart, before you validate.
+
+   :::warning
+
+   Once the sidecars are gone, zTunnel enforces the remaining `AuthorizationPolicy` resources, but it only understands Layer 4 attributes. It drops the Layer 7 conditions from a policy rather than ignoring the policy. An `ALLOW` policy whose rules were entirely Layer 7 becomes an empty allow, which denies all traffic to the selected workloads. A `DENY` policy behaves the same way, with the opposite effect.
+
+   :::
+
+   Delete the selector-based policies that contain Layer 7 rules, which you have already replaced with Waypoint-targeted equivalents:
+
+   ```bash
+   kubectl delete authorizationpolicy <policy-name> -n <namespace>
+   ```
+
+   Delete the `VirtualService` and `DestinationRule` resources you replaced with `HTTPRoute`:
+
+   ```bash
+   kubectl delete virtualservice <name> -n <namespace>
+   kubectl delete destinationrule <name> -n <namespace>
+   ```
+
+   Keep every `AuthorizationPolicy` that uses only Layer 4 rules. zTunnel enforces those correctly.
+
+1. **Validate the namespace** before you move to the next one. See [Verify the migration](#verify-the-migration).
+
+Repeat for each namespace. Namespaces you have not labeled are unaffected, subject to the certificate and mTLS constraints described in [Pattern 2](#pattern-2-phased-namespace-by-namespace).
+
+## Verify the migration
+
+1. Pods no longer have a sidecar container. The ready count drops by one, for example from `2/2` to `1/1`:
+
+   ```bash
+   kubectl get pods -n <namespace>
+   ```
+
+1. The workloads are known to zTunnel:
+
+   ```bash
+   istioctl ztunnel-config workloads -n calico-system | grep <namespace>
+   ```
+
+   The protocol column shows `HBONE` for migrated workloads.
+
+1. Your $[prodname] policies still match the same traffic. Because the enhanced zTunnel preserves the original destination port, flows for a migrated workload should appear with their application ports, not 15008. Check the flow logs or the flow visualizations in the web console for the namespace, and compare against `calico-policy-snapshot.yaml`.
+
+   <!-- ENG REVIEW: replace with the exact console navigation path and, if available, a screenshot, plus a CLI equivalent for customers without console access. -->
+
+1. Application traffic behaves as before. Test the Layer 7 behavior you rely on: header-based routing, path restrictions, JWT validation.
+
+## Roll back
+
+Every step is independently reversible. Roll back in the reverse order of the step you completed.
+
+| Last completed step | Rollback |
+| --- | --- |
+| Waypoint attached | `kubectl label namespace <namespace> istio.io/use-waypoint-` |
+| Ambient mode enabled | `kubectl label namespace <namespace> istio.io/dataplane-mode-` |
+| Sidecar injection removed | `kubectl label namespace <namespace> istio-injection=enabled` |
+| Workloads restarted | Re-add the injection label, then `kubectl rollout restart deployment -n <namespace>` |
+| Old policies deleted | `kubectl apply -f istio-config-backup.yaml` |
+| $[prodname]-managed Istio installed | `kubectl delete istio.operator.tigera.io default`, then reinstall your self-managed control plane |
+
+After a rollback that re-injects sidecars, confirm that pods show `2/2` containers and that traffic flows before you continue.
+
+:::warning
+
+Applying the full `istio-config-backup.yaml` restores your original resources, but it also overwrites any ambient resources you created during the migration that share a name with a backed-up resource. Delete the ambient resources first, or apply individual resources from the backup.
+
+:::
+
+## What changes in observability after migration
+
+* **Metrics.** In sidecar mode, metrics are reported with `reporter="source"` and `reporter="destination"`. In ambient mode they are reported with `reporter="source"` from zTunnel and `reporter="waypoint"`. Update dashboards and alerting rules that filter on the reporter label.
+* **Metrics merging.** Sidecar mode can merge application metrics into the proxy's metrics endpoint. Ambient mode does not. Configure Prometheus to scrape zTunnel, Waypoint, and application pods as separate targets.
+* **Tracing.** Sidecar mode produces two spans per hop. Ambient mode produces one span per Waypoint. Adjust trace-based SLOs.
+* **`istioctl proxy-status`** does not list ztunnel workloads. Use `istioctl ztunnel-config workloads -n calico-system` instead.
+* **$[prodname] flow logs** are unchanged, which is the point of the enhanced zTunnel: you keep the same service-level view you had before the mesh encrypted the traffic.
+
+## Troubleshooting
+
+Check whether the Istio pods are deployed:
+
+```bash
+kubectl get pods -n calico-system | grep 'istio\|ztunnel'
+```
+
+Check whether the Istio CRDs are deployed:
+
+```bash
+kubectl get crd | grep istio
+```
+
+Check which pods and namespaces are in the mesh:
+
+```bash
+istioctl ztunnel-config workloads -n calico-system
+```
+
+Check for errors logged by the zTunnel component:
+
+```bash
+ZTUNNEL_PODS=$(kubectl get pod -n calico-system \
+  -l app.kubernetes.io/name=ztunnel \
+  -o jsonpath='{.items[*].metadata.name}')
+
+for P in $ZTUNNEL_PODS; do
+  echo "--- Checking logs for pod: $P ---"
+  kubectl logs $P -n calico-system 2>/dev/null | grep -i error
+done
+```
+
+**A workload was labeled but never joined the mesh.** The pod most likely still has a sidecar, which takes precedence. Confirm that injection is removed from the namespace and restart the workload.
+
+**Traffic fails between a migrated and a not-yet-migrated namespace.** The two workloads trust different certificate authorities. Finish migrating both namespaces, or temporarily disable mTLS for that service pair with a `DestinationRule`.
+
+**A migrated workload is denied all traffic.** Check for an `AuthorizationPolicy` whose rules were entirely Layer 7. zTunnel drops the Layer 7 conditions, leaving an empty rule. Delete the policy and re-create it against a Waypoint with `targetRefs`.
+
+## Additional resources
+
+* [Istio Ambient Mode](about-istio-ambient.mdx)
+* [Deploy Istio Ambient Mode on your cluster](deploy-istio-ambient.mdx)
+* [Overview of Istio ambient mode](https://istio.io/latest/docs/ambient/overview/)
+* [Ambient and Kubernetes NetworkPolicy](https://istio.io/latest/docs/ambient/usage/networkpolicy/)
+* [Configuration options](../../reference/installation/api)
