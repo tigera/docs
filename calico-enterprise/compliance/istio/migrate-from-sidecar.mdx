@@ -68,7 +68,7 @@ Istio Ambient Mode on $[prodname] also has its own limitations, which apply afte
 * Connect-time load balancing is not compatible with Istio Ambient Mode.
 * Destination ports are preserved only when Istio is deployed without Waypoint. If you deploy Waypoint, traffic through the Waypoint shows port 15008 as its destination port.
 
-<!-- ENG REVIEW: confirm eBPF dataplane + ambient status for the shipping version. Fixes for the host-probe/SNAT issue landed in projectcalico/calico#9159 and #9192; confirm whether eBPF mode is a supported configuration for the bundled Istio, and whether Waypoint on eBPF is supported (see istio/istio#55481). If it is not, it belongs in this list. -->
+{/* ENG REVIEW: confirm eBPF dataplane + ambient status for the shipping version. Fixes for the host-probe/SNAT issue landed in projectcalico/calico#9159 and #9192; confirm whether eBPF mode is a supported configuration for the bundled Istio, and whether Waypoint on eBPF is supported (see istio/istio#55481). If it is not, it belongs in this list. */}
 
 ### Layer 7 policy causes a gap in enforcement
 
@@ -118,7 +118,7 @@ Layer 4 enforcement is not affected. zTunnel enforces L4 `AuthorizationPolicy` r
      kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/experimental-install.yaml
    ```
 
-<!-- ENG REVIEW: pin the Gateway API version we test against, and state whether the operator installs the Gateway API CRDs itself when Waypoint logging is enabled. -->
+{/* ENG REVIEW: pin the Gateway API version we test against, and state whether the operator installs the Gateway API CRDs itself when Waypoint logging is enabled. */}
 
 ## Plan your cutover
 
@@ -127,10 +127,10 @@ It cannot run alongside a self-managed Istio control plane, because both install
 
 **You must remove your self-managed Istio control plane before you create the `Istio` custom resource.**
 
-<!-- ENG REVIEW: this is the crux of the topic and needs to be confirmed or corrected before publication.
+{/* ENG REVIEW: this is the crux of the topic and needs to be confirmed or corrected before publication.
      1. Can the operator-managed Istio coexist with a self-managed istiod in istio-system for the duration of a phased migration (CRD ownership, validating/mutating webhooks, two istio-cni plugins on one node)? If yes, this whole section changes and a phased path becomes the recommendation.
      2. Can the operator-managed istiod use an existing root CA (a cacerts secret), so that workloads that still have sidecars can complete mTLS with workloads that zTunnel now handles? The IstioSpec API currently exposes istiod, istioCNI, ztunnel, waypointLogging, and dscpMark only.
-     3. What is the tested cert lifetime for sidecars that keep running after their control plane is removed? The 24-hour figure below is the Istio default, not a Tigera-tested number. -->
+     3. What is the tested cert lifetime for sidecars that keep running after their control plane is removed? The 24-hour figure below is the Istio default, not a Tigera-tested number. */}
 
 That constraint shapes the two supported cutover patterns.
 
@@ -267,7 +267,7 @@ Deploy a Waypoint before you enable ambient mode for the namespace, but do not a
 
 1. Update your $[prodname] network policies to allow traffic to port 15008 for the workloads behind the Waypoint. See [Network policy during and after migration](#network-policy-during-and-after-migration).
 
-<!-- ENG REVIEW: IstioSpec exposes waypointLogging, which injects an l7-collector sidecar into Waypoint pods to produce L7 logs. If that is a supported, documented capability in this release, it belongs here as a Calico-specific benefit of running Waypoints, with a link to the L7 logs topic. Today the L7 logs page says L7 log collection is not compatible with a service mesh, which reads as a contradiction for customers who deploy Waypoints. -->
+{/* ENG REVIEW: IstioSpec exposes waypointLogging, which injects an l7-collector sidecar into Waypoint pods to produce L7 logs. If that is a supported, documented capability in this release, it belongs here as a Calico-specific benefit of running Waypoints, with a link to the L7 logs topic. Today the L7 logs page says L7 log collection is not compatible with a service mesh, which reads as a contradiction for customers who deploy Waypoints. */}
 
 ## Step 4: Enable ambient mode, namespace by namespace
 
@@ -351,7 +351,7 @@ Repeat for each namespace. Namespaces you have not labeled are unaffected, subje
 
 1. Your $[prodname] policies still match the same traffic. Because the enhanced zTunnel preserves the original destination port, flows for a migrated workload should appear with their application ports, not 15008. Check the flow logs or the flow visualizations in the web console for the namespace, and compare against `calico-policy-snapshot.yaml`.
 
-   <!-- ENG REVIEW: replace with the exact console navigation path and, if available, a screenshot, plus a CLI equivalent for customers without console access. -->
+   {/* ENG REVIEW: replace with the exact console navigation path and, if available, a screenshot, plus a CLI equivalent for customers without console access. */}
 
 1. Application traffic behaves as before. Test the Layer 7 behavior you rely on: header-based routing, path restrictions, JWT validation.
 
