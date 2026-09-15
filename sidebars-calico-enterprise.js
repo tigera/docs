@@ -529,6 +529,7 @@ module.exports = {
           items: [
             'compliance/istio/about-istio-ambient',
             'compliance/istio/deploy-istio-ambient',
+            'compliance/istio/migrate-from-sidecar',
           ],
         },
         'compliance/encrypt-cluster-pod-traffic',
