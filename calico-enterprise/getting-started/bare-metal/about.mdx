@@ -97,6 +97,7 @@ cluster will use nftables, but can be configured to use iptables.
    | ------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ |
    | endpoint      | Required. Location of the log ingestion point for non-cluster hosts. | Any HTTPS URL with a domain name and a port number                       | string |
    | typhaEndpoint | Required. Location of the Typha endpoint for non-cluster host agent and Typha communication. If you are using an ingress controller or an external load balancer, ensure it is configured to allow TCP Layer 4 passthrough. This is required for non-cluster host agent to establish a mutual TLS (mTLS) connection to the cluster. | Any IP address or domain name with a port number | string |
+   | ingestionCompression | Optional. Compression for log batches in transit to the log ingestion endpoint. Defaults to `Zstd`. Hosts apply a change without a restart. | `Zstd`, `Gzip`, `None` | string |
 
    Wait until the Tigera Manager and non-cluster Typha deployments reach the Available status before proceeding to the next step.
 
@@ -168,6 +169,14 @@ cluster will use nftables, but can be configured to use iptables.
    :::note
 
    Enabling `calico-node.service` also turns on [boot-time network protection](boot-protection.mdx), which blocks inbound traffic from the start of boot until $[prodname] applies network policy. SSH stays reachable by default.
+
+   :::
+
+   The log forwarder reads `ingestionCompression` from the `NonClusterHost` resource, so no host configuration is needed. To override it on one host, set `COMPRESS` to `zstd`, `gzip`, or `none` in `/etc/calico/calico-fluent-bit/calico-fluent-bit.env` and restart the service.
+
+   :::note
+
+   Upgrade your cluster before the packages on your hosts. A host may run an older version than its cluster, never a newer one. Hosts fall back to gzip on a cluster whose `NonClusterHost` resource has no `ingestionCompression` field; every release accepts gzip.
 
    :::
 

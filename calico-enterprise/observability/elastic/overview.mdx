@@ -51,6 +51,17 @@ Fluent Bit buffers logs on each node's filesystem, under `/var/log/calico/calico
 
 $[prodname] enables user authentication in Elasticsearch, and secures access to Elasticsearch and Kibana instances using network policy.
 
+### Log ingestion compression
+
+Fluent Bit compresses each batch of logs it sends to the log ingestion endpoint. Set `ingestionCompression` on the LogCollector resource to `Zstd` (the default), `Gzip`, or `None`:
+
+```bash
+kubectl patch logcollector tigera-secure --type=merge \
+  --patch='{"spec":{"ingestionCompression":"Zstd"}}'
+```
+
+The setting applies only to batches in transit. It does not change the compression of the rotated log files on disk, the [additional destinations](archive-storage.mdx), or the OpenTelemetry exporters.
+
 ### RBAC and log access
 
 You control user access to logs using the standard Kubernetes RBAC cluster role and cluster role binding. For example:
