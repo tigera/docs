@@ -27,6 +27,8 @@ Install the Tigera fork of Forklift on an OpenShift cluster and connect it to a 
 - The BPF data plane enabled: `bpfEnabled: true` in the default `FelixConfiguration`. See [Enable eBPF on an existing cluster](../../operations/ebpf/enabling-ebpf.mdx).
 - OpenShift Virtualization (KubeVirt and CDI) installed, with `HyperConverged` Available.
 - A StorageClass for the migrated VM disks.
+  It must support the file locking `qemu-img` takes on an image it opens: a volume that cannot honor those locks fails the migration before conversion starts.
+  NFS-backed storage needs mount options that permit locking, such as `nfsvers=3,nolock` or NFSv4, set on the StorageClass rather than only on the export.
 - IP pools covering the VM addresses. The pod network uses an ordinary pool; each L2 VLAN needs its own pool with `allowedUses: [L2Workload]` and `disableBGPExport: true`. A VM keeps its address only if that address falls inside a pool. See [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx).
 
 ## How to
@@ -122,10 +124,24 @@ can be included to flag that the primary network should also receive address-pre
 To additionally force the primary NIC to get attached to a pre-configured Calico `Network`, the struct has
 fields `network` and `vlan` which target the Calico `Network` to use.
 
+`calico` is a property of a map item's `destination`, alongside `type`, and is valid only on an item of `type: pod`.
+At most one item in a `NetworkMap` may carry it.
+
 ```yaml
+  map:
+  - source:
+      id: <pod-network-portgroup-id>
+    destination:
+      type: pod
       calico:
         network: mock-l2-net   # cluster-scoped projectcalico.org/v3 Network CR
         vlan: 100              # must match a vlan.id entry in that Network
+  - source:
+      id: <secondary-portgroup-id>
+    destination:
+      type: multus
+      name: my-network-vlan10
+      namespace: vms
 ```
 
 | Field | Effect |
@@ -137,27 +153,29 @@ fields `network` and `vlan` which target the Calico `Network` to use.
 
 Note: The MAC is always carried over; the addresses follow when the `Plan` sets `preserveStaticIPs`. Definitions that use another CNI are left untouched. The values are set before the VM starts, so each interface is created already holding them.
 
-```yaml
-  map:
-  - source:
-      id: <secondary-portgroup-id>
-    destination:
-      type: multus
-      name: my-network-vlan10
-      namespace: vms
-```
-
-
 ### Verify address preservation worked
 
 Inspect the `virt-launcher` pod, or the VM template created post-migration.
-It should contain annotations for Calico address preservation, for each NIC
-in the NetworkMap:
+Each NIC in the `NetworkMap` carries a pair of annotations, and which keys to look for depends on the NIC.
+
+The primary NIC, mapped by an item of `type: pod` with a `calico` block, uses keys with no interface name:
 
 ```yaml
-cni.projectcalico.org/<interface>.hwAddr: ...
-cni.projectcalico.org/<interface>.ipAddrs: ...
+cni.projectcalico.org/hwAddr: '52:54:00:3a:1c:04'
+cni.projectcalico.org/ipAddrs: '["10.10.0.42"]'
 ```
+
+A secondary NIC, mapped by an item of `type: multus`, scopes each key to the interface it applies to:
+
+```yaml
+cni.projectcalico.org/<interface>.hwAddr: '52:54:00:3a:1c:05'
+cni.projectcalico.org/<interface>.ipAddrs: '["10.10.10.42"]'
+```
+
+For the name to use in place of `<interface>`, see [Which interface name to use](../l2-bridge/vm-identity.mdx#which-interface-name-to-use).
+
+The MAC is always stamped; `ipAddrs` appears only when the `Plan` sets `preserveStaticIPs`.
+$[prodname] adds `cni.projectcalico.org/podIP` and `podIPs` once the interface is up, which is what confirms the requested address was assigned.
 
 
 See [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx) for the `Network`, IP pool and attachment definition, and [Set a VM's IP and MAC address](../l2-bridge/vm-identity.mdx) for the annotations themselves.
