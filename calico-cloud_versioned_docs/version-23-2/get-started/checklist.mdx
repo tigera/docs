@@ -20,14 +20,15 @@ kubectl get installer default --namespace calico-cloud -o jsonpath --template '{
 {"clusterName":"my-new-cluster","state":"installing"}
 ```
 
-After `state` is `complete`, $[prodname] is properly installed.
+`state` moves through `waiting` and `installing` to `done`. If `state` is `error`, `message` says why.
 
 ## Check logs for fatal errors
 
-Check that the $[prodname] operator is running and that logs do not have any fatal errors.
+Check that the $[prodname] operator is running and that logs do not have any fatal errors. The deployment is named `calico-cloud-controller-manager` on a kubectl install and `calico-cloud` on a Helm install, so select it by label. The first line reports which version the operator installs.
 
 ```bash
-kubectl logs -n calico-cloud deployment/calico-cloud-controller-manager
+kubectl logs -n calico-cloud -l k8s-app=calico-cloud-updater
+2022-04-04T14:34:32.472Z        INFO    setup   starting cc-operator    {"ccOperatorVersion": "v23.0.2", "calicoCloudVersion": "v23.0.2"}
 2022-04-04T14:34:32.472Z        INFO    controller-runtime.metrics      metrics server is starting to listen    {"addr": "127.0.0.1:8080"}
 2022-04-04T14:34:32.472Z        INFO    setup   starting manager
 2022-04-04T14:34:32.472Z        INFO    setup   config  {"ccBaseURL": "https://www.dev.calicocloud.io/api", "debug": false, "leader-elect": true}
@@ -36,6 +37,16 @@ I0404 14:34:32.472586       1 leaderelection.go:243] attempting to acquire leade
 I0404 14:34:32.480870       1 leaderelection.go:253] successfully acquired lease calico-cloud/c2ad41ce.calicocloud.io
 <...>
 ```
+
+## Check installation errors
+
+**`spec.calicoCloudVersion ... does not match the Calico Cloud version installed by this operator`**
+
+Each operator installs one version of $[prodname] and rejects an `Installer` that asks for another. Set `spec.calicoCloudVersion` to the version the operator installs, remove it, or re-run the connect command for the version you want.
+
+**Operator pod in `ImagePullBackOff`**
+
+The operator image for that version is missing from your registry. Each version needs its own — see [Set up a private registry](setup-private-registry.mdx).
 
 ## Check custom resources
 
