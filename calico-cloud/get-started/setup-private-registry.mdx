@@ -28,6 +28,7 @@ An **image path** is a directory in a registry that contains images required to 
 
 **Required**
 
+- [Helm CLI](https://helm.sh/docs/intro/install/) command
 - Use the [Crane command](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) to follow steps in this guide. (Other tools can be used, but commands be adjusted accordingly.)
 - Image registry
   - Must be private (accessible only on a private network or using log in credentials)
@@ -49,8 +50,6 @@ Add the required $[prodname] images to a private registry.
 
 <VersionedCloudImageList />
 
-`OPERATOR_IMAGE` is the $[prodname] operator, which is released per $[prodname] version and tagged with it; `IMAGES` is everything else. Mirror both for each version you plan to install.
-
 ### Set up the private registry
 
 ```bash
@@ -65,14 +64,12 @@ IMAGEPATH=""
 
 #### Image examples
 
-| Original image                       | Image Registry | Image Path    | Private registry image                                |
-| ------------------------------------ | -------------- | ------------- | ----------------------------------------------------- |
-| `quay.io/tigera/typha:v1.2.3`        | `my.registry/` |               | `my.registry/tigera/typha:v1.2.3`                     |
-| `quay.io/tigera/typha:v1.2.3`        | `my.registry/` | `custom-path` | `my.registry/custom-path/typha:v1.2.3`                |
-| `quay.io/tigera/cc-operator:v23.0.2` | `my.registry/` |               | `my.registry/calico-cloud-public/cc-operator:v23.0.2` |
-| `quay.io/tigera/cc-operator:v23.0.2` | `my.registry/` | `custom-path` | `my.registry/custom-path/cc-operator:v23.0.2`         |
-
-The operator is the exception: with no image path set, it is pulled from the `calico-cloud-public` path in your registry rather than `tigera`.
+| Original image                      | Image Registry | Image Path    | Private registry image                       |
+| ----------------------------------- | -------------- | ------------- | -------------------------------------------- |
+| `quay.io/tigera/typha:v1.2.3`       | `my.registry/` |               | `my.registry/tigera/typha:v1.2.3`            |
+| `quay.io/tigera/typha:v1.2.3`       | `my.registry/` | `custom-path` | `my.registry/custom-path/typha:v1.2.3`       |
+| `quay.io/tigera/cc-operator:v4.5.6` | `my.registry/` |               | `my.registry/tigera/cc-operator:v4.5.6`      |
+| `quay.io/tigera/cc-operator:v4.5.6` | `my.registry/` | `custom-path` | `my.registry/custom-path/cc-operator:v4.5.6` |
 
 ### Copy images to your registry
 
@@ -86,7 +83,6 @@ for image in ${IMAGES[@]}; do
   img_base=$(echo ${image} | sed "s#^.*/\([^/]*/[^/]*$\)#\1#")
   crane cp ${image} ${REGISTRY}${img_base} || break
 done
-crane cp ${OPERATOR_IMAGE} ${REGISTRY}calico-cloud-public/${OPERATOR_IMAGE##*/}
 ```
 
 </TabItem>
@@ -97,7 +93,6 @@ for image in ${IMAGES[@]}; do
   img_base=$(echo ${image} | sed "s#^.*/##")
   crane cp ${image} ${REGISTRY}${IMAGEPATH}/${img_base} || break
 done
-crane cp ${OPERATOR_IMAGE} ${REGISTRY}${IMAGEPATH}/${OPERATOR_IMAGE##*/}
 ```
 
 </TabItem>
