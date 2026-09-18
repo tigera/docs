@@ -48,8 +48,8 @@ const CodeBlockSelector = () => {
         title={`Images for Calico Cloud ${selectedVersion}`}
         language='bash'
       >
-        {`OPERATOR_IMAGE=${variables.cloudoperatorimage}:${operatorTag(selectedVersion)}
-IMAGES=(
+        {`IMAGES=(
+${variables.cloudoperatorimage}:${operatorTag(selectedVersion)}
 ${ccImageLists[selectedVersion]}
 )`}
       </CodeBlock>

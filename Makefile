@@ -153,7 +153,7 @@ $(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES) $(CALICO_CLOUD_BRANCHES): %__operator_
 # This breaks up automatic generation by the three product
 # categories - OSS, cloud, and enterprise - but also retains
 # the `autogen` target, which updates all three.
-#
+# 
 # Don't allow parallel jobs (this prevents breaking autogen targets)
 # and don't print commands that we run.
 .SILENT .NOTPARALLEL .PHONY: autogen autogen_calico autogen_enterprise autogen_cloud
@@ -264,17 +264,22 @@ build-crd-reference-docs: $(CRD_DOC_GENERATOR)
 		$(SED_INPLACE) 's/ \(Default:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
 		$(SED_INPLACE) 's/ \(Supported values are:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
 
-# Adds a Calico Cloud version to the private-registry image list in
-# src/___new___/data/ccImageLists.js. The list is keyed by Calico Cloud version and shared by every
-# docs tree, so it is updated once per release rather than once per tree.
-#
-# Both arguments are required:
-#   CC_VERSION       the Calico Cloud version being released, e.g. v24.0.0
-#   MANIFEST_VERSION the cloud-manifest version that release installs from, e.g. v3.24.0-1.0-1
 update-cloud-image-list:
-	@if [ -z "$(CC_VERSION)" ] || [ -z "$(MANIFEST_VERSION)" ]; then \
-		echo "usage: make update-cloud-image-list CC_VERSION=vXX.Y.Z MANIFEST_VERSION=v3.XX.Y-N"; false; fi
-	./scripts/update-cloud-image-list.sh "$(CC_VERSION)" "$(MANIFEST_VERSION)"
+	@if [ -z "${RUN_UPDATE_CLOUD_IMAGE_LIST}" ]; then echo "Use 'make run-update-cloud-image-list' instead"; false; fi
+	sed -i  '/^\$$INSTALLER_IMAGE/,/^)/{/^\$$/!{/^)/!d}}' $(PRODUCT)/get-started/setup-private-registry.mdx
+	dl=$$(cat $(PRODUCT)/variables.js | grep clouddownloadurl | sed -e "s/^[^']*'\([^']*\)'.*$$/\1/" ) && \
+	curl -O $$dl/image-list && \
+	sed -i -e "/^\$$INSTALLER_IMAGE/r image-list" $(PRODUCT)/get-started/setup-private-registry.mdx
+	rm -f image-list
+
+# Add this back to the netlify target when the missing windows images are addressed in the image-list
+run-update-cloud-image-list:
+	RUN_UPDATE_CLOUD_IMAGE_LIST=1 PRODUCT=calico-cloud make update-cloud-image-list
+	for x in $$(ls calico-cloud_versioned_docs/); do \
+		RUN_UPDATE_CLOUD_IMAGE_LIST=1 PRODUCT=calico-cloud_versioned_docs/$$x make update-cloud-image-list; \
+	done
+	@if [ "$$(git diff --stat ./calico-cloud*/**/get-started/connect/setup-private-registry.mdx)" != "" ]; then \
+	echo "You might need to run 'make run-update-cloud-image-list' and commit the changes"; exit 1; fi
 
 # This allow generating the components version for a specific product
 # NOTE: currently only implemented for calico-enterprise; there is validation in the script to check this
