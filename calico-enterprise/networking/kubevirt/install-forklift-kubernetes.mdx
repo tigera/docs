@@ -43,6 +43,9 @@ Upstream Forklift's guest conversion fails on clusters whose nodes carry the run
   ```
 
 - CDI and a default StorageClass, for migrations that import disks. Neither is needed to install Forklift.
+  The StorageClass backing the migrated disks must support the file locking `qemu-img` takes on an image it opens.
+  A volume that cannot honor those locks fails the migration before conversion starts.
+  NFS-backed storage needs mount options that permit locking, such as `nfsvers=3,nolock` or NFSv4, set on the StorageClass rather than only on the export.
 
 ## How to
 
@@ -96,8 +99,7 @@ OpenShift hits neither: its nodes permit `unshare` and confine containers with S
 
 Put the profiles on every node that can run a conversion. Use the Security Profiles Operator if you already run it; otherwise you may apply the ConfigMap and DaemonSet patch below, after inspection.
 
-**Note** This is a privileged DaemonSet. It writes both profiles under the kubelet's seccomp directory, and loads the AppArmor one on nodes that have `apparmor_parser`. Its log says which it did on each node:
-
+**Note** This is a privileged DaemonSet. It writes both profiles under the kubelet's seccomp directory, and loads the AppArmor one on nodes that have `apparmor_parser`.
 
 ```bash
 kubectl apply -f $[filesUrl]/forklift/forklift-virt-v2v-profiles.yaml
@@ -105,11 +107,23 @@ kubectl apply -f $[filesUrl]/forklift/forklift-virt-v2v-profiles.yaml
 kubectl -n konveyor-forklift rollout status ds/forklift-virt-v2v-profile-installer
 ```
 
+Each pod reports what it did on its own node, and a single `kubectl logs` across the DaemonSet loses that attribution, so read the logs one pod at a time:
+
 ```bash
-kubectl -n konveyor-forklift logs -l service=forklift-virt-v2v-profile-installer -c install
+for pod in $(kubectl -n konveyor-forklift get pods \
+  -l service=forklift-virt-v2v-profile-installer -o name); do
+  echo "== $(kubectl -n konveyor-forklift get $pod -o jsonpath='{.spec.nodeName}')"
+  kubectl -n konveyor-forklift logs $pod -c install
+done
 ```
 
-Then name the profiles on the `ForkliftController`:
+A node that enforces AppArmor reports `loaded AppArmor profile`.
+One that does not reports `no apparmor_parser on this node, skipping AppArmor`.
+What you see decides which fields to set next.
+
+Then name the profiles on the `ForkliftController`.
+The patch below sets all four fields, which is what a cluster of AppArmor-enforcing nodes needs.
+Drop the two `apparmor` lines if no node enforces it:
 
 ```bash
 kubectl -n konveyor-forklift patch forkliftcontroller forklift-controller \
@@ -120,7 +134,22 @@ kubectl -n konveyor-forklift patch forkliftcontroller forklift-controller \
     "virt_v2v_apparmor_profile_path": "forklift-virt-v2v-unshare"}}'
 ```
 
-All four fields are unset by default, which leaves every cluster on its runtime default: naming a profile that a node does not carry makes the kubelet refuse the pod outright. A path given without its type is rejected as the CR is saved. On nodes that do not enforce AppArmor, set only the seccomp pair.
+All four fields are unset by default, which leaves every cluster on its runtime default.
+A path given without its type is rejected as the CR is saved.
+
+The fields belong to the one `ForkliftController`, so they apply to every conversion pod in the cluster.
+There is no per-node and no per-`Plan` override, which makes the AppArmor pair a property of the cluster rather than of a node:
+
+| Nodes that can run a conversion | Set |
+| --- | --- |
+| All enforce AppArmor | All four fields |
+| None enforce AppArmor | The seccomp pair only |
+
+A cluster whose conversion-capable nodes are mixed has no valid setting.
+Name the AppArmor profile and the kubelet refuses the conversion pod outright wherever AppArmor is absent, reporting `Cannot enforce AppArmor: AppArmor is not enabled on the host`.
+Omit it and the pod is admitted on an AppArmor node, where the remount then fails.
+
+If your nodes are mixed, confine conversions to a uniform set of them with `spec.convertorNodeSelector` on the `Plan`, and set these fields to match the set you chose.
 
 ### 5. Map a VM's networks to $[prodname]
 
@@ -137,10 +166,24 @@ can be included to flag that the primary network should also receive address-pre
 To additionally force the primary NIC to get attached to a pre-configured Calico `Network`, the struct has
 fields `network` and `vlan` which target the Calico `Network` to use.
 
+`calico` is a property of a map item's `destination`, alongside `type`, and is valid only on an item of `type: pod`.
+At most one item in a `NetworkMap` may carry it.
+
 ```yaml
+  map:
+  - source:
+      id: <pod-network-portgroup-id>
+    destination:
+      type: pod
       calico:
         network: mock-l2-net   # cluster-scoped projectcalico.org/v3 Network CR
         vlan: 100              # must match a vlan.id entry in that Network
+  - source:
+      id: <secondary-portgroup-id>
+    destination:
+      type: multus
+      name: my-network-vlan10
+      namespace: vms
 ```
 
 | Field | Effect |
@@ -152,27 +195,29 @@ fields `network` and `vlan` which target the Calico `Network` to use.
 
 Note: The MAC is always carried over; the addresses follow when the `Plan` sets `preserveStaticIPs`. Definitions that use another CNI are left untouched. The values are set before the VM starts, so each interface is created already holding them.
 
-```yaml
-  map:
-  - source:
-      id: <secondary-portgroup-id>
-    destination:
-      type: multus
-      name: my-network-vlan10
-      namespace: vms
-```
-
-
 ### Verify address preservation worked
 
 Inspect the `virt-launcher` pod, or the VM template created post-migration.
-It should contain annotations for Calico address preservation, for each NIC
-in the NetworkMap:
+Each NIC in the `NetworkMap` carries a pair of annotations, and which keys to look for depends on the NIC.
+
+The primary NIC, mapped by an item of `type: pod` with a `calico` block, uses keys with no interface name:
 
 ```yaml
-cni.projectcalico.org/<interface>.hwAddr: ...
-cni.projectcalico.org/<interface>.ipAddrs: ...
+cni.projectcalico.org/hwAddr: '52:54:00:3a:1c:04'
+cni.projectcalico.org/ipAddrs: '["10.10.0.42"]'
 ```
+
+A secondary NIC, mapped by an item of `type: multus`, scopes each key to the interface it applies to:
+
+```yaml
+cni.projectcalico.org/<interface>.hwAddr: '52:54:00:3a:1c:05'
+cni.projectcalico.org/<interface>.ipAddrs: '["10.10.10.42"]'
+```
+
+For the name to use in place of `<interface>`, see [Which interface name to use](../l2-bridge/vm-identity.mdx#which-interface-name-to-use).
+
+The MAC is always stamped; `ipAddrs` appears only when the `Plan` sets `preserveStaticIPs`.
+$[prodname] adds `cni.projectcalico.org/podIP` and `podIPs` once the interface is up, which is what confirms the requested address was assigned.
 
 
 See [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx) for the `Network`, IP pool and attachment definition, and [Set a VM's IP and MAC address](../l2-bridge/vm-identity.mdx) for the annotations themselves.
