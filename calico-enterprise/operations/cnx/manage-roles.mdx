@@ -1,0 +1,142 @@
+---
+description: Grant scoped access to Calico Enterprise by creating custom roles in the web console and binding them to groups from your identity provider, instead of writing Kubernetes RBAC manifests by hand.
+---
+
+import IconUser from '/img/icons/user-icon.svg';
+
+# Grant access with custom roles and IdP groups
+
+## Big picture
+
+Create and scope $[prodname] roles from the **Manage Team** page in the web console, and bind them to groups from your identity provider, instead of writing Kubernetes RBAC manifests by hand.
+
+## Value
+
+Giving a team access to one tier, one namespace, or one web console feature normally means hand-writing `ClusterRole` and `ClusterRoleBinding` manifests, and knowing which $[prodname] API resources each feature reads. **Manage Team** turns that into a list of named permissions: you pick what a role can view or modify and where it applies, and $[prodname] writes and reconciles the underlying Kubernetes RBAC for you.
+
+## Concepts
+
+### A role is a named set of permissions
+
+A role in the console is a set of permissions under a name, and that name is a Kubernetes **group**. Membership in the group is what grants the role: anyone whose login carries the group has it. Nothing else decides who holds a role.
+
+Behind each role, $[prodname] writes the Kubernetes RBAC that grants its permissions — `ClusterRoleBindings`, or `RoleBindings` where you scoped a permission to a namespace — labeled `app.kubernetes.io/managed-by=calico-ui-rbac`. These are the console's to manage; you do not edit them by hand.
+
+The console does not create or invite users. The **Users** tab is read-only, and lists the subjects it finds on those bindings and in any bound identity provider groups, with the roles in effect for each.
+
+### Role management is per cluster
+
+Role management is off by default and is turned on one cluster at a time, including each managed cluster in a multi-cluster deployment. Roles are local to the cluster they were created on and are not synchronized; use **Export YAML** to copy them to another cluster.
+
+## Before you begin
+
+**Required**
+
+- A cluster running $[prodname] 3.24.0-3.0 or later
+- [Access to the web console](access-the-manager.mdx) as a user bound to `tigera-network-admin`
+
+**Limitations**
+
+- Roles do not synchronize between clusters. Exported roles are a copy, not a link.
+
+## How to
+
+- [Turn on role management](#turn-on-role-management)
+- [Connect an identity provider directory](#connect-an-identity-provider-directory)
+- [Create a role](#create-a-role)
+- [See who has access](#see-who-has-access)
+- [Copy roles to another cluster](#copy-roles-to-another-cluster)
+
+### Turn on role management
+
+1. In the web console, select the cluster you want to manage roles on.
+1. Click the user icon <IconUser width="20"/> > **Manage Team**.
+1. Click **Enable RBAC management**.
+
+$[prodname] sets `rbac-ui-enabled` to `true` in the `rbac-ui-config` ConfigMap in the `calico-system` namespace, then builds the catalogue of permissions. This takes a few seconds, after which the **Roles** and **Users** tabs appear.
+
+To turn role management off again, set the flag back to `false`; the console has no control for this. Roles you already created keep working, but are no longer manageable from the console.
+
+```bash
+kubectl get configmap rbac-ui-config -n calico-system -o json \
+  | jq '.data["rbac-ui-enabled"] = "false"' \
+  | kubectl replace -f -
+```
+
+`kubectl patch` fails here: `tigera-network-admin` holds `get` and `update` on this ConfigMap, not `patch`.
+
+### Connect an identity provider directory
+
+Connecting your directory lets roles bind to groups that already exist in it, so membership stays managed in your identity provider and users pick their roles up at the next sign-in.
+
+This requires the cluster to authenticate users with [LDAP](configure-identity-provider.mdx), on port 389 or 636. The directory is read on the management cluster only, so create the secret there and turn role management on there too, even when the role applies to a managed cluster.
+
+Create the directory-sync secret. This is separate from the `tigera-ldap-credentials` secret that authentication uses; its `url` must point at the same host as `Authentication.spec.ldap.host`, written as a full URL. $[prodname] walks the directory with these credentials and offers the groups it finds when you create a role.
+
+```bash
+kubectl create secret generic tigera-idp-ldap-config -n calico-system \
+  --from-literal=url=ldaps://ad.example.com:636 \
+  --from-literal=bindDN='cn=admin,dc=example,dc=com' \
+  --from-literal=bindPassword='<password>' \
+  --from-literal=baseDN='ou=groups,dc=example,dc=com'
+```
+
+Optionally add `groupFilter` (default `(objectClass=groupOfNames)`), `nameAttribute` (default `cn`; Active Directory typically uses `sAMAccountName`), `caBundle` for a private certificate authority, and `refreshIntervalSeconds` (default 300, clamped to 60–86400).
+
+### Create a role
+
+A role's name is a group, so choosing the name decides who gets it. There are two ways to set it:
+
+- **Bind an IdP group** takes the name from a group in your [connected directory](#connect-an-identity-provider-directory), so everyone already in that group has the role. Membership stays managed in your identity provider, and there is nothing to do outside the console. This is the usual choice.
+- **Manual group binding** lets you type the group name yourself, for a group the directory sync does not offer.
+
+1. Click the user icon <IconUser width="20"/> > **Manage Team** > **Roles** > **Create Role**.
+1. Choose what the role binds to, then click **Next**. With no directory connected this step does not appear and the role form opens straight away.
+   - **Bind an IdP group** is selected by default. Pick a group from the list; a group can back only one role, so any that already do are shown as unavailable.
+   - **Manual group binding** opens the form with an empty name for you to fill in.
+1. Name the role:
+   - For an IdP group, **IdP Group** is fixed to the group you picked. **Role Display Name** is cosmetic: it is what the **Roles** list shows, so you can make it readable without changing who holds the role.
+   - For a manual role, **Role Name** is the group itself. Any non-empty value up to 253 characters is accepted, spaces and `@` included.
+1. Click **Add Permission** and choose one. Permissions are per feature area — policies, network sets, dashboards, service graph, packet captures, egress gateways and so on — each offered as **View** or **Modify**. The picker lists what is available on the cluster. Note that **Alerts and Security Events Settings** covers alert configuration, not the events themselves.
+1. Scope the permission, where it supports it:
+   - **Tier** — for policy permissions. Leave it as **all tiers** to apply the permission to every tier.
+   - **Namespace** — for namespaced permissions. Leave it as **any namespace** to apply the permission cluster-wide.
+1. Add any further permissions, then click **Save**. A role must carry at least one permission.
+
+A role bound to a directory group appears in the list as **Custom - IdP**. Its membership is owned by your identity provider, so its subjects cannot be edited from the console.
+
+To change a role later, select **Actions** > **Edit Permissions**. **Delete Role** removes the role and its bindings from this cluster; subjects bound to it lose the access it granted.
+
+### See who has access
+
+Click the user icon <IconUser width="20"/> > **Manage Team** > **Users** to review which subjects hold which roles, and when each last signed in. Select a subject to see the permissions its roles carry.
+
+The tab is read-only, and lists the subjects on the roles' bindings plus the members of any bound identity provider groups; **Last signed in** fills in once a subject authenticates. Effective permissions are the union of these roles and anything bound to the subject outside the console, which this view does not show.
+
+To audit which group each role binds, list the bindings the console manages.
+
+```bash
+kubectl get clusterrolebinding -l app.kubernetes.io/managed-by=calico-ui-rbac \
+  -o custom-columns='NAME:.metadata.name,ROLE:.roleRef.name,GROUP:.subjects[0].name'
+```
+
+### Copy roles to another cluster
+
+Roles apply only to the cluster they were created on. To reuse them elsewhere, export them and apply them to a cluster that also has role management turned on. The export carries each role's bindings, not the permissions they point at, and those exist only where the console has built its catalogue.
+
+1. Select the source cluster, then click the user icon <IconUser width="20"/> > **Manage Team** > **Roles** > **Export YAML**.
+1. Apply the file to each target cluster.
+
+   ```bash
+   kubectl apply -f <exported-file>.yaml
+   ```
+
+Check first that the target cluster has the tiers and namespaces the roles were scoped to. A binding naming a tier that is missing there applies without error but grants nothing, and a binding into a namespace that does not exist is rejected.
+
+The roles are independent copies: later changes on the source cluster are not propagated.
+
+## Additional resources
+
+- [Configure user roles and permissions](roles-and-permissions.mdx)
+- [Configure an external identity provider](configure-identity-provider.mdx)
+- [Configure RBAC for tiered policies](../../network-policy/policy-tiers/rbac-tiered-policies.mdx)
