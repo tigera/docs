@@ -225,6 +225,7 @@ module.exports = {
             'networking/egress/egress-gateway-on-prem',
             'networking/egress/egress-gateway-host-ip',
             'networking/egress/egress-gateway-azure',
+            'networking/egress/egress-gateway-azure-udr',
             'networking/egress/egress-gateway-aws',
             'networking/egress/egress-gateway-maintenance',
             'networking/egress/external-network',

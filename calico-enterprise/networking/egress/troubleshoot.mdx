@@ -234,6 +234,26 @@ iptables-save -c | grep -i MASQUERADE
 iptables-save -c | grep -i SNAT
 ```
 
+## Routes are missing or traffic is dropped (user-defined route setups)
+
+Setting these clusters up is covered in
+[Configure egress gateways, Azure user-defined routes](egress-gateway-azure-udr.mdx). This section
+covers what each symptom tells you.
+
+**No route appears, and Azure reports no error.** Read the kube-controllers log with debug logging
+enabled. Each sweep reports how many route tables are visible, how many are managed, and how many
+are selected, which tells you whether to suspect the role assignment, the management marker, or the
+routing tags. A visible count of zero means the identity cannot read the table at all.
+
+**A table you tagged behaves as though it were unmarked.** The management marker's value must be
+`true`; any other value counts as unmarked, and $[prodname] logs the reason rather than ignoring the
+table silently. Tag keys are matched case-insensitively and values exactly, so a mismatch is in the
+value or the key spelling, never the key's case.
+
+**Gateway pods are `NotReady`.** The gateway's health probes run over the egress path, so a node
+that has stopped forwarding fails them. Check NIC IP forwarding on that node; an AKS node image
+upgrade can turn it off.
+
 ## Finding leaked AWS ENIs
 
 In normal usage of the AWS-backed IP pools feature, the $[noderunning] Pod on each node will manage the
