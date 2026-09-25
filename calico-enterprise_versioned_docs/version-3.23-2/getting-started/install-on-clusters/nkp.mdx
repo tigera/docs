@@ -1,0 +1,220 @@
+---
+description: Install Calico Enterprise on a Nutanix Kubernetes Platform managed cluster created without a CNI plugin.
+---
+
+# Nutanix Kubernetes Platform (NKP)
+
+NKP installs Calico Open Source as the Container Network Interface (CNI) plugin for every managed cluster it creates. Rather than install one CNI plugin and replace it, you create the managed cluster without a CNI plugin and install $[prodname] directly, so the cluster runs $[prodname] from the moment its nodes become ready.
+
+Nutanix certifies $[prodname] on NKP.
+
+## Prerequisites
+
+- You have an NKP management cluster with a [compatible version of NKP](../compatibility.mdx#nkp).
+
+- The connected infrastructure for your managed cluster meets the $[prodname] [system requirements](requirements.mdx).
+
+- You have a storage class for $[prodname].
+
+  See [Configure a storage class](../../operations/logstorage/create-storage.mdx). The default NKP storage class is served by a local volume provisioner that discovers volumes on your nodes, so it provides no storage until your nodes have volumes available to it.
+
+- You have the [Tigera private registry credentials and a license key](calico-enterprise.mdx).
+
+- On your workstation, you have the `nkp` CLI tool and a `kubectl` environment with access to your NKP management cluster.
+
+## Create an NKP managed cluster with no CNI plugin
+
+To create a managed cluster without a CNI plugin, generate the cluster manifest, remove the CNI add-on from it, and apply the result.
+
+1. Generate the cluster manifest instead of creating the cluster directly, substituting the arguments you would normally pass to `nkp create cluster`.
+
+   ```bash
+   nkp create cluster <provider> --cluster-name <cluster-name> \
+     --dry-run -o yaml \
+     <your-other-arguments> > cluster.yaml
+   ```
+
+   :::note
+
+   Any `PreprovisionedInventory` you pass must not set a `namespace` field. NKP generates a namespace for each managed cluster, and a hard-coded namespace makes the SSH key secret unresolvable.
+
+   :::
+
+1. Search `cluster.yaml` for `cni`. NKP generates the CNI add-on in one of two forms. Remove whichever one you find:
+
+   - A `ClusterResourceSet` named `calico-cni-installation-<cluster-name>`, together with the two `ConfigMap` resources it references, `calico-cni-installation-<cluster-name>` and `tigera-operator-<cluster-name>`. Remove all three.
+   - A `cni` section under `addons` in the `clusterConfig` variable. Remove the `cni` section.
+
+   Leave everything else in place, including the add-ons for storage, load balancing, and node feature discovery.
+
+1. Apply the manifest.
+
+   ```bash
+   kubectl apply -f cluster.yaml
+   ```
+
+   :::note
+
+   `nkp create cluster --dry-run` creates the cluster namespace on the management cluster and then deletes it. If you apply the manifest immediately, the apply can fail with `unable to create new content in namespace <namespace> because it is being terminated`. Wait until the namespace no longer exists before you apply:
+
+   ```bash
+   kubectl get namespace <namespace>
+   ```
+
+   The namespace name is in the generated manifest.
+
+   :::
+
+1. Wait for the control plane to initialize, then retrieve the kubeconfig for your new cluster.
+
+   ```bash
+   nkp get kubeconfig --cluster-name <cluster-name> -n <namespace> > managed-cluster.conf
+   ```
+
+1. Confirm that the nodes are present and in a `NotReady` state.
+
+   ```bash
+   kubectl --kubeconfig managed-cluster.conf get nodes
+   ```
+
+   Every node reports `NotReady`. This is expected: a node cannot become ready until a CNI plugin is installed. The nodes become ready after you install $[prodname].
+
+1. Point `kubectl` at the managed cluster.
+
+   ```bash
+   export KUBECONFIG=managed-cluster.conf
+   ```
+
+   Every command in the rest of this procedure runs against the managed cluster. If you skip this step, you install $[prodname] on your NKP management cluster instead.
+
+## Install $[prodname]
+
+1. Install the Tigera Operator and custom resource definitions.
+
+   ```bash
+   kubectl create -f $[filesUrl]/manifests/operator-crds.yaml
+   kubectl create -f $[filesUrl]/manifests/tigera-operator.yaml
+   ```
+
+1. Install the Prometheus operator and related custom resource definitions. The Prometheus operator is used to deploy Prometheus server and Alertmanager to monitor $[prodname] metrics.
+
+   :::note
+
+   If you have an existing Prometheus operator in your cluster that you want to use, skip this step. To work with $[prodname], your Prometheus operator must be v0.40.0 or higher.
+
+   :::
+
+   ```bash
+   kubectl create -f $[filesUrl]/manifests/tigera-prometheus-operator.yaml
+   ```
+
+1. Install your pull secret.
+
+   If pulling images directly from `quay.io/tigera`, you can use the credentials provided to you by your Tigera support representative. If using a private registry, use your private registry credentials instead.
+
+   ```bash
+   kubectl create secret generic tigera-pull-secret \
+       --type=kubernetes.io/dockerconfigjson -n tigera-operator \
+       --from-file=.dockerconfigjson=<path/to/pull/secret>
+   ```
+
+1. Install any extra [Calico resources](../../reference/resources/index.mdx) needed at cluster start using [calicoctl](../../reference/clis/calicoctl/overview.mdx).
+
+1. Install the Tigera custom resources. For more information on configuration options available, see [the installation reference](../../reference/installation/api.mdx).
+
+   ```bash
+   kubectl create -f $[filesUrl]/manifests/custom-resources.yaml
+   ```
+
+   :::note
+
+   The pod CIDR in the `Installation` resource must match the pod CIDR of your NKP cluster. NKP and $[prodname] both default to `192.168.0.0/16`, so no change is needed unless you overrode the pod network when you created the cluster.
+
+   :::
+
+   Monitor progress with the following command:
+
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+
+   Wait until the `apiserver` shows a status of `Available`, then proceed to the next section.
+
+## Install the $[prodname] license
+
+```bash
+kubectl create -f </path/to/license.yaml>
+```
+
+Monitor progress with the following command:
+
+```bash
+watch kubectl get tigerastatus
+```
+
+## Verify the installation
+
+1. Confirm that every node is now ready.
+
+   ```bash
+   kubectl get nodes
+   ```
+
+   Nodes become ready within about a minute of the operator starting. A node cannot become ready without a working CNI plugin, so this is the clearest signal that the installation succeeded.
+
+1. Confirm that the cluster runs $[prodname] rather than Calico Open Source.
+
+   ```bash
+   kubectl get installation default -o jsonpath='{.spec.variant}'
+   ```
+
+   The output is `TigeraSecureEnterprise`. If the output is `Calico`, the cluster is running Calico Open Source, which means the CNI add-on was not removed from the cluster manifest.
+
+1. Confirm that the core components are available.
+
+   ```bash
+   kubectl get tigerastatus
+   ```
+
+   The `apiserver` and `calico` components both show `AVAILABLE` as `True`.
+
+   Components that depend on Elasticsearch or Prometheus, such as `log-storage-elastic`, `manager`, and `monitor`, can report `DEGRADED` for several minutes while those services start.
+   This is expected and resolves on its own.
+
+1. Confirm that pods can reach each other across nodes.
+
+   Running pods do not prove that traffic flows between nodes. Create pods on more than one node:
+
+   ```bash
+   kubectl create deployment connectivity-check --replicas 4 \
+     --image registry.k8s.io/e2e-test-images/agnhost:2.47 -- sleep 3600
+   kubectl get pods -l app=connectivity-check -o wide
+   ```
+
+   From a pod on one node, ping a pod on a different node:
+
+   ```bash
+   kubectl exec <pod-name> -- ping -c 3 <pod-ip-on-another-node>
+   ```
+
+   All three packets are received. Delete the deployment when you are finished:
+
+   ```bash
+   kubectl delete deployment connectivity-check
+   ```
+
+## Next steps
+
+**Recommended**
+
+- [Configure access to the $[prodname] web console](../../operations/cnx/access-the-manager.mdx)
+- [Authentication quickstart](../../operations/cnx/authentication-quickstart.mdx)
+- [Configure your own identity provider](../../operations/cnx/configure-identity-provider.mdx)
+
+**Recommended - Networking**
+
+- The default networking uses IPIP encapsulation with BGP routing. For all networking options, see [Determine best networking option](../../networking/determine-best-networking.mdx).
+
+**Recommended - Security**
+
+- [Get started with $[prodname] tiered network policy](../../network-policy/policy-tiers/tiered-policy.mdx)
