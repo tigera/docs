@@ -12,15 +12,6 @@ Learn about the new features, bug fixes, and other updates in this release of $[
 
 ## New features and enhancements
 
-### Native v3 CRDs by default
-
-New installs now default to v3 CRD mode, where `projectcalico.org/v3` resources are served directly by CRDs with no aggregation API server.
-Existing and upgraded clusters are unaffected.
-To install with the aggregation API server instead, apply the v1 CRDs before installing the operator.
-v3 CRD mode requires Kubernetes 1.32 or later, and is the successor to the aggregation API server.
-
-For more information, see [Native v3 CRDs](../operations/native-v3-crds.mdx).
-
 ### eBPF: established connection limits
 
 The eBPF data plane now enforces the `qos.projectcalico.org/ingressMaxConnections` and `qos.projectcalico.org/egressMaxConnections` annotations, which previously took effect only on the standard data plane.
@@ -277,29 +268,47 @@ You should consider migrating away from a deprecated feature before it is remove
 
 ## Upgrade notes
 
-{/* Add breaking changes and required upgrade steps here, one subsection per feature. */}
-
-### OpenStack resync
-
-The periodic resync is gone.
-`resync_interval_secs` and `resync_max_interval_secs` are now no-ops, retained so that an existing `neutron.conf` does not break.
-If you relied on the periodic resync to recover from drift, the startup resync covers restarts and `calico-resync` covers everything else.
-
 ### Calico Ingress Gateway
 
 :::warning[Breaking change]
 
-Calico Ingress Gateway now runs each gateway's proxy in the same namespace as its `Gateway`, and the controller moves to `calico-system`.
-On upgrade, existing proxies move out of the `tigera-gateway` namespace into each Gateway's namespace, so anything pinned to `tigera-gateway` — network policy, monitoring, and external DNS — must move with them.
-Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway gets its own load balancer.
+Gateway proxies move namespace on upgrade, and merged gateways are no longer supported.
 
-Migrate in this order:
+:::
+
+Calico Ingress Gateway now runs each gateway's proxy in the same namespace as its `Gateway`, and the controller moves to `calico-system`.
+Existing proxies move out of the `tigera-gateway` namespace into each Gateway's namespace, so anything pinned to `tigera-gateway` — network policy, monitoring, and external DNS — must move with them.
+Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway gets its own load balancer.
 
 1. **Before you upgrade**, if you run a global default deny policy, create a network policy in each Gateway's namespace that allows the proxy pods, so they can start as soon as they move. For the policy, see [Create an ingress gateway](../networking/ingress-gateway/create-ingress-gateway.mdx).
 2. Upgrade $[prodname].
-3. After the upgrade, re-point monitoring and external DNS from `tigera-gateway` to each Gateway's namespace. If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
+3. Re-point monitoring and external DNS from `tigera-gateway` to each Gateway's namespace. If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
 
-:::
+### Native v3 CRDs by default
+
+This is not a breaking change. An upgrade leaves an existing cluster on the mechanism it already uses.
+
+New installs now default to v3 CRD mode, where `projectcalico.org/v3` resources are served directly by CRDs with no aggregation API server.
+The default applies to new clusters only, so upgrading does not move you to it.
+
+1. Upgrade $[prodname]. Nothing is required to keep serving the API the way you do today.
+2. When you next install a new cluster, check that it runs Kubernetes 1.32 or later, which v3 CRD mode requires. To put a new cluster on the aggregation API server instead, apply the v1 CRDs before you install the operator.
+3. To move an existing cluster onto native v3 CRDs, follow [Migrate from API server to native CRDs](../operations/crd-migration.mdx). The datastore is briefly locked during the migration.
+
+For more information, see [Native v3 CRDs](../operations/native-v3-crds.mdx).
+
+### OpenStack resync
+
+This is not a breaking change. An existing `neutron.conf` keeps working untouched.
+
+The periodic resync is gone.
+`resync_interval_secs` and `resync_max_interval_secs` are now no-ops, retained only so that an existing configuration does not break.
+
+1. Upgrade $[prodname]. The driver resyncs once when the Neutron server restarts.
+2. Remove `resync_interval_secs` and `resync_max_interval_secs` from `neutron.conf` at your convenience.
+3. If you relied on the periodic resync to recover from drift, run `calico-resync` when you need an immediate reconciliation. To resync from somewhere other than the Neutron server's own startup, set `startup_resync = never` and drive it entirely from the command.
+
+For more information, see [Resync between Neutron and etcd](../networking/openstack/resync.mdx).
 
 ## Release details
 
