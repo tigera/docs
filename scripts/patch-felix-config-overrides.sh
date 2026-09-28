@@ -22,7 +22,9 @@ target=$1
 patched=""
 
 cleanup() {
-    [[ -n "$patched" && -f "$patched" ]] && rm -f "$patched"
+    if [[ -n "$patched" && -f "$patched" ]]; then
+        rm -f "$patched"
+    fi
 }
 trap cleanup EXIT
 
