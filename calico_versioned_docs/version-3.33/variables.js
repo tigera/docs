@@ -1,27 +1,26 @@
 const releases = require('./releases.json');
 
 const variables = {
-  releaseTitle: 'master',
+  releaseTitle: 'v3.33.0',
   prodname: 'Calico',
   prodnamedash: 'calico',
-  version: 'master',
-  baseUrl: '/calico/latest',
-  filesUrl: 'https://projectcalico.docs.tigera.io/master',
+  version: 'v3.33',
+  baseUrl: '/calico/3.33',
+  filesUrl: 'https://projectcalico.docs.tigera.io/v3.33',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download',
-  tmpScriptsURL: 'https://docs.tigera.io/calico/next',
   windowsScriptsURL: 'https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess',
   prodnameWindows: 'Calico for Windows',
   prodnamedashWindows: 'calico-for-windows',
   nodecontainer: 'calico/node',
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\CalicoWindows',
-  ppa_repo_name: 'calico-master',
-  manifestsUrl: 'https://2025-10-03-v3-31-quarterly.docs.eng.tigera.net', //Replace with hashrelease
+  ppa_repo_name: 'calico-3.33',
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.33.0',
   releases,
   registry: '',
-  vppbranch: 'master',
-  envoyVersion: '1.5.0',
+  vppbranch: 'v3.33.0',
+  envoyVersion: '1.9.1',
   tigeraOperator: releases[0]['tigera-operator'],
   tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {
@@ -33,7 +32,7 @@ const variables = {
     'calico/envoy-gateway': 'calico/envoy-gateway',
     'calico/envoy-proxy': 'calico/envoy-proxy',
     'calico/envoy-ratelimit': 'calico/envoy-ratelimit',
-    flannel: 'docker.io/flannelcni/flannel',
+    flannel: 'docker.io/flannelcni/flannel'
   },
 };
 
