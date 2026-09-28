@@ -21,6 +21,7 @@ const variables = {
   registry: '',
   vppbranch: 'v3.33.0',
   envoyVersion: '1.9.1',
+  istioVersion: '1.29.8',
   tigeraOperator: releases[0]['tigera-operator'],
   tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {
