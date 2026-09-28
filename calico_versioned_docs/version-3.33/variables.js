@@ -19,7 +19,8 @@ const variables = {
   manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.33.0',
   releases,
   registry: '',
-  vppbranch: 'v3.33.0',
+  // vpp-dataplane releases on its own cadence; bump only to a tag that exists.
+  vppbranch: 'v3.32.0',
   envoyVersion: '1.9.1',
   istioVersion: '1.29.8',
   tigeraOperator: releases[0]['tigera-operator'],
