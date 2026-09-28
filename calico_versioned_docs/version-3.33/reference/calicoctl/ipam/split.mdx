@@ -1,0 +1,81 @@
+---
+description: Reference for the calicoctl IPAM split command in Calico Open Source, used to split an existing IP pool into smaller pools.
+---
+
+# calicoctl ipam split
+
+This section describes the `calicoctl ipam split` command.
+
+Read the [calicoctlOverview](../overview.mdx)
+for a full list of calicoctl commands.
+
+## Display the help text for `calicoctl ipam split` command
+
+Run `calicoctl ipam split --help` to display the following help menu for the command.
+
+```
+Split an IP pool into the given number of smaller pools of equal size. Useful
+for carving a large pool into per-zone or per-node pools.
+
+Usage:
+  calicoctl ipam split NUMBER [flags]
+
+Examples:
+  # Split a pool into 4 smaller pools.
+  calicoctl ipam split 4 --name my-pool
+
+Flags:
+      --cidr string     CIDR of the IP pool to split.
+  -c, --config string   Path to the file containing connection configuration in YAML or JSON format. (default "/etc/calico/calicoctl.cfg")
+  -h, --help            help for split
+      --name string     Name of the IP pool to split.
+
+Global Flags:
+      --allow-version-mismatch   Allow client and cluster versions mismatch
+      --context string           The name of the kubeconfig context to use
+  -l, --log-level string         Set the log level (panic, fatal, error, warn, info, debug) (default "panic")
+```
+
+### Prerequisites
+
+To split an IP pool, you will first need to lock the Calico database
+so that no IPAM data can change during the split. This is accomplished by using the
+[`calicoctl datastore migrate lock` command](../datastore/migrate/lock.mdx).
+To continue normal IPAM operation, you will need to unlock the calico datastore
+after the split with the
+[`calicoctl datastore migrate unlock` command](../datastore/migrate/unlock.mdx).
+
+### Examples
+
+Lock the Calico datastore.
+
+```bash
+calicoctl datastore migrate lock
+```
+
+Split the IP pool specified by 172.0.0.0/15 into 2 smaller pools.
+
+```bash
+calicoctl ipam split --cidr=172.0.0.0/15 2
+```
+
+This should create 2 IP pools, one covering CIDR `172.0.0.0/16`
+and one covering CIDR `172.1.0.0/16`.
+
+Unlock the Calico datastore to restore normal IPAM operation.
+
+```bash
+calicoctl datastore migrate unlock
+```
+
+### General options
+
+```
+  -c, --config string   Path to the file containing connection configuration in YAML or JSON format. (default "/etc/calico/calicoctl.cfg")
+```
+
+## See also
+
+- [Install calicoctl](../../../operations/calicoctl/install.mdx)
+- [Resources](../../resources/overview.mdx) for details on all valid resources, including file format
+  and schema

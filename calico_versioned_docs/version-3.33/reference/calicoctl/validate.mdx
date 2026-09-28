@@ -1,0 +1,123 @@
+---
+description: Reference for the calicoctl validate command in Calico Open Source, used to check resource manifests for syntax and schema errors.
+---
+
+# calicoctl validate
+
+This sections describes the `calicoctl validate` command.
+
+Read the [calicoctl command line interface user reference](overview.mdx) for a full list of calicoctl commands.
+
+:::note
+
+The validate command works offline and does not require access to a datastore.
+It validates resource structure, syntax, and Calico-specific validation rules without applying changes to the cluster.
+
+:::
+
+## Displaying the help text for 'calicoctl validate' command
+
+Run `calicoctl validate --help` to display the following help menu for the command.
+
+```
+Validate one or more Calico resources from a file, directory, or stdin without
+applying them. Validation runs entirely offline - checking syntax, structure,
+and schema without touching the datastore - so it's useful for catching errors
+before you apply resources to a cluster.
+
+Usage:
+  calicoctl validate [flags]
+
+Examples:
+  # Validate resources in a file.
+  calicoctl validate -f ./policy.yaml
+
+Flags:
+  -c, --config string      Path to the file containing connection configuration in YAML or JSON format. (default "/etc/calico/calicoctl.cfg")
+  -f, --filename string    Filename to use to create/apply/replace/delete the resource. Use '-' for stdin.
+  -h, --help               help for validate
+  -n, --namespace string   Namespace of the resource.
+  -R, --recursive          Process the filename specified in -f recursively.
+      --skip-empty         Do not error if files contain no data.
+
+Global Flags:
+      --allow-version-mismatch   Allow client and cluster versions mismatch
+      --context string           The name of the kubeconfig context to use
+  -l, --log-level string         Set the log level (panic, fatal, error, warn, info, debug) (default "panic")
+```
+
+### Examples
+
+1. Validate a single policy file.
+
+   ```bash
+   calicoctl validate -f ./network-policy.yaml
+   ```
+
+   Results indicate successful validation.
+
+   ```
+   Successfully validated 1 'NetworkPolicy' resource(s)
+   ```
+
+2. Validate resources from stdin.
+
+   ```bash
+   cat resources.yaml | calicoctl validate -f -
+   ```
+
+   Results indicate successful validation of multiple resources.
+
+   ```
+   Successfully validated 3 resource(s)
+   ```
+
+3. Validate all resource files in a directory recursively.
+
+   ```bash
+   calicoctl validate -f ./calico-resources/ --recursive
+   ```
+
+   Results indicate validation failure.
+
+   ```
+   Failed to validate 'NetworkPolicy' resource: [error with field Selector = 'invalid@selector' (Reason: failed to validate Field: Selector because of Tag: selector )]
+   ```
+
+4. Validation with invalid selector example.
+
+   ```bash
+   calicoctl validate -f policy-with-invalid-selector.yaml
+   ```
+
+   Results show Calico-specific validation error.
+
+   ```
+   Failed to validate 'NetworkPolicy' resource: [error with field Selector = 'ga@rb"ag'e' (Reason: failed to validate Field: Selector because of Tag: selector )]
+   ```
+
+5. Validation with invalid IP address example.
+
+   ```bash
+   calicoctl validate -f bgppeer-with-invalid-ip.yaml
+   ```
+
+   Results show IP validation error.
+
+   ```
+   Failed to validate 'BGPPeer' resource: [error with field PeerIP = '999.999.999.999' (Reason: failed to validate Field: PeerIP because of Tag: IP:port )]
+   ```
+
+### Options
+
+```
+  -f, --filename string    Filename to use to create/apply/replace/delete the resource. Use '-' for stdin.
+  -R, --recursive          Process the filename specified in -f recursively.
+      --skip-empty         Do not error if files contain no data.
+```
+
+## See also
+
+- [Installing calicoctl](../../operations/calicoctl/install.mdx)
+- [Resources](../resources/overview.mdx) for details on all valid resources, including file format and schema
+- [NetworkPolicy](../resources/networkpolicy.mdx) for details on the $[prodname] selector-based policy model

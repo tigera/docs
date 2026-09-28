@@ -1,0 +1,203 @@
+---
+description: Reference for the calicoctl get command in Calico Open Source, used to list resources in plain, YAML, JSON, or wide output formats.
+---
+
+# calicoctl get
+
+This sections describes the `calicoctl get` command.
+
+Read the [calicoctl command line interface user reference](overview.mdx)
+for a full list of calicoctl commands.
+
+:::note
+
+The available actions for a specific resource type may be
+limited based on the datastore used for $[prodname] (etcdv3 / Kubernetes API).
+Please refer to the
+[Resources section](../resources/overview.mdx)
+for details about each resource type.
+
+:::
+
+## Displaying the help text for 'calicoctl get' command
+
+Run `calicoctl get --help` to display the following help menu for the
+command.
+
+```
+Get one or more Calico resources - all resources of a type, specific ones by
+name, or those described in a file. Output can be a table (the default), YAML,
+JSON, or a custom template; the YAML and JSON output can be fed back into apply
+or replace.
+
+Usage:
+  calicoctl get [KIND [NAME...]] [flags]
+
+Examples:
+  # List all network policies.
+  calicoctl get networkpolicy
+
+  # Get specific policies as YAML.
+  calicoctl get networkpolicy my-policy-1 my-policy-2 -o yaml
+
+Flags:
+  -A, --all-namespaces     List the requested object(s) across all namespaces.
+  -c, --config string      Path to the file containing connection configuration in YAML or JSON format. (default "/etc/calico/calicoctl.cfg")
+      --export             Strip cluster-specific information from the output.
+  -f, --filename string    Filename to use to create/apply/replace/delete the resource. Use '-' for stdin.
+  -h, --help               help for get
+  -n, --namespace string   Namespace of the resource.
+  -o, --output string      Output format: yaml, json, ps, wide, custom-columns=..., go-template=..., go-template-file=... (default "ps")
+  -R, --recursive          Process the filename specified in -f recursively.
+      --skip-empty         Do not error if files contain no data.
+
+Global Flags:
+      --allow-version-mismatch   Allow client and cluster versions mismatch
+      --context string           The name of the kubeconfig context to use
+  -l, --log-level string         Set the log level (panic, fatal, error, warn, info, debug) (default "panic")
+```
+
+### Options
+
+```
+  -h, --help               help for get
+  -f, --filename string    Filename to use to create/apply/replace/delete the resource. Use '-' for stdin.
+  -o, --output string      Output format: yaml, json, ps, wide, custom-columns=..., go-template=..., go-template-file=... (default "ps")
+  -n, --namespace string   Namespace of the resource.
+  -A, --all-namespaces     List the requested object(s) across all namespaces.
+      --export             Strip cluster-specific information from the output.
+```
+
+### General options
+
+```
+  -c, --config string      Path to the file containing connection configuration in YAML or JSON format. (default "/etc/calico/calicoctl.cfg")
+```
+
+### Output options
+
+#### `ps`
+
+This is the default output format. It displays output in ps-style table output with sufficient columns to
+uniquely identify the resource.
+
+The headings displayed for each resource type is fixed. However, we `wide` option for displaying additional
+columns, and `custom-columns` for selecting which columns to display.
+
+Example:
+
+```bash
+calicoctl get hostEndpoint
+```
+
+Response:
+
+```
+NAME          NODE
+endpoint1     host1
+myhost-eth0   myhost
+```
+
+#### `wide`
+
+Similar to the `ps` format, the `wide` option displays output in ps-style table output but with additional columns.
+
+The headings displayed for each resource type is fixed. See `custom-columns` for selecting which columns to display.
+
+Example:
+
+```bash
+calicoctl get hostEndpoint --output=wide
+```
+
+Response:
+
+```
+NAME           NODE     INTERFACE   IPS                PROFILES
+endpoint1      host1                1.2.3.4,0:bb::aa   prof1,prof2
+myhost-eth0    myhost                                  profile1
+```
+
+#### `custom-columns`
+
+Similar to the `ps` format, the `custom-columns` option displays output in ps-style table output but allows the user
+to specify and ordered, comma-separated list of columns to display in the output. The valid heading names for each
+resource type is documented in the [Resources](../resources/overview.mdx) guide.
+
+Example:
+
+```
+calicoctl get hostEndpoint --output=custom-columns=NAME,IPS
+```
+
+Response:
+
+```
+NAME        IPS
+endpoint1   1.2.3.4,0:bb::aa
+myhost-eth0
+```
+
+#### `yaml / json`
+
+The `yaml` and `json` options display the output as a list of YAML documents or JSON dictionaries. The fields for
+resource type are documented in the [Resources](../resources/overview.mdx) guide.
+
+The output from either of these formats may be used as input for all of the resource management commands.
+
+Example:
+
+```bash
+calicoctl get hostEndpoint --output=yaml
+```
+
+Response:
+
+```yaml
+- apiVersion: projectcalico.org/v3
+  kind: HostEndpoint
+  metadata:
+    labels:
+      type: database
+    name: endpoint1
+  spec:
+    node: host1
+    expectedIPs:
+      - 1.2.3.4
+      - 0:bb::aa
+    profiles:
+      - prof1
+      - prof2
+- apiVersion: projectcalico.org/v3
+  kind: HostEndpoint
+  metadata:
+    name: myhost-eth0
+  spec:
+    node: myhost
+    profiles:
+      - profile1
+```
+
+#### `go-template / go-template-file`
+
+The `go-template` and `go-template-file` options display the output using a golang template specified as a string
+on the CLI, or defined in a separate file.
+When writing a template, be aware that the data passed to the template is a golang slice of resource-lists. The
+resource-lists are defined in the [libcalico API](../resources/overview.mdx) and there is a resource-list defined for
+each resource type. A resource-list contains an Items field which is itself a slice of resources. Thus, to output
+the "Name" field from the supplied data, it is necessary to enumerate over the slice of resource-lists and the items
+within that list.
+
+Example:
+
+```bash
+bin/calicoctl get hostEndpoint --output=go-template="{{range .}}{{range .Items}}{{.ObjectMeta.Name}},{{end}}{{end}}"
+endpoint1,eth0,
+```
+
+## See also
+
+- [Installing calicoctl](../../operations/calicoctl/install.mdx).
+- [Resources](../resources/overview.mdx) for details on all valid resources, including file format
+  and schema
+- [NetworkPolicy](../resources/networkpolicy.mdx) for details on the $[prodname] selector-based policy model

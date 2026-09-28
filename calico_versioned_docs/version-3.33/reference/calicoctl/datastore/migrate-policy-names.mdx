@@ -1,0 +1,72 @@
+---
+description: Reference for the calicoctl datastore migrate-policy-names command in Calico Open Source, used to fix pre-v3.32 policy names on an upgraded etcdv3 datastore.
+---
+
+# calicoctl datastore migrate-policy-names
+
+This section describes the `calicoctl datastore migrate-policy-names` command.
+
+Read the [calicoctl Overview](../overview.mdx)
+for a full list of calicoctl commands.
+
+:::note
+
+You only need this command on an etcdv3 datastore (for example, OpenStack) that
+was created before v3.32 and upgraded in place. A Kubernetes datastore is
+migrated automatically by kube-controllers, so no manual step is required there.
+
+:::
+
+## Display the help text for 'calicoctl datastore migrate-policy-names' command
+
+Run `calicoctl datastore migrate-policy-names --help` to display the following help menu for the
+command.
+
+```
+Rewrite pre-v3.32 policy names in an etcdv3 datastore to drop the legacy
+"default." tier prefix. Run this once when upgrading an etcdv3-backed cluster
+past v3.32 so existing policy names match the current naming scheme.
+
+Usage:
+  calicoctl datastore migrate-policy-names [flags]
+
+Examples:
+  calicoctl datastore migrate-policy-names
+
+Flags:
+  -c, --config string   Path to the file containing connection configuration in YAML or JSON format. (default "/etc/calico/calicoctl.cfg")
+  -h, --help            help for migrate-policy-names
+
+Global Flags:
+      --allow-version-mismatch   Allow client and cluster versions mismatch
+      --context string           The name of the kubeconfig context to use
+  -l, --log-level string         Set the log level (panic, fatal, error, warn, info, debug) (default "panic")
+```
+
+### Examples
+
+Rewrite any pre-v3.32 policy names in the datastore so they match their v3 names.
+
+```bash
+calicoctl datastore migrate-policy-names
+```
+
+On completion, the command reports how many policies it rewrote.
+
+```
+Policy name migration complete, migrated 5 policies.
+```
+
+The command is idempotent. Running it again once every policy has already been
+migrated reports `migrated 0 policies` and makes no changes.
+
+### General options
+
+```
+-c, --config string   Path to the file containing connection configuration in YAML or JSON format. (default "/etc/calico/calicoctl.cfg")
+```
+
+## See also
+
+- [Install calicoctl](../../../operations/calicoctl/install.mdx)
+- [Upgrade Calico on OpenStack](../../../operations/upgrading/openstack-upgrade.mdx) for the full upgrade procedure that runs this command
