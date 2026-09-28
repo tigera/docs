@@ -21,6 +21,20 @@ the pattern.
 
 - New installs default to v3 CRD mode: `projectcalico.org/v3` resources are served directly by CRDs, with no aggregation API server. Existing and upgraded clusters are unaffected. To install with the aggregation API server instead, apply the v1 CRDs before installing the operator. v3 CRD mode requires Kubernetes 1.32 or later. Native v3 CRDs are the successor to the aggregation API server. See [Native v3 CRDs](../operations/native-v3-crds.mdx).
 
+- The eBPF data plane now enforces the `qos.projectcalico.org/ingressMaxConnections` and `qos.projectcalico.org/egressMaxConnections` annotations, which previously took effect only on the standard data plane.
+  A TCP connection that would take a pod past its limit is refused with a RST, so the client fails immediately rather than waiting out its SYN retries.
+  See [Configure QoS controls](../networking/configuring/qos-controls.mdx).
+
+### On-demand OpenStack resync
+
+A new `calico-resync` command reconciles Neutron with etcd whenever you ask, optionally scoped to particular networks, subnets, ports, or security groups.
+The driver also resyncs once at Neutron server startup, so a restart corrects any drift.
+
+Resync is much faster at scale, because it reads Neutron state in bulk instead of querying per port, and it runs in its own process, so a long resync no longer delays port creation.
+Each resource it has to change is logged at INFO level.
+
+For more information, see [Resync between Neutron and etcd](../networking/openstack/resync.mdx).
+
 ## Technology preview features
 
 This table shows the status of features that were in technology preview at any point in the releases covered here.
@@ -57,6 +71,12 @@ You should consider migrating away from a deprecated feature before it is remove
 ## Upgrade notes
 
 {/* Add breaking changes and required upgrade steps here, one subsection per feature. */}
+
+### OpenStack resync
+
+The periodic resync is gone.
+`resync_interval_secs` and `resync_max_interval_secs` are now no-ops, retained so that an existing `neutron.conf` does not break.
+If you relied on the periodic resync to recover from drift, the startup resync covers restarts and `calico-resync` covers everything else.
 
 ### Calico Ingress Gateway
 
