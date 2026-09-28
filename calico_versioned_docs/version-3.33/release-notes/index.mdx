@@ -12,13 +12,6 @@ Learn about the new features, bug fixes, and other updates in this release of $[
 
 ## New features and enhancements
 
-### eBPF: established connection limits
-
-The eBPF data plane now enforces the `qos.projectcalico.org/ingressMaxConnections` and `qos.projectcalico.org/egressMaxConnections` annotations, which previously took effect only on the standard data plane.
-A TCP connection that would take a pod past its limit is refused with a RST, so the client fails immediately rather than waiting out its SYN retries.
-
-For more information, see [Configure QoS controls](../networking/configuring/qos-controls.mdx).
-
 ### On-demand OpenStack resync
 
 A new `calico-resync` command reconciles Neutron with etcd whenever you ask, optionally scoped to particular networks, subnets, ports, or security groups.
@@ -28,6 +21,13 @@ Resync is much faster at scale, because it reads Neutron state in bulk instead o
 Each resource it has to change is logged at INFO level.
 
 For more information, see [Resync between Neutron and etcd](../networking/openstack/resync.mdx).
+
+### eBPF: established connection limits
+
+The eBPF data plane now enforces the `qos.projectcalico.org/ingressMaxConnections` and `qos.projectcalico.org/egressMaxConnections` annotations, which previously took effect only on the standard data plane.
+A TCP connection that would take a pod past its limit is refused with a RST, so the client fails immediately rather than waiting out its SYN retries.
+
+For more information, see [Configure QoS controls](../networking/configuring/qos-controls.mdx).
 
 ## Technology preview features
 
@@ -251,7 +251,7 @@ You should consider migrating away from a deprecated feature before it is remove
 - Add NFTablesSupported feature flag, defaulting to enabled.  This controls Calico's use of nftables for purposes other than policy programming, such as proxy ARP filtering.  In case your distribution or kernel does not support nftables, you can disable this by setting `NFTablesSupported=false` in the `FeatureDetectOverride` field in `FelixConfiguration`. [calico 12146](https://github.com/projectcalico/calico/pull/12146) (@nelljerram)
 - ebpf: Require kernel 5.10+ with BTF/CO-RE support. Remove legacy BPF object files, runtime fallback paths, and conditional compilation. Report a clear health message when the kernel is too old. [calico 12128](https://github.com/projectcalico/calico/pull/12128) (@tomastigera)
 - [BPF] Migrate BPF events from perf event array to ring buffer [calico 12111](https://github.com/projectcalico/calico/pull/12111) (@lucastigera)
-- [Tech Preview] FelixConfiguration resources now support an optional `nodeSelector` field that restricts configuration to nodes matching a label selector, enabling per-node-group Felix configuration without requiring individual per-node resources. At most one selector-scoped FelixConfiguration should match any given node; if multiple match, the oldest by creation time wins to avoid disrupting existing working configuration. Overlapping selectors are treated as a misconfiguration and this behavior may change in future releases. [calico 11977](https://github.com/projectcalico/calico/pull/11977) (@tomastigera)
+- FelixConfiguration resources now support an optional `nodeSelector` field that restricts configuration to nodes matching a label selector, enabling per-node-group Felix configuration without requiring individual per-node resources. At most one selector-scoped FelixConfiguration should match any given node; if multiple match, the oldest by creation time wins to avoid disrupting existing working configuration. Overlapping selectors are treated as a misconfiguration and this behavior may change in future releases. [calico 11977](https://github.com/projectcalico/calico/pull/11977) (@tomastigera)
 - LoadBalancer controller now supports spec.loadBalancerIP as a fallback when no Calico-specific annotation is set. [calico 11961](https://github.com/projectcalico/calico/pull/11961) (@nebojsaj1726)
 - Calico is now built using the RHEL 9 toolchain with Go 1.26, and is updated to use the Kubernetes 1.35 release series. [calico 11948](https://github.com/projectcalico/calico/pull/11948) (@hjiawei)
 - ebpf: vxlan and ipip do not have any IP assigned, therefore when a node talks to a pod via the overlay, it always uses the host's main device IP (as configured and presented in k8s as internal IP). The legacy behavior (IP on overlay device) can be restored by setting BPFOverlayIPOnDevice to true. [calico 11919](https://github.com/projectcalico/calico/pull/11919) (@tomastigera)
@@ -314,8 +314,7 @@ For more information, see [Resync between Neutron and etcd](../networking/openst
 
 ### Calico Open Source 3.33.0 general availability release
 
-{/* Set this to the GA date before publishing. */}
-Month DD, YYYY
+September 29, 2026
 
 Calico Open Source release 3.33.0 is now generally available.
 
