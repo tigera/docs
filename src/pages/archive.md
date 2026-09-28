@@ -7,7 +7,8 @@ description: Links to all versions of product documentation for Calico, Calico E
 
 ## Calico Open Source
 
-* [Calico Open Source 3.32](https://docs.tigera.io/calico/latest/about)
+* [Calico Open Source 3.33](https://docs.tigera.io/calico/latest/about)
+* [Calico Open Source 3.32](https://docs.tigera.io/calico/3.32/about)
 * [Calico Open Source 3.31](https://docs.tigera.io/calico/3.31/about)
 * [Calico Open Source 3.30](https://docs.tigera.io/calico/3.30/about)
 * [Calico Open Source 3.29](https://archive-os-3-29.netlify.app/calico/3.29/about)
