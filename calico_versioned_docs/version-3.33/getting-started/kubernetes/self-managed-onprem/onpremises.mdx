@@ -1,0 +1,561 @@
+---
+description: Install Calico Open Source networking and network policy on a self-managed Kubernetes cluster running on-premises hardware.
+title: Installing on on-premises deployments
+---
+
+# Install Calico networking and network policy for on-premises deployments
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Big picture
+
+Install $[prodname] to provide both networking and network policy for self-managed on-premises deployments.
+
+## Value
+
+**$[prodname] networking** and **network policy** are a powerful choice for a CaaS implementation. If you have the networking infrastructure and resources to manage Kubernetes on-premises, installing the full $[prodname] product provides the most customization and control.
+
+## Concepts
+
+### Recommended: Tigera Operator
+
+$[prodname] is installed by an operator which manages the installation, upgrade, and general lifecycle of a $[prodname] cluster. The operator is
+installed directly on the cluster as a Deployment, and is configured through one or more custom Kubernetes API resources.
+
+### $[prodname] manifests
+
+$[prodname] can also be installed using raw manifests as an alternative to the operator. The manifests contain the necessary resources for installing $[prodname] on each node in your Kubernetes cluster. Using manifests is not recommended as they cannot automatically manage the lifecycle of the $[prodname] as the operator does. However, manifests may be useful for clusters that require highly specific modifications to the underlying Kubernetes resources.
+
+## Before you begin...
+
+- Ensure that your Kubernetes cluster meets [requirements](../requirements.mdx).
+  If you do not have a cluster, see [Installing kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/).
+
+## How to
+
+- [Install Calico](#install-calico)
+
+### Install Calico
+
+<Tabs>
+<TabItem label="Operator" value="Operator-0">
+
+1. Install the $[prodname] custom resource definitions.
+
+   If your cluster is based on Kubernetes 1.36 or later:
+
+   ```
+   kubectl create -f $[manifestsUrl]/manifests/v3_projectcalico_org.yaml
+   ```
+
+   If your cluster is based on Kubernetes 1.34 or 1.35:
+
+   ```
+   kubectl create -f $[manifestsUrl]/manifests/v3_projectcalico_org-v1beta1.yaml
+   ```
+
+1. Install the Tigera Operator.
+
+   ```
+   kubectl create -f $[manifestsUrl]/manifests/tigera-operator.yaml
+   ```
+
+1. Download the custom resources necessary to configure $[prodname].
+
+   :::tip Automatic data plane deployment
+   You can select either eBPF or iptables to be deployed automatically.
+   :::
+   <Tabs groupId="data-plane" defaultValue="eBPF">
+   <TabItem label="eBPF" value = "eBPF">
+   ```shell
+   curl -O $[manifestsUrl]/manifests/custom-resources-bpf.yaml
+   ```
+   </TabItem>
+   <TabItem label="iptables" value = "iptables">
+   ```shell
+   curl -O $[manifestsUrl]/manifests/custom-resources.yaml
+   ```
+   </TabItem>
+   </Tabs>
+   If you wish to customize the $[prodname] install, customize the downloaded custom-resources.yaml manifest locally.
+
+1. Create the manifest to install $[prodname].
+    <Tabs groupId="data-plane" defaultValue="eBPF">
+   <TabItem label="eBPF" value = "eBPF">
+   ```shell
+   kubectl create -f custom-resources-bpf.yaml
+   ```
+   </TabItem>
+   <TabItem label="iptables" value = "iptables">
+   ```shell
+   kubectl create -f custom-resources.yaml
+   ```
+   </TabItem>
+   </Tabs>
+
+3. Monitor the deployment by running the following command:
+
+   ```shell
+   watch kubectl get tigerastatus
+   ```
+
+   After a few minutes, all the Calico components display `True` in the `AVAILABLE` column.
+
+   <Tabs groupId="data-plane" defaultValue="eBPF">
+   <TabItem label="eBPF" value = "eBPF">
+   ```bash title="Expected output"
+   NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver                       True        False         False      4m9s
+   calico                          True        False         False      3m29s
+   goldmane                        True        False         False      3m39s
+   ippools                         True        False         False      6m4s
+   kubeproxy-monitor               True        False         False      6m15s
+   whisker                         True        False         False      3m19s
+   ```
+   </TabItem>
+   <TabItem label="iptables" value = "iptables">
+   ```bash title="Expected output"
+   NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
+   apiserver                       True        False         False      4m9s
+   calico                          True        False         False      3m29s
+   goldmane                        True        False         False      3m39s
+   ippools                         True        False         False      6m4s
+   whisker                         True        False         False      3m19s
+   ```
+   </TabItem>
+   </Tabs>
+
+<GeekDetails
+  prodname='$[prodname]'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+</TabItem>
+<TabItem label="Manifest (v3 CRDs)" value="Manifest-v3">
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+This manifest installs $[prodname] using the native `projectcalico.org/v3` CRD API group. The v3 API group supports tiered policy, admission webhooks, and other features that aren't available with the legacy `crd.projectcalico.org/v1` API group.
+
+:::note
+
+If you're setting up a new cluster and don't need to customize the underlying Kubernetes resources, we recommend using the operator instead. The operator automatically manages the lifecycle of $[prodname] components, including upgrades and scaling.
+
+:::
+
+Native `projectcalico.org/v3` CRDs rely on MutatingAdmissionPolicies for defaulting, which require the beta `admissionregistration.k8s.io/v1beta1` API. That API is available in **Kubernetes 1.34 and later**; on Kubernetes 1.33 and earlier, MutatingAdmissionPolicy is only available as an alpha API and is not supported. On Kubernetes 1.34 and 1.35, enable the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) on the Kubernetes API server before installing, as it is not enabled by default. On Kubernetes 1.36 and later, the feature is GA and enabled by default.
+
+1. Download the $[prodname] v3 CRD manifest.
+
+   If your cluster is based on Kubernetes 1.36 or later:
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico-v3-crds.yaml -O
+   ```
+
+   If your cluster is based on Kubernetes 1.34 or 1.35:
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico-v3-crds-v1beta1.yaml -o calico-v3-crds.yaml
+   ```
+
+1. If you are using pod CIDR `192.168.0.0/16`, skip to the next step.
+   If you are using a different pod CIDR with kubeadm, no changes are required - Calico will automatically detect the CIDR based on the running configuration.
+   For other platforms, make sure you uncomment the CALICO_IPV4POOL_CIDR variable in the manifest and set it to the same value as your chosen pod CIDR.
+1. Customize the manifest as necessary.
+1. Apply the manifest.
+
+   ```bash
+   kubectl apply -f calico-v3-crds.yaml
+   ```
+
+1. Generate TLS certificates for the admission webhook.
+
+   The manifest applied above includes a `calico-webhooks` Deployment that serves a `ValidatingWebhookConfiguration` for tiered RBAC enforcement on `projectcalico.org/v3` policy resources, but no TLS material is provisioned by default. Until the certificates are in place, write operations on `projectcalico.org/v3` policy resources will fail closed.
+
+   The following commands create a self-signed CA and a server certificate valid for `calico-webhooks.kube-system.svc`. If you already manage TLS via cert-manager or an internal PKI, use that instead and skip ahead.
+
+   ```bash
+   # Self-signed CA.
+   openssl genrsa -out ca.key 2048
+   openssl req -x509 -new -nodes -key ca.key -days 3650 \
+       -subj "/CN=calico-webhooks-ca" -out ca.crt
+
+   # Server cert with SANs for the webhook service.
+   openssl genrsa -out tls.key 2048
+   cat > csr.conf <<'EOF'
+   [req]
+   distinguished_name = req_distinguished_name
+   req_extensions = v3_req
+   prompt = no
+   [req_distinguished_name]
+   CN = calico-webhooks.kube-system.svc
+   [v3_req]
+   keyUsage = digitalSignature, keyEncipherment
+   extendedKeyUsage = serverAuth
+   subjectAltName = @alt_names
+   [alt_names]
+   DNS.1 = calico-webhooks.kube-system.svc
+   DNS.2 = calico-webhooks.kube-system.svc.cluster.local
+   EOF
+   openssl req -new -key tls.key -out tls.csr -config csr.conf
+   openssl x509 -req -in tls.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+       -days 365 -extensions v3_req -extfile csr.conf -out tls.crt
+   ```
+
+1. Create the webhook TLS secret in the `kube-system` namespace.
+
+   ```bash
+   kubectl -n kube-system create secret tls calico-webhooks-tls \
+       --cert=tls.crt --key=tls.key
+   ```
+
+1. Patch the `ValidatingWebhookConfiguration` with the CA bundle so the API server trusts the webhook.
+
+   ```bash
+   kubectl patch validatingwebhookconfiguration calico-webhooks \
+       --type='json' \
+       -p="[{\"op\":\"replace\",\"path\":\"/webhooks/0/clientConfig/caBundle\",\"value\":\"$(base64 -w0 < ca.crt)\"}]"
+   ```
+
+<GeekDetails
+  prodname='$[prodname]'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+</TabItem>
+<TabItem label="Migrate to v3 CRDs" value="Migrate-v3">
+
+:::note
+
+This feature is tech preview. Tech preview features may be subject to significant changes before they become GA.
+
+:::
+
+If you have an existing manifest-based $[prodname] install using the legacy `crd.projectcalico.org/v1` CRDs, you can migrate to the native `projectcalico.org/v3` CRDs. This enables tiered policy, admission webhooks, and other v3-only features.
+
+#### Prerequisites
+
+- $[prodname] installed via `calico.yaml` manifest (not operator)
+- `kubectl` access to the cluster
+- A recent $[prodname] version that includes the migration controller
+- **Kubernetes 1.34 or later.** Native `projectcalico.org/v3` CRDs rely on MutatingAdmissionPolicies for defaulting, which require the beta `admissionregistration.k8s.io/v1beta1` API. That API is not available on Kubernetes 1.33 and earlier, where MutatingAdmissionPolicy is alpha only. On Kubernetes 1.34 and 1.35, the `MutatingAdmissionPolicy` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) must be enabled on the Kubernetes API server before starting the migration, as it is not enabled by default. On Kubernetes 1.36 and later, the feature is GA and enabled by default.
+
+#### Migration steps
+
+1. Install the v3 CRDs alongside the existing v1 CRDs.
+
+   ```bash
+   kubectl apply --server-side --force-conflicts -f $[manifestsUrl]/api/config/crd/
+   ```
+
+1. Install the DatastoreMigration CRD.
+
+   ```bash
+   kubectl apply --server-side -f $[manifestsUrl]/kube-controllers/pkg/controllers/migration/crd/migration.projectcalico.org_datastoremigrations.yaml
+   ```
+
+1. Create a DatastoreMigration resource to start the migration. The migration controller copies all Calico resources from v1 CRDs to v3 CRDs.
+
+   ```bash
+   kubectl apply -f - <<EOF
+   apiVersion: migration.projectcalico.org/v1
+   kind: DatastoreMigration
+   metadata:
+     name: v1-to-v3
+   spec:
+     type: APIServerToCRDs
+   EOF
+   ```
+
+1. Monitor the migration progress.
+
+   ```bash
+   kubectl get datastoremigration v1-to-v3 -w
+   ```
+
+   The migration transitions through `Pending` → `Migrating` → `Converged`. Once it reaches `Converged`, all resources have been copied to v3 CRDs.
+
+1. When the migration reaches `Converged`, configure calico-node (and calico-typha if present) to use the v3 API group.
+
+   ```bash
+   kubectl set env -n kube-system daemonset/calico-node CALICO_API_GROUP=projectcalico.org/v3
+   ```
+
+   If you're running calico-typha, update it as well:
+
+   ```bash
+   kubectl set env -n kube-system deployment/calico-typha CALICO_API_GROUP=projectcalico.org/v3
+   ```
+
+1. The migration controller monitors the rollout and transitions to `Complete` once all pods are running with the v3 API group. kube-controllers restarts automatically to pick up the new API group.
+
+   ```bash
+   kubectl get datastoremigration v1-to-v3 -w
+   ```
+
+1. Once the migration is `Complete`, delete the DatastoreMigration resource to clean up the old v1 CRDs.
+
+   ```bash
+   kubectl delete datastoremigration v1-to-v3
+   ```
+
+   The finalizer on the resource deletes all `crd.projectcalico.org` CRDs before removing the resource.
+
+1. Once the DatastoreMigration resource is gone, delete the DatastoreMigration CRD.
+
+   ```bash
+   kubectl get datastoremigration
+   kubectl delete crd datastoremigrations.migration.projectcalico.org
+   ```
+
+   Never delete the CRD while a DatastoreMigration resource still exists. That deletes the resource too, which runs its finalizer and either deletes your `crd.projectcalico.org` CRDs or rolls the migration back, depending on the phase.
+
+1. Install the admission webhook resources. The Deployment, Service, RBAC, `MutatingAdmissionPolicy` resources, and `ValidatingWebhookConfiguration` are bundled into `calico-v3-crds.yaml` alongside the CRDs and core $[prodname] components. Extract just the webhook resources with [`yq`](https://github.com/mikefarah/yq) and apply them, so the existing `calico-node` DaemonSet, `kube-controllers` Deployment, and `calico-typha` Deployment in your cluster (including the `CALICO_API_GROUP` env you set above) are not overwritten.
+
+   If your cluster is based on Kubernetes 1.36 or later:
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico-v3-crds.yaml -O
+   yq 'select(.metadata.name == "calico-webhooks" or .kind == "MutatingAdmissionPolicy" or .kind == "MutatingAdmissionPolicyBinding")' \
+       calico-v3-crds.yaml | kubectl apply -f -
+   ```
+
+   If your cluster is based on Kubernetes 1.34 or 1.35:
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico-v3-crds-v1beta1.yaml -o calico-v3-crds.yaml
+   yq 'select(.metadata.name == "calico-webhooks" or .kind == "MutatingAdmissionPolicy" or .kind == "MutatingAdmissionPolicyBinding")' \
+       calico-v3-crds.yaml | kubectl apply -f -
+   ```
+
+1. Generate TLS certificates for the admission webhook.
+
+   The `calico-webhooks` Deployment serves a `ValidatingWebhookConfiguration` for tiered RBAC enforcement on `projectcalico.org/v3` policy resources, but no TLS material is provisioned by default. Until the certificates are in place, write operations on `projectcalico.org/v3` policy resources will fail closed.
+
+   The following commands create a self-signed CA and a server certificate valid for `calico-webhooks.kube-system.svc`. If you already manage TLS via cert-manager or an internal PKI, use that instead and skip ahead.
+
+   ```bash
+   # Self-signed CA.
+   openssl genrsa -out ca.key 2048
+   openssl req -x509 -new -nodes -key ca.key -days 3650 \
+       -subj "/CN=calico-webhooks-ca" -out ca.crt
+
+   # Server cert with SANs for the webhook service.
+   openssl genrsa -out tls.key 2048
+   cat > csr.conf <<'EOF'
+   [req]
+   distinguished_name = req_distinguished_name
+   req_extensions = v3_req
+   prompt = no
+   [req_distinguished_name]
+   CN = calico-webhooks.kube-system.svc
+   [v3_req]
+   keyUsage = digitalSignature, keyEncipherment
+   extendedKeyUsage = serverAuth
+   subjectAltName = @alt_names
+   [alt_names]
+   DNS.1 = calico-webhooks.kube-system.svc
+   DNS.2 = calico-webhooks.kube-system.svc.cluster.local
+   EOF
+   openssl req -new -key tls.key -out tls.csr -config csr.conf
+   openssl x509 -req -in tls.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+       -days 365 -extensions v3_req -extfile csr.conf -out tls.crt
+   ```
+
+1. Create the webhook TLS secret in the `kube-system` namespace.
+
+   ```bash
+   kubectl -n kube-system create secret tls calico-webhooks-tls \
+       --cert=tls.crt --key=tls.key
+   ```
+
+1. Patch the `ValidatingWebhookConfiguration` with the CA bundle so the API server trusts the webhook.
+
+   ```bash
+   kubectl patch validatingwebhookconfiguration calico-webhooks \
+       --type='json' \
+       -p="[{\"op\":\"replace\",\"path\":\"/webhooks/0/clientConfig/caBundle\",\"value\":\"$(base64 -w0 < ca.crt)\"}]"
+   ```
+
+</TabItem>
+<TabItem label="Manifest" value="Manifest-1">
+
+Based on your datastore and number of nodes, select a link below to install $[prodname].
+
+:::note
+
+The option, **Kubernetes API datastore, more than 50 nodes** provides scaling using [Typha daemon](../../../reference/typha/index.mdx). Typha is not included for etcd because etcd already handles many clients so using Typha is redundant and not recommended.
+
+:::
+
+- [Install Calico with Kubernetes API datastore, 50 nodes or less](#install-calico-with-kubernetes-api-datastore-50-nodes-or-less)
+- [Install Calico with Kubernetes API datastore, more than 50 nodes](#install-calico-with-kubernetes-api-datastore-more-than-50-nodes)
+- [Install Calico with etcd datastore](#install-calico-with-etcd-datastore)
+
+#### Install Calico with Kubernetes API datastore, 50 nodes or less
+
+:::note
+
+This option is maintained for upgrade compatibility, but we recommend that new clusters use the operator, which
+will automatically configure $[prodname] correctly for your cluster size (including deploying the Typha scale-out
+proxy and securing it when necessary).
+
+:::
+
+1. Download the $[prodname] networking manifest for the Kubernetes API datastore.
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico.yaml -O
+   ```
+
+1. If you are using pod CIDR `192.168.0.0/16`, skip to the next step.
+   If you are using a different pod CIDR with kubeadm, no changes are required &#8212; Calico will automatically detect the CIDR based on the running configuration.
+   For other platforms, make sure you uncomment the CALICO_IPV4POOL_CIDR variable in the manifest and set it to the same value as your chosen pod CIDR.
+1. Customize the manifest as necessary.
+1. Apply the manifest using the following command.
+
+   ```bash
+   kubectl apply -f calico.yaml
+   ```
+
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='$[prodname]'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+#### Install Calico with Kubernetes API datastore, more than 50 nodes
+
+:::note
+
+This option is maintained for upgrade compatibility but we recommend that new clusters use the operator to deploy
+Typha (the extra scale-out component included in this manifest) instead of using this method.  The operator deploys
+Typha, autoscales it, and auto-configures mTLS between the per-host agent and Typha for maximum security.  This
+manifest option leaves scaling up to you and, by default, it does not secure Typha's port.
+
+:::
+
+1. Download the $[prodname] networking manifest for the Kubernetes API datastore.
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico-typha.yaml -o calico.yaml
+   ```
+
+1. If you are using pod CIDR `192.168.0.0/16`, skip to the next step.
+   If you are using a different pod CIDR with kubeadm, no changes are required &#8212; Calico will automatically detect the CIDR based on the running configuration.
+   For other platforms, make sure you uncomment the CALICO_IPV4POOL_CIDR variable in the manifest and set it to the same value as your chosen pod CIDR.
+1. Modify the replica count to the desired number in the `Deployment` named, `calico-typha`.
+
+   ```yaml noValidation
+   apiVersion: apps/v1beta1
+   kind: Deployment
+   metadata:
+     name: calico-typha
+     ...
+   spec:
+     ...
+     replicas: <number of replicas>
+   ```
+
+   We recommend at least one replica for every 200 nodes, and no more than
+   20 replicas. In production, we recommend a minimum of three replicas to reduce
+   the impact of rolling upgrades and failures. The number of replicas should
+   always be less than the number of nodes, otherwise rolling upgrades will stall.
+   In addition, Typha only helps with scale if there are fewer Typha instances than
+   there are nodes.
+
+   :::note
+
+   If you set `typha_service_name` and set the Typha deployment replica
+   count to 0, Felix will not start.
+
+   :::
+
+1. Customize the manifest if desired.
+1. Apply the manifest.
+
+   ```bash
+   kubectl apply -f calico.yaml
+   ```
+
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='$[prodname]'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:Kubernetes'
+/>
+
+#### Install Calico with etcd datastore
+
+:::note
+
+The etcd datastore is not recommended for new Kubernetes installs:
+
+* etcd is another component to manage and maintain.
+* Some newer Kubernetes-targeted features (such as service matches in policy) are not supported with the etcd datastore.
+* eBPF data plane mode is not supported with the etcd datastore.  It relies on watching services to implement some features,
+  which is not supported with the etcd datastore.
+* The Cloud/Enterprise versions of $[prodname] do not support etcd mode at all so using this manifest prevents
+  you from upgrading.
+
+However, it is the only option that supports running both OpenStack and Kubernetes nodes in the same cluster.
+
+:::
+
+1. Download the $[prodname] networking manifest for etcd.
+
+   ```bash
+   curl $[manifestsUrl]/manifests/calico-etcd.yaml -o calico.yaml
+   ```
+
+1. If you are using pod CIDR `192.168.0.0/16`, skip to the next step.
+   If you are using a different pod CIDR with kubeadm, no changes are required &#8212; Calico will automatically detect the CIDR based on the running configuration.
+   For other platforms, make sure you uncomment the CALICO_IPV4POOL_CIDR variable in the manifest and set it to the same value as your chosen pod CIDR.
+1. In the `ConfigMap` named, `calico-config`, set the value of `etcd_endpoints` to the IP address and port of your etcd server.
+   :::note
+
+   You can specify more than one `etcd_endpoint` using commas as delimiters.
+
+   :::
+
+1. Customize the manifest if desired.
+1. Apply the manifest using the following command.
+
+   ```bash
+   kubectl apply -f calico.yaml
+   ```
+
+The geeky details of what you get:
+
+<GeekDetails
+  prodname='$[prodname]'
+  details='Policy:Calico,IPAM:Calico,CNI:Calico,Overlay:IPIP,Routing:BGP,Datastore:etcd'
+/>
+
+</TabItem>
+</Tabs>
+
+## Next steps
+
+**Required**
+
+- [Install and configure calicoctl](../../../operations/calicoctl/install.mdx)
+
+**Recommended - Networking**
+
+- If you are using the default BGP networking with full-mesh node-to-node peering with no encapsulation, go to [Configure BGP peering](../../../networking/configuring/bgp.mdx) to get traffic flowing between pods.
+- If you are unsure about networking options, or want to implement encapsulation (overlay networking), see [Determine best networking option](../../../networking/determine-best-networking.mdx).
+
+**Recommended - Security**
+
+- [Secure Calico component communications](../../../network-policy/comms/crypto-auth.mdx)
+- [Secure hosts by installing Calico on hosts](../../bare-metal/about.mdx)
+- [Secure pods with Calico network policy](../../../network-policy/get-started/calico-policy/calico-network-policy.mdx)
+- If you are using $[prodname] with Istio service mesh, get started here: [Enable application layer policy](../../../network-policy/istio/app-layer-policy.mdx)

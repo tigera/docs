@@ -1,0 +1,226 @@
+---
+description: Reference for the calicoctl node run command in Calico Open Source, used to start a calico/node instance with the supplied options.
+---
+
+# calicoctl node run
+
+This sections describes the `calicoctl node run` command.
+
+Read the [calicoctl Overview](../overview.mdx)
+for a full list of calicoctl commands.
+
+## Displaying the help text for 'calicoctl node run' command
+
+Run `calicoctl node run --help` to display the following help menu for the
+command.
+
+```
+Start the Calico node container on this host. Runs the calico/node image with
+the supplied networking options; most options mirror fields on the node
+resource and are autodetected when omitted.
+
+Usage:
+  calicoctl node run [flags]
+
+Examples:
+  # Start calico/node, autodetecting the IPv4 address.
+  calicoctl node run --ip autodetect --ip-autodetection-method can-reach=8.8.8.8
+
+Flags:
+      --as string                         Set the AS number for this node.
+      --backend string                    Specify which networking backend to use (bird|none). (default "bird")
+  -c, --config string                     Path to the file containing connection configuration in YAML or JSON format. (default "/etc/calico/calicoctl.cfg")
+      --dryrun                            Output the appropriate command, without starting the container.
+      --felix-config string               Path to the file containing Felix configuration.
+  -h, --help                              help for run
+      --init-system                       Run the appropriate command to use with an init system.
+      --ip string                         Set the local IPv4 routing address for this node.
+      --ip-autodetection-method string    Specify the autodetection method for detecting the local IPv4 routing address. (default "first-found")
+      --ip6 string                        Set the local IPv6 routing address for this node.
+      --ip6-autodetection-method string   Specify the autodetection method for detecting the local IPv6 routing address. (default "first-found")
+      --log-dir string                    The directory containing Calico logs. (default "/var/log/calico")
+      --name string                       The name of the Calico node.
+      --no-default-ippools                Do not create default pools upon startup.
+      --node-image string                 Docker image to use for Calico's per-node container. (default "quay.io/calico/node:latest")
+
+Global Flags:
+      --allow-version-mismatch   Allow client and cluster versions mismatch
+      --context string           The name of the kubeconfig context to use
+  -l, --log-level string         Set the log level (panic, fatal, error, warn, info, debug) (default "panic")
+```
+
+### Kubernetes as the datastore
+
+When $[prodname] is configured to use the Kubernetes API as the datastore, BGP routing is _currently_
+not supported. Many of the command line options related to BGP routing will
+have no effect. These include:
+
+- `--ip`, `--ip6`, `--ip-autodetection-method`, `--ip6-autodetection-method`
+- `--as`
+- `--backend`
+
+### Examples
+
+Start the $[nodecontainer] with a pre-configured IPv4 address for BGP.
+
+```bash
+sudo calicoctl node run
+```
+
+An example response follows.
+
+```
+Running command to load modules: modprobe -a xt_set ip6_tables
+Enabling IPv4 forwarding
+Enabling IPv6 forwarding
+Increasing conntrack limit
+Running the following command:
+
+docker run --net=host --privileged --name=$[noderunning] -d --restart=always -e ETCD_SCHEME=http -e HOSTNAME=calico -e ETCD_AUTHORITY=127.0.0.1:2379 -e AS= -e NO_DEFAULT_POOLS= -e ETCD_ENDPOINTS= -e IP= -e IP6= -e CALICO_NETWORKING_BACKEND=bird -v /var/run/docker.sock:/var/run/docker.sock -v /var/run/calico:/var/run/calico -v /lib/modules:/lib/modules -v /var/log/calico:/var/log/calico -v /run/docker/plugins:/run/docker/plugins $[registry]$[imageNames.calico/node]:$[releaseTitle]
+
+Waiting for etcd connection...
+Using configured IPv4 address: 192.0.2.0
+No IPv6 address configured
+Using global AS number
+WARNING: Could not confirm that the provided IPv4 address is assigned to this host.
+Calico node name:  calico
+Calico node started successfully
+```
+
+#### IP Autodetection method examples
+
+The node resource includes IPv4 and IPv6 routing IP addresses that should
+match those on one of the host interfaces. These IP addresses may be
+configured in advance by configuring the node resource prior to starting the
+`$[nodecontainer]` service, alternatively, the addresses may either be explicitly
+specified or autodetected through options on the `calicoctl run` command.
+
+There are different autodetection methods available and you should use the one
+best suited to your deployment. If you are able to explicitly specify the IP
+addresses, that is always preferred over autodetection. This section describes
+the available methods for autodetecting the hosts IP addresses.
+
+An IPv4 address is always required, and so if no address was previously
+configured in the node resource, and no address was specified on the CLI, then
+we will attempt to autodetect an IPv4 address. An IPv6 address, however, will
+only be autodetected when explicitly requested.
+
+To force autodetection of an IPv4 address, use the option `--ip=autodetect`. To
+force autodetection of an IPv6 address, use the option `--ip6=autodetect`.
+
+To set the autodetection method for IPv4, use the `--ip-autodetection-method` option.
+To set the autodetection method for IPv6, use the `--ip6-autodetection-method` option.
+
+:::note
+
+If you are starting the `$[nodecontainer]` container directly (and not using the
+`calicoctl run` helper command), the options are passed in environment
+variables. These are described in
+[Configuring `$[nodecontainer]`](../../configure-calico-node.mdx).
+
+:::
+
+**first-found**
+
+The `first-found` option enumerates all interface IP addresses and returns the
+first valid IP address (based on IP version and type of address) on
+the first valid interface. Certain known "local" interfaces
+are omitted, such as the docker bridge. The order that both the interfaces
+and the IP addresses are listed is system dependent.
+
+This is the default detection method. However, since this method only makes a
+very simplified guess, it is recommended to either configure the node with a
+specific IP address, or to use one of the other detection methods.
+
+An example with first-found auto detection method explicitly specified follows
+
+```bash
+sudo calicoctl node run --ip autodetect --ip-autodetection-method first-found
+```
+
+**can-reach=DESTINATION**
+
+The `can-reach` method uses your local routing to determine which IP address
+will be used to reach the supplied destination. Both IP addresses and domain
+names may be used.
+
+An example with IP detection using a can-reach IP address:
+
+```bash
+sudo calicoctl node run --ip autodetect --ip-autodetection-method can-reach=8.8.8.8
+```
+
+An example with IP detection using a can-reach domain name:
+
+```bash
+sudo calicoctl node run --ip autodetect --ip-autodetection-method can-reach=www.google.com
+```
+
+**interface=INTERFACE-REGEX,INTERFACE-REGEX,...**
+
+The `interface` method uses the supplied interface regular expressions (golang
+syntax) to enumerate matching interfaces and to return the first IP address on
+the first interface that matches any of the interface regexes provided. The
+order that both the interfaces and the IP addresses are listed is system
+dependent.
+
+Example with IP detection on interface eth0:
+
+```bash
+sudo calicoctl node run --ip autodetect --ip-autodetection-method interface=eth0
+```
+
+Example with IP detection on interfaces eth0, eth1, eth2 etc.:
+
+```bash
+sudo calicoctl node run --ip autodetect --ip-autodetection-method interface=eth.*
+```
+
+An example with IP detection on interfaces eth0, eth1, eth2 etc. and wlp2s0:
+
+```bash
+sudo calicoctl node run --ip-autodetect --ip-autodetection-method interface=eth.*,wlp2s0
+```
+
+**skip-interface=INTERFACE-REGEX,INTERFACE-REGEX,...**
+
+The `skip-interface` method uses the supplied interface regular expressions (golang
+syntax) to enumerate all interface IP addresses and returns the first valid IP address
+(based on IP version and type of address) that does not match the listed regular
+expressions. Like the `first-found` option, it also skips by default certain known
+"local" interfaces such as the docker bridge. The order that both the interfaces
+and the IP addresses are listed is system dependent.
+
+This method has the ability to take in multiple regular expressions separated by `,`.
+Specifying only one regular expression for interfaces to skip will also work and a
+terminating `,` character does not need to be specified for those cases.
+
+### Options
+
+```
+      --name string                       The name of the Calico node.
+      --as string                         Set the AS number for this node.
+      --ip string                         Set the local IPv4 routing address for this node.
+      --ip6 string                        Set the local IPv6 routing address for this node.
+      --ip-autodetection-method string    Specify the autodetection method for detecting the local IPv4 routing address. (default "first-found")
+      --ip6-autodetection-method string   Specify the autodetection method for detecting the local IPv6 routing address. (default "first-found")
+      --log-dir string                    The directory containing Calico logs. (default "/var/log/calico")
+      --node-image string                 Docker image to use for Calico's per-node container. (default "quay.io/calico/node:latest")
+      --backend string                    Specify which networking backend to use (bird|none). (default "bird")
+      --dryrun                            Output the appropriate command, without starting the container.
+      --init-system                       Run the appropriate command to use with an init system.
+      --no-default-ippools                Do not create default pools upon startup.
+```
+
+### General options
+
+```
+  -c, --config string   Path to the file containing connection configuration in YAML or JSON format. (default "/etc/calico/calicoctl.cfg")
+```
+
+## See also
+
+- [Installing calicoctl](../../../operations/calicoctl/install.mdx)
+- [Resources](../../resources/overview.mdx) for details on all valid resources, including file format
+  and schema
+- [Policy](../../resources/networkpolicy.mdx) for details on the $[prodname] selector-based policy model

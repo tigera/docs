@@ -1,0 +1,261 @@
+---
+description: Upgrade Calico Open Source on OpenStack from v3.0 or later by updating system packages on CentOS or Ubuntu compute and control nodes.
+---
+
+# Upgrade Calico on OpenStack
+
+## $[prodname] package update
+
+This page describes how to upgrade to $[version] from $[prodname] v3.0 or later. The procedure
+varies by Linux distribution.
+
+- [Upgrading an OpenStack cluster based on CentOS](#upgrading-an-openstack-cluster-based-on-centos)
+
+- [Upgrading an OpenStack cluster based on Ubuntu](#upgrading-an-openstack-cluster-based-on-ubuntu)
+
+If you are upgrading from a version earlier than v3.32, you must also run a
+one-time policy data migration after the package upgrade; see
+[Migrating policy data](#migrating-policy-data-when-upgrading-from-earlier-than-v332)
+below.
+
+:::note
+
+Do not use older versions of `calicoctl` after the upgrade.
+This may result in unexpected behavior and data.
+
+:::
+
+## Upgrading an OpenStack cluster based on CentOS
+
+1. On all nodes, change the location of the $[prodname] packages to point to the $[version] repo:
+
+   ```
+   sudo sed -i 's/calico-X.X/calico-Y.Y/g' /etc/yum.repos.d/calico.repo
+   ```
+
+   Replace `X.X` in the above command with the version you're upgrading from (must be v3.0 or later).
+   Replace `Y.Y` with the version of the release you're upgrading to. Example: if you are upgrading from v3.1
+   to v3.5, replace `X.X` with `3.1` and replace `Y.Y` with `3.5`.
+
+1. On all compute nodes, update packages:
+
+   ```
+   sudo yum update
+   ```
+
+   We recommend upgrading the whole distribution as shown here. In case you prefer to upgrade particular packages only, those needed for a $[prodname] compute node are the following.
+
+   - `calico-common`
+   - `calico-compute`
+   - `calico-dhcp-agent`
+   - `calico-felix`
+   - `dnsmasq`
+   - `networking-calico`
+   - `openstack-neutron`
+   - `openstack-nova-api`
+   - `openstack-nova-compute`
+     <br />
+     <br />
+
+1. Use the following command on the compute nodes to confirm that Felix has upgraded to $[version].
+
+   ```
+   calico-felix --version
+   ```
+
+   It should return `$[version]`.
+
+1. On all compute nodes, make sure the datastore type is `etcdv3` in `/etc/calico/felix.cfg`:
+
+   ```
+   DatastoreType = etcdv3
+   ```
+
+   If you need to change the EtcdEndpoints address (e.g. because you've installed a new etcdv3 cluster
+   rather than upgrading your existing etcdv2 cluster), you should update the EtcdEndpoints addresses
+   in `/etcd/calico/felix.cfg` at this point.
+
+1. On all control nodes, update packages:
+
+   ```
+   sudo yum update
+   ```
+
+   We recommend upgrading the whole distribution as shown here. In case you prefer to upgrade particular packages only, those needed for a $[prodname] control node are the following.
+
+   - `calico-common`
+   - `calico-control`
+   - `networking-calico`
+   - `openstack-neutron`
+     <br />
+     <br />
+
+1. On all control nodes, restart `neutron-server`:
+
+   ```
+   sudo systemctl restart neutron-server
+   ```
+
+1. If you ran `calico-upgrade` earlier to migrate non-openstack data, on the control node run:
+
+   ```
+   calico-upgrade complete
+   ```
+
+1. Remove any existing `calicoctl` instances and [install the new `calicoctl`](../calicoctl/install.mdx).
+
+1. If you are upgrading from a version earlier than v3.32, run the
+   [policy data migration](#migrating-policy-data-when-upgrading-from-earlier-than-v332).
+
+1. Congratulations! You have upgraded to $[prodname] $[version].
+
+## Upgrading an OpenStack cluster based on Ubuntu
+
+1. On all nodes, change the location of the $[prodname] packages to point to the $[version] repo:
+
+   ```
+   sudo bash -c 'cat > /etc/apt/sources.list.d/project-calico-calico-X_X-trusty.list' << EOF
+   deb http://ppa.launchpad.net/project-calico/calico-X.X/ubuntu trusty main
+   # deb-src http://ppa.launchpad.net/project-calico/calico-X.X/ubuntu trusty main
+   EOF
+   ```
+
+   Replace `X_X` and `X.X` with the version you're upgrading to. Example: if you're upgrading to v3.5, replace `X_X` with
+   `3_5` and replace `X.X` with `3.5`. Also replace `trusty` with the code name of your Ubuntu version.
+
+1. On all compute nodes, update packages:
+
+   ```
+   sudo apt-get update
+   sudo apt-get install calico-compute calico-felix calico-common \
+                        networking-calico calico-dhcp-agent
+
+   ```
+
+1. Use the following command on the compute nodes to confirm that Felix has upgraded to $[version].
+
+   ```
+   calico-felix --version
+   ```
+
+   It should return `$[version]`.
+
+1. On all compute nodes, make sure the datastore type is `etcdv3` in `/etc/calico/felix.cfg`:
+
+   ```
+   DatastoreType = etcdv3
+   ```
+
+   If you need to change the EtcdEndpoints address (e.g. because you've installed a new etcdv3 cluster
+   rather than upgrading your existing etcdv2 cluster), you should update the EtcdEndpoints addresses
+   in `/etcd/calico/felix.cfg` at this point.
+
+1. On all control nodes, update packages:
+
+   ```
+   sudo apt-get update
+   sudo apt-get install calico-control calico-common networking-calico
+   ```
+
+1. On all control nodes, restart `neutron-server`:
+
+   ```
+   sudo service neutron-server restart
+   ```
+
+1. If you ran `calico-upgrade` earlier to migrate non-openstack data, on the control node run:
+
+   ```
+   calico-upgrade complete
+   ```
+
+1. Remove any existing `calicoctl` instances and [install the new `calicoctl`](../calicoctl/install.mdx).
+
+1. If you are upgrading from a version earlier than v3.32, run the
+   [policy data migration](#migrating-policy-data-when-upgrading-from-earlier-than-v332).
+
+1. Congratulations! You have upgraded to $[prodname] $[version].
+
+## Migrating policy data when upgrading from earlier than v3.32
+
+In $[prodname] v3.32, the naming convention for policies stored in the etcd
+datastore changed: policies in the default tier are now stored under their
+plain name, whereas $[prodname] v3.29.4 through v3.31.x stored them under a
+tier-prefixed name such as `default.my-policy`.  On Kubernetes clusters this
+data is migrated automatically by kube-controllers.  OpenStack clusters do not
+run kube-controllers as a service, so the same migration must be run once, by
+hand, after upgrading.
+
+If you skip this step, policies created before the upgrade misbehave in the
+following ways, until each one is migrated or recreated:
+
+- `calicoctl get`, `calicoctl delete`, and similar commands only find such a
+  policy under its stored name, e.g.
+  `calicoctl get globalnetworkpolicy default.my-policy`; using the plain name
+  reports that the resource does not exist.
+
+- Re-applying such a policy under its plain name creates a second, independent
+  policy object instead of updating the existing one.  Both objects are then
+  live policy until one of them is deleted.
+
+- The `%n` and `%p` specifiers in Felix's `LogPrefix` configuration expand to
+  the stored name, so log entries for pre-upgrade policies include the
+  `default.` prefix while entries for newly written policies do not.
+
+### Before you begin
+
+- **Upgrade every node first.**  All Felix instances (compute nodes) and all
+  neutron-server instances (control nodes) must be running $[prodname] v3.32
+  or later before you run the migration.  On a Kubernetes cluster this
+  ordering is verified automatically; on OpenStack it is your responsibility.
+
+- **Install and configure `calicoctl`.**  You need to be able to run
+  [`calicoctl`](../../operations/calicoctl/index.mdx) successfully on at least
+  one cluster node.
+
+- **Resolve any duplicate policies.**  If policies have already been
+  re-applied since the upgrade, you may have duplicate pairs - the same policy
+  name listed twice by `calicoctl get globalnetworkpolicy`, one showing the
+  tier `default` and one with an empty tier column.  For each pair, compare
+  the two objects:
+
+  ```
+  calicoctl get globalnetworkpolicy default.my-policy -o yaml
+  calicoctl get globalnetworkpolicy my-policy -o yaml
+  ```
+
+  and, once you have confirmed that the plain-named object has the spec you
+  want, delete the legacy one:
+
+  ```
+  calicoctl delete globalnetworkpolicy default.my-policy
+  ```
+
+  If you don't resolve a duplicate pair yourself, the migration keeps the
+  plain-named object and deletes the legacy one.
+
+### Run the migration
+
+Run the following on any machine where calicoctl is installed and configured to
+reach your etcd datastore:
+
+```bash
+calicoctl datastore migrate-policy-names
+```
+
+### Verify
+
+Pick a policy that was created before the upgrade and confirm that it is now
+accessible by its plain name:
+
+```
+calicoctl get globalnetworkpolicy my-policy
+```
+
+and that the legacy name is gone:
+
+```
+calicoctl get globalnetworkpolicy default.my-policy
+```
+
+The second command should report that the resource does not exist.
