@@ -1,0 +1,133 @@
+---
+description: Changes in each Calico Open Source release that need your attention before or during an upgrade, with the action to take for each.
+title: Upgrade notes
+---
+
+# Upgrade notes
+
+Review this page before you upgrade.
+It lists the changes in each release that alter behavior you may depend on, and says what to do about each one.
+Notes are grouped by the release that introduced them, so if you are skipping releases, read every group between the version you are on and the version you are upgrading to.
+
+Each note says who it affects, what changes, and what you need to do.
+Where a note applies only to some upgrade paths, it says so.
+
+## Upgrading to 3.33
+
+These apply when you upgrade to 3.33 from an earlier release.
+
+### Calico ships as a single image
+
+This affects you if you mirror $[prodname] images into a private registry, pin image names or digests, or scan specific images.
+
+Most components now ship inside one `calico/calico` image.
+The images it replaces are not published for 3.33 at all, so a mirror or a pinned reference to `calico/typha`, `calico/cni`, `calico/ctl`, `calico/apiserver`, `calico/kube-controllers` or `calico/goldmane` fails to pull after the upgrade.
+Release artifacts changed for the same reason.
+
+1. **Before you upgrade**, mirror `calico/calico` into your registry.
+2. Update any image pins, digests, or scanner configuration that name the replaced images.
+3. Upgrade $[prodname].
+
+### Limits on policy rules and selectors
+
+This affects you if you generate $[prodname] network policy programmatically, or have policies with very large rule lists, address lists, or selectors.
+
+$[prodname] network policy types now declare size limits in their CRD schemas, which the Kubernetes API server enforces on every write:
+
+| Field | Limit |
+| --- | --- |
+| Ingress rules, egress rules | 1024 each |
+| `selector`, `notSelector`, `namespaceSelector`, `serviceAccountSelector` | 1024 characters |
+| `nets`, `notNets` | 256 entries per rule |
+| `ports`, `notPorts` | 50 entries per rule |
+| HTTP `methods`, `paths` | 20 entries per rule |
+
+Policies already stored in the datastore keep working.
+The limits apply when a policy is written, so a policy that exceeds one is rejected the next time anything updates it, including your own tooling.
+
+1. **Before you upgrade**, check whether any existing policy exceeds a limit, and whether the tooling that generates your policy can produce one that does.
+2. Split any policy that exceeds a limit, or narrow the field that does.
+3. Upgrade $[prodname].
+
+### Calico Ingress Gateway proxies move namespace
+
+:::warning[Breaking change]
+
+Gateway proxies move namespace on upgrade, and merged gateways are no longer supported.
+
+:::
+
+This affects you if you use $[prodname] Ingress Gateway.
+
+Each gateway's proxy now runs in the same namespace as its `Gateway`, and the controller moves to `calico-system`.
+Existing proxies move out of the `tigera-gateway` namespace, so anything pinned to `tigera-gateway` — network policy, monitoring, and external DNS — stops matching them.
+Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway gets its own load balancer.
+
+1. **Before you upgrade**, if you run a global default deny policy, create a network policy in each Gateway's namespace that allows the proxy pods, so they can start as soon as they move. For the policy, see [Create an ingress gateway](../../networking/ingress-gateway/create-ingress-gateway.mdx).
+2. Upgrade $[prodname].
+3. Re-point monitoring and external DNS from `tigera-gateway` to each Gateway's namespace. If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
+
+### Calico Ingress Gateway requires Kubernetes 1.33
+
+This affects you if you use $[prodname] Ingress Gateway.
+It does not change the Kubernetes versions $[prodname] itself supports, which remain 1.32, 1.33 and 1.34.
+
+The bundled Envoy Gateway moves to v1.9.1, which raises its own minimum Kubernetes version to 1.33.
+
+1. **Before you upgrade**, if you use Ingress Gateway on Kubernetes 1.32, upgrade the cluster to 1.33 or later.
+
+### eBPF data plane requires kernel 5.10 or later
+
+This affects you if you run the eBPF data plane on nodes with a kernel earlier than 5.10, or a kernel built without BTF and CO-RE support.
+
+The runtime fallback paths for older kernels are gone.
+Instead of degrading, $[prodname] now reports a clear health message and does not program the data plane on an unsupported node.
+
+1. **Before you upgrade**, check the kernel version and BTF support on every node running the eBPF data plane.
+2. Upgrade nodes that are too old, or move them to the standard data plane.
+3. Upgrade $[prodname].
+
+Check the [release notes](../../release-notes/index.mdx) for known issues affecting specific kernel versions before you plan the upgrade.
+
+### Felix metrics endpoint no longer requires client certificates by default
+
+This affects you if you scrape the Felix Prometheus metrics endpoint and have never set `prometheusMetricsClientAuth`.
+
+The default changes from `RequireAndVerifyClientCert` to `NoClientCert`.
+Nothing fails, and no scrape breaks.
+The endpoint simply stops requiring a client certificate, so a protection you had by default is gone after the upgrade.
+
+1. **Before you upgrade**, if you rely on that protection, set `prometheusMetricsClientAuth: RequireAndVerifyClientCert` explicitly in your `FelixConfiguration`.
+
+### FIPS mode is removed
+
+This affects you if you run the `-fips` image variants.
+
+$[prodname] no longer publishes `-fips` tagged images or boringcrypto binaries.
+FIPS mode was deprecated in 3.30.
+The `fipsMode` field remains on the operator Installation API for now, because that field belongs to the operator and is removed separately.
+
+1. **Before you upgrade**, move off the `-fips` images.
+
+### New installs default to native v3 CRDs
+
+No action is required. This note is here because the default changed, not because an upgrade changes your cluster.
+
+An upgrade never switches an existing cluster between the aggregation API server and native v3 CRDs.
+The operator selects the mode from the CRDs already present.
+What changed is the default for a brand new install, which is now v3 CRD mode, and which requires Kubernetes 1.32 or later.
+
+1. Upgrade $[prodname]. Your cluster keeps the mechanism it already uses.
+2. To move an existing cluster onto native v3 CRDs deliberately, follow [Migrate from API server to native CRDs](../crd-migration.mdx). The datastore is briefly locked during the migration.
+
+### OpenStack no longer resyncs on a timer
+
+This affects you if you run $[prodname] for OpenStack and relied on the periodic resync to recover from drift.
+
+The periodic resync is gone.
+`resync_interval_secs` and `resync_max_interval_secs` are now no-ops, retained only so that an existing `neutron.conf` does not break.
+The driver resyncs once when the Neutron server starts, and on demand after that.
+
+1. Upgrade $[prodname].
+2. Remove `resync_interval_secs` and `resync_max_interval_secs` from `neutron.conf` at your convenience.
+3. Run `calico-resync` when you need an immediate reconciliation. To drive reconciliation entirely by hand, set `startup_resync = never`. See [Resync between Neutron and etcd](../../networking/openstack/resync.mdx).
