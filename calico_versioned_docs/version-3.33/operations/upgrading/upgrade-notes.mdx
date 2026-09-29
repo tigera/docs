@@ -77,6 +77,8 @@ The floor belongs to the bundled Envoy Gateway, not to $[prodname] itself.
 The bundled Envoy Gateway moves to v1.9.1, which raises its own minimum Kubernetes version to 1.33, and moves the bundled Gateway API CRDs from v1.5.1 to v1.6.1.
 Gateway API v1.6 removes `sessionPersistence.idleTimeout` from `HTTPRoute`, and Envoy Gateway v1.9 rejects an empty `clientIPDetection` in `ClientTrafficPolicy`.
 
+If your cluster is below Kubernetes 1.33, Ingress Gateway does not run after the upgrade.
+
 1. **Before you upgrade**, if your cluster is below Kubernetes 1.33, upgrade it first.
 2. Remove `sessionPersistence.idleTimeout` from any `HTTPRoute`, and any empty `clientIPDetection` from a `ClientTrafficPolicy`.
 
@@ -177,11 +179,21 @@ The driver resyncs once when the Neutron server starts, and on demand after that
 
 1. Upgrade $[prodname].
 2. Remove `resync_interval_secs` and `resync_max_interval_secs` from `neutron.conf` at your convenience.
-3. Run `calico-resync` when you need an immediate reconciliation. To drive reconciliation entirely by hand, set `startup_resync = never`. See [Resync between Neutron and etcd](../../networking/openstack/resync.mdx).
+3. If you install from packages, install the `calico-resync` package on each control node. The command ships separately from `calico-control`.
+4. Run `calico-resync` when you need an immediate reconciliation. To drive reconciliation entirely by hand, set `startup_resync = never`. See [Resync between Neutron and etcd](../../networking/openstack/resync.mdx).
 
 ## Upgrading to 3.32
 
 These apply when you upgrade from 3.31, and not when you upgrade from 3.32.
+
+### AdminNetworkPolicy and BaselineAdminNetworkPolicy are no longer enforced
+
+This affects you if you have `AdminNetworkPolicy` or `BaselineAdminNetworkPolicy` resources.
+
+3.32 removed support for both in favor of `ClusterNetworkPolicy`.
+$[prodname] does not enforce them from 3.32 onward, so they stop taking effect silently: the resources remain in the cluster and nothing reports an error.
+
+1. **Before you upgrade**, replace each `AdminNetworkPolicy` and `BaselineAdminNetworkPolicy` with an equivalent `ClusterNetworkPolicy`, or remove it.
 
 ### OpenStack policy names change in the etcd datastore
 
