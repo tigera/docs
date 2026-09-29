@@ -69,18 +69,15 @@ Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway
 2. Upgrade $[prodname].
 3. Re-point monitoring and external DNS from `tigera-gateway` to each Gateway's namespace. If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
 
-### Calico Ingress Gateway requires Kubernetes 1.33
+### Calico Ingress Gateway moves to Gateway API v1.6
 
 This affects you if you use $[prodname] Ingress Gateway.
-The floor belongs to the bundled Envoy Gateway, not to $[prodname] itself.
 
-The bundled Envoy Gateway moves to v1.9.1, which raises its own minimum Kubernetes version to 1.33, and moves the bundled Gateway API CRDs from v1.5.1 to v1.6.1.
+The bundled Envoy Gateway moves to v1.9.1, which takes the bundled Gateway API CRDs from v1.5.1 to v1.6.1.
 Gateway API v1.6 removes `sessionPersistence.idleTimeout` from `HTTPRoute`, and Envoy Gateway v1.9 rejects an empty `clientIPDetection` in `ClientTrafficPolicy`.
+A manifest using either is rejected once the CRDs are upgraded.
 
-If your cluster is below Kubernetes 1.33, Ingress Gateway does not run after the upgrade.
-
-1. **Before you upgrade**, if your cluster is below Kubernetes 1.33, upgrade it first.
-2. Remove `sessionPersistence.idleTimeout` from any `HTTPRoute`, and any empty `clientIPDetection` from a `ClientTrafficPolicy`.
+1. **Before you upgrade**, remove `sessionPersistence.idleTimeout` from any `HTTPRoute`, and any empty `clientIPDetection` from a `ClientTrafficPolicy`.
 
 ### eBPF data plane requires kernel 5.10 or later
 
@@ -164,7 +161,8 @@ No action is required. This note is here because the default changed, not becaus
 An upgrade never switches an existing cluster between the aggregation API server and native v3 CRDs.
 The operator selects the mode from the CRDs already present.
 What changed is the default for a brand new install, which is now v3 CRD mode.
-That mode needs Kubernetes 1.34 or later, and on 1.34 and 1.35 it also needs the `MutatingAdmissionPolicy` feature gate enabled on the API server, because it is not on by default there.
+On Kubernetes 1.35 that mode also needs the `MutatingAdmissionPolicy` feature gate enabled on the API server, because the beta API exists there but is not on by default.
+From 1.36 the feature is generally available and enabled for you.
 
 1. Upgrade $[prodname]. Your cluster keeps the mechanism it already uses.
 2. To move an existing cluster onto native v3 CRDs deliberately, follow [Migrate from API server to native CRDs](../crd-migration.mdx). Plan a maintenance window: new pod scheduling and policy changes are blocked until the migration completes, and IPAM allocations are blocked during its final phase.
