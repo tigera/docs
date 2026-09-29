@@ -21,8 +21,9 @@ These apply when you upgrade to 3.33 from an earlier release.
 This affects you if you mirror $[prodname] images into a private registry, pin image names or digests, or scan specific images.
 
 Most components now ship inside one `calico/calico` image.
-The images it replaces are not published for 3.33 at all, so a mirror or a pinned reference to `calico/typha`, `calico/cni`, `calico/ctl`, `calico/apiserver`, `calico/kube-controllers` or `calico/goldmane` fails to pull after the upgrade.
-Release artifacts changed for the same reason.
+The images it replaces are not published for 3.33 at all, so a mirror or a pinned reference to any of them fails to pull after the upgrade.
+Fourteen images are no longer published: `calico/typha`, `calico/cni`, `calico/ctl`, `calico/apiserver`, `calico/kube-controllers`, `calico/goldmane`, `calico/dikastes`, `calico/csi`, `calico/node-driver-registrar`, `calico/pod2daemon-flexvol`, `calico/key-cert-provisioner`, `calico/flannel-migration-controller`, `calico/whisker-backend`, and `flexvol`.
+`calico/node`, `calico/whisker`, the Windows images and the Envoy images are still published separately.
 
 1. **Before you upgrade**, mirror `calico/calico` into your registry.
 2. Update any image pins, digests, or scanner configuration that name the replaced images.
@@ -42,8 +43,9 @@ $[prodname] network policy types now declare size limits in their CRD schemas, w
 | `ports`, `notPorts` | 50 entries per rule |
 | HTTP `methods`, `paths` | 20 entries per rule |
 
-Policies already stored in the datastore keep working.
-The limits apply when a policy is written, so a policy that exceeds one is rejected the next time anything updates it, including your own tooling.
+Policies already stored in the datastore keep working, and an update that does not touch an over-limit field is still accepted, because Kubernetes ratchets CRD validation.
+What fails is creating a policy over a limit, or updating the field that exceeds one.
+These limits live in the CRDs, so they do not apply on the etcdv3 datastore.
 
 1. **Before you upgrade**, check whether any existing policy exceeds a limit, and whether the tooling that generates your policy can produce one that does.
 2. Split any policy that exceeds a limit, or narrow the field that does.
@@ -70,24 +72,68 @@ Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway
 ### Calico Ingress Gateway requires Kubernetes 1.33
 
 This affects you if you use $[prodname] Ingress Gateway.
-It does not change the Kubernetes versions $[prodname] itself supports, which remain 1.32, 1.33 and 1.34.
+The floor belongs to the bundled Envoy Gateway, not to $[prodname] itself.
 
-The bundled Envoy Gateway moves to v1.9.1, which raises its own minimum Kubernetes version to 1.33.
+The bundled Envoy Gateway moves to v1.9.1, which raises its own minimum Kubernetes version to 1.33, and moves the bundled Gateway API CRDs from v1.5.1 to v1.6.1.
+Gateway API v1.6 removes `sessionPersistence.idleTimeout` from `HTTPRoute`, and Envoy Gateway v1.9 rejects an empty `clientIPDetection` in `ClientTrafficPolicy`.
 
-1. **Before you upgrade**, if you use Ingress Gateway on Kubernetes 1.32, upgrade the cluster to 1.33 or later.
+1. **Before you upgrade**, if your cluster is below Kubernetes 1.33, upgrade it first.
+2. Remove `sessionPersistence.idleTimeout` from any `HTTPRoute`, and any empty `clientIPDetection` from a `ClientTrafficPolicy`.
 
 ### eBPF data plane requires kernel 5.10 or later
 
 This affects you if you run the eBPF data plane on nodes with a kernel earlier than 5.10, or a kernel built without BTF and CO-RE support.
+Red Hat 8.4 with kernel 4.18.0-305 or above is supported, because Red Hat backported the required features to that build.
 
 The runtime fallback paths for older kernels are gone.
 Instead of degrading, $[prodname] now reports a clear health message and does not program the data plane on an unsupported node.
 
-1. **Before you upgrade**, check the kernel version and BTF support on every node running the eBPF data plane.
+1. **Before you upgrade**, check every node running the eBPF data plane with `uname -r`, and confirm BTF support with `ls /sys/kernel/btf/vmlinux`.
 2. Upgrade nodes that are too old, or move them to the standard data plane.
 3. Upgrade $[prodname].
 
-Check the [release notes](../../release-notes/index.mdx) for known issues affecting specific kernel versions before you plan the upgrade.
+Some kernels inside the supported range have known problems in this release. Check the known issues in the [release notes](../../release-notes/index.mdx) before you plan the upgrade.
+
+### eBPF programs attach through netkit by default
+
+This affects you if you run the eBPF data plane and may need to roll back to 3.32 or earlier.
+
+`BPFAttachType` gains a `Netkit` value, which is now the default.
+Felix attaches BPF programs through the netkit API on workload netkit devices, and through TCX elsewhere.
+A release before 3.33 does not understand netkit devices, so rolling back without preparing first leaves those devices unmanaged.
+
+1. Upgrade $[prodname].
+2. **Before rolling back** to a release without netkit support, set `BPFAttachType` to `TCX` or `TC` in your `FelixConfiguration`, so Felix drives the existing netkit devices with that mechanism instead.
+
+### eBPF overlay traffic now uses the node's main IP
+
+This affects you if you run the eBPF data plane with VXLAN or IPIP, and have policy or firewall rules that match the tunnel device address.
+
+VXLAN and IPIP devices no longer carry their own IP.
+When a node talks to a pod over the overlay it now uses the host's main device address, the one Kubernetes reports as the node's internal IP.
+Any host endpoint policy, global network policy, or external firewall rule written against the tunnel address stops matching.
+
+1. **Before you upgrade**, find any rule that matches a tunnel device address and rewrite it against the node's internal IP.
+2. To keep the old behavior instead, set `BPFOverlayIPOnDevice` to `true` in your `FelixConfiguration`.
+
+### Default CNI configuration requires a newer container runtime
+
+This affects you if any node runs containerd earlier than v1.6, or CRI-O earlier than v1.24.
+
+The default CNI configuration now declares `cniVersion` 1.0.0, up from 0.3.1.
+Older runtimes do not understand that version, so CNI ADD fails and pods cannot start on those nodes.
+
+1. **Before you upgrade**, check the container runtime version on every node.
+2. Upgrade any node below containerd v1.6 or CRI-O v1.24.
+
+### Overlapping IP pools are rejected
+
+This affects you if any two of your IP pools have overlapping CIDRs.
+
+Creating or updating an IP pool is now rejected when its CIDR overlaps an existing pool.
+Pools already stored keep working, but you cannot edit one that overlaps another until the overlap is resolved.
+
+1. **Before you upgrade**, check your pools for overlapping CIDRs if you expect to edit them afterwards.
 
 ### Felix metrics endpoint no longer requires client certificates by default
 
@@ -101,13 +147,13 @@ The endpoint simply stops requiring a client certificate, so a protection you ha
 
 ### FIPS mode is removed
 
-This affects you if you run the `-fips` image variants.
+This affects you if your `Installation` sets `fipsMode: Enabled`, which is how an operator-managed cluster runs the `-fips` images.
 
-$[prodname] no longer publishes `-fips` tagged images or boringcrypto binaries.
-FIPS mode was deprecated in 3.30.
-The `fipsMode` field remains on the operator Installation API for now, because that field belongs to the operator and is removed separately.
+$[prodname] no longer publishes `-fips` tagged images or boringcrypto binaries, and FIPS mode was deprecated in 3.30.
+The `fipsMode` field still exists on the Installation API, but it is deprecated, and leaving it set to `Enabled` marks the installation degraded after the upgrade.
 
-1. **Before you upgrade**, move off the `-fips` images.
+1. **Before you upgrade**, remove `fipsMode` from your `Installation`, or set it to `Disabled`.
+2. If you pin image tags anywhere, move off the `-fips` variants.
 
 ### New installs default to native v3 CRDs
 
@@ -115,10 +161,11 @@ No action is required. This note is here because the default changed, not becaus
 
 An upgrade never switches an existing cluster between the aggregation API server and native v3 CRDs.
 The operator selects the mode from the CRDs already present.
-What changed is the default for a brand new install, which is now v3 CRD mode, and which requires Kubernetes 1.32 or later.
+What changed is the default for a brand new install, which is now v3 CRD mode.
+That mode needs Kubernetes 1.34 or later, and on 1.34 and 1.35 it also needs the `MutatingAdmissionPolicy` feature gate enabled on the API server, because it is not on by default there.
 
 1. Upgrade $[prodname]. Your cluster keeps the mechanism it already uses.
-2. To move an existing cluster onto native v3 CRDs deliberately, follow [Migrate from API server to native CRDs](../crd-migration.mdx). The datastore is briefly locked during the migration.
+2. To move an existing cluster onto native v3 CRDs deliberately, follow [Migrate from API server to native CRDs](../crd-migration.mdx). Plan a maintenance window: new pod scheduling and policy changes are blocked until the migration completes, and IPAM allocations are blocked during its final phase.
 
 ### OpenStack no longer resyncs on a timer
 
@@ -131,3 +178,18 @@ The driver resyncs once when the Neutron server starts, and on demand after that
 1. Upgrade $[prodname].
 2. Remove `resync_interval_secs` and `resync_max_interval_secs` from `neutron.conf` at your convenience.
 3. Run `calico-resync` when you need an immediate reconciliation. To drive reconciliation entirely by hand, set `startup_resync = never`. See [Resync between Neutron and etcd](../../networking/openstack/resync.mdx).
+
+## Upgrading to 3.32
+
+These apply when you upgrade from 3.31, and not when you upgrade from 3.32.
+
+### OpenStack policy names change in the etcd datastore
+
+This affects you if you run $[prodname] for OpenStack on the etcd datastore.
+
+In 3.32 the naming convention for stored policies changed: policies in the default tier are stored under their plain name, where 3.29.4 through 3.31.x stored them under a tier-prefixed name.
+Kubernetes clusters migrate this automatically through kube-controllers.
+OpenStack clusters do not run kube-controllers, so the migration has to be run once, by hand.
+
+1. Upgrade $[prodname].
+2. Run the one-time migration described in [Migrating policy data](openstack-upgrade.mdx#migrating-policy-data-when-upgrading-from-earlier-than-v332).
