@@ -7,16 +7,14 @@ title: Upgrade notes
 
 Review this page before you upgrade.
 It lists the changes in each release that alter behavior you may depend on, and says what to do about each one.
-Notes are grouped by the release that introduced them. Read every group newer than the version you are upgrading from.
+Each note applies to every upgrade to $[version] unless it says otherwise.
 
 Each note says who it affects, what changes, and what you need to do.
 Where a note applies only to some upgrade paths, it says so.
 
-## Changes introduced in 3.33
+{/* 3.33 · calico#12225 */}
 
-These apply to every upgrade to 3.33.
-
-### Calico ships as a single image
+## Calico ships as a single image
 
 This affects you if you mirror $[prodname] images into a private registry, pin image names or digests, or scan specific images.
 
@@ -29,7 +27,9 @@ Fourteen images are no longer published: `calico/typha`, `calico/cni`, `calico/c
 2. Update any image pins, digests, or scanner configuration that name the replaced images.
 3. Upgrade $[prodname].
 
-### Limits on policy rules and selectors
+{/* 3.33 · calico#12250 */}
+
+## Limits on policy rules and selectors
 
 This affects you if you generate $[prodname] network policy programmatically, or have policies with very large rule lists, address lists, or selectors.
 
@@ -51,7 +51,9 @@ These limits live in the CRDs, so they do not apply on the etcdv3 datastore.
 2. Split any policy that exceeds a limit, or narrow the field that does.
 3. Upgrade $[prodname].
 
-### Calico Ingress Gateway proxies move namespace
+{/* 3.33 */}
+
+## Calico Ingress Gateway proxies move namespace
 
 :::warning[Breaking change]
 
@@ -69,7 +71,9 @@ Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway
 2. Upgrade $[prodname].
 3. Re-point monitoring and external DNS from `tigera-gateway` to each Gateway's namespace. If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
 
-### Calico Ingress Gateway moves to Gateway API v1.6
+{/* 3.33 · calico#14049 */}
+
+## Calico Ingress Gateway moves to Gateway API v1.6
 
 This affects you if you use $[prodname] Ingress Gateway.
 
@@ -79,7 +83,9 @@ A manifest using either is rejected once the CRDs are upgraded.
 
 1. **Before you upgrade**, remove `sessionPersistence.idleTimeout` from any `HTTPRoute`, and any empty `clientIPDetection` from a `ClientTrafficPolicy`.
 
-### eBPF data plane requires kernel 5.10 or later
+{/* 3.33 · calico#12128 */}
+
+## eBPF data plane requires kernel 5.10 or later
 
 This affects you if you run the eBPF data plane on nodes with a kernel earlier than 5.10, or a kernel built without BTF and CO-RE support.
 Red Hat 8.4 with kernel 4.18.0-305 or above is supported, because Red Hat backported the required features to that build.
@@ -93,7 +99,9 @@ Instead of degrading, $[prodname] now reports a clear health message and does no
 
 Some kernels inside the supported range have known problems in this release. Check the known issues in the [release notes](../../release-notes/index.mdx) before you plan the upgrade.
 
-### eBPF programs attach through netkit by default
+{/* 3.33 · calico#13576 */}
+
+## eBPF programs attach through netkit by default
 
 This affects you if you run the eBPF data plane and may need to roll back to 3.32 or earlier.
 
@@ -104,7 +112,9 @@ A release before 3.33 does not understand netkit devices, so rolling back withou
 1. Upgrade $[prodname].
 2. **Before rolling back** to a release without netkit support, set `BPFAttachType` to `TCX` or `TC` in your `FelixConfiguration`, so Felix drives the existing netkit devices with that mechanism instead.
 
-### eBPF overlay traffic now uses the node's main IP
+{/* 3.33 · calico#11919 */}
+
+## eBPF overlay traffic now uses the node's main IP
 
 This affects you if you run the eBPF data plane with VXLAN or IPIP, and have policy or firewall rules that match the tunnel device address.
 
@@ -115,7 +125,9 @@ Any host endpoint policy, global network policy, or external firewall rule writt
 1. **Before you upgrade**, find any rule that matches a tunnel device address and rewrite it against the node's internal IP.
 2. To keep the old behavior instead, set `BPFOverlayIPOnDevice` to `true` in your `FelixConfiguration`.
 
-### Default CNI configuration requires a newer container runtime
+{/* 3.33 · calico#13352 */}
+
+## Default CNI configuration requires a newer container runtime
 
 This affects you if any node runs containerd earlier than v1.6, or CRI-O earlier than v1.24.
 
@@ -125,7 +137,9 @@ Older runtimes do not understand that version, so CNI ADD fails and pods cannot 
 1. **Before you upgrade**, check the container runtime version on every node.
 2. Upgrade any node below containerd v1.6 or CRI-O v1.24.
 
-### Overlapping IP pools are rejected
+{/* 3.33 · calico#13953 */}
+
+## Overlapping IP pools are rejected
 
 This affects you if any two of your IP pools have overlapping CIDRs.
 
@@ -134,7 +148,9 @@ Pools already stored keep working, but you cannot edit one that overlaps another
 
 1. **Before you upgrade**, check your pools for overlapping CIDRs if you expect to edit them afterwards.
 
-### Felix metrics endpoint no longer requires client certificates by default
+{/* 3.33 · calico#13072 */}
+
+## Felix metrics endpoint no longer requires client certificates by default
 
 This affects you if you scrape the Felix Prometheus metrics endpoint and have never set `prometheusMetricsClientAuth`.
 
@@ -144,7 +160,9 @@ The endpoint simply stops requiring a client certificate, so a protection you ha
 
 1. **Before you upgrade**, if you rely on that protection, set `prometheusMetricsClientAuth: RequireAndVerifyClientCert` explicitly in your `FelixConfiguration`.
 
-### FIPS mode is removed
+{/* 3.33 · calico#12883 */}
+
+## FIPS mode is removed
 
 This affects you if your `Installation` sets `fipsMode: Enabled`, which is how an operator-managed cluster runs the `-fips` images.
 
@@ -154,7 +172,9 @@ The `fipsMode` field still exists on the Installation API, but it is deprecated,
 1. **Before you upgrade**, remove `fipsMode` from your `Installation`, or set it to `Disabled`.
 2. If you pin image tags anywhere, move off the `-fips` variants.
 
-### New installs default to native v3 CRDs
+{/* 3.33 */}
+
+## New installs default to native v3 CRDs
 
 No action is required. This note is here because the default changed, not because an upgrade changes your cluster.
 
@@ -167,7 +187,9 @@ From 1.36 the feature is generally available and enabled for you.
 1. Upgrade $[prodname]. Your cluster keeps the mechanism it already uses.
 2. To move an existing cluster onto native v3 CRDs deliberately, follow [Migrate from API server to native CRDs](../crd-migration.mdx). Plan a maintenance window: new pod scheduling and policy changes are blocked until the migration completes, and IPAM allocations are blocked during its final phase.
 
-### OpenStack no longer resyncs on a timer
+{/* 3.33 · calico#12658 */}
+
+## OpenStack no longer resyncs on a timer
 
 This affects you if you run $[prodname] for OpenStack and relied on the periodic resync to recover from drift.
 
@@ -180,22 +202,22 @@ The driver resyncs once when the Neutron server starts, and on demand after that
 3. If you install from packages, install the `calico-resync` package on each control node. The command ships separately from `calico-control`.
 4. Run `calico-resync` when you need an immediate reconciliation. To drive reconciliation entirely by hand, set `startup_resync = never`. See [Resync between Neutron and etcd](../../networking/openstack/resync.mdx).
 
-## Changes introduced in 3.32
+{/* 3.32 */}
 
-These apply only if you are upgrading from 3.31, and so jumping over 3.32. If you are already on 3.32 you have them.
+## AdminNetworkPolicy and BaselineAdminNetworkPolicy are no longer enforced
 
-### AdminNetworkPolicy and BaselineAdminNetworkPolicy are no longer enforced
-
-This affects you if you have `AdminNetworkPolicy` or `BaselineAdminNetworkPolicy` resources.
+This affects you if you are upgrading from 3.31 and have `AdminNetworkPolicy` or `BaselineAdminNetworkPolicy` resources. If you are already on 3.32 this has happened.
 
 3.32 removed support for both in favor of `ClusterNetworkPolicy`.
 $[prodname] does not enforce them from 3.32 onward, so they stop taking effect silently: the resources remain in the cluster and nothing reports an error.
 
 1. **Before you upgrade**, replace each `AdminNetworkPolicy` and `BaselineAdminNetworkPolicy` with an equivalent `ClusterNetworkPolicy`, or remove it.
 
-### OpenStack policy names change in the etcd datastore
+{/* 3.32 */}
 
-This affects you if you run $[prodname] for OpenStack on the etcd datastore.
+## OpenStack policy names change in the etcd datastore
+
+This affects you if you are upgrading from 3.31 and run $[prodname] for OpenStack on the etcd datastore. If you are already on 3.32 this has happened.
 
 In 3.32 the naming convention for stored policies changed: policies in the default tier are stored under their plain name, where 3.29.4 through 3.31.x stored them under a tier-prefixed name.
 Kubernetes clusters migrate this automatically through kube-controllers.
