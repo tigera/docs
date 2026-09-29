@@ -26,7 +26,9 @@ The console does not create or invite users. The **Users** tab is read-only, and
 
 ### Role management is per cluster
 
-Role management is off by default and is turned on one cluster at a time, including each managed cluster in a multi-cluster deployment. Roles are local to the cluster they were created on and are not synchronized; use **Export YAML** to copy them to another cluster.
+Role management is off by default and is turned on one cluster at a time, including each managed cluster in a multi-cluster deployment. A role belongs to the cluster it was created on and is not synchronized to other clusters; use **Export YAML** to copy it.
+
+On a managed cluster, a role's log and Kibana permissions are held on the management cluster, because that is where the logs and Kibana live. The console writes and removes them with the rest of the role, so you manage the role from the managed cluster as usual.
 
 ## Before you begin
 
@@ -38,6 +40,8 @@ Role management is off by default and is turned on one cluster at a time, includ
 **Limitations**
 
 - Roles do not synchronize between clusters. Exported roles are a copy, not a link.
+- Directory groups come from LDAP only. With an OIDC-only identity provider, such as Okta or Microsoft Entra ID, **Bind an IdP group** is not offered; use **Manual group binding** instead.
+- Role management cannot be turned on for a multi-tenant management cluster.
 
 ## How to
 
@@ -71,7 +75,9 @@ Connecting your directory lets roles bind to groups that already exist in it, so
 
 This requires the cluster to authenticate users with [LDAP](configure-identity-provider.mdx), on port 389 or 636. The directory is read on the management cluster only, so create the secret there and turn role management on there too, even when the role applies to a managed cluster.
 
-Create the directory-sync secret. This is separate from the `tigera-ldap-credentials` secret that authentication uses; its `url` must point at the same host as `Authentication.spec.ldap.host`, written as a full URL. $[prodname] walks the directory with these credentials and offers the groups it finds when you create a role.
+On the management cluster, open **Manage Team** and connect the directory, giving its URL, a bind DN and password, and the base DN to search for groups. The URL must point at the same host as `Authentication.spec.ldap.host`, written as a full URL. $[prodname] walks the directory with these credentials and offers the groups it finds when you create a role. The bind password is not shown again after you save it.
+
+The console stores these settings in the `tigera-idp-ldap-config` secret in the `calico-system` namespace, separate from the `tigera-ldap-credentials` secret that authentication uses. You can create the secret with `kubectl` instead:
 
 ```bash
 kubectl create secret generic tigera-idp-ldap-config -n calico-system \
@@ -103,15 +109,24 @@ A role's name is a group, so choosing the name decides who gets it. There are tw
    - **Namespace** — for namespaced permissions. Leave it as **any namespace** to apply the permission cluster-wide.
 1. Add any further permissions, then click **Save**. A role must carry at least one permission.
 
+#### What some permissions include
+
+- **Logs** are granted per log type (**View Flow Logs**, **View DNS Logs**, **View Audit Logs (Timeline)** and so on, or **View All Logs**) and apply to the cluster the role is on.
+- **View Kibana** signs the user in to Kibana, which is a single instance on the management cluster shared by all clusters. What they see there comes only from their log permissions, cluster by cluster.
+- **Policy** permissions do not include audit logs. To see a policy's change history on the policy board, add **View Audit Logs (Timeline)**.
+- **Policy** permissions include Kubernetes network policies only when they cover the `default` tier, where $[prodname] enforces them.
+- **Modify Alerts** also reads the logs its alerts query, because an alert copies what it finds into the events it raises. **View IP Pools** and **View L2 Networks** list pods in every namespace. The permission picker says so for each.
+- **Policy Recommendations** is offered as **Modify** only.
+
 A role bound to a directory group appears in the list as **Custom - IdP**. Its membership is owned by your identity provider, so its subjects cannot be edited from the console.
 
-To change a role later, select **Actions** > **Edit Permissions**. **Delete Role** removes the role and its bindings from this cluster; subjects bound to it lose the access it granted.
+To change a role later, select **Actions** > **Edit Permissions**. **Delete Role** removes the role and its bindings from this cluster; subjects bound to it lose the access it granted. For a role bound to a directory group, the group stays in the directory and can be bound to a new role.
 
 ### See who has access
 
 Click the user icon <IconUser width="20"/> > **Manage Team** > **Users** to review which subjects hold which roles, and when each last signed in. Select a subject to see the permissions its roles carry.
 
-The tab is read-only, and lists the subjects on the roles' bindings plus the members of any bound identity provider groups; **Last signed in** fills in once a subject authenticates. Effective permissions are the union of these roles and anything bound to the subject outside the console, which this view does not show.
+The tab is read-only, and lists the subjects on the roles' bindings plus the members of any bound identity provider groups. A directory group's members appear once they have signed in to the web console at least once; until then the group's role applies to them, but they are not listed. Effective permissions are the union of these roles and anything bound to the subject outside the console, which this view does not show.
 
 To audit which group each role binds, list the bindings the console manages.
 
@@ -125,11 +140,26 @@ kubectl get clusterrolebinding -l app.kubernetes.io/managed-by=calico-ui-rbac \
 Roles apply only to the cluster they were created on. To reuse them elsewhere, export them and apply them to a cluster that also has role management turned on. The export carries each role's bindings, not the permissions they point at, and those exist only where the console has built its catalogue.
 
 1. Select the source cluster, then click the user icon <IconUser width="20"/> > **Manage Team** > **Roles** > **Export YAML**.
-1. Apply the file to each target cluster.
+1. Apply the file:
+   - For a standalone or management cluster, apply it to the target cluster.
 
-   ```bash
-   kubectl apply -f <exported-file>.yaml
-   ```
+     ```bash
+     kubectl apply -f <exported-file>
+     ```
+
+   - For a managed cluster, the file also holds the bindings kept on the management cluster, labeled `rbac.tigera.io/managed-cluster`. Apply each part to its cluster.
+
+     ```bash
+     kubectl --context <managed-cluster> apply -f <exported-file> -l '!rbac.tigera.io/managed-cluster'
+     kubectl --context <management-cluster> apply -f <exported-file> -l rbac.tigera.io/managed-cluster
+     ```
+
+The console exports a managed cluster's roles for that same cluster. To copy them to a different managed cluster, request the export for the target through the API, then apply it as above.
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  "https://<web-console>/ui-apis/team/export?cluster=<source-cluster>&target=<target-cluster>" > <exported-file>
+```
 
 Check first that the target cluster has the tiers and namespaces the roles were scoped to. A binding naming a tier that is missing there applies without error but grants nothing, and a binding into a namespace that does not exist is rejected.
 
