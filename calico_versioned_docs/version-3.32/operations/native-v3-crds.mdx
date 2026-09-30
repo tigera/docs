@@ -69,17 +69,19 @@ Select the method below based on your preferred installation method.
    kubectl create namespace tigera-operator
    ```
 
-1. Install the v3 CRD chart instead of the default v1 CRD chart:
+1. Install the v3 CRD chart instead of the default v1 CRD chart.
+
+   If your cluster is based on Kubernetes 1.36 or later:
 
    ```bash
-   helm template calico-crds projectcalico/projectcalico.org.v3 --version $[releaseTitle] | kubectl apply --server-side -f -
+   helm template calico-crds projectcalico/projectcalico.org.v3 --version $[releaseTitle] --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy | kubectl apply --server-side -f -
    ```
 
-   :::note
+   If your cluster is based on Kubernetes 1.34 or 1.35:
 
-   On Kubernetes 1.36 and later, add `--api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy` to the `helm template` command. Without it, Helm renders the MutatingAdmissionPolicy resources at `v1beta1`, which Kubernetes 1.36 does not serve.
-
-   :::
+   ```bash
+   helm template calico-crds projectcalico/projectcalico.org.v3 --version $[releaseTitle] --api-versions admissionregistration.k8s.io/v1beta1/MutatingAdmissionPolicy | kubectl apply --server-side -f -
+   ```
 
    :::note
 
