@@ -6,11 +6,8 @@ title: Upgrade notes
 # Upgrade notes
 
 Review this page before you upgrade.
-It lists the changes in each release that alter behavior you may depend on, and says what to do about each one.
-Each note applies to every upgrade to $[version] unless it says otherwise.
-
-Each note says who it affects, what changes, and what you need to do.
-Where a note applies only to some upgrade paths, it says so.
+It lists the changes that alter behavior you may depend on, and says who each one affects and what to do about it.
+A note applies to every upgrade to $[version] unless it says otherwise.
 
 {/* 3.33 · calico#12225 */}
 
@@ -20,8 +17,8 @@ This affects you if you mirror $[prodname] images into a private registry, pin i
 
 Most components now ship inside one `calico/calico` image.
 The images it replaces are not published for 3.33 at all, so a mirror or a pinned reference to any of them fails to pull after the upgrade.
-Fourteen images are no longer published: `calico/typha`, `calico/cni`, `calico/ctl`, `calico/apiserver`, `calico/kube-controllers`, `calico/goldmane`, `calico/dikastes`, `calico/csi`, `calico/node-driver-registrar`, `calico/pod2daemon-flexvol`, `calico/key-cert-provisioner`, `calico/flannel-migration-controller`, `calico/whisker-backend`, and `flexvol`.
-`calico/node`, `calico/whisker`, the Windows images and the Envoy images are still published separately.
+Thirteen images are no longer published: `calico/typha`, `calico/cni`, `calico/ctl`, `calico/apiserver`, `calico/kube-controllers`, `calico/goldmane`, `calico/dikastes`, `calico/csi`, `calico/node-driver-registrar`, `calico/pod2daemon-flexvol`, `calico/key-cert-provisioner`, `calico/flannel-migration-controller` and `calico/whisker-backend`.
+`calico/node`, `calico/whisker`, `calico/third-party-cni-plugins`, the Windows images, the Envoy images and the Istio images are still published separately.
 
 1. **Before you upgrade**, mirror `calico/calico` into your registry.
 2. Update any image pins, digests, or scanner configuration that name the replaced images.
@@ -112,31 +109,6 @@ A release before 3.33 does not understand netkit devices, so rolling back withou
 1. Upgrade $[prodname].
 2. **Before rolling back** to a release without netkit support, set `BPFAttachType` to `TCX` or `TC` in your `FelixConfiguration`, so Felix drives the existing netkit devices with that mechanism instead.
 
-{/* 3.33 · calico#11919 */}
-
-## eBPF overlay traffic now uses the node's main IP
-
-This affects you if you run the eBPF data plane with VXLAN or IPIP, and have policy or firewall rules that match the tunnel device address.
-
-VXLAN and IPIP devices no longer carry their own IP.
-When a node talks to a pod over the overlay it now uses the host's main device address, the one Kubernetes reports as the node's internal IP.
-Any host endpoint policy, global network policy, or external firewall rule written against the tunnel address stops matching.
-
-1. **Before you upgrade**, find any rule that matches a tunnel device address and rewrite it against the node's internal IP.
-2. To keep the old behavior instead, set `BPFOverlayIPOnDevice` to `true` in your `FelixConfiguration`.
-
-{/* 3.33 · calico#13352 */}
-
-## Default CNI configuration requires a newer container runtime
-
-This affects you if any node runs containerd earlier than v1.6, or CRI-O earlier than v1.24.
-
-The default CNI configuration now declares `cniVersion` 1.0.0, up from 0.3.1.
-Older runtimes do not understand that version, so CNI ADD fails and pods cannot start on those nodes.
-
-1. **Before you upgrade**, check the container runtime version on every node.
-2. Upgrade any node below containerd v1.6 or CRI-O v1.24.
-
 {/* 3.33 · calico#13953 */}
 
 ## Overlapping IP pools are rejected
@@ -152,7 +124,8 @@ Pools already stored keep working, but you cannot edit one that overlaps another
 
 ## Felix metrics endpoint no longer requires client certificates by default
 
-This affects you if you scrape the Felix Prometheus metrics endpoint and have never set `prometheusMetricsClientAuth`.
+This affects you if you serve the Felix Prometheus metrics endpoint over HTTPS, by setting `prometheusMetricsCertFile` and `prometheusMetricsKeyFile`, and have never set `prometheusMetricsClientAuth`.
+If you serve it over plain HTTP, which is the default, client certificates were never involved and nothing changes.
 
 The default changes from `RequireAndVerifyClientCert` to `NoClientCert`.
 Nothing fails, and no scrape breaks.
