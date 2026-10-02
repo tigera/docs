@@ -154,11 +154,17 @@ Roles apply only to the cluster they were created on. To reuse them elsewhere, e
      kubectl --context <management-cluster> apply -f <exported-file> -l rbac.tigera.io/managed-cluster
      ```
 
-The console exports a managed cluster's roles for that same cluster. To copy them to a different managed cluster, request the export for the target through the API, then apply it as above.
+The file is written for the cluster it was exported from. To copy a managed cluster's roles to a different managed cluster, edit the bindings labeled `rbac.tigera.io/managed-cluster` before you apply them, replacing the source cluster's name with the target's in four places: the label, the annotation with the same key, the end of `metadata.name`, and the end of `roleRef.name`. The rest of the file does not name a cluster and applies as it is.
 
-```bash
-curl -H "Authorization: Bearer <token>" \
-  "https://<web-console>/ui-apis/team/export?cluster=<source-cluster>&target=<target-cluster>" > <exported-file>
+```yaml
+metadata:
+  name: calico-ui-<hash>-<target-cluster>
+  labels:
+    rbac.tigera.io/managed-cluster: <target-cluster>
+  annotations:
+    rbac.tigera.io/managed-cluster: <target-cluster>
+roleRef:
+  name: calico-ui-logs-view-flows-<target-cluster>
 ```
 
 Check first that the target cluster has the tiers and namespaces the roles were scoped to. A binding naming a tier that is missing there applies without error but grants nothing, and a binding into a namespace that does not exist is rejected.
