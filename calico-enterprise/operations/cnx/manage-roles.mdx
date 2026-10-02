@@ -59,7 +59,7 @@ On a managed cluster, a role's log and Kibana permissions are held on the manage
 
 $[prodname] sets `rbac-ui-enabled` to `true` in the `rbac-ui-config` ConfigMap in the `calico-system` namespace, then builds the catalogue of permissions. This takes a few seconds, after which the **Roles** and **Users** tabs appear.
 
-To turn role management off again, set the flag back to `false`; the console has no control for this. Roles you already created keep working, but are no longer manageable from the console.
+To turn role management off again, set the flag back to `false`. Roles you already created keep working, but are no longer manageable from the console.
 
 ```bash
 kubectl get configmap rbac-ui-config -n calico-system -o json \
@@ -75,9 +75,7 @@ Connecting your directory lets roles bind to groups that already exist in it, so
 
 This requires the cluster to authenticate users with [LDAP](configure-identity-provider.mdx), on port 389 or 636. The directory is read on the management cluster only, so create the secret there and turn role management on there too, even when the role applies to a managed cluster.
 
-On the management cluster, open **Manage Team** and connect the directory, giving its URL, a bind DN and password, and the base DN to search for groups. The URL must point at the same host as `Authentication.spec.ldap.host`, written as a full URL. $[prodname] walks the directory with these credentials and offers the groups it finds when you create a role. The bind password is not shown again after you save it.
-
-The console stores these settings in the `tigera-idp-ldap-config` secret in the `calico-system` namespace, separate from the `tigera-ldap-credentials` secret that authentication uses. You can create the secret with `kubectl` instead:
+On the management cluster, create the `tigera-idp-ldap-config` secret in the `calico-system` namespace with the directory's URL, a bind DN and password, and the base DN to search for groups. This secret is separate from the `tigera-ldap-credentials` secret that authentication uses.
 
 ```bash
 kubectl create secret generic tigera-idp-ldap-config -n calico-system \
@@ -86,6 +84,8 @@ kubectl create secret generic tigera-idp-ldap-config -n calico-system \
   --from-literal=bindPassword='<password>' \
   --from-literal=baseDN='ou=groups,dc=example,dc=com'
 ```
+
+The URL must be a full `ldap://` or `ldaps://` URL whose host matches `Authentication.spec.ldap.host`. The web console can connect only to that host, so a URL pointing anywhere else is accepted but no groups are found. $[prodname] picks up the secret, searches the directory with these credentials, and offers the groups it finds when you create a role. It searches again every five minutes by default.
 
 Optionally add `groupFilter` (default `(objectClass=groupOfNames)`), `nameAttribute` (default `cn`; Active Directory typically uses `sAMAccountName`), `caBundle` for a private certificate authority, and `refreshIntervalSeconds` (default 300, clamped to 60–86400).
 
