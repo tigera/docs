@@ -5,7 +5,7 @@ const variables = {
   prodname: 'Calico',
   prodnamedash: 'calico',
   version: 'v3.33',
-  baseUrl: '/calico/3.33',
+  baseUrl: '/calico/latest',
   filesUrl: 'https://projectcalico.docs.tigera.io/v3.33',
   tutorialFilesURL: 'https://docs.tigera.io/files',
   calicoReleasesURL: 'https://github.com/projectcalico/calico/releases/download',
@@ -19,7 +19,8 @@ const variables = {
   manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.33.0',
   releases,
   registry: '',
-  vppbranch: 'v3.33.0',
+  // vpp-dataplane releases on its own cadence; bump only to a tag that exists.
+  vppbranch: 'v3.32.0',
   envoyVersion: '1.9.1',
   istioVersion: '1.29.8',
   tigeraOperator: releases[0]['tigera-operator'],
