@@ -11,6 +11,7 @@ const nextVersion = process.env.BUILD_NEXT === 'true' ? ['current'] : [];
 
 export default async function createAsyncConfig() {
   const variablesPlugin = await import('./src/remark/variablesPlugin');
+  const lifecycleNoticePlugin = await import('./src/remark/lifecycleNoticePlugin');
 
   /** @type {import('@docusaurus/types').Config} */
   const config = {
@@ -457,7 +458,7 @@ export default async function createAsyncConfig() {
             },
           },
           sidebarPath: './sidebars-calico.js',
-          beforeDefaultRemarkPlugins: [variablesPlugin],
+          beforeDefaultRemarkPlugins: [lifecycleNoticePlugin, variablesPlugin],
           editUrl: generateEditUrl,
         },
       ],
@@ -504,7 +505,7 @@ export default async function createAsyncConfig() {
             },
           },
           sidebarPath: './sidebars-calico-enterprise.js',
-          beforeDefaultRemarkPlugins: [variablesPlugin],
+          beforeDefaultRemarkPlugins: [lifecycleNoticePlugin, variablesPlugin],
           editUrl: generateEditUrl,
         },
       ],
@@ -530,7 +531,7 @@ export default async function createAsyncConfig() {
             },
           },
           sidebarPath: './sidebars-calico-cloud.js',
-          beforeDefaultRemarkPlugins: [variablesPlugin],
+          beforeDefaultRemarkPlugins: [lifecycleNoticePlugin, variablesPlugin],
           editUrl: generateEditUrl,
         },
       ],

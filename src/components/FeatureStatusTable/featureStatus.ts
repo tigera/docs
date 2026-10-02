@@ -118,6 +118,33 @@ function statusAt(changes: ReturnType<typeof statusChanges>, version: string): C
 }
 
 /**
+ * A feature's status in one product at one release, or `null` if it did not exist yet.
+ *
+ * `version` may be null, meaning the unversioned Next tree, which is ahead of every released
+ * line and so takes the last recorded status. Next has no release number of its own — the
+ * unversioned trees set `version: 'master'` — so there is nothing to compare against, and
+ * carrying the final change forward is the only reading consistent with Next being newer than
+ * everything in the file.
+ *
+ * Exported for the lifecycle drift check, which asks the same question one feature at a time
+ * rather than one table at a time. It shares `statusChanges` and `statusAt` with the tables so
+ * the two can never answer it differently.
+ */
+export function resolveStatus(
+  feature: Feature,
+  product: string,
+  version: string | null
+): CellStatus {
+  const history = feature.products?.[product];
+  if (!history || history.confirmed === false) return null;
+
+  const changes = statusChanges(history);
+  if (!changes.length) return null;
+
+  return version === null ? changes[changes.length - 1].status : statusAt(changes, version);
+}
+
+/**
  * The rows of one table: every feature that held one of the `include` statuses at some
  * point in the window.
  *
