@@ -28,13 +28,12 @@ The console does not create or invite users. The **Users** tab is read-only, and
 
 Role management is off by default and is turned on one cluster at a time, including each managed cluster in a multi-cluster deployment. A role belongs to the cluster it was created on and is not synchronized to other clusters; use **Export YAML** to copy it.
 
-On a managed cluster, a role's log and Kibana permissions are held on the management cluster, because that is where the logs and Kibana live. The console writes and removes them with the rest of the role, so you manage the role from the managed cluster as usual.
+On a managed cluster, a role's log and Kibana permissions are held on the management cluster, because that is where the logs and Kibana live. The console writes and removes them with the rest of the role, so you manage the role from the managed cluster as usual. For this to work, role management must also be turned on in the management cluster.
 
 ## Before you begin
 
 **Required**
 
-- A cluster running $[prodname] 3.24.0-3.0 or later
 - [Access to the web console](access-the-manager.mdx) as a user bound to `tigera-network-admin`
 
 **Limitations**
@@ -59,7 +58,7 @@ On a managed cluster, a role's log and Kibana permissions are held on the manage
 
 $[prodname] sets `rbac-ui-enabled` to `true` in the `rbac-ui-config` ConfigMap in the `calico-system` namespace, then builds the catalogue of permissions. This takes a few seconds, after which the **Roles** and **Users** tabs appear.
 
-To turn role management off again, set the flag back to `false`. Roles you already created keep working, but are no longer manageable from the console.
+To turn role management off again, set the flag back to `false`. Roles you already created keep granting what they did, but are no longer manageable from the console, and $[prodname] stops keeping them up to date: a role scoped to **all tiers** does not cover tiers created afterwards, and a role bound to a directory group keeps its access after the group is removed from the directory.
 
 ```bash
 kubectl get configmap rbac-ui-config -n calico-system -o json \
@@ -75,19 +74,34 @@ Connecting your directory lets roles bind to groups that already exist in it, so
 
 This requires the cluster to authenticate users with [LDAP](configure-identity-provider.mdx), on port 389 or 636. The directory is read on the management cluster only, so create the secret there and turn role management on there too, even when the role applies to a managed cluster.
 
-On the management cluster, create the `tigera-idp-ldap-config` secret in the `calico-system` namespace with the directory's URL, a bind DN and password, and the base DN to search for groups. This secret is separate from the `tigera-ldap-credentials` secret that authentication uses.
+A user gets a directory group's role only if their sign-in carries the group, so check the LDAP settings in the `Authentication` resource:
 
-```bash
-kubectl create secret generic tigera-idp-ldap-config -n calico-system \
-  --from-literal=url=ldaps://ad.example.com:636 \
-  --from-literal=bindDN='cn=admin,dc=example,dc=com' \
-  --from-literal=bindPassword='<password>' \
-  --from-literal=baseDN='ou=groups,dc=example,dc=com'
+- `spec.ldap.groupSearch` must be set. Without it, users sign in with no groups.
+- `spec.ldap.groupSearch.nameAttribute` must be the same attribute as `nameAttribute` in the secret below (`cn` unless you set it), so that both give a group the same name.
+- `spec.groupsPrefix` must not be set. Roles are bound to the group name as the directory has it, without a prefix.
+
+On the management cluster, create the `tigera-idp-ldap-config` secret in the `calico-system` namespace with the directory's URL, a bind DN and password, and the base DN to search for groups. This secret is separate from the `tigera-ldap-credentials` secret that authentication uses. Save the manifest to a file and create the secret with `kubectl create -f <file>`.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tigera-idp-ldap-config
+  namespace: calico-system
+stringData:
+  url: ldaps://ad.example.com:636
+  bindDN: cn=admin,dc=example,dc=com
+  bindPassword: <password>
+  baseDN: ou=groups,dc=example,dc=com
 ```
 
 The URL must be a full `ldap://` or `ldaps://` URL whose host matches `Authentication.spec.ldap.host`. The web console can connect only to that host, so a URL pointing anywhere else is accepted but no groups are found. $[prodname] picks up the secret, searches the directory with these credentials, and offers the groups it finds when you create a role. It searches again every five minutes by default.
 
 Optionally add `groupFilter` (default `(objectClass=groupOfNames)`), `nameAttribute` (default `cn`; Active Directory typically uses `sAMAccountName`), `caBundle` for a private certificate authority, and `refreshIntervalSeconds` (default 300, clamped to 60–86400).
+
+When a group leaves the directory, or stops matching `baseDN`, `groupFilter` or `nameAttribute`, $[prodname] removes the roles bound to it, so changing these settings can remove many roles at once. If the directory cannot be reached, nothing is removed.
+
+A `tigera-network-admin` user can create the secret but cannot read, change or delete it, so changing the settings later needs a cluster administrator.
 
 ### Create a role
 
@@ -102,12 +116,12 @@ A role's name is a group, so choosing the name decides who gets it. There are tw
    - **Manual group binding** opens the form with an empty name for you to fill in.
 1. Name the role:
    - For an IdP group, **IdP Group** is fixed to the group you picked. **Role Display Name** is cosmetic: it is what the **Roles** list shows, so you can make it readable without changing who holds the role.
-   - For a manual role, **Role Name** is the group itself. Any non-empty value up to 253 characters is accepted, spaces and `@` included.
-1. Click **Add Permission** and choose one. Permissions are per feature area — policies, network sets, dashboards, service graph, packet captures, egress gateways and so on — each offered as **View** or **Modify**. The picker lists what is available on the cluster. Note that **Alerts and Security Events Settings** covers alert configuration, not the events themselves.
+   - For a manual role, **Role Name** is the group itself, exactly as users' sign-in carries it, including any `groupsPrefix` set in the `Authentication` resource. Microsoft Entra ID, for example, sends a group's object ID rather than its name unless you configure it otherwise. Any non-empty value up to 253 characters is accepted, spaces and `@` included.
+1. Choose a permission from the list. Permissions are per feature area — policies, network sets, dashboards, service graph, packet captures, egress gateways and so on — most of them offered as both **View** and **Modify**.
 1. Scope the permission, where it supports it:
-   - **Tier** — for policy permissions. Leave it as **all tiers** to apply the permission to every tier.
+   - **Tier** — for policy permissions. Choose **all tiers** to apply the permission to every tier.
    - **Namespace** — for namespaced permissions. Leave it as **any namespace** to apply the permission cluster-wide.
-1. Add any further permissions, then click **Save**. A role must carry at least one permission.
+1. Click **Add Permission** for each further permission, then click **Save**. A role must carry at least one permission.
 
 #### What some permissions include
 
@@ -115,29 +129,27 @@ A role's name is a group, so choosing the name decides who gets it. There are tw
 - **View Kibana** signs the user in to Kibana, which is a single instance on the management cluster shared by all clusters. What they see there comes only from their log permissions, cluster by cluster.
 - **Policy** permissions do not include audit logs. To see a policy's change history on the policy board, add **View Audit Logs (Timeline)**.
 - **Policy** permissions include Kubernetes network policies only when they cover the `default` tier, where $[prodname] enforces them.
-- **Modify Alerts** also reads the logs its alerts query, because an alert copies what it finds into the events it raises. **View IP Pools** and **View L2 Networks** list pods in every namespace. The permission picker says so for each.
-- **Policy Recommendations** is offered as **Modify** only.
+- **Alerts and Security Events Settings** is the alert configuration. **View** also reads the security events, and **Modify** also reads the logs its alerts query, because an alert copies what it finds into the events it raises. To grant the security events alone, use **View Alerts**.
+- **View IP Pools** and **View L2 Networks** list pods in every namespace.
+- **Tiers** and **Policy Recommendations** are offered as **Modify** only, and **Kibana**, **IP Pools**, **L2 Networks** and the log permissions as **View** only.
+
+Click a role in the **Roles** list to see what each of its permissions includes.
 
 A role bound to a directory group appears in the list as **Custom - IdP**. Its membership is owned by your identity provider, so its subjects cannot be edited from the console.
 
-To change a role later, select **Actions** > **Edit Permissions**. **Delete Role** removes the role and its bindings from this cluster; subjects bound to it lose the access it granted. For a role bound to a directory group, the group stays in the directory and can be bound to a new role.
+To change a role later, select **Actions** > **Edit Permissions**. Editing a manual role's **Role Name** changes only the name shown in the list; the group it binds is fixed when the role is created. **Delete Role** removes the role and its bindings from this cluster; subjects bound to it lose the access it granted. For a role bound to a directory group, the group stays in the directory and can be bound to a new role.
 
 ### See who has access
 
-Click the user icon <IconUser width="20"/> > **Manage Team** > **Users** to review which subjects hold which roles, and when each last signed in. Select a subject to see the permissions its roles carry.
+Click the user icon <IconUser width="20"/> > **Manage Team** > **Users** to review which subjects hold which roles, and when each last signed in. Click a subject to expand the permissions its roles carry.
 
 The tab is read-only, and lists the subjects on the roles' bindings plus the members of any bound identity provider groups. A directory group's members appear once they have signed in to the web console at least once; until then the group's role applies to them, but they are not listed. Effective permissions are the union of these roles and anything bound to the subject outside the console, which this view does not show.
-
-To audit which group each role binds, list the bindings the console manages.
-
-```bash
-kubectl get clusterrolebinding -l app.kubernetes.io/managed-by=calico-ui-rbac \
-  -o custom-columns='NAME:.metadata.name,ROLE:.roleRef.name,GROUP:.subjects[0].name'
-```
 
 ### Copy roles to another cluster
 
 Roles apply only to the cluster they were created on. To reuse them elsewhere, export them and apply them to a cluster that also has role management turned on. The export carries each role's bindings, not the permissions they point at, and those exist only where the console has built its catalogue.
+
+Copy roles between standalone and management clusters, or from one managed cluster to another. A role copied between a managed cluster and any other kind of cluster loses its log and Kibana permissions.
 
 1. Select the source cluster, then click the user icon <IconUser width="20"/> > **Manage Team** > **Roles** > **Export YAML**.
 1. Apply the file:
@@ -167,7 +179,7 @@ roleRef:
   name: calico-ui-logs-view-flows-<target-cluster>
 ```
 
-Check first that the target cluster has the tiers and namespaces the roles were scoped to. A binding naming a tier that is missing there applies without error but grants nothing, and a binding into a namespace that does not exist is rejected.
+Check first that the target cluster has the tiers and namespaces the roles were scoped to. A binding into a namespace that does not exist is rejected. A binding that names a missing tier is rejected when a `tigera-network-admin` user applies it; applied by a cluster administrator, it is accepted but grants nothing until the tier exists.
 
 The roles are independent copies: later changes on the source cluster are not propagated.
 
