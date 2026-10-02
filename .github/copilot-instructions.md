@@ -166,6 +166,68 @@ yarn test:show-report         # View test failures
 - Configuration in `.vale.ini` and `.github/styles/`
 - No direct yarn/make command for local Vale linting
 
+## Feature Lifecycle Notices
+
+Technology preview and deprecation notices are rendered by one component, so the wording is the
+same on every page. Do not write the admonition by hand.
+
+### Whole page
+
+When a page is about the feature, declare it in front matter and write nothing in the body:
+
+```yaml
+---
+description: ...
+lifecycle-status: tech-preview
+lifecycle-feature: Gateway WAF
+lifecycle-id: gateway-waf
+---
+```
+
+- `lifecycle-status` is `tech-preview` or `deprecated`. There is no value for generally
+  available: a GA feature says nothing.
+- `lifecycle-feature` is the name shown in the notice title. Omit it when the page title already
+  names the feature unambiguously.
+- `lifecycle-id` is the matching `id` in `data/feature-status.yaml`. It is optional, but supply
+  it when the feature has an entry, because it is what lets CI catch a notice that outlived the
+  status it describes. Nothing is rendered from it.
+
+`src/remark/lifecycleNoticePlugin.js` places the notice directly after the page's H1. A page
+that declares a status but has no H1 fails the build.
+
+Do not use `$[variables]` in these front matter fields. Variable substitution is a remark plugin
+that runs over the page body, and front matter never passes through it, so the token would be
+published literally. Write the product name out instead.
+
+### Part of a page
+
+When only one section of an otherwise generally available page is affected, or when the notice
+needs extra guidance such as what to migrate to, place the component yourself:
+
+```mdx
+### Selector-scoped configuration
+
+<LifecycleNotice
+  status='tech-preview'
+  feature='Selector-scoped Felix configuration'
+  id='selector-scoped-felix-config'
+/>
+```
+
+```mdx
+<LifecycleNotice status='deprecated' feature='Application layer policy' id='application-layer-policy-envoy'>
+  For similar functionality, use [Istio ambient mode](../../compliance/istio/about-istio-ambient.mdx).
+</LifecycleNotice>
+```
+
+The component is registered globally in `src/theme/MDXComponents.js`, so no import is needed.
+
+### When a feature's status changes
+
+Update `data/feature-status.yaml`, which drives the release notes tables, and update or remove
+the notice on the feature's pages in the same change. `yarn test:components` fails when a page
+and the data file disagree, so the two cannot drift apart silently.
+
 ## Operator API Documentation Updates
 
 ### Auto-generation Commands
