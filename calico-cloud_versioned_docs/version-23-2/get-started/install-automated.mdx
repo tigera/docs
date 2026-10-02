@@ -1,14 +1,15 @@
 ---
-description: Connect a Kubernetes cluster to Calico Cloud as part of an automated CI or provisioning workflow rather than the interactive UI flow.
+description: Connect and upgrade Kubernetes clusters in Calico Cloud as part of an automated CI or provisioning workflow rather than the interactive UI flow.
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import IconUser from '/img/icons/user-icon.svg';
+import ccImageLists from '@site/src/___new___/data/ccImageLists';
 
 # Install Calico Cloud as part of an automated workflow
 
-You can connect clusters to Calico Cloud as part of an automated workflow, using persistent client credentials and customized Helm charts.
+You can connect clusters to Calico Cloud, and upgrade them, as part of an automated workflow, using persistent client credentials and customized Helm charts.
 
 ## Prerequisites
 
@@ -64,6 +65,21 @@ installer:
   clusterName: example-cluster
   calicoCloudVersion: $[cloudUserVersion]
 ```
+
+### Supported Calico Cloud versions
+
+Calico Cloud supports the three most recent major versions.
+You can set `installer.calicoCloudVersion` to any of the following versions, and you can upgrade directly from any of them to any later version in the list.
+The first version in the list is the most recent release.
+
+<p>
+  {Object.keys(ccImageLists).map((version, index) => (
+    <span key={version}>
+      {index > 0 && ', '}
+      <code>{version.replace(' (latest)', '')}</code>
+    </span>
+  ))}
+</p>
 
 ### Optional parameters for private registries
 
@@ -186,6 +202,74 @@ These commands can be added to any automated workflow.
    -f <custom-values>.yaml
    ```
 
+## Upgrade Calico Cloud as part of an automated workflow
+
+You upgrade a cluster that you connected with an automated workflow the same way you installed it: by running `helm upgrade` with a newer value for `installer.calicoCloudVersion`.
+You don't need the **Reinstall** action in the web console.
+
+***Prerequisites***
+
+* You connected the cluster to Calico Cloud using client credentials and a `values.yaml` file.
+* Your client credential key is still valid.
+  If the key expired, or you replaced it, apply the new secret to the cluster before you upgrade.
+* You have the `values.yaml` file that you used to connect the cluster.
+
+1. Refresh your local copy of the Calico Cloud Helm charts.
+
+   ```bash
+   helm repo add calico-cloud https://installer.calicocloud.io/charts --force-update
+   ```
+
+1. In your `<custom-values>.yaml` file, set `installer.calicoCloudVersion` to the version you want to upgrade to.
+   For the versions you can upgrade to, see [Supported Calico Cloud versions](#supported-calico-cloud-versions).
+
+   ```yaml title="Example from values.yaml file with an updated calicoCloudVersion"
+   installer:
+     clusterName: example-cluster
+     calicoCloudVersion: $[cloudUserVersion]
+   ```
+
+   An upgrade is also when you can change the [feature parameters](#optional-parameters-for-features) that can be set only at installation.
+
+1. Upgrade the Calico Cloud custom resource definitions.
+
+   ```bash
+   helm upgrade --install calico-cloud-crds calico-cloud/calico-cloud-crds \
+   --namespace calico-cloud
+   ```
+
+   Helm does not upgrade the custom resource definitions that are bundled in a chart, so Calico Cloud provides them in a separate chart that you upgrade first.
+
+1. Upgrade Calico Cloud with your customizations in the `values.yaml` file.
+
+   ```bash
+   helm upgrade --install calico-cloud calico-cloud/calico-cloud \
+   --namespace calico-cloud \
+   -f <custom-values>.yaml
+   ```
+
+   :::important
+   Pass the same complete `values.yaml` file that you used to connect the cluster.
+   Any customization that you leave out of the file returns to its default value during the upgrade.
+   :::
+
+1. Monitor the upgrade.
+
+   ```bash
+   kubectl get installer default --namespace calico-cloud -o jsonpath --template '{.status}' -w
+   ```
+
+   You can also watch the cluster on the **Managed Clusters** page in the web console.
+   The status under **Connection Status** changes to **Disconnected: Installing**, and then to **Connected** when the upgrade is complete.
+
+:::note
+
+To reinstall the version that is already running, change the value of `installer.resourceVersion` in your `values.yaml` file.
+Modifying this value forces a reinstall.
+
+:::
+
 ## Additional resources
 
 * [Calico Cloud installation reference](https://docs.tigera.io/calico-cloud/reference/installation/api)
+* [Upgrade Calico Cloud](upgrade-cluster.mdx)
