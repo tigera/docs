@@ -12,7 +12,8 @@ Install $[prodname] on an OpenShift Hosted Control Planes (HCP) cluster.
 
 ## Value
 
-Provides steps to install $[prodname] in [OpenShift Hosted Control Planes (HCP)](https://docs.openshift.com/container-platform/latest/hosted_control_planes/index.html) clusters using the [HyperShift](https://github.com/openshift/hypershift) middleware, augmenting the steps in the [HyperShift documentation](https://hypershift-docs.netlify.app) where appropriate.
+Provides steps to install $[prodname] in [OpenShift Hosted Control Planes (HCP)](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/hosted_control_planes/index) clusters on AWS.
+The steps follow the Red Hat procedure for [deploying hosted control planes on AWS](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/hosted_control_planes/deploying-hosted-control-planes#hcp-deploy-aws), with the changes that $[prodname] needs.
 
 ## How to
 
@@ -20,15 +21,13 @@ Provides steps to install $[prodname] in [OpenShift Hosted Control Planes (HCP)]
 
 - Ensure that your environment meets the $[prodname] [system requirements](requirements.mdx).
 
-- Ensure that you have a [RedHat account](https://cloud.redhat.com/). A RedHat account is required to get the pull secret necessary to provision an OpenShift cluster. Note that the OpenShift installer supports a subset of AWS regions.
+- Ensure that you have a [Red Hat account](https://cloud.redhat.com/).
+  You need it to get the pull secret that is required to provision an OpenShift cluster.
+  The OpenShift installer supports a subset of AWS regions.
 
-- If installing on AWS, ensure that you have:
+- Ensure that you have an AWS account that is configured for OpenShift 4.
 
-    - Configured an AWS account appropriate for OpenShift 4
-    - [Set up your AWS credentials](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html)
-    - Generated a local SSH private key and added it to your ssh-agent
-
-- Install the HyperShift CLI and fulfill all the other [Prerequisites from the HyperShift documentation](https://hypershift-docs.netlify.app/getting-started/#prerequisites).
+- Install the [AWS CLI](https://aws.amazon.com/cli/) and configure it with credentials for your AWS account.
 
 ### Create the hosting cluster
 
@@ -38,13 +37,41 @@ Deploy an [OpenShift cluster](./installation.mdx) with $[prodname]. This will be
 export KUBECONFIG=/path/to/kubeconfig
 ```
 
-### Install the HyperShift operator in the hosting cluster
+### Prepare the hosting cluster for hosted control planes
 
-Follow the steps from the HyperShift documentation to [Install the HyperShift Operator](https://hypershift-docs.netlify.app/getting-started/#install-hypershift-operator).
+Set up the hosted control planes feature on the hosting cluster and create the AWS resources that hosted clusters need.
+Red Hat documents each of these steps.
+
+1. Install the multicluster engine for Kubernetes operator, version 2.5 or later, on the hosting cluster.
+   The multicluster engine operator runs the HyperShift operator for you.
+   If the hosted control planes feature is turned off, [turn it on](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/hosted_control_planes/preparing-to-deploy-hosted-control-planes#hcp-enable-manual_hcp-enable-disable).
+
+1. Verify that the `local-cluster` managed cluster exists:
+
+   ```
+   oc get managedclusters local-cluster
+   ```
+
+1. [Create the S3 bucket and S3 OIDC secret](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/hosted_control_planes/deploying-hosted-control-planes#hcp-aws-create-secret-s3_hcp-deploy-aws).
+
+1. [Create a routable public zone](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/hosted_control_planes/deploying-hosted-control-planes#hcp-aws-create-public-zone_hcp-deploy-aws) for the base domain of your hosted clusters.
+
+1. [Create an AWS IAM role and STS credentials](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/hosted_control_planes/deploying-hosted-control-planes#hcp-aws-create-role-sts-creds_hcp-deploy-aws).
+   You need the role ARN and the `sts-creds.json` file when you create the hosted cluster.
+   STS credentials expire, so get new ones if yours have expired.
+
+1. Install the `hcp` CLI from the hosting cluster:
+
+   ```
+   oc get ConsoleCLIDownload hcp-cli-download -o json | jq -r ".spec"
+   ```
+
+   Download the archive for your platform from a link in the output, then extract the `hcp` binary and add it to your `PATH`.
+   For more options, see [Installing the hosted control planes command-line interface](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/hosted_control_planes/preparing-to-deploy-hosted-control-planes#hcp-cli).
 
 ### Create a hosted cluster
 
-Create a hosted cluster with $[prodname] by going through the following steps (slightly modified from the [HyperShift docs](https://hypershift-docs.netlify.app/how-to/aws/other-sdn-providers/#calico)).
+Create a hosted cluster with no default CNI, so that you can install $[prodname] on it.
 
 1. Create a HostedCluster and set its HostedCluster.spec.networking.networkType to Other:
 
@@ -55,17 +82,22 @@ Make sure to adjust the variables for the command below to the correct values fo
 
 ```
 HOSTED_CLUSTER_NAME=my-os-hosted-cluster
+HOSTED_CLUSTER_NS=clusters
 REGION=us-west-2
 BASE_DOMAIN=www.example.com
-AWS_CREDS="$HOME/.aws/credentials"
 PULL_SECRET="$HOME/.secrets/redhat-pull-secret.txt"
+STS_CREDS="$HOME/sts-creds.json"
+ROLE_ARN="arn:aws:iam::123456789012:role/hcp-cli-role"
 
-hypershift create cluster aws \
+hcp create cluster aws \
   --name $HOSTED_CLUSTER_NAME \
-  --node-pool-replicas=3 \
+  --infra-id $HOSTED_CLUSTER_NAME \
+  --namespace $HOSTED_CLUSTER_NS \
+  --node-pool-replicas 3 \
   --base-domain $BASE_DOMAIN \
   --pull-secret $PULL_SECRET \
-  --aws-creds $AWS_CREDS \
+  --sts-creds $STS_CREDS \
+  --role-arn $ROLE_ARN \
   --region $REGION \
   --generate-ssh \
   --network-type Other
@@ -73,7 +105,7 @@ hypershift create cluster aws \
 
 :::note
 If your hosted cluster is having authorization problems with your Red Hat pull secret (`unauthorized: authentication required` in the HyperShift operator pod logs), make sure it is using a stable release image for the OpenShift Container Platform (OCP).
-You can find them in [https://amd64.ocp.releases.ci.openshift.org], for example `--release-image quay.io/openshift-release-dev/ocp-release:4.16.4-x86_64`
+You can find them in [https://amd64.ocp.releases.ci.openshift.org](https://amd64.ocp.releases.ci.openshift.org), for example `--release-image quay.io/openshift-release-dev/ocp-release:4.16.4-x86_64`
 :::
 
 :::note
@@ -85,11 +117,11 @@ oc patch -n ${CLUSTER_NS} hostedcluster ${HOSTED_CLUSTER_NAME} --type='json' -p 
 ```
 :::
 
-Once the hosted cluster is up, use the `hypershift` CLI tool to generate the `kubeconfig` file. We strongly recommend you create a separate directory for the hosted cluster, it is very important to not mix up configuration and manifests from the hosting and hosted clusters:
+Once the hosted cluster is up, use the `hcp` CLI tool to generate the `kubeconfig` file. We strongly recommend you create a separate directory for the hosted cluster, it is very important to not mix up configuration and manifests from the hosting and hosted clusters:
 
 ```
 mkdir my_hosted_cluster && cd my_hosted_cluster
-hypershift create kubeconfig > hosted_kubeconfig && export KUBECONFIG=$(pwd)/hosted_kubeconfig
+hcp create kubeconfig --namespace $HOSTED_CLUSTER_NS --name $HOSTED_CLUSTER_NAME > hosted_kubeconfig && export KUBECONFIG=$(pwd)/hosted_kubeconfig
 ```
 
 Then, copy the `aws-creds` secret from the hosting cluster to the hosted cluster. Run this using the hosting cluster kubeconfig to extract the secret to a `yaml` file:
