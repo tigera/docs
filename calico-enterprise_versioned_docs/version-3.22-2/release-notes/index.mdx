@@ -457,8 +457,46 @@ To update an existing installation of Calico Enterprise 3.22, see [Install a pat
 
 October 15, 2026
 
+#### Enhancements
+
+* Updated Envoy to 1.39.1 in Calico Ingress Gateway and the L7 log collector. This changes some routing behavior: {/* #14229 */}
+  * A header sent on more than one line is now matched one value at a time. A route that matches a joined value such as `user,admin` no longer matches when those values arrive on separate header lines. To restore the old behavior, set the runtime flag `envoy.reloadable_features.match_headers_individually` to `false`.
+  * Paths with `..` segments that carry parameters, such as `/public/..;x=y/admin`, are now normalized before routing, so the request can match a different route.
+* Updated the bundled Envoy Gateway to v1.8.4. Its CRDs now validate more strictly, so some resources that were accepted before, such as ones with an empty list or a non-HTTPS URL, are now rejected. {/* #14129, #5340 */}
+* Updated the bundled Istio to 1.29.8. {/* #14270 */}
+* Updated Elasticsearch and Kibana to 8.19.22. {/* #14164, #5339 */}
+* Improved application layer policy (Dikastes) performance with large policy sets. Per-rule warnings from the policy engine are now rate limited. {/* #13807 */}
+* Dikastes and Felix now log the recurring "IPSet not found" and "failed to parse source principal" conditions as one line per five-minute window. The IP set IDs and principals are in the list-valued `ipsets` and `principals` fields, and the `logsSkipped` field is gone. {/* #13857 */}
+
 #### Bug fixes
 
-* TBD
+* Fixed calico-node rollouts stalling on clusters where the Kubernetes API server is reachable only by name, such as EKS and AKS. calico-node now uses the node's own DNS resolver unless the operator has an explicit `dnsConfig`. {/* #5249, #13693 */}
+* Fixed the operator failing to reconcile, and to renew Typha certificates, on Rancher-managed clusters. The operator can now update namespace pod security labels. {/* #14263 */}
+* Fixed concurrent requests to the endpoints APIs behind the Manager Endpoints view being served with another caller's credentials, which could return data that caller was not authorized to see. {/* #14158 */}
+* Fixed domain-based policy in the eBPF data plane for pods that resolve through the NodeLocal DNSCache link-local address. Clusters whose pods use the kube-dns ClusterIP were not affected. {/* #13711 */}
+* Fixed a Felix panic on nodes running NodeLocal DNSCache with IPv6 enabled. {/* #13709 */}
+* Fixed the BPF DNS parser being rejected by the verifier on newer kernels, which silently disabled cross-node overlay traffic in the eBPF data plane. {/* #13897 */}
+* Fixed pre-existing connections to a node port with a backend on another node being dropped when the data plane was switched to eBPF. {/* #13895 */}
+* Fixed two service affinity bugs in the eBPF data plane: datagrams from one unconnected UDP socket could reach different backends, and a UDP service's `sessionAffinity` timeout was capped at the shorter conntrack timeout. {/* #13681 */}
+* Fixed IPv6 session affinity entries in the eBPF data plane being deleted early or never expiring, which could move sticky connections to a different backend. {/* #13090 */}
+* Fixed memory leaks in the eBPF data plane that kept interface state for deleted egress gateway pods, egress client pods, and Istio ambient workloads. {/* #13352, #13720 */}
+* Fixed premature age-out of flow log entries in the eBPF data plane, which duplicated packet and byte counts for long-lived ICMP flows. {/* #13683 */}
+* Fixed the eBPF data plane attributing flow logs to the wrong host endpoint interface, or leaving the interface out. {/* #14003 */}
+* Fixed Felix re-reporting a stale deny flow with zero counters after a policy change allowed the traffic. {/* #13590 */}
+* Fixed flow logs reporting an end-of-tier deny as the staged policy verdict for domain-based rules after a Felix restart. Enforcement was not affected. {/* #13944 */}
+* Fixed Goldmane counting a node's flow statistics twice when Felix reconnected. {/* #13706 */}
+* Fixed application layer policy (Dikastes) never matching rules that reference a named port, which caused Allow rules to deny and Deny rules to have no effect. {/* #13851 */}
+* Fixed Felix panicking instead of restarting cleanly when a configuration change that requires a restart was applied while the data plane was busy, and a related deadlock at startup. {/* #13763 */}
+* Fixed Felix restarting repeatedly when more than one `routeTableRanges` entry was set. {/* #13674 */}
+* Fixed Felix creating two IPv6 IP set data planes, with the iptables data plane, that repeatedly deleted each other's IP sets. {/* #13935 */}
+* Fixed IP sets with overlapping CIDRs failing to program in nftables mode after a member was removed. {/* #14265 */}
+* Fixed Felix retrying an invalid tunnel route forever for a local pod whose IP was borrowed from another node's IPAM block. {/* #13902 */}
+* Fixed pods, most often egress gateways, failing to restart when their IP pool had no free addresses. The pod now keeps its existing address when its sandbox is rebuilt. {/* #14048 */}
+* Fixed egress gateway maintenance annotations not being applied to a workload when its endpoint was updated as the gateway started terminating. {/* #13803 */}
+* Fixed a stale packet capture status overwriting a newer one after a failed status update was retried. {/* #14078 */}
+* Fixed a kube-controllers panic when a delete handler received a tombstone object. {/* #13435 */}
+* Fixed `calico-noncluster-host-init` ignoring the `FELIX_TYPHACAFILE`, `FELIX_TYPHACERTFILE`, and `FELIX_TYPHAKEYFILE` overrides in `calico-node.env`, which could stop calico-node from starting on a non-cluster host. {/* #14095 */}
+* Fixed DNS policy on Windows by retrying the ETW provider subscription with backoff when it fails. {/* #14152 */}
+* Security updates. {/* #13737, #14129, #14171, #14188, #14270, #14280 */}
 
 To update an existing installation of Calico Enterprise 3.22, see [Install a patch release](../getting-started/manifest-archive.mdx).
