@@ -35,11 +35,11 @@ There are three main parts to every $[prodname] policy:
 
 - **Scope** - namespace or global
 - **Applies to** - objects within the above scope to which policy rules will be applied using labels and selectors
-- **Type** - whether this policy affects ingress, egress, or both
+- **Rules** - whether this policy affects ingress, egress, or both
   - Ingress - policy rules to apply to connections inbound to the selected objects
   - Egress - policy rules to apply to connections outbound from the selected objects
 
-![policy-parts](/img/calico-enterprise/policy-parts.png)
+![policy-parts](/img/calico-enterprise/policy-parts-3.24.png)
 
 Let's look at each part.
 
@@ -77,22 +77,22 @@ As discussed above, selecting **Applies to** lets you further limit pods in a po
 
 For example, if we select the BLUE namespace and apply it to only pods with the label, `app/tier == FE`,
 
-![blue-namespace](/img/calico-enterprise/blue-namespace.png)
+![blue-namespace](/img/calico-enterprise/blue-namespace-3.24.png)
 
 the resulting scope in our diagram would be only the pods labeled, `FE`:
 
 ![blue-namespace-pods](/img/calico-enterprise/blue-namespace-pods.png)
 
-### Type
+### Rules
 
-In the Type section, you specify whether the policy impacts ingress, egress, or both.
+In the Rules section, you specify whether the policy impacts ingress, egress, or both.
 
 Note that ingress and egress are defined from the point of view of the _scoped endpoints_ (pods or host endpoints). In the previous diagram, the scoped endpoints are the three pods labeled, `app/tier:FE`.
 
 - Ingress rules filter traffic _coming to_ the scoped endpoints
 - Egress rules filter traffic _leaving_ the scoped endpoints
 
-Select the **Ingress** rule, and click **+ Add ingress rule** to access the **Create New Policy rules** page.
+Click **+ Add ingress rule** to access the **Rules** panel.
 
 ### Endpoint selector
 
@@ -100,7 +100,7 @@ The endpoint selector lets you select the endpoint traffic that is matched withi
 
 In our example, the policy is scoped to endpoints that have the `app/tier == FE` label in the BLUE namespace. In the context of an egress rule, when we add the `app/tier == BE` endpoint selector, all TCP traffic from endpoints that have the`app/tier == BE` label will be allowed to the `app/tier == FE` endpoints.
 
-![policy-tutorial-endpoint-selector](/img/calico-enterprise/policy-tutorial-endpoint-selector.png)
+![policy-tutorial-endpoint-selector](/img/calico-enterprise/policy-tutorial-endpoint-selector-3.24.png)
 
 Note that endpoints that have the `app/tier == BE` label in other namespaces are not matched because the policy is namespace scoped.
 
@@ -108,7 +108,7 @@ Note that endpoints that have the `app/tier == BE` label in other namespaces are
 
 This is where things can get interesting. In the previous example, we did not select anything in the namespace selector. Let's change the namespace selector to have both the BLUE and GREEN namespaces.
 
-![endpoint-selector-blue-green](/img/calico-enterprise/endpoint-selector-blue-green.png)
+![endpoint-selector-blue-green](/img/calico-enterprise/endpoint-selector-blue-green-3.24.png)
 
 Although the overall policy is scoped to the BLUE namespace, we can match endpoints in other namespaces on a per-rule basis. Note that the top-level scope that you select remains unchanged, meaning that the policy is still applied only to endpoints in the BLUE namespace.
 
@@ -118,7 +118,7 @@ Although the overall policy is scoped to the BLUE namespace, we can match endpoi
 
 Using the Nets selector, we can add CIDR addresses to be matched by the policy rule.
 
-![network-selector](/img/calico-enterprise/network-selector.png)
+![network-selector](/img/calico-enterprise/network-selector-3.24.png)
 
 ### Service account selector
 
@@ -126,7 +126,7 @@ Network policies can be also applied to the endpoint’s service account.
 
 Using the service account selector, we can apply rules to traffic from any endpoint whose service account matches the name or label selector.
 
-![service-account-selector](/img/calico-enterprise/service-account-selector.png)
+![service-account-selector](/img/calico-enterprise/service-account-selector-3.24.png)
 
 ### Use Match All for wider matches in policy rules
 
@@ -146,7 +146,7 @@ Suppose we want to match traffic to the pod labeled `BE`, and the $[prodname] `n
 
 To do this, we can use the policy rule endpoint selector, **Match All**.
 
-![match-all-endpoints](/img/calico-enterprise/match-all-endpoints.png)
+![match-all-endpoints](/img/calico-enterprise/match-all-endpoints-3.24.png)
 
 Not only is the pod labeled `BE` included, but also the $[prodname] `networkset-1`.
 
@@ -164,7 +164,7 @@ In the following example, if we select **Match All** endpoints, but in the **Nam
 
 Let's see what happens when we select the **Global** selector.
 
-![namespace-selector-global](/img/calico-enterprise/namespace-selector-global.png)
+![namespace-selector-global](/img/calico-enterprise/namespace-selector-global-3.24.png)
 
 In our example, the Global selector selects HEPs and global network sets are selected. You might think that Global (`global()` in YAML) would select all endpoints, but it doesn't. Global means "do not select any namespaced resources" (which includes namespaced network set resources). Another way to express it is, do not select any workload endpoints.
 
@@ -228,7 +228,7 @@ It is also important to understand that $[prodname] policy action rules affect h
 
 Action defines what should happen when a connection matches this rule.
 
-![policy-tutorial-action](/img/calico-enterprise/policy-tutorial-action.png)
+![policy-tutorial-action](/img/calico-enterprise/policy-tutorial-action-3.24.png)
 
 - **Allow or Deny** - traffic is allowed or denied and the connection is handled accordingly. No further rules are processed.
 - **Pass** - skips to the next tier that contains a policy that applies to the endpoint, and processes the connection. If the tier applies to the endpoint but no action is taken on the connection, the connection is dropped.
