@@ -10,23 +10,23 @@ You choose what to export and where to send it; you don't write any Collector co
 
 ## About OpenTelemetry export
 
-You configure OpenTelemetry export in the `openTelemetry` section of the [LogCollector](../../reference/installation/api.mdx#logcollector) resource named `tigera-secure`.
+You configure OpenTelemetry export in the `openTelemetry` section of the [LogCollector](../reference/installation/api.mdx#logcollector) resource named `tigera-secure`.
 From that section, the operator creates an OpenTelemetry Collector StatefulSet named `otel-collector` in the `calico-system` namespace.
 
 You can export two kinds of data:
 
-- **Logs.** Fluent Bit sends the log types you choose to the Collector over mutual TLS, and the Collector forwards them to your exporters. You can export `Flows`, `DNS`, and `Audit` logs. Flow and DNS logs from [non-cluster hosts](../../getting-started/bare-metal/about) are included. Each record carries a `service.name` resource attribute of `flows`, `dns`, or `audit`, so you can route or filter by log type in your backend.
+- **Logs.** Fluent Bit sends the log types you choose to the Collector over mutual TLS, and the Collector forwards them to your exporters. You can export `Flows`, `DNS`, and `Audit` logs. Flow and DNS logs from [non-cluster hosts](../getting-started/bare-metal/about) are included. Each record carries a `service.name` resource attribute of `flows`, `dns`, or `audit`, so you can route or filter by log type in your backend.
 - **Metrics.** The Collector federates every metric that the in-cluster $[prodname] Prometheus already scrapes, including metrics from $[noderunning], Typha, kube-controllers, Fluent Bit, Elasticsearch, and the operator. Series keep their original `job` and `instance` labels.
 
 Everything you export goes to every exporter that you configure.
-Logs that go to OTLP still go to $[prodname]'s log storage and to any [additional destinations](archive-storage.mdx) as usual.
+Logs that go to OTLP still go to $[prodname]'s log storage and to any [additional destinations](elastic/archive-storage.mdx) as usual.
 
 ## Before you begin
 
 - Your $[prodname] license must include the OpenTelemetry Collector feature.
   If the license doesn't include it, or if it expires, the operator removes the Collector and export stops.
 - To export metrics, the in-cluster $[prodname] Prometheus must be running.
-  For more information, see [Configure Prometheus](../../operations/monitor/prometheus/configure-prometheus.mdx).
+  For more information, see [Configure Prometheus](../operations/monitor/prometheus/configure-prometheus.mdx).
 - Your backend must accept OTLP over `https`, using either gRPC or HTTP.
   The Collector never sends telemetry or credentials over plain HTTP.
 - If an exporter's endpoint is a domain name rather than an IP address, your license must also include egress access control.
@@ -93,7 +93,7 @@ Logs that go to OTLP still go to $[prodname]'s log storage and to any [additiona
    | `exporters[].auth.headers` | Request headers to send with every export, each read from a key in a Secret in the `tigera-operator` namespace. |
    | `exporters[].tls` | Custom certificate authority and client certificate for this exporter. See [Configure TLS for an exporter](#configure-tls-for-an-exporter). |
 
-   For the full API, see [OpenTelemetrySpec](../../reference/installation/api.mdx#opentelemetryspec).
+   For the full API, see [OpenTelemetrySpec](../reference/installation/api.mdx#opentelemetryspec).
 
    :::note
 
@@ -225,7 +225,7 @@ spec:
 ```
 
 You can also set `affinity`, `nodeSelector`, and `tolerations` for the Collector pod.
-For the full list of fields, see [OpenTelemetryCollectorStatefulSet](../../reference/installation/api.mdx#opentelemetrycollectorstatefulset).
+For the full list of fields, see [OpenTelemetryCollectorStatefulSet](../reference/installation/api.mdx#opentelemetrycollectorstatefulset).
 
 ## Turn off OpenTelemetry export
 
@@ -241,7 +241,7 @@ It doesn't delete the Secrets and ConfigMaps that you created in the `tigera-ope
 
 ## Additional resources
 
-- [OpenTelemetrySpec API reference](../../reference/installation/api.mdx#opentelemetryspec)
-- [Archive logs](archive-storage.mdx)
-- [Prometheus metrics](../../operations/monitor/metrics/index.mdx)
+- [OpenTelemetrySpec API reference](../reference/installation/api.mdx#opentelemetryspec)
+- [Archive logs](elastic/archive-storage.mdx)
+- [Prometheus metrics](../operations/monitor/metrics/index.mdx)
 - [OpenTelemetry Protocol specification](https://opentelemetry.io/docs/specs/otlp/)
