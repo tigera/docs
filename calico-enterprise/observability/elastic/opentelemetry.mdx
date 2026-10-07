@@ -1,0 +1,247 @@
+---
+description: Export Calico Enterprise flow, DNS, and audit logs and component metrics over OTLP to any OpenTelemetry-compatible backend with an operator-managed OpenTelemetry Collector.
+---
+
+# Export logs and metrics with OpenTelemetry
+
+You can send $[prodname] logs and metrics to any backend that accepts the OpenTelemetry Protocol (OTLP), such as an observability platform, a SIEM, or your own OpenTelemetry Collector.
+When you turn this on, the Tigera Operator deploys an OpenTelemetry Collector in your cluster and manages its configuration, certificates, and network policy for you.
+You choose what to export and where to send it; you don't write any Collector configuration.
+
+## About OpenTelemetry export
+
+You configure OpenTelemetry export in the `openTelemetry` section of the [LogCollector](../../reference/installation/api.mdx#logcollector) resource named `tigera-secure`.
+From that section, the operator creates an OpenTelemetry Collector StatefulSet named `otel-collector` in the `calico-system` namespace.
+
+You can export two kinds of data:
+
+- **Logs.** Fluent Bit sends the log types you choose to the Collector over mutual TLS, and the Collector forwards them to your exporters. You can export `Flows`, `DNS`, and `Audit` logs. Flow and DNS logs from [non-cluster hosts](../../getting-started/bare-metal/about) are included. Each record carries a `service.name` resource attribute of `flows`, `dns`, or `audit`, so you can route or filter by log type in your backend.
+- **Metrics.** The Collector federates every metric that the in-cluster $[prodname] Prometheus already scrapes, including metrics from $[noderunning], Typha, kube-controllers, Fluent Bit, Elasticsearch, and the operator. Series keep their original `job` and `instance` labels.
+
+Everything you export goes to every exporter that you configure.
+Logs that go to OTLP still go to $[prodname]'s log storage and to any [additional destinations](archive-storage.mdx) as usual.
+
+## Before you begin
+
+- Your $[prodname] license must include the OpenTelemetry Collector feature.
+  If the license doesn't include it, or if it expires, the operator removes the Collector and export stops.
+- To export metrics, the in-cluster $[prodname] Prometheus must be running.
+  For more information, see [Configure Prometheus](../../operations/monitor/prometheus/configure-prometheus.mdx).
+- Your backend must accept OTLP over `https`, using either gRPC or HTTP.
+  The Collector never sends telemetry or credentials over plain HTTP.
+- If an exporter's endpoint is a domain name rather than an IP address, your license must also include egress access control.
+  The operator restricts the Collector's outbound traffic to your exporters with a network policy, and it can only write a rule for a domain name when that feature is available.
+- Logs are exported from Linux nodes only.
+
+## Configure an exporter
+
+1. If your backend needs an API key or token, create a Secret for it in the `tigera-operator` namespace.
+
+   ```bash
+   kubectl create secret generic otel-backend-credentials \
+     --from-literal=api-key=<your-api-key> \
+     -n tigera-operator
+   ```
+
+   The Collector sends the value exactly as stored.
+   If your backend expects a bearer token in the `Authorization` header, include the `Bearer ` prefix in the Secret value.
+
+2. Add an `openTelemetry` section to the LogCollector resource.
+
+   ```bash
+   kubectl edit logcollector tigera-secure
+   ```
+
+   The following example exports all three log types and component metrics to a single backend over gRPC:
+
+   ```yaml
+   apiVersion: operator.tigera.io/v1
+   kind: LogCollector
+   metadata:
+     name: tigera-secure
+   spec:
+     openTelemetry:
+       logs:
+         types:
+           - Flows
+           - DNS
+           - Audit
+       metrics:
+         state: Enabled
+       exporters:
+         - name: my-backend
+           endpoint: https://otlp.example.com:4317
+           protocol: grpc
+           auth:
+             headers:
+               - name: api-key
+                 valueFrom:
+                   secretKeyRef:
+                     name: otel-backend-credentials
+                     key: api-key
+   ```
+
+   You must configure at least one exporter, and you must turn on at least one data source: list at least one log type, or set `metrics.state` to `Enabled`.
+
+   | Field | Description |
+   | --- | --- |
+   | `logs.types` | The log types to export. Supported values: `Flows`, `DNS`, `Audit`. |
+   | `metrics.state` | Set to `Enabled` to export component metrics. Default: `Disabled`. |
+   | `exporters[].name` | A unique name for the exporter. Must be a valid DNS label: lowercase letters, numbers, and hyphens, up to 63 characters. |
+   | `exporters[].endpoint` | The OTLP endpoint URL. Must start with `https://`. |
+   | `exporters[].protocol` | The OTLP transport: `grpc` or `http`. Default: `grpc`. |
+   | `exporters[].auth.headers` | Request headers to send with every export, each read from a key in a Secret in the `tigera-operator` namespace. |
+   | `exporters[].tls` | Custom certificate authority and client certificate for this exporter. See [Configure TLS for an exporter](#configure-tls-for-an-exporter). |
+
+   For the full API, see [OpenTelemetrySpec](../../reference/installation/api.mdx#opentelemetryspec).
+
+   :::note
+
+   With `protocol: http`, set `endpoint` to the base URL of your backend's OTLP receiver.
+   The Collector appends the signal path, such as `/v1/logs` or `/v1/metrics`, to the URL for you.
+
+   :::
+
+3. Check that the operator deployed the Collector.
+
+   ```bash
+   kubectl get tigerastatus log-collector-otel
+   ```
+
+   When the Collector is running, `AVAILABLE` is `True`.
+   If it's `DEGRADED`, run `kubectl get tigerastatus log-collector-otel -o yaml` to see the reason, such as a Secret or ConfigMap that an exporter refers to but that doesn't exist yet.
+
+## Send data to more than one backend
+
+Add an entry to `exporters` for each backend.
+Each exporter has its own protocol, credentials, and TLS settings, and each one receives all of the logs and metrics that you export.
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: LogCollector
+metadata:
+  name: tigera-secure
+spec:
+  openTelemetry:
+    logs:
+      types:
+        - Flows
+        - DNS
+    exporters:
+      - name: observability
+        endpoint: https://otlp.example.com:4317
+      - name: siem
+        endpoint: https://siem.example.internal:4318
+        protocol: http
+        auth:
+          headers:
+            - name: Authorization
+              valueFrom:
+                secretKeyRef:
+                  name: siem-credentials
+                  key: token
+```
+
+## Configure TLS for an exporter
+
+By default, the Collector verifies each exporter's server certificate against the system's public certificate authorities.
+Certificate verification is never turned off.
+
+**Use a private certificate authority**
+
+If your backend's certificate is signed by a private certificate authority (CA), create a ConfigMap in the `tigera-operator` namespace with the CA certificate under the `tls.crt` key:
+
+```bash
+kubectl create configmap siem-ca --from-file=tls.crt=<path-to-ca.crt> -n tigera-operator
+```
+
+Then refer to it from the exporter:
+
+```yaml
+exporters:
+  - name: siem
+    endpoint: https://siem.example.internal:4317
+    tls:
+      caConfigMapName: siem-ca
+```
+
+When you set `caConfigMapName`, the Collector trusts only that CA for this exporter.
+It no longer trusts the system's public CAs for this exporter.
+
+**Use mutual TLS**
+
+If your backend requires a client certificate, create a TLS Secret in the `tigera-operator` namespace with the client certificate and key under the `tls.crt` and `tls.key` keys:
+
+```bash
+kubectl create secret tls siem-client-cert \
+  --cert=<path-to-client.crt> \
+  --key=<path-to-client.key> \
+  -n tigera-operator
+```
+
+Then refer to it from the exporter:
+
+```yaml
+exporters:
+  - name: siem
+    endpoint: https://siem.example.internal:4317
+    tls:
+      caConfigMapName: siem-ca
+      clientCertSecretName: siem-client-cert
+```
+
+TLS settings apply to one exporter only, so each backend can use a different CA and a different client identity.
+
+When you update a CA ConfigMap, client certificate Secret, or credentials Secret, the operator restarts the Collector to pick up the change.
+
+## Customize the Collector deployment
+
+The Collector runs as a single replica on the same nodes as other $[prodname] control plane components.
+By default, the `otel-collector` container requests 128Mi of memory and is limited to 512Mi.
+The Collector starts to throttle incoming data when it uses about 80% of its memory limit.
+
+If you export a high volume of logs, raise the memory limit with `openTelemetryCollectorStatefulSet`.
+The Collector's throttling threshold scales with the limit you set.
+
+```yaml
+apiVersion: operator.tigera.io/v1
+kind: LogCollector
+metadata:
+  name: tigera-secure
+spec:
+  openTelemetry:
+    # ...
+    openTelemetryCollectorStatefulSet:
+      spec:
+        template:
+          spec:
+            containers:
+              - name: otel-collector
+                resources:
+                  requests:
+                    memory: 256Mi
+                  limits:
+                    memory: 1Gi
+```
+
+You can also set `affinity`, `nodeSelector`, and `tolerations` for the Collector pod.
+For the full list of fields, see [OpenTelemetryCollectorStatefulSet](../../reference/installation/api.mdx#opentelemetrycollectorstatefulset).
+
+## Turn off OpenTelemetry export
+
+Remove the `openTelemetry` section from the LogCollector resource:
+
+```bash
+kubectl patch logcollector tigera-secure --type=json \
+  -p='[{"op": "remove", "path": "/spec/openTelemetry"}]'
+```
+
+The operator removes the Collector and the resources it created for it, including its copies of your exporter certificates and credentials.
+It doesn't delete the Secrets and ConfigMaps that you created in the `tigera-operator` namespace.
+
+## Additional resources
+
+- [OpenTelemetrySpec API reference](../../reference/installation/api.mdx#opentelemetryspec)
+- [Archive logs](archive-storage.mdx)
+- [Prometheus metrics](../../operations/monitor/metrics/index.mdx)
+- [OpenTelemetry Protocol specification](https://opentelemetry.io/docs/specs/otlp/)

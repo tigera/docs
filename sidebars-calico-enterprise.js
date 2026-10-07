@@ -400,6 +400,7 @@ module.exports = {
             'observability/elastic/overview',
             'observability/elastic/retention',
             'observability/elastic/archive-storage',
+            'observability/elastic/opentelemetry',
             'observability/elastic/rbac-elasticsearch',
             'observability/elastic/aggregation',
             {
