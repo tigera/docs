@@ -4,6 +4,10 @@ import CodeBlock from '@theme/CodeBlock';
 import variables from '../../../../calico-cloud/variables';
 import ccImageLists from '../../data/ccImageLists';
 
+// ccImageLists keys are the Calico Cloud version labels shown in the selector (for example, "v23.0.2 (latest)").
+// cc-operator is tagged per Calico Cloud version, so derive the operator image tag by stripping the optional "(latest)" suffix.
+const operatorTag = (versionLabel) => versionLabel.replace(/\s*\(latest\)\s*$/, '').trim();
+
 const CodeBlockSelector = () => {
   const [selectedVersion, setSelectedVersion] = useState(Object.keys(ccImageLists)[0]);
 
@@ -41,13 +45,11 @@ const CodeBlockSelector = () => {
         </Select>
       </FormControl>
       <CodeBlock
-        title={`Helm command to add images for Calico Cloud ${selectedVersion}`}
-        language='javascript'
+        title={`Images for Calico Cloud ${selectedVersion}`}
+        language='bash'
       >
-        {`helm repo add calico-cloud ${variables.clouddownloadbase}/charts
-INSTALLER_IMAGE="${variables.cloudoperatorimage}:$(helm show chart calico-cloud/calico-cloud | grep version: | sed -e 's/version: *//' -e 's/+/-g/')"
-IMAGES=(
-$INSTALLER_IMAGE
+        {`IMAGES=(
+${variables.cloudoperatorimage}:${operatorTag(selectedVersion)}
 ${ccImageLists[selectedVersion]}
 )`}
       </CodeBlock>
