@@ -43,7 +43,6 @@ For a simple use case workflow, see [Faster troubleshooting of microservices, co
 **Not supported**
 
 - Capturing traffic from host networked pods or host endpoints
-- Capturing traffic from pods with multiple interfaces
 - Capturing traffic for pods running on Windows hosts
 
 ## How to
@@ -123,6 +122,20 @@ metadata:
   namespace: sample
 spec:
   selector: k8s-app == "nginx"
+```
+
+**Example: One interface of a pod with multiple interfaces**
+
+A capture records every interface its selector matches. On a pod with more than one interface, such as a Multus pod, each interface's workload endpoint carries the `projectcalico.org/network-interface` label with the interface name inside the pod. This example captures traffic only on the `net1` interface of pods with the label `app` equal to `vm`.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: PacketCapture
+metadata:
+  name: sample-capture-net1
+  namespace: sample
+spec:
+  selector: app == "vm" && projectcalico.org/network-interface == "net1"
 ```
 
 **Example: All pods in a namespace, TCP traffic only**
@@ -251,6 +264,7 @@ Packet capture files are stored on the host-mounted volume used for calico nodes
   `{namespace}/{packet capture resource name}`
 - The active packet capture file is identified using the following schema:
   `{workload endpoint name}_{host network interface}.pcap`
+- A pod with more than one interface, such as a Multus pod, gets a separate capture file for each interface
 - Rotated capture file names contain an index matching the rotation timestamp
 - Packet capture files are deleted after the packet capture resource is deleted.
 
