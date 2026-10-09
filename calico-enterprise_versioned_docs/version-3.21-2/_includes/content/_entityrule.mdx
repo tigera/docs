@@ -31,6 +31,10 @@ You cannot mix IPv4 and IPv6 CIDRs in a single rule using `nets` or `notNets`. I
 
 :::
 
+When using selectors in network policy, remember that selectors only match (known) resources, but _rules_ match packets.
+A rule with a selector `all()` won't match "all packets", it will match "packets from all in-scope endpoints and network sets".
+To match all packets, do not include a selector in the rule at all.
+
 #### Empty match fields
 
 An empty value in a match field is treated as if the field were not set at all, not as an empty set that matches nothing.
@@ -38,6 +42,13 @@ For example, `nets: []` does not stop the rule from matching.
 It leaves the rule unconstrained by IP address, so the rule matches any source or destination address.
 The same is true of `notNets`, `ports`, and `notPorts`, and of an empty string in `selector`, `notSelector`, and `namespaceSelector`.
 $[prodname] typically drops the empty value when it stores the resource, so the field is absent when you read the policy back.
+
+#### Understanding `notSelector`
+
+`notSelector` is somewhat subtle because the `not` in `notSelector` negates the packet match rather than the selector:
+
+- `selector: !has(foo)` matches packets from/to endpoints and network sets that do not have the label "foo".
+- `notSelector: has(foo)` matches packets from/to **anywhere** (including outside the cluster), **except** traffic from/to endpoints and network sets that have the label "foo".
 
 #### Selector performance in EntityRules
 
