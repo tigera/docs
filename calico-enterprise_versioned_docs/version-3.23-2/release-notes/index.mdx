@@ -257,6 +257,11 @@ To update an existing installation of Calico Enterprise 3.23, see [Install a pat
 
 August 27, 2026
 
+#### Upgrade notes
+
+* If you use an admission policy that limits the host paths calico-node can mount, add `/sys/kernel/security` to the policy before you upgrade.
+  Otherwise, the policy blocks the new calico-node pods and the upgrade does not complete.
+
 #### Enhancements
 
 * The operator-generated CNI config now declares `cniVersion` 1.0.0, as Multus requires on OpenShift 4.23 and later. The new `spec.cni.specVersion` field pins a different version or leaves it operator-managed (`Auto`).
@@ -271,10 +276,8 @@ August 27, 2026
 * Fixed Felix splitting a flow or DNS log record across a rotation boundary, causing downstream consumers to drop one record per rotation.
 * Fixed Felix dataplane delays under load that could hold up policy programming for new pods: IP set resyncs are now incremental, and the flow log collector's policy re-evaluation is time-boxed so it no longer blocks conntrack and NFLOG processing.
 * Fixed eBPF nodes running a kernel with `lockdown=confidentiality`, such as Talos, spewing `could not enable bpf_trace_printk events` into dmesg on every BPF program load.
-  To detect lockdown mode, calico-node now mounts the host path `/sys/kernel/security` read-only on every Linux node.
-  **Compatibility note:** This affects you if an admission policy, such as Kyverno or OPA Gatekeeper, limits the host paths that calico-node can mount.
-  Before you upgrade, add `/sys/kernel/security` to that allow-list.
-  Otherwise the policy rejects the new calico-node pods, Typha disconnects the old ones with `Client does not support modern policy keys`, and pods created while calico-node is down get no network policy.
+  To detect lockdown mode, calico-node now mounts the host path `/sys/kernel/security`.
+  See the upgrade notes for this release.
 * Fixed HostEndpoint policy blocking UDP return traffic for SNAT'd pod egress in the eBPF dataplane.
 * Fixed Linseed rejecting valid service account tokens after a cluster's service account issuer changed. Unrecognized issuers are now validated via TokenReview.
 * Fixed a BPF program leak in the iptables dataplane with `flowLogsCollectTcpStats` enabled: on kernels without TCX support, each endpoint update stacked a duplicate `calico_tcp_stats` filter, eventually degrading node performance and Felix startup. Existing duplicates are cleaned up.
