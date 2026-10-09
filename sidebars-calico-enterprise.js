@@ -392,6 +392,8 @@ module.exports = {
         'observability/kibana',
         'observability/packetcapture',
         'observability/visualize-traffic',
+        'observability/archive-storage',
+        'observability/opentelemetry',
         {
           type: 'category',
           label: 'Calico Enterprise logs',
@@ -399,7 +401,6 @@ module.exports = {
           items: [
             'observability/elastic/overview',
             'observability/elastic/retention',
-            'observability/elastic/archive-storage',
             'observability/elastic/rbac-elasticsearch',
             'observability/elastic/aggregation',
             {
