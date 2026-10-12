@@ -21,7 +21,7 @@ import Icmp from '@site/calico_versioned_docs/version-3.31/_includes/content/_ic
 import Rule from '@site/calico_versioned_docs/version-3.31/_includes/content/_rule.mdx';
 
 A staged global network policy resource (`StagedGlobalNetworkPolicy`) represents an ordered set of rules which are applied
-to a collection of endpoints that match a [label selector](#selector). These rules are used to preview network behavior and do
+to a collection of endpoints that match a [label selector](#selectors). These rules are used to preview network behavior and do
 not enforce network traffic. For enforcing network traffic, see [global network policy resource](globalnetworkpolicy.mdx).
 
 `StagedGlobalNetworkPolicy` is not a namespaced resource. `StagedGlobalNetworkPolicy` applies to [workload endpoint resources](workloadendpoint.mdx) in all namespaces, and to [host endpoint resources](hostendpoint.mdx).
@@ -81,12 +81,12 @@ spec:
 
 | Field                  | Description                                                                                                                                                                                                                          | Accepted Values           | Schema                | Default                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | --------------------- | --------------------------------------------- |
-| stagedAction           | Change that the staged policy previews. `Set` previews creating or updating the enforced policy with the same name. `Delete` previews deleting it, and requires all other spec fields except `tier` to be empty.                     | `Set`, `Delete`, `Learn`, `Ignore` | string                | `Set`                                         |
+| stagedAction           | How $[prodname] handles the staged policy. With `Set`, $[prodname] evaluates the policy as if it were enforced, alongside the enforced policies, and reports the result in the `policies.pending` field of [flow logs](../../observability/view-flow-logs.mdx). Results for host endpoints aren't reported. It doesn't replace an enforced policy that has the same name. With `Delete`, $[prodname] ignores the staged policy, and all other spec fields except `tier` must be empty. The API also accepts `Learn` and `Ignore`, which $[prodname] treats like `Set`. | `Set`, `Delete`, `Learn`, `Ignore` | string                | `Set`                                         |
 | order                  | Controls the order of precedence. $[prodname] applies the policy with the lowest value first.                                                                                                                                       |                           | float                 |                                               |
 | tier                   | Name of the [tier](tier.mdx) this policy belongs to.                                                                                                                                                                                 |                           | string                | `default`                                     |
-| selector               | Selects the endpoints to which this policy applies.                                                                                                                                                                                  |                           | [selector](#selector) | all()                                         |
-| serviceAccountSelector | Selects the service account(s) to which this policy applies. Select all service accounts in the cluster with a specific name using the `projectcalico.org/name` label.                                                               |                           | [selector](#selector) | all()                                         |
-| namespaceSelector      | Selects the namespace(s) to which this policy applies. Select a specific namespace by name using the `projectcalico.org/name` label.                                                                                                 |                           | [selector](#selector) | all()                                         |
+| selector               | Selects the endpoints to which this policy applies.                                                                                                                                                                                  |                           | [selector](#selectors) | all()                                         |
+| serviceAccountSelector | Selects the service account(s) to which this policy applies. Select all service accounts in the cluster with a specific name using the `projectcalico.org/name` label.                                                               |                           | [selector](#selectors) | all()                                         |
+| namespaceSelector      | Selects the namespace(s) to which this policy applies. Select a specific namespace by name using the `projectcalico.org/name` label.                                                                                                 |                           | [selector](#selectors) | all()                                         |
 | types                  | Applies the policy based on the direction of the traffic. To apply the policy to inbound traffic, set to `Ingress`. To apply the policy to outbound traffic, set to `Egress`. To apply the policy to both, set to `Ingress, Egress`. | `Ingress`, `Egress`       | List of strings       | Depends on presence of ingress/egress rules\* |
 | ingress                | Ordered list of ingress rules applied by policy.                                                                                                                                                                                     |                           | List of [Rule](#rule) |                                               |
 | egress                 | Ordered list of egress rules applied by this policy.                                                                                                                                                                                 |                           | List of [Rule](#rule) |                                               |
@@ -130,7 +130,7 @@ for how `doNotTrack` and `preDNAT` and `applyOnForward` can be useful for host e
 
 <Entityrule global='true' />
 
-### Selector
+### Selectors
 
 <Selectors />
 
