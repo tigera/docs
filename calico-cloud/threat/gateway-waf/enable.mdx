@@ -15,7 +15,7 @@ Gateway WAF is off by default. Turning it on is a one-line change to the operato
 ## Prerequisites
 
 - Your cluster is connected to $[prodname].
-- $[prodname] Ingress Gateway is already set up. See [About Calico Ingress Gateway](../../networking/ingress-gateway/about-calico-ingress-gateway.mdx).
+- Calico Ingress Gateway is already set up. See [About Calico Ingress Gateway](../../networking/ingress-gateway/about-calico-ingress-gateway.mdx).
 - Cluster-admin rights — the `GatewayAPI` CR is a cluster-scoped operator resource.
 
 :::note
@@ -26,19 +26,11 @@ Customer-installed (BYO) Envoy Gateway is not supported. Gateway WAF requires th
 
 ## Enable Gateway WAF
 
-1. Edit the operator `GatewayAPI` CR named `default` and set `spec.extensions.waf.state` to `Enabled` (the default is `Disabled`):
+1. Set `spec.extensions.waf.state` to `Enabled` on the `GatewayAPI` resource named `tigera-secure`, which you created when you set up the ingress gateway.
+   The default is `Disabled`.
 
    ```bash
-   kubectl apply -f - <<'EOF'
-   apiVersion: operator.tigera.io/v1
-   kind: GatewayAPI
-   metadata:
-     name: default
-   spec:
-     extensions:
-       waf:
-         state: Enabled
-   EOF
+   kubectl patch gatewayapi tigera-secure --type merge -p '{"spec":{"extensions":{"waf":{"state":"Enabled"}}}}'
    ```
 
    The operator installs the six WAF CRDs and the validating admission webhook, and wires the WAF reconcilers into the existing `calico-kube-controllers` pod in `calico-system`. No new workload is deployed.
@@ -70,17 +62,10 @@ Customer-installed (BYO) Envoy Gateway is not supported. Gateway WAF requires th
 
 ## Disable Gateway WAF
 
-Set `spec.extensions.waf.state` back to `Disabled` on the same `GatewayAPI` CR to turn the feature off:
+Set `spec.extensions.waf.state` back to `Disabled` on the same `GatewayAPI` resource to turn the feature off:
 
-```yaml
-apiVersion: operator.tigera.io/v1
-kind: GatewayAPI
-metadata:
-  name: default
-spec:
-  extensions:
-    waf:
-      state: Disabled
+```bash
+kubectl patch gatewayapi tigera-secure --type merge -p '{"spec":{"extensions":{"waf":{"state":"Disabled"}}}}'
 ```
 
 The operator removes the admission webhook and stops the WAF reconcilers; existing `WAFPolicy`, `GlobalWAFPolicy`, and other WAF resources stay on the cluster but are no longer reconciled or enforced until you re-enable the feature.
