@@ -440,6 +440,7 @@ module.exports = {
               label: 'Metrics',
               link: { type: 'doc', id: 'operations/monitor/metrics/index' },
               items: [
+                'operations/monitor/metrics/operator-metrics',
                 'operations/monitor/metrics/bgp-metrics',
                 'operations/monitor/metrics/policy-metrics',
                 'operations/monitor/metrics/elasticsearch-and-fluentd-metrics',
