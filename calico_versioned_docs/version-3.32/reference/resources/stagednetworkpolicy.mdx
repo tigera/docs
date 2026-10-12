@@ -4,6 +4,8 @@ description: Reference for the StagedNetworkPolicy resource in Calico Open Sourc
 
 # Staged network policy
 
+import Httpmatch from '@site/calico_versioned_docs/version-3.32/_includes/content/_httpmatch.mdx';
+
 import Servicematch from '@site/calico_versioned_docs/version-3.32/_includes/content/_servicematch.mdx';
 
 import Serviceaccountmatch from '@site/calico_versioned_docs/version-3.32/_includes/content/_serviceaccountmatch.mdx';
@@ -81,6 +83,7 @@ spec:
 
 | Field                  | Description                                                                                                                                                                                                                          | Accepted Values           | Schema                | Default                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | --------------------- | --------------------------------------------- |
+| stagedAction           | Change that the staged policy previews. `Set` previews creating or updating the enforced policy with the same name. `Delete` previews deleting it, and requires all other spec fields except `tier` to be empty.                     | `Set`, `Delete`, `Learn`, `Ignore` | string                | `Set`                                         |
 | order                  | Controls the order of precedence. $[prodname] applies the policy with the lowest value first.                                                                                                                                       |                           | float                 |                                               |
 | tier                   | Name of the [tier](tier.mdx) this policy belongs to.                                                                                                                                                                                 |                           | string                | `default`                                     |
 | selector               | Selects the endpoints to which this policy applies.                                                                                                                                                                                  |                           | [selector](#selector) | all()                                         |
@@ -138,6 +141,25 @@ process it more efficiently.  Currently only one hint is defined:
   useful for large policy sets that are known to apply to all (or nearly all) endpoints.  It effectively "preloads"
   the policy on every node so that there is less work to do when the first endpoint matching the policy shows up.
   It also prevents work from being done to tear down the policy when the last endpoint is drained.
+
+## Application layer policy
+
+Application layer policy is an optional feature of $[prodname] and
+[must be enabled](../../network-policy/istio/app-layer-policy.mdx)
+to use the following match criteria.
+
+:::note
+
+Application layer policy match criteria are supported with the following restrictions.
+
+- Only ingress policy is supported. Egress policy must not contain any application layer policy match clauses.
+- Rules must have the action `Allow` if they contain application layer policy match clauses.
+
+:::
+
+### HTTPMatch
+
+<Httpmatch />
 
 ## Supported operations
 
