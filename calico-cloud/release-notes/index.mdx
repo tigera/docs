@@ -21,16 +21,16 @@ For more information, see [Network policy tutorial](../network-policy/policy-tie
 
 #### Gateway WAF for routes and namespaces (tech preview)
 
-You can now apply web application firewall (WAF) protection to individual routes and namespaces behind Calico Ingress Gateway, instead of to the whole gateway.
+You can now attach web application firewall (WAF) protection to an individual Gateway or HTTPRoute behind Calico Ingress Gateway, instead of to every gateway at once, and tune it for each namespace.
 Platform teams set a global baseline, application teams tune it for their own namespaces and routes, and you can add custom rules as plugins.
 
 For more information, see [Gateway WAF](../threat/gateway-waf/overview.mdx).
 
-#### L7 logs from the eBPF collector
+#### New L7 log collectors
 
 $[prodname] can now collect L7 logs with an eBPF collector that captures HTTP and TLS metadata in the kernel, with no proxy or sidecar in the data path.
 You enable it once for the cluster, and it works with any data plane.
-The Envoy collector is deprecated.
+If you run Istio Ambient Mode, you can also collect L7 logs from waypoint proxies with the new Waypoint collector.
 
 For more information, see [L7 logs](../observability/elastic/l7/overview.mdx).
 
@@ -54,8 +54,10 @@ You still need to set `installer.calicoCloudVersion` when you install with Helm.
 
 ### Deprecated and removed features
 
-* Compliance reporting is removed in this release.
-  Compliance reports, the `GlobalReport` resource, and the compliance pages of the web console are no longer available.
+* The compliance reporting feature is removed from the $[prodname] web console.
+  The compliance reporting docs, including the `GlobalReport` resource reference, are removed.
+* The Envoy collector for L7 logs is deprecated.
+  Use the eBPF collector or the Waypoint collector instead.
 * $[prodname] 21 is no longer supported.
 
 ### Updating
@@ -68,7 +70,7 @@ You still need to set `installer.calicoCloudVersion` when you install with Helm.
   1. Before you upgrade, if you use a global default deny policy, create a network policy in each `Gateway` namespace that allows the proxy pods, so they can start as soon as they move.
      For the policy, see [Create an ingress gateway](../networking/ingress-gateway/create-ingress-gateway.mdx).
   2. Upgrade your cluster.
-     For more information, see [Upgrade Calico Cloud](../get-started/upgrade-cluster.mdx).
+     For more information, see [Upgrade $[prodname]](../get-started/upgrade-cluster.mdx).
   3. After the upgrade, point monitoring, RBAC, and external DNS at each `Gateway` namespace instead of `tigera-gateway`.
      If you used merged gateways, plan for one load balancer, DNS record, and certificate for each gateway.
 * If you install from a private registry with the latest Helm chart, add the `cc-operator` image that matches the version you're installing or upgrading to into your registry.
@@ -82,7 +84,8 @@ You still need to set `installer.calicoCloudVersion` when you install with Helm.
 
 ### Known issues
 
-* $[prodname] 24.0.0 doesn't support installation on Kubernetes 1.36 with the v3 CRDs.
+* You can't connect a Kubernetes 1.36 cluster to $[prodname] 24.0.0 if Calico Open Source on that cluster was installed with the `projectcalico.org/v3` CRDs.
+  The installation needs the `admissionregistration.k8s.io/v1beta1` API, which Kubernetes 1.36 doesn't provide.
 
 <h2 id="23.0.2">August 28, 2026 (versions 23.0.2 and 22.5.1)</h2>
 
