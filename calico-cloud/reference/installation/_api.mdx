@@ -13,19 +13,15 @@ Package v1 contains API Schema definitions for the operator v1 API group
 Resource Types
 - [APIServer](#apiserver)
 - [ApplicationLayer](#applicationlayer)
-- [Authentication](#authentication)
-- [Compliance](#compliance)
 - [EgressGateway](#egressgateway)
 - [GatewayAPI](#gatewayapi)
 - [Goldmane](#goldmane)
 - [ImageSet](#imageset)
 - [Installation](#installation)
 - [IntrusionDetection](#intrusiondetection)
+- [Istio](#istio)
 - [LogCollector](#logcollector)
-- [LogStorage](#logstorage)
-- [ManagementCluster](#managementcluster)
 - [ManagementClusterConnection](#managementclusterconnection)
-- [Manager](#manager)
 - [Monitor](#monitor)
 - [NonClusterHost](#nonclusterhost)
 - [PacketCaptureAPI](#packetcaptureapi)
@@ -80,6 +76,8 @@ _Appears in:_
 | `name` _string_ | Name is an enum which identifies the API server Deployment container by name.<br />Supported values are: calico-apiserver, tigera-queryserver, calico-l7-admission-controller |
 | `ports` _[APIServerDeploymentContainerPort](#apiserverdeploymentcontainerport) array_ | (Optional) Ports allows customization of container's ports. If specified, this overrides the named APIServer Deployment container's ports. If omitted, the API server Deployment will use its default value for this container's port. |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named API server Deployment container's resources. If omitted, the API server Deployment will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### APIServerDeploymentContainerPort
@@ -204,6 +202,7 @@ _Appears in:_
 | --- | --- |
 | `logging` _[APIServerPodLogging](#apiserverpodlogging)_ | (Optional)  |
 | `apiServerDeployment` _[APIServerDeployment](#apiserverdeployment)_ | APIServerDeployment configures the calico-apiserver Deployment. If used in conjunction with ControlPlaneNodeSelector or ControlPlaneTolerations, then these overrides take precedence. |
+| `calicoWebhooksDeployment` _[CalicoWebhooksDeployment](#calicowebhooksdeployment)_ | (Optional) CalicoWebhooksDeployment configures the calico-webhooks Deployment. |
 
 
 ### APIServerStatus
@@ -266,7 +265,7 @@ _Appears in:_
 | `splunk` _[SplunkStoreSpec](#splunkstorespec)_ | (Optional) If specified, enables exporting of flow, audit, and DNS logs to splunk. |
 
 
-### AlertManager
+### Alertmanager
 
 
 
@@ -277,20 +276,21 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `spec` _[AlertManagerSpec](#alertmanagerspec)_ | (Optional) Spec is the specification of the Alertmanager. |
+| `spec` _[AlertmanagerSpec](#alertmanagerspec)_ | (Optional) Spec is the specification of the Alertmanager. |
 
 
-### AlertManagerSpec
+### AlertmanagerSpec
 
 
 
 
 
 _Appears in:_
-- [AlertManager](#alertmanager)
+- [Alertmanager](#alertmanager)
 
 | Field | Description |
 | --- | --- |
+| `replicas` _integer_ | (Optional) Replicas defines the number of Alertmanager replicas. When set to 0, Alertmanager is not rendered.<br />Default: 0 |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | Define resources requests and limits for single Pods. |
 
 
@@ -394,109 +394,6 @@ _Appears in:_
 
 
 
-### Authentication
-
-
-
-Authentication is the Schema for the authentications API
-
-| Field | Description |
-| --- | --- |
-| `apiVersion` _string_ | `operator.tigera.io/v1` |
-| `kind` _string_ | `Authentication` |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
-| `spec` _[AuthenticationSpec](#authenticationspec)_ |  |
-| `status` _[AuthenticationStatus](#authenticationstatus)_ |  |
-
-
-### AuthenticationLDAP
-
-
-
-AuthenticationLDAP is the configuration needed to setup LDAP.
-
-_Appears in:_
-- [AuthenticationSpec](#authenticationspec)
-
-| Field | Description |
-| --- | --- |
-| `host` _string_ | The host and port of the LDAP server. Example: ad.example.com:636 |
-| `startTLS` _boolean_ | (Optional) StartTLS whether to enable the startTLS feature for establishing TLS on an existing LDAP session. If true, the ldap:// protocol is used and then issues a StartTLS command, otherwise, connections will use the ldaps:// protocol. |
-| `userSearch` _[UserSearch](#usersearch)_ | User entry search configuration to match the credentials with a user. |
-| `groupSearch` _[GroupSearch](#groupsearch)_ | (Optional) Group search configuration to find the groups that a user is in. |
-
-
-### AuthenticationOIDC
-
-
-
-AuthenticationOIDC is the configuration needed to setup OIDC.
-
-_Appears in:_
-- [AuthenticationSpec](#authenticationspec)
-
-| Field | Description |
-| --- | --- |
-| `issuerURL` _string_ | IssuerURL is the URL to the OIDC provider. |
-| `usernameClaim` _string_ | UsernameClaim specifies which claim to use from the OIDC provider as the username. |
-| `requestedScopes` _string array_ | (Optional) RequestedScopes is a list of scopes to request from the OIDC provider. If not provided, the following scopes are requested: ["openid", "email", "profile", "groups", "offline_access"]. |
-| `usernamePrefix` _string_ | (Optional) Deprecated. Please use Authentication.Spec.UsernamePrefix instead. |
-| `groupsClaim` _string_ | (Optional) GroupsClaim specifies which claim to use from the OIDC provider as the group. |
-| `groupsPrefix` _string_ | (Optional) Deprecated. Please use Authentication.Spec.GroupsPrefix instead. |
-| `emailVerification` _[EmailVerificationType](#emailverificationtype)_ | (Optional) Some providers do not include the claim "email_verified" when there is no verification in the user enrollment process or if they are acting as a proxy for another identity provider. By default those tokens are deemed invalid. To skip this check, set the value to "InsecureSkip".<br />Default: Verify |
-| `promptTypes` _[PromptType](#prompttype) array_ | (Optional) PromptTypes is an optional list of string values that specifies whether the identity provider prompts the end user for re-authentication and consent. See the RFC for more information on prompt types: https://openid.net/specs/openid-connect-core-1_0.html.<br />Default: "Consent" |
-| `type` _[OIDCType](#oidctype)_ | (Optional)<br />Default: "Dex" |
-
-
-### AuthenticationOpenshift
-
-
-
-AuthenticationOpenshift is the configuration needed to setup Openshift.
-
-_Appears in:_
-- [AuthenticationSpec](#authenticationspec)
-
-| Field | Description |
-| --- | --- |
-| `issuerURL` _string_ | IssuerURL is the URL to the Openshift OAuth provider. Ex.: https://api.my-ocp-domain.com:6443 |
-
-
-### AuthenticationSpec
-
-
-
-AuthenticationSpec defines the desired state of Authentication
-
-_Appears in:_
-- [Authentication](#authentication)
-
-| Field | Description |
-| --- | --- |
-| `managerDomain` _string_ | ManagerDomain is the domain name of the Manager |
-| `usernamePrefix` _string_ | (Optional) If specified, UsernamePrefix is prepended to each user obtained from the identity provider. Note that Kibana does not support a user prefix, so this prefix is removed from Kubernetes User when translating log access ClusterRoleBindings into Elastic. |
-| `groupsPrefix` _string_ | (Optional) If specified, GroupsPrefix is prepended to each group obtained from the identity provider. Note that Kibana does not support a groups prefix, so this prefix is removed from Kubernetes Groups when translating log access ClusterRoleBindings into Elastic. |
-| `oidc` _[AuthenticationOIDC](#authenticationoidc)_ | (Optional) OIDC contains the configuration needed to setup OIDC authentication. |
-| `openshift` _[AuthenticationOpenshift](#authenticationopenshift)_ | (Optional) Openshift contains the configuration needed to setup Openshift OAuth authentication. |
-| `ldap` _[AuthenticationLDAP](#authenticationldap)_ | (Optional) LDAP contains the configuration needed to setup LDAP authentication. |
-| `dexDeployment` _[DexDeployment](#dexdeployment)_ | (Optional) DexDeployment configures the Dex Deployment. |
-
-
-### AuthenticationStatus
-
-
-
-AuthenticationStatus defines the observed state of Authentication
-
-_Appears in:_
-- [Authentication](#authentication)
-
-| Field | Description |
-| --- | --- |
-| `state` _string_ | State provides user-readable status. |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of Ready, Progressing, Degraded or other customer types. |
-
-
 ### Azure
 
 
@@ -543,21 +440,21 @@ _Appears in:_
 | `Disabled` |  |
 
 
-### CAType
+
+
+### CNIInstallMode
 
 _Underlying type:_ _string_
 
-CAType specifies which verification method the tunnel client should use to verify the tunnel server's identity.
-
-One of: Tigera, Public
+CNIInstallMode controls which CNI plugin binaries the operator installs onto the host.
 
 _Appears in:_
-- [ManagementClusterTLS](#managementclustertls)
+- [CNISpec](#cnispec)
 
 | Value | Description |
 | --- | --- |
-| `Tigera` |  |
-| `Public` |  |
+| `All` | CNIInstallModeAll installs Calico's own CNI binaries plus the upstream plugin set (host-local, portmap, loopback, tuning, flannel) via a dedicated init container.  |
+| `CalicoOnly` | CNIInstallModeCalicoOnly installs only Calico's own CNI binaries; the host is expected to provide any required upstream plugins.  |
 
 
 ### CNILogging
@@ -611,6 +508,7 @@ _Appears in:_
 | `ipam` _[IPAMSpec](#ipamspec)_ | (Optional) IPAM specifies the pod IP address management that will be used in the Calico or Calico Enterprise installation. |
 | `binDir` _string_ | (Optional) BinDir is the path to the CNI binaries directory. If you have changed the installation directory for CNI binaries in the container runtime configuration, please ensure that this field points to the same directory as specified in the container runtime settings. Default directory depends on the KubernetesProvider. * For KubernetesProvider GKE, this field defaults to "/home/kubernetes/bin". * For KubernetesProvider OpenShift, this field defaults to "/var/lib/cni/bin". * Otherwise, this field defaults to "/opt/cni/bin". |
 | `confDir` _string_ | (Optional) ConfDir is the path to the CNI config directory. If you have changed the installation directory for CNI configuration in the container runtime configuration, please ensure that this field points to the same directory as specified in the container runtime settings. Default directory depends on the KubernetesProvider. * For KubernetesProvider GKE, this field defaults to "/etc/cni/net.d". * For KubernetesProvider OpenShift, this field defaults to "/var/run/multus/cni/net.d". * Otherwise, this field defaults to "/etc/cni/net.d". |
+| `installMode` _[CNIInstallMode](#cniinstallmode)_ | (Optional) InstallMode controls which CNI plugin binaries the operator installs onto each node when CNI.Type is Calico. * All (default): the operator runs a cni-plugins init container that stages upstream   CNI plugin binaries (host-local, portmap, loopback, tuning, flannel) into a shared   volume, and the install-cni init container copies them onto the host alongside   Calico's own binaries. * CalicoOnly: skip the cni-plugins init container. Only Calico's own binaries are   installed. Use this when the host already provides the upstream plugins (e.g. kind,   certain managed node images).<br />Default: All |
 
 
 ### CRDManagement
@@ -660,6 +558,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the csi-node-driver DaemonSet container by name.<br />Supported values are: calico-csi, csi-node-driver-registrar. |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named csi-node-driver DaemonSet container's resources. If omitted, the csi-node-driver DaemonSet will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### CSINodeDriverDaemonSetPodSpec
@@ -737,6 +637,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the calico-kube-controllers Deployment container by name.<br />Supported values are: calico-kube-controllers, es-calico-kube-controllers |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-kube-controllers Deployment container's resources. If omitted, the calico-kube-controllers Deployment will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### CalicoKubeControllersDeploymentPodSpec
@@ -802,6 +704,7 @@ _Appears in:_
 | `bpfNetworkBootstrap` _[BPFNetworkBootstrapType](#bpfnetworkbootstraptype)_ | (Optional) BPFNetworkBootstrap manages the initial networking setup required to configure the BPF dataplane. When enabled, the operator tries to bootstraps access to the Kubernetes API Server by using the Kubernetes service and its associated endpoints. This field should be enabled only if linuxDataplane is set to "BPF". If another dataplane is selected, this field must be omitted or explicitly set to Disabled. When disabled and linuxDataplane is BPF, you must manually provide the Kubernetes API Server information via the "kubernetes-service-endpoint" ConfigMap. It is invalid to use both the ConfigMap and have this field set to true at the same time.<br />Default: Disabled |
 | `kubeProxyManagement` _[KubeProxyManagementType](#kubeproxymanagementtype)_ | (Optional) KubeProxyManagement controls whether the operator manages the kube-proxy DaemonSet. When enabled, the operator will manage the DaemonSet by patching it: it disables kube-proxy if the dataplane is BPF, or enables it otherwise.<br />Default: Disabled |
 | `bgp` _[BGPOption](#bgpoption)_ | (Optional) BGP configures whether or not to enable Calico's BGP capabilities. |
+| `clusterRoutingMode` _[ClusterRoutingMode](#clusterroutingmode)_ | (Optional) ClusterRoutingMode controls how nodes get a route to a workload on another node, when that workload's IP comes from an IP Pool with vxlanMode: Never. When ClusterRoutingMode is BIRD, confd and BIRD program that route. When ClusterRoutingMode is Felix, it is expected that Felix will program that route. Felix always programs such routes for IP Pools with vxlanMode: Always or vxlanMode: CrossSubnet. [Default: BIRD] |
 | `ipPools` _[IPPool](#ippool) array_ | (Optional) IPPools contains a list of IP pools to manage. If nil, a single IPv4 IP pool will be created by the operator. If an empty list is provided, the operator will not create any IP pools and will instead wait for IP pools to be created out-of-band. IP pools in this list will be reconciled by the operator and should not be modified out-of-band. |
 | `mtu` _integer_ | (Optional) MTU specifies the maximum transmission unit to use on the pod network. If not specified, Calico will perform MTU auto-detection based on the cluster network. |
 | `nodeAddressAutodetectionV4` _[NodeAddressAutodetection](#nodeaddressautodetection)_ | (Optional) NodeAddressAutodetectionV4 specifies an approach to automatically detect node IPv4 addresses. If not specified, will use default auto-detection settings to acquire an IPv4 address for each node. |
@@ -809,6 +712,7 @@ _Appears in:_
 | `hostPorts` _[HostPortsType](#hostportstype)_ | (Optional) HostPorts configures whether or not Calico will support Kubernetes HostPorts. Valid only when using the Calico CNI plugin.<br />Default: Enabled |
 | `multiInterfaceMode` _[MultiInterfaceMode](#multiinterfacemode)_ | (Optional) MultiInterfaceMode configures what will configure multiple interface per pod. Only valid for Calico Enterprise installations using the Calico CNI plugin.<br />Default: None |
 | `containerIPForwarding` _[ContainerIPForwardingType](#containeripforwardingtype)_ | (Optional) ContainerIPForwarding configures whether ip forwarding will be enabled for containers in the CNI configuration.<br />Default: Disabled |
+| `linuxPodInterfaceType` _[LinuxPodInterfaceType](#linuxpodinterfacetype)_ | (Optional) LinuxPodInterfaceType selects the virtual device type the Calico CNI plugin creates for each pod's interface on Linux nodes. When set to Netkit, the CNI plugin creates a netkit L2 pair on kernels that support it (Linux 6.7+) and falls back to a veth pair on older kernels. Netkit is recommended for the BPF dataplane, where it allows BPF programs to attach via BPF_NETKIT_PRIMARY for improved throughput and tail-latency under contention; for non-BPF dataplanes it is functionally equivalent to veth. Only valid when using the Calico CNI plugin.<br />Default: Veth |
 | `sysctl` _[Sysctl](#sysctl) array_ | (Optional) Sysctl configures sysctl parameters for tuning plugin |
 | `linuxPolicySetupTimeoutSeconds` _integer_ | (Optional) LinuxPolicySetupTimeoutSeconds delays new pods from running containers until their policy has been programmed in the dataplane. The specified delay defines the maximum amount of time that the Calico CNI plugin will wait for policy to be programmed. Only applies to pods created on Linux nodes. * A value of 0 disables pod startup delays.<br />Default: 0 |
 
@@ -841,6 +745,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the calico-node DaemonSet container by name.<br />Supported values are: calico-node |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node DaemonSet container's resources. If omitted, the calico-node DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### CalicoNodeDaemonSetInitContainer
@@ -854,7 +760,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the calico-node DaemonSet init container by name.<br />Supported values are: install-cni, hostpath-init, flexvol-driver, ebpf-bootstrap, node-certs-key-cert-provisioner, calico-node-prometheus-server-tls-key-cert-provisioner, mount-bpffs (deprecated, replaced by ebpf-bootstrap) |
+| `name` _string_ | Name is an enum which identifies the calico-node DaemonSet init container by name.<br />Supported values are: install-cni, cni-plugins, hostpath-init, flexvol-driver, ebpf-bootstrap, node-certs-key-cert-provisioner, calico-node-prometheus-server-tls-key-cert-provisioner, mount-bpffs (deprecated, replaced by ebpf-bootstrap) |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node DaemonSet init container's resources. If omitted, the calico-node DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
 
 
@@ -934,8 +840,10 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the calico-node-windows DaemonSet container by name.<br />Supported values are: calico-node-windows |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node-windows DaemonSet container's resources. If omitted, the calico-node-windows DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+| `name` _string_ | Name is an enum which identifies the calico-node-windows DaemonSet container by name.<br />Supported values are: node, felix, confd calico-node-windows is allowed because it was previously allowed. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named DaemonSet container's resources. If omitted, the DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### CalicoNodeWindowsDaemonSetInitContainer
@@ -1001,6 +909,102 @@ _Appears in:_
 | `template` _[CalicoNodeWindowsDaemonSetPodTemplateSpec](#caliconodewindowsdaemonsetpodtemplatespec)_ | (Optional) Template describes the calico-node-windows DaemonSet pod that will be created. |
 
 
+### CalicoWebhooksDeployment
+
+
+
+CalicoWebhooksDeployment is the configuration for the calico-webhooks Deployment.
+
+_Appears in:_
+- [APIServerSpec](#apiserverspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoWebhooksDeploymentSpec](#calicowebhooksdeploymentspec)_ | (Optional) Spec is the specification of the calico-webhooks Deployment. |
+
+
+### CalicoWebhooksDeploymentContainer
+
+
+
+CalicoWebhooksDeploymentContainer is a calico-webhooks Deployment container.
+
+_Appears in:_
+- [CalicoWebhooksDeploymentPodSpec](#calicowebhooksdeploymentpodspec)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-webhooks Deployment container by name.<br />Supported values are: calico-webhooks |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-webhooks Deployment container's resources. If omitted, the calico-webhooks Deployment will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `ports` _[CalicoWebhooksDeploymentContainerPort](#calicowebhooksdeploymentcontainerport) array_ | (Optional) Ports allows customization of the calico-webhooks container's ports. If specified, this overrides the default container port configuration. If omitted, the calico-webhooks Deployment will use its default port (6443). |
+
+
+### CalicoWebhooksDeploymentContainerPort
+
+
+
+CalicoWebhooksDeploymentContainerPort defines a port override for a calico-webhooks container.
+
+_Appears in:_
+- [CalicoWebhooksDeploymentContainer](#calicowebhooksdeploymentcontainer)
+
+| Field | Description |
+| --- | --- |
+| `name` _string_ | Name is an enum which identifies the calico-webhooks Deployment container port by name.<br />Supported values are: calico-webhooks |
+| `containerPort` _integer_ | Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536. |
+
+
+### CalicoWebhooksDeploymentPodSpec
+
+
+
+CalicoWebhooksDeploymentPodSpec is the calico-webhooks Deployment's PodSpec.
+
+_Appears in:_
+- [CalicoWebhooksDeploymentPodTemplateSpec](#calicowebhooksdeploymentpodtemplatespec)
+
+| Field | Description |
+| --- | --- |
+| `containers` _[CalicoWebhooksDeploymentContainer](#calicowebhooksdeploymentcontainer) array_ | (Optional) Containers is a list of calico-webhooks containers. If specified, this overrides the specified calico-webhooks Deployment containers. If omitted, the calico-webhooks Deployment will use its default values for its containers. |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity is a group of affinity scheduling rules for the calico-webhooks pods. If specified, this overrides any affinity that may be set on the calico-webhooks Deployment. If omitted, the calico-webhooks Deployment will use its default value for affinity.<br />WARNING: Please note that this field will override the default calico-webhooks Deployment affinity. |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector is the calico-webhooks pod's scheduling constraints. If specified, each of the key/value pairs are added to the calico-webhooks Deployment nodeSelector provided the key does not already exist in the object's nodeSelector. If used in conjunction with ControlPlaneNodeSelector, that nodeSelector is set on the calico-webhooks Deployment and each of this field's key/value pairs are added to the calico-webhooks Deployment nodeSelector provided the key does not already exist in the object's nodeSelector. If omitted, the calico-webhooks Deployment will use its default value for nodeSelector.<br />WARNING: Please note that this field will modify the default calico-webhooks Deployment nodeSelector. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations is the calico-webhooks pod's tolerations. If specified, this overrides any tolerations that may be set on the calico-webhooks Deployment. If omitted, the calico-webhooks Deployment will use its default value for tolerations.<br />WARNING: Please note that this field will override the default calico-webhooks Deployment tolerations. |
+| `hostNetwork` _boolean_ | (Optional) HostNetwork forces the webhook pod to use the host's network namespace. When true, the webhook pod will run with hostNetwork=true and DNSPolicy=ClusterFirstWithHostNet. When nil or omitted, the operator auto-detects whether host networking is required (e.g., for EKS/TKG with Calico CNI). |
+
+
+### CalicoWebhooksDeploymentPodTemplateSpec
+
+
+
+CalicoWebhooksDeploymentPodTemplateSpec is the calico-webhooks Deployment's PodTemplateSpec
+
+_Appears in:_
+- [CalicoWebhooksDeploymentSpec](#calicowebhooksdeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[CalicoWebhooksDeploymentPodSpec](#calicowebhooksdeploymentpodspec)_ | (Optional) Spec is the calico-webhooks Deployment's PodSpec. |
+
+
+### CalicoWebhooksDeploymentSpec
+
+
+
+CalicoWebhooksDeploymentSpec defines configuration for the calico-webhooks Deployment.
+
+_Appears in:_
+- [CalicoWebhooksDeployment](#calicowebhooksdeployment)
+
+| Field | Description |
+| --- | --- |
+| `minReadySeconds` _integer_ | (Optional) MinReadySeconds is the minimum number of seconds for which a newly created Deployment pod should be ready without any of its container crashing, for it to be considered available. If specified, this overrides any minReadySeconds value that may be set on the calico-webhooks Deployment. If omitted, the calico-webhooks Deployment will use its default value for minReadySeconds. |
+| `template` _[CalicoWebhooksDeploymentPodTemplateSpec](#calicowebhooksdeploymentpodtemplatespec)_ | (Optional) Template describes the calico-webhooks Deployment pod that will be created. |
+
+
 ### CalicoWindowsUpgradeDaemonSet
 
 
@@ -1030,6 +1034,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the calico-windows-upgrade DaemonSet container by name. |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-windows-upgrade DaemonSet container's resources. If omitted, the calico-windows-upgrade DaemonSet will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### CalicoWindowsUpgradeDaemonSetPodSpec
@@ -1098,6 +1104,25 @@ _Appears in:_
 | `signatureAlgorithm` _string_ | (Optional) Specify the algorithm used for the signature of the X.509 certificate request.<br />Default: SHA256WithRSA |
 
 
+### ClusterRoutingMode
+
+_Underlying type:_ _string_
+
+ClusterRoutingMode describes the mode of cluster routing.
+
+_Validation:_
+- Enum: [BIRD Felix]
+
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Value | Description |
+| --- | --- |
+| `BIRD` |  |
+| `Felix` |  |
+
+
 ### CollectProcessPathOption
 
 _Underlying type:_ _string_
@@ -1126,476 +1151,6 @@ _Appears in:_
 | --- | --- |
 | `containers` _[PrometheusContainer](#prometheuscontainer) array_ | (Optional) Containers is a list of Prometheus containers. If specified, this overrides the specified Prometheus Deployment containers. If omitted, the Prometheus Deployment will use its default values for its containers. |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | Define resources requests and limits for single Pods. |
-
-
-### Compliance
-
-
-
-Compliance installs the components required for Tigera compliance reporting. At most one instance
-of this resource is supported. It must be named "tigera-secure".
-
-| Field | Description |
-| --- | --- |
-| `apiVersion` _string_ | `operator.tigera.io/v1` |
-| `kind` _string_ | `Compliance` |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
-| `spec` _[ComplianceSpec](#compliancespec)_ | Specification of the desired state for Tigera compliance reporting. |
-| `status` _[ComplianceStatus](#compliancestatus)_ | Most recently observed state for Tigera compliance reporting. |
-
-
-### ComplianceBenchmarkerDaemonSet
-
-
-
-ComplianceBenchmarkerDaemonSet is the configuration for the Compliance Benchmarker DaemonSet.
-
-_Appears in:_
-- [ComplianceSpec](#compliancespec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ComplianceBenchmarkerDaemonSetSpec](#compliancebenchmarkerdaemonsetspec)_ | (Optional) Spec is the specification of the Compliance Benchmarker DaemonSet. |
-
-
-### ComplianceBenchmarkerDaemonSetContainer
-
-
-
-ComplianceBenchmarkerDaemonSetContainer is a Compliance Benchmarker DaemonSet container.
-
-_Appears in:_
-- [ComplianceBenchmarkerDaemonSetPodSpec](#compliancebenchmarkerdaemonsetpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the Compliance Benchmarker DaemonSet container by name.<br />Supported values are: compliance-benchmarker |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Compliance Benchmarker DaemonSet container's resources. If omitted, the Compliance Benchmarker DaemonSet will use its default value for this container's resources. |
-
-
-### ComplianceBenchmarkerDaemonSetInitContainer
-
-
-
-ComplianceBenchmarkerDaemonSetInitContainer is a Compliance Benchmarker DaemonSet init container.
-
-_Appears in:_
-- [ComplianceBenchmarkerDaemonSetPodSpec](#compliancebenchmarkerdaemonsetpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the Compliance Benchmarker DaemonSet init container by name.<br />Supported values are: tigera-compliance-benchmarker-tls-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Compliance Benchmarker DaemonSet init container's resources. If omitted, the Compliance Benchmarker DaemonSet will use its default value for this init container's resources. |
-
-
-### ComplianceBenchmarkerDaemonSetPodSpec
-
-
-
-ComplianceBenchmarkerDaemonSetPodSpec is the Compliance Benchmarker DaemonSet's PodSpec.
-
-_Appears in:_
-- [ComplianceBenchmarkerDaemonSetPodTemplateSpec](#compliancebenchmarkerdaemonsetpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[ComplianceBenchmarkerDaemonSetInitContainer](#compliancebenchmarkerdaemonsetinitcontainer) array_ | (Optional) InitContainers is a list of Compliance benchmark init containers. If specified, this overrides the specified Compliance Benchmarker DaemonSet init containers. If omitted, the Compliance Benchmarker DaemonSet will use its default values for its init containers. |
-| `containers` _[ComplianceBenchmarkerDaemonSetContainer](#compliancebenchmarkerdaemonsetcontainer) array_ | (Optional) Containers is a list of Compliance benchmark containers. If specified, this overrides the specified Compliance Benchmarker DaemonSet containers. If omitted, the Compliance Benchmarker DaemonSet will use its default values for its containers. |
-
-
-### ComplianceBenchmarkerDaemonSetPodTemplateSpec
-
-
-
-ComplianceBenchmarkerDaemonSetPodTemplateSpec is the Compliance Benchmarker DaemonSet's PodTemplateSpec
-
-_Appears in:_
-- [ComplianceBenchmarkerDaemonSetSpec](#compliancebenchmarkerdaemonsetspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ComplianceBenchmarkerDaemonSetPodSpec](#compliancebenchmarkerdaemonsetpodspec)_ | (Optional) Spec is the Compliance Benchmarker DaemonSet's PodSpec. |
-
-
-### ComplianceBenchmarkerDaemonSetSpec
-
-
-
-ComplianceBenchmarkerDaemonSetSpec defines configuration for the Compliance Benchmarker DaemonSet.
-
-_Appears in:_
-- [ComplianceBenchmarkerDaemonSet](#compliancebenchmarkerdaemonset)
-
-| Field | Description |
-| --- | --- |
-| `template` _[ComplianceBenchmarkerDaemonSetPodTemplateSpec](#compliancebenchmarkerdaemonsetpodtemplatespec)_ | (Optional) Template describes the Compliance Benchmarker DaemonSet pod that will be created. |
-
-
-### ComplianceControllerDeployment
-
-
-
-ComplianceControllerDeployment is the configuration for the compliance controller Deployment.
-
-_Appears in:_
-- [ComplianceSpec](#compliancespec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ComplianceControllerDeploymentSpec](#compliancecontrollerdeploymentspec)_ | (Optional) Spec is the specification of the compliance controller Deployment. |
-
-
-### ComplianceControllerDeploymentContainer
-
-
-
-ComplianceControllerDeploymentContainer is a compliance controller Deployment container.
-
-_Appears in:_
-- [ComplianceControllerDeploymentPodSpec](#compliancecontrollerdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the compliance controller Deployment container by name.<br />Supported values are: compliance-controller |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named compliance controller Deployment container's resources. If omitted, the compliance controller Deployment will use its default value for this container's resources. |
-
-
-### ComplianceControllerDeploymentInitContainer
-
-
-
-ComplianceControllerDeploymentInitContainer is a compliance controller Deployment init container.
-
-_Appears in:_
-- [ComplianceControllerDeploymentPodSpec](#compliancecontrollerdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the compliance controller Deployment init container by name.<br />Supported values are: tigera-compliance-controller-tls-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named compliance controller Deployment init container's resources. If omitted, the compliance controller Deployment will use its default value for this init container's resources. |
-
-
-### ComplianceControllerDeploymentPodSpec
-
-
-
-ComplianceControllerDeploymentPodSpec is the compliance controller Deployment's PodSpec.
-
-_Appears in:_
-- [ComplianceControllerDeploymentPodTemplateSpec](#compliancecontrollerdeploymentpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[ComplianceControllerDeploymentInitContainer](#compliancecontrollerdeploymentinitcontainer) array_ | (Optional) InitContainers is a list of compliance controller init containers. If specified, this overrides the specified compliance controller Deployment init containers. If omitted, the compliance controller Deployment will use its default values for its init containers. |
-| `containers` _[ComplianceControllerDeploymentContainer](#compliancecontrollerdeploymentcontainer) array_ | (Optional) Containers is a list of compliance controller containers. If specified, this overrides the specified compliance controller Deployment containers. If omitted, the compliance controller Deployment will use its default values for its containers. |
-
-
-### ComplianceControllerDeploymentPodTemplateSpec
-
-
-
-ComplianceControllerDeploymentPodTemplateSpec is the compliance controller Deployment's PodTemplateSpec
-
-_Appears in:_
-- [ComplianceControllerDeploymentSpec](#compliancecontrollerdeploymentspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ComplianceControllerDeploymentPodSpec](#compliancecontrollerdeploymentpodspec)_ | (Optional) Spec is the compliance controller Deployment's PodSpec. |
-
-
-### ComplianceControllerDeploymentSpec
-
-
-
-ComplianceControllerDeploymentSpec defines configuration for the compliance controller Deployment.
-
-_Appears in:_
-- [ComplianceControllerDeployment](#compliancecontrollerdeployment)
-
-| Field | Description |
-| --- | --- |
-| `template` _[ComplianceControllerDeploymentPodTemplateSpec](#compliancecontrollerdeploymentpodtemplatespec)_ | (Optional) Template describes the compliance controller Deployment pod that will be created. |
-
-
-### ComplianceReporterPodSpec
-
-
-
-ComplianceReporterPodSpec is the ComplianceReporter PodSpec.
-
-_Appears in:_
-- [ComplianceReporterPodTemplateSpec](#compliancereporterpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[ComplianceReporterPodTemplateInitContainer](#compliancereporterpodtemplateinitcontainer) array_ | (Optional) InitContainers is a list of ComplianceReporter PodSpec init containers. If specified, this overrides the specified ComplianceReporter PodSpec init containers. If omitted, the ComplianceServer Deployment will use its default values for its init containers. |
-| `containers` _[ComplianceReporterPodTemplateContainer](#compliancereporterpodtemplatecontainer) array_ | (Optional) Containers is a list of ComplianceServer containers. If specified, this overrides the specified ComplianceReporter PodSpec containers. If omitted, the ComplianceServer Deployment will use its default values for its containers. |
-
-
-### ComplianceReporterPodTemplate
-
-
-
-ComplianceReporterPodTemplate is the configuration for the ComplianceReporter PodTemplate.
-
-_Appears in:_
-- [ComplianceSpec](#compliancespec)
-
-| Field | Description |
-| --- | --- |
-| `template` _[ComplianceReporterPodTemplateSpec](#compliancereporterpodtemplatespec)_ | (Optional) Spec is the specification of the ComplianceReporter PodTemplateSpec. |
-
-
-### ComplianceReporterPodTemplateContainer
-
-
-
-ComplianceReporterPodTemplateContainer is a ComplianceServer Deployment container.
-
-_Appears in:_
-- [ComplianceReporterPodSpec](#compliancereporterpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the ComplianceServer Deployment container by name.<br />Supported values are: reporter |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named ComplianceServer Deployment container's resources. If omitted, the ComplianceServer Deployment will use its default value for this container's resources. |
-
-
-### ComplianceReporterPodTemplateInitContainer
-
-
-
-ComplianceReporterPodTemplateInitContainer is a ComplianceServer Deployment init container.
-
-_Appears in:_
-- [ComplianceReporterPodSpec](#compliancereporterpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the ComplianceReporter PodSpec init container by name.<br />Supported values are: tigera-compliance-reporter-tls-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named ComplianceReporter PodSpec init container's resources. If omitted, the ComplianceServer Deployment will use its default value for this init container's resources. |
-
-
-### ComplianceReporterPodTemplateSpec
-
-
-
-ComplianceReporterPodTemplateSpec is the ComplianceReporter PodTemplateSpec.
-
-_Appears in:_
-- [ComplianceReporterPodTemplate](#compliancereporterpodtemplate)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ComplianceReporterPodSpec](#compliancereporterpodspec)_ | (Optional) Spec is the ComplianceReporter PodTemplate's PodSpec. |
-
-
-### ComplianceServerDeployment
-
-
-
-ComplianceServerDeployment is the configuration for the ComplianceServer Deployment.
-
-_Appears in:_
-- [ComplianceSpec](#compliancespec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ComplianceServerDeploymentSpec](#complianceserverdeploymentspec)_ | (Optional) Spec is the specification of the ComplianceServer Deployment. |
-
-
-### ComplianceServerDeploymentContainer
-
-
-
-ComplianceServerDeploymentContainer is a ComplianceServer Deployment container.
-
-_Appears in:_
-- [ComplianceServerDeploymentPodSpec](#complianceserverdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the ComplianceServer Deployment container by name.<br />Supported values are: compliance-server |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named ComplianceServer Deployment container's resources. If omitted, the ComplianceServer Deployment will use its default value for this container's resources. |
-
-
-### ComplianceServerDeploymentInitContainer
-
-
-
-ComplianceServerDeploymentInitContainer is a ComplianceServer Deployment init container.
-
-_Appears in:_
-- [ComplianceServerDeploymentPodSpec](#complianceserverdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the ComplianceServer Deployment init container by name.<br />Supported values are: tigera-compliance-server-tls-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named ComplianceServer Deployment init container's resources. If omitted, the ComplianceServer Deployment will use its default value for this init container's resources. |
-
-
-### ComplianceServerDeploymentPodSpec
-
-
-
-ComplianceServerDeploymentPodSpec is the ComplianceServer Deployment's PodSpec.
-
-_Appears in:_
-- [ComplianceServerDeploymentPodTemplateSpec](#complianceserverdeploymentpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[ComplianceServerDeploymentInitContainer](#complianceserverdeploymentinitcontainer) array_ | (Optional) InitContainers is a list of ComplianceServer init containers. If specified, this overrides the specified ComplianceServer Deployment init containers. If omitted, the ComplianceServer Deployment will use its default values for its init containers. |
-| `containers` _[ComplianceServerDeploymentContainer](#complianceserverdeploymentcontainer) array_ | (Optional) Containers is a list of ComplianceServer containers. If specified, this overrides the specified ComplianceServer Deployment containers. If omitted, the ComplianceServer Deployment will use its default values for its containers. |
-
-
-### ComplianceServerDeploymentPodTemplateSpec
-
-
-
-ComplianceServerDeploymentPodTemplateSpec is the ComplianceServer Deployment's PodTemplateSpec
-
-_Appears in:_
-- [ComplianceServerDeploymentSpec](#complianceserverdeploymentspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ComplianceServerDeploymentPodSpec](#complianceserverdeploymentpodspec)_ | (Optional) Spec is the ComplianceServer Deployment's PodSpec. |
-
-
-### ComplianceServerDeploymentSpec
-
-
-
-ComplianceServerDeploymentSpec defines configuration for the ComplianceServer Deployment.
-
-_Appears in:_
-- [ComplianceServerDeployment](#complianceserverdeployment)
-
-| Field | Description |
-| --- | --- |
-| `template` _[ComplianceServerDeploymentPodTemplateSpec](#complianceserverdeploymentpodtemplatespec)_ | (Optional) Template describes the ComplianceServer Deployment pod that will be created. |
-
-
-### ComplianceSnapshotterDeployment
-
-
-
-ComplianceSnapshotterDeployment is the configuration for the compliance snapshotter Deployment.
-
-_Appears in:_
-- [ComplianceSpec](#compliancespec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ComplianceSnapshotterDeploymentSpec](#compliancesnapshotterdeploymentspec)_ | (Optional) Spec is the specification of the compliance snapshotter Deployment. |
-
-
-### ComplianceSnapshotterDeploymentContainer
-
-
-
-ComplianceSnapshotterDeploymentContainer is a compliance snapshotter Deployment container.
-
-_Appears in:_
-- [ComplianceSnapshotterDeploymentPodSpec](#compliancesnapshotterdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the compliance snapshotter Deployment container by name.<br />Supported values are: compliance-snapshotter |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named compliance snapshotter Deployment container's resources. If omitted, the compliance snapshotter Deployment will use its default value for this container's resources. |
-
-
-### ComplianceSnapshotterDeploymentInitContainer
-
-
-
-ComplianceSnapshotterDeploymentInitContainer is a compliance snapshotter Deployment init container.
-
-_Appears in:_
-- [ComplianceSnapshotterDeploymentPodSpec](#compliancesnapshotterdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the compliance snapshotter Deployment init container by name.<br />Supported values are: tigera-compliance-snapshotter-tls-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named compliance snapshotter Deployment init container's resources. If omitted, the compliance snapshotter Deployment will use its default value for this init container's resources. |
-
-
-### ComplianceSnapshotterDeploymentPodSpec
-
-
-
-ComplianceSnapshotterDeploymentPodSpec is the compliance snapshotter Deployment's PodSpec.
-
-_Appears in:_
-- [ComplianceSnapshotterDeploymentPodTemplateSpec](#compliancesnapshotterdeploymentpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[ComplianceSnapshotterDeploymentInitContainer](#compliancesnapshotterdeploymentinitcontainer) array_ | (Optional) InitContainers is a list of compliance snapshotter init containers. If specified, this overrides the specified compliance snapshotter Deployment init containers. If omitted, the compliance snapshotter Deployment will use its default values for its init containers. |
-| `containers` _[ComplianceSnapshotterDeploymentContainer](#compliancesnapshotterdeploymentcontainer) array_ | (Optional) Containers is a list of compliance snapshotter containers. If specified, this overrides the specified compliance snapshotter Deployment containers. If omitted, the compliance snapshotter Deployment will use its default values for its containers. |
-
-
-### ComplianceSnapshotterDeploymentPodTemplateSpec
-
-
-
-ComplianceSnapshotterDeploymentPodTemplateSpec is the compliance snapshotter Deployment's PodTemplateSpec
-
-_Appears in:_
-- [ComplianceSnapshotterDeploymentSpec](#compliancesnapshotterdeploymentspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ComplianceSnapshotterDeploymentPodSpec](#compliancesnapshotterdeploymentpodspec)_ | (Optional) Spec is the compliance snapshotter Deployment's PodSpec. |
-
-
-### ComplianceSnapshotterDeploymentSpec
-
-
-
-ComplianceSnapshotterDeploymentSpec defines configuration for the compliance snapshotter Deployment.
-
-_Appears in:_
-- [ComplianceSnapshotterDeployment](#compliancesnapshotterdeployment)
-
-| Field | Description |
-| --- | --- |
-| `template` _[ComplianceSnapshotterDeploymentPodTemplateSpec](#compliancesnapshotterdeploymentpodtemplatespec)_ | (Optional) Template describes the compliance snapshotter Deployment pod that will be created. |
-
-
-### ComplianceSpec
-
-
-
-ComplianceSpec defines the desired state of Tigera compliance reporting capabilities.
-
-_Appears in:_
-- [Compliance](#compliance)
-
-| Field | Description |
-| --- | --- |
-| `complianceControllerDeployment` _[ComplianceControllerDeployment](#compliancecontrollerdeployment)_ | (Optional) ComplianceControllerDeployment configures the Compliance Controller Deployment. |
-| `complianceSnapshotterDeployment` _[ComplianceSnapshotterDeployment](#compliancesnapshotterdeployment)_ | (Optional) ComplianceSnapshotterDeployment configures the Compliance Snapshotter Deployment. |
-| `complianceBenchmarkerDaemonSet` _[ComplianceBenchmarkerDaemonSet](#compliancebenchmarkerdaemonset)_ | (Optional) ComplianceBenchmarkerDaemonSet configures the Compliance Benchmarker DaemonSet. |
-| `complianceServerDeployment` _[ComplianceServerDeployment](#complianceserverdeployment)_ | (Optional) ComplianceServerDeployment configures the Compliance Server Deployment. |
-| `complianceReporterPodTemplate` _[ComplianceReporterPodTemplate](#compliancereporterpodtemplate)_ | (Optional) ComplianceReporterPodTemplate configures the Compliance Reporter PodTemplate. |
-
-
-### ComplianceStatus
-
-
-
-ComplianceStatus defines the observed state of Tigera compliance reporting capabilities.
-
-_Appears in:_
-- [Compliance](#compliance)
-
-| Field | Description |
-| --- | --- |
-| `state` _string_ | State provides user-readable status. |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of Ready, Progressing, Degraded or other customer types. |
 
 
 ### ComponentName
@@ -1739,6 +1294,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the Dashboard Job container by name.<br />Supported values are: dashboards-installer |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Dashboard Job container's resources. If omitted, the Dashboard Job will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### DashboardsJobPodSpec
@@ -1790,7 +1347,7 @@ _Underlying type:_ _string_
 DataType represent the type of data stored
 
 _Validation:_
-- Enum: [Alerts AuditLogs BGPLogs ComplianceBenchmarks ComplianceReports ComplianceSnapshots DNSLogs FlowLogs L7Logs RuntimeReports ThreatFeedsDomainSet ThreatFeedsIPSet WAFLogs]
+- Enum: [Alerts AuditLogs BGPLogs ComplianceBenchmarks ComplianceReports ComplianceSnapshots DNSLogs FlowLogs L7Logs RuntimeReports ThreatFeedsDomainSet ThreatFeedsIPSet WAFLogs PolicyActivity]
 
 
 _Appears in:_
@@ -1811,6 +1368,7 @@ _Appears in:_
 | `ThreatFeedsDomainSet` |  |
 | `ThreatFeedsIPSet` |  |
 | `WAFLogs` |  |
+| `PolicyActivity` |  |
 
 
 ### DeepPacketInspectionDaemonset
@@ -1827,180 +1385,6 @@ _Appears in:_
 | `spec` _[DPIDaemonsetSpec](#dpidaemonsetspec)_ | (Optional) DPIDaemonsetSpec configures the DPI Daemonset |
 
 
-### DexDeployment
-
-
-
-DexDeployment is the configuration for the Dex Deployment.
-
-_Appears in:_
-- [AuthenticationSpec](#authenticationspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[DexDeploymentSpec](#dexdeploymentspec)_ | (Optional) Spec is the specification of the Dex Deployment. |
-
-
-### DexDeploymentContainer
-
-
-
-DexDeploymentContainer is a Dex Deployment container.
-
-_Appears in:_
-- [DexDeploymentPodSpec](#dexdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the Dex Deployment container by name.<br />Supported values are: tigera-dex |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Dex Deployment container's resources. If omitted, the Dex Deployment will use its default value for this container's resources. |
-
-
-### DexDeploymentInitContainer
-
-
-
-DexDeploymentInitContainer is a Dex Deployment init container.
-
-_Appears in:_
-- [DexDeploymentPodSpec](#dexdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the Dex Deployment init container by name.<br />Supported values are: tigera-dex-tls-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Dex Deployment init container's resources. If omitted, the Dex Deployment will use its default value for this init container's resources. |
-
-
-### DexDeploymentPodSpec
-
-
-
-DexDeploymentPodSpec is the Dex Deployment's PodSpec.
-
-_Appears in:_
-- [DexDeploymentPodTemplateSpec](#dexdeploymentpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[DexDeploymentInitContainer](#dexdeploymentinitcontainer) array_ | (Optional) InitContainers is a list of Dex init containers. If specified, this overrides the specified Dex Deployment init containers. If omitted, the Dex Deployment will use its default values for its init containers. |
-| `containers` _[DexDeploymentContainer](#dexdeploymentcontainer) array_ | (Optional) Containers is a list of Dex containers. If specified, this overrides the specified Dex Deployment containers. If omitted, the Dex Deployment will use its default values for its containers. |
-
-
-### DexDeploymentPodTemplateSpec
-
-
-
-DexDeploymentPodTemplateSpec is the Dex Deployment's PodTemplateSpec
-
-_Appears in:_
-- [DexDeploymentSpec](#dexdeploymentspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[DexDeploymentPodSpec](#dexdeploymentpodspec)_ | (Optional) Spec is the Dex Deployment's PodSpec. |
-
-
-### DexDeploymentSpec
-
-
-
-DexDeploymentSpec defines configuration for the Dex Deployment.
-
-_Appears in:_
-- [DexDeployment](#dexdeployment)
-
-| Field | Description |
-| --- | --- |
-| `template` _[DexDeploymentPodTemplateSpec](#dexdeploymentpodtemplatespec)_ | (Optional) Template describes the Dex Deployment pod that will be created. |
-
-
-### ECKOperatorStatefulSet
-
-
-
-ECKOperatorStatefulSet is the configuration for the ECKOperator StatefulSet.
-
-_Appears in:_
-- [LogStorageSpec](#logstoragespec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ECKOperatorStatefulSetSpec](#eckoperatorstatefulsetspec)_ | (Optional) Spec is the specification of the ECKOperator StatefulSet. |
-
-
-### ECKOperatorStatefulSetContainer
-
-
-
-ECKOperatorStatefulSetContainer is a ECKOperator StatefulSet container.
-
-_Appears in:_
-- [ECKOperatorStatefulSetPodSpec](#eckoperatorstatefulsetpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the ECKOperator StatefulSet container by name.<br />Supported values are: manager |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named ECKOperator StatefulSet container's resources. If omitted, the ECKOperator StatefulSet will use its default value for this container's resources. |
-
-
-### ECKOperatorStatefulSetInitContainer
-
-
-
-ECKOperatorStatefulSetInitContainer is a ECKOperator StatefulSet init container.
-
-_Appears in:_
-- [ECKOperatorStatefulSetPodSpec](#eckoperatorstatefulsetpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the ECKOperator StatefulSet init container by name. |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named ECKOperator StatefulSet init container's resources. If omitted, the ECKOperator StatefulSet will use its default value for this init container's resources. |
-
-
-### ECKOperatorStatefulSetPodSpec
-
-
-
-ECKOperatorStatefulSetPodSpec is the ECKOperator StatefulSet's PodSpec.
-
-_Appears in:_
-- [ECKOperatorStatefulSetPodTemplateSpec](#eckoperatorstatefulsetpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[ECKOperatorStatefulSetInitContainer](#eckoperatorstatefulsetinitcontainer) array_ | (Optional) InitContainers is a list of ECKOperator StatefulSet init containers. If specified, this overrides the specified ECKOperator StatefulSet init containers. If omitted, the ECKOperator StatefulSet will use its default values for its init containers. |
-| `containers` _[ECKOperatorStatefulSetContainer](#eckoperatorstatefulsetcontainer) array_ | (Optional) Containers is a list of ECKOperator StatefulSet containers. If specified, this overrides the specified ECKOperator StatefulSet containers. If omitted, the ECKOperator StatefulSet will use its default values for its containers. |
-
-
-### ECKOperatorStatefulSetPodTemplateSpec
-
-
-
-ECKOperatorStatefulSetPodTemplateSpec is the ECKOperator StatefulSet's PodTemplateSpec
-
-_Appears in:_
-- [ECKOperatorStatefulSetSpec](#eckoperatorstatefulsetspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ECKOperatorStatefulSetPodSpec](#eckoperatorstatefulsetpodspec)_ | (Optional) Spec is the ECKOperator StatefulSet's PodSpec. |
-
-
-### ECKOperatorStatefulSetSpec
-
-
-
-ECKOperatorStatefulSetSpec defines configuration for the ECKOperator StatefulSet.
-
-_Appears in:_
-- [ECKOperatorStatefulSet](#eckoperatorstatefulset)
-
-| Field | Description |
-| --- | --- |
-| `template` _[ECKOperatorStatefulSetPodTemplateSpec](#eckoperatorstatefulsetpodtemplatespec)_ | (Optional) Template describes the ECKOperator StatefulSet pod that will be created. |
-
-
 ### EGWDeploymentContainer
 
 
@@ -2012,8 +1396,10 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ | Name is an enum which identifies the EGW Deployment container by name.<br />Supported values are: calico-egw |
+| `name` _string_ | Name is an enum which identifies the EGW Deployment container by name.<br />Supported values are: egress-gateway |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named EGW Deployment container's resources. If omitted, the EGW Deployment will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### EGWDeploymentInitContainer
@@ -2058,6 +1444,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the EKSLogForwarder Deployment container by name.<br />Supported values are: eks-log-forwarder |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named EKSLogForwarder Deployment container's resources. If omitted, the EKSLogForwarder Deployment will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### EKSLogForwarderDeploymentInitContainer
@@ -2116,93 +1504,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `template` _[EKSLogForwarderDeploymentPodTemplateSpec](#ekslogforwarderdeploymentpodtemplatespec)_ | (Optional) Template describes the EKSLogForwarder Deployment pod that will be created. |
-
-
-### ESGatewayDeployment
-
-
-
-ESGatewayDeployment is the configuration for the es-gateway Deployment.
-
-_Appears in:_
-- [LogStorageSpec](#logstoragespec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ESGatewayDeploymentSpec](#esgatewaydeploymentspec)_ | (Optional) Spec is the specification of the es-gateway Deployment. |
-
-
-### ESGatewayDeploymentContainer
-
-
-
-ESGatewayDeploymentContainer is a es-gateway Deployment container.
-
-_Appears in:_
-- [ESGatewayDeploymentPodSpec](#esgatewaydeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the es-gateway Deployment container by name.<br />Supported values are: tigera-secure-es-gateway |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named es-gateway Deployment container's resources. If omitted, the es-gateway Deployment will use its default value for this container's resources. |
-
-
-### ESGatewayDeploymentInitContainer
-
-
-
-ESGatewayDeploymentInitContainer is a es-gateway Deployment init container.
-
-_Appears in:_
-- [ESGatewayDeploymentPodSpec](#esgatewaydeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the es-gateway Deployment init container by name.<br />Supported values are: tigera-secure-elasticsearch-cert-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named es-gateway Deployment init container's resources. If omitted, the es-gateway Deployment will use its default value for this init container's resources. |
-
-
-### ESGatewayDeploymentPodSpec
-
-
-
-ESGatewayDeploymentPodSpec is the es-gateway Deployment's PodSpec.
-
-_Appears in:_
-- [ESGatewayDeploymentPodTemplateSpec](#esgatewaydeploymentpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[ESGatewayDeploymentInitContainer](#esgatewaydeploymentinitcontainer) array_ | (Optional) InitContainers is a list of es-gateway init containers. If specified, this overrides the specified es-gateway Deployment init containers. If omitted, the es-gateway Deployment will use its default values for its init containers. |
-| `containers` _[ESGatewayDeploymentContainer](#esgatewaydeploymentcontainer) array_ | (Optional) Containers is a list of es-gateway containers. If specified, this overrides the specified es-gateway Deployment containers. If omitted, the es-gateway Deployment will use its default values for its containers. |
-
-
-### ESGatewayDeploymentPodTemplateSpec
-
-
-
-ESGatewayDeploymentPodTemplateSpec is the es-gateway Deployment's PodTemplateSpec
-
-_Appears in:_
-- [ESGatewayDeploymentSpec](#esgatewaydeploymentspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ESGatewayDeploymentPodSpec](#esgatewaydeploymentpodspec)_ | (Optional) Spec is the es-gateway Deployment's PodSpec. |
-
-
-### ESGatewayDeploymentSpec
-
-
-
-ESGatewayDeploymentSpec defines configuration for the es-gateway Deployment.
-
-_Appears in:_
-- [ESGatewayDeployment](#esgatewaydeployment)
-
-| Field | Description |
-| --- | --- |
-| `template` _[ESGatewayDeploymentPodTemplateSpec](#esgatewaydeploymentpodtemplatespec)_ | (Optional) Template describes the es-gateway Deployment pod that will be created. |
 
 
 ### EgressGateway
@@ -2355,108 +1656,6 @@ _Appears in:_
 | `fetchInterval` _integer_ | (Optional) Cloudwatch audit logs fetching interval in seconds.<br />Default: 60 |
 
 
-### ElasticsearchMetricsDeployment
-
-
-
-ElasticsearchMetricsDeployment is the configuration for the tigera-elasticsearch-metric Deployment.
-
-_Appears in:_
-- [LogStorageSpec](#logstoragespec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ElasticsearchMetricsDeploymentSpec](#elasticsearchmetricsdeploymentspec)_ | (Optional) Spec is the specification of the ElasticsearchMetrics Deployment. |
-
-
-### ElasticsearchMetricsDeploymentContainer
-
-
-
-ElasticsearchMetricsDeploymentContainer is a ElasticsearchMetricsDeployment container.
-
-_Appears in:_
-- [ElasticsearchMetricsDeploymentPodSpec](#elasticsearchmetricsdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the ElasticsearchMetricsDeployment container by name.<br />Supported values are: tigera-elasticsearch-metrics |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named ElasticsearchMetricsDeployment container's resources. If omitted, the ElasticsearchMetrics Deployment will use its default value for this container's resources. |
-
-
-### ElasticsearchMetricsDeploymentInitContainer
-
-
-
-ElasticsearchMetricsDeploymentInitContainer is a ElasticsearchMetricsDeployment init container.
-
-_Appears in:_
-- [ElasticsearchMetricsDeploymentPodSpec](#elasticsearchmetricsdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the ElasticsearchMetricsDeployment init container by name.<br />Supported values are: tigera-ee-elasticsearch-metrics-tls-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named ElasticsearchMetricsDeployment init container's resources. If omitted, the ElasticsearchMetrics Deployment will use its default value for this init container's resources. |
-
-
-### ElasticsearchMetricsDeploymentPodSpec
-
-
-
-ElasticsearchMetricsDeploymentPodSpec is the tElasticsearchMetricsDeployment's PodSpec.
-
-_Appears in:_
-- [ElasticsearchMetricsDeploymentPodTemplateSpec](#elasticsearchmetricsdeploymentpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[ElasticsearchMetricsDeploymentInitContainer](#elasticsearchmetricsdeploymentinitcontainer) array_ | (Optional) InitContainers is a list of ElasticsearchMetricsDeployment init containers. If specified, this overrides the specified ElasticsearchMetricsDeployment init containers. If omitted, the ElasticsearchMetrics Deployment will use its default values for its init containers. |
-| `containers` _[ElasticsearchMetricsDeploymentContainer](#elasticsearchmetricsdeploymentcontainer) array_ | (Optional) Containers is a list of ElasticsearchMetricsDeployment containers. If specified, this overrides the specified ElasticsearchMetricsDeployment containers. If omitted, the ElasticsearchMetrics Deployment will use its default values for its containers. |
-
-
-### ElasticsearchMetricsDeploymentPodTemplateSpec
-
-
-
-ElasticsearchMetricsDeploymentPodTemplateSpec is the ElasticsearchMetricsDeployment's PodTemplateSpec
-
-_Appears in:_
-- [ElasticsearchMetricsDeploymentSpec](#elasticsearchmetricsdeploymentspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ElasticsearchMetricsDeploymentPodSpec](#elasticsearchmetricsdeploymentpodspec)_ | (Optional) Spec is the ElasticsearchMetrics Deployment's PodSpec. |
-
-
-### ElasticsearchMetricsDeploymentSpec
-
-
-
-ElasticsearchMetricsDeploymentSpec defines configuration for the ElasticsearchMetricsDeployment Deployment.
-
-_Appears in:_
-- [ElasticsearchMetricsDeployment](#elasticsearchmetricsdeployment)
-
-| Field | Description |
-| --- | --- |
-| `template` _[ElasticsearchMetricsDeploymentPodTemplateSpec](#elasticsearchmetricsdeploymentpodtemplatespec)_ | (Optional) Template describes the ElasticsearchMetrics Deployment pod that will be created. |
-
-
-### EmailVerificationType
-
-_Underlying type:_ _string_
-
-
-
-_Appears in:_
-- [AuthenticationOIDC](#authenticationoidc)
-
-| Value | Description |
-| --- | --- |
-| `Verify` |  |
-| `InsecureSkip` |  |
-
-
 ### EncapsulationType
 
 _Underlying type:_ _string_
@@ -2587,6 +1786,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the Fluentd DaemonSet container by name.<br />Supported values are: fluentd |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Fluentd DaemonSet container's resources. If omitted, the Fluentd DaemonSet will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### FluentdDaemonSetInitContainer
@@ -2661,6 +1862,20 @@ _Appears in:_
 | `spec` _[GatewayAPISpec](#gatewayapispec)_ |  |
 
 
+### GatewayAPIExtensions
+
+
+
+GatewayAPIExtensions enables and configures Tigera-built Gateway API add-ons.
+
+_Appears in:_
+- [GatewayAPISpec](#gatewayapispec)
+
+| Field | Description |
+| --- | --- |
+| `waf` _[WAFExtensionSpec](#wafextensionspec)_ | (Optional) WAF enables and configures the Tigera Web Application Firewall (Coraza WASM when WAF.State is nil, and when WAF.State is "Disabled", the operator does not render the WAF env vars or RBAC on calico-kube-controllers.  Set WAF.State = "Enabled" to turn the feature on.  See design `tigera/designs#25` (PMREQ-384) for the full surface. |
+
+
 ### GatewayAPISpec
 
 
@@ -2677,6 +1892,7 @@ _Appears in:_
 | `gatewayControllerDeployment` _[GatewayControllerDeployment](#gatewaycontrollerdeployment)_ | (Optional) Allows customization of the gateway controller deployment. |
 | `gatewayCertgenJob` _[GatewayCertgenJob](#gatewaycertgenjob)_ | (Optional) Allows customization of the gateway certgen job. |
 | `crdManagement` _[CRDManagement](#crdmanagement)_ | (Optional) Configures how to manage and update Gateway API CRDs.  The default behaviour - which is used when this field is not set, or is set to "PreferExisting" - is that the Tigera operator will create the Gateway API CRDs if they do not already exist, but will not overwrite any existing Gateway API CRDs.  This setting may be preferable if the customer is using other implementations of the Gateway API concurrently with the Gateway API support in Calico Enterprise.  It is then the customer's responsibility to ensure that CRDs are installed that meet the needs of all the Gateway API implementations in their cluster. Alternatively, if this field is set to "Reconcile", the Tigera operator will keep the cluster's Gateway API CRDs aligned with those that it would install on a cluster that does not yet have any version of those CRDs. |
+| `extensions` _[GatewayAPIExtensions](#gatewayapiextensions)_ | (Optional) Extensions enables and configures Tigera-built add-ons that sit on top of the Gateway API data plane.  Each add-on is opt-in: an unset Extensions, an unset add-on field, and an empty add-on object all leave the add-on disabled. |
 
 
 ### GatewayCertgenJob
@@ -2708,6 +1924,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) If non-nil, Resources sets the ResourceRequirements of the job's "envoy-gateway-certgen" container. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### GatewayCertgenJobPodSpec
@@ -2804,6 +2022,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) If non-nil, Resources sets the ResourceRequirements of the controller's "envoy-gateway" container. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### GatewayControllerDeploymentPodSpec
@@ -2884,7 +2104,9 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `name` _string_ |  |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) If non-nil, Resources sets the ResourceRequirements of the daemonset's "envoy" container. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) container. |
 
 
 ### GatewayDaemonSetPodSpec
@@ -2962,6 +2184,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) If non-nil, Resources sets the ResourceRequirements of the deployment's "envoy" container. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### GatewayDeploymentPodSpec
@@ -3087,6 +2311,7 @@ _Appears in:_
 | `allocateLoadBalancerNodePorts` _boolean_ | (Optional)  |
 | `loadBalancerSourceRanges` _string array_ | (Optional)  |
 | `loadBalancerIP` _string_ | (Optional)  |
+| `patch` _[KubernetesPatchSpec](#kubernetespatchspec)_ | (Optional) Patch allows the Service for a gateway to be patched in ways that aren't more explicitly supported by the fields above.  For example, the following YAML could be used to set the Service's healthCheckNodePort:   patch:     type: StrategicMerge     value:       spec:         healthCheckNodePort: 12345 |
 
 
 ### Goldmane
@@ -3132,6 +2357,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional)  |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### GoldmaneDeploymentPodSpec
@@ -3211,6 +2438,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `goldmaneDeployment` _[GoldmaneDeployment](#goldmanedeployment)_ |  |
+| `metricsPort` _integer_ | (Optional) MetricsPort configures the port that Goldmane uses to serve Prometheus metrics. When set to a non-zero value, Goldmane will expose a /metrics endpoint on the given port. Set to zero to disable metrics. If omitted, metrics are disabled. |
 
 
 ### GoldmaneStatus
@@ -3225,23 +2453,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of Ready, Progressing, Degraded or other customer types. |
-
-
-### GroupSearch
-
-
-
-Group search configuration to find the groups that a user is in.
-
-_Appears in:_
-- [AuthenticationLDAP](#authenticationldap)
-
-| Field | Description |
-| --- | --- |
-| `baseDN` _string_ | BaseDN to start the search from. For example "cn=groups,dc=example,dc=com" |
-| `filter` _string_ | (Optional) Optional filter to apply when searching the directory. For example "(objectClass=posixGroup)" |
-| `nameAttribute` _string_ | The attribute of the group that represents its name. This attribute can be used to apply RBAC to a user group. |
-| `userMatchers` _[UserMatch](#usermatch) array_ | Following list contains field pairs that are used to match a user to a group. It adds an additional requirement to the filter that an attribute in the group must match the user's attribute value. |
 
 
 ### GuardianDeployment
@@ -3271,6 +2482,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the guardian Deployment container by name.<br />Supported values are: tigera-guardian |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named guardian Deployment container's resources. If omitted, the guardian Deployment will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### GuardianDeploymentInitContainer
@@ -3493,7 +2706,7 @@ _Appears in:_
 ImageSet is used to specify image digests for the images that the operator deploys.
 The name of the ImageSet is expected to be in the format `<variant>-<release>`.
 The `variant` used is `enterprise` if the InstallationSpec Variant is
-`CalicoEnterprise` otherwise it is `calico`.
+`CalicoEnterprise` or `TigeraSecureEnterprise`, otherwise it is `calico`.
 The `release` must match the version of the variant that the operator is built to deploy,
 this version can be obtained by passing the `--version` flag to the operator binary.
 
@@ -3537,20 +2750,6 @@ _Appears in:_
 
 
 
-### Indices
-
-
-
-Indices defines the configuration for the indices in an Elasticsearch cluster.
-
-_Appears in:_
-- [LogStorageSpec](#logstoragespec)
-
-| Field | Description |
-| --- | --- |
-| `replicas` _integer_ | (Optional) Replicas defines how many replicas each index will have. See https://www.elastic.co/guide/en/elasticsearch/reference/current/scalability.html |
-
-
 ### Installation
 
 
@@ -3580,11 +2779,12 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `variant` _[ProductVariant](#productvariant)_ | (Optional) Variant is the product to install - one of Calico or CalicoEnterprise<br />Default: Calico |
+| `variant` _[ProductVariant](#productvariant)_ | (Optional) Variant is the product to install - one of Calico or CalicoEnterprise. TigeraSecureEnterprise is also accepted as a deprecated alias for CalicoEnterprise.<br />Default: Calico |
 | `registry` _string_ | (Optional) Registry is the default Docker registry used for component Docker images. If specified then the given value must end with a slash character (`/`) and all images will be pulled from this registry. If not specified then the default registries will be used. A special case value, UseDefault, is supported to explicitly specify the default registries will be used. Image format:    `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>` This option allows configuring the `<registry>` portion of the above format. |
 | `imagePath` _string_ | (Optional) ImagePath allows for the path part of an image to be specified. If specified then the specified value will be used as the image path for each image. If not specified or empty, the default for each image will be used. A special case value, UseDefault, is supported to explicitly specify the default image path will be used for each image. Image format:    `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>` This option allows configuring the `<imagePath>` portion of the above format. |
 | `imagePrefix` _string_ | (Optional) ImagePrefix allows for the prefix part of an image to be specified. If specified then the given value will be used as a prefix on each image. If not specified or empty, no prefix will be used. A special case value, UseDefault, is supported to explicitly specify the default image prefix will be used for each image. Image format:    `<registry><imagePath>/<imagePrefix><imageName>:<image-tag>` This option allows configuring the `<imagePrefix>` portion of the above format. |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#localobjectreference-v1-core) array_ | (Optional) ImagePullSecrets is an array of references to container registry pull secrets to use. These are applied to all images to be pulled. |
+| `imagePullPolicy` _[PullPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#pullpolicy-v1-core)_ | (Optional) ImagePullPolicy is the pull policy applied to containers in pods rendered by the operator that do not explicitly set their own pull policy. If unset, defaults to IfNotPresent. This is useful in air-gapped environments where images are pre-loaded onto nodes and must not be re-pulled from a remote registry. |
 | `kubernetesProvider` _[Provider](#provider)_ | (Optional) KubernetesProvider specifies a particular provider of the Kubernetes platform and enables provider-specific configuration. If the specified value is empty, the Operator will attempt to automatically determine the current provider. If the specified value is not empty, the Operator will still attempt auto-detection, but will additionally compare the auto-detected value to the specified value to confirm they match. |
 | `cni` _[CNISpec](#cnispec)_ | (Optional) CNI specifies the CNI that will be used by this installation. |
 | `calicoNetwork` _[CalicoNetworkSpec](#caliconetworkspec)_ | (Optional) CalicoNetwork specifies networking configuration options for Calico. |
@@ -3600,19 +2800,21 @@ _Appears in:_
 | `componentResources` _[ComponentResource](#componentresource) array_ | (Optional) Deprecated. Please use CalicoNodeDaemonSet, TyphaDeployment, and KubeControllersDeployment. ComponentResources can be used to customize the resource requirements for each component. Node, Typha, and KubeControllers are supported for installations. |
 | `certificateManagement` _[CertificateManagement](#certificatemanagement)_ | (Optional) CertificateManagement configures pods to submit a CertificateSigningRequest to the certificates.k8s.io/v1 API in order to obtain TLS certificates. This feature requires that you bring your own CSR signing and approval process, otherwise pods will be stuck during initialization. |
 | `tlsCipherSuites` _[TLSCipherSuites](#tlsciphersuites)_ | (Optional) TLSCipherSuites defines the cipher suite list that the TLS protocol should use during secure communication. |
-| `nonPrivileged` _[NonPrivilegedType](#nonprivilegedtype)_ | (Optional) NonPrivileged configures Calico to be run in non-privileged containers as non-root users where possible. |
+| `nonPrivileged` _[NonPrivilegedType](#nonprivilegedtype)_ | (Optional) Deprecated. NonPrivileged is deprecated and will be removed from the API in a future release. Enabling this field is not supported and will cause errors. NonPrivileged configures Calico to be run in non-privileged containers as non-root users where possible. |
 | `calicoNodeDaemonSet` _[CalicoNodeDaemonSet](#caliconodedaemonset)_ | (Optional) CalicoNodeDaemonSet configures the calico-node DaemonSet. If used in conjunction with the deprecated ComponentResources, then these overrides take precedence. |
 | `csiNodeDriverDaemonSet` _[CSINodeDriverDaemonSet](#csinodedriverdaemonset)_ | (Optional) CSINodeDriverDaemonSet configures the csi-node-driver DaemonSet. |
 | `calicoKubeControllersDeployment` _[CalicoKubeControllersDeployment](#calicokubecontrollersdeployment)_ | (Optional) CalicoKubeControllersDeployment configures the calico-kube-controllers Deployment. If used in conjunction with the deprecated ComponentResources, then these overrides take precedence. |
 | `typhaDeployment` _[TyphaDeployment](#typhadeployment)_ | (Optional) TyphaDeployment configures the typha Deployment. If used in conjunction with the deprecated ComponentResources or TyphaAffinity, then these overrides take precedence. |
+| `typhaPodDisruptionBudget` _[PodDisruptionBudgetOverride](#poddisruptionbudgetoverride)_ | (Optional) TyphaPodDisruptionBudget configures the PodDisruptionBudget for the calico-typha Deployment. Fields left unset fall back to the operator's defaults. The PDB's selector is managed by the operator and cannot be overridden. |
 | `calicoWindowsUpgradeDaemonSet` _[CalicoWindowsUpgradeDaemonSet](#calicowindowsupgradedaemonset)_ | Deprecated. The CalicoWindowsUpgradeDaemonSet is deprecated and will be removed from the API in the future. CalicoWindowsUpgradeDaemonSet configures the calico-windows-upgrade DaemonSet. |
 | `calicoNodeWindowsDaemonSet` _[CalicoNodeWindowsDaemonSet](#caliconodewindowsdaemonset)_ | CalicoNodeWindowsDaemonSet configures the calico-node-windows DaemonSet. |
-| `fipsMode` _[FIPSMode](#fipsmode)_ | (Optional) FIPSMode uses images and features only that are using FIPS 140-2 validated cryptographic modules and standards. Only supported for Variant=Calico.<br />Default: Disabled |
+| `fipsMode` _[FIPSMode](#fipsmode)_ | (Optional) Deprecated. FIPS mode is no longer supported. Setting fipsMode to Enabled marks the installation degraded. |
 | `logging` _[Logging](#logging)_ | (Optional) Logging Configuration for Components |
 | `windowsNodes` _[WindowsNodeSpec](#windowsnodespec)_ | (Optional) Windows Configuration |
 | `serviceCIDRs` _string array_ | (Optional) Kubernetes Service CIDRs. Specifying this is required when using Calico for Windows. |
 | `azure` _[Azure](#azure)_ | (Optional) Azure is used to configure azure provider specific options. |
 | `proxy` _[Proxy](#proxy)_ | (Optional) Proxy is used to configure the HTTP(S) proxy settings that will be applied to Tigera containers that connect to destinations outside the cluster. It is expected that NO_PROXY is configured such that destinations within the cluster (including the API server) are exempt from proxying. |
+| `networkPolicy` _[NetworkPolicySpec](#networkpolicyspec)_ | (Optional) NetworkPolicy configures how the operator manages the NetworkPolicies and GlobalNetworkPolicies it installs to protect the Calico components it manages. |
 
 
 ### InstallationStatus
@@ -3626,7 +2828,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `variant` _[ProductVariant](#productvariant)_ | Variant is the most recently observed installed variant - one of Calico or CalicoEnterprise |
+| `variant` _[ProductVariant](#productvariant)_ | Variant is the most recently observed installed variant - one of Calico or CalicoEnterprise. TigeraSecureEnterprise is a deprecated alias for CalicoEnterprise. |
 | `mtu` _integer_ | MTU is the most recently observed value for pod network MTU. This may be an explicitly configured value, or based on Calico's native auto-detetion. |
 | `imageSet` _string_ | (Optional) ImageSet is the name of the ImageSet being used, if there is an ImageSet that is being used. If an ImageSet is not being used then this will not be set. |
 | `computed` _[InstallationSpec](#installationspec)_ | (Optional) Computed is the final installation including overlaid resources. |
@@ -3706,6 +2908,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the IntrusionDetectionController Deployment container by name.<br />Supported values are: controller, webhooks-processor |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named IntrusionDetectionController Deployment container's resources. If omitted, the IntrusionDetection Deployment will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### IntrusionDetectionControllerDeploymentInitContainer
@@ -3798,18 +3002,171 @@ _Appears in:_
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of Ready, Progressing, Degraded or other customer types. |
 
 
-### Kibana
+### Istio
 
 
 
-Kibana is the configuration for the Kibana.
-
-_Appears in:_
-- [LogStorageSpec](#logstoragespec)
+Istio is the Schema for the istios API
 
 | Field | Description |
 | --- | --- |
-| `spec` _[KibanaSpec](#kibanaspec)_ | (Optional) Spec is the specification of the Kibana. |
+| `apiVersion` _string_ | `operator.tigera.io/v1` |
+| `kind` _string_ | `Istio` |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[IstioSpec](#istiospec)_ |  |
+| `status` _[IstioStatus](#istiostatus)_ |  |
+
+
+### IstioCNIDaemonset
+
+
+
+IstioCNIDaemonset defines customized settings for the Istio CNI plugin.
+
+_Appears in:_
+- [IstioSpec](#istiospec)
+
+| Field | Description |
+| --- | --- |
+| `spec` _[IstioCNIDaemonsetSpec](#istiocnidaemonsetspec)_ | (Optional) Spec allows users to specify custom fields for the Istio CNI Daemonset. |
+
+
+### IstioCNIDaemonsetPodSpec
+
+
+
+IstioCNIDaemonsetPodSpec defines the pod spec for customizing the Istio CNI Daemonset.
+
+_Appears in:_
+- [IstioCNIDaemonsetSpecTemplate](#istiocnidaemonsetspectemplate)
+
+| Field | Description |
+| --- | --- |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity specifies the affinity for the deployment. |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) NodeSelector specifies the node affinity for the deployment. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources specifies the compute resources required for the deployment. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations specifies the tolerations for the deployment. |
+
+
+### IstioCNIDaemonsetSpec
+
+
+
+IstioCNIDaemonsetSpec defines the spec for customizing the Istio CNI Daemonset.
+
+_Appears in:_
+- [IstioCNIDaemonset](#istiocnidaemonset)
+
+| Field | Description |
+| --- | --- |
+| `template` _[IstioCNIDaemonsetSpecTemplate](#istiocnidaemonsetspectemplate)_ | (Optional) Template allows users to specify custom fields for the Istio CNI Daemonset. |
+
+
+### IstioCNIDaemonsetSpecTemplate
+
+
+
+IstioCNIDaemonsetSpecTemplate defines the template for customizing the Istio CNI Daemonset.
+
+_Appears in:_
+- [IstioCNIDaemonsetSpec](#istiocnidaemonsetspec)
+
+| Field | Description |
+| --- | --- |
+| `spec` _[IstioCNIDaemonsetPodSpec](#istiocnidaemonsetpodspec)_ | (Optional) Spec allows users to specify custom fields for the Istio CNI Daemonset. |
+
+
+### IstioSpec
+
+
+
+IstioSpec defines the desired state of Istio
+
+_Appears in:_
+- [Istio](#istio)
+
+| Field | Description |
+| --- | --- |
+| `istiod` _[IstiodDeployment](#istioddeployment)_ | (Optional) IstiodDeployment defines the resource requirements and node selector for the Istio deployment. |
+| `istioCNI` _[IstioCNIDaemonset](#istiocnidaemonset)_ | (Optional) IstioCNIDaemonset defines the resource requirements for the Istio CNI plugin. |
+| `ztunnel` _[ZTunnelDaemonset](#ztunneldaemonset)_ | (Optional) ZTunnelDaemonset defines the resource requirements for the ZTunnelDaemonset component. |
+| `waypointLogging` _[LogCollectionStatusType](#logcollectionstatustype)_ | (Optional) WaypointLogging controls whether L7 logging is enabled on every Gateway using the istio-waypoint GatewayClass. When Enabled (the default), the operator injects an l7-collector sidecar into each waypoint pod via class-level defaults. When Disabled, no sidecar is injected and the associated EnvoyFilters are not created. Allowed values are Enabled or Disabled. |
+| `dscpMark` _[DSCP](#dscp)_ | (Optional) DSCPMark define the value of the DSCP mark done by Felix and recognised by Istio CNI for Transparent NetworkPolicies. |
+
+
+### IstioStatus
+
+
+
+IstioStatus defines the observed state of Istio
+
+_Appears in:_
+- [Istio](#istio)
+
+| Field | Description |
+| --- | --- |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | Conditions represents the latest observed set of conditions for the component. A component may be one or more of Ready, Progressing, Degraded or other customer types. |
+
+
+### IstiodDeployment
+
+
+
+IstiodDeployment defines customized settings for the Istio deployment.
+
+_Appears in:_
+- [IstioSpec](#istiospec)
+
+| Field | Description |
+| --- | --- |
+| `spec` _[IstiodDeploymentSpec](#istioddeploymentspec)_ | (Optional) Spec allows users to specify custom fields for the Istiod Deployment. |
+
+
+### IstiodDeploymentPodSpec
+
+
+
+IstiodDeploymentPodSpec defines the pod spec for customizing the Istiod Deployment.
+
+_Appears in:_
+- [IstiodDeploymentSpecTemplate](#istioddeploymentspectemplate)
+
+| Field | Description |
+| --- | --- |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity specifies the affinity for the deployment. |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) NodeSelector specifies the node affinity for the deployment. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources specifies the compute resources required for the deployment. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations specifies the tolerations for the deployment. |
+
+
+### IstiodDeploymentSpec
+
+
+
+IstiodDeploymentSpec defines the spec for customizing the Istiod Deployment.
+
+_Appears in:_
+- [IstiodDeployment](#istioddeployment)
+
+| Field | Description |
+| --- | --- |
+| `template` _[IstiodDeploymentSpecTemplate](#istioddeploymentspectemplate)_ | (Optional) Template allows users to specify custom fields for the Istiod Deployment. |
+
+
+### IstiodDeploymentSpecTemplate
+
+
+
+IstiodDeploymentSpecTemplate defines the template for customizing the Istiod Deployment.
+
+_Appears in:_
+- [IstiodDeploymentSpec](#istioddeploymentspec)
+
+| Field | Description |
+| --- | --- |
+| `spec` _[IstiodDeploymentPodSpec](#istioddeploymentpodspec)_ | (Optional) Spec allows users to specify custom fields for the Istiod Deployment. |
+
+
 
 
 ### KibanaContainer
@@ -3825,6 +3182,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the Kibana Deployment container by name.<br />Supported values are: kibana |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Kibana container's resources. If omitted, the Kibana will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### KibanaInitContainer
@@ -3882,6 +3241,7 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
+| `replicas` _integer_ | (Optional) Replicas defines the number of Kibana replicas. When set to 0, Kibana is not rendered.<br />Default: 1 |
 | `template` _[KibanaPodTemplateSpec](#kibanapodtemplatespec)_ | (Optional) Template describes the Kibana pod that will be created. |
 
 
@@ -3943,6 +3303,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the L7LogCollector DaemonSet container by name.<br />Supported values are: l7-collector, envoy-proxy, dikastes |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named L7LogCollector DaemonSet container's resources. If omitted, the L7LogCollector DaemonSet will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### L7LogCollectorDaemonSetInitContainer
@@ -4003,93 +3365,6 @@ _Appears in:_
 | `template` _[L7LogCollectorDaemonSetPodTemplateSpec](#l7logcollectordaemonsetpodtemplatespec)_ | (Optional) Template describes the L7LogCollector DaemonSet pod that will be created. |
 
 
-### LinseedDeployment
-
-
-
-LinseedDeployment is the configuration for the linseed Deployment.
-
-_Appears in:_
-- [LogStorageSpec](#logstoragespec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[LinseedDeploymentSpec](#linseeddeploymentspec)_ | (Optional) Spec is the specification of the linseed Deployment. |
-
-
-### LinseedDeploymentContainer
-
-
-
-LinseedDeploymentContainer is a linseed Deployment container.
-
-_Appears in:_
-- [LinseedDeploymentPodSpec](#linseeddeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the linseed Deployment container by name.<br />Supported values are: tigera-linseed |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named linseed Deployment container's resources. If omitted, the linseed Deployment will use its default value for this container's resources. |
-
-
-### LinseedDeploymentInitContainer
-
-
-
-LinseedDeploymentInitContainer is a linseed Deployment init container.
-
-_Appears in:_
-- [LinseedDeploymentPodSpec](#linseeddeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the linseed Deployment init container by name.<br />Supported values are: tigera-secure-linseed-token-tls-key-cert-provisioner,tigera-secure-linseed-cert-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named linseed Deployment init container's resources. If omitted, the linseed Deployment will use its default value for this init container's resources. |
-
-
-### LinseedDeploymentPodSpec
-
-
-
-LinseedDeploymentPodSpec is the linseed Deployment's PodSpec.
-
-_Appears in:_
-- [LinseedDeploymentPodTemplateSpec](#linseeddeploymentpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[LinseedDeploymentInitContainer](#linseeddeploymentinitcontainer) array_ | (Optional) InitContainers is a list of linseed init containers. If specified, this overrides the specified linseed Deployment init containers. If omitted, the linseed Deployment will use its default values for its init containers. |
-| `containers` _[LinseedDeploymentContainer](#linseeddeploymentcontainer) array_ | (Optional) Containers is a list of linseed containers. If specified, this overrides the specified linseed Deployment containers. If omitted, the linseed Deployment will use its default values for its containers. |
-
-
-### LinseedDeploymentPodTemplateSpec
-
-
-
-LinseedDeploymentPodTemplateSpec is the linseed Deployment's PodTemplateSpec
-
-_Appears in:_
-- [LinseedDeploymentSpec](#linseeddeploymentspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[LinseedDeploymentPodSpec](#linseeddeploymentpodspec)_ | (Optional) Spec is the linseed Deployment's PodSpec. |
-
-
-### LinseedDeploymentSpec
-
-
-
-LinseedDeploymentSpec defines configuration for the linseed Deployment.
-
-_Appears in:_
-- [LinseedDeployment](#linseeddeployment)
-
-| Field | Description |
-| --- | --- |
-| `template` _[LinseedDeploymentPodTemplateSpec](#linseeddeploymentpodtemplatespec)_ | (Optional) Template describes the linseed Deployment pod that will be created. |
-
-
 ### LinuxDataplaneOption
 
 _Underlying type:_ _string_
@@ -4111,6 +3386,28 @@ _Appears in:_
 | `BPF` |  |
 | `VPP` |  |
 | `Nftables` |  |
+
+
+### LinuxPodInterfaceType
+
+_Underlying type:_ _string_
+
+LinuxPodInterfaceType specifies the type of virtual device the Calico CNI plugin
+creates for the pod-side interface on Linux nodes.
+
+One of: Veth, Netkit
+
+_Validation:_
+- Enum: [Veth Netkit]
+
+
+_Appears in:_
+- [CalicoNetworkSpec](#caliconetworkspec)
+
+| Value | Description |
+| --- | --- |
+| `Veth` |  |
+| `Netkit` |  |
 
 
 ### LogCollectionSpec
@@ -4140,6 +3437,7 @@ _Validation:_
 
 
 _Appears in:_
+- [IstioSpec](#istiospec)
 - [LogCollectionSpec](#logcollectionspec)
 
 | Value | Description |
@@ -4245,93 +3543,6 @@ _Appears in:_
 | `Trace` |  |
 
 
-### LogStorage
-
-
-
-LogStorage installs the components required for Tigera flow and DNS log storage. At most one instance
-of this resource is supported. It must be named "tigera-secure". When created, this installs an Elasticsearch cluster for use by
-Calico Enterprise.
-
-| Field | Description |
-| --- | --- |
-| `apiVersion` _string_ | `operator.tigera.io/v1` |
-| `kind` _string_ | `LogStorage` |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
-| `spec` _[LogStorageSpec](#logstoragespec)_ | Specification of the desired state for Tigera log storage. |
-| `status` _[LogStorageStatus](#logstoragestatus)_ | Most recently observed state for Tigera log storage. |
-
-
-### LogStorageComponentName
-
-_Underlying type:_ _string_
-
-LogStorageComponentName CRD enum
-
-_Appears in:_
-- [LogStorageComponentResource](#logstoragecomponentresource)
-
-| Value | Description |
-| --- | --- |
-| `ECKOperator` |  |
-
-
-### LogStorageComponentResource
-
-
-
-The ComponentResource struct associates a ResourceRequirements with a component by name
-
-_Appears in:_
-- [LogStorageSpec](#logstoragespec)
-
-| Field | Description |
-| --- | --- |
-| `componentName` _[LogStorageComponentName](#logstoragecomponentname)_ | Deprecated. Please use ECKOperatorStatefulSet. ComponentName is an enum which identifies the component |
-| `resourceRequirements` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | ResourceRequirements allows customization of limits and requests for compute resources such as cpu and memory. |
-
-
-### LogStorageSpec
-
-
-
-LogStorageSpec defines the desired state of Tigera flow and DNS log storage.
-
-_Appears in:_
-- [LogStorage](#logstorage)
-
-| Field | Description |
-| --- | --- |
-| `nodes` _[Nodes](#nodes)_ | Nodes defines the configuration for a set of identical Elasticsearch cluster nodes, each of type master, data, and ingest. |
-| `indices` _[Indices](#indices)_ | (Optional) Index defines the configuration for the indices in the Elasticsearch cluster. |
-| `retention` _[Retention](#retention)_ | (Optional) Retention defines how long data is retained in the Elasticsearch cluster before it is cleared. |
-| `storageClassName` _string_ | (Optional) StorageClassName will populate the PersistentVolumeClaim.StorageClassName that is used to provision disks to the Tigera Elasticsearch cluster. The StorageClassName should only be modified when no LogStorage is currently active. We recommend choosing a storage class dedicated to Tigera LogStorage only. Otherwise, data retention cannot be guaranteed during upgrades. See https://docs.tigera.io/maintenance/upgrading for up-to-date instructions.<br />Default: tigera-elasticsearch |
-| `dataNodeSelector` _object (keys:string, values:string)_ | (Optional) DataNodeSelector gives you more control over the node that Elasticsearch will run on. The contents of DataNodeSelector will be added to the PodSpec of the Elasticsearch nodes. For the pod to be eligible to run on a node, the node must have each of the indicated key-value pairs as labels as well as access to the specified StorageClassName. |
-| `componentResources` _[LogStorageComponentResource](#logstoragecomponentresource) array_ | (Optional) ComponentResources can be used to customize the resource requirements for each component. Only ECKOperator is supported for this spec. |
-| `eckOperatorStatefulSet` _[ECKOperatorStatefulSet](#eckoperatorstatefulset)_ | (Optional) ECKOperatorStatefulSet configures the ECKOperator StatefulSet. If used in conjunction with the deprecated ComponentResources, then these overrides take precedence. |
-| `kibana` _[Kibana](#kibana)_ | (Optional) Kibana configures the Kibana Spec. |
-| `linseedDeployment` _[LinseedDeployment](#linseeddeployment)_ | LinseedDeployment configures the linseed Deployment. |
-| `elasticsearchMetricsDeployment` _[ElasticsearchMetricsDeployment](#elasticsearchmetricsdeployment)_ | ElasticsearchMetricsDeployment configures the tigera-elasticsearch-metric Deployment. |
-| `esGatewayDeployment` _[ESGatewayDeployment](#esgatewaydeployment)_ | ESGatewayDeployment configures the es-gateway Deployment. |
-
-
-### LogStorageStatus
-
-
-
-LogStorageStatus defines the observed state of Tigera flow and DNS log storage.
-
-_Appears in:_
-- [LogStorage](#logstorage)
-
-| Field | Description |
-| --- | --- |
-| `state` _string_ | State provides user-readable status. |
-| `elasticsearchHash` _string_ | ElasticsearchHash represents the current revision and configuration of the installed Elasticsearch cluster. This is an opaque string which can be monitored for changes to perform actions when Elasticsearch is modified. |
-| `kibanaHash` _string_ | KibanaHash represents the current revision and configuration of the installed Kibana dashboard. This is an opaque string which can be monitored for changes to perform actions when Kibana is modified. |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of Ready, Progressing, Degraded or other customer types. |
-
-
 ### Logging
 
 
@@ -4344,21 +3555,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `cni` _[CNILogging](#cnilogging)_ | (Optional) Customized logging specification for calico-cni plugin |
-
-
-### ManagementCluster
-
-
-
-The presence of ManagementCluster in your cluster, will configure it to be the management plane to which managed
-clusters can connect. At most one instance of this resource is supported. It must be named "tigera-secure".
-
-| Field | Description |
-| --- | --- |
-| `apiVersion` _string_ | `operator.tigera.io/v1` |
-| `kind` _string_ | `ManagementCluster` |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
-| `spec` _[ManagementClusterSpec](#managementclusterspec)_ |  |
 
 
 ### ManagementClusterConnection
@@ -4389,7 +3585,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `managementClusterAddr` _string_ | (Optional) Specify where the managed cluster can reach the management cluster. Ex.: "10.128.0.10:30449". A managed cluster should be able to access this address. This field is used by managed clusters only. |
-| `tls` _[ManagementClusterTLS](#managementclustertls)_ | (Optional) TLS provides options for configuring how Managed Clusters can establish an mTLS connection with the Management Cluster. |
 | `guardianDeployment` _[GuardianDeployment](#guardiandeployment)_ | GuardianDeployment configures the guardian Deployment. |
 | `impersonation` _[Impersonation](#impersonation)_ | (Optional) Impersonation configures the RBAC impersonation permissions for the guardian deployment. This field is not applicable to installation variant Calico as no impersonation is ever used. Otherwise, if this field is left nil, a default set of permissions will be applied.<br />WARNING: If this field is specified, it completely replaces the default permissions. For example, providing an empty `impersonation: \{\}` block will result in guardian having NO impersonation permissions. Similarly, if you specify `users` but omit `groups`, guardian will lose its default permissions to impersonate groups. |
 
@@ -4405,167 +3600,6 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of Ready, Progressing, Degraded or other customer types. |
-
-
-### ManagementClusterSpec
-
-
-
-ManagementClusterSpec defines the desired state of a ManagementCluster
-
-_Appears in:_
-- [ManagementCluster](#managementcluster)
-
-| Field | Description |
-| --- | --- |
-| `address` _string_ | (Optional) This field specifies the externally reachable address to which your managed cluster will connect. When a managed cluster is added, this field is used to populate an easy-to-apply manifest that will connect both clusters. Valid examples are: "0.0.0.0:31000", "example.com:32000", "[::1]:32500" |
-| `tls` _[TLS](#tls)_ | (Optional) TLS provides options for configuring how Managed Clusters can establish an mTLS connection with the Management Cluster. |
-
-
-### ManagementClusterTLS
-
-
-
-
-
-_Appears in:_
-- [ManagementClusterConnectionSpec](#managementclusterconnectionspec)
-
-| Field | Description |
-| --- | --- |
-| `ca` _[CAType](#catype)_ | CA indicates which verification method the tunnel client should use to verify the tunnel server's identity. When left blank or set to 'Tigera', the tunnel client will expect a self-signed cert to be included in the certificate bundle and will expect the cert to have a Common Name (CN) of 'voltron'. When set to 'Public', the tunnel client will use its installed system certs and will use the managementClusterAddr to verify the tunnel server's identity.<br />Default: Tigera |
-
-
-### Manager
-
-
-
-Manager installs the Calico Enterprise manager graphical user interface. At most one instance
-of this resource is supported. It must be named "tigera-secure".
-
-| Field | Description |
-| --- | --- |
-| `apiVersion` _string_ | `operator.tigera.io/v1` |
-| `kind` _string_ | `Manager` |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
-| `spec` _[ManagerSpec](#managerspec)_ | Specification of the desired state for the Calico Enterprise manager. |
-| `status` _[ManagerStatus](#managerstatus)_ | Most recently observed state for the Calico Enterprise manager. |
-
-
-### ManagerDeployment
-
-
-
-ManagerDeployment is the configuration for the Manager Deployment.
-
-_Appears in:_
-- [ManagerSpec](#managerspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ManagerDeploymentSpec](#managerdeploymentspec)_ | (Optional) Spec is the specification of the Manager Deployment. |
-
-
-### ManagerDeploymentContainer
-
-
-
-ManagerDeploymentContainer is a Manager Deployment container.
-
-_Appears in:_
-- [ManagerDeploymentPodSpec](#managerdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the Manager Deployment container by name.<br />Supported values are: tigera-voltron, tigera-manager, tigera-ui-apis, and tigera-es-proxy (deprecated). |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Manager Deployment container's resources. If omitted, the Manager Deployment will use its default value for this container's resources. |
-
-
-### ManagerDeploymentInitContainer
-
-
-
-ManagerDeploymentInitContainer is a Manager Deployment init container.
-
-_Appears in:_
-- [ManagerDeploymentPodSpec](#managerdeploymentpodspec)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ | Name is an enum which identifies the Manager Deployment init container by name.<br />Supported values are: manager-tls-key-cert-provisioner, internal-manager-tls-key-cert-provisioner, tigera-voltron-linseed-tls-key-cert-provisioner |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Manager Deployment init container's resources. If omitted, the Manager Deployment will use its default value for this init container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
-
-
-### ManagerDeploymentPodSpec
-
-
-
-ManagerDeploymentPodSpec is the Manager Deployment's PodSpec.
-
-_Appears in:_
-- [ManagerDeploymentPodTemplateSpec](#managerdeploymentpodtemplatespec)
-
-| Field | Description |
-| --- | --- |
-| `initContainers` _[ManagerDeploymentInitContainer](#managerdeploymentinitcontainer) array_ | (Optional) InitContainers is a list of Manager init containers. If specified, this overrides the specified Manager Deployment init containers. If omitted, the Manager Deployment will use its default values for its init containers. |
-| `containers` _[ManagerDeploymentContainer](#managerdeploymentcontainer) array_ | (Optional) Containers is a list of Manager containers. If specified, this overrides the specified Manager Deployment containers. If omitted, the Manager Deployment will use its default values for its containers. |
-
-
-### ManagerDeploymentPodTemplateSpec
-
-
-
-ManagerDeploymentPodTemplateSpec is the Manager Deployment's PodTemplateSpec
-
-_Appears in:_
-- [ManagerDeploymentSpec](#managerdeploymentspec)
-
-| Field | Description |
-| --- | --- |
-| `spec` _[ManagerDeploymentPodSpec](#managerdeploymentpodspec)_ | (Optional) Spec is the Manager Deployment's PodSpec. |
-
-
-### ManagerDeploymentSpec
-
-
-
-ManagerDeploymentSpec defines configuration for the Manager Deployment.
-
-_Appears in:_
-- [ManagerDeployment](#managerdeployment)
-
-| Field | Description |
-| --- | --- |
-| `template` _[ManagerDeploymentPodTemplateSpec](#managerdeploymentpodtemplatespec)_ | (Optional) Template describes the Manager Deployment pod that will be created. |
-
-
-### ManagerSpec
-
-
-
-ManagerSpec defines configuration for the Calico Enterprise manager GUI.
-
-_Appears in:_
-- [Manager](#manager)
-
-| Field | Description |
-| --- | --- |
-| `managerDeployment` _[ManagerDeployment](#managerdeployment)_ | (Optional) ManagerDeployment configures the Manager Deployment. |
-
-
-### ManagerStatus
-
-
-
-ManagerStatus defines the observed state of the Calico Enterprise manager GUI.
-
-_Appears in:_
-- [Manager](#manager)
-
-| Field | Description |
-| --- | --- |
-| `state` _string_ | State provides user-readable status. |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#condition-v1-meta) array_ | (Optional) Conditions represents the latest observed set of conditions for the component. A component may be one or more of Ready, Progressing, Degraded or other customer types. |
 
 
@@ -4586,6 +3620,8 @@ _Appears in:_
 - [CalicoNodeDaemonSetPodTemplateSpec](#caliconodedaemonsetpodtemplatespec)
 - [CalicoNodeWindowsDaemonSet](#caliconodewindowsdaemonset)
 - [CalicoNodeWindowsDaemonSetPodTemplateSpec](#caliconodewindowsdaemonsetpodtemplatespec)
+- [CalicoWebhooksDeployment](#calicowebhooksdeployment)
+- [CalicoWebhooksDeploymentPodTemplateSpec](#calicowebhooksdeploymentpodtemplatespec)
 - [CalicoWindowsUpgradeDaemonSet](#calicowindowsupgradedaemonset)
 - [CalicoWindowsUpgradeDaemonSetPodTemplateSpec](#calicowindowsupgradedaemonsetpodtemplatespec)
 - [GatewayCertgenJob](#gatewaycertgenjob)
@@ -4597,6 +3633,7 @@ _Appears in:_
 - [GatewayService](#gatewayservice)
 - [GoldmaneDeployment](#goldmanedeployment)
 - [GoldmaneDeploymentPodTemplateSpec](#goldmanedeploymentpodtemplatespec)
+- [PodDisruptionBudgetOverride](#poddisruptionbudgetoverride)
 - [TyphaDeployment](#typhadeployment)
 - [TyphaDeploymentPodTemplateSpec](#typhadeploymentpodtemplatespec)
 - [WhiskerDeployment](#whiskerdeployment)
@@ -4637,7 +3674,7 @@ _Appears in:_
 | --- | --- |
 | `externalPrometheus` _[ExternalPrometheus](#externalprometheus)_ | ExternalPrometheus optionally configures integration with an external Prometheus for scraping Calico metrics. When specified, the operator will render resources in the defined namespace. This option can be useful for configuring scraping from git-ops tools without the need of post-installation steps. |
 | `prometheus` _[Prometheus](#prometheus)_ | (Optional) Prometheus is the configuration for the Prometheus. |
-| `alertManager` _[AlertManager](#alertmanager)_ | (Optional) AlertManager is the configuration for the AlertManager. |
+| `alertManager` _[Alertmanager](#alertmanager)_ | (Optional) Alertmanager is the configuration for the Alertmanager. |
 
 
 ### MonitorStatus
@@ -4721,6 +3758,40 @@ _Appears in:_
 | `Disabled` |  |
 
 
+### NetworkPolicyManagement
+
+_Underlying type:_ _string_
+
+NetworkPolicyManagement specifies whether the operator manages the NetworkPolicies it installs to
+protect the Calico components it manages.
+
+_Validation:_
+- Enum: [Enabled Disabled]
+
+
+_Appears in:_
+- [NetworkPolicySpec](#networkpolicyspec)
+
+| Value | Description |
+| --- | --- |
+| `Enabled` |  |
+| `Disabled` |  |
+
+
+### NetworkPolicySpec
+
+
+
+NetworkPolicySpec configures how the operator manages the NetworkPolicies it installs.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `managePolicies` _[NetworkPolicyManagement](#networkpolicymanagement)_ | (Optional) ManagePolicies controls whether the operator creates and reconciles the NetworkPolicies and GlobalNetworkPolicies it uses to protect the Calico components it installs. When set to Disabled, the operator stops creating or updating these policies and deletes any it has already created, leaving policy management to the user. Defaults to Enabled. |
+
+
 ### NodeAddressAutodetection
 
 
@@ -4755,54 +3826,6 @@ _Appears in:_
 | --- | --- |
 | `preferredDuringSchedulingIgnoredDuringExecution` _[PreferredSchedulingTerm](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#preferredschedulingterm-v1-core) array_ | (Optional) The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. |
 | `requiredDuringSchedulingIgnoredDuringExecution` _[NodeSelector](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#nodeselector-v1-core)_ | (Optional)<br />WARNING: Please note that if the affinity requirements specified by this field are not met at scheduling time, the pod will NOT be scheduled onto the node. There is no fallback to another affinity rules with this setting. This may cause networking disruption or even catastrophic failure! PreferredDuringSchedulingIgnoredDuringExecution should be used for affinity unless there is a specific well understood reason to use RequiredDuringSchedulingIgnoredDuringExecution and you can guarantee that the RequiredDuringSchedulingIgnoredDuringExecution will always have sufficient nodes to satisfy the requirement. NOTE: RequiredDuringSchedulingIgnoredDuringExecution is set by default for AKS nodes, to avoid scheduling Typhas on virtual-nodes. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node. |
-
-
-### NodeSet
-
-
-
-NodeSets defines configuration specific to each Elasticsearch Node Set
-
-_Appears in:_
-- [Nodes](#nodes)
-
-| Field | Description |
-| --- | --- |
-| `selectionAttributes` _[NodeSetSelectionAttribute](#nodesetselectionattribute) array_ | SelectionAttributes defines K8s node attributes a NodeSet should use when setting the Node Affinity selectors and Elasticsearch cluster awareness attributes for the Elasticsearch nodes. The list of SelectionAttributes are used to define Node Affinities and set the node awareness configuration in the running Elasticsearch instance. |
-
-
-### NodeSetSelectionAttribute
-
-
-
-NodeSetSelectionAttribute defines a K8s node "attribute" the Elasticsearch nodes should be aware of. The "Name" and "Value"
-are used together to set the "awareness" attributes in Elasticsearch, while the "NodeLabel" and "Value" are used together
-to define Node Affinity for the Pods created for the Elasticsearch nodes.
-
-_Appears in:_
-- [NodeSet](#nodeset)
-
-| Field | Description |
-| --- | --- |
-| `name` _string_ |  |
-| `nodeLabel` _string_ |  |
-| `value` _string_ |  |
-
-
-### Nodes
-
-
-
-Nodes defines the configuration for a set of identical Elasticsearch cluster nodes, each of type master, data, and ingest.
-
-_Appears in:_
-- [LogStorageSpec](#logstoragespec)
-
-| Field | Description |
-| --- | --- |
-| `count` _integer_ | Count defines the number of nodes in the Elasticsearch cluster. |
-| `nodeSets` _[NodeSet](#nodeset) array_ | (Optional) NodeSets defines configuration specific to each Elasticsearch Node Set |
-| `resourceRequirements` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) ResourceRequirements defines the resource limits and requirements for the Elasticsearch cluster. |
 
 
 ### NonClusterHost
@@ -4867,27 +3890,6 @@ _Appears in:_
 | `Enabled` |  |
 
 
-### OIDCType
-
-_Underlying type:_ _string_
-
-OIDCType defines how OIDC is configured for Tigera Enterprise. Dex should be the best option for most use-cases.
-The Tigera option can help in specific use-cases, for instance, when you are unable to configure a client secret.
-One of: Dex, Tigera
-
-_Validation:_
-- Enum: [Dex Tigera]
-
-
-_Appears in:_
-- [AuthenticationOIDC](#authenticationoidc)
-
-| Value | Description |
-| --- | --- |
-| `Dex` | OIDCTypeDex uses Dex IdP, a popular open-source tool for connecting OIDC.  |
-| `Tigera` | OIDCTypeTigera uses customer code to pass OIDC configuration directly into our server applications.  |
-
-
 ### PacketCaptureAPI
 
 
@@ -4930,6 +3932,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the PacketCaptureAPI Deployment container by name.<br />Supported values are: tigera-packetcapture-server |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named PacketCaptureAPI Deployment container's resources. If omitted, the PacketCaptureAPI Deployment will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### PacketCaptureAPIDeploymentInitContainer
@@ -5035,6 +4039,39 @@ _Appears in:_
 | `pathReplace` _string_ | (Optional) PathReplace if not nil will be used to replace PathRegexp matches. |
 
 
+### PodDisruptionBudgetOverride
+
+
+
+PodDisruptionBudgetOverride allows overriding select fields on an operator-managed
+PodDisruptionBudget. The PDB's selector, name, and namespace are managed by the
+operator and cannot be overridden.
+
+_Appears in:_
+- [InstallationSpec](#installationspec)
+
+| Field | Description |
+| --- | --- |
+| `metadata` _[Metadata](#metadata)_ | (Optional) Refer to Kubernetes API documentation for fields of `metadata`. |
+| `spec` _[PodDisruptionBudgetOverrideSpec](#poddisruptionbudgetoverridespec)_ | (Optional) Spec is the specification of the PodDisruptionBudget. |
+
+
+### PodDisruptionBudgetOverrideSpec
+
+
+
+PodDisruptionBudgetOverrideSpec defines the desired state of an operator-managed PodDisruptionBudget.
+
+_Appears in:_
+- [PodDisruptionBudgetOverride](#poddisruptionbudgetoverride)
+
+| Field | Description |
+| --- | --- |
+| `minAvailable` _[IntOrString](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#intorstring-intstr-util)_ | (Optional) MinAvailable is the minimum number of pods (as an integer or percentage) that must remain available during a disruption. Mutually exclusive with MaxUnavailable. |
+| `maxUnavailable` _[IntOrString](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#intorstring-intstr-util)_ | (Optional) MaxUnavailable is the maximum number of pods (as an integer or percentage) that can be unavailable during a disruption. Mutually exclusive with MinAvailable. If neither MinAvailable nor MaxUnavailable is set, the operator applies its default (MaxUnavailable=1 for calico-typha). |
+| `unhealthyPodEvictionPolicy` _[UnhealthyPodEvictionPolicyType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#unhealthypodevictionpolicytype-v1-policy)_ | (Optional) UnhealthyPodEvictionPolicy defines when unhealthy pods should be considered for eviction. Defaults to IfHealthyBudget (the Kubernetes default) when unset. See https://kubernetes.io/docs/tasks/run-application/configure-pdb/#unhealthy-pod-eviction-policy. |
+
+
 ### PolicyMode
 
 _Underlying type:_ _string_
@@ -5093,6 +4130,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the PolicyRecommendation Deployment container by name.<br />Supported values are: policy-recommendation-controller |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named PolicyRecommendation Deployment container's resources. If omitted, the PolicyRecommendation Deployment will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### PolicyRecommendationDeploymentInitContainer
@@ -5182,13 +4221,56 @@ _Appears in:_
 | `state` _string_ | State provides user-readable status. |
 
 
+### ProbeOverride
+
+
+
+ProbeOverride allows customization of probe timing parameters without
+changing the probe handler itself (which the operator controls).
+
+_Appears in:_
+- [APIServerDeploymentContainer](#apiserverdeploymentcontainer)
+- [CSINodeDriverDaemonSetContainer](#csinodedriverdaemonsetcontainer)
+- [CalicoKubeControllersDeploymentContainer](#calicokubecontrollersdeploymentcontainer)
+- [CalicoNodeDaemonSetContainer](#caliconodedaemonsetcontainer)
+- [CalicoNodeWindowsDaemonSetContainer](#caliconodewindowsdaemonsetcontainer)
+- [CalicoWebhooksDeploymentContainer](#calicowebhooksdeploymentcontainer)
+- [CalicoWindowsUpgradeDaemonSetContainer](#calicowindowsupgradedaemonsetcontainer)
+- [DashboardsJobContainer](#dashboardsjobcontainer)
+- [EGWDeploymentContainer](#egwdeploymentcontainer)
+- [EKSLogForwarderDeploymentContainer](#ekslogforwarderdeploymentcontainer)
+- [FluentdDaemonSetContainer](#fluentddaemonsetcontainer)
+- [GatewayCertgenJobContainer](#gatewaycertgenjobcontainer)
+- [GatewayControllerDeploymentContainer](#gatewaycontrollerdeploymentcontainer)
+- [GatewayDaemonSetContainer](#gatewaydaemonsetcontainer)
+- [GatewayDeploymentContainer](#gatewaydeploymentcontainer)
+- [GoldmaneDeploymentContainer](#goldmanedeploymentcontainer)
+- [GuardianDeploymentContainer](#guardiandeploymentcontainer)
+- [IntrusionDetectionControllerDeploymentContainer](#intrusiondetectioncontrollerdeploymentcontainer)
+- [KibanaContainer](#kibanacontainer)
+- [L7LogCollectorDaemonSetContainer](#l7logcollectordaemonsetcontainer)
+- [PacketCaptureAPIDeploymentContainer](#packetcaptureapideploymentcontainer)
+- [PolicyRecommendationDeploymentContainer](#policyrecommendationdeploymentcontainer)
+- [PrometheusContainer](#prometheuscontainer)
+- [TyphaDeploymentContainer](#typhadeploymentcontainer)
+- [WhiskerDeploymentContainer](#whiskerdeploymentcontainer)
+
+| Field | Description |
+| --- | --- |
+| `periodSeconds` _integer_ | (Optional) PeriodSeconds is how often (in seconds) to perform the probe. |
+| `timeoutSeconds` _integer_ | (Optional) TimeoutSeconds is the number of seconds after which the probe times out. |
+| `failureThreshold` _integer_ | (Optional) FailureThreshold is the minimum consecutive failures for the probe to be considered failed after having succeeded. |
+| `initialDelaySeconds` _integer_ | (Optional) InitialDelaySeconds is the number of seconds after the container starts before the probe is initiated. |
+
+
 ### ProductVariant
 
 _Underlying type:_ _string_
 
 ProductVariant represents the variant of the product.
 
-One of: Calico, CalicoEnterprise
+One of: Calico, CalicoEnterprise.
+TigeraSecureEnterprise is a deprecated alias for CalicoEnterprise.
 
 _Appears in:_
 - [InstallationSpec](#installationspec)
@@ -5223,6 +4305,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the Prometheus Deployment container by name.<br />Supported values are: authn-proxy |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named Prometheus container's resources. If omitted, the Prometheus will use its default value for this container's resources. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### PrometheusSpec
@@ -5237,29 +4321,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `commonPrometheusFields` _[CommonPrometheusFields](#commonprometheusfields)_ | CommonPrometheusFields are the options available to both the Prometheus server and agent. |
-
-
-### PromptType
-
-_Underlying type:_ _string_
-
-PromptType is a value that specifies whether the identity provider prompts the end user for re-authentication and
-consent.
-One of: None, Login, Consent, SelectAccount.
-
-_Validation:_
-- Enum: [None Login Consent SelectAccount]
-
-
-_Appears in:_
-- [AuthenticationOIDC](#authenticationoidc)
-
-| Value | Description |
-| --- | --- |
-| `None` | The identity provider must not display any authentication or consent user interface pages.  |
-| `Login` | The identity provider should prompt the end user for reauthentication.  |
-| `Consent` | The identity provider should prompt the end user for consent before returning information to the client.  |
-| `SelectAccount` | The identity provider should prompt the end user to select a user account.  |
 
 
 ### Provider
@@ -5302,25 +4363,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `logSeverity` _[LogSeverity](#logseverity)_ | (Optional) LogSeverity defines log level for QueryServer container. |
-
-
-### Retention
-
-
-
-Retention defines how long data is retained in an Elasticsearch cluster before it is cleared.
-
-_Appears in:_
-- [LogStorageSpec](#logstoragespec)
-
-| Field | Description |
-| --- | --- |
-| `flows` _integer_ | (Optional) Flows configures the retention period for flow logs, in days.  Logs written on a day that started at least this long ago are removed.  To keep logs for at least x days, use a retention period of x+1.<br />Default: 8 |
-| `auditReports` _integer_ | (Optional) AuditReports configures the retention period for audit logs, in days.  Logs written on a day that started at least this long ago are removed.  To keep logs for at least x days, use a retention period of x+1.<br />Default: 91 |
-| `snapshots` _integer_ | (Optional) Snapshots configures the retention period for snapshots, in days. Snapshots are periodic captures of resources which along with audit events are used to generate reports. Consult the Compliance Reporting documentation for more details on snapshots. Logs written on a day that started at least this long ago are removed.  To keep logs for at least x days, use a retention period of x+1.<br />Default: 91 |
-| `complianceReports` _integer_ | (Optional) ComplianceReports configures the retention period for compliance reports, in days. Reports are output from the analysis of the system state and audit events for compliance reporting. Consult the Compliance Reporting documentation for more details on reports. Logs written on a day that started at least this long ago are removed.  To keep logs for at least x days, use a retention period of x+1.<br />Default: 91 |
-| `dnsLogs` _integer_ | (Optional) DNSLogs configures the retention period for DNS logs, in days.  Logs written on a day that started at least this long ago are removed.  To keep logs for at least x days, use a retention period of x+1.<br />Default: 8 |
-| `bgpLogs` _integer_ | (Optional) BGPLogs configures the retention period for BGP logs, in days.  Logs written on a day that started at least this long ago are removed.  To keep logs for at least x days, use a retention period of x+1.<br />Default: 8 |
 
 
 ### S3StoreSpec
@@ -5497,20 +4539,6 @@ _Appears in:_
 | `logTypes` _[SyslogLogType](#sysloglogtype) array_ | If no values are provided, the list will be updated to include log types Audit, DNS and Flows.<br />Default: Audit, DNS, Flows |
 | `encryption` _[EncryptionOption](#encryptionoption)_ | (Optional) Encryption configures traffic encryption to the Syslog server.<br />Default: None |
 | `hostScope` _[HostScope](#hostscope)_ | (Optional) The set of hosts that will forward their logs to this store. |
-
-
-### TLS
-
-
-
-
-
-_Appears in:_
-- [ManagementClusterSpec](#managementclusterspec)
-
-| Field | Description |
-| --- | --- |
-| `secretName` _string_ | (Optional) SecretName indicates the name of the secret in the tigera-operator namespace that contains the private key and certificate that the management cluster uses when it listens for incoming connections. When set to tigera-management-cluster-connection voltron will use the same cert bundle which Guardian client certs are signed with. When set to manager-tls, voltron will use the same cert bundle which Manager UI is served with. This cert bundle must be a publicly signed cert created by the user. Note that Tigera Operator will generate a self-signed manager-tls cert if one does not exist, and use of that cert will result in Guardian being unable to verify Voltron's identity. If changed on a running cluster with connected managed clusters, all managed clusters will disconnect as they will no longer be able to verify Voltron's identity. To reconnect existing managed clusters, change the tls.ca of the  managed clusters' ManagementClusterConnection resource. One of: tigera-management-cluster-connection, manager-tls<br />Default: tigera-management-cluster-connection |
 
 
 ### TLSCipher
@@ -5732,6 +4760,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ | Name is an enum which identifies the typha Deployment container by name.<br />Supported values are: calico-typha |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named typha Deployment container's resources. If omitted, the typha Deployment will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence. |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### TyphaDeploymentInitContainer
@@ -5815,35 +4845,37 @@ _Appears in:_
 | `rollingUpdate` _[RollingUpdateDeployment](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#rollingupdatedeployment-v1-apps)_ | (Optional) Rolling update config params. Present only if DeploymentStrategyType = RollingUpdate. to be. |
 
 
-### UserMatch
+### WAFExtensionSpec
 
 
 
-UserMatch when the value of a UserAttribute and a GroupAttribute match, a user belongs to the group.
+WAFExtensionSpec configures the WAF Gateway API add-on.
 
 _Appears in:_
-- [GroupSearch](#groupsearch)
+- [GatewayAPIExtensions](#gatewayapiextensions)
 
 | Field | Description |
 | --- | --- |
-| `userAttribute` _string_ | The attribute of a user that links it to a group. |
-| `groupAttribute` _string_ | The attribute of a group that links it to a user. |
+| `state` _[WAFExtensionState](#wafextensionstate)_ | (Optional) State turns the WAF Gateway API add-on on or off.  Default (nil or "Disabled") means the operator does not render the WAF surface on calico-kube-controllers.  Set to "Enabled" to opt in. |
 
 
-### UserSearch
+### WAFExtensionState
 
+_Underlying type:_ _string_
 
+WAFExtensionState is the on/off enum for the WAF Gateway API add-on.
 
-User entry search configuration to match the credentials with a user.
+_Validation:_
+- Enum: [Enabled Disabled]
+
 
 _Appears in:_
-- [AuthenticationLDAP](#authenticationldap)
+- [WAFExtensionSpec](#wafextensionspec)
 
-| Field | Description |
+| Value | Description |
 | --- | --- |
-| `baseDN` _string_ | BaseDN to start the search from. For example "cn=users,dc=example,dc=com" |
-| `filter` _string_ | (Optional) Optional filter to apply when searching the directory. For example "(objectClass=person)" |
-| `nameAttribute` _string_ | (Optional) A mapping of the attribute that is used as the username. This attribute can be used to apply RBAC to a user.<br />Default: uid |
+| `Enabled` |  |
+| `Disabled` |  |
 
 
 ### WAFStatusType
@@ -5908,6 +4940,8 @@ _Appears in:_
 | --- | --- |
 | `name` _string_ |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional)  |
+| `readinessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) ReadinessProbe allows customization of the readiness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
+| `livenessProbe` _[ProbeOverride](#probeoverride)_ | (Optional) LivenessProbe allows customization of the liveness probe timing parameters. The probe handler is set by the operator and cannot be overridden. |
 
 
 ### WhiskerDeploymentPodSpec
@@ -6039,4 +5073,63 @@ _Appears in:_
 | `cniLogDir` _string_ | (Optional) CNILogDir is the path to the Calico CNI logs directory on Windows. |
 | `vxlanMACPrefix` _string_ | (Optional) VXLANMACPrefix is the prefix used when generating MAC addresses for virtual NICs |
 | `vxlanAdapter` _string_ | (Optional) VXLANAdapter is the Network Adapter used for VXLAN, leave blank for primary NIC |
+
+
+### ZTunnelDaemonset
+
+
+
+ZTunnelDaemonset defines customized settings for the ZTunnelDaemonset component.
+
+_Appears in:_
+- [IstioSpec](#istiospec)
+
+| Field | Description |
+| --- | --- |
+| `spec` _[ZTunnelDaemonsetSpec](#ztunneldaemonsetspec)_ | (Optional) Spec allows users to specify custom fields for the ZTunnel Daemonset. |
+
+
+### ZTunnelDaemonsetPodSpec
+
+
+
+ZTunnelDaemonsetPodSpec defines the pod spec for customizing the ZTunnel Daemonset.
+
+_Appears in:_
+- [ZTunnelDaemonsetSpecTemplate](#ztunneldaemonsetspectemplate)
+
+| Field | Description |
+| --- | --- |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#affinity-v1-core)_ | (Optional) Affinity specifies the affinity for the deployment. |
+| `nodeSelector` _object (keys:string, values:string)_ | (Optional) NodeSelector specifies the node affinity for the deployment. |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#resourcerequirements-v1-core)_ | (Optional) Resources specifies the compute resources required for the deployment. |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#toleration-v1-core) array_ | (Optional) Tolerations specifies the tolerations for the deployment. |
+
+
+### ZTunnelDaemonsetSpec
+
+
+
+ZTunnelDaemonsetSpec defines the spec for customizing the ZTunnel Daemonset.
+
+_Appears in:_
+- [ZTunnelDaemonset](#ztunneldaemonset)
+
+| Field | Description |
+| --- | --- |
+| `template` _[ZTunnelDaemonsetSpecTemplate](#ztunneldaemonsetspectemplate)_ | (Optional) Template allows users to specify custom fields for the ZTunnel Daemonset. |
+
+
+### ZTunnelDaemonsetSpecTemplate
+
+
+
+ZTunnelDaemonsetSpecTemplate defines the template for customizing the ZTunnel Daemonset.
+
+_Appears in:_
+- [ZTunnelDaemonsetSpec](#ztunneldaemonsetspec)
+
+| Field | Description |
+| --- | --- |
+| `spec` _[ZTunnelDaemonsetPodSpec](#ztunneldaemonsetpodspec)_ | (Optional) Spec allows users to specify custom fields for the ZTunnel Daemonset. |
 
