@@ -21,7 +21,7 @@ import Icmp from '@site/calico/_includes/content/_icmp.mdx';
 import Rule from '@site/calico/_includes/content/_rule.mdx';
 
 A staged network policy resource (`StagedNetworkPolicy`) represents an ordered set of rules which are applied
-to a collection of endpoints that match a [label selector](#selector). These rules are used to preview network behavior and do
+to a collection of endpoints that match a [label selector](#selectors). These rules are used to preview network behavior and do
 not enforce network traffic. For enforcing network traffic, see [network policy resource](networkpolicy.mdx).
 
 `StagedNetworkPolicy` is a namespaced resource. `StagedNetworkPolicy` in a specific namespace
@@ -83,14 +83,14 @@ spec:
 
 | Field                  | Description                                                                                                                                                                                                                          | Accepted Values           | Schema                | Default                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | --------------------- | --------------------------------------------- |
-| stagedAction           | Change that the staged policy previews. `Set` previews creating or updating the enforced policy with the same name. `Delete` previews deleting it, and requires all other spec fields except `tier` to be empty.                     | `Set`, `Delete`, `Learn`, `Ignore` | string                | `Set`                                         |
+| stagedAction           | How $[prodname] handles the staged policy. With `Set`, $[prodname] evaluates the policy as if it were enforced, alongside the enforced policies, and reports the result in the `policies.pending` field of [flow logs](../../observability/view-flow-logs.mdx). It doesn't replace an enforced policy that has the same name. With `Delete`, $[prodname] ignores the staged policy, and all other spec fields except `tier` must be empty. The API also accepts `Learn` and `Ignore`, which $[prodname] treats like `Set`. | `Set`, `Delete`, `Learn`, `Ignore` | string                | `Set`                                         |
 | order                  | Controls the order of precedence. $[prodname] applies the policy with the lowest value first.                                                                                                                                       |                           | float                 |                                               |
 | tier                   | Name of the [tier](tier.mdx) this policy belongs to.                                                                                                                                                                                 |                           | string                | `default`                                     |
-| selector               | Selects the endpoints to which this policy applies.                                                                                                                                                                                  |                           | [selector](#selector) | all()                                         |
+| selector               | Selects the endpoints to which this policy applies.                                                                                                                                                                                  |                           | [selector](#selectors) | all()                                         |
 | types                  | Applies the policy based on the direction of the traffic. To apply the policy to inbound traffic, set to `Ingress`. To apply the policy to outbound traffic, set to `Egress`. To apply the policy to both, set to `Ingress, Egress`. | `Ingress`, `Egress`       | List of strings       | Depends on presence of ingress/egress rules\* |
 | ingress                | Ordered list of ingress rules applied by policy.                                                                                                                                                                                     |                           | List of [Rule](#rule) |                                               |
 | egress                 | Ordered list of egress rules applied by this policy.                                                                                                                                                                                 |                           | List of [Rule](#rule) |                                               |
-| serviceAccountSelector | Selects the service account(s) to which this policy applies. Select a specific service account by name using the `projectcalico.org/name` label.                                                                                     |                           | [selector](#selector) | all()                                         |
+| serviceAccountSelector | Selects the service account(s) to which this policy applies. Select a specific service account by name using the `projectcalico.org/name` label.                                                                                     |                           | [selector](#selectors) | all()                                         |
 | performanceHints       | Contains a list of hints to Calico's policy engine to help process the policy more efficiently.  Hints never change the enforcement behaviour of the policy.  The available hints are described [below](#performance-hints).                                                                         | `AssumeNeededOnEveryNode` | List of strings       |                                               |
 
 \* If `types` has no value, $[prodname] defaults as follows.
@@ -114,7 +114,7 @@ spec:
 
 <Entityrule global='false' />
 
-### Selector
+### Selectors
 
 <Selectors />
 
