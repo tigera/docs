@@ -72,6 +72,9 @@ update_felix_config() {
     "$(dirname "${BASH_SOURCE[0]}")/patch-felix-config-overrides.sh" "$tmpfile"
 
     mv "$tmpfile" "$LOCAL_PATH"
+
+    # Render any group the new JSON adds on the pages that list groups by name.
+    node "$(dirname "${BASH_SOURCE[0]}")/sync-felix-config-groups.mjs" "${LOCAL_PATH%%/_includes/*}"
     echo -e "Finished processing ${VERSION}.\n\n"
 }
 
