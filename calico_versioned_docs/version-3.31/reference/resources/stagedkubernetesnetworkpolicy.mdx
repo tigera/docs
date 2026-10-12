@@ -61,5 +61,22 @@ spec:
 
 ## Definition
 
-See the [Kubernetes NetworkPolicy documentation](https://v1-21.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#networkpolicyspec-v1-networking-k8s-io)
-for more information.
+### Metadata
+
+| Field     | Description                                                        | Accepted Values                                     | Schema | Default   |
+| --------- | ------------------------------------------------------------------ | --------------------------------------------------- | ------ | --------- |
+| name      | The name of the staged Kubernetes network policy. Required.        | Alphanumeric string with optional `.`, `_`, or `-`. | string |           |
+| namespace | Namespace provides an additional qualification to a resource name. |                                                     | string | "default" |
+
+### Spec
+
+| Field        | Description                                                                                                                                                                                                  | Accepted Values                    | Schema                                                                                                                                        | Default                             |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| stagedAction | Change that the staged policy previews. `Set` previews creating or updating the Kubernetes network policy with the same name. `Delete` previews deleting it, and requires all other spec fields to be empty. | `Set`, `Delete`, `Learn`, `Ignore` | string                                                                                                                                        | `Set`                               |
+| podSelector  | Selects the pods in the policy's namespace to which this policy applies. An empty selector selects all pods in the namespace.                                                                                |                                    | [LabelSelector](https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/label-selector/)                                       |                                     |
+| ingress      | List of ingress rules applied to the selected pods. If the policy applies to ingress traffic and this list is empty, the policy allows no ingress traffic.                                                   |                                    | List of [NetworkPolicyIngressRule](https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/network-policy-v1/#NetworkPolicySpec) |                                     |
+| egress       | List of egress rules applied to the selected pods. If the policy applies to egress traffic and this list is empty, the policy allows no egress traffic.                                                      |                                    | List of [NetworkPolicyEgressRule](https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/network-policy-v1/#NetworkPolicySpec)  |                                     |
+| policyTypes  | Traffic directions the policy applies to. If not set, the policy applies to `Ingress`, and also to `Egress` if it has egress rules. To write an egress-only policy, set this to `Egress`.                    | `Ingress`, `Egress`                | List of strings                                                                                                                               | Depends on presence of egress rules |
+
+The ingress and egress rules use the same schema as Kubernetes `NetworkPolicy`.
+For the rule fields, see the [Kubernetes NetworkPolicy API reference](https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/network-policy-v1/).
