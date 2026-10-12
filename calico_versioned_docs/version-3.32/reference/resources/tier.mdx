@@ -50,7 +50,7 @@ spec:
 
 | Field | Description           | Accepted Values | Schema |
 | ----- | --------------------- | --------------- | ------ |
-| name  | The name of the tier. |                 | string |
+| name  | The name of the tier. | Lowercase alphanumeric characters and `-`. Must start and end with an alphanumeric character. No dots. Up to 63 characters. | string |
 
 ### Spec
 
@@ -59,4 +59,11 @@ spec:
 | order         | (Optional) Indicates priority of this Tier, with lower order taking precedence. No value indicates highest order (lowest precedence) |                 | float  | `nil` (highest order) |
 | defaultAction | (Optional) Indicates the default action, when this Tier applies to an endpoint, but takes no action on the packet                    | `Deny`, `Pass`  | string | `Deny`                |
 
-All Policies created by $[prodname] orchestrator integrations are created in the default (last) Tier.
+$[prodname] puts Kubernetes network policies in the `default` tier, which has order 1,000,000.
+It puts Kubernetes cluster network policies in the `kube-admin` tier (order 1,000) or the `kube-baseline` tier (order 10,000,000).
+
+### Status
+
+| Field      | Description | Schema |
+| ---------- | ----------- | ------ |
+| conditions | Read-only. Conditions that $[prodname] sets on the tier when you use [native v3 CRDs](../../operations/native-v3-crds.mdx). If you delete a tier that still contains policies, the tier isn't removed until you delete those policies. Until then, the `Ready` condition is `False` with the reason `Terminating`. | List of Kubernetes conditions |
