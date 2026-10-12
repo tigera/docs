@@ -14,6 +14,11 @@ match the name configured in the Node resource.
 By default, starting a `$[nodecontainer]` instance will automatically create a node resource
 using the `hostname` of the compute host.
 
+With the Kubernetes datastore, $[prodname] generates a node resource for each Kubernetes node, and you can't create or delete node resources yourself.
+
+The $[prodname] node resource isn't available through `kubectl`, which returns Kubernetes nodes instead.
+Use [`calicoctl`](../calicoctl/overview.mdx) to view and update them, for example `calicoctl get node <name> -o yaml`.
+
 ## Sample YAML
 
 ```yaml
@@ -48,6 +53,8 @@ spec:
 | vxlanTunnelMACAddrV6 | MAC address of the IPv6 VXLAN tunnel. This is system configured and should not be updated manually.                               |                 | string                       |
 | orchRefs             | Correlates this node to a node in another orchestrator.                                                                           |                 | list of [OrchRefs](#orchref) |
 | wireguard            | WireGuard configuration for this node. This is applicable only if WireGuard is enabled in [Felix Configuration](felixconfig.mdx). |                 | [WireGuard](#wireguard)      |
+| addresses            | Addresses at which this node can be reached. This is system configured and should not be updated manually.                       |                 | list of [NodeAddress](#nodeaddress) |
+| interfaces           | Network interfaces on this node and their addresses. This is system configured and should not be updated manually.               |                 | list of [NodeInterface](#nodeinterface) |
 
 ### OrchRef
 
@@ -55,6 +62,20 @@ spec:
 | ------------ | ------------------------------------------------ | --------------- | ------ | ------- |
 | nodeName     | Name of this node according to the orchestrator. |                 | string |
 | orchestrator | Name of the orchestrator.                        | k8s             | string |
+
+### NodeAddress
+
+| Field   | Description                                    | Accepted Values                            | Schema | Default |
+| ------- | ---------------------------------------------- | ------------------------------------------ | ------ | ------- |
+| address | IP address or CIDR of the node. Required.      |                                            | string |
+| type    | The type of address.                           | `CalicoNodeIP`, `InternalIP`, `ExternalIP` | string |
+
+### NodeInterface
+
+| Field     | Description                              | Accepted Values | Schema          | Default |
+| --------- | ---------------------------------------- | --------------- | --------------- | ------- |
+| name      | Name of the interface.                   |                 | string          |
+| addresses | IP addresses assigned to the interface.  |                 | list of strings |
 
 ### BGP
 
@@ -70,5 +91,15 @@ spec:
 
 | Field                | Description                                                                               | Accepted Values | Schema | Default |
 | -------------------- | ----------------------------------------------------------------------------------------- | --------------- | ------ | ------- |
-| interfaceIPv4Address | The IP address and subnet for the IPv4 WireGuard interface created by Felix on this node. | Optional        | string |
-| interfaceIPv6Address | The IP address and subnet for the IPv6 WireGuard interface created by Felix on this node. | Optional        | string |
+| interfaceIPv4Address | The IP address for the IPv4 WireGuard interface created by Felix on this node.            | Optional        | string |
+| interfaceIPv6Address | The IP address for the IPv6 WireGuard interface created by Felix on this node.            | Optional        | string |
+
+### Status
+
+The status fields are system configured and should not be updated manually.
+
+| Field                | Description                                                                    | Accepted Values | Schema          | Default |
+| -------------------- | ------------------------------------------------------------------------------ | --------------- | --------------- | ------- |
+| wireguardPublicKey   | The base64-encoded public key of the IPv4 WireGuard interface on this node.    |                 | string          |
+| wireguardPublicKeyV6 | The base64-encoded public key of the IPv6 WireGuard interface on this node.    |                 | string          |
+| podCIDRs             | The pod CIDRs assigned to this node, copied from the Kubernetes node resource. |                 | list of strings |
