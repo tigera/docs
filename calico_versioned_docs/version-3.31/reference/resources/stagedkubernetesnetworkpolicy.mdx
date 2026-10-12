@@ -6,9 +6,9 @@ description: API for this resource.
 
 A staged Kubernetes network policy resource (`StagedKubernetesNetworkPolicy`) represents a staged version
 of [Kubernetes network policy](https://kubernetes.io/docs/concepts/services-networking/network-policies).
-This is used to preview network behavior before actually enforcing the network policy. Once persisted, this
-will create a Kubernetes network policy backed by a $[prodname]
-[network policy](networkpolicy.mdx).
+This is used to preview network behavior before actually enforcing the network policy.
+Creating it doesn't create or change any Kubernetes network policy.
+With the default `stagedAction` of `Set`, $[prodname] evaluates it as if it were enforced and reports the result in [flow logs](../../observability/view-flow-logs.mdx).
 
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
 may be used to specify the resource type on the CLI:
@@ -65,18 +65,18 @@ spec:
 
 | Field     | Description                                                        | Accepted Values                                     | Schema | Default   |
 | --------- | ------------------------------------------------------------------ | --------------------------------------------------- | ------ | --------- |
-| name      | The name of the staged Kubernetes network policy. Required.        | Alphanumeric string with optional `.`, `_`, or `-`. | string |           |
-| namespace | Namespace provides an additional qualification to a resource name. |                                                     | string | "default" |
+| name      | The name of the staged Kubernetes network policy. Required.        | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string |           |
+| namespace | Namespace provides an additional qualification to a resource name. |                                                     | string | The namespace of the current context |
 
 ### Spec
 
 | Field        | Description                                                                                                                                                                                                  | Accepted Values                    | Schema                                                                                                                                        | Default                             |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| stagedAction | Change that the staged policy previews. `Set` previews creating or updating the Kubernetes network policy with the same name. `Delete` previews deleting it, and requires all other spec fields to be empty. | `Set`, `Delete`, `Learn`, `Ignore` | string                                                                                                                                        | `Set`                               |
+| stagedAction | How $[prodname] handles the staged policy. With `Set`, $[prodname] evaluates the policy as if it were enforced, alongside the enforced policies, and reports the result in the `policies.pending` field of [flow logs](../../observability/view-flow-logs.mdx). It doesn't replace a Kubernetes network policy that has the same name. With `Delete`, $[prodname] ignores the staged policy, and all other spec fields must be empty. The API also accepts `Learn` and `Ignore`, which $[prodname] treats like `Set`. | `Set`, `Delete`, `Learn`, `Ignore` | string                                                                                                                                        | `Set`                               |
 | podSelector  | Selects the pods in the policy's namespace to which this policy applies. An empty selector selects all pods in the namespace.                                                                                |                                    | [LabelSelector](https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/label-selector/)                                       |                                     |
-| ingress      | List of ingress rules applied to the selected pods. If the policy applies to ingress traffic and this list is empty, the policy allows no ingress traffic.                                                   |                                    | List of [NetworkPolicyIngressRule](https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/network-policy-v1/#NetworkPolicySpec) |                                     |
-| egress       | List of egress rules applied to the selected pods. If the policy applies to egress traffic and this list is empty, the policy allows no egress traffic.                                                      |                                    | List of [NetworkPolicyEgressRule](https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/network-policy-v1/#NetworkPolicySpec)  |                                     |
-| policyTypes  | Traffic directions the policy applies to. If not set, the policy applies to `Ingress`, and also to `Egress` if it has egress rules. To write an egress-only policy, set this to `Egress`.                    | `Ingress`, `Egress`                | List of strings                                                                                                                               | Depends on presence of egress rules |
+| ingress      | List of ingress rules applied to the selected pods. If the policy applies to ingress traffic and this list is empty, the policy allows no ingress traffic.                                                   |                                    | List of [NetworkPolicyIngressRule](https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/network-policy-v1/#NetworkPolicyIngressRule) |                                     |
+| egress       | List of egress rules applied to the selected pods. If the policy applies to egress traffic and this list is empty, the policy allows no egress traffic.                                                      |                                    | List of [NetworkPolicyEgressRule](https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/network-policy-v1/#NetworkPolicyEgressRule)  |                                     |
+| policyTypes  | Traffic directions the policy applies to. If not set, $[prodname] applies the staged policy to ingress only, even if it has egress rules. To preview egress rules, include `Egress`. | `Ingress`, `Egress`                | List of strings                                                                                                                               | `Ingress`                           |
 
 The ingress and egress rules use the same schema as Kubernetes `NetworkPolicy`.
 For the rule fields, see the [Kubernetes NetworkPolicy API reference](https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/network-policy-v1/).
