@@ -347,19 +347,12 @@ function NetworkRequirementsEnt(props) {
           </tr>
           <tr className='odd'>
             <td>
-              <strong>Compliance</strong>
-            </td>
-            <td>{prodname} compliance</td>
-            <td>TCP 5443 (default)</td>
-          </tr>
-          <tr className='even'>
-            <td>
               <strong>Multi-cluster management</strong>
             </td>
             <td>Additional port required for Manager UI</td>
             <td>TCP 9449</td>
           </tr>
-          <tr className='odd'>
+          <tr className='even'>
             <td>
               <strong>Egress gateway</strong>
             </td>
