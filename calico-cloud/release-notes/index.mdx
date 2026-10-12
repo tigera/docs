@@ -8,6 +8,82 @@ import IconUser from '/img/icons/user-icon.svg';
 
 # Calico Cloud release notes
 
+<h2 id="24.0.0">October 13, 2026 (version 24.0.0)</h2>
+
+### New features and enhancements
+
+#### Policy editor improvements
+
+The policy editor in the web console has a redesigned layout and a new YAML view.
+You can switch between the form and the YAML for a policy while you create or edit it.
+
+For more information, see [Network policy tutorial](../network-policy/policy-tiers/policy-tutorial-ui.mdx).
+
+#### Gateway WAF for routes and namespaces (tech preview)
+
+You can now apply web application firewall (WAF) protection to individual routes and namespaces behind Calico Ingress Gateway, instead of to the whole gateway.
+Platform teams set a global baseline, application teams tune it for their own namespaces and routes, and you can add custom rules as plugins.
+
+For more information, see [Gateway WAF](../threat/gateway-waf/overview.mdx).
+
+#### L7 logs from the eBPF collector
+
+$[prodname] can now collect L7 logs with an eBPF collector that captures HTTP and TLS metadata in the kernel, with no proxy or sidecar in the data path.
+You enable it once for the cluster, and it works with any data plane.
+The Envoy collector is deprecated.
+
+For more information, see [L7 logs](../observability/elastic/l7/overview.mdx).
+
+#### Operator metrics
+
+The Tigera Operator now exposes Prometheus metrics for component status and TLS certificate expiry.
+You can use them to alert on degraded components and on TLS certificates that are about to expire.
+
+For more information, see [Operator metrics](../operations/monitor/metrics/operator-metrics.mdx).
+
+#### Selector-scoped Felix configuration (tech preview)
+
+You can now apply a `FelixConfiguration` resource to a set of nodes that you choose with a label selector.
+
+For more information, see [Felix configuration](../reference/resources/felixconfig.mdx#selector-scoped-configuration).
+
+#### Versioned Helm charts
+
+The $[prodname] Helm charts are now released with every $[prodname] release, and you can install a chart by its release version, such as `v24.0.0`.
+You still need to set `installer.calicoCloudVersion` when you install with Helm.
+
+### Deprecated and removed features
+
+* Compliance reporting is removed in this release.
+  Compliance reports, the `GlobalReport` resource, and the compliance pages of the web console are no longer available.
+* $[prodname] 21 is no longer supported.
+
+### Updating
+
+* ***Potential breaking change:*** Calico Ingress Gateway now runs each gateway's proxy in the same namespace as its `Gateway` resource, and the gateway controller moves to the `calico-system` namespace.
+  When you upgrade, existing proxies move out of the `tigera-gateway` namespace into the namespace of each `Gateway`.
+  Anything that refers to `tigera-gateway` must move with them, including network policy, monitoring, RBAC, and external DNS.
+  Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway gets its own load balancer.
+  Migrate in this order:
+  1. Before you upgrade, if you use a global default deny policy, create a network policy in each `Gateway` namespace that allows the proxy pods, so they can start as soon as they move.
+     For the policy, see [Create an ingress gateway](../networking/ingress-gateway/create-ingress-gateway.mdx).
+  2. Upgrade your cluster.
+     For more information, see [Upgrade Calico Cloud](../get-started/upgrade-cluster.mdx).
+  3. After the upgrade, point monitoring, RBAC, and external DNS at each `Gateway` namespace instead of `tigera-gateway`.
+     If you used merged gateways, plan for one load balancer, DNS record, and certificate for each gateway.
+* If you install from a private registry with the latest Helm chart, add the `cc-operator` image that matches the version you're installing or upgrading to into your registry.
+  For more information, see [Set up a private registry](../get-started/setup-private-registry.mdx).
+
+### Bug fixes
+
+* Fixed the default `cc-operator` image path in the Helm chart when you configure a private registry.
+  Previously, if you didn't set `imagePath`, the chart used `calico-cloud-public` as the image path.
+  If you changed your private registry to put `cc-operator` under a `calico-cloud-public` path to work around this, update your registry to match the image path you set.
+
+### Known issues
+
+* $[prodname] 24.0.0 doesn't support installation on Kubernetes 1.36 with the v3 CRDs.
+
 <h2 id="23.0.2">August 28, 2026 (versions 23.0.2 and 22.5.1)</h2>
 
 Versions 23.0.2 and 22.5.1 are patch releases that bring the same fix to $[prodname] 23 and 22.
