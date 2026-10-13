@@ -240,15 +240,38 @@ Setting these clusters up is covered in
 [Configure egress gateways, Azure user-defined routes](egress-gateway-azure-udr.mdx). This section
 covers what each symptom tells you.
 
-**No route appears, and Azure reports no error.** Read the kube-controllers log with debug logging
-enabled. Each sweep reports how many route tables are visible, how many are managed, and how many
-are selected, which tells you whether to suspect the role assignment, the management marker, or the
-routing tags. A visible count of zero means the identity cannot read the table at all.
+**No route appears, and Azure reports no error.** Read the kube-controllers log. Each time it reads
+your route tables, which is at least every five minutes, kube-controllers logs how many tables are
+`visible`, how many are `managed`, and how many are `selected`. The counts tell you whether to suspect
+the role assignment, the management marker, or the routing tags. They are logged at the default
+`Info` level, so you do not need to enable debug logging. A visible count of zero means the identity
+cannot read the table at all.
+
+```bash
+kubectl logs -n calico-system deployment/calico-kube-controllers | grep 'visible='
+```
+
+**Nothing changes after you fix the identity's permissions.** A running kube-controllers can keep
+using the identity's old permissions until you restart it. Wait up to 10 minutes for Azure to apply
+your change, and then restart kube-controllers:
+
+```bash
+kubectl rollout restart deployment/calico-kube-controllers -n calico-system
+```
+
+**Every sync fails with `AuthorizationFailed` for `Microsoft.Network/routeTables/routes/read`.** The
+identity's role lacks that action. Azure applies the routes that $[prodname] writes, but $[prodname]
+cannot read them back, so it reports each write as failed, and it does not remove the routes of
+gateway pods that have gone. Add the action to the role, and then restart kube-controllers.
 
 **A table you tagged behaves as though it were unmarked.** The management marker's value must be
 `true`; any other value counts as unmarked, and $[prodname] logs the reason rather than ignoring the
 table silently. Tag keys are matched case-insensitively and values exactly, so a mismatch is in the
 value or the key spelling, never the key's case.
+
+**Connections to a consumer in a peered VNet time out.** Check that the peering from the consumer
+VNet to the cluster VNet allows forwarded traffic. Without it, Azure drops the traffic from an egress gateway as
+it enters the consumer VNet, because its source address is outside the cluster VNet.
 
 **Gateway pods are `NotReady`.** The gateway's health probes run over the egress path, so a node
 that has stopped forwarding fails them. Check NIC IP forwarding on that node; an AKS node image
