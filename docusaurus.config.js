@@ -512,14 +512,14 @@ export default async function createAsyncConfig() {
           routeBasePath: 'calico-cloud',
           editCurrentVersion: true,
           //To see builds for unreleased versions, remove comments in the next line.
-          onlyIncludeVersions: [...nextVersion, '23-2'],
+          onlyIncludeVersions: [...nextVersion, '24-1'],
           versions: {
             current: {
               label: 'Next',
               path: 'next',
               banner: 'unreleased',
             },
-            '23-2': {
+            '24-1': {
               path: '/',
               banner: 'none',
             },
@@ -578,7 +578,7 @@ export default async function createAsyncConfig() {
           // Docusaurus version names are navigation labels. Where a product has a
           // user-facing version that differs, name the variables.js key holding it
           // so frontmatter reports something a reader can corroborate. Calico Cloud's
-          // Docusaurus label is "23-2", which appears in no URL and no dropdown.
+          // Docusaurus label is "24-1", which appears in no URL and no dropdown.
           versionVariables: {
             'calico-cloud': 'cloudUserVersion',
           },
