@@ -58,13 +58,13 @@ function NodeRequirementsEnt(props) {
             <li>
               <p>If your node has RHEL 8 installed, then run the following command:</p>
               <CodeBlock language="bash">
-                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el8.noarch.rpm`}
+                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.1-1.el8.noarch.rpm`}
               </CodeBlock>
             </li>
             <li>
               <p>If your node has RHEL 9 installed, then run the following command:</p>
               <CodeBlock language="bash">
-                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.0-1.el9.noarch.rpm`}
+                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.1-1.el9.noarch.rpm`}
               </CodeBlock>
             </li>
           </ul>
