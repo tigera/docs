@@ -66,6 +66,17 @@ means that a route is never written to a table that $[prodname] is not allowed t
 If an `EgressGateway` has no `spec.azure` section, its addresses are not routed in Azure. If its
 tags match no table, no routes are written.
 
+### Which pods get a route
+
+$[prodname] writes a route for each pod that carries the `operator.tigera.io/egress-gateway` label
+and is in the same namespace as the `EgressGateway` that the label names. The Tigera operator sets
+this label on every egress gateway pod that it creates. Host-networked pods are skipped, because
+their address is the node's own.
+
+$[prodname] does not check that the pod's address comes from the gateway's IP pools. Anyone who can
+create or change pods in the gateway's namespace can therefore make Azure route traffic for a pod
+address of their choosing to the node that runs the pod.
+
 ## Before you begin
 
 **Required**
@@ -73,8 +84,12 @@ tags match no table, no routes are written.
 - $[prodname] CNI and IPAM
 - An egress gateway deployment, as described in
   [Configure egress gateways, on-premises](egress-gateway-on-prem.mdx)
-- Permission in Azure to create a managed identity or service principal, assign it a role, and tag
-  route tables
+- An Azure identity for $[prodname]: a workload identity (recommended, because it stores no secret
+  in the cluster) or a service principal. For a workload identity, enable the OIDC issuer and
+  workload identity on the cluster, and add a federated credential for the cluster's issuer with the
+  subject `system:serviceaccount:calico-system:calico-kube-controllers` and the audience
+  `api://AzureADTokenExchange`.
+- Permission in Azure to create a custom role, assign it to the identity, and tag route tables
 
 **Not supported**
 
@@ -87,18 +102,16 @@ VNet to route.
 
 ## How to
 
-- [Create an Azure identity and grant it access to your route tables](#create-an-azure-identity-and-grant-it-access-to-your-route-tables)
+- [Grant the identity access to your route tables](#grant-the-identity-access-to-your-route-tables)
 - [Create the AzureIdentity resource](#create-the-azureidentity-resource)
 - [Prepare the Azure network](#prepare-the-azure-network)
 - [Provision an egress IP pool](#provision-an-egress-ip-pool)
 - [Deploy egress gateways with Azure routing](#deploy-egress-gateways-with-azure-routing)
 - [Verify the routes](#verify-the-routes)
 - [Remove Azure routing](#remove-azure-routing)
+- [Remove leftover routes](#remove-leftover-routes)
 
-### Create an Azure identity and grant it access to your route tables
-
-$[prodname] uses one identity for the whole cluster. Use workload identity if you can, because it
-stores no secret in the cluster.
+### Grant the identity access to your route tables
 
 Create a custom role with only the actions needed to manage route entries:
 
@@ -118,23 +131,24 @@ Create a custom role with only the actions needed to manage route entries:
 The role does not include `Microsoft.Network/routeTables/write`, because $[prodname] writes route
 entries and never creates, changes, or deletes a route table.
 
-You can assign the role at any scope: a single route table, a resource group, or the whole
-subscription. A broader assignment does not give $[prodname] more to change, because it writes only
-to tables that have the `calico-egw-management` marker. Assigning the role on each table is the most
-restrictive option, but it is not required. Azure returns only the route tables that the identity
-can read, so if a table has no role assignment, $[prodname] cannot see it, whatever tags it has.
+The role needs all four of its actions. Without `Microsoft.Network/routeTables/routes/read`, Azure
+accepts each route that $[prodname] writes, but $[prodname] cannot read the route back, so it
+reports the write as failed. Its syncs then fail, and it does not remove the routes of gateway pods
+that have gone.
 
-For workload identity, add a federated credential whose subject is the kube-controllers service
-account:
-
-```
-system:serviceaccount:calico-system:calico-kube-controllers
-```
+Assign the role to the identity. You can assign it at any scope: a single route table, a resource
+group, or the whole subscription. A broader assignment does not give $[prodname] more to change,
+because it writes only to tables that have the `calico-egw-management` marker. Assigning the role on
+each table is the most restrictive option, but then each table that you add later needs a new
+assignment and a kube-controllers restart. Azure returns only the route tables that the identity can
+read, so if a table has no role assignment, $[prodname] cannot see it, whatever tags it has.
 
 :::note
 
-A new role assignment can take several minutes to take effect. Until it does, $[prodname] cannot see
-the table and does not write any routes. This looks the same as a missing role assignment.
+Azure can take up to 10 minutes to apply a new role assignment. Until it does, $[prodname] cannot
+see the table and does not write any routes. This looks the same as a missing role assignment. If
+no routes appear once that time has passed, see
+[Troubleshoot egress gateways](troubleshoot.mdx#routes-are-missing-or-traffic-is-dropped-user-defined-route-setups).
 
 :::
 
@@ -194,6 +208,7 @@ Where:
   include the other one.
 - To rotate a service principal credential, update the secret. The operator then restarts
   kube-controllers so that it picks up the new value.
+- A change to the `AzureIdentity` restarts kube-controllers in the same way.
 
 ### Prepare the Azure network
 
@@ -202,26 +217,37 @@ For each consumer subnet or VNet, you need to set up four things:
 **A route table, associated with the consumer subnet.** Associate the table with the subnet that the
 traffic comes *from*, not with the subnet that your gateway nodes are in. The gateway node is the
 virtual appliance for the route, and Azure warns that applying a route table to an appliance's own
-subnet can send traffic back to it. Add the management marker so that $[prodname] can manage the
-table, and add a routing tag for the gateways that use it:
-
-```bash
-az network route-table update \
-  --resource-group <resource-group> \
-  --name <route-table> \
-  --set tags."calico-egw-management"=true tags."calico-egw"=blue
-```
+subnet can send traffic back to it. Tag the table with the management marker, `calico-egw-management`
+set to `true`, so that $[prodname] can manage it. Any other value counts as no marker. Then add a
+routing tag for the gateways that use the table, such as `calico-egw` set to `blue`.
 
 **NIC IP forwarding**, on every node that can host an egress gateway. Without it, the node drops
 packets for the egress gateway address instead of forwarding them. Run egress gateways on a
-dedicated node pool so that only those nodes need it.
+dedicated node pool so that only those nodes need it. On AKS, enable IP forwarding in the node
+pool's virtual machine scale set, which is in the cluster's node resource group, and apply the
+change to the nodes that already exist as well as to new ones.
 
-**Network security group rules** that allow the egress pool CIDR in both directions. The
-`VirtualNetwork` service tag does not cover an address outside the VNet address space, so the egress
-pool needs its own rules.
+**Network security group rules** that allow traffic to and from the egress pool CIDR, on both sides
+of the route:
+
+| Network security group for | Direction | Source | Destination |
+| --- | --- | --- | --- |
+| Your gateway nodes | Outbound | The egress pool CIDR | `VirtualNetwork` |
+| Your gateway nodes | Inbound | `VirtualNetwork` | The egress pool CIDR |
+| The consumer subnet or VM | Inbound | The egress pool CIDR | `VirtualNetwork` |
+| The consumer subnet or VM | Outbound | `VirtualNetwork` | The egress pool CIDR |
+
+Azure's default rules allow traffic between addresses in the `VirtualNetwork` service tag, and you
+cannot rely on that tag to include an address outside your VNet address space, so the egress pool
+needs its own rules. On AKS, the network security group for the gateway nodes is in the cluster's
+node resource group.
 
 **VNet peering** between any consumer VNet and the cluster VNet, so that the next-hop node address
-resolves. Use global peering if the VNets are in different regions.
+resolves. Use global peering if the VNets are in different regions. The peering from the consumer
+VNet to the cluster VNet must allow forwarded traffic. Traffic from an egress gateway has a source
+address outside the cluster VNet, so Azure treats it as forwarded, and drops it as it enters the
+consumer VNet unless that peering allows it. The peering from the cluster VNet to the consumer VNet
+does not need this setting.
 
 ### Provision an egress IP pool
 
@@ -253,7 +279,15 @@ Where:
 ### Deploy egress gateways with Azure routing
 
 Add a `spec.azure` section to the `EgressGateway` naming the tags of the route tables its addresses
-belong in:
+belong in. To add it to a gateway that already exists, patch the gateway rather than applying a new
+manifest, so that its other settings, including its pod labels, stay as they are:
+
+```bash
+kubectl patch egressgateway egress-gateway-blue -n calico-egress --type merge \
+  -p '{"spec": {"azure": {"routeTables": {"tags": [{"key": "calico-egw", "value": "blue"}]}}}}'
+```
+
+For a new gateway:
 
 ```bash
 kubectl apply -f - <<EOF
@@ -271,6 +305,10 @@ spec:
       tags:
         - key: calico-egw
           value: blue
+  template:
+    metadata:
+      labels:
+        egress-code: blue
 EOF
 ```
 
@@ -280,34 +318,32 @@ Where:
   `value`, so a general key such as `env` cannot select tables that you did not intend.
 - Several gateways can write to one table, and one gateway can write to several tables. A table
   selected by more than one gateway holds the routes for all of them.
-- $[prodname] routes the addresses from the IP pools that this same resource names in
-  `spec.ipPools`.
+- $[prodname] routes the address of each pod that this `EgressGateway` runs. The addresses come from
+  the IP pools named in `spec.ipPools`.
+
+Run the gateways in a namespace that only cluster administrators can create pods in, as described in
+[Which pods get a route](#which-pods-get-a-route).
 
 Then annotate the namespaces or pods that should use the gateway, exactly as for any other egress
-gateway deployment. See
+gateway deployment, with a selector such as `egress-code == 'blue'`. See
 [Configure namespaces and pods to use egress gateways](egress-gateway-azure.mdx#configure-namespaces-and-pods-to-use-egress-gateways).
 
 ### Verify the routes
 
-Check that the gateway pods are running and that a route exists for each of their addresses:
-
-```bash
-az network route-table route list \
-  --resource-group <resource-group> \
-  --route-table-name <route-table> \
-  --output table
-```
+Check that the gateway pods are running, and that each route table that the gateway selects has a
+route for each of their addresses.
 
 $[prodname] names its routes `calico-egw-<cluster>-<address>`, where `<address>` is the egress
 gateway address with `.` replaced by `-`. The `<cluster>` part identifies the cluster that owns the
-route, which matters when two clusters share a route table. To get your cluster's identifier:
+route, which matters when two clusters share a route table. It is the first 16 hexadecimal
+characters of the SHA-256 hash of the cluster's GUID. To get your cluster's identifier:
 
 ```bash
-kubectl get clusterinformation default -o jsonpath='{.spec.clusterGUID}'
+kubectl get clusterinformation default -o jsonpath='{.spec.clusterGUID}' | sha256sum | cut -c1-16
 ```
 
-The first eight characters are the identifier. The kube-controllers log prints the full prefix when
-the controller starts.
+The kube-controllers log also shows the full prefix, in the `ourRoutes` field of the line it logs
+each time it reads your route tables.
 
 Then test the data path from a consumer **outside** the cluster, such as a VM in a peered VNet.
 Testing from a cluster node does not work, because the node reaches the egress gateway address over
@@ -315,21 +351,42 @@ the cluster overlay and never uses the UDR.
 
 :::note
 
-Allow time for both Azure and $[prodname]. A role assignment can take several minutes to take
-effect, and the controller re-reads your route tables every five minutes, so a newly tagged table
-can take upwards of ten minutes to receive routes.
+The controller re-reads your route tables every five minutes, so a newly tagged table can take up to
+five minutes to receive routes. If routes are still missing after that, see
+[Troubleshoot egress gateways](troubleshoot.mdx#routes-are-missing-or-traffic-is-dropped-user-defined-route-setups).
 
 :::
 
 ### Remove Azure routing
 
-Delete the `EgressGateway`. It has a finalizer, so the resource stays in `Terminating` until
-$[prodname] has removed its routes from Azure. If the cleanup cannot finish, the resource stays in
-`Terminating` instead of failing silently.
+To stop routing a gateway's addresses, remove the `spec.azure` section from its `EgressGateway`, or
+delete the `EgressGateway`. $[prodname] then removes that gateway's routes from every table that it
+manages. Check that the route tables no longer hold routes for the gateway's addresses.
 
-Leave the management marker on the table until you have confirmed that the routes are gone. If you
-remove the marker first, $[prodname] no longer manages the table, so any routes left in it stay
-there and nothing removes them later. You then have to delete them yourself.
+If a route is still there, look for the error in the kube-controllers log. $[prodname] tries again at
+every sync, so once you fix the cause, the route is removed within five minutes. If the fix was to
+the identity's role, restart kube-controllers as well, as described in
+[Troubleshoot egress gateways](troubleshoot.mdx#routes-are-missing-or-traffic-is-dropped-user-defined-route-setups).
+
+Leave the management marker, the role assignment, and the `AzureIdentity` in place until you have
+confirmed that the routes are gone. If you remove any of them first, $[prodname] can no longer manage
+the table, so any routes left in it stay there, and you have to delete them yourself.
+
+### Remove leftover routes
+
+While a table has the management marker and the identity can read it, $[prodname] removes any route
+of its own that no gateway needs at every sync, including routes left over from an earlier failure.
+Routes are left behind when $[prodname] can no longer manage them or remove them, for example when
+the marker is removed from the table, when the identity loses access to it, or when the
+`AzureIdentity` or the cluster is deleted. A cluster also never removes another cluster's routes,
+even from a table that both share.
+
+To remove them, look in each table for routes whose names begin with the cluster's prefix, which is
+`calico-egw-` followed by the cluster's identifier and a `-`, as described in
+[Verify the routes](#verify-the-routes). Delete each one that no running gateway uses.
+
+You cannot work out a cluster's identifier once the cluster is deleted, so record it for each cluster
+that shares a table.
 
 ## Limitations
 
@@ -339,21 +396,31 @@ there and nothing removes them later. You then have to delete them yourself.
   routes share the consumer subnet's existing table. That table holds up to 400 routes, which you
   can raise to 1,000 with Azure Virtual Network Manager. If two clusters serve the same subnet, they
   share the table. Each cluster manages only its own routes, but the limit applies to both.
-- **Route names that begin with `calico-egw-` are reserved.** If you create a route with that prefix
-  in a managed table, $[prodname] overwrites or removes it.
+- **Each gateway pod takes a route in every table that its gateway selects.** A rolling update
+  briefly needs routes for both the old and the new pods. When a table is full, Azure rejects new
+  routes. To stay under the limit, give consumers of different gateways their own subnets and tables.
+- **Route names that begin with `calico-egw-` are reserved.** $[prodname] can overwrite or remove any
+  route with that prefix in a managed table, but leaves other routes alone.
 - **Internet-bound traffic does not keep the egress gateway address.** The AKS outbound load
   balancer masquerades it. The address is useful for destinations in Azure, in peered VNets, and
   on-premises.
 - **One identity and one subscription.** Route tables in another subscription are not read, even if
   the identity can reach them.
+- **Role assignment changes need a restart.** kube-controllers can keep using the identity's old
+  permissions until you restart it, and `tigerastatus` does not report the problem. See
+  [Troubleshoot egress gateways](troubleshoot.mdx#routes-are-missing-or-traffic-is-dropped-user-defined-route-setups).
 - **IPv4 only.**
 - **The egress gateway address is not fixed to a pod.** An IP pool usually holds more addresses than
   there are gateway pods, so a rescheduled gateway usually gets a different address. Allowlist the
   pool CIDR rather than individual addresses.
+- **A route can keep pointing at a node that has stopped.** $[prodname] removes a gateway pod's
+  route when Kubernetes deletes the pod, not when its node stops or becomes unreachable. By default,
+  Kubernetes evicts the pods from such a node about five minutes after it marks the node not ready
+  or unreachable.
 - **$[prodname] writes routes one at a time**, so a large rollout takes longer as the number of
   gateways and route tables increases.
 - **You must keep NIC IP forwarding enabled.** An AKS node image upgrade can turn it off, so
-  re-apply it after upgrading.
+  re-apply it after upgrading, as described in [Prepare the Azure network](#prepare-the-azure-network).
 
 ## Additional resources
 
