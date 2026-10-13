@@ -1,6 +1,41 @@
 const ccImageLists = {
+  // curl -0 https://installer.calicocloud.io/manifests/v3.24.0-1.0-4/image-list
+  'v24.0.0 (latest)': `quay.io/calico/istio-pilot:v3.32.0
+quay.io/calico/istio-install-cni:v3.32.0
+quay.io/calico/istio-ztunnel:v3.32.0
+quay.io/calico/istio-proxyv2:v3.32.0
+quay.io/calico/webhooks:v3.32.0
+quay.io/tigera/calico:v3.24.0-1.0
+quay.io/tigera/compliance-benchmarker:v3.24.0-1.0
+quay.io/tigera/deep-packet-inspection:v3.24.0-1.0
+quay.io/tigera/fluentd:v3.24.0-1.0
+quay.io/tigera/fluentd-windows:v3.24.0-1.0
+quay.io/tigera/intrusion-detection-controller:v3.24.0-1.0
+quay.io/tigera/manager:v3.24.0-1.0
+quay.io/tigera/egress-gateway:v3.24.0-1.0
+quay.io/tigera/gateway-l7-collector:v3.24.0-1.0
+quay.io/tigera/envoy:v3.24.0-1.0
+quay.io/tigera/dikastes:v3.24.0-1.0
+quay.io/tigera/prometheus:v3.24.0-1.0
+quay.io/tigera/alertmanager:v3.24.0-1.0
+quay.io/tigera/node:v3.24.0-1.0
+quay.io/tigera/node-windows:v3.24.0-1.0
+quay.io/tigera/cni-windows:v3.24.0-1.0
+quay.io/tigera/third-party-cni-plugins:v3.24.0-1.0
+quay.io/tigera/envoy-gateway:v3.24.0-1.0
+quay.io/tigera/envoy-proxy:v3.24.0-1.0
+quay.io/tigera/envoy-ratelimit:v3.24.0-1.0
+quay.io/tigera/istio-pilot:v3.24.0-1.0
+quay.io/tigera/istio-install-cni:v3.24.0-1.0
+quay.io/tigera/istio-ztunnel:v3.24.0-1.0
+quay.io/tigera/istio-proxyv2:v3.24.0-1.0
+quay.io/tigera/operator:v1.43.0
+quay.io/tigera/cc-core:v0.4.0
+quay.io/tigera/prometheus-operator:v3.24.0-1.0
+quay.io/tigera/prometheus-config-reloader:v3.24.0-1.0
+quay.io/tigera/cc-cni-config-scanner:v0.7.4`,
   // curl -0 https://installer.calicocloud.io/manifests/v3.23.1-4/image-list
-  'v23.0.2 (latest)': `quay.io/calico/istio-pilot:v3.32.1
+  'v23.0.2': `quay.io/calico/istio-pilot:v3.32.1
 quay.io/calico/istio-install-cni:v3.32.1
 quay.io/calico/istio-ztunnel:v3.32.1
 quay.io/calico/istio-proxyv2:v3.32.1
