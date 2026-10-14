@@ -31,7 +31,7 @@ function NodeRequirementsEnt(props) {
             {(props.orch === orchestrators.Kubernetes || props.orch === orchestrators.HostProtection) && (
               <>
                 <li>Ubuntu 20.04 and 22.04</li>
-                <li>RHEL 8 and RHEL 9</li>
+                <li>RHEL 9 and RHEL 10</li>
                 <li>Debian 10</li>
                 <li>Azure Linux Container Host</li>
               </>
@@ -51,20 +51,20 @@ function NodeRequirementsEnt(props) {
         </li>
         <li>
           <p>
-            If your node is running RHEL 8 or RHEL 9, you must install a specialized policy package before you install {prodname}.
+            If your node is running RHEL 9 or RHEL 10, you must install a specialized policy package before you install {prodname}.
             With this package, {prodname} can use SELinux contexts in a series of rules that allow it to interact with persistent and ephemeral data in nonstandard host system locations.
           </p>
           <ul>
             <li>
-              <p>If your node has RHEL 8 installed, then run the following command:</p>
+              <p>If your node has RHEL 9 installed, then run the following command:</p>
               <CodeBlock language="bash">
-                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.1-1.el8.noarch.rpm`}
+                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.2-1.el9.noarch.rpm`}
               </CodeBlock>
             </li>
             <li>
-              <p>If your node has RHEL 9 installed, then run the following command:</p>
+              <p>If your node has RHEL 10 installed, then run the following command:</p>
               <CodeBlock language="bash">
-                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.1-1.el9.noarch.rpm`}
+                {`dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.2-1.el10.noarch.rpm`}
               </CodeBlock>
             </li>
           </ul>
