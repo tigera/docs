@@ -51,7 +51,7 @@ export interface LifecycleNoticeProps {
    *
    * Not rendered, and never read at runtime — the notice is a page-level editorial statement and
    * does not depend on the data file. It exists so the build-time drift check can bind an inline
-   * notice to a feature; pages that declare their status in front matter use `lifecycle-id`
+   * notice to a feature; pages that declare their status in front matter use `lifecycle_id`
    * instead. Without it an inline notice is simply not drift-checked.
    */
   id?: string;
@@ -63,7 +63,7 @@ export interface LifecycleNoticeProps {
  * A feature lifecycle notice.
  *
  * Used directly in MDX when only part of an otherwise generally available page is affected.
- * For a whole page, declare `lifecycle-status` in front matter instead and let
+ * For a whole page, declare `lifecycle_status` in front matter instead and let
  * `src/remark/lifecycleNoticePlugin.js` place this component after the page title, so the
  * wording and position cannot drift from one page to the next.
  */

@@ -2,9 +2,9 @@ import { visit } from 'unist-util-visit';
 
 export const COMPONENT_NAME = 'LifecycleNotice';
 
-const STATUS_KEY = 'lifecycle-status';
-const FEATURE_KEY = 'lifecycle-feature';
-const ID_KEY = 'lifecycle-id';
+const STATUS_KEY = 'lifecycle_status';
+const FEATURE_KEY = 'lifecycle_feature';
+const ID_KEY = 'lifecycle_id';
 
 const VALID_STATUSES = ['tech-preview', 'deprecated'];
 
@@ -13,7 +13,7 @@ function attribute(name, value) {
 }
 
 /**
- * This is a remark plugin which runs during the build. When a page declares `lifecycle-status`
+ * This is a remark plugin which runs during the build. When a page declares `lifecycle_status`
  * in its front matter, it inserts a <LifecycleNotice> element directly after the page's H1, so
  * that a whole-page technology preview or deprecation notice is a one-line declaration rather
  * than an admonition copied between pages and left behind when the status changes.

@@ -178,17 +178,17 @@ When a page is about the feature, declare it in front matter and write nothing i
 ```yaml
 ---
 description: ...
-lifecycle-status: tech-preview
-lifecycle-feature: Gateway WAF
-lifecycle-id: gateway-waf
+lifecycle_status: tech-preview
+lifecycle_feature: Gateway WAF
+lifecycle_id: gateway-waf
 ---
 ```
 
-- `lifecycle-status` is `tech-preview` or `deprecated`. There is no value for generally
+- `lifecycle_status` is `tech-preview` or `deprecated`. There is no value for generally
   available: a GA feature says nothing.
-- `lifecycle-feature` is the name shown in the notice title. Omit it when the page title already
+- `lifecycle_feature` is the name shown in the notice title. Omit it when the page title already
   names the feature unambiguously.
-- `lifecycle-id` is the matching `id` in `data/feature-status.yaml`. It is optional, but supply
+- `lifecycle_id` is the matching `id` in `data/feature-status.yaml`. It is optional, but supply
   it when the feature has an entry, because it is what lets CI catch a notice that outlived the
   status it describes. Nothing is rendered from it.
 
