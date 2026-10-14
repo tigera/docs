@@ -38,9 +38,9 @@ const TREES: { dir: string; product: string; version: string | null }[] = [
   { dir: 'calico-enterprise_versioned_docs/version-3.23-2', product: 'calico-enterprise', version: '3.23' },
   { dir: 'calico-cloud', product: 'calico-cloud', version: null },
   {
-    dir: 'calico-cloud_versioned_docs/version-23-2',
+    dir: 'calico-cloud_versioned_docs/version-24-1',
     product: 'calico-cloud',
-    version: ceVersionFromCloudversion('v3.23.1-4'),
+    version: ceVersionFromCloudversion('v3.24.0-1.0-4'),
   },
 ];
 
