@@ -50,7 +50,7 @@ export interface LifecycleNoticeProps {
    * The matching `id` in `data/feature-status.yaml`.
    *
    * Not rendered, and never read at runtime — the notice is a page-level editorial statement and
-   * does not depend on the data file. It exists so the build-time drift check can bind an inline
+   * does not depend on the data file. It exists so the drift check in CI can bind an inline
    * notice to a feature; pages that declare their status in front matter use `lifecycle_id`
    * instead. Without it an inline notice is simply not drift-checked.
    */

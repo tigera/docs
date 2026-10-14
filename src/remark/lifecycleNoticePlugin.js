@@ -6,6 +6,8 @@ const STATUS_KEY = 'lifecycle_status';
 const FEATURE_KEY = 'lifecycle_feature';
 const ID_KEY = 'lifecycle_id';
 
+const KNOWN_KEYS = [STATUS_KEY, FEATURE_KEY, ID_KEY];
+
 const VALID_STATUSES = ['tech-preview', 'deprecated'];
 
 function attribute(name, value) {
@@ -28,10 +30,28 @@ function attribute(name, value) {
  */
 export default function lifecycleNoticePlugin(_options) {
   return function transformer(tree, file) {
-    const frontMatter = file.data?.frontMatter;
-    const status = frontMatter?.[STATUS_KEY];
+    const frontMatter = file.data?.frontMatter ?? {};
 
-    if (!status) return;
+    // A misspelled key, such as lifecycle-status, would otherwise render no notice and pass
+    // every check, publishing the page as though the feature were generally available.
+    const unknown = Object.keys(frontMatter).filter(
+      (key) => /^lifecycle/i.test(key) && !KNOWN_KEYS.includes(key)
+    );
+    if (unknown.length) {
+      file.fail(
+        `Unknown front matter key ${unknown.join(', ')}. Lifecycle keys are ${KNOWN_KEYS.join(', ')}.`
+      );
+    }
+
+    const status = frontMatter[STATUS_KEY];
+
+    if (!status) {
+      const orphans = [FEATURE_KEY, ID_KEY].filter((key) => frontMatter[key]);
+      if (orphans.length) {
+        file.fail(`${orphans.join(', ')} is set but ${STATUS_KEY} is not, so no notice would render.`);
+      }
+      return;
+    }
 
     if (!VALID_STATUSES.includes(status)) {
       file.fail(
