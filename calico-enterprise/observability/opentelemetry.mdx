@@ -16,6 +16,10 @@ From that section, the operator creates an OpenTelemetry Collector StatefulSet n
 You can export two kinds of data:
 
 - **Logs.** Fluent Bit sends the log types you choose to the Collector over mutual TLS, and the Collector forwards them to your exporters. You can export `Flows`, `DNS`, and `Audit` logs. Flow and DNS logs from [non-cluster hosts](../getting-started/bare-metal/about) are included. Each record carries a `service.name` resource attribute of `flows`, `dns`, or `audit`, so you can route or filter by log type in your backend.
+
+  `Audit` covers both $[prodname] audit logs and Kubernetes API server audit logs, and both carry `service.name` `audit`.
+  To tell them apart, filter on `objectRef.apiGroup`: $[prodname] resources use `projectcalico.org`.
+  If your Kubernetes audit policy also logs `projectcalico.org` requests, the same change can appear in both logs, and this filter can't separate them.
 - **Metrics.** The Collector federates every metric that the in-cluster $[prodname] Prometheus already scrapes, including metrics from $[noderunning], Typha, kube-controllers, Fluent Bit, Elasticsearch, and the operator. Series keep their original `job` and `instance` labels.
 
 Everything you export goes to every exporter that you configure.
