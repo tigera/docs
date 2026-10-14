@@ -93,6 +93,16 @@ describe('extractFromHtmlString', () => {
   });
 });
 
+/**
+ * An admonition in the shape Docusaurus emits: an icon and the title in a heading div, then
+ * the body in a content div. With no custom title, the heading holds the bare type name.
+ */
+function admonition(type, alert, title, body) {
+  return `<div class="theme-admonition theme-admonition-${type} admonition_YL73 alert alert--${alert}">` +
+    `<div class="admonitionHeading_kh8A"><span class="admonitionIcon_nw39"><svg viewBox="0 0 16 16"><path d="M0 0"></path></svg></span>${title}</div>` +
+    `<div class="admonitionContent_LGn1"><p>${body}</p></div></div>`;
+}
+
 describe('convertToMarkdown', () => {
   it('strips the zero-width hash-link anchor from headings', async () => {
     const extracted = extractFromHtmlString(page(heading(2, 'before-you-begin', 'Before you begin')));
@@ -124,6 +134,42 @@ describe('convertToMarkdown', () => {
     const markdown = await convertToMarkdown(extracted.html, SITE_URL);
 
     expect(markdown).toBe('```yaml\nfirst\n\nthird\n```');
+  });
+
+  it('keeps a custom admonition title in the label', async () => {
+    const extracted = extractFromHtmlString(
+      page(admonition('warning', 'warning', 'Deprecation and removal notice', 'The Fortinet integration is deprecated.'))
+    );
+    const markdown = await convertToMarkdown(extracted.html, SITE_URL);
+
+    expect(markdown).toBe(
+      '> **WARNING: Deprecation and removal notice** The Fortinet integration is deprecated.'
+    );
+  });
+
+  it('does not repeat the type when the admonition has no custom title', async () => {
+    const extracted = extractFromHtmlString(
+      page(admonition('warning', 'warning', 'warning', 'Back up the datastore first.'))
+    );
+    const markdown = await convertToMarkdown(extracted.html, SITE_URL);
+
+    expect(markdown).toBe('> **WARNING:** Back up the datastore first.');
+  });
+
+  it('labels a note as NOTE, not by its alert color class', async () => {
+    const extracted = extractFromHtmlString(
+      page(admonition('note', 'secondary', 'note', 'Requires a license.'))
+    );
+    const markdown = await convertToMarkdown(extracted.html, SITE_URL);
+
+    expect(markdown).toBe('> **NOTE:** Requires a license.');
+  });
+
+  it('labels a tip as TIP, not by its alert color class', async () => {
+    const extracted = extractFromHtmlString(page(admonition('tip', 'success', 'tip', 'Use a label.')));
+    const markdown = await convertToMarkdown(extracted.html, SITE_URL);
+
+    expect(markdown).toBe('> **TIP:** Use a label.');
   });
 
   it('resolves root-relative links against the site URL', async () => {

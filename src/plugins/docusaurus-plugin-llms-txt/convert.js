@@ -45,34 +45,47 @@ function createHandlers(siteUrl) {
 
       // --- Admonitions ---
       if (className.includes('theme-admonition')) {
-        const typeMatch = className.match(/alert--([\w]+)/);
-        const admonitionType = typeMatch ? typeMatch[1].toUpperCase() : 'NOTE';
+        // Label with the admonition type the author wrote, not its alert--* color class,
+        // which maps note to "secondary" and tip to "success"
+        const sourceType = className.match(/theme-admonition-([\w]+)/)?.[1];
+        const admonitionType = (sourceType || 'note').toUpperCase();
 
-        // Find the content div (class starts with 'admonitionContent')
+        // Find the heading div (class starts with 'admonitionHeading') and the content div
+        // (class starts with 'admonitionContent')
+        let headingNode = null;
         let contentNode = null;
         for (const child of node.children || []) {
           const childClass = (child.properties?.className || []).join(' ');
-          if (childClass.match(/admonitionContent/i)) {
+          if (childClass.match(/admonitionHeading/i)) {
+            headingNode = child;
+          } else if (childClass.match(/admonitionContent/i)) {
             contentNode = child;
-            break;
           }
         }
+
+        // Keep a custom title, such as "Deprecation and removal notice". Docusaurus renders
+        // the bare type name ("warning") when there is none, which would only repeat the label.
+        const title = headingNode ? toText(headingNode).trim() : '';
+        const label =
+          title && title.toLowerCase() !== sourceType?.toLowerCase()
+            ? `${admonitionType}: ${title}`
+            : `${admonitionType}:`;
 
         // Convert the content children to mdast
         const contentChildren = contentNode
           ? state.all(contentNode)
           : state.all(node);
 
-        // Build: > **TYPE:** content
-        // Prepend the type label to the first paragraph
+        // Build: > **TYPE:** content, or > **TYPE: Title** content
+        // Prepend the label to the first paragraph
         if (contentChildren.length > 0 && contentChildren[0].type === 'paragraph') {
           contentChildren[0].children.unshift(
-            strong(`${admonitionType}:`),
+            strong(label),
             { type: 'text', value: ' ' }
           );
         } else {
           contentChildren.unshift(
-            paragraph([strong(`${admonitionType}:`), { type: 'text', value: ' ' }])
+            paragraph([strong(label), { type: 'text', value: ' ' }])
           );
         }
 
