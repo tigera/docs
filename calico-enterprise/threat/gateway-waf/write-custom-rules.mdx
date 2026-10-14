@@ -132,6 +132,59 @@ A `WAFPlugin` (namespace) or `GlobalWAFPlugin` (cluster) holds custom [ModSecuri
 
 Gateway WAF runs the [OWASP Core Rule Set v4](https://coreruleset.org/docs/) via [Coraza](https://coraza.io/); the [ModSecurity reference manual](https://github.com/owasp-modsecurity/ModSecurity/wiki/Reference-Manual-(v3.x)) covers the full SecLang directive set.
 
+## Example: unblock Kibana Discover
+
+Kibana sends an Elasticsearch query in the body of its search requests, and a `url` argument on many requests. With the Core Rule Set enabled, the WAF reads the query as SQL injection and the `url` argument as server-side request forgery, so Kibana Discover fails with HTTP 403. The Core Rule Set is working as designed — Kibana needs app-specific exceptions, the same way the Core Rule Set ships exceptions for applications such as phpMyAdmin and WordPress.
+
+These exceptions remove inspection for Core Rule Set baseline rules, so they belong in a `GlobalWAFPlugin`. A namespaced `WAFPlugin` cannot alter a baseline rule — the admission webhook rejects it with `ProtectedIDRemoval`. A `GlobalWAFPlugin` is cluster-scoped and may tune baseline rules.
+
+These rules fire for Kibana (OWASP Core Rule Set 4.14.0, paranoia level 1):
+
+| Path | Rule | Reads as |
+| :--- | :--- | :--- |
+| `/tigera-kibana/internal/...` search requests | `942100` | SQL injection in the request-body arguments |
+| `/tigera-kibana/...` requests with a `url` argument | `931100`, `934110` | Server-side request forgery in the `url` argument |
+
+Rule `949110` also appears. It adds the scores from the rules above and blocks once the total crosses the threshold. Remove the rules above and the score stays under the threshold, so `949110` stops firing on its own — do not exclude it.
+
+Apply the plugin and reference it from the `default` `GlobalWAFPolicy`, which every `WAFPolicy` reads:
+
+```yaml
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFPlugin
+metadata:
+  name: kibana-exceptions
+spec:
+  description: "Core Rule Set exceptions for Kibana on the Manager gateway"
+  before: |
+    # Elasticsearch query bodies on the search paths read as SQL injection.
+    SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/internal/" \
+      "id:100000001,phase:1,pass,nolog,t:none,t:urlDecodeUni,t:normalizePath,\
+       ctl:ruleRemoveTargetById=942100;ARGS"
+    # The url argument reads as server-side request forgery.
+    SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/" \
+      "id:100000002,phase:1,pass,nolog,t:none,t:urlDecodeUni,t:normalizePath,\
+       ctl:ruleRemoveTargetById=931100;ARGS:url,\
+       ctl:ruleRemoveTargetById=934110;ARGS:url"
+---
+apiVersion: applicationlayer.projectcalico.org/v3
+kind: GlobalWAFPolicy
+metadata:
+  name: default
+spec:
+  plugins:
+    - kind: GlobalWAFPlugin
+      name: kibana-exceptions
+```
+
+If the cluster already has a `default` `GlobalWAFPolicy`, add the plugin to its existing `plugins` list rather than replacing the object.
+
+:::note
+
+The rule IDs `100000001` and `100000002` sit above every reserved range. The search paths differ between Kibana versions — read the `tigera_secure_ee_waf` log index for your cluster to confirm which paths and rules fire, and adjust the `@beginsWith` prefixes to match.
+
+:::
+
 ## Next steps
 
 - [Validate configuration with Rego](./validate-config.mdx) — enforce guardrails on the merged ruleset.
