@@ -15,7 +15,7 @@ import type { CellStatus, Feature } from '../../FeatureStatusTable/featureStatus
  * Open Source 3.33 shipped with the release notes calling native v3 CRDs generally available
  * while the install page still called it a technology preview.
  *
- * Only pages that opt in are checked. A page opts in by declaring `lifecycle-id` in front matter,
+ * Only pages that opt in are checked. A page opts in by declaring `lifecycle_id` in front matter,
  * or by passing `id` to an inline <LifecycleNotice>. A page with no id is not checked, so a
  * feature with no entry in the data file costs nothing.
  */
@@ -81,8 +81,8 @@ function declarations(file: string): Declaration[] {
   const header = FRONT_MATTER.exec(source);
   if (header) {
     const frontMatter = parse(header[1]) ?? {};
-    const status = frontMatter['lifecycle-status'];
-    const id = frontMatter['lifecycle-id'];
+    const status = frontMatter['lifecycle_status'];
+    const id = frontMatter['lifecycle_id'];
     if (status && id) found.push({ file, id, status });
   }
 
@@ -178,7 +178,7 @@ describe('lifecycle notices agree with data/feature-status.yaml', () => {
 
       if (!feature) {
         throw new Error(
-          `${file} declares lifecycle-id "${id}", which is not in data/feature-status.yaml`
+          `${file} declares lifecycle_id "${id}", which is not in data/feature-status.yaml`
         );
       }
 

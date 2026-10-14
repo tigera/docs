@@ -26,7 +26,7 @@ const attributes = (node) =>
 describe('lifecycleNoticePlugin', () => {
   it('inserts the component directly after the H1', () => {
     const tree = page();
-    run(tree, { 'lifecycle-status': 'tech-preview', 'lifecycle-feature': 'Gateway WAF' });
+    run(tree, { 'lifecycle_status': 'tech-preview', 'lifecycle_feature': 'Gateway WAF' });
 
     expect(tree.children.map((node) => node.type)).toEqual([
       'heading',
@@ -40,12 +40,12 @@ describe('lifecycleNoticePlugin', () => {
     expect(attributes(inserted)).toEqual({ status: 'tech-preview', feature: 'Gateway WAF' });
   });
 
-  it('passes lifecycle-id through for the drift check', () => {
+  it('passes lifecycle_id through for the drift check', () => {
     const tree = page();
     run(tree, {
-      'lifecycle-status': 'deprecated',
-      'lifecycle-feature': 'Fortinet integration',
-      'lifecycle-id': 'fortinet-integration',
+      'lifecycle_status': 'deprecated',
+      'lifecycle_feature': 'Fortinet integration',
+      'lifecycle_id': 'fortinet-integration',
     });
 
     expect(attributes(tree.children[1])).toEqual({
@@ -57,7 +57,7 @@ describe('lifecycleNoticePlugin', () => {
 
   it('omits the feature attribute when no name is declared', () => {
     const tree = page();
-    run(tree, { 'lifecycle-status': 'tech-preview' });
+    run(tree, { 'lifecycle_status': 'tech-preview' });
 
     expect(attributes(tree.children[1])).toEqual({ status: 'tech-preview' });
   });
@@ -76,7 +76,7 @@ describe('lifecycleNoticePlugin', () => {
   it('ignores a second level 1 heading', () => {
     const tree = page();
     tree.children.push({ type: 'heading', depth: 1, children: [{ type: 'text', value: 'Again' }] });
-    run(tree, { 'lifecycle-status': 'tech-preview' });
+    run(tree, { 'lifecycle_status': 'tech-preview' });
 
     expect(tree.children.filter((node) => node.type === 'mdxJsxFlowElement')).toHaveLength(1);
     expect(tree.children[1].type).toBe('mdxJsxFlowElement');
@@ -85,10 +85,10 @@ describe('lifecycleNoticePlugin', () => {
   it('fails when the page has no level 1 heading', () => {
     const tree = { type: 'root', children: [{ type: 'paragraph', children: [] }] };
 
-    expect(() => run(tree, { 'lifecycle-status': 'tech-preview' })).toThrow(/no level 1 heading/);
+    expect(() => run(tree, { 'lifecycle_status': 'tech-preview' })).toThrow(/no level 1 heading/);
   });
 
   it('fails on a status that is not one of the known values', () => {
-    expect(() => run(page(), { 'lifecycle-status': 'preview' })).toThrow(/not a valid status/);
+    expect(() => run(page(), { 'lifecycle_status': 'preview' })).toThrow(/not a valid status/);
   });
 });
