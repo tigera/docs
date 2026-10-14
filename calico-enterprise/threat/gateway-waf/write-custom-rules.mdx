@@ -136,16 +136,18 @@ Gateway WAF runs the [OWASP Core Rule Set v4](https://coreruleset.org/docs/) via
 
 Kibana sends an Elasticsearch query in the body of its search requests, and a `url` argument on many requests. With the Core Rule Set enabled, the WAF reads the query as SQL injection and the `url` argument as server-side request forgery, so Kibana Discover fails with HTTP 403. The Core Rule Set is working as designed — Kibana needs app-specific exceptions, the same way the Core Rule Set ships exceptions for applications such as phpMyAdmin and WordPress.
 
-These exceptions remove inspection for Core Rule Set baseline rules, so they belong in a `GlobalWAFPlugin`. A namespaced `WAFPlugin` cannot alter a baseline rule — the admission webhook rejects it with `ProtectedIDRemoval`. A `GlobalWAFPlugin` is cluster-scoped and may tune baseline rules.
+These exceptions adjust Core Rule Set baseline rules, so they belong in a `GlobalWAFPlugin`. A namespaced `WAFPlugin` cannot alter a baseline rule — the admission webhook rejects it with `ProtectedIDRemoval` — and a namespaced `WAFPolicy` cannot reference a `GlobalWAFPlugin`. A cluster-scoped `GlobalWAFPlugin`, loaded through the `default` `GlobalWAFPolicy`, is the only configuration that both tunes a baseline rule and reaches the gateway.
 
 These rules fire for Kibana (OWASP Core Rule Set 4.14.0, paranoia level 1):
 
-| Path | Rule | Reads as |
-| :--- | :--- | :--- |
-| `/tigera-kibana/internal/...` search requests | `942100` | SQL injection in the request-body arguments |
-| `/tigera-kibana/...` requests with a `url` argument | `931100`, `934110` | Server-side request forgery in the `url` argument |
+| Path | Rule | Reads as | Exception |
+| :--- | :--- | :--- | :--- |
+| `/tigera-kibana/internal/bsearch` (Discover search) | `942100` | SQL injection in the search body | Remove rule `942100` on that path only |
+| `/tigera-kibana/...` requests with a `url` argument | `931100`, `934110` | Server-side request forgery in the `url` argument | Remove the `url` argument from those two rules |
 
-Rule `949110` also appears. It adds the scores from the rules above and blocks once the total crosses the threshold. Remove the rules above and the score stays under the threshold, so `949110` stops firing on its own — do not exclude it.
+Rule `949110` also appears. It adds the scores from the rules above and blocks once the total crosses the threshold. Remove the matches above and the score stays under the threshold, so `949110` stops firing on its own — do not exclude it.
+
+Scope each exception as narrowly as it can go. The search body is parsed into arguments with dynamic names, so the exception removes rule `942100` for the one search path — keep the path match on the exact endpoint, so the rule still inspects every other request. The `url` argument has a fixed name, so its exception removes only that argument from the two forgery rules and leaves the rest of each rule in force.
 
 Apply the plugin and reference it from the `default` `GlobalWAFPolicy`, which every `WAFPolicy` reads:
 
@@ -157,11 +159,13 @@ metadata:
 spec:
   description: "Core Rule Set exceptions for Kibana on the Manager gateway"
   before: |
-    # Elasticsearch query bodies on the search paths read as SQL injection.
-    SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/internal/" \
+    # Discover sends the Elasticsearch query in the request body, which rule
+    # 942100 reads as SQL injection. Remove that rule for the search path only.
+    SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/internal/bsearch" \
       "id:100000001,phase:1,pass,nolog,t:none,t:urlDecodeUni,t:normalizePath,\
-       ctl:ruleRemoveTargetById=942100;ARGS"
-    # The url argument reads as server-side request forgery.
+       ctl:ruleRemoveById=942100"
+    # The url argument reads as server-side request forgery. Remove only that
+    # argument from the two forgery rules.
     SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/" \
       "id:100000002,phase:1,pass,nolog,t:none,t:urlDecodeUni,t:normalizePath,\
        ctl:ruleRemoveTargetById=931100;ARGS:url,\
@@ -181,7 +185,13 @@ If the cluster already has a `default` `GlobalWAFPolicy`, add the plugin to its 
 
 :::note
 
-The rule IDs `100000001` and `100000002` sit above every reserved range. The search paths differ between Kibana versions — read the `tigera_secure_ee_waf` log index for your cluster to confirm which paths and rules fire, and adjust the `@beginsWith` prefixes to match.
+The plugin is cluster-scoped: through the `default` `GlobalWAFPolicy` it reaches every `WAFPolicy`. The `/tigera-kibana/` path match keeps it inert on gateways that don't serve Kibana, but a second gateway serving the same paths receives the same exceptions. This wide reach is unavoidable — only a `GlobalWAFPlugin` may adjust a baseline rule — so keep every match scoped to the Kibana paths.
+
+:::
+
+:::note
+
+The rule IDs `100000001` and `100000002` sit above every reserved range. The search endpoint differs between Kibana versions — read the `tigera_secure_ee_waf` log index for your cluster to confirm which paths and rules fire, and add a path match per search endpoint rather than widening the prefix.
 
 :::
 
