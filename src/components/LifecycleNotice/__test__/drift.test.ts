@@ -22,27 +22,46 @@ import type { CellStatus, Feature } from '../../FeatureStatusTable/featureStatus
 
 const ROOT = path.resolve(__dirname, '../../../..');
 
+const PRODUCTS = ['calico', 'calico-enterprise', 'calico-cloud'];
+
+/**
+ * The release line a versioned tree describes.
+ *
+ * Enterprise versions carry a Docusaurus suffix, so 3.24-1 and 3.24-2 are both line 3.24. The
+ * Calico Cloud trees are keyed to the Calico Enterprise line they are built on, because that is
+ * what the data file records, read from the `cloudversion` in that tree's own variables.js.
+ */
+function releaseLine(product: string, dir: string, version: string): string | null {
+  if (product !== 'calico-cloud') return version.replace(/-\d+$/, '');
+
+  const variables = fs.readFileSync(path.join(ROOT, dir, 'variables.js'), 'utf8');
+  const cloudversion = /cloudversion:\s*['"]([^'"]+)['"]/.exec(variables)?.[1];
+  if (!cloudversion) throw new Error(`${dir}/variables.js has no cloudversion`);
+  return ceVersionFromCloudversion(cloudversion);
+}
+
 /**
  * Each documentation tree, and the release line its pages describe.
  *
- * `null` means a Next tree, which is ahead of every released line. The Calico Cloud trees are
- * keyed to the Calico Enterprise line they are built on, because that is what the data file
- * records. The unversioned Calico Cloud tree is treated as Next rather than trusting its own
- * `cloudversion`, which trails the published tree and is not what that tree documents.
+ * The versioned trees come from each product's versions file, the list Docusaurus itself reads,
+ * so a newly cut version is checked without anyone remembering to add it here. `null` means a
+ * Next tree, which is ahead of every released line. The unversioned Calico Cloud tree is treated
+ * as Next rather than trusting its own `cloudversion`, which can trail what that tree documents.
  */
-const TREES: { dir: string; product: string; version: string | null }[] = [
-  { dir: 'calico', product: 'calico', version: null },
-  { dir: 'calico_versioned_docs/version-3.33', product: 'calico', version: '3.33' },
-  { dir: 'calico-enterprise', product: 'calico-enterprise', version: null },
-  { dir: 'calico-enterprise_versioned_docs/version-3.24-2', product: 'calico-enterprise', version: '3.24' },
-  { dir: 'calico-enterprise_versioned_docs/version-3.23-2', product: 'calico-enterprise', version: '3.23' },
-  { dir: 'calico-cloud', product: 'calico-cloud', version: null },
-  {
-    dir: 'calico-cloud_versioned_docs/version-24-1',
-    product: 'calico-cloud',
-    version: ceVersionFromCloudversion('v3.24.0-1.0-4'),
-  },
-];
+const TREES: { dir: string; product: string; version: string | null }[] = PRODUCTS.flatMap(
+  (product) => {
+    const versions: string[] = JSON.parse(
+      fs.readFileSync(path.join(ROOT, `${product}_versions.json`), 'utf8')
+    );
+    return [
+      { dir: product, product, version: null },
+      ...versions.map((version) => {
+        const dir = `${product}_versioned_docs/version-${version}`;
+        return { dir, product, version: releaseLine(product, dir, version) };
+      }),
+    ];
+  }
+);
 
 /** Statuses a page can declare, mapped to the data file's vocabulary. */
 const DECLARABLE = ['tech-preview', 'deprecated'] as const;
@@ -71,11 +90,27 @@ function mdxFiles(dir: string): string[] {
 }
 
 const FRONT_MATTER = /^---\n([\s\S]*?)\n---/;
-const INLINE_NOTICE = /<LifecycleNotice\b([^>]*)>/g;
+
+/**
+ * An inline <LifecycleNotice> opening tag. Quoted strings and {expressions} are matched whole,
+ * so a `>` inside a feature name does not end the tag early.
+ */
+const INLINE_NOTICE = /<LifecycleNotice\b((?:"[^"]*"|'[^']*'|\{[^}]*\}|[^>"'{])*)>/g;
+
+/** A string attribute, written as status="x", status='x', status={'x'} or status={"x"}. */
+function stringAttribute(attributes: string, name: string): string | undefined {
+  const match = new RegExp(
+    `(?:^|\\s)${name}=(?:"([^"]*)"|'([^']*)'|\\{\\s*["']([^"']*)["']\\s*\\})`
+  ).exec(attributes);
+  return match ? match[1] ?? match[2] ?? match[3] : undefined;
+}
 
 /** Every lifecycle declaration in one file, from front matter and from inline notices. */
 function declarations(file: string): Declaration[] {
-  const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
+  return declarationsIn(file, fs.readFileSync(path.join(ROOT, file), 'utf8'));
+}
+
+function declarationsIn(file: string, source: string): Declaration[] {
   const found: Declaration[] = [];
 
   const header = FRONT_MATTER.exec(source);
@@ -87,9 +122,18 @@ function declarations(file: string): Declaration[] {
   }
 
   for (const [, attributes] of source.matchAll(INLINE_NOTICE)) {
-    const status = /status=["']([^"']+)["']/.exec(attributes)?.[1];
-    const id = /\bid=["']([^"']+)["']/.exec(attributes)?.[1];
-    if (status && id) found.push({ file, id, status: status as Declarable });
+    const status = stringAttribute(attributes, 'status');
+    const id = stringAttribute(attributes, 'id');
+    if (!id) continue;
+
+    // An id the check cannot pair with a status would otherwise go unchecked without a word.
+    if (!status) {
+      throw new Error(
+        `${file} has a <LifecycleNotice id="${id}"> whose status is not a string literal, ` +
+          'so the drift check cannot read it. Write status="tech-preview" or status="deprecated".'
+      );
+    }
+    found.push({ file, id, status: status as Declarable });
   }
 
   return found;
@@ -156,6 +200,34 @@ describe('the drift check catches a stale notice', () => {
   });
 });
 
+describe('the drift check reads every inline notice', () => {
+  const read = (mdx: string) => declarationsIn('page.mdx', mdx);
+
+  it('reads quoted and expression attributes alike', () => {
+    expect(read(`<LifecycleNotice status={'deprecated'} id="fortinet-integration" />`)).toEqual([
+      { file: 'page.mdx', id: 'fortinet-integration', status: 'deprecated' },
+    ]);
+  });
+
+  it('is not cut short by a > inside the feature name', () => {
+    expect(
+      read(`<LifecycleNotice feature="Flows > L7" status="tech-preview" id="l7-logs" />`)
+    ).toEqual([{ file: 'page.mdx', id: 'l7-logs', status: 'tech-preview' }]);
+  });
+
+  it('refuses a status it cannot read rather than skipping the notice', () => {
+    expect(() => read(`<LifecycleNotice status={STATUS} id="l7-logs" />`)).toThrow(
+      /status is not a string literal/
+    );
+  });
+
+  it('reads the Calico Cloud release line from the tree itself', () => {
+    expect(TREES.find((tree) => tree.dir === 'calico-cloud_versioned_docs/version-24-1')?.version).toBe(
+      '3.24'
+    );
+  });
+});
+
 describe('lifecycle notices agree with data/feature-status.yaml', () => {
   const cases = TREES.flatMap((tree) =>
     mdxFiles(tree.dir)
@@ -179,6 +251,14 @@ describe('lifecycle notices agree with data/feature-status.yaml', () => {
       if (!feature) {
         throw new Error(
           `${file} declares lifecycle_id "${id}", which is not in data/feature-status.yaml`
+        );
+      }
+
+      if (feature.products?.[product]?.confirmed === false) {
+        throw new Error(
+          `${file} declares lifecycle_id "${id}", but its ${product} entry in ` +
+            'data/feature-status.yaml is marked confirmed: false, so it has no status to check ' +
+            'against. Confirm the entry or remove the id.'
         );
       }
 

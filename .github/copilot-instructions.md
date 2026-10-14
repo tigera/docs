@@ -193,7 +193,8 @@ lifecycle_id: gateway-waf
   status it describes. Nothing is rendered from it.
 
 `src/remark/lifecycleNoticePlugin.js` places the notice directly after the page's H1. A page
-that declares a status but has no H1 fails the build.
+that declares a status but has no H1 fails the build. So does a misspelled key such as
+`lifecycle-status`, or a `lifecycle_feature` or `lifecycle_id` without `lifecycle_status`.
 
 Do not use `$[variables]` in these front matter fields. Variable substitution is a remark plugin
 that runs over the page body, and front matter never passes through it, so the token would be
