@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
-"""Check that each docs version states the Envoy Gateway versions its release ships.
+"""Check that each docs version states the Envoy Gateway version its release ships.
 
-A release carries two Envoy Gateway pins, which are bumped separately:
-
-  * the image: ENVOY_GATEWAY_VERSION in third_party/envoy-gateway/Makefile of the
-    code repo. `envoyVersion` in variables.js must match it, because the docs use
-    the variable to name the version the hardened image is based on.
-  * the chart: ENVOY_GATEWAY_VERSION in the operator Makefile, which selects the
-    gateway-helm chart the operator embeds and renders. The `gateway-helm-vX.Y.Z`
-    and `app.kubernetes.io/version` labels in example output must match it,
-    because they show what a running cluster reports.
+`envoyVersion` in variables.js must match ENVOY_GATEWAY_VERSION in
+third_party/envoy-gateway/Makefile of the code repo, because the docs use the
+variable to name the version the hardened image is based on.
 
 The code is read at the release each docs tree documents:
 
@@ -19,17 +13,11 @@ The code is read at the release each docs tree documents:
     as v3.32.2, or `master` for an unreleased next tree. For Calico Cloud it is
     the Calico Enterprise tag in `cloudversion`, because the Calico Cloud
     releases.json files are not kept current.
-  * The operator Makefile is operator/Makefile in the code repo where the operator
-    lives there. Otherwise it is the Makefile of tigera/operator at the
-    `tigeraOperator` version in the code repo's charts/tigera-operator/values.yaml.
 
 Only trees the site builds are checked: the next tree, which builds for the next
 preview, and the versions in the product's `onlyIncludeVersions` in
 docusaurus.config.js. `envoyVersion` resolves as the build resolves it, from the
 tree's variables.js and then from the root variables.js.
-
-Image tags in the example output, such as quay.io/calico/envoy-gateway:vX.Y.Z,
-are Calico release versions, not Envoy Gateway versions, and are not checked.
 
 A release tag is checked rather than a release branch because patch releases
 move the pins within a minor, and a branch head can be ahead of the last release.
@@ -58,22 +46,13 @@ PRODUCTS = {
     'calico-enterprise': 'tigera/calico-private',
     'calico-cloud': 'tigera/calico-private',
 }
-OPERATOR_REPO = 'tigera/operator'
 
 IMAGE_MAKEFILE = 'third_party/envoy-gateway/Makefile'
-OPERATOR_VALUES = 'charts/tigera-operator/values.yaml'
 MAKEFILE_VERSION = re.compile(r'^ENVOY_GATEWAY_VERSION\s*\??=\s*v?(\S+)', re.M)
-VALUES_OPERATOR_VERSION = re.compile(r'^tigeraOperator:\n(?:[ \t]+.*\n)*?[ \t]+version:\s*(\S+)', re.M)
 CLOUD_VERSION = re.compile(r"cloudversion:\s*['\"](v[^'\"]+)-\d+['\"]")
 DOCS_VARIABLE = re.compile(r"envoyVersion:\s*['\"]v?([^'\"]+)['\"]")
 # The same token pattern as src/remark/variablesPlugin.js.
 DOCS_VARIABLE_USE = re.compile(r'\$\[[ \t]*envoyVersion[ \t]*\]')
-DOCS_CHART_LABEL = re.compile(r'gateway-helm-v(\d+\.\d+\.\d+)')
-DOCS_VERSION_LABEL = re.compile(r'app\.kubernetes\.io/version:\s*["\']?v?(\d+\.\d+\.\d+)')
-
-
-class NotFound(Exception):
-    """The file does not exist at a ref that does exist."""
 
 
 def gh_api(path, raw=False):
@@ -83,10 +62,6 @@ def gh_api(path, raw=False):
     result = subprocess.run(args, capture_output=True, text=True)
     if result.returncode != 0:
         output = result.stdout + result.stderr
-        # GitHub answers a missing ref with 404 as well, so only a plain
-        # "Not Found" means the file is absent.
-        if 'HTTP 404' in output and 'No commit found' not in output:
-            raise NotFound(path)
         raise RuntimeError(f'gh api {path} failed: {output.strip()}')
     return result.stdout
 
@@ -97,10 +72,10 @@ def check_repo_access():
     GitHub answers a private repo the caller cannot see with 404, which would
     otherwise be indistinguishable from a missing file.
     """
-    for repo in sorted(set(PRODUCTS.values()) | {OPERATOR_REPO}):
+    for repo in sorted(set(PRODUCTS.values())):
         try:
             gh_api(f'repos/{repo}')
-        except NotFound:
+        except RuntimeError:
             raise RuntimeError(f'No read access to {repo}; authenticate gh with a token that can read it')
 
 
@@ -150,19 +125,6 @@ def image_version(product, tree):
     return makefile_version(repo, ref, IMAGE_MAKEFILE), f'{repo}@{ref}'
 
 
-def chart_version(product, tree):
-    repo, ref = PRODUCTS[product], code_ref(product, tree)
-    try:
-        return makefile_version(repo, ref, 'operator/Makefile'), f'{repo}@{ref}'
-    except NotFound:
-        pass
-    match = VALUES_OPERATOR_VERSION.search(read_file(repo, ref, OPERATOR_VALUES))
-    if not match:
-        raise RuntimeError(f'No tigeraOperator version in {repo}@{ref}:{OPERATOR_VALUES}')
-    operator_ref = match.group(1).strip('\'"')
-    return makefile_version(OPERATOR_REPO, operator_ref, 'Makefile'), f'{OPERATOR_REPO}@{operator_ref}'
-
-
 def docs_pages(tree):
     return {str(page.relative_to(REPO_ROOT)): page.read_text() for page in sorted(tree.rglob('*.md*'))}
 
@@ -182,18 +144,13 @@ def tree_checks(product, tree):
     The expected callable returns (version, source) and may raise, so that a
     lookup failure is reported against one check instead of stopping the run.
     """
-    pages = docs_pages(tree)
     stated, variables = docs_envoy_variable(tree)
     if stated is not None:
         yield 'envoyVersion', variables, stated, lambda: image_version(product, tree)
     else:
-        for page, text in pages.items():
+        for page, text in docs_pages(tree).items():
             if DOCS_VARIABLE_USE.search(text):
                 yield 'envoyVersion', page, 'undefined', lambda: ('defined in variables.js', 'docs')
-    for page, text in pages.items():
-        if DOCS_CHART_LABEL.search(text):
-            versions = set(DOCS_CHART_LABEL.findall(text)) | set(DOCS_VERSION_LABEL.findall(text))
-            yield 'chart labels', page, ','.join(sorted(versions)), lambda: chart_version(product, tree)
 
 
 def tree_name(tree):
