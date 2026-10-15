@@ -552,6 +552,7 @@ module.exports = {
             'operations/cnx/authentication-quickstart',
             'operations/cnx/configure-identity-provider',
             'operations/cnx/roles-and-permissions',
+            'operations/cnx/manage-roles',
           ],
         },
         'operations/comms/index',
