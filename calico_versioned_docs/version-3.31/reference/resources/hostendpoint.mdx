@@ -20,21 +20,21 @@ interfaces.
 
 Each host endpoint may include a set of labels and list of profiles that $[prodname]
 will use to apply
-[policy](networkpolicy.mdx)
+[policy](globalnetworkpolicy.mdx)
 to the interface.
 
 **Default behavior of external traffic to/from host**
 
-If a host endpoint is created and network policy is not in place, the $[prodname] default is to deny traffic to/from that endpoint (except for traffic allowed by failsafe rules).
+If a host endpoint is created and network policy is not in place, the $[prodname] default is to deny traffic to/from that endpoint (except for traffic allowed by failsafe rules, IP-in-IP or VXLAN traffic between $[prodname] nodes, and WireGuard traffic). Traffic forwarded through the endpoint is not denied by default; only policies with `applyOnForward: true` apply to it.
 For a named host endpoint (i.e. a host endpoint representing a specific interface), $[prodname] blocks traffic only to/from the interface specified in the host endpoint. Traffic to/from other interfaces is ignored.
 
 :::note
 
-Host endpoints with `interfaceName: *` do not support [untracked policy](../../network-policy/extreme-traffic/high-connection-workloads.mdx).
+With the iptables and nftables data planes, host endpoints with `interfaceName: *` do not support [untracked policy](../../network-policy/extreme-traffic/high-connection-workloads.mdx).
 
 :::
 
-For a wildcard host endpoint (i.e. a host endpoint representing all of a host's interfaces), $[prodname] blocks traffic to/from _all_ interfaces on the host (except for traffic allowed by failsafe rules).
+For a wildcard host endpoint (i.e. a host endpoint representing all of a host's interfaces), $[prodname] blocks traffic to/from _all_ interfaces on the host except local workload interfaces (and except for traffic allowed by failsafe rules, IP-in-IP or VXLAN traffic between $[prodname] nodes, and WireGuard traffic). Traffic forwarded through the host is not denied by default; only policies with `applyOnForward: true` apply to it.
 
 However, profiles can be used in conjunction with host endpoints to modify default behavior of external traffic to/from the host in the absence of network policy.
 $[prodname] provides a default profile resource named `projectcalico-default-allow` that consists of allow-all ingress and egress rules.
@@ -91,18 +91,18 @@ spec:
 
 | Field  | Description                                | Accepted Values                                     | Schema |
 | ------ | ------------------------------------------ | --------------------------------------------------- | ------ |
-| name   | The name of this hostEndpoint. Required.   | Alphanumeric string with optional `.`, `_`, or `-`. | string |
+| name   | The name of this hostEndpoint. Required.   | Lowercase alphanumeric string with optional `.` or `-`. | string |
 | labels | A set of labels to apply to this endpoint. |                                                     | map    |
 
 ### Spec
 
 | Field         | Description                                                                | Accepted Values            | Schema                                 | Default |
 | ------------- | -------------------------------------------------------------------------- | -------------------------- | -------------------------------------- | ------- |
-| node          | The name of the node where this HostEndpoint resides.                      |                            | string                                 |
-| interfaceName | Either `*` or the name of the specific interface on which to apply policy. |                            | string                                 |
+| node          | The name of the node where this HostEndpoint resides. Required.            |                            | string                                 |
+| interfaceName | Either `*`, the name of the specific interface on which to apply policy, or empty (to match the interface by `expectedIPs`). |                            | string                                 |
 | expectedIPs   | The expected IP addresses associated with the interface.                   | Valid IPv4 or IPv6 address | list                                   |
 | profiles      | The list of profiles to apply to the endpoint.                             |                            | list                                   |
-| ports         | List of named ports that this workload exposes.                            |                            | List of [EndpointPorts](#endpointport) |
+| ports         | List of named ports on this host endpoint.                                 |                            | List of [EndpointPorts](#endpointport) |
 
 ### EndpointPort
 
