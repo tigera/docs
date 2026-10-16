@@ -18,6 +18,8 @@ import Icmp from '@site/calico_versioned_docs/version-3.32/_includes/content/_ic
 
 import Rule from '@site/calico_versioned_docs/version-3.32/_includes/content/_rule.mdx';
 
+import Httpmatch from '@site/calico_versioned_docs/version-3.32/_includes/content/_httpmatch.mdx';
+
 A staged global network policy resource (`StagedGlobalNetworkPolicy`) represents an ordered set of rules which are applied
 to a collection of endpoints that match a [label selector](#selector). These rules are used to preview network behavior and do
 not enforce network traffic. For enforcing network traffic, see [global network policy resource](globalnetworkpolicy.mdx).
@@ -42,7 +44,7 @@ may be used to specify the resource type on the CLI:
 ## Sample YAML
 
 This sample policy allows TCP traffic from `frontend` endpoints to port 6379 on
-`database` endpoints.
+`database` endpoints. The `internal-access` [tier](tier.mdx) must exist before you create the policy.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -73,7 +75,7 @@ spec:
 
 | Field | Description                               | Accepted Values                                     | Schema | Default |
 | ----- | ----------------------------------------- | --------------------------------------------------- | ------ | ------- |
-| name  | The name of the network policy. Required. | Alphanumeric string with optional `.`, `_`, or `-`. | string |         |
+| name  | The name of the network policy. Required. | Lowercase alphanumeric string with optional `-` and at most one `.`. | string |         |
 
 ### Spec
 
@@ -81,6 +83,7 @@ spec:
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | --------------------- | --------------------------------------------- |
 | order                  | Controls the order of precedence. $[prodname] applies the policy with the lowest value first.                                                                                                                                       |                           | float                 |                                               |
 | tier                   | Name of the [tier](tier.mdx) this policy belongs to.                                                                                                                                                                                 |                           | string                | `default`                                     |
+| stagedAction           | The staged action. With `Delete`, all other `spec` fields except `tier` must be empty.                                                                                                             | `Set`, `Delete`, `Learn`, `Ignore` | string                | `Set`                                         |
 | selector               | Selects the endpoints to which this policy applies.                                                                                                                                                                                  |                           | [selector](#selector) | all()                                         |
 | serviceAccountSelector | Selects the service account(s) to which this policy applies. Select all service accounts in the cluster with a specific name using the `projectcalico.org/name` label.                                                               |                           | [selector](#selector) | all()                                         |
 | namespaceSelector      | Selects the namespace(s) to which this policy applies. Select a specific namespace by name using the `projectcalico.org/name` label.                                                                                                 |                           | [selector](#selector) | all()                                         |
@@ -104,9 +107,9 @@ spec:
 \*\* The `doNotTrack` and `preDNAT` and `applyOnForward` fields are meaningful
 only when applying policy to a [host endpoint](hostendpoint.mdx).
 
-Only one of `doNotTrack` and `preDNAT` may be set to `true` (in a given policy). If they are both `false`, or when applying the policy to a
-[workload endpoint](workloadendpoint.mdx),
-the policy is enforced after connection tracking and any DNAT.
+Only one of `doNotTrack` and `preDNAT` may be set to `true` (in a given policy). If they are both `false`,
+the policy is enforced after connection tracking and any DNAT. A policy with either set to `true` is not applied to
+[workload endpoints](workloadendpoint.mdx).
 
 `applyOnForward` must be set to `true` if either `doNotTrack` or `preDNAT` is
 `true` because for a given policy, any untracked rules or rules before DNAT will
@@ -142,6 +145,10 @@ for how `doNotTrack` and `preDNAT` and `applyOnForward` can be useful for host e
 ### ServiceMatch
 
 <Servicematch />
+
+### HTTPMatch
+
+<Httpmatch />
 
 ### Performance Hints
 
