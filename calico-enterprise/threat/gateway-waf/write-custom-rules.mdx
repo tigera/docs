@@ -140,12 +140,12 @@ These exceptions change how the Core Rule Set runs, so they belong in a `GlobalW
 
 A Discover search carries a full Elasticsearch query in its body — sort fields, highlight tags, field lists, nested filters, and large numbers. The Core Rule Set cannot tell this query apart from an attack: many of its rules each match some part of the body and add to an anomaly score, and rule `949110` blocks the request once that score crosses the threshold. The set of rules that match changes from query to query, because each search sends different fields and values. Removing one rule, or even the whole SQL-injection group, does not reliably unblock Discover — another rule brings the score back over the threshold on the next query.
 
-So the exception skips Core Rule Set inspection of the request **body** for the one search path, instead of removing named rules. The WAF still inspects the URL, headers, and method on that path, and still inspects the body on every other path. The `url` argument is different: it rides in the URL, has a fixed name, and trips two specific rules, so its exception removes just that argument from those two rules.
+So the exception skips Core Rule Set inspection of the request **body**, instead of removing named rules — and it matches as narrowly as it can: only a `POST`, to the Manager gateway host, on the exact search path. The WAF still inspects the URL, headers, and method on that request, still inspects the body on every other path, and the exception never applies on another gateway that serves the same path. The `url` argument is different: it rides in the URL, has a fixed name, and trips two specific rules, so its exception removes just that argument from those two rules — pinned to the same host.
 
-| Path | What fires | Exception |
+| Request | What fires | Exception |
 | :--- | :--- | :--- |
-| `/tigera-kibana/internal/bsearch` (Discover search) | The search body scores across several Core Rule Set rules and crosses the anomaly threshold (`949110`) | Skip request-body inspection on that path only |
-| `/tigera-kibana/...` requests with a `url` argument | `931100`, `934110` read the `url` argument as server-side request forgery | Remove the `url` argument from those two rules |
+| `POST /tigera-kibana/internal/bsearch` on the Manager host (Discover search) | The search body scores across several Core Rule Set rules and crosses the anomaly threshold (`949110`) | Skip request-body inspection for that one request |
+| `/tigera-kibana/...` requests with a `url` argument, on the Manager host | `931100`, `934110` read the `url` argument as server-side request forgery | Remove the `url` argument from those two rules |
 
 Apply the plugin and reference it from the `default` `GlobalWAFPolicy`, which every `WAFPolicy` reads:
 
@@ -157,18 +157,27 @@ metadata:
 spec:
   description: "Core Rule Set exceptions for Kibana on the Manager gateway"
   before: |
-    # Discover sends an arbitrary Elasticsearch query in the request body, which
-    # the Core Rule Set scores as an attack. Skip request-body inspection for the
-    # search path only; URL, header, and method inspection stay in force.
-    SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/internal/bsearch" \
-      "id:100000001,phase:1,pass,nolog,t:none,t:urlDecodeUni,t:normalizePath,\
-       ctl:requestBodyAccess=Off"
-    # The url argument reads as server-side request forgery. Remove only that
-    # argument from the two forgery rules.
-    SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/" \
-      "id:100000002,phase:1,pass,nolog,t:none,t:urlDecodeUni,t:normalizePath,\
+    # Discover sends its Elasticsearch query in the body of a POST to one search
+    # path. The Core Rule Set scores that body as an attack, so skip request-body
+    # inspection for exactly that request: a POST, to the Manager gateway host, on
+    # the exact search path. URL, header, and method inspection stay in force.
+    # Replace manager.example.com with your Manager gateway hostname
+    # (Manager spec.ingressGateway.hostname).
+    SecRule REQUEST_METHOD "@streq POST" \
+      "id:100000001,phase:1,pass,nolog,t:none,\
+       ctl:requestBodyAccess=Off,chain"
+      SecRule REQUEST_HEADERS:Host "@streq manager.example.com" \
+        "t:none,t:lowercase,chain"
+      SecRule REQUEST_FILENAME "@streq /tigera-kibana/internal/bsearch" \
+        "t:none,t:urlDecodeUni,t:normalizePath"
+    # The url argument reads as server-side request forgery. On the Manager host
+    # only, remove that one argument from the two forgery rules.
+    SecRule REQUEST_HEADERS:Host "@streq manager.example.com" \
+      "id:100000002,phase:1,pass,nolog,t:none,t:lowercase,\
        ctl:ruleRemoveTargetById=931100;ARGS:url,\
-       ctl:ruleRemoveTargetById=934110;ARGS:url"
+       ctl:ruleRemoveTargetById=934110;ARGS:url,chain"
+      SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/" \
+        "t:none,t:urlDecodeUni,t:normalizePath"
 ---
 apiVersion: applicationlayer.projectcalico.org/v3
 kind: GlobalWAFPolicy
@@ -182,15 +191,21 @@ spec:
 
 If the cluster already has a `default` `GlobalWAFPolicy`, add the plugin to its existing `plugins` list rather than replacing the object.
 
-:::note
+:::caution
 
-The plugin is cluster-scoped: through the `default` `GlobalWAFPolicy` it reaches every `WAFPolicy`. The `/tigera-kibana/` path match keeps it inert on gateways that don't serve Kibana, but a second gateway serving the same paths receives the same exceptions. This wide reach is unavoidable — only a `GlobalWAFPlugin` may adjust a baseline rule — so keep every match scoped to the Kibana paths.
+Trade-off: on the Manager gateway host, the WAF does not inspect the **body** of a Discover search (the `POST` to `/tigera-kibana/internal/bsearch`). Its URL, headers, and method are still inspected, and every other request, path, and host is inspected in full.
 
 :::
 
 :::note
 
-The rule IDs `100000001` and `100000002` sit above every reserved range. The search endpoint can differ between Kibana versions — read the `tigera_secure_ee_waf` log index for your cluster to confirm the search path, and add a path match per search endpoint rather than widening the prefix. Because the body exception keys on the path and not on named rules, it keeps working as the Core Rule Set changes which rules match.
+The plugin is cluster-scoped — through the `default` `GlobalWAFPolicy` it reaches every `WAFPolicy` — but each rule is pinned to the Manager gateway host with `REQUEST_HEADERS:Host`, so a second gateway serving the same paths is unaffected. Set the host in both rules to your Manager gateway hostname.
+
+:::
+
+:::note
+
+The rule IDs `100000001` and `100000002` sit above every reserved range. The search endpoint can differ between Kibana versions — read the `tigera_secure_ee_waf` log index for your cluster to confirm the search path, and add a rule per search endpoint rather than loosening the exact-path match. Because the body exception keys on the request (`POST` + host + path) and not on named rules, it keeps working as the Core Rule Set changes which rules match.
 
 :::
 
