@@ -159,25 +159,27 @@ spec:
   before: |
     # Discover sends its Elasticsearch query in the body of a POST to one search
     # path. The Core Rule Set scores that body as an attack, so skip request-body
-    # inspection for exactly that request: a POST, to the Manager gateway host, on
+    # inspection for exactly that request: on the Manager gateway host, a POST to
     # the exact search path. URL, header, and method inspection stay in force.
     # Replace manager.example.com with your Manager gateway hostname
-    # (Manager spec.ingressGateway.hostname).
-    SecRule REQUEST_METHOD "@streq POST" \
-      "id:100000001,phase:1,pass,nolog,t:none,\
-       ctl:requestBodyAccess=Off,chain"
-      SecRule REQUEST_HEADERS:Host "@streq manager.example.com" \
-        "t:none,t:lowercase,chain"
+    # (Manager spec.ingressGateway.hostname). SERVER_NAME is the gateway host from
+    # the :authority header. The ctl sits on the last rule of the chain, not the
+    # first, so it only runs when the whole chain matches. The chained rules carry
+    # no id — the admission check rejects a chained rule that has one.
+    SecRule SERVER_NAME "@streq manager.example.com" \
+      "id:100000001,phase:1,pass,nolog,t:none,t:lowercase,chain"
+      SecRule REQUEST_METHOD "@streq POST" \
+        "t:none,chain"
       SecRule REQUEST_FILENAME "@streq /tigera-kibana/internal/bsearch" \
-        "t:none,t:urlDecodeUni,t:normalizePath"
+        "t:none,t:urlDecodeUni,t:normalizePath,ctl:requestBodyAccess=Off"
     # The url argument reads as server-side request forgery. On the Manager host
     # only, remove that one argument from the two forgery rules.
-    SecRule REQUEST_HEADERS:Host "@streq manager.example.com" \
-      "id:100000002,phase:1,pass,nolog,t:none,t:lowercase,\
-       ctl:ruleRemoveTargetById=931100;ARGS:url,\
-       ctl:ruleRemoveTargetById=934110;ARGS:url,chain"
+    SecRule SERVER_NAME "@streq manager.example.com" \
+      "id:100000002,phase:1,pass,nolog,t:none,t:lowercase,chain"
       SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/" \
-        "t:none,t:urlDecodeUni,t:normalizePath"
+        "t:none,t:urlDecodeUni,t:normalizePath,\
+         ctl:ruleRemoveTargetById=931100;ARGS:url,\
+         ctl:ruleRemoveTargetById=934110;ARGS:url"
 ---
 apiVersion: applicationlayer.projectcalico.org/v3
 kind: GlobalWAFPolicy
@@ -189,7 +191,14 @@ spec:
       name: kibana-exceptions
 ```
 
-If the cluster already has a `default` `GlobalWAFPolicy`, add the plugin to its existing `plugins` list rather than replacing the object.
+If the cluster already has a `default` `GlobalWAFPolicy`, do **not** re-apply the block above — a second `kubectl apply` drops any field the file omits, so a `defaultAction: Block` would fall back to `Detect` for every policy that inherits it. Append the plugin with a patch instead:
+
+```bash
+kubectl patch globalwafpolicy default --type=json \
+  -p='[{"op":"add","path":"/spec/plugins/-","value":{"kind":"GlobalWAFPlugin","name":"kibana-exceptions"}}]'
+```
+
+Apply the full `GlobalWAFPolicy` block above only on a cluster that has no `default` yet.
 
 :::caution
 
@@ -199,13 +208,19 @@ Trade-off: on the Manager gateway host, the WAF does not inspect the **body** of
 
 :::note
 
-The plugin is cluster-scoped — through the `default` `GlobalWAFPolicy` it reaches every `WAFPolicy` — but each rule is pinned to the Manager gateway host with `REQUEST_HEADERS:Host`, so a second gateway serving the same paths is unaffected. Set the host in both rules to your Manager gateway hostname.
+The plugin **loads** on every WAF-covered gateway and route: the controller merges `GlobalWAFPolicy/default` into every `WAFPolicy` in the cluster. The `SERVER_NAME` host match and the path match keep it **firing** only for Kibana on the Manager gateway, so a second gateway serving the same paths is unaffected. Set the host in both rules to your Manager gateway hostname.
 
 :::
 
 :::note
 
-The rule IDs `100000001` and `100000002` sit above every reserved range. The search endpoint can differ between Kibana versions — read the `tigera_secure_ee_waf` log index for your cluster to confirm the search path, and add a rule per search endpoint rather than loosening the exact-path match. Because the body exception keys on the request (`POST` + host + path) and not on named rules, it keeps working as the Core Rule Set changes which rules match.
+There is no namespaced way to drop a single Core Rule Set rule — a `WAFPlugin` cannot remove or retarget a baseline rule (IDs `900000`–`999999` or the Tigera-managed range). The nearest namespaced alternative is a `WAFPolicy` with `action: Detect`, in the Manager gateway's namespace (`calico-system`, unless `Manager.spec.ingressGateway.gatewayNamespace` says otherwise), targeting the `calico-manager-route` `HTTPRoute`. The cost is that it turns the **whole** Manager gateway to Detect — it stops blocking for the entire Manager UI, not just Kibana — because the operator renders that route as one rule with no path match and reverts hand edits. Use the `GlobalWAFPlugin` above if you need to keep blocking everywhere else.
+
+:::
+
+:::note
+
+The rule IDs `100000001` and `100000002` are safe to reuse and to copy for other apps: namespace ID windows stop at `99,999,999` and the protected ranges (Core Rule Set and Tigera baseline) stop at `1,099,999`, so IDs from `100,000,000` up can't clash with a tenant's rules or a baseline rule. The search endpoint can differ between Kibana versions — read the `tigera_secure_ee_waf` log index for your cluster to confirm the search path, and add a rule per search endpoint rather than loosening the exact-path match. Because the body exception keys on the request (`SERVER_NAME` + `POST` + path) and not on named rules, it keeps working as the Core Rule Set changes which rules match.
 
 :::
 
