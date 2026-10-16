@@ -7,8 +7,8 @@ description: Reference for the StagedKubernetesNetworkPolicy resource in Calico 
 A staged Kubernetes network policy resource (`StagedKubernetesNetworkPolicy`) represents a staged version
 of [Kubernetes network policy](https://kubernetes.io/docs/concepts/services-networking/network-policies).
 This is used to preview network behavior before actually enforcing the network policy. Once persisted, this
-will create a Kubernetes network policy backed by a $[prodname]
-[network policy](networkpolicy.mdx).
+is converted to a $[prodname]
+[network policy](networkpolicy.mdx) that is not enforced.
 
 For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
 may be used to specify the resource type on the CLI:
@@ -63,3 +63,13 @@ spec:
 
 See the [Kubernetes NetworkPolicy documentation](https://v1-21.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#networkpolicyspec-v1-networking-k8s-io)
 for more information.
+
+### Spec
+
+| Field        | Description                                                                                                                                             | Accepted Values                    | Schema                                        | Default   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------- | --------- |
+| stagedAction | The staged action. With `Delete`, all other spec fields must be empty, and the policy is not sent to Felix.                                            | `Set`, `Delete`, `Learn`, `Ignore` | string                                        | `Set`     |
+| podSelector  | Selects the pods in the namespace to which this policy applies. An empty selector matches all pods in the namespace.                                    |                                    | Kubernetes `LabelSelector`                    |           |
+| ingress      | List of ingress rules applied to the selected pods.                                                                                                     |                                    | List of Kubernetes `NetworkPolicyIngressRule` |           |
+| egress       | List of egress rules applied to the selected pods.                                                                                                      |                                    | List of Kubernetes `NetworkPolicyEgressRule`  |           |
+| policyTypes  | Applies the policy to ingress traffic (`Ingress`), egress traffic (`Egress`), or both. If omitted, the staged policy applies to ingress traffic only.   | `Ingress`, `Egress`                | List of strings                               | `Ingress` |
