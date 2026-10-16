@@ -190,12 +190,26 @@ Make sure you always install the version of `calicoctl` that matches the version
 
 ### Install calicoctl as a container on a single host
 
-To install `calicoctl` as a container on a single host, log into the
-target host and issue the following command.
+`calicoctl` ships as the `calico/ctl` image.
 
-```bash
-docker pull $[registry]$[imageNames.calicoctl]:$[releaseTitle]
-```
+1. Log into the target host and pull the image.
+
+   ```bash
+   docker pull $[registry]$[imageNames.calicoctl]:$[releaseTitle]
+   ```
+
+1. Run a `calicoctl` command, mounting your kubeconfig into the container.
+
+   ```bash
+   docker run --rm --network host \
+     -v "$HOME/.kube/config:/kubeconfig:ro" \
+     -e KUBECONFIG=/kubeconfig \
+     $[registry]$[imageNames.calicoctl]:$[releaseTitle] get nodes
+   ```
+
+   - `--network host` lets `calicoctl` reach the Kubernetes API server at the address in your kubeconfig, including `127.0.0.1`.
+
+   To pass other settings, such as etcd connection details, see [Configure calicoctl](configure/overview.mdx).
 
 **Next step**:
 
