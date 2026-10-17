@@ -1,0 +1,19 @@
+# Step 7 of the quickstart. Runs after all specs, including after a failure.
+# Deletes the cluster only if the quickstart spec created it, so a run never
+# removes a calico-cluster that someone else is using.
+specId: delete-kind-cluster
+tests:
+  - testId: delete-kind-cluster
+    steps:
+      - stepId: step7-delete-cluster
+        description: Delete the kind cluster.
+        runShell:
+          command: |
+            if [ -f /tmp/calico-quickstart/.created-by-doc-tests ]; then
+              rm -f /tmp/calico-quickstart/.created-by-doc-tests
+              kind delete cluster --name calico-cluster
+            else
+              echo "Skipped: this run did not create calico-cluster."
+            fi
+          stdio: '/Deleting cluster "calico-cluster" \.\.\.|Skipped: this run did not create calico-cluster\./'
+          timeout: 300000

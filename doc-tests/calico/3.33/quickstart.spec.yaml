@@ -1,0 +1,238 @@
+# Tests calico_versioned_docs/version-3.33/getting-started/kubernetes/quickstart.mdx.
+# Commands and expected output are copied from the page. Keep the two in sync.
+#
+# The BusyBox shell is one background process for steps 4 to 6, as on the page.
+# A process surface matches against all output since the shell started, so a
+# check for text that an earlier step already printed counts occurrences,
+# for example {2} for the second time the text appears.
+#
+# The create step leaves a marker file so that cleanup deletes the cluster only
+# if this run created it. kubectl uses the kubeconfig set in kind.env.
+specId: calico-3.33-quickstart
+description: Calico Open Source 3.33 quickstart on kind
+tests:
+  - testId: quickstart
+    description: Follow every step of the quickstart and check each expected output.
+    steps:
+      # Step 1: Create a cluster
+      - stepId: step1-config
+        description: Create config.yaml.
+        runShell:
+          command: |
+            mkdir -p /tmp/calico-quickstart && rm -f /tmp/calico-quickstart/.created-by-doc-tests
+            cat > /tmp/calico-quickstart/config.yaml <<'EOF'
+            kind: Cluster
+            apiVersion: kind.x-k8s.io/v1alpha4
+            nodes:
+              - role: control-plane
+              - role: worker
+              - role: worker
+            networking:
+              disableDefaultCNI: true
+              podSubnet: 192.168.0.0/16
+            EOF
+      - stepId: step1-create-cluster
+        description: Create the kind cluster.
+        runShell:
+          command: kind create cluster --name=calico-cluster --config=config.yaml && touch .created-by-doc-tests
+          workingDirectory: /tmp/calico-quickstart
+          stdio: 'Set kubectl context to "kind-calico-cluster"'
+          timeout: 600000
+      - stepId: step1-get-nodes
+        description: Three nodes exist and are NotReady.
+        runShell:
+          command: kubectl get nodes
+          stdio: '/calico-cluster-control-plane\s+NotReady\s+control-plane[\s\S]*calico-cluster-worker\s+NotReady[\s\S]*calico-cluster-worker2\s+NotReady/'
+
+      # Step 2: Install Calico
+      - stepId: step2-crds
+        description: Install the CRDs for Kubernetes 1.36 or later.
+        runShell:
+          command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/v3_projectcalico_org.yaml
+          stdio: 'customresourcedefinition.apiextensions.k8s.io/tiers.projectcalico.org created'
+          timeout: 120000
+      - stepId: step2-operator
+        description: Install the Tigera Operator.
+        runShell:
+          command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/tigera-operator.yaml
+          stdio: '/namespace\/tigera-operator created\nserviceaccount\/tigera-operator created\nclusterrole.rbac.authorization.k8s.io\/tigera-operator-secrets created\nclusterrole.rbac.authorization.k8s.io\/tigera-operator created\nclusterrolebinding.rbac.authorization.k8s.io\/tigera-operator created\nrolebinding.rbac.authorization.k8s.io\/tigera-operator-secrets created\ndeployment.apps\/tigera-operator created/'
+          timeout: 120000
+      - stepId: step2-custom-resources
+        description: Create the custom resources.
+        runShell:
+          command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/custom-resources.yaml
+          stdio: '/installation.operator.tigera.io\/default created\napiserver.operator.tigera.io\/default created\ngoldmane.operator.tigera.io\/default created\nwhisker.operator.tigera.io\/default created/'
+          timeout: 120000
+      - stepId: step2-tigerastatus
+        description: Rerun kubectl get tigerastatus until every component is available, as the page instructs.
+        runShell:
+          command: |
+            for i in $(seq 1 60); do
+              out=$(kubectl get tigerastatus 2>&1)
+              rows=$(echo "$out" | awk 'NR>1' | wc -l)
+              ready=$(echo "$out" | awk 'NR>1 && $2=="True"' | wc -l)
+              [ "$rows" -ge 6 ] && [ "$rows" -eq "$ready" ] && break
+              sleep 10
+            done
+            echo "$out"
+          stdio: '/NAME\s+AVAILABLE\s+PROGRESSING\s+DEGRADED\s+SINCE\s+MESSAGE\napiserver\s+True[^\n]*\ncalico\s+True[^\n]*\ngoldmane\s+True[^\n]*\nippools\s+True[^\n]*\ntiers\s+True[^\n]*\nwhisker\s+True/'
+          timeout: 660000
+
+      # Step 3: Monitor network traffic in Calico Whisker
+      - stepId: step3-port-forward
+        description: Forward the Whisker port and keep it open.
+        runShell:
+          command: kubectl port-forward -n calico-system service/whisker 8443:8443
+          background:
+            name: whisker-port-forward
+            waitUntil:
+              stdio: 'Forwarding from 127.0.0.1:8443 -> 8443'
+          timeout: 60000
+      - stepId: step3-whisker-responds
+        description: Whisker answers on https://localhost:8443. This checks the server, not the web console.
+        runShell:
+          command: curl -sk -o /dev/null -w '%{http_code}' https://localhost:8443
+          stdio: '200'
+
+      # Step 4: Deploy NGINX and BusyBox to generate traffic
+      - stepId: step4-namespace
+        runShell:
+          command: kubectl create namespace quickstart
+          stdio: 'namespace/quickstart created'
+      - stepId: step4-deployment
+        runShell:
+          command: kubectl create deployment --namespace=quickstart nginx --image=nginx
+          stdio: 'deployment.apps/nginx created'
+      - stepId: step4-expose
+        runShell:
+          command: kubectl expose --namespace=quickstart deployment nginx --port=80
+          stdio: 'service/nginx exposed'
+      - stepId: step4-busybox
+        description: Start the BusyBox shell.
+        runShell:
+          command: kubectl run --namespace=quickstart access --rm -ti --image busybox /bin/sh
+          background:
+            name: busybox
+            tty: true
+            waitUntil:
+              stdio: "If you don't see a command prompt, try pressing enter."
+          timeout: 180000
+      - stepId: step4-wget-nginx
+        description: BusyBox reaches NGINX.
+        type:
+          keys: ['wget -qO- http://nginx', '$ENTER$']
+          surface: busybox
+          waitUntil:
+            stdio: '/(Thank you for using nginx\.[\s\S]*){1}/'
+          timeout: 60000
+      - stepId: step4-wget-internet
+        description: BusyBox reaches the public internet.
+        type:
+          keys: ['wget -qO- https://docs.tigera.io/pod-connection-test.txt', '$ENTER$']
+          surface: busybox
+          waitUntil:
+            stdio: '/wget: note: TLS certificate validation not implemented[\s\S]*You successfully connected to https:\/\/docs.tigera.io\/pod-connection-test.txt\./'
+          timeout: 30000
+
+      # Step 5: Restrict all traffic with a default deny policy
+      - stepId: step5-default-deny
+        runShell:
+          command: |
+            kubectl create -f - <<EOF
+            apiVersion: projectcalico.org/v3
+            kind: GlobalNetworkPolicy
+            metadata:
+              name: default-deny
+            spec:
+              selector: projectcalico.org/namespace not in {'kube-system', 'calico-system', 'calico-apiserver'}
+              types:
+                - Ingress
+                - Egress
+            EOF
+          stdio: 'globalnetworkpolicy.projectcalico.org/default-deny created'
+      - stepId: step5-wget-nginx
+        description: NGINX is unreachable.
+        type:
+          keys: ['wget -qO- http://nginx', '$ENTER$']
+          surface: busybox
+          waitUntil:
+            stdio: "wget: bad address 'nginx'"
+          timeout: 60000
+      - stepId: step5-wget-internet
+        description: The public internet is unreachable.
+        type:
+          keys: ['wget -qO- https://docs.tigera.io/pod-connection-test.txt', '$ENTER$']
+          surface: busybox
+          waitUntil:
+            stdio: "wget: bad address 'docs.tigera.io'"
+          timeout: 60000
+
+      # Step 6: Create targeted network policy for allowed traffic
+      - stepId: step6-allow-busybox-egress
+        runShell:
+          command: |
+            kubectl create -f - <<EOF
+            apiVersion: projectcalico.org/v3
+            kind: NetworkPolicy
+            metadata:
+              name: allow-busybox-egress
+              namespace: quickstart
+            spec:
+              selector: run == 'access'
+              types:
+              - Egress
+              egress:
+              - action: Allow
+            EOF
+          stdio: 'networkpolicy.projectcalico.org/allow-busybox-egress created'
+      - stepId: step6-wget-internet
+        description: The public internet is reachable again.
+        type:
+          keys: ['wget -qO- https://docs.tigera.io/pod-connection-test.txt', '$ENTER$']
+          surface: busybox
+          waitUntil:
+            stdio: '/(You successfully connected to https:\/\/docs.tigera.io\/pod-connection-test.txt\.[\s\S]*){2}/'
+          timeout: 30000
+      - stepId: step6-wget-nginx-timeout
+        description: NGINX ingress is still blocked, so wget times out.
+        type:
+          keys: ['wget -qO- -T 5 http://nginx', '$ENTER$']
+          surface: busybox
+          waitUntil:
+            stdio: 'wget: download timed out'
+          timeout: 30000
+      - stepId: step6-allow-nginx-ingress
+        runShell:
+          command: |
+            kubectl create -f - <<EOF
+            apiVersion: projectcalico.org/v3
+            kind: NetworkPolicy
+            metadata:
+              name: allow-nginx-ingress
+              namespace: quickstart
+            spec:
+              selector: app == 'nginx'
+              types:
+              - Ingress
+              ingress:
+              - action: Allow
+                source:
+                  selector: run == 'access'
+            EOF
+          stdio: 'networkpolicy.projectcalico.org/allow-nginx-ingress created'
+      - stepId: step6-wget-nginx
+        description: BusyBox reaches NGINX again.
+        type:
+          keys: ['wget -qO- http://nginx', '$ENTER$']
+          surface: busybox
+          waitUntil:
+            stdio: '/(Thank you for using nginx\.[\s\S]*){2}/'
+          timeout: 30000
+      - stepId: step6-exit-busybox
+        description: Leave the BusyBox shell.
+        type:
+          keys: ['exit', '$ENTER$']
+          surface: busybox
+          waitUntil:
+            stdio: 'pod "access" deleted'
+          timeout: 60000
