@@ -191,7 +191,7 @@ Make sure you always install the version of `calicoctl` that matches the version
 ### Install calicoctl as a container on a single host
 
 `calicoctl` ships as part of the combined `calico/calico` image.
-The image's entrypoint is the combined `calico` binary, so set the entrypoint to `calicoctl` when you run it.
+The image's entrypoint is the combined `calico` binary, so pass `ctl` as the first argument to run `calicoctl`.
 
 1. Log into the target host and pull the image.
 
@@ -206,15 +206,14 @@ The image's entrypoint is the combined `calico` binary, so set the entrypoint to
      --user "$(id -u):$(id -g)" \
      -v "$HOME/.kube/config:/kubeconfig:ro" \
      -e KUBECONFIG=/kubeconfig \
-     --entrypoint calicoctl \
-     $[registry]$[imageNames.calico/calico]:$[releaseTitle] get nodes
+     $[registry]$[imageNames.calico/calico]:$[releaseTitle] ctl get nodes
    ```
 
    - `--network host` lets `calicoctl` reach the Kubernetes API server at the address in your kubeconfig, including `127.0.0.1`.
    - `--user` runs `calicoctl` as your user, so it can read a kubeconfig that only you can read.
      Without it, `calicoctl` runs as UID 10001.
-   - `--entrypoint calicoctl` runs `calicoctl` instead of the combined binary.
-     You can instead keep the default entrypoint and pass `ctl` as the first argument, for example `ctl get nodes`.
+   - `ctl` runs `calicoctl`.
+     Put the `calicoctl` command and its arguments after it, for example `ctl get ippools`.
 
    To pass other settings, such as etcd connection details, see [Configure calicoctl](configure/overview.mdx).
 
