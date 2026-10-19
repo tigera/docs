@@ -1,7 +1,7 @@
 const releases = require('./releases.json');
 
 const variables = {
-  releaseTitle: 'v3.32.2',
+  releaseTitle: 'v3.32.3',
   prodname: 'Calico',
   prodnamedash: 'calico',
   version: 'v3.32',
@@ -16,11 +16,11 @@ const variables = {
   noderunning: 'calico-node',
   rootDirWindows: 'C:\\CalicoWindows',
   ppa_repo_name: 'calico-3.32',
-  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.32.2',
+  manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.32.3',
   releases,
   registry: '',
   vppbranch: 'v3.32.0',
-  envoyVersion: '1.8.3',
+  envoyVersion: '1.9.1',
   tigeraOperator: releases[0]['tigera-operator'],
   tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {
