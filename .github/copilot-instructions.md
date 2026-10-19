@@ -196,9 +196,9 @@ lifecycle_id: gateway-waf
 that declares a status but has no H1 fails the build. So does a misspelled key such as
 `lifecycle-status`, or a `lifecycle_feature` or `lifecycle_id` without `lifecycle_status`.
 
-Do not use `$[variables]` in these front matter fields. Variable substitution is a remark plugin
-that runs over the page body, and front matter never passes through it, so the token would be
-published literally. Write the product name out instead.
+Do not use `$[variables]` in these front matter fields. Substitution there is not reliable: it
+happens only because the notice is inserted before the variables plugin runs, and that plugin
+does not wait for its own replacements to finish. Write the product name out instead.
 
 ### Part of a page
 

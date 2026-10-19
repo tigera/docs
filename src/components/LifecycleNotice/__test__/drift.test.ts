@@ -142,13 +142,13 @@ function declarationsIn(file: string, source: string): Declaration[] {
 /**
  * The statuses in the data file that a declared status is allowed to resolve to.
  *
- * A page that says deprecated is still right once the feature is recorded as removed: removal
- * only reaches a tree whose pages are on their way out, and the notice should keep warning until
- * they go.
+ * A deprecation notice does not accept a feature recorded as removed. The notice says the
+ * feature is still present and supported, which is false once it is removed, so the page needs
+ * removing from that tree instead.
  */
 const ALLOWED: Record<Declarable, CellStatus[]> = {
   'tech-preview': ['tech-preview'],
-  deprecated: ['deprecated', 'removed'],
+  deprecated: ['deprecated'],
 };
 
 function allowedFor(declared: Declarable): RegExp {
@@ -188,10 +188,10 @@ describe('the drift check catches a stale notice', () => {
     expect(agrees('tech-preview', resolveStatus(nativeV3Crds(), 'calico', null))).toBe(false);
   });
 
-  it('accepts a deprecation notice once the feature is removed', () => {
+  it('rejects a deprecation notice once the feature is removed', () => {
     const compliance = byId.get('compliance-reporting')!;
     expect(resolveStatus(compliance, 'calico-enterprise', '3.24')).toBe('removed');
-    expect(agrees('deprecated', resolveStatus(compliance, 'calico-enterprise', '3.24'))).toBe(true);
+    expect(agrees('deprecated', resolveStatus(compliance, 'calico-enterprise', '3.24'))).toBe(false);
   });
 
   it('rejects any notice on a feature the data file does not cover for that product', () => {
@@ -240,11 +240,17 @@ describe('lifecycle notices agree with data/feature-status.yaml', () => {
     expect(TREES.filter((tree) => mdxFiles(tree.dir).length > 0)).toHaveLength(TREES.length);
   });
 
+  it('finds at least one declaration', () => {
+    // Without one, no page-level case below would be registered and the suite would pass empty.
+    expect(cases.length).toBeGreaterThan(0);
+  });
+
   it.each(DECLARABLE)('recognises %s as a declarable status', (status) => {
     expect(features.some((feature) => JSON.stringify(feature.products).includes(status))).toBe(true);
   });
 
   if (cases.length) {
+    // Guarded because it.each rejects an empty table; the test above fails in that case.
     it.each(cases)('$file declares $status for $id', ({ file, id, status, product, version }) => {
       const feature = byId.get(id);
 
