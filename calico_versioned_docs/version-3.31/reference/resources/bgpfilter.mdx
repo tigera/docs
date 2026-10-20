@@ -11,7 +11,8 @@ specified by a [BGP peer resource](bgppeer.mdx) (`BGPPeer`).
 The BGPFilter rules are applied sequentially: the `action` for
 the **first** rule that matches is executed immediately.
 If an address does not match any explicit BGP filter rule,
-the default action is `Accept`.
+it is accepted on import. On export, it is advertised only if
+Calico would advertise it to that peer without the filter.
 
 In order for a BGPFilter to be used in a BGP peering, its `name`
 must be added to `filters` of the corresponding BGPPeer resource.
@@ -61,7 +62,7 @@ spec:
 
 | Field | Description                                                        | Accepted Values                                     | Schema |
 | ----- | ------------------------------------------------------------------ | --------------------------------------------------- | ------ |
-| name  | Unique name to describe this resource instance. Must be specified. | Alphanumeric string with optional `.`, `_`, or `-`. | string |
+| name  | Unique name to describe this resource instance. Must be specified. | Lowercase alphanumeric string with optional `.` or `-`. | string |
 
 ### Spec
 
@@ -76,12 +77,12 @@ spec:
 
 | Field         | Description                                | Accepted Values                                                     | Schema | Default |
 | ------------- | ------------------------------------------ | ------------------------------------------------------------------- | ------ | ------- |
-| cidr          | IPv6 range                                 | A valid IPv6 CIDR                                                   | string |         |
+| cidr          | IPv4 range                                 | A valid IPv4 CIDR                                                   | string |         |
 | prefixLength  | [PrefixLength](#bgp-filter-prefix-length)  | Valid integers between 0 and ipv4/6 max (32, 128)                   |        |         |
 | matchOperator | Method by which to match candidate routes  | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string |         |
 | source        | Indicator of the source of route           | `RemotePeers` means any route learned from other BGP peers          | string |         |
 | interface     | String to match interface names            | A valid pattern to match interfaces. "*" can be used as a wildcard. | string |         |
-| action        | Action to be taken for this rule           | `Accept` or `Reject`                                                | string |         |
+| action        | Action to be taken for this rule. Required.| `Accept` or `Reject`                                                | string |         |
 
 ### BGP Filter Rule v6
 
@@ -92,11 +93,11 @@ spec:
 | matchOperator | Method by which to match candidate routes  | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string |         |
 | source        | Indicator of the source of route           | `RemotePeers` means any route learned from other BGP peers          | string |         |
 | interface     | String to match interface names            | A valid pattern to match interfaces. "*" can be used as a wildcard. | string |         |
-| action        | Action to be taken for this rule           | `Accept` or `Reject`                                                | string |         |
+| action        | Action to be taken for this rule. Required.| `Accept` or `Reject`                                                | string |         |
 
 ### BGP Filter Prefix Length
 
 | Field  | Description                                   | Accepted Values                                                     | Schema | Default |
 | ------ | --------------------------------------------- | ------------------------------------------------------------------- | ------ | ------- |
-| min    | Smallest matched mask size (0 by default)     | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
-| max    | Largest matched mask size (32/128 by default) | Valid integers between 1 and ipv4/6 max (32, 128)                   | int    |         |
+| min    | Smallest matched mask size (the CIDR's mask size by default)     | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
+| max    | Largest matched mask size (32/128 by default) | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
