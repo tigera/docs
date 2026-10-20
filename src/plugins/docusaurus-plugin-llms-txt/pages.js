@@ -7,6 +7,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { hasContent } from './generate.js';
+import { outputPathFor } from './links.js';
 
 /**
  * Quote a value as a YAML double-quoted scalar.
@@ -86,8 +87,8 @@ export function markdownPathsFor(permalink) {
  * Write both Markdown twins for a doc.
  *
  * @param {object} doc
- * @param {string} outDir
- * @param {object} meta
+ * @param {string} outDir - The build directory, which is served at the site's baseUrl
+ * @param {{ productName: string, versionLabel: string, siteUrl: string, baseUrl?: string }} meta
  * @returns {Promise<number>} Bytes written per file, or 0 if the page was skipped
  */
 export async function writePageMarkdown(doc, outDir, meta) {
@@ -101,7 +102,7 @@ export async function writePageMarkdown(doc, outDir, meta) {
 
   const content = buildPageMarkdown(doc, meta);
 
-  for (const relativePath of markdownPathsFor(doc.permalink)) {
+  for (const relativePath of markdownPathsFor(outputPathFor(doc.permalink, meta.baseUrl))) {
     const target = path.join(outDir, relativePath);
     await fs.mkdir(path.dirname(target), { recursive: true });
     await fs.writeFile(target, content);

@@ -116,6 +116,19 @@ describe('writePageMarkdown', () => {
     await expect(fs.access(path.join(outDir, markdownPathsFor(DOC.permalink)[0]))).rejects.toThrow();
   });
 
+  it('writes under the build directory, not a second copy of a non-root baseUrl', async () => {
+    const doc = { ...DOC, permalink: '/lynx/1.4/install' };
+    await writePageMarkdown(doc, outDir, {
+      ...META,
+      siteUrl: 'https://docs.tigera.io',
+      baseUrl: '/lynx/',
+    });
+
+    const page = await fs.readFile(path.join(outDir, '1.4/install.md'), 'utf-8');
+    expect(page).toContain('canonical_url: "https://docs.tigera.io/lynx/1.4/install"');
+    await expect(fs.access(path.join(outDir, 'lynx'))).rejects.toThrow();
+  });
+
   it('omits the version line when the product is unversioned', () => {
     const page = buildPageMarkdown(DOC, { ...META, versionLabel: '' });
 

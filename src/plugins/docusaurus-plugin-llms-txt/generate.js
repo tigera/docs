@@ -51,8 +51,8 @@ function groupBySection(docs) {
  * from the index never has to fetch HTML. The pages that produce no twin keep their
  * HTML link: the page is real, only its Markdown is not.
  */
-function formatLink(doc, siteUrl) {
-  const url = docUrl(doc, siteUrl, hasContent(doc));
+function formatLink(doc, siteUrl, baseUrl) {
+  const url = docUrl(doc, siteUrl, hasContent(doc), baseUrl);
   const desc = doc.description ? `: ${doc.description}` : '';
   return `- [${doc.title}](${url})${desc}`;
 }
@@ -73,9 +73,17 @@ function isOptionalSection(sectionLabel, optionalSections) {
  * @param {ProcessedDoc[]} docs - All processed docs for this product
  * @param {string} siteUrl - Site base URL
  * @param {string[]} optionalSections - Section label patterns for ## Optional
+ * @param {string} [baseUrl] - The site's baseUrl
  * @returns {string}
  */
-export function generateProductIndex(productName, description, docs, siteUrl, optionalSections) {
+export function generateProductIndex(
+  productName,
+  description,
+  docs,
+  siteUrl,
+  optionalSections,
+  baseUrl = '/'
+) {
   // Unlike llms-full.txt this lists every doc, including those with no twin; those
   // entries link to HTML rather than to a .md that does not exist. See formatLink.
   const sections = groupBySection(docs);
@@ -87,7 +95,7 @@ export function generateProductIndex(productName, description, docs, siteUrl, op
   lines.push(`> ${description}`);
 
   for (const [sectionLabel, sectionDocs] of sections) {
-    const linkLines = sectionDocs.map((doc) => formatLink(doc, siteUrl));
+    const linkLines = sectionDocs.map((doc) => formatLink(doc, siteUrl, baseUrl));
 
     if (isOptionalSection(sectionLabel, optionalSections)) {
       optionalLines.push(...linkLines);
@@ -152,37 +160,51 @@ export function generateProductFull(productName, description, versionLabel, docs
 }
 
 /**
- * Generate the root llms.txt (top pages + use cases + product file links).
+ * Generate the root llms.txt (top pages, extra sections, then links to each
+ * product's own files).
  *
- * @param {string} siteDescription - Blockquote for the root file
- * @param {ProcessedDoc[]} topPageDocs - Resolved top page docs
- * @param {ProcessedDoc[]} useCaseDocs - Use-case docs
- * @param {{ id: string, name: string }[]} products - Product metadata for linking to per-product files
- * @param {string} siteUrl - Site base URL
+ * @param {object} root
+ * @param {string} root.title - h1 for the file
+ * @param {string} root.description - Blockquote for the file
+ * @param {ProcessedDoc[]} root.topPageDocs - Resolved top page docs
+ * @param {{ title: string, docs: ProcessedDoc[] }[]} root.sections - Instances listed in full, such as use cases
+ * @param {{ name: string, path: string }[]} root.products - Each product's name and the URL path its files sit under
+ * @param {string} root.siteUrl - Site URL, no trailing slash
+ * @param {string} [root.baseUrl] - The site's baseUrl
  * @returns {string}
  */
-export function generateRootIndex(siteDescription, topPageDocs, useCaseDocs, products, siteUrl) {
+export function generateRootIndex({
+  title,
+  description,
+  topPageDocs,
+  sections,
+  products,
+  siteUrl,
+  baseUrl = '/',
+}) {
   const lines = [];
 
-  lines.push('# Calico Documentation');
+  lines.push(`# ${title}`);
   lines.push('');
-  lines.push(`> ${siteDescription}`);
+  lines.push(`> ${description}`);
 
   // Top Pages section
   lines.push('');
   lines.push('## Top Pages');
   lines.push('');
   for (const doc of topPageDocs) {
-    lines.push(formatLink(doc, siteUrl));
+    lines.push(formatLink(doc, siteUrl, baseUrl));
   }
 
-  // Use Cases section
-  if (useCaseDocs.length > 0) {
+  for (const section of sections) {
+    if (section.docs.length === 0) {
+      continue;
+    }
     lines.push('');
-    lines.push('## Use Cases');
+    lines.push(`## ${section.title}`);
     lines.push('');
-    for (const doc of useCaseDocs) {
-      lines.push(formatLink(doc, siteUrl));
+    for (const doc of section.docs) {
+      lines.push(formatLink(doc, siteUrl, baseUrl));
     }
   }
 
@@ -191,9 +213,8 @@ export function generateRootIndex(siteDescription, topPageDocs, useCaseDocs, pro
   lines.push('## Product Documentation');
   lines.push('');
   for (const product of products) {
-    const basePath = product.id;
-    lines.push(`- [${product.name} llms.txt](${siteUrl}/${basePath}/llms.txt): Index of all ${product.name} docs`);
-    lines.push(`- [${product.name} llms-full.txt](${siteUrl}/${basePath}/llms-full.txt): Full ${product.name} documentation content`);
+    lines.push(`- [${product.name} llms.txt](${siteUrl}${product.path}/llms.txt): Index of all ${product.name} docs`);
+    lines.push(`- [${product.name} llms-full.txt](${siteUrl}${product.path}/llms-full.txt): Full ${product.name} documentation content`);
   }
 
   lines.push('');
