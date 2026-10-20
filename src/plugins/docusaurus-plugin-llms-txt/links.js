@@ -93,7 +93,9 @@ export function rewriteDocLinks(markdown, siteUrl, hasTwin, baseUrl = '/') {
       const fragment = hashAt === -1 ? '' : target.slice(hashAt);
 
       const permalink = normalisePermalink(pathname);
-      if (!permalink || permalink.endsWith('.md') || !hasTwin(permalink)) {
+      // The site root normalises to an empty permalink, which is a real page when the
+      // site has a doc at its root; hasTwin decides, and twinPath maps it to index.md.
+      if (permalink.endsWith('.md') || !hasTwin(permalink)) {
         return match;
       }
 
