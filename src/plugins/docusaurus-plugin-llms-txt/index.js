@@ -446,6 +446,37 @@ export function resolveInstances(docsPlugins, configured, skipped = []) {
 }
 
 /**
+ * Index paths that more than one llms.txt would be written to.
+ *
+ * Paths are compared after normalising, so `calico`, `/calico` and `calico/` clash.
+ * The root index, when there is one, occupies the empty path.
+ *
+ * @param {object[]} instances - From resolveInstances
+ * @param {boolean} hasRootIndex
+ * @returns {string[]} One description per clashing path, such as `"calico" (calico, oss)`
+ */
+export function indexPathClashes(instances, hasRootIndex) {
+  const owners = new Map();
+  const claim = (indexPath, owner) => {
+    const key = path.posix.normalize(`/${indexPath}/`).replace(/^\/+|\/+$/g, '');
+    owners.set(key, [...(owners.get(key) ?? []), owner]);
+  };
+
+  if (hasRootIndex) {
+    claim('', 'rootIndex');
+  }
+  for (const instance of instances) {
+    if (!instance.rootSection) {
+      claim(instance.indexPath, instance.instanceId);
+    }
+  }
+
+  return [...owners]
+    .filter(([, ids]) => ids.length > 1)
+    .map(([key, ids]) => `"${key || '/'}" (${ids.join(', ')})`);
+}
+
+/**
  * The URL path an instance's llms.txt and llms-full.txt sit under, with no
  * trailing slash: `/calico` on a site served from `/`.
  *
@@ -598,8 +629,8 @@ export default function llmsTxtPlugin(context, options) {
       }
 
       // Both of these would otherwise fail quietly: a root section with no root file
-      // to put it in drops the instance from every index, and an index at the root
-      // path would be overwritten by the root file.
+      // to put it in drops the instance from every index, and two indexes at one path
+      // overwrite each other, with whichever finishes last winning.
       if (!rootIndex) {
         const orphaned = instances.filter((i) => i.rootSection).map((i) => i.instanceId);
         if (orphaned.length > 0) {
@@ -607,14 +638,11 @@ export default function llmsTxtPlugin(context, options) {
             `${PLUGIN_NAME}: ${orphaned.join(', ')} set rootSection, but there is no rootIndex to list them in.`
           );
         }
-      } else {
-        const clashing = instances.filter((i) => !i.rootSection && i.indexPath === '');
-        if (clashing.length > 0) {
-          throw new Error(
-            `${PLUGIN_NAME}: ${clashing.map((i) => i.instanceId).join(', ')} would write ` +
-              'llms.txt at the site root, where rootIndex writes its own.'
-          );
-        }
+      }
+
+      const clashes = indexPathClashes(instances, Boolean(rootIndex));
+      if (clashes.length > 0) {
+        throw new Error(`${PLUGIN_NAME}: more than one llms.txt would be written at ${clashes.join('; ')}.`);
       }
 
       // Process all products concurrently

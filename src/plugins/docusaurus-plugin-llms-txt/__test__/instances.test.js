@@ -1,4 +1,4 @@
-import { resolveInstances } from '../index.js';
+import { indexPathClashes, resolveInstances } from '../index.js';
 import { generateRootIndex } from '../generate.js';
 
 const docsPlugin = (id) => ({ name: 'docusaurus-plugin-content-docs', options: { id } });
@@ -36,6 +36,25 @@ describe('resolveInstances', () => {
     const { instances } = resolveInstances([docsPlugin('calico')], { calico: {} });
 
     expect(instances[0]).toMatchObject({ indexPath: 'calico', productName: 'calico' });
+  });
+});
+
+describe('indexPathClashes', () => {
+  const instance = (instanceId, indexPath, rootSection) => ({ instanceId, indexPath, rootSection });
+
+  it('accepts distinct paths, and root sections, which write no files', () => {
+    const instances = [instance('calico', 'calico'), instance('use-cases', 'use-cases', 'Use Cases')];
+    expect(indexPathClashes(instances, true)).toEqual([]);
+  });
+
+  it('catches two instances at the same path, however it is written', () => {
+    const instances = [instance('calico', 'calico'), instance('oss', '/calico/')];
+    expect(indexPathClashes(instances, false)).toEqual(['"calico" (calico, oss)']);
+  });
+
+  it('catches an instance at the root when the root index is there too', () => {
+    expect(indexPathClashes([instance('default', '')], true)).toEqual(['"/" (rootIndex, default)']);
+    expect(indexPathClashes([instance('default', '')], false)).toEqual([]);
   });
 });
 

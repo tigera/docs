@@ -134,6 +134,12 @@ describe('twinPath', () => {
     expect(twinPath('/', '/')).toBe('/index.md');
   });
 
+  it('rewrites a link to the root doc of a site served from /', () => {
+    const rootOnly = (p) => p === '';
+    expect(rewriteDocLinks(`[Home](${SITE}/)`, SITE, rootOnly)).toBe(`[Home](${SITE}/index.md)`);
+    expect(rewriteDocLinks(`[Home](${SITE}/)`, SITE, () => false)).toBe(`[Home](${SITE}/)`);
+  });
+
   it('agrees with the files pages.js writes', () => {
     expect(docUrl({ permalink: '/lynx/' }, SITE, true, '/lynx/')).toBe(`${SITE}/lynx/index.md`);
     expect(rewriteDocLinks(`[Home](${SITE}/lynx/)`, SITE, () => true, '/lynx/')).toBe(
