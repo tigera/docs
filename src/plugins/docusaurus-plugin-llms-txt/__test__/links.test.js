@@ -1,4 +1,4 @@
-import { docUrl, normalisePermalink, rewriteDocLinks } from '../links.js';
+import { docUrl, normalisePermalink, outputPathFor, rewriteDocLinks, twinPath } from '../links.js';
 
 const SITE = 'https://docs.tigera.io';
 const TWINS = new Set([
@@ -99,5 +99,45 @@ describe('docUrl', () => {
 
   it('falls back to the HTML page when it does not', () => {
     expect(docUrl({ permalink: '/calico/latest/x' }, SITE, false)).toBe(`${SITE}/calico/latest/x`);
+  });
+});
+
+describe('outputPathFor', () => {
+  it('leaves permalinks alone on a site served from the root', () => {
+    expect(outputPathFor('/calico/latest/about', '/')).toBe('/calico/latest/about');
+  });
+
+  it('strips a non-root baseUrl, which the build directory already stands for', () => {
+    expect(outputPathFor('/lynx/1.4/install', '/lynx/')).toBe('/1.4/install');
+    expect(outputPathFor('/lynx/1.4/networking/', '/lynx/')).toBe('/1.4/networking/');
+  });
+
+  it('maps the baseUrl itself to the build root', () => {
+    expect(outputPathFor('/lynx/', '/lynx/')).toBe('/');
+    expect(outputPathFor('/lynx', '/lynx/')).toBe('/');
+  });
+
+  it('does not strip a prefix that only looks like the baseUrl', () => {
+    expect(() => outputPathFor('/lynxish/page', '/lynx/')).toThrow(/outside the site baseUrl/);
+  });
+});
+
+describe('twinPath', () => {
+  it('appends .md to an ordinary page', () => {
+    expect(twinPath('/calico/latest/networking/')).toBe('/calico/latest/networking.md');
+    expect(twinPath('/lynx/1.3/', '/lynx/')).toBe('/lynx/1.3.md');
+  });
+
+  it('keeps the root doc inside the site, where its index.md is written', () => {
+    // /lynx.md would be outside the site the build directory is served as.
+    expect(twinPath('/lynx/', '/lynx/')).toBe('/lynx/index.md');
+    expect(twinPath('/', '/')).toBe('/index.md');
+  });
+
+  it('agrees with the files pages.js writes', () => {
+    expect(docUrl({ permalink: '/lynx/' }, SITE, true, '/lynx/')).toBe(`${SITE}/lynx/index.md`);
+    expect(rewriteDocLinks(`[Home](${SITE}/lynx/)`, SITE, () => true, '/lynx/')).toBe(
+      `[Home](${SITE}/lynx/index.md)`
+    );
   });
 });

@@ -553,36 +553,54 @@ export default async function createAsyncConfig() {
       [
         './src/plugins/docusaurus-plugin-llms-txt',
         {
-          siteDescription:
-            'Calico documentation for networking, network security, and observability for Kubernetes, including Calico Open Source, Calico Enterprise, and Calico Cloud.',
-          productDescriptions: {
-            calico: 'Open source networking and network security for containers and Kubernetes.',
-            'calico-enterprise': 'Enterprise-grade networking, security, and observability for Kubernetes.',
-            'calico-cloud': 'SaaS-based Kubernetes security and observability platform.',
+          rootIndex: {
+            title: 'Calico Documentation',
+            description:
+              'Calico documentation for networking, network security, and observability for Kubernetes, including Calico Open Source, Calico Enterprise, and Calico Cloud.',
+            topPages: [
+              '/calico/latest/getting-started/kubernetes/quickstart',
+              '/calico-enterprise/latest/getting-started/install-on-clusters/kubernetes/quickstart',
+              '/calico-cloud/get-started/connect-cluster',
+              '/calico/latest/networking/determine-best-networking',
+              '/calico/latest/network-policy/get-started/calico-policy/calico-network-policy',
+              '/calico-enterprise/latest/network-policy/policy-tiers/tiered-policy',
+              '/calico/latest/operations/ebpf/enabling-ebpf',
+              '/calico-enterprise/latest/observability',
+              '/calico/latest/networking/configuring/bgp',
+              '/calico-cloud/get-started/system-requirements',
+            ],
           },
-          topPages: [
-            '/calico/latest/getting-started/kubernetes/quickstart',
-            '/calico-enterprise/latest/getting-started/install-on-clusters/kubernetes/quickstart',
-            '/calico-cloud/get-started/connect-cluster',
-            '/calico/latest/networking/determine-best-networking',
-            '/calico/latest/network-policy/get-started/calico-policy/calico-network-policy',
-            '/calico-enterprise/latest/network-policy/policy-tiers/tiered-policy',
-            '/calico/latest/operations/ebpf/enabling-ebpf',
-            '/calico-enterprise/latest/observability',
-            '/calico/latest/networking/configuring/bgp',
-            '/calico-cloud/get-started/system-requirements',
-          ],
+          instances: {
+            calico: {
+              name: 'Calico Open Source',
+              description: 'Open source networking and network security for containers and Kubernetes.',
+            },
+            'calico-enterprise': {
+              name: 'Calico Enterprise',
+              description: 'Enterprise-grade networking, security, and observability for Kubernetes.',
+            },
+            'calico-cloud': {
+              name: 'Calico Cloud',
+              description: 'SaaS-based Kubernetes security and observability platform.',
+              // Docusaurus version names are navigation labels. Where a product has a
+              // user-facing version that differs, name the variables.js key holding it
+              // so frontmatter reports something a reader can corroborate. Calico Cloud's
+              // Docusaurus label is "24-1", which appears in no URL and no dropdown.
+              versionVariable: 'cloudUserVersion',
+            },
+            // Listed in full in the root llms.txt rather than getting files of its own.
+            'use-cases': {
+              name: 'Calico use cases',
+              unversioned: true,
+              rootSection: 'Use Cases',
+            },
+          },
+          // The placeholder instance that multi-instance docs require. It has one page.
+          skipInstances: ['default'],
           optionalSections: ['release notes'],
           // 'last' covers only the version served at /latest; 'all' covers every
           // built version, at roughly three times the generation cost.
           versions: 'all',
-          // Docusaurus version names are navigation labels. Where a product has a
-          // user-facing version that differs, name the variables.js key holding it
-          // so frontmatter reports something a reader can corroborate. Calico Cloud's
-          // Docusaurus label is "24-1", which appears in no URL and no dropdown.
-          versionVariables: {
-            'calico-cloud': 'cloudUserVersion',
-          },
         },
       ],
     ],

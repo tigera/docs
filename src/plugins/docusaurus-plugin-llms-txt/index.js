@@ -6,6 +6,16 @@
  *
  * Runs on every build. Conversion is cached against a hash of each page's HTML, so
  * only pages whose rendered output changed are reconverted.
+ *
+ * Options:
+ *   instances        Docs instance id to { name, description, unversioned,
+ *                    versionVariable, indexPath, rootSection }. Only these get output.
+ *   skipInstances    Instance ids that deliberately get none, so they raise no warning.
+ *   rootIndex        { title, description, topPages } for a root llms.txt that links
+ *                    to every instance's files. Omit it on a single-instance site and
+ *                    set that instance's indexPath to '' instead.
+ *   optionalSections Sidebar labels that go under "## Optional" in llms.txt.
+ *   versions         'last' (default) or 'all'.
  */
 
 import fs from 'fs/promises';
@@ -23,12 +33,17 @@ import {
 } from './generate.js';
 import { writePageMarkdown } from './pages.js';
 import { createCache, fingerprintConverter } from './cache.js';
-import { rewriteDocLinks, normalisePermalink } from './links.js';
+import { rewriteDocLinks, normalisePermalink, outputPathFor } from './links.js';
 
 const PLUGIN_NAME = 'docusaurus-plugin-llms-txt';
 const LOG_PREFIX = '[llms-txt]';
 const CACHE_DIR_NAME = '.llms-cache';
-const USE_CASES_NAME = 'Calico use cases';
+
+/**
+ * Lockfiles, in the order they are looked for. The first one present is
+ * fingerprinted; see the cache setup in postBuild for why.
+ */
+const LOCKFILES = ['yarn.lock', 'package-lock.json', 'pnpm-lock.yaml'];
 
 /**
  * How many pages in a version may convert to an empty body before the build fails.
@@ -72,17 +87,16 @@ const requireFromHere = createRequire(import.meta.url);
  * has nothing to corroborate it against. The docs themselves render $[cloudUserVersion],
  * and that is the string a reader would recognise.
  *
- * The location mirrors src/utils/getVariableByFilePath.js, which resolves the same
- * files for the remark plugin.
+ * The file sits at the root of the version's content directory, as in
+ * src/utils/getVariableByFilePath.js, which resolves the same files for the remark
+ * plugin. Docusaurus reports that directory itself, which matters because it does
+ * not derive it from the instance id the same way for every instance: the default
+ * instance's versions live in versioned_docs/, with no prefix.
  *
  * @returns {string | null}
  */
-function versionLabelFromVariables(variableName, docsPath, version, siteDir) {
-  const versionDir =
-    version.versionName === 'current'
-      ? path.join(siteDir, docsPath)
-      : path.join(siteDir, `${docsPath}_versioned_docs`, `version-${version.versionName}`);
-  const variablesPath = path.join(versionDir, 'variables.js');
+function versionLabelFromVariables(variableName, version) {
+  const variablesPath = path.join(version.contentPath, 'variables.js');
 
   try {
     const value = requireFromHere(variablesPath)[variableName];
@@ -115,13 +129,6 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Product display names */
-const PRODUCT_NAMES = {
-  calico: 'Calico Open Source',
-  'calico-enterprise': 'Calico Enterprise',
-  'calico-cloud': 'Calico Cloud',
-};
-
 /**
  * Process a single doc: read HTML, extract content, convert to Markdown.
  *
@@ -130,8 +137,9 @@ const PRODUCT_NAMES = {
  *
  * @returns {Promise<{ title, description, permalink, markdown, sectionLabel } | null>}
  */
-async function processDoc(doc, sectionLabel, outDir, siteUrl, cache) {
-  const htmlPath = path.join(outDir, doc.permalink, 'index.html');
+async function processDoc(doc, sectionLabel, site, cache) {
+  const { outDir, siteUrl, baseUrl } = site;
+  const htmlPath = path.join(outDir, outputPathFor(doc.permalink, baseUrl), 'index.html');
 
   let rawHtml;
   try {
@@ -177,7 +185,7 @@ const BATCH_SIZE = 50;
  *
  * @returns {Promise<{ versionLabel: string, allDocs: object[], sidebarDocs: object[] }>}
  */
-async function processVersion(version, outDir, siteUrl, cache) {
+async function processVersion(version, site, cache) {
   const versionLabel = version.label || version.versionName;
 
   const docsById = new Map();
@@ -204,7 +212,7 @@ async function processVersion(version, outDir, siteUrl, cache) {
   for (let i = 0; i < version.docs.length; i += BATCH_SIZE) {
     const batch = version.docs.slice(i, i + BATCH_SIZE);
     const results = await Promise.all(
-      batch.map((doc) => processDoc(doc, sectionByDocId.get(doc.id) || '', outDir, siteUrl, cache))
+      batch.map((doc) => processDoc(doc, sectionByDocId.get(doc.id) || '', site, cache))
     );
 
     results.forEach((result, index) => {
@@ -275,9 +283,8 @@ async function processVersion(version, outDir, siteUrl, cache) {
  * single 'current' version for the Calico Cloud preview build, which makes every
  * product look unversioned.
  */
-async function processProduct(docsPlugin, outDir, siteUrl, options, cache) {
+async function processProduct(docsPlugin, site, options, cache) {
   const content = docsPlugin.content;
-  const docsPath = docsPlugin.options?.path;
   if (!content?.loadedVersions?.length) {
     console.warn(`${LOG_PREFIX} No loaded versions for plugin instance`);
     return null;
@@ -295,15 +302,14 @@ async function processProduct(docsPlugin, outDir, siteUrl, options, cache) {
 
   const versions = [];
   for (const version of selected) {
-    const result = await processVersion(version, outDir, siteUrl, cache);
+    const result = await processVersion(version, site, cache);
     // Precedence: unversioned wins, then a variables.js label, then Docusaurus's own.
     let versionLabel = result.versionLabel;
     if (options.unversioned) {
       versionLabel = '';
-    } else if (options.versionVariable && docsPath && options.siteDir) {
+    } else if (options.versionVariable) {
       versionLabel =
-        versionLabelFromVariables(options.versionVariable, docsPath, version, options.siteDir) ??
-        result.versionLabel;
+        versionLabelFromVariables(options.versionVariable, version) ?? result.versionLabel;
     }
 
     versions.push({ ...result, versionLabel, isLast: Boolean(version.isLast) });
@@ -366,7 +372,7 @@ function throwOnFailures(outcomes, phase) {
   }
 }
 
-async function writeProductPages(result, outDir, productName, siteUrl) {
+async function writeProductPages(result, site, productName) {
   let count = 0;
 
   let skipped = 0;
@@ -376,10 +382,11 @@ async function writeProductPages(result, outDir, productName, siteUrl) {
       const batch = version.allDocs.slice(i, i + BATCH_SIZE);
       const written = await Promise.all(
         batch.map((doc) =>
-          writePageMarkdown(doc, outDir, {
+          writePageMarkdown(doc, site.outDir, {
             productName,
             versionLabel: version.versionLabel,
-            siteUrl,
+            siteUrl: site.siteUrl,
+            baseUrl: site.baseUrl,
           })
         )
       );
@@ -400,6 +407,143 @@ async function writeProductPages(result, outDir, productName, siteUrl) {
   return count;
 }
 
+/**
+ * Match the configured instances to the docs plugin instances that actually loaded.
+ *
+ * Each configured instance gets its own llms.txt and llms-full.txt under
+ * `indexPath`, unless it sets `rootSection`, in which case it writes no files of its
+ * own and is listed in full under that heading in the root llms.txt instead. Every
+ * instance gets Markdown twins either way.
+ *
+ * @param {object[]} docsPlugins - Loaded docusaurus-plugin-content-docs instances
+ * @param {Record<string, object>} configured - The plugin's `instances` option
+ * @param {string[]} skipped - Instance ids that deliberately get no output
+ * @returns {{ instances: object[], unconfigured: string[], missing: string[] }}
+ */
+export function resolveInstances(docsPlugins, configured, skipped = []) {
+  const instances = [];
+  const unconfigured = [];
+
+  for (const plugin of docsPlugins) {
+    const instanceId = plugin.options?.id || 'default';
+    const config = configured[instanceId];
+
+    if (!config) {
+      if (!skipped.includes(instanceId)) {
+        unconfigured.push(instanceId);
+      }
+      continue;
+    }
+
+    instances.push({
+      plugin,
+      instanceId,
+      productName: config.name || instanceId,
+      description: config.description || '',
+      unversioned: Boolean(config.unversioned),
+      versionVariable: config.versionVariable,
+      rootSection: config.rootSection,
+      indexPath: config.indexPath ?? instanceId,
+    });
+  }
+
+  const loaded = new Set(instances.map((i) => i.instanceId));
+  const missing = Object.keys(configured).filter((id) => !loaded.has(id));
+
+  return { instances, unconfigured, missing };
+}
+
+/**
+ * The URL path an instance's llms.txt and llms-full.txt sit under, with no
+ * trailing slash: `/calico` on a site served from `/`.
+ *
+ * @param {string} baseUrl
+ * @param {string} indexPath
+ * @returns {string}
+ */
+function indexUrlPath(baseUrl, indexPath) {
+  return path.posix.join(baseUrl, indexPath).replace(/\/+$/, '');
+}
+
+/**
+ * The site's lockfile, for the cache fingerprint.
+ *
+ * Fails rather than fingerprinting without one, for the same reason
+ * fingerprintConverter fails on an unreadable input.
+ *
+ * @param {string} siteDir
+ * @returns {Promise<string>}
+ */
+async function findLockfile(siteDir) {
+  for (const name of LOCKFILES) {
+    const candidate = path.join(siteDir, name);
+    try {
+      await fs.access(candidate);
+      return candidate;
+    } catch {
+      // Try the next one.
+    }
+  }
+
+  throw new Error(
+    `${PLUGIN_NAME}: found no lockfile (${LOCKFILES.join(', ')}) in ${siteDir}, so the ` +
+      'conversion cache cannot tell when a dependency changes the Markdown.'
+  );
+}
+
+/**
+ * Write the root llms.txt, which links to every other instance's files.
+ *
+ * @param {{ title: string, description?: string, topPages?: string[] }} rootIndex
+ * @param {object[]} instances - From resolveInstances
+ * @param {Map<string, object>} processed - instanceId to processProduct result
+ * @param {{ id: string, name: string, path: string }[]} productMeta
+ * @param {{ outDir: string, siteUrl: string, baseUrl: string }} site
+ */
+async function writeRootIndex(rootIndex, instances, processed, productMeta, site) {
+  const { title, description = '', topPages = [] } = rootIndex;
+
+  // Normalize permalink for consistent lookup (strip trailing slash)
+  const normalizePermalink = (p) => p.replace(/\/+$/, '') || '/';
+
+  const docsByPermalink = new Map();
+  for (const result of processed.values()) {
+    for (const doc of result.docs) {
+      docsByPermalink.set(normalizePermalink(doc.permalink), doc);
+    }
+  }
+
+  const topPageDocs = [];
+  for (const permalink of topPages) {
+    const doc = docsByPermalink.get(normalizePermalink(permalink));
+    if (doc) {
+      topPageDocs.push(doc);
+    } else {
+      console.warn(`${LOG_PREFIX} Top page not found: ${permalink}`);
+    }
+  }
+
+  const sections = instances
+    .filter((i) => i.rootSection)
+    .map((i) => ({ title: i.rootSection, docs: processed.get(i.instanceId)?.docs ?? [] }));
+
+  // Sort product meta to have a consistent order
+  const products = [...productMeta].sort((a, b) => a.id.localeCompare(b.id));
+
+  const rootContent = generateRootIndex({
+    title,
+    description,
+    topPageDocs,
+    sections,
+    products,
+    siteUrl: site.siteUrl,
+    baseUrl: site.baseUrl,
+  });
+  const rootPath = path.join(site.outDir, 'llms.txt');
+  await fs.writeFile(rootPath, rootContent);
+  console.log(`${LOG_PREFIX} Wrote ${rootPath} (${formatSize(Buffer.byteLength(rootContent))})`);
+}
+
 export default function llmsTxtPlugin(context, options) {
   return {
     name: PLUGIN_NAME,
@@ -410,29 +554,30 @@ export default function llmsTxtPlugin(context, options) {
 
       const { outDir, plugins, siteConfig, siteDir } = props;
       const siteUrl = siteConfig.url.replace(/\/$/, '');
+      const site = { outDir, siteUrl, baseUrl: siteConfig.baseUrl };
 
       // The fingerprint has to cover everything that determines conversion output,
       // not just our own modules. The conversion is done by cheerio, unified, rehype
       // and remark, all on caret ranges, so a dependency bump can change the Markdown
       // while every cache key stays the same — which would freeze every page at the
       // old conversion until its HTML happened to change, with nothing to notice it by.
-      // yarn.lock covers transitive dependencies too, at the cost of reconverting on
+      // The lockfile covers transitive dependencies too, at the cost of reconverting on
       // an unrelated bump. siteUrl is in here because links are absolutised against it.
+      const lockfile = await findLockfile(siteDir);
       const cache = createCache({
         cacheDir: path.join(siteDir, CACHE_DIR_NAME),
         fingerprint: `${await fingerprintConverter([
           ...CONVERTER_MODULES,
-          path.join(siteDir, 'yarn.lock'),
+          lockfile,
         ])}:${siteUrl}`,
       });
 
       const {
-        siteDescription = '',
-        productDescriptions = {},
-        topPages = [],
+        instances: configured = {},
+        skipInstances = [],
+        rootIndex,
         optionalSections = [],
         versions = 'last',
-        versionVariables = {},
       } = options;
 
       // Find all docs plugin instances
@@ -440,55 +585,44 @@ export default function llmsTxtPlugin(context, options) {
         (p) => p.name === 'docusaurus-plugin-content-docs'
       );
 
-      // Separate product instances from use-cases
-      const productPlugins = [];
-      let useCasesPlugin = null;
-
-      const unrecognised = [];
-
-      for (const dp of docsPlugins) {
-        const instanceId = dp.options?.id || 'default';
-        if (instanceId === 'use-cases') {
-          useCasesPlugin = dp;
-        } else if (productDescriptions[instanceId]) {
-          productPlugins.push({ plugin: dp, instanceId });
-        } else if (instanceId !== 'default') {
-          unrecognised.push(instanceId);
-        }
-      }
-
-      // Use-cases runs in the same set as the products. Running it afterwards meant a
-      // use-cases failure was never reached when a product had already failed, and
-      // when it failed alone it threw bare instead of joining the collected report.
-      const instances = [
-        ...productPlugins.map(({ plugin, instanceId }) => ({
-          plugin,
-          instanceId,
-          productName: PRODUCT_NAMES[instanceId] || instanceId,
-          description: productDescriptions[instanceId] || '',
-          isProduct: true,
-        })),
-        ...(useCasesPlugin
-          ? [
-              {
-                plugin: useCasesPlugin,
-                instanceId: 'use-cases',
-                productName: USE_CASES_NAME,
-                description: '',
-                isProduct: false,
-                unversioned: true,
-              },
-            ]
-          : []),
-      ];
+      const { instances, unconfigured, missing } = resolveInstances(
+        docsPlugins,
+        configured,
+        skipInstances
+      );
 
       // Not fatal — a new instance may genuinely not want Markdown output — but it
       // should never be silent, or a whole product could be added and never covered.
-      if (unrecognised.length > 0) {
+      if (unconfigured.length > 0) {
         console.warn(
-          `${LOG_PREFIX} No productDescriptions entry for ${unrecognised.join(', ')}; ` +
+          `${LOG_PREFIX} No instances entry for ${unconfigured.join(', ')}; ` +
             'these docs get no Markdown twins'
         );
+      }
+      if (missing.length > 0) {
+        console.warn(
+          `${LOG_PREFIX} Configured instances that did not load: ${missing.join(', ')}`
+        );
+      }
+
+      // Both of these would otherwise fail quietly: a root section with no root file
+      // to put it in drops the instance from every index, and an index at the root
+      // path would be overwritten by the root file.
+      if (!rootIndex) {
+        const orphaned = instances.filter((i) => i.rootSection).map((i) => i.instanceId);
+        if (orphaned.length > 0) {
+          throw new Error(
+            `${PLUGIN_NAME}: ${orphaned.join(', ')} set rootSection, but there is no rootIndex to list them in.`
+          );
+        }
+      } else {
+        const clashing = instances.filter((i) => !i.rootSection && i.indexPath === '');
+        if (clashing.length > 0) {
+          throw new Error(
+            `${PLUGIN_NAME}: ${clashing.map((i) => i.instanceId).join(', ')} would write ` +
+              'llms.txt at the site root, where rootIndex writes its own.'
+          );
+        }
       }
 
       // Process all products concurrently
@@ -504,14 +638,11 @@ export default function llmsTxtPlugin(context, options) {
           console.log(`${LOG_PREFIX} Processing ${instance.productName}...`);
           const result = await processProduct(
             instance.plugin,
-            outDir,
-            siteUrl,
+            site,
             {
-              ...options,
               versions,
               unversioned: instance.unversioned,
-              siteDir,
-              versionVariable: versionVariables[instance.instanceId],
+              versionVariable: instance.versionVariable,
             },
             cache
           );
@@ -543,7 +674,7 @@ export default function llmsTxtPlugin(context, options) {
       // to decide where to advertise a twin and cannot know which pages produced
       // one, so a disagreement either links to a 404 or hides a real twin. Checks
       // every docs instance, not just the ones generated for: the theme renders on
-      // all of them, including the 'default' placeholder this plugin skips.
+      // all of them, including any listed in skipInstances.
       const withoutTwin = [];
       for (const docsPlugin of docsPlugins) {
         for (const version of docsPlugin.content?.loadedVersions ?? []) {
@@ -580,7 +711,7 @@ export default function llmsTxtPlugin(context, options) {
           // sidebarDocs holds these same objects, so llms.txt and llms-full.txt pick
           // the rewrite up from here too.
           for (const doc of version.allDocs) {
-            doc.markdown = rewriteDocLinks(doc.markdown, siteUrl, hasTwin);
+            doc.markdown = rewriteDocLinks(doc.markdown, siteUrl, hasTwin, site.baseUrl);
           }
         }
       }
@@ -588,11 +719,9 @@ export default function llmsTxtPlugin(context, options) {
       // Phase 3 — write the twins and the per-product indexes.
       const emitted = await Promise.allSettled(
         instanceResults.map(async ({ instance, result }) => {
-          const { instanceId, productName, description, isProduct } = instance;
+          const { instanceId, productName, description, rootSection, indexPath } = instance;
 
-          const written = result
-            ? await writeProductPages(result, outDir, productName, siteUrl)
-            : 0;
+          const written = result ? await writeProductPages(result, site, productName) : 0;
 
           // A product dropping out used to be a warning, which meant a green build
           // could publish a site missing hundreds of pages and 404 on llms.txt paths
@@ -602,8 +731,8 @@ export default function llmsTxtPlugin(context, options) {
           allProcessedDocs.set(instanceId, result);
           pagesWritten += written;
 
-          // Use-cases contributes only to the root llms.txt; it has no files of its own.
-          if (!isProduct) {
+          // A root section contributes only to the root llms.txt; it has no files of its own.
+          if (rootSection) {
             return;
           }
 
@@ -612,12 +741,13 @@ export default function llmsTxtPlugin(context, options) {
             description,
             result.docs,
             siteUrl,
-            optionalSections
+            optionalSections,
+            site.baseUrl
           );
-          const indexPath = path.join(outDir, instanceId, 'llms.txt');
-          await fs.mkdir(path.dirname(indexPath), { recursive: true });
-          await fs.writeFile(indexPath, indexContent);
-          console.log(`${LOG_PREFIX} Wrote ${indexPath} (${formatSize(Buffer.byteLength(indexContent))})`);
+          const indexFile = path.join(outDir, indexPath, 'llms.txt');
+          await fs.mkdir(path.dirname(indexFile), { recursive: true });
+          await fs.writeFile(indexFile, indexContent);
+          console.log(`${LOG_PREFIX} Wrote ${indexFile} (${formatSize(Buffer.byteLength(indexContent))})`);
 
           const fullContent = generateProductFull(
             productName,
@@ -626,63 +756,28 @@ export default function llmsTxtPlugin(context, options) {
             result.docs,
             siteUrl
           );
-          const fullPath = path.join(outDir, instanceId, 'llms-full.txt');
+          const fullPath = path.join(outDir, indexPath, 'llms-full.txt');
           await fs.writeFile(fullPath, fullContent);
           console.log(`${LOG_PREFIX} Wrote ${fullPath} (${formatSize(Buffer.byteLength(fullContent))})`);
 
-          productMeta.push({ id: instanceId, name: productName });
+          productMeta.push({
+            id: instanceId,
+            name: productName,
+            path: indexUrlPath(site.baseUrl, indexPath),
+          });
         })
       );
 
       throwOnFailures(emitted, 'emit');
 
-      // Use-cases was processed in the set above; pull its docs out for the root index.
-      const useCaseResult = allProcessedDocs.get('use-cases');
-      const useCaseDocs = useCaseResult ? useCaseResult.docs : [];
-
-      // Resolve top pages from the processed docs across all products
       const allDocsFlat = [];
-      for (const [instanceId, result] of allProcessedDocs) {
-        // use-cases is added below; it is in this map too now that it runs in the
-        // same set, and adding it twice would double-count it.
-        if (instanceId !== 'use-cases') {
-          allDocsFlat.push(...result.docs);
-        }
-      }
-      allDocsFlat.push(...useCaseDocs);
-
-      // Normalize permalink for consistent lookup (strip trailing slash)
-      const normalizePermalink = (p) => p.replace(/\/+$/, '') || '/';
-
-      const docsByPermalink = new Map();
-      for (const doc of allDocsFlat) {
-        docsByPermalink.set(normalizePermalink(doc.permalink), doc);
+      for (const result of allProcessedDocs.values()) {
+        allDocsFlat.push(...result.docs);
       }
 
-      const topPageDocs = [];
-      for (const permalink of topPages) {
-        const doc = docsByPermalink.get(normalizePermalink(permalink));
-        if (doc) {
-          topPageDocs.push(doc);
-        } else {
-          console.warn(`${LOG_PREFIX} Top page not found: ${permalink}`);
-        }
+      if (rootIndex) {
+        await writeRootIndex(rootIndex, instances, allProcessedDocs, productMeta, site);
       }
-
-      // Generate root llms.txt
-      // Sort product meta to have a consistent order
-      productMeta.sort((a, b) => a.id.localeCompare(b.id));
-
-      const rootContent = generateRootIndex(
-        siteDescription,
-        topPageDocs,
-        useCaseDocs,
-        productMeta,
-        siteUrl
-      );
-      const rootPath = path.join(outDir, 'llms.txt');
-      await fs.writeFile(rootPath, rootContent);
-      console.log(`${LOG_PREFIX} Wrote ${rootPath} (${formatSize(Buffer.byteLength(rootContent))})`);
 
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       const totalDocs = allDocsFlat.length;
