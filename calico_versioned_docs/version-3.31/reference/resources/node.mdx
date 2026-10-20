@@ -4,15 +4,16 @@ description: API for this Calico resource.
 
 # Node
 
-A node resource (`Node`) represents a node running $[prodname]. When adding a host
-to a $[prodname] cluster, a node resource needs to be created which contains the
+A node resource (`Node`) represents a node running $[prodname]. Each host
+in a $[prodname] cluster has a node resource which contains the
 configuration for the `$[nodecontainer]` instance running on the host.
 
 When starting a `$[nodecontainer]` instance, the name supplied to the instance should
 match the name configured in the Node resource.
 
 By default, starting a `$[nodecontainer]` instance will automatically create a node resource
-using the `hostname` of the compute host.
+using the `hostname` of the compute host. With the Kubernetes API datastore, the node resource is instead
+the Kubernetes node of the same name, and you cannot create a node resource with `calicoctl`.
 
 ## Sample YAML
 
@@ -35,7 +36,7 @@ spec:
 
 | Field | Description                      | Accepted Values                                     | Schema |
 | ----- | -------------------------------- | --------------------------------------------------- | ------ |
-| name  | The name of this node. Required. | Alphanumeric string with optional `.`, `_`, or `-`. | string |
+| name  | The name of this node. Required. | Lowercase alphanumeric string with optional `.` or `-`. | string |
 
 ### Spec
 
@@ -43,11 +44,13 @@ spec:
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------- | ---------------------------- | ------- |
 | bgp                  | BGP configuration for this node. Omit if using $[prodname] for policy only.                                                      |                 | [BGP](#bgp)                  |
 | ipv4VXLANTunnelAddr  | IPv4 address of the VXLAN tunnel. This is system configured and should not be updated manually.                                   |                 | string                       |
-| vxlanTunnelMACAddr   | MAC address of the IPv4 VXLAN tunnel. This is system configured and should not be updated manually.                               |                 | string                       |
+| vxlanTunnelMACAddr   | MAC address of the IPv4 VXLAN tunnel. If not set, Felix generates the MAC address from the node name.                               |                 | string                       |
 | ipv6VXLANTunnelAddr  | IPv6 address of the VXLAN tunnel. This is system configured and should not be updated manually.                                   |                 | string                       |
 | vxlanTunnelMACAddrV6 | MAC address of the IPv6 VXLAN tunnel. This is system configured and should not be updated manually.                               |                 | string                       |
 | orchRefs             | Correlates this node to a node in another orchestrator.                                                                           |                 | list of [OrchRefs](#orchref) |
 | wireguard            | WireGuard configuration for this node. This is applicable only if WireGuard is enabled in [Felix Configuration](felixconfig.mdx). |                 | [WireGuard](#wireguard)      |
+| addresses            | Addresses at which the node can be reached. With the Kubernetes API datastore, this is system configured and should not be updated manually. |                 | list                         |
+| interfaces           | Interfaces on the node and their addresses. This is system configured and should not be updated manually.                         |                 | list                         |
 
 ### OrchRef
 
@@ -70,5 +73,5 @@ spec:
 
 | Field                | Description                                                                               | Accepted Values | Schema | Default |
 | -------------------- | ----------------------------------------------------------------------------------------- | --------------- | ------ | ------- |
-| interfaceIPv4Address | The IP address and subnet for the IPv4 WireGuard interface created by Felix on this node. | Optional        | string |
-| interfaceIPv6Address | The IP address and subnet for the IPv6 WireGuard interface created by Felix on this node. | Optional        | string |
+| interfaceIPv4Address | The IP address for the IPv4 WireGuard interface created by Felix on this node. | Optional        | string |
+| interfaceIPv6Address | The IP address for the IPv6 WireGuard interface created by Felix on this node. | Optional        | string |
