@@ -11,7 +11,8 @@ specified by a [BGP peer resource](bgppeer.mdx) (`BGPPeer`).
 The BGPFilter rules are applied sequentially: the `action` for
 the **first** rule that matches is executed immediately.
 If an address does not match any explicit BGP filter rule,
-the default action is `Accept`.
+it is accepted on import. On export, it is advertised only if
+Calico would advertise it to that peer without the filter.
 
 In order for a BGPFilter to be used in a BGP peering, its `name`
 must be added to `filters` of the corresponding BGPPeer resource.
@@ -61,7 +62,7 @@ spec:
 
 | Field | Description                                                        | Accepted Values                                     | Schema |
 | ----- | ------------------------------------------------------------------ | --------------------------------------------------- | ------ |
-| `name`  | Unique name to describe this resource instance. Must be specified. | Alphanumeric string with optional `.`, `_`, or `-`. | string |
+| `name`  | Unique name to describe this resource instance. Must be specified. | Lowercase alphanumeric string with optional `.` or `-`. | string |
 
 ### Spec
 
@@ -106,14 +107,14 @@ spec:
 
 | Field  | Description                                   | Accepted Values                                                     | Schema | Default |
 | ------ | --------------------------------------------- | ------------------------------------------------------------------- | ------ | ------- |
-| `min`    | Smallest matched mask size (0 by default)     | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
-| `max`    | Largest matched mask size (32/128 by default) | Valid integers between 1 and ipv4/6 max (32, 128)                   | int    |         |
+| `min`    | Smallest matched mask size (the CIDR's mask size by default)     | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
+| `max`    | Largest matched mask size (32/128 by default) | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
 
 ### BGP Filter Community Match
 
 | Field  | Description                                                                                          | Accepted Values                                              | Schema         |
 | ------ | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------------- |
-| `values` | List of BGP community values to match against. The route must carry at least one of these communities. | Standard (`aa:nn`) or large (`aa:nn:mm`) community values.  | list of string |
+| `values` | List of BGP community values to match against. Required. Must contain exactly one value, which the route must carry. | Standard (`aa:nn`) or large (`aa:nn:mm`) community values.  | list of string |
 
 ### BGP Filter Operation
 
@@ -129,16 +130,16 @@ Each operation is an object with exactly one of the following fields set:
 
 | Field | Description                  | Accepted Values                                            | Schema |
 | ----- | ---------------------------- | ---------------------------------------------------------- | ------ |
-| `value` | BGP community value to add.  | Standard (`aa:nn`) or large (`aa:nn:mm`) community value.  | string |
+| `value` | BGP community value to add. Required.  | Standard (`aa:nn`) or large (`aa:nn:mm`) community value.  | string |
 
 ### BGP Filter Prepend AS Path
 
 | Field  | Description                                                                                                                                                         | Accepted Values                  | Schema           |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ---------------- |
-| `prefix` | Sequence of AS numbers to prepend to the route's AS path. The resulting path starts with these AS numbers in the order listed (e.g., `[65000, 65001]` produces `65000 65001 <original>`). | A list of 1-10 valid AS numbers. | list of integer  |
+| `prefix` | Sequence of AS numbers to prepend to the route's AS path. Required. The resulting path starts with these AS numbers in the order listed (e.g., `[65000, 65001]` produces `65000 65001 <original>`). | A list of 1-10 valid AS numbers. | list of integer  |
 
 ### BGP Filter Set Priority
 
 | Field | Description                                                                                                | Accepted Values | Schema  |
 | ----- | ---------------------------------------------------------------------------------------------------------- | --------------- | ------- |
-| `value` | The priority (metric) value to set on the route. Uses the same units as FelixConfiguration RoutePriority fields. | 1-2147483646    | integer |
+| `value` | The priority (metric) value to set on the route. Required. Uses the same units as FelixConfiguration RoutePriority fields. | 1-2147483646    | integer |
