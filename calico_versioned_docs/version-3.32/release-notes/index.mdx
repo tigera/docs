@@ -402,6 +402,7 @@ October 21, 2026
 
 #### Other changes
 
+- Reduced CPU and memory use when converting Kubernetes network policies that contain wide port ranges. [calico 14331](https://github.com/projectcalico/calico/pull/14331) (@fasaxc)
 - Replaced the felix_collector_dataplanestats_update_processing_errors_per_minute gauge, which reported a value unrelated to the real error rate and never decayed, with a felix_collector_dataplanestats_update_processing_errors_total counter. [calico 14305](https://github.com/projectcalico/calico/pull/14305) (@fasaxc)
 - Published v1beta1 variants of the native v3 CRD manifests, for use on Kubernetes 1.34 and 1.35, which do not serve MutatingAdmissionPolicy at v1. [calico 14272](https://github.com/projectcalico/calico/pull/14272) (@caseydavenport)
 - LoadBalancer controller now supports spec.loadBalancerIP as a fallback when no Calico-specific annotation is set. [calico 14001](https://github.com/projectcalico/calico/pull/14001) (@defo89)
@@ -412,6 +413,10 @@ October 21, 2026
 #### Updating
 
 To update a previous version of Calico, see [our upgrade guides](../operations/upgrading/index.mdx).
+
+If you use Calico Ingress Gateway, this release bumps the bundled Envoy Gateway to v1.9.1, which takes the bundled Gateway API CRDs from v1.5.1 to v1.6.1. Gateway API v1.6 removes `sessionPersistence.idleTimeout` from `HTTPRoute`, and Envoy Gateway v1.9 rejects an empty `clientIPDetection` in `ClientTrafficPolicy`. A manifest that uses either is rejected once the CRDs are upgraded.
+
+Before you upgrade, remove `sessionPersistence.idleTimeout` from any `HTTPRoute`, and any empty `clientIPDetection` from any `ClientTrafficPolicy`.
 
 {/*
 ### Calico Open Source 3.32.4 bug fix release
