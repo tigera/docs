@@ -7,15 +7,7 @@
  * Runs on every build. Conversion is cached against a hash of each page's HTML, so
  * only pages whose rendered output changed are reconverted.
  *
- * Options:
- *   instances        Docs instance id to { name, description, unversioned,
- *                    versionVariable, indexPath, rootSection }. Only these get output.
- *   skipInstances    Instance ids that deliberately get none, so they raise no warning.
- *   rootIndex        { title, description, topPages } for a root llms.txt that links
- *                    to every instance's files. Omit it on a single-instance site and
- *                    set that instance's indexPath to '' instead.
- *   optionalSections Sidebar labels that go under "## Optional" in llms.txt.
- *   versions         'last' (default) or 'all'.
+ * Options and setup are in README.md.
  */
 
 import fs from 'fs/promises';
@@ -87,7 +79,7 @@ const requireFromHere = createRequire(import.meta.url);
  * has nothing to corroborate it against. The docs themselves render $[cloudUserVersion],
  * and that is the string a reader would recognise.
  *
- * The file sits at the root of the version's content directory, as in
+ * The file sits at the root of the version's content directory, as in tigera/docs'
  * src/utils/getVariableByFilePath.js, which resolves the same files for the remark
  * plugin. Docusaurus reports that directory itself, which matters because it does
  * not derive it from the instance id the same way for every instance: the default
