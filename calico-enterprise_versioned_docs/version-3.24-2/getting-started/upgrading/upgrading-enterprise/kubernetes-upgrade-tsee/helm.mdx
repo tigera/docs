@@ -50,6 +50,58 @@ owned resources being garbage collected by Kubernetes.
 1. Perform the upgrade normally.
 1. Add new OwnerReferences to your resources referencing the new UID.
 
+### Hold Typha when upgrading from 3.22
+
+If you are upgrading from 3.23 or later, you can skip this section.
+
+From 3.23, Typha accepts connections only from calico-node 3.23 and later.
+A calico-node that has not been upgraded yet cannot get policy or routing updates from an upgraded Typha.
+This affects every cluster, and also any non-cluster hosts:
+
+- **Cluster nodes.** By default the operator upgrades Typha first, so every calico-node pod loses its connection at once.
+  The pods all report not ready and are replaced together instead of one node at a time.
+  If you use BGP, each node's routes are withdrawn while it restarts.
+- **Non-cluster hosts.** Hosts on 3.22 stop receiving policy updates until you upgrade them.
+
+To prevent this, keep Typha on 3.22 until calico-node and your non-cluster hosts are upgraded, then let the operator upgrade Typha.
+A 3.23 calico-node can connect to a 3.22 Typha.
+
+1. Stop the operator from upgrading Typha:
+
+   ```bash
+   kubectl annotate deployment calico-typha -n calico-system unsupported.operator.tigera.io/ignore=true
+   ```
+
+   If you have non-cluster hosts, also hold their Typha:
+
+   ```bash
+   kubectl annotate deployment calico-typha-noncluster-host -n calico-system unsupported.operator.tigera.io/ignore=true
+   ```
+
+1. Perform the upgrade normally.
+1. Wait for calico-node to finish rolling out:
+
+   ```bash
+   kubectl rollout status daemonset calico-node -n calico-system
+   ```
+
+1. Upgrade the `calico-node` and `calico-fluent-bit` packages on each non-cluster host.
+1. Release Typha so the operator upgrades it:
+
+   ```bash
+   kubectl annotate deployment calico-typha -n calico-system unsupported.operator.tigera.io/ignore-
+   kubectl annotate deployment calico-typha-noncluster-host -n calico-system unsupported.operator.tigera.io/ignore-
+   ```
+
+   calico-node pods may report not ready briefly while they reconnect to the new Typha.
+   They do not restart, and BGP sessions stay up.
+
+:::tip
+
+If you use BGP with a short graceful restart time, such as `maxRestartTime: 10s`, consider raising it for the duration of the upgrade.
+
+:::
+
 ### Default Deny
 
 $[prodname] creates a default-deny for the calico-system namespace. If you deploy workloads into the calico-system namespace, you must create policy that allows the required traffic for your workloads prior to upgrade.
