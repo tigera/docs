@@ -48,7 +48,7 @@ owned resources being garbage collected by Kubernetes.
 1. Perform the upgrade normally.
 1. Add new OwnerReferences to your resources referencing the new UID.
 
-### Hold Typha when upgrading from 3.22
+### Hold Typha when upgrading from 3.22 or earlier
 
 If you are upgrading from 3.23 or later, you can skip this section.
 
@@ -59,10 +59,10 @@ This affects every cluster, and also any non-cluster hosts:
 - **Cluster nodes.** By default the operator upgrades Typha first, so every calico-node pod loses its connection at once.
   The pods all report not ready and are replaced together instead of one node at a time.
   If you use BGP, each node's routes are withdrawn while it restarts.
-- **Non-cluster hosts.** Hosts on 3.22 stop receiving policy updates until you upgrade them.
+- **Non-cluster hosts.** Hosts on 3.22 or earlier stop receiving policy updates until you upgrade them.
 
-To prevent this, keep Typha on 3.22 until calico-node and your non-cluster hosts are upgraded, then let the operator upgrade Typha.
-A 3.23 calico-node can connect to a 3.22 Typha.
+To prevent this, keep Typha on its current version until calico-node and your non-cluster hosts are upgraded, then let the operator upgrade Typha.
+A newer calico-node can connect to an older Typha.
 
 1. Stop the operator from upgrading Typha:
 
@@ -88,6 +88,11 @@ A 3.23 calico-node can connect to a 3.22 Typha.
 
    ```bash
    kubectl annotate deployment calico-typha -n calico-system unsupported.operator.tigera.io/ignore-
+   ```
+
+   If you also held the non-cluster host Typha, release it too:
+
+   ```bash
    kubectl annotate deployment calico-typha-noncluster-host -n calico-system unsupported.operator.tigera.io/ignore-
    ```
 
