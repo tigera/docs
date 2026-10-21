@@ -134,6 +134,14 @@ export default async function createAsyncConfig() {
           contextualSearch: true,
           searchPagePath: '/search',
         },
+        announcementBar: {
+          id: 'kubecon_na_2026_workshop',
+          content:
+            'Join the Calico and Lynx communities for a workshop and happy hour at KubeCon NA 2026. <a href="https://link.tigera.io/utPnA">Register here</a>',
+          backgroundColor: '#FCE181',
+          textColor: '#000',
+          isCloseable: true,
+        },
         navbar: {
           logo: {
             src: 'img/tigera-logo-2026-black-text.svg',
