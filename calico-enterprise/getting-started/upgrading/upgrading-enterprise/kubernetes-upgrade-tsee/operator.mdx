@@ -57,6 +57,28 @@ If you manage $[prodname] resources with GitOps tooling, remove the Compliance r
 
 If you receive an error indicating the resource or resource type does not exist, Compliance was not installed in your cluster. You can safely ignore the error and proceed.
 
+### License agent
+
+{/* TODO: Remove this section when 3.26 is cut. 3.23 is the last release with the license agent, and 3.25 is the last release that 3.23 can upgrade to directly. */}
+
+The license agent is removed in this release.
+If you installed the license agent, delete it before or after you upgrade.
+Upgrading does not remove it, and it no longer receives updates or security fixes.
+
+```bash
+kubectl delete -f https://downloads.tigera.io/ee/v3.23.2/manifests/licenseagent.yaml --ignore-not-found
+```
+
+This command works for any version you upgrade from.
+It deletes the `tigera-license-agent` namespace and everything in it, the agent's cluster role and cluster role binding, and its ServiceMonitor in the `tigera-prometheus` namespace.
+
+The operator now exports license metrics and includes alerts for license expiry.
+If your dashboards or alerts use the license agent's metrics, such as `license_number_of_days`, update them to use the operator metrics.
+For more information, see [Operator metrics](../../../../operations/monitor/metrics/operator-metrics.mdx).
+
+If you manage the license agent with GitOps tooling, remove it from your source manifests as well.
+Otherwise the tooling recreates it after you upgrade.
+
 ### RHEL nodes with SELinux
 
 If you installed the `calico-selinux` policy package on RHEL nodes, upgrade it to version 1.1 on each of those nodes before you upgrade $[prodname]. With version 1.0, SELinux stops the log collector from mapping its files under `/var/log/calico`, and the `calico-fluent-bit` pods crash-loop. To check whether a node has the package, run `rpm -q calico-selinux`.
