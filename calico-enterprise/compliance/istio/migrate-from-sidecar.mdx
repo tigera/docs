@@ -71,8 +71,7 @@ Migrate every namespace in one window if you can. From Step 1 until a namespace 
 * Sidecars cannot renew their certificates. Istio's default certificate lifetime is 24 hours.
 * Without a shared `cacerts` root, sidecar and ambient workloads cannot talk over mTLS.
 * Layer 7 policy on a Waypoint does not apply to traffic from sidecar pods.
-
-{/* ENG REVIEW: with the old istiod gone, sidecars also get no endpoint updates, so a pod that restarts with a new IP may be unreachable from sidecars. Not tested. */}
+* Sidecars get no endpoint updates. A pod that restarts gets a new IP, and sidecars keep sending its traffic to the old one.
 
 ## Step 1: Remove the self-managed Istio control plane
 
@@ -105,13 +104,13 @@ This step replaces Istio's "Install ambient components" step.
 
 ## Step 2: Install the $[prodname]-managed Istio
 
-Apply the `Istio` custom resource and check that it is available, as in [Deploy Istio Ambient Mode](deploy-istio-ambient.mdx#install-istio-in-ambient-mode-on-your-cluster).
-The operator also creates the Gateway API CRDs if they are missing.
+Apply the `Istio` custom resource and check that it is available, as in [Deploy Istio Ambient Mode](deploy-istio-ambient.mdx#install-istio-in-ambient-mode-on-your-cluster). The operator also creates the Gateway API CRDs if they are missing.
 
 ## Step 3: Migrate your policies
 
 Follow Istio's [Migrate policies](https://istio.io/latest/docs/ambient/migrate/migrate-policies/) page. On $[prodname]:
 
+* If one `AuthorizationPolicy` mixes L4 and L7 rules, split it in two before you enable Waypoints. Then you keep the L4 part when you delete the old policy.
 * If you deploy a Waypoint, update your $[prodname] network policies to allow port 15008 to the workloads behind it.
 * $[prodname] adds an `l7-collector` container to each Waypoint, so its traffic shows up in L7 logs. To turn this off, set `waypointLogging: Disabled` in the `Istio` custom resource. See [Collect L7 logs using the Waypoint collector](../../observability/elastic/l7/enable-waypoint-collector.mdx).
 
@@ -119,6 +118,7 @@ Follow Istio's [Migrate policies](https://istio.io/latest/docs/ambient/migrate/m
 
 Follow Istio's [Enable ambient mode](https://istio.io/latest/docs/ambient/migrate/enable-ambient-mode/) page, one namespace at a time.
 You removed the injection labels in Step 1.
+When you restart workloads, restart StatefulSets and DaemonSets too, not just Deployments.
 Do not label $[prodname] namespaces or pods into the mesh. It can break cluster networking.
 
 To check that $[prodname] policy still matches, look at the [flows](../../observability/visualize-traffic.mdx) for the namespace.
