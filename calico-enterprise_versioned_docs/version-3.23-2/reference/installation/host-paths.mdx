@@ -1,0 +1,164 @@
+---
+description: Host paths that each Calico Enterprise 3.23 component mounts, with access mode, the condition for each path, and the release that added it.
+---
+
+{/* User story: As a platform engineer who runs admission policies that allow-list host paths, I want a list of every host path each Calico Enterprise component mounts, and which ones are new in this release, so I can update my allow-list before I upgrade. */}
+
+# Host paths used by Calico Enterprise components
+
+Several $[prodname] components mount directories or files from the host node.
+If an admission policy, such as Kyverno or OPA Gatekeeper, limits the host paths that pods can use, it must allow these paths, or the components fail to start.
+
+Use this page to build or check your allow-list before you install or upgrade.
+Each table lists the host paths for one component:
+
+- **Volume** is the volume name in the pod spec.
+- **Access** is read-only or read-write. "Not mounted" means the volume is declared in the pod spec but no container mounts it. Policies that inspect pod volumes still see it.
+- **When present** says whether the path is always there or depends on your configuration.
+- **Added in** shows the 3.23 patch release that added the path. It is blank for paths that were present in 3.23.0.
+
+## Host paths added in 3.23
+
+| Host path | Component | Added in |
+| --- | --- | --- |
+| `/sys/kernel/security` | calico-node | **3.23.2** |
+
+For upgrade guidance, see the [3.23.2 release notes](../../release-notes/index.mdx).
+
+## calico-node
+
+The `calico-node` DaemonSet runs on every Linux node, in the `calico-system` namespace.
+
+| Host path | Volume | Access | When present | Added in |
+| --- | --- | --- | --- | --- |
+| `/lib/modules` | `lib-modules` | Read-only | Always | |
+| `/run/xtables.lock` | `xtables-lock` | Read-write | Always | |
+| `/var/run/nodeagent` | `policysync` | Read-write | Always | |
+| `/var/run/calico` | `var-run-calico` | Read-write | Always | |
+| `/var/lib/calico` | `var-lib-calico` | Read-write | Always | |
+| `/var/log/calico` | `var-log-calico` | Read-write | Always | |
+| `/sys/fs` | `sys-fs` | Read-write | Always, for the init container | |
+| `/sys/fs/bpf` | `bpffs` | Read-write | Always | |
+| `/proc` | `nodeproc` | Read-only | Always, for the init container | |
+| `/sys/kernel/security` | `sys-kernel-security` | Read-only | Always | **3.23.2** |
+| CNI binary directory | `cni-bin-dir` | Read-write | When the CNI plugin is Calico | |
+| CNI configuration directory | `cni-net-dir` | Read-write | When the CNI plugin is Calico | |
+| `/var/log/calico/cni` | `cni-log-dir` | Not mounted | When the CNI plugin is Calico | |
+| FlexVolume directory, plus `nodeagent~uds` | `flexvol-driver-host` | Read-write | Unless `flexVolumePath` is `None` | |
+| `/var/lib/calico/felix-plugins` | `felix-plugins` | Read-only | When the Linux data plane is VPP | |
+
+The CNI and FlexVolume directories depend on your platform.
+See [Default CNI and FlexVolume directories](#default-cni-and-flexvolume-directories).
+
+## calico-node for Windows
+
+The `calico-node-windows` DaemonSet runs on Windows nodes, in the `calico-system` namespace, when the Windows data plane is enabled.
+
+| Host path | Volume | Access | When present | Added in |
+| --- | --- | --- | --- | --- |
+| `/var/run/calico` | `var-run-calico` | Read-write | Always | |
+| `/var/lib/calico` | `var-lib-calico` | Read-write | Always | |
+| `/var/log/calico` | `var-log-calico` | Read-write | Always | |
+| Windows CNI binary directory | `cni-bin-dir` | Read-write | When the CNI plugin is Calico | |
+| Windows CNI configuration directory | `cni-net-dir` | Read-write | When the CNI plugin is Calico | |
+| Windows CNI log directory | `cni-log-dir` | Not mounted | When the CNI plugin is Calico | |
+| `/lib/modules` | `lib-modules` | Not mounted | Always | |
+| `/run/xtables.lock` | `xtables-lock` | Not mounted | Always | |
+| `/var/run/nodeagent` | `policysync` | Not mounted | Always | |
+
+## CSI node driver
+
+The `csi-node-driver` DaemonSet runs on every Linux node, in the `calico-system` namespace, unless `kubeletVolumePluginPath` is `None`.
+The kubelet directory defaults to `/var/lib/kubelet`, and you can change it with `kubeletVolumePluginPath` in the [Installation resource](api.mdx#installationspec).
+
+| Host path | Volume | Access | When present | Added in |
+| --- | --- | --- | --- | --- |
+| `/var/run` | `varrun` | Read-write | Always | |
+| Kubelet directory | `kubelet-dir` | Read-write | Always | |
+| Kubelet directory, plus `/plugins/csi.tigera.io` | `socket-dir` | Read-write | Always | |
+| Kubelet directory, plus `/plugins_registry` | `registration-dir` | Read-write | Always | |
+
+## Log collector
+
+The `fluentd-node` DaemonSet runs in the `tigera-fluentd` namespace when the LogCollector resource exists.
+
+| Host path | Volume | Access | When present | Added in |
+| --- | --- | --- | --- | --- |
+| `/var/log/calico` | `var-log-calico` | Read-write | Always | |
+| `c:/TigeraCalico` | `var-log-calico` | Read-write | On `fluentd-node-windows`, when the cluster has Windows nodes | |
+
+## L7 log collector
+
+The `l7-log-collector` DaemonSet runs in the `calico-system` namespace when the ApplicationLayer resource exists.
+
+| Host path | Volume | Access | When present | Added in |
+| --- | --- | --- | --- | --- |
+| `/var/run/l7-collector` | `l7-collector-socks` | Read-write | When L7 log collection or sidecar injection is enabled | |
+| `/var/run/dikastes` | `dikastes-sync` | Read-write | When the web application firewall, application layer policy, or sidecar injection is enabled | |
+| `/var/log/calico` | `var-log-calico` | Read-write | When the web application firewall or sidecar injection is enabled | |
+
+## Deep packet inspection
+
+The `tigera-dpi` DaemonSet runs in the `tigera-dpi` namespace when at least one DeepPacketInspection resource exists.
+
+| Host path | Volume | Access | When present | Added in |
+| --- | --- | --- | --- | --- |
+| `/var/log/calico/snort-alerts` | `log-snort-alters` | Read-write | Always | |
+
+## Intrusion detection
+
+The `intrusion-detection-controller` Deployment runs in the `tigera-intrusion-detection` namespace.
+
+| Host path | Volume | Access | When present | Added in |
+| --- | --- | --- | --- | --- |
+| `/var/log/calico` | `var-log-calico` | Read-write | When the LogCollector forwards IDS events to syslog | |
+
+## API server audit logs
+
+One of these workloads runs in the `calico-system` namespace, depending on how the $[prodname] API is served.
+
+| Host path | Volume | Access | When present | Added in |
+| --- | --- | --- | --- | --- |
+| `/var/log/calico/audit` | `calico-audit-logs` | Read-write | On `calico-apiserver`, when the API server runs as an aggregation API server | |
+| `/var/log/calico/audit` | `audit-logs` | Read-write | On `calico-webhooks`, when the cluster uses projectcalico.org/v3 CRDs | |
+
+{/* TODO for review: confirm when CE 3.23 uses v3 CRDs (UseV3CRDs) rather than the aggregation API server. */}
+
+## Compliance
+
+The compliance workloads run in the `tigera-compliance` namespace when the Compliance resource exists.
+
+| Host path | Volume | Access | When present | Added in |
+| --- | --- | --- | --- | --- |
+| `/var/lib/etcd` | `var-lib-etcd` | Read-only | On `compliance-benchmarker` | |
+| `/var/lib/kubelet` | `var-lib-kubelet` | Read-only | On `compliance-benchmarker` | |
+| `/etc/systemd` | `etc-systemd` | Read-only | On `compliance-benchmarker` | |
+| `/etc/kubernetes` | `etc-kubernetes` | Read-only | On `compliance-benchmarker` | |
+| `/usr/bin` | `usr-bin` | Read-only | On `compliance-benchmarker` | |
+| `/home/kubernetes` | `home-kubernetes` | Read-only | On `compliance-benchmarker`, on GKE | |
+| `/var/log/calico` | `var-log-calico` | Read-write | On compliance reporter pods | |
+
+{/* TODO for review: Calico Ingress Gateway Envoy proxy pods mount /var/log/calico (waf-http-filter sidecar) when the proxy runs as a Deployment. Istio ambient (istio-cni-node, ztunnel) mounts host paths from upstream Istio charts. Both need engineering confirmation before they are listed. */}
+
+## Default CNI and FlexVolume directories
+
+The operator sets these directories when the Installation resource does not.
+You can set the CNI directories with `cni.binDir` and `cni.confDir`, the Windows CNI directories with `windowsNodes`, and the FlexVolume directory with `flexVolumePath`.
+For details, see the [Installation resource reference](api.mdx#installationspec).
+
+| Platform | CNI binary directory | CNI configuration directory | FlexVolume directory |
+| --- | --- | --- | --- |
+| OpenShift | `/var/lib/cni/bin` | `/var/run/multus/cni/net.d` | `/etc/kubernetes/kubelet-plugins/volume/exec/` |
+| GKE | `/home/kubernetes/bin` | `/etc/cni/net.d` | `/home/kubernetes/flexvolume/` |
+| AKS | `/opt/cni/bin` | `/etc/cni/net.d` | `/etc/kubernetes/volumeplugins/` |
+| RKE2 | `/opt/cni/bin` | `/etc/cni/net.d` | `/var/lib/kubelet/volumeplugins/` |
+| All others | `/opt/cni/bin` | `/etc/cni/net.d` | `/usr/libexec/kubernetes/kubelet-plugins/volume/exec/` |
+
+On Windows nodes, the CNI binary and configuration directories default to `/k/azurecni/bin` and `/k/azurecni/netconf` on AKS, `/Program Files/Amazon/EKS/cni` and `/Program Files/Amazon/EKS/cni/config` on EKS, and `/opt/cni/bin` and `/etc/cni/net.d` elsewhere.
+The Windows CNI log directory is `/var/log/calico/cni`.
+
+## Additional resources
+
+- [Release notes](../../release-notes/index.mdx)
+- [Upgrade $[prodname]](../../getting-started/upgrading/index.mdx)
+- [Installation resource reference](api.mdx#installationspec)
