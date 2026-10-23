@@ -217,6 +217,36 @@ Instead of creating an ingress or load balancer yourself, you can let the operat
 
 1. Point your hostname at that address in DNS.
 
+1. Optional: if you protect the web console with a [Gateway WAF](../../threat/gateway-waf/overview.mdx) policy that uses the Core Rule Set, Kibana Discover fails with HTTP `403`. The Core Rule Set reads Kibana's search requests as attacks. To allow them, create this `GlobalWAFPlugin`:
+
+   ```yaml
+   apiVersion: applicationlayer.projectcalico.org/v3
+   kind: GlobalWAFPlugin
+   metadata:
+     name: kibana-exceptions
+   spec:
+     before: |
+       SecRule SERVER_NAME "@streq <web-console-hostname>" "id:100000001,phase:1,pass,nolog,t:none,t:lowercase,chain"
+         SecRule REQUEST_METHOD "@streq POST" "t:none,chain"
+         SecRule REQUEST_FILENAME "@streq /tigera-kibana/internal/bsearch" "t:none,t:urlDecodeUni,t:normalizePath,ctl:requestBodyAccess=Off"
+       SecRule SERVER_NAME "@streq <web-console-hostname>" "id:100000002,phase:1,pass,nolog,t:none,t:lowercase,chain"
+         SecRule REQUEST_FILENAME "@beginsWith /tigera-kibana/" "t:none,t:urlDecodeUni,t:normalizePath,ctl:ruleRemoveTargetById=931100;ARGS:url,ctl:ruleRemoveTargetById=934110;ARGS:url"
+   ```
+
+   Replace the following:
+   * `<web-console-hostname>`: The hostname you set in `spec.ingressGateway.hostname`, in lowercase. For example, `manager.example.com`.
+
+   Then add `kibana-exceptions` to the `spec.plugins` list in your existing `default` `GlobalWAFPolicy`. Keep any plugins that are already in the list. If `spec.plugins` doesn't exist yet, add it:
+
+   ```yaml
+   spec:
+     plugins:
+       - kind: GlobalWAFPlugin
+         name: kibana-exceptions
+   ```
+
+   On your web console host, the WAF stops inspecting the body of Kibana search requests. For every Kibana request, rules `931100` and `934110` no longer check the `url` argument. The WAF still inspects all other traffic. For more about plugins, see [Write custom rules with plugins](../../threat/gateway-waf/write-custom-rules.mdx).
+
 :::note
 
 If your cluster uses OIDC, set the `Authentication` resource's `managerDomain` to `https://` plus that hostname (as in the example below). The host must match `spec.ingressGateway.hostname`, or the operator reports the $[prodname] web console as degraded:
