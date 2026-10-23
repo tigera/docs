@@ -19,7 +19,7 @@ Workloads and policies are highly dynamic. To troubleshoot Kubernetes clusters, 
 - Collect/archive logs or subset of logs
 - Log aggregation for high-volume logs
 - Configure data retention settings to manage cluster disk space
-- Integration with third-party tools like Amazon S3, Syslog, Splunk
+- Integration with third-party tools like Amazon S3, Syslog, Splunk, and any backend that accepts OpenTelemetry (OTLP)
 
 ## Concepts
 
@@ -45,7 +45,7 @@ Because of their high-volume, flow and DNS logs support aggregation.
 
 ### Default log configuration and security
 
-$[prodname] automatically installs Fluent Bit on all nodes and collects flow, audit, and DNS logs. You can configure additional destinations like Amazon S3, Syslog, Splunk.
+$[prodname] automatically installs Fluent Bit on all nodes and collects flow, audit, and DNS logs. You can configure additional destinations like Amazon S3, Syslog, Splunk, or an [OpenTelemetry backend](../opentelemetry.mdx).
 
 Fluent Bit buffers logs on each node's filesystem, under `/var/log/calico/calico-fluent-bit/storage`, so chunks that have not been delivered yet survive a log collector restart. Each destination gets its own buffer with its own cap: 500 MB for flow logs and for each additional destination, and 100 MB for each of the other log types. Account for that disk usage when you size your nodes. Fluent Bit retries a chunk until it is delivered, so a destination that stays unreachable long enough to fill its buffer starts losing data for that destination only; the others keep shipping.
 
@@ -60,7 +60,7 @@ kubectl patch logcollector tigera-secure --type=merge \
   --patch='{"spec":{"ingestionCompression":"Zstd"}}'
 ```
 
-The setting applies only to batches in transit. It does not change the compression of the rotated log files on disk, the [additional destinations](archive-storage.mdx), or the OpenTelemetry exporters.
+The setting applies only to batches in transit. It does not change the compression of the rotated log files on disk, the [additional destinations](../archive-storage.mdx), or the OpenTelemetry exporters.
 
 ### RBAC and log access
 
@@ -98,5 +98,5 @@ verbs: ['get']
 - [Audit logs](audit-overview.mdx)
 - [BGP logs](bgp.mdx)
 - [DNS logs](dns/dns-logs.mdx)
-- [Archive logs](archive-storage.mdx)
+- [Archive logs](../archive-storage.mdx)
 - [Log collection options](../../reference/installation/api.mdx#logcollectorspec)
