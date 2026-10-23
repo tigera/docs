@@ -43,7 +43,7 @@ Built with [Docusaurus 3](https://docusaurus.io/), React 19, and TypeScript. Dep
 
 |               | Native                                          | Docker            |
 |---------------|-------------------------------------------------|-------------------|
-| **Requires**  | Node.js v22.17.0+ (see `.nvmrc`), Corepack      | Docker            |
+| **Requires**  | Node.js v22.23.4+ (see `.nvmrc`), Corepack      | Docker            |
 | **Setup**     | `nvm use && corepack enable`                     | Just have Docker running |
 
 This project uses Yarn 4.9.2, managed via [Corepack](https://nodejs.org/api/corepack.html). You must run `corepack enable` before any yarn commands.
@@ -260,7 +260,7 @@ make calico-enterprise_versioned_docs/version-3.22-2__operator_reference
 
 | Problem | Solution |
 |---|---|
-| Build fails with "Cannot find package '@docusaurus/logger'" | Wrong Node version. Need v22.17.0+ (check `.nvmrc`). |
+| Build fails with "Cannot find package '@docusaurus/logger'" | Wrong Node version. Need v22.23.4+ (check `.nvmrc`). |
 | `packageManager` yarn error | Run `corepack enable` first. |
 | `make clean` fails when dependencies aren't installed | Use `make manual-clean` instead. |
 | React version mismatch warnings during `yarn install` | Expected and non-blocking. Safe to ignore. |
