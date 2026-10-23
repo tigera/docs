@@ -15,7 +15,7 @@ From that section, the operator creates an OpenTelemetry Collector StatefulSet n
 
 You can export two kinds of data:
 
-- **Logs.** Fluent Bit sends the log types you choose to the Collector over mutual TLS, and the Collector forwards them to your exporters. You can export `Flows`, `DNS`, and `Audit` logs. Flow and DNS logs from [non-cluster hosts](../getting-started/bare-metal/about) are included. Each record carries a `service.name` resource attribute of `flows`, `dns`, or `audit`, so you can route or filter by log type in your backend.
+- **Logs.** Fluent Bit sends the log types you choose to the Collector over mutual TLS, and the Collector forwards them to your exporters. You can export `Flows`, `DNS`, and `Audit` logs. Flow and DNS logs from [non-cluster hosts](../getting-started/bare-metal/about) are included. Each record carries a `service.name` resource attribute of `flows`, `dns`, or `audit`, so you can route or filter by log type in your backend. `service.name` is the only resource attribute.
 
   `Audit` covers both $[prodname] audit logs and Kubernetes API server audit logs, and both carry `service.name` `audit`.
   To tell them apart, filter on `objectRef.apiGroup`: $[prodname] resources use `projectcalico.org`.
@@ -23,7 +23,7 @@ You can export two kinds of data:
 - **Metrics.** The Collector federates every metric that the in-cluster $[prodname] Prometheus already scrapes, including metrics from $[noderunning], Typha, kube-controllers, Fluent Bit, Elasticsearch, and the operator. Series keep their original `job` and `instance` labels.
 
 Exported logs and metrics don't identify the cluster they come from.
-Each cluster, including each managed cluster in a multi-cluster management setup, runs its own Collector, and no record or series carries a cluster name.
+Flow and DNS records have a `host` field with the node name, audit records have no node field, and metrics have no cluster label.
 If several clusters export to the same backend, give each cluster an exporter that your backend can tell apart, such as a different endpoint or different credentials.
 
 Everything you export goes to every exporter that you configure.
@@ -119,6 +119,39 @@ Logs that go to OTLP still go to $[prodname]'s log storage and to any [additiona
    When the Collector is running, `AVAILABLE` is `True`.
    If it's `DEGRADED`, run `kubectl get tigerastatus log-collector-otel -o yaml` to see the reason, such as a Secret or ConfigMap that an exporter refers to but that doesn't exist yet.
 
+   `AVAILABLE` only means that the Collector process is running.
+   It stays `True` when exports fail, for example when the backend is down, its certificate doesn't verify, or the endpoint isn't an OTLP receiver.
+   To confirm that data is reaching your backend, see [Check that data is reaching your backend](#check-that-data-is-reaching-your-backend).
+
+## Check that data is reaching your backend
+
+The Collector reports its own metrics, and the in-cluster $[prodname] Prometheus scrapes them.
+Each series has an `exporter` label of `otlp_grpc/<name>` or `otlp_http/<name>`, where `<name>` is the exporter's name.
+
+| Metric | What it tells you |
+| --- | --- |
+| `otelcol_exporter_queue_size` | Batches waiting to be sent. It grows as soon as the backend stops accepting data. |
+| `otelcol_exporter_send_failed_log_records` | Log records that were dropped after the Collector stopped retrying them. |
+| `otelcol_exporter_send_failed_metric_points` | Metric points that were dropped after the Collector stopped retrying them. |
+| `otelcol_exporter_sent_log_records`, `otelcol_exporter_sent_metric_points` | Data that the backend accepted. |
+
+The Collector retries a failed export for about 5 minutes before it drops the data and counts it as failed.
+An outage shorter than that shows only as a growing queue, so alert on `otelcol_exporter_queue_size` as well as on the failure counters.
+
+The Collector also logs each failed attempt, at `info` level:
+
+```bash
+kubectl logs -n calico-system otel-collector-0 | grep "Exporting failed"
+```
+
+## Export from managed clusters
+
+In a [multi-cluster management](../multicluster/index.mdx) setup, configure OpenTelemetry export on each cluster's own LogCollector resource, from that cluster.
+Nothing is configured from the management cluster, and the management cluster runs a Collector only if you configure one there.
+
+A managed cluster's Collector sends directly to your backend, not through the management cluster.
+Each managed cluster needs its own network route to the backend, and its own Secrets and ConfigMaps for credentials and certificates in its `tigera-operator` namespace.
+
 ## Send data to more than one backend
 
 Add an entry to `exporters` for each backend.
@@ -206,10 +239,10 @@ When you update a CA ConfigMap, client certificate Secret, or credentials Secret
 
 The Collector runs as a single replica on the same nodes as other $[prodname] control plane components.
 By default, the `otel-collector` container requests 128Mi of memory and is limited to 512Mi.
-The Collector starts to throttle incoming data when it uses about 80% of its memory limit.
+The Collector refuses incoming data when it uses about 60% of its memory limit, and forces garbage collection at about 80%.
 
 If you export a high volume of logs, raise the memory limit with `openTelemetryCollectorStatefulSet`.
-The Collector's throttling threshold scales with the limit you set.
+Both thresholds scale with the limit you set.
 
 ```yaml
 apiVersion: operator.tigera.io/v1
@@ -234,6 +267,16 @@ spec:
 
 You can also set `affinity`, `nodeSelector`, and `tolerations` for the Collector pod.
 For the full list of fields, see [OpenTelemetryCollectorStatefulSet](../reference/installation/api.mdx#opentelemetrycollectorstatefulset).
+
+## Restarts and data loss
+
+The Collector is a single replica, and it holds data waiting to be sent in memory.
+When it restarts, for example after you change its configuration or credentials, or when its node is drained, logs that Fluent Bit sends during the restart can be lost.
+Fluent Bit retries a failed send to the Collector once, and then drops that batch.
+This affects only the OpenTelemetry copy: the same logs still reach $[prodname] log storage.
+
+When you change `logs.types`, the operator restarts Fluent Bit on every node.
+Fluent Bit also ships logs to $[prodname] log storage, so that path restarts too.
 
 ## Turn off OpenTelemetry export
 
