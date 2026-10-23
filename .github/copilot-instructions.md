@@ -91,9 +91,9 @@ Examples:
 ## Critical Setup Requirements
 
 ### Node.js Version (CRITICAL)
-- **Required**: Node.js v22.17.0 or later
+- **Required**: Node.js v22.23.4 or later
 - **Why Critical**: Build fails with earlier versions (tested with v20.x)
-- **Setup**: Use nvm if available: `nvm install 22.17.0 && nvm use 22.17.0`
+- **Setup**: Use nvm if available: `nvm install 22.23.4 && nvm use 22.23.4`
 
 ### Package Manager Setup (CRITICAL)
 1. **Enable Corepack**: `corepack enable` (required for containerized builds, recommended for local development)
@@ -311,8 +311,8 @@ yarn test:screenshots             # Visual regression tests (optional)
 
 ### Node Version Issues
 - **Problem**: Build fails with "Cannot find package '@docusaurus/logger'"
-- **Solution**: Ensure Node.js v22.17.0+, run `corepack enable` first
-- **Validation**: `node --version` should show v22.17.0+
+- **Solution**: Ensure Node.js v22.23.4+, run `corepack enable` first
+- **Validation**: `node --version` should show v22.23.4+
 
 ### Yarn Issues  
 - **Problem**: "packageManager": "yarn@4.9.2" error with global yarn
