@@ -31,6 +31,11 @@ Logs that go to OTLP still go to $[prodname]'s log storage and to any [additiona
 
 ## Before you begin
 
+- Each cluster that you configure must run $[prodname] v3.24.0-3.0 (3.24 early preview 3) or later.
+  Earlier releases don't have the `openTelemetry` field.
+  On an earlier release, `kubectl apply`, `kubectl edit`, and `kubectl apply --server-side` reject the change with an `unknown field` or `field not declared in schema` error.
+  `kubectl patch`, and other clients that don't ask for strict validation, only print `Warning: unknown field "spec.openTelemetry"` and save the resource without the field, so nothing is exported and no status reports an error.
+  After you upgrade the cluster, apply the configuration again.
 - Your $[prodname] license must include the OpenTelemetry Collector feature.
   If the license doesn't include it, or if it expires, the operator removes the Collector and export stops.
 - To export metrics, the in-cluster $[prodname] Prometheus must be running.
@@ -148,6 +153,8 @@ kubectl logs -n calico-system otel-collector-0 | grep "Exporting failed"
 
 In a [multi-cluster management](../multicluster/index.mdx) setup, configure OpenTelemetry export on each cluster's own LogCollector resource, from that cluster.
 Nothing is configured from the management cluster, and the management cluster runs a Collector only if you configure one there.
+A managed cluster can run an earlier release than the management cluster, so upgrade each managed cluster to a release that supports OpenTelemetry export before you set `openTelemetry` on it.
+See [Before you begin](#before-you-begin).
 
 A managed cluster's Collector sends directly to your backend, not through the management cluster.
 Each managed cluster needs its own network route to the backend, and its own Secrets and ConfigMaps for credentials and certificates in its `tigera-operator` namespace.
