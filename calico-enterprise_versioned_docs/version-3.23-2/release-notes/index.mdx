@@ -307,11 +307,7 @@ October 27, 2026
 #### Upgrade notes
 
 * Removed the emSign (eMudhra) root certificates from the CA bundle that the operator mounts into $[prodname] components, and updated Go to 1.26.10. Endpoints whose certificates chain to an emSign root, such as an external Elasticsearch, an identity provider or a webhook target, are no longer trusted after the upgrade. {/* #5365 */}
-* Envoy is updated to 1.39.1 in Calico Ingress Gateway and the L7 log collector. **Compatibility note:** the new Envoy changes how some requests match routes:
-  * A header sent on more than one line is now matched one value at a time. A route that matches a joined value such as `user,admin` no longer matches when those values arrive as separate header lines. To restore the old behavior, set the runtime flag `envoy.reloadable_features.match_headers_individually` to `false`.
-  * Paths that carry `..` segments with parameters, such as `/public/..;x=y/admin`, are now normalized before routing, so such a request can match a different route.
-  * Envoy always enforces RSA key usage on TLS certificates, and the TLS inspector now checks the client's minimum and maximum TLS version.
-  {/* #14240 */}
+* Calico Ingress Gateway now bundles Envoy Gateway v1.9.1 (from v1.8.3), and Calico Ingress Gateway and the L7 log collector now use Envoy 1.39.1 (from 1.38.3). Both releases change routing and validation behavior. The new CRDs reject `sessionPersistence.idleTimeout` in `HTTPRoute` and an empty `clientIPDetection` in `ClientTrafficPolicy`; remove them before you upgrade. For the other changes, see the [Envoy Gateway v1.9 release notes](https://gateway.envoyproxy.io/news/releases/notes/v1.9.0/) and the [Envoy 1.39 release notes](https://www.envoyproxy.io/docs/envoy/latest/version_history/v1.39/v1.39.0). {/* #14670 #14240 */}
 * IP pool namespace selectors are now honored when $[prodname] assigns LoadBalancer Service IPs. A LoadBalancer IP pool with a namespace selector starts matching Services in the selected namespaces after the upgrade. {/* #14517 */}
 * Selectors with parentheses nested more than 100 deep are now rejected. {/* #14723 */}
 
