@@ -317,11 +317,11 @@ October 27, 2026
 
 #### Enhancements
 
-* Added the `connectionMode` field to BGPPeer (`Auto`, `Active` or `Passive`) to control which end initiates the BGP session. Combined with faster reconnect timers on local workload peerings, `Active` reduces the LoadBalancer VIP outage during a nested KubeVirt VM live migration from over 16 seconds to under 2 seconds. Nodes also no longer re-advertise BGP-learned routes they have marked unreachable. {/* #13760 */}
+* Added the `connectionMode` field to BGPPeer (`Auto`, `Active` or `Passive`) to control which end initiates the BGP session. Use `Active` to cut LoadBalancer VIP downtime during a nested KubeVirt VM live migration from over 16 seconds to under 2 seconds. {/* #13760 */}
 * Added the Helm value `managementCluster.service.createNamespace`, so you can stop the tigera-operator chart from creating the `calico-system` namespace on a management cluster when you manage that namespace yourself. To turn it off on an existing installation, first upgrade with the default (`true`), and then set it to `false` in a later, separate upgrade. If you do both in one upgrade, Helm deletes `calico-system`. {/* #14867 */}
 * Application layer policy evaluates rule criteria cheapest-first, which makes evaluation 1.6 to 3.7 times faster for large policy sets. Per-rule warnings from the policy engine are now rate limited. {/* #13806 */}
 * Reduced CPU and memory use when converting Kubernetes network policies that contain wide port ranges. {/* #14738 */}
-* Dikastes and Felix now report the recurring policy-evaluation conditions "IPSet not found" and "failed to parse source principal" as one aggregated log line per five-minute window. **Compatibility note:** the IP set IDs and principals move out of the message text into the list-valued `ipsets` and `principals` fields, and the `logsSkipped` field is gone. Update any log queries or alerts that parse these lines. {/* #13847 */}
+* Dikastes and Felix now aggregate the recurring "IPSet not found" and "failed to parse source principal" log lines into one line per five minutes. **Compatibility note:** IP set IDs and principals move into the `ipsets` and `principals` fields, and `logsSkipped` is removed. Update any log queries or alerts that parse these lines. {/* #13847 */}
 
 #### Bug fixes
 
@@ -329,51 +329,40 @@ October 27, 2026
 * Fixed Felix, with IPv6 and the iptables dataplane enabled, creating two IPv6 IP set dataplanes that repeatedly deleted each other's IP sets. {/* #13933 */}
 * Fixed a race where a workload's egress gateway maintenance annotations were not applied when the workload endpoint was updated at the same time as the gateway started terminating. {/* #13802 */}
 * Fixed a policy program that the kernel verifier rejected with "unreachable insn" when a workload had enough policy rules to need more than one program, which left the node not ready. {/* #14764 */}
-* Fixed a regression where traffic on the WireGuard port (51820 by default) arriving at a host interface was dropped unless it came from a known $[prodname] node. This broke user-managed WireGuard overlays, and $[prodname] WireGuard between nodes with different underlay addresses, such as nodes behind NAT. {/* #14183 */}
+* Fixed eBPF mode dropping UDP traffic on the WireGuard port (51820 by default) at host interfaces unless it came from a known $[prodname] node. This broke user-managed WireGuard overlays and caused occasional UDP DNS timeouts when a client's ephemeral port was 51820. {/* #14183 */}
 * Reverted the change that suppressed empty `source: {}` and `destination: {}` in policy rules, which left GitOps tools such as Argo CD reporting those policies as permanently out of sync. {/* #14498 */}
 * Fixed the policy board in the web console rendering empty on managed clusters. {/* #5260 */}
 * Fixed web console login failing with "Service Unavailable" for users who are not cluster administrators. {/* #14574 */}
 * Fixed the tigera-operator Helm chart leaving behind a stale uninstall Job after an interrupted or failed uninstall, which blocked later uninstalls. {/* #14472 */}
+* Fixed pods being unable to restart when their IP pool has no spare addresses, which most often affected egress gateways. A pod now keeps its existing address when its sandbox is rebuilt. {/* #14047 */}
 * Fixed nested workload traffic, such as a Service VIP or pod CIDR advertised from inside a KubeVirt VM, being black-holed on the node that receives a live-migrated VM. {/* #14038 */}
 * Fixed BGPConfiguration, BGPPeer and BGPFilter rejecting 4-byte AS numbers above 2147483647. {/* #14141 */}
 * Fixed an IP address leak when a KubeVirt VM allocated an address while its IPAM handle was being freed manually after an earlier failure. {/* #11877 */}
-* Fixed pods being unable to restart when their IP pool has no spare addresses, which most often affected egress gateways. A pod now keeps its existing address when its sandbox is rebuilt. {/* #14047 */}
 * Fixed KubeVirt VMs with address persistence failing to get an address when their namespace and name together are longer than about 107 characters. {/* #14611 */}
-* Fixed Felix retrying an invalid tunnel route forever for a local pod whose IP was borrowed from another node's IPAM block. {/* #13901 */}
 * Fixed IP sets with overlapping CIDRs failing to program correctly in nftables mode after a member was removed. {/* #14266 */}
 * Fixed Felix on EKS waiting on the EC2 API during startup when TPROXY mode is disabled, which could delay policy enforcement by up to 20 seconds after a restart. {/* #14813 */}
 * Fixed calico-noncluster-host-init ignoring the `FELIX_TYPHACAFILE`, `FELIX_TYPHACERTFILE` and `FELIX_TYPHAKEYFILE` overrides in `calico-node.env`, which could stop calico-node from starting on a non-cluster host. {/* #14096 */}
-* Fixed the BPF DNS parser being rejected by the verifier on newer kernels, which silently disabled cross-node overlay traffic. {/* #13789 */}
-* Fixed pre-existing connections to a node port with a backend on another node being dropped when the dataplane was switched to eBPF. {/* #13894 */}
-* Fixed domain-based policy for pods that resolve through the NodeLocal DNSCache link-local address (169.254.20.10). Clusters whose pods use the kube-dns ClusterIP were not affected. {/* #13710 */}
 * Fixed a Felix panic on nodes running NodeLocal DNSCache with IPv6 enabled. {/* #13708 */}
-* Fixed IPv6 conntrack cleanup for expired NAT reverse entries. {/* #14430 */}
-* Fixed two service affinity bugs: datagrams from an unconnected UDP socket could go to different backends, and a UDP service with `sessionAffinity` had its affinity timeout capped at the much shorter UDP conntrack timeout. {/* #13677 */}
-* Fixed a leak that retained per-interface state for every Istio ambient workload torn down on a node. {/* #13682 */}
+* Fixed several issues in the eBPF dataplane:
+  * The BPF DNS parser was rejected by the verifier on newer kernels, which silently disabled cross-node overlay traffic. {/* #13789 */}
+  * Pre-existing connections to a node port with a backend on another node were dropped when the dataplane was switched to eBPF. {/* #13894 */}
+  * Domain-based policy did not work for pods that resolve through the NodeLocal DNSCache link-local address. {/* #13710 */}
+  * Datagrams from one unconnected UDP socket could go to different backends, and UDP `sessionAffinity` timeouts were capped at the UDP conntrack timeout. {/* #13677 */}
+  * Flow logs duplicated counts for long-lived ICMP flows, and could attribute traffic to the wrong host endpoint. {/* #13680 #14000 */}
+  * Expired IPv6 NAT conntrack entries were not cleaned up, and per-interface state leaked for Istio ambient workloads. {/* #14430 #13682 */}
 * Fixed application layer policy never matching rules that reference a named port, which caused Allow rules to deny and Deny rules to have no effect. {/* #13850 */}
 * Fixed application layer policy enforcing staged policies as if they were enforced. {/* #13869 */}
 * Fixed policy recommendation producing an invalid recommendation for namespaces whose pods call the Kubernetes API, or another Service backed by non-pod endpoints, and then retrying the rejected recommendation every few seconds. {/* #14853 */}
 * Fixed `calicoctl validate` accepting resources that the API server rejects, including duplicate entries in list fields such as a NetworkSet's addresses. {/* #14142 */}
 * Fixed repeated "cannot patch resource tiers" errors from calico-kube-controllers on clusters that use native `projectcalico.org/v3` CRDs. {/* #5360 */}
-* Fixed flow logs reporting a staged policy as the enforced verdict, with incorrect packet and byte counts, when a flow's policy path changed mid-flow. {/* #13869 */}
-* Fixed flow logs reporting an end-of-tier deny as the staged policy verdict for connections to DNS-resolved destinations, both right after the DNS lookup and after the DNS mapping expires. {/* #14377 */}
-* Fixed flow logs reporting an end-of-tier deny as the staged policy verdict for traffic to domain-based network sets or egress domain rules after a Felix restart. Enforcement was not affected. {/* #13945 */}
-* Fixed Felix repeatedly emitting stale deny flow logs with zero counters after a policy change allowed the traffic. {/* #13589 */}
+* Fixed flow logs reporting the wrong staged policy verdict: a staged policy as the enforced verdict when a flow's policy path changed mid-flow, and an end-of-tier deny for traffic to DNS-resolved destinations or domain-based network sets. Enforcement was not affected. {/* #13869 #14377 #13945 */}
+* Fixed wrong flow counts: Felix emitting stale zero-count deny logs after a policy change allowed the traffic, Goldmane counting a node's statistics twice after Felix reconnects, and Service Graph connection rates on clusters that changed `flowLogsFlushInterval`. {/* #13589 #13705 #14407 */}
 * Fixed Felix restarting with "BUG: Unexpected action" when a new policy with a Pass rule changed the policy match for an active flow while flow logs were sent to Goldmane. {/* #14646 */}
-* Fixed Goldmane counting a node's flow statistics twice when Felix reconnects to it. {/* #13705 */}
-* Fixed premature age-out of flow log entries in the eBPF dataplane, which duplicated packet and byte counts for long-lived ICMP flows. {/* #13680 */}
-* Fixed eBPF flow logs attributing traffic to the wrong host endpoint, or leaving the reporting interface out. {/* #14000 */}
-* Fixed Service Graph connection rates being wrong on clusters that changed `flowLogsFlushInterval` in FelixConfiguration. {/* #14407 */}
-* Fixed a stale packet capture status being written to a PacketCapture after a failed status update was retried. {/* #14074 */}
 * Fixed concurrent endpoint queries in the web console being able to run with another request's credentials. {/* #14157 */}
-* Fixed aborting a datastore migration leaving $[prodname] serving from an empty datastore instead of restoring the aggregated API server. {/* #14517 */}
-* Fixed `calicoctl datastore migrate` leaving IPv6 VXLAN and WireGuard tunnel addresses tied to the old node name, and a kube-controllers panic on load balancer IP allocations with no handle. {/* #14517 */}
-* Fixed policy name migration never running when the calico-node DaemonSet has a different name. {/* #14517 */}
-* Fixed the datastore migration reporting cleanup as complete while v1 CRDs were still being deleted. {/* #14413 */}
-* Fixed a datastore migration getting stuck permanently if the calico-kube-controllers pod was lost during the migration. {/* #5319 */}
+* Fixed several datastore migration issues: aborting a migration left $[prodname] serving from an empty datastore, a migration could get stuck permanently if the calico-kube-controllers pod was lost, and cleanup was reported complete while v1 CRDs were still being deleted. {/* #14517 #5319 #14413 */}
+* Fixed `calicoctl datastore migrate` leaving IPv6 VXLAN and WireGuard tunnel addresses tied to the old node name, policy name migration never running when the calico-node DaemonSet has a different name, and a kube-controllers panic on load balancer IP allocations with no handle. {/* #14517 */}
 * Fixed the operator failing to reconcile, and to renew Typha certificates, on Rancher-managed clusters. {/* #14264 */}
 * Fixed a deadlock on clusters where the Kubernetes API server is reachable only by name. calico-node now defaults to the node's own DNS resolver. {/* #5247 */}
-* Fixed TigeraStatus reporting a StatefulSet-backed component as available before its pods are ready. {/* #5354 */}
 * Fixed Felix panicking instead of restarting cleanly when a restart-requiring configuration change arrived while the dataplane was busy, and deadlocking if such a change arrived before startup completed. {/* #13762 */}
 * Security updates. {/* #14549 #14634 #14352 #14240 #14189 #14583 */}
 
