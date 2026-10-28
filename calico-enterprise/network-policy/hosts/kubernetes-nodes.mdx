@@ -149,6 +149,38 @@ To enable template host endpoints and disable default host endpoints, edit the d
    192.168.157.128.compute.internal-custom-host-endpoint-auto-hep  192.168.157.128.compute.internal              192.168.157.128   projectcalico-default-allow
    ```
 
+#### Create one host endpoint per interface
+
+To create a host endpoint for each matching interface instead of one per node, set `interfacePattern` in a template to a regular expression that matches interface names.
+Each node selected by `nodeSelector` gets one host endpoint for each of its interfaces that matches.
+This lets you select particular NICs by label, for example for [host NIC QoS](../../networking/configuring/host-nic-qos.mdx).
+
+At least one of `interfacePattern` and `interfaceCIDRs` must be set.
+
+```yaml
+spec:
+  controllers:
+    node:
+      hostEndpoint:
+        autoCreate: Enabled
+        templates:
+          - generateName: storage-nic
+            interfacePattern: '^eth1$'
+            nodeSelector: "!has(node-role.kubernetes.io/control-plane)"
+            labels:
+              host-qos: storage-nic
+```
+
+With `autoCreate: Enabled`, the default `*` host endpoint for each node is also created, unless `createDefaultHostEndpoint` is `Disabled`.
+
+Each generated host endpoint is named `<node>-<generateName>-<interface>-auto-hep`, names one interface, and carries its node's labels plus the template's:
+
+```
+NAME                                 NODE          INTERFACE   PROFILES
+worker-1-storage-nic-eth1-auto-hep   worker-1      eth1        [projectcalico-default-allow]
+worker-2-storage-nic-eth1-auto-hep   worker-2      eth1        [projectcalico-default-allow]
+```
+
 ### Apply network policy to automatic host endpoints
 
 To apply policy that targets all Kubernetes nodes, first add a label to the nodes.

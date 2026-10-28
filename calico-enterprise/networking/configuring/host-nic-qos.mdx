@@ -1,0 +1,449 @@
+---
+description: Guarantee and cap bandwidth for classes of traffic on host NICs with Calico Enterprise HostQoSPolicy.
+---
+
+# Host NIC QoS
+
+:::note
+
+Host NIC QoS is a tech preview feature.
+APIs and behavior may change before GA.
+
+:::
+
+## Big picture
+
+Reserve, cap and share the bandwidth of each node's network interfaces between classes of traffic, so that no one kind of traffic can take over a NIC.
+
+## Value
+
+On a busy node, one kind of traffic can use a whole NIC and starve everything else on it:
+
+- CSI storage replication, or a backup job, saturating the link the node's applications use.
+- KubeVirt live migrations copying VM memory as fast as the link allows.
+- AI workloads pulling large models from a registry or object store.
+
+Host NIC QoS lets you divide a NIC into classes of traffic. Each class can be guaranteed a minimum bandwidth, capped at a maximum, and given a weight for sharing whatever is spare.
+Traffic you don't classify keeps a guaranteed share of the link.
+
+Host NIC QoS shapes the node's own interfaces. To limit the bandwidth of individual pods, see [Configure QoS controls](qos-controls.mdx).
+
+## Concepts
+
+### Host QoS policies and resource pools
+
+A [`HostQoSPolicy`](../../reference/resources/hostqospolicy.mdx) selects host endpoints by label, and shapes each interface they name.
+It divides each interface into **resource pools**, one per class of traffic.
+For each direction, egress (leaving the node) and ingress (arriving at the node), a pool has:
+
+- **`reservation`**: bandwidth the pool is guaranteed whenever it has traffic to send. Reservations are the only guarantee.
+- **`limit`**: the most the pool can ever use. It defaults to the link's capacity.
+- **`match`**: which traffic belongs to the pool, by address, port, protocol, or DSCP value.
+
+and, for both directions:
+
+- **`shares`**: how the pool competes for spare bandwidth. When pools want more than their reservation at the same time, spare bandwidth is split between them in proportion to their shares. Treat shares as a weighting, not a fixed ratio: how evenly it splits in practice depends on the traffic.
+
+:::caution
+
+Rates are in bits per second, written as decimal SI quantities: `500M` is 500 Mbit/s and `10G` is 10 Gbit/s.
+Suffixes are case-sensitive, and some mistakes are accepted without an error:
+
+- `500m`, with a lowercase `m`, means 0.5 bit/s: the pool is throttled to almost nothing.
+- A quoted number without a suffix is bits per second: `limit: "128"` is 128 bit/s, not 128 Mbit/s. (An unquoted number is rejected.)
+- `Mi` and `Gi` are binary: `1Gi` is 1,073,741,824 bit/s.
+
+Use `k`, `M`, `G` or `T`, and always write the suffix.
+
+:::
+
+### How bandwidth is shared
+
+Traffic that matches no pool isn't dropped or throttled to zero. It's guaranteed whatever bandwidth the pools don't reserve.
+
+To leave room for it, the reservations on one interface, in one direction, can add up to at most 75% of the link's capacity by default.
+You can change that cap with `hostQoSReservationSafetyMargin`; see [Tune the Felix settings](#tune-the-felix-settings).
+
+#### What happens to traffic that matches no pool
+
+Every shaped interface has a **default class** that carries all traffic not matched by a pool.
+That includes cluster-essential traffic you didn't classify: the Kubernetes API, kubelet, BGP, DNS.
+
+- Its guaranteed floor is exactly what the pools leave unreserved: the link capacity minus the sum of reservations. With the default 75% cap, that's at least 25% of the link.
+- It can borrow up to the full link. But when bandwidth is spare, pools are served before the default class. Under contention, unmatched traffic gets its floor and little more.
+
+So keep the default 75% cap unless you've classified your infrastructure traffic into a pool of its own.
+
+:::caution
+
+A pool with no `match` in a direction takes **all** of that direction's traffic that an earlier pool hasn't matched, including the Kubernetes API, kubelet, DNS and BGP.
+The same goes for a match that covers the node's own subnet, the whole pod CIDR, or `0.0.0.0/0`.
+Under a tight `limit`, that can cut nodes off from the control plane. Match the traffic you mean to shape, and nothing else.
+
+:::
+
+#### Worked example: 10G link, three pools
+
+| Pool | Reservation | Limit | Shares |
+|---|---|---|---|
+| storage | 3G | 8G | 3 |
+| migration | 1G | 4G | 1 |
+| backup | 500M | 2G | 1 |
+| *(default class)* | *5.5G (the rest)* | *10G* | *—* |
+
+Reservations total 4.5G, within the 7.5G cap (10G × 0.75).
+
+- With everything busy, each pool gets at least its reservation and unmatched traffic at least 5.5G.
+- If only storage and migration have more to send, spare bandwidth is split between them about 3:1, until each reaches its limit.
+- Backup never exceeds 2G, even on an idle link.
+
+#### Which pool a packet lands in
+
+Pools are checked in the order they're listed, and a packet goes to the first pool whose match it matches.
+List pools with narrower matches before broader ones: a pool matching `10.0.0.0/8` listed above one matching `10.1.0.0/16` takes all of `10.1.0.0/16`'s traffic, and the second pool never sees any.
+
+### Selecting interfaces
+
+A policy's `selector` matches [host endpoints](../../reference/resources/hostendpoint.mdx) by their own labels. Each binding — one host endpoint and one interface — is shaped separately:
+
+- A host endpoint with `interfaceName: eth1` shapes `eth1`.
+- A host endpoint with `interfaceName: "*"`, such as an [automatic host endpoint](../../network-policy/hosts/kubernetes-nodes.mdx), shapes each of the host's physical NICs, and each bond with a physical member. It doesn't shape virtual interfaces such as VLANs, macvlans or veths; to shape one of those, name it in a host endpoint of its own.
+- Interfaces $[prodname] manages itself, such as pod interfaces and tunnel devices, are never shaped.
+- To shape a bond, select the bond, not its members.
+
+If two policies select the same host endpoint, the policy whose name sorts first alphabetically shapes it.
+If two host endpoints that host QoS policies select cover the same interface, the host endpoint whose name sorts first wins.
+The loser reports a collision in its status; see [Troubleshoot host NIC QoS](host-nic-qos-troubleshooting.mdx).
+
+### Egress, ingress, and DSCP marking
+
+Egress shaping controls what the node sends. Ingress shaping controls what the node accepts, which slows down a TCP sender, but can't stop traffic from arriving at the NIC.
+Ingress shaping uses the `ifb` kernel module, which most Linux distributions include.
+
+A pool can also mark the packets it carries with a DSCP value as they leave the node, with `egress.dscp`, so that switches and routers downstream can prioritize them. Marking is egress only.
+
+### Link capacity
+
+Pools are sized against each interface's capacity.
+
+- If you omit `linkCapacity`, $[prodname] reads each interface's speed from the kernel. For a bond, that's the speed the bond reports: the sum of its active members' speeds in most bonding modes, but only the active member's in `active-backup` mode. It notices when the speed or bond membership changes.
+- An interface that's up but doesn't report a speed, as with some virtio NICs, cloud VM NICs and SR-IOV virtual functions, isn't shaped. Its status says `CapacityUnknown`. Set `linkCapacity` for those.
+- If you set `linkCapacity`, it's used for every interface the policy shapes, whatever the NIC reports.
+
+:::caution
+
+An explicit `linkCapacity` replaces the NIC's real speed. Set it to bandwidth the interface really has.
+
+- Set lower than the NIC's speed, it caps **all** of the interface's traffic in each shaped direction, unmatched traffic included, at `linkCapacity`.
+- Set higher, the policy is applied, but its reservations can't be met, and the floor for unmatched traffic is lost.
+
+If a policy selects NICs of different speeds, omit `linkCapacity`, or use one policy per speed.
+
+:::
+
+With a detected capacity, a pool `limit` above the capacity, or reservations above the cap, mean the policy isn't applied on that interface.
+Its status reports `ReservationsExceedCapacity`, and the interface isn't shaped.
+So a policy written for 10G NICs, with `linkCapacity` omitted, is refused on a 1G NIC, and an interface's shaping is removed if it renegotiates to a speed the policy doesn't fit.
+
+### Status
+
+$[prodname] reports how each policy was applied:
+
+- `kubectl get hostqospolicy` (`hqp`) shows each policy's `Ready` condition and counts.
+- `kubectl get hostqosnodestatus` (`hqns`) shows one status per policy and host, with the state of each interface. See [HostQoSNodeStatus](../../reference/resources/hostqosnodestatus.mdx).
+
+## Before you begin
+
+- $[prodname] 3.25 or later, installed with the operator.
+- Linux nodes, using the iptables, nftables, or eBPF data plane. With the eBPF data plane, programs must attach with TCX: `bpfAttachType` set to `Netkit` (the default) or `TCX`, on Linux kernel 6.6 or later. With `TC`, or on an older kernel, policies report `UnsupportedDataplane`.
+- A host endpoint for each interface you want to shape, or [automatic host endpoints](../../network-policy/hosts/kubernetes-nodes.mdx).
+- For each class of traffic: the addresses, ports or DSCP values that identify it, and the bandwidth it needs. In some organizations this comes from the network team.
+
+## How to
+
+- [Get started: two traffic classes on one NIC](#get-started-two-traffic-classes-on-one-nic)
+- [Classify traffic](#classify-traffic)
+- [Mark DSCP on egress](#mark-dscp-on-egress)
+- [Set or detect link capacity](#set-or-detect-link-capacity)
+- [Tune the Felix settings](#tune-the-felix-settings)
+- [Check status](#check-status)
+
+For more policies, see [Host NIC QoS examples](host-nic-qos-examples.mdx). For KubeVirt, see [Shape live-migration traffic](../kubevirt/live-migration-qos.mdx).
+
+### Get started: two traffic classes on one NIC
+
+This example shapes the egress of each node's `eth0`, a 10G NIC, into two classes:
+
+- **storage**: traffic to a storage network, `10.20.0.0/24`, guaranteed 3G.
+- **backup**: traffic to a backup server, `10.30.0.10`, on TCP port 8200, guaranteed 500M and capped at 1G so it can't crowd out anything else.
+
+Everything else keeps at least 6.5G (10G minus the 3.5G reserved).
+
+Steps 1 and 5 may belong to your network team.
+
+1. **Decide the classes.**
+
+   1. List the traffic to shape, and how to recognize each kind: destination addresses, ports, or a DSCP value it already carries.
+   2. Choose a reservation and a limit for each. Keep the reservations' total within 75% of the link.
+   3. Check that no match covers traffic the cluster depends on: the node subnet, the Kubernetes API server, kubelet (port 10250), DNS, or BGP.
+
+2. **Select the interfaces.**
+
+   - If you use [automatic host endpoints](../../network-policy/hosts/kubernetes-nodes.mdx), label the nodes to shape. The label is copied to their host endpoints:
+
+     ```bash
+     kubectl label node worker-1 worker-2 host-qos=demo
+     ```
+
+     An automatic host endpoint covers all of a node's physical NICs, so the policy shapes each of them.
+     To shape only some NICs, use a [template with `interfacePattern`](../../network-policy/hosts/kubernetes-nodes.mdx#create-one-host-endpoint-per-interface), which creates one labelled host endpoint per matching interface.
+     Use one approach or the other. Template host endpoints copy their node's labels, so with both a node label and a template, the node's `*` host endpoint and the template's host endpoint are both selected for the same NIC, and one reports `HEPCollision`.
+
+   - Otherwise, create a host endpoint for `eth0` on each node:
+
+     ```yaml
+     apiVersion: projectcalico.org/v3
+     kind: HostEndpoint
+     metadata:
+       name: worker-1-eth0
+       labels:
+         host-qos: demo
+     spec:
+       node: worker-1
+       interfaceName: eth0
+       expectedIPs: ['10.0.0.11']
+       profiles:
+         - projectcalico-default-allow
+     ```
+
+     :::caution
+
+     A host endpoint also turns on network policy for its interface, and with no policy, traffic to and from it is denied apart from [failsafe ports](../../reference/host-endpoints/failsafe.mdx).
+     The `projectcalico-default-allow` profile keeps traffic flowing. Leave it out only if you already have network policy for the interface.
+
+     :::
+
+3. **Create the policy.**
+
+   ```yaml
+   apiVersion: projectcalico.org/v3
+   kind: HostQoSPolicy
+   metadata:
+     name: demo
+   spec:
+     selector: host-qos == 'demo'
+     linkCapacity: 10G
+     resourcePools:
+       - name: storage
+         egress:
+           reservation: 3G
+           match:
+             destination:
+               nets: [10.20.0.0/24]
+       - name: backup
+         egress:
+           reservation: 500M
+           limit: 1G
+           match:
+             protocol: TCP
+             destination:
+               nets: [10.30.0.10/32]
+               ports: [8200]
+   ```
+
+   `linkCapacity` is set to the NIC's real speed, 10G, so the policy also works on NICs that don't report their speed.
+   Change it to your NICs' speed, or omit it to use each NIC's detected speed; a value that doesn't match the NIC caps or misshapes all of its traffic. See [Link capacity](#link-capacity).
+
+4. **Check that the policy applied.**
+
+   ```bash
+   kubectl get hqp demo
+   ```
+
+   ```
+   NAME   READY   REASON    APPLIEDBINDINGS   ERROREDBINDINGS   APPLIEDNODES   AGE
+   demo   True    Applied   2                 0                 2              20s
+   ```
+
+   If `REASON` isn't `Applied`, see [Check status](#check-status).
+
+5. **Check the shaping with traffic.**
+
+   1. On the backup server, `10.30.0.10`, run an iperf3 server on the backup port:
+
+      ```bash
+      iperf3 -s -p 8200
+      ```
+
+   2. On a shaped node, send to it, and check the rate stays at or below 1 Gbit/s:
+
+      ```bash
+      iperf3 -c 10.30.0.10 -p 8200 -t 20 -P 4
+      ```
+
+      Expect a result just under the limit, such as `950 Mbits/sec`, however fast the link is. Traffic to any other port isn't capped.
+
+   3. Send to a storage address at the same time, and check storage traffic gets at least its 3 Gbit/s while backup stays capped.
+
+### Classify traffic
+
+Each pool's `match` is set per direction. All the fields you set must match.
+
+| To match | Use |
+|---|---|
+| Traffic to or from a network | `destination.nets` or `source.nets` |
+| A service port | `protocol` plus `destination.ports` or `source.ports`. Ports can be ranges, such as `"49152:49215"`. |
+| Traffic already marked with DSCP | `dscp`, such as `AF31` or `26` |
+
+A match sees the headers as they are on the interface:
+
+- On **egress**, after source NAT. Pod traffic that leaves the node with the node's IP has the node's IP as its source, so a pod CIDR in `source.nets` doesn't match it.
+- On **ingress**, before destination NAT, with the iptables and nftables data planes. Traffic to a NodePort service has the node's IP as its destination, so a pod CIDR in `destination.nets` doesn't match it.
+- For traffic that crosses the interface encapsulated, such as pod-to-pod traffic between nodes over VXLAN, IPIP or WireGuard, the match sees the outer header. Ports, pod addresses and the inner packet's DSCP value don't match it.
+
+DSCP survives NAT, so `dscp` is often the most reliable match for translated traffic.
+If the traffic isn't marked at its source, the `qos.projectcalico.org/dscp` annotation can mark traffic from a pod or host endpoint that's leaving the cluster or going to another host; see [Configure QoS controls](qos-controls.mdx). It doesn't mark pod-to-pod traffic.
+
+For ingress, `source` is the remote end and `destination` is this node.
+To match a service this node listens on, use `destination.ports` on ingress and `source.ports` on egress.
+
+### Mark DSCP on egress
+
+Set `egress.dscp` on a pool to mark its packets as they leave the interface:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: HostQoSPolicy
+metadata:
+  name: mark-backup
+spec:
+  selector: host-qos == 'demo'
+  linkCapacity: 10G
+  resourcePools:
+    - name: backup
+      egress:
+        reservation: 500M
+        limit: 1G
+        dscp: AF11
+        match:
+          protocol: TCP
+          destination:
+            ports: [8200]
+```
+
+The `qos.projectcalico.org/dscp` annotation on a host endpoint marks traffic before it reaches the NIC.
+A pool with `egress.dscp` then overwrites that mark on the traffic it matches; traffic no pool matches keeps the annotation's mark.
+A pool without `egress.dscp` can still match on the annotation's mark, so the annotation can classify traffic and the policy shape it.
+
+### Set or detect link capacity
+
+To use each interface's detected speed, omit `linkCapacity`, and check what was detected:
+
+```bash
+kubectl get hqns -l projectcalico.org/hostqos-node=worker-1 -o yaml
+```
+
+A binding in `Error` with `CapacityUnknown` is on an interface that doesn't report a speed: set `linkCapacity` in the policy.
+One with `ReservationsExceedCapacity` doesn't fit the interface: lower the policy's limits or reservations, or shape that interface with a different policy.
+
+Set `linkCapacity` when the NIC's speed isn't the bandwidth you want to plan for, for example when the link to the next switch is slower than the NIC, or when the NIC doesn't report a speed.
+
+### Tune the Felix settings
+
+Two [FelixConfiguration](../../reference/resources/felixconfig.mdx) fields affect host NIC QoS on every interface:
+
+| Field | Default | What it does |
+|---|---|---|
+| `hostQoSReservationSafetyMargin` | `0.75` | The share of each interface's capacity, per direction, that pool reservations can add up to. Greater than 0, at most 1. Lowering it below what an applied policy reserves removes that policy's shaping, and its status reports `ReservationsExceedCapacity`. |
+| `hostQoSRefreshInterval` | `90s` | How often $[prodname] checks each shaped interface and repairs anything changed outside it. |
+
+```bash
+kubectl patch felixconfiguration default --type merge -p '{"spec":{"hostQoSReservationSafetyMargin":0.8}}'
+```
+
+:::caution
+
+Setting `hostQoSRefreshInterval` to `0` turns off the periodic repair. Shaping that something else changes or removes then stays that way until the policy or the interface changes.
+
+:::
+
+### Check status
+
+```bash
+kubectl get hqp
+kubectl get hqns
+```
+
+- `READY` `True` with `REASON` `Applied`: every selected interface is shaped.
+- `PartiallyApplied`: some interfaces are shaped and some aren't.
+- `NoBindings`: no host endpoint matches the selector.
+- Anything else: no interface is shaped.
+
+For the interfaces that aren't shaped, read the bindings in their `hqns`, and see [Troubleshoot host NIC QoS](host-nic-qos-troubleshooting.mdx).
+
+## Interactions with other features
+
+- **Per-pod QoS.** [QoS controls](qos-controls.mdx) shape each pod's own interface, so a pod can't be a noisy neighbor. Host NIC QoS shapes the node's NICs, so a class of traffic can't starve the others. They don't conflict, and you can use both.
+- **Network policy on host endpoints.** Host endpoints carry both network policy and host NIC QoS. The two are independent: a host QoS policy doesn't allow or deny anything.
+- **The `qos.projectcalico.org/dscp` annotation.** See [Mark DSCP on egress](#mark-dscp-on-egress).
+
+## Limits
+
+- Up to 100 resource pools per policy.
+- Up to 64 entries in each `nets` and `ports` list.
+- A match's lists combine: `source.nets` × `source.ports` × `destination.nets` × `destination.ports` rules, per IP family. A match with 4 networks and 4 ports is 16 rules. A port range can take more than one rule, unless it's aligned like `49152:49215`.
+- One pool's match can have at most 1,024 rules per IP family. A pool over that isn't applied: its bindings report `DataplaneFailure`. Match on DSCP or broader CIDRs instead.
+- Keep each interface's rules, across all pools and both directions, under about 2,000. More works, but each policy change takes longer to apply.
+
+## Upgrade and downgrade
+
+### Upgrade
+
+Upgrade with the operator, as described in [Upgrade $[prodname]](../../getting-started/upgrading/index.mdx).
+The operator grants the new permissions host NIC QoS needs before it upgrades the $[prodname] components.
+Don't upgrade $[prodname] images ahead of the operator: without those permissions, Typha can't sync, and networking on the cluster stalls, not only QoS.
+
+### Downgrade
+
+A release without host NIC QoS can't remove the shaping a later one programmed, and $[prodname] doesn't remove shaping when it stops.
+So a node downgraded with policies in place keeps shaping its NICs, with nothing in the cluster that shows it.
+
+Before you downgrade to a release without host NIC QoS:
+
+1. Delete every host QoS policy:
+
+   ```bash
+   kubectl delete hostqospolicies --all
+   ```
+
+2. Check that the shaping is gone. No host QoS node statuses should remain, and on a node that was shaped, no interface should have an `htb 1ca1:` root qdisc or an `ifbqos` device:
+
+   ```bash
+   kubectl get hqns
+   tc qdisc show | grep 'htb 1ca1:'
+   ip -br link | grep ifbqos
+   ```
+
+3. Downgrade.
+
+If a node was downgraded with shaping in place, remove it on that node. For each shaped interface:
+
+```bash
+IFACE=eth0
+# The root shaping, only if it is host NIC QoS's own.
+tc qdisc show dev $IFACE root | grep -q 'htb 1ca1:' && tc qdisc del dev $IFACE root
+# The ingress redirect, then the ingress qdisc if nothing else uses it.
+tc filter del dev $IFACE ingress pref 7329
+tc filter show dev $IFACE ingress | grep -q . || tc qdisc del dev $IFACE ingress
+```
+
+Then remove the devices that ingress shaping used:
+
+```bash
+for dev in $(ip -br link | awk '/^ifbqos/ {print $1}'); do ip link del "$dev"; done
+```
+
+## Metrics
+
+$[prodname] exports Prometheus metrics for host NIC QoS: per-pool bytes, packets, drops and backlog, link capacity, and reconcile time and errors.
+See [Host NIC QoS metrics](../../reference/component-resources/node/felix/prometheus.mdx#host-nic-qos-metrics).

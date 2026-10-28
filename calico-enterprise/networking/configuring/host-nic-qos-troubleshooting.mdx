@@ -1,0 +1,237 @@
+---
+description: Troubleshoot Calico Enterprise host NIC QoS by reading HostQoSPolicy and HostQoSNodeStatus status and fixing each cause.
+---
+
+# Troubleshoot host NIC QoS
+
+:::note
+
+Host NIC QoS is a tech preview feature.
+APIs and behavior may change before GA.
+
+:::
+
+## Read the status
+
+Start from the policy, then look at the hosts and interfaces that aren't shaped.
+
+1. **Check the policy.**
+
+   ```bash
+   kubectl get hqp
+   ```
+
+   ```
+   NAME   READY   REASON             APPLIEDBINDINGS   ERROREDBINDINGS   APPLIEDNODES   AGE
+   demo   True    PartiallyApplied   4                 1                 2              5m
+   ```
+
+   A *binding* is one host endpoint and one interface. `REASON` summarizes them; see [HostQoSPolicy status](../../reference/resources/hostqospolicy.mdx#status).
+
+2. **Find the hosts with a problem.**
+
+   ```bash
+   kubectl get hqns
+   ```
+
+   ```
+   NAME                           POLICY   NODE       HOSTTYPE      STATE              AGE
+   demo.worker-1-91fde02fe4       demo     worker-1   ClusterNode   Applied            5m
+   demo.worker-3-d4cf81b9c9       demo     worker-3   ClusterNode   PartiallyApplied   5m
+   ```
+
+3. **Read the bindings on those hosts.**
+
+   ```bash
+   kubectl get hqns demo.worker-3-d4cf81b9c9 -o jsonpath='{range .status.bindings[*]}{.hostEndpointName} {.interfaceName} {.state} {.message}{"\n"}{end}'
+   ```
+
+   ```
+   worker-3-eth1 eth1 Applied
+   worker-3-eth2 eth2 Error ForeignQdisc: existing root qdisc htb handle 2:0 on eth2 is not managed by Calico; refusing to install shaping
+   ```
+
+   Each message starts with a cause. Find it below.
+
+A binding that isn't `Applied` isn't shaped, with one exception: when only one direction fails, as with `IFBUnavailable` on ingress, the other direction's shaping stays in place.
+Bindings on other interfaces and hosts are unaffected.
+
+Causes that need a command run on the node itself say so. Run those with root access on the node, for example through `kubectl debug node/<node> -it --image=<image with iproute2>` and `chroot /host`.
+
+## Causes
+
+### PolicyCollision
+
+```
+PolicyCollision: HostQoSPolicy aaa-storage also selects HostEndpoint worker-1-eth1 and sorts first; this policy is inert on that HostEndpoint
+```
+
+Two policies select the same host endpoint. Only one policy can shape an interface, so the policy whose name sorts first alphabetically wins, and the other does nothing there.
+
+**Fix:** change the selectors so each host endpoint is selected by one policy, or merge the policies' pools into one policy.
+If you meant the other policy to win, rename one of them.
+
+### HEPCollision
+
+```
+HEPCollision: HostEndpoint aaa-worker-1-eth1 also resolves to eth1 and sorts first; this binding is inert
+```
+
+Two host endpoints that host QoS policies select name the same interface, so the host endpoint whose name sorts first wins.
+This happens if you select both a node's [automatic host endpoint](../../network-policy/hosts/kubernetes-nodes.mdx), which covers all of the node's physical NICs, and a host endpoint for one of those NICs.
+Template host endpoints copy their node's labels, so a policy whose selector matches a node label selects the node's automatic host endpoint and all its template host endpoints.
+
+**Fix:** select one host endpoint per interface. Select template host endpoints by a label only the template sets, and remove that label from the nodes; or label the nodes and don't use templates for those NICs.
+
+### InterfaceExcluded
+
+```
+InterfaceExcluded: interface tunl0 is managed by Calico and cannot be shaped by HostQoSPolicy
+```
+
+The interface is one $[prodname] manages itself, such as a pod interface, `tunl0`, `vxlan.calico`, or a WireGuard device. These are never shaped.
+
+**Fix:** stop selecting it. To shape overlay traffic, shape the NIC it leaves through.
+
+### InterfaceDown
+
+```
+InterfaceDown: interface eth2 is not present or not up
+```
+
+The interface doesn't exist on the node, or isn't up. For a host endpoint without `interfaceName`, no interface that is up has any of its `expectedIPs`.
+
+**Fix:** check the interface name in the host endpoint, and bring the interface up. Shaping is applied as soon as it is, with no restart.
+
+### InterfaceBondMember
+
+```
+InterfaceBondMember: interface eth2 is a member of bond0; bind bond0 instead
+```
+
+The interface is a member of a bond. Traffic is sent through the bond, so that's where it has to be shaped.
+
+**Fix:** point the host endpoint at the bond, `bond0`, instead of its member.
+
+### ForeignQdisc
+
+```
+ForeignQdisc: existing root qdisc htb handle 2:0 on eth2 is not managed by Calico; refusing to install shaping
+```
+
+Another tool already shapes the interface, with its own root qdisc, or its own qdisc on the ingress hook. $[prodname] doesn't remove other tools' shaping.
+For the ingress hook, the message reads `ForeignQdisc: eth2 has a clsact qdisc on its ingress hook, which Calico does not manage; refusing to redirect its ingress`, and the interface's egress shaping stays in place.
+
+**Fix:** decide which tool shapes the interface.
+
+- To use host NIC QoS, remove the other tool's configuration, then its qdisc, on the node:
+
+  ```bash
+  tc qdisc show dev eth2
+  tc qdisc del dev eth2 root      # for a foreign root qdisc
+  tc qdisc del dev eth2 clsact    # for a foreign qdisc on the ingress hook
+  ```
+
+  A `clsact` qdisc on the ingress hook usually belongs to an eBPF program. Check what owns it before you remove it.
+
+  The binding is shaped on the next check, within the [refresh interval](host-nic-qos.mdx#tune-the-felix-settings).
+
+- To keep the other tool, stop selecting the interface.
+
+### ClassIDCollision
+
+```
+ClassIDCollision: class ID collision between pool "a" and pool "b"; rename one of them
+```
+
+Each pool's name maps to an identifier on the interface, and two of the policy's pool names map to the same one. This is rare.
+
+**Fix:** rename one of the two pools the message names.
+
+### IFBUnavailable
+
+```
+IFBUnavailable: the kernel has no ifb support, so ifbqosf674cabc9 could not be created (operation not supported); the ifb module is missing or could not be loaded
+```
+
+Ingress shaping needs the `ifb` kernel module, and the node can't load it.
+The interface's egress shaping is still applied; only its ingress pools aren't. The binding reports `Error` with this cause until ingress works too.
+
+**Fix:** on the node, load the module, and check it isn't blocked:
+
+```bash
+modprobe ifb
+grep -r ifb /etc/modprobe.d/
+```
+
+If the message says the module's `numifbs` budget is exhausted, raise it, for example with `options ifb numifbs=16` in `/etc/modprobe.d/`, and reload the module.
+If the node's kernel doesn't include the module, remove the `ingress` pools from the policies that select the node.
+
+### DataplaneFailure
+
+```
+DataplaneFailure: <error from the kernel>
+```
+
+Programming the interface failed. One cause is a configuration error:
+
+```
+DataplaneFailure: match expands to more than 1024 tc filters per address family (nets x ports, source x destination); match on DSCP or coarser CIDRs instead
+```
+
+A pool's match combines its lists into one rule per combination, and a pool can have at most 1,024 per IP family. **Fix:** split the pool, use broader CIDRs, or match on DSCP. See [Limits](host-nic-qos.mdx#limits).
+
+Any other `DataplaneFailure` is unexpected, and $[prodname] retries. **Fix:** if it doesn't clear, check the `calico-node` logs on that node for host QoS errors, and contact support with them.
+
+### UnsupportedDataplane
+
+```
+UnsupportedDataplane: host NIC QoS needs the BPF dataplane in TCX attach mode (kernel 6.6+): …
+```
+
+The node runs the eBPF data plane with TC attachment, which uses the interface's ingress hook itself.
+
+**Fix:** set `bpfAttachType` to `Netkit` (the default) or `TCX` in [FelixConfiguration](../../reference/resources/felixconfig.mdx), on nodes with Linux kernel 6.6 or later; or use the iptables or nftables data plane.
+
+### CapacityUnknown
+
+```
+CapacityUnknown: spec.linkCapacity is not set and the link speed of eth2 could not be determined (…); set an explicit linkCapacity
+```
+
+The policy doesn't set `linkCapacity`, and the interface doesn't report its speed. This is common for virtual NICs, such as on cloud VMs.
+
+**Fix:** set `linkCapacity` in the policy to the bandwidth the interface has. See [Link capacity](host-nic-qos.mdx#link-capacity).
+
+### ReservationsExceedCapacity
+
+```
+ReservationsExceedCapacity: sum of egress reservations (900M) exceeds linkCapacity (1G) * HostQoSReservationSafetyMargin (0.75)
+ReservationsExceedCapacity: egress limit of pool backup (8G) exceeds the detected link speed of eth2 (1G)
+```
+
+The policy doesn't fit the interface:
+
+- the reservations in one direction add up to more than the capacity times `hostQoSReservationSafetyMargin`, or
+- a pool's `limit` is above the interface's detected speed. (A `limit` above an explicit `linkCapacity` is rejected when you create the policy.)
+
+**Fix:** lower the reservations or limits, or set `linkCapacity` if the detected speed is wrong.
+If the interface renegotiated to a lower speed, shaping comes back by itself when the speed does.
+Raise `hostQoSReservationSafetyMargin` only if your infrastructure traffic has a pool of its own; see [How bandwidth is shared](host-nic-qos.mdx#how-bandwidth-is-shared).
+
+## Behavior that looks like a fault
+
+### The policy's observedGeneration doesn't advance
+
+A policy's `status.observedGeneration` is the oldest generation any host reports.
+A host that has a status for the policy but hasn't reported on the latest spec holds it back: one whose `calico-node` is restarting, one that is powered off with its node still in the cluster, or one downgraded to a release without host NIC QoS after it wrote a status.
+It advances once that host reports, or its node is removed.
+
+### lastTransitionTime changed with no change in state
+
+When `calico-node` restarts, it rewrites its host's statuses, and sets `lastTransitionTime` to the time it restarted, even when nothing else changed.
+Compare `state` and `message`, not transition times.
+
+### A deleted HostQoSNodeStatus comes back
+
+The host's `calico-node` rewrites its statuses every 10 to 11 minutes, so it recreates one that's deleted within 11 minutes, or as soon as that host's state changes. Shaping isn't affected.
