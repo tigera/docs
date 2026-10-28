@@ -75,10 +75,12 @@ make start CONTAINERIZED=true
 | `make build-next` | Full build including unreleased docs |
 | `make serve` | Build and serve the production site |
 | `make serve-next` | Build-next and serve |
+| `make test` | Serve an existing `build/` and run the Playwright link crawler against it |
 | `make clean` | Remove build artifacts |
 | `make manual-clean` | Nuclear clean: removes `node_modules`, `.yarn`, `.docusaurus`, `build` |
 
 All commands support `CONTAINERIZED=true` for Docker-based builds (e.g., `make build CONTAINERIZED=true`).
+`make help` lists every target, including the maintenance targets described later in this file.
 
 > **Note:** Dependencies are installed automatically when you run any build or start command. When switching between native and containerized builds, the build system detects the change and runs `manual-clean` for you.
 
@@ -220,7 +222,7 @@ Two workflows run on every PR:
 
 ## Operator API documentation
 
-Operator API reference docs are auto-generated from the [tigera/operator](https://github.com/tigera/operator) repo. Requires Docker and a `GITHUB_TOKEN` environment variable.
+Operator API reference docs are auto-generated from the [tigera/operator](https://github.com/tigera/operator) repo with [crd-ref-docs](https://github.com/elastic/crd-ref-docs), which the Makefile downloads into `.bin/`. Requires `git`, `curl`, and `jq`. Each tree's filter lives in `reference/installation/_crd-ref-docs/config.yaml`.
 
 ```bash
 make autogen                 # Update all products, all versions
@@ -254,6 +256,25 @@ make show_current_branches
 
 # Then run a specific target:
 make calico-enterprise_versioned_docs/version-3.22-2__operator_reference
+```
+
+## Component versions (Calico Enterprise)
+
+`releases.json` for a Calico Enterprise stream is refreshed from `calico-private` with `scripts/update-component-versions.sh`. Requires `go`, `yq`, `jq`, bash 4+, and a `GITHUB_TOKEN` that can read `tigera/calico-private`.
+
+```bash
+make version/autogen/3.24-2   # one stream
+make version/updateall        # every stream in calico-enterprise_versioned_docs/
+```
+
+The script updates only `releases.json`; update the stream's `variables.js` by hand and check `git diff` before committing.
+
+## Felix configuration reference
+
+The Felix configuration JSON for all three products is synced from the product repos with `scripts/update-felix-config.sh`. Requires a `GITHUB_TOKEN`.
+
+```bash
+make update-felix-config
 ```
 
 ## Troubleshooting
