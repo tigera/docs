@@ -20,18 +20,7 @@
 ##         - Outputs all of the branch-related targets that you can
 ##           use to update a specific branch's operator docs.
 
-GO_BUILD_VER?=1.24.6-llvm18.1.8-k8s1.33.3
-CALICO_BUILD?=calico/go-build:$(GO_BUILD_VER)
-LOCAL_USER_ID?=$(shell id -u $$USER)
-PACKAGE_NAME?=github.com/projectcalico/calico/calico
-API_GEN_REPO?=tigera/gen-crd-api-reference-docs
-API_GEN_BRANCH?=operator
-API_GEN_VERSION=v0.3.0
-OPERATOR_REPO?=tigera/operator
 PRODUCT?=calico
-
-IA_OPERATOR_REPO?=tigera/image-assurance
-IA_OPERATOR_VERSION?=v1.17.7
 
 NODE_VER=22
 
@@ -51,10 +40,6 @@ ifeq ($(BUILDOS),Darwin)
 SED_INPLACE = sed -i ''
 else
 SED_INPLACE = sed -i
-endif
-
-ifdef PRODUCT
-OP_VERSION := $(shell jq ".[0].\"tigera-operator\".version" -r $(PRODUCT)/releases.json)
 endif
 
 YARN=yarn
@@ -145,11 +130,6 @@ index:
 $(CALICO_BRANCHES) $(CALICO_ENT_BRANCHES) $(CALICO_CLOUD_BRANCHES): %__operator_reference : %
 	@PRODUCT=$< $(MAKE) --no-print-directory build-crd-reference-docs
 
-# Calico Cloud requires the legacy `build-operator-reference` target,
-# but also requires the `build-ia-operator-reference` target to be run
-# as well (for now).
-
-
 # This breaks up automatic generation by the three product
 # categories - OSS, cloud, and enterprise - but also retains
 # the `autogen` target, which updates all three.
@@ -175,66 +155,7 @@ show_current_branches:
 	@true
 
 scripts/versions/format-versions: scripts/versions/go.* scripts/versions/main.go
-ifdef LOCAL_BUILD
-	make -C scripts/versions
-else
-	docker run --rm --net=host \
-	-e LOCAL_USER_ID=$(LOCAL_USER_ID) \
-	-e GOOS=$(shell go env GOOS) \
-	-e GOARCH=$(shell go env GOARCH) \
-	-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
-	-v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
-	-w /go/src/$(PACKAGE_NAME) \
-	$(CALICO_BUILD) make -C scripts/versions
-endif
-
-.PHONY: build-operator-reference
-build-operator-reference:
-	@mkdir -p .go-pkg-cache && \
-		docker run --rm \
-			--net=host \
-			-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
-			-v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
-			-e LOCAL_USER_ID=$(LOCAL_USER_ID) \
-			-w /go/src/$(PACKAGE_NAME) \
-			$(CALICO_BUILD) /bin/bash -c '\
-			    op_ver=$$(jq ".[0].\"tigera-operator\".version" -r $(PRODUCT)/releases.json) && \
-				echo Building reference from operator $$op_ver && \
-				rm -rf builder && mkdir builder && cd builder && \
-				git clone --depth=1 -b $(API_GEN_BRANCH) https://github.com/$(API_GEN_REPO) api-gen && cd api-gen && \
-				go mod edit -replace github.com/tigera/operator=github.com/$(OPERATOR_REPO)@$$op_ver && \
-				go mod tidy && \
-				go mod download all && go build && \
-				go get github.com/$(OPERATOR_REPO)@$$op_ver && \
-				./gen-crd-api-reference-docs \
-					-template-dir /go/src/$(PACKAGE_NAME)/crd-gen-template/operator \
-					-api-dir github.com/tigera/operator/api \
-					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
-					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx && \
-					sed -i "s|<br>|<br/>|g" /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx && \
-					/go/src/$(PACKAGE_NAME)/scripts/api-jsx.sh /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_api.mdx'
-
-GIT_CONFIG_SSH ?= git config --global url."ssh://git@github.com/".insteadOf "https://github.com/";
-
-build-ia-operator-reference:
-	@mkdir -p .go-pkg-cache && \
-		docker run --rm \
-			--net=host \
-			-v $(CURDIR):/go/src/$(PACKAGE_NAME):rw \
-			-v $(CURDIR)/.go-pkg-cache:/go/pkg:rw \
-			-e LOCAL_USER_ID=$(LOCAL_USER_ID) \
-			-e GOPRIVATE=github.com/tigera/* \
-			-v /run/user/1000/keyring/ssh:/ssh-agent \
-			--env SSH_AUTH_SOCK=/ssh-agent\
-			-w /go/src/$(PACKAGE_NAME) \
-			$(CALICO_BUILD) /bin/bash -c '$(GIT_CONFIG_SSH) rm -rf builder && mkdir builder && cd builder && \
-				git -c advice.detachedHead=false clone --depth=1 -b $(API_GEN_VERSION) git@github.com:ahmetb/gen-crd-api-reference-docs.git && cd gen-crd-api-reference-docs && go build && \
-				cd ../ && git -c advice.detachedHead=false clone --depth=1 -b $(IA_OPERATOR_VERSION) git@github.com:tigera/image-assurance.git && cd image-assurance && \
-				../gen-crd-api-reference-docs/gen-crd-api-reference-docs  \
-					-template-dir /go/src/$(PACKAGE_NAME)/crd-gen-template/ia-operator -api-dir github.com/tigera/image-assurance/operator/api \
-					-config /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/config.json \
-					-out-file /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx && \
-                    /go/src/$(PACKAGE_NAME)/scripts/api-jsx.sh /go/src/$(PACKAGE_NAME)/$(PRODUCT)/reference/installation/_ia-api.mdx'
+	$(MAKE) -C scripts/versions
 
 #Note this should not have the `v` prefix
 CRD_REF_DOCS_VER=0.2.0
@@ -264,23 +185,6 @@ build-crd-reference-docs: $(CRD_DOC_GENERATOR)
 		$(SED_INPLACE) 's/ \(Default:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
 		$(SED_INPLACE) 's/ \(Supported values are:\)/<br \/>\1/g' $(PRODUCT)/reference/installation/_api.mdx
 
-update-cloud-image-list:
-	@if [ -z "${RUN_UPDATE_CLOUD_IMAGE_LIST}" ]; then echo "Use 'make run-update-cloud-image-list' instead"; false; fi
-	sed -i  '/^\$$INSTALLER_IMAGE/,/^)/{/^\$$/!{/^)/!d}}' $(PRODUCT)/get-started/setup-private-registry.mdx
-	dl=$$(cat $(PRODUCT)/variables.js | grep clouddownloadurl | sed -e "s/^[^']*'\([^']*\)'.*$$/\1/" ) && \
-	curl -O $$dl/image-list && \
-	sed -i -e "/^\$$INSTALLER_IMAGE/r image-list" $(PRODUCT)/get-started/setup-private-registry.mdx
-	rm -f image-list
-
-# Add this back to the netlify target when the missing windows images are addressed in the image-list
-run-update-cloud-image-list:
-	RUN_UPDATE_CLOUD_IMAGE_LIST=1 PRODUCT=calico-cloud make update-cloud-image-list
-	for x in $$(ls calico-cloud_versioned_docs/); do \
-		RUN_UPDATE_CLOUD_IMAGE_LIST=1 PRODUCT=calico-cloud_versioned_docs/$$x make update-cloud-image-list; \
-	done
-	@if [ "$$(git diff --stat ./calico-cloud*/**/get-started/connect/setup-private-registry.mdx)" != "" ]; then \
-	echo "You might need to run 'make run-update-cloud-image-list' and commit the changes"; exit 1; fi
-
 # This allow generating the components version for a specific product
 # NOTE: currently only implemented for calico-enterprise; there is validation in the script to check this
 # If you want to use a different product branch from the default, specify GIT_VERSION_REF
@@ -308,52 +212,6 @@ version/autogen: scripts/versions/format-versions
 	$(if $(PRODUCT),,$(error PRODUCT is not set or empty, but is required))
 	$(if $(VERSION),,$(error VERSION is not set or empty, but is required))
 	@./scripts/update-component-versions.sh
-
-# Call the github API. $(1) is the http method type for the https request, $(2) is the repo slug, and is $(3) is for json
-# data (if omitted then no data is set for the request). If GITHUB_API_EXIT_ON_FAILURE is set then the macro exits with 1
-# on failure. On success, the ENV variable GITHUB_API_RESPONSE will contain the response from github
-define github_call_api
-	$(eval CMD := curl -f -X$(1) \
-		-H "Content-Type: application/json"\
-		-H "Authorization: token ${GITHUB_TOKEN}"\
-		https://api.github.com/repos/$(2) $(if $(3),--data '$(3)',))
-	$(eval GITHUB_API_RESPONSE := $(shell $(CMD) | sed -e 's/#/\\\#/g'))
-	$(if $(GITHUB_API_EXIT_ON_FAILURE), $(if $(GITHUB_API_RESPONSE),,exit 1),)
-endef
-
-# Create the pull request. $(1) is the repo slug, $(2) is the title, $(3) is the head branch and $(4) is the base branch.
-# If the call was successful then the ENV variable PR_NUMBER will contain the pull request number of the created pull request.
-define github_pr_create
-	$(eval JSON := {"title": "$(2)", "head": "$(3)", "base": "$(4)"})
-	$(call github_call_api,POST,$(1)/pulls,$(JSON))
-	$(eval PR_NUMBER := $(filter-out null,$(shell echo '$(GITHUB_API_RESPONSE)' | jq '.number')))
-endef
-
-release-prep: version/autogen autogen_$(lastword $(subst -, ,$(PRODUCT)))
-	$(MAKE) release-prep/create-and-push-branch
-
-GIT_REMOTE?=origin
-ifneq ($(if $(GIT_REPO_SLUG),$(shell dirname $(GIT_REPO_SLUG)),), $(shell dirname `git config remote.$(GIT_REMOTE).url | cut -d: -f2`))
-GIT_FORK_USER:=$(shell dirname `git config remote.$(GIT_REMOTE).url | cut -d: -f2`)
-endif
-GIT_PR_BRANCH_BASE?=$(if $(SEMAPHORE),$(SEMAPHORE_GIT_BRANCH),)
-GIT_REPO_SLUG?=$(if $(SEMAPHORE),$(SEMAPHORE_GIT_REPO_SLUG),)
-RELEASE_UPDATE_BRANCH?=$(if $(SEMAPHORE),semaphore-,)auto-build-updates-$(PRODUCT)-$(VERSION)
-GIT_PR_BRANCH_HEAD?=$(if $(GIT_FORK_USER),$(GIT_FORK_USER):$(RELEASE_UPDATE_BRANCH),$(RELEASE_UPDATE_BRANCH))
-release-prep/create-and-push-branch:
-ifeq ($(shell git rev-parse --abbrev-ref HEAD),$(RELEASE_UPDATE_BRANCH))
-	$(error Current branch is pull request head, cannot set it up.)
-endif
-	-git branch -D $(RELEASE_UPDATE_BRANCH)
-	-git push $(GIT_REMOTE) --delete $(RELEASE_UPDATE_BRANCH)
-	git checkout -b $(RELEASE_UPDATE_BRANCH)
-	git add $(PRODUCT)*/\*_api.mdx $(PRODUCT)*/\*releases.json
-	git commit -m "Automatic updates for $(PRODUCT) $(VERSION) release"
-	$(GIT) push $(GIT_REMOTE) $(RELEASE_UPDATE_BRANCH)
-
-release-prep/create-pr:
-	$(call github_pr_create,$(GIT_REPO_SLUG),[$(GIT_PR_BRANCH_BASE)] $(if $(SEMAPHORE), Semaphore,) Auto Release Update for $(PRODUCT) $(VERSION),$(GIT_PR_BRANCH_HEAD),$(GIT_PR_BRANCH_BASE))
-	echo 'Created release update pull request for $(VERSION): $(PR_NUMBER)'
 
 .PHONY: vale
 # Run vale against the specified PRODUCT. There will probably be lots of failures
