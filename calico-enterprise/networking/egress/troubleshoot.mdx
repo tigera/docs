@@ -241,28 +241,50 @@ Setting these clusters up is covered in
 covers what each symptom tells you.
 
 **No route appears, and Azure reports no error.** Read the kube-controllers log. Each time it reads
-your route tables, which is at least every five minutes, kube-controllers logs how many tables are
-`visible`, how many are `managed`, and how many are `selected`. The counts tell you whether to suspect
-the role assignment, the management marker, or the routing tags. They are logged at the default
-`Info` level, so you do not need to enable debug logging. A visible count of zero means the identity
-cannot read the table at all.
+your route tables, which is at least every five minutes, kube-controllers logs a line of counts. It
+logs them at the default `Info` level, so you do not need to enable debug logging.
 
 ```bash
 kubectl logs -n calico-system deployment/calico-kube-controllers | grep 'visible='
 ```
 
-**Nothing changes after you fix the identity's permissions.** A running kube-controllers can keep
-using the identity's old permissions until you restart it. Wait up to 10 minutes for Azure to apply
-your change, and then restart kube-controllers:
+The counts tell you where to look:
+
+- `visible` is the number of route tables that the identity can read. Zero means that the role
+  assignment is missing, or that Azure has not applied it yet.
+- `managed` is the number of visible tables that have the management marker.
+- `unreadable` is the number of managed tables whose routes the identity cannot list. $[prodname]
+  leaves these tables alone. The warning `Cannot read a route table's routes` gives the error for
+  each one.
+- `selected` is the number of managed tables, not counting unreadable ones, that have a tag that a
+  gateway names. Zero, with `unreadable` at zero, means that you should check the routing tags.
+
+The same line lists, in `misTagged`, the tables whose marker has a value other than `true`, and in
+`unmarked`, the tables that have a gateway's tag but no marker.
+
+If there is no such line, kube-controllers has not reached your route tables. Look in the same log
+for `Failed to sync egress gateway routes`, which gives the reason, such as a credential that cannot
+get a token or an identity that cannot list route tables. If that does not appear either,
+kube-controllers has no Azure credential, and it logs nothing about that at the `Info` level. Check
+that the `AzureIdentity` exists, and look for a problem with it in the operator's status:
+
+```bash
+kubectl get tigerastatus -o wide
+```
+
+**Nothing changes after you fix the identity's permissions.** Azure can take up to 10 minutes to
+apply a role change, and kube-controllers acts on it at its next sync after that, so allow up to
+15 minutes. To have Azure apply the change sooner, restart kube-controllers, so that it gets a new
+token:
 
 ```bash
 kubectl rollout restart deployment/calico-kube-controllers -n calico-system
 ```
 
-**Every sync fails with `AuthorizationFailed` for `Microsoft.Network/routeTables/routes/read`.** The
-identity's role lacks that action. Azure applies the routes that $[prodname] writes, but $[prodname]
-cannot read them back, so it reports each write as failed, and it does not remove the routes of
-gateway pods that have gone. Add the action to the role, and then restart kube-controllers.
+**kube-controllers logs `Cannot read a route table's routes`, with `AuthorizationFailed` for
+`Microsoft.Network/routeTables/routes/read`.** The identity's role lacks that action. $[prodname]
+cannot list the routes in the table, so it leaves the table alone: it writes no routes to it, and it
+does not remove the routes of gateway pods that have gone. Add the action to the role.
 
 **A table you tagged behaves as though it were unmarked.** The management marker's value must be
 `true`; any other value counts as unmarked, and $[prodname] logs the reason rather than ignoring the
