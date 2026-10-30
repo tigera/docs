@@ -10,11 +10,10 @@ Several $[prodname] components mount directories or files from the host node.
 If an admission policy, such as Kyverno or OPA Gatekeeper, limits the host paths that pods can use, it must allow these paths, or the admission controller rejects the component's pods.
 
 The tables list the host path volumes that the operator adds to $[prodname] workloads in 3.23.
-They do not include the Istio ambient components, `istio-cni-node` and `ztunnel`, which get their host paths from the upstream Istio charts.
 Each table lists the host paths for one component:
 
 - **Volume** is the volume name in the pod spec.
-- **Access** is read-only or read-write. "Bidirectional" means the mount uses bidirectional mount propagation, which requires a privileged container. "Not mounted" means the volume is declared in the pod spec but no container mounts it. Policies that inspect pod volumes still see it.
+- **Access** is read-only or read-write. "Bidirectional" and "HostToContainer" name the mount propagation mode, where one is set. Bidirectional propagation requires a privileged container. "Not mounted" means the volume is declared in the pod spec but no container mounts it. Policies that inspect pod volumes still see it.
 - **When present** says whether the path is always there or depends on your configuration.
 
 ## calico-node
@@ -66,7 +65,7 @@ The kubelet directory defaults to `/var/lib/kubelet`, and you can change it with
 | Host path | Volume | Access | When present |
 | --- | --- | --- | --- |
 | `/var/run` | `varrun` | Read-write | Always |
-| Kubelet directory | `kubelet-dir` | Read-write | Always |
+| Kubelet directory | `kubelet-dir` | Read-write, Bidirectional | Always |
 | Kubelet directory, plus `/plugins/csi.tigera.io` | `socket-dir` | Read-write | Always |
 | Kubelet directory, plus `/plugins_registry` | `registration-dir` | Read-write | Always |
 
@@ -113,10 +112,8 @@ One of these workloads runs in the `calico-system` namespace, depending on how t
 
 | Host path | Volume | Access | When present |
 | --- | --- | --- | --- |
-| `/var/log/calico/audit` | `calico-audit-logs` | Read-write | On `calico-apiserver`, when the API server runs as an aggregation API server |
-| `/var/log/calico/audit` | `audit-logs` | Read-write | On `calico-webhooks`, when the cluster uses projectcalico.org/v3 CRDs |
-
-{/* TODO for review: confirm when CE 3.23 uses v3 CRDs (UseV3CRDs) rather than the aggregation API server. */}
+| `/var/log/calico/audit` | `calico-audit-logs` | Read-write | On `calico-apiserver`, when the cluster uses the aggregation API server, which is the default |
+| `/var/log/calico/audit` | `audit-logs` | Read-write | On `calico-webhooks`, when the cluster uses [native `projectcalico.org/v3` CRDs](../../operations/native-v3-crds.mdx) |
 
 ## Compliance
 
@@ -134,14 +131,27 @@ The compliance workloads run in the `tigera-compliance` namespace when the Compl
 
 ## Calico Ingress Gateway
 
-Envoy proxy pods for Calico Ingress Gateway mount a host path when the proxy runs as a Deployment, which is the default.
+Envoy proxy pods for Calico Ingress Gateway run in the `tigera-gateway` namespace.
+They mount a host path when the proxy runs as a Deployment, which is the default.
 Proxies that run as a DaemonSet do not.
 
 | Host path | Volume | Access | When present |
 | --- | --- | --- | --- |
-| `/var/log/calico` | `var-log-calico` | Read-write | For the `waf-http-filter` container, when the proxy runs as a Deployment |
+| `/var/log/calico` | `var-log-calico` | Read-write | For the `waf-http-filter` init container, when the proxy runs as a Deployment |
 
-{/* TODO for review: list the istio-cni-node and ztunnel host paths, from helm template against the Istio version that operator v1.42.7 pins. */}
+## Istio ambient mode
+
+The `istio-cni-node` and `ztunnel` DaemonSets run in the `calico-system` namespace when the Istio resource exists.
+Their host paths come from the upstream Istio charts, not from the Installation resource.
+
+| Host path | Volume | Access | When present |
+| --- | --- | --- | --- |
+| `/opt/cni/bin` | `cni-bin-dir` | Read-write | On `istio-cni-node` |
+| `/etc/cni/net.d` | `cni-net-dir` | Read-write | On `istio-cni-node` |
+| `/proc` | `cni-host-procfs` | Read-only | On `istio-cni-node` |
+| `/var/run/istio-cni` | `cni-socket-dir` | Read-write | On `istio-cni-node` |
+| `/var/run/netns` | `cni-netns-dir` | Read-write, HostToContainer | On `istio-cni-node` |
+| `/var/run/ztunnel` | `cni-ztunnel-sock-dir` | Read-write | On `istio-cni-node` and `ztunnel` |
 
 ## Default CNI and FlexVolume directories
 
