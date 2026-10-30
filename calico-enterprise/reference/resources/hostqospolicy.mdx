@@ -1,0 +1,185 @@
+---
+description: Reference for the HostQoSPolicy resource in Calico Enterprise, which reserves, caps and shares bandwidth on host NICs.
+---
+
+# Host QoS policy
+
+:::note
+
+Host NIC QoS is a tech preview feature.
+APIs and behavior may change before GA.
+
+:::
+
+A host QoS policy resource (`HostQoSPolicy`) shapes the bandwidth of host network interfaces.
+It divides each interface it selects into resource pools: classes of traffic, each with a guaranteed
+reservation, an optional cap, and a weight for sharing spare bandwidth.
+Traffic that matches no pool is guaranteed whatever the pools don't reserve.
+
+A policy selects [host endpoints](hostendpoint.mdx) by their labels, and shapes the interfaces those host endpoints name.
+For how to use it, see [Host NIC QoS](../../networking/configuring/host-nic-qos.mdx).
+
+`HostQoSPolicy` is cluster-scoped.
+For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
+may be used to specify the resource type on the CLI:
+`hostqospolicy.projectcalico.org`, `hostqospolicies.projectcalico.org`, and the short name `hqp`.
+
+:::caution
+
+Rates are in bits per second, written as decimal SI quantities: `500M` is 500 Mbit/s and `10G` is 10 Gbit/s.
+Suffixes are case-sensitive, and some mistakes are accepted without an error: `500m`, with a lowercase `m`, is 0.5 bit/s;
+a quoted number without a suffix, such as `limit: "128"`, is 128 bit/s; and `Gi` and `Mi` are binary.
+An unquoted number is rejected. Use `k`, `M`, `G` or `T`, and always write the suffix.
+
+:::
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: HostQoSPolicy
+metadata:
+  name: storage-nic
+spec:
+  selector: host-qos == 'storage-nic'
+  linkCapacity: 10G
+  resourcePools:
+    - name: storage
+      shares: 3
+      egress:
+        reservation: 3G
+        limit: 8G
+        match:
+          destination:
+            nets: [10.20.0.0/24]
+      ingress:
+        reservation: 3G
+        limit: 8G
+        match:
+          source:
+            nets: [10.20.0.0/24]
+    - name: backup
+      egress:
+        reservation: 500M
+        limit: 2G
+        dscp: AF11
+        match:
+          protocol: TCP
+          destination:
+            nets: [10.30.0.10/32]
+            ports: [8200]
+```
+
+## Host QoS policy definition
+
+### Metadata
+
+| Field  | Description                                    | Accepted Values                                     | Schema |
+| ------ | ---------------------------------------------- | --------------------------------------------------- | ------ |
+| name   | The name of the policy. Required.              | Alphanumeric string with optional `.`, `_`, or `-`. | string |
+| labels | A set of labels to apply to this policy.       |                                                     | map    |
+
+### Spec
+
+| Field         | Description | Accepted Values | Schema | Default |
+| ------------- | ----------- | --------------- | ------ | ------- |
+| `selector`      | Selects the host endpoints to shape, by the host endpoint's own labels (not the labels of its profiles). Required. If two policies select the same host endpoint, the policy whose name sorts first alphabetically shapes it, and the other reports `PolicyCollision` for it. | [Selector](networkpolicy.mdx#selector) | string | |
+| `linkCapacity`  | The capacity of each interface the policy shapes, in bits per second. Omit it to detect each interface's speed; see [Link capacity](../../networking/configuring/host-nic-qos.mdx#link-capacity). | Greater than zero, e.g. `10G` | quantity | Detected per interface |
+| `resourcePools` | The traffic classes. Required. A packet goes to the first pool, in list order, whose `match` it matches. | 1 to 100 [resource pools](#resourcepool), with unique names | list | |
+
+### ResourcePool
+
+| Field     | Description | Accepted Values | Schema | Default |
+| --------- | ----------- | --------------- | ------ | ------- |
+| `name`    | The pool's name, unique within the policy. Shown in status and in metric labels. Required. | Lowercase letters, digits, `-` and `.`, starting and ending with a letter or digit | string | |
+| `shares`  | The pool's weight when it competes with other pools for spare bandwidth. Spare bandwidth is split between pools that are busy at the same time, in proportion to their shares; it's a weighting, not a fixed ratio. | 1 or more | integer | `1` |
+| `egress`  | The pool's controls for traffic leaving the host through the interface. | [EgressPoolControl](#egresspoolcontrol) | object | |
+| `ingress` | The pool's controls for traffic arriving at the host through the interface. | [PoolControl](#poolcontrol) | object | |
+
+Each pool must set `egress`, `ingress`, or both.
+A pool without `egress` doesn't classify or shape egress traffic, and the same for `ingress`.
+
+### PoolControl
+
+The controls for one direction of a pool. `ingress` takes these fields.
+
+| Field         | Description | Accepted Values | Schema | Default |
+| ------------- | ----------- | --------------- | ------ | ------- |
+| `reservation` | The bandwidth the pool is guaranteed whenever it has traffic to send, in bits per second. Required. | Greater than zero, and at most `linkCapacity` when that is set | quantity | |
+| `limit`       | The most the pool can use, in bits per second. | At least `reservation`, and at most `linkCapacity` when that is set | quantity | The link capacity |
+| `match`       | Which traffic belongs to the pool, in this direction. | [Match](#match) | object | Matches all traffic |
+
+:::caution
+
+A pool whose `match` is omitted or empty takes **all** traffic in that direction that an earlier pool hasn't,
+including Kubernetes API, kubelet, DNS and BGP traffic.
+Give every pool a `match` unless you mean it to be the catch-all, and list it last.
+
+:::
+
+### EgressPoolControl
+
+Everything in [PoolControl](#poolcontrol), plus:
+
+| Field  | Description | Accepted Values | Schema | Default |
+| ------ | ----------- | --------------- | ------ | ------- |
+| `dscp` | A DSCP value to mark on the pool's packets as they leave the interface. Marking happens on egress only. | 0 to 63, or one of `DF`, `EF`, `CS0`–`CS6`, `AF11`–`AF13`, `AF21`–`AF23`, `AF31`–`AF33`, `AF41`–`AF43` | integer or string | No marking |
+
+### Match
+
+All the fields you set must match.
+
+| Field         | Description | Accepted Values | Schema | Default |
+| ------------- | ----------- | --------------- | ------ | ------- |
+| `protocol`    | The IP protocol. Required when `source.ports` or `destination.ports` is set. | `TCP`, `UDP`, `SCTP`, or `6`, `17`, `132` | string or integer | Any |
+| `dscp`        | The DSCP value the packet already carries. DSCP survives NAT, so it's often the most reliable way to classify translated traffic. | 0 to 63, or one of `DF`, `EF`, `CS0`–`CS6`, `AF11`–`AF13`, `AF21`–`AF23`, `AF31`–`AF33`, `AF41`–`AF43` | integer or string | Any |
+| `source`      | The packet's source. | [EntityMatch](#entitymatch) | object | Any |
+| `destination` | The packet's destination. | [EntityMatch](#entitymatch) | object | Any |
+
+A match sees the headers as they are on the interface:
+
+- On **egress**, after source NAT. Traffic from pods that leaves the node with the node's IP has the node's IP as its source, so a pod CIDR in `source.nets` doesn't match it.
+- On **ingress**, before destination NAT, with the iptables and nftables data planes. Traffic to a NodePort service has the node's IP as its destination, so a pod CIDR in `destination.nets` doesn't match it.
+- With an overlay (VXLAN, IPIP or WireGuard) between nodes, pod-to-pod traffic crossing the interface is encapsulated. A match sees the outer header, so ports, pod addresses and the inner packet's DSCP value don't match it.
+
+### EntityMatch
+
+| Field   | Description | Accepted Values | Schema | Default |
+| ------- | ----------- | --------------- | ------ | ------- |
+| `nets`  | IP addresses or CIDRs. IPv4 and IPv6 can be mixed. | Up to 64 IP addresses or CIDRs, with no host bits set (`10.0.0.0/8`, not `10.0.0.1/8`) | list of strings | Any |
+| `ports` | Ports or port ranges. Requires `protocol`. | Up to 64 entries; a port from 1 to 65535, or a range such as `"8080:8090"`. Named ports aren't accepted. | list of integers or strings | Any |
+
+### Status
+
+$[prodname] writes the status. It rolls up the per-host detail in each [host QoS node status](hostqosnodestatus.mdx).
+A *binding* is one (host endpoint, interface) pair the policy shapes.
+
+| Field                | Description |
+| -------------------- | ----------- |
+| `conditions`         | A `Ready` condition; see below. |
+| `observedGeneration` | The oldest policy generation any live host reports. It advances only once every host that has a status for this policy has caught up with the latest spec. A host whose node still exists but that has stopped updating its status, such as one that is powered off, or was downgraded to a release without host NIC QoS after writing a status, holds it back. |
+| `appliedBindings`    | The number of bindings that are shaped. |
+| `erroredBindings`    | The number of bindings in the `Error` state. |
+| `collidedBindings`   | The number of bindings in the `PolicyCollision` or `HEPCollision` state. |
+| `appliedNodes`       | The number of hosts where every binding is shaped. |
+| `erroredNodes`       | The number of hosts with at least one binding in the `Error` state. |
+
+The `Ready` condition's reason summarises the bindings:
+
+| Reason             | Status    | Meaning |
+| ------------------ | --------- | ------- |
+| `Applied`          | `True`    | Every binding is shaped. |
+| `PartiallyApplied` | `True`    | Some bindings are shaped and some aren't. |
+| `Error`            | `False`   | No binding is shaped, and at least one is in `Error`. |
+| `PolicyCollision`  | `False`   | Every binding lost a collision, and at least one lost to a policy whose name sorts first. |
+| `HEPCollision`     | `False`   | Every binding lost to a host endpoint whose name sorts first. |
+| `NoBindings`       | `Unknown` | No host endpoint matches the selector, or the ones that do cover no interface, such as a `*` host endpoint on a node with no physical NIC. |
+
+`kubectl get hqp` shows the columns `Ready`, `Reason`, `AppliedBindings`, `ErroredBindings`, `AppliedNodes` and `Age`.
+To find out why a binding isn't shaped, see [Troubleshoot host NIC QoS](../../networking/configuring/host-nic-qos-troubleshooting.mdx).
+
+## Supported operations
+
+| Datastore type        | Create/Delete | Update | Get/List | Notes |
+| --------------------- | ------------- | ------ | -------- | ----- |
+| Kubernetes API server | Yes           | Yes    | Yes      |       |

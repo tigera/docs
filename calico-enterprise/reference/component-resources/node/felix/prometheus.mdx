@@ -81,6 +81,35 @@ The calculation graph processes updates from the datastore to calculate the acti
 | `felix_iptables_save_calls`                                          | Number of iptables-save calls.                                                                                                                                      |
 | `felix_iptables_save_errors`                                         | Number of iptables-save errors.                                                                                                                                     |
 
+#### Host NIC QoS metrics
+
+Metrics for [host NIC QoS](../../../../networking/configuring/host-nic-qos.mdx), exported by nodes that shape at least one interface.
+
+Labels: `interface` is the shaped interface, `direction` is `egress` or `ingress`, and `pool` is the resource pool's name.
+Pool metrics cover the policy's pools only, not the traffic that matches no pool.
+
+| Name                                                | Labels                            | Description |
+|-----------------------------------------------------|-----------------------------------|-------------|
+| `felix_host_nic_qos_pool_bytes_total`               | `interface`, `pool`, `direction`  | Bytes sent through the pool. |
+| `felix_host_nic_qos_pool_packets_total`             | `interface`, `pool`, `direction`  | Packets sent through the pool. |
+| `felix_host_nic_qos_pool_drops_total`               | `interface`, `pool`, `direction`  | Packets the pool dropped. |
+| `felix_host_nic_qos_pool_overlimits_total`          | `interface`, `pool`, `direction`  | Times the pool reached its reservation or limit. |
+| `felix_host_nic_qos_pool_borrows_total`             | `interface`, `pool`, `direction`  | Scheduling events in which the pool used bandwidth above its reservation. |
+| `felix_host_nic_qos_pool_lends_total`               | `interface`, `pool`, `direction`  | Scheduling events in which the pool sent within its reservation. |
+| `felix_host_nic_qos_pool_backlog_bytes`             | `interface`, `pool`, `direction`  | Bytes queued in the pool now. |
+| `felix_host_nic_qos_pool_qlen`                      | `interface`, `pool`, `direction`  | Packets queued in the pool now. |
+| `felix_host_nic_qos_link_capacity_bits_per_second`  | `interface`                       | The capacity the interface is shaped to: the policy's `linkCapacity`, or the detected speed. |
+| `felix_host_nic_qos_classes_programmed`             | `interface`, `direction`          | Number of traffic classes programmed on the interface: one per pool, plus two of $[prodname]'s own. |
+| `felix_host_nic_qos_filters_programmed`             | `interface`, `direction`          | Number of classifying rules programmed on the interface. |
+| `felix_host_nic_qos_reconcile_total`                | `interface`, `outcome`            | Number of times the interface's shaping was reconciled, by `outcome`: `success`, `partial` or `error`. |
+| `felix_host_nic_qos_reconcile_duration_seconds`     | `interface`                       | Histogram of the time taken to reconcile the interface's shaping. |
+
+To see a pool's throughput, take the rate of its byte counter, in bits per second:
+
+```
+8 * rate(felix_host_nic_qos_pool_bytes_total{pool="storage", direction="egress"}[1m])
+```
+
 #### BPF data plane metrics
 
 | Name                                                                 | Description                                                                                                                                                         |
