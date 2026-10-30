@@ -32,6 +32,7 @@ Upstream Forklift's guest conversion fails on clusters whose nodes carry the run
 - The BPF data plane enabled: `bpfEnabled: true` in the default `FelixConfiguration`. See [Enable eBPF on an existing cluster](../../operations/ebpf/enabling-ebpf.mdx).
 - KubeVirt.
 - IP pools covering the VM addresses. The pod network uses an ordinary pool; each L2 VLAN needs its own pool with `allowedUses: [L2Workload]` and `disableBGPExport: true`. A VM keeps its address only if that address falls inside a pool. See [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx).
+  Only IPv4 addresses are preserved; a source VM's IPv6 configuration is not carried over.
 - Multus, for secondary-NIC attachments and for the auto-created `host` provider, whose connection test queries `NetworkAttachmentDefinition` and reports `ConnectionFailed` without that CRD. Verified with the thick DaemonSet v4.3.0. Pin the daemon container and the `install-multus-binary` init container to the same tag, and raise the daemon memory limit from 50Mi to 512Mi to stop it being OOM-killed.
 - cert-manager, which issues the serving certificates. Without it the `forklift-api`, `forklift-validation`, and `forklift-inventory` pods stay NotReady. OpenShift needs nothing here; its service-ca operator issues the same certificates. No `Issuer` or `ClusterIssuer` setup is needed: the operator creates its own in `konveyor-forklift`, which you can check with `kubectl -n konveyor-forklift get issuers,certificates`.
 
