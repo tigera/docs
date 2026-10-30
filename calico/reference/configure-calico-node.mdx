@@ -7,7 +7,7 @@ description: Reference for configuring the calico/node container in Calico Open 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-The `$[nodecontainer]` container is deployed to every node (on Kubernetes, by a DaemonSet), and runs three internal daemons:
+The `$[nodecontainer]` container is deployed to every node (on Kubernetes, by a DaemonSet), and runs several internal daemons, including the following. BIRD and confd do not run when `CALICO_NETWORKING_BACKEND` is `vxlan` or `none`:
 
 - Felix, the Calico daemon that runs on every node and provides endpoints.
 - BIRD, the BGP daemon that distributes routing information to other nodes.
@@ -41,13 +41,13 @@ exist in the cluster. The following options control the parameters on the create
 
 | Environment                        | Description                                                                                                                                                                                                 | Schema                                                                       |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| CALICO_IPV4POOL_CIDR               | The IPv4 Pool to create if none exists at start up. It is invalid to define this variable and NO_DEFAULT_POOLS. [Default: First not used in locally of (192.168.0.0/16, 172.16.0.0/16, .., 172.31.0.0/16) ] | IPv4 CIDR                                                                    |
+| CALICO_IPV4POOL_CIDR               | The IPv4 Pool to create if none exists at start up. It is invalid to define this variable and NO_DEFAULT_POOLS. [Default: IPv4 `podSubnet` from the kubeadm-config ConfigMap if present, otherwise first not used in locally of (192.168.0.0/16, 172.16.0.0/16, .., 172.31.0.0/16) ] | IPv4 CIDR                                                                    |
 | CALICO_IPV4POOL_BLOCK_SIZE         | Block size to use for the IPv4 Pool created at startup. Block size for IPv4 should be in the range 20-32 (inclusive) [Default: `26`]                                                                        | int                                                                          |
-| CALICO_IPV4POOL_IPIP               | IPIP Mode to use for the IPv4 Pool created at start up. If set to a value other than `Never`, `CALICO_IPV4POOL_VXLAN` should not be set. [Default: `Always`]                                                | Always, CrossSubnet, Never ("Off" is also accepted as a synonym for "Never") |
+| CALICO_IPV4POOL_IPIP               | IPIP Mode to use for the IPv4 Pool created at start up. If set to a value other than `Never`, `CALICO_IPV4POOL_VXLAN` should not be set. [Default: `Never`]                                                | Always, CrossSubnet, Never ("Off" is also accepted as a synonym for "Never") |
 | CALICO_IPV4POOL_VXLAN              | VXLAN Mode to use for the IPv4 Pool created at start up. If set to a value other than `Never`, `CALICO_IPV4POOL_IPIP` should not be set. [Default: `Never`]                                                 | Always, CrossSubnet, Never                                                   |
 | CALICO_IPV4POOL_NAT_OUTGOING       | Controls NAT Outgoing for the IPv4 Pool created at start up. [Default: `true`]                                                                                                                              | boolean                                                                      |
 | CALICO_IPV4POOL_NODE_SELECTOR      | Controls the NodeSelector for the IPv4 Pool created at start up. [Default: `all()`]                                                                                                                         | [selector](resources/ippool.mdx#node-selector)                               |
-| CALICO_IPV6POOL_CIDR               | The IPv6 Pool to create if none exists at start up. It is invalid to define this variable and NO_DEFAULT_POOLS. [Default: `<a randomly chosen /48 ULA>`]                                                    | IPv6 CIDR                                                                    |
+| CALICO_IPV6POOL_CIDR               | The IPv6 Pool to create if none exists at start up. It is invalid to define this variable and NO_DEFAULT_POOLS. [Default: IPv6 `podSubnet` from the kubeadm-config ConfigMap if present, otherwise `<a randomly chosen /48 ULA>`]                                                    | IPv6 CIDR                                                                    |
 | CALICO_IPV6POOL_BLOCK_SIZE         | Block size to use for the IPv6 POOL created at startup. Block size for IPv6 should be in the range 116-128 (inclusive) [Default: `122`]                                                                     | int                                                                          |
 | CALICO_IPV6POOL_VXLAN              | VXLAN Mode to use for the IPv6 Pool created at start up. [Default: `Never`]                                                                                                                                 | Always, CrossSubnet, Never                                                   |
 | CALICO_IPV6POOL_NAT_OUTGOING       | Controls NAT Outgoing for the IPv6 Pool created at start up. [Default: `false`]                                                                                                                             | boolean                                                                      |
@@ -70,7 +70,7 @@ below.
 | IP_AUTODETECTION_METHOD  | The method to use to autodetect the IPv4 address for this host. This is only used when the IPv4 address is being autodetected. See [IP Autodetection methods](#ip-autodetection-methods) for details of the valid methods. [Default: `first-found`]                                                                                                                                                                                                                                                       | string           |
 | IP6_AUTODETECTION_METHOD | The method to use to autodetect the IPv6 address for this host. This is only used when the IPv6 address is being autodetected. See [IP Autodetection methods](#ip-autodetection-methods) for details of the valid methods. [Default: `first-found`]                                                                                                                                                                                                                                                       | string           |
 | AS                       | The AS number for this node. When specified, the value is saved in the node resource configuration for this host, overriding any previously configured value. When omitted, if an AS number has been previously configured in the node resource, that AS number is used for the peering. When omitted, if an AS number has not yet been configured in the node resource, the node will use the global value (see [example modifying Global BGP settings](../networking/configuring/bgp.mdx) for details.) | int              |
-| CALICO_ROUTER_ID         | Sets the `router id` to use for BGP if no IPv4 address is set on the node. For an IPv6-only system, this may be set to `hash`. It then uses the hash of the nodename to create a 4 byte router id. See note below. [Default: ``]                                                                                                                                                                                                                                                                          | string           |
+| CALICO_ROUTER_ID         | Sets the `router id` to use for BGP. If not set, the node's IPv4 address is used. For an IPv6-only system, this may be set to `hash`. It then uses the hash of the nodename to create a 4 byte router id. See note below. [Default: ``]                                                                                                                                                                                                                                                                          | string           |
 | CALICO_K8S_NODE_REF      | The name of the corresponding node object in the Kubernetes API. When set, used for correlating this node with events from the Kubernetes API.                                                                                                                                                                                                                                                                                                                                                            | string           |
 
 ### Configuring Datastore Access
@@ -89,14 +89,6 @@ below.
 | K8S_KEY_FILE     | Location of a client key for accessing the Kubernetes API.                     | string |
 | K8S_CA_FILE      | Location of a CA for accessing the Kubernetes API.                             | string |
 
-:::note
-
-When $[prodname] is configured to use the Kubernetes API as the datastore, the environments
-used for BGP configuration are ignored—this includes selection of the node AS number (AS)
-and all of the IP selection options (IP, IP6, IP_AUTODETECTION_METHOD, IP6_AUTODETECTION_METHOD).
-
-:::
-
 #### Configuring etcd Datastore Access
 
 | Environment        | Description                                                                                                                                                                                                                                                                                                                                              | Schema |
@@ -112,7 +104,7 @@ and all of the IP selection options (IP, IP6, IP_AUTODETECTION_METHOD, IP6_AUTOD
 | Environment                 | Description                                                                                              | Schema                                                            |
 | --------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | CALICO_DISABLE_FILE_LOGGING | Disables logging to file. [Default: "false"]                                                             | string                                                            |
-| CALICO_STARTUP_LOGLEVEL     | The log severity above which startup `$[nodecontainer]` logs are sent to the stdout. [Default: `ERROR`] | DEBUG, INFO, WARNING, ERROR, CRITICAL, or NONE (case-insensitive) |
+| CALICO_STARTUP_LOGLEVEL     | The log severity above which startup `$[nodecontainer]` logs are sent to the stdout. [Default: `INFO`] | TRACE, DEBUG, INFO, WARNING, ERROR, FATAL, or PANIC (case-insensitive) |
 
 ### Configuring CNI Plugin
 
@@ -129,7 +121,7 @@ configuration used on the cluster.
 | Environment               | Description                                                                                                                                                                                                                                                                                                                           | Schema            |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | DISABLE_NODE_IP_CHECK     | Skips checks for duplicate Node IPs. This can reduce the load on the cluster when a large number of Nodes are restarting. [Default: `false`]                                                                                                                                                                                          | boolean           |
-| WAIT_FOR_DATASTORE        | Wait for connection to datastore before starting. If a successful connection is not made, node will shutdown. [Default: `false`]                                                                                                                                                                                                      | boolean           |
+| WAIT_FOR_DATASTORE        | Wait for connection to datastore before starting. If the datastore cannot be reached, node retries until it can, and shuts down only if the connection is unauthorized. With the release manifest, the liveness probe restarts the container if node is still waiting after about 70 seconds. [Default: `false`]                                                                                                                                                                                                      | boolean           |
 | CALICO_NETWORKING_BACKEND | The networking backend to use. In `bird` mode, Calico will provide BGP networking using the BIRD BGP daemon; VXLAN networking can also be used. In `vxlan` mode, only VXLAN networking is provided; BIRD and BGP are disabled. If set to `none` (also known as policy-only mode), both BIRD and VXLAN are disabled. [Default: `bird`] | bird, vxlan, none |
 | CLUSTER_TYPE              | Contains comma delimited list of indicators about this cluster. e.g. k8s, mesos, kubeadm, canal, bgp                                                                                                                                                                                                                                  | string            |
 
@@ -145,7 +137,7 @@ When launched, the `$[nodecontainer]` container sets the node name according to 
 
 1. The value specified in the `NODENAME` environment variable, if set.
 1. The value specified in `/var/lib/calico/nodename`, if it exists.
-1. The value specified in the `HOSTNAME` environment variable, if set.
+1. The value specified in the `HOSTNAME` environment variable, if set, converted to lowercase.
 1. The hostname as returned by the operating system, converted to lowercase.
 
 Once the node has determined its name, the value will be cached in `/var/lib/calico/nodename` for future use.
@@ -169,7 +161,7 @@ the address is saved in the
 [node resource configuration](resources/node.mdx)
 for this host, overriding any previously configured value.
 
-calico/node will attempt to detect subnet information from the host, and augment the provided address
+calico/node will attempt to detect subnet information from the host, and augment the provided IPv4 address
 if possible.
 
 #### IP setting special case values
@@ -185,7 +177,7 @@ There are several special case values that can be set in the IP(6) environment v
 - `autodetect`: Autodetection will always be performed for the IP address and
   the detected address will overwrite any value configured in the node
   resource.
-- `none`: Autodetection will not be performed (this is useful to disable IPv4).
+- `none`: Autodetection will not be performed (this is useful to disable IPv4). Any previously set address on the node resource is still used.
 
 ### IP autodetection methods
 
@@ -300,17 +292,17 @@ The `calico/node` container supports an exec readiness endpoint.
 To access this endpoint, use the following command.
 
 ```bash
-docker exec calico-node /bin/calico-node [flag]
+kubectl exec -n kube-system <calico-node-pod> -c calico-node -- /usr/bin/calico component node health [flag]
 ```
 
 Substitute `[flag]` with one or more of the following.
 
-- `-bird-ready`
-- `-bird6-ready`
-- `-felix-ready`
+- `--bird-ready`
+- `--bird6-ready`
+- `--felix-ready`
 
-The BIRD readiness endpoint ensures that the BGP mesh is healthy by verifying that all BGP peers are established and
-no graceful restart is in progress. If the BIRD readiness check is failing due to unreachable peers that are no longer
+The BIRD readiness endpoint checks that the BGP mesh is healthy. For the first 30 seconds after `$[nodecontainer]` completes its startup, it verifies that all BGP peers are established and
+no graceful restart is in progress. After that, if the node has BGP peers, it requires at least one of them to be established. If the BIRD readiness check is failing due to unreachable peers that are no longer
 in the cluster, see [decommissioning a node](../operations/decommissioning-a-node.mdx).
 
 ### Setting `CALICO_ROUTER_ID` for IPv6 only system
