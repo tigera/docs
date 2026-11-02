@@ -58,7 +58,7 @@ In this step, you will:
 
    ```bash title='Expected output'
    Creating cluster "calico-cluster" ...
-   ✓ Ensuring node image (kindest/node:v1.29.2) 🖼
+   ✓ Ensuring node image (kindest/node:v1.36.1) 🖼
    ✓ Preparing nodes 📦 📦 📦
    ✓ Writing configuration 📜
    ✓ Starting control-plane 🕹️
@@ -82,9 +82,9 @@ In this step, you will:
 
    ```bash title="Expected output"
    NAME                           STATUS     ROLES           AGE     VERSION
-   calico-cluster-control-plane   NotReady   control-plane   5m46s   v1.29.2
-   calico-cluster-worker          NotReady   <none>          5m23s   v1.29.2
-   calico-cluster-worker2         NotReady   <none>          5m22s   v1.29.2
+   calico-cluster-control-plane   NotReady   control-plane   16s   v1.36.1
+   calico-cluster-worker          NotReady   <none>          1s    v1.36.1
+   calico-cluster-worker2         NotReady   <none>          1s    v1.36.1
    ```
 
    Don't wait for the nodes to get a `Ready` status.
@@ -138,12 +138,13 @@ In this step, you will install Calico in your cluster.
    After a few minutes, all the Calico components display `True` in the `AVAILABLE` column.
 
    ```bash title="Expected output"
-   NAME                            AVAILABLE   PROGRESSING   DEGRADED   SINCE
-   apiserver                       True        False         False      4m9s
-   calico                          True        False         False      3m29s
-   goldmane                        True        False         False      3m39s
-   ippools                         True        False         False      6m4s
-   whisker                         True        False         False      3m19s
+   NAME        AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
+   apiserver   True        False         False      24s     All objects available
+   calico      True        False         False      34s     All objects available
+   goldmane    True        False         False      4s      All objects available
+   ippools     True        False         False      79s     All objects available
+   tiers       True        False         False      19s     All objects available
+   whisker     True        False         False      4s      All objects available
    ```
 
 ## Step 3. Monitor network traffic in Calico Whisker
@@ -228,6 +229,7 @@ In this step, you will:
     This command creates a BusyBox pod inside the `quickstart` namespace and starts a shell session inside the pod.
 
     ```bash title="Expected output"
+    All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
     If you don't see a command prompt, try pressing enter.
     / #
     ```
@@ -253,13 +255,17 @@ In this step, you will:
    </head>
    <body>
    <h1>Welcome to nginx!</h1>
-   <p>If you see this page, the nginx web server is successfully installed and
-   working. Further configuration is required.</p>
+   <p>If you see this page, nginx is successfully installed and working.
+   Further configuration is required for the web server, reverse proxy,
+   API gateway, load balancer, content cache, or other features.</p>
 
    <p>For online documentation and support please refer to
-   <a href="http://nginx.org/">nginx.org</a>.<br/>
-   Commercial support is available at
-   <a href="http://nginx.com/">nginx.com</a>.</p>
+   <a href="https://nginx.org/">nginx.org</a>.<br/>
+   To engage with the community please visit
+   <a href="https://community.nginx.org/">community.nginx.org</a>.<br/>
+   For enterprise grade support, professional services, additional
+   security features and capabilities please refer to
+   <a href="https://f5.com/nginx">f5.com/nginx</a>.</p>
 
    <p><em>Thank you for using nginx.</em></p>
    </body>
@@ -267,15 +273,17 @@ In this step, you will:
    ```
    This confirms that the BusyBox pod can access the NGINX server.
 
-1. In the Busybox shell, run the following command test communication with the public internet:
+1. In the BusyBox shell, run the following command to test communication with the public internet:
 
     ```bash
     wget -qO- https://docs.tigera.io/pod-connection-test.txt
     ```
 
-    You should see the content of the file `pod-connectivity-test.txt`.
+    `wget` prints a note about TLS certificate validation, followed by the content of the file `pod-connection-test.txt`: a Calico logo drawn in text characters and a success message.
 
-    ```html title="Expected output"
+    ```bash title="Expected output"
+    wget: note: TLS certificate validation not implemented
+    ...
     You successfully connected to https://docs.tigera.io/pod-connection-test.txt.
     ```
 
@@ -342,10 +350,10 @@ In this step, you will:
    ```
 
 1. Return to your browser to see the denied flow logs appear in the Whisker web console.
-   You should see two denied flows to `coredns`.
+   You should see denied flows to `coredns`.
 
    <Screenshot src="/img/quickstart-whisker3.png" alt="whisker3" />
-   *Figure {figCount++}: Whisker web console showing denied flows to NGINX server and `https://docs.tigera.io`.*
+   *Figure {figCount++}: Whisker web console showing denied DNS lookups to `coredns`.*
 
 
    By following these steps, you have successfully implemented a global default deny policy and verified that it is working as expected.
@@ -388,20 +396,23 @@ In this step, you will:
     wget -qO- https://docs.tigera.io/pod-connection-test.txt
     ```
 
-    ```html title="Expected output"
+    ```bash title="Expected output"
+    wget: note: TLS certificate validation not implemented
+    ...
     You successfully connected to https://docs.tigera.io/pod-connection-test.txt.
     ```
 
 1. Test access to the NGINX server again.
    Egress *from* the `access` pod is allowed by the new policy, but ingress *to* the `nginx` pod is still blocked by the `default-deny` policy.
    This request should fail.
+   The `-T 5` option makes `wget` give up after 5 seconds instead of waiting for the connection to time out.
 
    ```bash
-   wget -qO- http://nginx
+   wget -qO- -T 5 http://nginx
    ```
 
    ```bash title="Expected output"
-   wget: bad address 'nginx'
+   wget: download timed out
    ```
 
 
@@ -429,7 +440,7 @@ In this step, you will:
     ```
 
     ```bash title="Expected output"
-    networkpolicy.org/allow-nginx-ingress created
+    networkpolicy.projectcalico.org/allow-nginx-ingress created
     ```
 
 1.  Test access to the NGINX server again.
@@ -454,13 +465,17 @@ In this step, you will:
     </head>
     <body>
     <h1>Welcome to nginx!</h1>
-    <p>If you see this page, the nginx web server is successfully installed and
-    working. Further configuration is required.</p>
+    <p>If you see this page, nginx is successfully installed and working.
+    Further configuration is required for the web server, reverse proxy,
+    API gateway, load balancer, content cache, or other features.</p>
 
     <p>For online documentation and support please refer to
-    <a href="http://nginx.org/">nginx.org</a>.<br/>
-    Commercial support is available at
-    <a href="http://nginx.com/">nginx.com</a>.</p>
+    <a href="https://nginx.org/">nginx.org</a>.<br/>
+    To engage with the community please visit
+    <a href="https://community.nginx.org/">community.nginx.org</a>.<br/>
+    For enterprise grade support, professional services, additional
+    security features and capabilities please refer to
+    <a href="https://f5.com/nginx">f5.com/nginx</a>.</p>
 
     <p><em>Thank you for using nginx.</em></p>
     </body>
