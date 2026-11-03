@@ -6,7 +6,6 @@ quay.io/calico/istio-ztunnel:v3.32.0
 quay.io/calico/istio-proxyv2:v3.32.0
 quay.io/calico/webhooks:v3.32.0
 quay.io/tigera/calico:v3.24.0-1.0
-quay.io/tigera/compliance-benchmarker:v3.24.0-1.0
 quay.io/tigera/deep-packet-inspection:v3.24.0-1.0
 quay.io/tigera/fluentd:v3.24.0-1.0
 quay.io/tigera/fluentd-windows:v3.24.0-1.0
