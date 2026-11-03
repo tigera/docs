@@ -40,8 +40,17 @@ When you edit a rule in the policy editor, the rule editor now opens directly un
 
 ### Known issues
 
-* You can't connect a Kubernetes 1.36 cluster to $[prodname] 24.1.1 if Calico Open Source on that cluster was installed with the `projectcalico.org/v3` CRDs.
-  The installation needs the `admissionregistration.k8s.io/v1beta1` API, which Kubernetes 1.36 doesn't provide.
+* You can't connect a cluster to $[prodname] 24.1.1 if Calico Open Source on that cluster uses the `projectcalico.org/v3` CRDs and the cluster doesn't serve the `admissionregistration.k8s.io/v1beta1` API.
+  Kubernetes 1.36 doesn't provide this API.
+  On Kubernetes 1.34 and 1.35, the API is turned off by default.
+  New installations of Calico Open Source 3.33 use the `projectcalico.org/v3` CRDs by default.
+  If your cluster is affected, $[prodname] refuses the installation and explains why.
+  To connect the cluster, do one of the following:
+  * On Kubernetes 1.34 or 1.35, turn on the `admissionregistration.k8s.io/v1beta1` API and the `MutatingAdmissionPolicy` feature gate on the Kubernetes API server.
+  * Install Calico Open Source with the aggregation API server instead of the `projectcalico.org/v3` CRDs.
+    For more information, see [Native v3 CRDs](/calico/latest/operations/native-v3-crds) in the Calico Open Source documentation.
+
+  Support for clusters without this API is planned for a later release of $[prodname].
 
 <h2 id="24.0.0">October 13, 2026 (version 24.0.0)</h2>
 
