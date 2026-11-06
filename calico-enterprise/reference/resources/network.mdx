@@ -390,8 +390,11 @@ The limitations below apply to `vrf` networks.
 For `l2Bridge` networks, see [L2 bridge support and limitations](../l2-bridge-support.mdx).
 
 
-- **Dataplane**: only the [nftables dataplane](../../operations/nftables.mdx) is supported. iptables and eBPF are not supported.
-- **NodePort services** are not supported on VRF networks; advertise services as `LoadBalancer` cluster IPs instead.
+- **Data plane**: the [nftables data plane](../../operations/nftables.mdx) and the [eBPF data plane](../../operations/ebpf/index.mdx) are supported.
+  The iptables data plane is not supported.
+- **NodePort services** must select backends in a single VRF.
+  For setup on each data plane, see [Advertise services scoped to a VRF](../../networking/configuring/multi-vrf.mdx#advertise-services-scoped-to-a-vrf).
+  For the limits on the eBPF data plane, see [NodePort services with eBPF](../../networking/configuring/multi-vrf.mdx#nodeport-services-with-ebpf).
 - **Egress gateways** cannot be placed on a VRF network.
 - **ExternalNetworks** and `Network` resources cannot be used in the same cluster.
 - **Host endpoints** should not be applied to interfaces inside a VRF.
@@ -408,6 +411,7 @@ The requirements below apply to `vrf` networks.
 `l2Bridge` networks have different requirements, including the eBPF data plane and a newer kernel — see [L2 bridge support and limitations](../l2-bridge-support.mdx).
 
 
-- Linux kernel **5.6 or later** (for the `meta sdifname` nftables match used by VRF policy dispatch).
+- With the nftables data plane: Linux kernel **5.6 or later** (for the `meta sdifname` nftables match used by VRF policy dispatch) and $[prodname] installed with `linuxDataplane: Nftables`.
+  kube-proxy must also be in nftables mode.
+- With the eBPF data plane: a kernel that meets the [eBPF data plane requirements](../../operations/ebpf/install.mdx#before-you-begin), and $[prodname] installed with `linuxDataplane: BPF`.
 - The `vrf` kernel module must be loaded on every node. On Ubuntu this is part of `linux-modules-extra-$(uname -r)`. Confirm with `sudo modprobe vrf && lsmod | grep '^vrf '`.
-- $[prodname] must be installed with `linuxDataplane: Nftables` and kube-proxy must also be in nftables mode.

@@ -112,11 +112,14 @@ interface — use exec probes for those pods.
 
 **Required**
 
-- $[prodname] installed with the **nftables dataplane** (`linuxDataplane: Nftables` in the [Installation](../../reference/installation/api.mdx) resource), and kube-proxy must also be in `nftables` mode.
+- $[prodname] installed with one of these data planes, set by `linuxDataplane` in the [Installation](../../reference/installation/api.mdx) resource:
+  - The **nftables data plane** (`linuxDataplane: Nftables`), with kube-proxy in `nftables` mode.
+  - The **eBPF data plane** (`linuxDataplane: BPF`).
+    See [Use VRF networks with the eBPF data plane](#use-vrf-networks-with-the-ebpf-data-plane) for what is different with eBPF.
 - The **`vrf` kernel module** must be available on every node.
 - BGP peering configured between each node and the upstream router on each VRF (see [Create BGPPeers and BGPFilters](#create-bgppeers-and-bgpfilters)).
 - If you want to attach pods to a VRF using a secondary interface (the most common topology), you need to have [Multus](./multiple-networks.mdx) installed on your cluster.
-- `nodeAddressAutodetection` in the [Installation](../../reference/installation/api.mdx) pinned to a specific interface (for example `eth0`) or to `kubernetes: NodeInternalIP`. The default "first found" autodetection can chase a VRF-attached interface when additional interfaces are brought up, breaking the cluster.
+- `nodeAddressAutodetectionV4` (or `nodeAddressAutodetectionV6`) in the [Installation](../../reference/installation/api.mdx) pinned to a specific interface (for example `eth0`) or to `kubernetes: NodeInternalIP`. The default "first found" autodetection can chase a VRF-attached interface when additional interfaces are brought up, breaking the cluster.
 
 ## How to
 
@@ -458,9 +461,55 @@ typically also need [multus-service](https://github.com/k8snetworkplumbingwg/mul
 or an equivalent controller so that the service `Endpoints` use the secondary
 (VRF) IP rather than the primary (flat) IP.
 
-To use NodePort services kube-proxy's `nodePortAddresses` option must be set to
-CIDR(s) that cover the node IPs on the VRF interfaces.  The default detection
+With the nftables data plane, set kube-proxy's `nodePortAddresses` option to
+CIDRs that cover the node IPs on the VRF interfaces.  The default detection
 of local addresses only considers IPs in the default VRF.
+With the eBPF data plane, there is no kube-proxy to configure.
+See [NodePort services](#nodeport-services-with-ebpf) below.
+
+### Use VRF networks with the eBPF data plane
+
+This section covers what is different when your cluster runs the [eBPF data plane](../../operations/ebpf/index.mdx) instead of nftables.
+The `Network`, `IPPool`, `BGPPeer`, and pod settings in this guide are the same for both data planes.
+The differences are in which interfaces get eBPF programs, how NodePort services reach backends on other nodes, and how you verify the setup.
+
+#### Host interfaces in a VRF
+
+With the eBPF data plane, $[prodname] treats VRF host interfaces as follows:
+
+- Each interface named in `hostConfig.hostInterfaces` is treated as an eBPF data interface, even if `bpfDataIfacePattern` in [FelixConfiguration](../../reference/resources/felixconfig.mdx) does not match its name.
+  Traffic on the interface gets eBPF connection tracking.
+- An interface that already exists when the `Network` claims it is picked up without a restart.
+- When an interface is no longer listed in any `Network`, $[prodname] removes its eBPF programs.
+  If `bpfDataIfacePattern` still matches the name, the interface is programmed again as an interface on the default network instead.
+- The `calv-*` VRF device itself carries no eBPF programs.
+  Policy is enforced on the pod interfaces and on the host interfaces in the VRF.
+- The [eBPF install page](../../operations/ebpf/install.mdx#before-you-begin) lists tagged VLAN devices as unsupported in eBPF mode.
+  That includes VLAN subinterfaces like `eth1.100` in this guide's example.
+  Contact Tigera support before you use a VLAN subinterface as a VRF host interface with the eBPF data plane.
+
+#### NodePort services with eBPF
+
+The eBPF data plane handles NodePort services itself, so you do not configure kube-proxy.
+A NodePort whose backend pod is on the same node works as it does on the default network.
+When the backend pod is on another node, $[prodname] sends the packet to that node inside a VXLAN tunnel, which keeps the client's source IP.
+For a VRF, the tunnel stays inside the VRF.
+Its endpoints are the two nodes' addresses on that VRF's host interfaces, not the nodes' default-network IPs.
+On each node, the tunnel address is the lowest global unicast address on the first interface in `hostConfig.hostInterfaces` that has one.
+A NodePort that arrives on one VRF's interface cannot reach a backend in a different VRF, which keeps the VRFs isolated.
+
+NodePort services on a VRF have these limits:
+
+- The host interfaces in the VRF need IP addresses.
+  An unnumbered interface cannot be a tunnel endpoint, so a NodePort whose backend is on another node drops traffic that arrives on it.
+  A NodePort with `externalTrafficPolicy: Local` still works, because no tunnel is needed.
+- Each node must publish the addresses of its interfaces.
+  A node does not publish them when `CALICO_NETWORKING_BACKEND=none` is set, when IP autodetection is disabled, or for an interface on calico-node's built-in autodetection exclude list.
+  Other nodes then have no tunnel endpoint for it, and NodePort traffic for backends on that node is dropped.
+- A change to the address on a VRF host interface takes up to 60 seconds to reach other nodes.
+- The check that decides whether a packet is too big for the tunnel uses the MTU of the default network, not the MTU of the VRF host interface.
+- Select backends in one VRF only.
+  Backend selection is not VRF-aware, so a NodePort with backends in several VRFs fails for some connections.
 
 ### Verify
 
@@ -486,6 +535,14 @@ ip route        # the pod's own table; default route via the primary interface
 ip rule         # source-based rules pinning each interface's source IP to its table
 ```
 
+With the eBPF data plane, you can also check that the eBPF routes for local VRF pods carry the VRF's routing table number:
+
+```bash
+kubectl exec -n calico-system <calico-node-name> -- calico-node -bpf routes dump
+# A route for a local pod on vrf1 ends with "vrf 100", the routeTableIndex of the Network.
+# Add --json to get the same value in the "vrf_tbid" field.
+```
+
 The VRF device on the node is named `calv-<suffix>`. To make debugging easier,
 network names of 10 characters or less that contain only lowercase
 letters, digits, and hyphens (no dots) are passed through directly — for
@@ -500,8 +557,11 @@ device.
 
 The current tech preview has the following limitations:
 
-- **Dataplane**: only the [nftables dataplane](../../operations/nftables.mdx) is supported. iptables and eBPF are not supported.
-- **kube-proxy**: must be in `nftables` mode.
+- **Data plane**: the [nftables data plane](../../operations/nftables.mdx) and the [eBPF data plane](../../operations/ebpf/index.mdx) are supported.
+  The iptables data plane is not supported.
+- **kube-proxy**: must be in `nftables` mode when you use the nftables data plane.
+- **Encapsulation**: IPIP, VXLAN overlays, and WireGuard do not carry VRF traffic on either data plane.
+  The only exception is the NodePort tunnel that the eBPF data plane uses inside a VRF.
 - **Egress gateways** cannot be placed on a VRF network. Use [external networks](../egress/external-network.mdx) for that use case.
 - **ExternalNetworks** and `Network` resources cannot share the same `routeTableIndex`.
 - **Host endpoints** should not be applied to interfaces inside a VRF.
@@ -524,6 +584,8 @@ The current tech preview has the following limitations:
 | Service cluster IP works on one VRF but not the other.                  | Service CIDR is missing from `BGPConfiguration.serviceClusterIPs` or from the per-VRF `BGPFilter` `exportV4`, so the route isn't advertised.    | Inspect both, then look for the `/32` on the upstream router.                                                                            |
 | `kube-dns` lookups fail from a VRF pod.                                | Pod has no flat-network interface. VRF-only pods can't reach in-cluster DNS unless an external router bridges the VRF to the flat network.    | Use a Multus secondary interface for the VRF and keep the primary interface on the flat network. Use exec probes if needed.             |
 | `vrf` module not loaded; Felix logs complain about VRF setup.           | The kernel `vrf` module is not loaded on the node.                                                                                            | `sudo modprobe vrf && lsmod \| grep '^vrf '`. Install `linux-modules-extra-$(uname -r)` if missing.                                        |
+| eBPF data plane: a NodePort whose backend is on another node drops traffic, and on the node where the NodePort traffic arrives `calico-node -bpf counters dump --iface=<VRF host interface>` shows `failed encapsulation` increasing. | This counter can point to a backend node that has no published address in this VRF, so there is no tunnel endpoint for it. Its VRF host interface may have no IP, or the node does not publish interface addresses (`CALICO_NETWORKING_BACKEND=none`, IP autodetection disabled, or an excluded interface). | On the backend node, check that `ip addr show <VRF host interface>` shows a global unicast address. Check the calico-node `CALICO_NETWORKING_BACKEND` setting, and that `nodeAddressAutodetectionV4` (or `V6`) in the Installation resource is set. Wait 60 seconds after an address change. |
+| eBPF data plane: NodePort traffic is dropped, and on the node where the NodePort traffic arrives `calico-node -bpf counters dump --iface=<VRF host interface>` shows `VXLAN encap when host IP unknown` increasing. | The node where the NodePort traffic arrives has no address in the VRF to use as its own tunnel endpoint. None of the interfaces in `hostConfig.hostInterfaces` has a global unicast address. | On that node, run `ip addr show <interface>` for each interface in `hostConfig.hostInterfaces`. Give at least one of them a global unicast address, or use `externalTrafficPolicy: Local` so no tunnel is needed. |
 
 ## Additional resources
 
@@ -533,3 +595,4 @@ The current tech preview has the following limitations:
 - [`IPPool` resource reference](../../reference/resources/ippool.mdx)
 - [Configure multiple Calico Enterprise networks on a pod](./multiple-networks.mdx) (Multus setup)
 - [Install Calico Enterprise using the nftables data plane](../../operations/nftables.mdx)
+- [Install Calico Enterprise using the eBPF data plane](../../operations/ebpf/install.mdx)
