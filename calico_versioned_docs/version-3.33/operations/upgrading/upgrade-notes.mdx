@@ -1,6 +1,7 @@
 ---
 description: Changes in each Calico Open Source release that need your attention before or during an upgrade, with the action to take for each.
 title: Upgrade notes
+content_type: unclassified
 ---
 
 # Upgrade notes
@@ -174,6 +175,43 @@ The driver resyncs once when the Neutron server starts, and on demand after that
 2. Remove `resync_interval_secs` and `resync_max_interval_secs` from `neutron.conf` at your convenience.
 3. If you install from packages, install the `calico-resync` package on each control node. The command ships separately from `calico-control`.
 4. Run `calico-resync` when you need an immediate reconciliation. To drive reconciliation entirely by hand, set `startup_resync = never`. See [Resync between Neutron and etcd](../../networking/openstack/resync.mdx).
+
+{/* 3.32 */}
+
+## Hold Typha when upgrading from 3.31
+
+This affects you if you are upgrading from 3.31. If you are already on 3.32 this has happened.
+
+From 3.32, Typha accepts connections only from calico-node 3.32 and later.
+By default the operator upgrades Typha first, so every calico-node pod loses its connection at once.
+The pods all report not ready and are replaced together instead of one node at a time.
+If you use BGP, each node's routes are withdrawn while it restarts.
+
+To prevent this, hold Typha on 3.31 during the upgrade.
+A newer calico-node can connect to an older Typha, so calico-node rolls out one node at a time.
+As soon as calico-node has rolled out, release Typha so the operator can upgrade it.
+Do not keep Typha on hold after the upgrade.
+
+1. **Before you upgrade**, stop the operator from upgrading Typha:
+
+   ```bash
+   kubectl annotate deployment calico-typha -n calico-system unsupported.operator.tigera.io/ignore=true
+   ```
+
+2. Upgrade $[prodname], then wait for calico-node to finish rolling out:
+
+   ```bash
+   kubectl rollout status daemonset calico-node -n calico-system
+   ```
+
+3. Release Typha so the operator upgrades it:
+
+   ```bash
+   kubectl annotate deployment calico-typha -n calico-system unsupported.operator.tigera.io/ignore-
+   ```
+
+   calico-node pods may report not ready briefly while they reconnect.
+   They do not restart, and BGP sessions stay up.
 
 {/* 3.32 */}
 

@@ -2,7 +2,7 @@ const releases = require('./releases.json');
 
 const variables = {
   releaseTitle: 'v3.24.0-1.0',
-  cloudUserVersion: 'v24.0.0',
+  cloudUserVersion: 'v24.1.1',
   prodname: 'Calico Cloud',
   manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.32.0',
   prodnamedash: 'calico-cloud',
