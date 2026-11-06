@@ -343,6 +343,11 @@ The .yamls have no namespace defined so when you apply `kubectl`, it is applied 
 </TabItem>
 <TabItem label="operator" value="operator-6">
 
+The operator metrics endpoint uses mutual TLS (mTLS).
+Your Prometheus must present a client certificate signed by the $[prodname] certificate authority (CA).
+It must also trust the $[prodname] CA bundle, so it can verify the operator.
+The steps below copy the client certificate in the `calico-node-prometheus-client-tls` secret and the CA bundle in the `tigera-ca-bundle` ConfigMap to your Prometheus namespace.
+
 **Configure TLS certificates**
 
 1. Copy the required secret and configmap to your namespace.
@@ -380,6 +385,35 @@ kubectl apply -f $[filesUrl]/manifests/prometheus/operator-metrics-service-monit
 ```
 
 The .yamls have no namespace defined so when you apply `kubectl`, it is applied in the $NAMESPACE.
+
+**Allow traffic to the operator**
+
+Your Prometheus usually runs in a different namespace from the operator.
+If network policy limits egress from your Prometheus pods, add a policy that allows them to reach the `tigera-operator-metrics` Service.
+The Service is in the `tigera-operator` namespace and listens on TCP port 9484 by default.
+Without this policy, the scrape target shows as down.
+
+The following example allows this traffic.
+Replace the selector with one that matches your Prometheus pods.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-operator-metrics
+  namespace: <my-prometheus-namespace>
+spec:
+  selector: app.kubernetes.io/name == 'prometheus'
+  types:
+    - Egress
+  egress:
+    - action: Allow
+      protocol: TCP
+      destination:
+        services:
+          name: tigera-operator-metrics
+          namespace: tigera-operator
+```
 
 </TabItem>
   </Tabs>
