@@ -27,12 +27,19 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
   For more information, see the [Helm installation reference](../reference/installation/helm_customization.mdx).
 - New installs default to v3 CRD mode: `projectcalico.org/v3` resources are served directly by CRDs, with no aggregation API server. Existing and upgraded clusters are unaffected. To install with the aggregation API server instead, apply the v1 CRDs before installing the operator. v3 CRD mode requires Kubernetes 1.32 or later. See [Native v3 CRDs](../operations/native-v3-crds.mdx).
 - Log batches are compressed on their way to the log ingestion endpoint. Set `ingestionCompression` to `Zstd` (the default), `Gzip`, or `None` on the LogCollector resource for cluster nodes, or on the NonClusterHost resource for hosts and VMs. See [Log ingestion compression](../observability/elastic/overview.mdx#log-ingestion-compression).
+- **Boot-time network protection for non-cluster hosts:**
+  Non-cluster hosts and VMs now block inbound traffic from the start of boot until $[prodname] applies network policy.
+  Protection is on by default on every host where `calico-node.service` is enabled, and SSH on TCP port 22 stays reachable.
+  For more information, see [Boot-time network protection](../getting-started/bare-metal/boot-protection.mdx).
 
 ### Deprecated and removed features
 
 - The compliance reporting feature has been removed from the $[prodname] web console.
 - $[prodname] is moving the `projectcalico.org/v3` API from the aggregated API server to native Kubernetes CRDs. Both mechanisms will be supported until native v3 CRDs are compatible with all supported platforms, after which the aggregated API server will be removed.
 - The license agent has been removed. The operator exports license metrics instead. See [Operator metrics](../operations/monitor/metrics/operator-metrics.mdx).
+- Host packages for RHEL 8 are no longer published.
+  To run $[prodname] on a non-cluster host or VM with RHEL, use RHEL 9 or RHEL 10.
+  See [Install Calico on non-cluster hosts and VMs](../getting-started/bare-metal/about.mdx).
 
 ## Technology Preview features
 
@@ -90,6 +97,58 @@ Two defaults also change:
 
 - Logs are buffered on each node's filesystem instead of in memory. Logs that have not been delivered yet survive a restart of the collector, and node disk usage grows accordingly. See [Log collection overview](../observability/elastic/overview.mdx).
 - When `spec.additionalStores.syslog.packetSize` is unset, the maximum syslog message size is 2048 bytes rather than Fluentd's 1024, so fewer long log lines are truncated. See [Archive logs](../observability/elastic/archive-storage.mdx).
+
+{/* 3.24 EP1 · calico-private#11809; 3.24 EP3 · calico-private#12550, calico-private#14870 */}
+
+### Non-cluster host boot protection
+
+This note is for you if you upgrade the `calico-node` package on existing non-cluster hosts or VMs.
+Hosts on RHEL 8 cannot take this release, because host packages for RHEL 8 are no longer published.
+
+The new package turns on [boot-time network protection](../getting-started/bare-metal/boot-protection.mdx) on every host where `calico-node.service` is enabled.
+Protection starts the first time `calico-node.service` restarts after the package upgrade, not only at the next reboot.
+On RHEL, the package upgrade restarts the service, so protection starts during the upgrade.
+On Debian and Ubuntu, the package upgrade does not restart the service, so protection starts when you next restart the service or reboot the host.
+Until the agent applies policy again, the host accepts only the traffic that the boot ruleset allows.
+The boot ruleset is fixed.
+It accepts new inbound connections only on TCP port 22 for SSH and on the DHCP client ports.
+Connections that are already open, such as your SSH session, stay up.
+If the agent cannot apply policy, for example because its configuration is not valid, the host stays on the boot ruleset until you fix the problem.
+
+Removing the package now also removes the host's $[prodname] rules.
+See [Remove Calico from a non-cluster host or VM](../getting-started/bare-metal/about.mdx#remove-calico-from-a-non-cluster-host-or-vm).
+
+:::warning[Breaking change]
+
+The package now ships one program, `calico`.
+The `/usr/bin/calico-noncluster-host-init` and `/usr/bin/calico-node` programs are removed.
+The job that `calico-noncluster-host-init` did now runs as `calico component node noncluster-host init`.
+Custom systemd units, drop-ins, and scripts that call the old programs stop working until you update them.
+
+:::
+
+Prepare each host in this order:
+
+1. Update any custom systemd units, drop-ins, or scripts that call `/usr/bin/calico-noncluster-host-init` or `/usr/bin/calico-node`.
+2. Check that the agent is healthy before you upgrade.
+   `systemctl status calico-node.service` should show the service as active.
+   A host whose agent cannot start or connect stays on the boot ruleset after the upgrade.
+3. If SSH does not use TCP port 22, or the host must accept other new connections while the agent starts, mask the unit before you upgrade:
+   ```bash
+   systemctl mask calico-node-boot-protection.service
+   ```
+   For more information, see [Turn off boot-time protection](../getting-started/bare-metal/boot-protection.mdx#turn-off-boot-time-protection).
+4. Upgrade the package.
+   On Debian and Ubuntu, reload systemd and restart the service after the upgrade, so that the new unit files and the new version run:
+   ```bash
+   systemctl daemon-reload
+   systemctl restart calico-node.service
+   ```
+5. Check the protection state:
+   ```bash
+   calico component node noncluster-host boot-protection status
+   ```
+   After the agent applies policy, the last line reads `Boot protection: removed`.
 
 ## Release details
 
