@@ -10,7 +10,7 @@ Read it instead of expecting that here.
 Run `corepack enable` and `yarn install` once.
 The `make` targets do that for you.
 
-- `yarn build` builds every released version in about four minutes and fails on a broken internal link.
+- `yarn build` builds every released version in three to four minutes and fails on a broken internal link.
 - `make build-next` also builds the unreleased `calico/`, `calico-enterprise/`, and `calico-cloud/` trees.
   Use it when you changed those.
 - `yarn test:components` runs the Jest unit tests.
