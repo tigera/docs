@@ -20,6 +20,14 @@ Operator metrics are enabled by default. The `tigera-operator` deployment ships 
 - `METRICS_ENABLED=true`
 - `METRICS_SCHEME=https` (required)
 
+`METRICS_SCHEME` must be `https`.
+If you remove it or set it to any other value, the `monitor` TigeraStatus reports `Degraded`.
+While it is degraded, the operator stops updating the monitoring resources it manages, such as Prometheus, Alertmanager, and the built-in alerts.
+To turn operator metrics off, set `METRICS_ENABLED=false` instead.
+
+If certificate management is enabled in the Installation resource, the operator does not serve metrics.
+The `monitor` TigeraStatus shows a warning that says so.
+
 Metrics are served on port **9484** over HTTPS and scraped by the built-in Prometheus instance via the `tigera-operator-metrics` ServiceMonitor.
 
 ## Metrics reference
@@ -34,7 +42,8 @@ The `tigera_operator_component_status` metric reports the status of each $[prodn
 
 **Labels:**
 
-- `component` — The $[prodname] component (e.g. `calico`, `apiserver`, `monitor`, `log-storage`, `manager`)
+- `component`: The name of the TigeraStatus resource, such as `calico`, `apiserver`, or `monitor`.
+  See [Component values](#component-values).
 - `condition` — One of:
   - `available` — The component is running and healthy
   - `degraded` — The component is in an error state
@@ -53,6 +62,33 @@ The `tigera_operator_component_status` metric reports the status of each $[prodn
   ```
   tigera_operator_component_status{component="calico", condition="available"}
   ```
+
+#### Component values
+
+This section lists the values you can see in the `component` label.
+
+The metric has one series for each TigeraStatus resource and condition.
+Each TigeraStatus gets three series: `available`, `progressing`, and `degraded`.
+When a TigeraStatus is deleted, its series go away.
+
+The TigeraStatus resources in your cluster depend on the features you use.
+To list them, run:
+
+```bash
+kubectl get tigerastatus
+```
+
+The `component` label can take these values:
+
+- Core: `calico`, `calico-windows`, `apiserver`, `ippools`, `tiers`, `kubeproxy-monitor`
+- Web console and access: `manager`, `authentication`
+- Monitoring: `monitor`
+- Logs: `log-collector`, `log-collector-otel`, `log-storage`, `log-storage-access`, `log-storage-dashboards`, `log-storage-elastic`, `log-storage-esmetrics`, `log-storage-kubecontrollers`, `log-storage-secrets`, `log-storage-users`
+- Threat defense and policy: `intrusion-detection`, `policy-recommendation`, `packet-capture`
+- Traffic features: `applicationlayer`, `egressgateway`, `gatewayapi`, `istio`
+- Hosts and clusters: `non-cluster-hosts`, `management-cluster-connection`
+
+The `management-cluster-connection` value appears only in managed clusters.
 
 ### TLS certificate expiry
 
@@ -86,8 +122,13 @@ The `tigera_operator_tls_certificate_expiry_timestamp_seconds` metric reports th
 
 | Metric | Labels | Description |
 |---|---|---|
-| `tigera_operator_license_valid` | — | Whether the license is valid (`1`) or not (`0`). |
-| `tigera_operator_license_expiry_timestamp_seconds` | — | Unix timestamp when the license expires. |
+| `tigera_operator_license_valid` | `package` | Whether the license is valid (`1`) or not (`0`). A license in its grace period counts as valid. |
+| `tigera_operator_license_expiry_timestamp_seconds` | `package` | Unix timestamp when the license expires. |
+
+**Labels:**
+
+- `package`: The license package.
+  If the license does not name a package, the value is `Enterprise`.
 
 **Example queries:**
 
@@ -116,7 +157,7 @@ The built-in rules include:
 | Alert | Condition | Severity |
 |---|---|---|
 | `DeniedPacketsRate` | Denied packets rate > 50/s | info |
-| `TLSCertExpiringWarning` | Certificate expires in < 30 days | warning |
+| `TLSCertExpiringWarning` | Certificate expires in < 29 days 16 hours | warning |
 | `TLSCertExpiringCritical` | Certificate expires in < 7 days | critical |
 | `LicenseExpiringWarning` | License expires in < 30 days | warning |
 | `LicenseExpiringCritical` | License expires in < 7 days or is invalid | critical |
@@ -126,6 +167,54 @@ The built-in rules include:
 | `ComponentProgressingCritical` | Component progressing for > 30m | critical |
 
 To route these alerts, see [Configure Alertmanager](../prometheus/alertmanager.mdx).
+
+`TLSCertExpiringWarning` fires 8 hours after the 30-day mark.
+This gives the operator time to renew the certificates it manages before the alert fires.
+
+## Example alert rule
+
+This section shows how to write your own alert rule on the operator metrics.
+
+The built-in rules cover degraded and progressing components.
+The following PrometheusRule fires when the operator stops reporting the `calico` component for 10 minutes.
+This also happens when the scrape itself fails.
+Use this example as a starting point for your own rules.
+
+1. Save the following to a file, say `operator-calico-not-reported-alert.yaml`.
+
+   ```yaml
+   apiVersion: monitoring.coreos.com/v1
+   kind: PrometheusRule
+   metadata:
+     name: calico-operator-calico-not-reported
+     namespace: tigera-prometheus
+     labels:
+       role: tigera-prometheus-rules
+       prometheus: calico-node-prometheus
+   spec:
+     groups:
+       - name: calico.rules
+         rules:
+           - alert: CalicoComponentNotReported
+             expr: absent(tigera_operator_component_status{component="calico"})
+             for: 10m
+             labels:
+               severity: critical
+             annotations:
+               summary: 'Component calico is not reported'
+               description: 'The operator has not reported the calico component for more than 10 minutes. Check that Prometheus can scrape the tigera-operator-metrics target, and run kubectl get tigerastatus calico.'
+   ```
+
+   The labels match the `ruleSelector` of the bundled Prometheus.
+   For your own Prometheus, change the namespace and labels to match its `ruleSelector`.
+
+1. Apply the manifest.
+
+   ```bash
+   kubectl apply -f operator-calico-not-reported-alert.yaml
+   ```
+
+For more about custom rules, see [Configure Prometheus](../prometheus/configure-prometheus.mdx).
 
 ## Additional resources
 
