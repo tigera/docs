@@ -119,6 +119,56 @@ The `calico-selinux` 1.2 package has no RHEL 8 build.
 
 3. Upgrade $[prodname].
 
+{/* 3.24 EP1 · calico-private#11809; 3.24 EP3 · calico-private#12550, calico-private#14870 */}
+
+## Non-cluster hosts turn on boot protection
+
+:::warning[Breaking change]
+
+The `/usr/bin/calico-noncluster-host-init` and `/usr/bin/calico-node` programs are removed, so custom systemd units, drop-ins, and scripts that call them stop working.
+
+:::
+
+This affects you if you upgrade the `calico-node` package on existing non-cluster hosts or VMs.
+Hosts on RHEL 8 cannot take this release, because host packages for RHEL 8 are no longer published.
+
+The new package turns on [boot-time network protection](../../bare-metal/boot-protection.mdx) on every host where `calico-node.service` is enabled.
+Protection starts the first time `calico-node.service` restarts after the package upgrade, not only at the next reboot.
+If the service is running, the package upgrade restarts it, so protection starts during the upgrade.
+If the service is stopped, it stays stopped, and protection starts when the service next starts or the host reboots.
+Until the agent applies policy again, the host accepts only the traffic that the boot ruleset allows.
+The boot ruleset is fixed.
+It accepts new inbound connections only on TCP port 22 for SSH and on the DHCP client ports.
+Connections that are already open, such as your SSH session, stay up.
+If the agent cannot apply policy, for example because its configuration is not valid, the host stays on the boot ruleset until you fix the problem.
+
+The package now ships one program, `calico`.
+The job that `calico-noncluster-host-init` did now runs as `calico component node noncluster-host init`.
+
+Removing the package now also removes the host's $[prodname] rules.
+See [Remove Calico from a non-cluster host or VM](../../bare-metal/about.mdx#remove-calico-from-a-non-cluster-host-or-vm).
+
+1. **Before you upgrade**, update any custom systemd units, drop-ins, or scripts that call `/usr/bin/calico-noncluster-host-init` or `/usr/bin/calico-node`.
+2. **Before you upgrade**, check that the agent is healthy.
+   `systemctl status calico-node.service` should show the service as active.
+   A host whose agent cannot start or connect stays on the boot ruleset after the upgrade.
+3. **Before you upgrade**, if SSH does not use TCP port 22, or the host must accept other new connections while the agent starts, mask the unit:
+
+   ```bash
+   systemctl mask calico-node-boot-protection.service
+   ```
+
+   For more information, see [Turn off boot-time protection](../../bare-metal/boot-protection.mdx#turn-off-boot-time-protection).
+
+4. Upgrade the package.
+5. Check the protection state:
+
+   ```bash
+   calico component node noncluster-host boot-protection status
+   ```
+
+   After the agent applies policy, the last line reads `Boot protection: removed`.
+
 {/* 3.24 */}
 
 ## Compliance is removed
