@@ -21,7 +21,7 @@ Giving a team access to one tier, one namespace, or one web console feature norm
 
 A role in the console is a set of permissions under a name, and that name is a Kubernetes **group**. Membership in the group is what grants the role: anyone whose login carries the group has it.
 
-Behind each role, $[prodname] writes the Kubernetes RBAC that grants its permissions — `ClusterRoleBindings`, or `RoleBindings` where you scoped a permission to a namespace — labeled `app.kubernetes.io/managed-by=calico-ui-rbac`. These are the console's to manage; you do not edit them by hand.
+Behind each role, $[prodname] writes the Kubernetes RBAC that grants its permissions — `ClusterRoleBindings`, or `RoleBindings` where you scoped a permission to a namespace, plus a `RoleBinding` in `tigera-intrusion-detection` for **Modify Webhooks** — labeled `app.kubernetes.io/managed-by=calico-ui-rbac`. These are the console's to manage; you do not edit them by hand.
 
 The console does not create or invite users. The **Users** tab is read-only, and lists the subjects it finds on those bindings and in any bound identity provider groups, with the roles in effect for each.
 
@@ -139,6 +139,7 @@ To change a role later, select **Actions** > **Edit Permissions**. Editing a man
 - **Policy** permissions also grant **View Flow Logs**, for policy preview and the flow views on the policy board. They do not include audit logs; to see a policy's change history on the policy board, add **View Audit Logs (Timeline)**.
 - **Dashboards** also grant flow, DNS, L7 and WAF logs, and **Service Graph** grants flow, DNS and L7 logs and security events, because their pages show them.
 - **Dashboards**, **Service Graph** and the log permissions apply to the whole cluster, so they can't be scoped to a namespace. They also list every pod, host endpoint and network set, so their pages show rows from every namespace.
+- **Modify Webhooks** can update the Secret that stores webhook credentials only in `tigera-intrusion-detection`.
 - **View Endpoints** opens the **Endpoints** page, which lists every pod and host endpoint, so it applies to the whole cluster. To show which endpoints denied traffic, add **View Flow Logs**.
 - Traffic charts, such as packets by policy, come from Prometheus, which only the **Dashboards**, **Policy**, **Admin Network Policies** and **Policy Recommendations** permissions grant. Prometheus answers for the whole cluster, so a **Policy** permission scoped to a namespace shows no charts, and the traffic and WireGuard figures on the node list need one of these permissions.
 - **Policy** permissions include Kubernetes network policies only when they cover the `default` tier, where $[prodname] enforces them.
@@ -186,7 +187,7 @@ roleRef:
   name: calico-ui-logs-view-flows-<target-cluster>
 ```
 
-Check first that the target cluster has the tiers and namespaces the roles were scoped to. A binding into a namespace that does not exist is rejected. A binding that names a missing tier is rejected when a `tigera-network-admin` user applies it; applied by a cluster administrator, it is accepted but grants nothing until the tier exists.
+Check first that the target cluster has the tiers and namespaces the roles were scoped to. A binding into a namespace that does not exist is rejected; for a role with **Modify Webhooks**, that includes its binding in `tigera-intrusion-detection` on a cluster without intrusion detection, and the rest still applies. A binding that names a missing tier is rejected when a `tigera-network-admin` user applies it; applied by a cluster administrator, it is accepted but grants nothing until the tier exists.
 
 The roles are independent copies: later changes on the source cluster are not propagated.
 
