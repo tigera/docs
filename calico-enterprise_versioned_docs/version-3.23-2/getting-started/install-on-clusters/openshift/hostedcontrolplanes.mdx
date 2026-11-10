@@ -65,7 +65,7 @@ Red Hat documents each of these steps.
 1. Install the `hcp` CLI from the hosting cluster:
 
    ```
-   oc get ConsoleCLIDownload hcp-cli-download -o json | jq -r ".spec"
+   oc get consoleclidownload hcp-cli-download -o jsonpath='{range .spec.links[*]}{.text}{"\t"}{.href}{"\n"}{end}'
    ```
 
    Download the archive for your platform from a link in the output, then extract the `hcp` binary and add it to your `PATH`.
@@ -105,26 +105,23 @@ hcp create cluster aws \
   --network-type Other
 ```
 
-:::note
-If your hosted cluster is having authorization problems with your Red Hat pull secret (`unauthorized: authentication required` in the HyperShift operator pod logs), make sure it is using a stable release image for the OpenShift Container Platform (OCP).
-You can find them in [https://amd64.ocp.releases.ci.openshift.org](https://amd64.ocp.releases.ci.openshift.org), for example `--release-image quay.io/openshift-release-dev/ocp-release:4.16.4-x86_64`
-:::
+Wait until the hosted cluster reports `Available`:
 
-:::note
-If you face an [issue](https://github.com/openshift/hypershift/issues/3927) with the HyperShift middleware that results in the hosted cluster installation not progressing due to a missing `OVNSbDb` service, patch the hosted cluster resource in order to add it:
 ```
-HOSTED_CLUSTER_NAME=my-os-hosted-cluster
-CLUSTER_NS="clusters"
-oc patch -n ${CLUSTER_NS} hostedcluster ${HOSTED_CLUSTER_NAME} --type='json' -p '[{"op": "add", "path": "/spec/services/-", "value": {"service":"OVNSbDb","servicePublishingStrategy": {"type": "Route"}}}]'
+oc wait --for=condition=Available --timeout=30m -n $HOSTED_CLUSTER_NS hostedcluster/$HOSTED_CLUSTER_NAME
 ```
-:::
 
-Once the hosted cluster is up, use the `hcp` CLI tool to generate the `kubeconfig` file. We strongly recommend you create a separate directory for the hosted cluster, it is very important to not mix up configuration and manifests from the hosting and hosted clusters:
+Then use the `hcp` CLI to generate the `kubeconfig` file.
+Create a separate directory for the hosted cluster, so that you do not mix up configuration and manifests from the hosting and hosted clusters:
 
 ```
 mkdir my_hosted_cluster && cd my_hosted_cluster
 hcp create kubeconfig --namespace $HOSTED_CLUSTER_NS --name $HOSTED_CLUSTER_NAME > hosted_kubeconfig && export KUBECONFIG=$(pwd)/hosted_kubeconfig
 ```
+
+Nodes join the hosted cluster over the next few minutes.
+They show as `NotReady` in `oc get nodes` until you install $[prodname].
+This is expected.
 
 Then, copy the `aws-creds` secret from the hosting cluster to the hosted cluster. Run this using the hosting cluster kubeconfig to extract the secret to a `yaml` file:
 
