@@ -117,11 +117,11 @@ to the kube-baseline `Tier`. The `ClusterNetworkPolicy` `priority` field maps to
 ## ClusterNetworkPolicy API version
 
 $[prodname] supports the `policy.networking.k8s.io/v1beta1` `ClusterNetworkPolicy` API from network-policy-api v0.3.0.
-The `ClusterNetworkPolicy` CRD that $[prodname] installs also serves `v1alpha2`, so existing `v1alpha2` manifests keep working.
+The `ClusterNetworkPolicy` CRD that $[prodname] installs also serves `v1alpha2`.
 
 The v0.3.0 standard-channel CRD no longer includes the `destinationNamedPort` protocol field.
 Before you upgrade, rewrite any rule that uses `destinationNamedPort` to use a numeric port.
-After the upgrade, the API server removes the field from stored policies, and $[prodname] can't convert the rule:
+After the upgrade, the API server prunes the field when it reads an existing policy, and $[prodname] can't convert the rule:
 it drops an `Accept` rule, and turns a `Deny` or `Pass` rule into a rule that denies all traffic.
 
 The CRD also rejects a CIDR in `networks` that has host bits set, such as `10.0.0.1/24`. Use the network address instead, such as `10.0.0.0/24`.
