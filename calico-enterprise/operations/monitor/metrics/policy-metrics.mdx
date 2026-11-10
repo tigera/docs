@@ -87,20 +87,25 @@ Prometheus terminology, `calico_denied_packets` is the metric name and `policy`
 and `srcIP` are labels. Each one of these metrics will be available as a
 combination of `{policy, srcIP}`.
 
+The `policy` label identifies the rule that denied the packets, in the format
+`<tier>|<kind>|[<namespace>/]<name>|<direction>|<index>|deny`.
+`<direction>` is `I` for an ingress rule and `E` for an egress rule.
+Namespaced policies include the namespace before the policy name.
+
 Example queries:
 
-- Total number of bytes, denied by $[prodname] policies, originating from the IP address "10.245.13.133"
-  by `k8s_ns.ns-0` profile.
+- Total number of bytes originating from the IP address "10.245.13.133" that were denied by
+  the first ingress rule of the `restrict-db` network policy in namespace `ns-0` and tier `security`.
 
 ```
-calico_denied_bytes{policy="profile|k8s_ns.ns-0|0|deny", srcIP="10.245.13.133"}
+calico_denied_bytes{policy="security|NetworkPolicy|ns-0/restrict-db|I|0|deny", srcIP="10.245.13.133"}
 ```
 
-- Total number of packets denied by $[prodname] policies, originating from the IP address "10.245.13.149"
-  by `k8s_ns.ns-0` profile.
+- Total number of packets originating from the IP address "10.245.13.149" that were denied by
+  the second egress rule of the same policy.
 
 ```
-calico_denied_packets{policy="profile|k8s_ns.ns-0|0|deny", srcIP="10.245.13.149"}}
+calico_denied_packets{policy="security|NetworkPolicy|ns-0/restrict-db|E|1|deny", srcIP="10.245.13.149"}
 ```
 
 The metrics `cnx_policy_rule_packets`, `cnx_policy_rule_bytes` and `cnx_policy_rule_connections` have the
