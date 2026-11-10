@@ -181,10 +181,12 @@ ls 01* | xargs -n1 oc apply -f
 ls 02* | xargs -n1 oc apply -f
 ```
 
-Then wait until the Tigera Operator creates the necessary CustomResourceDefinitions (CRDs) before applying the CustomResources to install $[prodname] on your cluster:
+Then wait until the Tigera Operator has created the CustomResourceDefinitions (CRDs) that the `03*` files need, and the API server has established them.
+Only then apply the custom resources that install $[prodname] on your cluster:
 
 ```
-timeout --foreground 600 bash -c "while ! kubectl get crd installations.operator.tigera.io; do sleep 5; done" # wait until CRDs are created by the operator
+timeout --foreground 600 bash -c "while ! oc get crd installations.operator.tigera.io apiservers.operator.tigera.io goldmanes.operator.tigera.io whiskers.operator.tigera.io; do sleep 5; done"
+oc wait --for=condition=Established --timeout=120s crd/installations.operator.tigera.io crd/apiservers.operator.tigera.io crd/goldmanes.operator.tigera.io crd/whiskers.operator.tigera.io
 ls 03* | xargs -n1 oc apply -f
 ```
 
