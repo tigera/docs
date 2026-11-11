@@ -116,6 +116,8 @@ to the kube-baseline `Tier`. The `ClusterNetworkPolicy` `priority` field maps to
 
 ## ClusterNetworkPolicy API version
 
+If a `ClusterNetworkPolicy` uses `destinationNamedPort` or a CIDR with host bits set, read this section before you upgrade.
+
 $[prodname] supports the `policy.networking.k8s.io/v1beta1` `ClusterNetworkPolicy` API from network-policy-api v0.3.0.
 The `ClusterNetworkPolicy` CRD that $[prodname] installs also serves `v1alpha2`.
 
@@ -125,6 +127,8 @@ After the upgrade, the API server prunes the field when it reads an existing pol
 it drops an `Accept` rule, and turns a `Deny` or `Pass` rule into a rule that denies all traffic.
 
 The CRD also rejects a CIDR in `networks` that has host bits set, such as `10.0.0.1/24`. Use the network address instead, such as `10.0.0.0/24`.
+The API server checks this only when you create or update a policy, so existing policies keep working, and $[prodname] enforces them as before.
+On Kubernetes 1.30 and later, which ratchet CRD validation, you can also update such a policy without changing its `networks` field.
 
 ## Tier order
 
