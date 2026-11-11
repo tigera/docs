@@ -219,12 +219,19 @@ test('Crawl the docs and execute tests', async () => {
     'https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html', // TEMP
     'https://review.openstack.org/#/c/344008/',
     'http://www.faqs.org/rfcs/rfc1966.html',
-    'http://www.faqs.org/rfcs/rfc4893.html'
+    'http://www.faqs.org/rfcs/rfc4893.html',
+    // The Juju docs moved from documentation.ubuntu.com to canonical.com/juju/docs, and the new
+    // site has returned 503 since 2026-11-10. Linked from the CE Charmed Kubernetes install page.
+    /^https:\/\/documentation\.ubuntu\.com\/juju\//,
   ];
 
   const lc = linkChecker();
   if (isLocalHost) lc.setLocalhost(DOCS);
   lc.setSkipList([...lc.getSkipList(), ...skipList]);
+  // crawlee 3.18 reads the cgroup v2 CPU quota once a second for autoscaling. The Netlify build
+  // container has no /sys/fs/cgroup/cpu.max, so each read logs a stack trace. Use the older
+  // CPU measurement instead.
+  Configuration.getGlobalConfig().set('systemInfoV2', false);
   if (process.env.CI === 'true') {
     Configuration.getGlobalConfig().set('availableMemoryRatio', 0.75);
   } else {

@@ -2,6 +2,7 @@
 
 This file is for AI coding agents working in this repository.
 For the build, the product directories, and other repository conventions, read [.github/copilot-instructions.md](.github/copilot-instructions.md).
+For writing conventions, such as placeholders, admonitions, headings, and the word list, follow the [style guide](contributors/style-guide.md).
 
 ## Writing a new page
 
