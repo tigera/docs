@@ -398,7 +398,7 @@ A *Vale* tag means the linter enforces it.
 - **kubectl.** Lowercase. Code font for the command.
 - **log in, log out.** Verb forms, two words. *Login* is the noun and the adjective. Not *sign in*, because the web console says *Log in*.
 - **microsegmentation.** One word.
-- **multicluster.** One word. Not *multi-cluster*. Vale: planned.
+- **multi-cluster.** Hyphenated, as in the Google word list. Not *multicluster*. Vale: planned.
 - **nftables, iptables.** Lowercase, always.
 - **please.** Don't use.
 - **quickstart.** One word. Vale.
