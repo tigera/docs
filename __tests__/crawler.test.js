@@ -219,7 +219,10 @@ test('Crawl the docs and execute tests', async () => {
     'https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html', // TEMP
     'https://review.openstack.org/#/c/344008/',
     'http://www.faqs.org/rfcs/rfc1966.html',
-    'http://www.faqs.org/rfcs/rfc4893.html'
+    'http://www.faqs.org/rfcs/rfc4893.html',
+    // The Juju docs moved from documentation.ubuntu.com to canonical.com/juju/docs, and the new
+    // site has returned 503 since 2026-11-10. Linked from the CE Charmed Kubernetes install page.
+    /^https:\/\/documentation\.ubuntu\.com\/juju\//,
   ];
 
   const lc = linkChecker();
