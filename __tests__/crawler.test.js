@@ -228,6 +228,10 @@ test('Crawl the docs and execute tests', async () => {
   const lc = linkChecker();
   if (isLocalHost) lc.setLocalhost(DOCS);
   lc.setSkipList([...lc.getSkipList(), ...skipList]);
+  // crawlee 3.18 reads the cgroup v2 CPU quota once a second for autoscaling. The Netlify build
+  // container has no /sys/fs/cgroup/cpu.max, so each read logs a stack trace. Use the older
+  // CPU measurement instead.
+  Configuration.getGlobalConfig().set('systemInfoV2', false);
   if (process.env.CI === 'true') {
     Configuration.getGlobalConfig().set('availableMemoryRatio', 0.75);
   } else {
