@@ -360,7 +360,9 @@ Set them rather than writing a notice by hand.
 | Scheduled for removal | deprecated | Deprecated |
 | Gone | removed | Removed |
 
+<!-- vale CalicoStyle.Substitutions = NO -->
 Never write *technical preview* or *beta*.
+<!-- vale CalicoStyle.Substitutions = YES -->
 Write *GA* and *TP* only in table cells, with a legend.
 
 A tech preview or deprecation notice is generated from the `lifecycle_*` front matter, or from the `<LifecycleNotice>` component for part of a page.
@@ -383,7 +385,10 @@ Terms where we have made a choice, in alphabetical order.
 For anything not here, use the [Google word list](https://developers.google.com/style/word-list), then Merriam-Webster.
 A *Vale* tag means the linter enforces it.
 
-- **allowlist, denylist.** Not *whitelist* or *blacklist*. Vale: planned.
+<!-- vale off -->
+<!-- The entries below name the forms they reject, so Vale is off for the list. -->
+
+- **allowlist, denylist.** Not *whitelist* or *blacklist*. Vale.
 - **calicoctl.** Lowercase. Code font for the command, plain text for the tool.
 - **credential.** Singular when you mean one set of credentials for one client.
 - **data plane.** Two words. The one-word form is correct only inside code identifiers such as `linuxDataplane`. Vale.
@@ -398,18 +403,20 @@ A *Vale* tag means the linter enforces it.
 - **kubectl.** Lowercase. Code font for the command.
 - **log in, log out.** Verb forms, two words. *Login* is the noun and the adjective. Not *sign in*, because the web console says *Log in*.
 - **microsegmentation.** One word.
-- **multi-cluster.** Hyphenated, as in the Google word list. Not *multicluster*. Vale: planned.
+- **multi-cluster.** Hyphenated, as in the Google word list. Not *multicluster*. Vale.
 - **nftables, iptables.** Lowercase, always.
 - **please.** Don't use.
 - **quickstart.** One word. Vale.
 - **rule set.** Two words, as in the OWASP Core Rule Set. Not *ruleset*. Vale.
 - **set up, setup.** *Set up* is the verb. *Setup* is the noun.
-- **tech preview.** Lowercase in text. *Technology preview* in notice titles and table headings. Never *technical preview*. Vale: planned.
+- **tech preview.** Lowercase in text. *Technology preview* in notice titles and table headings. Never *technical preview*. Vale.
 - **Tigera Operator.** Both words capitalized. "the Tigera Operator". Vale.
 - **via.** Don't use. Write *through*, *by using*, or *with*.
 - **walk through.** Needs an object: "walks you through". Or write *covers*, *describes*, *explains*. Vale.
 - **web console.** Lowercase. The Calico Cloud and Calico Enterprise user interface. Not *Manager*, *Manager UI*, or *Calico Cloud Manager*.
 - **WireGuard, OpenShift, NGINX, KubeVirt, MetalLB, GitHub.** Brand capitalization. Vale.
+
+<!-- vale on -->
 
 ## Changelog
 
