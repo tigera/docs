@@ -129,6 +129,8 @@ Logs that go to OTLP still go to $[prodname]'s log storage and to any [additiona
 
    `AVAILABLE` only means that the Collector process is running.
    It stays `True` when exports fail, for example when the backend is down, its certificate doesn't verify, or the endpoint isn't an OTLP receiver.
+   When an exporter keeps failing, the status message names it, but only after about 15 minutes.
+   If more than one exporter is failing, the message lists them all.
    To confirm that data is reaching your backend, see [Check that data is reaching your backend](#check-that-data-is-reaching-your-backend).
 
 ## Check that data is reaching your backend
@@ -144,7 +146,23 @@ Each series has an `exporter` label of `otlp_grpc/<name>` or `otlp_http/<name>`,
 | `otelcol_exporter_sent_log_records`, `otelcol_exporter_sent_metric_points` | Data that the backend accepted. |
 
 The Collector retries a failed export for about 5 minutes before it drops the data and counts it as failed.
-An outage shorter than that shows only as a growing queue, so alert on `otelcol_exporter_queue_size` as well as on the failure counters.
+
+When an exporter keeps dropping data, $[prodname] reports it in two places:
+
+- The in-cluster Prometheus fires the `OpenTelemetryExportFailing` alert, with severity `warning`, for each failing exporter.
+  Its summary is `OpenTelemetry exporter otlp_grpc/<name> is dropping data`, or `otlp_http/<name>` for an HTTP exporter.
+  The alert fires after the failure counters have been rising for 5 minutes.
+- The `log-collector-otel` TigeraStatus stays `AVAILABLE`, and its message changes to `Export to <name> keeps failing: check the otel-collector logs in calico-system`.
+  If more than one exporter is failing, `<name>` is a comma-separated list, for example `Export to external, backup keeps failing: ...`.
+  The message clears within about a minute after you fix or remove the exporter.
+
+  ```bash
+  kubectl get tigerastatus log-collector-otel -o yaml
+  ```
+
+Both take time to appear: about 5 minutes of retries before the Collector drops data, then 5 minutes before the alert fires, then up to a few minutes before the status message updates.
+Expect the status message about 15 minutes after the first failed export.
+An outage shorter than 5 minutes shows only as a growing queue and doesn't trigger either one, so if you need to know sooner, alert on `otelcol_exporter_queue_size` in your own monitoring.
 
 The Collector also logs each failed attempt, at `info` level:
 
@@ -280,10 +298,23 @@ For the full list of fields, see [OpenTelemetryCollectorStatefulSet](../referenc
 
 ## Restarts and data loss
 
-The Collector is a single replica, and it holds data waiting to be sent in memory.
-When it restarts, for example after you change its configuration or credentials, or when its node is drained, logs that Fluent Bit sends during the restart can be lost.
-Fluent Bit retries a failed send to the Collector once, and then drops that batch.
+The Collector is a single replica.
+It restarts when you change its configuration or credentials, and it moves when its node is drained.
+
+While the Collector is down, Fluent Bit on each node buffers logs to disk and retries without limit, so logs sent during a restart reach your backend once the Collector is back.
+Each log type has its own buffer on each node:
+
+| Log type | Buffer per node |
+| --- | --- |
+| `Flows` | 500 MB |
+| `DNS` | 100 MB |
+| `Audit` | 100 MB |
+
+Logs are lost only when an outage lasts long enough to fill a buffer.
+Fluent Bit then drops the oldest buffered logs of that type to make room.
 This affects only the OpenTelemetry copy: the same logs still reach $[prodname] log storage.
+
+The Collector holds data waiting to be sent to your backend in memory, so data it has accepted but not yet exported is lost when it restarts.
 
 When you change `logs.types`, the operator restarts Fluent Bit on every node.
 Fluent Bit also ships logs to $[prodname] log storage, so that path restarts too.

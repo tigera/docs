@@ -12,7 +12,9 @@ jobs:
       - name: Get changed files
         id: changed
         run: |
-          FILES=$(git diff --name-only --diff-filter=d ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- '*.md' '*.mdx')
+          # Lint only the published docs trees. Repository files such as README.md and contributors/ are not linted.
+          FILES=$(git diff --name-only --diff-filter=d ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- '*.md' '*.mdx' \
+            | grep -E '^(calico|calico-enterprise|calico-cloud|use-cases|default|[a-z-]+_versioned_docs)/' || true)
           if [ -z "$FILES" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo 'files=all' >> "$GITHUB_OUTPUT"
