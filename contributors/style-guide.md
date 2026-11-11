@@ -1,23 +1,20 @@
 # Style guide
 
-Writing conventions for Calico documentation.
-This guide covers the pages in this repository.
-It doesn't cover UI strings, marketing copy, or blog posts.
+Writing conventions for Tigera documentation, published at <https://docs.tigera.io>.
 
 ## How to use this guide
 
 We use these references, in this order:
 
-1. **This guide.** Our exceptions to Google style, and the conventions Google doesn't cover.
+1. **This guide.** Our house style.
 2. **[Google developer documentation style guide](https://developers.google.com/style).** Most answers are here. Start with the [highlights](https://developers.google.com/style/highlights) and the [word list](https://developers.google.com/style/word-list).
 3. **The Chicago Manual of Style, 17th edition.** Usage questions that neither guide answers.
 
 For spelling, use [Merriam-Webster](https://www.merriam-webster.com/).
-For Kubernetes terms, use the [Kubernetes documentation style guide](https://kubernetes.io/docs/contribute/style/style-guide/), but only for Kubernetes terms.
+For Kubernetes terms, use the [Kubernetes documentation style guide](https://kubernetes.io/docs/contribute/style/style-guide/).
 
 Google's own guide also lists the Microsoft Writing Style Guide as a fallback.
 We don't use it.
-Two technical style guides in the chain give two answers to the same question.
 
 These are guidelines, not laws.
 Depart from them when that makes a page clearer, and stay consistent within the page.
@@ -28,53 +25,52 @@ When you add a word-list entry, add the matching Vale rule or vocabulary line in
 ## The short version
 
 If you read nothing else, follow these rules.
-Each one is tagged with its source.
-A rule tagged *Google* links to the page that explains it.
-A rule tagged *House* is ours, and the sections below explain it.
+The sections below explain the house rules in full.
 
 **Voice**
 
-- Write to the reader as *you*. Don't use *we* to mean the reader. *Google*: [Second person](https://developers.google.com/style/person)
-- Use the active voice and the present tense. *Google*: [Active voice](https://developers.google.com/style/voice), [Present tense](https://developers.google.com/style/tense)
-- Be conversational, not frivolous. Contractions are fine. *Google*: [Tone](https://developers.google.com/style/tone), [Contractions](https://developers.google.com/style/contractions)
-- Don't use *please*, *simply*, *easily*, *just*, or *via*. *Google*: [Word list](https://developers.google.com/style/word-list)
-- Don't use *e.g.*, *i.e.*, or *etc.* Write *for example* or *that is*, and end a list with a complete example. *Google*: [Word list](https://developers.google.com/style/word-list)
-- Don't announce future features. *Google*: [Future features](https://developers.google.com/style/future)
+- Write to the reader as *you*. Don't use *we* to mean the reader. <!-- Google: https://developers.google.com/style/person -->
+- Prefer the active voice. The passive is fine when the actor doesn't matter or the object is the point: "The pod is deleted after 30 seconds." <!-- Google: https://developers.google.com/style/voice -->
+- Use the present tense. Use the future only for something that really happens later: "The node will be drained the next time the upgrade runs." <!-- Google: https://developers.google.com/style/tense -->
+- Be conversational, not frivolous. Contractions are fine. <!-- Google: https://developers.google.com/style/tone and https://developers.google.com/style/contractions -->
+- Don't use *please*, *simply*, *easily*, *just*, or *via*. <!-- Google: https://developers.google.com/style/word-list -->
+- Don't use *e.g.*, *i.e.*, or *etc.* Write *for example* or *that is*, and end a list with a complete example. <!-- Google: https://developers.google.com/style/word-list -->
+- Don't announce future features. <!-- Google: https://developers.google.com/style/future -->
 
 **Grammar**
 
-- Use American spelling. *Google*: [Spelling](https://developers.google.com/style/word-list)
-- Use the serial comma. *Google*: [Commas](https://developers.google.com/style/commas)
-- Put the condition before the instruction: "If the node is running, restart it." *Google*: [Sentence structure](https://developers.google.com/style/sentence-structure)
-- Spell out an abbreviation the first time you use it on a page. *Google*: [Abbreviations](https://developers.google.com/style/abbreviations)
+- Use American spelling. <!-- Google: https://developers.google.com/style/word-list -->
+- Use the serial comma. <!-- Google: https://developers.google.com/style/commas -->
+- Put the condition before the instruction: "If the node is running, restart it." <!-- Google: https://developers.google.com/style/sentence-structure -->
+- Spell out an abbreviation the first time you use it on a page. <!-- Google: https://developers.google.com/style/abbreviations -->
 
 **Headings and titles**
 
-- Use sentence case for every title and heading. *Google*: [Capitalization](https://developers.google.com/style/capitalization)
-- Start a task heading with a bare verb: "Configure BGP peering", not "Configuring BGP peering". *Google*: [Headings](https://developers.google.com/style/headings)
-- Use a noun phrase for a concept heading: "Host endpoints", not "Understanding host endpoints". *Google*: [Headings](https://developers.google.com/style/headings)
-- Pick the title pattern for the page's content type. *House*: [Page structure](#page-structure)
+- Use sentence case for every title and heading. <!-- Google: https://developers.google.com/style/capitalization -->
+- Start a task heading with a bare verb: "Configure BGP peering", not "Configuring BGP peering". <!-- Google: https://developers.google.com/style/headings -->
+- Use a noun phrase for a concept heading: "Host endpoints", not "Understanding host endpoints". <!-- Google: https://developers.google.com/style/headings -->
+- Pick the title pattern for the page's content type. See [Page structure](#page-structure).
 
 **Formatting**
 
-- Put UI labels in bold: click **Connect Cluster**. *Google*: [UI elements](https://developers.google.com/style/ui-elements)
-- Put filenames, commands, flags, field names, and values in code font. *Google*: [Code in text](https://developers.google.com/style/code-in-text)
-- Use italics for a term you're defining and for emphasis. Don't use bold for emphasis. *Google*: [Text formatting](https://developers.google.com/style/text-formatting)
-- Write link text that says where the link goes. Never *here* or *this page*. *Google*: [Link text](https://developers.google.com/style/cross-references)
-- Use a numbered list for steps, a bulleted list for everything else. *Google*: [Lists](https://developers.google.com/style/lists)
-- Give every image alt text. *Google*: [Images](https://developers.google.com/style/images)
+- Put UI labels in bold: click **Connect Cluster**. <!-- Google: https://developers.google.com/style/ui-elements -->
+- Put filenames, commands, flags, field names, and values in code font. <!-- Google: https://developers.google.com/style/code-in-text -->
+- Use italics for a term you're defining and for emphasis. Don't use bold for emphasis. <!-- Google: https://developers.google.com/style/text-formatting -->
+- Write link text that says where the link goes. Never *here* or *this page*. <!-- Google: https://developers.google.com/style/cross-references -->
+- Use a numbered list for steps, a bulleted list for everything else. <!-- Google: https://developers.google.com/style/lists -->
+- Give every image alt text. <!-- Google: https://developers.google.com/style/images -->
 
 **Code and commands**
 
-- Write placeholders as `<lowercase-hyphenated>` and explain each one. *House*: [Placeholders](#placeholders)
-- Don't show a shell prompt. Put output in its own block. *House*: [Commands and output](#commands-and-output)
-- Use `$[prodname]` and the other variables in body text. *House*: [Variables and partials](#variables-and-partials)
-- Write one sentence per line in the source. *House*: [Source formatting](#source-formatting)
+- Write placeholders as `<lowercase-hyphenated>` and explain each one. See [Placeholders](#placeholders).
+- Don't show a shell prompt. Put output in its own block. See [Commands and output](#commands-and-output).
+- Use `$[prodname]` and the other variables in body text. See [Variables and partials](#variables-and-partials).
+- Write ventilated prose: one sentence per line in the source. See [Source formatting](#source-formatting).
 
-**Notices**
+**Admonitions**
 
-- Use `:::note`, `:::tip`, `:::caution`, and `:::warning`. Not more than one in a section. *House*: [Admonitions](#admonitions)
-- Never write a tech preview or deprecation notice by hand. *House*: [Feature lifecycle wording](#feature-lifecycle-wording)
+- Use `:::note`, `:::tip`, `:::caution`, and `:::warning`, and only when the body text can't do the job. Never two in a row. See [Admonitions](#admonitions).
+- Never write a tech preview or deprecation notice by hand. See [Feature lifecycle wording](#feature-lifecycle-wording).
 
 ## Where we differ from Google
 
@@ -91,7 +87,7 @@ If you find a conflict that isn't here, this guide is wrong or incomplete, so fi
 | [Product names](https://developers.google.com/style/product-names) | Write the name | `$[prodname]` in body text | Pages are shared across three products. |
 | [Kubernetes API kinds](https://developers.google.com/style/product-names) | Follow the project's capitalization | UpperCamelCase for the kind, lowercase for the generic noun, no code font | The Kubernetes style guide rule, stated once so nobody re-derives it. |
 | [Prerequisites](https://developers.google.com/style/procedures) | "Before you begin" | "Before you begin", and leave out obvious prerequisites | Nobody needs to be told they need a cluster. |
-| Source line wrapping | Not covered | One sentence per line | Reviewable diffs. |
+| Source line wrapping | Not covered | Ventilated prose: one sentence per line | Reviewable diffs. |
 | Third-party fallback | Microsoft Writing Style Guide | Not used | One technical guide is enough. |
 
 Some things look like exceptions but aren't.
@@ -99,9 +95,7 @@ Sentence-case headings, imperative task titles, the serial comma, American spell
 So is avoiding *e.g.*, *via*, and *please*, and so is using contractions.
 The older pages that break these rules are drift, not policy.
 
-## What Google doesn't cover
-
-### Page structure
+## Page structure
 
 Every page has one content type, and the type decides the title pattern and the sections.
 Read [Content types](content-types/content-types.md) and start a new page from its [template](content-types/templates/).
@@ -126,7 +120,8 @@ Use these section names, and no others for the same job:
 Give every section a line or two under its heading that says what it covers.
 Don't leave a heading followed directly by another heading.
 
-Number every procedure, even a short one.
+Number the steps when a procedure has two or more.
+Write a single step as a sentence.
 Put the condition first: "If the value isn't `Multus`, set it."
 One action per step.
 When a procedure passes about ten steps, split it or consider a tutorial.
@@ -134,11 +129,18 @@ When a procedure passes about ten steps, split it or consider a tutorial.
 Don't restructure an existing page to fit a template unless that's the task.
 Copy the structure when you copy a page to another product.
 
-### Source formatting
+## Source formatting
 
-Write one sentence per line.
-Line breaks inside a paragraph don't show in the rendered page, so this costs the reader nothing and makes a diff show the sentence that changed.
-It applies to prose and to list items.
+Write ventilated prose: one sentence per line.
+
+The main reason is review.
+A diff then shows the sentence that changed, not the whole paragraph.
+Ventilated prose is harder to read in the source.
+That's an acceptable trade-off, because we don't publish the source.
+These files aren't a collection of README files.
+The reader sees the rendered page, where line breaks inside a paragraph don't show.
+
+The rule applies to prose and to list items.
 Leave fenced code blocks, table rows, headings, and `:::` markers alone.
 
 Don't reflow paragraphs you didn't write.
@@ -152,7 +154,7 @@ MDX comments look like `{/* ... */}`.
 A page can carry a user-story comment between the front matter and the H1.
 That comment can stay.
 
-### Variables and partials
+## Variables and partials
 
 The build replaces `$[name]` tokens with values from the product's `variables.js`.
 Use them in body text so that one page can serve several products and versions.
@@ -181,7 +183,7 @@ Shared text lives in partials under `_includes/`, and shared components are regi
 Use a partial when three or more pages need the same paragraph.
 Don't use one to hide a paragraph that only one page needs.
 
-### Placeholders
+## Placeholders
 
 A placeholder stands in for a value the reader supplies.
 Write it in lowercase with hyphens, inside angle brackets, in code font: `<cluster-name>`, `<node-name>`, `<namespace>`.
@@ -193,7 +195,6 @@ Write it in lowercase with hyphens, inside angle brackets, in code font: `<clust
 - Keep the brackets inside the code font: `<cluster-name>`, not <`cluster-name`>.
 
 Explain every placeholder the first time it appears on the page.
-Use the pattern Google uses.
 
 For one placeholder, say what it is in the sentence that introduces the command:
 
@@ -203,13 +204,13 @@ For two or more, list them after the command:
 
 ````markdown
 ```bash
-kubectl get node <node-name> -n <namespace> -o yaml
+kubectl get pod <pod-name> -n <namespace> -o yaml
 ```
 
 Replace the following:
 
-- `<node-name>`: the name of the node to inspect.
-- `<namespace>`: the namespace that holds the node's workload endpoints, such as `calico-system`.
+- `<pod-name>`: the name of the pod to inspect.
+- `<namespace>`: the namespace the pod runs in, such as `calico-system`.
 ````
 
 In a long page, repeat the explanation when the same placeholder reappears far from its first use.
@@ -217,7 +218,7 @@ In a long page, repeat the explanation when the same placeholder reappears far f
 Placeholders that appear in output follow the same rule.
 Introduce them with "This output includes the following values:".
 
-### Commands and output
+## Commands and output
 
 Don't show a shell prompt.
 Readers copy commands, and a `$` breaks the paste.
@@ -251,7 +252,10 @@ For commands that the reader runs as a step, write the step first, then the comm
 >    kubectl get nodes
 >    ```
 
-### Admonitions
+## Admonitions
+
+Use an admonition only when the body text can't do the job.
+If you can say it another way, you probably should.
 
 Use the Docusaurus admonition types this way:
 
@@ -278,12 +282,12 @@ Text.
 
 Put a blank line after the opening marker and before the closing one.
 
-Use admonitions sparingly.
-One in a section is enough, and two in a row is a sign that the content belongs in the body text.
+Never put two admonitions back to back.
+Two in a row is a sign that the content belongs in the body text.
 Don't put a prerequisite, a step, or an expected result in an admonition.
 Those belong in the flow of the page.
 
-### Product and company names
+## Product and company names
 
 | Name | Use |
 |---|---|
@@ -291,9 +295,9 @@ Those belong in the flow of the page.
 | Calico Open Source | The open source product when it stands beside the other two. |
 | Calico Enterprise | The self-managed commercial product. |
 | Calico Cloud | The SaaS product. |
+| Tigera Lynx | The governance platform for AI agents. *Lynx* after the first mention. Its docs are at <https://docs.tigera.io/lynx/>, in another repository, and follow this guide. |
 | Tigera | The company. Not the product. |
 | Tigera Operator | The operator. Say "the Tigera Operator". |
-| web console | The Calico Cloud and Calico Enterprise user interface. Lowercase. Not "Manager", "Manager UI", or "Calico Cloud Manager". |
 
 Don't put *the* before a product name: "Calico Enterprise supports", not "the Calico Enterprise supports".
 Do put *the* before a tool or component name: "the Tigera Operator", "the calicoctl CLI", "the web console".
@@ -303,7 +307,7 @@ Feature names are lowercase unless the web console capitalizes them, and then on
 
 In front matter and in text that's copied out of the docs, write the full product name, not *Calico*.
 
-### Kubernetes and Calico terms
+## Kubernetes and Calico terms
 
 When you name an API kind, use its UpperCamelCase name, without code font: a NetworkPolicy, the ConfigMap, an IPPool, a BGPPeer.
 When you mean the thing in general, use the lowercase noun: pods, nodes, namespaces, services.
@@ -321,7 +325,7 @@ The Vale vocabulary files hold the current list.
 
 Write *Kubernetes*, never *k8s*, except in labels and names where it appears literally.
 
-### Front matter
+## Front matter
 
 Front matter fields, in this order:
 
@@ -344,10 +348,10 @@ Don't repeat it in the first paragraph.
 
 Quote a value that contains a colon.
 
-The `lifecycle_*` fields are described in the [Copilot instructions](../.github/copilot-instructions.md).
+The `lifecycle_*` fields are described in [Feature status](feature-status.md).
 Set them rather than writing a notice by hand.
 
-### Feature lifecycle wording
+## Feature lifecycle wording
 
 | Status | In body text | In a notice or table |
 |---|---|---|
@@ -361,9 +365,9 @@ Write *GA* and *TP* only in table cells, with a legend.
 
 A tech preview or deprecation notice is generated from the `lifecycle_*` front matter, or from the `<LifecycleNotice>` component for part of a page.
 Don't copy one from another page.
-The data behind every notice lives in `data/feature-status.yaml`.
+[Feature status](feature-status.md) explains how to mark a feature and what to update when its status changes.
 
-### Release notes
+## Release notes
 
 Start from the [release notes template](../calico-enterprise/release-notes/_template.mdx).
 It sets the section order, the empty-state lines, and the lifecycle tables.
@@ -404,7 +408,7 @@ A *Vale* tag means the linter enforces it.
 - **Tigera Operator.** Both words capitalized. "the Tigera Operator". Vale.
 - **via.** Don't use. Write *through*, *by using*, or *with*.
 - **walk through.** Needs an object: "walks you through". Or write *covers*, *describes*, *explains*. Vale.
-- **web console.** Lowercase. The Calico Cloud and Calico Enterprise UI.
+- **web console.** Lowercase. The Calico Cloud and Calico Enterprise user interface. Not *Manager*, *Manager UI*, or *Calico Cloud Manager*.
 - **WireGuard, OpenShift, NGINX, KubeVirt, MetalLB, GitHub.** Brand capitalization. Vale.
 
 ## Changelog
