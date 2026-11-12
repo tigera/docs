@@ -170,7 +170,7 @@ When configuring your cluster, you may be asked for the following inputs:
    - `<base64-client-id>`: the client ID, base64 encoded.
    - `<base64-client-secret>`: the client secret, base64 encoded.
    - `<base64-service-account-key>`: the JSON key file of the service account, base64 encoded.
-   - `<base64-admin-email>`: the email address of the Google Workspace user from the previous step, base64 encoded.
+   - `<base64-admin-email>`: the email address of the G Suite super user from the previous step, base64 encoded.
 
    If you are using an external secret provider, you can mount your OIDC credentials as a volume through CSI Secret Store
    Driver to avoid storing the credentials in the Kubernetes cluster.
@@ -215,15 +215,19 @@ When configuring your cluster, you may be asked for the following inputs:
 
 1. Install the [OpenShift CLI (oc)](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html).
 
-1. Create values for some required variables. `MANAGER_URL` is the URL where the $[prodname] web console will be accessed,
-   `CLUSTER_DOMAIN` is the domain (excl. port) where your OpenShift cluster is accessed (run `oc status` to get it) and `CLIENT_SECRET` is a value of your choosing.
+1. Create values for some required variables.
 
    ```bash
-    # This indicates where the web console can be accessed from the browser. Include the port only if the web console is not running on port 443.
-   MANAGER_URL=<manager-host>:<port>
-   CLUSTER_DOMAIN=<domain-of-your-ocp-cluster>
-   CLIENT_SECRET=<clientSecret>
+   MANAGER_URL=<web-console-domain>
+   CLUSTER_DOMAIN=<ocp-cluster-domain>
+   CLIENT_SECRET=<client-secret>
    ```
+
+   Replace the following:
+
+   - `<web-console-domain>`: the domain where the web console is reached, with the port if it isn't 443.
+   - `<ocp-cluster-domain>`: the domain of your OpenShift cluster, without a port. Run `oc status` to get it.
+   - `<client-secret>`: a value of your choosing.
 
 1. Add an OAuthClient to your OpenShift cluster.
 
@@ -286,7 +290,7 @@ When configuring your cluster, you may be asked for the following inputs:
    metadata:
      name: tigera-secure
    spec:
-     managerDomain: https://<manager-host>:<port>
+     managerDomain: https://<web-console-domain>
      ldap:
        # The host and port of the LDAP server. Example: ad.example.com:636.
        host: <ldap-host>:<ldap-port>
@@ -325,6 +329,8 @@ When configuring your cluster, you may be asked for the following inputs:
            - userAttribute: <user-attribute>
              groupAttribute: <group-attribute>
    ```
+
+   Replace `<web-console-domain>` with the domain where the web console is reached, with the port if it isn't 443.
 
 1. Apply the secret to your cluster with your LDAP credentials. To obtain the values, consult the documentation of your provider.
 
