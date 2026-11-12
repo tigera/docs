@@ -19,21 +19,26 @@ To replace any certificate with your own, create a Kubernetes secret with the sa
 
 ```bash
 SIGNER=my-ca-signer
-kubectl create secret generic <SECRET_NAME> -n tigera-operator \
-  --from-file=tls.crt=</path/to/cert> \
-  --from-file=tls.key=</path/to/key> && \
-kubectl label secret <SECRET_NAME> -n tigera-operator operator.tigera.io/signer=$SIGNER
+kubectl create secret generic <secret-name> -n tigera-operator \
+  --from-file=tls.crt=<cert-path> \
+  --from-file=tls.key=<key-path> && \
+kubectl label secret <secret-name> -n tigera-operator operator.tigera.io/signer=$SIGNER
 ```
+
+Replace the following:
+
+- `<secret-name>`: the name of the secret, from the table below.
+- `<cert-path>` and `<key-path>`: the paths to the certificate and key files.
 
 To update an existing secret:
 
 ```bash
 SIGNER=my-ca-signer
-kubectl create secret generic <SECRET_NAME> -n tigera-operator \
-  --from-file=tls.crt=</path/to/cert> \
-  --from-file=tls.key=</path/to/key> \
+kubectl create secret generic <secret-name> -n tigera-operator \
+  --from-file=tls.crt=<cert-path> \
+  --from-file=tls.key=<key-path> \
   --dry-run=client -o yaml | kubectl replace -f - && \
-kubectl label secret <SECRET_NAME> -n tigera-operator operator.tigera.io/signer=$SIGNER --overwrite
+kubectl label secret <secret-name> -n tigera-operator operator.tigera.io/signer=$SIGNER --overwrite
 ```
 
 :::note
@@ -69,8 +74,8 @@ Typha and Node use mutual TLS. If you replace `typha-certs`, `typha-certs-nonclu
 - These secrets require an additional `common-name` data field containing the CN. For example:
   ```bash
   kubectl create secret generic typha-certs -n tigera-operator \
-    --from-file=tls.crt=</path/to/cert> \
-    --from-file=tls.key=</path/to/key> \
+    --from-file=tls.crt=<cert-path> \
+    --from-file=tls.key=<key-path> \
     --from-literal=common-name=typha-server
   ```
 
