@@ -90,13 +90,20 @@ Description:
    The table shows usage for each IP Pool:
 
    ```
-   +----------+-------------------+------------+------------+-------------------+
-   | GROUPING |       CIDR        | IPS TOTAL  | IPS IN USE |     IPS FREE      |
-   +----------+-------------------+------------+------------+-------------------+
-   | IP Pool  | 10.65.0.0/16      |      65536 | 5 (0%)     | 65531 (100%)      |
-   | IP Pool  | fd5f:abcd:64::/48 | 1.2089e+24 | 7 (0%)     | 1.2089e+24 (100%) |
-   +----------+-------------------+------------+------------+-------------------+
+   +----------+-------------------+------------+------------+--------------+-------------------+
+   | GROUPING |       CIDR        | IPS TOTAL  | IPS IN USE | IPS RESERVED |     IPS FREE      |
+   +----------+-------------------+------------+------------+--------------+-------------------+
+   | IP Pool  | 10.65.0.0/16      |      65536 |     5 (0%) |    1024 (2%) |       64507 (98%) |
+   | IP Pool  | fd5f:abcd:64::/48 | 1.2089e+24 |     7 (0%) |       0 (0%) | 1.2089e+24 (100%) |
+   +----------+-------------------+------------+------------+--------------+-------------------+
    ```
+
+   - `IPS IN USE` counts allocated addresses.
+   - `IPS RESERVED` counts addresses that $[prodname] won't assign automatically: those an [IP reservation](../../../resources/ipreservation.mdx) covers,
+     and the [reserved addresses](../../../resources/network.mdx#l2subnet) of each L2 bridge network subnet: its network and broadcast addresses, and the gateways that its routes declare.
+   - `IPS FREE` counts addresses that are neither in use nor reserved.
+
+   An address that was allocated before it was reserved counts as both in use and reserved, so the percentages can add up to more than 100%.
 
 1. Print more detailed IP usage by blocks.
 
@@ -107,15 +114,18 @@ Description:
    As well as the total usage per IP Pool, the table shows usage for block that has been allocated from those pools:
 
    ```
-   +----------+-------------------------------------------+------------+------------+-------------------+
-   | GROUPING |                   CIDR                    | IPS TOTAL  | IPS IN USE |     IPS FREE      |
-   +----------+-------------------------------------------+------------+------------+-------------------+
-   | IP Pool  | 10.65.0.0/16                              |      65536 | 5 (0%)     | 65531 (100%)      |
-   | Block    | 10.65.79.0/26                             |         64 | 5 (8%)     | 59 (92%)          |
-   | IP Pool  | fd5f:abcd:64::/48                         | 1.2089e+24 | 7 (0%)     | 1.2089e+24 (100%) |
-   | Block    | fd5f:abcd:64:4f2c:ec1b:27b9:1989:77c0/122 |         64 | 7 (11%)    | 57 (89%)          |
-   +----------+-------------------------------------------+------------+------------+-------------------+
+   +----------+-------------------------------------------+------------+------------+--------------+-------------------+
+   | GROUPING |                   CIDR                    | IPS TOTAL  | IPS IN USE | IPS RESERVED |     IPS FREE      |
+   +----------+-------------------------------------------+------------+------------+--------------+-------------------+
+   | IP Pool  | 10.65.0.0/16                              |      65536 |     5 (0%) |    1024 (2%) |       64507 (98%) |
+   | Block    | 10.65.79.0/26                             |         64 |     5 (8%) |       0 (0%) |          59 (92%) |
+   | IP Pool  | fd5f:abcd:64::/48                         | 1.2089e+24 |     7 (0%) |       0 (0%) | 1.2089e+24 (100%) |
+   | Block    | fd5f:abcd:64:4f2c:ec1b:27b9:1989:77c0/122 |         64 |    7 (11%) |       0 (0%) |          57 (89%) |
+   +----------+-------------------------------------------+------------+------------+--------------+-------------------+
    ```
+
+   An IP pool's counts cover the whole pool CIDR, including addresses that no block has been allocated from yet.
+   In this example, the 1024 reserved addresses are outside the pool's only block.
 
 1. Print more detailed information about borrowed IP addresses.
 
