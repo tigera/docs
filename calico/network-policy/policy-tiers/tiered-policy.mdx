@@ -58,7 +58,7 @@ The `Tier` with name `kube-admin` is where all [Kubernetes ClusterNetworkPolicy]
 It is automatically created at startup and has the order of 1,000 and a default action of `Pass`. This is fixed, and cannot be changed.
 
 ```yaml
-apiVersion: policy.networking.k8s.io/v1alpha2
+apiVersion: policy.networking.k8s.io/v1beta1
 kind: ClusterNetworkPolicy
 metadata:
   name: accept-default
@@ -90,7 +90,7 @@ The `Tier` with name `kube-baseline` is where all [Kubernetes ClusterNetworkPoli
 It is automatically created during startup and has the order of 10,000,000 and a default action of `Pass`. This is fixed, and cannot be changed.
 
 ```yaml
-apiVersion: policy.networking.k8s.io/v1alpha2
+apiVersion: policy.networking.k8s.io/v1beta1
 kind: ClusterNetworkPolicy
 metadata:
   name: deny-all
@@ -113,6 +113,22 @@ $[prodname] places a Kubernetes `ClusterNetworkPolicy` with `spec.tier: Baseline
 In addition to the `ClusterNetworkPolicy` resource, you can also add $[prodname] `NetworkPolicy`/`GlobalNetworkPolicy` resources
 to the kube-baseline `Tier`. The `ClusterNetworkPolicy` `priority` field maps to the `order` field in the $[prodname]
 `NetworkPolicy`/`GlobalNetworkPolicy` resources so that the two types of policy can be ordered together.
+
+## ClusterNetworkPolicy API version
+
+If a `ClusterNetworkPolicy` uses `destinationNamedPort` or a CIDR with host bits set, read this section before you upgrade.
+
+$[prodname] supports the `policy.networking.k8s.io/v1beta1` `ClusterNetworkPolicy` API from network-policy-api v0.3.0.
+The `ClusterNetworkPolicy` CRD that $[prodname] installs also serves `v1alpha2`.
+
+The v0.3.0 standard-channel CRD no longer includes the `destinationNamedPort` protocol field.
+Before you upgrade, rewrite any rule that uses `destinationNamedPort` to use a numeric port.
+After the upgrade, the API server prunes the field when it reads an existing policy, and $[prodname] can't convert the rule:
+it drops an `Accept` rule, and turns a `Deny` or `Pass` rule into a rule that denies all traffic.
+
+The CRD also rejects a CIDR in `networks` that has host bits set, such as `10.0.0.1/24`. Use the network address instead, such as `10.0.0.0/24`.
+The API server checks this only when you create or update a policy, so existing policies keep working, and $[prodname] enforces them as before.
+On Kubernetes 1.30 and later, which ratchet CRD validation, you can also update such a policy without changing its `networks` field.
 
 ## Tier order
 
