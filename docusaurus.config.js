@@ -23,6 +23,18 @@ const contentTypes = [
 export default async function createAsyncConfig() {
   const variablesPlugin = await import('./src/remark/variablesPlugin');
   const lifecycleNoticePlugin = await import('./src/remark/lifecycleNoticePlugin');
+  const releaseNotesPlugin = await import('./src/remark/releaseNotesPlugin');
+
+  // Docusaurus's default exclude list (GlobExcludeDefault in @docusaurus/utils), plus the
+  // per-release notes and updating files, which are imported into release-notes/index.mdx
+  // rather than published as pages of their own.
+  const docsExclude = [
+    '**/_*.{js,jsx,ts,tsx,md,mdx}',
+    '**/_*/**',
+    '**/*.test.{js,jsx,ts,tsx}',
+    '**/__tests__/**',
+    ...releaseNotesPlugin.RELEASE_NOTES_GLOBS,
+  ];
 
   /** @type {import('@docusaurus/types').Config} */
   const config = {
@@ -53,6 +65,10 @@ export default async function createAsyncConfig() {
     onBrokenLinks: 'throw',
     favicon: 'img/calico-logo-2026-badge.png',
     markdown: {
+      // Parse .md files as CommonMark and .mdx files as MDX. Release notes copied from the
+      // projectcalico/calico repo are .md and can contain text such as "(< 9.5.0)", which
+      // is a syntax error in MDX. Every docs page is .mdx, so this changes nothing else.
+      format: 'detect',
       hooks: {
         onBrokenMarkdownLinks: 'throw',
       },
@@ -473,7 +489,8 @@ export default async function createAsyncConfig() {
             },
           },
           sidebarPath: './sidebars-calico.js',
-          beforeDefaultRemarkPlugins: [lifecycleNoticePlugin, variablesPlugin],
+          exclude: docsExclude,
+          beforeDefaultRemarkPlugins: [releaseNotesPlugin, lifecycleNoticePlugin, variablesPlugin],
           editUrl: generateEditUrl,
         },
       ],
@@ -520,7 +537,8 @@ export default async function createAsyncConfig() {
             },
           },
           sidebarPath: './sidebars-calico-enterprise.js',
-          beforeDefaultRemarkPlugins: [lifecycleNoticePlugin, variablesPlugin],
+          exclude: docsExclude,
+          beforeDefaultRemarkPlugins: [releaseNotesPlugin, lifecycleNoticePlugin, variablesPlugin],
           editUrl: generateEditUrl,
         },
       ],
@@ -546,7 +564,8 @@ export default async function createAsyncConfig() {
             },
           },
           sidebarPath: './sidebars-calico-cloud.js',
-          beforeDefaultRemarkPlugins: [lifecycleNoticePlugin, variablesPlugin],
+          exclude: docsExclude,
+          beforeDefaultRemarkPlugins: [releaseNotesPlugin, lifecycleNoticePlugin, variablesPlugin],
           editUrl: generateEditUrl,
         },
       ],
