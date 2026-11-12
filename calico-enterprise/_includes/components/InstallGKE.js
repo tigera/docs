@@ -172,9 +172,7 @@ EOF`}
             </CodeBlock>
           </li>
           <li>
-            <p>
-              Export the address of the management cluster.
-            </p>
+            <p>Export the address of the management cluster.</p>
             <CodeBlock language='bash'>{`export MANAGEMENT_CLUSTER_ADDR=<management-cluster-addr>`}</CodeBlock>
             <p>
               Replace <code>&lt;management-cluster-addr&gt;</code> with the public IP or host of the management cluster
