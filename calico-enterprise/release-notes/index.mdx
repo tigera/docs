@@ -5,11 +5,13 @@ sidebar_label: Release notes
 content_type: unclassified
 ---
 
-# Calico Enterprise X.Y release notes
+import { TechPreviewTable, DeprecatedFeaturesTable } from '@site/src/components/FeatureStatusTable';
+
+# Calico Enterprise 3.24 release notes
 
 :::info[early preview release]
 
-Calico Enterprise X.Y can be used for previewing and testing purposes only.
+Calico Enterprise 3.24 can be used for previewing and testing purposes only.
 It is not supported for use in production.
 
 :::
@@ -20,60 +22,189 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
 
 ## New features and enhancements
 
+{/* Start 3.24.0-3.0 features */}
+
+{/* TODO: Confirm with PM whether OpenTelemetry export and Azure user-defined routes ship as tech preview. If so, add "(tech preview)" to the heading and a row to the feature status data. */}
+
+### Export logs and metrics with OpenTelemetry
+
+You can export flow, DNS, and audit logs, and $[prodname] metrics, over OTLP to one or more OpenTelemetry collectors.
+This lets you send $[prodname] data to any backend that accepts OpenTelemetry, such as an observability platform or a SIEM.
+You set `spec.openTelemetry` on the `LogCollector` resource, and this needs the `otel-collector` feature in your license.
+
+For more information, see [Export logs and metrics with OpenTelemetry](../observability/opentelemetry.mdx).
+
+### Role management in the web console
+
+You can create roles on the **Manage Team** page of the web console and bind them to identity provider groups.
+You can export roles as YAML to copy them to another cluster.
+Role management is off by default, and you turn it on for each cluster.
+On a managed cluster, the **Manage Team** page appears only when the cluster runs $[prodname] 3.24 EP3 or later.
+
+For more information, see [Grant access with custom roles and IdP groups](../operations/cnx/manage-roles.mdx).
+
+### Egress gateways with Azure user-defined routes
+
+You can use Azure user-defined routes for egress gateways instead of Azure Route Server and BGP.
+$[prodname] writes the routes to the Azure route tables that you tag.
+This needs an `AzureIdentity` resource.
+
+For more information, see [Configure egress gateways, Azure user-defined routes](../networking/egress/egress-gateway-azure-udr.mdx).
+
+### Native v3 CRDs for new installations
+
+New installations default to v3 CRD mode.
+`projectcalico.org/v3` resources are served directly by CRDs, with no aggregation API server.
+Existing and upgraded clusters are unaffected.
+To install with the aggregation API server instead, apply the v1 CRDs before you install the operator.
+v3 CRD mode requires Kubernetes 1.32 or later.
+
+For more information, see [Native v3 CRDs](../operations/native-v3-crds.mdx).
+
+{/* End 3.24.0-3.0 features */}
+
+{/* Start 3.24.0-2.0 features */}
+
+### L2 bridge networking (tech preview)
+
+You can now put KubeVirt VMs and pods directly on the VLANs your physical network already carries.
+$[prodname] builds a VLAN-aware Linux bridge on each node, and attaches the workload to it on the VLAN you choose.
+
+This is for teams moving virtual machines onto Kubernetes that cannot be re-addressed.
+A VM keeps its IP address, its MAC address, and its place on the same broadcast domain as the servers it already talks to, so the DNS records, firewall rules, and licenses tied to that address keep working.
+It also suits flat on-premises and edge networks, where a workload has to be reachable from the local segment.
+
+You could build a bridge like this yourself. What you would lose is policy.
+Because the workload's interface is still a $[prodname] interface, it gets the same network policy and flow visibility as a pod on the $[prodname] pod network.
+
+The feature is additive and opt-in: a cluster that creates no `Network` resources behaves exactly as it did before.
+It requires the eBPF data plane, and Multus where an L2 network is an additional interface.
+
+For more information, see [L2 bridge networking](../networking/l2-bridge/index.mdx) and [L2 bridge support and limitations](../reference/l2-bridge-support.mdx).
+
+### Forklift VM migration (tech preview)
+
+Forklift reads your existing virtualization platform, including vSphere, and migrates its VMs to KubeVirt with $[prodname] networking.
+Your VMs come across with their IP and MAC addresses intact, onto a $[prodname] L2 network, under the same network policy and flow visibility as your pods.
+Every DNS record, firewall rule, and license tied to a VM's address survives the move.
+
+Install Forklift from the manifests in the guides below; it does not ship with the $[prodname] operator.
+
+For more information, see [Install Forklift on OpenShift](../networking/kubevirt/install-forklift-openshift.mdx) and [Install Forklift on Kubernetes](../networking/kubevirt/install-forklift-kubernetes.mdx).
+
+{/* End 3.24.0-2.0 features */}
+
+{/* Start 3.24.0-1.0 features */}
+
+### Per-namespace deployment for Calico Ingress Gateway
+
+Calico Ingress Gateway runs each gateway's proxy, `Service`, and load balancer in the same namespace as its `Gateway`, rather than in a single shared namespace.
+Application teams can deploy and operate their own gateways alongside their workloads, scope network policy and RBAC to a single namespace, and attribute the gateway's resource usage to the team that owns it.
+You can run multiple independent gateway instances across different namespaces.
+
+For more information, see [Create an ingress gateway](../networking/ingress-gateway/create-ingress-gateway.mdx).
+
+### Web application firewall for ingress gateways (tech preview)
+
+You can attach a web application firewall (WAF) to Calico Ingress Gateway traffic per `Gateway` and per route, and tune it per namespace, instead of applying a single ruleset to everything behind the gateway.
+A cluster operator sets a security baseline once from the OWASP Core Rule Set, and each application team layers its own rules and exceptions on top — scoped to their own gateways and `HTTPRoute` resources, within guardrails the operator defines.
+
+For more information, see [Gateway WAF](../threat/gateway-waf/overview.mdx).
+
+### Layer 7 logs from a kernel eBPF collector
+
+A new kernel TCP-layer eBPF collector captures Layer 7 (HTTP and TLS) logs with no data path proxy and no per-workload sidecars.
+You enable it once at the cluster level, and it works with any $[prodname] data plane — iptables, nftables, or eBPF.
+The collected HTTP request/response and TLS handshake metadata feeds the same L7 log pipeline that powers Service Graph, HTTP logs, and the L7 dashboards.
+
+For more information, see [L7 logs overview](../observability/elastic/l7/overview.mdx) and [Collect L7 logs using the eBPF collector](../observability/elastic/l7/enable-ebpf-collector.mdx).
+
+### L2 reachability for pods and services without BGP
+
+$[prodname] can make pods and LoadBalancer service IPs that share a node's subnet reachable from the local Layer 2 network without configuring BGP.
+With `localSubnetL2Reachability` enabled, $[prodname] runs a userspace ARP/NDP responder on the relevant host interfaces and answers for local pod IPs and LoadBalancer VIPs within the host subnet, so external hosts on the same segment can reach them with no overlay encapsulation and no changes to your network infrastructure.
+This is useful for on-premises, edge, and other flat L2 environments where BGP peering is not an option.
+
+For more information, see [L2 reachability for pods and services without BGP](../networking/configuring/local-subnet-l2-reachability.mdx).
+
+{/* End 3.24.0-1.0 features */}
+
 ### Enhancements
 
-* **Enable Calico Ingress Gateway during Helm installation:**
-  You can now enable Calico Ingress Gateway when you install $[prodname] with Helm, by setting `gatewayAPI.enabled: true` in your `values.yaml`.
-  For more information, see the [Helm installation reference](../reference/installation/helm_customization.mdx).
-* **Redesigned policy editor in the web console:**
-  The policy editor has a redesigned layout and a new YAML view.
+{/* Start 3.24.0-3.0 enhancements */}
+
+* The policy editor in the web console has a redesigned layout and a new YAML view.
   You can switch between the form and the YAML while you create or edit a policy.
   For more information, see [Network policy tutorial](../network-policy/policy-tiers/policy-tutorial-ui.mdx).
-* **Access the web console through Calico Ingress Gateway:**
-  You can now expose the web console through Calico Ingress Gateway by setting `spec.ingressGateway` on the `Manager` resource.
+* You can expose the web console through Calico Ingress Gateway by setting `spec.ingressGateway` on the `Manager` resource.
   This needs Calico Ingress Gateway to be enabled with a `GatewayAPI` resource.
   Your existing access methods keep working.
   For more information, see [Configure access to the web console](../operations/cnx/access-the-manager.mdx).
-* **Export logs and metrics with OpenTelemetry:**
-  You can now export flow, DNS, and audit logs, and $[prodname] metrics, over OTLP.
-  Set `spec.openTelemetry` on the `LogCollector` resource to send them to one or more OpenTelemetry collectors.
-  This needs the `otel-collector` feature in your license.
-  For more information, see the [OpenTelemetrySpec reference](../reference/installation/api.mdx#opentelemetryspec).
-* **Manage roles in the web console:**
-  You can now create roles on the **Manage Team** page and bind them to identity provider groups.
-  Role management is off by default, and you turn it on for each cluster.
-  You can export roles as YAML to copy them to another cluster.
-  On a managed cluster, the **Manage Team** page appears only when the cluster runs $[prodname] 3.24 EP3 or later.
-  For more information, see [Grant access with custom roles and IdP groups](../operations/cnx/manage-roles.mdx).
-* **Egress gateways with Azure user-defined routes:**
-  You can now use Azure user-defined routes for egress gateways instead of Azure Route Server and BGP.
-  $[prodname] writes the routes to the Azure route tables that you tag.
-  This needs an `AzureIdentity` resource.
-  For more information, see [Configure egress gateways, Azure user-defined routes](../networking/egress/egress-gateway-azure-udr.mdx).
-- New installs default to v3 CRD mode: `projectcalico.org/v3` resources are served directly by CRDs, with no aggregation API server. Existing and upgraded clusters are unaffected. To install with the aggregation API server instead, apply the v1 CRDs before installing the operator. v3 CRD mode requires Kubernetes 1.32 or later. See [Native v3 CRDs](../operations/native-v3-crds.mdx).
-- Log batches are compressed on their way to the log ingestion endpoint. Set `ingestionCompression` to `Zstd` (the default), `Gzip`, or `None` on the LogCollector resource for cluster nodes, or on the NonClusterHost resource for hosts and VMs. See [Log ingestion compression](../observability/elastic/overview.mdx#log-ingestion-compression).
+* Log batches are compressed on their way to the log ingestion endpoint.
+  Set `ingestionCompression` to `Zstd` (the default), `Gzip`, or `None` on the `LogCollector` resource for cluster nodes, or on the `NonClusterHost` resource for hosts and VMs.
+  For more information, see [Log ingestion compression](../observability/elastic/overview.mdx#log-ingestion-compression).
 
-### Deprecated and removed features
+{/* End 3.24.0-3.0 enhancements */}
 
-- The compliance reporting feature has been removed from the $[prodname] web console.
-- $[prodname] is moving the `projectcalico.org/v3` API from the aggregated API server to native Kubernetes CRDs. Both mechanisms will be supported until native v3 CRDs are compatible with all supported platforms, after which the aggregated API server will be removed.
-- The license agent has been removed. The operator exports license metrics instead. See [Operator metrics](../operations/monitor/metrics/operator-metrics.mdx).
+{/* Start 3.24.0-1.0 enhancements */}
 
-## Technology Preview features
+* You can now enable Calico Ingress Gateway when you install $[prodname] with Helm, by setting `gatewayAPI.enabled: true` in your `values.yaml`.
+  For more information, see the [Helm installation reference](../reference/installation/helm_customization.mdx).
 
-## Upgrade notes
+{/* End 3.24.0-1.0 enhancements */}
+
+## Technology preview features
+
+This table shows the status of features that were in technology preview at any point in the releases covered here.
+Technology preview features are for evaluation and feedback only and are **not supported for production use**. Behavior, APIs, and configuration may change before a feature reaches general availability.
+
+<TechPreviewTable />
+
+## Deprecated and removed features
+
+Review the following table to see what features have recently been deprecated or removed.
+Deprecated features are still present and supported, but they are scheduled for removal.
+You should consider migrating away from a deprecated feature before it is removed.
+
+<DeprecatedFeaturesTable />
+
+### Deprecated and removed features in this release
+
+* The compliance reporting feature has been removed from the $[prodname] web console.
+* $[prodname] is moving the `projectcalico.org/v3` API from the aggregated API server to native Kubernetes CRDs.
+  Both mechanisms will be supported until native v3 CRDs are compatible with all supported platforms, after which the aggregated API server will be removed.
+* The license agent has been removed.
+  The operator exports license metrics instead.
+  For more information, see [Operator metrics](../operations/monitor/metrics/operator-metrics.mdx).
+
+{/* ### Known issues */}
+
+## Upgrading
+
+Before upgrading to Calico Enterprise 3.24, review [Upgrade notes](#upgrade-notes), [Deprecated and removed features](#deprecated-and-removed-features), and Known issues.
+
+### Upgrade from a previous minor
+
+Calico Enterprise 3.24 supports a direct upgrade from versions 3.23 and 3.22.
+To upgrade from an earlier version, plan an intermediate upgrade.
+
+For upgrade instructions, see [Upgrade Calico Enterprise](../getting-started/upgrading/upgrading-enterprise/index.mdx).
+
+### Upgrade notes
 
 This section collects the upgrade notes for this release while it is in early preview.
 Before general availability, they move to an upgrade notes page that you can review before any upgrade.
 
 {/*
-Add one ### subsection for each change that needs action before, during, or after an upgrade.
+Add one #### subsection for each change that needs action before, during, or after an upgrade.
 Above each subsection, add a comment that names the release and the source PR, for example: 3.24 EP3 · tigera/operator#4910
 Say who the change affects, then give the steps in the order the reader does them.
 Use a Breaking change admonition only when the upgrade breaks something unless the reader acts.
 */}
 
-### Calico Ingress Gateway
+{/* TODO: Add the "Hold Typha when upgrading from 3.22" note from 3.24.0-1.0 after its steps are ported to the next upgrade guides. */}
+
+#### Calico Ingress Gateway
 
 :::warning[Breaking change]
 
@@ -89,7 +220,7 @@ Migrate in this order:
 
 :::
 
-### License agent
+#### License agent
 
 If you installed the license agent, delete it before or after you upgrade, and update any dashboards or alerts that use its metrics.
 Upgrading does not remove it.
@@ -97,7 +228,7 @@ For the steps, see the upgrade guide for [the operator](../getting-started/upgra
 
 {/* 3.24 EP3 · tigera/operator#4910, calico-private#12538 */}
 
-### Fluent Bit log collector
+#### Fluent Bit log collector
 
 :::warning[Breaking change]
 
@@ -118,14 +249,74 @@ Two defaults also change:
 
 ## Release details
 
-### Calico Enterprise X.Y.Z (early preview)
+### Calico Enterprise 3.24.0-3.0 (early preview)
 
-January xx, 2024
+{/* TODO: Set the release date. */}
+Month DD, 2026
 
-Calico Enterprise X.Y.Z is now available as an early preview release.
+Calico Enterprise 3.24.0-3.0 is now available as an early preview release.
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+
+### Calico Enterprise 3.24.0-2.0 (early preview)
+
+September 1, 2026
+
+Calico Enterprise 3.24.0-2.0 is now available as an early preview release.
+This release is for previewing and testing purposes only.
+It is not supported for use in production.
+
+
+#### Known issues
+
+Both L2 bridge networking and Forklift are tech preview features in this release.
+The issues below are the ones we know about. For what the L2 bridge feature does not do at all, see [L2 bridge support and limitations](../reference/l2-bridge-support.mdx).
+
+##### L2 bridge networking: data plane and Installation
+
+- {/* CORE-13458 */} Setting `multiInterfaceMode: None` on the Installation stops traffic for every L2 workload, new and existing. Nothing reports it: `tigerastatus` stays available, pods stay ready, and IPAM keeps handing out addresses to workloads that cannot pass traffic. Set the field back to `Multus`. Workloads created while it was `None` stay broken and have to be recreated.
+- {/* CORE-13460 */} L2 bridge networking needs the eBPF data plane, but nothing stops you moving `linuxDataplane` off `BPF` while `Network` resources exist. The change is accepted, every L2 workload goes dark, and the health indicators stay green. Leave the data plane on `BPF` for as long as any `Network` exists.
+- {/* CORE-13459 */} Moving `linuxDataplane` from `BPF` to `Iptables` can panic `calico-node`. The rollout replaces the crashed pods, so the stack trace is gone unless you were already capturing logs. The opposite direction shuts down cleanly. Avoid this change on a running cluster; there is no workaround once it happens.
+
+##### L2 bridge networking: Networks and IP pools
+
+- {/* CORE-13455 */} In various places, IPv6 CIDRs are accepted, but IPv6 support is not yet implemented. A repeated VLAN ID also discards the second subnet without saying so, and `0.0.0.0/0` and a `/32` are accepted as L2 subnets. Check these values yourself before you apply them.
+- {/* CORE-13417 */} Two `Network` resources that name the same bridge compete for it, and the winner depends on which reconciles last. Point each `Network` at a bridge of its own.
+- {/* CORE-13457 */} Two L2 workloads can claim the same MAC address. Both start, both get their own IP, and both answer `arping`, but the bridge keeps one forwarding entry, so only one of them is reachable. A MAC you set by hand bypasses kubemacpool, so kubemacpool does not prevent it. Keep hand-assigned MAC addresses unique.
+- {/* CORE-13452 */} A Multus secondary interface that fails to attach retries about once a second and never backs off. Calico IPAM assigns and releases an address on every attempt, for as long as the pod exists. Delete the pod rather than leaving it to retry.
+
+##### L2 bridge networking: bring-your-own bridge
+
+- {/* CORE-13089 */} If the trunk device is not named correctly under `hostConnections` in the `Network` resource, and it matches `bpfDataIfacePattern`, the node loses connectivity. $[prodname] treats the device as an L3 device, so its reverse path forwarding checks fail. Always name the trunk under `hostConnections`.
+- {/* CORE-13462 */} $[prodname] checks the bridge's settings only at bring-up. If the configuration changes after Felix first examines the bridge, the drift goes undetected. Pin the bridge's settings in your node configuration so nothing rewrites them.
+- {/* CORE-13475 */} Trunk VLAN membership is programmed once and not reconciled. If the node's network configuration later diverges, that VLAN stops carrying traffic and does not recover on its own. Confirm membership with `bridge vlan show` after any change to the node's network configuration.
+- {/* CORE-13456 */} When you delete a `Network`, or a label change means it no longer applies to a node, Felix does not clean up all the state it added to the bridge. Remove the VLANs from the bridge yourself afterwards.
+- {/* CORE-13428 */} The first workload to attach lowers the MTU of the bridge, and of any VLAN device above it, from 1500 to 1480. This follows from how a Linux bridge takes the lowest MTU of its ports, but nothing tells you it happened. Set the MTU as described in [MTU](../reference/l2-bridge-support.mdx#mtu) and check it once the first workload is up.
+- {/* CORE-13399 */} Removing Calico resources can cut a node off the network if a `Network` includes the host's own management VLAN. Keep the management VLAN out of every `Network`.
+
+##### L2 bridge networking: live migration
+
+- {/* CORE-13418 */} A VM that live-migrates without `macAddress` set on its interface loses L2 connectivity, because KubeVirt has to be told the MAC address in order to keep it across the move. OpenShift handles this for you. Elsewhere, set `macAddress` on every VM interface, or install a MAC allocation controller. See [Set a VM's IP and MAC address](../networking/l2-bridge/vm-identity.mdx#set-the-mac-address).
+- {/* CORE-13427 */} TCP sessions survive the live-migration cut-over, then drop 12 to 20 seconds later, when Felix on the source node removes the VM's old endpoint. Applications that reconnect recover by themselves; long-lived sessions do not. Both OpenShift Virtualization and upstream KubeVirt are affected.
+
+##### L2 bridge networking: policy, flow logs, and diagnostics
+
+- {/* CORE-13372 */} A flow that leaves one L2 segment, passes through your router, and returns to a second segment on the same node is recorded once per segment. Totals for those flows are doubled, and a record can close while the flow is still running. Flows that stay inside one segment are counted correctly.
+- {/* CORE-13288 */} The pod `network-status` annotation is not protected from edits. Anyone who can patch pod annotations can rewrite it, which is enough to spoof a MAC address on an L2 network. Restrict who can patch pod annotations until the admission policy that guards this field ships.
+- {/* CORE-13422 */} `calicoctl cluster diags` does not collect bridge state, so a support bundle from an L2 cluster arrives without it. Run `bridge vlan show`, `bridge fdb show`, and `ip -d link show` on the affected nodes and attach the output yourself.
+
+##### Forklift VM migration
+
+- {/* CORE-13467 */} Forklift converts each VM's guest as it migrates, and that step fails on most clusters other than OpenShift. The default seccomp and AppArmor profiles on the node block it. Install the profiles Forklift needs and name them on the `ForkliftController`, as described in [Fix guest conversion permissions](../networking/kubevirt/install-forklift-kubernetes.mdx#4-fix-guest-conversion-permissions).
+
+### Calico Enterprise 3.24.0-1.0 (early preview)
+
+July 31, 2026
+
+Calico Enterprise 3.24.0-1.0 is now available as an early preview release.
 This release is for previewing and testing purposes only.
 It is not supported for use in production.
 
 {/*
-To update an existing installation of Calico Enterprise X.Y, see [Install a patch release](../getting-started/manifest-archive.mdx).
+To update an existing installation of Calico Enterprise 3.24, see [Install a patch release](../getting-started/manifest-archive.mdx).
 */}
