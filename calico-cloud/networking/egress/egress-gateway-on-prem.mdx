@@ -2,6 +2,7 @@
 description: Send selected application traffic through Calico Cloud egress gateways on-premises so external firewalls see a predictable source IP for cluster workloads.
 redirect_from:
   - /compliance/egress-gateways
+content_type: unclassified
 ---
 
 # Configure egress gateways, on-premises
@@ -395,6 +396,15 @@ kubectl annotate ns <namespace> egress.projectcalico.org/namespaceSelector="kube
 
 Egress gateway annotations have the same [syntax and range of expressions](../../reference/resources/networkpolicy.mdx#selector) as the selector fields in
 $[prodname] [network policy](../../reference/resources/networkpolicy.mdx#entityrule).
+
+:::caution
+
+If an egress gateway annotation is invalid, $[prodname] selects no egress gateways for the pod, and drops the pod's traffic that would leave the cluster through an egress gateway.
+An annotation is invalid if its selector isn't valid, or if its `egressGatewayPolicy` value isn't a valid resource name.
+$[prodname] does the same if the egress gateway policy that the annotation names doesn't exist.
+Traffic to other pods and hosts in the cluster is unaffected.
+
+:::
 
 To configure a specific Kubernetes Pod to use egress gateways, specify the same annotations when
 creating the pod. For example:

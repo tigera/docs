@@ -1,5 +1,6 @@
 ---
 description: Frequently asked questions about Calico Cloud covering connected clusters, the web console, observability, and platform support.
+content_type: unclassified
 ---
 
 # Frequently asked questions
@@ -317,12 +318,12 @@ kind: IPPool
 metadata:
   name: ippool-1
 spec:
-  cidr: <CIDR>
+  cidr: <pool-cidr>
   natOutgoing: true
 EOF
 ```
 
-Where `<CIDR>` is the CIDR of your IP pool, for example `192.168.0.0/16`.
+Replace `<pool-cidr>` with the CIDR of your IP pool, for example `192.168.0.0/16`.
 
 Remember: the security profile for the container will need to allow traffic to the
 internet as well. Refer to the appropriate guide for your orchestration
@@ -359,17 +360,21 @@ is running on.
 
    :::
 
-1. For each port you want to expose, add a rule to the
-   expose-ports chain, replacing `<PUBLIC_IP>` with the host IP that you
-   want to use to expose the port and `<PUBLIC_PORT>` with the host port.
+1. For each port you want to expose, add a rule to the expose-ports chain:
 
    ```bash
-   iptables -t nat -A expose-ports -p tcp --destination <PUBLIC_IP> \
-   --dport <PUBLIC_PORT> -j DNAT  --to <CALICO_IP>:<SERVICE_PORT>
+   iptables -t nat -A expose-ports -p tcp --destination <public-ip> \
+       --dport <public-port> -j DNAT --to <container-ip>:<service-port>
    ```
 
-For example, you have a container to which you've assigned the `CALICO_IP`
-of 192.168.7.4, and you have NGINX running on port 8080 inside the container.
+   Replace the following:
+
+   - `<public-ip>`: the host IP that you want to use to expose the port.
+   - `<public-port>`: the host port.
+   - `<container-ip>`: the Calico IP assigned to the container.
+   - `<service-port>`: the port the service listens on inside the container.
+
+For example, you have a container whose Calico IP is 192.168.7.4, and you have NGINX running on port 8080 inside the container.
 If you want to expose this service on port 80 and your host has IP 192.0.2.1,
 then you could run the following commands:
 
@@ -397,11 +402,13 @@ kind: IPPool
 metadata:
   name: ippool-1
 spec:
-  cidr: <CIDR>
+  cidr: <pool-cidr>
   ipipMode: Always
   natOutgoing: true
 EOF
 ```
+
+Replace `<pool-cidr>` with the CIDR of your IP pool.
 
 $[prodname] will then route traffic between $[prodname] hosts using IP-in-IP.
 
@@ -410,7 +417,7 @@ For best performance in AWS, you can disable [Source/Destination Check](resource
 You can disable Source/Destination Check using [Felix configuration](resources/felixconfig.mdx), the AWS CLI, or the EC2 console. For example, using the AWS CLI:
 
 ```bash
-aws ec2 modify-instance-attribute --instance-id <INSTANCE_ID> --source-dest-check "{\"Value\": false}"
+aws ec2 modify-instance-attribute --instance-id <instance-id> --source-dest-check "{\"Value\": false}"
 
 cat <<EOF | kubectl apply -f -
 apiVersion: projectcalico.org/v3
@@ -418,10 +425,15 @@ kind: IPPool
 metadata:
   name: ippool-2
 spec:
-  cidr: <CIDR>
+  cidr: <pool-cidr>
   natOutgoing: true
 EOF
 ```
+
+Replace the following:
+
+- `<instance-id>`: the ID of the EC2 instance.
+- `<pool-cidr>`: the CIDR of your IP pool.
 
 ### On AWS with IP-in-IP, why do I see no connectivity between workloads or only see connectivity if I ping in both directions?
 

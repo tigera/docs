@@ -1,5 +1,6 @@
 ---
 description: Provide custom TLS certificates for Calico components.
+content_type: unclassified
 ---
 
 # Provide TLS certificates for Calico components
@@ -18,21 +19,27 @@ To replace any certificate with your own, create a Kubernetes secret with the sa
 
 ```bash
 SIGNER=my-ca-signer
-kubectl create secret generic <SECRET_NAME> -n tigera-operator \
-  --from-file=tls.crt=</path/to/cert> \
-  --from-file=tls.key=</path/to/key> && \
-kubectl label secret <SECRET_NAME> -n tigera-operator operator.tigera.io/signer=$SIGNER
+kubectl create secret generic <secret-name> -n tigera-operator \
+  --from-file=tls.crt=<path-to-cert-file> \
+  --from-file=tls.key=<path-to-key-file> && \
+kubectl label secret <secret-name> -n tigera-operator operator.tigera.io/signer=$SIGNER
 ```
+
+Replace the following:
+
+- `<secret-name>`: the name of the secret, from the table below.
+- `<path-to-cert-file>`: the path to the certificate file.
+- `<path-to-key-file>`: the path to the key file.
 
 To update an existing secret:
 
 ```bash
 SIGNER=my-ca-signer
-kubectl create secret generic <SECRET_NAME> -n tigera-operator \
-  --from-file=tls.crt=</path/to/cert> \
-  --from-file=tls.key=</path/to/key> \
+kubectl create secret generic <secret-name> -n tigera-operator \
+  --from-file=tls.crt=<path-to-cert-file> \
+  --from-file=tls.key=<path-to-key-file> \
   --dry-run=client -o yaml | kubectl replace -f - && \
-kubectl label secret <SECRET_NAME> -n tigera-operator operator.tigera.io/signer=$SIGNER --overwrite
+kubectl label secret <secret-name> -n tigera-operator operator.tigera.io/signer=$SIGNER --overwrite
 ```
 
 :::note
@@ -68,8 +75,8 @@ Typha and Node use mutual TLS. If you replace `typha-certs`, `typha-certs-nonclu
 - These secrets require an additional `common-name` data field containing the CN. For example:
   ```bash
   kubectl create secret generic typha-certs -n tigera-operator \
-    --from-file=tls.crt=</path/to/cert> \
-    --from-file=tls.key=</path/to/key> \
+    --from-file=tls.crt=<path-to-cert-file> \
+    --from-file=tls.key=<path-to-key-file> \
     --from-literal=common-name=typha-server
   ```
 
@@ -121,11 +128,16 @@ metadata:
   name: default
 spec:
   certificateManagement:
-    caCert: <your CA cert in PEM format>
-    signerName: <your-domain>/<signer-name>
+    caCert: <ca-cert-pem>
+    signerName: <signer-name>
     signatureAlgorithm: SHA512WithRSA
     keyAlgorithm: RSAWithSize4096
 ```
+
+Replace the following:
+
+- `<ca-cert-pem>`: your CA certificate in PEM format.
+- `<signer-name>`: the name of the signer, in the form `domain/name`, such as `example.com/my-signer`.
 
 **Supported algorithms:**
 - Private key: RSA (2048, 4096, 8192), ECDSA (256, 384, 521)

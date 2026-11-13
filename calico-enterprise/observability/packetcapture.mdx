@@ -1,5 +1,6 @@
 ---
 description: Capture live pod traffic in self-managed Calico Enterprise clusters from Service Graph or the CLI and export pcap files to Wireshark for analysis.
+content_type: unclassified
 ---
 
 # Packet capture
@@ -146,8 +147,10 @@ spec:
 To start a packet capture job immediately, use the following command:
 
 ```bash
-kubectl apply -f <your_packet_capture_filename>
+kubectl apply -f <path-to-packet-capture-file>
 ```
+
+Replace `<path-to-packet-capture-file>` with the path to a file that holds the PacketCapture resource.
 
 **Schedule a packet capture job**
 
@@ -180,13 +183,13 @@ To stop a capture job immediately, update the PacketCaptureResource by setting t
 **Stop a packet capture job, and delete the capture file from the cluster**
 
 ```bash
-kubectl delete -f <your_packet_capture_filename>
+kubectl delete -f <path-to-packet-capture-file>
 ```
 
 **Delete a packet capture job**
 
 ```bash
-kubectl delete -f <your_packet_capture_filename>
+kubectl delete -f <path-to-packet-capture-file>
 ```
 
 **Find packet capture files**
@@ -194,12 +197,17 @@ kubectl delete -f <your_packet_capture_filename>
 To find generated capture files, query the status of the PacketCapture:
 
 ```bash
-kubectl get packetcaptures -n <namespace> <name> -o yaml
+kubectl get packetcaptures -n <capture-namespace> <capture-name> -o yaml
 ```
 
+Replace the following:
+
+- `<capture-namespace>`: the namespace of the packet capture.
+- `<capture-name>`: the name of the packet capture.
+
 ```bash
-export NS=<REPLACE_WITH_CAPTURE_NAMESPACE>
-export NAME=<REPLACE_WITH_CAPTURE_NAME>
+export NS=<capture-namespace>
+export NAME=<capture-name>
 ```
 
 **Sample output**
@@ -226,19 +234,23 @@ status:
 Get the pod on the node with the packet capture that you want.
 
 ```bash
-kubectl get pods -n calico-system -l k8s-app=calico-node --no-headers --field-selector spec.nodeName="<REPLACE_WITH_NODE_NAME>"
+kubectl get pods -n calico-system -l k8s-app=calico-node --no-headers --field-selector spec.nodeName="<node-name>"
 ```
+
+Replace `<node-name>` with the name of the node that has the capture files.
 
 Copy the packet capture using the pod information.
 
 ```bash
-kubectl cp calico-system/<REPLACE_WITH_POD_NAME>:var/log/calico/pcap/sample/sample-capture/ .
+kubectl cp calico-system/<pod-name>:var/log/calico/pcap/sample/sample-capture/ .
 ```
+
+Replace `<pod-name>` with the name of the pod from the previous command.
 
 **Delete packet capture files**
 
 ```bash
-kubectl exec -it -n calico-system <REPLACE_WITH_POD_NAME> -- sh -c "rm -r /var/log/calico/pcap/sample/sample-capture/"
+kubectl exec -it -n calico-system <pod-name> -- sh -c "rm -r /var/log/calico/pcap/sample/sample-capture/"
 ```
 
 ### Store and rotate capture files

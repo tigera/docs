@@ -1,6 +1,7 @@
 ---
 description: Customize a Calico Open Source on-premises installation before applying it — IP pools, BGP, MTU, and other Installation resource fields.
 title: Customizing your installation
+content_type: unclassified
 ---
 
 # Customize Calico configuration
@@ -129,23 +130,42 @@ be undone):
 - Optionally, (to save some resources if you're running a VXLAN-only cluster) completely disable Calico's BGP-based
   networking:
   - Replace `calico_backend: "bird"` with `calico_backend: "vxlan"`. This disables BIRD.
-  - Comment out the line `- -bird-ready` and `- -bird-live` from the calico/node readiness/liveness check (otherwise disabling BIRD will cause the
-    readiness/liveness check to fail on every node):
+  - Remove the `- --bird-live` line from the $[nodecontainer] liveness probe and the `- --bird-ready` line from its
+    readiness probe. Otherwise, disabling BIRD causes both checks to fail on every node, and the kubelet restarts
+    $[nodecontainer] repeatedly.
+
+After these edits, the $[nodecontainer] probes look like this:
 
 ```yaml
 livenessProbe:
   exec:
     command:
-      - /bin/calico-node
-      - -felix-live
-      - -bird-live
+      - calico
+      - component
+      - node
+      - health
+      - --felix-live
 readinessProbe:
   exec:
     command:
-      - /bin/calico-node
-        - -bird-ready
-      - -felix-ready
+      - calico
+      - component
+      - node
+      - health
+      - --felix-ready
 ```
+
+Manifests from earlier releases ran `/bin/calico-node` with single-dash flags (`-bird-live` and `-bird-ready`). If you
+script these edits, update any pattern that matches the old form.
+
+:::tip
+
+For a VXLAN-only cluster with BGP disabled, you can skip these edits and start from
+[calico-vxlan.yaml]($[manifestsUrl]/manifests/calico-vxlan.yaml) instead. It already sets `calico_backend: "vxlan"`
+and leaves the BIRD checks out of the probes. It creates the default IP pool with `CALICO_IPV4POOL_VXLAN` set to
+`CrossSubnet`; change the value to `Always` if you need VXLAN for all traffic between nodes.
+
+:::
 
 For more information on $[nodecontainer]'s configuration variables, including additional VXLAN settings, see
 [Configuring $[nodecontainer]](../../../reference/configure-calico-node.mdx).

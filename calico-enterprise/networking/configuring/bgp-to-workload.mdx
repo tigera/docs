@@ -1,5 +1,6 @@
 ---
 description: Peer Calico Enterprise nodes with BGP speakers inside KubeVirt VMs so nested clusters can announce routes from their workloads upstream.
+content_type: unclassified
 ---
 
 # Configure BGP peering with nested clusters running on KubeVirt VMs
@@ -264,6 +265,54 @@ In the child cluster,
    peerIP: "fdc9:9723:09bc::1"
    asNumber: <parent cluster's AS number>
   ```
+
+### Speed up BGP reconvergence for live migration
+
+When a workload (such as a KubeVirt VM) is live-migrated to a new node, its BGP session to the
+host must re-establish on the new node, during which the workload's advertised routes are
+unreachable. By default the workload is the active initiator of this session, so after a migration
+the workload — the side that just moved — must redial through BGP's reconnect back-off before
+routes recover.
+
+You can shorten this window with the [`connectionMode`](../../reference/resources/bgppeer.mdx)
+field, by making the **host node** the active initiator instead of the workload. Because the host
+node is stable across the migration, it re-establishes the session promptly, while the
+**workload** waits passively. Set it on both peerings:
+
+- In the parent cluster, set `connectionMode: Active` on the `localWorkloadSelector` peer:
+
+  ```yaml
+  apiVersion: projectcalico.org/v3
+  kind: BGPPeer
+  metadata:
+   name: peer-to-workloads
+  spec:
+   localWorkloadSelector: color == 'red'
+   asNumber: <workload cluster's AS number>
+   connectionMode: Active
+   filters:
+   - no-export
+   - accept-nested-ip-pools
+  ```
+
+- In the nested cluster, set `connectionMode: Passive` on the peer(s) to the parent cluster:
+
+  ```yaml
+  apiVersion: projectcalico.org/v3
+  kind: BGPPeer
+  metadata:
+   name: peer-to-parent-cluster
+  spec:
+   peerIP: 169.254.0.179
+   asNumber: <parent cluster's AS number>
+   connectionMode: Passive
+  ```
+
+We recommend configuring `connectionMode` as shown above for any deployment where workloads are
+live-migrated. Set both ends, and set the parent cluster first: with `Auto`, the host node is
+passive and the workload initiates, so if you set the nested peer to `Passive` before the parent
+peer is `Active`, both ends wait and the session never forms. If you leave the field unset, it
+defaults to `Auto`, which preserves the previous behavior.
 
 ### Configure more than one nested cluster
 

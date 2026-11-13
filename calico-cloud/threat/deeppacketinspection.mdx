@@ -1,5 +1,6 @@
 ---
 description: Run deep packet inspection on selected workloads in Calico Cloud connected clusters with Snort community rules to alert on suspected malicious traffic.
+content_type: unclassified
 ---
 
 # Deep packet inspection
@@ -42,13 +43,15 @@ It is commonly used for troubleshooting (like tcpdump and Wireshark), but also f
 Create a YAML file containing one or more [DeepPacketInspection](../reference/resources/deeppacketinspection.mdx) resources and apply it to your cluster.
 
 ```bash
-kubectl apply -f <your_deep_packet_inspection_filename>
+kubectl apply -f <path-to-deep-packet-inspection-file>
 ```
+
+Replace `<path-to-deep-packet-inspection-file>` with the path to the file you created.
 
 To stop deep packet inspection, delete the DeepPacketInspection resource from your cluster.
 
 ```bash
-kubectl delete -f <your_deep_packet_inspection_filename>
+kubectl delete -f <path-to-deep-packet-inspection-file>
 ```
 
 **Examples of selecting workloads**
@@ -146,9 +149,14 @@ You will be responsible for making sure your rules are up to date.
    1. In the console, run the following commands:
 
       ```bash
-      docker build . -t <your-image-name>:<your-image-tag>
-      docker push <your-image-name>:<your-image-tag>
+      docker build . -t <image-name>:<image-tag>
+      docker push <image-name>:<image-tag>
       ```
+
+      Replace the following:
+
+      - `<image-name>`: the name of the image in your registry.
+      - `<image-tag>`: the tag of the image.
 
       After the image has been pushed to the registry, you're ready to configure the `IntrusionDetection` resource.
 
@@ -162,13 +170,13 @@ You will be responsible for making sure your rules are up to date.
            spec:
              initContainers:
              - name: snort-rules
-               image: <your-image-name>:<your-image-tag>
+               image: <image-name>:<image-tag>
    ```
 
     This can also be done by running the following command:
 
     ```bash
-    kubectl patch intrusiondetection tigera-secure --type merge -p '{"spec":{"deepPacketInspectionDaemonset":{"spec":{"template":{"spec":{"initContainers":[{"name":"snort-rules", "image":"<your-image-name>:<your-image-tag>"}]}}}}}}'
+    kubectl patch intrusiondetection tigera-secure --type merge -p '{"spec":{"deepPacketInspectionDaemonset":{"spec":{"template":{"spec":{"initContainers":[{"name":"snort-rules", "image":"<image-name>:<image-tag>"}]}}}}}}'
     ```
 
 1. Verify that your custom rules have been installed correctly:

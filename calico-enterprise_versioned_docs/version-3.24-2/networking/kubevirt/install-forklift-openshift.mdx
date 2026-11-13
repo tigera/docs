@@ -1,5 +1,6 @@
 ---
 description: Install the Tigera fork of Forklift on an OpenShift cluster to migrate vSphere virtual machines onto Calico Enterprise networking.
+content_type: unclassified
 ---
 
 import Tabs from '@theme/Tabs';
@@ -24,10 +25,15 @@ Install the Tigera fork of Forklift on an OpenShift cluster and connect it to a 
 
 - Cluster admin access, and `kubectl` or `oc`.
 - A cluster running $[prodname] as the CNI, and Multus for secondary-NIC attachments, with your Installation's [`spec.calicoNetwork.multiInterfaceMode`](../l2-bridge/connect-vlan.mdx) set to `Multus`.
+- One of the following OpenShift versions. Earlier patch releases ship a Multus bug that leaves a VM's IP address allocated after the VM is deleted.
+  - 4.20.40 or a later 4.20 patch
+  - 4.21.35 or a later 4.21 patch
+  - 4.22.14 or a later 4.22 patch
 - The BPF data plane enabled: `bpfEnabled: true` in the default `FelixConfiguration`. See [Enable eBPF on an existing cluster](../../operations/ebpf/enabling-ebpf.mdx).
 - OpenShift Virtualization (KubeVirt and CDI) installed, with `HyperConverged` Available.
 - A StorageClass for the migrated VM disks.
 - IP pools covering the VM addresses. The pod network uses an ordinary pool; each L2 VLAN needs its own pool with `allowedUses: [L2Workload]` and `disableBGPExport: true`. A VM keeps its address only if that address falls inside a pool. See [Connect workloads to an existing VLAN](../l2-bridge/connect-vlan.mdx).
+  Only IPv4 addresses are preserved; a source VM's IPv6 configuration is not carried over.
 
 ## How to
 

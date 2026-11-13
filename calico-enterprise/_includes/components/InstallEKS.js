@@ -356,11 +356,12 @@ EOF`}
               </CodeBlock>
             </li>
             <li>
+              <p>Export the address of the management cluster.</p>
+              <CodeBlock language='bash'>{`export MANAGEMENT_CLUSTER_ADDR=<management-cluster-addr>`}</CodeBlock>
               <p>
-                Export the service port number, and the public IP or host of the management cluster. (Ex.
-                "example.com:1234" or "10.0.0.10:1234".)
+                Replace <code>&lt;management-cluster-addr&gt;</code> with the public IP or host of the management
+                cluster and the service port, such as <code>example.com:1234</code> or <code>10.0.0.10:1234</code>.
               </p>
-              <CodeBlock language='bash'>{`export MANAGEMENT_CLUSTER_ADDR=<your-management-cluster-addr>`}</CodeBlock>
             </li>
             <li>
               <p>

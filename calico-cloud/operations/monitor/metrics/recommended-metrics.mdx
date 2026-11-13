@@ -1,5 +1,6 @@
 ---
 description: Recommended Prometheus metrics for Calico Cloud Typha, Felix, and policy components on connected clusters, covering the signals most critical to cluster health.
+content_type: unclassified
 ---
 
 # Recommended Prometheus metrics
@@ -311,8 +312,8 @@ The following policy metrics are a separate endpoint exposed by Felix that are u
 | Denied traffic                   |                                                              |
 | -------------------------------- | ------------------------------------------------------------ |
 | Metric                           | <code>calico_denied_packets<br />calico_denied_bytes</code>  |
-| Example value                    | <code>calico_denied_packets\{<strong>endpoint</strong>="calico-metrics-port", <strong>instance</strong>="ip-10-0-1-30.ca-central-1.compute.internal", <strong>job</strong>="calico-node-metrics", <strong>namespace</strong>="calico-system", <strong>pod</strong>="calico-node-6pcqm", <strong>policy</strong>="default</code> |
-| Explanation                      | Number of packets or bytes that have been dropped by explicit or implicit deny rules. Note that you'll get one instance of `calico_denied_packets/bytes` for each policy rule that is denying traffic.  For example: <code>calico_denied_packets\{policy="tier1\|fv/policy1\|0\|deny\|-1",scrIP="10.245.13.133"\}</code> |
+| Example value                    | <code>calico_denied_packets\{<strong>endpoint</strong>="calico-metrics-port", <strong>instance</strong>="ip-10-0-1-30.ca-central-1.compute.internal", <strong>job</strong>="calico-node-metrics", <strong>namespace</strong>="calico-system", <strong>pod</strong>="calico-node-6pcqm", <strong>policy</strong>="default\|NetworkPolicy\|ns-0/restrict-db\|I\|0\|deny", <strong>srcIP</strong>="10.245.13.133"\}</code> |
+| Explanation                      | Number of packets or bytes that have been dropped by explicit or implicit deny rules. Note that you'll get one instance of `calico_denied_packets/bytes` for each policy rule that is denying traffic.  For example: <code>calico_denied_packets\{policy="tier1\|NetworkPolicy\|ns-0/policy1\|E\|0\|deny",srcIP="10.245.13.133"\}</code>. See [policy metrics](policy-metrics.mdx) for the format of the `policy` label. |
 | Threshold value recommendation   | The general rule of thumb is  this metric should report zero at a stable state.  Any deviation means that policy and traffic have diverged. Achieving a zero state  depends on the stability and maturity of your cluster and policy. |
 | Threshold breach symptoms        | Either unexpected traffic is being denied because of an attack (one example), or expected traffic is being denied because of a misconfiguration in a policy. |
 | Threshold breach recommendations | If this metric indicates that policy and traffic have diverged, the recommended steps are: Determine if an attack is causing the metric to spike, or if these flows should be allowed. If the flow should indeed be allowed, update the policy or a preceding policy to allow this traffic. |

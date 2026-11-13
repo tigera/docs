@@ -2,6 +2,7 @@
 description: Release notes for the current Calico Enterprise release — new features, enhancements, technology previews, deprecations, upgrade notes, and bug fixes.
 title: Calico Enterprise release notes
 sidebar_label: Release notes
+content_type: unclassified
 ---
 
 import { TechPreviewTable, DeprecatedFeaturesTable } from '@site/src/components/FeatureStatusTable';
@@ -363,5 +364,45 @@ October 27, 2026
 * Fixed a deadlock on clusters where the Kubernetes API server is reachable only by name. calico-node now defaults to the node's own DNS resolver. {/* #5247 */}
 * Fixed Felix panicking instead of restarting cleanly when a restart-requiring configuration change arrived while the dataplane was busy, and deadlocking if such a change arrived before startup completed. {/* #13762 */}
 * Security updates. {/* #14549 #14634 #14352 #14240 #14189 #14583 #14157 #13735 */}
+
+To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
+
+### Calico Enterprise 3.23.4 hot fix release
+
+November 10, 2026
+
+This expedited release completes the fix for the eMudhra certificate authority incident by updating Kibana and Elasticsearch, which were not yet available at the time of our previous patch.
+It also includes a selection of other security and product fixes. We recommend that all Calico Enterprise 3.23 users upgrade.
+
+#### Enhancements
+
+* eBPF conntrack map autoscaling now grows only the IP family whose map is more than 80% full, and Felix copies BPF maps faster when it resizes them. {/* #14927 */}
+* eBPF conntrack metrics are now labeled by IP family, the conntrack map capacity is exported as a metric, and `felix_bpf_conntrack_cleaned_total` now counts cleaned entries rather than visited ones. {/* #14927 */}
+* Replaced the `felix_collector_dataplanestats_update_processing_errors_per_minute` gauge, which never decayed, with a `felix_collector_dataplanestats_update_processing_errors_total` counter. {/* #14705 */}
+* IP autodetection now skips Submariner's `vx-submariner` interfaces by default. {/* #15160 */}
+
+#### Bug fixes
+
+* Fixed ui-apis crashing, which took down the web console and managed cluster connections, when Linseed held flow logs with no source or destination type. {/* #14873 */}
+* Fixed an issue where a pod could lose its IP address to another pod after the container runtime retried sandbox creation and left a stale CNI ADD running, including under Multus. {/* #15160 */}
+* Fixed the IPAM garbage collector not releasing leaked IPs from a pod's earlier sandboxes, from pods in the Succeeded or Failed phase, and from KubeVirt VMs deleted while stopped. This could exhaust small IP pools, such as those used by Multus secondary networks. {/* #15281 */}
+* Fixed several cases where calico-node needed a restart to fix a node's IPIP, VXLAN, or WireGuard tunnel address: after a node label or IP pool `nodeSelector` change, after a hung datastore call during allocation, and when deleting an IP pool that held the address. {/* #15281 */}
+* Fixed pods failing to start on single-stack clusters that have a non-workload IP pool of the other IP family. {/* operator #5377 */}
+* Fixed Felix never reporting the dataplane as in sync when a workload interface was deleted during its first resync after startup, which made new pods on the node wait for the full CNI policy setup timeout. {/* #15247 */}
+* Fixed Felix ignoring non-default `NftablesFilterAllowAction`, `NftablesMangleAllowAction`, and `NftablesFilterDenyAction` values, and the nftables mark mask and refresh interval, when the nftables mode is `Auto`. {/* #15160 #15290 */}
+* Fixed a Felix panic in nftables mode when a malformed IP set member, such as an empty NetworkSet entry, reached an IP set. {/* #15290 */}
+* Fixed calico-node restarts in eBPF mode resizing BPF maps to their defaults and back, which could crash the init container when the conntrack table held more entries than the default size. {/* #14927 */}
+* Fixed an issue where creating an ExternalNetwork could leave another ExternalNetwork's BGP peers without routes for local workloads, such as egress gateways, until those workloads were recreated. {/* #15249 */}
+* Fixed node-to-node mesh BGP sessions failing to establish from a node with its own AS number to a peer that uses the global AS number. {/* #14992 */}
+* Fixed CalicoNodeStatus dropping a node's IPv4 BGP peers and routes while its IPv6 BIRD socket was unreachable. {/* #15290 */}
+* Fixed log lines from BIRD and Felix being merged or split when both services in calico-node logged at the same moment. {/* #15149 */}
+* Fixed fluentd on Windows losing its log positions on restart and resending flow logs as duplicates. Position files are now stored on the host. {/* #14997 */}
+* Fixed the queryserver refusing connections for a few seconds when a calico-apiserver pod was deleted or rolled. {/* #14923 */}
+* Fixed BackendTLSPolicy `wellKnownCACertificates: System` on Calico Ingress Gateway. The envoy-proxy pods now mount the trusted CA bundle where Envoy Gateway expects it, and restart when the bundle changes. {/* operator #5392 */}
+* Fixed the Istio resource's `resources` settings being ignored for istiod, Istio CNI, and ztunnel. {/* operator #5377 */}
+* Fixed the non-cluster host Typha deployment ignoring the container resources and `terminationGracePeriodSeconds` set in the Installation's `spec.typhaDeployment`, and its pods being rejected when certificate management is enabled. {/* operator #5368 */}
+* Fixed the RHEL 8 calico-node and calico-fluent-bit packages requiring glibc 2.34, which stopped them installing or loading on RHEL 8. {/* #15026 #15036 */}
+* KubeControllersConfiguration `logSeverityScreen` now accepts `Trace` and rejects `None`, which kube-controllers never supported. BlockAffinity `spec.type` is now limited to `host` or `virtual`. {/* #15281 #15290 */}
+* Security fixes. {/* #14685, #14862, #14894, #14929, #15176, #15185, #15218, operator #5364, #5382, #5387, #5388 */}
 
 To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).

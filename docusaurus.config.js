@@ -9,6 +9,17 @@ const darkCodeTheme = themes.dracula;
 // when true current version will be built
 const nextVersion = process.env.BUILD_NEXT === 'true' ? ['current'] : [];
 
+// allowed values for the content_type front matter field
+const contentTypes = [
+  'how-to',
+  'explanation',
+  'tutorial',
+  'reference',
+  'installation-guide',
+  'troubleshooting',
+  'unclassified',
+];
+
 export default async function createAsyncConfig() {
   const variablesPlugin = await import('./src/remark/variablesPlugin');
   const lifecycleNoticePlugin = await import('./src/remark/lifecycleNoticePlugin');
@@ -44,6 +55,17 @@ export default async function createAsyncConfig() {
     markdown: {
       hooks: {
         onBrokenMarkdownLinks: 'throw',
+      },
+      // Fail the build when a page sets content_type to a value outside the content model.
+      parseFrontMatter: async (params) => {
+        const result = await params.defaultParseFrontMatter(params);
+        const contentType = result.frontMatter.content_type;
+        if (contentType !== undefined && !contentTypes.includes(contentType)) {
+          throw new Error(
+            `${params.filePath}: content_type "${contentType}" is not one of: ${contentTypes.join(', ')}`
+          );
+        }
+        return result;
       },
     },
 
@@ -131,14 +153,6 @@ export default async function createAsyncConfig() {
           indexName: 'calico',
           contextualSearch: true,
           searchPagePath: '/search',
-        },
-        announcementBar: {
-          id: 'kubecon_na_2026_workshop',
-          content:
-            'Join the Calico and Lynx communities for a workshop and happy hour at KubeCon NA 2026. <a href="https://link.tigera.io/utPnA">Register here</a>',
-          backgroundColor: '#FCE181',
-          textColor: '#000',
-          isCloseable: true,
         },
         navbar: {
           logo: {

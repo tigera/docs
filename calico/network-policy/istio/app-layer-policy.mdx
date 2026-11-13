@@ -1,5 +1,6 @@
 ---
 description: Apply Calico Open Source network policy to Istio service-mesh traffic, including matching on HTTP methods and paths.
+content_type: unclassified
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -258,8 +259,10 @@ This manifest creates:
 Label the namespace where you want to deploy Istio-enabled workloads:
 
 ```bash
-kubectl label namespace <your-namespace> istio-injection=enabled
+kubectl label namespace <namespace> istio-injection=enabled
 ```
+
+Replace `<namespace>` with the namespace for your workloads.
 
 ### 6. Annotate pods to inject Dikastes
 
@@ -299,21 +302,24 @@ After deploying a workload with the annotation:
 
 ```bash
 # Check that Dikastes container is present
-kubectl get pod -l app=<your-app> -n <your-namespace> -o jsonpath='{.items[0].spec.containers[*].name}'
+kubectl get pod -l app=<app-name> -n <namespace> -o jsonpath='{.items[0].spec.containers[*].name}'
 ```
 
-You should see: `dikastes <your-app-container> ...`
+Replace `<app-name>` with the value of the `app` label on your workload.
+
+The output lists the pod's containers.
+Check that `dikastes` is one of them.
 
 **Check pod status** (should show all containers ready):
 
 ```bash
-kubectl get pods -n <your-namespace>
+kubectl get pods -n <namespace>
 ```
 
 **Check Dikastes logs**:
 
 ```bash
-kubectl logs -n <your-namespace> -l app=<your-app> -c dikastes
+kubectl logs -n <namespace> -l app=<app-name> -c dikastes
 ```
 
 You should see:
@@ -384,16 +390,20 @@ Without explicit allow policies, Dikastes enforces a **default-deny** posture fo
 **Check namespace label**:
 
 ```bash
-kubectl get namespace <your-namespace> -o jsonpath='{.metadata.labels.istio-injection}'
+kubectl get namespace <namespace> -o jsonpath='{.metadata.labels.istio-injection}'
 ```
+
+Replace `<namespace>` with the namespace for your workloads.
 
 Should show: `enabled`
 
 **Check pod annotation**:
 
 ```bash
-kubectl get pod <pod-name> -n <your-namespace> -o yaml | grep inject.istio.io/templates
+kubectl get pod <pod-name> -n <namespace> -o yaml | grep inject.istio.io/templates
 ```
+
+Replace `<pod-name>` with the name of the pod.
 
 Should show: `inject.istio.io/templates: sidecar,dikastes`
 
@@ -410,13 +420,13 @@ Should return `2` (one for each template).
 **Check pod events**:
 
 ```bash
-kubectl describe pod <pod-name> -n <your-namespace>
+kubectl describe pod <pod-name> -n <namespace>
 ```
 
 **Check Dikastes logs**:
 
 ```bash
-kubectl logs <pod-name> -n <your-namespace> -c dikastes
+kubectl logs <pod-name> -n <namespace> -c dikastes
 ```
 
 **Check CSI driver** (automatically installed with $[prodname]):

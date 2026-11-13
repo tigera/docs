@@ -1,5 +1,6 @@
 ---
 description: Apply Calico Enterprise network policy to traffic forwarded through hosts acting as routers or NAT gateways.
+content_type: unclassified
 ---
 
 # Apply policy to forwarded traffic
@@ -174,6 +175,27 @@ Each policy entry in these fields follows this format:
 <index>|<tier_name>|<tier_name>.<global_policy_name>|<action>|<rule_index>
 ```
 
+### Flow log `reporter` values for forwarded traffic
+
+The `reporter` field of a flow log shows where on the node the flow was observed:
+
+- `src,fwd` or `dst,fwd`: the flow starts or ends at a workload on this node, and forwarding policy also applied to it.
+- `fwd-in`: the node forwarded the flow without being its source or destination, and ingress host endpoint policy, including `preDNAT` policy, applied to it.
+  As for `dst`, `bytes_in` and `packets_in` count traffic in the connection's forward direction.
+- `fwd-out`: as `fwd-in`, for egress host endpoint policy.
+  As for `src`, `bytes_out` and `packets_out` count traffic in the connection's forward direction.
+
+When both ingress and egress host endpoint policy apply to a forwarded flow, the node reports two flow logs, one with each reporter, and each with its own `transit_policies` and counters.
+
+:::note
+
+Earlier versions reported a forwarded flow as one flow log with reporter `fwd`, which combined both directions' policies and counters.
+After upgrading, update queries and alerts that match reporter `fwd` to also match `fwd-in` and `fwd-out`.
+Flow logs written before the upgrade keep `fwd` until they age out.
+In a multi-cluster management setup, a managed cluster reports `fwd` until it is upgraded.
+
+:::
+
 ### Example flow log for applyOnForward policy
 
 Using the tutorial example from this document (SSH traffic to maintenance network), here's what a flow log entry might look like:
@@ -192,7 +214,7 @@ Using the tutorial example from this document (SSH traffic to maintenance networ
   "dest_type": "wep",
   "proto": "tcp",
   "action": "allow",
-  "reporter": "dst, fwd",
+  "reporter": "dst,fwd",
   "policies": {
     "all_policies": [
       "0|__PROFILE__|__PROFILE__.kns.maintenance-server|allow|0"
@@ -216,7 +238,7 @@ Using the tutorial example from this document (SSH traffic to maintenance networ
 ```
 
 **Key points about this flow log:**
-- `reporter` is `dst, fwd`, indicating this flow was reported by both the destination workload endpoint and the forwarding node. The `enforced_policies` shows policies that applied to the destination workload's ingress traffic, while `transit_policies` shows the host endpoint policy that applied as the traffic was forwarded through the node.
+- `reporter` is `dst,fwd`, indicating this flow was reported by both the destination workload endpoint and the forwarding node. The `enforced_policies` shows policies that applied to the destination workload's ingress traffic, while `transit_policies` shows the host endpoint policy that applied as the traffic was forwarded through the node.
 - The `policies.transit_policies` field shows that the `allow-ssh-maintenance` GlobalNetworkPolicy allowed the traffic
 - The rule index `0` indicates the first rule in the policy matched (the SSH allow rule)
 
@@ -264,7 +286,7 @@ For preDNAT policies, flow logs display the original destination IP and port bef
   "dest_port": 30080,
   "proto": "tcp",
   "action": "allow",
-  "reporter": "fwd",
+  "reporter": "fwd-in",
   "policies": {
     "transit_policies": [
       "0|default|default.allow-external-http|allow|0"
@@ -282,7 +304,7 @@ For preDNAT policies, flow logs display the original destination IP and port bef
 - `source_name_aggr` is `pub`, indicating external traffic from outside the cluster
 - `dest_name_aggr` is `pub`, indicating the NodePort's external facing IP
 - `dest_port` shows the original NodePort (30080) before DNAT translation to the service port
-- The `reporter` is `fwd`, indicating this policy acted on forwarded ingress traffic at the host endpoint
+- The `reporter` is `fwd-in`, indicating this policy acted on forwarded ingress traffic at the host endpoint
 - The `policies.transit_policies` field shows the preDNAT policy that allowed the traffic before DNAT processing
 
 ## Additional resources

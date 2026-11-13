@@ -1,5 +1,6 @@
 ---
 description: Connect an external identity provider to Calico Enterprise so users authenticate against an existing IdP when signing in to the web console and Kibana.
+content_type: unclassified
 ---
 
 # Configure an external identity provider
@@ -54,12 +55,16 @@ When configuring your cluster, you may be asked for the following inputs:
    metadata:
      name: tigera-secure
    spec:
-      # This indicates where the web console can be accessed from the browser. Include the port only if the web console is not running on port 443.
-     managerDomain: https://<domain-of-manager-ui>
+     managerDomain: https://<web-console-domain>
      oidc:
-       issuerURL: <your-idp-issuer>
+       issuerURL: <idp-issuer>
        usernameClaim: email
    ```
+
+   Replace the following:
+
+   - `<web-console-domain>`: the domain where the web console is reached, with the port if it isn't 443.
+   - `<idp-issuer>`: the issuer URL of your identity provider.
 
 1. Apply the secret to your cluster with your OIDC credentials. To get the values, consult the documentation of your provider.
 
@@ -70,9 +75,14 @@ When configuring your cluster, you may be asked for the following inputs:
      name: tigera-oidc-credentials
      namespace: tigera-operator
    data:
-     clientID: <your-base64-clientid>
-     clientSecret: <your-base64-clientid-secret>
+     clientID: <base64-client-id>
+     clientSecret: <base64-client-secret>
    ```
+
+   Replace the following:
+
+   - `<base64-client-id>`: the client ID, base64 encoded.
+   - `<base64-client-secret>`: the client secret, base64 encoded.
 
    If you are using an external secret provider, you can mount your OIDC credentials as a volume through CSI Secret Store
    Driver to avoid storing the credentials in the Kubernetes cluster.
@@ -116,11 +126,16 @@ When configuring your cluster, you may be asked for the following inputs:
    metadata:
      name: tigera-secure
    spec:
-     managerDomain: https://<domain-of-manager-ui>
+     managerDomain: https://<web-console-domain>
      oidc:
-       issuerURL: <your-idp-issuer>
+       issuerURL: <idp-issuer>
        usernameClaim: email
    ```
+
+   Replace the following:
+
+   - `<web-console-domain>`: the domain where the web console is reached, with the port if it isn't 443.
+   - `<idp-issuer>`: the issuer URL of your identity provider.
 
 1. Optional: Google OIDC does not support the groups claim. However, $[prodname] leverages [Dex IdP](https://dexidp.io/docs/connectors/google/) to add groups if you configure a service account.
    This account needs Domain-Wide Delegation and permission to access the `https://www.googleapis.com/auth/admin.directory.group.readonly` API scope.
@@ -143,12 +158,19 @@ When configuring your cluster, you may be asked for the following inputs:
      name: tigera-oidc-credentials
      namespace: tigera-operator
    data:
-     clientID: <your-base64-clientid>
-     clientSecret: <your-base64-clientid-secret>
+     clientID: <base64-client-id>
+     clientSecret: <base64-client-secret>
        # If you created a service account in the previous step, include the following two fields.
-     serviceAccountSecret: <your-base64-json-contents>
-     adminEmail: <your-base64-gsuite-user>
+     serviceAccountSecret: <base64-service-account-key>
+     adminEmail: <base64-admin-email>
    ```
+
+   Replace the following:
+
+   - `<base64-client-id>`: the client ID, base64 encoded.
+   - `<base64-client-secret>`: the client secret, base64 encoded.
+   - `<base64-service-account-key>`: the JSON key file of the service account, base64 encoded.
+   - `<base64-admin-email>`: the email address of the G Suite super user from the previous step, base64 encoded.
 
    If you are using an external secret provider, you can mount your OIDC credentials as a volume through CSI Secret Store
    Driver to avoid storing the credentials in the Kubernetes cluster.
@@ -172,31 +194,41 @@ When configuring your cluster, you may be asked for the following inputs:
      provider: gcp
      parameters:
        secrets: |
-         - resourceName: "projects/<your-project-id>/secrets/tigera-oidc-client-id/versions/<secret-version>"
+         - resourceName: "projects/<project-id>/secrets/tigera-oidc-client-id/versions/<secret-version>"
            fileName: "clientID"
-         - resourceName: "projects/<your-project-id>/secrets/tigera-oidc-client-secret/versions/<secret-version>"
+         - resourceName: "projects/<project-id>/secrets/tigera-oidc-client-secret/versions/<secret-version>"
            fileName: "clientSecret"
          # If you created a service account in the previous step, include the following two files.
-         - resourceName: "projects/<your-project-id>/secrets/tigera-oidc-service-account-secret/versions/<secret-version>"
+         - resourceName: "projects/<project-id>/secrets/tigera-oidc-service-account-secret/versions/<secret-version>"
            fileName: "serviceAccountSecret"
-         - resourceName: "projects/<your-project-id>/secrets/tigera-oidc-admin-email/versions/<secret-version>"
+         - resourceName: "projects/<project-id>/secrets/tigera-oidc-admin-email/versions/<secret-version>"
            fileName: "adminEmail"
    ```
+
+   Replace the following:
+
+   - `<project-id>`: your Google Cloud project ID.
+   - `<secret-version>`: the version of each secret, such as `latest`.
 
 </TabItem>
 <TabItem label="OpenShift" value="OpenShift-2">
 
 1. Install the [OpenShift CLI (oc)](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html).
 
-1. Create values for some required variables. `MANAGER_URL` is the URL where the $[prodname] web console will be accessed,
-   `CLUSTER_DOMAIN` is the domain (excl. port) where your OpenShift cluster is accessed (run `oc status` to get it) and `CLIENT_SECRET` is a value of your choosing.
+1. Create values for some required variables.
 
    ```bash
-    # This indicates where the web console can be accessed from the browser. Include the port only if the web console is not running on port 443.
-   MANAGER_URL=<manager-host>:<port>
-   CLUSTER_DOMAIN=<domain-of-your-ocp-cluster>
-   CLIENT_SECRET=<clientSecret>
+   MANAGER_URL=https://<web-console-domain>
+   CLUSTER_DOMAIN=<ocp-cluster-domain>
+   CLIENT_SECRET=<client-secret>
    ```
+
+   Replace the following:
+
+   - `<web-console-domain>`: the domain where the web console is reached, with the port if it isn't 443.
+   - `<ocp-cluster-domain>`: the domain of your OpenShift cluster, without `api.` or a port.
+     Run `oc status`, and take the part of the server URL between `https://api.` and `:6443`.
+   - `<client-secret>`: a value of your choosing.
 
 1. Add an OAuthClient to your OpenShift cluster.
 
@@ -225,7 +257,6 @@ When configuring your cluster, you may be asked for the following inputs:
    metadata:
      name: tigera-secure
    spec:
-      # This indicates where the web console can be accessed from the browser. Include the port only if the web console is not running on port 443.
      managerDomain: $MANAGER_URL
      openshift:
        issuerURL: https://api.$CLUSTER_DOMAIN:6443
@@ -260,8 +291,7 @@ When configuring your cluster, you may be asked for the following inputs:
    metadata:
      name: tigera-secure
    spec:
-      # This indicates where the web console can be accessed from the browser. Include the port only if the web console is not running on port 443.
-     managerDomain: https://<manager-host>:<port>
+     managerDomain: https://<web-console-domain>
      ldap:
        # The host and port of the LDAP server. Example: ad.example.com:636.
        host: <ldap-host>:<ldap-port>
@@ -301,6 +331,8 @@ When configuring your cluster, you may be asked for the following inputs:
              groupAttribute: <group-attribute>
    ```
 
+   Replace `<web-console-domain>` with the domain where the web console is reached, with the port if it isn't 443.
+
 1. Apply the secret to your cluster with your LDAP credentials. To obtain the values, consult the documentation of your provider.
 
    ```yaml
@@ -310,10 +342,16 @@ When configuring your cluster, you may be asked for the following inputs:
      name: tigera-ldap-credentials
      namespace: tigera-operator
    data:
-     bindDN: <your-base64-bind-dn>
-     bindPW: <your-base64-bind-password>
-     rootCA: <your-base64-ca-cert-pem>
+     bindDN: <base64-bind-dn>
+     bindPW: <base64-bind-password>
+     rootCA: <base64-ca-cert-pem>
    ```
+
+   Replace the following:
+
+   - `<base64-bind-dn>`: the bind DN, base64 encoded.
+   - `<base64-bind-password>`: the bind password, base64 encoded.
+   - `<base64-ca-cert-pem>`: the CA certificate in PEM format, base64 encoded.
 
    If you are using an external secret provider, you can mount your LDAP credentials as a volume through CSI Secret Store
    Driver to avoid storing the credentials in the Kubernetes cluster.
