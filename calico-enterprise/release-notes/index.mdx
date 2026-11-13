@@ -27,6 +27,9 @@ This version of Calico Enterprise is based on [Calico Open Source $[openSourceVe
   For more information, see the [Helm installation reference](../reference/installation/helm_customization.mdx).
 - New installs default to v3 CRD mode: `projectcalico.org/v3` resources are served directly by CRDs, with no aggregation API server. Existing and upgraded clusters are unaffected. To install with the aggregation API server instead, apply the v1 CRDs before installing the operator. v3 CRD mode requires Kubernetes 1.32 or later. See [Native v3 CRDs](../operations/native-v3-crds.mdx).
 - Log batches are compressed on their way to the log ingestion endpoint. Set `ingestionCompression` to `Zstd` (the default), `Gzip`, or `None` on the LogCollector resource for cluster nodes, or on the NonClusterHost resource for hosts and VMs. See [Log ingestion compression](../observability/elastic/overview.mdx#log-ingestion-compression).
+- **Operator metrics:** The operator exports Prometheus metrics for the status of each component, the expiry of TLS certificates, and the license.
+  Component status uses the same conditions that `kubectl get tigerastatus` shows, so you can alert when a component is degraded.
+  For more information, see [Operator metrics](../operations/monitor/metrics/operator-metrics.mdx).
 
 ### Deprecated and removed features
 
@@ -69,6 +72,28 @@ Migrate in this order:
 If you installed the license agent, delete it before or after you upgrade, and update any dashboards or alerts that use its metrics.
 Upgrading does not remove it.
 For the steps, see the upgrade guide for [the operator](../getting-started/upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/operator.mdx#license-agent), [Helm](../getting-started/upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/helm.mdx#license-agent), or [OpenShift](../getting-started/upgrading/upgrading-enterprise/openshift-upgrade.mdx#license-agent).
+
+{/* 3.24 EP3 · tigera/calico-private#14114 · applies only to upgrades from 3.24 EP1 or EP2 */}
+
+### Operator metrics
+
+This note applies only if you set `METRICS_SCHEME` on the `tigera-operator` deployment to a value other than `https` in an earlier 3.24 early preview.
+After you upgrade, the `monitor` TigeraStatus reports `Degraded`.
+The message says that operator metrics without `https` are not supported.
+While it is degraded, the operator stops updating the monitoring resources it manages, such as Prometheus, Alertmanager, and the built-in alerts.
+
+To fix it:
+
+1. Set `METRICS_SCHEME` to `https`.
+   If you install with Helm, remove `METRICS_SCHEME` from `tigeraOperator.env` in your values file.
+   If you do not want operator metrics, set `METRICS_ENABLED=false` instead.
+2. Check that the `monitor` TigeraStatus is no longer degraded.
+
+   ```bash
+   kubectl get tigerastatus monitor
+   ```
+
+For more information, see [Operator metrics](../operations/monitor/metrics/operator-metrics.mdx).
 
 {/* 3.24 EP3 · tigera/operator#4910, calico-private#12538 */}
 
