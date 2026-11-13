@@ -194,7 +194,16 @@ Write it in lowercase with hyphens, inside angle brackets, in code font: `<clust
 - Don't write `INSERT_VALUE_HERE` or any other instruction inside the brackets.
 - Keep the brackets inside the code font: `<cluster-name>`, not <`cluster-name`>.
 
+Name a file or directory by what the reader supplies.
+
+- For a path, start with `path-to-` and end with `-file` or `-directory`: `<path-to-policy-file>`, `<path-to-archive-directory>`.
+- For a bare name, end with `-file-name` or `-directory-name`: `<backup-file-name>`.
+
+Most values in our commands are paths, as in `kubectl apply -f <path-to-policy-file>`.
+A name on its own is rare.
+
 Explain every placeholder the first time it appears on the page.
+A placeholder that says what kind of thing it is still needs an explanation, because the explanation says which one: the file you created in the previous step, or the directory where you extracted the archive.
 
 For one placeholder, say what it is in the sentence that introduces the command:
 
