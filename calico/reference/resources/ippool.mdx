@@ -72,6 +72,24 @@ The `nodeSelector` field selects over `Node` resources, and the `namespaceSelect
 
 <Selectors />
 
+### Status
+
+$[prodname] kube-controllers writes the status when the cluster uses [native v3 CRDs](../../operations/native-v3-crds.mdx). In API server mode, the status is empty.
+
+| Field                      | Description                                                        | Accepted Values                        | Schema                                                                                                                | Default |
+| -------------------------- | ------------------------------------------------------------------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------- |
+| conditions _(since v3.32.0)_ | Conditions that report whether the pool can be used for IP address assignment. | See [Conditions](#conditions). | list of [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#condition-v1-meta) |         |
+
+#### Conditions
+
+| Type                   | Status | Reason              | Meaning                                                                                                              |
+| ---------------------- | ------ | ------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Allocatable            | True   | `OK`                | The pool can be used for IP address assignment.                                                                      |
+| Allocatable            | False  | `CIDROverlap`       | The pool's CIDR overlaps another pool's CIDR. See [CIDR overlap validation](#cidr-overlap-validation).               |
+| Allocatable            | False  | `PoolDisabled`      | `disabled` is `true`.                                                                                                |
+| Allocatable            | False  | `Terminating`       | The pool is being deleted.                                                                                           |
+| AddressSpaceNearlyFull | True   | `ThresholdExceeded` | At least 80% of the pool's addresses are in use or reserved. Pools of 32 addresses or fewer never carry this condition. |
+
 ## Allowed uses
 
 When automatically assigning IP addresses to workloads, only pools with "Workload" in their `allowedUses` field are
