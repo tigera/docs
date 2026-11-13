@@ -22,7 +22,7 @@ const variables = {
   // vpp-dataplane releases on its own cadence; bump only to a tag that exists.
   vppbranch: 'v3.32.0',
   envoyVersion: '1.9.3',
-  istioVersion: '1.29.8',
+  istioVersion: '1.29.10',
   tigeraOperator: releases[0]['tigera-operator'],
   tigeraOperatorVersionShort: releases[0]['tigera-operator'].version.split('.').slice(0, 2).join('.'),
   imageNames: {
