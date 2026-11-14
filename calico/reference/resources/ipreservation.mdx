@@ -1,14 +1,19 @@
 ---
 description: Reference for the IPReservation resource in Calico Open Source that excludes specific addresses or ranges from automatic allocation.
-content_type: unclassified
+content_type: reference
 ---
 
 # IP reservation
 
 An IP reservation resource (`IPReservation`) represents a collection of IP addresses that $[prodname] should
 not use when automatically assigning new IP addresses. It only applies when $[prodname] IPAM is in use.
+`IPReservation` is a cluster-scoped resource.
+
+For `kubectl` commands, you can use the aliases `ipreservation.projectcalico.org`, `ipreservations.projectcalico.org`, `ipreservation.p`, and `ipreservations.p`.
 
 ## Sample YAML
+
+This sample reserves two single addresses and one IPv6 range.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -22,21 +27,21 @@ spec:
     - cafe:f00d::/123
 ```
 
-## IP reservation definition
+## Definition
 
 ### Metadata
 
-| Field | Description                                        | Accepted Values                                     | Schema |
-| ----- | -------------------------------------------------- | --------------------------------------------------- | ------ |
-| name  | The name of this IPReservation resource. Required. | Lowercase alphanumeric string with optional `.` or `-`. | string |
+| Field | Description                                | Accepted Values                                                                                                           | Schema | Default |
+| ----- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ------ | ------- |
+| name  | The name of this IP reservation. Required. | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string |         |
 
 ### Spec
 
-| Field         | Description                                                     | Accepted Values                                    | Schema | Default |
-| ------------- | --------------------------------------------------------------- | -------------------------------------------------- | ------ | ------- |
-| reservedCIDRs | List of IP addresses and/or networks specified in CIDR notation | List of valid IPv4 and/or IPv6 CIDRs, such as `10.0.2.3/32` for a single address | list   |         |
+| Field         | Description                                                     | Accepted Values                                                                  | Schema          | Default |
+| ------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------- | ------- |
+| reservedCIDRs | List of IP addresses and/or networks specified in CIDR notation | List of valid IPv4 and/or IPv6 CIDRs, such as `10.0.2.3/32` for a single address | list of strings |         |
 
-### Notes
+## How reservations are applied
 
 The implementation of `IPReservation`s is designed to handle reservation of a small number of IP addresses/CIDRs from
 (generally much larger) IP pools. If a significant portion of an IP pool is reserved (say more than 10%) then
@@ -55,3 +60,8 @@ are in place.
 When Windows nodes claim blocks of IPs they automatically assign the first three IPs
 in each block and the final IP for internal purposes. These assignments cannot be blocked by an `IPReservation`.
 However, if a whole IPAM block is reserved with an `IPReservation`, Windows nodes will not claim such a block.
+
+## Additional resources
+
+- [IP pool](ippool.mdx)
+- [Use a specific IP address with a pod](../../networking/ipam/use-specific-ip.mdx)

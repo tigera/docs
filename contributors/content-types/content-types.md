@@ -49,6 +49,7 @@ See [How-to guides](https://diataxis.fr/how-to-guides/).
 Readers consult it rather than read it from start to finish.
 It follows the structure of the product and must be accurate and complete.
 It describes; it doesn't instruct or explain.
+Pages that describe one API resource follow a fixed structure, so that every resource page reads the same way.
 See [Reference](https://diataxis.fr/reference/).
 
 **Explanation.** An explanation page helps the reader understand a topic: how it works, why it's designed that way, and what the trade-offs and alternatives are.

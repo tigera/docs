@@ -99,7 +99,7 @@ Don't restructure an existing page to fit a content type unless the person asks 
 ### Choose a content type
 
 Every new page has one content type, chosen for what the reader is trying to do.
-Read [content-types.md](contributors/content-types/content-types.md) and choose a type: how-to, explanation, tutorial, reference, installation guide, or troubleshooting.
+Read [content-types.md](contributors/content-types/content-types.md) and choose a type from the ones it defines.
 If the request covers more than one type, such as steps plus a long explanation of how a feature works, suggest separate pages and ask before you write them.
 If you can't tell which type fits, ask.
 
