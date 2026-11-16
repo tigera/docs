@@ -718,6 +718,7 @@ module.exports = {
             'reference/resources/globalnetworkpolicy',
             'reference/resources/globalnetworkset',
             'reference/resources/hostendpoint',
+            'reference/resources/ipamblock',
             'reference/resources/ipamhandle',
             'reference/resources/ippool',
             'reference/resources/ipreservation',

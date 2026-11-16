@@ -1,0 +1,114 @@
+---
+description: Reference for the IPAMBlock resource in Calico Open Source that records which IP addresses in an IPAM block are assigned, and what holds each one.
+content_type: reference
+---
+
+{/*
+  As a platform engineer, I want the field-level definition of the IPAMBlock resource, so that I can read the blocks in my cluster when I check IP address assignments.
+*/}
+
+# IPAM block
+
+An IPAM block resource (`IPAMBlock`) represents one block of IP addresses that $[prodname] IP address management (IPAM) takes from an IP pool.
+A block can belong to one owner, such as a node.
+It lists every address in the block with the pod, tunnel, or service that holds it.
+`IPAMBlock` is a cluster-scoped resource.
+
+$[prodname] IPAM creates and manages these resources.
+You don't normally create or change them.
+To see the blocks in a cluster and how full each one is, use [`calicoctl ipam show --show-blocks`](../calicoctl/ipam/show.mdx).
+
+The `projectcalico.org/v3` version of this resource exists only when the cluster uses [native v3 CRDs](../../operations/native-v3-crds.mdx).
+In API server mode, which is the default, $[prodname] stores the same fields in the `ipamblocks.crd.projectcalico.org` resource.
+
+For `kubectl` commands, you can use the aliases `ipamblock.projectcalico.org`, `ipamblocks.projectcalico.org`, `ipamblock.p`, and `ipamblocks.p`.
+The `calicoctl get` command doesn't support this resource.
+
+## Definition
+
+### Metadata
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| name | The name of this IPAM block. $[prodname] builds it from the block's CIDR. For example, the block `192.168.83.128/26` has the name `192-168-83-128-26`. Required. | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string | |
+
+### Spec
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| cidr | The range of IP addresses in this block. Required. | A valid CIDR. | string | |
+| affinity | The owner of the block. A block that belongs to a node has the value `host:<node-name>`, where `<node-name>` is the name of the node. A block that holds addresses for `LoadBalancer` services has the value `virtual:load-balancer`. | `host:` or `virtual:`, followed by a name made of letters, digits, `.`, `-`, or `_`. | string | |
+| affinityClaimTime | The time when the owner claimed the block. | | date-time string | |
+| allocations | One entry for each address in the block, in order. The entry at position 0 is for the first address in the CIDR. A `null` entry means the address is free. Any other entry is the position, in `attributes`, of the item that describes what holds the address. Required. | | list of integers or `null` | |
+| unallocated | The positions of the free addresses in the block. $[prodname] IPAM assigns the address at the start of the list first and adds an address to the end of the list when it is released. Required. | | list of integers | |
+| attributes | One item for each assigned address. Each item describes what holds the address. Required. | | list of [AllocationAttribute](#allocationattribute) | |
+| sequenceNumber | A counter that $[prodname] IPAM increases each time it assigns or releases an address in the block. | | integer | `0` |
+| sequenceNumberForAllocation | The value of `sequenceNumber` when $[prodname] IPAM assigned each address. Each key is the position of the address in the block, written as a string. | | map of string to integer | |
+| deleted | Reserved for $[prodname] IPAM. Don't set it yourself. | `true`, `false` | boolean | |
+| strictAffinity _(deprecated)_ | Use `strictAffinity` in the [IPAM configuration](ipamconfig.mdx) resource instead. Required. | `true`, `false` | boolean | |
+
+### AllocationAttribute
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| handle_id | The ID of the IPAM handle that holds the address. | | string | |
+| secondary | Details of what holds the address. See [Owner details](#owner-details). | | map of string to string | |
+| alternateOwnerAttrs | A second set of owner details, in the same form as `secondary`. | | map of string to string | |
+
+## Owner details
+
+The keys in `secondary` depend on what holds the address.
+
+| What holds the address | Keys |
+| ---------------------- | ---- |
+| A pod | `namespace`, `node`, `pod`, `timestamp` |
+| A node's VXLAN tunnel | `node`, `type` with the value `vxlanTunnelAddress` |
+| A `LoadBalancer` service | `namespace`, `service`, `timestamp`, `type` with the value `LoadBalancer` |
+
+## Released addresses
+
+A released address is free immediately.
+Its entry in `allocations` becomes `null`, its item in `attributes` is removed, and its position goes to the end of `unallocated`.
+
+## Example
+
+This block is a `/30`, so it has four addresses.
+It belongs to the node `worker-1`.
+It holds the node's VXLAN tunnel address at position 0 and the address of the pod `web-1` at position 1.
+The other two addresses are free.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: IPAMBlock
+metadata:
+  name: 192-168-125-128-30
+spec:
+  cidr: 192.168.125.128/30
+  affinity: host:worker-1
+  affinityClaimTime: '2026-11-16T18:29:36Z'
+  allocations: [0, 1, null, null]
+  unallocated: [2, 3]
+  attributes:
+    - handle_id: vxlan-tunnel-addr-worker-1
+      secondary:
+        node: worker-1
+        type: vxlanTunnelAddress
+    - handle_id: k8s-pod-network.148c7078772919272c8d77eaf83edcaac1cdd83e1fffe01dae4f4ea311025c54
+      secondary:
+        namespace: default
+        node: worker-1
+        pod: web-1
+        timestamp: '2026-11-16 18:29:38.183279251 +0000 UTC'
+  sequenceNumber: 1794853776914978753
+  sequenceNumberForAllocation:
+    '0': 1794853776914978751
+    '1': 1794853776914978752
+  deleted: false
+  strictAffinity: false
+```
+
+## Additional resources
+
+- [Block affinity](blockaffinity.mdx)
+- [IPAM configuration](ipamconfig.mdx)
+- [IP pool](ippool.mdx)
