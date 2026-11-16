@@ -712,6 +712,7 @@ module.exports = {
             'reference/resources/bgpfilter',
             'reference/resources/blockaffinity',
             'reference/resources/caliconodestatus',
+            'reference/resources/clusterinformation',
             'reference/resources/datastoremigration',
             'reference/resources/felixconfig',
             'reference/resources/globalnetworkpolicy',
