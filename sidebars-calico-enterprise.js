@@ -647,6 +647,17 @@ module.exports = {
             'operations/ebpf/troubleshoot-ebpf',
           ],
         },
+        {
+          type: 'category',
+          label: 'Calico MCP server',
+          link: { type: 'doc', id: 'operations/calico-mcp/about' },
+          items: [
+            'operations/calico-mcp/requirements',
+            'operations/calico-mcp/install',
+            'operations/calico-mcp/use',
+            'operations/calico-mcp/tools-skills-options',
+          ],
+        },
         'operations/native-v3-crds',
         'operations/crd-migration',
         'operations/nftables',
