@@ -20,8 +20,6 @@ Start with "This affects you if", say what changed, then give the steps in the o
 Use a Breaking change admonition only when the upgrade breaks something unless the reader acts.
 */}
 
-{/* TODO: Add the "Hold Typha when upgrading from 3.22" note. Typha in 3.24 still rejects calico-node 3.22 and earlier. */}
-
 {/* 3.24 EP1 */}
 
 ## Calico Ingress Gateway proxies move namespace
@@ -169,3 +167,74 @@ The operator now exports license metrics and includes alerts for license expiry.
 
 3. If your dashboards or alerts use the license agent's metrics, such as `license_number_of_days`, update them to use the operator metrics.
    See [Operator metrics](../../../operations/monitor/metrics/operator-metrics.mdx).
+
+{/* 3.23 · tigera/docs#3146 */}
+
+## Hold Typha when upgrading from 3.22
+
+{/* TODO: Remove this section after the last 3.24 docs cut, when this tree starts to describe 3.25. 3.24 is the last release that 3.22 can upgrade to directly. */}
+
+:::warning[Breaking change]
+
+When you upgrade from 3.22, every calico-node pod restarts at the same time, and non-cluster hosts stop receiving policy updates, unless you hold Typha first.
+
+:::
+
+This affects you if you are upgrading from 3.22.
+If you are upgrading from 3.23, skip this note.
+
+From 3.23, Typha accepts connections only from calico-node 3.23 and later.
+A calico-node that has not been upgraded yet cannot get policy or routing updates from an upgraded Typha.
+This affects every cluster, and also any non-cluster hosts:
+
+- **Cluster nodes.**
+  By default the operator upgrades Typha first, so every calico-node pod loses its connection at once.
+  The pods all report not ready and are replaced together instead of one node at a time.
+  If you use BGP, each node's routes are withdrawn while it restarts.
+- **Non-cluster hosts.**
+  Hosts on 3.22 stop receiving policy updates until you upgrade them.
+
+To prevent this, hold Typha on 3.22 during the upgrade.
+A newer calico-node can connect to an older Typha, so calico-node rolls out one node at a time and non-cluster hosts stay connected.
+As soon as calico-node and your non-cluster hosts are upgraded, release Typha so the operator can upgrade it.
+Do not keep Typha on hold after the upgrade.
+
+:::tip
+
+If you use BGP with a short graceful restart time, such as `maxRestartTime: 10s`, consider raising it for the duration of the upgrade.
+
+:::
+
+1. **Before you upgrade**, stop the operator from upgrading Typha:
+
+   ```bash
+   kubectl annotate deployment calico-typha -n calico-system unsupported.operator.tigera.io/ignore=true
+   ```
+
+   If you have non-cluster hosts, also hold their Typha:
+
+   ```bash
+   kubectl annotate deployment calico-typha-noncluster-host -n calico-system unsupported.operator.tigera.io/ignore=true
+   ```
+
+2. Upgrade $[prodname], then wait for calico-node to finish rolling out:
+
+   ```bash
+   kubectl rollout status daemonset calico-node -n calico-system
+   ```
+
+3. If you have non-cluster hosts, upgrade the `calico-node` and `calico-fluent-bit` packages on each one.
+4. Release Typha so the operator upgrades it:
+
+   ```bash
+   kubectl annotate deployment calico-typha -n calico-system unsupported.operator.tigera.io/ignore-
+   ```
+
+   If you also held the non-cluster host Typha, release it too:
+
+   ```bash
+   kubectl annotate deployment calico-typha-noncluster-host -n calico-system unsupported.operator.tigera.io/ignore-
+   ```
+
+   The calico-node pods might report not ready briefly while they reconnect to the new Typha.
+   They do not restart, and BGP sessions stay up.
