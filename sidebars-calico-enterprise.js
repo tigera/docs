@@ -106,6 +106,7 @@ module.exports = {
               label: 'Upgrade Calico Enterprise',
               link: { type: 'doc', id: 'getting-started/upgrading/upgrading-enterprise/index' },
               items: [
+                'getting-started/upgrading/upgrading-enterprise/upgrade-notes',
                 {
                   type: 'category',
                   label: 'Kubernetes',
