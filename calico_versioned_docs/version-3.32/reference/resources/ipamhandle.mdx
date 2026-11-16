@@ -1,0 +1,61 @@
+---
+description: Reference for the IPAMHandle resource in Calico Open Source that records which IP address blocks hold the addresses assigned to one pod or tunnel.
+content_type: reference
+---
+
+{/*
+  As a platform engineer, I want the field-level definition of the IPAMHandle resource, so that I can read the handles in my cluster when I check IP address assignments.
+*/}
+
+# IPAM handle
+
+An IPAM handle resource (`IPAMHandle`) represents one group of IP addresses that $[prodname] IP address management (IPAM) assigned to the same owner, such as a pod.
+Each handle lists the IPAM blocks that hold its addresses, and how many addresses it holds in each block.
+`IPAMHandle` is a cluster-scoped resource.
+
+$[prodname] IPAM creates and manages these resources.
+You don't normally create or change them.
+To see the handle that holds an IP address, use [`calicoctl ipam show --ip=<ip-address>`](../calicoctl/ipam/show.mdx).
+
+The `projectcalico.org/v3` version of this resource exists only when the cluster uses [native v3 CRDs](../../operations/native-v3-crds.mdx).
+In API server mode, which is the default, $[prodname] stores the same fields in the `ipamhandles.crd.projectcalico.org` resource.
+
+For `kubectl` commands, you can use the aliases `ipamhandle.projectcalico.org`, `ipamhandles.projectcalico.org`, `ipamhandle.p`, and `ipamhandles.p`.
+The `calicoctl get` command doesn't support this resource.
+
+## Definition
+
+### Metadata
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| name | The name of this IPAM handle. $[prodname] sets it to the handle ID in lowercase. Required. | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string | |
+
+### Spec
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| handleID | The identifier of this handle. See [Handle IDs](#handle-ids). Required. | | string | |
+| block | The IPAM blocks that hold this handle's addresses. Each key is the CIDR of a block. Each value is the number of addresses the handle holds in that block. Required. | | map of string to integer | |
+| deleted | $[prodname] IPAM sets this field to `true` immediately before it deletes the handle. Don't set it yourself. | `true`, `false` | boolean | |
+
+## Handle IDs
+
+$[prodname] builds each handle ID from the owner of the addresses.
+For example:
+
+| Owner | Handle ID |
+| ----- | --------- |
+| A pod | `k8s-pod-network.<sandbox-id>`, where `<sandbox-id>` is the ID of the pod's sandbox in the container runtime |
+| A node's VXLAN tunnel address | `vxlan-tunnel-addr-<node-name>`, where `<node-name>` is the name of the node |
+| A `LoadBalancer` service address | `lb-<hash>`, where `<hash>` is a string of letters and digits that $[prodname] generates |
+
+$[prodname] creates the handle when it assigns the addresses, and deletes the handle when it releases them.
+For a pod, that is when the container runtime creates the pod's sandbox and when it stops the sandbox, for example when the pod is deleted or runs to completion.
+A pod that uses the host network has no handle.
+
+## Additional resources
+
+- [Block affinity](blockaffinity.mdx)
+- [IPAM configuration](ipamconfig.mdx)
+- [IP pool](ippool.mdx)
