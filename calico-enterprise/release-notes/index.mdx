@@ -188,7 +188,7 @@ You should consider migrating away from a deprecated feature before it is remove
 
 ## Upgrading
 
-Before upgrading to Calico Enterprise 3.24, review [Upgrade notes](#upgrade-notes), [Deprecated and removed features](#deprecated-and-removed-features), and Known issues.
+Before upgrading to Calico Enterprise 3.24, review [Upgrade notes](../getting-started/upgrading/upgrading-enterprise/upgrade-notes.mdx), [Deprecated and removed features](#deprecated-and-removed-features), and Known issues.
 
 ### Upgrade from a previous minor
 
@@ -199,60 +199,17 @@ For upgrade instructions, see [Upgrade Calico Enterprise](../getting-started/upg
 
 ### Upgrade notes
 
-This section collects the upgrade notes for this release while it is in early preview.
-Before general availability, they move to an upgrade notes page that you can review before any upgrade.
+For each change that needs action before, during, or after an upgrade, see [Upgrade notes](../getting-started/upgrading/upgrading-enterprise/upgrade-notes.mdx).
 
 {/*
-Add one #### subsection for each change that needs action before, during, or after an upgrade.
-Above each subsection, add a comment that names the release and the source PR, for example: 3.24 EP3 · tigera/operator#4910
-Say who the change affects, then give the steps in the order the reader does them.
-Use a Breaking change admonition only when the upgrade breaks something unless the reader acts.
+Add upgrade notes to the upgrade notes page in the same version tree as this page, not to this section.
+If the note also applies to upgrades to the next minor version, add it to the page in calico-enterprise/ too.
+If a note applies only from a patch release, say so in its first sentence, for example: This affects you if you upgrade to 3.24.2 or later.
+Add a #### subsection here only for a change that applies between early preview releases of 3.24.
+Before the first subsection, add this line: The following notes apply only if you upgrade from an earlier 3.24 early preview release.
+Above each subsection, add a comment that names the release and the source PR, as on the upgrade notes page.
+Remove the line and the subsections at general availability.
 */}
-
-{/* TODO: Add the "Hold Typha when upgrading from 3.22" note from 3.24.0-1.0 after its steps are ported to the next upgrade guides. */}
-
-#### Calico Ingress Gateway
-
-:::warning[Breaking change]
-
-Calico Ingress Gateway now runs each gateway's proxy in the same namespace as its `Gateway`, and the controller moves to `calico-system`.
-On upgrade, existing proxies move out of the `tigera-gateway` namespace into each Gateway's namespace, so anything pinned to `tigera-gateway` — network policy, monitoring, RBAC, and external DNS — must move with them.
-Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway gets its own load balancer.
-
-Migrate in this order:
-
-1. Before you upgrade, if you run a global default deny policy, create a network policy in each Gateway's namespace that allows the proxy pods, so they can start as soon as they move. For the policy, see [Create an ingress gateway](../networking/ingress-gateway/create-ingress-gateway.mdx).
-2. Upgrade $[prodname].
-3. After the upgrade, re-point monitoring, RBAC, and external DNS from `tigera-gateway` to each Gateway's namespace. If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
-
-:::
-
-#### License agent
-
-If you installed the license agent, delete it before or after you upgrade, and update any dashboards or alerts that use its metrics.
-Upgrading does not remove it.
-For the steps, see the upgrade guide for [the operator](../getting-started/upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/operator.mdx#license-agent), [Helm](../getting-started/upgrading/upgrading-enterprise/kubernetes-upgrade-tsee/helm.mdx#license-agent), or [OpenShift](../getting-started/upgrading/upgrading-enterprise/openshift-upgrade.mdx#license-agent).
-
-{/* 3.24 EP3 · tigera/operator#4910, calico-private#12538 */}
-
-#### Fluent Bit log collector
-
-:::warning[Breaking change]
-
-The log collector changes from Fluentd to Fluent Bit. The `tigera-fluentd` namespace is removed, and each item below needs action:
-
-- **Rewrite your log filters before you upgrade.** Flow and DNS log filters are no longer read from the `fluentd-filters` ConfigMap, and Fluentd filter syntax is not translated for you. Recreate your filters as Fluent Bit filter lists in a `fluent-bit-filters` ConfigMap. Until you do, logs ship unfiltered. See [Filter flow logs](../observability/elastic/flow/filtering.mdx) and [Filter DNS logs](../observability/elastic/dns/filtering-dns.mdx).
-- **Update anything that names the old resources.** Log collector resources move to `calico-system` and are renamed: the DaemonSet and container become `calico-fluent-bit`, or `calico-fluent-bit-windows` on Windows nodes, and the TLS secret becomes `calico-fluent-bit-tls`. Commands such as `kubectl logs -c fluentd` no longer work.
-- **Re-point your dashboards, alerts, and scrape configuration.** Log collector metrics are now Fluent Bit's own Prometheus metrics, with `fluentbit_` names on plain HTTP port 2020, in place of `fluentd_` names on the mTLS endpoint on port 9081. The metrics services are renamed to `calico-fluent-bit-metrics` and `calico-fluent-bit-metrics-windows`, and the pod label is now `k8s-app: calico-fluent-bit`. See [Elasticsearch and Fluent Bit metrics](../operations/monitor/metrics/elasticsearch-and-fluentd-metrics.mdx) and [Bring your own Prometheus](../operations/monitor/prometheus/byo-prometheus.mdx).
-- **Update tooling that reads archived logs from S3.** The object keys change from a flat layout to one directory per log type, and flows from non-cluster hosts get their own directory. See [Archive logs](../observability/archive-storage.mdx).
-- **Check your EKS log forwarder overrides.** The deployment no longer runs an `eks-log-forwarder-startup` init container, so overrides that target it by name no longer apply. See [Configure resource requests and limits](../reference/component-resources/configure-resources.mdx).
-
-:::
-
-Two defaults also change:
-
-- Logs are buffered on each node's filesystem instead of in memory. Logs that have not been delivered yet survive a restart of the collector, and node disk usage grows accordingly. See [Log collection overview](../observability/elastic/overview.mdx).
-- When `spec.additionalStores.syslog.packetSize` is unset, the maximum syslog message size is 2048 bytes rather than Fluentd's 1024, so fewer long log lines are truncated. See [Archive logs](../observability/archive-storage.mdx).
 
 ## Release details
 

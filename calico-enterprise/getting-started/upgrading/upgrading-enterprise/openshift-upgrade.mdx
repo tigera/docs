@@ -40,7 +40,8 @@ using the operator.
 
 ## Prepare your cluster for the upgrade
 
-Before you start, review the [upgrade notes](upgrade-notes.mdx) for changes in each release that need your attention.
+Before you start, review the [upgrade notes](upgrade-notes.mdx).
+They list the changes that need action before, during, or after the upgrade.
 
 During upgrade, the $[prodname] LogStorage CR is temporarily removed so Elasticsearch can be upgraded. Features
 that depend on LogStorage are temporarily unavailable, including dashboards in the web console. Data ingestion is paused
@@ -50,40 +51,6 @@ To retain data from your current installation (optional), ensure that the curren
 have their reclaim policy set to [retain data](https://kubernetes.io/docs/tasks/administer-cluster/change-pv-reclaim-policy/).
 Data retention is recommended only for users that have a valid Elasticsearch license. (Trial licenses can be invalidated
 during upgrade).
-
-### Compliance
-
-The Compliance feature is removed in this release. Delete the Compliance resource before you upgrade, so that Kubernetes garbage collects the compliance deployments, service accounts, and RBAC that it owns.
-
-```bash
-oc delete compliance tigera-secure
-```
-
-If you manage $[prodname] resources with GitOps tooling, remove the Compliance resource from your source manifests as well. Otherwise the tooling recreates it after you upgrade.
-
-If you receive an error indicating the resource or resource type does not exist, Compliance was not installed in your cluster. You can safely ignore the error and proceed.
-
-### License agent
-
-{/* TODO: Remove this section when 3.26 is cut. 3.23 is the last release with the license agent, and 3.25 is the last release that 3.23 can upgrade to directly. */}
-
-The license agent is removed in this release.
-If you installed the license agent, delete it before or after you upgrade.
-Upgrading does not remove it, and it no longer receives updates or security fixes.
-
-```bash
-oc delete -f https://downloads.tigera.io/ee/v3.23.2/manifests/licenseagent.yaml --ignore-not-found
-```
-
-This command works for any version you upgrade from.
-It deletes the `tigera-license-agent` namespace and everything in it, the agent's cluster role and cluster role binding, and its ServiceMonitor in the `tigera-prometheus` namespace.
-
-The operator now exports license metrics and includes alerts for license expiry.
-If your dashboards or alerts use the license agent's metrics, such as `license_number_of_days`, update them to use the operator metrics.
-For more information, see [Operator metrics](../../../operations/monitor/metrics/operator-metrics.mdx).
-
-If you manage the license agent with GitOps tooling, remove it from your source manifests as well.
-Otherwise the tooling recreates it after you upgrade.
 
 ### Upgrade OwnerReferences
 
