@@ -1,0 +1,171 @@
+---
+description: Changes in each Calico Enterprise release that need your attention before, during, or after an upgrade, with the action to take for each one.
+content_type: unclassified
+---
+
+# Upgrade notes
+
+Review this page before you upgrade.
+It lists the changes that alter behavior you might depend on, and says who each one affects and what to do about it.
+A note applies to every upgrade to $[prodname] 3.24 unless it says otherwise.
+Do the **Before you upgrade** steps in every note that affects you, then upgrade once.
+
+The cluster commands on this page use `kubectl`.
+On OpenShift, use `oc` instead.
+
+{/*
+Add one ## section for each change that needs action before, during, or after an upgrade.
+Above each section, add a comment that names the release and the source PR, for example: 3.24 EP3 · tigera/operator#4910
+Start with "This affects you if", say what changed, then give the steps in the order the reader does them.
+Use a Breaking change admonition only when the upgrade breaks something unless the reader acts.
+*/}
+
+{/* TODO: Add the "Hold Typha when upgrading from 3.22" note. Typha in 3.24 still rejects calico-node 3.22 and earlier. */}
+
+{/* 3.24 EP1 */}
+
+## Calico Ingress Gateway proxies move namespace
+
+:::warning[Breaking change]
+
+Gateway proxies move namespace on upgrade, and merged gateways are no longer supported.
+
+:::
+
+This affects you if you use Calico Ingress Gateway.
+
+Each gateway's proxy now runs in the same namespace as its Gateway, and the controller moves to `calico-system`.
+Existing proxies move out of the `tigera-gateway` namespace, so anything pinned to `tigera-gateway` stops matching them.
+That includes network policy, monitoring, RBAC, and external DNS.
+Merged gateways (`mergeGateways: true`) are no longer supported, so each gateway gets its own load balancer.
+
+1. **Before you upgrade**, if you run a global default deny policy, create a network policy in each Gateway's namespace that allows the proxy pods, so they can start as soon as they move.
+   For the policy, see [Create an ingress gateway](../../../networking/ingress-gateway/create-ingress-gateway.mdx).
+2. Upgrade $[prodname].
+3. Re-point network policy, monitoring, RBAC, and external DNS from `tigera-gateway` to each Gateway's namespace.
+   If you used merged gateways, plan for one load balancer, DNS record, and certificate per gateway.
+
+{/* 3.24 EP3 · tigera/operator#4910, calico-private#12538 */}
+
+## Fluent Bit replaces Fluentd as the log collector
+
+:::warning[Breaking change]
+
+Fluentd log filters stop working on upgrade, and the log collector's resources, metrics, and S3 object keys are renamed.
+
+:::
+
+This affects you if your cluster has a LogCollector resource.
+
+The log collector changes from Fluentd to Fluent Bit.
+The `tigera-fluentd` namespace is removed, and the log collector now runs in `calico-system`.
+Fluentd filter syntax is not translated for you, so logs ship unfiltered until you recreate your filters.
+
+1. **Before you upgrade**, if you filter flow or DNS logs, recreate your filters as Fluent Bit filter lists in a `fluent-bit-filters` ConfigMap in the `tigera-operator` namespace.
+   Filters are no longer read from the `fluentd-filters` ConfigMap.
+   See [Filter flow logs](../../../observability/elastic/flow/filtering.mdx) and [Filter DNS logs](../../../observability/elastic/dns/filtering-dns.mdx).
+2. **Before you upgrade**, if you installed the `calico-selinux` policy package on RHEL nodes, follow [RHEL nodes need `calico-selinux` 1.2](#rhel-nodes-need-calico-selinux-12).
+3. Upgrade $[prodname].
+4. Update anything that names the old resources.
+   The DaemonSet and container become `calico-fluent-bit`, or `calico-fluent-bit-windows` on Windows nodes, and the TLS secret becomes `calico-fluent-bit-tls`.
+   Commands such as `kubectl logs -c fluentd` no longer work.
+5. Re-point your dashboards, alerts, and scrape configuration.
+   Log collector metrics are now Fluent Bit's own Prometheus metrics, with `fluentbit_` names on plain HTTP port 2020, in place of `fluentd_` names on the mTLS endpoint on port 9081.
+   The metrics services are renamed to `calico-fluent-bit-metrics` and `calico-fluent-bit-metrics-windows`, and the pod label is now `k8s-app: calico-fluent-bit`.
+   See [Elasticsearch and Fluent Bit metrics](../../../operations/monitor/metrics/elasticsearch-and-fluentd-metrics.mdx) and [Bring your own Prometheus](../../../operations/monitor/prometheus/byo-prometheus.mdx).
+6. Update tooling that reads archived logs from S3.
+   The object keys change from a flat layout to one directory per log type, and flows from non-cluster hosts get their own directory.
+   See [Archive logs](../../../observability/archive-storage.mdx).
+7. Check your EKS log forwarder overrides.
+   The deployment no longer runs an `eks-log-forwarder-startup` init container, so overrides that target it by name no longer apply.
+   See [Configure resource requests and limits](../../../reference/component-resources/configure-resources.mdx).
+
+Two defaults also change:
+
+- Logs are buffered on each node's filesystem instead of in memory.
+  Logs that have not been delivered yet survive a restart of the collector, and node disk usage grows accordingly.
+  See [Log collection overview](../../../observability/elastic/overview.mdx).
+- When `spec.additionalStores.syslog.packetSize` is unset, the maximum syslog message size is 2048 bytes rather than Fluentd's 1024, so fewer long log lines are truncated.
+  See [Archive logs](../../../observability/archive-storage.mdx).
+
+{/* 3.24 EP3 · tigera/docs#3070 */}
+
+## RHEL nodes need `calico-selinux` 1.2
+
+:::warning[Breaking change]
+
+On RHEL nodes with an old `calico-selinux` package, the log collector crash-loops after the upgrade.
+
+:::
+
+This affects you if you installed the `calico-selinux` policy package on RHEL nodes.
+To check whether a node has the package, run `rpm -q calico-selinux`.
+
+With versions of the package older than 1.1, SELinux stops the log collector from mapping its files under `/var/log/calico`, and the `calico-fluent-bit` pods crash-loop after the upgrade.
+The `calico-selinux` 1.2 package has no RHEL 8 build.
+
+1. **Before you upgrade**, move any RHEL 8 nodes that have the package to RHEL 9 or RHEL 10.
+2. **Before you upgrade**, install version 1.2 of the package on each node that has it.
+
+   On RHEL 9 nodes, run:
+
+   ```bash
+   dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.2-1.el9.noarch.rpm
+   ```
+
+   On RHEL 10 nodes, run:
+
+   ```bash
+   dnf install https://downloads.tigera.io/ee/archives/calico-selinux-1.2-1.el10.noarch.rpm
+   ```
+
+3. Upgrade $[prodname].
+
+{/* 3.24 */}
+
+## Compliance is removed
+
+This affects you if your cluster has a Compliance resource.
+
+The Compliance feature is removed in $[prodname] 3.24.
+Upgrading does not remove the compliance deployments, service accounts, and RBAC.
+Kubernetes garbage collects them when you delete the Compliance resource that owns them.
+
+1. **Before you upgrade**, if you manage $[prodname] resources with GitOps tooling, remove the Compliance resource from your source manifests.
+   Otherwise the tooling recreates it.
+2. **Before you upgrade**, delete the Compliance resource:
+
+   ```bash
+   kubectl delete compliance tigera-secure
+   ```
+
+   An error that says the resource or resource type does not exist means Compliance was not installed.
+   You can ignore it.
+
+3. Upgrade $[prodname].
+
+{/* 3.24 · tigera/docs#3148 */}
+
+## License agent is removed
+
+{/* TODO: Remove this section when 3.26 is cut. 3.23 is the last release with the license agent, and 3.25 is the last release that 3.23 can upgrade to directly. */}
+
+This affects you if you installed the license agent.
+
+The license agent is removed in $[prodname] 3.24.
+Upgrading does not remove it, and it no longer receives updates or security fixes.
+The operator now exports license metrics and includes alerts for license expiry.
+
+1. If you manage the license agent with GitOps tooling, remove it from your source manifests.
+   Otherwise the tooling recreates it.
+2. Delete the license agent, before or after you upgrade:
+
+   ```bash
+   kubectl delete -f https://downloads.tigera.io/ee/v3.23.2/manifests/licenseagent.yaml --ignore-not-found
+   ```
+
+   This command works for any version you upgrade from.
+   It deletes the `tigera-license-agent` namespace and everything in it, the agent's cluster role and cluster role binding, and its ServiceMonitor in the `tigera-prometheus` namespace.
+
+3. If your dashboards or alerts use the license agent's metrics, such as `license_number_of_days`, update them to use the operator metrics.
+   See [Operator metrics](../../../operations/monitor/metrics/operator-metrics.mdx).
