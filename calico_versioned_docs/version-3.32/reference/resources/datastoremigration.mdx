@@ -1,0 +1,118 @@
+---
+description: Reference for the DatastoreMigration resource in Calico Open Source that starts a migration from API server mode to native v3 CRDs and reports its progress.
+content_type: reference
+---
+
+{/*
+  As a platform engineer, I want the field-level definition of the DatastoreMigration resource, so that I can start a migration to native v3 CRDs and read its status while it runs.
+*/}
+
+# Datastore migration
+
+A datastore migration resource (`DatastoreMigration`) represents one migration of $[prodname] resources from `crd.projectcalico.org/v1` CRDs to native `projectcalico.org/v3` CRDs.
+You create the resource to start the migration, read its status to follow the migration, and delete it when the migration is complete.
+`DatastoreMigration` is a cluster-scoped resource.
+
+For the steps, see [Migrate from API server to native CRDs](../../operations/crd-migration.mdx).
+
+This resource is in the `migration.projectcalico.org` API group, not in `projectcalico.org`.
+Its CRD is not part of a $[prodname] installation.
+You install the CRD as a step in the migration.
+The API version is `migration.projectcalico.org/v1beta1`.
+
+For `kubectl` commands, you can use the names `datastoremigration`, `datastoremigrations`, `datastoremigration.migration.projectcalico.org`, and `datastoremigrations.migration.projectcalico.org`.
+This resource is not supported in calicoctl.
+
+## Sample YAML
+
+This sample starts a migration from API server mode to native v3 CRDs.
+
+```yaml
+apiVersion: migration.projectcalico.org/v1beta1
+kind: DatastoreMigration
+metadata:
+  name: v1-to-v3
+spec:
+  type: APIServerToCRDs
+```
+
+## Definition
+
+### Metadata
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| name | The name of this datastore migration. $[prodname] ignores a datastore migration with any other name than `v1-to-v3`. Required. | `v1-to-v3` | string | |
+
+### Spec
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| type | The migration to run. Required. | `APIServerToCRDs` | string | |
+
+### DatastoreMigrationProgress
+
+$[prodname] leaves out a counter when its value is zero.
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| totalTypes | The number of resource kinds to migrate. | | integer | |
+| completedTypes | The number of resource kinds that are done. | | integer | |
+| typeProgress | A summary of `completedTypes` and `totalTypes`, such as `5 / 21`. | | string | |
+| currentType | The resource kind that is being migrated now. | | string | |
+| total | The number of resources processed so far, across all kinds. | | integer | |
+| migrated | The number of resources copied to the v3 CRDs. | | integer | |
+| skipped | The number of resources that were already in the v3 CRDs with the same content. | | integer | |
+| conflicts | The number of resources that were already in the v3 CRDs with different content. | | integer | |
+| typeDetails | The result for each resource kind. | | list of [TypeMigrationProgress](#typemigrationprogress) | |
+
+### TypeMigrationProgress
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| kind | The resource kind, such as `NetworkPolicy`. Required. | | string | |
+| migrated | The number of resources of this kind copied to the v3 CRDs. | | integer | |
+| skipped | The number of resources of this kind that were already in the v3 CRDs with the same content. | | integer | |
+| conflicts | The number of resources of this kind that were already in the v3 CRDs with different content. | | integer | |
+
+### Status
+
+$[prodname] kube-controllers writes the status.
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| phase | The phase of the migration. $[prodname] sets it to `Pending`, `Migrating`, `WaitingForConflictResolution`, `Converged`, `Complete`, or `Failed`. See [Phases](#phases). | | string | |
+| message | What the migration is doing now, or what it is waiting for. | | string | |
+| datastoreLockedAt | The time when the migration locked the datastore. | | date-time string | |
+| startedAt | The time when the phase became `Migrating`. | | date-time string | |
+| completedAt | The time when the phase became `Complete`. | | date-time string | |
+| progress | Counters for the migration as a whole and for each resource kind. | | [DatastoreMigrationProgress](#datastoremigrationprogress) | |
+| conditions | Conflicts and errors found during the migration. A migration with no conflicts or errors has no conditions. | | list of [Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#condition-v1-meta) | |
+
+## Phases
+
+A migration with no conflicts goes through these phases in order.
+
+| Phase | What happens |
+| ----- | ------------ |
+| Not set | $[prodname] adds the finalizer `migration.projectcalico.org/v1-crd-cleanup` to the resource and locks the datastore. The message is `Waiting for in-flight datastore writes to drain`. |
+| `Migrating` | $[prodname] copies resources to the v3 CRDs, one kind at a time. `progress` shows the kind and the counts. |
+| `Converged` | All resources are copied. The migration waits for the $[prodname] components to switch to the `projectcalico.org/v3` API group. The message says what it is waiting for. |
+| `Complete` | The migration is finished. |
+
+For the `WaitingForConflictResolution` phase, see [Resolve conflicts](../../operations/crd-migration.mdx#resolve-conflicts).
+
+A migration that can't run has the phase `Failed`, and a condition of the type `Failed` with the reason `MigrationError`.
+For example, a datastore migration on a cluster that has no `crd.projectcalico.org` CRDs fails with the message `no v1 CRDs (crd.projectcalico.org) found - nothing to migrate`.
+
+## Deletion
+
+When you delete a datastore migration whose phase is `Complete`, $[prodname] deletes all the `crd.projectcalico.org` CRDs and the data in them.
+
+When you delete a datastore migration while the phase is not set, the migration stops and the `crd.projectcalico.org` CRDs stay.
+For deletion in other phases, see [Abort a migration](../../operations/crd-migration.mdx#abort-a-migration).
+
+## Additional resources
+
+- [Migrate from API server to native CRDs](../../operations/crd-migration.mdx)
+- [Enable native v3 CRDs](../../operations/native-v3-crds.mdx)
