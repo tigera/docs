@@ -15,11 +15,13 @@ It lists every address in the block with the pod, tunnel, or service that holds 
 `IPAMBlock` is a cluster-scoped resource.
 
 $[prodname] IPAM creates and manages these resources.
-You don't normally create or change them.
+You don't normally create or change them yourself.
 To see the blocks in a cluster and how full each one is, use [`calicoctl ipam show --show-blocks`](../calicoctl/ipam/show.mdx).
 
-The `projectcalico.org/v3` version of this resource exists only when the cluster uses [native v3 CRDs](../../operations/native-v3-crds.mdx).
-In API server mode, $[prodname] stores the same fields in the `ipamblocks.crd.projectcalico.org` resource.
+This resource is in the `projectcalico.org/v3` API only when the cluster uses [native v3 CRDs](../../operations/native-v3-crds.mdx).
+The $[prodname] API server doesn't serve it.
+In API server mode, read the `ipamblocks.crd.projectcalico.org` resource instead.
+It has the same fields.
 
 For `kubectl` commands, you can use the aliases `ipamblock.projectcalico.org`, `ipamblocks.projectcalico.org`, `ipamblock.p`, and `ipamblocks.p`.
 The `calicoctl get` command doesn't support this resource.
@@ -41,7 +43,7 @@ The `calicoctl get` command doesn't support this resource.
 | affinityClaimTime | The time when the owner claimed the block. | | date-time string | |
 | allocations | One entry for each address in the block, in order. The entry at position 0 is for the first address in the CIDR. A `null` entry means the address is free. Any other entry is the position, in `attributes`, of the item that describes what holds the address. Required. | | list of integers or `null` | |
 | unallocated | The positions of the free addresses in the block. $[prodname] IPAM assigns the address at the start of the list first and adds an address to the end of the list when it is released. Required. | | list of integers | |
-| attributes | One item for each assigned address. Each item describes what holds the address. Required. | | list of [AllocationAttribute](#allocationattribute) | |
+| attributes | One item for each assigned address, and one for each released address that waits to be reused. Each item describes what holds the address. Required. | | list of [AllocationAttribute](#allocationattribute) | |
 | sequenceNumber | A counter that $[prodname] IPAM increases each time it assigns or releases an address in the block. | | integer | `0` |
 | sequenceNumberForAllocation | The value of `sequenceNumber` when $[prodname] IPAM assigned each address. Each key is the position of the address in the block, written as a string. | | map of string to integer | |
 | deleted | Reserved for $[prodname] IPAM. Don't set it yourself. | `true`, `false` | boolean | |
