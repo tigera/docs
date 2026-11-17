@@ -11,6 +11,8 @@ content_type: reference
 
 A datastore migration resource (`DatastoreMigration`) represents one migration of $[prodname] resources from `crd.projectcalico.org/v1` CRDs to native `projectcalico.org/v3` CRDs.
 You create the resource to start the migration, read its status to follow the migration, and delete it when the migration is complete.
+The only values you set are the name and `spec.type`.
+$[prodname] sets every value in the status, and you only read them.
 `DatastoreMigration` is a cluster-scoped resource.
 
 For the steps, see [Migrate from API server to native CRDs](../../operations/crd-migration.mdx).
@@ -53,6 +55,8 @@ spec:
 
 ### DatastoreMigrationProgress
 
+These fields are part of the status.
+You read them, and you don't set them.
 $[prodname] leaves out a counter when its value is zero.
 
 | Field | Description | Accepted Values | Schema | Default |
@@ -69,6 +73,9 @@ $[prodname] leaves out a counter when its value is zero.
 
 ### TypeMigrationProgress
 
+These fields are part of the status.
+You read them, and you don't set them.
+
 | Field | Description | Accepted Values | Schema | Default |
 | ----- | ----------- | --------------- | ------ | ------- |
 | kind | The resource kind, such as `NetworkPolicy`. Required. | Up to 253 characters. | string | |
@@ -79,6 +86,7 @@ $[prodname] leaves out a counter when its value is zero.
 ### Status
 
 $[prodname] kube-controllers writes the status.
+You read these fields, and you don't set them.
 
 | Field | Description | Accepted Values | Schema | Default |
 | ----- | ----------- | --------------- | ------ | ------- |
@@ -100,6 +108,9 @@ A migration with no conflicts goes through these phases in order.
 | `Migrating` | $[prodname] copies resources to the v3 CRDs, one kind at a time. `progress` shows the kind and the counts. |
 | `Converged` | All resources are copied. The migration waits for the $[prodname] components to switch to the `projectcalico.org/v3` API group. The message says what it is waiting for. |
 | `Complete` | The migration is finished. |
+
+`Pending` is an accepted value, but a migration with no conflicts doesn't show it.
+The phase is not set until it becomes `Migrating`.
 
 For the `WaitingForConflictResolution` phase, see [Resolve conflicts](../../operations/crd-migration.mdx#resolve-conflicts).
 
