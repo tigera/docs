@@ -1,0 +1,261 @@
+---
+description: Check the Sigstore signatures on Calico Enterprise images, Helm charts, and release files with cosign, for a whole release or for one artifact.
+content_type: how-to
+---
+
+{/*
+  As a cluster operator, I want to check that the $[prodname] artifacts I install are the ones Tigera published, so that I don't run images or files that someone else built or changed.
+*/}
+
+# Verify release artifacts
+
+Each $[prodname] release is signed with [Sigstore](https://www.sigstore.dev/).
+Check the signatures to confirm that the images, charts, and files you install are the ones Tigera published, unchanged.
+You can check a whole release with one script, or check one image or file at a time with `cosign`.
+
+## What is signed
+
+| Artifact | Where it's published | Where its signature is |
+| --- | --- | --- |
+| Container images | `quay.io/tigera` | In the registry, attached to the image digest as an OCI referrer |
+| Helm charts | `quay.io/tigera`, as OCI artifacts | In the registry, attached to the chart digest |
+| Carvel package bundles | `quay.io/tigera` | In the registry, attached to the bundle digest |
+| Release files, such as the release archive and packages | `downloads.tigera.io` | A Sigstore bundle at the file's URL plus `.sigstore.json` |
+| The $[prodnameWindows] archive | Available from Tigera support | A Sigstore bundle at `$[filesUrl]/<file-name>.sigstore.json` |
+| `metadata.yaml`, which lists every artifact with its digest or SHA-256 hash | `$[filesUrl]/` | `$[filesUrl]/metadata.yaml.sigstore.json` |
+| `verify.sh`, which checks the whole release | `$[filesUrl]/` | `$[filesUrl]/verify.sh.sigstore.json` |
+
+Images, charts, and bundles are signed by digest, not by tag.
+The index files of the RPM and Debian package repositories are signed with GPG only, and `dnf` and `apt` check those signatures.
+
+A release that has no `$[filesUrl]/verify.sh` isn't signed.
+
+## Before you begin
+
+- Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/) v3 or later.
+  `verify.sh` stops with an error if it finds an earlier version.
+- Allow outbound HTTPS to Sigstore.
+  cosign downloads the Sigstore trust root from `tuf-repo-cdn.sigstore.dev` before it checks a signature.
+- To check images, charts, or bundles, log in to `quay.io` with the credentials in your $[prodname] pull secret.
+  cosign reads registry credentials from your Docker config file.
+  If you don't use `docker login`, save the pull secret as `config.json` in an empty directory and set `DOCKER_CONFIG` to that directory.
+- To check files with `verify.sh`, have `curl` and either `sha256sum` or `shasum` installed.
+
+## Signing identity
+
+Every signature names the identity that created it.
+Accept a signature only when it matches this identity and issuer exactly:
+
+| Field | Value | cosign flag |
+| --- | --- | --- |
+| Identity | `signer@<release-project>.iam.gserviceaccount.com` | `--certificate-identity` |
+| Issuer | `https://accounts.google.com` | `--certificate-oidc-issuer` |
+
+{/* TODO(DE-4745): replace <release-project> with the release signing project ID before this page merges. */}
+
+Don't use `--certificate-identity-regexp`.
+A pattern can match an identity that Tigera doesn't control.
+
+To confirm these values from a second source, ask Tigera support.
+
+The commands on this page read the values from two shell variables.
+Set them first:
+
+```bash
+IDENTITY=signer@<release-project>.iam.gserviceaccount.com
+ISSUER=https://accounts.google.com
+```
+
+## Verify a whole release
+
+`verify.sh` is generated for each release and lists every artifact in it.
+It checks each artifact's signature against the signing identity, and checks each file's SHA-256 hash against the release.
+The script can't vouch for itself, so check its signature with cosign before you run it.
+
+1. Download `verify.sh` and its bundle:
+
+   ```bash
+   curl -fsSLO $[filesUrl]/verify.sh
+   curl -fsSLO $[filesUrl]/verify.sh.sigstore.json
+   ```
+
+1. Check the signature of `verify.sh`:
+
+   ```bash
+   cosign verify-blob --certificate-identity "$IDENTITY" \
+       --certificate-oidc-issuer "$ISSUER" \
+       --bundle verify.sh.sigstore.json verify.sh
+   ```
+
+   If this command fails, don't run the script.
+   See [`verify.sh` fails its own check](#verifysh-fails-its-own-check).
+
+1. Run the script:
+
+   ```bash
+   bash verify.sh
+   ```
+
+   The output is similar to the following:
+
+   ```
+   Checking Calico Enterprise <version> against identity signer@<release-project>.iam.gserviceaccount.com, issuer https://accounts.google.com
+   PASS  images   quay.io/tigera/cnx-node
+   PASS  images   quay.io/tigera/operator
+   ...
+   PASS  files    <file-name>
+   SKIP  files    <windows-archive>: not available for download; request it from Tigera support and pass its folder with --files-dir
+
+   52 passed, 0 failed, 1 skipped
+   ```
+
+   The script exits with status 0 only if every artifact it checked passed.
+
+### Check part of a release
+
+To check only the artifacts you use, pass a category, a name, or both.
+
+- To list the category and name of every artifact, run `bash verify.sh --list`.
+- To check one or more categories, pass `--only` with a comma-separated list of `images`, `charts`, `bundles`, and `files`:
+
+  ```bash
+  bash verify.sh --only images,charts
+  ```
+
+- To check named artifacts, pass the names that `--list` prints:
+
+  ```bash
+  bash verify.sh quay.io/tigera/cnx-node quay.io/tigera/operator
+  ```
+
+- To check files you already downloaded, pass the directory that holds them with `--files-dir <directory>`.
+  The script reads each file from `<directory>` instead of downloading it.
+  If `<directory>` also holds the file's `.sigstore.json` bundle, the script uses that bundle.
+  This is the only way to check the $[prodnameWindows] archive.
+- To change how many artifacts the script checks at once, pass `--jobs <number>`.
+  The default is 4.
+
+A name that matches no artifact is an error, not a pass.
+When you name an artifact or a category, the script reports an artifact it can't check as a failure, not a skip.
+
+## Verify one image, chart, or bundle
+
+Check an image by its digest, and deploy it by the same digest.
+A tag can be moved to a different image after you check it.
+
+1. Download `metadata.yaml` and its bundle, and check the signature:
+
+   ```bash
+   curl -fsSLO $[filesUrl]/metadata.yaml
+   curl -fsSLO $[filesUrl]/metadata.yaml.sigstore.json
+   cosign verify-blob --certificate-identity "$IDENTITY" \
+       --certificate-oidc-issuer "$ISSUER" \
+       --bundle metadata.yaml.sigstore.json metadata.yaml
+   ```
+
+1. In `metadata.yaml`, find the `image` and `digest` of the artifact you want to check.
+   Images are under `components`, Helm charts are under `charts.entries`, and Carvel bundles are under `carvel`.
+   An image entry looks like this:
+
+   ```yaml
+   components:
+     <component>:
+       version: <version>
+       image: quay.io/tigera/<image>:<version>
+       digest: sha256:<digest>
+   ```
+
+1. Check the signature, where `<repository>` is the `image` value without its tag, and `<digest>` is the `digest` value without the `sha256:` prefix:
+
+   ```bash
+   cosign verify --certificate-identity "$IDENTITY" \
+       --certificate-oidc-issuer "$ISSUER" \
+       <repository>@sha256:<digest>
+   ```
+
+   cosign prints the checks it ran and the signature payload, and exits with status 0.
+
+## Verify one file
+
+1. Download the file and its bundle, where `<file-url>` is the file's `url` in the `artifacts` list of `metadata.yaml`:
+
+   ```bash
+   curl -fsSLO <file-url>
+   curl -fsSLO <file-url>.sigstore.json
+   ```
+
+   For the $[prodnameWindows] archive, get the archive from Tigera support, and download its bundle from `$[filesUrl]/<file-name>.sigstore.json`.
+
+1. Check the signature, where `<file-name>` is the name of the file you downloaded:
+
+   ```bash
+   cosign verify-blob --certificate-identity "$IDENTITY" \
+       --certificate-oidc-issuer "$ISSUER" \
+       --bundle <file-name>.sigstore.json <file-name>
+   ```
+
+   The command exits with status 0 when the signature matches.
+
+## Troubleshooting
+
+`verify.sh` exits with status 1 when any artifact fails, or when none passes.
+It exits with status 2 when an option is wrong or a tool it needs is missing.
+After the summary line, it prints the reason for each failure.
+
+If an artifact fails its signature check, don't install it.
+First, check that `IDENTITY` and `ISSUER` match the [signing identity](#signing-identity) exactly.
+
+### `verify.sh` fails its own check
+
+The `cosign verify-blob` command for `verify.sh` exits with an error.
+
+**Cause:** The script or its bundle isn't the one Tigera published, or the download didn't finish.
+
+**Fix:**
+
+1. Download `verify.sh` and `verify.sh.sigstore.json` again from `$[filesUrl]/`, and check the signature again.
+1. If it still fails, don't run the script, and contact Tigera support.
+
+### `FAIL` with a reason under `Failures`
+
+The artifact's line says `FAIL`, and the `Failures` section shows the error from cosign.
+
+**Cause:** The artifact has no signature from the signing identity.
+It isn't the artifact Tigera published, or it was changed after it was signed.
+
+**Fix:** Don't install the artifact, and contact Tigera support.
+
+### `sha256 is <hash>, the release lists <hash>`
+
+**Cause:** The file you have differs from the file in the release.
+The download was cut short, or the file was changed.
+
+**Fix:** Download the file again from its URL in `metadata.yaml`.
+If the hash still differs, don't use the file, and contact Tigera support.
+
+### `registry access denied`
+
+**Cause:** cosign couldn't read the image from the registry, because you aren't logged in or your credentials don't give access to it.
+
+**Fix:** Log in to the registry the summary names, as described in [Before you begin](#before-you-begin), and run the script again.
+To skip images, charts, and bundles, run `bash verify.sh --only files`.
+
+### `Sigstore trust root not loaded`
+
+**Cause:** cosign couldn't download the Sigstore trust root.
+
+**Fix:** Check that your machine can reach `tuf-repo-cdn.sigstore.dev` over HTTPS, and run the script again.
+
+### `cosign <version> is too old, need v3 or later`
+
+**Fix:** Install cosign v3 or later, and run the script again.
+
+### `SKIP` for the $[prodnameWindows] archive
+
+**Cause:** The archive isn't available for public download, so the script can't fetch it.
+
+**Fix:** Request the archive from Tigera support, put it in a directory, and run the script with `--files-dir <directory>`.
+
+## Additional resources
+
+- [Verify signatures with cosign](https://docs.sigstore.dev/cosign/verifying/verify/)
