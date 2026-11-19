@@ -179,6 +179,10 @@ Spell the product name out, with no variable, in these places:
 Don't repeat the product name in every sentence.
 Once the page has said what it's about, say *it*.
 
+Don't join a product name variable to another word with a hyphen.
+`$[prodname]-advertised routes` renders as "Calico Enterprise-advertised routes", which is hard to read.
+Write "routes that `$[prodname]` advertises", or leave the name out when the page has already said which product it's about.
+
 Shared text lives in partials under `_includes/`, and shared components are registered in `src/theme/MDXComponents.js`.
 Use a partial when three or more pages need the same paragraph.
 Don't use one to hide a paragraph that only one page needs.
