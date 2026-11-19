@@ -3,11 +3,11 @@ description: Check the Sigstore signatures on Calico Enterprise images, Helm cha
 content_type: how-to
 ---
 
+# Verify release artifacts
+
 {/*
   As a cluster operator, I want to check that the $[prodname] artifacts I install are the ones Tigera published, so that I don't run images or files that someone else built or changed.
 */}
-
-# Verify release artifacts
 
 Each $[prodname] release is signed with [Sigstore](https://www.sigstore.dev/).
 Check the signatures to confirm that the images, charts, and files you install are the ones Tigera published, unchanged.
@@ -18,14 +18,16 @@ You can check a whole release with one script, or check one image or file at a t
 | Artifact | Where it's published | Where its signature is |
 | --- | --- | --- |
 | Container images | `quay.io/tigera` | In the registry, attached to the image digest as an OCI referrer |
+| A software bill of materials (SBOM) for each platform of each image, in SPDX 2.3 format | `quay.io/tigera`, as a signed attestation | In the registry, attached to the digest of that platform's image |
 | Helm charts | `quay.io/tigera`, as OCI artifacts | In the registry, attached to the chart digest |
 | Carvel package bundles | `quay.io/tigera` | In the registry, attached to the bundle digest |
 | Release files, such as the release archive and packages | `downloads.tigera.io` | A Sigstore bundle at the file's URL plus `.sigstore.json` |
-| The $[prodnameWindows] archive | Available from Tigera support | A Sigstore bundle at `$[filesUrl]/<file-name>.sigstore.json` |
+| The $[prodnameWindows] archive | Your copy of the archive | A Sigstore bundle at `$[filesUrl]/` plus the archive's file name plus `.sigstore.json` |
 | `metadata.yaml`, which lists every artifact with its digest or SHA-256 hash | `$[filesUrl]/` | `$[filesUrl]/metadata.yaml.sigstore.json` |
 | `verify.sh`, which checks the whole release | `$[filesUrl]/` | `$[filesUrl]/verify.sh.sigstore.json` |
 
 Images, charts, and bundles are signed by digest, not by tag.
+Charts and bundles have no SBOM.
 The index files of the RPM and Debian package repositories are signed with GPG only, and `dnf` and `apt` check those signatures.
 
 A release that has no `$[filesUrl]/verify.sh` isn't signed.
@@ -40,6 +42,7 @@ A release that has no `$[filesUrl]/verify.sh` isn't signed.
   cosign reads registry credentials from your Docker config file.
   If you don't use `docker login`, save the pull secret as `config.json` in an empty directory and set `DOCKER_CONFIG` to that directory.
 - To check files with `verify.sh`, have `curl` and either `sha256sum` or `shasum` installed.
+- To get an SBOM by hand, have [crane](https://github.com/google/go-containerregistry/tree/main/cmd/crane) and `jq` installed.
 
 ## Signing identity
 
@@ -70,6 +73,7 @@ ISSUER=https://accounts.google.com
 
 `verify.sh` is generated for each release and lists every artifact in it.
 It checks each artifact's signature against the signing identity, and checks each file's SHA-256 hash against the release.
+For each image, it also checks the SBOM of each platform the image is built for.
 The script can't vouch for itself, so check its signature with cosign before you run it.
 
 1. Download `verify.sh` and its bundle:
@@ -79,7 +83,7 @@ The script can't vouch for itself, so check its signature with cosign before you
    curl -fsSLO $[filesUrl]/verify.sh.sigstore.json
    ```
 
-1. Check the signature of `verify.sh`:
+2. Check the signature of `verify.sh`:
 
    ```bash
    cosign verify-blob --certificate-identity "$IDENTITY" \
@@ -90,30 +94,43 @@ The script can't vouch for itself, so check its signature with cosign before you
    If this command fails, don't run the script.
    See [`verify.sh` fails its own check](#verifysh-fails-its-own-check).
 
-1. Run the script:
+3. Run the script:
 
    ```bash
    bash verify.sh
    ```
 
+   If you have the $[prodnameWindows] archive, add `--files-dir <path-to-archive-directory>`, where `<path-to-archive-directory>` is the directory that holds the archive.
+
    The output is similar to the following:
 
    ```
    Checking Calico Enterprise <version> against identity signer@<release-project>.iam.gserviceaccount.com, issuer https://accounts.google.com
-   PASS  images   quay.io/tigera/cnx-node
-   PASS  images   quay.io/tigera/operator
-   ...
-   PASS  files    <file-name>
-   SKIP  files    <windows-archive>: not available for download; request it from Tigera support and pass its folder with --files-dir
 
-   52 passed, 0 failed, 1 skipped
+   RESULT  CATEGORY  NAME                     SIGNATURE  SBOM
+   PASS    images    quay.io/tigera/cnx-node  pass       pass (linux/amd64, linux/arm64)
+   ...
+   PASS    files     <file-name>              pass       -
+
+   <passed> passed, <failed> failed, <skipped> skipped
    ```
 
+   This output includes the following values:
+
+   - `<version>`: the release version.
+   - `<file-name>`: the name of a file in the release.
+   - `<passed>`, `<failed>`, and `<skipped>`: the number of artifacts with each result.
+
+   The `SBOM` column lists the platforms whose SBOM the script checked.
+   It shows `-` for artifacts that have no SBOM.
+
    The script exits with status 0 only if every artifact it checked passed.
+   When it does, `<failed>` is 0.
 
 ### Check part of a release
 
 To check only the artifacts you use, pass a category, a name, or both.
+To see every option, run `bash verify.sh --help`.
 
 - To list the category and name of every artifact, run `bash verify.sh --list`.
 - To check one or more categories, pass `--only` with a comma-separated list of `images`, `charts`, `bundles`, and `files`:
@@ -128,12 +145,9 @@ To check only the artifacts you use, pass a category, a name, or both.
   bash verify.sh quay.io/tigera/cnx-node quay.io/tigera/operator
   ```
 
-- To check files you already downloaded, pass the directory that holds them with `--files-dir <directory>`.
-  The script reads each file from `<directory>` instead of downloading it.
-  If `<directory>` also holds the file's `.sigstore.json` bundle, the script uses that bundle.
-  This is the only way to check the $[prodnameWindows] archive.
-- To change how many artifacts the script checks at once, pass `--jobs <number>`.
-  The default is 4.
+- To check files you already downloaded, pass `--files-dir <path-to-files-directory>`, where `<path-to-files-directory>` is the directory that holds them.
+  The script reads each file from that directory instead of downloading it.
+  If the directory also holds the file's `.sigstore.json` bundle, the script uses that bundle.
 
 A name that matches no artifact is an error, not a pass.
 When you name an artifact or a category, the script reports an artifact it can't check as a failure, not a skip.
@@ -153,19 +167,19 @@ A tag can be moved to a different image after you check it.
        --bundle metadata.yaml.sigstore.json metadata.yaml
    ```
 
-1. In `metadata.yaml`, find the `image` and `digest` of the artifact you want to check.
+2. In `metadata.yaml`, find the `image` and `digest` of the artifact you want to check.
    Images are under `components`, Helm charts are under `charts.entries`, and Carvel bundles are under `carvel`.
    An image entry looks like this:
 
    ```yaml
    components:
-     <component>:
+     cnx-node:
        version: <version>
-       image: quay.io/tigera/<image>:<version>
+       image: quay.io/tigera/cnx-node:<version>
        digest: sha256:<digest>
    ```
 
-1. Check the signature, where `<repository>` is the `image` value without its tag, and `<digest>` is the `digest` value without the `sha256:` prefix:
+3. Check the signature:
 
    ```bash
    cosign verify --certificate-identity "$IDENTITY" \
@@ -173,20 +187,64 @@ A tag can be moved to a different image after you check it.
        <repository>@sha256:<digest>
    ```
 
+   Replace the following:
+
+   - `<repository>`: the `image` value without its tag, such as `quay.io/tigera/cnx-node`.
+   - `<digest>`: the `digest` value without the `sha256:` prefix.
+
    cosign prints the checks it ran and the signature payload, and exits with status 0.
+
+## Get the SBOM for an image
+
+Each platform of an image has its own SBOM, attached to that platform's digest.
+The `digest` in `metadata.yaml` is the digest of the image index, which lists the platforms.
+
+1. Check the image's signature, as in [Verify one image, chart, or bundle](#verify-one-image-chart-or-bundle).
+
+2. Get the digest of one platform:
+
+   ```bash
+   crane digest --platform <platform> <repository>@sha256:<digest>
+   ```
+
+   Replace the following:
+
+   - `<platform>`: the platform, such as `linux/amd64` or `linux/arm64`.
+   - `<repository>` and `<digest>`: the same values as in the signature check.
+
+   The command prints the platform digest, such as `sha256:<platform-digest>`.
+
+3. Check the SBOM's signature, and save the SBOM:
+
+   ```bash
+   cosign verify-attestation --type spdxjson \
+       --certificate-identity "$IDENTITY" \
+       --certificate-oidc-issuer "$ISSUER" \
+       <repository>@sha256:<platform-digest> \
+       | jq -r '.payload' | base64 -d | jq '.predicate' > sbom.spdx.json
+   ```
+
+   Replace `<platform-digest>` with the digest from the previous step, without the `sha256:` prefix.
+
+   cosign exits with status 0 when the signature matches.
+   `sbom.spdx.json` holds the SPDX 2.3 document, which lists the packages in that platform's image.
 
 ## Verify one file
 
-1. Download the file and its bundle, where `<file-url>` is the file's `url` in the `artifacts` list of `metadata.yaml`:
+1. Download `metadata.yaml` and check its signature, as in [Verify one image, chart, or bundle](#verify-one-image-chart-or-bundle).
+
+2. Download the file and its bundle:
 
    ```bash
    curl -fsSLO <file-url>
    curl -fsSLO <file-url>.sigstore.json
    ```
 
-   For the $[prodnameWindows] archive, get the archive from Tigera support, and download its bundle from `$[filesUrl]/<file-name>.sigstore.json`.
+   Replace `<file-url>` with the file's `url` in the `artifacts` list of `metadata.yaml`.
 
-1. Check the signature, where `<file-name>` is the name of the file you downloaded:
+   For the $[prodnameWindows] archive, use your copy of the archive, and download only its bundle from `$[filesUrl]/<file-name>.sigstore.json`.
+
+3. Check the signature:
 
    ```bash
    cosign verify-blob --certificate-identity "$IDENTITY" \
@@ -194,7 +252,16 @@ A tag can be moved to a different image after you check it.
        --bundle <file-name>.sigstore.json <file-name>
    ```
 
+   Replace `<file-name>` with the name of the file.
    The command exits with status 0 when the signature matches.
+
+4. Check that the file's SHA-256 hash matches the `sha256` value for the file in `metadata.yaml`:
+
+   ```bash
+   sha256sum <file-name>
+   ```
+
+   This step ties the file to this release, because a file from another release carries a valid signature too.
 
 ## Troubleshooting
 
@@ -214,14 +281,16 @@ The `cosign verify-blob` command for `verify.sh` exits with an error.
 **Fix:**
 
 1. Download `verify.sh` and `verify.sh.sigstore.json` again from `$[filesUrl]/`, and check the signature again.
-1. If it still fails, don't run the script, and contact Tigera support.
+2. If it still fails, don't run the script, and contact Tigera support.
 
 ### `FAIL` with a reason under `Failures`
 
 The artifact's line says `FAIL`, and the `Failures` section shows the error from cosign.
+An error that starts with `signature:` is for the artifact.
+An error that starts with `SBOM` and a platform, such as `SBOM linux/amd64:`, is for that platform's SBOM.
 
-**Cause:** The artifact has no signature from the signing identity.
-It isn't the artifact Tigera published, or it was changed after it was signed.
+**Cause:** The artifact or SBOM has no signature from the signing identity.
+It isn't the one Tigera published, or it was changed after it was signed.
 
 **Fix:** Don't install the artifact, and contact Tigera support.
 
@@ -248,13 +317,15 @@ To skip images, charts, and bundles, run `bash verify.sh --only files`.
 
 ### `cosign <version> is too old, need v3 or later`
 
+**Cause:** The cosign on your `PATH` is earlier than v3.
+
 **Fix:** Install cosign v3 or later, and run the script again.
 
 ### `SKIP` for the $[prodnameWindows] archive
 
-**Cause:** The archive isn't available for public download, so the script can't fetch it.
+**Cause:** The archive isn't on a public URL, so the script can't download it.
 
-**Fix:** Request the archive from Tigera support, put it in a directory, and run the script with `--files-dir <directory>`.
+**Fix:** Run the script again with `--files-dir <path-to-archive-directory>`, where `<path-to-archive-directory>` is the directory that holds your copy of the archive.
 
 ## Additional resources
 
