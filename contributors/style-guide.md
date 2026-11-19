@@ -417,6 +417,7 @@ A *Vale* tag means the linter enforces it.
 - **kube-proxy.** Lowercase, hyphenated.
 - **kubectl.** Lowercase. Code font for the command.
 - **log in, log out.** Verb forms, two words. *Login* is the noun and the adjective. Not *sign in*, because the web console says *Log in*.
+- **may, might.** Prefer *might* for something that could happen and *can* for permission, as in the Google word list. This is a small point. Don't raise it in a review.
 - **microsegmentation.** One word.
 - **multi-cluster.** Hyphenated, as in the Google word list. Not *multicluster*. Vale.
 - **nftables, iptables.** Lowercase, always.
@@ -436,3 +437,4 @@ A *Vale* tag means the linter enforces it.
 | Date | Change |
 |---|---|
 | 2026-11-06 | First version. Replaces the 2022 and 2024 Google Docs drafts. |
+| 2026-11-19 | Only Vale rules can hold up a pull request. Relaxed the tense rule. Added rules for product names in compounds and for *may* and *might*. |
