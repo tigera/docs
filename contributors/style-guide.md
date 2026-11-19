@@ -19,6 +19,13 @@ We don't use it.
 These are guidelines, not laws.
 Depart from them when that makes a page clearer, and stay consistent within the page.
 
+In a review, only the rules that Vale checks can hold up a pull request.
+Vale runs on every pull request and comments on the lines it flags.
+Every other rule in this guide is advice.
+If your text is clear and correct as you wrote it, you can say so and leave it.
+A reviewer doesn't ask a contributor to change clear, correct text only to match the guide.
+The docs team can tidy the style later, in a pull request of its own.
+
 To change this guide, open a pull request.
 When you add a word-list entry, add the matching Vale rule or vocabulary line in the same pull request, so the guide and the linter agree.
 
