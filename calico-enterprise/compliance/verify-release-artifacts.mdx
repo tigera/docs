@@ -214,19 +214,26 @@ The `digest` in `metadata.yaml` is the digest of the image index, which lists th
 
    The command prints the platform digest, such as `sha256:<platform-digest>`.
 
-3. Check the SBOM's signature, and save the SBOM:
+3. Check the SBOM's signature, and save the signed attestation:
 
    ```bash
    cosign verify-attestation --type spdxjson \
        --certificate-identity "$IDENTITY" \
        --certificate-oidc-issuer "$ISSUER" \
-       <repository>@sha256:<platform-digest> \
-       | jq -r '.payload' | base64 -d | jq '.predicate' > sbom.spdx.json
+       <repository>@sha256:<platform-digest> > attestation.json
    ```
 
    Replace `<platform-digest>` with the digest from the previous step, without the `sha256:` prefix.
 
    cosign exits with status 0 when the signature matches.
+   If it fails, don't use the SBOM.
+
+4. Extract the SBOM from the attestation:
+
+   ```bash
+   jq -r '.payload' attestation.json | base64 -d | jq '.predicate' > sbom.spdx.json
+   ```
+
    `sbom.spdx.json` holds the SPDX 2.3 document, which lists the packages in that platform's image.
 
 ## Verify one file
@@ -267,10 +274,115 @@ The `digest` in `metadata.yaml` is the digest of the image index, which lists th
 
 `verify.sh` exits with status 1 when any artifact fails, or when none passes.
 It exits with status 2 when an option is wrong or a tool it needs is missing.
-After the summary line, it prints the reason for each failure.
+After the summary line, it lists the reason for each failure under `Failures`.
+A reason that starts with `signature:` is for the artifact itself.
+A reason that starts with `SBOM` and a platform, such as `SBOM linux/amd64:`, is for that platform's SBOM.
 
-If an artifact fails its signature check, don't install it.
-First, check that `IDENTITY` and `ISSUER` match the [signing identity](#signing-identity) exactly.
+Don't install an artifact that fails its signature check until you find the cause.
+
+### `cosign <version> is too old, need v3 or later`
+
+`verify.sh` stops before it checks anything, and prints this error.
+
+**Cause:** The cosign on your `PATH` is earlier than v3.
+
+**Fix:**
+
+1. Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/) v3 or later.
+2. Run `cosign version` to confirm the version, and run the script again.
+
+### `Registry access denied: <registry>`
+
+Images, charts, or bundles fail, and the summary names the registry that refused access.
+
+**Cause:** cosign couldn't read from the registry, because you aren't logged in, or your credentials don't give access.
+
+**Fix:**
+
+1. Log in to the registry, as described in [Before you begin](#before-you-begin).
+2. Run the script again.
+
+To check only files while you sort out access, run `bash verify.sh --only files`.
+
+### `--certificate-identity or --certificate-identity-regexp is required`
+
+cosign stops before it checks anything, and prints this error.
+
+**Cause:** `IDENTITY` isn't set in your shell, so the command passed an empty identity.
+This happens when you run the command in a new terminal.
+
+**Fix:**
+
+1. Set `IDENTITY` and `ISSUER`, as in [Signing identity](#signing-identity).
+2. Run the command again.
+
+### `none of the expected identities matched what was in the certificate`
+
+cosign prints this error, followed by the identity and issuer that signed the artifact.
+
+**Cause:** The identity or issuer you passed doesn't match the [signing identity](#signing-identity).
+This happens most often in a manual check, when `IDENTITY` or `ISSUER` isn't set or has a typo.
+
+**Fix:**
+
+1. Run `echo "$IDENTITY $ISSUER"`, and compare the output with the [signing identity](#signing-identity).
+2. Set both variables again, and run the check again.
+
+**Cause:** The artifact was signed by someone other than Tigera.
+
+**Fix:** Don't install the artifact, and contact Tigera support.
+
+### `no signatures found`
+
+cosign finds no signature on the image you checked.
+
+**Cause:** You checked a tag or a platform digest instead of the digest in `metadata.yaml`.
+Signatures are attached to the image index digest that `metadata.yaml` lists.
+SBOMs are attached to the platform digests.
+
+**Fix:** Check `<repository>@sha256:<digest>`, with the `digest` from `metadata.yaml`, as in [Verify one image, chart, or bundle](#verify-one-image-chart-or-bundle).
+
+**Cause:** You checked a copy of the image in your own registry, and the tool that copied it didn't copy the signatures.
+
+**Fix:**
+
+1. Check the same digest in `quay.io/tigera` instead.
+   An unchanged copy has the same digest as the original.
+2. To check images in your own registry, copy them with a tool that also copies OCI referrers, such as `oras copy -r`.
+
+### `cosign could not load the Sigstore trust root`
+
+Every check fails, and the summary shows this error with the reason from cosign.
+
+**Cause:** cosign couldn't download the Sigstore trust root.
+
+**Fix:**
+
+1. Check that your machine can reach `tuf-repo-cdn.sigstore.dev` over HTTPS, for example with `curl -I https://tuf-repo-cdn.sigstore.dev`.
+2. Run the script again.
+
+### `sha256 is <hash>, the release lists <hash>`
+
+A file fails, and its reason under `Failures` shows two different hashes.
+
+**Cause:** The file you have differs from the file in the release.
+The download was cut short, the file in `--files-dir` is from another release, or the file was changed.
+
+**Fix:**
+
+1. Download the file again from its `url` in `metadata.yaml`, and run the script again.
+2. If the hash still differs, don't use the file, and contact Tigera support.
+
+### `SKIP` for the $[prodnameWindows] archive
+
+The archive's line says `SKIP`, and the reason under `Skipped` says that it isn't available for download.
+
+**Cause:** The archive isn't on a public URL, so the script can't download it.
+
+**Fix:** Run the script again with `--files-dir <path-to-archive-directory>`, where `<path-to-archive-directory>` is the directory that holds your copy of the archive.
+
+If the reason says `not publicly available and not found in <path-to-archive-directory>`, the archive isn't in that directory under its original file name.
+Move it there, or pass the directory that holds it.
 
 ### `verify.sh` fails its own check
 
@@ -282,50 +394,6 @@ The `cosign verify-blob` command for `verify.sh` exits with an error.
 
 1. Download `verify.sh` and `verify.sh.sigstore.json` again from `$[filesUrl]/`, and check the signature again.
 2. If it still fails, don't run the script, and contact Tigera support.
-
-### `FAIL` with a reason under `Failures`
-
-The artifact's line says `FAIL`, and the `Failures` section shows the error from cosign.
-An error that starts with `signature:` is for the artifact.
-An error that starts with `SBOM` and a platform, such as `SBOM linux/amd64:`, is for that platform's SBOM.
-
-**Cause:** The artifact or SBOM has no signature from the signing identity.
-It isn't the one Tigera published, or it was changed after it was signed.
-
-**Fix:** Don't install the artifact, and contact Tigera support.
-
-### `sha256 is <hash>, the release lists <hash>`
-
-**Cause:** The file you have differs from the file in the release.
-The download was cut short, or the file was changed.
-
-**Fix:** Download the file again from its URL in `metadata.yaml`.
-If the hash still differs, don't use the file, and contact Tigera support.
-
-### `registry access denied`
-
-**Cause:** cosign couldn't read the image from the registry, because you aren't logged in or your credentials don't give access to it.
-
-**Fix:** Log in to the registry the summary names, as described in [Before you begin](#before-you-begin), and run the script again.
-To skip images, charts, and bundles, run `bash verify.sh --only files`.
-
-### `Sigstore trust root not loaded`
-
-**Cause:** cosign couldn't download the Sigstore trust root.
-
-**Fix:** Check that your machine can reach `tuf-repo-cdn.sigstore.dev` over HTTPS, and run the script again.
-
-### `cosign <version> is too old, need v3 or later`
-
-**Cause:** The cosign on your `PATH` is earlier than v3.
-
-**Fix:** Install cosign v3 or later, and run the script again.
-
-### `SKIP` for the $[prodnameWindows] archive
-
-**Cause:** The archive isn't on a public URL, so the script can't download it.
-
-**Fix:** Run the script again with `--files-dir <path-to-archive-directory>`, where `<path-to-archive-directory>` is the directory that holds your copy of the archive.
 
 ## Additional resources
 
