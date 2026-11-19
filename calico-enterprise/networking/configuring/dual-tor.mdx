@@ -131,15 +131,16 @@ $[nodecontainer] _pod_:
   :::note
 
   Taking over a ToR BGP session _sooner_ than that would cause the ToRs to lose
-  the Calico-advertised pod routes before the intended restart time had passed.
+  the $[prodname]-advertised pod routes before the intended restart time had
+  passed.
 
   Taking over a ToR BGP session _later_ than that would leave a gap during
   which the ToRs cannot route to the node's stable IP, and hence the node loses
   connectivity to the outside world.
 
   The restart time on each BGP session is configured by the `maxRestartTime`
-  field of the `BGPPeer` resource.  When `maxRestartTime` is not set, the
-  default is 120s for traditional BGP GR and 3600s for LLGR.
+  field of the BGPPeer resource.  When `maxRestartTime` is not set, the default
+  is 120s for traditional BGP GR and 3600s for LLGR.
 
   :::
 
@@ -283,11 +284,11 @@ For a dual ToR setup, LLGR is helpful, as explained in more detail by [this blog
       :::note
 
       It's important to enable LLGR handling _only_ when your ToR routers
-      support it.  If LLGR is enabled in your Calico configuration, but the ToR
-      routers do not support it, a node will lose connectivity whenever its
-      $[nodecontainer] pod restarts, because the early networking function will
-      assume that routing is already being maintained by LLGR logic and will
-      not configure its own BGP to take over the ToR sessions - and
+      support it.  If LLGR is enabled in your $[prodname] configuration, but
+      the ToR routers do not support it, a node will lose connectivity whenever
+      its $[nodecontainer] pod restarts, because the early networking function
+      will assume that routing is already being maintained by LLGR logic and
+      will not configure its own BGP to take over the ToR sessions - and
       re-advertise the node's stable IP address - until the LLGR stale time
       (default 3600s) has passed.
 
@@ -296,10 +297,10 @@ For a dual ToR setup, LLGR is helpful, as explained in more detail by [this blog
       :::tip
 
       If you configure a short `maxRestartTime` setting, such as the `10s`
-      recommended above, and you are planning a Calico upgrade or
+      recommended above, and you are planning a $[prodname] upgrade or
       $[nodecontainer] restart that may take longer than that `maxRestartTime`,
       consider raising `maxRestartTime` in advance of that, so as not to lose
-      Calico-advertised routes (such as to pod IPs) during the upgrade or
+      $[prodname]-advertised routes (such as to pod IPs) during the upgrade or
       restart, and then lower it again afterwards.
 
       Changing `maxRestartTime` resets the BGP sessions, so will briefly flap
@@ -533,7 +534,7 @@ WantedBy=multi-user.target
   writes its current peer IPs and restart times to a file in that location
   named `restart-times.json`.  Without the mount, early networking defaults to
   120s for every ToR session and logs a warning at startup.  If the
-  `Installation` resource sets `calicoRunHostPath`, use
+  Installation resource sets `calicoRunHostPath`, use
   `<calicoRunHostPath>/early` as the host side of the mount instead of
   `/var/run/calico/early`.
 
