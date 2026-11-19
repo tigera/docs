@@ -20,7 +20,7 @@ const variables = {
   rootDirWindows: 'C:\\TigeraCalico',
   registry: 'quay.io/',
   envoyVersion: '1.8.4',
-  chart_version_name: 'v3.22.9-0',
+  chart_version_name: 'v3.22.9-1',
   tigeraOperator: releases[0]['tigera-operator'],
   dikastesVersion: releases[0].components.dikastes.version,
   releases,
