@@ -48,7 +48,7 @@ A release that has no `$[filesUrl]/verify.sh` isn't signed.
   cosign reads registry credentials from your Docker config file.
   If you don't use `docker login`, save the pull secret as `config.json` in an empty directory and set `DOCKER_CONFIG` to that directory.
 - To check files with `verify.sh`, have `curl` and either `sha256sum` or `shasum` installed.
-- To get an SBOM by hand, have [crane](https://github.com/google/go-containerregistry/tree/main/cmd/crane) and `jq` installed.
+- To save SBOMs, have `jq` or `base64` installed.
 
 ## Signing identity
 
@@ -104,7 +104,9 @@ The script can't vouch for itself, so check its signature with cosign before you
    bash verify.sh
    ```
 
-   If you have the $[prodnameWindows] archive, add `--files-dir <path-to-archive-directory>`, where `<path-to-archive-directory>` is the directory that holds the archive.
+   To check the $[prodnameWindows] archive or to save the SBOMs, add `--dir <path-to-directory>`.
+   `<path-to-directory>` is a directory you can write to.
+   If you have the archive, put it in that directory under its original file name.
 
    The output is similar to the following:
 
@@ -137,67 +139,16 @@ To check only some artifacts, or files you already downloaded, run `bash verify.
 
 ## Get the SBOM for an image
 
-`verify.sh` checks each SBOM but doesn't save it.
-To get the SBOM for one platform of an image, check it and extract it with cosign.
+When you run `verify.sh` with `--dir`, it saves the SBOM of each image platform that passes its check.
+To save only the image SBOMs, run:
 
-1. Download `metadata.yaml` and its bundle, and check the signature:
+```bash
+bash verify.sh --only images --dir <path-to-directory>
+```
 
-   ```bash
-   curl -fsSLO $[filesUrl]/metadata.yaml
-   curl -fsSLO $[filesUrl]/metadata.yaml.sigstore.json
-   cosign verify-blob --certificate-identity "$IDENTITY" \
-       --certificate-oidc-issuer "$ISSUER" \
-       --bundle metadata.yaml.sigstore.json metadata.yaml
-   ```
-
-2. In `metadata.yaml`, find the `image` and `digest` of the image under `components`:
-
-   ```yaml
-   components:
-     cnx-node:
-       version: <version>
-       image: quay.io/tigera/cnx-node:<version>
-       digest: sha256:<digest>
-   ```
-
-   The `digest` is the digest of the image index, which lists the platforms.
-   Each platform has its own SBOM, attached to that platform's digest.
-
-3. Get the digest of one platform:
-
-   ```bash
-   crane digest --platform <platform> <repository>@sha256:<digest>
-   ```
-
-   Replace the following:
-
-   - `<platform>`: the platform, such as `linux/amd64` or `linux/arm64`.
-   - `<repository>`: the `image` value without its tag, such as `quay.io/tigera/cnx-node`.
-   - `<digest>`: the `digest` value without the `sha256:` prefix.
-
-   The command prints the platform digest, such as `sha256:<platform-digest>`.
-
-4. Check the SBOM's signature, and save the signed attestation:
-
-   ```bash
-   cosign verify-attestation --type spdxjson \
-       --certificate-identity "$IDENTITY" \
-       --certificate-oidc-issuer "$ISSUER" \
-       <repository>@sha256:<platform-digest> > attestation.json
-   ```
-
-   Replace `<platform-digest>` with the digest from the previous step, without the `sha256:` prefix.
-
-   cosign exits with status 0 when the signature matches.
-   If it fails, don't use the SBOM.
-
-5. Extract the SBOM from the attestation:
-
-   ```bash
-   jq -r '.payload' attestation.json | base64 -d | jq '.predicate' > sbom.spdx.json
-   ```
-
-   `sbom.spdx.json` holds the SPDX 2.3 document, which lists the packages in that platform's image.
+Each SBOM is an SPDX 2.3 document named `<image>_<os>-<arch>.spdx.json`, such as `cnx-node_linux-amd64.spdx.json`.
+It lists every package in that platform's image and how the packages relate to each other.
+It doesn't list individual files.
 
 ## Verify packages
 
@@ -327,7 +278,7 @@ Every check fails, and the summary shows this error with the reason from cosign.
 A file fails, and its reason under `Failures` shows two different hashes.
 
 **Cause:** The file you have differs from the file in the release.
-The download was cut short, the file in `--files-dir` is from another release, or the file was changed.
+The download was cut short, the file in `--dir` is from another release, or the file was changed.
 
 **Fix:**
 
@@ -336,14 +287,38 @@ The download was cut short, the file in `--files-dir` is from another release, o
 
 ### `SKIP` for the $[prodnameWindows] archive
 
-The archive's line says `SKIP`, and the reason under `Skipped` says that it isn't available for download.
+The archive's line says `SKIP`, and the reason under `Skipped` is `no dir passed, use --dir to specify the directory`.
 
 **Cause:** The archive isn't on a public URL, so the script can't download it.
 
-**Fix:** Run the script again with `--files-dir <path-to-archive-directory>`, where `<path-to-archive-directory>` is the directory that holds your copy of the archive.
+**Fix:** Run the script again with `--dir <path-to-directory>`, where `<path-to-directory>` is the directory that holds your copy of the archive.
 
-If the reason says `not publicly available and not found in <path-to-archive-directory>`, the archive isn't in that directory under its original file name.
+If the reason is `not found in <path-to-directory>`, the archive isn't in that directory under its original file name.
 Move it there, or pass the directory that holds it.
+
+### `SBOMs not saved to <path-to-directory>`
+
+The images pass, but the directory has no `.spdx.json` files, and the summary ends with this message and a reason.
+
+**Cause:** The reason is `jq and base64 are not installed`.
+
+**Fix:** Install `jq`, and run the script again.
+
+**Cause:** The reason is `the directory is not writable`.
+
+**Fix:** Pass a directory that exists and that you can write to, and run the script again.
+
+### `verified, but cannot read the SPDX document from cosign's output`
+
+An image fails, and its reason under `Failures` starts with `SBOM <platform>:` and ends with this message.
+
+**Cause:** The SBOM's signature is valid, but the script couldn't extract the SPDX document from the attestation.
+This can happen when `jq` isn't installed and the script falls back to `base64`.
+
+**Fix:**
+
+1. Install `jq`, and run the script again.
+2. If the check still fails, contact Tigera support.
 
 ### `verify.sh` fails its own check
 
