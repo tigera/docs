@@ -1,0 +1,148 @@
+---
+description: Move a self-managed Istio sidecar mesh to the Calico-managed Istio Ambient Mode. Follow the Istio migration guide, with the changes on this page.
+---
+
+# Migrate from Istio sidecar mode to Istio Ambient Mode
+
+You can move a self-managed Istio sidecar mesh to the Istio Ambient Mode that $[prodname] installs and manages.
+Istio's [Migrate from Sidecar to Ambient](https://istio.io/latest/docs/ambient/migrate/) guide covers most of the work.
+This page covers only what is different on $[prodname].
+
+:::note
+
+Istio Ambient Mode is a tech preview feature.
+Tech preview features are subject to significant changes before they become GA.
+
+This procedure is documented, but it is not tested continuously.
+
+:::
+
+## How this differs from the Istio guide
+
+The Istio guide upgrades your istiod in place, so one control plane serves sidecars and ambient workloads.
+On $[prodname], the Tigera Operator installs its own istiod, Istio CNI plugin, and zTunnel in the `calico-system` namespace.
+It cannot run alongside a self-managed Istio control plane, so you remove yours first.
+
+This changes the migration:
+
+* The $[prodname]-managed istiod does not inject sidecars. Once your control plane is gone, a pod that restarts in a namespace you have not migrated starts with no sidecar and outside the mesh.
+* The root namespace moves from `istio-system` to `calico-system`.
+* Your mesh config is not carried over.
+* Where the Istio guide says `istio-system`, use `calico-system`. For example, `istioctl ztunnel-config workloads -n calico-system`.
+* Without Waypoints, your network policies need no rewrite. The [enhanced zTunnel](about-istio-ambient.mdx#the-enhanced-ztunnel-proxy) keeps the original destination port. Traffic through a Waypoint shows port 15008 instead.
+
+Read the [limitations of Istio Ambient Mode](deploy-istio-ambient.mdx#limitations) on $[prodname] and the blockers listed in the Istio guide.
+
+## Before you begin
+
+1. Follow Istio's [Before you begin](https://istio.io/latest/docs/ambient/migrate/before-you-begin/) page. Keep the backups. You need them to roll back.
+
+1. Check that the Istio fields in your `FelixConfiguration` are empty. Both lines of output must be blank. The Tigera Operator sets these fields. If you set one by hand, the install stops with `felixconfig IstioAmbientMode modified by user` or `felixconfig IstioDSCPMark modified by user`.
+
+   ```bash
+   kubectl get felixconfiguration default -o jsonpath='{.spec.istioAmbientMode}{"\n"}{.spec.istioDSCPMark}{"\n"}'
+   ```
+
+1. If your Istio uses your own certificate authority, copy the `cacerts` secret to `calico-system`. The $[prodname]-managed istiod reads it from there. With the same root, sidecar and ambient workloads trust each other during the migration.
+
+   ```bash
+   kubectl get secret cacerts -n istio-system -o json \
+     | jq 'del(.metadata.resourceVersion,.metadata.uid,.metadata.creationTimestamp,.metadata.managedFields,.metadata.ownerReferences) | .metadata.namespace="calico-system"' \
+     | kubectl apply -f -
+   ```
+
+   Do this before Step 2. If you change the root under a running istiod, new pods get no certificate.
+   If `istio-system` has no `cacerts` secret, the new istiod makes a new root that your sidecars do not trust.
+
+1. Re-create your mesh-wide policies in `calico-system`. After Step 2, policies in `istio-system` apply only to `istio-system`. A mesh-wide `DENY` or `STRICT` policy left there stops protecting your other namespaces.
+
+   ```bash
+   kubectl get authorizationpolicy,peerauthentication,requestauthentication,telemetry,wasmplugin,envoyfilter -n istio-system
+   ```
+
+1. Check your mesh config with `kubectl get configmap istio -n istio-system -o jsonpath='{.data.mesh}'`. The `Istio` custom resource has no field for it, and the new istiod starts with Istio's defaults.
+   Look hardest at `trustDomain`, which changes every workload identity, and `outboundTrafficPolicy`. Resolve any setting you depend on before you migrate.
+
+### Plan one maintenance window
+
+Migrate every namespace in one window if you can. From Step 1 until a namespace is migrated, its sidecars keep their cached config, but:
+
+* A pod that restarts gets no sidecar.
+* Sidecars cannot renew their certificates. Istio's default certificate lifetime is 24 hours.
+* Without a shared `cacerts` root, sidecar and ambient workloads cannot talk over mTLS.
+* Layer 7 policy on a Waypoint does not apply to traffic from sidecar pods.
+* Sidecars get no endpoint updates. A pod that restarts gets a new IP, and sidecars keep sending its traffic to the old one.
+
+## Step 1: Remove the self-managed Istio control plane
+
+This step replaces Istio's "Install ambient components" step.
+
+1. Remove sidecar injection from the namespaces you will migrate. If you use revision labels, remove `istio.io/rev` instead.
+
+   ```bash
+   kubectl label namespace <namespace> istio-injection-
+   ```
+
+1. Uninstall istiod and the Istio CNI plugin. Keep the Istio CRDs. They hold your Istio resources, and you need them to roll back.
+
+   With Helm, keep the `istio-base` release:
+
+   ```bash
+   helm uninstall istio-cni -n istio-system
+   helm uninstall istiod -n istio-system
+   ```
+
+   With `istioctl`, run `istioctl uninstall` with the options you installed with.
+   **Do not use `--purge`.** It deletes the Istio CRDs, and every Istio resource goes with them.
+
+1. Check that no control plane or CNI pods are left:
+
+   ```bash
+   kubectl get pods -n istio-system
+   kubectl get daemonset --all-namespaces | grep istio
+   ```
+
+## Step 2: Install the $[prodname]-managed Istio
+
+Apply the `Istio` custom resource and check that it is available, as in [Deploy Istio Ambient Mode](deploy-istio-ambient.mdx#install-istio-in-ambient-mode-on-your-cluster). The operator also creates the Gateway API CRDs if they are missing.
+
+## Step 3: Migrate your policies
+
+Follow Istio's [Migrate policies](https://istio.io/latest/docs/ambient/migrate/migrate-policies/) page. On $[prodname]:
+
+* If one `AuthorizationPolicy` mixes L4 and L7 rules, split it in two before you enable Waypoints. Then you keep the L4 part when you delete the old policy.
+* If you deploy a Waypoint, update your $[prodname] network policies to allow port 15008 to the workloads behind it.
+* $[prodname] adds an `l7-collector` container to each Waypoint, so its traffic shows up in L7 logs. To turn this off, set `waypointLogging: Disabled` in the `Istio` custom resource. See [Collect L7 logs using the Waypoint collector](../../observability/elastic/l7/enable-waypoint-collector.mdx).
+
+## Step 4: Enable ambient mode
+
+Follow Istio's [Enable ambient mode](https://istio.io/latest/docs/ambient/migrate/enable-ambient-mode/) page, one namespace at a time.
+You removed the injection labels in Step 1.
+When you restart workloads, restart StatefulSets and DaemonSets too, not just Deployments.
+Do not label $[prodname] namespaces or pods into the mesh. It can break cluster networking.
+
+To check that $[prodname] policy still matches, look at the [flows](../../observability/visualize-traffic.mdx) for the namespace.
+In Kibana, search the `tigera_secure_ee_flows*` index for `dest_namespace: <namespace>`. The `dest_port` field should show application ports, not 15008.
+
+## Roll back
+
+Use the rollback steps in Istio's [Enable ambient mode](https://istio.io/latest/docs/ambient/migrate/enable-ambient-mode/) page, with one change.
+The $[prodname]-managed istiod does not inject sidecars, so re-adding an injection label does nothing on its own.
+Go back to your self-managed control plane first:
+
+1. Delete the `Istio` custom resource:
+
+   ```bash
+   kubectl delete istio.operator.tigera.io default
+   ```
+
+1. Wait until both commands return nothing. The two control planes must not run at the same time.
+
+   ```bash
+   kubectl get pods -n calico-system -l 'app in (istiod,ztunnel,istio-cni-node)'
+   kubectl get felixconfiguration default -o jsonpath='{.spec.istioAmbientMode}{"\n"}'
+   ```
+
+1. Reinstall your control plane with the same version and options as before. With Helm, run `helm upgrade --install` for `istio-base` first. It puts back the `istiod-default-validator` webhook that the operator removed.
+
+1. Re-add the injection labels you recorded and restart the workloads.
