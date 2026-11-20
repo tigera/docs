@@ -3,6 +3,9 @@ description: Check the Sigstore signatures on Calico Enterprise images, Helm cha
 content_type: how-to
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Verify release artifacts
 
 {/*
@@ -22,14 +25,16 @@ You can check a whole release with one script, or check one image or file at a t
 | Helm charts, as OCI artifacts | `quay.io/tigera` | In the registry, attached to the chart digest |
 | Helm charts, as `.tgz` files | `downloads.tigera.io` | A Sigstore bundle at the file's URL plus `.sigstore.json` |
 | Carvel package bundles | `quay.io/tigera` | In the registry, attached to the bundle digest |
-| Release files, such as the release archive and packages | `downloads.tigera.io` | A Sigstore bundle at the file's URL plus `.sigstore.json` |
+| Release files, such as the release archive | `downloads.tigera.io` | A Sigstore bundle at the file's URL plus `.sigstore.json` |
+| RPM and Debian packages for non-cluster hosts | The package repositories at `downloads.tigera.io` | GPG signatures in the packages and the repository index files |
 | The $[prodnameWindows] archive | Your copy of the archive | A Sigstore bundle at `$[filesUrl]/` plus the archive's file name plus `.sigstore.json` |
 | `metadata.yaml`, which lists every artifact with its digest or SHA-256 hash | `$[filesUrl]/` | `$[filesUrl]/metadata.yaml.sigstore.json` |
 | `verify.sh`, which checks the whole release | `$[filesUrl]/` | `$[filesUrl]/verify.sh.sigstore.json` |
 
 Images, charts, and bundles are signed by digest, not by tag.
 Charts and bundles have no SBOM.
-The index files of the RPM and Debian package repositories are signed with GPG only, and `dnf` and `apt` check those signatures.
+Packages are signed with GPG, not Sigstore, so `verify.sh` doesn't check them.
+See [Verify packages](#verify-packages).
 
 A release that has no `$[filesUrl]/verify.sh` isn't signed.
 
@@ -272,6 +277,56 @@ Use these steps for release files, and for Helm charts you install from `downloa
    ```
 
    This step ties the file to this release, because a file from another release carries a valid signature too.
+
+## Verify packages
+
+The RPM and Debian packages for [non-cluster hosts](../getting-started/bare-metal/about.mdx) are signed with GPG.
+`dnf` and `apt` check the signatures each time you install or upgrade, when you set up the repository with the files from that page.
+
+<Tabs groupId="linux-distro">
+<TabItem label="RHEL" value="rhel">
+
+1. Check that the repository file turns on signature checks:
+
+   ```bash
+   grep -E 'gpgcheck|gpgkey' /etc/yum.repos.d/calico-enterprise.repo
+   ```
+
+   The output is similar to the following:
+
+   ```
+   gpgcheck=1
+   repo_gpgcheck=1
+   gpgkey=<key-url>
+   ```
+
+   `gpgcheck=1` checks each package, and `repo_gpgcheck=1` checks the repository index.
+   `<key-url>` is the URL of the public key that signed them.
+   The first time you install a package, `dnf` shows the key and asks you to accept it.
+
+2. To check an RPM file that you downloaded, import the key, and check the file:
+
+   ```bash
+   sudo rpm --import <key-url>
+   rpm -K <package-file>
+   ```
+
+   Replace the following:
+
+   - `<key-url>`: the `gpgkey` value from the previous step.
+   - `<package-file>`: the path to the RPM file.
+
+   The output ends with `digests signatures OK`.
+
+</TabItem>
+<TabItem label="Debian/Ubuntu" value="ubuntu">
+
+The `.sources` file holds the public key in its `Signed-By` field.
+`apt-get update` checks the signature on the repository index, and stops with an error if the check fails.
+The index lists the SHA-256 hash of each package, and `apt` checks each package against it.
+
+</TabItem>
+</Tabs>
 
 ## Troubleshooting
 
