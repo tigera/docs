@@ -1,0 +1,262 @@
+---
+description: Point your AI assistant at a Calico Enterprise cluster or diagnostics bundle with the Calico MCP server, and ask it about network problems, health, and policy.
+content_type: how-to
+sidebar_label: Use
+lifecycle_status: tech-preview
+lifecycle_feature: Calico MCP server
+---
+
+{/*
+  User story
+  As a platform engineer or policy owner, I want to point my assistant at a cluster or a diagnostics bundle and ask it about my network and policies, so that I find causes faster and can check the evidence.
+
+  Page plan: DOCS-3135.
+*/}
+
+# Use the $[mcpserver]
+
+With the $[mcpserver], you describe a problem in plain language, and your AI assistant picks the tools to investigate it.
+There's no fixed procedure to follow.
+This page shows you how to start a session, what you can ask, and how to check the answer.
+
+## Before you begin
+
+- The $[mcpserver] is installed and added to your AI client.
+  See [Install the $[mcpserver]](install.mdx).
+- To use a live cluster, you have a kubeconfig for an identity that has the permissions you want the assistant to have.
+  See [Cluster permissions](requirements.mdx#cluster-permissions).
+- To use a diagnostics bundle, you have an unpacked bundle directory.
+  See [Diagnostics bundles](requirements.mdx#diagnostics-bundles).
+
+## Start a session
+
+A session reads from one live cluster or one diagnostics bundle.
+You choose the source in your first request.
+
+Start each request with the `/calico` prompt.
+The prompt sends your request to the server's skills, so that the assistant uses the diagnostic tools and not a shell.
+The name of the prompt depends on your client:
+
+| Client | Prompt |
+| --- | --- |
+| Claude Code | `/mcp__calico-mcp__calico` |
+| VS Code with GitHub Copilot | `/mcp.calico-mcp.calico` |
+
+If your client doesn't show MCP prompts, start your request with "Using the Calico MCP server" instead.
+
+The examples on this page use `/calico` for short.
+
+### Use a live cluster
+
+Name the kubeconfig in your first request:
+
+```text
+/calico Using the kubeconfig at <path-to-kubeconfig-file>, pods in the payments namespace can't reach the ledger service. Find out why.
+```
+
+Replace `<path-to-kubeconfig-file>` with the path to the kubeconfig for the cluster.
+
+If you don't name a kubeconfig, the assistant asks you for one.
+The server never picks a default.
+
+### Use a diagnostics bundle
+
+Name the unpacked bundle directory in your first request:
+
+```text
+/calico The diagnostics bundle at <path-to-bundle-directory> was collected after calico-node started to restart on several nodes. What's the cause?
+```
+
+Replace `<path-to-bundle-directory>` with the path to the directory that contains the `cluster/` and `nodes/` subdirectories.
+
+The server connects to no cluster.
+The assistant can check only what the bundle contains, and it tells you when that limits a conclusion.
+
+To include a packet capture or another file from outside the bundle, ask the assistant to attach it:
+
+```text
+Attach the capture at <path-to-capture-file> as dns, and look for DNS responses that never arrived.
+```
+
+Replace `<path-to-capture-file>` with the path to the capture file.
+
+### Switch to another cluster or bundle
+
+Ask the assistant to connect to a different kubeconfig or bundle directory.
+The new source replaces the current one.
+
+## Allow flow log access
+
+Questions about flows need access to flow logs.
+The first time a request needs them, the assistant asks to run a setup step called `grant_flow_log_access`.
+
+The step changes your cluster.
+Before you approve it, read [What the server can change](about.mdx#what-the-server-can-change).
+Your identity also needs the permissions listed in [Flow log access](requirements.mdx#flow-log-access).
+
+1. When the assistant asks to run `grant_flow_log_access`, approve the request.
+
+   The step creates a ServiceAccount, ClusterRole, and ClusterRoleBinding named `calico-mcp-linseed`, or checks them if they already exist.
+
+1. Approve the step again each time you start a session or switch clusters.
+
+   The objects stay in the cluster, but the server's access to the logs doesn't carry over.
+
+If you don't approve the step, the assistant can't query flow logs.
+The other tools still work.
+
+### Remove flow log access
+
+To remove the objects that the step created, delete them:
+
+```bash
+kubectl delete clusterrolebinding calico-mcp-linseed
+kubectl delete clusterrole calico-mcp-linseed
+kubectl delete serviceaccount calico-mcp-linseed -n calico-system
+```
+
+## What you can ask
+
+Phrase your requests however you like.
+The more detail you give, the less the assistant has to guess.
+
+### Diagnose a network problem
+
+Ask this when something is broken, slow, or denied.
+Give the source, the destination, the port, and when the problem started, if you know them.
+These requests work with a live cluster or a bundle.
+
+```text
+/calico Pods in the checkout namespace can't reach the inventory service on port 8080 since this morning's deploy. Find out what's blocking them.
+```
+
+```text
+/calico DNS lookups from pods on node worker-7 time out, but other nodes are fine. What's different about that node?
+```
+
+```text
+/calico Using the bundle at <path-to-bundle-directory>, trace a TCP packet from pod frontend-7d9f in namespace web to 10.96.14.2 port 443, and tell me which rule decides it.
+```
+
+### Check health and traffic
+
+Ask this when you want to know the state of the cluster.
+Health questions work with a live cluster or a bundle.
+Questions about flows need a live cluster and [flow log access](#allow-flow-log-access).
+
+```text
+/calico How healthy is this cluster? Check the Calico components and BGP, and tell me about anything that's degraded.
+```
+
+```text
+/calico Show me the denied flows across the cluster in the last hour, grouped by source and destination namespace, and which policy denied each one.
+```
+
+```text
+/calico Who are the top talkers in the payments namespace?
+```
+
+### Review a policy
+
+Ask this when you want to know what one policy does.
+Paste the policy YAML, or name a policy that's in the cluster or bundle.
+The session needs a cluster or a bundle even for pasted YAML, because the assistant checks the policy's selectors against real workloads.
+
+```text
+/calico Review this policy before I apply it. Which workloads does it select, and what does it allow and deny?
+
+<policy-yaml>
+```
+
+```text
+/calico Explain what the policy allow-frontend in the security tier does, and whether anything in a higher tier overrides it.
+```
+
+```text
+/calico List every policy that applies to pod api-6c8d4 in namespace orders, in the order they're evaluated.
+```
+
+The review reads the policy and the workloads.
+It doesn't test the policy against live traffic.
+
+### Find policies to remove
+
+Ask this when you want to clean up your policies.
+These requests need a live cluster.
+
+```text
+/calico We have too many network policies. Which ones are orphaned or duplicated, and how confident are you in each finding?
+```
+
+```text
+/calico Which policies and rules in this cluster haven't matched any traffic recently?
+```
+
+The assistant reports three kinds of finding:
+
+- **Orphaned** policies select no workloads.
+- **Duplicate** policies do the same thing as another policy.
+- **Unused** policies haven't matched traffic recently.
+  This finding needs $[prodname] 3.23 or later.
+
+The assistant reports what it found and how sure it is.
+It doesn't delete or change any policy.
+
+## Check the answer
+
+The assistant can be wrong.
+Before you act on an answer, check what it's based on.
+
+- **Read the evidence.**
+  The assistant shows the tool results behind its conclusion, such as the rule that matched or the flows that were denied.
+  If a conclusion has no evidence, ask for it.
+- **Watch for other tools.**
+  The assistant tells you, in one line, before it uses a tool outside the $[mcpserver], such as a shell command.
+  If you didn't expect that, ask it to stay with the server's tools.
+- **Make the fix yourself.**
+  The server finds causes.
+  It doesn't change policy, routes, or configuration.
+
+## Troubleshooting
+
+### Only a few tools are visible
+
+Before a session has a source, the server shows only the tools that set one up.
+The diagnostic tools appear after the assistant connects to a cluster or bundle.
+
+Ask the assistant to connect to your kubeconfig or bundle directory.
+If the tools still don't appear, restart the server in your client and try again.
+
+### The assistant uses `kubectl` or shell commands
+
+Your request didn't go through the server's skills.
+
+Start the request with the `/calico` prompt.
+
+### The assistant can't connect with your kubeconfig
+
+The kubeconfig path is wrong, or its current context can't reach the cluster.
+
+Check that the following command works, and then give the assistant the same path:
+
+```bash
+kubectl --kubeconfig <path-to-kubeconfig-file> get nodes
+```
+
+### The assistant can't connect to your bundle
+
+The path points to an archive, or to a directory that isn't the top of the bundle.
+
+Unpack the bundle, and give the assistant the directory that contains `cluster/` and `nodes/`.
+
+### Flow log queries fail with a 401 error
+
+The session doesn't have flow log access.
+
+Ask the assistant to run `grant_flow_log_access`, and then approve the request.
+
+### The flow log access step is refused
+
+Your identity doesn't have the permissions that the step needs.
+
+See [Flow log access](requirements.mdx#flow-log-access).

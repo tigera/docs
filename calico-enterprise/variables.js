@@ -6,6 +6,7 @@ const variables = {
   helmPre: 'master'.includes('-') ? ' --devel' : '',
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
+  mcpserver: 'Calico MCP server',
   version: 'master',
   openSourceVersion: releases[0].calico.minor_version.slice(1),
   baseUrl: '/calico-enterprise/next',

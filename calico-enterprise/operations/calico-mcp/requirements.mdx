@@ -1,0 +1,126 @@
+---
+description: Supported AI clients, platforms, cluster permissions, and network access for the Calico MCP server on Calico Enterprise, and the limits of the tech preview.
+content_type: reference
+sidebar_label: Requirements and limitations
+lifecycle_status: tech-preview
+lifecycle_feature: Calico MCP server
+---
+
+{/*
+  User story
+  As a platform engineer or cluster administrator, I want one list of what the Calico MCP server needs and what it can't do, so that I know whether it will work here and which permissions to grant.
+
+  Page plan: DOCS-3135.
+*/}
+
+# $[mcpserver] requirements and limitations
+
+This page lists what the $[mcpserver] needs from your workstation and your cluster, and what it can't do in the tech preview.
+For how the server works, see [About the $[mcpserver]](about.mdx).
+
+## AI clients
+
+The $[mcpserver] supports the following AI clients:
+
+- Claude Code
+- Claude Cowork, in the Claude desktop app
+- Visual Studio Code with GitHub Copilot Chat in agent mode
+
+Other MCP clients that can start a local server over standard input and output may work, but they aren't supported.
+
+{/* TODO DOCS-3135: confirm the client list with engineering, including which GitHub Copilot surfaces are supported. */}
+
+## Workstation platforms
+
+The server binary is available for the following platforms:
+
+| Operating system | Architecture |
+| --- | --- |
+| macOS | Apple silicon (arm64) |
+| macOS | Intel (amd64) |
+| Linux | x86-64 (amd64) |
+
+Windows and Linux on ARM aren't supported.
+
+## $[prodname] versions
+
+{/* TODO DOCS-3135: state the minimum supported Calico Enterprise version. */}
+
+| Capability | Required version |
+| --- | --- |
+| Policy activity, which shows when a policy last matched traffic | $[prodname] 3.23 or later |
+
+## Cluster permissions
+
+With a live cluster, the server acts as the identity in the kubeconfig that you name.
+The following table lists what that identity needs for each capability.
+
+| Capability | What the identity needs | Read-only |
+| --- | --- | --- |
+| Read resources, policy, and pod logs | `get` and `list` on the Kubernetes and Calico resources that you want the assistant to read, and `get` on `pods/log` | Yes |
+| Node-level tools: rule lookups, packet traces, route lookups, node health, eBPF state, and BGP session state | `create` on `pods/exec` for the `calico-node` pods in the `calico-system` namespace | No |
+| Policy activity | `get` on the `calico-api` Service and the `tigera-ca-bundle` ConfigMap, and `create` on `pods/portforward`, in the `calico-system` namespace | No |
+| Flow logs | Permission to run the flow log access step. See [Flow log access](#flow-log-access). | No |
+
+{/* TODO DOCS-3135: test these permissions on a cluster and add an example read-only ClusterRole. */}
+
+### Flow log access
+
+To query flow logs, the server runs a setup step called `grant_flow_log_access`.
+To run the step, the identity needs all of the following:
+
+- `create` on ServiceAccounts in the `calico-system` namespace
+- `create` on ClusterRoles and ClusterRoleBindings
+- `create` on a token for the `calico-mcp-linseed` ServiceAccount
+- `get` on the `tigera-ca-private` Secret in the `tigera-operator` namespace
+
+The step creates the following objects:
+
+| Kind | Name | Namespace |
+| --- | --- | --- |
+| ServiceAccount | `calico-mcp-linseed` | `calico-system` |
+| ClusterRole | `calico-mcp-linseed` | |
+| ClusterRoleBinding | `calico-mcp-linseed` | |
+
+The ClusterRole allows the following:
+
+- `get` on these `linseed.tigera.io` resources: `flows`, `flowlogs`, `dnslogs`, `l7logs`, `auditlogs`, `events`, `processes`, `waflogs`, and `bgplogs`
+- `get`, `list`, and `watch` on Calico, Kubernetes, and admin network policies, and on tiers
+
+The ServiceAccount can read the flow logs and policy activity of every namespace.
+
+## Diagnostics bundles
+
+To use a diagnostics bundle, you need an unpacked bundle directory that contains the `cluster/` and `nodes/` subdirectories.
+To collect a bundle, see [calicoctl cluster diags](../../reference/clis/calicoctl/cluster/diags.mdx).
+
+## Network access
+
+| Destination | Used for | If it's blocked |
+| --- | --- | --- |
+| `docs.tigera.io`, port 443 | Documentation search | Documentation search fails. All other tools work. |
+
+The server also needs to reach the Kubernetes API server of the cluster that you connect to.
+
+## Limitations
+
+- **Read-only tools.**
+  The server doesn't create, change, or delete policies or any other resource.
+  The flow log access step is the only tool that changes the cluster.
+- **No test traffic.**
+  The server can't send traffic or capture packets on a live cluster.
+  It uses flow logs, rule counters, and eBPF counters as evidence instead.
+- **One source at a time.**
+  A session reads from one cluster or one bundle.
+  You can switch during a session, but you can't query two at once.
+- **Partial node health.**
+  Node health doesn't report full route tables, policy-routing rules, or interfaces that $[prodname] doesn't manage.
+- **Live cluster only.**
+  Flow logs, node health, and the search for orphaned, duplicate, and unused policies aren't available from a diagnostics bundle.
+- **Bundle only.**
+  The tools that read packet capture files work only with a diagnostics bundle.
+- **No flow logs on a managed cluster.**
+  Flow logs aren't available on a managed cluster in a multi-cluster management setup.
+  Policy activity still works there.
+- **Client differences.**
+  Some clients don't support MCP prompts, and some limit the number of tools that they load.

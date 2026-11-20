@@ -1,0 +1,142 @@
+---
+description: Look up the tools, skills, prompt, and command-line options of the Calico MCP server for Calico Enterprise, and which tools work with a live cluster or a diagnostics bundle.
+content_type: reference
+sidebar_label: Tools, skills, and options
+lifecycle_status: tech-preview
+lifecycle_feature: Calico MCP server
+---
+
+{/*
+  User story
+  As a platform engineer, I want to look up a tool, skill, or flag, so that I know what my assistant can use in this session.
+
+  Page plan: DOCS-3135.
+*/}
+
+# $[mcpserver] tools, skills, and options
+
+This page lists the tools, skills, prompt, and command-line options of the $[mcpserver].
+Your assistant chooses tools and skills for you, so you don't need to call them by name.
+To get started, see [Use the $[mcpserver]](use.mdx).
+
+## Tools
+
+### Diagnostic tools
+
+The diagnostic tools appear after a session connects to a live cluster or a diagnostics bundle.
+All of them are read-only except `grant_flow_log_access`.
+
+| Tool | What it does | Live cluster | Bundle |
+| --- | --- | :---: | :---: |
+| `get_resource` | Reads one Kubernetes or Calico resource. | Yes | Yes |
+| `list_resources` | Lists Kubernetes or Calico resources of one kind. | Yes | Yes |
+| `pod_logs` | Reads the logs of a pod. | Yes | Yes |
+| `explain_policy` | Describes what a policy selects, allows, and denies. | Yes | Yes |
+| `get_policy_chain` | Lists the policies that apply to a pod, in the order they're evaluated. | Yes | Yes |
+| `nf_trace_packet` | Traces a packet through a node's iptables or nftables rules. | Yes | Yes |
+| `nf_find_rules` | Searches a node's iptables or nftables rules. | Yes | Yes |
+| `nf_lookup_set` | Checks whether an address is in an IP set on a node. | Yes | Yes |
+| `resolve_route` | Reports the route that a node uses for a destination. | Yes | Yes |
+| `isolate_service_backends` | Reports the backends of a Service. | Yes | Yes |
+| `get_cluster_health` | Reports the health of $[prodname] components and BGP sessions. | Yes | Yes |
+| `knowledge_search` | Searches the $[prodname] documentation. | Yes | Yes |
+| `bpf_counters` | Reads eBPF data plane counters. | eBPF clusters | If captured |
+| `bpf_conntrack` | Reads the eBPF connection tracking table. | eBPF clusters | If captured |
+| `bpf_services` | Reads the eBPF service map. | eBPF clusters | If captured |
+| `bpf_routes` | Reads the eBPF route map. | eBPF clusters | If captured |
+| `bpf_lookup_set` | Checks whether an address is in an eBPF IP set. | eBPF clusters | If captured |
+| `get_node_health` | Reports the BGP, overlay, and data plane state of one node. | Yes | No |
+| `query_flow_logs` | Queries flow logs. | Yes | No |
+| `grant_flow_log_access` | Sets up access to flow logs. Changes the cluster. | Yes | No |
+| `find_orphaned_policies` | Finds policies that select no workloads. | Yes | No |
+| `find_duplicate_policies` | Finds policies that duplicate another policy. | Yes | No |
+| `policy_activity` | Reports when each policy last matched traffic. | Yes | No |
+| `summarize_pcap` | Summarizes a packet capture file. | No | Yes |
+| `list_pcap_flows` | Lists the flows in a packet capture file. | No | Yes |
+| `add_diagnostic_files` | Attaches a file or directory from outside the bundle to the session. | No | Yes |
+
+### Session tools
+
+The session tools are available as soon as the server starts.
+
+| Tool | What it does |
+| --- | --- |
+| `set_context` | Connects the session to a live cluster or a diagnostics bundle. |
+| `get_context` | Reports what the session is connected to. |
+
+The `set_context` tool takes exactly one of the following arguments:
+
+| Argument | Value |
+| --- | --- |
+| `kubeconfig` | The path to a kubeconfig file. |
+| `bundle` | The path to an unpacked diagnostics bundle directory. |
+| `proxy_url` | Not used in this release. |
+| `proxy_kubeconfig` | Not used in this release. |
+
+### Tools for clients without prompts
+
+Some clients support MCP tools but not MCP prompts or resources.
+For these clients, the server offers the prompt and the skills as tools.
+
+| Tool | What it does |
+| --- | --- |
+| `get_mcp_prompt` | Returns the `/calico` prompt. |
+| `list_mcp_resources` | Lists the skills. |
+| `read_mcp_resource` | Returns one skill. |
+
+## Skills
+
+Skills are procedures that tell the assistant how to investigate.
+The `/calico` prompt sends each request to one of four main skills.
+
+| Skill | Use |
+| --- | --- |
+| `incident-response` | Something is broken, slow, or denied. Narrows a broad problem to specific paths, and uses `network-troubleshooting` to trace each path. |
+| `observability` | Questions about the state of the cluster: health, denied flows, top talkers, and policy counts. |
+| `policy-review` | What one policy selects, allows, and denies. |
+| `policy-hygiene` | Which policies are orphaned, duplicated, or unused. |
+
+The main skills call more specific skills when a problem needs them:
+
+| Skill | Use |
+| --- | --- |
+| `diagnose-cluster-overview` | Get oriented in an unfamiliar cluster. |
+| `diagnose-bgp-routing` | Missing routes or BGP peers that don't connect. |
+| `diagnose-calico-node` | Unhealthy `calico-node` pods. |
+| `diagnose-ipam` | IP address allocation failures. |
+| `diagnose-overlay` | Cross-node traffic that fails on a VXLAN or IP-in-IP overlay. |
+| `diagnose-nodelocal-dnscache` | DNS failures on a cluster that runs NodeLocal DNSCache. |
+| `diagnose-dns-policy-ee` | Egress to a domain that a DNS policy might deny. |
+| `diagnose-egress-gateway-ee` | Traffic that doesn't leave through an egress gateway as expected. |
+| `verify-kprobes-ee` | Flow logs that lack byte counts or process information. |
+| `session-report` | Write a report of the session to a local file. |
+
+On a cluster that uses the eBPF data plane, the server adds these skills:
+
+| Skill | Use |
+| --- | --- |
+| `verify-ebpf-dataplane` | Check that the eBPF data plane is working. |
+| `verify-ebpf-vxlan` | Check VXLAN with the eBPF data plane. |
+| `diagnose-ebpf-vxlan` | VXLAN failures with the eBPF data plane. |
+| `diagnose-ebpf-services` | Service failures with the eBPF data plane. |
+| `diagnose-ebpf-apiserver-connectivity` | The Kubernetes API server can't be reached through its cluster IP. |
+| `diagnose-ebpf-provider-cni` | Connectivity failures when another CNI plugin provides networking. |
+| `debug-ebpf-trace-logs` | Find the reason for a packet drop from eBPF trace logs. |
+
+## The `/calico` prompt
+
+The server offers one prompt, `calico`.
+It takes one argument, `request`, which is your request in plain language.
+
+| Client | Prompt name |
+| --- | --- |
+| Claude Code | `/mcp__calico-mcp__calico` |
+| VS Code with GitHub Copilot | `/mcp.calico-mcp.calico` |
+
+## Command-line options
+
+| Flag | Environment variable | Values | Description |
+| --- | --- | --- | --- |
+| `--version` | | | Prints the version and commit, and then exits. |
+| `--compat` | `CALICO_MCP_COMPAT` | `auto`, `full`, `tools-only` | Controls whether the server offers the prompt and skills as tools. `auto` turns this on for clients that are known to support tools only. `tools-only` always turns it on. `full` always turns it off. The default is `auto`. |
+| `--proxy` | `CALICO_MCP_PROXY` | `auto`, `off` | Not used in this release. |
