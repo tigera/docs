@@ -19,6 +19,13 @@ We don't use it.
 These are guidelines, not laws.
 Depart from them when that makes a page clearer, and stay consistent within the page.
 
+In a review, only the rules that Vale checks can hold up a pull request.
+Vale runs on every pull request and comments on the lines it flags.
+Every other rule in this guide is advice.
+If your text is clear and correct as you wrote it, you can say so and leave it.
+A reviewer doesn't ask a contributor to change clear, correct text only to match the guide.
+The docs team can tidy the style later, in a pull request of its own.
+
 To change this guide, open a pull request.
 When you add a word-list entry, add the matching Vale rule or vocabulary line in the same pull request, so the guide and the linter agree.
 
@@ -31,7 +38,7 @@ The sections below explain the house rules in full.
 
 - Write to the reader as *you*. Don't use *we* to mean the reader. <!-- Google: https://developers.google.com/style/person -->
 - Prefer the active voice. The passive is fine when the actor doesn't matter or the object is the point: "The pod is deleted after 30 seconds." <!-- Google: https://developers.google.com/style/voice -->
-- Use the present tense. Use the future only for something that really happens later: "The node will be drained the next time the upgrade runs." <!-- Google: https://developers.google.com/style/tense -->
+- Use the present tense for how the product behaves: "If the pod restarts, the node loses connectivity." Use *will* for something that happens later: "The node will be drained the next time the upgrade runs." *Will* is also fine when you warn the reader about a result. Don't change a clear sentence only to remove *will*. <!-- Google: https://developers.google.com/style/tense -->
 - Be conversational, not frivolous. Contractions are fine. <!-- Google: https://developers.google.com/style/tone and https://developers.google.com/style/contractions -->
 - Don't use *please*, *simply*, *easily*, *just*, or *via*. <!-- Google: https://developers.google.com/style/word-list -->
 - Don't use *e.g.*, *i.e.*, or *etc.* Write *for example* or *that is*, and end a list with a complete example. <!-- Google: https://developers.google.com/style/word-list -->
@@ -178,6 +185,10 @@ Spell the product name out, with no variable, in these places:
 
 Don't repeat the product name in every sentence.
 Once the page has said what it's about, say *it*.
+
+Don't join a product name variable to another word with a hyphen.
+`$[prodname]-advertised routes` renders as "Calico Enterprise-advertised routes", which is hard to read.
+Write "routes that `$[prodname]` advertises", or leave the name out when the page has already said which product it's about.
 
 Shared text lives in partials under `_includes/`, and shared components are registered in `src/theme/MDXComponents.js`.
 Use a partial when three or more pages need the same paragraph.
@@ -406,6 +417,7 @@ A *Vale* tag means the linter enforces it.
 - **kube-proxy.** Lowercase, hyphenated.
 - **kubectl.** Lowercase. Code font for the command.
 - **log in, log out.** Verb forms, two words. *Login* is the noun and the adjective. Not *sign in*, because the web console says *Log in*.
+- **may, might.** Prefer *might* for something that could happen and *can* for permission, as in the Google word list. This is a small point. Don't raise it in a review.
 - **microsegmentation.** One word.
 - **multi-cluster.** Hyphenated, as in the Google word list. Not *multicluster*. Vale.
 - **nftables, iptables.** Lowercase, always.
@@ -425,3 +437,4 @@ A *Vale* tag means the linter enforces it.
 | Date | Change |
 |---|---|
 | 2026-11-06 | First version. Replaces the 2022 and 2024 Google Docs drafts. |
+| 2026-11-19 | Only Vale rules can hold up a pull request. Relaxed the tense rule. Added rules for product names in compounds and for *may* and *might*. |
