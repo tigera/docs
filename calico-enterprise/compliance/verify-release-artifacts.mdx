@@ -1,5 +1,5 @@
 ---
-description: Check the Sigstore signatures on Calico Enterprise images, Helm charts, and release files with cosign, for a whole release or for one artifact.
+description: Check the signatures on a Calico Enterprise release with one script, and the GPG signatures on its RPM and Debian packages.
 content_type: how-to
 ---
 
@@ -14,7 +14,7 @@ import TabItem from '@theme/TabItem';
 
 Each $[prodname] release is signed with [Sigstore](https://www.sigstore.dev/).
 Check the signatures to confirm that the images, charts, and files you install are the ones Tigera published, unchanged.
-You can check a whole release with one script, or check one image or file at a time with `cosign`.
+Check a whole release with one script.
 
 ## What is signed
 
@@ -135,33 +135,12 @@ The script can't vouch for itself, so check its signature with cosign before you
 
 ### Check part of a release
 
-To check only the artifacts you use, pass a category, a name, or both.
-To see every option, run `bash verify.sh --help`.
+To check only some artifacts, or files you already downloaded, run `bash verify.sh --help` to see the options.
 
-- To list the category and name of every artifact, run `bash verify.sh --list`.
-- To check one or more categories, pass `--only` with a comma-separated list of `images`, `charts`, `bundles`, and `files`:
+## Get the SBOM for an image
 
-  ```bash
-  bash verify.sh --only images,charts
-  ```
-
-- To check named artifacts, pass the names that `--list` prints:
-
-  ```bash
-  bash verify.sh quay.io/tigera/cnx-node quay.io/tigera/operator
-  ```
-
-- To check files you already downloaded, pass `--files-dir <path-to-files-directory>`, where `<path-to-files-directory>` is the directory that holds them.
-  The script reads each file from that directory instead of downloading it.
-  If the directory also holds the file's `.sigstore.json` bundle, the script uses that bundle.
-
-A name that matches no artifact is an error, not a pass.
-When you name an artifact or a category, the script reports an artifact it can't check as a failure, not a skip.
-
-## Verify one image, chart, or bundle
-
-Check an image by its digest, and deploy it by the same digest.
-A tag can be moved to a different image after you check it.
+`verify.sh` checks each SBOM but doesn't save it.
+To get the SBOM for one platform of an image, check it and extract it with cosign.
 
 1. Download `metadata.yaml` and its bundle, and check the signature:
 
@@ -173,9 +152,7 @@ A tag can be moved to a different image after you check it.
        --bundle metadata.yaml.sigstore.json metadata.yaml
    ```
 
-2. In `metadata.yaml`, find the `image` and `digest` of the artifact you want to check.
-   Images are under `components`, Helm charts are under `charts.entries`, and Carvel bundles are under `carvel`.
-   An image entry looks like this:
+2. In `metadata.yaml`, find the `image` and `digest` of the image under `components`:
 
    ```yaml
    components:
@@ -185,29 +162,10 @@ A tag can be moved to a different image after you check it.
        digest: sha256:<digest>
    ```
 
-3. Check the signature:
+   The `digest` is the digest of the image index, which lists the platforms.
+   Each platform has its own SBOM, attached to that platform's digest.
 
-   ```bash
-   cosign verify --certificate-identity "$IDENTITY" \
-       --certificate-oidc-issuer "$ISSUER" \
-       <repository>@sha256:<digest>
-   ```
-
-   Replace the following:
-
-   - `<repository>`: the `image` value without its tag, such as `quay.io/tigera/cnx-node`.
-   - `<digest>`: the `digest` value without the `sha256:` prefix.
-
-   cosign prints the checks it ran and the signature payload, and exits with status 0.
-
-## Get the SBOM for an image
-
-Each platform of an image has its own SBOM, attached to that platform's digest.
-The `digest` in `metadata.yaml` is the digest of the image index, which lists the platforms.
-
-1. Check the image's signature, as in [Verify one image, chart, or bundle](#verify-one-image-chart-or-bundle).
-
-2. Get the digest of one platform:
+3. Get the digest of one platform:
 
    ```bash
    crane digest --platform <platform> <repository>@sha256:<digest>
@@ -216,11 +174,12 @@ The `digest` in `metadata.yaml` is the digest of the image index, which lists th
    Replace the following:
 
    - `<platform>`: the platform, such as `linux/amd64` or `linux/arm64`.
-   - `<repository>` and `<digest>`: the same values as in the signature check.
+   - `<repository>`: the `image` value without its tag, such as `quay.io/tigera/cnx-node`.
+   - `<digest>`: the `digest` value without the `sha256:` prefix.
 
    The command prints the platform digest, such as `sha256:<platform-digest>`.
 
-3. Check the SBOM's signature, and save the signed attestation:
+4. Check the SBOM's signature, and save the signed attestation:
 
    ```bash
    cosign verify-attestation --type spdxjson \
@@ -234,49 +193,13 @@ The `digest` in `metadata.yaml` is the digest of the image index, which lists th
    cosign exits with status 0 when the signature matches.
    If it fails, don't use the SBOM.
 
-4. Extract the SBOM from the attestation:
+5. Extract the SBOM from the attestation:
 
    ```bash
    jq -r '.payload' attestation.json | base64 -d | jq '.predicate' > sbom.spdx.json
    ```
 
    `sbom.spdx.json` holds the SPDX 2.3 document, which lists the packages in that platform's image.
-
-## Verify one file
-
-Use these steps for release files, and for Helm charts you install from `downloads.tigera.io` as `.tgz` files.
-
-1. Download `metadata.yaml` and check its signature, as in [Verify one image, chart, or bundle](#verify-one-image-chart-or-bundle).
-
-2. Download the file and its bundle:
-
-   ```bash
-   curl -fsSLO <file-url>
-   curl -fsSLO <file-url>.sigstore.json
-   ```
-
-   Replace `<file-url>` with the file's `url` in the `artifacts` list of `metadata.yaml`.
-
-   For the $[prodnameWindows] archive, use your copy of the archive, and download only its bundle from `$[filesUrl]/<file-name>.sigstore.json`.
-
-3. Check the signature:
-
-   ```bash
-   cosign verify-blob --certificate-identity "$IDENTITY" \
-       --certificate-oidc-issuer "$ISSUER" \
-       --bundle <file-name>.sigstore.json <file-name>
-   ```
-
-   Replace `<file-name>` with the name of the file.
-   The command exits with status 0 when the signature matches.
-
-4. Check that the file's SHA-256 hash matches the `sha256` value for the file in `metadata.yaml`:
-
-   ```bash
-   sha256sum <file-name>
-   ```
-
-   This step ties the file to this release, because a file from another release carries a valid signature too.
 
 ## Verify packages
 
@@ -389,24 +312,6 @@ This happens most often in a manual check, when `IDENTITY` or `ISSUER` isn't set
 **Cause:** The artifact was signed by someone other than Tigera.
 
 **Fix:** Don't install the artifact, and contact Tigera support.
-
-### `no signatures found`
-
-cosign finds no signature on the image you checked.
-
-**Cause:** You checked a tag or a platform digest instead of the digest in `metadata.yaml`.
-Signatures are attached to the image index digest that `metadata.yaml` lists.
-SBOMs are attached to the platform digests.
-
-**Fix:** Check `<repository>@sha256:<digest>`, with the `digest` from `metadata.yaml`, as in [Verify one image, chart, or bundle](#verify-one-image-chart-or-bundle).
-
-**Cause:** You checked a copy of the image in your own registry, and the tool that copied it didn't copy the signatures.
-
-**Fix:**
-
-1. Check the same digest in `quay.io/tigera` instead.
-   An unchanged copy has the same digest as the original.
-2. To check images in your own registry, copy them with a tool that also copies OCI referrers, such as `oras copy -r`.
 
 ### `cosign could not load the Sigstore trust root`
 
