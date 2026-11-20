@@ -142,13 +142,26 @@ To access the web console, you can use latest two versions of the following web 
 * Your cluster uses a supported combination of the `networkPlugin` and `networkPolicy` configurations:
   - `"networkPlugin": "none"` and `"networkPolicy": null`
   - `"networkPlugin": "azure"` and `"networkPolicy": null`
-  - `"networkPlugin": "azure"` and `"networkPolicy": "calico"`
+  - `"networkPlugin": "azure"` and `"networkPolicy": "calico"` (not recommended)
+
+  We recommend that `networkPolicy` is `null`.
+  To get this, create your cluster with `--network-policy none`.
 
   You can check your configuration by running the following command:
 
   ```bash
   az aks show --query 'networkProfile'
   ```
+
+  :::warning
+
+  If you create your cluster with `--network-policy calico`, AKS installs its own Calico and keeps managing it after you connect the cluster to $[prodname].
+  AKS updates can then change $[prodname] resources without warning.
+  To move an existing cluster to `--network-policy none`, you need a maintenance window.
+  Nodes restart, and network policy is not enforced for part of that time.
+  For help, [contact Support](https://tigeraio.my.site.com/community/s/login/).
+
+  :::
 
 * If your cluster uses the Azure CNI, your cluster's CNI is set to [transparent mode](https://docs.microsoft.com/en-us/azure/aks/faq#what-is-azure-cni-transparent-mode-vs-bridge-mode).
 
