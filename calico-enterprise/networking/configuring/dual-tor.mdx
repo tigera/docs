@@ -120,18 +120,17 @@ $[nodecontainer] _pod_:
   down its own BGP. Now the regular BGP service handles the advertisement of the stable
   address, as well as pod IPs and so on.
 
-- Later, the $[nodecontainer] pod might be shut down, e.g. for restart or upgrade.
-  If the downtime continues for longer than the graceful restart period, the early
-  networking container spots this and restarts its own BGP, to ensure that the node's
-  stable IP address continues to be advertised to other nodes. The cycle can now repeat
-  from the "Initially" state above.
+- Later, the $[nodecontainer] pod might be shut down, for example for restart or upgrade.
+  The early networking container discovers the restart times that the $[nodecontainer] pod was using on its BGP sessions to the ToR routers.
+  When each session's restart time has expired, the early networking container takes over that session with its own BGP.
+  That keeps the node's stable IP address advertised to the ToRs and other nodes.
+  The cycle can now repeat from the "Initially" state above.
 
-  :::note
+  Taking over a ToR BGP session before its restart time expires would cause the ToRs to lose the $[prodname]-advertised pod routes too early.
+  Taking over a ToR BGP session after its restart time expires would leave a gap during which the ToRs can't route to the node's stable IP, so the node loses connectivity to the outside world.
 
-  The default graceful restart period is 120s for traditional BGP GR and
-  3600s for LLGR.
-
-  :::
+  The `maxRestartTime` field of the BGPPeer resource sets the restart time for each BGP session.
+  When `maxRestartTime` isn't set, the default is 120 seconds for traditional BGP graceful restart (GR), and 3600 seconds for long-lived graceful restart (LLGR).
 
 ### BGP configuration for rapid outage detection
 
@@ -269,6 +268,17 @@ For a dual ToR setup, LLGR is helpful, as explained in more detail by [this blog
     - `restartMode: LongLivedGracefulRestart` to enable LLGR handling when the node needs
       to be restarted, if your ToR routers support LLGR. If not, we recommend instead
       `maxRestartTime: 10s`.
+
+      Enable LLGR handling only if your ToR routers support it.
+      If LLGR is enabled in your $[prodname] configuration, but the ToR routers do not support it, a node loses connectivity whenever its $[nodecontainer] pod restarts.
+      That is because the early networking function assumes that LLGR is already maintaining routing.
+      So it doesn't configure its own BGP to take over the ToR sessions, and re-advertise the node's stable IP address, until the LLGR stale time (default 3600 seconds) has passed.
+
+      If you configure a short `maxRestartTime`, such as the `10s` recommended above, and you are planning a $[prodname] upgrade or $[nodecontainer] restart that might take longer than that, consider raising `maxRestartTime` first, so that you don't lose $[prodname]-advertised routes (such as to pod IPs) during the upgrade or restart.
+      Then lower it again afterwards.
+
+      Changing `maxRestartTime` resets the BGP sessions, so the routes briefly flap, but only for a few seconds.
+      Make these changes in a quiet period ahead of the upgrade or restart, and after it, instead of as part of the upgrade or restart itself.
 
     - `birdGatewayMode: DirectIfDirectlyConnected` to enable the "direct" next hop
       algorithm, if that is helpful for optimal interworking with your ToR routers.
@@ -447,6 +457,7 @@ For example:
 ```
 podman run --privileged --net=host \
     -v /calico-early:/calico-early -e CALICO_EARLY_NETWORKING=/calico-early/cfg.yaml \
+    -v /var/run/calico/early:/var/run/calico/early:ro \
     $[registry]$[imageNames.node]:latest
 ```
 
@@ -470,11 +481,17 @@ After=nodeip-configuration.service
 ExecStartPre=/bin/sh -c "rm -f /etc/systemd/system/kubelet.service.d/20-nodenet.conf /etc/systemd/system/crio.service.d/20-nodenet.conf; systemctl daemon-reload"
 ExecStartPre=-/bin/podman rm -f calico-early
 ExecStartPre=/bin/mkdir -p /etc/calico-early
+ExecStartPre=/bin/mkdir -p /var/run/calico/early
 ExecStartPre=/bin/sh -c "test -f /etc/calico-early/details.yaml || /bin/curl -o /etc/calico-early/details.yaml http://172.31.1.1:8080/calico-early/details.yaml"
-ExecStart=/bin/podman run --rm --privileged --net=host --name=calico-early -v /etc/calico-early:/etc/calico-early -e CALICO_EARLY_NETWORKING=/etc/calico-early/details.yaml $[registry]$[imageNames.node]:latest
+ExecStart=/bin/podman run --rm --privileged --net=host --name=calico-early -v /etc/calico-early:/etc/calico-early -v /var/run/calico/early:/var/run/calico/early:ro -e CALICO_EARLY_NETWORKING=/etc/calico-early/details.yaml $[registry]$[imageNames.node]:latest
 [Install]
 WantedBy=multi-user.target
 ```
+
+The read-only mount of `/var/run/calico/early` allows early networking to read the restart times that $[nodecontainer] is using.
+$[nodecontainer] writes its current peer IPs and restart times to a file in that directory named `restart-times.json`.
+Without the mount, early networking defaults to 120 seconds for every ToR session and logs a warning at startup.
+If the Installation resource sets `calicoRunHostPath`, use `<calico-run-host-path>/early` as the host side of the mount instead of `/var/run/calico/early`, where `<calico-run-host-path>` is the value of `calicoRunHostPath`.
 
 :::note
 
