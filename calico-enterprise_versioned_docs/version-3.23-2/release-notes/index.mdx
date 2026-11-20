@@ -367,7 +367,7 @@ October 27, 2026
 
 To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
 
-### Calico Enterprise 3.23.4 hot fix release
+### Calico Enterprise 3.23.4 hotfix release
 
 November 10, 2026
 
@@ -406,3 +406,170 @@ It also includes a selection of other security and product fixes. We recommend t
 * Security fixes. {/* #14685, #14862, #14894, #14929, #15176, #15185, #15218, operator #5364, #5382, #5387, #5388 */}
 
 To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
+
+### Calico Enterprise 3.23.4 hotfix release for Tigera Operator and web console images
+
+November 19, 2026
+
+This hotfix release includes the following changes:
+
+* Elasticsearch: The Tigera Operator now starts Elasticsearch with `-XX:-UseBASE64Intrinsics`, which mitigates CVE-2026-114938 in the JDK bundled with Elasticsearch.
+* Web console: The web console image now includes NGINX 1.31.9, which fixes the HTTP/2 vulnerabilities CVE-2026-123007 and CVE-2026-123633, as well as the other CVEs fixed in that NGINX release.
+* Packet capture: The Tigera Operator now removes packet capture resources left over from older releases when no PacketCaptureAPI resource exists, so you can delete the deprecated `allow-tigera` tier.
+* The Tigera Operator also updates `golang.org/x/crypto` and a few related `golang.org/x` libraries to pick up upstream security fixes.
+
+The Calico Enterprise version is still 3.23.4, and no other images changed.
+
+* Tigera Operator: `quay.io/tigera/operator:v1.42.9`
+* Web console: `quay.io/tigera/manager:v3.23.4-hotfix1`
+
+#### Update these images from the same patch
+
+If your cluster already runs Calico Enterprise 3.23.4, you need only the two new images.
+You update the Tigera Operator, and the operator does the rest.
+The operator restarts the affected pods for you, so expect some Calico Enterprise pods to restart.
+
+##### Before you begin
+
+1. Confirm that your cluster runs Calico Enterprise 3.23.4.
+
+   ```bash
+   kubectl get installation default -o jsonpath='{.status.calicoVersion}{"\n"}'
+   ```
+
+   If the output is not `v3.23.4`, follow [Update from a previous version](#update-from-a-previous-version) instead.
+
+1. If you use a private registry, copy the two new images to it.
+
+   ```bash
+   docker pull quay.io/tigera/operator:v1.42.9
+   docker pull quay.io/tigera/manager:v3.23.4-hotfix1
+   docker tag quay.io/tigera/operator:v1.42.9 $PRIVATE_REGISTRY/tigera/operator:v1.42.9
+   docker tag quay.io/tigera/manager:v3.23.4-hotfix1 $PRIVATE_REGISTRY/tigera/manager:v3.23.4-hotfix1
+   docker push $PRIVATE_REGISTRY/tigera/operator:v1.42.9
+   docker push $PRIVATE_REGISTRY/tigera/manager:v3.23.4-hotfix1
+   ```
+
+   If you use an image path, tag the images the same way you did when you installed.
+   See [Install from an image path in a private registry](../getting-started/install-on-clusters/private-registry/private-registry-image-path.mdx).
+
+<details>
+
+<summary>Manifest installations</summary>
+
+1. Download the updated Tigera Operator manifest.
+
+   ```bash
+   curl -L -O https://downloads.tigera.io/ee/v3.23.4/manifests/tigera-operator.yaml
+   ```
+
+   For an AKS cluster that you upgraded from Calico Open Source, download this manifest instead:
+
+   ```bash
+   curl -L -o tigera-operator.yaml https://downloads.tigera.io/ee/v3.23.4/manifests/aks/tigera-operator-upgrade.yaml
+   ```
+
+1. Check that the manifest has the new operator image.
+   The manifest URL did not change with this release, so an older copy of the file has the same name.
+
+   ```bash
+   grep 'image:.*operator' tigera-operator.yaml
+   ```
+
+   The output must show `quay.io/tigera/operator:v1.42.9`.
+
+1. If you use a private registry, change the manifest the same way you did when you installed.
+   See [Install from a private registry](../getting-started/install-on-clusters/private-registry/index.mdx).
+
+1. Apply the manifest.
+
+   ```bash
+   kubectl apply --server-side --force-conflicts -f tigera-operator.yaml
+   ```
+
+</details>
+
+<details>
+
+<summary>Helm installations</summary>
+
+1. Download the updated Helm chart.
+
+   ```bash
+   curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-v3.23.4-1.tgz
+   ```
+
+1. Upgrade the release with the same values and files you used to install.
+   You don't need to apply the custom resource definitions again, because they did not change.
+
+   ```bash
+   helm upgrade calico-enterprise tigera-operator-v3.23.4-1.tgz \
+     --values=<path-to-values-yaml> \
+     --set-file imagePullSecrets.tigera-pull-secret=<path-to-pull-secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path-to-pull-secret> \
+     --set-file licenseKeyContent=<path-to-license-file-yaml> \
+     --namespace tigera-operator
+   ```
+
+   If you upgraded from Calico Open Source, your release name is `calico`, not `calico-enterprise`.
+
+   Don't use `--reuse-values`.
+   It keeps the default values of the old chart, which include the old operator image tag.
+
+</details>
+
+<details>
+
+<summary>OpenShift installations</summary>
+
+1. Download the updated manifests and extract the Tigera Operator manifest.
+
+   ```bash
+   wget -qO- https://downloads.tigera.io/ee/v3.23.4/manifests/ocp.tgz | tar xvz ocp/02-tigera-operator.yaml
+   ```
+
+1. Check that the manifest has the new operator image.
+
+   ```bash
+   grep 'image:.*operator' ocp/02-tigera-operator.yaml
+   ```
+
+   The output must show `quay.io/tigera/operator:v1.42.9`.
+
+1. If you use a private registry, change the manifest the same way you did when you installed.
+
+1. Apply the manifest.
+
+   ```bash
+   oc apply --server-side --force-conflicts -f ocp/02-tigera-operator.yaml
+   ```
+
+</details>
+
+##### Check the update
+
+1. Wait until all components are available.
+
+   ```bash
+   watch kubectl get tigerastatus
+   ```
+
+1. Check the Tigera Operator image.
+
+   ```bash
+   kubectl get deployment tigera-operator -n tigera-operator -o jsonpath='{.spec.template.spec.containers[*].image}{"\n"}'
+   ```
+
+   The image tag must be `v1.42.9`.
+
+1. Check the web console image.
+
+   ```bash
+   kubectl get deployment calico-manager -n calico-system -o jsonpath='{.spec.template.spec.containers[?(@.name=="calico-manager")].image}{"\n"}'
+   ```
+
+   The image tag must be `v3.23.4-hotfix1`.
+
+#### Update from a previous version
+
+If your cluster runs Calico Enterprise 3.23.3 or earlier, follow the regular upgrade steps in [Upgrade Calico Enterprise](../getting-started/upgrading/upgrading-enterprise/index.mdx).
+The upgrade installs the new Tigera Operator and web console images.
