@@ -397,7 +397,7 @@ A *Vale* tag means the linter enforces it.
 - **credential.** Singular when you mean one set of credentials for one client.
 - **data plane.** Two words. The one-word form is correct only inside code identifiers such as `linuxDataplane`. Vale.
 - **datastore.** One word.
-- **e.g., i.e., etc.** Don't use. Write *for example* or *that is*, and end a list with a complete example.
+- **e.g., i.e., etc.** Don't use. Write *for example* or *that is*, and end a list with a complete example. Vale.
 - **early preview.** The status of a Calico Enterprise minor before GA. Lowercase in text.
 - **Felix, Typha, Dikastes, Goldmane, Voltron, Whisker.** Capitalized component names.
 - **GA.** Only in table cells. Write *generally available* in text.
