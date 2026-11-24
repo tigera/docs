@@ -1,13 +1,14 @@
 ---
 description: API for this Calico resource.
-content_type: unclassified
+content_type: reference
 ---
 
 # Node
 
-A node resource (`Node`) represents a node running $[prodname]. Each host
+A node resource (Node) represents a node running $[prodname]. Each host
 in a $[prodname] cluster has a node resource which contains the
 configuration for the `$[nodecontainer]` instance running on the host.
+Node is a cluster-scoped resource.
 
 When starting a `$[nodecontainer]` instance, the name supplied to the instance should
 match the name configured in the Node resource.
@@ -16,7 +17,11 @@ By default, starting a `$[nodecontainer]` instance will automatically create a n
 using the `hostname` of the compute host. With the Kubernetes API datastore, the node resource is instead
 the Kubernetes node of the same name, and you cannot create a node resource with `calicoctl`.
 
+This resource is not supported in kubectl.
+
 ## Sample YAML
+
+This sample sets the AS number, BGP addresses, and IP-in-IP tunnel address for one node.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -35,44 +40,52 @@ spec:
 
 ### Metadata
 
-| Field | Description                      | Accepted Values                                     | Schema |
-| ----- | -------------------------------- | --------------------------------------------------- | ------ |
-| name  | The name of this node. Required. | Lowercase alphanumeric string with optional `.` or `-`. | string |
+| Field    | Description                                         | Accepted Values                                                                                                          | Schema                  | Default |
+| -------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------- | ------- |
+| `name`   | The name of this node. Required.                    | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string                  |         |
+| `labels` | Labels that selectors in other resources can match. |                                                                                                                          | map of string to string |         |
 
 ### Spec
 
-| Field                | Description                                                                                                                       | Accepted Values | Schema                       | Default |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------- | ---------------------------- | ------- |
-| bgp                  | BGP configuration for this node. Omit if using $[prodname] for policy only.                                                      |                 | [BGP](#bgp)                  |
-| ipv4VXLANTunnelAddr  | IPv4 address of the VXLAN tunnel. This is system configured and should not be updated manually.                                   |                 | string                       |
-| vxlanTunnelMACAddr   | MAC address of the IPv4 VXLAN tunnel. If not set, Felix generates the MAC address from the node name.                               |                 | string                       |
-| ipv6VXLANTunnelAddr  | IPv6 address of the VXLAN tunnel. This is system configured and should not be updated manually.                                   |                 | string                       |
-| vxlanTunnelMACAddrV6 | MAC address of the IPv6 VXLAN tunnel. This is system configured and should not be updated manually.                               |                 | string                       |
-| orchRefs             | Correlates this node to a node in another orchestrator.                                                                           |                 | list of [OrchRefs](#orchref) |
-| wireguard            | WireGuard configuration for this node. This is applicable only if WireGuard is enabled in [Felix Configuration](felixconfig.mdx). |                 | [WireGuard](#wireguard)      |
-| addresses            | Addresses at which the node can be reached. With the Kubernetes API datastore, this is system configured and should not be updated manually. |                 | list                         |
-| interfaces           | Interfaces on the node and their addresses. This is system configured and should not be updated manually.                         |                 | list                         |
+| Field                  | Description                                                                                                                                  | Accepted Values | Schema                                  | Default |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | --------------------------------------- | ------- |
+| `bgp`                  | BGP configuration for this node. Omit if using $[prodname] for policy only.                                                                 |                 | [NodeBGPSpec](#nodebgpspec)             |         |
+| `ipv4VXLANTunnelAddr`  | IPv4 address of the VXLAN tunnel. This is system configured and should not be updated manually.                                              |                 | string                                  |         |
+| `vxlanTunnelMACAddr`   | MAC address of the IPv4 VXLAN tunnel. If not set, Felix generates the MAC address from the node name.                                        |                 | string                                  |         |
+| `ipv6VXLANTunnelAddr`  | IPv6 address of the VXLAN tunnel. This is system configured and should not be updated manually.                                              |                 | string                                  |         |
+| `vxlanTunnelMACAddrV6` | MAC address of the IPv6 VXLAN tunnel. This is system configured and should not be updated manually.                                          |                 | string                                  |         |
+| `orchRefs`             | Correlates this node to a node in another orchestrator.                                                                                      |                 | list of [OrchRef](#orchref)             |         |
+| `wireguard`            | WireGuard configuration for this node. This is applicable only if WireGuard is enabled in [Felix Configuration](felixconfig.mdx).            |                 | [NodeWireguardSpec](#nodewireguardspec) |         |
+| `addresses`            | Addresses at which the node can be reached. With the Kubernetes API datastore, this is system configured and should not be updated manually. |                 | list                                    |         |
+| `interfaces`           | Interfaces on the node and their addresses. This is system configured and should not be updated manually.                                    |                 | list                                    |         |
 
 ### OrchRef
 
-| Field        | Description                                      | Accepted Values | Schema | Default |
-| ------------ | ------------------------------------------------ | --------------- | ------ | ------- |
-| nodeName     | Name of this node according to the orchestrator. |                 | string |
-| orchestrator | Name of the orchestrator.                        | k8s             | string |
+| Field          | Description                                      | Accepted Values | Schema | Default |
+| -------------- | ------------------------------------------------ | --------------- | ------ | ------- |
+| `nodeName`     | Name of this node according to the orchestrator. |                 | string |         |
+| `orchestrator` | Name of the orchestrator.                        | `k8s`           | string |         |
 
-### BGP
+### NodeBGPSpec
 
-| Field                   | Description                                                                                        | Accepted Values                                                                                                                                                                       | Schema  | Default |
-| ----------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| asNumber                | The AS Number of your `$[nodecontainer]`.                                                         | Optional. If omitted the global value is used (see [example modifying Global BGP settings](../../networking/configuring/bgp.mdx) for details about modifying the `asNumber` setting). | integer |
-| ipv4Address             | The IPv4 address and subnet exported as the next-hop for the $[prodname] endpoints on the host    | The IPv4 address must be specified if BGP is enabled.                                                                                                                                 | string  |
-| ipv6Address             | The IPv6 address and subnet exported as the next-hop for the $[prodname] endpoints on the host    | Optional                                                                                                                                                                              | string  |
-| ipv4IPIPTunnelAddr      | IPv4 address of the IP-in-IP tunnel. This is system configured and should not be updated manually. | Optional IPv4 address                                                                                                                                                                 | string  |
-| routeReflectorClusterID | Enables this node as a route reflector within the given cluster                                    | Optional IPv4 address                                                                                                                                                                 | string  |
+| Field                     | Description                                                                                         | Accepted Values                                                                                                                                                                         | Schema  | Default |
+| ------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
+| `asNumber`                | The AS Number of your `$[nodecontainer]`.                                                          | Optional. If omitted the global value is used (see [example modifying Global BGP settings](../../networking/configuring/bgp.mdx) for details about modifying the `asNumber` setting). | integer |         |
+| `ipv4Address`             | The IPv4 address and subnet exported as the next-hop for the $[prodname] endpoints on the host     | The IPv4 address must be specified if BGP is enabled.                                                                                                                                   | string  |         |
+| `ipv6Address`             | The IPv6 address and subnet exported as the next-hop for the $[prodname] endpoints on the host     | Optional                                                                                                                                                                                | string  |         |
+| `ipv4IPIPTunnelAddr`      | IPv4 address of the IP-in-IP tunnel. This is system configured and should not be updated manually. | Optional IPv4 address                                                                                                                                                                   | string  |         |
+| `routeReflectorClusterID` | Enables this node as a route reflector within the given cluster                                     | Optional IPv4 address                                                                                                                                                                   | string  |         |
 
-### WireGuard
+### NodeWireguardSpec
 
-| Field                | Description                                                                               | Accepted Values | Schema | Default |
-| -------------------- | ----------------------------------------------------------------------------------------- | --------------- | ------ | ------- |
-| interfaceIPv4Address | The IP address for the IPv4 WireGuard interface created by Felix on this node. | Optional        | string |
-| interfaceIPv6Address | The IP address for the IPv6 WireGuard interface created by Felix on this node. | Optional        | string |
+| Field                  | Description                                                                    | Accepted Values | Schema | Default |
+| ---------------------- | ------------------------------------------------------------------------------ | --------------- | ------ | ------- |
+| `interfaceIPv4Address` | The IP address for the IPv4 WireGuard interface created by Felix on this node. | Optional        | string |         |
+| `interfaceIPv6Address` | The IP address for the IPv6 WireGuard interface created by Felix on this node. | Optional        | string |         |
+
+## Additional resources
+
+- [Configure BGP peering](../../networking/configuring/bgp.mdx)
+- [Encrypt in-cluster pod traffic](../../network-policy/encrypt-cluster-pod-traffic.mdx)
+- [BGP peer](bgppeer.mdx)
+- [Calico node status](caliconodestatus.mdx)
