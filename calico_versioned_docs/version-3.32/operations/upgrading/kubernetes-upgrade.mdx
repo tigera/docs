@@ -9,7 +9,7 @@ import AutoHostendpointsMigrate from '@site/calico_versioned_docs/version-3.32/_
 
 ## About upgrading $[prodname]
 
-This page describes how to upgrade to $[version] from $[prodname] v3.15 or later. The
+This page describes how to upgrade to $[minorTag] from $[prodname] v3.15 or later. The
 procedure varies by datastore type and install method.
 
 If you are using $[prodname] in etcd mode on a Kubernetes cluster, we recommend upgrading to the Kubernetes API datastore [as discussed here](../datastore-migration.mdx).
@@ -45,14 +45,14 @@ owned resources being garbage collected by Kubernetes.
 
 ## Upgrading an installation that was installed using Helm
 
-The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm does not upgrade CRDs on `helm upgrade`. There are two ways to get the $[version] CRDs into your cluster:
+The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm does not upgrade CRDs on `helm upgrade`. There are two ways to get the $[minorTag] CRDs into your cluster:
 
 - **Apply the CRDs yourself before running `helm upgrade`.** This is the recommended option. The new CRDs are in place before the new operator starts, so you can configure any new fields ahead of the upgrade, and the CRDs are managed by whatever tooling you already use for the rest of your manifests.
 - **Let the operator apply them.** With `manageCRDs: true` in your `values.yaml` (the default), the operator applies the CRDs itself when the new pod starts. You do not need a separate step, but the new CRDs only exist once the new operator is running, so new configuration cannot be applied until after the upgrade.
 
 To apply the CRDs yourself:
 
-1. Apply the $[version] CRDs:
+1. Apply the $[minorTag] CRDs:
 
    ```bash
    kubectl apply --server-side --force-conflicts -f $[manifestsUrl]/manifests/v1_crd_projectcalico_org.yaml
@@ -61,7 +61,7 @@ To apply the CRDs yourself:
    Or, using the CRD chart:
 
    ```bash
-   helm template calico-crds projectcalico/crd.projectcalico.org.v1 --version $[releaseTitle] | kubectl apply --server-side --force-conflicts -f -
+   helm template calico-crds projectcalico/crd.projectcalico.org.v1 --version $[releaseTag] | kubectl apply --server-side --force-conflicts -f -
    ```
 
 1. Run the Helm upgrade:
@@ -106,7 +106,7 @@ To apply the CRDs yourself:
 
 ## Upgrading an installation that uses manifests and the Kubernetes API datastore
 
-1. Download the $[version] manifest that corresponds to your original installation method.
+1. Download the $[minorTag] manifest that corresponds to your original installation method.
 
    **$[prodname] for policy and networking**
 
@@ -162,7 +162,7 @@ To apply the CRDs yourself:
    calicoctl version
    ```
 
-   It should return a `Cluster Version` of `$[version].x`.
+   It should return a `Cluster Version` of `$[minorTag].x`.
 
 1. If you have [enable application layer policy](../../network-policy/istio/app-layer-policy.mdx),
    follow [the instructions below](#upgrading-if-you-have-application-layer-policy-enabled) to complete your upgrade. Skip this if you are not using Istio with $[prodname].
@@ -170,11 +170,11 @@ To apply the CRDs yourself:
 1. If you were upgrading from a version of Calico prior to v3.14 and followed the pre-upgrade steps for host endpoints above, review traffic logs from the temporary policy,
    add any global network policies needed to allow traffic, and delete the temporary network policy **allow-all-upgrade**.
 
-1. Congratulations! You have upgraded to $[prodname] $[version].
+1. Congratulations! You have upgraded to $[prodname] $[minorTag].
 
 ## Upgrading an installation that uses an etcd datastore
 
-1. Download the $[version] manifest that corresponds to your original installation method.
+1. Download the $[minorTag] manifest that corresponds to your original installation method.
 
    **$[prodname] for policy and networking**
 
@@ -191,7 +191,7 @@ To apply the CRDs yourself:
    :::note
 
    You must manually apply the changes you made to the manifest
-   during installation to the downloaded $[version] manifest. At a minimum,
+   during installation to the downloaded $[minorTag] manifest. At a minimum,
    you must set the `etcd_endpoints` value.
 
    :::
@@ -232,7 +232,7 @@ To apply the CRDs yourself:
    calicoctl version
    ```
 
-   It should return a `Cluster Version` of `$[version]`.
+   It should return a `Cluster Version` of `$[minorTag]`.
 
 1. If you have [enabled application layer policy](../../network-policy/istio/app-layer-policy.mdx),
    follow [the instructions below](#upgrading-if-you-have-application-layer-policy-enabled) to complete your upgrade. Skip this if you are not using Istio with $[prodname].
@@ -240,7 +240,7 @@ To apply the CRDs yourself:
 1. If you were upgrading from a version of Calico prior to v3.14 and followed the pre-upgrade steps for host endpoints above, review traffic logs from the temporary policy,
    add any global network policies needed to allow traffic, and delete the temporary network policy **allow-all-upgrade**.
 
-1. Congratulations! You have upgraded to $[prodname] $[version].
+1. Congratulations! You have upgraded to $[prodname] $[minorTag].
 
 ## Upgrading if you have Application Layer Policy enabled
 

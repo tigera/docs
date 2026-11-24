@@ -3,7 +3,7 @@ import Admonition from '@theme/Admonition';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
 
-import { prodname, version } from '../../variables';
+import { prodname, minorTag } from '../../variables';
 
 export default function HostEndpointsUpgrade(props) {
   return (
@@ -31,7 +31,7 @@ export default function HostEndpointsUpgrade(props) {
         endpoints drop traffic in the absence of policy.
       </p>
       <p>
-        Before upgrading to {version}, you must ensure that global network policies are in place that select existing
+        Before upgrading to {minorTag}, you must ensure that global network policies are in place that select existing
         all-interfaces host endpoints and explicitly allow existing traffic flows. As a starting point, you can create
         an allow-all policy that selects existing all-interfaces host endpoints. First, we&#39;ll add a label to the
         existing host endpoints. Get a list of the nodes that have an all-interfaces host endpoint:

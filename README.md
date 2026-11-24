@@ -133,7 +133,7 @@ MDX files use `$[variableName]` tokens that are replaced at build time by a cust
 For example:
 
 ```mdx
-Install $[prodname] version $[version] using the Tigera operator.
+Install $[prodname] version $[minorTag] using the Tigera operator.
 ```
 
 This renders differently depending on which product directory the file lives in (e.g., "Calico" vs. "Calico Enterprise").

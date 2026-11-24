@@ -1,7 +1,11 @@
 const releases = require('./releases.json');
 
+// Set these by hand for each release. A "tag" has the leading "v". A "version" doesn't.
+const releaseTag = 'v3.24.0-1.1';
+
 const variables = {
-  releaseTitle: 'v3.24.0-1.1',
+  releaseTag,
+  releaseVersion: releaseTag.replace(/^v/, ''),
   cloudUserVersion: 'v24.1.2',
   prodname: 'Calico Cloud',
   manifestsUrl: 'https://raw.githubusercontent.com/projectcalico/calico/v3.32.0',

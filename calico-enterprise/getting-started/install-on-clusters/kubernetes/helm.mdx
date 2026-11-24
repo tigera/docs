@@ -36,8 +36,8 @@ In this guide, you install the Tigera Calico operator and custom resource defini
 ```bash
 helm repo add tigera-ee https://downloads.tigera.io/ee/charts
 helm repo update
-helm pull tigera-ee/tigera-operator --version $[releaseTitle]$[helmPre]
-helm pull tigera-ee/projectcalico.org.v3 --version $[releaseTitle]$[helmPre]
+helm pull tigera-ee/tigera-operator --version $[releaseTag]$[helmPre]
+helm pull tigera-ee/projectcalico.org.v3 --version $[releaseTag]$[helmPre]
 ```
 
 ### Prepare the Installation Configuration
@@ -84,12 +84,12 @@ To install a standard $[prodname] cluster with Helm:
 1. Optional: Packet capture is an optional feature. To enable it, review the `values.yaml` file and set the flag to `enabled: true`. In the next step, use this modified `values.yaml` for the Helm install.
 
     <CodeBlock language='bash'>
-        {'$[version]' === 'master'
+        {'$[minorTag]' === 'master'
             ? (
             `helm show values ./tigera-operator-v0.0.tgz >values.yaml`
             )
             : (
-            `helm show values ./tigera-operator-$[chart_version_name].tgz >values.yaml`
+            `helm show values ./tigera-operator-$[chartVersion].tgz >values.yaml`
             )
         }
     </CodeBlock>
@@ -99,19 +99,19 @@ To install a standard $[prodname] cluster with Helm:
    If your cluster is based on Kubernetes 1.36 or later:
 
    ```bash
-   helm template calico-crds projectcalico.org.v3-$[chart_version_name].tgz --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy | kubectl apply --server-side -f -
+   helm template calico-crds projectcalico.org.v3-$[chartVersion].tgz --api-versions admissionregistration.k8s.io/v1/MutatingAdmissionPolicy | kubectl apply --server-side -f -
    ```
 
    If your cluster is based on Kubernetes 1.34 or 1.35:
 
    ```bash
-   helm template calico-crds projectcalico.org.v3-$[chart_version_name].tgz --api-versions admissionregistration.k8s.io/v1beta1/MutatingAdmissionPolicy | kubectl apply --server-side -f -
+   helm template calico-crds projectcalico.org.v3-$[chartVersion].tgz --api-versions admissionregistration.k8s.io/v1beta1/MutatingAdmissionPolicy | kubectl apply --server-side -f -
    ```
 
 1. Install the Tigera Operator using the Helm 3 chart:
 
    ```bash
-   helm install $[prodnamedash] tigera-operator-$[chart_version_name].tgz \
+   helm install $[prodnamedash] tigera-operator-$[chartVersion].tgz \
    --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
    --set-file licenseKeyContent=<path/to/license/file/yaml> \
    --namespace tigera-operator \
@@ -121,7 +121,7 @@ To install a standard $[prodname] cluster with Helm:
    or if you created a `values.yaml` above:
 
    ```bash
-   helm install $[prodnamedash] tigera-operator-$[chart_version_name].tgz -f values.yaml \
+   helm install $[prodnamedash] tigera-operator-$[chartVersion].tgz -f values.yaml \
    --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \
    --set-file licenseKeyContent=<path/to/license/file/yaml> \
    --namespace tigera-operator \

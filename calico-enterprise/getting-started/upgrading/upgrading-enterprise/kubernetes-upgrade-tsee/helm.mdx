@@ -66,7 +66,7 @@ These steps differ based on your cluster type. If you are unsure of your cluster
 
 :::
 
-The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm does not upgrade CRDs on `helm upgrade`. There are two ways to get the $[version] `projectcalico.org` and `operator.tigera.io` CRDs into your cluster:
+The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm does not upgrade CRDs on `helm upgrade`. There are two ways to get the $[minorTag] `projectcalico.org` and `operator.tigera.io` CRDs into your cluster:
 
 - **Apply the CRDs yourself before running `helm upgrade`.** This is the recommended option, and the one the steps below follow. The new CRDs are in place before the new operator starts, so you can configure any new fields ahead of the upgrade, and the CRDs are managed by whatever tooling you already use for the rest of your manifests.
 - **Let the operator apply them.** With `manageCRDs: true` in your `values.yaml` (the default), the operator applies them itself when the new pod starts. The new CRDs only exist once the new operator is running, so new configuration cannot be applied until after the upgrade. The Prometheus and ECK operator CRDs are not covered by this setting and still need to be applied by hand.
@@ -74,9 +74,9 @@ The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm do
 1. Get the Helm chart
 
    <CodeBlock language='bash'>
-     {'$[version]' === 'master'
+     {'$[minorTag]' === 'master'
        ? (`gsutil cp gs://tigera-helm-charts/tigera-operator-v0.0.tgz`)
-       : (`curl -O -L $[downloadsurl]/ee/charts/tigera-operator-$[chart_version_name].tgz`)
+       : (`curl -O -L $[downloadsurl]/ee/charts/tigera-operator-$[chartVersion].tgz`)
       }
    </CodeBlock>
 
@@ -135,12 +135,12 @@ The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm do
     If you are using default `values.yaml`, copy the custom `values.yaml` and update packetCaptureAPI's `enabled`  to `true`. Then, replace `<path-to-values.yaml>` in the next step with this modified `values.yaml` for the Helm upgrade.
 
     <CodeBlock language='bash'>
-        {'$[version]' === 'master'
+        {'$[minorTag]' === 'master'
             ? (
             `helm show values ./tigera-operator-v0.0.tgz >values.yaml`
             )
             : (
-            `helm show values ./tigera-operator-$[chart_version_name].tgz >values.yaml`
+            `helm show values ./tigera-operator-$[chartVersion].tgz >values.yaml`
             )
         }
     </CodeBlock>
@@ -159,12 +159,12 @@ The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm do
     If you are using default `values.yaml`, copy the custom `values.yaml` and update packetCaptureAPI's `enabled` to `true`. Then, replace `<path-to-values.yaml>` in the next step with this modified `values.yaml` for the Helm upgrade.
 
     <CodeBlock language='bash'>
-        {'$[version]' === 'master'
+        {'$[minorTag]' === 'master'
             ? (
             `helm show values ./tigera-operator-v0.0.tgz >values.yaml`
             )
             : (
-            `helm show values ./tigera-operator-$[chart_version_name].tgz >values.yaml`
+            `helm show values ./tigera-operator-$[chartVersion].tgz >values.yaml`
             )
         }
     </CodeBlock>
@@ -172,7 +172,7 @@ The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm do
 1. Run the Helm upgrade command for `tigera-operator` and make sure to either update `values.yaml` with your configuration or use custom `values.yaml` file:
 
   <CodeBlock language='bash'>
-    {'$[version]' === 'master'
+    {'$[minorTag]' === 'master'
       ? (
         `helm upgrade calico-enterprise --values=<path-to-values-yaml> tigera-operator-v0.0.tgz \\
   --set-file imagePullSecrets.tigera-pull-secret=<path-to-pull-secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path-to-pull-secret> \\
@@ -180,7 +180,7 @@ The `tigera-operator` chart does not contain the $[prodname] CRDs, since Helm do
   --namespace tigera-operator`
       )
       : (
-        `helm upgrade calico-enterprise --values=<path-to-values-yaml> tigera-operator-$[chart_version_name].tgz \\
+        `helm upgrade calico-enterprise --values=<path-to-values-yaml> tigera-operator-$[chartVersion].tgz \\
   --set-file imagePullSecrets.tigera-pull-secret=<path-to-pull-secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path-to-pull-secret> \\
   --set-file licenseKeyContent=<path-to-license-file-yaml> \\
   --namespace tigera-operator`

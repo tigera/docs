@@ -4,7 +4,7 @@ import { When } from 'react-if';
 import CodeBlock from '@theme/CodeBlock';
 import ConfigDataplaneOpenShiftManifests from './ConfigDataplaneOpenShiftManifests';
 
-import { prodname, releaseTitle, calicoReleasesURL } from '../../variables';
+import { prodname, releaseTag, calicoReleasesURL } from '../../variables';
 
 export default function InstallOpenShiftManifests(props) {
   let tarExcludeFlag = "";
@@ -19,7 +19,7 @@ export default function InstallOpenShiftManifests(props) {
       <p>Download the {prodname} manifests for OpenShift and add them to the generated manifests directory:</p>
       <CodeBlock id='data-install-openshift-manifests' language='bash'>
         {`mkdir calico
-wget -qO- ${calicoReleasesURL}/${releaseTitle}/ocp.tgz | \\
+wget -qO- ${calicoReleasesURL}/${releaseTag}/ocp.tgz | \\
 tar xvz ${tarExcludeFlag}--strip-components=1 -C calico
 cp calico/* manifests/`}
       </CodeBlock>

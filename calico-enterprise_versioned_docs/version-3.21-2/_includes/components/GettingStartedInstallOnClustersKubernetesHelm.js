@@ -5,7 +5,7 @@ import React from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
 
-import { chart_version_name, prodname, prodnamedash, version } from '../../variables';
+import { chartVersion, prodname, prodnamedash, minorTag } from '../../variables';
 
 export default function GettingStartedInstallOnClustersKubernetesHelm() {
   return (
@@ -106,7 +106,7 @@ EOF`}
   );
 
   function renderCond1() {
-    if (version === 'master') {
+    if (minorTag === 'master') {
       return (
         <ol>
           <li>
@@ -127,7 +127,7 @@ EOF`}
           <li>
             <p>Get the Helm chart:</p>
             <CodeBlock language='bash'>
-              {`curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-${chart_version_name}.tgz`}
+              {`curl -O -L https://downloads.tigera.io/ee/charts/tigera-operator-${chartVersion}.tgz`}
             </CodeBlock>
           </li>
         </ol>
@@ -136,15 +136,15 @@ EOF`}
   }
 
   function renderCond2() {
-    if (version === 'master') {
+    if (minorTag === 'master') {
       return <CodeBlock language='bash'>helm show values tigera/tigera-operator --version v0.0</CodeBlock>;
     }
 
-    return <CodeBlock language='bash'>{`helm show values ./tigera-operator-${chart_version_name}.tgz`}</CodeBlock>;
+    return <CodeBlock language='bash'>{`helm show values ./tigera-operator-${chartVersion}.tgz`}</CodeBlock>;
   }
 
   function renderCond3() {
-    if (version === 'master') {
+    if (minorTag === 'master') {
       return (
         <>
           <CodeBlock language='bash'>
@@ -167,7 +167,7 @@ EOF`}
     return (
       <>
         <CodeBlock language='bash'>
-          {`helm install calico-enterprise tigera-operator-${chart_version_name}.tgz \\
+          {`helm install calico-enterprise tigera-operator-${chartVersion}.tgz \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}
         </CodeBlock>
@@ -175,7 +175,7 @@ EOF`}
           or if you created a <code>values.yaml</code> above:
         </p>
         <CodeBlock language='bash'>
-          {`helm install calico-enterprise tigera-operator-${chart_version_name}.tgz -f values.yaml \\
+          {`helm install calico-enterprise tigera-operator-${chartVersion}.tgz -f values.yaml \\
 --set-file imagePullSecrets.tigera-pull-secret=<path/to/pull/secret>,tigera-prometheus-operator.imagePullSecrets.tigera-pull-secret=<path/to/pull/secret> \\
 --namespace tigera-operator`}
         </CodeBlock>

@@ -1,10 +1,16 @@
 const releases = require('./releases.json');
 
+// Set these by hand for each release. A "tag" has the leading "v". A "version" doesn't.
+const releaseTag = 'v3.32.4';
+const minorTag = 'v3.32';
+
 const variables = {
-  releaseTitle: 'v3.32.4',
+  releaseTag,
+  releaseVersion: releaseTag.replace(/^v/, ''),
   prodname: 'Calico',
   prodnamedash: 'calico',
-  version: 'v3.32',
+  minorTag,
+  minorVersion: minorTag.replace(/^v/, ''),
   baseUrl: '/calico/3.32',
   filesUrl: 'https://projectcalico.docs.tigera.io/v3.32',
   tutorialFilesURL: 'https://docs.tigera.io/files',

@@ -163,12 +163,22 @@ Use them in body text so that one page can serve several products and versions.
 |---|---|
 | Product name | `$[prodname]` |
 | Product name for Windows | `$[prodnameWindows]` |
-| Release version | `$[version]` |
+| Full release, with the `v` | `$[releaseTag]`, such as `v3.33.1` |
+| Full release, no `v` | `$[releaseVersion]`, such as `3.33.1` |
+| Minor release, with the `v` | `$[minorTag]`, such as `v3.33` |
+| Minor release, no `v` | `$[minorVersion]`, such as `3.33` |
+| Helm chart version | `$[chartVersion]` |
 | Container image registry | `$[registry]` |
 | The node container | `$[nodecontainer]` |
 | Manifest and tutorial file URLs | `$[manifestsUrl]`, `$[filesUrl]`, `$[tutorialFilesURL]` |
 
 The full list is in `calico/variables.js`, `calico-enterprise/variables.js`, and `calico-cloud/variables.js`.
+
+In a variable name, a *tag* has the leading `v` and a *version* doesn't.
+Use a tag for image tags, Git refs, and download URLs.
+Use a version where the `v` isn't allowed, such as a package version.
+`$[chartVersion]` is the exception: it holds the value you pass to `helm --version`, which has the `v`.
+On the `next` docs, all four release variables render as `master`.
 
 Spell the product name out, with no variable, in these places:
 

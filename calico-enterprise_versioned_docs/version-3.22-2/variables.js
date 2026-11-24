@@ -1,11 +1,17 @@
 const releases = require('./releases.json');
 const componentImage = require('../../src/components/utils/componentImage');
 
+// Set these by hand for each release. A "tag" has the leading "v". A "version" doesn't.
+const releaseTag = 'v3.22.9';
+const minorTag = 'v3.22';
+
 const variables = {
-  releaseTitle: 'v3.22.9',
+  releaseTag,
+  releaseVersion: releaseTag.replace(/^v/, ''),
   prodname: 'Calico Enterprise',
   prodnamedash: 'calico-enterprise',
-  version: 'v3.22',
+  minorTag,
+  minorVersion: minorTag.replace(/^v/, ''),
   openSourceVersion: releases[0].calico.minor_version.slice(1),
   baseUrl: '/calico-enterprise/3.22',
   filesUrl: 'https://downloads.tigera.io/ee/v3.22.9',
@@ -20,7 +26,7 @@ const variables = {
   rootDirWindows: 'C:\\TigeraCalico',
   registry: 'quay.io/',
   envoyVersion: '1.8.4',
-  chart_version_name: 'v3.22.9-1',
+  chartVersion: 'v3.22.9-1',
   tigeraOperator: releases[0]['tigera-operator'],
   dikastesVersion: releases[0].components.dikastes.version,
   releases,
