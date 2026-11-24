@@ -1,6 +1,6 @@
 ---
 description: Reference for the StagedNetworkPolicy resource in Calico Open Source that previews namespaced policy without enforcing it.
-content_type: unclassified
+content_type: reference
 ---
 
 # Staged network policy
@@ -21,26 +21,21 @@ import Rule from '@site/calico/_includes/content/_rule.mdx';
 
 import Httpmatch from '@site/calico/_includes/content/_httpmatch.mdx';
 
-A staged network policy resource (`StagedNetworkPolicy`) represents an ordered set of rules which are applied
-to a collection of endpoints that match a [label selector](#selector). These rules are used to preview network behavior and do
-not enforce network traffic. For enforcing network traffic, see [network policy resource](networkpolicy.mdx).
-
-`StagedNetworkPolicy` is a namespaced resource. `StagedNetworkPolicy` in a specific namespace
-only applies to [workload endpoint resources](workloadendpoint.mdx)
-in that namespace. Two resources are in the same namespace if the `namespace`
-value is set the same on both.
+A staged network policy resource (StagedNetworkPolicy) represents an ordered set of rules which are applied to a collection of endpoints that match a [label selector](#selector).
+These rules are used to preview network behavior and do not enforce network traffic.
+For enforcing network traffic, see [network policy resource](networkpolicy.mdx).
+StagedNetworkPolicy is a namespaced resource.
+A StagedNetworkPolicy in a specific namespace only applies to [workload endpoint resources](workloadendpoint.mdx) in that namespace.
+Two resources are in the same namespace if the `namespace` value is set the same on both.
 See [staged global network policy resource](stagedglobalnetworkpolicy.mdx) for staged non-namespaced network policy.
 
-`StagedNetworkPolicy` resources can be used to define network connectivity rules between groups of $[prodname] endpoints and host endpoints, and
+StagedNetworkPolicy resources can be used to define network connectivity rules between groups of $[prodname] endpoints and host endpoints, and
 take precedence over [profile resources](profile.mdx) if any are defined.
 
 StagedNetworkPolicies are organized into [tiers](tier.mdx), which provide an additional layer of ordering—in particular, note that the `Pass` action skips to the
 next [tier](tier.mdx), to enable hierarchical security policy.
 
-For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
-may be used to specify the resource type on the CLI:
-`stagednetworkpolicy.projectcalico.org`, `stagednetworkpolicies.projectcalico.org` and abbreviations such as
-`stagednetworkpolicy.p` and `stagednetworkpolicies.p`.
+For `kubectl` commands, you can use the aliases `stagednetworkpolicy.projectcalico.org`, `stagednetworkpolicies.projectcalico.org`, `stagednetworkpolicy.p`, and `stagednetworkpolicies.p`.
 
 ## Sample YAML
 
@@ -75,28 +70,28 @@ spec:
 
 ### Metadata
 
-| Field     | Description                                                        | Accepted Values                                     | Schema | Default   |
-| --------- | ------------------------------------------------------------------ | --------------------------------------------------- | ------ | --------- |
-| name      | The name of the network policy. Required.                          | Lowercase alphanumeric string with optional `-` and at most one `.`. | string |           |
-| namespace | Namespace provides an additional qualification to a resource name. |                                                     | string | "default" |
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| `name` | The name of this staged network policy. Required. | Lowercase alphanumeric string with optional `-` and at most one `.`. | string | |
+| `namespace` | The namespace this staged network policy belongs to. | | string | `default` |
 
 ### Spec
 
-| Field                  | Description                                                                                                                                                                                                                          | Accepted Values           | Schema                | Default                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | --------------------- | --------------------------------------------- |
-| order                  | Controls the order of precedence. $[prodname] applies the policy with the lowest value first.                                                                                                                                       |                           | float                 |                                               |
-| tier                   | Name of the [tier](tier.mdx) this policy belongs to.                                                                                                                                                                                 |                           | string                | `default`                                     |
-| stagedAction           | The staged action. `Set` stages the policy as written. With `Delete`, leave every other spec field except `tier` empty.                                                                                     | `Set`, `Delete`, `Learn`, `Ignore` | string                | `Set`                                         |
-| selector               | Selects the endpoints to which this policy applies.                                                                                                                                                                                  |                           | [selector](#selector) | all()                                         |
-| types                  | Applies the policy based on the direction of the traffic. To apply the policy to inbound traffic, set to `Ingress`. To apply the policy to outbound traffic, set to `Egress`. To apply the policy to both, set to `Ingress, Egress`. | `Ingress`, `Egress`       | List of strings       | Depends on presence of ingress/egress rules\* |
-| ingress                | Ordered list of ingress rules applied by policy.                                                                                                                                                                                     |                           | List of [Rule](#rule) |                                               |
-| egress                 | Ordered list of egress rules applied by this policy.                                                                                                                                                                                 |                           | List of [Rule](#rule) |                                               |
-| serviceAccountSelector | Selects the service account(s) to which this policy applies. Select a specific service account by name using the `projectcalico.org/name` label.                                                                                     |                           | [selector](#selector) | all()                                         |
-| performanceHints       | Contains a list of hints to Calico's policy engine to help process the policy more efficiently.  Hints never change the enforcement behaviour of the policy.  The available hints are described [below](#performance-hints).                                                                         | `AssumeNeededOnEveryNode` | List of strings       |                                               |
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| `order` | Controls the order of precedence. $[prodname] applies the policy with the lowest value first. | | float | |
+| `tier` | Name of the [tier](tier.mdx) this policy belongs to. | | string | `default` |
+| `stagedAction` | The staged action. `Set` stages the policy as written. With `Delete`, leave every other spec field except `tier` empty. | `Set`, `Delete`, `Learn`, `Ignore` | string | `Set` |
+| `selector` | Selects the endpoints to which this policy applies. | | [selector](#selector) | `all()` |
+| `types` | Applies the policy based on the direction of the traffic. To apply the policy to inbound traffic, set to `Ingress`. To apply the policy to outbound traffic, set to `Egress`. To apply the policy to both, set to `Ingress, Egress`. | `Ingress`, `Egress` | list of strings | Depends on presence of ingress/egress rules\* |
+| `ingress` | Ordered list of ingress rules applied by policy. | | list of [Rule](#rule) | |
+| `egress` | Ordered list of egress rules applied by this policy. | | list of [Rule](#rule) | |
+| `serviceAccountSelector` | Selects the service account(s) to which this policy applies. Select a specific service account by name using the `projectcalico.org/name` label. | | [selector](#selector) | `all()` |
+| `performanceHints` | Contains a list of hints to Calico's policy engine to help process the policy more efficiently. Hints never change the enforcement behaviour of the policy. The available hints are described [below](#performance-hints). | `AssumeNeededOnEveryNode` | list of strings | |
 
 \* If `types` has no value, $[prodname] defaults as follows.
 
-> | Ingress Rules Present | Egress Rules Present | `Types` value     |
+> | Ingress Rules Present | Egress Rules Present | `types` value     |
 > | --------------------- | -------------------- | ----------------- |
 > | No                    | No                   | `Ingress`         |
 > | Yes                   | No                   | `Ingress`         |
@@ -135,7 +130,7 @@ spec:
 
 <Httpmatch />
 
-### Performance Hints
+## Performance hints
 
 Performance hints provide a way to tell $[prodname] about the intended use of the policy so that it may
 process it more efficiently.  Currently only one hint is defined:
@@ -147,34 +142,35 @@ process it more efficiently.  Currently only one hint is defined:
   the policy on every node so that there is less work to do when the first endpoint matching the policy shows up.
   It also prevents work from being done to tear down the policy when the last endpoint is drained.
 
-## Supported operations
+## List filtering on tiers
 
-| Datastore type           | Create/Delete | Update | Get/List | Notes |
-| ------------------------ | ------------- | ------ | -------- | ----- |
-| Kubernetes API datastore | Yes           | Yes    | Yes      |
-
-#### List filtering on tiers
-
-List and watch operations may specify label selectors or field selectors to filter `StagedNetworkPolicy` resources on tiers returned by the API server.
-When no selector is specified, the API server returns all `StagedNetworkPolicy` resources from all tiers that the user has access to.
+List and watch operations may specify label selectors or field selectors to filter StagedNetworkPolicy resources on tiers returned by the API server.
+When no selector is specified, the API server returns all StagedNetworkPolicy resources from all tiers that the user has access to.
 When using native `projectcalico.org/v3` CRDs, tier RBAC is not enforced for list and watch: they require the `list` and `watch` verbs on `stagednetworkpolicies`, and return resources from all tiers.
 
-##### Field selector
+### Field selector
 
 When using the field selector, supported operators include `=` and `==`
 
-The following example shows how to retrieve all `StagedNetworkPolicy` resources in the default tier and in all namespaces:
+The following example shows how to retrieve all StagedNetworkPolicy resources in the default tier and in all namespaces:
 
 ```bash
 kubectl get stagednetworkpolicy.p --field-selector spec.tier=default --all-namespaces
 ```
 
-##### Label selector
+### Label selector
 
 When using the label selector, supported operators include `=`, `==` and `in`.
 
-The following example shows how to retrieve all `StagedNetworkPolicy` resources in the `default` and `net-sec` tiers and in all namespaces:
+The following example shows how to retrieve all StagedNetworkPolicy resources in the `default` and `net-sec` tiers and in all namespaces:
 
 ```bash
 kubectl get stagednetworkpolicy.p -l 'projectcalico.org/tier in (default, net-sec)' --all-namespaces
 ```
+
+## Additional resources
+
+- [Stage, preview impacts, and enforce policy](../../network-policy/staged-network-policies.mdx)
+- [Network policy](networkpolicy.mdx)
+- [Staged global network policy](stagedglobalnetworkpolicy.mdx)
+- [Tier](tier.mdx)
