@@ -1,13 +1,14 @@
 ---
 description: Reference for the BGPFilter resource in Calico Open Source that filters routes imported from or exported to BGP peers.
-content_type: unclassified
+content_type: reference
 ---
 
 # BGP filter
 
-A Border Gateway Protocol (BGP) filter resource (`BGPFilter`) represents a way to control
+A Border Gateway Protocol (BGP) filter resource (BGPFilter) represents a way to control
 routes imported by and exported to BGP peers
-specified by a [BGP peer resource](bgppeer.mdx) (`BGPPeer`).
+specified by a [BGP peer resource](bgppeer.mdx) (BGPPeer).
+BGPFilter is a cluster-scoped resource.
 
 The BGPFilter rules are applied sequentially: the `action` for
 the **first** rule that matches is executed immediately.
@@ -18,10 +19,11 @@ Calico would advertise it to that peer without the filter.
 In order for a BGPFilter to be used in a BGP peering, its `name`
 must be added to `filters` of the corresponding BGPPeer resource.
 
-For `kubectl` commands, the following case-sensitive aliases may
-be used to specify the resource type on the CLI: `bgpfilters.projectcalico.org`
+For `kubectl` commands, you can use the aliases `bgpfilter.projectcalico.org`, `bgpfilters.projectcalico.org`, `bgpfilter.p`, and `bgpfilters.p`.
 
 ## Sample YAML
+
+This sample accepts and rejects IPv4 and IPv6 routes by CIDR, route source, and interface, on import and on export.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -57,90 +59,104 @@ spec:
     - action: Reject
 ```
 
-## BGP filter definition
+## Definition
 
 ### Metadata
 
-| Field | Description                                                        | Accepted Values                                     | Schema |
-| ----- | ------------------------------------------------------------------ | --------------------------------------------------- | ------ |
-| `name`  | Unique name to describe this resource instance. Must be specified. | Lowercase alphanumeric string with optional `.` or `-`. | string |
+| Field  | Description                            | Accepted Values                                                                                                          | Schema | Default |
+| ------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ------- |
+| `name` | The name of this BGP filter. Required. | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string |         |
 
 ### Spec
 
-| Field    | Description                        | Accepted Values | Schema                                    | Default |
-| -------- | ---------------------------------- | --------------- | ----------------------------------------- | ------- |
-| `exportV4` | List of v4 CIDRs and export action |                 | [BGP Filter Rule v4](#bgp-filter-rule-v4) |         |
-| `importV4` | List of v4 CIDRs and import action |                 | [BGP Filter Rule v4](#bgp-filter-rule-v4) |         |
-| `exportV6` | List of v6 CIDRs and export action |                 | [BGP Filter Rule v6](#bgp-filter-rule-v6) |         |
-| `importV6` | List of v6 CIDRs and import action |                 | [BGP Filter Rule v6](#bgp-filter-rule-v6) |         |
+| Field      | Description                        | Accepted Values | Schema                                      | Default |
+| ---------- | ---------------------------------- | --------------- | ------------------------------------------- | ------- |
+| `exportV4` | List of v4 CIDRs and export action |                 | list of [BGPFilterRuleV4](#bgpfilterrulev4) |         |
+| `importV4` | List of v4 CIDRs and import action |                 | list of [BGPFilterRuleV4](#bgpfilterrulev4) |         |
+| `exportV6` | List of v6 CIDRs and export action |                 | list of [BGPFilterRuleV6](#bgpfilterrulev6) |         |
+| `importV6` | List of v6 CIDRs and import action |                 | list of [BGPFilterRuleV6](#bgpfilterrulev6) |         |
 
-### BGP Filter Rule v4
+### BGPFilterRuleV4
 
-| Field         | Description                                | Accepted Values                                                     | Schema | Default |
-| ------------- | ------------------------------------------ | ------------------------------------------------------------------- | ------ | ------- |
-| `cidr`          | IPv4 range                                 | A valid IPv4 CIDR                                                   | string |         |
-| `prefixLength`  | [PrefixLength](#bgp-filter-prefix-length)  | Valid integers between 0 and ipv4/6 max (32, 128)                   |        |         |
-| `matchOperator` | Method by which to match candidate routes  | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string |         |
-| `source`        | Indicator of the source of route           | `RemotePeers` means any route learned from other BGP peers          | string |         |
-| `interface`     | String to match interface names            | A valid pattern to match interfaces. "*" can be used as a wildcard. | string |         |
-| `peerType`      | Only apply this rule to routes from/to the specified BGP peer type. If empty, the rule applies to all peers. | `eBGP`, `iBGP` | string |         |
-| `priority`      | Only apply this rule to routes with the given priority (metric). Uses the same units as the `...RoutePriority` fields in FelixConfiguration. | 1-2147483646 | integer |         |
-| `communities`   | Only apply this rule to routes carrying the specified BGP community. | See [BGP Filter Community Match](#bgp-filter-community-match). | object |         |
-| `action`        | Action to be taken for this rule           | `Accept` or `Reject`                                                | string |         |
-| `operations`    | Ordered list of route modifications to apply when the rule matches. Only valid when action is `Accept`. Maximum 10 operations. | See [BGP Filter Operation](#bgp-filter-operation). | list |         |
+| Field           | Description                                                                                                                                  | Accepted Values                                                     | Schema                                              | Default |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------- | ------- |
+| `cidr`          | IPv4 range                                                                                                                                   | A valid IPv4 CIDR                                                   | string                                              |         |
+| `prefixLength`  | The range of prefix lengths to match.                                                                                                        | Valid integers between `0` and ipv4/6 max (`32`, `128`)             | [BGPFilterPrefixLengthV4](#bgpfilterprefixlengthv4) |         |
+| `matchOperator` | Method by which to match candidate routes                                                                                                    | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string                                              |         |
+| `source`        | Indicator of the source of route                                                                                                             | `RemotePeers` means any route learned from other BGP peers          | string                                              |         |
+| `interface`     | String to match interface names                                                                                                              | A valid pattern to match interfaces. `*` can be used as a wildcard. | string                                              |         |
+| `peerType`      | Only apply this rule to routes from/to the specified BGP peer type. If empty, the rule applies to all peers.                                 | `eBGP`, `iBGP`                                                      | string                                              |         |
+| `priority`      | Only apply this rule to routes with the given priority (metric). Uses the same units as the `...RoutePriority` fields in FelixConfiguration. | `1` to `2147483646`                                                 | integer                                             |         |
+| `communities`   | Only apply this rule to routes carrying the specified BGP community.                                                                         |                                                                     | [BGPFilterCommunityMatch](#bgpfiltercommunitymatch) |         |
+| `action`        | Action to be taken for this rule                                                                                                             | `Accept` or `Reject`                                                | string                                              |         |
+| `operations`    | Ordered list of route modifications to apply when the rule matches. Only valid when `action` is `Accept`. Maximum 10 operations.             |                                                                     | list of [BGPFilterOperation](#bgpfilteroperation)   |         |
 
-### BGP Filter Rule v6
+### BGPFilterRuleV6
 
-| Field         | Description                                | Accepted Values                                                     | Schema | Default |
-| ------------- | ------------------------------------------ | ------------------------------------------------------------------- | ------ | ------- |
-| `cidr`          | IPv6 range                                 | A valid IPv6 CIDR                                                   | string |         |
-| `prefixLength`  | [PrefixLength](#bgp-filter-prefix-length)  | Valid integers between 0 and ipv4/6 max (32, 128)                   |        |         |
-| `matchOperator` | Method by which to match candidate routes  | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string |         |
-| `source`        | Indicator of the source of route           | `RemotePeers` means any route learned from other BGP peers          | string |         |
-| `interface`     | String to match interface names            | A valid pattern to match interfaces. "*" can be used as a wildcard. | string |         |
-| `peerType`      | Only apply this rule to routes from/to the specified BGP peer type. If empty, the rule applies to all peers. | `eBGP`, `iBGP` | string |         |
-| `priority`      | Only apply this rule to routes with the given priority (metric). Uses the same units as the `...RoutePriority` fields in FelixConfiguration. | 1-2147483646 | integer |         |
-| `communities`   | Only apply this rule to routes carrying the specified BGP community. | See [BGP Filter Community Match](#bgp-filter-community-match). | object |         |
-| `action`        | Action to be taken for this rule           | `Accept` or `Reject`                                                | string |         |
-| `operations`    | Ordered list of route modifications to apply when the rule matches. Only valid when action is `Accept`. Maximum 10 operations. | See [BGP Filter Operation](#bgp-filter-operation). | list |         |
+| Field           | Description                                                                                                                                  | Accepted Values                                                     | Schema                                              | Default |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------- | ------- |
+| `cidr`          | IPv6 range                                                                                                                                   | A valid IPv6 CIDR                                                   | string                                              |         |
+| `prefixLength`  | The range of prefix lengths to match.                                                                                                        | Valid integers between `0` and ipv4/6 max (`32`, `128`)             | [BGPFilterPrefixLengthV6](#bgpfilterprefixlengthv6) |         |
+| `matchOperator` | Method by which to match candidate routes                                                                                                    | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string                                              |         |
+| `source`        | Indicator of the source of route                                                                                                             | `RemotePeers` means any route learned from other BGP peers          | string                                              |         |
+| `interface`     | String to match interface names                                                                                                              | A valid pattern to match interfaces. `*` can be used as a wildcard. | string                                              |         |
+| `peerType`      | Only apply this rule to routes from/to the specified BGP peer type. If empty, the rule applies to all peers.                                 | `eBGP`, `iBGP`                                                      | string                                              |         |
+| `priority`      | Only apply this rule to routes with the given priority (metric). Uses the same units as the `...RoutePriority` fields in FelixConfiguration. | `1` to `2147483646`                                                 | integer                                             |         |
+| `communities`   | Only apply this rule to routes carrying the specified BGP community.                                                                         |                                                                     | [BGPFilterCommunityMatch](#bgpfiltercommunitymatch) |         |
+| `action`        | Action to be taken for this rule                                                                                                             | `Accept` or `Reject`                                                | string                                              |         |
+| `operations`    | Ordered list of route modifications to apply when the rule matches. Only valid when `action` is `Accept`. Maximum 10 operations.             |                                                                     | list of [BGPFilterOperation](#bgpfilteroperation)   |         |
 
-### BGP Filter Prefix Length
+### BGPFilterPrefixLengthV4
 
-| Field  | Description                                   | Accepted Values                                                     | Schema | Default |
-| ------ | --------------------------------------------- | ------------------------------------------------------------------- | ------ | ------- |
-| `min`    | Smallest matched mask size (the CIDR's mask size by default)     | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
-| `max`    | Largest matched mask size (32/128 by default) | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
+| Field | Description                                                  | Accepted Values                                         | Schema  | Default |
+| ----- | ------------------------------------------------------------ | ------------------------------------------------------- | ------- | ------- |
+| `min` | Smallest matched mask size (the CIDR's mask size by default) | Valid integers between `0` and ipv4/6 max (`32`, `128`) | integer |         |
+| `max` | Largest matched mask size (`32`/`128` by default)            | Valid integers between `0` and ipv4/6 max (`32`, `128`) | integer |         |
 
-### BGP Filter Community Match
+### BGPFilterPrefixLengthV6
 
-| Field  | Description                                                                                          | Accepted Values                                              | Schema         |
-| ------ | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------------- |
-| `values` | List of BGP community values to match against. Required. Must contain exactly one value, which the route must carry. | Standard (`aa:nn`) or large (`aa:nn:mm`) community values.  | list of string |
+| Field | Description                                                  | Accepted Values                                         | Schema  | Default |
+| ----- | ------------------------------------------------------------ | ------------------------------------------------------- | ------- | ------- |
+| `min` | Smallest matched mask size (the CIDR's mask size by default) | Valid integers between `0` and ipv4/6 max (`32`, `128`) | integer |         |
+| `max` | Largest matched mask size (`32`/`128` by default)            | Valid integers between `0` and ipv4/6 max (`32`, `128`) | integer |         |
 
-### BGP Filter Operation
+### BGPFilterCommunityMatch
+
+| Field    | Description                                                                                                          | Accepted Values                                            | Schema          | Default |
+| -------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | --------------- | ------- |
+| `values` | List of BGP community values to match against. Required. Must contain exactly one value, which the route must carry. | Standard (`aa:nn`) or large (`aa:nn:mm`) community values. | list of strings |         |
+
+### BGPFilterOperation
 
 Each operation is an object with exactly one of the following fields set:
 
-| Field         | Description                                                  | Schema                                              |
-| ------------- | ------------------------------------------------------------ | --------------------------------------------------- |
-| `addCommunity`  | Adds a BGP community to the route.                           | [AddCommunity](#bgp-filter-add-community)           |
-| `prependASPath` | Prepends AS numbers to the route's AS path.                  | [PrependASPath](#bgp-filter-prepend-as-path)        |
-| `setPriority`   | Sets the route's priority (metric).                          | [SetPriority](#bgp-filter-set-priority)             |
+| Field           | Description                                 | Accepted Values | Schema                                            | Default |
+| --------------- | ------------------------------------------- | --------------- | ------------------------------------------------- | ------- |
+| `addCommunity`  | Adds a BGP community to the route.          |                 | [BGPFilterAddCommunity](#bgpfilteraddcommunity)   |         |
+| `prependASPath` | Prepends AS numbers to the route's AS path. |                 | [BGPFilterPrependASPath](#bgpfilterprependaspath) |         |
+| `setPriority`   | Sets the route's priority (metric).         |                 | [BGPFilterSetPriority](#bgpfiltersetpriority)     |         |
 
-### BGP Filter Add Community
+### BGPFilterAddCommunity
 
-| Field | Description                  | Accepted Values                                            | Schema |
-| ----- | ---------------------------- | ---------------------------------------------------------- | ------ |
-| `value` | BGP community value to add. Required.  | Standard (`aa:nn`) or large (`aa:nn:mm`) community value.  | string |
+| Field   | Description                           | Accepted Values                                           | Schema | Default |
+| ------- | ------------------------------------- | --------------------------------------------------------- | ------ | ------- |
+| `value` | BGP community value to add. Required. | Standard (`aa:nn`) or large (`aa:nn:mm`) community value. | string |         |
 
-### BGP Filter Prepend AS Path
+### BGPFilterPrependASPath
 
-| Field  | Description                                                                                                                                                         | Accepted Values                  | Schema           |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ---------------- |
-| `prefix` | Sequence of AS numbers to prepend to the route's AS path. Required. The resulting path starts with these AS numbers in the order listed (e.g., `[65000, 65001]` produces `65000 65001 <original>`). | A list of 1-10 valid AS numbers. | list of integer  |
+| Field    | Description                                                                                                                                                                                                | Accepted Values                         | Schema           | Default |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ---------------- | ------- |
+| `prefix` | Sequence of AS numbers to prepend to the route's AS path. Required. The resulting path starts with these AS numbers in the order listed (for example, `[65000, 65001]` produces `65000 65001 <original>`). | A list of `1` to `10` valid AS numbers. | list of integers |         |
 
-### BGP Filter Set Priority
+### BGPFilterSetPriority
 
-| Field | Description                                                                                                | Accepted Values | Schema  |
-| ----- | ---------------------------------------------------------------------------------------------------------- | --------------- | ------- |
-| `value` | The priority (metric) value to set on the route. Required. Uses the same units as FelixConfiguration RoutePriority fields. | 1-2147483646    | integer |
+| Field   | Description                                                                                                                | Accepted Values     | Schema  | Default |
+| ------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------- | ------- |
+| `value` | The priority (metric) value to set on the route. Required. Uses the same units as FelixConfiguration RoutePriority fields. | `1` to `2147483646` | integer |         |
+
+## Additional resources
+
+- [Configure a BGP filter](../../networking/configuring/bgp.mdx#configure-a-bgp-filter)
+- [Configure a BGP peer with a BGP filter](../../networking/configuring/bgp.mdx#configure-a-bgp-peer-with-a-bgp-filter)
+- [BGP peer](bgppeer.mdx)
+- [BGP configuration](bgpconfig.mdx)
