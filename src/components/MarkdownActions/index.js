@@ -187,7 +187,10 @@ export default function MarkdownActions() {
           behaviour the menu pattern calls for. */}
       <Menu placement='bottom-end' isLazy>
         {({ isOpen }) => (
-          <div className={styles.wrapper}>
+          // The global class lets the llms-txt plugin strip this control from the
+          // Markdown twin. It renders inside <article>, which the plugin falls back
+          // to when .theme-doc-markdown is empty.
+          <div className={`markdown-actions ${styles.wrapper}`}>
             <div className={styles.split}>
               <button
                 type='button'

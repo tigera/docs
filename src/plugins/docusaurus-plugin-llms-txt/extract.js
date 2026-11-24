@@ -29,6 +29,7 @@ const REMOVE_SELECTORS = [
   'nav[aria-label="Breadcrumbs"]',
   'footer.footer',
   'header',
+  '.markdown-actions',
 ];
 
 /**
@@ -79,8 +80,15 @@ function preprocessCodeBlocks($) {
 function preprocessTabs($) {
   // Find tab containers — Docusaurus wraps tabs in a div with class 'tabs-container'
   // or we can look for elements containing both [role="tablist"] and [role="tabpanel"]
-  $('ul[role="tablist"]').each(function () {
-    const tablist = $(this);
+  //
+  // Innermost groups first. A nested group sits inside one of its parent's panels,
+  // so it comes later in document order. Expanding it first removes its panels'
+  // role, so the parent's find() below collects only the parent's own panels.
+  // Outermost first, the parent also grabbed the inner panels and paired them with
+  // its own labels.
+  const tablists = $('ul[role="tablist"]').toArray().reverse();
+  tablists.forEach((el) => {
+    const tablist = $(el);
     // The parent container holds both the tablist and the tabpanels
     const container = tablist.parent();
 
