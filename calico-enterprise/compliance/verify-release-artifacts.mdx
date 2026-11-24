@@ -1,0 +1,336 @@
+---
+description: Check the signatures on a Calico Enterprise release with one script, and the GPG signatures on its RPM and Debian packages.
+content_type: how-to
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Verify release artifacts
+
+{/*
+  As a cluster operator, I want to check that the $[prodname] artifacts I install are the ones Tigera published, so that I don't run images or files that someone else built or changed.
+*/}
+
+Each $[prodname] release is signed with [Sigstore](https://www.sigstore.dev/).
+Check the signatures to confirm that the images, charts, and files you install are the ones Tigera published, unchanged.
+Check a whole release with one script.
+
+## What is signed
+
+| Artifact | Where it's published | Where its signature is |
+| --- | --- | --- |
+| Container images | `quay.io/tigera` | In the registry, attached to the image digest as an OCI referrer |
+| A software bill of materials (SBOM) for each platform of each image, in SPDX 2.3 format | `quay.io/tigera`, as a signed attestation | In the registry, attached to the digest of that platform's image |
+| Helm charts, as OCI artifacts | `quay.io/tigera` | In the registry, attached to the chart digest |
+| Helm charts, as `.tgz` files | `downloads.tigera.io` | A Sigstore bundle at the file's URL plus `.sigstore.json` |
+| Carvel package bundles | `quay.io/tigera` | In the registry, attached to the bundle digest |
+| Release files, such as the release archive | `downloads.tigera.io` | A Sigstore bundle at the file's URL plus `.sigstore.json` |
+| RPM and Debian packages for non-cluster hosts | The package repositories at `downloads.tigera.io` | GPG signatures in the packages and the repository index files |
+| The $[prodnameWindows] archive | Your copy of the archive | A Sigstore bundle at `$[filesUrl]/` plus the archive's file name plus `.sigstore.json` |
+| `metadata.yaml`, which lists every artifact with its digest or SHA-256 hash | `$[filesUrl]/` | `$[filesUrl]/metadata.yaml.sigstore.json` |
+| `verify.sh`, which checks the whole release | `$[filesUrl]/` | `$[filesUrl]/verify.sh.sigstore.json` |
+
+Images, charts, and bundles are signed by digest, not by tag.
+Charts and bundles have no SBOM.
+Packages are signed with GPG, not Sigstore, so `verify.sh` doesn't check them.
+See [Verify packages](#verify-packages).
+
+A release that has no `$[filesUrl]/verify.sh` isn't signed.
+
+## Before you begin
+
+- Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/) v3 or later.
+  `verify.sh` stops with an error if it finds an earlier version.
+- Allow outbound HTTPS to Sigstore.
+  cosign downloads the Sigstore trust root from `tuf-repo-cdn.sigstore.dev` before it checks a signature.
+- To check images, charts, or bundles, log in to `quay.io` with the credentials in your $[prodname] pull secret.
+  cosign reads registry credentials from your Docker config file.
+  If you don't use `docker login`, save the pull secret as `config.json` in an empty directory and set `DOCKER_CONFIG` to that directory.
+- To check files with `verify.sh`, have `curl` and either `sha256sum` or `shasum` installed.
+- To save SBOMs, have `jq` or `base64` installed.
+
+## Signing identity
+
+Every signature names the identity that created it.
+Accept a signature only when it matches this identity and issuer exactly:
+
+| Field | Value | cosign flag |
+| --- | --- | --- |
+| Identity | `signer@tigera-production-keys.iam.gserviceaccount.com` | `--certificate-identity` |
+| Issuer | `https://accounts.google.com` | `--certificate-oidc-issuer` |
+
+Don't use `--certificate-identity-regexp`.
+A pattern can match an identity that Tigera doesn't control.
+
+To confirm these values from a second source, ask Tigera support.
+
+The commands on this page read the values from two shell variables.
+Set them first:
+
+```bash
+IDENTITY=signer@tigera-production-keys.iam.gserviceaccount.com
+ISSUER=https://accounts.google.com
+```
+
+## Verify a whole release
+
+`verify.sh` is generated for each release and lists every artifact in it.
+It checks each artifact's signature against the signing identity, and checks each file's SHA-256 hash against the release.
+For each image, it also checks the SBOM of each platform the image is built for.
+The script can't vouch for itself, so check its signature with cosign before you run it.
+
+1. Download `verify.sh` and its bundle:
+
+   ```bash
+   curl -fsSLO $[filesUrl]/verify.sh
+   curl -fsSLO $[filesUrl]/verify.sh.sigstore.json
+   ```
+
+2. Check the signature of `verify.sh`:
+
+   ```bash
+   cosign verify-blob --certificate-identity "$IDENTITY" \
+       --certificate-oidc-issuer "$ISSUER" \
+       --bundle verify.sh.sigstore.json verify.sh
+   ```
+
+   If this command fails, don't run the script.
+   See [`verify.sh` fails its own check](#verifysh-fails-its-own-check).
+
+3. Run the script:
+
+   ```bash
+   bash verify.sh
+   ```
+
+   To check the $[prodnameWindows] archive or to save the SBOMs, add `--dir <path-to-directory>`.
+   `<path-to-directory>` is a directory you can write to.
+   If you have the archive, put it in that directory under its original file name.
+
+   The output is similar to the following:
+
+   ```
+   Checking Calico Enterprise <version> against identity signer@tigera-production-keys.iam.gserviceaccount.com, issuer https://accounts.google.com
+
+   RESULT  CATEGORY  NAME                     SIGNATURE  SBOM
+   PASS    images    quay.io/tigera/cnx-node  pass       pass (linux/amd64, linux/arm64)
+   ...
+   PASS    files     <file-name>              pass       -
+
+   <passed> passed, <failed> failed, <skipped> skipped
+   ```
+
+   This output includes the following values:
+
+   - `<version>`: the release version.
+   - `<file-name>`: the name of a file in the release.
+   - `<passed>`, `<failed>`, and `<skipped>`: the number of artifacts with each result.
+
+   The `SBOM` column lists the platforms whose SBOM the script checked.
+   It shows `-` for artifacts that have no SBOM.
+
+   The script exits with status 0 only if every artifact it checked passed.
+   When it does, `<failed>` is 0.
+
+### Check part of a release
+
+To check only some artifacts, or files you already downloaded, run `bash verify.sh --help` to see the options.
+
+## Get the SBOM for an image
+
+When you run `verify.sh` with `--dir`, it saves the SBOM of each image platform that passes its check.
+To save only the image SBOMs, run:
+
+```bash
+bash verify.sh --only images --dir <path-to-directory>
+```
+
+Each SBOM is an SPDX 2.3 document named `<image>_<os>-<arch>.spdx.json`, such as `cnx-node_linux-amd64.spdx.json`.
+It lists every package in that platform's image and how the packages relate to each other.
+It doesn't list individual files.
+
+## Verify packages
+
+The RPM and Debian packages for [non-cluster hosts](../getting-started/bare-metal/about.mdx) are signed with GPG.
+`dnf` and `apt` check the signatures each time you install or upgrade, when you set up the repository with the files from that page.
+
+<Tabs groupId="linux-distro">
+<TabItem label="RHEL" value="rhel">
+
+1. Check that the repository file turns on signature checks:
+
+   ```bash
+   grep -E 'gpgcheck|gpgkey' /etc/yum.repos.d/calico-enterprise.repo
+   ```
+
+   The output is similar to the following:
+
+   ```
+   gpgcheck=1
+   repo_gpgcheck=1
+   gpgkey=<key-url>
+   ```
+
+   `gpgcheck=1` checks each package, and `repo_gpgcheck=1` checks the repository index.
+   `<key-url>` is the URL of the public key that signed them.
+   The first time you install a package, `dnf` shows the key and asks you to accept it.
+
+2. To check an RPM file that you downloaded, import the key, and check the file:
+
+   ```bash
+   sudo rpm --import <key-url>
+   rpm -K <package-file>
+   ```
+
+   Replace the following:
+
+   - `<key-url>`: the `gpgkey` value from the previous step.
+   - `<package-file>`: the path to the RPM file.
+
+   The output ends with `digests signatures OK`.
+
+</TabItem>
+<TabItem label="Debian/Ubuntu" value="ubuntu">
+
+The `.sources` file holds the public key in its `Signed-By` field.
+`apt-get update` checks the signature on the repository index, and stops with an error if the check fails.
+The index lists the SHA-256 hash of each package, and `apt` checks each package against it.
+
+</TabItem>
+</Tabs>
+
+## Troubleshooting
+
+`verify.sh` exits with status 1 when any artifact fails, or when none passes.
+It exits with status 2 when an option is wrong or a tool it needs is missing.
+After the summary line, it lists the reason for each failure under `Failures`.
+A reason that starts with `signature:` is for the artifact itself.
+A reason that starts with `SBOM` and a platform, such as `SBOM linux/amd64:`, is for that platform's SBOM.
+
+Don't install an artifact that fails its signature check until you find the cause.
+
+### `cosign <version> is too old, need v3 or later`
+
+`verify.sh` stops before it checks anything, and prints this error.
+
+**Cause:** The cosign on your `PATH` is earlier than v3.
+
+**Fix:**
+
+1. Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/) v3 or later.
+2. Run `cosign version` to confirm the version, and run the script again.
+
+### `Registry access denied: <registry>`
+
+Images, charts, or bundles fail, and the summary names the registry that refused access.
+
+**Cause:** cosign couldn't read from the registry, because you aren't logged in, or your credentials don't give access.
+
+**Fix:**
+
+1. Log in to the registry, as described in [Before you begin](#before-you-begin).
+2. Run the script again.
+
+To check only files while you sort out access, run `bash verify.sh --only files`.
+
+### `--certificate-identity or --certificate-identity-regexp is required`
+
+cosign stops before it checks anything, and prints this error.
+
+**Cause:** `IDENTITY` isn't set in your shell, so the command passed an empty identity.
+This happens when you run the command in a new terminal.
+
+**Fix:**
+
+1. Set `IDENTITY` and `ISSUER`, as in [Signing identity](#signing-identity).
+2. Run the command again.
+
+### `none of the expected identities matched what was in the certificate`
+
+cosign prints this error, followed by the identity and issuer that signed the artifact.
+
+**Cause:** The identity or issuer you passed doesn't match the [signing identity](#signing-identity).
+This happens most often in a manual check, when `IDENTITY` or `ISSUER` isn't set or has a typo.
+
+**Fix:**
+
+1. Run `echo "$IDENTITY $ISSUER"`, and compare the output with the [signing identity](#signing-identity).
+2. Set both variables again, and run the check again.
+
+**Cause:** The artifact was signed by someone other than Tigera.
+
+**Fix:** Don't install the artifact, and contact Tigera support.
+
+### `cosign could not load the Sigstore trust root`
+
+Every check fails, and the summary shows this error with the reason from cosign.
+
+**Cause:** cosign couldn't download the Sigstore trust root.
+
+**Fix:**
+
+1. Check that your machine can reach `tuf-repo-cdn.sigstore.dev` over HTTPS, for example with `curl -I https://tuf-repo-cdn.sigstore.dev`.
+2. Run the script again.
+
+### `sha256 is <hash>, the release lists <hash>`
+
+A file fails, and its reason under `Failures` shows two different hashes.
+
+**Cause:** The file you have differs from the file in the release.
+The download was cut short, the file in `--dir` is from another release, or the file was changed.
+
+**Fix:**
+
+1. Download the file again from its `url` in `metadata.yaml`, and run the script again.
+2. If the hash still differs, don't use the file, and contact Tigera support.
+
+### `SKIP` for the $[prodnameWindows] archive
+
+The archive's line says `SKIP`, and the reason under `Skipped` is `no dir passed, use --dir to specify the directory`.
+
+**Cause:** The archive isn't on a public URL, so the script can't download it.
+
+**Fix:** Run the script again with `--dir <path-to-directory>`, where `<path-to-directory>` is the directory that holds your copy of the archive.
+
+If the reason is `not found in <path-to-directory>`, the archive isn't in that directory under its original file name.
+Move it there, or pass the directory that holds it.
+
+### `SBOMs not saved to <path-to-directory>`
+
+The images pass, but the directory has no `.spdx.json` files, and the summary ends with this message and a reason.
+
+**Cause:** The reason is `jq and base64 are not installed`.
+
+**Fix:** Install `jq`, and run the script again.
+
+**Cause:** The reason is `the directory is not writable`.
+
+**Fix:** Pass a directory that exists and that you can write to, and run the script again.
+
+### `verified, but cannot read the SPDX document from cosign's output`
+
+An image fails, and its reason under `Failures` starts with `SBOM <platform>:` and ends with this message.
+
+**Cause:** The SBOM's signature is valid, but the script couldn't extract the SPDX document from the attestation.
+This can happen when `jq` isn't installed and the script falls back to `base64`.
+
+**Fix:**
+
+1. Install `jq`, and run the script again.
+2. If the check still fails, contact Tigera support.
+
+### `verify.sh` fails its own check
+
+The `cosign verify-blob` command for `verify.sh` exits with an error.
+
+**Cause:** The script or its bundle isn't the one Tigera published, or the download didn't finish.
+
+**Fix:**
+
+1. Download `verify.sh` and `verify.sh.sigstore.json` again from `$[filesUrl]/`, and check the signature again.
+2. If it still fails, don't run the script, and contact Tigera support.
+
+## Additional resources
+
+- [Verify signatures with cosign](https://docs.sigstore.dev/cosign/verifying/verify/)

@@ -537,6 +537,7 @@ module.exports = {
         },
         'compliance/encrypt-cluster-pod-traffic',
         'compliance/configure-http-proxy',
+        'compliance/verify-release-artifacts',
       ],
     },
     {
