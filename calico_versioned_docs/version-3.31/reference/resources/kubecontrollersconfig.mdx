@@ -1,15 +1,23 @@
 ---
 description: API for KubeControllersConfiguration resource.
-content_type: unclassified
+content_type: reference
 ---
 
 import Selectors from '@site/calico_versioned_docs/version-3.31/_includes/content/_selectors.mdx';
 
 # Kubernetes controllers configuration
 
-A $[prodname] [Kubernetes controllers](../kube-controllers/configuration.mdx) configuration resource (`KubeControllersConfiguration`) represents configuration options for the $[prodname] Kubernetes controllers.
+A Kubernetes controllers configuration resource (KubeControllersConfiguration) represents configuration options for the $[prodname] [Kubernetes controllers](../kube-controllers/configuration.mdx).
+KubeControllersConfiguration is a cluster-scoped resource.
+$[prodname] creates this resource automatically.
+There is only one, and its name must be `default`.
+You can use [calicoctl](../calicoctl/overview.mdx) to view and edit its settings.
+
+For `kubectl` commands, you can use the aliases `kubecontrollersconfiguration.projectcalico.org`, `kubecontrollersconfigurations.projectcalico.org`, `kubecontrollersconfiguration.p`, and `kubecontrollersconfigurations.p`.
 
 ## Sample YAML
+
+This sample sets the log level and metrics port, and turns on and configures each controller.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -48,111 +56,115 @@ spec:
       assignIPs: AllServices
 ```
 
-## Kubernetes controllers configuration definition
+## Definition
 
 ### Metadata
 
-| Field | Description                                               | Accepted Values   | Schema |
-| ----- | --------------------------------------------------------- | ----------------- | ------ |
-| name  | Unique name to describe this resource instance. Required. | Must be `default` | string |
-
-- $[prodname] automatically creates a resource named `default` containing the configuration settings, only the name `default` is used and only one object of this type is allowed. You can use [calicoctl](../calicoctl/overview.mdx) to view and edit these settings
+| Field | Description                                              | Accepted Values | Schema | Default |
+| ----- | -------------------------------------------------------- | --------------- | ------ | ------- |
+| `name` | The name of this Kubernetes controllers configuration. Required. | `default`       | string |         |
 
 ### Spec
 
 | Field                  | Description                                                                                                | Accepted Values                     | Schema                            | Default |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------- | ------- |
-| logSeverityScreen      | The log severity above which logs are sent to the stdout.                                                  | Trace, Debug, Info, Warning, Error, Fatal | string                            | Info    |
-| healthChecks           | Enable support for health checks                                                                           | Enabled, Disabled                   | string                            | Enabled |
-| prometheusMetricsPort  | Port on which to serve prometheus metrics.                                                                 | Set to 0 to disable, > 0 to enable. | TCP port                          | 9094    |
-| etcdV3CompactionPeriod | The period between etcdv3 compaction requests. Only applies when using etcd as the $[prodname] datastore. | Set to 0 to disable, > 0 to enable  | [Duration string][parse-duration] | 10m     |
-| debugProfilePort       | Port on which to serve memory and CPU profiles, on localhost only. Omit or set to 0 to disable profiling. |                                     | integer                           |         |
-| controllers            | Enabled controllers and their settings                                                                     |                                     | [Controllers](#controllers)       |         |
+| `logSeverityScreen`    | The log severity above which logs are sent to the stdout.                                                  | `Trace`, `Debug`, `Info`, `Warning`, `Error`, `Fatal` | string                            | `Info`  |
+| `healthChecks`         | Enable support for health checks                                                                           | `Enabled`, `Disabled`               | string                            | `Enabled` |
+| `prometheusMetricsPort` | Port on which to serve Prometheus metrics.                                                                | Set to `0` to disable, > `0` to enable. | integer                           | `9094`  |
+| `etcdV3CompactionPeriod` | The period between etcdv3 compaction requests. Only applies when using etcd as the $[prodname] datastore. | Set to `0` to disable, > `0` to enable  | [Duration string][parse-duration] | `10m`   |
+| `debugProfilePort`     | Port on which to serve memory and CPU profiles, on localhost only. Omit or set to `0` to disable profiling. |                                     | integer                           |         |
+| `controllers`          | Enabled controllers and their settings                                                                     |                                     | [ControllersConfig](#controllersconfig) |         |
 
-### Controllers
+### ControllersConfig
 
-| Field            | Description                                           | Schema                                                                        |
-| ---------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------- |
-| node             | Enable and configure the node controller              | omit to disable, or [NodeController](#nodecontroller)                         |
-| policy           | Enable and configure the network policy controller    | omit to disable, or [PolicyController](#policycontroller)                     |
-| workloadEndpoint | Enable and configure the workload endpoint controller | omit to disable, or [WorkloadEndpointController](#workloadendpointcontroller) |
-| serviceAccount   | Enable and configure the service account controller   | omit to disable, or [ServiceAccountController](#serviceaccountcontroller)     |
-| namespace        | Enable and configure the namespace controller         | omit to disable, or [NamespaceController](#namespacecontroller)               |
+| Field              | Description                                                           | Accepted Values | Schema                                                                    | Default |
+| ------------------ | --------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------- | ------- |
+| `node`             | Enable and configure the node controller. Omit to disable.            |                 | [NodeControllerConfig](#nodecontrollerconfig)                             |         |
+| `policy`           | Enable and configure the network policy controller. Omit to disable.  |                 | [PolicyControllerConfig](#policycontrollerconfig)                         |         |
+| `workloadEndpoint` | Enable and configure the workload endpoint controller. Omit to disable. |               | [WorkloadEndpointControllerConfig](#workloadendpointcontrollerconfig)     |         |
+| `serviceAccount`   | Enable and configure the service account controller. Omit to disable. |                 | [ServiceAccountControllerConfig](#serviceaccountcontrollerconfig)         |         |
+| `namespace`        | Enable and configure the namespace controller. Omit to disable.       |                 | [NamespaceControllerConfig](#namespacecontrollerconfig)                   |         |
 
-### NodeController
+### NodeControllerConfig
 
 The node controller automatically cleans up configuration for nodes that no longer exist. Optionally, it can create host endpoints for all Kubernetes nodes.
 
-| Field            | Description                                                                       | Accepted Values   | Schema                            | Default |
-| ---------------- | --------------------------------------------------------------------------------- | ----------------- | --------------------------------- | ------- |
-| reconcilerPeriod | Not used by the node controller.                                                  |                   | [Duration string][parse-duration] |         |
-| syncLabels       | When enabled, Kubernetes node labels will be copied to $[prodname] node objects.  | Enabled, Disabled | string                            | Enabled |
-| hostEndpoint     | Configures the host endpoint controller                                           |                   | [HostEndpoint](#hostendpoint)     |         |
-| leakGracePeriod  | Grace period to use when garbage collecting suspected leaked IP addresses.        |                   | [Duration string][parse-duration] | 15m     |
+| Field              | Description                                                                       | Accepted Values       | Schema                                            | Default |
+| ------------------ | --------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------- | ------- |
+| `reconcilerPeriod` | Not used by the node controller.                                                  |                       | [Duration string][parse-duration]                 |         |
+| `syncLabels`       | When enabled, Kubernetes node labels will be copied to $[prodname] node objects.  | `Enabled`, `Disabled` | string                                            | `Enabled` |
+| `hostEndpoint`     | Configures the host endpoint controller                                           |                       | [AutoHostEndpointConfig](#autohostendpointconfig) |         |
+| `leakGracePeriod`  | Grace period to use when garbage collecting suspected leaked IP addresses.        |                       | [Duration string][parse-duration]                 | `15m`   |
 
-### HostEndpoint
+### AutoHostEndpointConfig
 
-| Field                     | Description                                                      | Accepted Values   | Schema                | Default  |
-| ------------------------- | ---------------------------------------------------------------- | ----------------- | --------------------- | -------- |
-| autoCreate                | When enabled, automatically create host endpoints                | Enabled, Disabled | string                | Disabled |
-| createDefaultHostEndpoint | When enabled, default host endpoint will be created              | Enabled, Disabled | string                | Enabled  |
-| templates                 | Controls creation of custom host endpoints                       |                   | List of [Template](#template) |          |
+| Field                       | Description                                         | Accepted Values       | Schema                        | Default    |
+| --------------------------- | --------------------------------------------------- | --------------------- | ----------------------------- | ---------- |
+| `autoCreate`                | When enabled, automatically create host endpoints   | `Enabled`, `Disabled` | string                        | `Disabled` |
+| `createDefaultHostEndpoint` | When enabled, default host endpoint will be created | `Enabled`, `Disabled` | string                        | `Enabled`  |
+| `templates`                 | Controls creation of custom host endpoints          |                       | list of [Template](#template) |            |
 
 ### Template
 
-| Field                     | Description                                                                                                                         | Accepted Values     | Schema                              | Default  |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------------------------------- | -------- |
-| generateName              | Unique name used in the names of host endpoints created based on this template. Required.                                           | Lowercase alphanumeric characters, `-` or `.` | string                              |          |
-| nodeSelector              | Selects the nodes for which this template should create host endpoints                                                              |                     | [Selector](#selectors)              | all()    |
-| interfaceCIDRs            | This configuration defines which IP addresses from a node's specification (including standard, tunnel, and WireGuard IPs) are eligible for inclusion in the generated HostEndpoint. IP addresses must fall within the provided CIDR ranges to be considered. If no address on the node matches the specified CIDRs and `interfacePattern` is not set, the HostEndpoint creation is skipped. | List of valid CIDRs | List string                         |          |
-| interfacePattern          | Regex to include matching interfaces and their IPs                                                                                  | string              | string                              |          |
-| labels                    | Labels to be added to generated host endpoints matching this template                                                               |                     | map of string key to string values  |          |
+| Field              | Description                                                                                                                         | Accepted Values     | Schema                  | Default  |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------------------- | -------- |
+| `generateName`     | Unique name used in the names of host endpoints created based on this template. Required.                                           | Lowercase alphanumeric characters, `-` or `.` | string                  |          |
+| `nodeSelector`     | Selects the nodes for which this template should create host endpoints                                                              |                     | [selector](#selector)   | `all()`  |
+| `interfaceCIDRs`   | This configuration defines which IP addresses from a node's specification (including standard, tunnel, and WireGuard IPs) are eligible for inclusion in the generated HostEndpoint. IP addresses must fall within the provided CIDR ranges to be considered. If no address on the node matches the specified CIDRs and `interfacePattern` is not set, the HostEndpoint creation is skipped. | List of valid CIDRs | list of strings         |          |
+| `interfacePattern` | Regex to include matching interfaces and their IPs                                                                                  | string              | string                  |          |
+| `labels`           | Labels to be added to generated host endpoints matching this template                                                               |                     | map of string to string |          |
 
-### Selectors
+### Selector
 
 <Selectors />
 
-### PolicyController
+### PolicyControllerConfig
 
 The policy controller syncs Kubernetes network policies to the Calico datastore. This controller is only valid when using etcd as the $[prodname] datastore.
 
-| Field            | Description                                                      | Schema                            | Default |
-| ---------------- | ---------------------------------------------------------------- | --------------------------------- | ------- |
-| reconcilerPeriod | Period to perform reconciliation with the $[prodname] datastore | [Duration string][parse-duration] | 5m      |
+| Field              | Description                                                      | Accepted Values | Schema                            | Default |
+| ------------------ | ---------------------------------------------------------------- | --------------- | --------------------------------- | ------- |
+| `reconcilerPeriod` | Period to perform reconciliation with the $[prodname] datastore |                 | [Duration string][parse-duration] | `5m`    |
 
-### WorkloadEndpointController
+### WorkloadEndpointControllerConfig
 
 The workload endpoint controller automatically syncs Kubernetes pod label changes to the $[prodname] datastore by updating the corresponding workload
 endpoints appropriately. This controller is only valid when using etcd as the $[prodname] datastore.
 
-| Field            | Description                                                      | Schema                            | Default |
-| ---------------- | ---------------------------------------------------------------- | --------------------------------- | ------- |
-| reconcilerPeriod | Period to perform reconciliation with the $[prodname] datastore | [Duration string][parse-duration] | 5m      |
+| Field              | Description                                                      | Accepted Values | Schema                            | Default |
+| ------------------ | ---------------------------------------------------------------- | --------------- | --------------------------------- | ------- |
+| `reconcilerPeriod` | Period to perform reconciliation with the $[prodname] datastore |                 | [Duration string][parse-duration] | `5m`    |
 
-### ServiceAccountController
+### ServiceAccountControllerConfig
 
 The service account controller syncs Kubernetes service account changes to the $[prodname] datastore. This controller is only valid when using etcd as
 the $[prodname] datastore.
 
-| Field            | Description                                                      | Schema                            | Default |
-| ---------------- | ---------------------------------------------------------------- | --------------------------------- | ------- |
-| reconcilerPeriod | Period to perform reconciliation with the $[prodname] datastore | [Duration string][parse-duration] | 5m      |
+| Field              | Description                                                      | Accepted Values | Schema                            | Default |
+| ------------------ | ---------------------------------------------------------------- | --------------- | --------------------------------- | ------- |
+| `reconcilerPeriod` | Period to perform reconciliation with the $[prodname] datastore |                 | [Duration string][parse-duration] | `5m`    |
 
-### NamespaceController
+### NamespaceControllerConfig
 
 The namespace controller syncs Kubernetes namespace label changes to the $[prodname] datastore. This controller is only valid when using etcd as the
 $[prodname] datastore.
 
-| Field            | Description                                                      | Schema                            | Default |
-| ---------------- | ---------------------------------------------------------------- | --------------------------------- | ------- |
-| reconcilerPeriod | Period to perform reconciliation with the $[prodname] datastore | [Duration string][parse-duration] | 5m      |
+| Field              | Description                                                      | Accepted Values | Schema                            | Default |
+| ------------------ | ---------------------------------------------------------------- | --------------- | --------------------------------- | ------- |
+| `reconcilerPeriod` | Period to perform reconciliation with the $[prodname] datastore |                 | [Duration string][parse-duration] | `5m`    |
 
-### LoadBalancerController
+### LoadBalancerControllerConfig
 
-The load balancer controller manages IPAM for Services of type LoadBalancer.
+The load balancer controller manages IPAM for Services of type `LoadBalancer`.
 
-| Field            | Description                                                      | Accepted Values                          | Schema | Default     |
-| ---------------- | ---------------------------------------------------------------- | ---------------------------------------- | ------ | ----------- |
-| assignIPs        | Mode in which LoadBalancer controller operates                   | AllServices, RequestedServicesOnly       | String | AllServices |
+| Field       | Description                                         | Accepted Values                      | Schema | Default       |
+| ----------- | --------------------------------------------------- | ------------------------------------ | ------ | ------------- |
+| `assignIPs` | Mode in which the load balancer controller operates | `AllServices`, `RequestedServicesOnly` | string | `AllServices` |
+
+## Additional resources
+
+- [Configuring the $[prodname] Kubernetes controllers](../kube-controllers/configuration.mdx)
+- [Protect Kubernetes nodes](../../network-policy/hosts/kubernetes-nodes.mdx)
+- [LoadBalancer IP address management](../../networking/ipam/service-loadbalancer.mdx)
 
 [parse-duration]: https://golang.org/pkg/time/#ParseDuration
