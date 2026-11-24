@@ -1,35 +1,35 @@
 ---
 description: Reference for the WorkloadEndpoint resource in Calico Open Source that represents a pod or VM interface for policy and IPAM.
-content_type: unclassified
+content_type: reference
 ---
 
 # Workload endpoint
 
 import Ipnat from '@site/calico_versioned_docs/version-3.33/_includes/content/_ipnat.mdx';
 
-A workload endpoint resource (`WorkloadEndpoint`) represents an interface
+A workload endpoint resource (WorkloadEndpoint) represents an interface
 connecting a $[prodname] networked container or VM to its host.
 
 Each endpoint may specify a set of labels and list of profiles that $[prodname] will use
 to apply policy to the interface.
 
-A workload endpoint is a namespaced resource, that means a
-[NetworkPolicy](networkpolicy.mdx)
-in a specific namespace only applies to the WorkloadEndpoint in that namespace.
+WorkloadEndpoint is a namespaced resource.
+A [NetworkPolicy](networkpolicy.mdx)
+in a specific namespace only applies to workload endpoints in that namespace.
 Two resources are in the same namespace if the namespace value is set the same
 on both.
 
-:::note
-
-With the Kubernetes datastore, `calicoctl` cannot create, update, or delete Workload Endpoint resources, and
+With the Kubernetes datastore, `calicoctl` cannot create, update, or delete workload endpoints, and
 the lifecycle of these resources is generally handled by an orchestrator-specific
 plugin such as the $[prodname] CNI plugin, the $[prodname] Docker network plugin,
 or the $[prodname] OpenStack Neutron Driver. In general, we recommend that you only
 use `calicoctl` to view this resource type.
 
-:::
+This resource is not supported in kubectl.
 
 ## Sample YAML
+
+This sample describes the `eth0` interface of a Kubernetes pod on node `node1`, with one profile and two named ports.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -62,54 +62,54 @@ spec:
     protocol: UDP
 ```
 
-## Definitions
+## Definition
 
 ### Metadata
 
-| Field     | Description                                                        | Accepted Values                                    | Schema | Default   |
-| --------- | ------------------------------------------------------------------ | -------------------------------------------------- | ------ | --------- |
-| name      | The name of this workload endpoint resource. If omitted, it is calculated from the spec. | The calculated name, for example `<node>-k8s-<pod>-<endpoint>`, with each `-` inside a field doubled | string |           |
-| namespace | Namespace provides an additional qualification to a resource name. |                                                    | string | "default" |
-| labels    | A set of labels to apply to this endpoint.                         |                                                    | map    |           |
+| Field       | Description                                                                              | Accepted Values                                                                                       | Schema                  | Default   |
+| ----------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------- | --------- |
+| `name`      | The name of this workload endpoint resource. If omitted, it is calculated from the spec. | The calculated name, for example `<node>-k8s-<pod>-<endpoint>`, with each `-` inside a field doubled | string                  |           |
+| `namespace` | The namespace this workload endpoint belongs to.                                         |                                                                                                       | string                  | `default` |
+| `labels`    | A set of labels to apply to this endpoint.                                               |                                                                                                       | map of string to string |           |
 
 ### Spec
 
-| Field         | Description                                                   | Accepted Values | Schema                                         | Default |
-| ------------- | ------------------------------------------------------------- | --------------- | ---------------------------------------------- | ------- |
-| workload      | The name of the workload to which this endpoint belongs.      |                 | string                                         |
-| orchestrator  | The orchestrator that created this endpoint.                  |                 | string                                         |
-| node          | The node where this endpoint resides.                         |                 | string                                         |
-| containerID   | The CNI CONTAINER_ID of the workload endpoint.                |                 | string                                         |
-| pod           | Kubernetes pod name for this workload endpoint.               |                 | string                                         |
-| endpoint      | Container network interface name.                             |                 | string                                         |
-| ipNetworks    | The CIDRs assigned to the interface.                          |                 | List of strings                                |
-| ipNATs        | List of 1:1 NAT mappings to apply to the endpoint.            |                 | List of [IPNATs](#ipnat)                       |
-| ipv4Gateway   | The gateway IPv4 address for traffic from the workload.       |                 | string                                         |
-| ipv6Gateway   | The gateway IPv6 address for traffic from the workload.       |                 | string                                         |
-| profiles      | List of profiles assigned to this endpoint.                   |                 | List of strings                                |
-| interfaceName | The name of the host-side interface attached to the workload. |                 | string                                         |
-| mac           | The source MAC address of traffic generated by the workload.  |                 | IEEE 802 MAC-48, EUI-48, or EUI-64             |
-| ports         | List on named ports that this workload exposes.               |                 | List of [WorkloadEndpointPorts](#endpointport) |
-| serviceAccountName | The Kubernetes service account of the pod.                | | string |
-| allowSpoofedSourcePrefixes | CIDRs that the workload may send traffic from, bypassing the RPF check. Requires `workloadSourceSpoofing: Any` in FelixConfiguration; otherwise Felix does not program the endpoint. See [Allow pods to use additional source IP prefixes](../../networking/configuring/allowed-source-prefixes.mdx). | | List of strings |
-| qosControls | QoS limits applied to the endpoint, set from pod annotations. See [Configure QoS Controls](../../networking/configuring/qos-controls.mdx). | | object |
+| Field                        | Description                                                                                                                                                                                                                                                                       | Accepted Values                    | Schema                                                | Default |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------- | ------- |
+| `workload`                   | The name of the workload to which this endpoint belongs.                                                                                                                                                                                                                          |                                    | string                                                |         |
+| `orchestrator`               | The orchestrator that created this endpoint.                                                                                                                                                                                                                                      |                                    | string                                                |         |
+| `node`                       | The node where this endpoint resides.                                                                                                                                                                                                                                             |                                    | string                                                |         |
+| `containerID`                | The CNI `CONTAINER_ID` of the workload endpoint.                                                                                                                                                                                                                                  |                                    | string                                                |         |
+| `pod`                        | Kubernetes pod name for this workload endpoint.                                                                                                                                                                                                                                   |                                    | string                                                |         |
+| `endpoint`                   | Container network interface name.                                                                                                                                                                                                                                                 |                                    | string                                                |         |
+| `ipNetworks`                 | The CIDRs assigned to the interface.                                                                                                                                                                                                                                              |                                    | list of strings                                       |         |
+| `ipNATs`                     | List of 1:1 NAT mappings to apply to the endpoint.                                                                                                                                                                                                                                |                                    | list of [IPNAT](#ipnat)                               |         |
+| `ipv4Gateway`                | The gateway IPv4 address for traffic from the workload.                                                                                                                                                                                                                           |                                    | string                                                |         |
+| `ipv6Gateway`                | The gateway IPv6 address for traffic from the workload.                                                                                                                                                                                                                           |                                    | string                                                |         |
+| `profiles`                   | List of profiles assigned to this endpoint.                                                                                                                                                                                                                                       |                                    | list of strings                                       |         |
+| `interfaceName`              | The name of the host-side interface attached to the workload.                                                                                                                                                                                                                     |                                    | string                                                |         |
+| `mac`                        | The source MAC address of traffic generated by the workload.                                                                                                                                                                                                                      | IEEE 802 MAC-48, EUI-48, or EUI-64 | string                                                |         |
+| `ports`                      | List on named ports that this workload exposes.                                                                                                                                                                                                                                   |                                    | list of [WorkloadEndpointPort](#workloadendpointport) |         |
+| `serviceAccountName`         | The Kubernetes service account of the pod.                                                                                                                                                                                                                                        |                                    | string                                                |         |
+| `allowSpoofedSourcePrefixes` | CIDRs that the workload may send traffic from, bypassing the RPF check. Requires `workloadSourceSpoofing: Any` in FelixConfiguration; otherwise Felix does not program the endpoint. See [Allow pods to use additional source IP prefixes](../../networking/configuring/allowed-source-prefixes.mdx). |                                    | list of strings                                       |         |
+| `qosControls`                | QoS limits applied to the endpoint, set from pod annotations. See [Configure QoS Controls](../../networking/configuring/qos-controls.mdx).                                                                                                                                        |                                    | object                                                |         |
 
 ### IPNAT
 
 <Ipnat />
 
-### EndpointPort
+### WorkloadEndpointPort
 
 A WorkloadEndpointPort associates a name with a particular TCP/UDP/SCTP port of the endpoint, allowing it to
 be referenced as a named port in [policy rules](networkpolicy.mdx#entityrule).
 
-| Field    | Description                                                                                                                                              | Accepted Values      | Schema | Default |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------ | ------- |
-| name     | The name to attach to this port, allowing it to be referred to in [policy rules](networkpolicy.mdx#entityrule). Names must be unique within an endpoint. |                      | string |         |
-| protocol | The protocol of this named port.                                                                                                                         | `TCP`, `UDP`, `SCTP` | string |         |
-| port     | The workload port number.                                                                                                                                | `1`-`65535`          | int    |         |
-| hostPort | Port on the host that is forwarded to this port.                                                                                                         | `1`-`65535`          | int    |         |
-| hostIP   | IP address on the host on which the hostPort is accessible.                                                                                              | A valid IP address   | string |         |
+| Field      | Description                                                                                                                                              | Accepted Values      | Schema  | Default |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------- | ------- |
+| `name`     | The name to attach to this port, allowing it to be referred to in [policy rules](networkpolicy.mdx#entityrule). Names must be unique within an endpoint. |                      | string  |         |
+| `protocol` | The protocol of this named port.                                                                                                                         | `TCP`, `UDP`, `SCTP` | string  |         |
+| `port`     | The workload port number.                                                                                                                                | `1` to `65535`       | integer |         |
+| `hostPort` | Port on the host that is forwarded to this port.                                                                                                         | `1` to `65535`       | integer |         |
+| `hostIP`   | IP address on the host on which the `hostPort` is accessible.                                                                                            | A valid IP address   | string  |         |
 
 :::note
 
@@ -120,7 +120,14 @@ They only have an effect if they are referred to in policy.
 
 :::note
 
-The hostPort and hostIP fields are read-only and determined from Kubernetes hostPort configuration.
+The `hostPort` and `hostIP` fields are read-only and determined from Kubernetes `hostPort` configuration.
 These fields are used only when host ports are enabled in Calico.
 
 :::
+
+## Additional resources
+
+- [Network policy](networkpolicy.mdx)
+- [Profile](profile.mdx)
+- [Host endpoint](hostendpoint.mdx)
+- [Configure QoS Controls](../../networking/configuring/qos-controls.mdx)
