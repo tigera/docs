@@ -20,7 +20,7 @@ This guide requires:
 - **OCI Registry**: An OCI-compliant registry configured in vSphere for storing package manifests and container images.
 - **Tigera registry credentials** for accessing the Tigera container registry (contact the Tigera team).
 - VKS v3.8 and above
-- vCenter - v9.1.1 and above
+- vCenter v9.1.1 and above
 
 ### Networking
 
@@ -48,15 +48,15 @@ Setting up $[prodname] on VKS has two main phases: set it as a Supervisor Servic
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: Package
 metadata:
-  name: calico-enterprise-svs.tigera.io.3.24.0-2.0
+  name: calico-enterprise-svs.tigera.io.$[releaseVersion]
 spec:
   refName: calico-enterprise-svs.tigera.io
-  version: 3.24.0-2.0
+  version: $[releaseVersion]
   template:
     spec:
       fetch:
       - imgpkgBundle:
-          image: quay.io/tigera/calico-enterprise-svs:v3.24.0-2.0   #Change this to the registry where the carvel package is getting picked up
+          image: quay.io/tigera/calico-enterprise-svs:$[releaseTitle]   #Change this to the registry where the carvel package is getting picked up
       template:
       - ytt:
           paths:
@@ -165,7 +165,7 @@ spec:
       expression: cluster.cniRefName() = "calico-enterprise" && cluster.kubeProxyConfiguration().enabled == true
   releaseFilter:
     ref:
-      name: calico-enterprise.tigera.io.3.24.0-2.0
+      name: calico-enterprise.tigera.io.$[releaseVersion]
   stopMatchingBehavior: Retain
 ```
 
@@ -317,7 +317,7 @@ If the published bundles need to be moved into a private OCI registry (for examp
 Run on a host that has access to the source registry:
 
 ```bash
-imgpkg copy --bundle <source-registry>/calico-enterprise-svs:v3.24.0-2.0  --to-tar calico-enterprise-svs.tar
+imgpkg copy --bundle <source-registry>/calico-enterprise-svs:$[releaseTitle]  --to-tar calico-enterprise-svs.tar
 ```
 
 :::tip
@@ -339,13 +339,13 @@ The only registry reference outside the bundles is the service-bundle pointer in
 ```bash
 yq eval '
   (select(.kind == "Package") | .spec.template.spec.fetch[0].imgpkgBundle.image)
-    = "<private-registry>/calico-enterprise-svs:v3.24.0-2.0"
+    = "<private-registry>/calico-enterprise-svs:$[releaseTitle]"
 ' -i calico-enterprise-svs.yaml
 ```
 
 :::tip
 
-**Content-pin to digest (optional):** `imgpkg copy --to-repo` prints the destination digest of the relocated bundle on its last line. Substituting `:v3.24.0-2.0` with `@sha256:<that-digest>` in the `yq` command above will make the reference immutable.
+**Content-pin to digest (optional):** `imgpkg copy --to-repo` prints the destination digest of the relocated bundle on its last line. Substituting `:$[releaseTitle]` with `@sha256:<that-digest>` in the `yq` command above will make the reference immutable.
 
 :::
 

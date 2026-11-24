@@ -36,4 +36,8 @@ const variables = {
   },
 };
 
+// The release version without the leading "v", for example 3.23.4. Used where a
+// package version or name can't have the "v" prefix, such as the VKS Carvel package.
+variables.releaseVersion = variables.releaseTitle.replace(/^v/, '');
+
 module.exports = variables;
