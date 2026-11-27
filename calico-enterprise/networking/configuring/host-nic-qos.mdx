@@ -42,7 +42,7 @@ For each direction, egress (leaving the node) and ingress (arriving at the node)
 
 and, for both directions:
 
-- **`shares`**: how the pool competes for spare bandwidth. When pools want more than their reservation at the same time, spare bandwidth is split between them in proportion to their shares. Treat shares as a weighting, not a fixed ratio: how evenly it splits in practice depends on the traffic.
+- **`shares`**: how the pool competes for spare bandwidth. When pools want more than their reservation at the same time, spare bandwidth is split between them in proportion to their shares. Treat shares as a weighting, not a fixed ratio: how evenly it splits in practice depends on the traffic. Pools with a `match` take spare bandwidth before a pool without one, so shares only weigh pools of the same kind against each other.
 
 :::caution
 
@@ -119,6 +119,10 @@ The loser reports a collision in its status; see [Troubleshoot host NIC QoS](hos
 
 Egress shaping controls what the node sends. Ingress shaping controls what the node accepts, which slows down a TCP sender, but can't stop traffic from arriving at the NIC.
 Ingress shaping uses the `ifb` kernel module, which most Linux distributions include.
+Each interface with ingress pools uses up to two IFB devices: one for pools with a `match`, and one for everything else.
+Everything else is spread over one queue per receive queue of the NIC, so a pool without a `match` gets its reservation in total across those queues, and a single flow in it, or a single flow of unmatched traffic, gets at most (`linkCapacity` minus the ingress reservations of pools with a `match`) divided by the number of receive queues.
+For example, at 100G with 16 receive queues and 10G reserved by pools with a `match`, one such flow is limited to about 5.6G.
+Give a single flow that needs more its own pool with a `match`.
 
 A pool can also mark the packets it carries with a DSCP value as they leave the node, with `egress.dscp`, so that switches and routers downstream can prioritize them. Marking is egress only.
 
@@ -432,8 +436,8 @@ If a node was downgraded with shaping in place, remove it on that node. For each
 IFACE=eth0
 # The root shaping, only if it is host NIC QoS's own.
 tc qdisc show dev $IFACE root | grep -q 'htb 1ca1:' && tc qdisc del dev $IFACE root
-# The ingress redirect, then the ingress qdisc if nothing else uses it.
-tc filter del dev $IFACE ingress pref 7329
+# The ingress redirects (prefs 6912 to 7139, and 7329), then the ingress qdisc if nothing else uses it.
+for pref in $(seq 6912 7139) 7329; do tc filter del dev $IFACE ingress pref $pref 2>/dev/null; done
 tc filter show dev $IFACE ingress | grep -q . || tc qdisc del dev $IFACE ingress
 ```
 
