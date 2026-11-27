@@ -385,16 +385,12 @@ It also includes a selection of other security and product fixes. We recommend t
 
 * Fixed ui-apis crashing, which took down the web console and managed cluster connections, when Linseed held flow logs with no source or destination type. {/* #14873 */}
 * Fixed an issue where a pod could lose its IP address to another pod after the container runtime retried sandbox creation and left a stale CNI ADD running, including under Multus. {/* #15160 */}
-* Fixed the IPAM garbage collector not releasing leaked IPs from a pod's earlier sandboxes, from pods in the Succeeded or Failed phase, and from KubeVirt VMs deleted while stopped. This could exhaust small IP pools, such as those used by Multus secondary networks. {/* #15281 */}
-* Fixed several cases where calico-node needed a restart to fix a node's IPIP, VXLAN, or WireGuard tunnel address: after a node label or IP pool `nodeSelector` change, after a hung datastore call during allocation, and when deleting an IP pool that held the address. {/* #15281 */}
 * Fixed pods failing to start on single-stack clusters that have a non-workload IP pool of the other IP family. {/* operator #5377 */}
 * Fixed Felix never reporting the dataplane as in sync when a workload interface was deleted during its first resync after startup, which made new pods on the node wait for the full CNI policy setup timeout. {/* #15247 */}
-* Fixed Felix ignoring non-default `NftablesFilterAllowAction`, `NftablesMangleAllowAction`, and `NftablesFilterDenyAction` values, and the nftables mark mask and refresh interval, when the nftables mode is `Auto`. {/* #15160 #15290 */}
-* Fixed a Felix panic in nftables mode when a malformed IP set member, such as an empty NetworkSet entry, reached an IP set. {/* #15290 */}
+* Fixed Felix ignoring the nftables mark mask and refresh interval when the nftables mode is `Auto`. {/* #15160 */}
 * Fixed calico-node restarts in eBPF mode resizing BPF maps to their defaults and back, which could crash the init container when the conntrack table held more entries than the default size. {/* #14927 */}
 * Fixed an issue where creating an ExternalNetwork could leave another ExternalNetwork's BGP peers without routes for local workloads, such as egress gateways, until those workloads were recreated. {/* #15249 */}
 * Fixed node-to-node mesh BGP sessions failing to establish from a node with its own AS number to a peer that uses the global AS number. {/* #14992 */}
-* Fixed CalicoNodeStatus dropping a node's IPv4 BGP peers and routes while its IPv6 BIRD socket was unreachable. {/* #15290 */}
 * Fixed log lines from BIRD and Felix being merged or split when both services in calico-node logged at the same moment. {/* #15149 */}
 * Fixed fluentd on Windows losing its log positions on restart and resending flow logs as duplicates. Position files are now stored on the host. {/* #14997 */}
 * Fixed the queryserver refusing connections for a few seconds when a calico-apiserver pod was deleted or rolled. {/* #14923 */}
@@ -402,7 +398,6 @@ It also includes a selection of other security and product fixes. We recommend t
 * Fixed the Istio resource's `resources` settings being ignored for istiod, Istio CNI, and ztunnel. {/* operator #5377 */}
 * Fixed the non-cluster host Typha deployment ignoring the container resources and `terminationGracePeriodSeconds` set in the Installation's `spec.typhaDeployment`, and its pods being rejected when certificate management is enabled. {/* operator #5368 */}
 * Fixed the RHEL 8 calico-node and calico-fluent-bit packages requiring glibc 2.34, which stopped them installing or loading on RHEL 8. {/* #15026 #15036 */}
-* KubeControllersConfiguration `logSeverityScreen` now accepts `Trace` and rejects `None`, which kube-controllers never supported. BlockAffinity `spec.type` is now limited to `host` or `virtual`. {/* #15281 #15290 */}
 * Security fixes. {/* #14685, #14862, #14894, #14929, #15176, #15185, #15218, operator #5364, #5382, #5387, #5388 */}
 
 To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
@@ -608,12 +603,18 @@ November 27, 2026
   * An error message named `bpfout.cali` when configuring `bpfin.cali` failed. {/* #15480 */}
 * Fixed an inotify instance and goroutine leak in confd when the endpoint-status directory could not be watched, which could exhaust the node's per-user inotify instance limit. {/* #15237 */}
 * Fixed IPAM garbage collection releasing an allocation only because the pod's node differed. {/* #15497 */}
+* Fixed the IPAM garbage collector not releasing leaked IPs from a pod's earlier sandboxes, from pods in the Succeeded or Failed phase, and from KubeVirt VMs deleted while stopped. This could exhaust small IP pools, such as those used by Multus secondary networks. {/* #15281 */}
+* Fixed several cases where calico-node needed a restart to fix a node's IPIP, VXLAN, or WireGuard tunnel address: after a node label or IP pool `nodeSelector` change, after a hung datastore call during allocation, and when deleting an IP pool that held the address. {/* #15281 */}
 * Fixed kube-controllers looping on status updates when no environment overrides are set. {/* #15497 */}
 * Fixed Goldmane counting a flow more than once per policy action in policy statistics. {/* #15497 */}
 * Flow log routes now check the cluster they read, and reject requests whose cluster parameters disagree. {/* #15497 */}
 * Fixed fluentd-node-windows crash looping on Windows Server 2019 nodes. {/* #15619 */}
 * Fixed calico-apiserver becoming not ready when a ValidatingAdmissionPolicy with a ConfigMap parameter is bound in the cluster, for example by OpenShift Logging 6.5 or later. {/* operator #5422 */}
 * Fixed es-calico-kube-controllers losing its service account, and failing with `Unauthorized` errors, while the Installation is being deleted. {/* operator #5420 */}
+* Fixed Felix ignoring non-default `NftablesFilterAllowAction`, `NftablesMangleAllowAction`, and `NftablesFilterDenyAction` values when the nftables mode is `Auto` or `Enabled`. {/* #15290 */}
+* Fixed a Felix panic in nftables mode when a malformed IP set member, such as an empty NetworkSet entry, reached an IP set. {/* #15290 */}
+* Fixed CalicoNodeStatus dropping a node's IPv4 BGP peers and routes while its IPv6 BIRD socket was unreachable. {/* #15290 */}
+* KubeControllersConfiguration `logSeverityScreen` now accepts `Trace` and rejects `None`, which kube-controllers never supported. BlockAffinity `spec.type` is now limited to `host` or `virtual`. {/* #15281 #15290 */}
 * Security fixes. {/* #15591 #15600 */}
 
 To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
