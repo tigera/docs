@@ -573,3 +573,47 @@ The operator restarts the affected pods for you, so expect some Calico Enterpris
 
 If your cluster runs Calico Enterprise 3.23.3 or earlier, follow the regular upgrade steps in [Upgrade Calico Enterprise](../getting-started/upgrading/upgrading-enterprise/index.mdx).
 The upgrade installs the new Tigera Operator and web console images.
+
+### Calico Enterprise 3.23.5 hotfix release
+
+November 27, 2026
+
+#### Upgrade notes
+
+* The `calico-webhooks` admission webhook now validates selectors and service account names in policies that you write directly to the `projectcalico.org/v3` CRDs. A policy with a malformed selector is now rejected with a clear error, instead of being accepted and then ignored with validation errors in the logs. {/* #15262 */}
+* Selector parsing is stricter in several components. An invalid pod egress gateway selector now blocks the pod's egress gateway traffic, rather than falling back to the namespace annotation. A DeepPacketInspection resource with an empty selector now inspects all endpoints in its namespace. {/* #15262 */}
+* Dual ToR: the early networking container now needs the host's `/var/run/calico/early` directory mapped into it. See the enhancement below. {/* #15552 */}
+
+#### Enhancements
+
+* Dual ToR: early networking now takes over each ToR peering when the BGP graceful restart time that calico-node announced to that ToR has passed, instead of after a fixed 120 seconds. A short `maxRestartTime` no longer leaves the node's stable address unreachable for about two minutes when calico-node restarts. {/* #15552 */}
+* Added the tigera-operator Helm chart value `preDeleteHook.enabled` (default `true`). Set it to `false` when Argo CD 3.3 or later manages the chart, so that deleting or moving the Argo CD Application doesn't run the chart's uninstall Job and remove $[prodname]. {/* #15652 */}
+* `calico-node -bpf conntrack remove` now accepts any protocol name or number, and `any`, not just `tcp` and `udp`. {/* #15237 */}
+
+#### Bug fixes
+
+* Fixed a VM's Multus secondary-network IP allocation being left without an active owner after a KubeVirt live migration. {/* #15751 */}
+* Fixed a Felix dataplane deadlock when a gratuitous ARP or RARP from a live-migrated VM raced with the migration-complete update from the datastore. {/* #15641 */}
+* Fixed a new managed cluster's installation manifest, including its private key, staying on the ManagedCluster resource, where users who list, get, or watch managed clusters could read it. {/* #15382 */}
+* Fixed DNS policy in `DelayDeniedPacket` mode holding denied packets for the full 1 second timeout. Packets are now released as soon as the domain's new IP address is programmed. {/* #15325 */}
+* Fixed Felix and the deep packet inspection daemon crashing on certain malformed selectors. {/* #15262 */}
+* Fixed a node-services crash loop that left a re-registered node without its BGP address annotation for several minutes, which stopped BIRD from starting. {/* #15365 */}
+* Fixed calico-node failing to start on nodes whose kernel is built without `CONFIG_SECURITYFS`. {/* #15365 */}
+* Fixed several issues in the eBPF dataplane:
+  * The Kubernetes API server Service could share a NAT service ID with an unrelated Service, which sent its traffic to the wrong backends and intermittently broke connections to the API server. {/* #15237 */}
+  * Conntrack entries for NAT'd (Service) connections survived for up to an hour after a client-side TCP RST, instead of expiring after two minutes. {/* #15237 */}
+  * On dual-stack clusters with WireGuard enabled for only one IP family, routes to remote workloads were marked as tunnelled for the other family too. {/* #15237 */}
+  * A pod that reached itself through a Service was not policed by its own ingress policy. {/* #15401 */}
+  * Packets redirected from a layer 3 device, such as a WireGuard or IPIP tunnel, did not have their TTL or hop limit decremented, and had their Ethernet source address corrupted. {/* #15365 */}
+  * An error message named `bpfout.cali` when configuring `bpfin.cali` failed. {/* #15480 */}
+* Fixed an inotify instance and goroutine leak in confd when the endpoint-status directory could not be watched, which could exhaust the node's per-user inotify instance limit. {/* #15237 */}
+* Fixed IPAM garbage collection releasing an allocation only because the pod's node differed. {/* #15497 */}
+* Fixed kube-controllers looping on status updates when no environment overrides are set. {/* #15497 */}
+* Fixed Goldmane counting a flow more than once per policy action in policy statistics. {/* #15497 */}
+* Flow log routes now check the cluster they read, and reject requests whose cluster parameters disagree. {/* #15497 */}
+* Fixed fluentd-node-windows crash looping on Windows Server 2019 nodes. {/* #15619 */}
+* Fixed calico-apiserver becoming not ready when a ValidatingAdmissionPolicy with a ConfigMap parameter is bound in the cluster, for example by OpenShift Logging 6.5 or later. {/* operator #5422 */}
+* Fixed es-calico-kube-controllers losing its service account, and failing with `Unauthorized` errors, while the Installation is being deleted. {/* operator #5420 */}
+* Security fixes. {/* #15591 #15600 */}
+
+To update an existing installation of Calico Enterprise 3.23, see [Install a patch release](../getting-started/manifest-archive.mdx).
