@@ -1,0 +1,47 @@
+---
+description: Reference for the ClusterInformation resource in Calico Open Source, a read-only record of the cluster's Calico version, cluster type, and unique ID.
+content_type: reference
+---
+
+{/*
+  As a platform engineer, I want the field-level definition of the ClusterInformation resource, so that I can read what Calico records about my cluster and grant the right access to it.
+*/}
+
+# Cluster information
+
+A cluster information resource (`ClusterInformation`) represents what $[prodname] records about the cluster as a whole: the $[prodname] version it runs, its type, its unique ID, and whether its datastore is ready.
+`ClusterInformation` is a cluster-scoped resource.
+
+$[prodname] creates and manages one cluster information resource, named `default`.
+You can read it, but you can't create, change, or delete it with kubectl, or with the calicoctl `create`, `apply`, `replace`, `patch`, or `delete` commands.
+The [`calicoctl version`](../calicoctl/version.mdx) command shows `calicoVersion` and `clusterType` as the cluster version and the cluster type.
+
+calicoctl reads this resource to check that its own version matches the cluster's version.
+A user who runs calicoctl needs `get` access to the resource.
+Without that access, calicoctl commands fail unless the user adds the `--allow-version-mismatch` flag.
+
+For `kubectl` commands, you can use the aliases `clusterinformation.projectcalico.org`, `clusterinformations.projectcalico.org`, `clusterinformation.p`, and `clusterinformations.p`.
+You can also use the short name `clusterinfo`.
+For `calicoctl` commands, you can use the aliases `clusterinformation`, `clusterinformations`, `clusterinfo`, and `clusterinfos`.
+
+## Definition
+
+### Metadata
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| name | The name of this cluster information resource. $[prodname] always uses the name `default`. | `default` | string | |
+
+### Spec
+
+| Field | Description | Accepted Values | Schema | Default |
+| ----- | ----------- | --------------- | ------ | ------- |
+| clusterGUID | A unique ID for the cluster, made of 32 hexadecimal characters. | | string | |
+| clusterType | A comma-separated list of words that describe the cluster, such as `typha,kdd,k8s,operator,bgp,kubeadm`. | | string | |
+| calicoVersion | The version of $[prodname] that the cluster runs, such as `v3.31.7`. | | string | |
+| datastoreReady | Whether the datastore is ready for use. The [`calicoctl datastore migrate lock`](../calicoctl/datastore/migrate/lock.mdx) command sets this field to `false`, and the [`calicoctl datastore migrate unlock`](../calicoctl/datastore/migrate/unlock.mdx) command sets it to `true`. | `true`, `false` | boolean | |
+| variant | The product variant. $[prodname] doesn't set this field. | | string | |
+
+## Additional resources
+
+- [Enable kubectl to manage Calico APIs](../../operations/install-apiserver.mdx)

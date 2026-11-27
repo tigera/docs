@@ -63,7 +63,7 @@ function walkItem(item, sectionLabel) {
  * @param {object} sidebars - The resolved `version.sidebars` object from Docusaurus
  *   e.g. { calicoSidebar: [ ... ] }
  * @param {Map<string, object>} docsById - Map of docId → doc metadata (for title lookup on bare refs)
- * @returns {{ docId: string, sectionLabel: string }[]}
+ * @returns {{ docId: string, sectionLabel: string }[]} Each doc once, at its first position
  */
 export function walkSidebar(sidebars, docsById) {
   const entries = [];
@@ -100,5 +100,15 @@ export function walkSidebar(sidebars, docsById) {
     }
   }
 
-  return entries;
+  // A doc can appear more than once, for example as a category's link and as one of
+  // its items. Keep the first, or llms.txt lists it twice and llms-full.txt holds
+  // its whole body twice.
+  const seen = new Set();
+  return entries.filter(({ docId }) => {
+    if (seen.has(docId)) {
+      return false;
+    }
+    seen.add(docId);
+    return true;
+  });
 }

@@ -91,6 +91,53 @@ describe('extractFromHtmlString', () => {
 
     await expect(convertToMarkdown(extracted.html, SITE_URL)).resolves.toBe('Real content.');
   });
+
+  it('drops the Markdown actions control when it falls back to the article', async () => {
+    // The control renders inside <article>, outside .theme-doc-markdown. On a page with
+    // no content, extraction falls back to <article>, and the control's labels must not
+    // become the twin. Otherwise the page counts as having content and gets a twin.
+    const empty =
+      `<!DOCTYPE html><html><head><meta name="description" content="A description."></head>` +
+      `<body><main><article><div class="markdown-actions wrapper_x1"><button>Copy page</button>` +
+      `<a href="/page.md">View as Markdown</a></div><div class="theme-doc-markdown markdown">` +
+      `<header><h1>Page title</h1></header></div></article></main></body></html>`;
+
+    const extracted = extractFromHtmlString(empty);
+
+    await expect(convertToMarkdown(extracted.html, SITE_URL)).resolves.toBe('');
+  });
+});
+
+/**
+ * A tab group in the shape Docusaurus emits: the tablist, then the panels inside a
+ * sibling div. Only the first panel is visible.
+ */
+function tabs(groups) {
+  const labels = groups
+    .map(([label], i) => `<li role="tab" tabindex="${i ? -1 : 0}" class="tabs__item">${label}</li>`)
+    .join('');
+  const panels = groups
+    .map(([, body], i) => `<div role="tabpanel" class="tabItem_x"${i ? ' hidden' : ''}>${body}</div>`)
+    .join('');
+  return `<div class="tabs-container"><ul role="tablist" class="tabs">${labels}</ul>` +
+    `<div class="margin-top--md">${panels}</div></div>`;
+}
+
+describe('tabs', () => {
+  it('pairs each label with its own panel when tab groups are nested', async () => {
+    const inner = tabs([['AWS', '<p>AWS steps.</p>'], ['GCP', '<p>GCP steps.</p>']]);
+    const outer = tabs([['Helm', `<p>Helm steps.</p>${inner}`], ['kubectl', '<p>kubectl steps.</p>']]);
+
+    const markdown = await convertToMarkdown(extractFromHtmlString(page(outer)).html, SITE_URL);
+
+    const order = ['Tab: Helm', 'Helm steps.', 'Tab: AWS', 'AWS steps.', 'Tab: GCP', 'GCP steps.',
+      'Tab: kubectl', 'kubectl steps.'].map((text) => markdown.indexOf(text));
+    expect(order.every((at) => at >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(markdown).not.toContain('Tab 3');
+    expect(markdown.split('AWS steps.')).toHaveLength(2);
+    expect(markdown.split('GCP steps.')).toHaveLength(2);
+  });
 });
 
 /**

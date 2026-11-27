@@ -200,6 +200,33 @@ To enable HA mode, system administrators must perform the following steps:
 - Replicate secrets: Copy the `tigera-ca-private` secret from the active cluster to the passive cluster under the `tigera-operator` namespace.
   After copying, verify that all Calico components in the passive cluster are running and healthy.
 
+### Remove Calico from a non-cluster host or VM
+
+Remove the $[prodname] packages from a host when it no longer needs $[prodname].
+
+1. If the host still needs a firewall, set one up first.
+
+   :::warning
+
+   Removing the `calico-node` package stops `calico-node.service` and deletes every $[prodname] rule on the host: the [boot-time protection](boot-protection.mdx) ruleset and the rules that enforce your network policy.
+   After that, no $[prodname] policy protects the host.
+
+   :::
+
+1. Remove the Calico node and fluent-bit log forwarder packages.
+   <Tabs groupId="linux-distro">
+   <TabItem label="RHEL" value="rhel-0">
+   ```bash
+   dnf remove calico-node calico-fluent-bit
+   ```
+   </TabItem>
+   <TabItem label="Debian/Ubuntu" value="ubuntu-1">
+   ```bash
+   sudo apt remove calico-node calico-fluent-bit
+   ```
+   </TabItem>
+   </Tabs>
+
 ## Additional resources
 
 - [Boot-time network protection](boot-protection.mdx)

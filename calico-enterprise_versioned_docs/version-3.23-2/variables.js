@@ -22,7 +22,7 @@ const variables = {
   rootDirWindows: 'C:\\TigeraCalico',
   registry: 'quay.io/',
   envoyVersion: '1.9.1',
-  chart_version_name: 'v3.23.4-0',
+  chart_version_name: 'v3.23.4-1',
   tigeraOperator: releases[0]['tigera-operator'],
   dikastesVersion: releases[0].components.dikastes.version,
   releases,
@@ -36,5 +36,9 @@ const variables = {
     calicoq: componentImage('calicoq', releases[0]),
   },
 };
+
+// The release version without the leading "v", for example 3.23.4. Used where a
+// package version or name can't have the "v" prefix, such as the VKS Carvel package.
+variables.releaseVersion = variables.releaseTitle.replace(/^v/, '');
 
 module.exports = variables;

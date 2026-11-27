@@ -223,6 +223,9 @@ test('Crawl the docs and execute tests', async () => {
     // The Juju docs moved from documentation.ubuntu.com to canonical.com/juju/docs, and the new
     // site has returned 503 since 2026-11-10. Linked from the CE Charmed Kubernetes install page.
     /^https:\/\/documentation\.ubuntu\.com\/juju\//,
+    // splunk.com returns 403 to the crawler's user agent (bot filter) but 200 to browsers.
+    // Linked from the CE and Calico Cloud archive-storage pages.
+    /^https:\/\/www\.splunk\.com\//,
   ];
 
   const lc = linkChecker();
