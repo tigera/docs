@@ -1,0 +1,207 @@
+---
+description: Shape KubeVirt live-migration traffic on host NICs with HostQoSPolicy, on a shared NIC or a dedicated migration NIC.
+---
+
+# Shape live-migration traffic with host NIC QoS
+
+:::note
+
+Host NIC QoS is a tech preview feature.
+APIs and behavior may change before GA.
+
+:::
+
+## Big picture
+
+Use [host NIC QoS](../configuring/host-nic-qos.mdx) to cap the bandwidth KubeVirt live migrations use on each node, so they can't starve the other traffic on the same NIC.
+
+## Value
+
+A live migration copies a VM's memory to another node as fast as the network allows. Several migrations at once, such as when a node is drained, can fill a node's NIC for minutes.
+With a host QoS policy, migration traffic gets a guaranteed share of the link and a cap, so migrations still finish, predictably, and everything else keeps its bandwidth.
+
+## Concepts
+
+### Where migration traffic runs
+
+By default, KubeVirt migrates VMs over the pod network, through the same NIC as the pods' traffic.
+You can instead give KubeVirt a dedicated migration network, on its own NIC or VLAN on each node.
+Which one you use decides how a host QoS policy can pick out migration traffic.
+
+KubeVirt migrates over TCP, to ports in the range `49152`–`49215` on the receiving node.
+
+### How a policy recognizes migration traffic
+
+A policy's match sees the packet headers as they are on the NIC.
+
+- **Dedicated migration network.** Everything on the migration NIC or VLAN is migration traffic, and it isn't encapsulated, so a pool can match the migration ports directly.
+- **Shared NIC, with no encapsulation between nodes** (BGP without an overlay, or `CrossSubnet` encapsulation with all nodes in one subnet). Pod traffic between nodes crosses the NIC as is, so a pool can match the migration ports.
+- **Shared NIC, with an overlay** (VXLAN, IPIP or WireGuard between nodes). Migration traffic crosses the NIC inside the overlay, so the NIC sees only the outer header, the same as for any other pod traffic. A host QoS policy can't tell migration traffic apart from other pod traffic in this case. Use a dedicated migration network.
+
+## Before you begin
+
+- The [host NIC QoS prerequisites](../configuring/host-nic-qos.mdx#before-you-begin).
+- KubeVirt, with live migration working.
+- Know which of the cases above applies to your cluster. To check whether pod traffic between nodes is encapsulated, see the IP pools' `ipipMode` and `vxlanMode`, and whether WireGuard is enabled.
+
+## How to
+
+- [Shape migration traffic on a dedicated migration NIC](#shape-migration-traffic-on-a-dedicated-migration-nic)
+- [Shape migration traffic on a shared NIC](#shape-migration-traffic-on-a-shared-nic)
+
+### Shape migration traffic on a dedicated migration NIC
+
+This example assumes each node has two NICs: `eth0` for pods and general traffic, and `eth1` for KubeVirt's migration network.
+Both are 10G. It uses two policies, one per NIC, so each NIC can be sized on its own.
+
+Step 1 may belong to your network team.
+
+1. **Plan the bandwidth.**
+
+   1. Decide how much bandwidth migrations should be guaranteed, and the most they may use. This example guarantees 2G and caps them at 6G, which leaves the rest of `eth1` for anything else on it.
+   2. Decide the classes for `eth0`. This example only guarantees application traffic to a database network.
+
+2. **Set up KubeVirt's migration network** on `eth1`, as described in the KubeVirt documentation on dedicated migration networks.
+
+3. **Create host endpoints for both NICs, labelled by role.** A [host endpoint template](../../network-policy/hosts/kubernetes-nodes.mdx#create-one-host-endpoint-per-interface) creates them for every node:
+
+   ```yaml
+   spec:
+     controllers:
+       node:
+         hostEndpoint:
+           autoCreate: Enabled
+           templates:
+             - generateName: data-nic
+               interfacePattern: '^eth0$'
+               nodeSelector: kubevirt.io/schedulable == 'true'
+               labels:
+                 host-qos: data-nic
+             - generateName: migration-nic
+               interfacePattern: '^eth1$'
+               nodeSelector: kubevirt.io/schedulable == 'true'
+               labels:
+                 host-qos: migration-nic
+   ```
+
+   ```bash
+   kubectl patch kubecontrollersconfiguration default --type merge --patch-file templates.yaml
+   ```
+
+   :::caution
+
+   - The patch replaces the whole `templates` list. If you already have templates, include them in `templates.yaml`, or their host endpoints are deleted.
+   - With `autoCreate: Enabled`, $[prodname] also creates a default `*` host endpoint for every node, unless `createDefaultHostEndpoint` is `Disabled`. If you don't already use automatic host endpoints, add `createDefaultHostEndpoint: Disabled`, so the only new host endpoints are the templates'.
+
+   :::
+
+4. **Create the policy for the migration NIC.**
+
+   ```yaml
+   apiVersion: projectcalico.org/v3
+   kind: HostQoSPolicy
+   metadata:
+     name: migration-nic
+   spec:
+     selector: host-qos == 'migration-nic'
+     linkCapacity: 10G
+     resourcePools:
+       - name: kubevirt-migration
+         egress:
+           reservation: 2G
+           limit: 6G
+           match:
+             protocol: TCP
+             destination:
+               ports: ['49152:49215']
+         ingress:
+           reservation: 2G
+           limit: 6G
+           match:
+             protocol: TCP
+             destination:
+               ports: ['49152:49215']
+   ```
+
+   - **Egress** shapes migrations this node sends, which go to the migration ports on the receiving node.
+   - **Ingress** shapes migrations this node receives. This node is the one listening, so the migration ports are still the **destination**.
+   - `linkCapacity` is set because a NIC that doesn't report its speed, common on cloud VMs, would otherwise report `CapacityUnknown`. A VLAN reports its parent NIC's speed, or none if the parent reports none.
+
+5. **Create the policy for the data NIC.**
+
+   ```yaml
+   apiVersion: projectcalico.org/v3
+   kind: HostQoSPolicy
+   metadata:
+     name: data-nic
+   spec:
+     selector: host-qos == 'data-nic'
+     linkCapacity: 10G
+     resourcePools:
+       - name: database
+         egress:
+           reservation: 3G
+           match:
+             destination:
+               nets: [10.50.0.0/24]
+   ```
+
+6. **Check both policies applied.**
+
+   ```bash
+   kubectl get hqp migration-nic data-nic
+   ```
+
+   Both should show `READY` `True` and `REASON` `Applied`. If not, see [Troubleshoot host NIC QoS](../configuring/host-nic-qos-troubleshooting.mdx).
+
+7. **Check the cap during a migration.** Start a migration of a VM with a large memory footprint, and watch the pool's throughput in the [host NIC QoS metrics](../../reference/component-resources/node/felix/prometheus.mdx#host-nic-qos-metrics):
+
+   ```
+   8 * rate(felix_host_nic_qos_pool_bytes_total{pool="kubevirt-migration"}[30s])
+   ```
+
+   It should stay at or below 6 Gbit/s per node and direction, and the migration should complete. Expect it to take longer than unshaped; a migration that times out because of the cap needs a higher `limit`, or a longer migration timeout in KubeVirt.
+
+### Shape migration traffic on a shared NIC
+
+Only when pod traffic between nodes isn't encapsulated; see [How a policy recognizes migration traffic](#how-a-policy-recognizes-migration-traffic).
+
+Add a migration pool to the NIC's policy, matching the migration ports in both directions, the same as in the dedicated NIC example:
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: HostQoSPolicy
+metadata:
+  name: shared-nic
+spec:
+  selector: host-qos == 'data-nic'
+  linkCapacity: 10G
+  resourcePools:
+    - name: kubevirt-migration
+      egress:
+        reservation: 1G
+        limit: 4G
+        match:
+          protocol: TCP
+          destination:
+            ports: ['49152:49215']
+      ingress:
+        reservation: 1G
+        limit: 4G
+        match:
+          protocol: TCP
+          destination:
+            ports: ['49152:49215']
+```
+
+:::caution
+
+Ports `49152`–`49215` are also inside Linux's default range for the local ports of outgoing connections (`32768`–`60999`).
+So on a shared NIC, this pool also catches some unrelated traffic: replies to connections that happened to use one of those ports, including the node's own connections to the Kubernetes API and DNS.
+They share the migration pool's limit. Keep that limit generous, and if your pods use a known address range, add it to the match, as `destination.nets` on egress and `source.nets` on ingress.
+On a dedicated migration NIC this doesn't matter, because nothing else uses it.
+
+:::
+
+Keep the migration limit well below the link, so application traffic sharing the NIC keeps most of it during a drain.
+To confirm the pool sees migration traffic, check that `felix_host_nic_qos_pool_bytes_total{pool="kubevirt-migration"}` rises during a migration. If it stays at zero, the traffic is encapsulated: use a dedicated migration network instead.

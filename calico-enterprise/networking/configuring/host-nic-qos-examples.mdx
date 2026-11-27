@@ -1,0 +1,168 @@
+---
+description: Worked HostQoSPolicy examples for storage, WAN edge, partner and AI model traffic on Calico Enterprise host NICs.
+---
+
+# Host NIC QoS examples
+
+:::note
+
+Host NIC QoS is a tech preview feature.
+APIs and behavior may change before GA.
+
+:::
+
+These examples show [host QoS policies](host-nic-qos.mdx) for common situations.
+Each one states the NIC it's sized for. Change the addresses, ports and rates to match your network, and keep each direction's reservations within 75% of the link.
+Set `linkCapacity` to your NICs' real speed, or omit it to detect it: it replaces the NIC's speed, so a wrong value caps or misshapes all of the interface's traffic. See [Link capacity](host-nic-qos.mdx#link-capacity).
+
+Each example selects host endpoints by a `host-qos` label. Label the host endpoints for the NICs you want to shape; see [Select the interfaces](host-nic-qos.mdx#get-started-two-traffic-classes-on-one-nic).
+
+## Storage and backup on a 25G NIC
+
+**Situation:** nodes reach a storage network over `eth1`, a 25G NIC. Storage replication and a nightly backup to a backup appliance share it, and the backup saturates the link.
+
+**Goal:** guarantee storage traffic 10G in each direction, and cap the backup at 5G so storage always has headroom.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: HostQoSPolicy
+metadata:
+  name: storage-nic
+spec:
+  selector: host-qos == 'storage-nic'
+  linkCapacity: 25G
+  resourcePools:
+    - name: backup
+      egress:
+        reservation: 1G
+        limit: 5G
+        match:
+          destination:
+            nets: [10.20.0.50/32]
+      ingress:
+        reservation: 1G
+        limit: 5G
+        match:
+          source:
+            nets: [10.20.0.50/32]
+    - name: storage
+      shares: 3
+      egress:
+        reservation: 10G
+        match:
+          destination:
+            nets: [10.20.0.0/24]
+      ingress:
+        reservation: 10G
+        match:
+          source:
+            nets: [10.20.0.0/24]
+```
+
+- The backup appliance, `10.20.0.50`, is inside the storage network, so its pool is listed first. Otherwise the broader `storage` pool would match its traffic first.
+- Storage gets three times the backup's weight for spare bandwidth, up to the full link.
+- Reservations total 11G per direction, within the 18.75G cap (25G × 0.75).
+- Neither pool matches anything outside the storage network, so the node's other traffic on `eth1` keeps at least 14G.
+
+## WAN edge with traffic already marked with DSCP
+
+**Situation:** edge nodes send voice, video and bulk traffic over a 1G WAN uplink, `eth0`. Applications already mark their traffic with DSCP: `EF` for voice, `AF41` for video, `AF11` for bulk transfers.
+
+**Goal:** guarantee voice and video their bandwidth, and keep bulk transfers from filling the link.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: HostQoSPolicy
+metadata:
+  name: wan-uplink
+spec:
+  selector: host-qos == 'wan-uplink'
+  linkCapacity: 1G
+  resourcePools:
+    - name: voice
+      egress:
+        reservation: 100M
+        limit: 200M
+        match:
+          dscp: EF
+    - name: video
+      shares: 2
+      egress:
+        reservation: 300M
+        match:
+          dscp: AF41
+    - name: bulk
+      egress:
+        reservation: 100M
+        limit: 400M
+        match:
+          dscp: AF11
+```
+
+- Matching on DSCP works for pod traffic even after it's source-NATed to the node's IP, because NAT doesn't change the DSCP value.
+- Voice is capped at 200M so a misbehaving sender can't take the link.
+- Reservations total 500M, within the 750M cap (1G × 0.75), which leaves unmarked traffic at least 500M.
+- `linkCapacity` is the WAN link's speed, not the NIC's, so all traffic on `eth0` is capped at 1G. That's intended here, because everything on `eth0` goes over the WAN: shaping to the slower link keeps the queue on the node, where the pools apply, instead of at the WAN router.
+
+## Priority traffic to a critical external partner
+
+**Situation:** workloads exchange orders with a partner's network, `203.0.113.0/24`, over a 10G NIC. Other outbound traffic sometimes crowds it out.
+
+**Goal:** guarantee the partner traffic 2G in each direction, and mark it so the network upstream can prioritize it too.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: HostQoSPolicy
+metadata:
+  name: partner
+spec:
+  selector: host-qos == 'egress-nic'
+  linkCapacity: 10G
+  resourcePools:
+    - name: partner
+      shares: 4
+      egress:
+        reservation: 2G
+        dscp: AF31
+        match:
+          destination:
+            nets: [203.0.113.0/24]
+      ingress:
+        reservation: 2G
+        match:
+          source:
+            nets: [203.0.113.0/24]
+```
+
+- The pool has no limit, so partner traffic can use the whole link when it's free, and has four times the weight of anything else that wants spare bandwidth.
+- `egress.dscp` marks the partner traffic `AF31` as it leaves, for the routers and firewalls between you and the partner.
+
+## AI model pulls
+
+**Situation:** inference pods pull multi-gigabyte models from an object store at `10.40.0.0/24`. When several pods start at once, the downloads fill the nodes' 25G NICs and starve everything else arriving at the node.
+
+**Goal:** cap model downloads at 10G per node, while still guaranteeing them 2G so pods don't stall.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: HostQoSPolicy
+metadata:
+  name: model-pulls
+spec:
+  selector: host-qos == 'gpu-nic'
+  linkCapacity: 25G
+  resourcePools:
+    - name: model-store
+      ingress:
+        reservation: 2G
+        limit: 10G
+        match:
+          protocol: TCP
+          source:
+            nets: [10.40.0.0/24]
+            ports: [443]
+```
+
+- Model downloads arrive at the node, so the pool shapes **ingress**. On ingress, `source` is the remote end: the object store and its HTTPS port.
+- Ingress shaping slows the senders down rather than dropping the traffic before it reaches the NIC, so it works for TCP downloads like these.
+- If the models come from a container registry instead, match the registry's addresses the same way.

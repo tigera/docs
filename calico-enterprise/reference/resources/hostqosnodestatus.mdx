@@ -1,0 +1,133 @@
+---
+description: Reference for the HostQoSNodeStatus resource in Calico Enterprise, which reports how one host applied one HostQoSPolicy.
+---
+
+# Host QoS node status
+
+:::note
+
+Host NIC QoS is a tech preview feature.
+APIs and behavior may change before GA.
+
+:::
+
+A host QoS node status resource (`HostQoSNodeStatus`) reports how one host applied one [host QoS policy](hostqospolicy.mdx):
+for each interface the policy selects on that host, whether it is shaped, and if not, why.
+
+$[prodname] creates, updates and deletes these resources. Don't create or edit them.
+
+- There is one per policy and host that the policy selects a host endpoint on. Non-cluster hosts get one too.
+- The host's $[prodname] node agent writes it, and rewrites it whenever the state of any of its bindings changes.
+- It is deleted when its policy is deleted, and when its host leaves the cluster.
+- The policy's own status rolls up all of them.
+
+`HostQoSNodeStatus` is cluster-scoped.
+For `kubectl` [commands](https://kubernetes.io/docs/reference/kubectl/overview/), the following case-insensitive aliases
+may be used to specify the resource type on the CLI:
+`hostqosnodestatus.projectcalico.org`, `hostqosnodestatuses.projectcalico.org`, and the short name `hqns`.
+
+`kubectl get hqns` shows the columns `Policy`, `Node`, `HostType`, `State` and `Age`.
+Each status is named `<policy>.<node>-<hash>`, so a policy's statuses sort together.
+Each carries the label `projectcalico.org/hostqos-node: <node>`, so to list one host's statuses:
+
+```bash
+kubectl get hqns -l projectcalico.org/hostqos-node=worker-1
+```
+
+## Sample YAML
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: HostQoSNodeStatus
+metadata:
+  name: storage-nic.worker-1-5d0e8c41a2
+  labels:
+    projectcalico.org/hostqos-node: worker-1
+    projectcalico.org/hostqos-host-type: ClusterNode
+spec:
+  policy: storage-nic
+  node: worker-1
+  hostType: ClusterNode
+status:
+  observedGeneration: 3
+  state: PartiallyApplied
+  lastTransitionTime: '2026-10-28T09:12:44Z'
+  bindings:
+    - hostEndpointName: worker-1-eth1
+      interfaceName: eth1
+      state: Applied
+      lastTransitionTime: '2026-10-28T09:12:44Z'
+    - hostEndpointName: worker-1-eth2
+      interfaceName: eth2
+      state: Error
+      message: 'ReservationsExceedCapacity: sum of egress reservations (8G) exceeds the detected link speed of eth2 (10G) * HostQoSReservationSafetyMargin (0.75)'
+      lastTransitionTime: '2026-10-28T09:12:44Z'
+```
+
+## Host QoS node status definition
+
+### Spec
+
+| Field      | Description | Schema |
+| ---------- | ----------- | ------ |
+| `policy`   | The name of the host QoS policy this status reports on. | string |
+| `node`     | The node name, or the hostname of a non-cluster host. | string |
+| `hostType` | `ClusterNode` for a Kubernetes node, `NonClusterHost` for a non-cluster host. | string |
+
+### Status
+
+| Field                | Description | Schema |
+| -------------------- | ----------- | ------ |
+| `observedGeneration` | The policy's `metadata.generation` this status reflects. | integer |
+| `state`              | The host's summary: the bindings' state when they all agree; `PartiallyApplied` when some are `Applied` and some aren't; otherwise `Error`. | string |
+| `bindings`           | One entry per binding on this host; see [Binding](#binding). At most 256 are listed, with non-`Applied` bindings first. | list |
+| `omittedBindings`    | When there are more than 256 bindings, the number not listed, by state. | map |
+| `lastTransitionTime` | When `state` last changed. | time |
+
+### Binding
+
+A binding is one (host endpoint, interface) pair.
+A host endpoint with `interfaceName: "*"` has one binding for each interface it covers.
+
+| Field                | Description | Schema |
+| -------------------- | ----------- | ------ |
+| `hostEndpointName`   | The host endpoint the policy selected. | string |
+| `interfaceName`      | The interface the binding shapes, or tried to. | string |
+| `state`              | One of the [states](#states) below, except `PartiallyApplied`. | string |
+| `message`            | Why the binding isn't `Applied`, as `<Cause>: <detail>`. The cause is one of the [causes](#causes) below and is stable; match on it. The detail is free text. | string |
+| `lastTransitionTime` | When `state` last changed. | time |
+
+### States
+
+| State              | Meaning |
+| ------------------ | ------- |
+| `Applied`          | The interface is shaped as the policy says. |
+| `Error`            | The binding was refused or failed. The message gives the cause. |
+| `PolicyCollision`  | A policy whose name sorts first selects the same host endpoint, and shapes it instead. |
+| `HEPCollision`     | A host endpoint whose name sorts first names the same interface, and its policy shapes it instead. |
+| `PartiallyApplied` | Host summary only: some bindings are `Applied` and some aren't. |
+
+### Causes
+
+The first word of a binding's `message`. Each links to how to fix it.
+
+| Cause | Meaning |
+| ----- | ------- |
+| [`PolicyCollision`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#policycollision) | Another policy, whose name sorts first, selects this host endpoint. |
+| [`HEPCollision`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#hepcollision) | Another host endpoint, whose name sorts first, names this interface. |
+| [`InterfaceExcluded`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#interfaceexcluded) | The interface is one $[prodname] manages itself, such as a workload or tunnel interface, and is never shaped. |
+| [`InterfaceDown`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#interfacedown) | The interface doesn't exist or isn't up. |
+| [`InterfaceBondMember`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#interfacebondmember) | The interface is a member of a bond. Shape the bond instead. |
+| [`ForeignQdisc`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#foreignqdisc) | Something other than $[prodname] already shapes the interface. |
+| [`ClassIDCollision`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#classidcollision) | Two of the policy's pool names map to the same internal identifier. Rename one of them. |
+| [`IFBUnavailable`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#ifbunavailable) | Ingress shaping needs the `ifb` kernel module, which isn't available. |
+| [`DataplaneFailure`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#dataplanefailure) | Programming the interface failed. |
+| [`UnsupportedDataplane`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#unsupporteddataplane) | The eBPF data plane in TC attach mode doesn't support host NIC QoS. |
+| [`CapacityUnknown`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#capacityunknown) | `linkCapacity` is omitted and the interface doesn't report its speed. |
+| [`ReservationsExceedCapacity`](../../networking/configuring/host-nic-qos-troubleshooting.mdx#reservationsexceedcapacity) | A pool's limit is above the interface's capacity, or the reservations in one direction add up to more than the capacity allows. |
+
+## Supported operations
+
+| Datastore type        | Create/Delete | Update | Get/List | Notes |
+| --------------------- | ------------- | ------ | -------- | ----- |
+| Kubernetes API server | No            | No     | Yes      | Written by $[prodname]. |
