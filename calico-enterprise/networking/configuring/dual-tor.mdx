@@ -121,16 +121,16 @@ $[nodecontainer] _pod_:
   address, as well as pod IPs and so on.
 
 - Later, the $[nodecontainer] pod might be shut down, for example for restart or upgrade.
-  The early networking container discovers the restart times that the $[nodecontainer] pod was using on its BGP sessions to the ToR routers.
-  When each session's restart time has expired, the early networking container takes over that session with its own BGP.
-  That keeps the node's stable IP address advertised to the ToRs and other nodes.
-  The cycle can now repeat from the "Initially" state above.
+  The early networking container discovers the restart times that the $[nodecontainer] pod was using on its BGP sessions to the ToR routers and takes over each of those sessions, with its own BGP, when that session's restart time has expired, to ensure that the node's stable IP address continues to be advertised to the ToRs and other nodes.
 
-  Taking over a ToR BGP session before its restart time expires would cause the ToRs to lose the $[prodname]-advertised pod routes too early.
-  Taking over a ToR BGP session after its restart time expires would leave a gap during which the ToRs can't route to the node's stable IP, so the node loses connectivity to the outside world.
+  Taking over a ToR BGP session _sooner_ than that would cause the ToRs to lose the Calico-advertised pod routes before the intended restart time had passed.
 
-  The `maxRestartTime` field of the BGPPeer resource sets the restart time for each BGP session.
-  When `maxRestartTime` isn't set, the default is 120 seconds for traditional BGP graceful restart (GR), and 3600 seconds for long-lived graceful restart (LLGR).
+  Taking over a ToR BGP session _later_ than that would leave a gap during which the ToRs cannot route to the node's stable IP, and hence the node loses connectivity to the outside world.
+
+  The restart time on each BGP session is configured by the `maxRestartTime` field of the `BGPPeer` resource.
+  When `maxRestartTime` is not set, the default is 120 seconds for traditional BGP graceful restart (GR) and 3600 seconds for long-lived graceful restart (LLGR).
+
+  The cycle can then repeat from the "Initially" state above.
 
 ### BGP configuration for rapid outage detection
 
@@ -269,16 +269,13 @@ For a dual ToR setup, LLGR is helpful, as explained in more detail by [this blog
       to be restarted, if your ToR routers support LLGR. If not, we recommend instead
       `maxRestartTime: 10s`.
 
-      Enable LLGR handling only if your ToR routers support it.
-      If LLGR is enabled in your $[prodname] configuration, but the ToR routers do not support it, a node loses connectivity whenever its $[nodecontainer] pod restarts.
-      That is because the early networking function assumes that LLGR is already maintaining routing.
-      So it doesn't configure its own BGP to take over the ToR sessions, and re-advertise the node's stable IP address, until the LLGR stale time (default 3600 seconds) has passed.
+      It's important to enable LLGR handling _only_ when your ToR routers support it.
+      If LLGR is enabled in your $[prodname] configuration, but the ToR routers do not support it, a node will lose connectivity whenever its $[nodecontainer] pod restarts, because the early networking function will assume that routing is already being maintained by LLGR logic and will not configure its own BGP to take over the ToR sessions - and re-advertise the node's stable IP address - until the LLGR stale time (default 3600s) has passed.
 
-      If you configure a short `maxRestartTime`, such as the `10s` recommended above, and you are planning a $[prodname] upgrade or $[nodecontainer] restart that might take longer than that, consider raising `maxRestartTime` first, so that you don't lose $[prodname]-advertised routes (such as to pod IPs) during the upgrade or restart.
-      Then lower it again afterwards.
+      If you configure a short `maxRestartTime` setting, such as the `10s` recommended above, and you are planning a $[prodname] upgrade or $[nodecontainer] restart that may take longer than that `maxRestartTime`, consider raising `maxRestartTime` in advance of that, so as not to lose Calico-advertised routes (such as to pod IPs) during the upgrade or restart; and then lower it again afterwards.
 
-      Changing `maxRestartTime` resets the BGP sessions, so the routes briefly flap, but only for a few seconds.
-      Make these changes in a quiet period ahead of the upgrade or restart, and after it, instead of as part of the upgrade or restart itself.
+      Changing `maxRestartTime` resets the BGP sessions, so will briefly flap the routes, but only for a few seconds.
+      Hence make these changes in a quiet period ahead of the upgrade or restart, and following it, instead of as part of the upgrade or restart itself.
 
     - `birdGatewayMode: DirectIfDirectlyConnected` to enable the "direct" next hop
       algorithm, if that is helpful for optimal interworking with your ToR routers.
