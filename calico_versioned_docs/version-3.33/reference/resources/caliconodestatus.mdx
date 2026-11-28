@@ -1,33 +1,22 @@
 ---
 description: Reference for the CalicoNodeStatus resource in Calico Open Source that exposes per-node agent, BGP, and routing state.
-content_type: unclassified
+content_type: reference
 ---
 
 # Calico node status
 
-A Calico node status resource (`CalicoNodeStatus`) reports status information for a node, for use during troubleshooting.
-You create a `CalicoNodeStatus` resource for the node you want to inspect, and $[prodname] periodically writes the collected information to the resource's `status` field.
+A Calico node status resource (CalicoNodeStatus) represents status information for a node, for use during troubleshooting.
+You create a CalicoNodeStatus resource for the node you want to inspect, and $[prodname] periodically writes the collected information to the resource's `status` field.
+CalicoNodeStatus is a cluster-scoped resource.
 
 Status of Border Gateway Protocol (BGP) agents, BGP sessions, and routes exposed to BGP agents is collected from Linux nodes only. **Windows nodes are not supported at this time.**
 The resource is valid only when $[prodname] BGP networking is in use.
 
-## Notes
-
-Updating `CalicoNodeStatus` has a small performance impact on CPU and memory usage of the node, and adds load to the Kubernetes API server.
-
-In our testing on a ten node, full mesh cluster, a `CalicoNodeStatus` resource was created for each node where the update interval was set to ten seconds. On each node, this resulted in an increase in CPU use of 5% of a vCPU and an increase of 4MB of memory. The control plane node recorded an increase in CPU usage of 5% of a vCPU for these 10 nodes.
-
-:::caution
-
-The implementation of `CalicoNodeStatus` is designed to handle a small number of nodes (less than 10 is recommended) reporting back status in the same time. If `CalicoNodeStatus` are created for a large number of nodes, and with short update interval,
-the kubernetes apiserver may become slower and less responsive.
-You should create `CalicoNodeStatus` for the node you are interested in and for debugging purpose only. `CalicoNodeStatus` resource should be deleted upon the completion of the debugging process.
-
-:::
+For `kubectl` commands, you can use the aliases `caliconodestatus.projectcalico.org`, `caliconodestatuses.projectcalico.org`, `caliconodestatus.p`, and `caliconodestatuses.p`.
 
 ## Sample YAML
 
-To use this function, the user creates a CalicoNodeStatus object for the node, specifying the information to collect and the interval it should be collected at. This example collects information for node "my-kadm-node-0" with an update interval of 10 seconds.
+This sample collects agent, BGP, and route status for node `my-kadm-node-0` every 10 seconds.
 
 ```bash
 kubectl apply -f -<<EOF
@@ -45,7 +34,9 @@ spec:
 EOF
 ```
 
-The user then reads back the same resource using the command `kubectl get caliconodestatus my-caliconodestatus-1 -o yaml`, and the information collected can be found in the `status` field. For example:
+To see the results, read back the resource with `kubectl get caliconodestatus my-caliconodestatus-1 -o yaml`.
+The collected information is in the `status` field.
+For example:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -129,89 +120,118 @@ status:
         type: FIB
 ```
 
-## Calico node status definition
+
+## Definition
 
 ### Metadata
 
-| Field | Description                                           | Accepted Values                                     | Schema |
-| ----- | ----------------------------------------------------- | --------------------------------------------------- | ------ |
-| name  | The name of this CalicoNodeStatus resource. Required. | Lowercase alphanumeric string with optional `.` or `-`. | string |
+| Field | Description                                    | Accepted Values                                                                                                          | Schema | Default |
+| ----- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ------- |
+| `name` | The name of this Calico node status. Required. | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string |         |
 
 ### Spec
 
-| Field               | Description                                                                                                                                                              | Accepted Values             | Schema         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- | -------------- |
-| classes             | List of classes that declare the types of information to monitor for this node and allows for selective status reporting about certain subsets of information. Required. | List of [Classes](#classes) | list of string |
-| node                | The node name identifies the Calico node instance to collect node status for. Required.                                                                                  | valid Kubernetes node name  | string         |
-| updatePeriodSeconds | Period in seconds at which CalicoNodeStatus should be updated. Set to 0 to disable CalicoNodeStatus refresh. Maximum update period is one day. Required.                 | 0 - 86400                   | int            |
-
-### Status
-
-| Field       | Description                                                                                                                            | Values                                                                               |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| lastUpdated | Timestamp representing the server time when the CalicoNodeStatus object last updated. It is represented in RFC3339 form and is in UTC. |
-| agent       | [BGP daemon status](#bgpdaemonstatus) on the node.                                                                                     | 'birdV4' holds status of IPv4 bird daemon, 'birdV6' holds status of IPv6 bird daemon |
-| bgp         | [BGP status](#bgpstatus) on the node.                                                                                                  | 'peersV4' holds status of IPv4 BGP peers, 'peersV6' holds status of IPv6 BGP peers   |
-| routes      | [Route status](#routestatus) learned by BGP daemon on the node.                                                                        | 'routesV4' holds status of IPv4 routes , 'routesV6' holds status of IPv6 routes      |
+| Field                 | Description                                                                                                                                                              | Accepted Values             | Schema          | Default |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- | --------------- | ------- |
+| `classes`             | List of classes that declare the types of information to monitor for this node and allows for selective status reporting about certain subsets of information. Required. | List of [Classes](#classes) | list of strings |         |
+| `node`                | The node name identifies the Calico node instance to collect node status for. Required.                                                                                  | valid Kubernetes node name  | string          |         |
+| `updatePeriodSeconds` | Period in seconds at which CalicoNodeStatus should be updated. Set to `0` to disable CalicoNodeStatus refresh. Maximum update period is one day. Required.               | `0` to `86400`              | integer         |         |
 
 ### Classes
 
 | Accepted Values | Description                            |
 | --------------- | -------------------------------------- |
-| Agent           | Status of BGP daemon agent             |
-| BGP             | Status of BGP sessions                 |
-| Routes          | Status of routes exposed to BGP daemon |
+| `Agent`         | Status of BGP daemon agent             |
+| `BGP`           | Status of BGP sessions                 |
+| `Routes`        | Status of routes exposed to BGP daemon |
+
+### CalicoNodeAgentStatus
+
+| Field    | Description                       | Accepted Values | Schema                              | Default |
+| -------- | --------------------------------- | --------------- | ----------------------------------- | ------- |
+| `birdV4` | Status of the IPv4 BIRD daemon.   |                 | [BGPDaemonStatus](#bgpdaemonstatus) |         |
+| `birdV6` | Status of the IPv6 BIRD daemon.   |                 | [BGPDaemonStatus](#bgpdaemonstatus) |         |
 
 ### BGPDaemonStatus
 
-| Field                   | Description                             | Schema | Possible Values |
-| ----------------------- | --------------------------------------- | ------ | --------------- |
-| state                   | State of BGP daemon.                    | string | Ready, NotReady |
-| version                 | Version of BGP daemon                   | string |                 |
-| routerID                | Router ID used by BGP daemon            | string |                 |
-| lastBootTime            | Last boot time of BGP daemon            | string |                 |
-| lastReconfigurationTime | Last reconfiguration time of BGP daemon | string |                 |
+| Field                     | Description                             | Accepted Values       | Schema | Default |
+| ------------------------- | --------------------------------------- | --------------------- | ------ | ------- |
+| `state`                   | State of BGP daemon.                    | `Ready`, `NotReady`   | string |         |
+| `version`                 | Version of BGP daemon                   |                       | string |         |
+| `routerID`                | Router ID used by BGP daemon            |                       | string |         |
+| `lastBootTime`            | Last boot time of BGP daemon            |                       | string |         |
+| `lastReconfigurationTime` | Last reconfiguration time of BGP daemon |                       | string |         |
 
-### BGPStatus
+### CalicoNodeBGPStatus
 
-| Field                  | Description                                            | Schema                       |
-| ---------------------- | ------------------------------------------------------ | ---------------------------- |
-| numberEstablishedV4    | The total number of IPv4 established bgp sessions.     | int                          |
-| numberNotEstablishedV4 | The total number of IPv4 non-established bgp sessions. | int                          |
-| numberEstablishedV6    | The total number of IPv6 established bgp sessions.     | int                          |
-| numberNotEstablishedV6 | The total number of IPv6 non-established bgp sessions. | int                          |
-| peersV4                | IPv4 BGP peers status on the node.                     | List of [BGP peer](#bgppeer) |
-| peersV6                | IPv6 BGP peers status on the node.                     | List of [BGP peer](#bgppeer) |
+| Field                    | Description                                            | Accepted Values | Schema                                    | Default |
+| ------------------------ | ------------------------------------------------------ | --------------- | ----------------------------------------- | ------- |
+| `numberEstablishedV4`    | The total number of IPv4 established BGP sessions.     |                 | integer                                   |         |
+| `numberNotEstablishedV4` | The total number of IPv4 non-established BGP sessions. |                 | integer                                   |         |
+| `numberEstablishedV6`    | The total number of IPv6 established BGP sessions.     |                 | integer                                   |         |
+| `numberNotEstablishedV6` | The total number of IPv6 non-established BGP sessions. |                 | integer                                   |         |
+| `peersV4`                | IPv4 BGP peers status on the node.                     |                 | list of [CalicoNodePeer](#caliconodepeer)   |         |
+| `peersV6`                | IPv6 BGP peers status on the node.                     |                 | list of [CalicoNodePeer](#caliconodepeer)   |         |
 
-### RouteStatus
+### CalicoNodeBGPRouteStatus
 
-| Field    | Description                                    | Schema                  |
-| -------- | ---------------------------------------------- | ----------------------- |
-| routesV4 | IPv4 routes learned by BGP daemon on the node. | List of [route](#route) |
-| routesV6 | IPv6 routes learned by BGP daemon on the node. | List of [route](#route) |
+| Field      | Description                                    | Accepted Values | Schema                                    | Default |
+| ---------- | ---------------------------------------------- | --------------- | ----------------------------------------- | ------- |
+| `routesV4` | IPv4 routes learned by BGP daemon on the node. |                 | list of [CalicoNodeRoute](#caliconoderoute) |         |
+| `routesV6` | IPv6 routes learned by BGP daemon on the node. |                 | list of [CalicoNodeRoute](#caliconoderoute) |         |
 
-### BGPPeer
+### CalicoNodePeer
 
-| Field  | Description                                                                                                                     | Schema | Possible Values                                                  |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------- |
-| peerIP | IP address of the peer whose condition we are reporting.                                                                        | `ip`   |                                                                  |
-| type   | Type indicates whether this peer is configured via the node-to-node mesh, or via en explicit global or per-node BGPPeer object. | string | NodeMesh, NodePeer, GlobalPeer                                   |
-| state  | BGP session state. Value of an empty string means BGP session state is unknown.                                                 | string | Idle, Connect, Active, OpenSent, OpenConfirm, Established, Close |
-| since  | Timestamp of last BGP session state change.                                                                                     | `time` |                                                                  |
+| Field    | Description                                                                                                                     | Accepted Values                                                                     | Schema | Default |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------ | ------- |
+| `peerIP` | IP address of the peer whose condition we are reporting.                                                                        | An IP address                                                                       | string |         |
+| `type`   | Type indicates whether this peer is configured via the node-to-node mesh, or via en explicit global or per-node BGPPeer object. | `NodeMesh`, `NodePeer`, `GlobalPeer`                                                | string |         |
+| `state`  | BGP session state. Value of an empty string means BGP session state is unknown.                                                 | `Idle`, `Connect`, `Active`, `OpenSent`, `OpenConfirm`, `Established`, `Close`      | string |         |
+| `since`  | Timestamp of last BGP session state change.                                                                                     |                                                                                     | string |         |
 
-### Route
+### CalicoNodeRoute
 
-| Field       | Description                                                                                                                                  | Schema                       | Possible Values |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------- |
-| type        | Type indicates if the route is being used for forwarding or not.                                                                             | string                       | FIB, RIB        |
-| destination | Destination CIDR of the route.                                                                                                               | `cidr`                       |                 |
-| gateway     | Gateway IP of the route. If the route does not involve a gateway, for example a direct route, the value is `N/A`.                            | `ip` or `N/A`                |                 |
-| interface   | Network interface for the destination. For a blackhole route, the value is `blackhole`. For a unreachable route, the value is `unreachable`. | string                       |                 |
-| learnedFrom | Information regarding where this route originated.                                                                                           | [learned from](#learnedfrom) |                 |
+| Field         | Description                                                                                                                                  | Accepted Values             | Schema                                                    | Default |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | --------------------------------------------------------- | ------- |
+| `type`        | Type indicates if the route is being used for forwarding or not.                                                                             | `FIB`, `RIB`                | string                                                    |         |
+| `destination` | Destination CIDR of the route.                                                                                                               | A CIDR                      | string                                                    |         |
+| `gateway`     | Gateway IP of the route. If the route does not involve a gateway, for example a direct route, the value is `N/A`.                            | An IP address, or `N/A`     | string                                                    |         |
+| `interface`   | Network interface for the destination. For a blackhole route, the value is `blackhole`. For a unreachable route, the value is `unreachable`. |                             | string                                                    |         |
+| `learnedFrom` | Information regarding where this route originated.                                                                                           |                             | [CalicoNodeRouteLearnedFrom](#caliconoderoutelearnedfrom)   |         |
 
-### LearnedFrom
+### CalicoNodeRouteLearnedFrom
 
-| Field      | Description                                                                             | Schema | Possible Values                           |
-| ---------- | --------------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
-| sourceType | Type of the source where a route is learned from.                                       | string | Kernel, Static, Direct, NodeMesh, BGPPeer |
-| peerIP     | If sourceType is NodeMesh or BGPPeer, IP address of the router that sent us this route. For a BGPPeer session with a port set, in `peerIP` or through a BGPConfiguration `listenPort`, the value also contains the port, for example `10.0.0.1.port.1790`. | string |                                           |
+| Field        | Description                                                                             | Accepted Values                                     | Schema | Default |
+| ------------ | --------------------------------------------------------------------------------------- | --------------------------------------------------- | ------ | ------- |
+| `sourceType` | Type of the source where a route is learned from.                                       | `Kernel`, `Static`, `Direct`, `NodeMesh`, `BGPPeer` | string |         |
+| `peerIP`     | If `sourceType` is `NodeMesh` or `BGPPeer`, IP address of the router that sent us this route. For a BGPPeer session with a port set, in `peerIP` or through a BGPConfiguration `listenPort`, the value also contains the port, for example `10.0.0.1.port.1790`. |  | string |         |
+
+### Status
+
+| Field         | Description                                                                                                                            | Accepted Values | Schema                                                | Default |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------------------------------------------------- | ------- |
+| `lastUpdated` | Timestamp representing the server time when the CalicoNodeStatus object last updated. It is represented in RFC3339 form and is in UTC. |                 |                                                       |         |
+| `agent`       | BGP daemon status on the node.                                                                                                         |                 | [CalicoNodeAgentStatus](#caliconodeagentstatus)       |         |
+| `bgp`         | BGP status on the node. `peersV4` holds status of IPv4 BGP peers, `peersV6` holds status of IPv6 BGP peers.                            |                 | [CalicoNodeBGPStatus](#caliconodebgpstatus)           |         |
+| `routes`      | Route status learned by BGP daemon on the node. `routesV4` holds status of IPv4 routes, `routesV6` holds status of IPv6 routes.       |                 | [CalicoNodeBGPRouteStatus](#caliconodebgproutestatus) |         |
+
+## Performance impact
+
+Updating CalicoNodeStatus has a small performance impact on CPU and memory usage of the node, and adds load to the Kubernetes API server.
+
+In our testing on a ten node, full mesh cluster, a CalicoNodeStatus resource was created for each node where the update interval was set to ten seconds. On each node, this resulted in an increase in CPU use of 5% of a vCPU and an increase of 4MB of memory. The control plane node recorded an increase in CPU usage of 5% of a vCPU for these 10 nodes.
+
+:::caution
+
+The implementation of CalicoNodeStatus is designed to handle a small number of nodes (less than 10 is recommended) reporting back status in the same time. If CalicoNodeStatus are created for a large number of nodes, and with short update interval,
+the Kubernetes API server may become slower and less responsive.
+You should create CalicoNodeStatus for the node you are interested in and for debugging purpose only. CalicoNodeStatus resource should be deleted upon the completion of the debugging process.
+
+:::
+
+## Additional resources
+
+- [Configure BGP peering](../../networking/configuring/bgp.mdx)
+- [Troubleshooting and diagnostics](../../operations/troubleshoot/troubleshooting.mdx)
+- [BGP peer](bgppeer.mdx)
+- [Node](node.mdx)
