@@ -31,7 +31,7 @@ The sections below explain the house rules in full.
 
 - Write to the reader as *you*. Don't use *we* to mean the reader. <!-- Google: https://developers.google.com/style/person -->
 - Prefer the active voice. The passive is fine when the actor doesn't matter or the object is the point: "The pod is deleted after 30 seconds." <!-- Google: https://developers.google.com/style/voice -->
-- Use the present tense. Use the future only for something that really happens later: "The node will be drained the next time the upgrade runs." <!-- Google: https://developers.google.com/style/tense -->
+- Use the present tense for how the product behaves: "If the pod restarts, the node loses connectivity." Use *will* for something that happens later: "The node will be drained the next time the upgrade runs." *Will* is also fine when you warn the reader about a result. Don't change a clear sentence only to remove *will*. <!-- Google: https://developers.google.com/style/tense -->
 - Be conversational, not frivolous. Contractions are fine. <!-- Google: https://developers.google.com/style/tone and https://developers.google.com/style/contractions -->
 - Don't use *please*, *simply*, *easily*, *just*, or *via*. <!-- Google: https://developers.google.com/style/word-list -->
 - Don't use *e.g.*, *i.e.*, or *etc.* Write *for example* or *that is*, and end a list with a complete example. <!-- Google: https://developers.google.com/style/word-list -->
@@ -178,6 +178,10 @@ Spell the product name out, with no variable, in these places:
 
 Don't repeat the product name in every sentence.
 Once the page has said what it's about, say *it*.
+
+Don't join a product name variable to another word with a hyphen.
+`$[prodname]-advertised routes` renders as "Calico Enterprise-advertised routes", which is hard to read.
+Write "routes that `$[prodname]` advertises", or leave the name out when the page has already said which product it's about.
 
 Shared text lives in partials under `_includes/`, and shared components are registered in `src/theme/MDXComponents.js`.
 Use a partial when three or more pages need the same paragraph.
@@ -406,6 +410,7 @@ A *Vale* tag means the linter enforces it.
 - **kube-proxy.** Lowercase, hyphenated.
 - **kubectl.** Lowercase. Code font for the command.
 - **log in, log out.** Verb forms, two words. *Login* is the noun and the adjective. Not *sign in*, because the web console says *Log in*.
+- **may, might.** Prefer *might* for something that could happen and *can* for permission, as in the Google word list.
 - **microsegmentation.** One word.
 - **multi-cluster.** Hyphenated, as in the Google word list. Not *multicluster*. Vale.
 - **nftables, iptables.** Lowercase, always.
@@ -425,3 +430,4 @@ A *Vale* tag means the linter enforces it.
 | Date | Change |
 |---|---|
 | 2026-11-06 | First version. Replaces the 2022 and 2024 Google Docs drafts. |
+| 2026-11-19 | Relaxed the tense rule. Added rules for product names in compounds and for *may* and *might*. |
