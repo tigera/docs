@@ -1,13 +1,19 @@
 ---
 description: Reference for the IP address management configuration resource in Calico Open Source that sets cluster-wide options such as strict affinity.
-content_type: unclassified
+content_type: reference
 ---
 
 # IPAM configuration
 
-An IP address management (IPAM) configuration resource (`IPAMConfiguration`) represents global IPAM configuration options.
+An IP address management (IPAM) configuration resource (IPAMConfiguration) represents global IPAM configuration options.
+IPAMConfiguration is a cluster-scoped resource.
+There is only one, and its name must be `default`.
+
+For `kubectl` commands, you can use the aliases `ipamconfiguration.projectcalico.org`, `ipamconfigurations.projectcalico.org`, `ipamconfiguration.p`, and `ipamconfigurations.p`.
 
 ## Sample YAML
+
+This sample limits each node to four blocks and keeps KubeVirt VM addresses across restarts and migrations.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -20,20 +26,23 @@ spec:
   kubeVirtVMAddressPersistence: Enabled
 ```
 
-## IPAM configuration definition
+## Definition
 
 ### Metadata
 
-| Field | Description                                               | Accepted Values | Schema |
-| ----- | --------------------------------------------------------- | --------------- | ------ |
-| `name`  | Unique name to describe this resource instance. Required. | default         | string |
-
-The resource is a singleton which must have the name `default`.
+| Field | Description                                    | Accepted Values | Schema | Default |
+| ----- | ---------------------------------------------- | --------------- | ------ | ------- |
+| `name` | The name of this IPAM configuration. Required. | `default`       | string |         |
 
 ### Spec
 
-| Field                        | Description                                                                                                                          | Accepted Values    | Schema | Default  |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ------ | -------- |
-| `strictAffinity`               | When StrictAffinity is true, borrowing IP addresses is not allowed.                                                                  | true, false        | bool   | false    |
-| `maxBlocksPerHost`             | The max number of blocks that can be affine to each host.                                                                            | 0 - max(int32)     | int    | 20       |
-| `kubeVirtVMAddressPersistence` | Controls whether KubeVirt VMs retain persistent IP addresses across lifecycle events such as restart or migration. Requires KubeVirt. | Enabled, Disabled  | string | Enabled  |
+| Field                        | Description                                                                                                                           | Accepted Values       | Schema  | Default   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------- | --------- |
+| `strictAffinity`             | When `strictAffinity` is `true`, borrowing IP addresses is not allowed.                                                                   | `true`, `false`       | boolean | `false`   |
+| `maxBlocksPerHost`           | The max number of blocks that can be affine to each host.                                                                             | `0` to max(int32)    | integer | `20`      |
+| `kubeVirtVMAddressPersistence` | Controls whether KubeVirt VMs retain persistent IP addresses across lifecycle events such as restart or migration. Requires KubeVirt. | `Enabled`, `Disabled` | string  | `Enabled` |
+
+## Additional resources
+
+- [IP pool](ippool.mdx)
+- [Block affinity](blockaffinity.mdx)
