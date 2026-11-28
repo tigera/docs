@@ -13,14 +13,15 @@ Install $[prodname] as a Supervisor Service on vSphere Kubernetes Service (VKS),
 
 This guide requires:
 
-- **VM Images**: Ubuntu or Photon OVA images registered for a supported TKR version, with TKR in a healthy state. For Windows node pools, Windows Server OVA images are also required.
-- **vSphere Resources**: Sufficient capacity to provision guest clusters with at minimum:
+- **Versions**: VKS 3.8 or later, and vCenter 9.1.1 or later.
+- **VM images**: Ubuntu or Photon OVA images registered for a supported Tanzu Kubernetes release (TKR), with the TKR in a healthy state.
+  For Windows node pools, you also need Windows Server OVA images.
+- **vSphere resources**: Enough capacity to provision guest clusters with at least:
     - 1 control plane node
     - 3 Linux worker nodes
-- **OCI Registry**: An OCI-compliant registry configured in vSphere for storing package manifests and container images.
-- **Tigera registry credentials** for accessing the Tigera container registry (contact the Tigera team).
-- VKS v3.8 and above
-- vCenter v9.1.1 and above
+- **OCI registry**: An OCI-compliant registry configured in vSphere to store package manifests and container images.
+- **Tigera registry credentials** to pull from the Tigera container registry.
+  Contact the Tigera team to get them.
 
 ### Networking
 
@@ -30,98 +31,114 @@ This guide requires:
 
 ## How to
 
-Setting up $[prodname] on VKS has two main phases: set it as a Supervisor Service (Part 1) in vSphere Client (one time), then deploy it to a guest cluster (Part 2). For Air-gapped environments follow the additional steps in the Air-gapped environment section.
+Setting up $[prodname] on VKS has two main phases:
 
-### Part 1: Set up the Supervisor Service (one time cluster admin setup)
+1. [Part 1](#part-1-set-up-the-supervisor-service-one-time-cluster-admin-setup): Set up $[prodname] as a Supervisor Service in the vSphere Client.
+   You do this once.
+1. [Part 2](#part-2-deploy-a-guest-cluster-with-calico-enterprise): Deploy $[prodname] to a guest cluster.
 
-1. In the vSphere Client - Container Registries page setup the Tigera container registry's credentials for pulling Calico Enterprise images from Tigera's private container registry.
-      -  Use `quay.io` as the Registry host URL, and Username/Password provided by Tigera.
-    For air-gapped installs, add the private registry that holds the $[prodname] images instead (see [Air-gapped private container registry](#air-gapped-private-container-registry-relocate-calico-enterprise-private-images-to-a-private-registry)).
+For air-gapped environments, also follow the steps in [Air-gapped environments](#air-gapped-environments).
 
-2. In the vSphere Client - Supervisor Management page:
-   - Create a new Supervisor Service (or add a new version to an existing one).
-   - Upload Supervisor service Package and PackageMetadata resources (example below) and complete the setup workflow.
-   - Register the Supervisor Service and set `registryName` to match the registry name configured for Tigera's private container registry.
+### Part 1: Set up the Supervisor Service (one-time cluster admin setup)
 
-```yaml
----
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: Package
-metadata:
-  name: calico-enterprise-svs.tigera.io.$[releaseVersion]
-spec:
-  refName: calico-enterprise-svs.tigera.io
-  version: $[releaseVersion]
-  template:
-    spec:
-      fetch:
-      - imgpkgBundle:
-          image: quay.io/tigera/calico-enterprise-svs:$[releaseTitle]   #Change this to the registry where the carvel package is getting picked up
-      template:
-      - ytt:
-          paths:
-          - service
-          - kapp
-      - kbld:
-          paths:
-          - "-"
-          - .imgpkg/images.yml
-          - kbld/
-      deploy:
-      - kapp: {}
----
-apiVersion: data.packaging.carvel.dev/v1alpha1
-kind: PackageMetadata
-metadata:
-  name: calico-enterprise-svs.tigera.io
-spec:
-  displayName: "Calico Enterprise SVS"
-  shortDescription: "Manages Calico Enterprise Addon Repository and Installation"
-```
+1. In the vSphere Client, on the **Container Registries** page, add the Tigera container registry so that the Supervisor can pull $[prodname] images:
+
+   - **Registry host URL**: `quay.io`
+   - **Username** and **Password**: the Tigera registry credentials
+
+   For air-gapped installs, add the private registry that holds the $[prodname] images instead.
+   See [Copy the images to the private registry](#copy-the-images-to-the-private-registry).
+
+1. In the vSphere Client, on the **Supervisor Management** page, create a new Supervisor Service, or add a new version to an existing one.
+
+1. Upload the following `Package` and `PackageMetadata` resources, and complete the setup workflow:
+
+   ```yaml
+   ---
+   apiVersion: data.packaging.carvel.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: calico-enterprise-svs.tigera.io.$[releaseVersion]
+   spec:
+     refName: calico-enterprise-svs.tigera.io
+     version: $[releaseVersion]
+     template:
+       spec:
+         fetch:
+         - imgpkgBundle:
+             image: quay.io/tigera/calico-enterprise-svs:$[releaseTitle]   # For air-gapped installs, change this to the private registry
+         template:
+         - ytt:
+             paths:
+             - service
+             - kapp
+         - kbld:
+             paths:
+             - "-"
+             - .imgpkg/images.yml
+             - kbld/
+         deploy:
+         - kapp: {}
+   ---
+   apiVersion: data.packaging.carvel.dev/v1alpha1
+   kind: PackageMetadata
+   metadata:
+     name: calico-enterprise-svs.tigera.io
+   spec:
+     displayName: "Calico Enterprise SVS"
+     shortDescription: "Manages Calico Enterprise Addon Repository and Installation"
+   ```
+
+1. Register the Supervisor Service.
+   In the service YAML configuration, set `registryName` to the name you gave the Tigera container registry in step 1:
+
+   ```yaml
+   registryName: <registered-registry-name>
+   ```
+
+   For air-gapped installs, also set `chartRepository` to the private registry path that holds the $[prodname] Helm chart.
+   See [Copy the add-on to the private registry](#copy-the-add-on-to-the-private-registry).
+
+   ```yaml
+   chartRepository: oci://<private-registry>/<path>
+   ```
 
 ### Part 2: Deploy a guest cluster with Calico Enterprise
 
 #### Guest cluster prerequisites
 
-- **Tigera license file** (contact the Tigera team).
-- **Dynamic PV provisioning** via a StorageClass, required for Elasticsearch storage.
+- **Tigera license file**.
+  Contact the Tigera team to get one.
+- **Dynamic PV provisioning** through a StorageClass.
+  Elasticsearch needs it for storage.
 
 #### Step 1 (optional): Apply the AddonConfig
 
-An AddonConfig is needed only if you want to change the default $[prodname] configuration, for example to create a cluster with Windows nodes. It is not required for a Linux-only cluster that uses the defaults.
+You need an AddonConfig only to change the default $[prodname] configuration, for example to create a cluster with Windows nodes.
+A Linux-only cluster that uses the defaults doesn't need one.
 
 The following example AddonConfig enables the Windows dataplane and disables policy recommendation.
+Before you apply it, update the following fields:
 
-:::info
+- `metadata.name` and `metadata.namespace`.
+  The name must use the format `<cluster-name>-calico-enterprise`.
+  If it doesn't, the add-on framework ignores your AddonConfig and creates one with default values instead.
+- For air-gapped installs, `spec.values.helmValues.installation.registry`.
+  Set it to the private registry that holds the $[prodname] images.
+  See [Copy the images to the private registry](#copy-the-images-to-the-private-registry).
 
-Update the following fields before applying:
-- `metadata.name` and `metadata.namespace`
-- `spec.values.helmValues.installation.registry` to use $[prodname] images from a private registry (for air-gapped installs). This should be the same registry where $[prodname] images are pushed to using [Air-gapped private container registry](#air-gapped-private-container-registry-relocate-calico-enterprise-private-images-to-a-private-registry) of this doc. Optionally `spec.values.helmValues.installation.imagePath` can be set if the $[prodname] images were pushed to a specific folder within the private registry.
-
-:::
-
-:::note
-
-All $[prodname] features (`logCollector`, `logStorage`, `manager`, `monitor`, `policyRecommendation`) are optional. Only `apiServer` is required. Set any unwanted features to `false`.
-
-:::
-
-```bash
-kubectl apply -f ./addon-config.yaml
-```
-
-```yaml
+```yaml title="addon-config.yaml"
 apiVersion: addons.kubernetes.vmware.com/v1alpha1
 kind: AddonConfig
 metadata:
-  name: <cluster-name>-calico-enterprise   # The AddonConfig name has to be in this format eg. cluster1-calico-enterprise
+  name: <cluster-name>-calico-enterprise
   namespace: <cluster-namespace>
 spec:
   values:
     helmValues:
-      # Every option from tigera-helm-charts/tigera-operator/values.yaml may be
-      # set here. Anything not specified falls back to the default declared in
-      # the AddonConfigDefinition schema. The fields below are illustrative;
+      # You can set any option from tigera-helm-charts/tigera-operator/values.yaml here.
+      # Options you don't set use the defaults from the AddonConfigDefinition schema.
+      # The following fields are examples.
       installation:
         calicoWindowsDataplane:
           enabled: true
@@ -129,38 +146,42 @@ spec:
         enabled: false
 ```
 
+```bash
+kubectl apply -f ./addon-config.yaml
+```
+
 :::note
 
-The Addon framework expects the `AddonConfig` name to use the format `<cluster-name>-<addon-name>`. If the name does not match this format, the framework ignores the `AddonConfig` and creates a new one with default values instead.
+All $[prodname] features (`logCollector`, `logStorage`, `manager`, `monitor`, and `policyRecommendation`) are optional.
+Only `apiServer` is required.
+To turn off a feature, set its `enabled` field to `false`.
 
 :::
 
-#### Step 2 (optional): Apply the Custom AddonInstall resource
+#### Step 2 (optional): Apply a custom AddonInstall resource
 
-A custom AddonInstall resource is needed only if you want to control which clusters get upgraded. It lets you upgrade clusters selectively. Use `spec.clusters.selector.matchLabels` to specify the labels that a cluster must have, and then add those labels to the Cluster resources you want to upgrade.
+You need a custom AddonInstall resource only to control which clusters get upgraded.
+In `spec.clusters.selector.matchLabels`, set the labels that a cluster must have.
+Then add those labels to the Cluster resources that you want to upgrade.
 
-```bash
-kubectl apply -f ./addon-install.yaml
-```
-
-```yaml
+```yaml title="addon-install.yaml"
 apiVersion: addons.kubernetes.vmware.com/v1alpha1
-kind: AddonInstall 
-metadata: 
+kind: AddonInstall
+metadata:
   labels:
-    addon.kubernetes.vmware.com/addon-name: calico-enterprise 
+    addon.kubernetes.vmware.com/addon-name: calico-enterprise
     addon.kubernetes.vmware.com/addon-namespace: vmware-system-vks-public
     addons.kubernetes.vmware.com/category: cni
   name: <addon-install-name>
   namespace: <cluster-namespace>
-spec: 
+spec:
   addonRef:
     name: calico-enterprise
-    namespace: vmware-system-vks-public 
+    namespace: vmware-system-vks-public
   clusters:
-  - selector: 
+  - selector:
       matchLabels:
-        <AddonInstallLabelKey>: <AddonInstallLabelValue>      # Eg. cluster-group: calico-group-1
+        <addon-install-label-key>: <addon-install-label-value>      # For example, cluster-group: calico-group-1
     constraints:
       expression: cluster.cniRefName() = "calico-enterprise" && cluster.kubeProxyConfiguration().enabled == true
   releaseFilter:
@@ -169,21 +190,24 @@ spec:
   stopMatchingBehavior: Retain
 ```
 
-#### Step 3: Apply the Cluster Resource
-
-The following example creates a cluster with Linux and Windows node pools. To create a Linux-only cluster, remove the Windows node pool (`windows-pool`).
-
-Update the following fields before applying:
-- `metadata.name` and `metadata.namespace`
-- `spec.topology.variables[].value.cniRef` (name and namespace of the $[prodname] addon)
-- If you applied a custom AddonInstall in Step 2, add its label (`<AddonInstallLabelKey>: <AddonInstallLabelValue>`) to `metadata.labels`.
-- Node pool configuration (VM class, storage class, replicas) as needed for your environment
-
 ```bash
-kubectl apply -f ./cluster.yaml
+kubectl apply -f ./addon-install.yaml
 ```
 
-```yaml
+#### Step 3: Apply the Cluster resource
+
+The following example creates a cluster with Linux and Windows node pools.
+For a Linux-only cluster, remove the Windows node pool (`windows-pool`).
+
+Before you apply it, update the following fields:
+
+- `metadata.name` and `metadata.namespace`.
+- `cniRef` in the `bootstrapAddons` variable, if the $[prodname] add-on has a different name or namespace.
+- `metadata.labels`, if you applied a custom AddonInstall in [Step 2](#step-2-optional-apply-a-custom-addoninstall-resource).
+  Add the `<addon-install-label-key>: <addon-install-label-value>` label from the AddonInstall.
+- The node pool configuration, such as the VM class, storage class, and number of replicas, to suit your environment.
+
+```yaml title="cluster.yaml"
 apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
@@ -235,31 +259,36 @@ spec:
           - {protocol: tcp, fromPort: 9443, toPort: 9443}     # Manager UI
 ```
 
-#### Step 4: Retrieve the Guest Cluster Kubeconfig
+```bash
+kubectl apply -f ./cluster.yaml
+```
 
-Can be copied from the Supervisor.
+#### Step 4: Retrieve the guest cluster kubeconfig
 
-#### Step 5: Wait for Core Components
+Copy the guest cluster's kubeconfig from the Supervisor.
+Run the remaining steps against the guest cluster.
 
-Monitor the Tigera status until `calico` and `apiserver` report as `Available`:
+#### Step 5: Wait for the core components
+
+Monitor the Tigera status until `calico` and `apiserver` show as `Available`:
 
 ```bash
 kubectl get tigerastatus
 ```
 
-At this point, all nodes should be in `Ready` state.
+All nodes are now in the `Ready` state.
 
 #### Step 6 (Windows only): Configure Windows nodes
 
 Skip this step for Linux-only clusters.
 
-1. After `apiserver` reports as `Available`, set `strictAffinity` to `true` in the IPAM configuration:
+1. Set `strictAffinity` to `true` in the IPAM configuration:
 
    ```bash
    kubectl patch ipamconfigurations default --type merge -p '{"spec":{"strictAffinity":true}}'
    ```
 
-   If the IPAM configuration does not exist yet, create it:
+   If the IPAM configuration doesn't exist yet, create it:
 
    ```bash
    kubectl apply -f - <<EOF
@@ -270,26 +299,35 @@ Skip this step for Linux-only clusters.
    EOF
    ```
 
+1. Get the Kubernetes version of the guest cluster:
+
+   ```bash
+   kubectl version -o json | jq -r '.serverVersion.gitVersion'
+   ```
+
+   If the version has a VMware suffix, such as `v1.36.4+vmware.2`, remove the suffix (`v1.36.4`).
+   Keep the suffix only if the `sigwindowstools/kube-proxy` repository has a kube-proxy image for that VMware version.
+
 1. Install kube-proxy for Windows:
 
    ```bash
-   curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/calico/kube-proxy/kube-proxy.yml | sed "s/KUBE_PROXY_VERSION/<YOUR_KUBERNETES_VERSION>/g" | kubectl apply -f -
+   curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/calico/kube-proxy/kube-proxy.yml | sed "s/KUBE_PROXY_VERSION/<kubernetes-version>/g" | kubectl apply -f -
    ```
 
-   Replace `<YOUR_KUBERNETES_VERSION>` with the Kubernetes version of the guest cluster, for example `v1.36.4`.
+   Replace `<kubernetes-version>` with the version from the previous step.
 
-   > 💡 **Tip:** The K8s version can be retrieved with `kubectl version -o json | jq -r '.serverVersion.gitVersion'`
+   In an air-gapped environment, download `kube-proxy.yml` on a host with internet access, and copy it into the environment.
+   Then run the same `sed` and `kubectl apply` commands on the local file.
 
-   > ℹ️ **Note:** If the version returned is of the form `v1.36.4+vmware.2`, strip the `+vmware.2` suffix unless a VMware-provided kube-proxy image exists in the `sigwindowstools/kube-proxy` repository.
-   > ℹ️ **Note:** For Air-gapped environments copy the kube-proxy.yaml to the air-gapped environment and make the changes.
-
-#### Step 7: Apply the Tigera License
+#### Step 7: Apply the Tigera license
 
 ```bash
-kubectl apply -f tigera-license.yaml
+kubectl apply -f <path-to-license-file>
 ```
 
-#### Step 8: Verify the Installation
+Replace `<path-to-license-file>` with the path to the Tigera license file.
+
+#### Step 8: Verify the installation
 
 Wait for all remaining components to become available:
 
@@ -298,43 +336,82 @@ kubectl get tigerastatus
 kubectl get pods -A | grep -E 'tigera|calico'
 ```
 
-Once all items in `tigerastatus` show `Available`, the installation is complete. You can now deploy workloads to validate networking.
+When every component in `tigerastatus` shows `Available`, the installation is complete.
+You can now deploy workloads to test networking.
 
-### Air-gapped environment 
+### Air-gapped environments
 
-#### Air-gapped package registry
+An air-gapped environment has no internet access, or very limited access.
+Clusters in such an environment can't pull the $[prodname] add-on or the $[prodname] images directly from Tigera's registries.
+Instead, you copy these artifacts from Tigera's registries to a private registry that the environment can reach.
 
-If the published bundles need to be moved into a private OCI registry (for example, an air-gapped install), follow these steps.
+This involves two tasks:
 
-##### Air-gapped relocation prerequisites
+1. [Copy the add-on to the private registry](#copy-the-add-on-to-the-private-registry), so that the Supervisor can install the $[prodname] Supervisor Service.
+1. [Copy the images to the private registry](#copy-the-images-to-the-private-registry), so that guest clusters can run $[prodname].
 
-- `imgpkg` and `yq` available locally.
-- Network access to the source registry (or a tarball produced from it) and to the private registry.
-- Credentials to push to the private registry (`imgpkg` will prompt or use the local docker config).
+#### Air-gapped prerequisites
 
-##### Step 1: Copy the Supervisor Service (SVS) bundles to a tarball (source side)
+- `imgpkg`, `helm`, and `yq` installed locally.
+- Network access to both Tigera's registry and the private registry.
+  If no single host can reach both, you can copy the artifacts through a tarball instead.
+- Credentials to push to the private registry.
+  `imgpkg` uses your local Docker configuration, or prompts you for credentials.
 
-Run on a host that has access to the source registry:
+#### Copy the add-on to the private registry
+
+The $[prodname] add-on consists of a Helm chart and a Supervisor Service (SVS) bundle.
+Copy both to the private registry, then point the Supervisor Service at them.
+
+##### Step 1: Copy the Helm chart
+
+On a host that can reach `quay.io`, pull the $[prodname] add-on Helm chart and push it to the private registry:
 
 ```bash
-imgpkg copy --bundle <source-registry>/calico-enterprise-svs:$[releaseTitle]  --to-tar calico-enterprise-svs.tar
+helm pull oci://quay.io/tigera/calico-enterprise --version $[releaseVersion]
+helm push calico-enterprise-$[releaseVersion].tgz oci://<private-registry>/<path>
+```
+
+Replace `<private-registry>/<path>` with the registry and path that will hold the chart.
+Don't include the chart name (`calico-enterprise`) in the path.
+You use the same value for `chartRepository` when you register the Supervisor Service in [Step 5](#step-5-upload-the-package-to-the-supervisor).
+
+##### Step 2: Copy the SVS bundle to a tarball
+
+On a host that can reach `quay.io`, copy the SVS bundle to a tarball:
+
+```bash
+imgpkg copy --bundle quay.io/tigera/calico-enterprise-svs:$[releaseTitle] --to-tar calico-enterprise-svs.tar
 ```
 
 :::tip
 
-Direct registry-to-registry relocation is also supported. Replace `--to-tar <file>.tar` with `--to-repo <private-registry>/<path>` and skip Step 2.
+If one host can reach both registries, you can copy the bundle directly to the private registry and skip Step 3.
+Replace `--to-tar calico-enterprise-svs.tar` with `--to-repo <private-registry>/calico-enterprise-svs`.
 
 :::
 
-##### Step 2: Push the SVS bundle into the private registry (destination side)
+##### Step 3: Push the SVS bundle to the private registry
+
+On a host that can reach the private registry, push the tarball:
 
 ```bash
-imgpkg copy --tar calico-enterprise-svs.tar --to-repo <customer-registry>/calico-enterprise-svs
+imgpkg copy --tar calico-enterprise-svs.tar --to-repo <private-registry>/calico-enterprise-svs
 ```
 
-##### Step 3: Patch Package Resource in `calico-enterprise-svs.yaml`
+:::caution
 
-The only registry reference outside the bundles is the service-bundle pointer in the `Package` CR inside `calico-enterprise-svs.yaml`. This needs to be updated to the private registry:
+Use `imgpkg` to copy the bundle.
+Don't copy individual images with `docker pull` and `docker push`.
+Re-tagging images can change their manifest digests, and the bundle's `images.yml` lock file isn't updated to match.
+kapp-controller then fails to fetch the images, with a `manifest unknown` error.
+
+:::
+
+##### Step 4: Update the package to use the private registry
+
+The `Package` resource in `calico-enterprise-svs.yaml` is the only registry reference outside the bundles.
+Update it to point to the SVS bundle in the private registry:
 
 ```bash
 yq eval '
@@ -345,35 +422,56 @@ yq eval '
 
 :::tip
 
-**Content-pin to digest (optional):** `imgpkg copy --to-repo` prints the destination digest of the relocated bundle on its last line. Substituting `:$[releaseTitle]` with `@sha256:<that-digest>` in the `yq` command above will make the reference immutable.
+To make the reference immutable, pin it to a digest.
+The last line of the `imgpkg copy --to-repo` output shows the digest of the copied bundle.
+In the `yq` command, replace `:$[releaseTitle]` with `@sha256:<digest>`.
 
 :::
 
-##### Step 4: Upload `calico-enterprise-svs.yaml` i.e. Package and PackageMetadata resource to the Supervisor
+##### Step 5: Upload the package to the Supervisor
 
-Upload the new Package and PackageMetadata to the vSphere Client - Supervisor Management as in Part 1, 2 and continue with the remaining steps to create a guest cluster.
+Upload the updated `Package` and `PackageMetadata` resources from `calico-enterprise-svs.yaml` on the vSphere Client **Supervisor Management** page, as described in [Part 1](#part-1-set-up-the-supervisor-service-one-time-cluster-admin-setup).
+When you register the Supervisor Service, set these values in the service YAML configuration:
 
-
-##### What does *not* work
-
-- `docker pull` / `docker push` on individual images. Re-tagging can change manifest digests, and the bundles' `images.yml` lock files are not rewritten — kapp-controller fetches will fail with `manifest unknown`.
-- Not Copying the svs bundle during `imgpkg copy` run. The other 2 bundles are pulled by the svs package.
-
-#### Air-gapped private container registry: Relocate $[prodname] private images to a private registry
-
-Follow the steps in [Push $[prodname] images to your private registry](./private-registry/private-registry-regular.mdx#push-calico-enterprise-images-to-your-private-registry) to pull $[prodname] images from Tigera's private image registry to your private registry.
-
-:::note
-
-Only steps 1, 2, 3, 4 — i.e. `docker pull`, `docker tag` and `docker push` for Linux only need to be performed.
-
-:::
+- `chartRepository`: the Helm chart path from [Step 1](#step-1-copy-the-helm-chart).
+- `registryName`: the name you registered the private registry under on the **Container Registries** page.
 
 :::caution
 
-Do not push $[prodname] private images to a public registry.
+You can set `chartRepository` only once for each version of the Supervisor Service.
+You can't change it later.
 
 :::
+
+#### Copy the images to the private registry
+
+Before you create guest clusters, copy the $[prodname] images to the private registry, and configure the cluster to pull them from there.
+
+1. Copy the $[prodname] images from `quay.io/tigera` to the private registry.
+   Follow the steps in [Push $[prodname] images to your private registry](./private-registry/private-registry-regular.mdx#push-calico-enterprise-images-to-your-private-registry).
+   Don't push $[prodname] images to a public registry.
+
+1. If the private registry requires authentication, register it with its credentials on the vSphere Client **Container Registries** page.
+   Use the name you register it under as `registryName` when you register the Supervisor Service.
+   See [Step 5: Upload the package to the Supervisor](#step-5-upload-the-package-to-the-supervisor).
+
+1. Add the private registry to the `installation` section of the AddonConfig.
+   For more about the AddonConfig, see [Step 1 (optional): Apply the AddonConfig](#step-1-optional-apply-the-addonconfig).
+
+   ```yaml
+   apiVersion: addons.kubernetes.vmware.com/v1alpha1
+   kind: AddonConfig
+   metadata:
+     name: <cluster-name>-calico-enterprise
+     namespace: <cluster-namespace>
+   spec:
+     values:
+       helmValues:
+         installation:
+           registry: registry.example.internal:5000/    # mirror host[:port]
+           # imagePath: tigera                          # optional; only if you pushed all images under one path
+           # imagePrefix: ""                            # optional; only if your mirror renames images
+   ```
 
 ## Next steps
 
