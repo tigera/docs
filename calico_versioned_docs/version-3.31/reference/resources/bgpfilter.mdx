@@ -1,13 +1,14 @@
 ---
 description: API for this Calico resource.
-content_type: unclassified
+content_type: reference
 ---
 
 # BGP filter
 
-A Border Gateway Protocol (BGP) filter resource (`BGPFilter`) represents a way to control
+A Border Gateway Protocol (BGP) filter resource (BGPFilter) represents a way to control
 routes imported by and exported to BGP peers
-specified by a [BGP peer resource](bgppeer.mdx) (`BGPPeer`).
+specified by a [BGP peer resource](bgppeer.mdx) (BGPPeer).
+BGPFilter is a cluster-scoped resource.
 
 The BGPFilter rules are applied sequentially: the `action` for
 the **first** rule that matches is executed immediately.
@@ -18,10 +19,11 @@ Calico would advertise it to that peer without the filter.
 In order for a BGPFilter to be used in a BGP peering, its `name`
 must be added to `filters` of the corresponding BGPPeer resource.
 
-For `kubectl` commands, the following case-sensitive aliases may
-be used to specify the resource type on the CLI: `bgpfilters.projectcalico.org`
+For `kubectl` commands, you can use the aliases `bgpfilter.projectcalico.org`, `bgpfilters.projectcalico.org`, `bgpfilter.p`, and `bgpfilters.p`.
 
 ## Sample YAML
+
+This sample accepts and rejects IPv4 and IPv6 routes by CIDR, route source, and interface, on import and on export.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -57,48 +59,62 @@ spec:
     - action: Reject
 ```
 
-## BGP filter definition
+## Definition
 
 ### Metadata
 
-| Field | Description                                                        | Accepted Values                                     | Schema |
-| ----- | ------------------------------------------------------------------ | --------------------------------------------------- | ------ |
-| name  | Unique name to describe this resource instance. Must be specified. | Lowercase alphanumeric string with optional `.` or `-`. | string |
+| Field  | Description                            | Accepted Values                                                                                                          | Schema | Default |
+| ------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ------- |
+| `name` | The name of this BGP filter. Required. | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string |         |
 
 ### Spec
 
-| Field    | Description                        | Accepted Values | Schema                                    | Default |
-| -------- | ---------------------------------- | --------------- | ----------------------------------------- | ------- |
-| exportV4 | List of v4 CIDRs and export action |                 | [BGP Filter Rule v4](#bgp-filter-rule-v4) |         |
-| importV4 | List of v4 CIDRs and import action |                 | [BGP Filter Rule v4](#bgp-filter-rule-v4) |         |
-| exportV6 | List of v6 CIDRs and export action |                 | [BGP Filter Rule v6](#bgp-filter-rule-v6) |         |
-| importV6 | List of v6 CIDRs and import action |                 | [BGP Filter Rule v6](#bgp-filter-rule-v6) |         |
+| Field      | Description                        | Accepted Values | Schema                                      | Default |
+| ---------- | ---------------------------------- | --------------- | ------------------------------------------- | ------- |
+| `exportV4` | List of v4 CIDRs and export action |                 | list of [BGPFilterRuleV4](#bgpfilterrulev4) |         |
+| `importV4` | List of v4 CIDRs and import action |                 | list of [BGPFilterRuleV4](#bgpfilterrulev4) |         |
+| `exportV6` | List of v6 CIDRs and export action |                 | list of [BGPFilterRuleV6](#bgpfilterrulev6) |         |
+| `importV6` | List of v6 CIDRs and import action |                 | list of [BGPFilterRuleV6](#bgpfilterrulev6) |         |
 
-### BGP Filter Rule v4
+### BGPFilterRuleV4
 
-| Field         | Description                                | Accepted Values                                                     | Schema | Default |
-| ------------- | ------------------------------------------ | ------------------------------------------------------------------- | ------ | ------- |
-| cidr          | IPv4 range                                 | A valid IPv4 CIDR                                                   | string |         |
-| prefixLength  | [PrefixLength](#bgp-filter-prefix-length)  | Valid integers between 0 and ipv4/6 max (32, 128)                   |        |         |
-| matchOperator | Method by which to match candidate routes  | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string |         |
-| source        | Indicator of the source of route           | `RemotePeers` means any route learned from other BGP peers          | string |         |
-| interface     | String to match interface names            | A valid pattern to match interfaces. "*" can be used as a wildcard. | string |         |
-| action        | Action to be taken for this rule. Required.| `Accept` or `Reject`                                                | string |         |
+| Field           | Description                                 | Accepted Values                                                     | Schema                                              | Default |
+| --------------- | ------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------- | ------- |
+| `cidr`          | IPv4 range                                  | A valid IPv4 CIDR                                                   | string                                              |         |
+| `prefixLength`  | The range of prefix lengths to match.       | Valid integers between `0` and ipv4/6 max (`32`, `128`)             | [BGPFilterPrefixLengthV4](#bgpfilterprefixlengthv4) |         |
+| `matchOperator` | Method by which to match candidate routes   | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string                                              |         |
+| `source`        | Indicator of the source of route            | `RemotePeers` means any route learned from other BGP peers          | string                                              |         |
+| `interface`     | String to match interface names             | A valid pattern to match interfaces. `*` can be used as a wildcard. | string                                              |         |
+| `action`        | Action to be taken for this rule. Required. | `Accept` or `Reject`                                                | string                                              |         |
 
-### BGP Filter Rule v6
+### BGPFilterRuleV6
 
-| Field         | Description                                | Accepted Values                                                     | Schema | Default |
-| ------------- | ------------------------------------------ | ------------------------------------------------------------------- | ------ | ------- |
-| cidr          | IPv6 range                                 | A valid IPv6 CIDR                                                   | string |         |
-| prefixLength  | [PrefixLength](#bgp-filter-prefix-length)  | Valid integers between 0 and ipv4/6 max (32, 128)                   |        |         |
-| matchOperator | Method by which to match candidate routes  | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string |         |
-| source        | Indicator of the source of route           | `RemotePeers` means any route learned from other BGP peers          | string |         |
-| interface     | String to match interface names            | A valid pattern to match interfaces. "*" can be used as a wildcard. | string |         |
-| action        | Action to be taken for this rule. Required.| `Accept` or `Reject`                                                | string |         |
+| Field           | Description                                 | Accepted Values                                                     | Schema                                              | Default |
+| --------------- | ------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------- | ------- |
+| `cidr`          | IPv6 range                                  | A valid IPv6 CIDR                                                   | string                                              |         |
+| `prefixLength`  | The range of prefix lengths to match.       | Valid integers between `0` and ipv4/6 max (`32`, `128`)             | [BGPFilterPrefixLengthV6](#bgpfilterprefixlengthv6) |         |
+| `matchOperator` | Method by which to match candidate routes   | `In`, `NotIn`, `Equal`, `NotEqual`                                  | string                                              |         |
+| `source`        | Indicator of the source of route            | `RemotePeers` means any route learned from other BGP peers          | string                                              |         |
+| `interface`     | String to match interface names             | A valid pattern to match interfaces. `*` can be used as a wildcard. | string                                              |         |
+| `action`        | Action to be taken for this rule. Required. | `Accept` or `Reject`                                                | string                                              |         |
 
-### BGP Filter Prefix Length
+### BGPFilterPrefixLengthV4
 
-| Field  | Description                                   | Accepted Values                                                     | Schema | Default |
-| ------ | --------------------------------------------- | ------------------------------------------------------------------- | ------ | ------- |
-| min    | Smallest matched mask size (the CIDR's mask size by default)     | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
-| max    | Largest matched mask size (32/128 by default) | Valid integers between 0 and ipv4/6 max (32, 128)                   | int    |         |
+| Field | Description                                                  | Accepted Values                                         | Schema  | Default |
+| ----- | ------------------------------------------------------------ | ------------------------------------------------------- | ------- | ------- |
+| `min` | Smallest matched mask size (the CIDR's mask size by default) | Valid integers between `0` and ipv4/6 max (`32`, `128`) | integer |         |
+| `max` | Largest matched mask size (`32`/`128` by default)            | Valid integers between `0` and ipv4/6 max (`32`, `128`) | integer |         |
+
+### BGPFilterPrefixLengthV6
+
+| Field | Description                                                  | Accepted Values                                         | Schema  | Default |
+| ----- | ------------------------------------------------------------ | ------------------------------------------------------- | ------- | ------- |
+| `min` | Smallest matched mask size (the CIDR's mask size by default) | Valid integers between `0` and ipv4/6 max (`32`, `128`) | integer |         |
+| `max` | Largest matched mask size (`32`/`128` by default)            | Valid integers between `0` and ipv4/6 max (`32`, `128`) | integer |         |
+
+## Additional resources
+
+- [Configure a BGP filter](../../networking/configuring/bgp.mdx#configure-a-bgp-filter)
+- [Configure a BGP peer with a BGP filter](../../networking/configuring/bgp.mdx#configure-a-bgp-peer-with-a-bgp-filter)
+- [BGP peer](bgppeer.mdx)
+- [BGP configuration](bgpconfig.mdx)
