@@ -90,7 +90,7 @@ defaultFelixConfiguration:
 
 ## Common customizations
 
-Common customizations that you might want to configure are number of replicas, pod affinity, and encryption using WireGuard.
+Common customizations that you might want to configure are number of replicas, pod affinity, encryption using WireGuard, and the pre-delete hook.
 
 ### Number of replicas
 This setting defines the number of replicas for $[prodname] components that can run simultaneously in multiple instances.
@@ -128,3 +128,17 @@ defaultFelixConfiguration:
   wireguardEnabled: true
   wireguardEnabledV6: true
 ```
+
+### Pre-delete hook
+When the chart is uninstalled, a `pre-delete` hook runs a Job that deletes the Installation and waits for the operator to remove $[prodname] before the operator itself is removed.
+
+Argo CD 3.3 and later run this hook whenever the Application is deleted, including deletes that keep the Application's resources. If you manage the chart with Argo CD, turn the hook off in the `values.yaml` file.
+
+```yaml
+preDeleteHook:
+  enabled: false
+```
+
+Let Argo CD sync this value before you delete the Application. Once it is in effect, the Application no longer has the `pre-delete-finalizer.argocd.argoproj.io` finalizer. If one change sets the value and deletes the Application, Argo CD deletes the Application with its previous values and the hook still runs.
+
+Before an uninstall that should remove $[prodname], set `preDeleteHook.enabled` back to `true` and let Argo CD sync it. Without the hook, the operator can be removed before the Installation, which is then left terminating.
