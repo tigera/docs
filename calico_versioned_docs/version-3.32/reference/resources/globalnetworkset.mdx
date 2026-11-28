@@ -1,13 +1,49 @@
 ---
 description: Reference for the GlobalNetworkSet resource in Calico Open Source that defines a cluster-scoped set of CIDRs referenced by network policy.
-content_type: unclassified
+content_type: reference
 ---
 
 # Global network set
 
-A global network set resource (`GlobalNetworkSet`) represents an arbitrary set of IP subnetworks/CIDRs,
-allowing it to be matched by $[prodname] policy. Network sets are useful for applying policy to traffic
-coming from (or going to) external, non-$[prodname], networks.
+A global network set resource (GlobalNetworkSet) represents an arbitrary set of IP subnetworks/CIDRs, allowing it to be matched by $[prodname] policy.
+Network sets are useful for applying policy to traffic coming from (or going to) external, non-$[prodname], networks.
+GlobalNetworkSet is a cluster-scoped resource.
+
+For `kubectl` commands, you can use the aliases `globalnetworkset.projectcalico.org`, `globalnetworksets.projectcalico.org`, `globalnetworkset.p`, and `globalnetworksets.p`.
+
+## Sample YAML
+
+This sample creates a global network set with two CIDRs and the label `role: external-database`.
+
+```yaml
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkSet
+metadata:
+  name: a-name-for-the-set
+  labels:
+    role: external-database
+spec:
+  nets:
+    - 198.51.100.0/28
+    - 203.0.113.0/24
+```
+
+## Definition
+
+### Metadata
+
+| Field    | Description                                    | Accepted Values                                                                                                           | Schema                  | Default |
+| -------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------- |
+| `name`   | The name of this global network set. Required. | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string                  |         |
+| `labels` | A set of labels to apply to this network set.  |                                                                                                                           | map of string to string |         |
+
+### Spec
+
+| Field  | Description                                  | Accepted Values                                                                                                                 | Schema          | Default |
+| ------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------- |
+| `nets` | The IP networks/CIDRs to include in the set. | Valid IPv4 or IPv6 CIDRs, for example `192.0.2.128/25`                                                                          | list of strings |         |
+
+## Policy matching
 
 The metadata for each network set includes a set of labels. When $[prodname] is calculating the set of
 IPs that should match a source/destination selector within a
@@ -25,32 +61,9 @@ policy will see the kube-proxy's host's IP as the source instead of the real sou
 
 :::
 
-## Sample YAML
+## Additional resources
 
-```yaml
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkSet
-metadata:
-  name: a-name-for-the-set
-  labels:
-    role: external-database
-spec:
-  nets:
-    - 198.51.100.0/28
-    - 203.0.113.0/24
-```
-
-## Global network set definition
-
-### Metadata
-
-| Field  | Description                                | Accepted Values                                   | Schema |
-| ------ | ------------------------------------------ | ------------------------------------------------- | ------ |
-| name   | The name of this network set.              | Lower-case alphanumeric with optional `-` or `.`. | string |
-| labels | A set of labels to apply to this network set. |                                                   | map    |
-
-### Spec
-
-| Field | Description                                  | Accepted Values                                        | Schema | Default |
-| ----- | -------------------------------------------- | ------------------------------------------------------ | ------ | ------- |
-| nets  | The IP networks/CIDRs to include in the set. | Valid IPv4 or IPv6 CIDRs, for example "192.0.2.128/25" | list   |         |
+- [Use external IPs or networks rules in policy](../../network-policy/policy-rules/external-ips-policy.mdx)
+- [Network set](networkset.mdx)
+- [Global network policy](globalnetworkpolicy.mdx)
+- [Network policy](networkpolicy.mdx)
