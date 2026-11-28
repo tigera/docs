@@ -1,0 +1,153 @@
+---
+description: Learn how the Calico MCP server gives an AI assistant Calico Enterprise diagnostic tools, what access it uses, and where your cluster data goes.
+content_type: explanation
+sidebar_label: About
+lifecycle_status: tech-preview
+lifecycle_feature: Calico MCP server
+---
+
+{/*
+  User story
+  As a platform engineer or security reviewer, I want to understand what the Calico MCP server does, what access it uses, and where cluster data goes, so that I can decide whether to use it and on what terms.
+
+  Page plan: DOCS-3135.
+*/}
+
+# About the $[mcpserver]
+
+The $[mcpserver], also known as Mylo, connects an AI assistant to your $[prodname] cluster, or to a diagnostics bundle collected from it.
+The assistant can then diagnose network problems, explain network policy, and answer questions about cluster health, and it shows you the evidence for each answer.
+
+This page explains how the server works, what access it uses, and where your data goes.
+
+## Why use the $[mcpserver]
+
+To diagnose a $[prodname] problem, you often have to compare several layers of state: Kubernetes resources, policies and tiers, the rules programmed on each node, routes, BGP sessions, and flow logs.
+An experienced engineer knows which layer to check first.
+A general-purpose AI assistant doesn't.
+When it has only `kubectl` and a shell, it tends to read too much, skip the data plane, and reach an answer that the evidence doesn't support.
+
+The $[mcpserver] gives the assistant two things:
+
+- A set of diagnostic tools that return structured data, such as the policies that apply to a pod, the rule that matched a packet, and the verdict on a flow.
+- A set of procedures that tell the assistant which tools to use, in what order, and how to weigh what they return.
+
+## How the $[mcpserver] works
+
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open standard that lets an AI client call external tools.
+An MCP server offers the tools, and the client calls them for you.
+
+The $[mcpserver] is a single binary that runs on your workstation, next to your AI client.
+It reaches your cluster with a kubeconfig, the same way `kubectl` does.
+Nothing is installed in the cluster.
+
+The server gives your client three kinds of capability:
+
+- **Tools** read cluster state and return structured results.
+- **Skills** are procedures that tell the assistant how to investigate a problem with the tools.
+  They're built into the binary, so there's nothing else to install.
+- **A prompt**, `/calico`, takes your request and sends it to the right skill.
+
+You don't call tools or skills by name.
+You describe the problem in plain language, and the assistant picks the tools that fit.
+
+Start your requests with the `/calico` prompt.
+An assistant that has a shell can choose to ignore the server and run `kubectl` instead.
+The prompt is the most reliable way to keep it on the diagnostic tools.
+
+## What you can ask
+
+The skills cover four kinds of question:
+
+- **Network problems.** Something is broken, slow, or denied, and you want the cause.
+- **Health and traffic.** You want to know the state of the cluster: component health, BGP sessions, denied flows, and the busiest workloads.
+- **One policy.** You want to know what a policy selects, allows, and denies.
+- **The whole policy set.** You want to know which policies are orphaned, duplicated, or unused.
+
+For example requests, see [Use the $[mcpserver]](use.mdx).
+
+## Live cluster or diagnostics bundle
+
+Each session reads from one of two sources:
+
+- **A live cluster.** The server connects with a kubeconfig that you name.
+  This gives the assistant the full tool set, including flow logs and the current state of each node.
+- **A diagnostics bundle.** The server reads an unpacked bundle from your disk and connects to no cluster.
+  The assistant sees the state that the bundle captured, and nothing after it.
+
+Most tools work with both sources.
+A bundle needs no cluster access at all, so it's the easiest way to try the server, and the usual way to investigate a problem after the fact.
+
+## What access the assistant needs
+
+With a live cluster, the server can read only what your kubeconfig's identity can read.
+How much access it needs depends on what you ask:
+
+- **Resources and policy** need read access only.
+- **Node-level tools** run commands in the `calico-node` pods to read rules, routes, and BGP state.
+  This needs permission to run commands in those pods, which is more than read access.
+- **Flow logs** need a setup step that creates objects in the cluster.
+  Only an identity with broad permissions can run it.
+
+For the full list, see [Cluster permissions](requirements.mdx#cluster-permissions).
+
+## Security and data flow
+
+### Whose identity the server uses
+
+The server has no credentials of its own.
+It makes every request to the cluster as the identity in the kubeconfig that you name.
+Kubernetes role-based access control (RBAC) decides what the assistant can read.
+
+The server never picks a kubeconfig for you.
+It doesn't fall back to `$KUBECONFIG` or `~/.kube/config`, so you always know which cluster the assistant reads.
+
+### What the server can change
+
+Every tool is read-only except one.
+To query flow logs, the server needs a setup step called `grant_flow_log_access`.
+The assistant asks for your approval before it runs the step.
+
+The step creates a ServiceAccount, a ClusterRole, and a ClusterRoleBinding, all named `calico-mcp-linseed`.
+It also reads the cluster's certificate authority (CA) private key to sign a short-lived client certificate.
+
+After the step runs, flow log and policy activity queries don't use your identity.
+They use the `calico-mcp-linseed` ServiceAccount, which can read the logs of every namespace.
+This is by design: the log store checks tokens with the cluster, and it can't check a token that an access gateway such as Rancher issued.
+It also means that the assistant can see flows in namespaces that your own identity can't.
+
+If that isn't acceptable in your environment, don't approve the step.
+The rest of the tools work without it.
+
+### What the server can't stop
+
+The server controls only its own tools.
+Your AI client has other tools, such as a shell, and the assistant can use them to change your cluster if your identity allows it.
+
+The skills tell the assistant to say so, in one line, before it uses a tool outside the server.
+This is a notice, not a block.
+
+The real control is the identity in your kubeconfig.
+If the identity can't delete a policy, neither can the assistant.
+
+### Where your data goes
+
+Cluster data moves from your cluster or bundle to the $[mcpserver], then to your AI client, then to the model provider that your client uses.
+Tigera isn't in that path and receives no cluster data.
+
+The server makes one kind of outbound call of its own.
+When the assistant searches the documentation, the server downloads public index files from `docs.tigera.io` and searches them on your workstation.
+It sends no search text and no cluster data.
+
+### What is recorded
+
+Requests that the server makes with your identity appear in the Kubernetes API server audit log under your name.
+Queries made after the flow log setup step appear under the `calico-mcp-linseed` ServiceAccount instead.
+
+The server keeps no record of its own of the tools the assistant calls.
+
+## Next steps
+
+- [$[mcpserver] requirements and limitations](requirements.mdx)
+- [Install the $[mcpserver]](install.mdx)
+- [Use the $[mcpserver]](use.mdx)

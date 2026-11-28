@@ -1,0 +1,227 @@
+---
+description: Install the Calico MCP server binary on your workstation and add it to Claude Code, Claude Cowork, or VS Code with GitHub Copilot for use with Calico Enterprise.
+content_type: how-to
+sidebar_label: Install
+lifecycle_status: tech-preview
+lifecycle_feature: Calico MCP server
+---
+
+{/*
+  User story
+  As a platform engineer, I want to install the Calico MCP server and add it to my AI client, so that my assistant can use the Calico tools.
+
+  Page plan: DOCS-3135.
+*/}
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Install the $[mcpserver]
+
+Install the $[mcpserver] binary on your workstation and add it to your AI client.
+When you finish, your assistant can use the $[prodname] diagnostic tools.
+
+## Before you begin
+
+- You have a supported AI client and platform.
+  See [$[mcpserver] requirements and limitations](requirements.mdx).
+- You have the $[mcpserver] binary for your platform.
+  To get the binary, contact Tigera Support.
+
+## Install the binary
+
+Put the binary in a fixed location on your workstation.
+These steps use `~/.local/bin`.
+
+1. Install the binary and make it executable:
+
+   ```bash
+   mkdir -p ~/.local/bin
+   install -m 0755 <path-to-downloaded-file> ~/.local/bin/calico-mcp
+   ```
+
+   Replace `<path-to-downloaded-file>` with the path to the file that you got from Tigera Support.
+
+1. On macOS only, remove the quarantine attribute that macOS adds to downloaded files:
+
+   ```bash
+   xattr -d com.apple.quarantine ~/.local/bin/calico-mcp
+   ```
+
+   If you skip this step, macOS blocks the binary, and your client can't start the server.
+
+1. Check that the binary runs:
+
+   ```bash
+   ~/.local/bin/calico-mcp --version
+   ```
+
+   The command prints the server name, the version, and the commit that the binary was built from.
+
+The `~/.local/bin` directory doesn't need to be on your `PATH`.
+You give each client the full path to the binary.
+
+## Add the server to your AI client
+
+Register the server with your client once.
+The registration stays in place when you upgrade the binary.
+
+<Tabs groupId="mcp-client">
+<TabItem label="Claude Code" value="claude-code">
+
+1. Add the server at user scope, so that it's available in every project:
+
+   ```bash
+   claude mcp add --scope user calico-mcp -- ~/.local/bin/calico-mcp
+   ```
+
+1. Start a new Claude Code session, and then run `/mcp`.
+
+   The `calico-mcp` server is listed as connected.
+
+</TabItem>
+<TabItem label="Claude Cowork" value="cowork">
+
+{/* TODO DOCS-3135: test these steps against the current Claude desktop app. */}
+
+1. In the Claude desktop app, go to **Settings** > **Developer**, and then click **Edit Config**.
+
+   The `claude_desktop_config.json` file opens.
+
+1. Add the server under `mcpServers`:
+
+   ```json
+   {
+     "mcpServers": {
+       "calico-mcp": {
+         "command": "<path-to-home-directory>/.local/bin/calico-mcp",
+         "args": []
+       }
+     }
+   }
+   ```
+
+   Replace `<path-to-home-directory>` with the full path to your home directory, for example `/Users/alex`.
+
+1. Quit the Claude desktop app and open it again, and then start a new Cowork task.
+
+</TabItem>
+<TabItem label="VS Code with GitHub Copilot" value="vscode-copilot">
+
+1. Open your MCP configuration file.
+
+   To make the server available in every workspace, run **MCP: Open User Configuration** from the Command Palette.
+   To make it available in one workspace only, create the file `.vscode/mcp.json` in that workspace.
+
+1. Add the server under `servers`:
+
+   ```json
+   {
+     "servers": {
+       "calico-mcp": {
+         "type": "stdio",
+         "command": "<path-to-home-directory>/.local/bin/calico-mcp",
+         "args": []
+       }
+     }
+   }
+   ```
+
+   Replace `<path-to-home-directory>` with the full path to your home directory, for example `/Users/alex`.
+
+1. Run **MCP: List Servers** from the Command Palette, select `calico-mcp`, and then start it.
+
+1. Open the Chat view, switch to **Agent** mode, and then open the tools picker.
+
+   The `calico-mcp` tools are listed and selected.
+
+GitHub Copilot limits the number of tools across all your MCP servers.
+If you have many servers, turn off the ones that you don't need for the session.
+
+</TabItem>
+</Tabs>
+
+## Upgrade
+
+To upgrade, replace the binary and restart the server in your client.
+
+1. Get the new binary for your platform from Tigera Support.
+
+1. Back up the current binary, and then install the new one in its place:
+
+   ```bash
+   cp ~/.local/bin/calico-mcp ~/.local/bin/calico-mcp.bak
+   install -m 0755 <path-to-downloaded-file> ~/.local/bin/calico-mcp
+   ```
+
+   Replace `<path-to-downloaded-file>` with the path to the new file.
+
+1. On macOS only, remove the quarantine attribute again:
+
+   ```bash
+   xattr -d com.apple.quarantine ~/.local/bin/calico-mcp
+   ```
+
+1. Restart the server, so that your client loads the new binary:
+
+   - **Claude Code**: Start a new session.
+   - **Claude Cowork**: Quit the Claude desktop app and open it again.
+   - **VS Code**: Run **MCP: List Servers**, select `calico-mcp`, and then restart it.
+
+1. Check the version:
+
+   ```bash
+   ~/.local/bin/calico-mcp --version
+   ```
+
+To go back to the earlier version, copy `~/.local/bin/calico-mcp.bak` over `~/.local/bin/calico-mcp`, and then restart the server.
+
+## Uninstall
+
+To uninstall, remove the server from your client and delete the binary.
+
+1. Remove the server from your client:
+
+   - **Claude Code**: Run `claude mcp remove calico-mcp`.
+   - **Claude Cowork**: Delete the `calico-mcp` entry from `claude_desktop_config.json`, and then restart the Claude desktop app.
+   - **VS Code**: Delete the `calico-mcp` entry from your MCP configuration file.
+
+1. Delete the binary:
+
+   ```bash
+   rm ~/.local/bin/calico-mcp
+   ```
+
+If you allowed flow log access on a cluster, the objects that it created are still there.
+To remove them, see [Remove flow log access](use.mdx#remove-flow-log-access).
+
+## Troubleshooting
+
+### The client can't start the server on macOS
+
+macOS reports that `calico-mcp` can't be verified, or the client fails to start the server with no clear error.
+
+The binary is still quarantined.
+Remove the quarantine attribute, and then restart the server:
+
+```bash
+xattr -d com.apple.quarantine ~/.local/bin/calico-mcp
+```
+
+### `claude mcp list` shows "Failed to connect"
+
+The `claude mcp list` command starts the server with no input, so the server exits.
+This doesn't mean that the server is broken.
+
+To check the real state, start a Claude Code session and run `/mcp`.
+
+### The assistant sees old tool arguments after an upgrade
+
+Your client is still running the earlier binary, or an earlier binary is registered under a different path.
+
+Restart the server in your client.
+If that doesn't help, remove the server from the client and add it again.
+
+## Next steps
+
+- [Use the $[mcpserver]](use.mdx)
