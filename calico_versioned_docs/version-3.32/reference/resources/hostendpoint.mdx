@@ -1,16 +1,17 @@
 ---
 description: Reference for the HostEndpoint resource in Calico Open Source that represents a host network interface for policy enforcement.
-content_type: unclassified
+content_type: reference
 ---
 
 # Host endpoint
 
 import Endpointport from '@site/calico_versioned_docs/version-3.32/_includes/content/_endpointport.mdx';
 
-A host endpoint resource (`HostEndpoint`) represents one or more real or virtual interfaces
+A host endpoint resource (HostEndpoint) represents one or more real or virtual interfaces
 attached to a host that is running $[prodname]. It enforces $[prodname] policy on
 the traffic that is entering or leaving the host's default network namespace through those
 interfaces.
+HostEndpoint is a cluster-scoped resource.
 
 - A host endpoint with `interfaceName: *` represents _all_ of a host's real or virtual
   interfaces.
@@ -24,42 +25,11 @@ will use to apply
 [policy](globalnetworkpolicy.mdx)
 to the interface.
 
-**Default behavior of external traffic to/from host**
-
-If a host endpoint is created and network policy is not in place, the $[prodname] default is to deny traffic to/from that endpoint (except for traffic allowed by failsafe rules, IP-in-IP or VXLAN traffic between $[prodname] nodes, and WireGuard traffic). Traffic forwarded through the endpoint is not denied by default; only policies with `applyOnForward: true` apply to it.
-For a named host endpoint (i.e. a host endpoint representing a specific interface), $[prodname] blocks traffic only to/from the interface specified in the host endpoint. Traffic to/from other interfaces is ignored.
-
-:::note
-
-With the iptables and nftables data planes, host endpoints with `interfaceName: *` do not support [untracked policy](../../network-policy/extreme-traffic/high-connection-workloads.mdx).
-
-:::
-
-For a wildcard host endpoint (i.e. a host endpoint representing all of a host's interfaces), $[prodname] blocks traffic to/from _all_ interfaces on the host except local workload interfaces (and except for traffic allowed by failsafe rules, IP-in-IP or VXLAN traffic between $[prodname] nodes, and WireGuard traffic). Traffic forwarded through the host is not denied by default; only policies with `applyOnForward: true` apply to it.
-
-However, profiles can be used in conjunction with host endpoints to modify default behavior of external traffic to/from the host in the absence of network policy.
-$[prodname] provides a default profile resource named `projectcalico-default-allow` that consists of allow-all ingress and egress rules.
-Host endpoints with the `projectcalico-default-allow` profile attached will have "allow-all" semantics instead of "deny-all" in the absence of policy.
-
-Note: If you have custom iptables rules, using host endpoints with allow-all rules (with no policies) will accept all traffic and therefore bypass those custom rules.
-
-:::note
-
-Auto host endpoints specify the `projectcalico-default-allow` profile so they behave similarly to pod workload endpoints.
-
-:::
-
-:::note
-
-When rendering security rules on other hosts, $[prodname] uses the
-`expectedIPs` field to resolve label selectors to IP addresses. If the `expectedIPs` field
-is omitted then security rules that use labels will fail to match this endpoint.
-
-:::
-
-**Host to local workload traffic**: Traffic from a host to its workload endpoints (e.g. Kubernetes pods) is always allowed, despite any policy in place. This ensures that `kubelet` liveness and readiness probes always work.
+For `kubectl` commands, you can use the aliases `hostendpoint.projectcalico.org`, `hostendpoints.projectcalico.org`, `hostendpoint.p`, and `hostendpoints.p`.
 
 ## Sample YAML
+
+This sample applies policy to interface `eth0` on node `myhost`, with two profiles and two named ports.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -86,25 +56,67 @@ spec:
       protocol: UDP
 ```
 
-## Host endpoint definition
+## Definition
 
 ### Metadata
 
-| Field  | Description                                | Accepted Values                                     | Schema |
-| ------ | ------------------------------------------ | --------------------------------------------------- | ------ |
-| name   | The name of this hostEndpoint. Required.   | Lowercase alphanumeric string with optional `.` or `-`. | string |
-| labels | A set of labels to apply to this endpoint. |                                                     | map    |
+| Field    | Description                                | Accepted Values                                                                                                          | Schema                  | Default |
+| -------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ----------------------- | ------- |
+| `name`   | The name of this host endpoint. Required.  | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string                  |         |
+| `labels` | A set of labels to apply to this endpoint. |                                                                                                                          | map of string to string |         |
 
 ### Spec
 
-| Field         | Description                                                                | Accepted Values            | Schema                                 | Default |
-| ------------- | -------------------------------------------------------------------------- | -------------------------- | -------------------------------------- | ------- |
-| node          | The name of the node where this HostEndpoint resides. Required.            |                            | string                                 |
-| interfaceName | Either `*`, the name of the specific interface on which to apply policy, or empty (to match the interface by `expectedIPs`). |                            | string                                 |
-| expectedIPs   | The expected IP addresses associated with the interface.                   | Valid IPv4 or IPv6 address | list                                   |
-| profiles      | The list of profiles to apply to the endpoint.                             |                            | list                                   |
-| ports         | List of named ports on this host endpoint.                                 |                            | List of [EndpointPorts](#endpointport) |
+| Field           | Description                                                                                                                      | Accepted Values            | Schema                                  | Default |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | --------------------------------------- | ------- |
+| `node`          | The name of the node where this host endpoint resides. Required.                                                                 |                            | string                                  |         |
+| `interfaceName` | Either `*`, the name of the specific interface on which to apply policy, or empty (to match the interface by `expectedIPs`).     |                            | string                                  |         |
+| `expectedIPs`   | The expected IP addresses associated with the interface.                                                                         | Valid IPv4 or IPv6 address | list of strings                         |         |
+| `profiles`      | The list of profiles to apply to the endpoint.                                                                                   |                            | list of strings                         |         |
+| `ports`         | List of named ports on this host endpoint.                                                                                       |                            | list of [EndpointPort](#endpointport)   |         |
 
 ### EndpointPort
 
 <Endpointport />
+
+## Default behavior of external traffic to and from the host
+
+If a host endpoint is created and network policy is not in place, the $[prodname] default is to deny traffic to/from that endpoint (except for traffic allowed by failsafe rules, IP-in-IP or VXLAN traffic between $[prodname] nodes, and WireGuard traffic). Traffic forwarded through the endpoint is not denied by default; only policies with `applyOnForward: true` apply to it.
+For a named host endpoint (i.e. a host endpoint representing a specific interface), $[prodname] blocks traffic only to/from the interface specified in the host endpoint. Traffic to/from other interfaces is ignored.
+
+:::note
+
+With the iptables and nftables data planes, host endpoints with `interfaceName: *` do not support [untracked policy](../../network-policy/extreme-traffic/high-connection-workloads.mdx).
+
+:::
+
+For a wildcard host endpoint (i.e. a host endpoint representing all of a host's interfaces), $[prodname] blocks traffic to/from _all_ interfaces on the host except local workload interfaces (and except for traffic allowed by failsafe rules, IP-in-IP or VXLAN traffic between $[prodname] nodes, and WireGuard traffic). Traffic forwarded through the host is not denied by default; only policies with `applyOnForward: true` apply to it.
+
+However, profiles can be used in conjunction with host endpoints to modify default behavior of external traffic to/from the host in the absence of network policy.
+$[prodname] provides a default profile resource named `projectcalico-default-allow` that consists of allow-all ingress and egress rules.
+Host endpoints with the `projectcalico-default-allow` profile attached will have "allow-all" semantics instead of "deny-all" in the absence of policy.
+
+Note: If you have custom iptables rules, using host endpoints with allow-all rules (with no policies) will accept all traffic and therefore bypass those custom rules.
+
+:::note
+
+Auto host endpoints specify the `projectcalico-default-allow` profile so they behave similarly to pod workload endpoints.
+
+:::
+
+## Expected IPs and label selectors
+
+When rendering security rules on other hosts, $[prodname] uses the
+`expectedIPs` field to resolve label selectors to IP addresses. If the `expectedIPs` field
+is omitted then security rules that use labels will fail to match this endpoint.
+
+## Host to local workload traffic
+
+Traffic from a host to its workload endpoints (e.g. Kubernetes pods) is always allowed, despite any policy in place. This ensures that `kubelet` liveness and readiness probes always work.
+
+## Additional resources
+
+- [Protect hosts and VMs](../../network-policy/hosts/protect-hosts.mdx)
+- [Protect Kubernetes nodes](../../network-policy/hosts/kubernetes-nodes.mdx)
+- [Profile](profile.mdx)
+- [Global network policy](globalnetworkpolicy.mdx)

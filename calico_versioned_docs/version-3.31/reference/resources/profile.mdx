@@ -1,26 +1,26 @@
 ---
 description: API for this Calico resource.
-content_type: unclassified
+content_type: reference
 ---
 
 # Profile
 
-Profiles provide a way to group multiple endpoints so that they inherit a shared set of labels. For historic reasons, Profiles can also include
+A profile resource (Profile) represents a group of endpoints that inherit a shared set of labels.
+For historic reasons, profiles can also include
 policy rules, but that feature is deprecated in favor of the much more
 flexible [NetworkPolicy](networkpolicy.mdx) and
 [GlobalNetworkPolicy](globalnetworkpolicy.mdx) resources.
+Profile is a cluster-scoped resource.
 
 Each $[prodname] endpoint or host endpoint can be assigned to zero or more profiles.
+
+With the Kubernetes datastore, profiles are read-only. $[prodname] generates a profile for each namespace and service account, and you cannot create, update, or delete profiles.
+
+For `kubectl` commands, you can use the aliases `profile.projectcalico.org`, `profiles.projectcalico.org`, `profile.p`, and `profiles.p`.
 
 ## Sample YAML
 
 The following sample profile applies the label `stage: development` to any endpoint that includes `dev-apps` in its list of profiles.
-
-:::note
-
-With the Kubernetes datastore, profiles are read-only. $[prodname] generates a profile for each namespace and service account, and you cannot create, update, or delete profiles.
-
-:::
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -36,18 +36,25 @@ spec:
 
 ### Metadata
 
-| Field  | Description                        | Accepted Values                                     | Schema                             | Default |
-| ------ | ---------------------------------- | --------------------------------------------------- | ---------------------------------- | ------- |
-| name   | The name of the profile. Required. | Lowercase alphanumeric string with optional `.` or `-`. | string                             |
-| labels | A set of labels for this profile.  |                                                     | map of string key to string values |
+| Field    | Description                           | Accepted Values                                                                                                          | Schema                  | Default |
+| -------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------- | ------- |
+| `name`   | The name of this profile. Required.   | Lowercase alphanumeric characters, `-`, or `.`. Must start and end with an alphanumeric character. Up to 253 characters. | string                  |         |
+| `labels` | A set of labels for this profile.     |                                                                                                                          | map of string to string |         |
 
 ### Spec
 
-| Field                | Description                                                                                                    | Accepted Values | Schema                                 | Default |
-| -------------------- | -------------------------------------------------------------------------------------------------------------- | --------------- | -------------------------------------- | ------- |
-| ingress (deprecated) | The ingress rules belonging to this profile.                                                                   |                 | List of [Rule](networkpolicy.mdx#rule) |
-| egress (deprecated)  | The egress rules belonging to this profile.                                                                    |                 | List of [Rule](networkpolicy.mdx#rule) |
-| labelsToApply        | An optional set of labels to apply to each endpoint in this profile (in addition to the endpoint's own labels) |                 | map                                    |
+| Field                          | Description                                                                                                    | Accepted Values | Schema                                 | Default |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- | --------------- | -------------------------------------- | ------- |
+| `ingress` _(deprecated)_       | The ingress rules belonging to this profile.                                                                   |                 | list of [Rule](networkpolicy.mdx#rule) |         |
+| `egress` _(deprecated)_        | The egress rules belonging to this profile.                                                                    |                 | list of [Rule](networkpolicy.mdx#rule) |         |
+| `labelsToApply`                | An optional set of labels to apply to each endpoint in this profile (in addition to the endpoint's own labels) |                 | map of string to string                |         |
 
 For `Rule` details please see the [NetworkPolicy](networkpolicy.mdx) or
 [GlobalNetworkPolicy](globalnetworkpolicy.mdx) resource.
+
+## Additional resources
+
+- [Network policy](networkpolicy.mdx)
+- [Global network policy](globalnetworkpolicy.mdx)
+- [Workload endpoint](workloadendpoint.mdx)
+- [Host endpoint](hostendpoint.mdx)
